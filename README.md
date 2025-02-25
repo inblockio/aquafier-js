@@ -2,6 +2,14 @@
 A tool that illustrates the capability & utility of Aqua protocol.
 
 ## Getting started 
-> The api project structure is inspired by laravel project layout.
-    > Running the api `npm run dev`
-> The web project is a react(typescript) project using chackra ui
+The api project structure is inspired by laravel project layout.<br/> The project is a fastify project with prisma ord (psql db)<br/><br/>
+
+The web project is a react(typescript) project using chackra ui
+
+
+## Running 
+To run the api, navigate to api directory.
+1. `create .env from .env.sample`, edit the db credentials.
+2. `npm i` to install dependancies
+3. run prisma db migration `npx prisma migrate dev`
+4. `npm run dev` to start http server
