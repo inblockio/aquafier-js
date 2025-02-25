@@ -15,7 +15,8 @@
     "dotenv": "^16.4.7",
     "ethers": "^6.13.5",
     "fastify": "^5.2.1",
-    "siwe": "^3.0.0"
+    "siwe": "^3.0.0",
+    "aquafier-js-sdk": "github:inblockio/aqua-verifier-js-lib#try_js_sha3"
   },
   "devDependencies": {
     "@types/node": "^22.13.5",
