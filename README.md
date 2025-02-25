@@ -13,3 +13,11 @@ To run the api, navigate to api directory.
 2. `npm i` to install dependancies
 3. run prisma db migration `npx prisma migrate dev`
 4. `npm run dev` to start http server
+
+## Database creation
+
+To create a database use the `create_db.sh`
+
+```bash
+chmod +x ./create_db.sh
+```
