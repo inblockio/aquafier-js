@@ -1,0 +1,60 @@
+{
+  "name": "apg-js",
+  "version": "4.4.0",
+  "description": "JavaScript APG, an ABNF Parser Generator",
+  "main": "index.js",
+  "scripts": {
+    "test": "cat ./dist/desc.txt",
+    "apg": "./bin/apg.sh",
+    "regen": "./bin/a.sh && ./bin/b.sh && ./bin/c.sh && ./bin/b.sh  && ./bin/d.sh",
+    "apg-conv": "./bin/apg-conv.sh",
+    "bundle-apg-conv-api": "./bin/apg-conv-api-bundle.sh",
+    "bundle-apg-lib": "./bin/apg-lib-bundle.sh",
+    "bundle-apg-api": "./bin/apg-api-bundle.sh",
+    "bundle-apg-exp": "./bin/apg-exp-bundle.sh",
+    "bundle-apg-lib-css": "./dev/apg-lib-bundle-css.sh",
+    "docco": "docco -l classic index.md README.md LICENSE.md ./src/apg/*.js ./src/apg-api/*.js ./src/apg-conv/*.js ./src/apg-conv-api/*.js ./src/apg-exp/*.js ./src/apg-lib/*.js"
+  },
+  "files": [
+    "src",
+    "bin",
+    "dist",
+    "dev",
+    "index.js",
+    "index.md",
+    "LICENSE.md",
+    "README.md"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ldthomas/apg-js.git"
+  },
+  "keywords": [
+    "APG",
+    "parser",
+    "generator",
+    "ABNF",
+    "SABNF",
+    "pattern-matching",
+    "regex",
+    "RegExp"
+  ],
+  "author": "Lowell D. Thomas <ldt@sabnf.com> (https://sabnf.com/)",
+  "license": "BSD-2-Clause",
+  "bugs": {
+    "url": "https://github.com/ldthomas/apg-js/issues"
+  },
+  "homepage": "https://github.com/ldthomas/apg-js#readme",
+  "devDependencies": {
+    "browserify": "^17.0.0",
+    "docco": "^0.9.1",
+    "eslint": "^7.26.0",
+    "eslint-config-airbnb": "^18.2.1",
+    "eslint-config-prettier": "^8.3.0",
+    "eslint-plugin-prettier": "^3.4.0",
+    "less": "^4.2.0",
+    "minify": "^10.3.0",
+    "prettier": "^2.3.0",
+    "terser": "^5.19.2"
+  }
+}

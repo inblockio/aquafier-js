@@ -1,0 +1,46 @@
+{
+  "name": "siwe",
+  "version": "3.0.0",
+  "description": "Sign-In with Ethereum",
+  "main": "dist/siwe.js",
+  "types": "dist/siwe.d.ts",
+  "directories": {
+    "lib": "lib"
+  },
+  "scripts": {
+    "test": "jest",
+    "build": "tsc",
+    "lint": "eslint --ext .js,.ts .",
+    "format": "prettier --ignore-path .gitignore --write \"**/*.+(js|ts|json)\""
+  },
+  "author": "Spruce Systems Inc.",
+  "license": "Apache-2.0",
+  "keywords": [
+    "ethereum",
+    "sign-in",
+    "sign-in-with-ethereum",
+    "siwe"
+  ],
+  "homepage": "https://github.com/spruceid/siwe",
+  "dependencies": {
+    "@spruceid/siwe-parser": "^3.0.0",
+    "@stablelib/random": "^1.0.1"
+  },
+  "devDependencies": {
+    "@typescript-eslint/eslint-plugin": "^5.23.0",
+    "@typescript-eslint/parser": "^5.23.0",
+    "eslint": "^8.15.0",
+    "eslint-config-prettier": "^8.5.0",
+    "prettier": "^2.6.2"
+  },
+  "peerDependencies": {
+    "ethers": "^5.6.8 || ^6.0.8"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/spruceid/siwe.git"
+  },
+  "bugs": {
+    "url": "https://github.com/spruceid/siwe/issues"
+  }
+}
