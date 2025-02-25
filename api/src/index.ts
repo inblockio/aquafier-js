@@ -23,7 +23,13 @@ fastify.register(authController);
 const start = async () => {
   try {
     await fastify.listen({ port: PORT, host: HOST });
-    console.log(`Server running at http://${HOST}:${PORT}`);
+    console.log(`\n`);
+    console.log("====================================");
+    console.log("🚀  AquaFier JS is running!");
+    console.log("🌊  Website: https://aqua-protocol.org/");
+    console.log(`📡  Listening on: http://${HOST}:${PORT}`);
+    console.log("====================================");
+    console.log("\n");
   } catch (err) {
     fastify.log.error(err);
     process.exit(1);
