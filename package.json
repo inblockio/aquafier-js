@@ -1,0 +1,20 @@
+{
+  "name": "aquafier-ts",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "fastify": "^5.2.1"
+  },
+  "devDependencies": {
+    "@types/node": "^22.13.5",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.7.3"
+  }
+}
