@@ -1,0 +1,170 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  user      String     @id @map("user") // pubkey
+  contracts Contract[]
+  latest    Latest[]
+  settings  Settings?
+}
+
+model Contract {
+  hash           String  @id @map("hash") // hash
+  latest         Json    @map("latest") // array
+  sender         String  @map("sender") // pubkey
+  receiver       String  @map("receiver") // pubkey
+  option         String  @map("option") // string
+  referenceCount Int     @map("reference_count")
+  // userRef         User     @relation(fields: [hash], references: [user])
+  // revisionRef     Revision @relation(fields: [hash], references: [hash])
+  User           User?   @relation(fields: [userUser], references: [user])
+  userUser       String?
+}
+
+model Latest {
+  hash         String    @id @map("hash") // hash
+  user         String    @map("user") // pubkey
+  userRef      User      @relation(fields: [user], references: [user])
+  revision     Revision? @relation(fields: [revisionHash], references: [hash])
+  revisionHash String?
+}
+
+model Revision {
+  hash               String     @id @map("hash") // hash
+  user               String     @map("user") // pubkey
+  nonce              String     @map("nonce") // string
+  shared             Json       @map("shared") // array_pubkey
+  contract           Json       @map("contract") // array
+  previous           String?    @map("previous") // varchar
+  children           Json       @map("children") // hash_map
+  localTimestamp     DateTime   @map("local_timestamp") // timestamp
+  revisionType       String     @map("Revision_type") // string
+  verificationLeaves Json       @map("Verification_leaves") // hash_map
+  // latestRef              Latest     @relation(fields: [hash], references: [hash])
+  file               File?
+  signature          Signature?
+  witness            Witness?
+  link               Link?
+  // contract_relation      Contract?
+  aquaForms          AquaForms?
+  // indexRef               Index?     @relation(fields: [hash], references: [fileHash])
+  Latest             Latest[]
+}
+
+model File {
+  hash           String   @id @map("hash") // hash
+  content        String   @map("content") // utf8_content
+  fileHash       String   @map("file_hash") // hash
+  referenceCount Int      @map("reference_count")
+  revisionRef    Revision @relation(fields: [hash], references: [hash])
+  indexes        Index[]
+}
+
+model Link {
+  hash                           String   @id @map("hash") // hash
+  linkType                       String   @map("link_type") // string
+  linkRequireIndepthVerification Boolean  @map("link_require_indepth_verification") // boolean
+  linkVerificationHash           String?  @map("link_verification_hash") // hash_map
+  referenceCount                 Int      @map("reference_count")
+  revisionRef                    Revision @relation(fields: [hash], references: [hash])
+  // indexRef                     Index?   @relation(fields: [linkVerificationHash], references: [hash])
+}
+
+model Index {
+  hash           String @map("hash") // array
+  fileHash       String @map("file_hash") // hash
+  uri            String @map("uri") // URLPath_and_Title
+  referenceCount Int    @map("reference_count")
+  fileRef        File   @relation(fields: [fileHash], references: [hash])
+  // revisions      Revision[]
+  // links          Link[]
+
+  @@id([hash, fileHash])
+}
+
+model Signature {
+  hash                   String   @id @map("hash") // hash
+  signatureDigest        String   @map("signature_digest") // string
+  signatureWalletAddress String   @map("signature_wallet_address") // varchar
+  signatureType          String   @map("signature_type") // hash
+  referenceCount         Int      @map("reference_count")
+  revisionRef            Revision @relation(fields: [hash], references: [hash])
+}
+
+model Witness {
+  hash              String        @id @map("hash") // hash
+  witnessMerkleRoot String        @map("Witness_merkle_root") // hash
+  referenceCount    Int           @map("reference_count")
+  revisionRef       Revision      @relation(fields: [hash], references: [hash])
+  witnessEvent      WitnessEvent  @relation(fields: [witnessMerkleRoot], references: [witnessMerkleRoot])
+  merkleNodes       MerkleNodes[]
+}
+
+model WitnessEvent {
+  witnessMerkleRoot           String        @id @map("Witness_merkle_root") // hash
+  witnessTimestamp            DateTime      @map("Witness_timestamp") // timestamp
+  witnessNetwork              String        @map("Witness_network") // chain_id
+  witnessSmartContractAddress String        @map("Witness_smart_contract_address") // hash
+  witnessTransactionHash      String        @map("Witness_transaction_hash") // tx_hash
+  witnessSenderAccountAddress String        @map("Witness_sender_account_address") // pubkey
+  witnesses                   Witness[]
+  merkleNodes                 MerkleNodes[]
+}
+
+model MerkleNodes {
+  nodeHash       String  @map("node_hash") // TEXT
+  parentHash     String? @map("parent_hash") // TEXT
+  height         Int     @map("height") // INTEGER
+  isLeaf         Boolean @map("is_leaf") // BOOLEAN
+  leftChildHash  String? @map("left_child_hash") // TEXT
+  rightChildHash String? @map("right_child_hash") // TEXT
+
+  // witnessRef     Witness? @relation(fields: [nodeHash], references: [hash])
+  // witnessEventRef WitnessEvent? @relation(fields: [nodeHash], references: [witnessMerkleRoot])
+
+  // Self-references for the tree structure
+  // parentNode    MerkleNodes?  @relation("ParentChild", fields: [nodeHash], references: [parentHash])
+  // childNodes    MerkleNodes[] @relation("ParentChild")
+
+  // leftNode      MerkleNodes?  @relation("LeftRight", fields: [nodeHash], references: [leftChildHash])
+  // rightNodes    MerkleNodes[] @relation("LeftRight")
+  Witness                       Witness?      @relation(fields: [witnessHash], references: [hash])
+  witnessHash                   String?
+  WitnessEvent                  WitnessEvent? @relation(fields: [witnessEventWitnessMerkleRoot], references: [witnessMerkleRoot])
+  witnessEventWitnessMerkleRoot String?
+
+  //@@id is a Prisma block attribute that specifies the primary key of the model
+  //nodeHash should be treated as the primary key for the MerkleNodes table
+  @@id([nodeHash])
+}
+
+model AquaForms {
+  hash           String   @id @map("hash") // hash
+  key            String   @map("key") // string
+  value          Json     @map("value") // object
+  type           String   @map("type") // string
+  referenceCount Int      @map("reference_count")
+  revisionRef    Revision @relation(fields: [hash], references: [hash])
+}
+
+model Settings {
+  userPubKey             String @id @map("user_pub_key") // pubkey
+  cliPubKey              String @map("cli_pub_key") // pubkey
+  cliPrivKey             String @map("cli_priv_key") // private_key
+  witnessNetwork         String @map("Witness_network") // chain_id
+  witnessContractAddress String @map("Witness_contract_address") // hash
+  theme                  String @map("theme") // string
+  userRef                User   @relation(fields: [userPubKey], references: [user])
+}
