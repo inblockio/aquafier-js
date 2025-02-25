@@ -4,6 +4,7 @@ import * as dotenv from 'dotenv';
 
 // Import controllers
 import authController from './controllers/auth';
+import indexController from './controllers/index';
 
 
 // Read host and port from environment variables
@@ -18,6 +19,7 @@ const fastify = Fastify({ logger: true });
 
 // Register controllers
 fastify.register(authController);
+fastify.register(indexController);
 
 // Start the server
 const start = async () => {
