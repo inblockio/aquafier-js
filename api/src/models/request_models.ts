@@ -13,3 +13,8 @@ export interface VerifyRequestBody {
     signature: string;
     domain: string;
   }
+
+
+  export   interface SessionQuery {
+    nonce?: string;
+  }

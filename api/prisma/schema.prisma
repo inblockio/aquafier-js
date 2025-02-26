@@ -16,7 +16,7 @@ datasource db {
 model SiweSession {
   id             Int      @id @default(autoincrement())
   address        String
-  nonce          String
+  nonce          String  @unique  // ✅ Make nonce unique
   issuedAt       DateTime @default(now())
   expirationTime DateTime?
 }

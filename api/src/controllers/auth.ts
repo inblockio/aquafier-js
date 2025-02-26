@@ -1,17 +1,66 @@
-import { FastifyInstance } from 'fastify';
+import { FastifyInstance, FastifyRequest } from 'fastify';
 import { SiweMessage } from 'siwe';
 import { prisma } from '../database/db';
 import { verifyMessage } from 'ethers';
-import { SiweRequest } from '../models/request_models';
+import { SessionQuery, SiweRequest } from '../models/request_models';
 
 export default async function authController(fastify: FastifyInstance) {
   // get current session
-  fastify.get('/session', async (request, reply) => {
-    return { success: true };
+  fastify.get('/session', async (request: FastifyRequest<{Querystring: SessionQuery}>, reply) => {
+    const nonce = request.query.nonce ?? "";
+    
+    if (!nonce) {
+      return { success: false, message: "Nonce is required" };
+    }
+    
+    try {
+  
+      
+      const session = await prisma.siweSession.findUnique({
+        where: { nonce }
+      });
+      
+      if (!session) {
+        return reply.code(404).send({ success: false, message: "Session not found" });
+      }
+      
+      // Check if session is expired
+      if (new Date(session.expirationTime!!) < new Date()) {
+        return reply.code(401).send({ success: false, message: "Session expired" });
+      }
+      
+      return { 
+        success: true, 
+        session: {
+          address: session.address,
+          nonce: session.nonce,
+          issued_at: session.issuedAt,
+          expiration_time: session.expirationTime
+        }
+      };
+    } catch (error) {
+      console.error("Error fetching session:", error);
+      return reply.code(500).send({ success: false, message: "Internal server error" });
+    }
   });
   //logout
-  fastify.delete('/session', async (request, reply) => {
-    return { success: true };
+  fastify.delete('/session', async (request : FastifyRequest<{Querystring: SessionQuery}>, reply) => {
+    const nonce = request.query.nonce ?? "";
+    
+    if (!nonce) {
+      return reply.code(400).send({ success: false, message: "Nonce is required" });
+    }
+    
+    try {
+      await prisma.siweSession.delete({
+        where: { nonce }
+      });
+      
+      return { success: true, message: "Session deleted successfully" };
+    } catch (error) {
+      console.error("Error deleting session:", error);
+      return reply.code(500).send({ success: false, message: "Internal server error" });
+    }
   });
   // login
   fastify.post('/session', async (request, reply) => {

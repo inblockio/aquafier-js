@@ -12,6 +12,8 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@fastify/cors": "^10.1.0",
+    "@fastify/formbody": "^8.0.2",
     "@prisma/client": "^6.4.1",
     "aquafier-js-sdk": "github:inblockio/aqua-verifier-js-lib#try_js_sha3",
     "dotenv": "^16.4.7",
