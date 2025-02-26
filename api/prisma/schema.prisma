@@ -13,6 +13,14 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+model SiweSession {
+  id             Int      @id @default(autoincrement())
+  address        String
+  nonce          String
+  issuedAt       DateTime @default(now())
+  expirationTime DateTime?
+}
+
 model User {
   user      String     @id @map("user") // pubkey
   contracts Contract[]

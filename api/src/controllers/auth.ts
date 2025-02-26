@@ -1,5 +1,8 @@
 import { FastifyInstance } from 'fastify';
 import { SiweMessage } from 'siwe';
+import { prisma } from '../database/db';
+import { verifyMessage } from 'ethers';
+import { SiweRequest } from '../models/request_models';
 
 export default async function authController(fastify: FastifyInstance) {
   // get current session
@@ -12,22 +15,46 @@ export default async function authController(fastify: FastifyInstance) {
   });
   // login
   fastify.post('/session', async (request, reply) => {
-    return { success: true };
-  });
-  fastify.post('/auth/siwe', async (request, reply) => {
+
+    const { message, signature } = request.body as SiweRequest;
+
+    let logs: string[] = [];
+    logs.push(`Received SIWE message: ${message}`);
+    logs.push(`Received signature: ${signature}`);
+
     try {
-      const { message, signature } = request.body as { message: string; signature: string };
+      // Extract Ethereum address from message
+      const address = verifyMessage(message, signature);
+      logs.push(`Verified Ethereum address: ${address}`);
 
-      const siweMessage = new SiweMessage(message);
-      const verification = await siweMessage.verify({ signature });
+      // Generate nonce (for demonstration, normally should be stored in DB)
+      const nonce = Math.random().toString(36).substring(2, 15);
 
-      if (!verification.success) {
-        return reply.status(400).send({ error: 'Invalid SIWE signature' });
-      }
+      // Insert session into the database
+      const session = await prisma.siweSession.create({
+        data: {
+          address,
+          nonce,
+          issuedAt: new Date(),
+          expirationTime: new Date(Date.now() + 24 * 60 * 60 * 1000), // 24-hour expiry
+        },
+      });
 
-      return { success: true, address: verification.data.address };
+      return reply.code(201).send({
+        success: true,
+        logs,
+        session,
+      });
     } catch (error) {
-      return reply.status(400).send({ error: 'Invalid SIWE request' });
+      logs.push(`SIWE sign-in failed: ${error}`);
+      fastify.log.error(error);
+
+      return reply.code(400).send({
+        success: false,
+        logs,
+        session: null,
+      });
     }
   });
+
 }

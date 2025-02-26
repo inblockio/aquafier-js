@@ -15,7 +15,6 @@ export default async function indexController(fastify: FastifyInstance) {
     //validated against aqua-verifier-js-lib verifier.
     fastify.post('/verify', async (request, reply) => {
 
-        let logs :LogData[] = [];
         let logsEnabled=false;
          // Check for a specific value
          if (request.headers.logs === 'true' || request.headers.logs === '1') {
@@ -63,11 +62,6 @@ export default async function indexController(fastify: FastifyInstance) {
           .send(logsEnabled ? { message: 'Error verifying revision', data: result.data } : {});
            
         }
-
-      
-
-       
-       
     });
 
     //Retrieves the branch from the specified hash back to the genesis hash (backward traversal only)

@@ -7,3 +7,9 @@ export interface VerifyRequestBody {
     fileObject: FileObject[];
   }
   
+
+ export interface SiweRequest {
+    message: string;
+    signature: string;
+    domain: string;
+  }
