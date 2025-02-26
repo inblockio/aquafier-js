@@ -1,6 +1,8 @@
 
 
+import Aquafier, { AquaTree, FileObject, LogData, LogType, Revision } from "aquafier-js-sdk";
 import { FastifyInstance } from "fastify";
+import { VerifyRequestBody } from "../models/request_models";
 
 export default async function indexController(fastify: FastifyInstance) {
 
@@ -10,10 +12,62 @@ export default async function indexController(fastify: FastifyInstance) {
         return { message: 'creat a new revision' };
     });
 
-    //Creates a new revision, validated against aqua-verifier-js-lib verifier.
+    //validated against aqua-verifier-js-lib verifier.
     fastify.post('/verify', async (request, reply) => {
 
-        return { message: 'verify a new revision' };
+        let logs :LogData[] = [];
+        let logsEnabled=false;
+         // Check for a specific value
+         if (request.headers.logs === 'true' || request.headers.logs === '1') {
+            // Enable detailed logging
+            logsEnabled = true;
+        }
+        const aquafier = new Aquafier();
+
+        const body  = request.body as VerifyRequestBody;
+
+        let result = await aquafier.verifyAquaTreeRevision(
+          body.tree,
+          body.revision,
+          body.hash,
+          body.fileObject, 
+        );
+
+        // console.log("Data " + JSON.stringify(result, null, 4))
+        if (result!.isOk()) {
+          result.data.logData.push({
+            log: `\n`,
+            logType: LogType.EMPTY
+          });
+          result.data.logData.push({
+            log: "AquaTree verified successfully",
+            logType: LogType.SUCCESS
+          })
+
+          return  reply
+          .code(200) // Set HTTP status code
+          .send(logsEnabled ? { message: 'Data verified successfully', data: result.data } : {});
+         
+        } else {
+          result.data.push({
+            log: `\n`,
+            logType: LogType.EMPTY
+          });
+          result.data.push({
+            log: "AquaTree verification failed",
+            logType: LogType.FINAL_ERROR
+          })
+
+          return  reply
+          .code(400) // Set HTTP status code
+          .send(logsEnabled ? { message: 'Error verifying revision', data: result.data } : {});
+           
+        }
+
+      
+
+       
+       
     });
 
     //Retrieves the branch from the specified hash back to the genesis hash (backward traversal only)
