@@ -2,11 +2,15 @@
 import Fastify from 'fastify';
 import cors from '@fastify/cors';
 import * as dotenv from 'dotenv';
+// Install first: npm install @fastify/multipart
+import fastifyMultipart from '@fastify/multipart';
+
 
 // Import controllers
 import authController from './controllers/auth';
 import indexController from './controllers/index';
 import versionController from './controllers/version';
+import filesController from './controllers/files';
 
 
 // Read host and port from environment variables
@@ -19,10 +23,7 @@ dotenv.config();
 // Create a Fastify instance
 const fastify = Fastify({ logger: true });
 
-// Register controllers
-fastify.register(authController);
-fastify.register(indexController);
-fastify.register(versionController);
+
 
 // Start the server
 const start = async () => {
@@ -36,8 +37,21 @@ const start = async () => {
       allowedHeaders: ['Content-Type', 'Authorization']
     });
 
+    // Register the plugin
+    await fastify.register(fastifyMultipart, {
+      limits: {
+        fileSize: 20 * 1024 * 1024 // 20MB - Adding this here as well for early rejection
+      }
+    });
+
     // Make sure you have the formbody parser plugin installed and registered
     fastify.register(require('@fastify/formbody'));
+
+    // Register controllers
+    fastify.register(authController);
+    fastify.register(indexController);
+    fastify.register(versionController);
+    fastify.register(filesController);
 
     await fastify.listen({ port: PORT, host: HOST });
     console.log(`\n`);
