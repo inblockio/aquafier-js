@@ -19,7 +19,8 @@ import { PageData, Revision } from "../../../models/PageData"
 import { formatCryptoAddress, getLastRevisionVerificationHash, timeToHumanFriendly } from "../../../utils/functions"
 import { Alert } from "../alert"
 import { ClipboardIconButton, ClipboardRoot } from "../clipboard"
-import AquaVerifier, { RevisionAquaChainResult, RevisionVerificationResult } from "aqua-verifier";
+import Aquafier  from "aquafier-js-sdk";
+// import AquaVerifier, { RevisionAquaChainResult, RevisionVerificationResult } from "aqua-verifier";
 import ReactLoading from "react-loading"
 import { WITNESS_NETWORK_MAP } from "../../../utils/constants"
 import { DownloadAquaChain, WitnessAquaChain, SignAquaChain, DeleteAquaChain } from "../../aqua_chain_actions"
@@ -404,13 +405,9 @@ const ChainDetails = ({ fileInfo, callBack }: IPageDataDetails) => {
 
     const verifyAquaChain = () => {
 
-        const verifier = new AquaVerifier({
-            alchemyKey: 'ZaQtnup49WhU7fxrujVpkFdRz4JaFRtZ',
-            doAlchemyKeyLookUp: true,
-            version: 1.2
-        });
+        const verifier = new Aquafier();
         if (pageData) {
-            verifier.verifyAquaChain(pageData.pages[0]).then((res) => {
+            verifier.verifyAquaTree(pageData.pages[0], []).then((res) => {
                 setVerificationResult(res)
                 callBack && callBack(res.successful)
             }).catch((error: any) => {

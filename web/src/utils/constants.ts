@@ -89,7 +89,7 @@ export const initializeBackendUrl = async (): Promise<string> => {
 // });
 
 
-export let testWitness = {
+export const testWitness = {
   "previous_verification_hash": "0x8fe3842787eb5d37c2fb170906a3d4c73c32b9dab7aab4525a06199fe9b9c823",
   "nonce": "AEkjaXCgfD2rP8ZGS-Xhl4eeksNRVOYlykWACBvVeXA",
   "local_timestamp": "20250123170100",

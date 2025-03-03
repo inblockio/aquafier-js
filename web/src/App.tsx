@@ -2,14 +2,14 @@ import { ethers } from 'ethers';
 import MainLayout from './layouts/MainLayout'
 import Home from './pages/Home'
 import LoadConfiguration from './components/config';
-import { initializeBackendUrl, testWitness } from './utils/constants';
+import { initializeBackendUrl } from './utils/constants';
 import { useEffect } from 'react'
 import appStore from './store';
 import { useStore } from "zustand"
 import { BrowserRouter, Route, Routes } from 'react-router-dom'
 import SharePage from './pages/SharePage';
 import Loading from './pages/Loading';
-import AquaVerifier from 'aqua-verifier';
+// import Aquafier from 'aquafier-js-sdk';
 declare global {
   interface Window {
     ethereum?: ethers.Eip1193Provider;
@@ -22,10 +22,10 @@ function App() {
 
   const verifyAquaChain = async() => {
 
-    let aquaProtocol = new AquaVerifier()
+    // const aquaProtocol = new Aquafier()
 
-    let result = await aquaProtocol.verifyWitness(testWitness as any, false)
-    console.log("Result:", result)
+    // let result = await aquaProtocol.verifyWitness(testWitness as any, false)
+    // console.log("Result:", result)
   }
 
   useEffect(() => {

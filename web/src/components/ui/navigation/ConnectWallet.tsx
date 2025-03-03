@@ -68,18 +68,24 @@ export default function ConnectWallet() {
 
         const signature = await signer.signMessage(message);
 
-        const formData = new URLSearchParams();
+        // const formData = new URLSearchParams();
 
-        formData.append("message", message);
-        formData.append("signature", remove0xPrefix(signature));
-        formData.append("domain", domain);
+        // formData.append("message", message);
+        // formData.append("signature", remove0xPrefix(signature));
+        // formData.append("domain", domain);
 
-        const url = `${backend_url}/siwe`;
+        const url = `${backend_url}/session`;
         console.log("url is ", url);
-        const response = await axios.post(url, formData, {
-          headers: {
-            "Content-Type": "application/x-www-form-urlencoded",
-          },
+        // const response = await axios.post(url, formData, {
+        //   headers: {
+        //     "Content-Type": "application/x-www-form-urlencoded",
+        //   },
+        // });
+
+        const response = await axios.post(url, {
+          "message":message,
+          "signature": signature,
+          "domain": domain
         });
 
         if (response.status === 200) {
@@ -151,16 +157,14 @@ export default function ConnectWallet() {
   const signOutFromSiweSession = async () => {
     setLoading(true);
     try {
-      const formData = new URLSearchParams();
+      // const formData = new URLSearchParams();
       const nonce = getCookie("pkc_nonce");
-      formData.append("nonce", nonce);
+      // formData.append("nonce", nonce);
 
       const url = `${backend_url}/siwe_logout`;
       console.log("url is ", url);
-      const response = await axios.post(url, formData, {
-        headers: {
-          "Content-Type": "application/x-www-form-urlencoded",
-        },
+      const response = await axios.post(url, {
+    "pkc_nonce" : nonce
       });
 
       if (response.status === 200) {
