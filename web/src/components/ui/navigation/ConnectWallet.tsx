@@ -15,7 +15,7 @@ import { Avatar } from "../avatar";
 import { toaster } from "../toaster";
 
 export default function ConnectWallet() {
-  const { metamaskAddress, setMetamaskAddress, setFiles, avatar, setAvatar, setUserProfile, backend_url } = useStore(appStore);
+  const { metamaskAddress, setMetamaskAddress, setFiles, avatar, setAvatar, setUserProfile, backend_url, setSession } = useStore(appStore);
 
   const [isOpen, setIsOpen] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -90,6 +90,7 @@ export default function ConnectWallet() {
 
         if (response.status === 200 || response.status === 201) {
           // if (signature) {
+          console.log(response.data)
             const responseData = response.data;
             const walletAddress = ethers.getAddress(responseData?.session?.address);
             setMetamaskAddress(walletAddress);
@@ -106,6 +107,10 @@ export default function ConnectWallet() {
             setUserProfile({
               ...response.data.user_settings,
             });
+            
+            setSession({
+              ...response.data.session
+            })
 
             const url = `${backend_url}/explorer_files`;
             console.log("url is ", url);

@@ -1,6 +1,6 @@
 import { ethers } from "ethers";
 import { ApiFileInfo } from "../models/FileInfo";
-import { documentTypes,  imageTypes, musicTypes, videoTypes } from "./constants";
+import { documentTypes, imageTypes, musicTypes, videoTypes } from "./constants";
 import { AvatarGenerator } from 'random-avatar-generator';
 import { AquaTree, FileObject } from "aquafier-js-sdk";
 
@@ -74,14 +74,14 @@ export async function switchNetwork(chainId: string) {
 }
 
 
-export async function fetchFiles(publicMetaMaskAddress: string, url: string, nounce : string): Promise<Array<ApiFileInfo>> {
+export async function fetchFiles(publicMetaMaskAddress: string, url: string, nonce: string): Promise<Array<ApiFileInfo>> {
     try {
-      
+
         const query = await fetch(url, {
             method: 'GET',
             headers: {
                 'metamask_address': publicMetaMaskAddress,
-                'nounce': nounce
+                'nonce': nonce
             },
         });
         const response = await query.json()
@@ -187,8 +187,8 @@ export function calculateContentSize(content: string | Buffer | Blob): number {
 }
 
 //sumFileContentSize
-export function estimateFileSize(fileObject: FileObject) : number{
-   
+export function estimateFileSize(fileObject: FileObject): number {
+
     const { fileContent } = fileObject;
     let fileSize = 0;
 
@@ -259,7 +259,7 @@ export const getLastRevisionVerificationHash = (aquaTree: AquaTree) => {
     const revisonHashes = Object.keys(aquaTree.revisions)
     const hash = revisonHashes[revisonHashes.length - 1]
     return hash
- }
+}
 
 export function filterFilesByType(files: ApiFileInfo[], fileType: string): ApiFileInfo[] { // "image" | "document" | "music" | "video"
 
@@ -334,115 +334,115 @@ export function generateAvatar(_address: string) {
 export const determineFileType = async (file: File): Promise<File> => {
     // If file already has an extension, return as is
     if (file.name.includes('.')) return file;
-  
+
     try {
-      // Attempt to read the file contents
-      const arrayBuffer = await file.arrayBuffer();
-      const uint8Array = new Uint8Array(arrayBuffer);
-  
-      // Advanced MIME type detection using file signatures
-      let extension = '';
-      let detectedMimeType = '';
-  
-      // PDF signature
-      if (uint8Array[0] === 0x25 && uint8Array[1] === 0x50 && uint8Array[2] === 0x44 && uint8Array[3] === 0x46) {
-        extension = '.pdf';
-        detectedMimeType = 'application/pdf';
-      }
-      // PNG signature
-      else if (uint8Array[0] === 0x89 && uint8Array[1] === 0x50 && uint8Array[2] === 0x4E && uint8Array[3] === 0x47) {
-        extension = '.png';
-        detectedMimeType = 'image/png';
-      }
-      // JPEG signature
-      else if (uint8Array[0] === 0xFF && uint8Array[1] === 0xD8 && uint8Array[2] === 0xFF) {
-        extension = '.jpg';
-        detectedMimeType = 'image/jpeg';
-      }
-      // JSON signature (looks like a JSON object or array start)
-      else if (uint8Array[0] === 0x7B || uint8Array[0] === 0x5B) {
-        try {
-          // Attempt to parse as JSON
-          const jsonTest = new TextDecoder().decode(uint8Array);
-          JSON.parse(jsonTest);
-          extension = '.json';
-          detectedMimeType = 'application/json';
-        } catch {
-          // Not a valid JSON
+        // Attempt to read the file contents
+        const arrayBuffer = await file.arrayBuffer();
+        const uint8Array = new Uint8Array(arrayBuffer);
+
+        // Advanced MIME type detection using file signatures
+        let extension = '';
+        let detectedMimeType = '';
+
+        // PDF signature
+        if (uint8Array[0] === 0x25 && uint8Array[1] === 0x50 && uint8Array[2] === 0x44 && uint8Array[3] === 0x46) {
+            extension = '.pdf';
+            detectedMimeType = 'application/pdf';
         }
-      }
-      // Excel XLSX signature
-      else if (
-        uint8Array[0] === 0x50 && uint8Array[1] === 0x4B && 
-        uint8Array[2] === 0x03 && uint8Array[3] === 0x04
-      ) {
-        extension = '.xlsx';
-        detectedMimeType = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
-      }
-      // CSV/Text detection (try to parse as CSV or check for text-like content)
-      else {
-        try {
-          const text = new TextDecoder().decode(uint8Array);
-          // Check if content looks like CSV (contains commas or semicolons)
-          if (/[,;]/.test(text)) {
-            extension = '.csv';
-            detectedMimeType = 'text/csv';
-          } else {
-            extension = '.txt';
-            detectedMimeType = 'text/plain';
-          }
-        } catch {
-          extension = '.bin';
-          detectedMimeType = 'application/octet-stream';
+        // PNG signature
+        else if (uint8Array[0] === 0x89 && uint8Array[1] === 0x50 && uint8Array[2] === 0x4E && uint8Array[3] === 0x47) {
+            extension = '.png';
+            detectedMimeType = 'image/png';
         }
-      }
-  
-      // If no extension was detected, fall back to original file type or generic
-      if (!extension) {
-        extension = file.type ? `.${file.type.split('/').pop()}` : '.bin';
-        detectedMimeType = file.type || 'application/octet-stream';
-      }
-  
-      // Create a new file with the determined extension
-      const renamedFile = new File([uint8Array], `${file.name}${extension}`, {
-        type: detectedMimeType,
-        lastModified: file.lastModified
-      });
-  
-      return renamedFile;
+        // JPEG signature
+        else if (uint8Array[0] === 0xFF && uint8Array[1] === 0xD8 && uint8Array[2] === 0xFF) {
+            extension = '.jpg';
+            detectedMimeType = 'image/jpeg';
+        }
+        // JSON signature (looks like a JSON object or array start)
+        else if (uint8Array[0] === 0x7B || uint8Array[0] === 0x5B) {
+            try {
+                // Attempt to parse as JSON
+                const jsonTest = new TextDecoder().decode(uint8Array);
+                JSON.parse(jsonTest);
+                extension = '.json';
+                detectedMimeType = 'application/json';
+            } catch {
+                // Not a valid JSON
+            }
+        }
+        // Excel XLSX signature
+        else if (
+            uint8Array[0] === 0x50 && uint8Array[1] === 0x4B &&
+            uint8Array[2] === 0x03 && uint8Array[3] === 0x04
+        ) {
+            extension = '.xlsx';
+            detectedMimeType = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
+        }
+        // CSV/Text detection (try to parse as CSV or check for text-like content)
+        else {
+            try {
+                const text = new TextDecoder().decode(uint8Array);
+                // Check if content looks like CSV (contains commas or semicolons)
+                if (/[,;]/.test(text)) {
+                    extension = '.csv';
+                    detectedMimeType = 'text/csv';
+                } else {
+                    extension = '.txt';
+                    detectedMimeType = 'text/plain';
+                }
+            } catch {
+                extension = '.bin';
+                detectedMimeType = 'application/octet-stream';
+            }
+        }
+
+        // If no extension was detected, fall back to original file type or generic
+        if (!extension) {
+            extension = file.type ? `.${file.type.split('/').pop()}` : '.bin';
+            detectedMimeType = file.type || 'application/octet-stream';
+        }
+
+        // Create a new file with the determined extension
+        const renamedFile = new File([uint8Array], `${file.name}${extension}`, {
+            type: detectedMimeType,
+            lastModified: file.lastModified
+        });
+
+        return renamedFile;
     } catch (error) {
-      console.error('Error determining file type:', error);
-      
-      // Fallback: use file type or add a generic extension
-      const fallbackExtension = file.type 
-        ? `.${file.type.split('/').pop()}`
-        : (file.name.includes('.') ? '' : '.bin');
-      
-      const fallbackFile = new File(
-        [await file.arrayBuffer()], 
-        `${file.name}${fallbackExtension}`, 
-        {
-          type: file.type || 'application/octet-stream',
-          lastModified: file.lastModified
-        }
-      );
-  
-      return fallbackFile;
+        console.error('Error determining file type:', error);
+
+        // Fallback: use file type or add a generic extension
+        const fallbackExtension = file.type
+            ? `.${file.type.split('/').pop()}`
+            : (file.name.includes('.') ? '' : '.bin');
+
+        const fallbackFile = new File(
+            [await file.arrayBuffer()],
+            `${file.name}${fallbackExtension}`,
+            {
+                type: file.type || 'application/octet-stream',
+                lastModified: file.lastModified
+            }
+        );
+
+        return fallbackFile;
     }
-  }
+}
 
 
- export  function getFileExtension(fileName : string ) : string {
+export function getFileExtension(fileName: string): string {
     // If the file name contains a dot, extract the extension
-    
-        const extMatch = fileName.match(/\.([0-9a-z]+)$/i);
-        if (extMatch) {
-            return extMatch[1];
-        }
-    
-    
-        //todo fix me
-        //  _fileContent :  string | ArrayBuffer | null
+
+    const extMatch = fileName.match(/\.([0-9a-z]+)$/i);
+    if (extMatch) {
+        return extMatch[1];
+    }
+
+
+    //todo fix me
+    //  _fileContent :  string | ArrayBuffer | null
     // if (fileContent instanceof File || fileContent instanceof Blob) {
     //     return new Promise((resolve, reject) => {
     //         const reader = new FileReader();
@@ -455,7 +455,7 @@ export const determineFileType = async (file: File): Promise<File> => {
     //         reader.readAsArrayBuffer(fileContent.slice(0, 4));
     //     });
     // }
-    
+
     return "";
 }
 
@@ -529,7 +529,7 @@ export function fileType(file: ApiFileInfo): string {
 //           (window.chrome && window.chrome.runtime && window.chrome.runtime.id === extensionId)) {
 //         resolve(true);
 //       }
-      
+
 //       // Alternative method using runtime messaging
 //       try {
 //         chrome.runtime.sendMessage(extensionId, { type: 'ping' }, (response: any) => {
@@ -540,3 +540,12 @@ export function fileType(file: ApiFileInfo): string {
 //       }
 //     });
 //   }
+
+export function encodeFileToBase64(file: File): Promise<string> {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onload = () => resolve(reader.result as string);
+        reader.onerror = (error) => reject(error);
+    });
+}

@@ -3,6 +3,7 @@ import { openDB } from 'idb';
 import { createStore } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
 import { ApiFileInfo } from './models/FileInfo';
+import { Session } from './types';
 
 type AppStoreState = {
     user_profile: {
@@ -13,7 +14,7 @@ type AppStoreState = {
         theme: string,
         witness_contract_address: string | null
     },
-
+    session: Session | null,
     files: ApiFileInfo[],
     metamaskAddress: string | null
     avatar: string | undefined
@@ -23,6 +24,9 @@ type AppStoreState = {
 type AppStoreActions = {
     setUserProfile: (
         config: AppStoreState['user_profile'],
+    ) => void,
+    setSession: (
+        config: AppStoreState['session'],
     ) => void,
     setMetamaskAddress: (
         address: AppStoreState['metamaskAddress'],
@@ -77,12 +81,14 @@ const appStore = createStore<TAppStore>()(
                 theme: "light",
                 witness_contract_address: '0x45f59310ADD88E6d23ca58A0Fa7A55BEE6d2a611',
             },
+            session: null,
             files: [],
             metamaskAddress: '',
             avatar: "",
             backend_url: "http://0.0.0.0:0",
             // Actions
             setUserProfile: (config) => set({ user_profile: config }),
+            setSession: (session) => set({ session: session }),
             setMetamaskAddress: (
                 address: AppStoreState['metamaskAddress'],
             ) => set({ metamaskAddress: address }),

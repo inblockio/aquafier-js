@@ -6,7 +6,7 @@ import appStore from "../store";
 import { useEffect, useState } from "react";
 import { ApiFileInfo } from "../models/FileInfo";
 import { toaster } from "./ui/toaster";
-import { formatCryptoAddress, readJsonFile } from "../utils/functions";
+import { encodeFileToBase64, formatCryptoAddress, readJsonFile } from "../utils/functions";
 import { ChainDetailsBtn } from "./ui/navigation/CustomDrawer";
 import { Container, DialogCloseTrigger, Group, List, Text } from "@chakra-ui/react";
 import { Alert } from "./ui/alert";
@@ -30,7 +30,7 @@ export const UploadFile = ({ file, uploadedIndexes, fileIndex, updateUploadedInd
     const [uploading, setUploading] = useState(false)
     const [uploaded, setUploaded] = useState(false)
 
-    const { metamaskAddress, setFiles, files, backend_url } = useStore(appStore)
+    const { metamaskAddress, setFiles, files, backend_url, session } = useStore(appStore)
 
     const uploadFile = async () => {
 
@@ -59,12 +59,12 @@ export const UploadFile = ({ file, uploadedIndexes, fileIndex, updateUploadedInd
 
         setUploading(true)
         try {
-            const url = `${backend_url}/explorer_file_upload`
+            const url = `${backend_url}/explorer_files`
             console.log("url ", url)
             const response = await axios.post(url, formData, {
                 headers: {
                     'Content-Type': 'multipart/form-data',
-                    "metamask_address": metamaskAddress
+                    "nonce": session?.nonce
                 },
             });
 
@@ -75,15 +75,23 @@ export const UploadFile = ({ file, uploadedIndexes, fileIndex, updateUploadedInd
             //     console.log("**>" + item + "\n.")
             // })
 
+            // const fileBuffer = await streamToBuffer(data.file);
+            const base64Content = await encodeFileToBase64(file);
 
             // Assuming the API returns an array of FileInfo objects
-            const file: ApiFileInfo = {
-                id: res.file.id,
-                name: res.file.name,
-                extension: res.file.extension,
-                page_data: res.file.page_data,
+            const fileInfo: ApiFileInfo = {
+                fileObject: {
+                    fileName: res.file.name,
+                    fileContent: base64Content,
+                    path: "aqua::",
+                },
+                // name: res.file.name,
+                // extension: res.file.extension,
+                // page_data: res.file.page_data,
                 mode: res.file.mode,
-                owner: res.file.owner
+                owner: res.file.owner,
+                aquaTree: null,
+                linkedFileObjects: []
             };
 
             setFiles([...files, file])
@@ -710,3 +718,7 @@ export const ImportAquaChainFromChain = ({ fileInfo, isVerificationSuccessful }:
         </Container >
     )
 }
+function streamToBuffer(file: any) {
+    throw new Error("Function not implemented.");
+}
+

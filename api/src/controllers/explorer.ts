@@ -1,4 +1,4 @@
-import Aquafier, { AquaTree, FileObject, LogData, LogType, Revision } from 'aquafier-js-sdk';
+import Aquafier, { AquaTree, FileObject, getHashSum, LogData, LogType, Revision } from 'aquafier-js-sdk';
 import { FastifyInstance } from 'fastify';
 import { prisma } from '../database/db';
 import { BusboyFileStream } from '@fastify/busboy';
@@ -32,7 +32,7 @@ export default async function explorerController(fastify: FastifyInstance) {
         if (!session) {
             return reply.code(403).send({ success: false, message: "Nounce  is invalid" });
         }
-        
+
 
         let aquafier = new Aquafier();
 
@@ -108,14 +108,15 @@ export default async function explorerController(fastify: FastifyInstance) {
                 })
 
             }
+            // let fileHash = getHashSum(data.file)
             let resData: AquaTree = res.data.aquaTree!!;
             let allHash: string[] = Object.keys(resData);
             let revisionData: Revision = resData.revisions[allHash[0]];
-            let fileHash = revisionData.file_hash; // Extract file hash
+            let fileHash = ""//revisionData.file_hash; // Extract file hash
 
-            if (!fileHash) {
-                return reply.code(500).send({ error: "File hash missing from AquaTree response" });
-            }
+            // if (!fileHash) {
+            //     return reply.code(500).send({ error: "File hash missing from AquaTree response" });
+            // }
             try {
 
                 // Check if file already exists in the database
@@ -149,7 +150,7 @@ export default async function explorerController(fastify: FastifyInstance) {
                 let createResult = await prisma.filename.create({
                     data: {
                         name: data.filename,
-                        fileId: fileId
+                        fileId: fileId,
                     },
                 });
 
