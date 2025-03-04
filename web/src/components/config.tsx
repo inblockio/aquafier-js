@@ -32,7 +32,7 @@ const LoadConfiguration = () => {
                         setMetamaskAddress(address)
                         const avatar = generateAvatar(address)
                         setAvatar(avatar)
-                        const files = await fetchFiles(address, url2);
+                        const files = await fetchFiles(address, url2,nonce );
                         setFiles(files)
                         fetchUserProfile(_address)
                     }

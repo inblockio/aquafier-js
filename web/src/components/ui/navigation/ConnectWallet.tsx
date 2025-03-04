@@ -89,7 +89,7 @@ export default function ConnectWallet() {
         });
 
         if (response.status === 200 || response.status === 201) {
-          if (signature) {
+          // if (signature) {
             const responseData = response.data;
             const walletAddress = ethers.getAddress(responseData?.session?.address);
             setMetamaskAddress(walletAddress);
@@ -110,9 +110,9 @@ export default function ConnectWallet() {
             const url = `${backend_url}/explorer_files`;
             console.log("url is ", url);
 
-            const files = await fetchFiles(walletAddress, url);
+            const files = await fetchFiles(walletAddress, url,responseData.session.nonce );
             setFiles(files);
-          }
+          // }
         }
         setLoading(false);
         setMessage(null);

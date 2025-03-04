@@ -1,4 +1,4 @@
-import Aquafier, { AquaTree, FileObject, LogType, Revision } from 'aquafier-js-sdk';
+import Aquafier, { AquaTree, FileObject, LogData, LogType, Revision } from 'aquafier-js-sdk';
 import { FastifyInstance } from 'fastify';
 import { prisma } from '../database/db';
 import { BusboyFileStream } from '@fastify/busboy';
@@ -105,6 +105,7 @@ export default async function explorerController(fastify: FastifyInstance) {
                 return reply.code(500).send({
                     logs: res.data
                 })
+
             }
             let resData: AquaTree = res.data.aquaTree!!;
             let allHash: string[] = Object.keys(resData);
@@ -117,25 +118,25 @@ export default async function explorerController(fastify: FastifyInstance) {
             try {
 
                 // Check if file already exists in the database
-                let existingFile = await prisma.file.findUnique({
+                let existingFile = await prisma.file.findFirst({
                     where: { fileHash: fileHash },
                 });
 
                 if (existingFile) {
                     // File exists: Increase reference count
                     await prisma.file.update({
-                        where: { fileHash: fileHash },
+                        where: { hash: existingFile.hash },
                         data: { referenceCount: existingFile.referenceCount + 1 },
                     });
                 } else {
                     // File does not exist: Insert a new file record
                     await prisma.file.create({
                         data: {
-                            hash: revisionHash,
+                            hash: allHash[0],
                             content: base64Content,
                             fileHash: fileHash,
                             referenceCount: 1, // First reference
-                            revisionRef: { connect: { hash: revisionHash } },
+                            // revisionRef: { connect: { hash: allHash[0] } },
                         },
                     });
                 }
@@ -155,16 +156,26 @@ export default async function explorerController(fastify: FastifyInstance) {
                         localTimestamp: new Date(revisionData.local_timestamp),
                         revisionType: revisionData.revision_type,
                         verificationLeaves: revisionData.witness_merkle_proof || [],
-                        issuedAt: new Date(),
-                        expirationTime: new Date(Date.now() + 24 * 60 * 60 * 1000), // 24-hour expiry
+                        Latest: {
+                            create: {
+                                hash: allHash[0],
+                                user: session.address,
+
+                            }
+                        }
                     },
                 });
             } catch (error) {
-
-                res.data.push({
+                let logs: LogData[] = []
+                logs.push({
                     log: `Error saving genesis revision`,
                     logType: LogType.ERROR
                 })
+
+                return reply.code(500).send({
+                    logs: res.data
+                })
+
             }
 
             // Return success response

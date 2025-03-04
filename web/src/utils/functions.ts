@@ -74,13 +74,14 @@ export async function switchNetwork(chainId: string) {
 }
 
 
-export async function fetchFiles(publicMetaMaskAddress: string, url: string): Promise<Array<ApiFileInfo>> {
+export async function fetchFiles(publicMetaMaskAddress: string, url: string, nounce : string): Promise<Array<ApiFileInfo>> {
     try {
       
         const query = await fetch(url, {
             method: 'GET',
             headers: {
-                'metamask_address': publicMetaMaskAddress
+                'metamask_address': publicMetaMaskAddress,
+                'nounce': nounce
             },
         });
         const response = await query.json()
