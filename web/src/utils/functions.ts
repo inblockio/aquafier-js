@@ -1,8 +1,8 @@
 import { ethers } from "ethers";
 import { ApiFileInfo } from "../models/FileInfo";
-import { PageData } from "../models/PageData";
 import { documentTypes,  imageTypes, musicTypes, videoTypes } from "./constants";
 import { AvatarGenerator } from 'random-avatar-generator';
+import { AquaTree, FileObject } from "aquafier-js-sdk";
 
 export function formatCryptoAddress(address?: string, start: number = 10, end: number = 4, message?: string): string {
     if (!address) return message ?? "NO ADDRESS"
@@ -89,8 +89,8 @@ export async function fetchFiles(publicMetaMaskAddress: string, url: string): Pr
             throw new Error(`HTTP error! status: ${query.status}`);
         }
 
-        let res = response;
-        let logs: Array<string> = res.logs
+        const res = response;
+        const logs: Array<string> = res.logs
         logs.forEach((item) => {
             console.log("**>" + item + "\n.")
         })
@@ -185,27 +185,41 @@ export function calculateContentSize(content: string | Buffer | Blob): number {
     throw new Error("Unsupported content type");
 }
 
+//sumFileContentSize
+export function estimateFileSize(fileObject: FileObject) : number{
+   
+    const { fileContent } = fileObject;
+    let fileSize = 0;
 
-export function sumFileContentSize(pageData: PageData): number {
-    if (!pageData?.pages) return 0;
+    if (typeof fileContent === 'string') {
+        if (isBase64(fileContent)) {
+            fileSize = calculateBase64Size(fileContent);
+        } else {
+            fileSize = new TextEncoder().encode(fileContent).length; // UTF-8 size
+        }
+    } else if (typeof fileContent === 'object') {
+        const jsonString = JSON.stringify(fileContent);
+        fileSize = new TextEncoder().encode(jsonString).length;
+    } else {
+        throw new Error("Unsupported fileContent type");
+    }
 
-    return pageData.pages.reduce((totalSize, hashChain) => {
-        if (!hashChain.revisions) return totalSize;
-
-        const chainSize = Object.values(hashChain.revisions).reduce((chainTotal, revision) => {
-            if (revision?.content?.file?.size) {
-                return chainTotal + revision.content.file.size;
-            }
-            return chainTotal;
-        }, 0);
-
-        return totalSize + chainSize;
-    }, 0);
+    return fileSize;
 }
 
-export function getTimestampSafe(pageData: PageData): string | null {
-    return pageData.pages[0]?.revisions[Object.keys(pageData.pages[0]?.revisions || {})[0]]?.metadata.time_stamp;
+// Function to check if a string is Base64 encoded
+function isBase64(str: string) {
+    if (typeof str !== 'string') return false;
+    return /^([A-Za-z0-9+/]{4})*([A-Za-z0-9+/]{3}=|[A-Za-z0-9+/]{2}==)?$/.test(str);
 }
+
+// Function to calculate decoded file size from base64
+function calculateBase64Size(base64String: string) {
+    const padding = (base64String.endsWith("==") ? 2 : base64String.endsWith("=") ? 1 : 0);
+    return (base64String.length * 3) / 4 - padding;
+}
+
+
 
 export function timeToHumanFriendly(timestamp: string | undefined, showFull: boolean = false): string {
     if (!timestamp) {
@@ -240,10 +254,11 @@ export function timeToHumanFriendly(timestamp: string | undefined, showFull: boo
 
 
 
-export const getLastRevisionVerificationHash = (pageData: PageData) => {
-    const revisionHashes = Object.keys(pageData.pages[0].revisions)
-    return pageData.pages[0].revisions[revisionHashes[revisionHashes.length - 1]].metadata.verification_hash
-}
+export const getLastRevisionVerificationHash = (aquaTree: AquaTree) => {
+    const revisonHashes = Object.keys(aquaTree.revisions)
+    const hash = revisonHashes[revisonHashes.length - 1]
+    return hash
+ }
 
 export function filterFilesByType(files: ApiFileInfo[], fileType: string): ApiFileInfo[] { // "image" | "document" | "music" | "video"
 
@@ -414,6 +429,62 @@ export const determineFileType = async (file: File): Promise<File> => {
       return fallbackFile;
     }
   }
+
+
+ export  function getFileExtension(fileName : string ) : string {
+    // If the file name contains a dot, extract the extension
+    
+        const extMatch = fileName.match(/\.([0-9a-z]+)$/i);
+        if (extMatch) {
+            return extMatch[1];
+        }
+    
+    
+        //todo fix me
+        //  _fileContent :  string | ArrayBuffer | null
+    // if (fileContent instanceof File || fileContent instanceof Blob) {
+    //     return new Promise((resolve, reject) => {
+    //         const reader = new FileReader();
+    //         reader.onloadend = function(event) {
+    //             const uint = new Uint8Array(event.target.result);
+    //             const hex = uint.slice(0, 4).reduce((acc, byte) => acc + byte.toString(16).padStart(2, '0'), '');
+    //             resolve(getExtensionFromBytes(hex) || getExtensionFromMime(file.type));
+    //         };
+    //         reader.onerror = reject;
+    //         reader.readAsArrayBuffer(fileContent.slice(0, 4));
+    //     });
+    // }
+    
+    return "";
+}
+
+function getExtensionFromMime(mimeType: string | number) {
+    const mimeToExt = {
+        'image/jpeg': 'jpg',
+        'image/png': 'png',
+        'image/gif': 'gif',
+        'application/pdf': 'pdf',
+        'text/plain': 'txt',
+        'application/zip': 'zip'
+    };
+    return mimeToExt[mimeType] || null;
+}
+
+function getExtensionFromBytes(hex: string) {
+    const magicNumbers = {
+        'ffd8ff': 'jpg',
+        '89504e47': 'png',
+        '47494638': 'gif',
+        '25504446': 'pdf',
+        '504b0304': 'zip'
+    };
+    for (const [magic, ext] of Object.entries(magicNumbers)) {
+        if (hex.startsWith(magic)) {
+            return ext;
+        }
+    }
+    return null;
+}
 
 
 // const b64toBlob = (b64Data: string, contentType = "", sliceSize = 512) => {

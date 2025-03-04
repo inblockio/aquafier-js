@@ -15,11 +15,11 @@ import { Button } from "../button"
 import { LuCheck, LuChevronDown, LuChevronUp, LuExternalLink, LuEye, LuX } from "react-icons/lu"
 import { Box, Card, Collapsible, For, Group, Icon, IconButton, Link, Spacer, Span, Text, VStack } from "@chakra-ui/react"
 import { TimelineConnector, TimelineContent, TimelineDescription, TimelineItem, TimelineRoot, TimelineTitle } from "../timeline"
-import { PageData, Revision } from "../../../models/PageData"
+// import { PageData, Revision } from "../../../models/PageData"
 import { formatCryptoAddress, getLastRevisionVerificationHash, timeToHumanFriendly } from "../../../utils/functions"
 import { Alert } from "../alert"
 import { ClipboardIconButton, ClipboardRoot } from "../clipboard"
-import Aquafier  from "aquafier-js-sdk";
+import Aquafier, { AquaOperationData, AquaTree, Revision } from "aquafier-js-sdk";
 // import AquaVerifier, { RevisionAquaChainResult, RevisionVerificationResult } from "aqua-verifier";
 import ReactLoading from "react-loading"
 import { WITNESS_NETWORK_MAP } from "../../../utils/constants"
@@ -54,27 +54,110 @@ const ItemDetail = ({ label, value, displayValue, showCopyIcon }: IItemDetail) =
 
 interface IRevisionDisplay {
     revision: Revision
-    verificationResult?: RevisionVerificationResult
+    // verificationResult?: AquaOperationData
+
+    revisionHash: string
+    failedVerifications: string[]
+    verificationResult: AquaOperationData[]
 }
 
-const RevisionDisplay = ({ revision, verificationResult }: IRevisionDisplay) => {
+const RevisionDisplay = ({ revision, verificationResult, failedVerifications, revisionHash }: IRevisionDisplay) => {
 
     const loaderSize = '40px'
 
+    const returnBgColor = (): string => {
+        if (verificationResult?.find((e: AquaOperationData) => {
+            const keys = Object.keys(e.aquaTree!);
+            return keys.includes(revisionHash)
+        })) {
+            return "green"
+        } else if (failedVerifications.includes(revisionHash)) {
+            return "red"
+        } else {
+            return "gray.400"
+        }
+    }
+    const isVerificationSuccessful = (): boolean | null => {
+
+        if (failedVerifications.includes(revisionHash)) {
+            return false
+        }
+
+        if (verificationResult?.find((e: AquaOperationData) => {
+            const keys = Object.keys(e.aquaTree!);
+            return keys.includes(revisionHash)
+        })) {
+            return true
+        }
+
+        return null
+
+    }
+
+    const verificationStatusText = (): string => {
+        const res = isVerificationSuccessful();
+
+        if (res == null) {
+
+            return "loading"
+        }
+
+        if (res) {
+            return "Valid"
+        } else {
+            return "Invalid"
+        }
+
+    }
+    const displayAlert = (): JSX.Element => {
+
+        const res = isVerificationSuccessful();
+        let status: "info" | "warning" | "success" | "error" | "neutral" = "info";
+        let title = "This revision is being verified";
+        if (res != null) {
+            if (res) {
+                status = "success"
+                title = "This revision is valid"
+            } else {
+                status = "error"
+                title = "This revision is invalid"
+            }
+        }
+        return <Alert status={status} title={title} />
+
+    }
+    const verificationStatusIcon = (): JSX.Element => {
+        const res = isVerificationSuccessful();
+
+        if (res == null) {
+
+            return <ReactLoading type={'spin'} color={'blue'} height={loaderSize} width={loaderSize} />
+        }
+
+        if (res) {
+            return <LuCheck />
+        } else {
+            return <LuX />
+        }
+
+    }
     return (
         <div>
             <TimelineItem>
                 <TimelineConnector
-                    bg={verificationResult?.successful ? "green" : "red"}
+                    bg={returnBgColor()}
                     color={"white"}
                 >
                     <Icon fontSize="xs" color={'white'} border={'none'}>
                         {
-                            !verificationResult ? (
-                                <ReactLoading type={'spin'} color={'blue'} height={loaderSize} width={loaderSize} />
-                            ) : (
-                                verificationResult.successful ? <LuCheck /> : <LuX />
-                            )
+                            verificationStatusIcon()
+                            /* {
+                                !verificationResult ? (
+                                    <ReactLoading type={'spin'} color={'blue'} height={loaderSize} width={loaderSize} />
+                                ) : (
+                                    verificationResult.successful ? <LuCheck /> : <LuX />
+                                )
+                            } */
                         }
                     </Icon>
                 </TimelineConnector>
@@ -90,12 +173,14 @@ const RevisionDisplay = ({ revision, verificationResult }: IRevisionDisplay) => 
 
                                 <TimelineItem>
                                     <TimelineConnector
-                                        bg={verificationResult?.content_verification.successful ? "green" : "red"}
+                                        bg={returnBgColor()}
                                     >
+                                        {/* {verificationResult?.content_verification.successful ? "green" : "red"} */}
                                         <Icon fontSize="xs" color={'white'}>
                                             {
-                                                verificationResult?.content_verification.successful ? <LuCheck /> :
-                                                    <LuX />
+                                                verificationStatusIcon()
+                                                // verificationResult?.content_verification.successful ? <LuCheck /> :
+                                                //     <LuX />
                                             }
                                         </Icon>
                                     </TimelineConnector>
@@ -103,7 +188,10 @@ const RevisionDisplay = ({ revision, verificationResult }: IRevisionDisplay) => 
                                         <TimelineTitle>
                                             <Span>
                                                 Revision content is
-                                                {verificationResult?.content_verification.successful ? ' valid' : ' invalid'}
+                                                {
+                                                    verificationStatusText()
+                                                    /* {verificationResult?.content_verification.successful ? ' valid' : ' invalid'} */
+                                                }
                                             </Span>
                                         </TimelineTitle>
                                     </TimelineContent>
@@ -111,40 +199,52 @@ const RevisionDisplay = ({ revision, verificationResult }: IRevisionDisplay) => 
 
                                 <TimelineItem>
                                     <TimelineConnector
-                                        bg={verificationResult?.metadata_verification.successful ? "green" : "red"}
+                                        bg={
+                                            returnBgColor()
+                                            // verificationResult?.metadata_verification.successful ? "green" : "red"
+                                        }
                                     >
                                         <Icon fontSize="xs" color={'white'}>
                                             {
-                                                verificationResult?.metadata_verification.successful ? <LuCheck /> :
-                                                    <LuX />
+                                                verificationStatusIcon()
+                                                // verificationResult?.metadata_verification.successful ? <LuCheck /> :
+                                                //     <LuX />
                                             }
                                         </Icon>
                                     </TimelineConnector>
                                     <TimelineContent gap="2">
                                         <TimelineTitle>
                                             <Span>
-                                                Revision metadata is
-                                                {verificationResult?.metadata_verification.successful ? ' valid' : ' invalid'}
+                                                Revision  is
+                                                {
+                                                    revision.previous_verification_hash.length == 0 ? "Genesis Revision" : "Not Genesis Revision"
+                                                    // verificationResult?.metadata_verification.successful ? ' valid' : ' invalid'
+                                                }
                                             </Span>
                                         </TimelineTitle>
-                                        <TimelineDescription>{timeToHumanFriendly(revision.metadata.time_stamp, true)}&nbsp;(UTC)</TimelineDescription>
-                                        <ItemDetail label="Metadata Hash:"
+                                        <TimelineDescription>{timeToHumanFriendly(revision.local_timestamp, true)}&nbsp;(UTC)</TimelineDescription>
+
+                                        {/* <ItemDetail label="Metadata Hash:"
                                             displayValue={formatCryptoAddress(revision.metadata.metadata_hash, 4, 6)}
                                             value={revision.metadata.metadata_hash} showCopyIcon={true}
-                                        />
+                                        /> */}
                                     </TimelineContent>
                                 </TimelineItem>
 
                                 {
-                                    revision.signature ? (
+                                    revision.revision_type == "signature" ? (
                                         <TimelineItem>
                                             <TimelineConnector
-                                                bg={verificationResult?.signature_verification.successful ? "green" : "red"}
+                                                bg={
+                                                    returnBgColor()
+                                                    // verificationResult?.signature_verification.successful ? "green" : "red"
+                                                }
                                             >
                                                 <Icon fontSize="xs" color={'white'}>
                                                     {
-                                                        verificationResult?.signature_verification.successful ? <LuCheck /> :
-                                                            <LuX />
+                                                        verificationStatusIcon()
+                                                        // verificationResult?.signature_verification.successful ? <LuCheck /> :
+                                                        //     <LuX />
                                                     }
                                                 </Icon>
                                             </TimelineConnector>
@@ -152,7 +252,10 @@ const RevisionDisplay = ({ revision, verificationResult }: IRevisionDisplay) => 
                                                 <TimelineTitle>
                                                     <Span>
                                                         Revision signature is
-                                                        {verificationResult?.signature_verification.successful ? ' valid' : ' invalid'}
+                                                        {
+                                                            // verificationResult?.signature_verification.successful ? ' valid' : ' invalid'
+                                                            verificationStatusText()
+                                                        }
                                                     </Span>
                                                 </TimelineTitle>
                                                 <ItemDetail label="Signature:"
@@ -195,15 +298,19 @@ const RevisionDisplay = ({ revision, verificationResult }: IRevisionDisplay) => 
                                 }
 
                                 {
-                                    revision.witness ? (
+                                    revision.revision_type == "witness" ? (
                                         <TimelineItem>
                                             <TimelineConnector
-                                                bg={verificationResult?.witness_verification.successful ? "green" : "red"}
+                                                bg={
+                                                    returnBgColor()
+                                                    // verificationResult?.witness_verification.successful ? "green" : "red"
+                                                }
                                             >
                                                 <Icon fontSize="xs" color={'white'}>
                                                     {
-                                                        verificationResult?.witness_verification.successful ? <LuCheck /> :
-                                                            <LuX />
+                                                        verificationStatusIcon()
+                                                        // verificationResult?.witness_verification.successful ? <LuCheck /> :
+                                                        //     <LuX />
                                                     }
                                                 </Icon>
                                             </TimelineConnector>
@@ -211,7 +318,10 @@ const RevisionDisplay = ({ revision, verificationResult }: IRevisionDisplay) => 
                                                 <TimelineTitle>
                                                     <Span>
                                                         Revision witness is
-                                                        {verificationResult?.witness_verification.successful ? ' valid' : ' invalid'}
+                                                        {
+                                                            verificationStatusText()
+                                                            // verificationResult?.witness_verification.successful ? ' valid' : ' invalid'
+                                                        }
                                                     </Span>
                                                 </TimelineTitle>
                                                 <ItemDetail label="Domain snapshot Hash:"
@@ -267,7 +377,7 @@ const RevisionDisplay = ({ revision, verificationResult }: IRevisionDisplay) => 
 
                         </Card.Body>
                         <Card.Footer>
-                            <Alert status={verificationResult?.successful ? 'success' : 'error'} title={verificationResult?.successful ? "This revision is valid" : "This revision is invalid"} />
+                            {displayAlert()}
                         </Card.Footer>
                     </Card.Root>
                 </TimelineContent>
@@ -282,8 +392,9 @@ interface IRevisionDetailsSummary {
 export const RevisionDetailsSummary = ({ fileInfo }: IRevisionDetailsSummary) => {
 
 
-    const pageData: PageData = JSON.parse(fileInfo.page_data);
-    const revisionHashes = Object.keys(pageData.pages[0].revisions)
+    // const pageData: PageData = JSON.parse(fileInfo.page_data);
+    // const revisionHashes = Object.keys(pageData.pages[0].revisions)
+    const revisionHashes = Object.keys(fileInfo.aquaTree.revisions)
 
     // 
     const revisionsWithSignatures: Array<Revision> = [];
@@ -291,13 +402,13 @@ export const RevisionDetailsSummary = ({ fileInfo }: IRevisionDetailsSummary) =>
 
     for (let i = 0; i < revisionHashes.length; i++) {
         const currentRevision: string = revisionHashes[i];
-        const revision: Revision = pageData.pages[0].revisions[currentRevision];
+        const revision: Revision = fileInfo.aquaTree.revisions[currentRevision]; //pageData.pages[0].revisions[currentRevision];
 
-        if (revision.signature) {
+        if (revision.revision_type == "signature") {
             revisionsWithSignatures.push(revision)
         }
 
-        if (revision.witness) {
+        if (revision.revision_type == "witness") {
             revisionsWithWitness.push(revision)
         }
     }
@@ -399,46 +510,61 @@ interface IPageDataDetails {
 }
 
 const ChainDetails = ({ fileInfo, callBack }: IPageDataDetails) => {
-    const [verificationResult, setVerificationResult] = useState<RevisionAquaChainResult | null>(null)
-    const [pageData, setPageData] = useState<PageData | null>()
+    const [failedVerifications, setFailedVerifications] = useState<Array<string>>([]);
+    const [verificationResult, setVerificationResult] = useState<AquaOperationData[] | null>(null)
+    const [aquaTree, setAquaTreeData] = useState<AquaTree | null>()
 
 
-    const verifyAquaChain = () => {
+    const verifyAquaChain = async () => {
 
         const verifier = new Aquafier();
-        if (pageData) {
-            verifier.verifyAquaTree(pageData.pages[0], []).then((res) => {
-                setVerificationResult(res)
-                callBack && callBack(res.successful)
-            }).catch((error: any) => {
+        if (aquaTree) {
+            try {
+                const results: AquaOperationData[] = [];
+                const revisionHahes = Object.values(aquaTree.revisions);
+                for (const item in revisionHahes) {
+                    console.log("Revision : ", item);
+                    const revision = aquaTree.revisions[item]
+                    const res = await verifier.verifyAquaTreeRevision(aquaTree, revision, item, []);
+                    if (res.isOk()) {
+                        results.push(res.data);
+                    } else {
+                        setFailedVerifications([...failedVerifications, item]);
+                    }
+                }
+                setVerificationResult(results);
+                //todo @Dalmas please verify
+                //     const isSuccess = failedVerifications.length === 0;
+                //    ( callBack && callBack(isSuccess))
+            } catch (error: any) {
                 console.error("Failed to verify aqua chain: ", error)
-            }).finally(() => {
-                console.info("Verification complete")
-            })
+            }
+
         }
     }
 
     useEffect(() => {
-        if (pageData) {
+        if (aquaTree) {
             verifyAquaChain()
         }
-    }, [pageData])
+    }, [aquaTree])
 
     useEffect(() => {
-        const _pageData: PageData = JSON.parse(fileInfo.page_data)
-        setPageData(_pageData)
+        // const _pageData: AquaTree = JSON.parse(fileInfo.aquaTree)
+        setAquaTreeData(fileInfo.aquaTree)
     }, [fileInfo])
 
     return (
         <>
             {
-                pageData ? (
+                aquaTree ? (
                     <TimelineRoot size="lg" variant="subtle" maxW="xl">
                         <For
-                            each={Object.values(pageData.pages[0].revisions)}
+                            each={Object.keys(aquaTree.revisions)}
                         >
-                            {(revision, index) => (
-                                <RevisionDisplay key={`revision_${index}`} revision={revision} verificationResult={verificationResult?.revisionResults[index]} />
+                            {(revisionHash, index) => (
+                                <RevisionDisplay key={`revision_${index}`} revision={aquaTree.revisions[revisionHash]} revisionHash={revisionHash} verificationResult={verificationResult ?? []} failedVerifications={failedVerifications} />
+                                // verificationResult={verificationResult?.revisionResults[index]} />
                             )}
                         </For>
                     </TimelineRoot>
@@ -454,9 +580,10 @@ export const ChainDetailsBtn = ({ fileInfo }: IPageDataDetails) => {
 
     const { backend_url } = useStore(appStore)
     const [isOpen, setIsOpen] = useState(false)
-    const pageData: PageData = JSON.parse(fileInfo.page_data)
+    // const pageData: PageData = JSON.parse(fileInfo.page_data)
     const [isVerificationSuccessful, setIsVerificationSuccessful] = useState<boolean>(false)
     const [lastVerificationHash, setLastVerificationHash] = useState<string | null>(null)
+    const [fileName, setFileName] = useState<string>("")
 
 
     const updateVerificationStatus = (result: boolean) => {
@@ -464,9 +591,12 @@ export const ChainDetailsBtn = ({ fileInfo }: IPageDataDetails) => {
     }
 
     useEffect(() => {
-        const hash = getLastRevisionVerificationHash(pageData)
+        const revisonHashes = Object.keys(fileInfo.aquaTree.revisions)
+        const hash = revisonHashes[revisonHashes.length - 1]//getLastRevisionVerificationHash(pageData)
         setLastVerificationHash(hash)
         console.log("ChainDetailsBtn == > " + JSON.stringify(fileInfo))
+        const name = fileInfo.aquaTree.file_index[revisonHashes[0]]
+        setFileName(name)
     }, [fileInfo])
 
     useEffect(() => {
@@ -498,7 +628,7 @@ export const ChainDetailsBtn = ({ fileInfo }: IPageDataDetails) => {
                 </DrawerTrigger> */}
                 <DrawerContent borderLeftRadius={'xl'} overflow={'hidden'}>
                     <DrawerHeader bg={{ base: isVerificationSuccessful ? 'green.100' : 'red.100', _dark: isVerificationSuccessful ? 'green.900' : 'red.900' }}>
-                        <DrawerTitle>{pageData?.pages[0]?.title}</DrawerTitle>
+                        <DrawerTitle>{fileName}</DrawerTitle>
                     </DrawerHeader>
                     <DrawerBody py={'lg'} px={1}>
                         <Card.Root border={'none'} shadow={'md'} borderRadius={'xl'}>
@@ -535,9 +665,9 @@ export const ChainDetailsBtn = ({ fileInfo }: IPageDataDetails) => {
                             <Button variant="outline" size={'sm'}>Close</Button>
                         </DrawerActionTrigger>
                         <DownloadAquaChain file={fileInfo} />
-                        <WitnessAquaChain backend_url={backend_url} file_id={fileInfo.id} filename={fileInfo.name} lastRevisionVerificationHash={lastVerificationHash ?? ""} />
-                        <SignAquaChain backend_url={backend_url} file_id={fileInfo.id} filename={fileInfo.name} lastRevisionVerificationHash={lastVerificationHash ?? ""} />
-                        <DeleteAquaChain backend_url={backend_url} file_id={fileInfo.id} filename={fileInfo.name} />
+                        <WitnessAquaChain backend_url={backend_url} file_id={fileInfo.id} filename={fileName} lastRevisionVerificationHash={lastVerificationHash ?? ""} />
+                        <SignAquaChain backend_url={backend_url} file_id={fileInfo.id} filename={fileName} lastRevisionVerificationHash={lastVerificationHash ?? ""} />
+                        <DeleteAquaChain backend_url={backend_url} file_id={fileInfo.id} filename={fileName} />
                     </DrawerFooter>
                     <DrawerCloseTrigger />
                 </DrawerContent>

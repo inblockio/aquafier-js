@@ -11,7 +11,7 @@ The web project is a react(typescript) project using chackra ui
 To run the api, navigate to api directory.
 1. `create .env from .env.sample`, edit the db credentials.
 2. `npm i` to install dependancies
-3. run prisma db migration `npx prisma migrate dev`
+3. run prisma db migration `npx prisma migrate dev` : Tip run `npx prisma generate` when you change `schema.prisma`
 4. `npm run dev` to start http server
 
 ## Database creation

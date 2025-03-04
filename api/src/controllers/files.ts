@@ -7,6 +7,9 @@ export default async function filesController(fastify: FastifyInstance) {
     fastify.get('/files/:fileHash', async (request, reply) => {
         const { fileHash } = request.params as { fileHash: string };
         console.log(`Received fileHash: ${fileHash}`);
+        // file content from db
+        // return as a blob
+        
         return { success: true };
     });
 
