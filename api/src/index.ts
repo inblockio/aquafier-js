@@ -35,7 +35,7 @@ const start = async () => {
       origin: ['http://localhost:5173', 'http://127.0.0.1:5173'], // Allow your React app origins
       methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
       credentials: true, // Allow cookies if needed
-      allowedHeaders: ['Content-Type', 'Authorization']
+      allowedHeaders: ['Content-Type', 'Authorization', 'nonce', 'nonce']
     });
 
     // Register the plugin
@@ -46,7 +46,7 @@ const start = async () => {
     });
 
     // Make sure you have the formbody parser plugin installed and registered
-    fastify.register(require('@fastify/formbody'));
+    fastify.register(import('@fastify/formbody'));
 
     // Register controllers
     fastify.register(authController);

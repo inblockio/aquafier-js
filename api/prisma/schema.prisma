@@ -14,10 +14,10 @@ datasource db {
 }
 
 model SiweSession {
-  id             Int      @id @default(autoincrement())
+  id             Int       @id @default(autoincrement())
   address        String
-  nonce          String  @unique  // ✅ Make nonce unique
-  issuedAt       DateTime @default(now())
+  nonce          String    @unique // ✅ Make nonce unique
+  issuedAt       DateTime  @default(now())
   expirationTime DateTime?
 }
 
@@ -71,13 +71,23 @@ model Revision {
   Latest             Latest[]
 }
 
+model FileNames {
+  id             Int      @id @default(autoincrement()) // New auto-increment ID
+  name           String   @map("file_name") // hash
+  fileId   Int  @unique // Foreign key linking to File
+  file     File @relation(fields: [fileId], references: [id], onDelete: Cascade)
+}
+
 model File {
-  hash           String   @id @map("hash") // hash
+  id             Int      @id @default(autoincrement()) // New auto-increment ID
+  hash           String   @unique @map("hash") // hash
   content        String   @map("content") // utf8_content
   fileHash       String   @map("file_hash") // hash
   referenceCount Int      @map("reference_count")
   revisionRef    Revision @relation(fields: [hash], references: [hash])
   indexes        Index[]
+
+  fileNames      FileNames[] // One-to-Many relationship
 }
 
 model Link {

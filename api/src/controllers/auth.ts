@@ -13,7 +13,7 @@ export default async function authController(fastify: FastifyInstance) {
       return { success: false, message: "Nonce is required" };
     }
     
-    try {
+    try { 
   
       
       const session = await prisma.siweSession.findUnique({
