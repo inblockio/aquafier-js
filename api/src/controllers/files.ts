@@ -1,6 +1,4 @@
 import { FastifyInstance } from 'fastify';
-import { SiweMessage } from 'siwe';
-import fastifyMultipart, { Multipart } from '@fastify/multipart';
 
 export default async function filesController(fastify: FastifyInstance) {
     // get file using file hash

@@ -3,8 +3,7 @@ import { StatHelpText, StatLabel } from "./ui/stat";
 import { LuDot } from "react-icons/lu";
 import { UiFileTypes } from "../models/UiFileTypes";
 import { ApiFileInfo } from "../models/FileInfo";
-import { filterFilesByType, humanReadableFileSize, sumFileContentSize } from "../utils/functions";
-import { PageData } from "../models/PageData";
+import { filterFilesByType, humanReadableFileSize } from "../utils/functions";
 import { useStore } from "zustand";
 import appStore from "../store";
 
@@ -83,34 +82,35 @@ const Statistic = (props: IStatistic) => {
     )
 }
 
-const calculateTotalFilesSize = (files: ApiFileInfo[]) => {
-    let size = 0;
-    for (const element of files) {
-        const pageData: PageData = JSON.parse(element.page_data);
-        // Debug the structure
-        // debugPageDataStructure(pageData);
+// const calculateTotalFilesSize = (_files: ApiFileInfo[]) => {
+//     const size = -1;
+    // for (const element of files) {
+    //     const pageData: PageData = JSON.parse(element.page_data);
+    //     // Debug the structure
+    //     // debugPageDataStructure(pageData);
 
-        const currentSize = sumFileContentSize(pageData)
-        size += currentSize
-    }
-    return size
-}
+    //     const currentSize = sumFileContentSize(pageData)
+    //     size += currentSize
+    // }
+//     return size
+// }
+
 const getFileTypeProportions = (files: ApiFileInfo[]) => {
     const fileTypes = ["image", "document", "music", "video"];
 
     const filesUiState: Record<string, UiFileTypes> = {}
 
-    const totalFilesSize = calculateTotalFilesSize(files)
+    const totalFilesSize =  -1 //calculateTotalFilesSize(files)
 
     for (const element of fileTypes) {
         const fileItemData = filterFilesByType(files, element)
 
-        let size = 0;
-        for (const element of fileItemData) {
-            const pageData: PageData = JSON.parse(element.page_data);
-            const currentSize = sumFileContentSize(pageData)
-            size += currentSize
-        }
+        const size = 0;
+        // for (const element of fileItemData) {
+        //     // const pageData: PageData = JSON.parse(element.page_data);
+        //     const currentSize = //sumFileContentSize(pageData)
+        //     size += currentSize
+        // }
 
         // Handle potential division by zero or NaN scenarios
         const percentage = totalFilesSize > 0

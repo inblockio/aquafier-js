@@ -12,7 +12,7 @@ import { Checkbox } from "./checkbox"
 import { SetStateAction, useEffect, useState } from "react"
 import { useStore } from "zustand"
 import appStore from "../../store"
-import { getFileCategory, getLastRevisionVerificationHash, sumFileContentSize, timeToHumanFriendly } from "../../utils/functions"
+import { getFileCategory, getLastRevisionVerificationHash } from "../../utils/functions"
 
 import { DeleteAquaChain, DownloadAquaChain, ShareButton, SignAquaChain, WitnessAquaChain } from "../aqua_chain_actions"
 import { ChainDetailsBtn } from "./navigation/CustomDrawer"

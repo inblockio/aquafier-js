@@ -6,7 +6,7 @@ import { LuCircleCheck, LuCircleX, LuLogOut, LuWallet } from "react-icons/lu";
 import ReactLoading from "react-loading";
 import { fetchFiles, formatCryptoAddress, generateAvatar, getCookie, remove0xPrefix, setCookie } from "../../../utils/functions";
 import { SiweMessage, generateNonce } from "siwe";
-import {  SESSION_COOKIE_NAME } from "../../../utils/constants";
+import { SESSION_COOKIE_NAME } from "../../../utils/constants";
 import axios from "axios";
 import { useStore } from "zustand";
 import appStore from "../../../store";
@@ -83,12 +83,12 @@ export default function ConnectWallet() {
         // });
 
         const response = await axios.post(url, {
-          "message":message,
+          "message": message,
           "signature": signature,
           "domain": domain
         });
 
-        if (response.status === 200) {
+        if (response.status === 200 || response.status === 201) {
           if (signature) {
             const responseData = response.data;
             const walletAddress = ethers.getAddress(responseData?.session?.address);
@@ -109,7 +109,7 @@ export default function ConnectWallet() {
 
             const url = `${backend_url}/explorer_files`;
             console.log("url is ", url);
-            
+
             const files = await fetchFiles(walletAddress, url);
             setFiles(files);
           }
@@ -164,7 +164,7 @@ export default function ConnectWallet() {
       const url = `${backend_url}/siwe_logout`;
       console.log("url is ", url);
       const response = await axios.post(url, {
-    "pkc_nonce" : nonce
+        "pkc_nonce": nonce
       });
 
       if (response.status === 200) {
