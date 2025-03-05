@@ -263,17 +263,18 @@ export const getLastRevisionVerificationHash = (aquaTree: AquaTree) => {
 
 export function filterFilesByType(files: ApiFileInfo[], fileType: string): ApiFileInfo[] { // "image" | "document" | "music" | "video"
 
+
     switch (fileType) {
         case "image":
             return files.filter(file => {
-                return imageTypes.includes(file.extension.replace(/\s+/g, ''))
+                return imageTypes.includes(getFileExtension(file.fileObject.fileName).replace(/\s+/g, ''))
             });
         case "document":
-            return files.filter(file => documentTypes.includes(file.extension.replace(/\s+/g, '')));
+            return files.filter(file => documentTypes.includes(getFileExtension(file.fileObject.fileName).replace(/\s+/g, '')));
         case "music":
-            return files.filter(file => musicTypes.includes(file.extension.replace(/\s+/g, '')));
+            return files.filter(file => musicTypes.includes(getFileExtension(file.fileObject.fileName).replace(/\s+/g, '')));
         case "video":
-            return files.filter(file => videoTypes.includes(file.extension.replace(/\s+/g, '')));
+            return files.filter(file => videoTypes.includes(getFileExtension(file.fileObject.fileName).replace(/\s+/g, '')));
         default:
             return [];
     }

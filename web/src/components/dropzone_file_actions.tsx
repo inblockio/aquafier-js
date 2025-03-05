@@ -70,31 +70,31 @@ export const UploadFile = ({ file, uploadedIndexes, fileIndex, updateUploadedInd
 
             const res = response.data
 
-            // let logs: Array<string> = res.logs
-            // logs.forEach((item) => {
-            //     console.log("**>" + item + "\n.")
-            // })
-
-            // const fileBuffer = await streamToBuffer(data.file);
-            const base64Content = await encodeFileToBase64(file);
-
+            const fileInfo : ApiFileInfo = {
+                aquaTree: res.aquaTree,
+                fileObject:  res.fileObject,
+                linkedFileObjects: [],
+                mode:"private",
+                owner: metamaskAddress??""
+            }
+            // const base64Content = await encodeFileToBase64(file);
             // Assuming the API returns an array of FileInfo objects
-            const fileInfo: ApiFileInfo = {
-                fileObject: {
-                    fileName: res.file.name,
-                    fileContent: base64Content,
-                    path: "aqua::",
-                },
-                // name: res.file.name,
-                // extension: res.file.extension,
-                // page_data: res.file.page_data,
-                mode: res.file.mode,
-                owner: res.file.owner,
-                aquaTree: null,
-                linkedFileObjects: []
-            };
+            // const fileInfo: ApiFileInfo = {
+            //     fileObject: {
+            //         fileName: res.file.name,
+            //         fileContent: base64Content,
+            //         path: "aqua::",
+            //     },
+            //     // name: res.file.name,
+            //     // extension: res.file.extension,
+            //     // page_data: res.file.page_data,
+            //     mode: res.file.mode,
+            //     owner: res.file.owner,
+            //     aquaTree: null,
+            //     linkedFileObjects: []
+            // };
 
-            setFiles([...files, file])
+            setFiles([...files, fileInfo])
             setUploaded(true)
             setUploading(false)
             toaster.create({

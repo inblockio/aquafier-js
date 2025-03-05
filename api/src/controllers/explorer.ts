@@ -62,8 +62,8 @@ export default async function explorerController(fastify: FastifyInstance) {
             // Properly handle the MultipartFields type
             let isForm = false;
             let enableContent = false;
+            let enableScalar = true;
 
-            console.log("Data fields", data.fields);
             if (data.fields.isForm) {
                 // Handle form fields correctly based on the actual API
                 const isFormField: any = data.fields.isForm;
@@ -78,6 +78,13 @@ export default async function explorerController(fastify: FastifyInstance) {
                 const enableContentField: any = data.fields.enableContent;
 
                 enableContent = enableContentField.value === 'true';
+            }
+
+             // Same for enableContent
+             if (data.fields.enableScalar) {
+                const enableScalarField: any = data.fields.enableScalar;
+
+                enableScalar = enableScalarField.value === 'true';
             }
 
 
@@ -95,7 +102,10 @@ export default async function explorerController(fastify: FastifyInstance) {
                 path: "./",
             }
             let res = await aquafier.createGenesisRevision(
-                fileObject
+                fileObject,
+                isForm,
+                enableContent,
+                enableScalar
             )
 
             if (res.isErr()) {
@@ -109,26 +119,19 @@ export default async function explorerController(fastify: FastifyInstance) {
                 })
 
             }
-            console.log("******************************")
-            console.log(JSON.stringify(res.data, null, 4))
             // let fileHash = getHashSum(data.file)
             let resData: AquaTree = res.data.aquaTree!!;
             let allHash: string[] = Object.keys(resData.revisions);
 
-            console.log(`hash => ${allHash[0]}`)
             let revisionData: Revision = resData.revisions[allHash[0]];
             let fileHash = revisionData.file_hash; // Extract file hash
 
             if (!fileHash) {
                 return reply.code(500).send({ error: "File hash missing from AquaTree response" });
             }
+
             try {
 
-                console.log(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>")
-                console.log(JSON.stringify(revisionData, null, 4))
-
-
-                console.log(`######## address => ${session.address}`)
                 // Parse the timestamp string into a valid Date object
                 const localTimestamp = new Date(
                     Date.UTC(
@@ -167,7 +170,6 @@ export default async function explorerController(fastify: FastifyInstance) {
                     },
                 });
 
-                console.log(`&&&& file hash ${fileHash}`)
                 // Check if file already exists in the database
                 let existingFile = await prisma.file.findFirst({
                     where: { fileHash: fileHash },
@@ -182,7 +184,6 @@ export default async function explorerController(fastify: FastifyInstance) {
                         data: { referenceCount: existingFile.referenceCount + 1 },
                     });
                     fileId = existingFile.id
-                    console.log(`existing  file id ${fileId}`)
                 } else {
                     // File does not exist: Insert a new file record
                     let createResult = await prisma.file.create({
@@ -195,7 +196,6 @@ export default async function explorerController(fastify: FastifyInstance) {
                         },
                     });
                     fileId = createResult.id
-                    console.log(`new   file id ${createResult}`)
                 }
 
                 let createResult = await prisma.fileNames.create({

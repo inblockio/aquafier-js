@@ -1,3 +1,5 @@
+import { streamToBuffer } from '@/utils/file_utils.js';
+import Aquafier, { AquaTree, FileObject, LogType } from 'aquafier-js-sdk';
 import { FastifyInstance } from 'fastify';
 
 export default async function filesController(fastify: FastifyInstance) {
@@ -7,7 +9,7 @@ export default async function filesController(fastify: FastifyInstance) {
         console.log(`Received fileHash: ${fileHash}`);
         // file content from db
         // return as a blob
-        
+
         return { success: true };
     });
 
@@ -20,6 +22,8 @@ export default async function filesController(fastify: FastifyInstance) {
 
         console.log("Request body", request.body);
         console.log("Request files", request.files);
+
+        let aquafier = new Aquafier();
 
         // Check if the request is multipart
         const isMultipart = request.isMultipart();
@@ -45,6 +49,7 @@ export default async function filesController(fastify: FastifyInstance) {
             // Properly handle the MultipartFields type
             let isForm = false;
             let enableContent = false;
+            let enableScalar = false;
 
             console.log("Data fields", data.fields);
             if (data.fields.isForm) {
@@ -62,18 +67,51 @@ export default async function filesController(fastify: FastifyInstance) {
 
                 enableContent = enableContentField.value === 'true';
             }
+            // Same for enableContent
+            if (data.fields.enableScalar) {
+                console.log("Hi...")
+                const enableScalarField: any = data.fields.enableScalar;
 
-            // Process file
-            // ... your file processing logic here ...
+                enableScalar = enableScalarField.value === 'true';
+            }
+
+            console.log(`hi 2 ${enableScalar}`)
+
+
+            // Convert file stream to base64 string
+            const fileBuffer = await streamToBuffer(data.file);
+            const base64Content = fileBuffer.toString('base64');
+
+
+            let fileObject: FileObject = {
+                fileContent: base64Content,
+                fileName: data.filename,
+                path: "./",
+            }
+            let res = await aquafier.createGenesisRevision(
+                fileObject,
+                isForm,
+                enableContent,
+                enableScalar
+            )
+
+            if (res.isErr()) {
+
+                res.data.push({
+                    log: `Error creating genesis revision`,
+                    logType: LogType.ERROR
+                })
+                return reply.code(500).send({
+                    logs: res.data
+                })
+
+            }
+
+            let resData: AquaTree = res.data.aquaTree!!;
 
             // Return success response
             return reply.code(200).send({
-                success: true,
-                filename: data.filename,
-                mimetype: data.mimetype,
-                isForm,
-                enableContent,
-                fileSize: data.file.bytesRead
+                 aquaTree: resData,
             });
         } catch (error) {
             request.log.error(error);

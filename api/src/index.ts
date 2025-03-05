@@ -12,6 +12,7 @@ import indexController from './controllers/index';
 import versionController from './controllers/version';
 import filesController from './controllers/files';
 import explorerController from './controllers/explorer';
+import verifyController from './controllers/verify.js';
 
 
 // Read host and port from environment variables
@@ -54,6 +55,7 @@ const start = async () => {
     fastify.register(versionController);
     fastify.register(filesController);
     fastify.register(explorerController);
+    fastify.register(verifyController);
 
     await fastify.listen({ port: PORT, host: HOST });
     console.log(`\n`);

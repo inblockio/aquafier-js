@@ -12,7 +12,7 @@ import { Checkbox } from "./checkbox"
 import { SetStateAction, useEffect, useState } from "react"
 import { useStore } from "zustand"
 import appStore from "../../store"
-import { getFileCategory, getLastRevisionVerificationHash } from "../../utils/functions"
+import { getFileCategory, getFileExtension, getLastRevisionVerificationHash } from "../../utils/functions"
 
 import { DeleteAquaChain, DownloadAquaChain, ShareButton, SignAquaChain, WitnessAquaChain } from "../aqua_chain_actions"
 import { ChainDetailsBtn } from "./navigation/CustomDrawer"
@@ -29,22 +29,22 @@ const FilesTable = () => {
     const hasSelection = selection.length > 0
     const indeterminate = hasSelection && selection.length < files.length
 
-    const rows = files?.map((item: ApiFileInfo) => {
+    const rows = files?.map((item: ApiFileInfo, index : number) => {
 
         return <Table.Row
-            key={item.id}
+            key={index}
             data-selected={selection.includes(item.fileObject.fileName) ? "" : undefined}
         >
             <Table.Cell>
                 <Checkbox
                     top="1"
                     aria-label="Select File"
-                    checked={selection.includes(item.id.toString())}
+                    checked={selection.includes(index.toString())}
                     onCheckedChange={(changes) => {
                         setSelection((prev) =>
                             changes.checked
-                                ? [...prev, item.id.toString()]
-                                : selection.filter((id) => id !== item.id.toString()),
+                                ? [...prev, index.toString()]
+                                : selection.filter((id) => id !== index.toString()),
                         )
                     }}
                 />
@@ -63,12 +63,12 @@ const FilesTable = () => {
             </Table.Cell>
             <Table.Cell minW={'220px'} maxW={'220px'} textWrap={'wrap'}>
                 <Group alignItems={'start'} flexWrap={'wrap'}>
-                    <ShareButton id={item.id} file_id={item.id} filename={item.fileObject.fileName} />
+                    <ShareButton id={index} file_id={index} filename={item.fileObject.fileName} />
                     <DownloadAquaChain file={item} />
                     <ChainDetailsBtn fileInfo={item} />
-                    <WitnessAquaChain filename={item.fileObject.fileName} file_id={item.id}  backend_url={backend_url} lastRevisionVerificationHash={getLastRevisionVerificationHash(item.page_data)} />
-                    <SignAquaChain filename={item.fileObject.fileName} file_id={item.id}  backend_url={backend_url} lastRevisionVerificationHash={getLastRevisionVerificationHash(JSON.parse(item.page_data))} />
-                    <DeleteAquaChain filename={item.fileObject.fileName}  file_id={item.id}  backend_url={backend_url} />
+                    {/* <WitnessAquaChain filename={item.fileObject.fileName} file_id={index}  backend_url={backend_url} lastRevisionVerificationHash={getLastRevisionVerificationHash(item.page_data)} />
+                    <SignAquaChain filename={item.fileObject.fileName} file_id={index}  backend_url={backend_url} lastRevisionVerificationHash={getLastRevisionVerificationHash(JSON.parse(item.page_data))} />
+                    <DeleteAquaChain filename={item.fileObject.fileName}  file_id={index}  backend_url={backend_url} /> */}
                 </Group>
             </Table.Cell>
         </Table.Row>
