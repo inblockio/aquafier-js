@@ -80,8 +80,8 @@ export default async function explorerController(fastify: FastifyInstance) {
                 enableContent = enableContentField.value === 'true';
             }
 
-             // Same for enableContent
-             if (data.fields.enableScalar) {
+            // Same for enableContent
+            if (data.fields.enableScalar) {
                 const enableScalarField: any = data.fields.enableScalar;
 
                 enableScalar = enableScalarField.value === 'true';
@@ -147,18 +147,18 @@ export default async function explorerController(fastify: FastifyInstance) {
                 // Insert new revision into the database
                 const revisionResult = await prisma.revision.create({
                     data: {
-                        hash: allHash[0],
-                        user: session.address, // Replace with actual user identifier (e.g., request.user.id)
+                        pubkey_hash: `${session.address}_${allHash[0]}`,
+                        // user: session.address, // Replace with actual user identifier (e.g., request.user.id)
                         nonce: revisionData.file_nonce || "",
                         shared: [],
-                        contract: revisionData.witness_smart_contract_address
-                            ? [{ address: revisionData.witness_smart_contract_address }]
-                            : [],
+                        // contract: revisionData.witness_smart_contract_address
+                        //     ? [{ address: revisionData.witness_smart_contract_address }]
+                        //     : [],
                         previous: revisionData.previous_verification_hash || null,
-                        children: {},
-                        localTimestamp: localTimestamp,
-                        revisionType: revisionData.revision_type,
-                        verificationLeaves: revisionData.witness_merkle_proof || [],
+                        // children: {},
+                        local_timestamp: localTimestamp,
+                        revision_type: revisionData.revision_type,
+                        verification_leaves: revisionData.witness_merkle_proof || [],
                         Latest: {
                             create: {
                                 hash: allHash[0],
@@ -172,38 +172,67 @@ export default async function explorerController(fastify: FastifyInstance) {
 
                 // Check if file already exists in the database
                 let existingFile = await prisma.file.findFirst({
-                    where: { fileHash: fileHash },
+                    where: { file_hash: fileHash },
                 });
 
                 let fileId: number = 0;
 
-                if (existingFile) {
-                    // File exists: Increase reference count
-                    await prisma.file.update({
-                        where: { hash: existingFile.hash },
-                        data: { referenceCount: existingFile.referenceCount + 1 },
-                    });
-                    fileId = existingFile.id
-                } else {
-                    // File does not exist: Insert a new file record
-                    let createResult = await prisma.file.create({
+                // if (existingFile) {
+                //     // File exists: Increase reference count
+                //     await prisma.file.update({
+                //         where: { hash: existingFile.hash },
+                //         data: { reference_count: existingFile.reference_count + 1 },
+                //     });
+                //     fileId = existingFile.id
+                // } else {
+                //     // File does not exist: Insert a new file record
+                //     let createResult = await prisma.file.create({
+                //         data: {
+                //             hash: allHash[0],
+                //             content: base64Content,
+                //             fileHash: fileHash,
+                //             referenceCount: 1, // First reference
+                //             // revisionRef: { connect: { hash: allHash[0] } },
+                //         },
+                //     });
+                //     fileId = createResult.id
+                // }
+
+                /*  3. 
+                    1. Fetch from file index by file hash
+                    2. If exists, update revision hash in hashes by Id
+
+                */
+                let existingFileIndex = await prisma.fileIndex.findFirst({
+                    where: { file_hash: fileHash },
+                });
+
+                if (existingFileIndex) {
+                    existingFileIndex.hash = [...existingFileIndex.hash, allHash[0]]
+                    await prisma.fileIndex.update({
+                        data: existingFileIndex,
+                        where: {
+                            id: existingFileIndex.id
+                        }
+                    })
+                }else {
+                    let firstRevisionHash = allHash[0]
+                    await prisma.fileIndex.create({
                         data: {
-                            hash: allHash[0],
-                            content: base64Content,
-                            fileHash: fileHash,
-                            referenceCount: 1, // First reference
-                            // revisionRef: { connect: { hash: allHash[0] } },
-                        },
-                    });
-                    fileId = createResult.id
+                            hash: [firstRevisionHash],
+                            file_hash: fileHash,
+                            uri: data.filename,
+                            reference_count: 1
+                        }
+                    }) 
                 }
 
-                let createResult = await prisma.fileNames.create({
-                    data: {
-                        name: data.filename,
-                        fileId: fileId,
-                    },
-                });
+                // let createResult = await prisma.fileNames.create({
+                //     data: {
+                //         name: data.filename,
+                //         fileId: fileId,
+                //     },
+                // });
 
 
             } catch (error) {

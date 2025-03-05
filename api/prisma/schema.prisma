@@ -13,7 +13,17 @@ model User {
   Settings         Settings?
   Contract         Contract[]
 
-   @@map("user")
+  @@map("user")
+}
+
+model SiweSession {
+  id             Int       @id @default(autoincrement())
+  address        String
+  nonce          String    @unique // ✅ Make nonce unique
+  issuedAt       DateTime  @default(now())
+  expirationTime DateTime?
+
+  @@map("siwe_session")
 }
 
 model Contract {
@@ -24,7 +34,7 @@ model Contract {
   option           String?
   reference_count  Int?
   User             User?         @relation(fields: [hash], references: [user])
-  Revision         Revision?     @relation(fields: [hash], references: [pubkey_hash])
+  // Revision         Revision?     @relation(fields: [hash], references: [pubkey_hash])
 
    @@map("contract")
 }
@@ -46,14 +56,14 @@ model Revision {
   previous         String?
   children         String?
   local_timestamp  DateTime?
-  Revision_type    String?
-  Verification_leaves String[]
+  revision_type    String?
+  verification_leaves String[]
   Latest           Latest        @relation(fields: [pubkey_hash], references: [hash])
   File             File[]
   Signature        Signature[]
   Witness          Witness[]
   Link             Link[]
-  Contract         Contract?
+  // Contract         Contract?
   FileIndex        FileIndex[]
   AquaForms        AquaForms[]
 
@@ -78,24 +88,25 @@ model Link {
   link_verification_hash              Json?
   reference_count                     Int?
   Revision                            Revision      @relation(fields: [hash], references: [pubkey_hash])
-  FileIndex                           FileIndex?    @relation(fields: [link_verification_hash], references: [hash])
+  // FileIndex                           FileIndex?    @relation(fields: [hash], references: [hash])
 
-    @@map("link")
+  @@map("link")
 }
 
 model FileIndex {
+  id               String            @id @default(uuid())
   hash             String[]
-  file_hash        String
+  file_hash        String          
   uri              String?
   reference_count  Int?
-  File             File            @relation(fields: [file_hash], references: [hash])
+  File             File            @relation(fields: [id], references: [hash])
   Revision         Revision        @relation(fields: [file_hash], references: [pubkey_hash])
-  Link             Link[]
+  // Link             Link[]
 
 
   // @@id([hash, file_hash])
 
-    @@map("file_index")
+  @@map("file_index")
 }
 
 model Signature {
@@ -115,7 +126,7 @@ model Witness {
   reference_count           Int?
   Revision                  Revision      @relation(fields: [hash], references: [pubkey_hash])
   WitnessEvent              WitnessEvent? @relation(fields: [Witness_merkle_root], references: [Witness_merkle_root])
-  MerkleNodes               MerkleNodes[]
+  // MerkleNodes               MerkleNodes[]
 
    @@map("witness")
 }
@@ -128,7 +139,7 @@ model WitnessEvent {
   Witness_transaction_hash          String?
   Witness_sender_account_address    String?
   Witness                            Witness[]
-  MerkleNodes                        MerkleNodes[]
+  // MerkleNodes                        MerkleNodes[]
 
    @@map("witness_event")
 }
@@ -140,13 +151,13 @@ model MerkleNodes {
   is_leaf              Boolean?
   left_child_hash      String?
   right_child_hash     String?
-  Witness              Witness?      @relation(fields: [node_hash], references: [hash])
-  WitnessEvent         WitnessEvent? @relation(fields: [node_hash], references: [Witness_merkle_root])
-  ParentNode           MerkleNodes?  @relation("MerkleNodesRelation", fields: [parent_hash], references: [node_hash])
-  LeftChildNode        MerkleNodes?  @relation("MerkleNodesLeftChildRelation", fields: [left_child_hash], references: [node_hash])
-  RightChildNode       MerkleNodes?  @relation("MerkleNodesRightChildRelation", fields: [right_child_hash], references: [node_hash])
+  // Witness              Witness?      @relation(fields: [node_hash], references: [hash])
+  // WitnessEvent         WitnessEvent? @relation(fields: [node_hash], references: [Witness_merkle_root])
+  // ParentNode           MerkleNodes?  @relation("MerkleNodesRelation", fields: [parent_hash], references: [node_hash])
+  // LeftChildNode        MerkleNodes?  @relation("MerkleNodesLeftChildRelation", fields: [left_child_hash], references: [node_hash])
+  // RightChildNode       MerkleNodes?  @relation("MerkleNodesRightChildRelation", fields: [right_child_hash], references: [node_hash])
 
-     @@map("merkle_nodes")
+  @@map("merkle_nodes")
 }
 
 model AquaForms {
