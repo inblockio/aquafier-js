@@ -1,4 +1,15 @@
 -- CreateTable
+CREATE TABLE "SiweSession" (
+    "id" SERIAL NOT NULL,
+    "address" TEXT NOT NULL,
+    "nonce" TEXT NOT NULL,
+    "issuedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "expirationTime" TIMESTAMP(3),
+
+    CONSTRAINT "SiweSession_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
 CREATE TABLE "User" (
     "user" TEXT NOT NULL,
 
@@ -44,13 +55,23 @@ CREATE TABLE "Revision" (
 );
 
 -- CreateTable
+CREATE TABLE "FileNames" (
+    "id" SERIAL NOT NULL,
+    "file_name" TEXT NOT NULL,
+    "fileId" INTEGER NOT NULL,
+
+    CONSTRAINT "FileNames_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
 CREATE TABLE "File" (
+    "id" SERIAL NOT NULL,
     "hash" TEXT NOT NULL,
     "content" TEXT NOT NULL,
     "file_hash" TEXT NOT NULL,
     "reference_count" INTEGER NOT NULL,
 
-    CONSTRAINT "File_pkey" PRIMARY KEY ("hash")
+    CONSTRAINT "File_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
@@ -143,6 +164,15 @@ CREATE TABLE "Settings" (
     CONSTRAINT "Settings_pkey" PRIMARY KEY ("user_pub_key")
 );
 
+-- CreateIndex
+CREATE UNIQUE INDEX "SiweSession_nonce_key" ON "SiweSession"("nonce");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "FileNames_fileId_key" ON "FileNames"("fileId");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "File_hash_key" ON "File"("hash");
+
 -- AddForeignKey
 ALTER TABLE "Contract" ADD CONSTRAINT "Contract_userUser_fkey" FOREIGN KEY ("userUser") REFERENCES "User"("user") ON DELETE SET NULL ON UPDATE CASCADE;
 
@@ -151,6 +181,9 @@ ALTER TABLE "Latest" ADD CONSTRAINT "Latest_user_fkey" FOREIGN KEY ("user") REFE
 
 -- AddForeignKey
 ALTER TABLE "Latest" ADD CONSTRAINT "Latest_revisionHash_fkey" FOREIGN KEY ("revisionHash") REFERENCES "Revision"("hash") ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "FileNames" ADD CONSTRAINT "FileNames_fileId_fkey" FOREIGN KEY ("fileId") REFERENCES "File"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "File" ADD CONSTRAINT "File_hash_fkey" FOREIGN KEY ("hash") REFERENCES "Revision"("hash") ON DELETE RESTRICT ON UPDATE CASCADE;

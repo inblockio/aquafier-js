@@ -99,6 +99,7 @@ export default async function explorerController(fastify: FastifyInstance) {
             )
 
             if (res.isErr()) {
+
                 res.data.push({
                     log: `Error creating genesis revision`,
                     logType: LogType.ERROR
@@ -108,17 +109,65 @@ export default async function explorerController(fastify: FastifyInstance) {
                 })
 
             }
+            console.log("******************************")
+            console.log(JSON.stringify(res.data, null, 4))
             // let fileHash = getHashSum(data.file)
             let resData: AquaTree = res.data.aquaTree!!;
-            let allHash: string[] = Object.keys(resData);
-            let revisionData: Revision = resData.revisions[allHash[0]];
-            let fileHash = ""//revisionData.file_hash; // Extract file hash
+            let allHash: string[] = Object.keys(resData.revisions);
 
-            // if (!fileHash) {
-            //     return reply.code(500).send({ error: "File hash missing from AquaTree response" });
-            // }
+            console.log(`hash => ${allHash[0]}`)
+            let revisionData: Revision = resData.revisions[allHash[0]];
+            let fileHash = revisionData.file_hash; // Extract file hash
+
+            if (!fileHash) {
+                return reply.code(500).send({ error: "File hash missing from AquaTree response" });
+            }
             try {
 
+                console.log(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>")
+                console.log(JSON.stringify(revisionData, null, 4))
+
+
+                console.log(`######## address => ${session.address}`)
+                // Parse the timestamp string into a valid Date object
+                const localTimestamp = new Date(
+                    Date.UTC(
+                        parseInt(revisionData.local_timestamp.slice(0, 4)),   // Year
+                        parseInt(revisionData.local_timestamp.slice(4, 6)) - 1,  // Month (0-indexed)
+                        parseInt(revisionData.local_timestamp.slice(6, 8)),   // Day
+                        parseInt(revisionData.local_timestamp.slice(8, 10)),  // Hours
+                        parseInt(revisionData.local_timestamp.slice(10, 12)), // Minutes
+                        parseInt(revisionData.local_timestamp.slice(12, 14))  // Seconds
+                    )
+                );
+
+                // Insert new revision into the database
+                const revisionResult = await prisma.revision.create({
+                    data: {
+                        hash: allHash[0],
+                        user: session.address, // Replace with actual user identifier (e.g., request.user.id)
+                        nonce: revisionData.file_nonce || "",
+                        shared: [],
+                        contract: revisionData.witness_smart_contract_address
+                            ? [{ address: revisionData.witness_smart_contract_address }]
+                            : [],
+                        previous: revisionData.previous_verification_hash || null,
+                        children: {},
+                        localTimestamp: localTimestamp,
+                        revisionType: revisionData.revision_type,
+                        verificationLeaves: revisionData.witness_merkle_proof || [],
+                        Latest: {
+                            create: {
+                                hash: allHash[0],
+                                user: session.address,
+
+                            }
+                        },
+
+                    },
+                });
+
+                console.log(`&&&& file hash ${fileHash}`)
                 // Check if file already exists in the database
                 let existingFile = await prisma.file.findFirst({
                     where: { fileHash: fileHash },
@@ -133,6 +182,7 @@ export default async function explorerController(fastify: FastifyInstance) {
                         data: { referenceCount: existingFile.referenceCount + 1 },
                     });
                     fileId = existingFile.id
+                    console.log(`existing  file id ${fileId}`)
                 } else {
                     // File does not exist: Insert a new file record
                     let createResult = await prisma.file.create({
@@ -145,40 +195,20 @@ export default async function explorerController(fastify: FastifyInstance) {
                         },
                     });
                     fileId = createResult.id
+                    console.log(`new   file id ${createResult}`)
                 }
 
-                let createResult = await prisma.filename.create({
+                let createResult = await prisma.fileNames.create({
                     data: {
                         name: data.filename,
                         fileId: fileId,
                     },
                 });
 
-                // Insert new revision into the database
-                const revisionResult = await prisma.revision.create({
-                    data: {
-                        hash: allHash[0],
-                        user: session.address, // Replace with actual user identifier (e.g., request.user.id)
-                        nonce: revisionData.file_nonce || "",
-                        shared: [],
-                        contract: revisionData.witness_smart_contract_address
-                            ? [{ address: revisionData.witness_smart_contract_address }]
-                            : [],
-                        previous: revisionData.previous_verification_hash || null,
-                        children: {},
-                        localTimestamp: new Date(revisionData.local_timestamp),
-                        revisionType: revisionData.revision_type,
-                        verificationLeaves: revisionData.witness_merkle_proof || [],
-                        Latest: {
-                            create: {
-                                hash: allHash[0],
-                                user: session.address,
 
-                            }
-                        }
-                    },
-                });
             } catch (error) {
+                console.log("======================================")
+                console.log(`error ${error}`)
                 let logs: LogData[] = []
                 logs.push({
                     log: `Error saving genesis revision`,
@@ -186,19 +216,15 @@ export default async function explorerController(fastify: FastifyInstance) {
                 })
 
                 return reply.code(500).send({
-                    logs: res.data
+                    data: res.data
                 })
 
             }
 
             // Return success response
             return reply.code(200).send({
-                success: true,
-                filename: data.filename,
-                mimetype: data.mimetype,
-                isForm,
-                enableContent,
-                fileSize: data.file.bytesRead
+                aquaTree: resData,
+                fileObject: fileObject
             });
         } catch (error) {
             request.log.error(error);

@@ -6,31 +6,31 @@ import { SessionQuery, SiweRequest } from '../models/request_models';
 
 export default async function authController(fastify: FastifyInstance) {
   // get current session
-  fastify.get('/session', async (request: FastifyRequest<{Querystring: SessionQuery}>, reply) => {
+  fastify.get('/session', async (request: FastifyRequest<{ Querystring: SessionQuery }>, reply) => {
     const nonce = request.query.nonce ?? "";
-    
+
     if (!nonce) {
       return { success: false, message: "Nonce is required" };
     }
-    
-    try { 
-  
-      
+
+    try {
+
+
       const session = await prisma.siweSession.findUnique({
         where: { nonce }
       });
-      
+
       if (!session) {
         return reply.code(404).send({ success: false, message: "Session not found" });
       }
-      
+
       // Check if session is expired
       if (new Date(session.expirationTime!!) < new Date()) {
         return reply.code(401).send({ success: false, message: "Session expired" });
       }
-      
-      return { 
-        success: true, 
+
+      return {
+        success: true,
         session: {
           address: session.address,
           nonce: session.nonce,
@@ -44,18 +44,18 @@ export default async function authController(fastify: FastifyInstance) {
     }
   });
   //logout
-  fastify.delete('/session', async (request : FastifyRequest<{Querystring: SessionQuery}>, reply) => {
+  fastify.delete('/session', async (request: FastifyRequest<{ Querystring: SessionQuery }>, reply) => {
     const nonce = request.query.nonce ?? "";
-    
+
     if (!nonce) {
       return reply.code(400).send({ success: false, message: "Nonce is required" });
     }
-    
+
     try {
       await prisma.siweSession.delete({
         where: { nonce }
       });
-      
+
       return { success: true, message: "Session deleted successfully" };
     } catch (error) {
       console.error("Error deleting session:", error);
@@ -88,6 +88,18 @@ export default async function authController(fastify: FastifyInstance) {
           expirationTime: new Date(Date.now() + 24 * 60 * 60 * 1000), // 24-hour expiry
         },
       });
+
+      const user = await prisma.user.upsert({
+        where: {
+          user: address,
+        },
+        update: {}, // Optional: what to update if the user exists
+        create: {
+          user: address // What to create if the user doesn't exist
+        }
+      });
+
+
 
       return reply.code(201).send({
         success: true,

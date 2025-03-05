@@ -24,3 +24,4 @@ EOF
 
 # Exit PostgreSQL command line interface
 echo "Exiting PostgreSQL command line interface..."
+
