@@ -10,7 +10,7 @@ import { Link } from "react-router-dom"
 
 const Navbar = () => {
     const { colorMode } = useColorMode()
-    const { metamaskAddress } = useStore(appStore)
+    const {  session } = useStore(appStore)
 
     return (
         <div>
@@ -23,7 +23,7 @@ const Navbar = () => {
                         <VersionAndDisclaimer />
                         <ConnectWallet />
                         {
-                            metamaskAddress ? (
+                            session ? (
                                 <Settings />
                             ) : null
                         }

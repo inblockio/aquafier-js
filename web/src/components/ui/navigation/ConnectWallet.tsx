@@ -4,7 +4,7 @@ import { DialogBody, DialogCloseTrigger, DialogContent, DialogHeader, DialogTitl
 import { Center, Dialog, Text, VStack } from "@chakra-ui/react";
 import { LuCircleCheck, LuCircleX, LuLogOut, LuWallet } from "react-icons/lu";
 import ReactLoading from "react-loading";
-import { fetchFiles, formatCryptoAddress, generateAvatar, getCookie, remove0xPrefix, setCookie } from "../../../utils/functions";
+import { fetchFiles, formatCryptoAddress, generateAvatar, getCookie,  setCookie } from "../../../utils/functions";
 import { SiweMessage, generateNonce } from "siwe";
 import { SESSION_COOKIE_NAME } from "../../../utils/constants";
 import axios from "axios";
@@ -15,7 +15,7 @@ import { Avatar } from "../avatar";
 import { toaster } from "../toaster";
 
 export default function ConnectWallet() {
-  const { metamaskAddress, setMetamaskAddress, setFiles, avatar, setAvatar, setUserProfile, backend_url, setSession } = useStore(appStore);
+  const {  setMetamaskAddress, session,  setFiles, avatar, setAvatar, setUserProfile, backend_url, setSession } = useStore(appStore);
 
   const [isOpen, setIsOpen] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -176,12 +176,14 @@ export default function ConnectWallet() {
         signOut();
         setMetamaskAddress(null);
         setAvatar(undefined);
+        setSession(null)
         setFiles([]);
       }
     } catch (error: any) {
       if (error?.response?.status === 404) {
         setMetamaskAddress(null);
         setAvatar(undefined);
+        setSession(null)
         setFiles([]);
       }
     }
@@ -197,26 +199,26 @@ export default function ConnectWallet() {
           borderRadius={"md"}
           onClick={() => {
             setIsOpen(true);
-            !metamaskAddress && signAndConnect();
+            !session && signAndConnect();
           }}
         >
           <LuWallet />
-          {metamaskAddress ? formatCryptoAddress(metamaskAddress, 3, 3) : "Sign In"}
+          {session ? formatCryptoAddress(session?.address, 3, 3) : "Sign In"}
         </Button>
       </DialogTrigger>
       <DialogContent borderRadius={"2xl"} overflow={"hidden"}>
         <DialogHeader py={"3"} px={"5"} bg={{ base: "rgb(188 220 255 / 22%)", _dark: "rgba(0, 0, 0, 0.3)" }}>
           <DialogTitle fontWeight={500} color={"gray.800"} _dark={{ color: "white" }}>
-            {metamaskAddress ? "Account" : "Sign In"}
+            {session ? "Account" : "Sign In"}
           </DialogTitle>
         </DialogHeader>
         <DialogBody py={"8"} px={"5"}>
-          {metamaskAddress ? (
+          {session ? (
             <VStack gap={5}>
               <Center>
                 <Avatar src={avatar} size={"2xl"} loading="eager" />
               </Center>
-              <Text fontFamily={"monospace"}>{formatCryptoAddress(metamaskAddress, 10, 10)}</Text>
+              <Text fontFamily={"monospace"}>{formatCryptoAddress(session?.address, 10, 10)}</Text>
               <Button borderRadius={"md"} loading={loading} onClick={signOutFromSiweSession}>
                 Sign Out
                 <LuLogOut />

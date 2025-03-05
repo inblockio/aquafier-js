@@ -46,7 +46,7 @@ export default async function verifyController(fastify: FastifyInstance) {
             });
         }
 
-        return { message: 'creat a new revision' };
+    
     });
     //Creates a new revision, validated against aqua-verifier-js-lib verifier.
     fastify.post('/verify/tree', async (request, reply) => {
