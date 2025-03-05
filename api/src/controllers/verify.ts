@@ -94,12 +94,12 @@ export default async function verifyController(fastify: FastifyInstance) {
             }
 
             // Process the AquaTree
-            const revisionHashes = Object.keys(aquaTree.revisions);
-            const firstRevisionHash = revisionHashes[0];
-            const firstRevision = aquaTree.revisions[firstRevisionHash];
+            // const revisionHashes = Object.keys(aquaTree.revisions);
+            // const firstRevisionHash = revisionHashes[0];
+            // const firstRevision = aquaTree.revisions[firstRevisionHash];
 
             const aquafier = new Aquafier();
-
+            
             let res = await aquafier.verifyAquaTree(aquaTree, fileObjects)
 
             if (res.isOk()) {

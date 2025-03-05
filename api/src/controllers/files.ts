@@ -81,13 +81,15 @@ export default async function filesController(fastify: FastifyInstance) {
             // Convert file stream to base64 string
             const fileBuffer = await streamToBuffer(data.file);
             const base64Content = fileBuffer.toString('base64');
+            const utf8Content = fileBuffer.toString('utf-8');
 
 
             let fileObject: FileObject = {
-                fileContent: base64Content,
+                fileContent: utf8Content,
                 fileName: data.filename,
                 path: "./",
             }
+            
             let res = await aquafier.createGenesisRevision(
                 fileObject,
                 isForm,
