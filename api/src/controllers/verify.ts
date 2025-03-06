@@ -1,5 +1,6 @@
 
 
+import { streamToBuffer } from "@/utils/file_utils";
 import Aquafier, { AquaTree, FileObject, LogData, LogType, Revision } from "aqua-js-sdk";
 import { FastifyInstance } from "fastify";
 
@@ -46,8 +47,46 @@ export default async function verifyController(fastify: FastifyInstance) {
             });
         }
 
-    
+
     });
+
+    //Creates a new revision, validated against aqua-verifier-js-lib verifier.
+    fastify.post('/verify/file', async (request, reply) => {
+        let aquafier = new Aquafier();
+
+        console.log("Request ", request);
+        console.log("Request body", request.body);
+        console.log("Request files", JSON.stringify(request.files, null, 4));
+
+        try {
+            // Process the multipart data
+            const data : any = await request.file();
+
+            if (data == undefined || data.aqua_file === undefined) {
+                return reply.code(400).send({ error: 'No Aqua Json file uploaded' });
+            }
+
+            if (data == undefined || data.files === undefined) {
+                return reply.code(400).send({ error: 'No files uploaded, please upload file next to aqua file' });
+            }
+
+
+            // Convert file stream to base64 string
+            const aquaFileBuffer = await streamToBuffer(data.aqua_file);            
+            const aquaFileContent =  aquaFileBuffer.toString('utf-8');
+            const aquaTree : AquaTree = JSON.parse(aquaFileContent)
+
+
+            return reply.code(200).send({
+                aquaTree: {},
+            });
+        } catch (error) {
+            request.log.error(error);
+            return reply.code(500).send({ error: 'File upload failed' });
+        }
+    });
+
+
     //Creates a new revision, validated against aqua-verifier-js-lib verifier.
     fastify.post('/verify/tree', async (request, reply) => {
 
@@ -99,7 +138,7 @@ export default async function verifyController(fastify: FastifyInstance) {
             // const firstRevision = aquaTree.revisions[firstRevisionHash];
 
             const aquafier = new Aquafier();
-            
+
             // console.log(`fileObjects ${JSON.stringify(fileObjects, null, 4)}`)
             // console.log(`aquaTree ${JSON.stringify(aquaTree, null, 4)}`)
             let res = await aquafier.verifyAquaTree(aquaTree, fileObjects)
