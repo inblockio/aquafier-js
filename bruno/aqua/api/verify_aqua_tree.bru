@@ -15,38 +15,75 @@ body:json {
     "fileObjects": [
       {
         "fileName":"sample.txt",
-        "fileContent":"hi i am kenn.",
+        "fileContent": "Test sample file",
         "path": ""
       }
     ],  
   
-    "aquaTree": {
-      "revisions": {
-        "0xb1da8d647d3b3d822696dfd94bd19957c359ec31951557e5a1cee70f7e073c17": {
-          "previous_verification_hash": "",
-          "local_timestamp": "20250306084049",
-          "revision_type": "file",
-          "file_hash": "31f2f715138fd28a45d0e567d952f98516d216ec135cf28ca9a07a49db487db0",
-          "file_nonce": "04d404db64c739e4324cfe6bacc5499b2c98a45a34e5aa26282aff0d77fc55d8",
-          "version": "https://aqua-protocol.org/docs/v3/schema_2 | SHA256 | Method: scalar"
-        }
+    "aquaTree":  {
+    "revisions": {
+      "0x96b05f20d6ede7bbc9d96681561ccca19147796657f228862cd3064e6478b81b": {
+        "previous_verification_hash": "",
+        "local_timestamp": "20250306102712",
+        "revision_type": "file",
+        "file_hash": "c95a415eb3f8e22ee03f31021265d0c592075a7fe5fffa3c615b489ddca50306",
+        "file_nonce": "d94aab65aa3721f932609bd9a4f92a835042370cee3d9008f70a868ac745512f",
+        "version": "https://aqua-protocol.org/docs/v3/schema_2 | SHA256 | Method: scalar"
       },
-      "file_index": {
-        "0xb1da8d647d3b3d822696dfd94bd19957c359ec31951557e5a1cee70f7e073c17": "sample.txt"
+      "0xecf92a1d809646148be16282efbeaa3123885cf3eb87834be871d659a4c7331f": {
+        "previous_verification_hash": "0x96b05f20d6ede7bbc9d96681561ccca19147796657f228862cd3064e6478b81b",
+        "local_timestamp": "20250306102737",
+        "revision_type": "signature",
+        "signature": "0xa3d61af8d04a2b71320e69ca546dc9443ef445b2efb7bbf584e2bf5a5acf6029230e6980c7f0238fb01f4d4f6fc488a95ed3e0081f5c95af44acdf6b2799654c1b",
+        "signature_public_key": "0x0380a77a1a6d59be5c10d7ee5e10def79283938bb8a60025d0fe5404e650e8ccc1",
+        "signature_wallet_address": "0x568a94a8f0f3dc0b245b853bef572075c1df5c50",
+        "signature_type": "ethereum:eip-191",
+        "version": "https://aqua-protocol.org/docs/v3/schema_2 | SHA256 | Method: scalar"
       },
-      "tree": {
-        "hash": "0xb1da8d647d3b3d822696dfd94bd19957c359ec31951557e5a1cee70f7e073c17",
-        "children": []
-      },
-      "treeMapping": {
-        "paths": {
-          "0xb1da8d647d3b3d822696dfd94bd19957c359ec31951557e5a1cee70f7e073c17": [
-            "0xb1da8d647d3b3d822696dfd94bd19957c359ec31951557e5a1cee70f7e073c17"
-          ]
-        },
-        "latestHash": "0xb1da8d647d3b3d822696dfd94bd19957c359ec31951557e5a1cee70f7e073c17"
+      "0x5d581ef8351223aaa3ce40a7cb501dbe8674c934df1fa25862a71bf93555aa96": {
+        "previous_verification_hash": "0xecf92a1d809646148be16282efbeaa3123885cf3eb87834be871d659a4c7331f",
+        "local_timestamp": "20250306102750",
+        "revision_type": "witness",
+        "version": "https://aqua-protocol.org/docs/v3/schema_2 | SHA256 | Method: scalar",
+        "witness_merkle_root": "0xecf92a1d809646148be16282efbeaa3123885cf3eb87834be871d659a4c7331f",
+        "witness_timestamp": 1741256874,
+        "witness_network": "sepolia",
+        "witness_smart_contract_address": "0x45f59310ADD88E6d23ca58A0Fa7A55BEE6d2a611",
+        "witness_transaction_hash": "0x172c6aadf2c0e41cc4b5b5c6f15ac42596074238c555503d7feb6481a407c5b1",
+        "witness_sender_account_address": "0x568a94a8f0f3dc0b245b853bef572075c1df5c50",
+        "witness_merkle_proof": [
+          "0xecf92a1d809646148be16282efbeaa3123885cf3eb87834be871d659a4c7331f"
+        ]
       }
+    },
+    "file_index": {
+      "0x96b05f20d6ede7bbc9d96681561ccca19147796657f228862cd3064e6478b81b": "sample.txt"
+    },
+    "tree": {
+      "hash": "0x96b05f20d6ede7bbc9d96681561ccca19147796657f228862cd3064e6478b81b",
+      "children": [
+        {
+          "hash": "0xecf92a1d809646148be16282efbeaa3123885cf3eb87834be871d659a4c7331f",
+          "children": [
+            {
+              "hash": "0x5d581ef8351223aaa3ce40a7cb501dbe8674c934df1fa25862a71bf93555aa96",
+              "children": []
+            }
+          ]
+        }
+      ]
+    },
+    "treeMapping": {
+      "paths": {
+        "0x5d581ef8351223aaa3ce40a7cb501dbe8674c934df1fa25862a71bf93555aa96": [
+          "0x96b05f20d6ede7bbc9d96681561ccca19147796657f228862cd3064e6478b81b",
+          "0xecf92a1d809646148be16282efbeaa3123885cf3eb87834be871d659a4c7331f",
+          "0x5d581ef8351223aaa3ce40a7cb501dbe8674c934df1fa25862a71bf93555aa96"
+        ]
+      },
+      "latestHash": "0x5d581ef8351223aaa3ce40a7cb501dbe8674c934df1fa25862a71bf93555aa96"
     }
+  }
   
   }
 }
