@@ -921,7 +921,7 @@
   resolved "https://registry.npmjs.org/@types/json-schema/-/json-schema-7.0.15.tgz"
   integrity sha512-5+fP8P8MFNC+AyZCDxrB2pkZFPGzqQWUzpSeuuVLvm8VMcorNYavBqoFcxK8bQz4Qsbn4oUEEem4wDLfcysGHA==
 
-"@types/node@^18.0.0 || >=20.0.0", "@types/node@22.7.5":
+"@types/node@*", "@types/node@^18.0.0 || >=20.0.0", "@types/node@22.7.5":
   version "22.7.5"
   resolved "https://registry.npmjs.org/@types/node/-/node-22.7.5.tgz"
   integrity sha512-jML7s2NAzMWc//QSJ1a3prpk78cOPchGvXJsC3C6R6PSMoooztvRVQEz89gmBTBY1SPMaqo5teB4uNHPdetShQ==
@@ -1792,10 +1792,9 @@ apg-js@^4.3.0:
   resolved "https://registry.npmjs.org/apg-js/-/apg-js-4.4.0.tgz"
   integrity sha512-fefmXFknJmtgtNEXfPwZKYkMFX4Fyeyz+fNF6JWp87biGOPslJbCBVU158zvKRZfHBKnJDy8CMM40oLFGkXT8Q==
 
-aqua-js-sdk@^3.2.0:
-  version "3.2.0"
-  resolved "https://registry.npmjs.org/aqua-js-sdk/-/aqua-js-sdk-3.2.0.tgz"
-  integrity sha512-/v/f+zt1FGM8zdhpUCPO/OsyQIaHBzxpAsYZQNac6IRqwawf9A2An7JkkB8IP/vM4TCEVtuljFIu8ZyBs7k0Qw==
+"aqua-js-sdk@github:inblockio/aqua-js-sdk":
+  version "1.3.2-1"
+  resolved "git+ssh://git@github.com/inblockio/aqua-js-sdk.git#e3074a4c19adc420b010c051acb3381d22eab2d1"
   dependencies:
     asn1js "^3.0.5"
     buffer "^6.0.3"
@@ -1812,6 +1811,7 @@ aqua-js-sdk@^3.2.0:
     open "^10.1.0"
     openid-client "^5.7.0"
     pkijs "^3.2.4"
+    sha.js "^2.4.11"
     sigstore "^3.0.0"
     ws "^8.18.0"
 
@@ -2114,6 +2114,13 @@ canonicalize@^2.0.0:
   version "2.0.0"
   resolved "https://registry.npmjs.org/canonicalize/-/canonicalize-2.0.0.tgz"
   integrity sha512-ulDEYPv7asdKvqahuAY35c1selLdzDwHqugK92hfkzvlDCwXRRelDkR+Er33md/PtnpqHemgkuDPanZ4fiYZ8w==
+
+canvas-renderer@~2.2.0:
+  version "2.2.1"
+  resolved "https://registry.npmjs.org/canvas-renderer/-/canvas-renderer-2.2.1.tgz"
+  integrity sha512-RrBgVL5qCEDIXpJ6NrzyRNoTnXxYarqm/cS/W6ERhUJts5UQtt/XPEosGN3rqUkZ4fjBArlnCbsISJ+KCFnIAg==
+  dependencies:
+    "@types/node" "*"
 
 cborg@^4.0.0:
   version "4.2.7"
@@ -3093,6 +3100,13 @@ jackspeak@^3.1.2:
     "@isaacs/cliui" "^8.0.2"
   optionalDependencies:
     "@pkgjs/parseargs" "^0.11.0"
+
+jdenticon@^3.3.0:
+  version "3.3.0"
+  resolved "https://registry.npmjs.org/jdenticon/-/jdenticon-3.3.0.tgz"
+  integrity sha512-DhuBRNRIybGPeAjMjdHbkIfiwZCCmf8ggu7C49jhp6aJ7DYsZfudnvnTY5/1vgUhrGA7JaDAx1WevnpjCPvaGg==
+  dependencies:
+    canvas-renderer "~2.2.0"
 
 jose@^4.15.9:
   version "4.15.9"
@@ -4105,7 +4119,7 @@ setimmediate@^1.0.4:
   resolved "https://registry.npmjs.org/setimmediate/-/setimmediate-1.0.5.tgz"
   integrity sha512-MATJdZp8sLqDl/68LfQmbP8zKPLQNV6BIZoIgrscFDQ+RsvK/BxeDQOgyxKKoh0y/8h3BqVFnCqQ/gd+reiIXA==
 
-sha.js@^2.4.0, sha.js@^2.4.8:
+sha.js@^2.4.0, sha.js@^2.4.11, sha.js@^2.4.8:
   version "2.4.11"
   resolved "https://registry.npmjs.org/sha.js/-/sha.js-2.4.11.tgz"
   integrity sha512-QMEp5B7cftE7APOjk5Y6xgrbWu+WkLVQwk8JNjZ8nKRciZaByEW6MubieAiToS7+dwvrjGhH8jRXz3MVd0AYqQ==

@@ -76,7 +76,7 @@ export default async function filesController(fastify: FastifyInstance) {
                 enableScalar = enableScalarField.value === 'true';
             }
 
-
+            console.log("All data: ", data)
 
             // Convert file stream to base64 string
             const fileBuffer = await streamToBuffer(data.file);

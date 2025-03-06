@@ -3,6 +3,7 @@ import { ApiFileInfo } from "../models/FileInfo";
 import { documentTypes, imageTypes, musicTypes, videoTypes } from "./constants";
 import { AvatarGenerator } from 'random-avatar-generator';
 import { AquaTree, FileObject } from "aqua-js-sdk";
+import jdenticon from "jdenticon/standalone";
 
 export function formatCryptoAddress(address?: string, start: number = 10, end: number = 4, message?: string): string {
     if (!address) return message ?? "NO ADDRESS"
@@ -324,11 +325,11 @@ export const isJSONFile = (fileName: string) => {
     return fileName.trim().toLowerCase().endsWith('.json');
 }
 
-export function generateAvatar(_address: string) {
-    const address = ethers.getAddress(_address)
-    const generator = new AvatarGenerator()
-    return generator.generateRandomAvatar(address)
-}
+// export function generateAvatar(_address: string) {
+//     const address = ethers.getAddress(_address)
+//     const generator = new AvatarGenerator()
+//     return generator.generateRandomAvatar(address)
+// }
 
 
 // Utility function to determine file type and potentially rename
@@ -549,4 +550,10 @@ export function encodeFileToBase64(file: File): Promise<string> {
         reader.onload = () => resolve(reader.result as string);
         reader.onerror = (error) => reject(error);
     });
+}
+
+
+export function generateAvatar(seed: string, size = 200) {
+    const svg = jdenticon.toSvg(seed, size);
+    return `data:image/svg+xml;base64,${btoa(svg)}`;
 }
