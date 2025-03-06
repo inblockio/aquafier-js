@@ -1,4 +1,4 @@
-import { AquaTree, FileObject } from "aquafier-js-sdk";
+import { AquaTree, FileObject } from "aqua-js-sdk";
 
 export interface ApiFileInfo {
     // id: number | null,

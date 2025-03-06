@@ -1,4 +1,4 @@
-import { AquaTree, Revision, FileObject } from "aquafier-js-sdk";
+import { AquaTree, Revision, FileObject } from "aqua-js-sdk";
 
 export interface VerifyRequestBody {
     tree: AquaTree;

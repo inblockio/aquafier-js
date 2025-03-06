@@ -1,6 +1,6 @@
 
 
-import Aquafier, { AquaTree, FileObject, LogData, LogType, Revision } from "aquafier-js-sdk";
+import Aquafier, { AquaTree, FileObject, LogData, LogType, Revision } from "aqua-js-sdk";
 import { FastifyInstance } from "fastify";
 
 export default async function verifyController(fastify: FastifyInstance) {
@@ -100,6 +100,8 @@ export default async function verifyController(fastify: FastifyInstance) {
 
             const aquafier = new Aquafier();
             
+            // console.log(`fileObjects ${JSON.stringify(fileObjects, null, 4)}`)
+            // console.log(`aquaTree ${JSON.stringify(aquaTree, null, 4)}`)
             let res = await aquafier.verifyAquaTree(aquaTree, fileObjects)
 
             if (res.isOk()) {

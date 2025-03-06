@@ -9,7 +9,7 @@ import { useStore } from "zustand"
 import { BrowserRouter, Route, Routes } from 'react-router-dom'
 import SharePage from './pages/SharePage';
 import Loading from './pages/Loading';
-// import Aquafier from 'aquafier-js-sdk';
+// import Aquafier from 'aqua-js-sdk';
 declare global {
   interface Window {
     ethereum?: ethers.Eip1193Provider;

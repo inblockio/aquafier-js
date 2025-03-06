@@ -19,7 +19,7 @@ import { TimelineConnector, TimelineContent, TimelineDescription, TimelineItem, 
 import { formatCryptoAddress, getLastRevisionVerificationHash, timeToHumanFriendly } from "../../../utils/functions"
 import { Alert } from "../alert"
 import { ClipboardIconButton, ClipboardRoot } from "../clipboard"
-import Aquafier, { AquaOperationData, AquaTree, Revision } from "aquafier-js-sdk";
+import Aquafier, { AquaOperationData, AquaTree, Revision } from "aqua-js-sdk";
 // import AquaVerifier, { RevisionAquaChainResult, RevisionVerificationResult } from "aqua-verifier";
 import ReactLoading from "react-loading"
 import { WITNESS_NETWORK_MAP } from "../../../utils/constants"

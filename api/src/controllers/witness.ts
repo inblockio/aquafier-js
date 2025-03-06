@@ -1,5 +1,5 @@
 import { WitnessEvent } from '@prisma/client';
-import { Revision } from 'aquafier-js-sdk';
+import { Revision } from 'aqua-js-sdk';
 import { FastifyInstance } from 'fastify';
 
 export default async function revisionsController(fastify: FastifyInstance) {

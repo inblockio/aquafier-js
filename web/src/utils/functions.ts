@@ -2,7 +2,7 @@ import { ethers } from "ethers";
 import { ApiFileInfo } from "../models/FileInfo";
 import { documentTypes, imageTypes, musicTypes, videoTypes } from "./constants";
 import { AvatarGenerator } from 'random-avatar-generator';
-import { AquaTree, FileObject } from "aquafier-js-sdk";
+import { AquaTree, FileObject } from "aqua-js-sdk";
 
 export function formatCryptoAddress(address?: string, start: number = 10, end: number = 4, message?: string): string {
     if (!address) return message ?? "NO ADDRESS"

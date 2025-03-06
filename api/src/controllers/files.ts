@@ -1,6 +1,7 @@
-import { streamToBuffer } from '@/utils/file_utils.js';
-import Aquafier, { AquaTree, FileObject, LogType } from 'aquafier-js-sdk';
+import { isTextFile, isTextFileProbability, streamToBuffer } from '@/utils/file_utils.js';
+import Aquafier, { AquaTree, FileObject, LogType } from 'aqua-js-sdk';
 import { FastifyInstance } from 'fastify';
+import path from 'path';
 
 export default async function filesController(fastify: FastifyInstance) {
     // get file using file hash
@@ -69,27 +70,47 @@ export default async function filesController(fastify: FastifyInstance) {
             }
             // Same for enableContent
             if (data.fields.enableScalar) {
-                console.log("Hi...")
+
                 const enableScalarField: any = data.fields.enableScalar;
 
                 enableScalar = enableScalarField.value === 'true';
             }
 
-            console.log(`hi 2 ${enableScalar}`)
 
 
             // Convert file stream to base64 string
             const fileBuffer = await streamToBuffer(data.file);
-            const base64Content = fileBuffer.toString('base64');
-            const utf8Content = fileBuffer.toString('utf-8');
+            // const base64Content = fileBuffer.toString('base64');
+            // const utf8Content = fileBuffer.toString('utf-8');
 
+            let fileContent = ""
+            // Check if the file has an extension and if it's a text file
+            if (path.extname(data.filename) && isTextFile(data.filename)) {
+                // For text files, use UTF-8
+                fileContent = fileBuffer.toString('utf-8');
+                console.log(`UTF-8 content (first 100 chars): ${fileContent.substring(0, 100)}`);
+            } else {
+                let isFIleProbable = await isTextFileProbability(fileBuffer, data.filename);
 
+                if (isFIleProbable) {
+                    fileContent = fileBuffer.toString('utf-8');
+                    console.log(`Without file extension UTF-8 content (first 100 chars): ${fileContent.substring(0, 100)}`);
+                }
+
+                // For binary files or files without extensions, use base64
+                fileContent = fileBuffer.toString('base64');
+
+                console.log(`Base64 encoded content (file size: ${fileBuffer.length} bytes)`);
+            }
+
+            console.log(`utf8Content ${fileContent}`)
+            console.log(`data.filename ${data.filename}`)
             let fileObject: FileObject = {
-                fileContent: utf8Content,
+                fileContent: fileContent,
                 fileName: data.filename,
                 path: "./",
             }
-            
+
             let res = await aquafier.createGenesisRevision(
                 fileObject,
                 isForm,
@@ -113,7 +134,7 @@ export default async function filesController(fastify: FastifyInstance) {
 
             // Return success response
             return reply.code(200).send({
-                 aquaTree: resData,
+                aquaTree: resData,
             });
         } catch (error) {
             request.log.error(error);

@@ -1,8 +1,9 @@
-import Aquafier, { AquaTree, FileObject, getHashSum, LogData, LogType, Revision } from 'aquafier-js-sdk';
+import Aquafier, { AquaTree, FileObject, getHashSum, LogData, LogType, Revision } from 'aqua-js-sdk';
 import { FastifyInstance } from 'fastify';
 import { prisma } from '../database/db';
 import { BusboyFileStream } from '@fastify/busboy';
-import { streamToBuffer } from '../utils/file_utils';
+import { isTextFile, isTextFileProbability, streamToBuffer } from '../utils/file_utils';
+import path from 'path';
 
 export default async function explorerController(fastify: FastifyInstance) {
     // get file using file hash
@@ -89,15 +90,38 @@ export default async function explorerController(fastify: FastifyInstance) {
 
 
             // Convert file stream to base64 string
+            // const fileBuffer = await streamToBuffer(data.file);
+            // const base64Content = fileBuffer.toString('base64');
+
+            // Convert file stream to base64 string
             const fileBuffer = await streamToBuffer(data.file);
-            const base64Content = fileBuffer.toString('base64');
+            // const base64Content = fileBuffer.toString('base64');
+            // const utf8Content = fileBuffer.toString('utf-8');
 
+            let fileContent = ""
+            // Check if the file has an extension and if it's a text file
+            if (path.extname(data.filename) && isTextFile(data.filename)) {
+                // For text files, use UTF-8
+                fileContent = fileBuffer.toString('utf-8');
+                console.log(`UTF-8 content (first 100 chars): ${fileContent.substring(0, 100)}`);
+            } else {
+                let isFIleProbable = await isTextFileProbability(fileBuffer, data.filename);
 
-            // fetch wallet address using nonce provided on sign in 
+                if (isFIleProbable) {
+                    fileContent = fileBuffer.toString('utf-8');
+                    console.log(`Without file extension UTF-8 content (first 100 chars): ${fileContent.substring(0, 100)}`);
+                }
+
+                // For binary files or files without extensions, use base64
+                fileContent = fileBuffer.toString('base64');
+
+                console.log(`Base64 encoded content (file size: ${fileBuffer.length} bytes)`);
+            }
+
 
 
             let fileObject: FileObject = {
-                fileContent: base64Content,
+                fileContent: fileContent,
                 fileName: data.filename,
                 path: "./",
             }
@@ -145,7 +169,7 @@ export default async function explorerController(fastify: FastifyInstance) {
                 );
 
                 // Insert new revision into the database
-                const revisionResult = await prisma.revision.create({
+                 await prisma.revision.create({
                     data: {
                         pubkey_hash: `${session.address}_${allHash[0]}`,
                         // user: session.address, // Replace with actual user identifier (e.g., request.user.id)
@@ -159,15 +183,15 @@ export default async function explorerController(fastify: FastifyInstance) {
                         local_timestamp: localTimestamp,
                         revision_type: revisionData.revision_type,
                         verification_leaves: revisionData.witness_merkle_proof || [],
-                        Latest: {
-                            create: {
-                                hash: allHash[0],
-                                user: session.address,
-
-                            }
-                        },
-
+                        
                     },
+                });
+
+                await prisma.latest.create({
+                    data: {
+                        hash: allHash[0],
+                        user: session.address,
+                    }
                 });
 
                 // Check if file already exists in the database
@@ -215,7 +239,7 @@ export default async function explorerController(fastify: FastifyInstance) {
                             id: existingFileIndex.id
                         }
                     })
-                }else {
+                } else {
                     let firstRevisionHash = allHash[0]
                     await prisma.fileIndex.create({
                         data: {
@@ -224,7 +248,7 @@ export default async function explorerController(fastify: FastifyInstance) {
                             uri: data.filename,
                             reference_count: 1
                         }
-                    }) 
+                    })
                 }
 
                 // let createResult = await prisma.fileNames.create({

@@ -1,6 +1,6 @@
 
 
-import Aquafier, { AquaTree, FileObject, LogData, LogType, Revision } from "aquafier-js-sdk";
+import Aquafier, { AquaTree, FileObject, LogData, LogType, Revision } from "aqua-js-sdk";
 import { FastifyInstance } from "fastify";
 import { VerifyRequestBody } from "../models/request_models";
 
