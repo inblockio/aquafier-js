@@ -73,7 +73,7 @@ export const initializeBackendUrl = async (): Promise<string> => {
 // Generate endpoints function
 // export const ENDPOINTS = () => ({
   // SIWE_SIGN_IN: `${BACKEND_URL}/siwe`,
-  // FETCH_ADDRESS_BY_NONCE: `${BACKEND_URL}/fetch_nonce_session`,
+  // FETCH_ADDRESS_BY_NONCE: `${BACKEND_URL}/session`,
   // SIWE_SIGN_OUT: `${BACKEND_URL}/siwe_logout`,
 
   // FETCH_USER_PROFILE: `${BACKEND_URL}/explorer_fetch_user_settings`,

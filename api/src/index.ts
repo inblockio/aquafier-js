@@ -4,7 +4,9 @@ import cors from '@fastify/cors';
 import * as dotenv from 'dotenv';
 // Install first: npm install @fastify/multipart
 import fastifyMultipart from '@fastify/multipart';
-
+import fastifyStatic from '@fastify/static';
+import * as fs from "fs"
+import path from "path"
 
 // Import controllers
 import authController from './controllers/auth';
@@ -21,6 +23,14 @@ const PORT = Number(process.env.PORT) || 3600;
 
 // Load environment variables
 dotenv.config();
+
+// Define upload directory
+const UPLOAD_DIR = process.env.UPLOAD_DIR ||  path.join(__dirname, '/media/');
+
+// Ensure upload directory exists
+if (!fs.existsSync(UPLOAD_DIR)) {
+  fs.mkdirSync(UPLOAD_DIR, { recursive: true });
+}
 
 // Create a Fastify instance
 const fastify = Fastify({ logger: true });
@@ -39,9 +49,15 @@ const start = async () => {
       allowedHeaders: ['Content-Type', 'Authorization', 'nonce', 'nonce']
     });
 
+    // Static handler
+    await fastify.register(fastifyStatic, {
+      root: UPLOAD_DIR,
+      prefix: '/uploads/' // This will be the URL prefix to access files
+    });
+
     // Make sure you have the formbody parser plugin installed and registered
     fastify.register(import('@fastify/formbody'));
-    
+
     // Register the plugin
     await fastify.register(fastifyMultipart, {
       limits: {
@@ -49,7 +65,7 @@ const start = async () => {
       }
     });
 
-    
+
 
     // Register controllers
     fastify.register(authController);

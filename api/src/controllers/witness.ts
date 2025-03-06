@@ -27,14 +27,14 @@ export default async function revisionsController(fastify: FastifyInstance) {
                 witness_transaction_hash: ""
             }
 
-            let witnessEvent: WitnessEvent = {
-                witnessMerkleRoot: '',
-                witnessTimestamp: new Date(),
-                witnessNetwork: '',
-                witnessSmartContractAddress: '',
-                witnessTransactionHash: '',
-                witnessSenderAccountAddress: ''
-            }
+            // let witnessEvent: WitnessEvent = {
+            //     witnessMerkleRoot: '',
+            //     witnessTimestamp: new Date(),
+            //     witnessNetwork: '',
+            //     witnessSmartContractAddress: '',
+            //     witnessTransactionHash: '',
+            //     witnessSenderAccountAddress: ''
+            // }
 
             console.log("Received Revisions:", revisions);
             console.log("Received File Index:", file_index);

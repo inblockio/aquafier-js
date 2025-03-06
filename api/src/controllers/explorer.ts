@@ -4,6 +4,13 @@ import { prisma } from '../database/db';
 import { BusboyFileStream } from '@fastify/busboy';
 import { isTextFile, isTextFileProbability, streamToBuffer } from '../utils/file_utils';
 import path from 'path';
+import { randomUUID } from 'crypto';
+import util from 'util';
+import { pipeline } from 'stream';
+import * as fs from "fs"
+
+// Promisify pipeline
+const pump = util.promisify(pipeline);
 
 export default async function explorerController(fastify: FastifyInstance) {
     // get file using file hash
@@ -168,10 +175,19 @@ export default async function explorerController(fastify: FastifyInstance) {
                     )
                 );
 
-                // Insert new revision into the database
-                 await prisma.revision.create({
+                let filepubkeyhash = `${session.address}_${allHash[0]}`
+
+                await prisma.latest.create({
                     data: {
-                        pubkey_hash: `${session.address}_${allHash[0]}`,
+                        hash: filepubkeyhash,
+                        user: session.address,
+                    }
+                });
+
+                // Insert new revision into the database
+                await prisma.revision.create({
+                    data: {
+                        pubkey_hash: filepubkeyhash,
                         // user: session.address, // Replace with actual user identifier (e.g., request.user.id)
                         nonce: revisionData.file_nonce || "",
                         shared: [],
@@ -183,50 +199,22 @@ export default async function explorerController(fastify: FastifyInstance) {
                         local_timestamp: localTimestamp,
                         revision_type: revisionData.revision_type,
                         verification_leaves: revisionData.witness_merkle_proof || [],
-                        
+
                     },
                 });
 
-                await prisma.latest.create({
-                    data: {
-                        hash: allHash[0],
-                        user: session.address,
-                    }
-                });
+                // await prisma.latest.create({
+                //     data: {
+                //         hash: allHash[0],
+                //         user: session.address,
+                //     }
+                // });
 
                 // Check if file already exists in the database
                 let existingFile = await prisma.file.findFirst({
                     where: { file_hash: fileHash },
                 });
 
-                let fileId: number = 0;
-
-                // if (existingFile) {
-                //     // File exists: Increase reference count
-                //     await prisma.file.update({
-                //         where: { hash: existingFile.hash },
-                //         data: { reference_count: existingFile.reference_count + 1 },
-                //     });
-                //     fileId = existingFile.id
-                // } else {
-                //     // File does not exist: Insert a new file record
-                //     let createResult = await prisma.file.create({
-                //         data: {
-                //             hash: allHash[0],
-                //             content: base64Content,
-                //             fileHash: fileHash,
-                //             referenceCount: 1, // First reference
-                //             // revisionRef: { connect: { hash: allHash[0] } },
-                //         },
-                //     });
-                //     fileId = createResult.id
-                // }
-
-                /*  3. 
-                    1. Fetch from file index by file hash
-                    2. If exists, update revision hash in hashes by Id
-
-                */
                 let existingFileIndex = await prisma.fileIndex.findFirst({
                     where: { file_hash: fileHash },
                 });
@@ -241,23 +229,37 @@ export default async function explorerController(fastify: FastifyInstance) {
                     })
                 } else {
                     let firstRevisionHash = allHash[0]
+                    const UPLOAD_DIR = process.env.UPLOAD_DIR || path.join(__dirname, 'media');
+                    // Create unique filename
+                    const filename = `${randomUUID()}-${data.filename}`;
+                    const filePath = path.join(UPLOAD_DIR, filename);
+
+                    // Save the file
+                    await pump(data.file, fs.createWriteStream(filePath))
+
+                    let fileCreation = await prisma.file.create({
+                        data: { 
+                            hash: filepubkeyhash,
+                            file_hash: fileHash,
+                            content: filePath,
+                            reference_count: 1,
+                        }
+                    })
+
+                    console.log(JSON.stringify(fileCreation, null, 4))
+                    console.error("====We are through here: ", fileCreation.hash)
+
                     await prisma.fileIndex.create({
                         data: {
-                            hash: [firstRevisionHash],
+                            id: fileCreation.hash,
+                            hash: [filepubkeyhash],
                             file_hash: fileHash,
                             uri: data.filename,
                             reference_count: 1
                         }
                     })
+                    console.log("Saved successfully")
                 }
-
-                // let createResult = await prisma.fileNames.create({
-                //     data: {
-                //         name: data.filename,
-                //         fileId: fileId,
-                //     },
-                // });
-
 
             } catch (error) {
                 console.log("======================================")
