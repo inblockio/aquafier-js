@@ -50,42 +50,52 @@ export default async function verifyController(fastify: FastifyInstance) {
 
     });
 
-    //Creates a new revision, validated against aqua-verifier-js-lib verifier.
     fastify.post('/verify/file', async (request, reply) => {
         let aquafier = new Aquafier();
-
-        console.log("Request ", request);
-        console.log("Request body", request.body);
-        console.log("Request files", JSON.stringify(request.files, null, 4));
-
+        
         try {
-            // Process the multipart data
-            const data : any = await request.file();
-
-            if (data == undefined || data.aqua_file === undefined) {
+            const parts = request.parts();
+            let aquaFileContent = null;
+            let files = [];
+            
+            for await (const part of parts) {
+                if (part.type === 'file') {
+                    const buffer = await streamToBuffer(part.file);
+                    
+                    if (part.fieldname === 'aqua_file') {
+                        aquaFileContent = buffer.toString('utf-8');
+                    } else {
+                        // Store other files
+                        files.push({
+                            fieldname: part.fieldname,
+                            filename: part.filename,
+                            buffer: buffer
+                        });
+                    }
+                }
+            }
+            
+            if (!aquaFileContent) {
                 return reply.code(400).send({ error: 'No Aqua Json file uploaded' });
             }
-
-            if (data == undefined || data.files === undefined) {
+            
+            if (files.length === 0) {
                 return reply.code(400).send({ error: 'No files uploaded, please upload file next to aqua file' });
             }
-
-
-            // Convert file stream to base64 string
-            const aquaFileBuffer = await streamToBuffer(data.aqua_file);            
-            const aquaFileContent =  aquaFileBuffer.toString('utf-8');
-            const aquaTree : AquaTree = JSON.parse(aquaFileContent)
-
-
+            
+            const aquaTree = JSON.parse(aquaFileContent);
+            
             return reply.code(200).send({
-                aquaTree: {},
+                aquaTree: aquaTree,
+                fileCount: files.length
             });
         } catch (error) {
             request.log.error(error);
-            return reply.code(500).send({ error: 'File upload failed' });
+            return reply.code(500).send({ error: 'File upload failed', details: error.message });
         }
     });
 
+  
 
     //Creates a new revision, validated against aqua-verifier-js-lib verifier.
     fastify.post('/verify/tree', async (request, reply) => {

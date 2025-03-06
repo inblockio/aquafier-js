@@ -39,6 +39,9 @@ const start = async () => {
       allowedHeaders: ['Content-Type', 'Authorization', 'nonce', 'nonce']
     });
 
+    // Make sure you have the formbody parser plugin installed and registered
+    fastify.register(import('@fastify/formbody'));
+    
     // Register the plugin
     await fastify.register(fastifyMultipart, {
       limits: {
@@ -46,8 +49,7 @@ const start = async () => {
       }
     });
 
-    // Make sure you have the formbody parser plugin installed and registered
-    fastify.register(import('@fastify/formbody'));
+    
 
     // Register controllers
     fastify.register(authController);
