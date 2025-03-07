@@ -1,0 +1,52 @@
+meta {
+  name: file_object_upload
+  type: http
+  seq: 5
+}
+
+post {
+  url: http://164.92.183.228:3600/verify/tree
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "fileObjects": [
+      {
+        "fileName":"sample.txt",
+        "fileContent": "hi am kenn.",
+        "path": ""
+      }
+    ],  
+  "aquaTree": {
+      "revisions": {
+        "0x5fb68ab0139c9fb2a6da884304a76efe08f2501a7cb8df44169c477212239bdf": {
+          "previous_verification_hash": "",
+          "local_timestamp": "20250307191542",
+          "revision_type": "file",
+          "file_hash": "31f2f715138fd28a45d0e567d952f98516d216ec135cf28ca9a07a49db487db0",
+          "file_nonce": "206625be637053d5c881fc1b6a9b22755e6374c233cfa333474b212c8fea41b6",
+          "version": "https://aqua-protocol.org/docs/v3/schema_2 | SHA256 | Method: scalar"
+        }
+      },
+      "file_index": {
+        "0x5fb68ab0139c9fb2a6da884304a76efe08f2501a7cb8df44169c477212239bdf": "sample.txt"
+      },
+      "tree": {
+        "hash": "0x5fb68ab0139c9fb2a6da884304a76efe08f2501a7cb8df44169c477212239bdf",
+        "children": []
+      },
+      "treeMapping": {
+        "paths": {
+          "0x5fb68ab0139c9fb2a6da884304a76efe08f2501a7cb8df44169c477212239bdf": [
+            "0x5fb68ab0139c9fb2a6da884304a76efe08f2501a7cb8df44169c477212239bdf"
+          ]
+        },
+        "latestHash": "0x5fb68ab0139c9fb2a6da884304a76efe08f2501a7cb8df44169c477212239bdf"
+      }
+    }
+  
+  
+  }
+}

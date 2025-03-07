@@ -14,7 +14,72 @@ export default async function filesController(fastify: FastifyInstance) {
         return { success: true };
     });
 
-    fastify.get('/file', async (request, reply) => {
+    fastify.post('/file/object', async (request, reply) => {
+        let aquafier = new Aquafier();
+
+        try {
+            const data: any = request.body
+
+
+            console.log(`--- data ${JSON.stringify(data, null, 4)}`)
+            // Type assertion and validation
+            const fileObject = data.fileObject as FileObject;
+
+            if (fileObject == undefined) {
+                return reply.code(400).send({ error: 'No file uploaded' });
+            }
+            if (fileObject.fileName == undefined || fileObject.fileContent == undefined) {
+                return reply.code(400).send({ error: 'File name and content are required in file object' });
+            }
+
+            let isForm = true;
+            if (data.isForm) {
+                isForm = data.isForm as boolean;
+
+            }
+            let enableContent = false;
+            if (data.enableContent) {
+                enableContent = data.enableContent as boolean;
+
+            }
+            let enableScalar = false;
+            if (data.enableScalar) {
+                enableScalar = data.enableScalar as boolean;
+
+            }
+
+            let res = await aquafier.createGenesisRevision(
+                fileObject,
+                isForm,
+                enableContent,
+                enableScalar
+            )
+
+            if (res.isErr()) {
+
+                res.data.push({
+                    log: `Error creating genesis revision`,
+                    logType: LogType.ERROR
+                })
+                return reply.code(500).send({
+                    logs: res.data
+                })
+
+            }
+
+            let resData: AquaTree = res.data.aquaTree!!;
+
+            // Return success response
+            return reply.code(200).send({
+                aquaTree: resData,
+            });
+        } catch (error) {
+            request.log.error(error);
+            return reply.code(500).send({ error: 'File upload failed' });
+        }
+
+
+
         return { success: true };
     });
 
