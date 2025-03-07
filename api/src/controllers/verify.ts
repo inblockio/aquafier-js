@@ -52,16 +52,16 @@ export default async function verifyController(fastify: FastifyInstance) {
 
     fastify.post('/verify/file', async (request, reply) => {
         let aquafier = new Aquafier();
-        
+
         try {
             const parts = request.parts();
             let aquaFileContent = null;
             let files = [];
-            
+
             for await (const part of parts) {
                 if (part.type === 'file') {
                     const buffer = await streamToBuffer(part.file);
-                    
+
                     if (part.fieldname === 'aqua_file') {
                         aquaFileContent = buffer.toString('utf-8');
                     } else {
@@ -74,28 +74,43 @@ export default async function verifyController(fastify: FastifyInstance) {
                     }
                 }
             }
-            
+
             if (!aquaFileContent) {
                 return reply.code(400).send({ error: 'No Aqua Json file uploaded' });
             }
-            
+
             if (files.length === 0) {
                 return reply.code(400).send({ error: 'No files uploaded, please upload file next to aqua file' });
             }
-            
+
+            const aquaFileObjects: FileObject[] = files.map(file => ({
+                fileContent: file.buffer.toString('utf-8'),
+                fileName: file.filename,
+                path: "./"
+            }))
+
             const aquaTree = JSON.parse(aquaFileContent);
-            
-            return reply.code(200).send({
-                aquaTree: aquaTree,
-                fileCount: files.length
-            });
-        } catch (error) {
+
+            let verificationResults = await aquafier.verifyAquaTree(aquaTree, aquaFileObjects)
+
+            if (verificationResults.isOk()) {
+                return reply.code(200).send({
+                    results: verificationResults.data,
+                    fileCount: files.length
+                });
+            } else {
+                return reply.code(417).send({
+                    results: verificationResults.data,
+                    fileCount: files.length
+                });
+            }
+        } catch (error: any) {
             request.log.error(error);
             return reply.code(500).send({ error: 'File upload failed', details: error.message });
         }
     });
 
-  
+
 
     //Creates a new revision, validated against aqua-verifier-js-lib verifier.
     fastify.post('/verify/tree', async (request, reply) => {

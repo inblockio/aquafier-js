@@ -28,8 +28,10 @@ const FilesTable = () => {
 
     const hasSelection = selection.length > 0
     const indeterminate = hasSelection && selection.length < files.length
+    console.log(files)
 
-    const rows = files?.map((item: ApiFileInfo, index : number) => {
+    const rows = files?.map((item: ApiFileInfo, index: number) => {
+
 
         return <Table.Row
             key={index}
@@ -52,14 +54,14 @@ const FilesTable = () => {
             <Table.Cell minW={'180px'} maxW={'180px'} textWrap={'wrap'}>{item.fileObject.fileName}</Table.Cell>
             <Table.Cell minW={'120px'} maxW={'120px'} textWrap={'wrap'}>{getFileCategory(getFileExtension(item.fileObject.fileName))}</Table.Cell>
             <Table.Cell minW={'140px'} maxW={'140px'} textWrap={'wrap'}>
-                { "fix me"
+                {"fix me"
                 /* {timeToHumanFriendly(getTimestampSafe(item.aquaTree), true)} */}
             </Table.Cell>
             <Table.Cell minW={'100px'} maxW={'100px'} textWrap={'wrap'}>
                 <FormatByte value={
                     0
                     // sumFileContentSize(JSON.parse(item.page_data))
-                    } />
+                } />
             </Table.Cell>
             <Table.Cell minW={'220px'} maxW={'220px'} textWrap={'wrap'}>
                 <Group alignItems={'start'} flexWrap={'wrap'}>
@@ -72,25 +74,25 @@ const FilesTable = () => {
                 </Group>
             </Table.Cell>
         </Table.Row>
- } )
+    })
 
-    const smallScreenView = files?.map((item: ApiFileInfo) => (
-        <Box key={`sm_${item.id}`} bg={'gray.100'} _dark={{
-            bg: 'blackAlpha.950'
-        }} p={2} borderRadius={'10px'}>
-            <VStack textAlign={'start'}>
-                <Text textAlign={'start'} w={'100%'}>{item.fileObject.fileName}</Text>
-                <Group alignItems={'start'} flexWrap={'wrap'}>
-                    <ShareButton id={item.id} file_id={item.id} filename={item.fileObject.fileName} />
-                    <DownloadAquaChain file={item} />
-                    <ChainDetailsBtn fileInfo={item} />
-                    <WitnessAquaChain filename={item.fileObject.fileName} file_id={item.id} backend_url={backend_url} lastRevisionVerificationHash={getLastRevisionVerificationHash(JSON.parse(item.page_data))} />
-                    <SignAquaChain filename={item.fileObject.fileName}  file_id={item.id}  backend_url={backend_url} lastRevisionVerificationHash={getLastRevisionVerificationHash(JSON.parse(item.page_data))} />
-                    <DeleteAquaChain filename={item.fileObject.fileName}  file_id={item.id}  backend_url={backend_url} />
-                </Group>
-            </VStack>
-        </Box>
-    ))
+    // const smallScreenView = files?.map((item: ApiFileInfo) => (
+    //     <Box key={`sm_${item}`} bg={'gray.100'} _dark={{
+    //         bg: 'blackAlpha.950'
+    //     }} p={2} borderRadius={'10px'}>
+    //         <VStack textAlign={'start'}>
+    //             <Text textAlign={'start'} w={'100%'}>{item.fileObject.fileName}</Text>
+    //             <Group alignItems={'start'} flexWrap={'wrap'}>
+    //                 <ShareButton id={item.id} file_id={item.id} filename={item.fileObject.fileName} />
+    //                 <DownloadAquaChain file={item} />
+    //                 <ChainDetailsBtn fileInfo={item} />
+    //                 <WitnessAquaChain filename={item.fileObject.fileName} file_id={item.id} backend_url={backend_url} lastRevisionVerificationHash={getLastRevisionVerificationHash(JSON.parse(item.page_data))} />
+    //                 <SignAquaChain filename={item.fileObject.fileName} file_id={item.id} backend_url={backend_url} lastRevisionVerificationHash={getLastRevisionVerificationHash(JSON.parse(item.page_data))} />
+    //                 <DeleteAquaChain filename={item.fileObject.fileName} file_id={item.id} backend_url={backend_url} />
+    //             </Group>
+    //         </VStack>
+    //     </Box>
+    // ))
 
     useEffect(() => {
         if (files) {
@@ -103,26 +105,26 @@ const FilesTable = () => {
             const processFiles = (chunkSize = 1) => {
                 let currentIndex = 0;
                 const chunkedFiles: SetStateAction<ApiFileInfo[]> = [];
-    
+
                 const processChunk = () => {
                     const chunk = files.slice(currentIndex, currentIndex + chunkSize);
                     chunkedFiles.push(...chunk);
                     currentIndex += chunkSize;
-    
+
                     if (currentIndex < files.length) {
                         setTimeout(processChunk, 0); // Process the next chunk
                     } else {
                         setFilesToDisplay(chunkedFiles); // Update state after all chunks are processed
                     }
                 };
-    
+
                 processChunk();
             };
-    
+
             processFiles();
         }
     }, [files]);
-    
+
 
     return (
         <Card.Root px={1} borderRadius={'2xl'}>
@@ -132,7 +134,7 @@ const FilesTable = () => {
             <CardBody px={0}>
                 <Box hideFrom={'md'}>
                     <VStack gap={4}>
-                        {smallScreenView}
+                        {/* {smallScreenView} */}
                     </VStack>
                 </Box>
                 <Table.ScrollArea hideBelow={'md'}>
@@ -140,7 +142,7 @@ const FilesTable = () => {
                         <Table.Header>
                             <Table.Row>
                                 <Table.ColumnHeader w="6">
-                                    <Checkbox
+                                    {/* <Checkbox
                                         top="1"
                                         aria-label="Select all rows"
                                         checked={indeterminate ? "indeterminate" : selection.length > 0}
@@ -149,7 +151,7 @@ const FilesTable = () => {
                                                 changes.checked ? files.map((item: ApiFileInfo) => item.id.toString()) : [],
                                             )
                                         }}
-                                    />
+                                    /> */}
                                 </Table.ColumnHeader>
                                 <Table.ColumnHeader fontWeight={600} fontSize={{ base: 'sm', md: 'md' }}>File Name</Table.ColumnHeader>
                                 <Table.ColumnHeader fontWeight={600} fontSize={{ base: 'sm', md: 'md' }}>Type</Table.ColumnHeader>
@@ -159,7 +161,7 @@ const FilesTable = () => {
                             </Table.Row>
                         </Table.Header>
                         <Table.Body>
-                            {rows}
+                            {/* {rows} */}
                             {filesToDisplay.length === 0 ?
                                 <Table.Row>
                                     <Table.Cell colSpan={6}>

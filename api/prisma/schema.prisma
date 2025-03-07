@@ -42,7 +42,7 @@ model Contract {
 model Latest {
   hash             String        @id
   user             String
-  User             User          @relation(fields: [hash], references: [user])
+  User             User          @relation(fields: [user], references: [user])
   Revision         Revision[]
 
     @@map("latest")
@@ -64,7 +64,7 @@ model Revision {
   Witness          Witness[]
   Link             Link[]
   // Contract         Contract?
-  FileIndex        FileIndex[]
+  // FileIndex        FileIndex[]
   AquaForms        AquaForms[]
 
     @@map("revision")
@@ -72,7 +72,7 @@ model Revision {
 
 model File {
   hash             String        @id
-  content          Bytes?
+  content          String?
   file_hash        String?
   reference_count  Int?
   Revision         Revision      @relation(fields: [hash], references: [pubkey_hash])
@@ -100,7 +100,7 @@ model FileIndex {
   uri              String?
   reference_count  Int?
   File             File            @relation(fields: [id], references: [hash])
-  Revision         Revision        @relation(fields: [file_hash], references: [pubkey_hash])
+  // Revision         Revision        @relation(fields: [file_hash], references: [pubkey_hash])
   // Link             Link[]
 
 

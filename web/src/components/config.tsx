@@ -8,17 +8,14 @@ import { ethers } from "ethers";
 
 
 const LoadConfiguration = () => {
-    const { setMetamaskAddress, setUserProfile, setFiles, setAvatar, backend_url } = useStore(appStore)
+    const { setMetamaskAddress, setUserProfile, setFiles, setAvatar, backend_url, setSession } = useStore(appStore)
 
     const fetchAddressGivenANonce = async (nonce: string) => {
         if (!backend_url.includes('0.0.0.0')) {
             try {
-                const formData = new URLSearchParams();
-                formData.append('nonce', nonce);
-
-                const url = `${backend_url}/fetch_nonce_session`;
-                console.log("url is ", url)
-                const response = await axios.post(url, formData, {
+                const url = `${backend_url}/session`;
+                const response = await axios.get(url, {
+                    params: { nonce: nonce },  // This is the correct way to pass query params
                     headers: {
                         'Content-Type': 'application/x-www-form-urlencoded'
                     }
@@ -32,13 +29,17 @@ const LoadConfiguration = () => {
                         setMetamaskAddress(address)
                         const avatar = generateAvatar(address)
                         setAvatar(avatar)
-                        const files = await fetchFiles(address, url2,nonce );
+                        const files = await fetchFiles(address, url2, nonce);
                         setFiles(files)
                         fetchUserProfile(_address)
                     }
-                } else {
+                }
+            }
+            catch (error: any) {
+                if (error?.response?.status === 404) {
                     setMetamaskAddress(null)
                     setAvatar(undefined)
+                    setSession(null)
                     setFiles([])
                     setUserProfile({
                         user_pub_key: "",
@@ -47,15 +48,8 @@ const LoadConfiguration = () => {
                         witness_network: "",
                         theme: "light",
                         witness_contract_address: '0x45f59310ADD88E6d23ca58A0Fa7A55BEE6d2a611',
-                  
+
                     })
-                }
-            }
-            catch (error: any) {
-                if (error?.response?.status === 404) {
-                    setMetamaskAddress(null)
-                    setAvatar(undefined)
-                    setFiles([])
                 } else {
                     console.log("An error from the api ", error);
                 }
@@ -84,7 +78,7 @@ const LoadConfiguration = () => {
             // })
             setUserProfile({
                 ...response.data.user_settings,
-              });
+            });
         }
     }
 
