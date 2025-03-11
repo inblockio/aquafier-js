@@ -4,3 +4,5 @@ node_modules
 dist
 android
 prisma/migrations
+src/media
+*/media/**

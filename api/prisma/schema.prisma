@@ -57,6 +57,7 @@ model Revision {
   children         String?
   local_timestamp  DateTime?
   revision_type    String?
+  has_content       Boolean @default(false)
   verification_leaves String[]
   Latest           Latest        @relation(fields: [pubkey_hash], references: [hash])
   File             File[]

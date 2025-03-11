@@ -11,7 +11,7 @@ import * as fs from "fs"
 import { error } from 'console';
 import { findAquaTreeRevision } from '@/utils/revisions_utils';
 import { fileURLToPath } from 'url';
-
+import { FileIndex } from '@prisma/client';
 // Promisify pipeline
 const pump = util.promisify(pipeline);
 
@@ -62,11 +62,12 @@ export default async function explorerController(fastify: FastifyInstance) {
         }> = []
         for (let revisonLatetsItem of latest) {
 
+            console.log(`Find ${JSON.stringify(revisonLatetsItem, null, 4)}.`)
             let revisionData = [];
             // fetch latest revision 
             let latestRevionData = await prisma.revision.findFirst({
                 where: {
-                    pubkey_hash: `${session.address}_${revisonLatetsItem.hash}`
+                    pubkey_hash: revisonLatetsItem.hash, //`${session.address}_${}`
                 }
             });
 
@@ -76,8 +77,9 @@ export default async function explorerController(fastify: FastifyInstance) {
             revisionData.push(latestRevionData);
 
             try {
+                console.log(`previous ${latestRevionData?.previous}`)
                 //if previosu verification hash is not empty find the previous one
-                if (latestRevionData?.previous?.length != 0) {
+                if (latestRevionData?.previous != null && latestRevionData?.previous?.length != 0) {
                     let aquaTreerevision = await findAquaTreeRevision(latestRevionData?.previous!!);
                     revisionData.push(...aquaTreerevision)
                 }
@@ -87,7 +89,7 @@ export default async function explorerController(fastify: FastifyInstance) {
 
             // file object 
             let lastRevision = revisionData[revisionData.length - 1];
-            let lastRevisionHash = lastRevision.pubkey_hash.split("_")[1];
+            // let lastRevisionHash = lastRevision.pubkey_hash.split("_")[1];
 
             // files 
 
@@ -99,7 +101,7 @@ export default async function explorerController(fastify: FastifyInstance) {
 
 
             let fileObject: FileObject[] = [];
-
+            let fileIndexes: FileIndex[] = [];
             if (file != null) {
                 console.log("#### file is not null ")
 
@@ -114,17 +116,26 @@ export default async function explorerController(fastify: FastifyInstance) {
 
                     console.log(`Original filename: ${originalFilename}`)
 
-                    fileObject.push({
-                        fileContent: fileContent.toString(),
-                        fileName: originalFilename,
-                        path: ""
+
+
+                    let fileIndex = await prisma.fileIndex.findFirst({
+                        where: {
+                            file_hash: fileItem.file_hash!!
+                        }
                     })
 
-                    // let fileIndex = await prisma.fileIndex.findFirst({
-                    //     where: {
-                    //         file_hash: fileItem.file_hash!!
-                    //     }
-                    // })
+
+                    if (fileIndex == null) {
+                        return reply.code(500).send({ success: false, message: `Error file  ${originalFilename} not found in index` });
+                    }
+
+                    fileIndexes.push(fileIndex)
+
+                    fileObject.push({
+                        fileContent: fileContent.toString(),
+                        fileName: fileIndex.uri!!,
+                        path: ""
+                    })
 
                 }
             }
@@ -142,9 +153,19 @@ export default async function explorerController(fastify: FastifyInstance) {
                 let revisionWithData: Revision = {
                     revision_type: revisionItem.revision_type!! as "link" | "file" | "witness" | "signature" | "form",
                     previous_verification_hash: revisionItem.previous!!,
-                    local_timestamp: revisionItem.local_timestamp!.toDateString()
+                    local_timestamp: revisionItem.local_timestamp!.toDateString(),
+                    "version": "https://aqua-protocol.org/docs/v3/schema_2 | SHA256 | Method: scalar",
+                }
+
+                if (revisionItem.has_content) {
+                    revisionWithData["content"] = "content"
                 }
                 anAquaTree.revisions[hash] = revisionWithData;
+
+                if (revisionItem.previous!!.length == 0) {
+                    let name = fileIndexes.find((item) => item.hash.includes(hash))
+                    anAquaTree.file_index[hash] = name?.uri ?? "-error-"
+                }
             }
 
 
