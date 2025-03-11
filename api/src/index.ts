@@ -15,6 +15,7 @@ import versionController from './controllers/version';
 import filesController from './controllers/files';
 import explorerController from './controllers/explorer';
 import verifyController from './controllers/verify.js';
+import { fileURLToPath } from 'url';
 
 
 // Read host and port from environment variables
@@ -23,6 +24,10 @@ const PORT = Number(process.env.PORT) || 3600;
 
 // Load environment variables
 dotenv.config();
+
+// Get the equivalent of __dirname in ES modules
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 // Define upload directory
 const UPLOAD_DIR = process.env.UPLOAD_DIR ||  path.join(__dirname, '/media/');
