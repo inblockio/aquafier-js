@@ -15,10 +15,39 @@ const pump = util.promisify(pipeline);
 export default async function explorerController(fastify: FastifyInstance) {
     // get file using file hash
     fastify.get('/explorer_files', async (request, reply) => {
-        const { fileHash } = request.params as { fileHash: string };
-        console.log(`Received fileHash: ${fileHash}`);
+        // const { fileHash } = request.params as { fileHash: string };
+        // console.log(`Received fileHash: ${fileHash}`);
         // file content from db
         // return as a blob
+
+        // Read `nonce` from headers
+        const nonce = request.headers['nonce']; // Headers are case-insensitive
+
+        // Check if `nonce` is missing or empty
+        if (!nonce || typeof nonce !== 'string' || nonce.trim() === '') {
+            return reply.code(401).send({ error: 'Unauthorized: Missing or empty nonce header' });
+        }
+
+        const session = await prisma.siweSession.findUnique({
+            where: { nonce }
+        });
+
+        if (!session) {
+            return reply.code(403).send({ success: false, message: "Nounce  is invalid" });
+        }
+
+
+        // fetch all from latetst
+
+        let latest = prisma.latest.findMany({
+            where: {
+                user: session.address
+            }
+        });
+
+        // traverse from the latest to the genesis of each 
+        console.log(`data ${latest}`)
+
 
         return { success: true };
     });
@@ -238,7 +267,7 @@ export default async function explorerController(fastify: FastifyInstance) {
                     await pump(data.file, fs.createWriteStream(filePath))
 
                     let fileCreation = await prisma.file.create({
-                        data: { 
+                        data: {
                             hash: filepubkeyhash,
                             file_hash: fileHash,
                             content: filePath,
