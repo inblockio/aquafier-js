@@ -158,13 +158,30 @@ export default async function explorerController(fastify: FastifyInstance) {
                 }
 
                 if (revisionItem.has_content) {
-                    revisionWithData["content"] = "content"
+                    let fileItem = file.find((e) => e.hash == hash)
+                    let fileContent = fs.readFileSync(fileItem?.content ?? "--error--");
+                    revisionWithData["content"] = fileContent
                 }
+
+
+                // forms
+                let fileFormData = await prisma.aquaForms.findMany({
+                    where: {
+                        hash: hash
+                    }
+                })
+
+                if (fileFormData != null) {
+                    for (let formItem of fileFormData) {
+                        revisionWithData[formItem.key!!] = formItem.value
+                    }
+                }
+
                 anAquaTree.revisions[hash] = revisionWithData;
 
                 if (revisionItem.previous!!.length == 0) {
                     let name = fileIndexes.find((item) => item.hash.includes(hash))
-                    anAquaTree.file_index[hash] = name?.uri ?? "-error-"
+                    anAquaTree.file_index[hash] = name?.uri ?? "--error--"
                 }
             }
 
@@ -340,6 +357,22 @@ export default async function explorerController(fastify: FastifyInstance) {
                     },
                 });
 
+                // if is form add the form elements 
+                if (isForm) {
+                    let revisioValue = Object.keys(revisionData);
+                    for (let formItem in revisioValue) {
+                        if (formItem.startsWith("form_")) {
+                            await prisma.aquaForms.create({
+                                data: {
+                                    hash: filepubkeyhash,
+                                    key: formItem,
+                                    value: revisioValue[formItem],
+                                    type: typeof revisioValue[formItem]
+                                }
+                            });
+                        }
+                    }
+                }
 
 
                 // Check if file already exists in the database
