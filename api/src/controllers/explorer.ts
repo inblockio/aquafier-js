@@ -8,6 +8,8 @@ import { randomUUID } from 'crypto';
 import util from 'util';
 import { pipeline } from 'stream';
 import * as fs from "fs"
+import { error } from 'console';
+import { findAquaTreeRevision } from '@/utils/revisions_utils';
 
 // Promisify pipeline
 const pump = util.promisify(pipeline);
@@ -39,17 +41,100 @@ export default async function explorerController(fastify: FastifyInstance) {
 
         // fetch all from latetst
 
-        let latest = prisma.latest.findMany({
+        let latest = await prisma.latest.findMany({
             where: {
                 user: session.address
             }
         });
 
+        if (latest.length == 0) {
+            return reply.code(200).send({ data: [] });
+        }
+
         // traverse from the latest to the genesis of each 
-        console.log(`data ${latest}`)
+        console.log(`data ${JSON.stringify(latest, null, 4)}`)
 
 
-        return { success: true };
+        let displayData: Array<{
+            aquaTree: AquaTree,
+            fileObject: FileObject[]
+        }> = []
+        for (let revisonLatetsItem of latest) {
+
+            let revisionData = [];
+            // fetch latest revision 
+            let latestRevionData = await prisma.revision.findFirst({
+                where: {
+                    pubkey_hash: `${session.address}_${revisonLatetsItem.hash}`
+                }
+            });
+
+            if (latestRevionData == null) {
+                return reply.code(500).send({ success: false, message: `revision with hash ${latestRevionData} not found in system` });
+            }
+            revisionData.push(latestRevionData);
+
+            try {
+                //if previosu verification hash is not empty find the previous one
+                if (latestRevionData?.previous?.length != 0) {
+                    let aquaTreerevision = await findAquaTreeRevision(latestRevionData?.previous!!);
+                    revisionData.push(...aquaTreerevision)
+                }
+            } catch (e: any) {
+                return reply.code(500).send({ success: false, message: `Error fetching a revision ${JSON.stringify(error, null, 4)}` });
+            }
+
+            // file object 
+            let lastRevision = revisionData[revisionData.length - 1];
+            let lastRevisionHash = lastRevision.pubkey_hash.split("_")[1];
+
+            // files 
+
+            let file = await prisma.file.findMany({
+                where: {
+                    hash: lastRevision.pubkey_hash
+                }
+            })
+
+            
+            if (file != null) {
+
+                for(let fileItem of file ){
+                    let fileIndex = await prisma.fileIndex.findFirst({
+                        where: {
+                            file_hash: fileItem.file_hash
+                        }
+                    })
+
+                }
+            }
+
+
+
+            // construct the return data
+            let anAquaTree: AquaTree = {
+                revisions: {},
+                file_index: {}
+            };
+
+            for (let revisionItem of revisionData) {
+                let hash = revisionItem.pubkey_hash.split("_")[1]
+                let revisionWithData: Revision = {
+                    revision_type: revisionItem.revision_type!! as "link" | "file" | "witness" | "signature" | "form",
+                    previous_verification_hash: revisionItem.previous!!,
+                    local_timestamp: revisionItem.local_timestamp!.toDateString()
+                }
+                anAquaTree.revisions[hash] = revisionWithData;
+            }
+
+
+
+
+
+
+
+        }
+        return reply.code(200).send(displayData)
     });
 
     fastify.post('/explorer_files', async (request, reply) => {
