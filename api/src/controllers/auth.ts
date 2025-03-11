@@ -1,8 +1,8 @@
 import { FastifyInstance, FastifyRequest } from 'fastify';
 import { SiweMessage } from 'siwe';
 import { prisma } from '../database/db';
-import { verifyMessage } from 'ethers';
 import { SessionQuery, SiweRequest } from '../models/request_models';
+import { verifySiweMessage } from '@/utils/auth_utils';
 
 export default async function authController(fastify: FastifyInstance) {
   // get current session
@@ -73,8 +73,18 @@ export default async function authController(fastify: FastifyInstance) {
 
     try {
       // Extract Ethereum address from message
-      const address = verifyMessage(message, signature);
-      logs.push(`Verified Ethereum address: ${address}`);
+      // const address = verifyMessage(message, signature);
+      const siweData = await verifySiweMessage(message, signature);
+      // logs.push(`Verified Ethereum address: ${address}`);
+
+      if (siweData === undefined || !siweData.isValid) {
+        logs.push("Invalid sign in message")
+        logs.push(siweData.error)
+        return reply.code(400).send({
+          success: true,
+          logs
+        });
+      }
 
       // Generate nonce (for demonstration, normally should be stored in DB)
       const nonce = Math.random().toString(36).substring(2, 15);
@@ -82,20 +92,21 @@ export default async function authController(fastify: FastifyInstance) {
       // Insert session into the database
       const session = await prisma.siweSession.create({
         data: {
-          address,
-          nonce,
+          address: siweData.address!!,
+          nonce: siweData.nonce!!,
           issuedAt: new Date(),
-          expirationTime: new Date(Date.now() + 24 * 60 * 60 * 1000), // 24-hour expiry
+          // expirationTime: new Date(Date.now() + 24 * 60 * 60 * 1000), // 24-hour expiry
+          expirationTime: siweData.expirationTime
         },
       });
 
       const user = await prisma.user.upsert({
         where: {
-          user: address,
+          user: siweData.address,
         },
         update: {}, // Optional: what to update if the user exists
         create: {
-          user: address // What to create if the user doesn't exist
+          user: siweData.address!! // What to create if the user doesn't exist
         }
       });
 
