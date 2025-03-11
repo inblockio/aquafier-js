@@ -30,7 +30,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 // Define upload directory
-const UPLOAD_DIR = process.env.UPLOAD_DIR ||  path.join(__dirname, '/media/');
+const UPLOAD_DIR = process.env.UPLOAD_DIR ||  path.join(__dirname, '../media/');
 
 // Ensure upload directory exists
 if (!fs.existsSync(UPLOAD_DIR)) {

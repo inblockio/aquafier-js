@@ -10,6 +10,7 @@ import { pipeline } from 'stream';
 import * as fs from "fs"
 import { error } from 'console';
 import { findAquaTreeRevision } from '@/utils/revisions_utils';
+import { fileURLToPath } from 'url';
 
 // Promisify pipeline
 const pump = util.promisify(pipeline);
@@ -96,15 +97,34 @@ export default async function explorerController(fastify: FastifyInstance) {
                 }
             })
 
-            
-            if (file != null) {
 
-                for(let fileItem of file ){
-                    let fileIndex = await prisma.fileIndex.findFirst({
-                        where: {
-                            file_hash: fileItem.file_hash
-                        }
+            let fileObject: FileObject[] = [];
+
+            if (file != null) {
+                console.log("#### file is not null ")
+
+                for (let fileItem of file) {
+                    console.log("=================================================")
+                    console.log(`reading ${fileItem.content}`)
+                    let fileContent = fs.readFileSync(fileItem.content!!);
+                    // Extract just the original filename (without the UUID prefix)
+                    const fullFilename = path.basename(fileItem.content!!) // Gets filename.ext from full path
+                    const originalFilename = fullFilename.substring(fullFilename.indexOf('-') + 1) // Removes UUID-
+
+
+                    console.log(`Original filename: ${originalFilename}`)
+
+                    fileObject.push({
+                        fileContent: fileContent.toString(),
+                        fileName: originalFilename,
+                        path: ""
                     })
+
+                    // let fileIndex = await prisma.fileIndex.findFirst({
+                    //     where: {
+                    //         file_hash: fileItem.file_hash!!
+                    //     }
+                    // })
 
                 }
             }
@@ -128,10 +148,11 @@ export default async function explorerController(fastify: FastifyInstance) {
             }
 
 
+            displayData.push({
 
-
-
-
+                aquaTree: anAquaTree,
+                fileObject: fileObject
+            })
 
         }
         return reply.code(200).send(displayData)
@@ -219,26 +240,7 @@ export default async function explorerController(fastify: FastifyInstance) {
             // const base64Content = fileBuffer.toString('base64');
             // const utf8Content = fileBuffer.toString('utf-8');
 
-            let fileContent = ""
-            // Check if the file has an extension and if it's a text file
-            if (path.extname(data.filename) && isTextFile(data.filename)) {
-                // For text files, use UTF-8
-                fileContent = fileBuffer.toString('utf-8');
-                console.log(`UTF-8 content (first 100 chars): ${fileContent.substring(0, 100)}`);
-            } else {
-                let isFIleProbable = await isTextFileProbability(fileBuffer, data.filename);
-
-                if (isFIleProbable) {
-                    fileContent = fileBuffer.toString('utf-8');
-                    console.log(`Without file extension UTF-8 content (first 100 chars): ${fileContent.substring(0, 100)}`);
-                }
-
-                // For binary files or files without extensions, use base64
-                fileContent = fileBuffer.toString('base64');
-
-                console.log(`Base64 encoded content (file size: ${fileBuffer.length} bytes)`);
-            }
-
+            let fileContent = fileBuffer.toString('utf-8');
 
 
             let fileObject: FileObject = {
@@ -317,12 +319,7 @@ export default async function explorerController(fastify: FastifyInstance) {
                     },
                 });
 
-                // await prisma.latest.create({
-                //     data: {
-                //         hash: allHash[0],
-                //         user: session.address,
-                //     }
-                // });
+
 
                 // Check if file already exists in the database
                 let existingFile = await prisma.file.findFirst({
@@ -342,14 +339,19 @@ export default async function explorerController(fastify: FastifyInstance) {
                         }
                     })
                 } else {
+                    // Get the equivalent of __dirname in ES modules
+                    const __filename = fileURLToPath(import.meta.url);
+                    const __dirname = path.dirname(__filename);
+
                     let firstRevisionHash = allHash[0]
-                    const UPLOAD_DIR = process.env.UPLOAD_DIR || path.join(__dirname, 'media');
+                    const UPLOAD_DIR = process.env.UPLOAD_DIR || path.join(__dirname, '../media');
                     // Create unique filename
                     const filename = `${randomUUID()}-${data.filename}`;
                     const filePath = path.join(UPLOAD_DIR, filename);
 
                     // Save the file
-                    await pump(data.file, fs.createWriteStream(filePath))
+                    // await pump(data.file, fs.createWriteStream(filePath))
+                    await fs.promises.writeFile(filePath, fileBuffer);
 
                     let fileCreation = await prisma.file.create({
                         data: {
