@@ -23,12 +23,13 @@ const LoadConfiguration = () => {
 
                 if (response.status === 200) {
                     const url2 = `${backend_url}/explorer_files`;
-                    const _address = response.data?.address
+                    const _address = response.data?.session.address
+                    console.log(`address ${_address} ..`)
                     if (_address) {
                         const address = ethers.getAddress(_address)
                         setMetamaskAddress(address)
                         const avatar = generateAvatar(address)
-                        setAvatar(avatar)
+                        setAvatar(avatar) 
                         const files = await fetchFiles(address, url2, nonce);
                         setFiles(files)
                         fetchUserProfile(_address)

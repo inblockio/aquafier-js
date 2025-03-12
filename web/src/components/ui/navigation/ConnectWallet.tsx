@@ -67,7 +67,7 @@ export default function ConnectWallet() {
         const message = createSiweMessage(signer.address, "Sign in with Ethereum to the app.");
 
         const signature = await signer.signMessage(message);
-
+  
         // const formData = new URLSearchParams();
 
         // formData.append("message", message);

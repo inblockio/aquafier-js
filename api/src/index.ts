@@ -51,7 +51,7 @@ const start = async () => {
       origin: ['http://localhost:5173', 'http://127.0.0.1:5173'], // Allow your React app origins
       methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
       credentials: true, // Allow cookies if needed
-      allowedHeaders: ['Content-Type', 'Authorization', 'nonce', 'nonce']
+      allowedHeaders: ['Content-Type', 'Authorization', 'nonce', 'metamask_address']
     });
 
     // Static handler

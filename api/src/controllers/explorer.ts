@@ -173,6 +173,7 @@ export default async function explorerController(fastify: FastifyInstance) {
                     revision_type: revisionItem.revision_type!! as "link" | "file" | "witness" | "signature" | "form",
                     previous_verification_hash: revisionItem.previous!!,
                     local_timestamp: revisionItem.local_timestamp!.toDateString(),
+                    file_nonce: revisionItem.nonce ?? "--error--",
                     "version": "https://aqua-protocol.org/docs/v3/schema_2 | SHA256 | Method: scalar",
                 }
 
@@ -196,7 +197,8 @@ export default async function explorerController(fastify: FastifyInstance) {
                     }
                 }
 
-                anAquaTree.revisions[hashOnly] = revisionWithData;
+
+
 
                 if (revisionItem.previous == null || revisionItem.previous.length == 0) {
                     console.log("****************************************************************")
@@ -214,7 +216,15 @@ export default async function explorerController(fastify: FastifyInstance) {
                     })
                     console.log(`----------  name ${JSON.stringify(name, null, 4)}`)
                     anAquaTree.file_index[hashOnly] = name?.uri ?? "--error--."
+                    revisionWithData["file_hash"] = name?.file_hash ?? "--error--"
+
+
+
+
                 }
+
+
+                anAquaTree.revisions[hashOnly] = revisionWithData;
             }
 
 
