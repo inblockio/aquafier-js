@@ -112,7 +112,7 @@ export default async function explorerController(fastify: FastifyInstance) {
                     console.log(`reading ${fileItem.content}`)
                     // let fileContent = fs.readFileSync(fileItem.content!!);
 
-                   
+
                     // Extract just the original filename (without the UUID prefix)
                     const fullFilename = path.basename(fileItem.content!!) // Gets filename.ext from full path
                     const originalFilename = fullFilename.substring(fullFilename.indexOf('-') + 1) // Removes UUID-
@@ -134,9 +134,9 @@ export default async function explorerController(fastify: FastifyInstance) {
                     fileIndexes.push(fileIndex)
 
 
-                    if(!fs.existsSync(fileItem.content!!)){
+                    if (!fs.existsSync(fileItem.content!!)) {
                         return reply.code(500).send({ success: false, message: `Error file  ${originalFilename} not found` });
-                   
+
                     }
 
                     // Get the host from the request headers
@@ -146,10 +146,10 @@ export default async function explorerController(fastify: FastifyInstance) {
                     const protocol = request.protocol || 'https'
 
                     // Path you want to add
-                    const path = `/files/${fileItem.file_hash}`;
+                    const urlPath = `/files/${fileItem.file_hash}`;
 
                     // Construct the full URL
-                    const fullUrl = `${protocol}://${host}${path}`;
+                    const fullUrl = `${protocol}://${host}${urlPath}`;
                     fileObject.push({
                         fileContent: fullUrl,//fileContent.toString(),
                         fileName: fileIndex.uri!!,
@@ -301,25 +301,24 @@ export default async function explorerController(fastify: FastifyInstance) {
             }
 
 
-            // Convert file stream to base64 string
-            // const fileBuffer = await streamToBuffer(data.file);
-            // const base64Content = fileBuffer.toString('base64');
-
-            // Convert file stream to base64 string
             const fileBuffer = await streamToBuffer(data.file);
-            // const base64Content = fileBuffer.toString('base64');
-            // const utf8Content = fileBuffer.toString('utf-8');
-
             let fileContent = fileBuffer.toString('utf-8');
 
-
-            let fileObject: FileObject = {
+            let fileObjectPar: FileObject = {
                 fileContent: fileContent,
                 fileName: data.filename,
                 path: "./",
             }
+
+            // Get the host from the request headers
+            const host = request.headers.host || `${getHost()}:${getPort()}`;
+
+            // Get the protocol (http or https)
+            const protocol = request.protocol || 'https'
+
+
             let res = await aquafier.createGenesisRevision(
-                fileObject,
+                fileObjectPar,
                 isForm,
                 enableContent,
                 enableScalar
@@ -336,6 +335,8 @@ export default async function explorerController(fastify: FastifyInstance) {
                 })
 
             }
+
+
             // let fileHash = getHashSum(data.file)
             let resData: AquaTree = res.data.aquaTree!!;
             let allHash: string[] = Object.keys(resData.revisions);
@@ -343,8 +344,18 @@ export default async function explorerController(fastify: FastifyInstance) {
             let revisionData: Revision = resData.revisions[allHash[0]];
             let fileHash = revisionData.file_hash; // Extract file hash
 
+
             if (!fileHash) {
                 return reply.code(500).send({ error: "File hash missing from AquaTree response" });
+            }
+
+            const urlPath = `/files/${fileHash}`;
+            // Construct the full URL
+            const fullUrl = `${protocol}://${host}${urlPath}`;
+            let fileObject: FileObject = {
+                fileContent: fullUrl, // fileContent,
+                fileName: data.filename,
+                path: "./",
             }
 
             try {
