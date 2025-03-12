@@ -29,7 +29,7 @@ const Home = () => {
                     </FileUploadRoot>
                 
                     <Box w={'100%'}>
-                        <Statistics />
+                        {/* <Statistics /> */}
                     </Box>
                     <Box w={'100%'}>
                         <FilesTable />

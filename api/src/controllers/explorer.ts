@@ -171,7 +171,7 @@ export default async function explorerController(fastify: FastifyInstance) {
                 let hashOnly = revisionItem.pubkey_hash.split("_")[1]
                 let revisionWithData: Revision = {
                     revision_type: revisionItem.revision_type!! as "link" | "file" | "witness" | "signature" | "form",
-                    previous_verification_hash: revisionItem.previous!!,
+                    previous_verification_hash: revisionItem.previous == null ? "" : revisionItem.previous  ,
                     local_timestamp: revisionItem.local_timestamp!.toDateString(),
                     file_nonce: revisionItem.nonce ?? "--error--",
                     "version": "https://aqua-protocol.org/docs/v3/schema_2 | SHA256 | Method: scalar",

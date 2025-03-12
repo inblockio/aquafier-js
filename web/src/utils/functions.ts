@@ -91,26 +91,31 @@ export async function fetchFiles(publicMetaMaskAddress: string, url: string, non
             throw new Error(`HTTP error! status: ${query.status}`);
         }
 
-        const res = response;
-        const logs: Array<string> = res.logs
-        logs.forEach((item) => {
-            console.log("**>" + item + "\n.")
-        })
+        return  response;
+        // const res = response;
+
+        // console.log(`Res ==> ${JSON.stringify(res, null, 4)}`)
+        // return 
+
+        // const logs: Array<string> = res.logs
+        // logs.forEach((item) => {
+        //     console.log("**>" + item + "\n.")
+        // })
 
         // console.log("fetchFiles Response " + response.body)
 
         // Parse the response body as JSON
-        const data = res.files;
+        // const data = res.files;
 
         // Assuming the API returns an array of FileInfo objects
-        const files: Array<ApiFileInfo> = data.map((item: any) => ({
-            id: item.id,
-            name: item.name,
-            extension: item.extension,
-            page_data: item.page_data,
-            mode: item.mode,
-            owner: item.owner,
-        }));
+        // const files: Array<ApiFileInfo> = data.map((item: any) => ({
+        //     id: item.id,
+        //     name: item.name,
+        //     extension: item.extension,
+        //     page_data: item.page_data,
+        //     mode: item.mode,
+        //     owner: item.owner,
+        // }));
 
         return files;
     } catch (error) {

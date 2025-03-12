@@ -32,7 +32,7 @@ const FilesTable = () => {
 
     const rows = files?.map((item: ApiFileInfo, index: number) => {
 
-
+        
         return <Table.Row
             key={index}
             data-selected={selection.includes(item.fileObject.fileName) ? "" : undefined}
@@ -52,27 +52,27 @@ const FilesTable = () => {
                 />
             </Table.Cell>
             <Table.Cell minW={'180px'} maxW={'180px'} textWrap={'wrap'}>{item.fileObject.fileName}</Table.Cell>
-            <Table.Cell minW={'120px'} maxW={'120px'} textWrap={'wrap'}>{getFileCategory(getFileExtension(item.fileObject.fileName))}</Table.Cell>
-            <Table.Cell minW={'140px'} maxW={'140px'} textWrap={'wrap'}>
-                {"fix me"
-                /* {timeToHumanFriendly(getTimestampSafe(item.aquaTree), true)} */}
+            {/* <Table.Cell minW={'120px'} maxW={'120px'} textWrap={'wrap'}>{getFileCategory(getFileExtension(item.fileObject.fileName))}</Table.Cell> */}
+         
+            {/* <Table.Cell minW={'140px'} maxW={'140px'} textWrap={'wrap'}>
+                
+                 {timeToHumanFriendly(getTimestampSafe(item.aquaTree), true)} 
             </Table.Cell>
             <Table.Cell minW={'100px'} maxW={'100px'} textWrap={'wrap'}>
                 <FormatByte value={
-                    0
-                    // sumFileContentSize(JSON.parse(item.page_data))
+                     sumFileContentSize(JSON.parse(item.page_data))
                 } />
-            </Table.Cell>
-            <Table.Cell minW={'220px'} maxW={'220px'} textWrap={'wrap'}>
+            </Table.Cell> */}
+            {/* <Table.Cell minW={'220px'} maxW={'220px'} textWrap={'wrap'}>
                 <Group alignItems={'start'} flexWrap={'wrap'}>
                     <ShareButton id={index} file_id={index} filename={item.fileObject.fileName} />
                     <DownloadAquaChain file={item} />
                     <ChainDetailsBtn fileInfo={item} />
-                    {/* <WitnessAquaChain filename={item.fileObject.fileName} file_id={index}  backend_url={backend_url} lastRevisionVerificationHash={getLastRevisionVerificationHash(item.page_data)} />
+                    <WitnessAquaChain filename={item.fileObject.fileName} file_id={index}  backend_url={backend_url} lastRevisionVerificationHash={getLastRevisionVerificationHash(item.page_data)} />
                     <SignAquaChain filename={item.fileObject.fileName} file_id={index}  backend_url={backend_url} lastRevisionVerificationHash={getLastRevisionVerificationHash(JSON.parse(item.page_data))} />
-                    <DeleteAquaChain filename={item.fileObject.fileName}  file_id={index}  backend_url={backend_url} /> */}
+                    <DeleteAquaChain filename={item.fileObject.fileName}  file_id={index}  backend_url={backend_url} />
                 </Group>
-            </Table.Cell>
+            </Table.Cell> */}
         </Table.Row>
     })
 
@@ -161,7 +161,7 @@ const FilesTable = () => {
                             </Table.Row>
                         </Table.Header>
                         <Table.Body>
-                            {/* {rows} */}
+                            {rows}
                             {filesToDisplay.length === 0 ?
                                 <Table.Row>
                                     <Table.Cell colSpan={6}>
