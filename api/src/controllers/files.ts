@@ -1,7 +1,10 @@
+import { prisma } from '@/database/db';
 import { isTextFile, isTextFileProbability, streamToBuffer } from '@/utils/file_utils.js';
 import Aquafier, { AquaTree, FileObject, LogType } from 'aqua-js-sdk';
 import { FastifyInstance } from 'fastify';
 import path from 'path';
+
+import * as fs from "fs"
 
 export default async function filesController(fastify: FastifyInstance) {
     // get file using file hash
@@ -10,8 +13,80 @@ export default async function filesController(fastify: FastifyInstance) {
         console.log(`Received fileHash: ${fileHash}`);
         // file content from db
         // return as a blob
+        if (!fileHash || fileHash.trim() === '') {
+            return reply.code(401).send({ error: ' Missing or empty file hash' });
+        }
 
-        return { success: true };
+        const nonce = request.headers['nonce']; // Headers are case-insensitive
+
+        // Check if `nonce` is missing or empty
+        if (!nonce || typeof nonce !== 'string' || nonce.trim() === '') {
+            return reply.code(401).send({ error: 'Unauthorized: Missing or empty nonce header' });
+        }
+
+        const session = await prisma.siweSession.findUnique({
+            where: { nonce }
+        });
+
+        if (!session) {
+            return reply.code(403).send({ success: false, message: "Nounce  is invalid" });
+        }
+
+        let file = await prisma.file.findFirst({
+            where: {
+                file_hash: fileHash
+            }
+        })
+
+        if (file == null) {
+            return reply.code(500).send({ success: false, message: `Error file  not found ` });
+        }
+
+        let fileIndex = await prisma.fileIndex.findFirst({
+            where: {
+                file_hash: fileHash
+            }
+        })
+
+        if (fileIndex == null) {
+            return reply.code(500).send({ success: false, message: `Error file uri  not found ` });
+        }
+
+
+        // check ownership of the file 
+        let revision = prisma.revision.findFirst({
+            where: {
+                OR: [
+                    { pubkey_hash: file.hash },
+                    {
+                        // Check if any of the fileIndex hashes are in the revision's pubkey_hash
+                        pubkey_hash: {
+                            in: fileIndex.hash
+                        }
+                    }
+                ]
+            }
+        })
+
+        // If no matching revision is found, deny access
+        if (!revision) {
+            return reply.code(403).send({ success: false, message: "Access denied: You don't have permission to access this file" });
+        }
+
+        try {
+            // Read the file
+            let fileContent = fs.readFileSync(file.content!!);
+
+            // Set appropriate headers
+            reply.header('Content-Type', 'application/octet-stream');
+            reply.header('Content-Disposition', `attachment; filename="${fileIndex.uri}"`);
+
+            // Send the file content as a response
+            return reply.send(fileContent);
+        } catch (error) {
+            console.error('Error reading file:', error);
+            return reply.code(500).send({ success: false, message: 'Error reading file content' });
+        }
     });
 
     fastify.post('/file/object', async (request, reply) => {
@@ -148,8 +223,8 @@ export default async function filesController(fastify: FastifyInstance) {
             // const base64Content = fileBuffer.toString('base64');
             // const utf8Content = fileBuffer.toString('utf-8');
 
-            let fileContent =  fileBuffer.toString('utf-8');
-               
+            let fileContent = fileBuffer.toString('utf-8');
+
             console.log(`utf8Content ${fileContent}`)
             console.log(`data.filename ${data.filename}`)
             let fileObject: FileObject = {
