@@ -67,6 +67,56 @@
             END LOOP;
         END $$;
     ```
+- To clea all the data in all the tables 
+    ```sql
+        DO $$
+        DECLARE
+            tables CURSOR FOR
+                SELECT tablename
+                FROM pg_tables
+                WHERE schemaname = 'public'
+                ORDER BY tablename;
+            
+            truncate_statement TEXT;
+            table_record RECORD;
+        BEGIN
+            -- Temporarily disable foreign key constraints to avoid relationship conflicts
+            EXECUTE 'SET session_replication_role = replica;';
+            
+            -- First pass: Collect all table names
+            CREATE TEMP TABLE IF NOT EXISTS table_list (
+                table_name TEXT
+            );
+            
+            FOR table_record IN tables LOOP
+                INSERT INTO table_list VALUES (table_record.tablename);
+            END LOOP;
+            
+            -- Second pass: Truncate all tables
+            FOR table_record IN SELECT table_name FROM table_list LOOP
+                truncate_statement := 'TRUNCATE TABLE "' || table_record.table_name || '" CASCADE;';
+                
+                BEGIN
+                    EXECUTE truncate_statement;
+                    RAISE NOTICE 'Truncated table: %', table_record.table_name;
+                EXCEPTION WHEN OTHERS THEN
+                    RAISE WARNING 'Failed to truncate table %: %', table_record.table_name, SQLERRM;
+                END;
+            END LOOP;
+            
+            -- Clean up
+            DROP TABLE IF EXISTS table_list;
+            
+            -- Re-enable foreign key constraints
+            EXECUTE 'SET session_replication_role = DEFAULT;';
+            
+            RAISE NOTICE 'All tables have been emptied.';
+        END $$;
+
+    ```
+
+
+
 - If you're in development and don't mind losing data, you can:
     ```bash
        

@@ -149,7 +149,7 @@ export default async function explorerController(fastify: FastifyInstance) {
             };
 
             for (let revisionItem of revisionData) {
-                let hash = revisionItem.pubkey_hash.split("_")[1]
+                let hashOnly = revisionItem.pubkey_hash.split("_")[1]
                 let revisionWithData: Revision = {
                     revision_type: revisionItem.revision_type!! as "link" | "file" | "witness" | "signature" | "form",
                     previous_verification_hash: revisionItem.previous!!,
@@ -158,7 +158,7 @@ export default async function explorerController(fastify: FastifyInstance) {
                 }
 
                 if (revisionItem.has_content) {
-                    let fileItem = file.find((e) => e.hash == hash)
+                    let fileItem = file.find((e) => e.hash == revisionItem.pubkey_hash)
                     let fileContent = fs.readFileSync(fileItem?.content ?? "--error--");
                     revisionWithData["content"] = fileContent
                 }
@@ -167,7 +167,7 @@ export default async function explorerController(fastify: FastifyInstance) {
                 // forms
                 let fileFormData = await prisma.aquaForms.findMany({
                     where: {
-                        hash: hash
+                        hash: revisionItem.pubkey_hash
                     }
                 })
 
@@ -177,11 +177,24 @@ export default async function explorerController(fastify: FastifyInstance) {
                     }
                 }
 
-                anAquaTree.revisions[hash] = revisionWithData;
+                anAquaTree.revisions[hashOnly] = revisionWithData;
 
-                if (revisionItem.previous!!.length == 0) {
-                    let name = fileIndexes.find((item) => item.hash.includes(hash))
-                    anAquaTree.file_index[hash] = name?.uri ?? "--error--"
+                if (revisionItem.previous == null || revisionItem.previous.length == 0) {
+                    console.log("****************************************************************")
+                    console.log(`fileIndexes ${JSON.stringify(fileIndexes)} -- hash ${revisionItem.pubkey_hash}`)
+                    let name = fileIndexes.find((item) => {
+                        // return item.hash.includes(revisionItem.pubkey_hash) || item.hash.map((item) => item.includes(hashOnly)).length > 0
+
+                        // Check if the full pubkey_hash is in the array
+                        if (item.hash.includes(revisionItem.pubkey_hash)) {
+                            return true;
+                        }
+
+                        // Check if any hash in the array contains the hashOnly part
+                        return item.hash.some(hashItem => hashItem.includes(hashOnly));
+                    })
+                    console.log(`----------  name ${JSON.stringify(name, null, 4)}`)
+                    anAquaTree.file_index[hashOnly] = name?.uri ?? "--error--."
                 }
             }
 
