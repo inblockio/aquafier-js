@@ -62,6 +62,7 @@ export default async function explorerController(fastify: FastifyInstance) {
             aquaTree: AquaTree,
             fileObject: FileObject[]
         }> = []
+
         for (let revisonLatetsItem of latest) {
 
             console.log(`Find ${JSON.stringify(revisonLatetsItem, null, 4)}.`)
@@ -81,7 +82,7 @@ export default async function explorerController(fastify: FastifyInstance) {
             try {
                 console.log(`previous ${latestRevionData?.previous}`)
                 //if previosu verification hash is not empty find the previous one
-                if (latestRevionData?.previous != null && latestRevionData?.previous?.length != 0) {
+                if (latestRevionData?.previous !== null && latestRevionData?.previous?.length !== 0) {
                     let aquaTreerevision = await findAquaTreeRevision(latestRevionData?.previous!!);
                     revisionData.push(...aquaTreerevision)
                 }
@@ -91,11 +92,11 @@ export default async function explorerController(fastify: FastifyInstance) {
 
             // file object 
             let lastRevision = revisionData[revisionData.length - 1];
-            // let lastRevisionHash = lastRevision.pubkey_hash.split("_")[1];
+            let lastRevisionHash = lastRevision.pubkey_hash.split("_")[1];
 
             // files 
 
-            let file = await prisma.file.findMany({
+            let files = await prisma.file.findMany({
                 where: {
                     hash: lastRevision.pubkey_hash
                 }
@@ -104,12 +105,12 @@ export default async function explorerController(fastify: FastifyInstance) {
 
             let fileObject: FileObject[] = [];
             let fileIndexes: FileIndex[] = [];
-            if (file != null) {
+            if (files != null) {
                 console.log("#### file is not null ")
 
-                for (let fileItem of file) {
+                for (let fileItem of files) {
                     console.log("=================================================")
-                    console.log(`reading ${fileItem.content}`)
+                    console.log(`reading ${JSON.stringify(fileItem, null, 4)}`)
                     // let fileContent = fs.readFileSync(fileItem.content!!);
 
 
@@ -125,6 +126,8 @@ export default async function explorerController(fastify: FastifyInstance) {
                             file_hash: fileItem.file_hash!!
                         }
                     })
+
+                    console.log("File index: ", fileIndex)
 
 
                     if (fileIndex == null) {
@@ -159,6 +162,8 @@ export default async function explorerController(fastify: FastifyInstance) {
                 }
             }
 
+            console.log(`File indexes for hash: ${lastRevisionHash}\n${JSON.stringify(fileIndexes, null, 4)}`)
+
 
 
             // construct the return data
@@ -171,14 +176,14 @@ export default async function explorerController(fastify: FastifyInstance) {
                 let hashOnly = revisionItem.pubkey_hash.split("_")[1]
                 let revisionWithData: Revision = {
                     revision_type: revisionItem.revision_type!! as "link" | "file" | "witness" | "signature" | "form",
-                    previous_verification_hash: revisionItem.previous == null ? "" : revisionItem.previous  ,
+                    previous_verification_hash: revisionItem.previous == null ? "" : revisionItem.previous,
                     local_timestamp: revisionItem.local_timestamp!.toDateString(),
                     file_nonce: revisionItem.nonce ?? "--error--",
                     "version": "https://aqua-protocol.org/docs/v3/schema_2 | SHA256 | Method: scalar",
                 }
 
                 if (revisionItem.has_content) {
-                    let fileItem = file.find((e) => e.hash == revisionItem.pubkey_hash)
+                    let fileItem = files.find((e) => e.hash == revisionItem.pubkey_hash)
                     let fileContent = fs.readFileSync(fileItem?.content ?? "--error--");
                     revisionWithData["content"] = fileContent
                 }
