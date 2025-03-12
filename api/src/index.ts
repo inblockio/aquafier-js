@@ -6,7 +6,7 @@ import * as dotenv from 'dotenv';
 import fastifyMultipart from '@fastify/multipart';
 import fastifyStatic from '@fastify/static';
 import * as fs from "fs"
-import path from "path"
+
 
 // Import controllers
 import authController from './controllers/auth';
@@ -16,21 +16,21 @@ import filesController from './controllers/files';
 import explorerController from './controllers/explorer';
 import verifyController from './controllers/verify.js';
 import { fileURLToPath } from 'url';
+import { getFileUploadDirectory } from './utils/file_utils';
+import { getHost, getPort } from './utils/api_utils';
 
 
 // Read host and port from environment variables
-const HOST = process.env.HOST || '127.0.0.1';
-const PORT = Number(process.env.PORT) || 3600;
+const HOST = getHost();
+const PORT = getPort();
 
 // Load environment variables
 dotenv.config();
 
 // Get the equivalent of __dirname in ES modules
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
 
 // Define upload directory
-const UPLOAD_DIR = process.env.UPLOAD_DIR ||  path.join(__dirname, '../media/');
+const UPLOAD_DIR = getFileUploadDirectory();  //process.env.UPLOAD_DIR ||  path.join(__dirname, '../../media/');
 
 // Ensure upload directory exists
 if (!fs.existsSync(UPLOAD_DIR)) {

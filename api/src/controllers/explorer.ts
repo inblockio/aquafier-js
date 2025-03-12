@@ -2,8 +2,9 @@ import Aquafier, { AquaTree, FileObject, getHashSum, LogData, LogType, Revision 
 import { FastifyInstance } from 'fastify';
 import { prisma } from '../database/db';
 import { BusboyFileStream } from '@fastify/busboy';
-import { isTextFile, isTextFileProbability, streamToBuffer } from '../utils/file_utils';
+import { getFileUploadDirectory, isTextFile, isTextFileProbability, streamToBuffer } from '../utils/file_utils';
 import path from 'path';
+
 import { randomUUID } from 'crypto';
 import util from 'util';
 import { pipeline } from 'stream';
@@ -12,6 +13,7 @@ import { error } from 'console';
 import { findAquaTreeRevision } from '@/utils/revisions_utils';
 import { fileURLToPath } from 'url';
 import { FileIndex } from '@prisma/client';
+import { getHost, getPort } from '@/utils/api_utils';
 // Promisify pipeline
 const pump = util.promisify(pipeline);
 
@@ -108,12 +110,12 @@ export default async function explorerController(fastify: FastifyInstance) {
                 for (let fileItem of file) {
                     console.log("=================================================")
                     console.log(`reading ${fileItem.content}`)
-                    let fileContent = fs.readFileSync(fileItem.content!!);
+                    // let fileContent = fs.readFileSync(fileItem.content!!);
+
+                   
                     // Extract just the original filename (without the UUID prefix)
                     const fullFilename = path.basename(fileItem.content!!) // Gets filename.ext from full path
                     const originalFilename = fullFilename.substring(fullFilename.indexOf('-') + 1) // Removes UUID-
-
-
                     console.log(`Original filename: ${originalFilename}`)
 
 
@@ -131,8 +133,25 @@ export default async function explorerController(fastify: FastifyInstance) {
 
                     fileIndexes.push(fileIndex)
 
+
+                    if(!fs.existsSync(fileItem.content!!)){
+                        return reply.code(500).send({ success: false, message: `Error file  ${originalFilename} not found` });
+                   
+                    }
+
+                    // Get the host from the request headers
+                    const host = request.headers.host || `${getHost()}:${getPort()}`;
+
+                    // Get the protocol (http or https)
+                    const protocol = request.protocol || 'https'
+
+                    // Path you want to add
+                    const path = `/files/${fileItem.file_hash}`;
+
+                    // Construct the full URL
+                    const fullUrl = `${protocol}://${host}${path}`;
                     fileObject.push({
-                        fileContent: fileContent.toString(),
+                        fileContent: fullUrl,//fileContent.toString(),
                         fileName: fileIndex.uri!!,
                         path: ""
                     })
@@ -406,12 +425,10 @@ export default async function explorerController(fastify: FastifyInstance) {
                         }
                     })
                 } else {
-                    // Get the equivalent of __dirname in ES modules
-                    const __filename = fileURLToPath(import.meta.url);
-                    const __dirname = path.dirname(__filename);
+
 
                     let firstRevisionHash = allHash[0]
-                    const UPLOAD_DIR = process.env.UPLOAD_DIR || path.join(__dirname, '../media');
+                    const UPLOAD_DIR = getFileUploadDirectory();
                     // Create unique filename
                     const filename = `${randomUUID()}-${data.filename}`;
                     const filePath = path.join(UPLOAD_DIR, filename);

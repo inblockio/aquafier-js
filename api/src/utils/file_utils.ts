@@ -1,5 +1,14 @@
 import path from "path";
+import { fileURLToPath } from "url";
 
+const getFileUploadDirectory =(): string =>{
+  // Get the equivalent of __dirname in ES modules
+  const __filename = fileURLToPath(import.meta.url);
+  const __dirname = path.dirname(__filename);
+  
+  return process.env.UPLOAD_DIR || path.join(__dirname, '../../media');
+   
+}
 const streamToBuffer = async (stream: NodeJS.ReadableStream): Promise<Buffer> => {
     const chunks: Uint8Array[] = [];
     return new Promise((resolve, reject) => {
@@ -84,4 +93,4 @@ const isTextFileProbability = async (buffer: Buffer, filename: string): Promise<
     const textRatio = printableChars / sampleSize;
     return textRatio > 0.9; // If more than 90% is printable ASCII, consider it text
   };
-export { streamToBuffer, isTextFile, isTextFileProbability };
+export { streamToBuffer, isTextFile, isTextFileProbability , getFileUploadDirectory};

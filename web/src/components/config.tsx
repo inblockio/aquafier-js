@@ -36,23 +36,23 @@ const LoadConfiguration = () => {
                 }
             }
             catch (error: any) {
-                if (error?.response?.status === 404) {
-                    setMetamaskAddress(null)
-                    setAvatar(undefined)
-                    setSession(null)
-                    setFiles([])
-                    setUserProfile({
-                        user_pub_key: "",
-                        cli_pub_key: "",
-                        cli_priv_key: "",
-                        witness_network: "",
-                        theme: "light",
-                        witness_contract_address: '0x45f59310ADD88E6d23ca58A0Fa7A55BEE6d2a611',
+                // if (error?.response?.status === 404) {
+                setMetamaskAddress(null)
+                setAvatar(undefined)
+                setSession(null)
+                setFiles([])
+                setUserProfile({
+                    user_pub_key: "",
+                    cli_pub_key: "",
+                    cli_priv_key: "",
+                    witness_network: "",
+                    theme: "light",
+                    witness_contract_address: '0x45f59310ADD88E6d23ca58A0Fa7A55BEE6d2a611',
 
-                    })
-                } else {
-                    console.log("An error from the api ", error);
-                }
+                })
+                // } else {
+                //     console.log("An error from the api ", error);
+                // }
             }
         }
     }
