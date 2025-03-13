@@ -410,7 +410,7 @@ export default async function explorerController(fastify: FastifyInstance) {
                         // children: {},
                         local_timestamp: localTimestamp,
                         revision_type: revisionData.revision_type,
-                        verification_leaves: revisionData.witness_merkle_proof || [],
+                        verification_leaves: revisionData.leaves || [],
 
                     },
                 });

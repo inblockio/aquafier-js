@@ -47,82 +47,144 @@ export default async function revisionsController(fastify: FastifyInstance) {
             }
 
 
+
             let oldFilePubKeyHash = `${session.address}_${revisionData.revision.previous_verification_hash}`
+
+
+            let existData = await prisma.latest.findFirst({
+                where: {
+                    hash: oldFilePubKeyHash
+                }
+            });
+
+            if (existData == null) {
+                return reply.code(401).send({ success: false, message: "previous  hash  not found" });
+
+            }
+
             let filePubKeyHash = `${session.address}_${revisionData.revisionHash}`
 
-            await prisma.latest.upsert({
+            await prisma.latest.update({
+                where: {
+                    hash: oldFilePubKeyHash
+                },
                 data: {
-                    hash: filepubkeyhash,
-                    user: session.address,
+                    hash: filePubKeyHash
                 }
+
             });
 
 
             // Insert new revision into the database
             await prisma.revision.create({
                 data: {
-                    pubkey_hash: filepubkeyhash,
-                    // user: session.address, // Replace with actual user identifier (e.g., request.user.id)
-                    nonce: revisionData.file_nonce || "",
+                    pubkey_hash: filePubKeyHash,
+                    nonce: revisionData.revision.file_nonce || "",
                     shared: [],
                     // contract: revisionData.witness_smart_contract_address
                     //     ? [{ address: revisionData.witness_smart_contract_address }]
                     //     : [],
-                    previous: revisionData.previous_verification_hash || null,
+                    previous: revisionData.revision.previous_verification_hash,
                     // children: {},
-                    local_timestamp: localTimestamp,
-                    revision_type: revisionData.revision_type,
-                    verification_leaves: revisionData.witness_merkle_proof || [],
+                    local_timestamp: revisionData.revision.local_timestamp,
+                    revision_type: revisionData.revision.revision_type,
+                    verification_leaves: revisionData.revision.leaves || [],
 
                 },
             });
 
-            // const { revisions, file_index } = request.body as {
-            //     revisions: Record<string, any>;
-            //     file_index: Record<string, string>;
-            // };
+            if (revisionData.revision.revision_type == "form") {
+                let revisioValue = Object.keys(revisionData);
+                for (let formItem in revisioValue) {
+                    if (formItem.startsWith("form_")) {
+                        await prisma.aquaForms.create({
+                            data: {
+                                hash: filePubKeyHash,
+                                key: formItem,
+                                value: revisioValue[formItem],
+                                type: typeof revisioValue[formItem]
+                            }
+                        });
+                    }
+                }
+            }
 
-            // if (!revisions || typeof revisions !== 'object') {
-            //     return reply.code(400).send({ error: "Invalid revisions data" });
-            // }
+            if (revisionData.revision.revision_type == "signature") {
+                let signature = "";
+                if (typeof revisionData.revision.signature == "string") {
+                    signature = revisionData.revision.signature
+                } else {
+                    signature = JSON.stringify(revisionData.revision.signature)
+                }
 
-            // let revision: Revision = {
-            //     previous_verification_hash: '',
-            //     local_timestamp: '',
-            //     revision_type: 'witness',
-            //     witness_merkle_proof: [],
-            //     witness_merkle_root: "",
-            //     witness_network: "",
-            //     witness_timestamp: 1,
-            //     witness_sender_account_address: "",
-            //     witness_smart_contract_address: "",
-            //     witness_transaction_hash: ""
-            // }
 
-            // let witnessEvent: WitnessEvent = {
-            //     witnessMerkleRoot: '',
-            //     witnessTimestamp: new Date(),
-            //     witnessNetwork: '',
-            //     witnessSmartContractAddress: '',
-            //     witnessTransactionHash: '',
-            //     witnessSenderAccountAddress: ''
-            // }
+                //todo consult dalmas if signature_public_key needs tobe stored
+                await prisma.signature.upsert({
+                    where: {
+                        hash: filePubKeyHash
+                    },
+                    update: {
+                        reference_count: {
+                            increment: 1
+                        }
+                    },
+                    create: {
+                        hash: filePubKeyHash,
+                        signature_digest: signature,
+                        signature_wallet_address: revisionData.revision.signature.wallet_address,
+                        signature_type: revisionData.revision.signature_type,
+                        reference_count: 1
+                    }
+                });
 
-            // console.log("Received Revisions:", revisions);
-            // console.log("Received File Index:", file_index);
+            }
 
-            // You can process and store the revisions here (e.g., database insert, file system storage)
-            // Example: Saving to an in-memory map (just for demonstration)
-            // const revisionStore: Record<string, any> = {};
 
-            // for (const [revisionHash, revisionData] of Object.entries(revisions)) {
-            //     revisionStore[revisionHash] = revisionData;
-            // }
+            if (revisionData.revision.revision_type == "witness") {
 
-            return reply.code(201).send({
+                await prisma.witness.upsert({
+                    where: {
+                        hash: filePubKeyHash
+                    },
+                    update: {
+                        reference_count: {
+                            increment: 1
+                        }
+                    },
+                    create: {
+                        hash: filePubKeyHash,
+                        Witness_merkle_root: revisionData.revision.witness_merkle_root,
+                        reference_count: 1  // Starting with 1 since this is the first reference
+                    }
+                });
+
+                const witnessTimestamp = new Date(revisionData.revision.witness_timestamp!);
+                await prisma.witnessEvent.create({
+                    data: {
+                        Witness_merkle_root: revisionData.revision.witness_merkle_root!,
+                        Witness_timestamp: witnessTimestamp,
+                        Witness_network: revisionData.revision.witness_network,
+                        Witness_smart_contract_address: revisionData.revision.witness_smart_contract_address,
+                        Witness_transaction_hash: revisionData.revision.witness_transaction_hash,
+                        Witness_sender_account_address: revisionData.revision.witness_sender_account_address
+
+                    }
+                });
+            }
+
+
+
+            if (revisionData.revision.revision_type == "link" || revisionData.revision.revision_type == "file") {
+
+                return reply.code(500).send({
+                    message: "not implemented",
+                });
+            }
+
+            return reply.code(200).send({
                 success: true,
                 message: "Revisions stored successfully",
-                total_revisions: Object.keys(revisions).length,
+
             });
 
         } catch (error) {
