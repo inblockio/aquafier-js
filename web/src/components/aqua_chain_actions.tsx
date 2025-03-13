@@ -1,75 +1,72 @@
 import { LuDelete, LuDownload, LuGlasses, LuShare2, LuSignature } from "react-icons/lu"
 import { Button } from "./ui/button"
-import { ethers } from "ethers"
-import { areArraysEqual, dummyCredential, getCurrentNetwork, switchNetwork } from "../utils/functions"
-import { ETH_CHAIN_ADDRESSES_MAP, ETH_CHAINID_MAP } from "../utils/constants"
+import { areArraysEqual, dummyCredential } from "../utils/functions"
 import { useStore } from "zustand"
 import appStore from "../store"
-import axios, { AxiosError } from "axios"
+import axios from "axios"
 import { ApiFileInfo } from "../models/FileInfo"
 import { toaster } from "./ui/toaster"
 import { useState } from "react"
-import sha3 from 'js-sha3'
-import { PageData } from "../models/PageData"
+
 import { DialogActionTrigger, DialogBody, DialogCloseTrigger, DialogContent, DialogFooter, DialogHeader, DialogRoot, DialogTitle } from "./ui/dialog"
 import { generateNonce } from "siwe"
 import Loading from "react-loading"
 import { Box, Center, Text, VStack } from "@chakra-ui/react"
 import { ClipboardButton, ClipboardIconButton, ClipboardInput, ClipboardLabel, ClipboardRoot } from "./ui/clipboard"
 import { InputGroup } from "./ui/input-group"
-import Aquafier, { AquaTree, AquaTreeWrapper } from "aqua-js-sdk"
+import Aquafier, { AquaTreeWrapper } from "aqua-js-sdk"
 import { RevionOperation } from "../models/RevisionOperation"
 
-async function storeWitnessTx(file_id: number, filename: string, txhash: string, ownerAddress: string, network: string, files: ApiFileInfo[], setFiles: any, backend_url: string) {
+// async function storeWitnessTx(file_id: number, filename: string, txhash: string, ownerAddress: string, network: string, files: ApiFileInfo[], setFiles: any, backend_url: string) {
 
-    const formData = new URLSearchParams();
+//     const formData = new URLSearchParams();
 
-    formData.append('file_id', file_id.toString());
-    formData.append('filename', filename);
-    formData.append('tx_hash', txhash);
-    formData.append('wallet_address', ownerAddress);
-    formData.append('network', network);
+//     formData.append('file_id', file_id.toString());
+//     formData.append('filename', filename);
+//     formData.append('tx_hash', txhash);
+//     formData.append('wallet_address', ownerAddress);
+//     formData.append('network', network);
 
-    const url = `${backend_url}/explorer_witness_file`
+//     const url = `${backend_url}/explorer_witness_file`
 
-    const response = await axios.post(url, formData, {
-        headers: {
-            'Content-Type': 'application/x-www-form-urlencoded'
-        }
-    })
+//     const response = await axios.post(url, formData, {
+//         headers: {
+//             'Content-Type': 'application/x-www-form-urlencoded'
+//         }
+//     })
 
-    const res = await response.data;
-    // let logs: Array<string> = res.logs
-    // // logs.forEach((item) => {
-    // //     console.log("**>" + item + "\n.")
-    // // })
+//     const res = await response.data;
+//     // let logs: Array<string> = res.logs
+//     // // logs.forEach((item) => {
+//     // //     console.log("**>" + item + "\n.")
+//     // // })
 
-    if (response.status === 200) {
-        console.log(res)
-        const resp: ApiFileInfo = res.file
-        const array: ApiFileInfo[] = [];
-        for (let index = 0; index < files.length; index++) {
-            const element = files[index];
-            if (element.id === file_id) {
-                array.push(resp)
-            } else {
-                array.push(element)
-            }
-        }
-        setFiles(array)
-        toaster.create({
-            description: "Witnessing successful",
-            type: "success"
-        })
-    }
+//     if (response.status === 200) {
+//         console.log(res)
+//         const resp: ApiFileInfo = res.file
+//         const array: ApiFileInfo[] = [];
+//         for (let index = 0; index < files.length; index++) {
+//             const element = files[index];
+//             if (element.id === file_id) {
+//                 array.push(resp)
+//             } else {
+//                 array.push(element)
+//             }
+//         }
+//         setFiles(array)
+//         toaster.create({
+//             description: "Witnessing successful",
+//             type: "success"
+//         })
+//     }
 
-}
+// }
 
 
 
 
 export const WitnessAquaChain = ({ apiFileInfo, backendUrl, nonce }: RevionOperation) => {
-   const {  files, setFiles, metamaskAddress } = useStore(appStore)
+    const { files, setFiles, metamaskAddress } = useStore(appStore)
     const [witnessing, setWitnessing] = useState(false)
 
 
@@ -154,7 +151,7 @@ export const WitnessAquaChain = ({ apiFileInfo, backendUrl, nonce }: RevionOpera
 
                 setWitnessing(false)
 
-            } catch (error: any) {
+            } catch (error) {
                 console.log("Error  ", error)
                 setWitnessing(false)
                 toaster.create({
@@ -184,7 +181,7 @@ export const WitnessAquaChain = ({ apiFileInfo, backendUrl, nonce }: RevionOpera
 }
 
 export const SignAquaChain = ({ apiFileInfo, backendUrl, nonce }: RevionOperation) => {
-    const {  files, setFiles} = useStore(appStore)
+    const { files, setFiles } = useStore(appStore)
     const [signing, setSigning] = useState(false)
     const signFileHandler = async () => {
         setSigning(true)
@@ -245,7 +242,7 @@ export const SignAquaChain = ({ apiFileInfo, backendUrl, nonce }: RevionOperatio
                                     newFiles.push(item)
                                 }
                             })
-    
+
                             setFiles(newFiles)
                         }
                     }
@@ -290,31 +287,36 @@ export const DeleteAquaChain = ({ apiFileInfo, backendUrl, nonce }: RevionOperat
 
     const deleteFile = async () => {
         setDeleting(true)
-        const formData = new URLSearchParams();
-        formData.append('filename', filename);
-        formData.append('file_id', file_id.toString());
 
+        const allRevisionHashes = Object.keys(apiFileInfo.aquaTree!.revisions!);
+        const lastRevisionHash = allRevisionHashes[allRevisionHashes.length - 1]
         const url = `${backendUrl}/explorer_delete_file`
-        const response = await axios.post(url, formData, {
+        const response = await axios.post(url, {
+            "fileHash": lastRevisionHash
+        }, {
             headers: {
-                'Content-Type': 'application/x-www-form-urlencoded'
+                'nonce': nonce
             }
         });
 
         if (response.status === 200) {
-            throw Error("Fix me ....2")
-            // let filesNew: Array<ApiFileInfo> = [];
-            // for (let index = 0; index < files.length; index++) {
-            //     const file = files[index];
-            //     if (file.id != file_id) {
-            //         filesNew.push(file)
-            //     }
-            // }
-            // setFiles(filesNew);
-            // toaster.create({
-            //     description: "File deleted successfully",
-            //     type: "success"
-            // })
+            console.log("update state ...")
+            const newFiles: ApiFileInfo[] = [];
+            const keysPar = Object.keys(apiFileInfo.aquaTree!.revisions!)
+            files.forEach((item) => {
+                const keys = Object.keys(item.aquaTree!.revisions!)
+                if (areArraysEqual(keys, keysPar)) {
+                    console.log("ignore revision files ...")
+                } else {
+                    newFiles.push(item)
+                }
+            })
+
+            setFiles(newFiles)
+            toaster.create({
+                description: "File deleted successfully",
+                type: "success"
+            })
         }
         setDeleting(false)
     }
@@ -330,36 +332,14 @@ export const DeleteAquaChain = ({ apiFileInfo, backendUrl, nonce }: RevionOperat
 }
 
 export const DownloadAquaChain = ({ file }: { file: ApiFileInfo }) => {
+    const [downloading, setDownloading] = useState(false)
 
-
-    const downloadAquaJson = () => {
+    const downloadAquaJson = async () => {
         try {
-            // Parse the page_data string to a PageData object
-            const pageData: PageData = JSON.parse(file.page_data);
-
-            for (const page of pageData.pages) {
-                for (const revisionKey in page.revisions) {
-                    const revision = page.revisions[revisionKey];
-
-                    if (revision.witness && revision.witness.witness_event_transaction_hash) {
-                        const hash = revision.witness.witness_event_transaction_hash;
-
-                        // Prepend '0x' only if it doesn't already start with it
-                        if (!hash.startsWith('0x')) {
-                            revision.witness.witness_event_transaction_hash = `0x${hash}`;
-                        }
-                    }
-
-                    // // Check if the revision has a witness and update witness_event_transaction_hash
-                    // if (revision.witness && revision.witness.witness_event_transaction_hash) {
-
-                    //     revision.witness.witness_event_transaction_hash = `0x${revision.witness.witness_event_transaction_hash}`;
-                    // }
-                }
-            }
-
+            setDownloading(true)
+           
             // Convert the PageData object to a formatted JSON string
-            const jsonString = JSON.stringify(pageData, null, 2);
+            const jsonString = JSON.stringify(file.aquaTree, null, 2);
 
             // Create a Blob from the JSON string
             const blob = new Blob([jsonString], { type: 'application/json' });
@@ -370,7 +350,7 @@ export const DownloadAquaChain = ({ file }: { file: ApiFileInfo }) => {
             // Create a temporary anchor element and trigger the download
             const a = document.createElement('a');
             a.href = url;
-            a.download = `${file.name}-aqua.json`;
+            a.download = `${file.fileObject[0].fileName}-aqua.json`;
             document.body.appendChild(a);
             a.click();
 
@@ -381,17 +361,60 @@ export const DownloadAquaChain = ({ file }: { file: ApiFileInfo }) => {
                 description: `Aqua Chain Downloaded successfully`,
                 type: "success"
             })
-        } catch (error) {
+
+
+
+              // Loop through each file object and download the content
+              for (const fileObj of file.fileObject) {
+                // Check if fileContent is a string (URL)
+                if (typeof fileObj.fileContent === 'string' && fileObj.fileContent.startsWith('http')) {
+                    try {
+                        // Fetch the file from the URL
+                        const response = await fetch(fileObj.fileContent);
+                        const blob = await response.blob();
+                        
+                        // Create URL from blob
+                        const url = URL.createObjectURL(blob);
+                        
+                        // Create temporary anchor and trigger download
+                        const a = document.createElement('a');
+                        a.href = url;
+                        a.download = fileObj.fileName;
+                        document.body.appendChild(a);
+                        a.click();
+                        
+                        // Clean up
+                        document.body.removeChild(a);
+                        URL.revokeObjectURL(url);
+                    } catch (error) {
+                        console.error(`Error downloading ${fileObj.fileName}:`, error);
+                        toaster.create({
+                            description: `Error downloading ${fileObj.fileName}: ${error}`,
+                            type: "error"
+                        });
+                    }
+                }
+            }
+            
+            toaster.create({
+                description: `Files downloaded successfully`,
+                type: "success"
+            });
+            setDownloading(false)
+        } catch (error  ) {
             toaster.create({
                 description: `Error downloading JSON: ${error}`,
                 type: "error"
             })
+
+            setDownloading(false)
         }
+
 
     }
 
     return (
-        <Button size={'xs'} colorPalette={'blackAlpha'} variant={'subtle'} w={'168px'} onClick={downloadAquaJson}>
+        <Button size={'xs'} colorPalette={'blackAlpha'} variant={'subtle'} w={'168px'} onClick={downloadAquaJson} loading={downloading}>
             <LuDownload />
             Download Aqua-Chain
         </Button>
