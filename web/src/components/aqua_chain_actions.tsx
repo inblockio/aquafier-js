@@ -17,7 +17,8 @@ import Loading from "react-loading"
 import { Box, Center, Text, VStack } from "@chakra-ui/react"
 import { ClipboardButton, ClipboardIconButton, ClipboardInput, ClipboardLabel, ClipboardRoot } from "./ui/clipboard"
 import { InputGroup } from "./ui/input-group"
-import Aquafier from "aqua-js-sdk"
+import Aquafier, { AquaTree, AquaTreeWrapper } from "aqua-js-sdk"
+import { RevionOperation } from "../models/RevisionOperation"
 
 async function storeWitnessTx(file_id: number, filename: string, txhash: string, ownerAddress: string, network: string, files: ApiFileInfo[], setFiles: any, backend_url: string) {
 
@@ -65,20 +66,21 @@ async function storeWitnessTx(file_id: number, filename: string, txhash: string,
 }
 
 
-interface ISigningAndWitnessing {
-    file_id: number,
-    filename: string,
-    lastRevisionVerificationHash?: string,
-    backend_url: string
-}
+// interface ISigningAndWitnessing {
+//     file_id: number,
+//     filename: string,
+//     lastRevisionVerificationHash?: string,
+//     backend_url: string
+// }
 
-export const WitnessAquaChain = ({ file_id, filename, lastRevisionVerificationHash }: ISigningAndWitnessing) => {
+export const WitnessAquaChain = ({ aquaTree, backendUrl, nonce }: RevionOperation) => {
+// export const WitnessAquaChain = ({ file_id, filename, lastRevisionVerificationHash }: ISigningAndWitnessing) => {
     const { user_profile, files, setFiles, metamaskAddress, backend_url } = useStore(appStore)
     const [witnessing, setWitnessing] = useState(false)
 
 
     const witnessFileHandler = async () => {
-        const witness_event_verification_hash = sha3.sha3_512("a69f73cca23a9ac5c8b567dc185a756e97c982164fe25859e0d1dcc1475c80a615b2123af1f5f94c11e3e9402c3ac558f500199d95b6d3e301758586281dcd26" + lastRevisionVerificationHash)
+        // const witness_event_verification_hash = sha3.sha3_512("a69f73cca23a9ac5c8b567dc185a756e97c982164fe25859e0d1dcc1475c80a615b2123af1f5f94c11e3e9402c3ac558f500199d95b6d3e301758586281dcd26" + lastRevisionVerificationHash)
         if (window.ethereum) {
             setWitnessing(true)
             try {
@@ -93,48 +95,48 @@ export const WitnessAquaChain = ({ file_id, filename, lastRevisionVerificationHa
                     return;
                 }
 
-                const networkId = await getCurrentNetwork()
-                const currentChainId = ETH_CHAINID_MAP[user_profile.witness_network]
-                if (networkId !== currentChainId) {
-                    await switchNetwork(currentChainId)
-                }
-                const contract_address = ETH_CHAIN_ADDRESSES_MAP[user_profile.witness_network]
-                const network = user_profile.witness_network
+                // const networkId = await getCurrentNetwork()
+                // const currentChainId = ETH_CHAINID_MAP[user_profile.witness_network]
+                // if (networkId !== currentChainId) {
+                //     await switchNetwork(currentChainId)
+                // }
+                // const contract_address = ETH_CHAIN_ADDRESSES_MAP[user_profile.witness_network]
+                // const network = user_profile.witness_network
 
-                const params = [
-                    {
-                        from: walletAddress,
-                        // to: SEPOLIA_SMART_CONTRACT_ADDRESS,
-                        to: contract_address,
-                        // gas and gasPrice are optional values which are
-                        // automatically set by MetaMask.
-                        // gas: '0x7cc0', // 30400
-                        // gasPrice: '0x328400000',
-                        data: '0x9cef4ea1' + witness_event_verification_hash,
-                    },
-                ]
-                window.ethereum
-                    .request({
-                        method: 'eth_sendTransaction',
-                        params: params,
-                    })
-                    .then(txhash => {
-                        storeWitnessTx(file_id, filename, txhash, ethers.getAddress(walletAddress), network, files, setFiles, backend_url).then(() => {
+                // const params = [
+                //     {
+                //         from: walletAddress,
+                //         // to: SEPOLIA_SMART_CONTRACT_ADDRESS,
+                //         to: contract_address,
+                //         // gas and gasPrice are optional values which are
+                //         // automatically set by MetaMask.
+                //         // gas: '0x7cc0', // 30400
+                //         // gasPrice: '0x328400000',
+                //         data: '0x9cef4ea1' + witness_event_verification_hash,
+                //     },
+                // ]
+                // window.ethereum
+                //     .request({
+                //         method: 'eth_sendTransaction',
+                //         params: params,
+                //     })
+                //     .then(txhash => {
+                //         storeWitnessTx(file_id, filename, txhash, ethers.getAddress(walletAddress), network, files, setFiles, backend_url).then(() => {
 
-                        }).catch(() => {
+                //         }).catch(() => {
 
-                        })
-                    })
-                    .catch((error: AxiosError) => {
-                        if (error?.message) {
-                            toaster.create({
-                                description: error.message,
-                                type: "error"
-                            })
-                        }
-                    }).finally(() => {
-                        setWitnessing(false)
-                    })
+                //         })
+                //     })
+                //     .catch((error: AxiosError) => {
+                //         if (error?.message) {
+                //             toaster.create({
+                //                 description: error.message,
+                //                 type: "error"
+                //             })
+                //         }
+                //     }).finally(() => {
+                //         setWitnessing(false)
+                //     })
 
             } catch (error: any) {
                 console.log("Error  ", error)
@@ -165,9 +167,87 @@ export const WitnessAquaChain = ({ file_id, filename, lastRevisionVerificationHa
     )
 }
 
-export const SignAquaChain = (aquaTree: AquaTree) => {
+export const SignAquaChain = ({ aquaTree, backendUrl, nonce }: RevionOperation) => {
     // const { user_profile, files, setFiles, metamaskAddress, backend_url } = useStore(appStore)
     const [signing, setSigning] = useState(false)
+    const signFileHandler = async () => {
+        setSigning(true)
+        if (window.ethereum) {
+            try {
+
+                const aquafier = new Aquafier();
+
+                const aquaTreeWrapper: AquaTreeWrapper = {
+                    aquaTree: aquaTree,
+                    revision: "",
+                    fileObject: undefined
+                }
+                const result = await aquafier.signAquaTree(aquaTreeWrapper, "metamask", dummyCredential())
+                if (result.isErr()) {
+                    toaster.create({
+                        description: `Error signing failed`,
+                        type: "error"
+                    })
+                } else {
+
+                    const revisionHashes = result.data.aquaTree?.revisions ? Object.keys(result.data.aquaTree.revisions) : [];
+
+                    if (revisionHashes.length == 0) {
+                        toaster.create({
+                            description: `Error signing failed (aqua tree structure)`,
+                            type: "error"
+                        })
+                    }
+                    const lastHash = revisionHashes[revisionHashes.length - 1]
+                    const lastRevision = result.data.aquaTree?.revisions[lastHash]
+                    // send to server
+                    const url = `${backendUrl}/tree`;
+
+                    const response = await axios.post(url, {
+                        "revision": lastRevision,
+                        "revisionHash": lastHash,
+
+                    }, {
+                        headers: {
+                            "nonce": nonce
+                        }
+                    });
+
+                    if (response.status === 200 || response.status === 201) {
+                        console.log("update state ...")
+                    }
+
+                    toaster.create({
+                        description: `Signing successfull`,
+                        type: "success"
+                    })
+                }
+
+                setSigning(false)
+            } catch (error) {
+                console.error("An Error", error)
+                setSigning(false)
+                toaster.create({
+                    description: `Error during signing`,
+                    type: "error"
+                })
+            }
+        } else {
+            setSigning(false)
+            toaster.create({
+                description: `MetaMask is not installed`,
+                type: "info"
+            })
+        }
+    };
+    return (
+        <Button size={'xs'} colorPalette={'blue'} variant={'subtle'} w={'80px'} onClick={signFileHandler} loading={signing}>
+            <LuSignature />
+            Sign
+        </Button>
+    )
+
+    // const lastRevisionVerificationHash=getLastRevisionVerificationHash(aquaTree!)
     // const signFileHandler = async () => {
     // setSigning(true)
     // if (window.ethereum) {
@@ -287,49 +367,7 @@ export const SignAquaChain = (aquaTree: AquaTree) => {
     // };
 
 
-    const signFileHandler = async () => {
-        setSigning(true)
-        if (window.ethereum) {
-            try {
 
-                const aquafier = new Aquafier();
-
-                const result = await aquafier.signAquaTree(aquaTree, "metamask", dummyCredential())
-                if (result.isErr()) {
-                    toaster.create({
-                        description: `Error signing failed`,
-                        type: "error"
-                    })
-                } else {
-                    toaster.create({
-                        description: `Signing successfull`,
-                        type: "success"
-                    })
-                }
-
-                setSigning(false)
-            } catch (error) {
-                console.error("An Error", error)
-                setSigning(false)
-                toaster.create({
-                    description: `Error during signing`,
-                    type: "error"
-                })
-            }
-        } else {
-            setSigning(false)
-            toaster.create({
-                description: `MetaMask is not installed`,
-                type: "info"
-            })
-        }
-    };
-    return (
-        <Button size={'xs'} colorPalette={'blue'} variant={'subtle'} w={'80px'} onClick={signFileHandler} loading={signing}>
-            <LuSignature />
-            Sign
-        </Button>
-    )
 }
 
 

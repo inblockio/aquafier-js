@@ -75,7 +75,7 @@ export default function ConnectWallet() {
         // formData.append("domain", domain);
 
         const url = `${backend_url}/session`;
-        console.log("url is ", url);
+        // console.log("url is ", url);
         // const response = await axios.post(url, formData, {
         //   headers: {
         //     "Content-Type": "application/x-www-form-urlencoded",

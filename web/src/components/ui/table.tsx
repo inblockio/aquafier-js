@@ -88,7 +88,7 @@ const FilesTable = () => {
                     <DownloadAquaChain file={item} />
                     <ChainDetailsBtn fileInfo={item} />
                     <WitnessAquaChain filename={item.fileObject[0].fileName} file_id={0} backend_url={backend_url} lastRevisionVerificationHash={getLastRevisionVerificationHash(item.aquaTree!)} />
-                    <SignAquaChain filename={item.fileObject[0].fileName} file_id={0} backend_url={backend_url} lastRevisionVerificationHash={getLastRevisionVerificationHash(item.aquaTree!)} />
+                    <SignAquaChain  backend_url={backend_url}  />
                     <DeleteAquaChain filename={item.fileObject[0].fileName} file_id={0} backend_url={backend_url} />
                 </Group>
             </VStack>
