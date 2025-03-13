@@ -18,3 +18,9 @@ export interface VerifyRequestBody {
   export   interface SessionQuery {
     nonce?: string;
   }
+
+
+  export interface SaveRevision{
+    revision : Revision,
+    revisionHash : string
+  }

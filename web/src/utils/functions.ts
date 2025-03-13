@@ -2,7 +2,7 @@ import { ethers } from "ethers";
 import { ApiFileInfo } from "../models/FileInfo";
 import { documentTypes, imageTypes, musicTypes, videoTypes } from "./constants";
 import { AvatarGenerator } from 'random-avatar-generator';
-import { AquaTree, FileObject } from "aqua-js-sdk";
+import { AquaTree, CredentialsData, FileObject } from "aqua-js-sdk";
 import jdenticon from "jdenticon/standalone";
 
 export function formatCryptoAddress(address?: string, start: number = 10, end: number = 4, message?: string): string {
@@ -259,6 +259,16 @@ export function timeToHumanFriendly(timestamp: string | undefined, showFull: boo
     return date.toLocaleDateString('en-US', showFull ? fullOptions : dateOptions);
 }
 
+export function dummyCredential():CredentialsData{
+    return {
+        mnemonic: "",
+        nostr_sk: "",
+        did_key: "",
+        alchemy_key: "",
+        witness_eth_network: "sepolia",
+        witness_method: "metamask"
+    }
+}
 
 export function displayTime(input: number | string): string {
     // Handle number input
