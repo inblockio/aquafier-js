@@ -5,7 +5,7 @@ export interface ApiFileInfo {
     // name: string,
     // extension: string,
     //page_data: string,
-    fileObject: FileObject
+    fileObject: FileObject[]
     aquaTree: AquaTree | null,
     linkedFileObjects: FileObject[],
     mode: string,

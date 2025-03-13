@@ -91,7 +91,7 @@ export async function fetchFiles(publicMetaMaskAddress: string, url: string, non
             throw new Error(`HTTP error! status: ${query.status}`);
         }
 
-        return  response;
+        return response;
         // const res = response;
 
         // console.log(`Res ==> ${JSON.stringify(res, null, 4)}`)
@@ -260,6 +260,38 @@ export function timeToHumanFriendly(timestamp: string | undefined, showFull: boo
 }
 
 
+export function displayTime(input: number | string): string {
+    // Handle number input
+    if (typeof input === 'number') {
+      const date = new Date(input);
+      return date.toDateString(); // Returns format like "Thu Mar 13 2025"
+    }
+    
+    // Handle string input
+    if (typeof input === 'string') {
+      // Check if string contains only numbers
+      if (/^\d+$/.test(input)) {
+        // Parse as number and convert to date
+        const date = new Date(parseInt(input, 10));
+        return date.toDateString();
+      } else {
+        // String contains alphabets, just display it
+        return input;
+      }
+    }
+    
+    // Handle invalid input
+    return "Invalid input";
+  }
+
+export const getFileHashFromUrl = (url: string) => {
+    // Using a regular expression to match the file ID
+    const regex = /\/files\/([a-f0-9]+)/;
+    const match = url.match(regex);
+
+    // Return the captured group if found, otherwise empty string
+    return match ? match[1] : '';
+}
 
 export const getLastRevisionVerificationHash = (aquaTree: AquaTree) => {
     const revisonHashes = Object.keys(aquaTree.revisions)

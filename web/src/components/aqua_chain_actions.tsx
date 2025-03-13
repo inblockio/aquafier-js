@@ -93,12 +93,12 @@ export const WitnessAquaChain = ({ file_id, filename, lastRevisionVerificationHa
                 }
 
                 const networkId = await getCurrentNetwork()
-                const currentChainId = ETH_CHAINID_MAP[user_profile.network]
+                const currentChainId = ETH_CHAINID_MAP[user_profile.witness_network]
                 if (networkId !== currentChainId) {
                     await switchNetwork(currentChainId)
                 }
-                const contract_address = ETH_CHAIN_ADDRESSES_MAP[user_profile.network]
-                const network = user_profile.network
+                const contract_address = ETH_CHAIN_ADDRESSES_MAP[user_profile.witness_network]
+                const network = user_profile.witness_network
 
                 const params = [
                     {
@@ -191,7 +191,7 @@ export const SignAquaChain = ({ file_id, filename, lastRevisionVerificationHash 
                 const provider = new ethers.BrowserProvider(window.ethereum);
 
                 const networkId = await getCurrentNetwork()
-                const currentChainId = ETH_CHAINID_MAP[user_profile.network]
+                const currentChainId = ETH_CHAINID_MAP[user_profile.witness_network]
                 if (networkId !== currentChainId) {
                     await switchNetwork(currentChainId)
                 }
@@ -233,7 +233,7 @@ export const SignAquaChain = ({ file_id, filename, lastRevisionVerificationHash 
                             }
                         });
 
-                        const res = await response.data;
+                        // const res = await response.data;
                         // Logs from api backend
                         // let logs: Array<string> = res.logs
                         // logs.forEach((item) => {
@@ -241,18 +241,19 @@ export const SignAquaChain = ({ file_id, filename, lastRevisionVerificationHash 
                         // })
 
                         if (response.status === 200) {
-                            const resp: ApiFileInfo = res.file
+                            throw Error("Fix me ....")
+                            // const resp: ApiFileInfo = res.file
 
-                            const array: ApiFileInfo[] = [];
-                            for (let index = 0; index < files.length; index++) {
-                                const file = files[index];
-                                if (file.id === file_id) {
-                                    array.push(resp)
-                                } else {
-                                    array.push(file)
-                                }
-                            }
-                            setFiles(array)
+                            // const array: ApiFileInfo[] = [];
+                            // for (let index = 0; index < files.length; index++) {
+                            //     const file = files[index];
+                            //     if (file.id === file_id) {
+                            //         array.push(resp)
+                            //     } else {
+                            //         array.push(file)
+                            //     }
+                            // }
+                            // setFiles(array)
                             toaster.create({
                                 description: "File signed successfully",
                                 type: "success"
@@ -312,18 +313,19 @@ export const DeleteAquaChain = ({ file_id, filename, backend_url }: ISigningAndW
         });
 
         if (response.status === 200) {
-            let filesNew: Array<ApiFileInfo> = [];
-            for (let index = 0; index < files.length; index++) {
-                const file = files[index];
-                if (file.id != file_id) {
-                    filesNew.push(file)
-                }
-            }
-            setFiles(filesNew);
-            toaster.create({
-                description: "File deleted successfully",
-                type: "success"
-            })
+            throw Error("Fix me ....2")
+            // let filesNew: Array<ApiFileInfo> = [];
+            // for (let index = 0; index < files.length; index++) {
+            //     const file = files[index];
+            //     if (file.id != file_id) {
+            //         filesNew.push(file)
+            //     }
+            // }
+            // setFiles(filesNew);
+            // toaster.create({
+            //     description: "File deleted successfully",
+            //     type: "success"
+            // })
         }
         setDeleting(false)
     }

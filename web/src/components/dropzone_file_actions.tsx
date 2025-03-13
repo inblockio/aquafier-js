@@ -72,7 +72,7 @@ export const UploadFile = ({ file, uploadedIndexes, fileIndex, updateUploadedInd
 
             const fileInfo : ApiFileInfo = {
                 aquaTree: res.aquaTree,
-                fileObject:  res.fileObject,
+                fileObject:  [res.fileObject],
                 linkedFileObjects: [],
                 mode:"private",
                 owner: metamaskAddress??""

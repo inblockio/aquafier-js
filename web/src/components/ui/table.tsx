@@ -12,7 +12,7 @@ import { Checkbox } from "./checkbox"
 import { SetStateAction, useEffect, useState } from "react"
 import { useStore } from "zustand"
 import appStore from "../../store"
-import { getFileCategory, getFileExtension } from "../../utils/functions"
+import { displayTime, getFileCategory, getFileExtension, getLastRevisionVerificationHash } from "../../utils/functions"
 
 import { DeleteAquaChain, DownloadAquaChain, ShareButton, SignAquaChain, WitnessAquaChain } from "../aqua_chain_actions"
 import { ChainDetailsBtn } from "./navigation/CustomDrawer"
@@ -28,14 +28,16 @@ const FilesTable = () => {
 
     const hasSelection = selection.length > 0
     const indeterminate = hasSelection && selection.length < files.length
-    console.log(files)
+ 
 
     const rows = files?.map((item: ApiFileInfo, index: number) => {
 
-        
+
+
+
         return <Table.Row
             key={index}
-            data-selected={selection.includes(item.fileObject.fileName) ? "" : undefined}
+            // data-selected={selection.includes(item.fileObject[0].fileName)?? "--" ? "" : undefined}
         >
             <Table.Cell>
                 <Checkbox
@@ -51,48 +53,47 @@ const FilesTable = () => {
                     }}
                 />
             </Table.Cell>
-            <Table.Cell minW={'180px'} maxW={'180px'} textWrap={'wrap'}>{item.fileObject.fileName}</Table.Cell>
-            {/* <Table.Cell minW={'120px'} maxW={'120px'} textWrap={'wrap'}>{getFileCategory(getFileExtension(item.fileObject.fileName))}</Table.Cell> */}
-         
-            {/* <Table.Cell minW={'140px'} maxW={'140px'} textWrap={'wrap'}>
-                
-                 {timeToHumanFriendly(getTimestampSafe(item.aquaTree), true)} 
+            <Table.Cell minW={'180px'} maxW={'180px'} textWrap={'wrap'}>{item.fileObject[0].fileName}</Table.Cell>
+            <Table.Cell minW={'120px'} maxW={'120px'} textWrap={'wrap'}>{getFileCategory(getFileExtension(item.fileObject[0].fileName))}</Table.Cell>
+
+            <Table.Cell minW={'140px'} maxW={'140px'} textWrap={'wrap'}>
+                {displayTime(Object.values(item.aquaTree!.revisions!)[0].local_timestamp)}
             </Table.Cell>
             <Table.Cell minW={'100px'} maxW={'100px'} textWrap={'wrap'}>
                 <FormatByte value={
-                     sumFileContentSize(JSON.parse(item.page_data))
+                    0 //sumFileContentSize(JSON.parse(item.page_data))
                 } />
-            </Table.Cell> */}
-            {/* <Table.Cell minW={'220px'} maxW={'220px'} textWrap={'wrap'}>
+            </Table.Cell>
+            <Table.Cell minW={'220px'} maxW={'220px'} textWrap={'wrap'}>
                 <Group alignItems={'start'} flexWrap={'wrap'}>
-                    <ShareButton id={index} file_id={index} filename={item.fileObject.fileName} />
+                    <ShareButton id={index} file_id={index} filename={item.fileObject[0].fileName} />
                     <DownloadAquaChain file={item} />
                     <ChainDetailsBtn fileInfo={item} />
-                    <WitnessAquaChain filename={item.fileObject.fileName} file_id={index}  backend_url={backend_url} lastRevisionVerificationHash={getLastRevisionVerificationHash(item.page_data)} />
-                    <SignAquaChain filename={item.fileObject.fileName} file_id={index}  backend_url={backend_url} lastRevisionVerificationHash={getLastRevisionVerificationHash(JSON.parse(item.page_data))} />
-                    <DeleteAquaChain filename={item.fileObject.fileName}  file_id={index}  backend_url={backend_url} />
+                    <WitnessAquaChain filename={item.fileObject[0].fileName} file_id={index}  backend_url={backend_url} lastRevisionVerificationHash={getLastRevisionVerificationHash(item.aquaTree!)} />
+                    <SignAquaChain filename={item.fileObject[0].fileName} file_id={index}  backend_url={backend_url} lastRevisionVerificationHash={getLastRevisionVerificationHash(item.aquaTree!)} />
+                    <DeleteAquaChain filename={item.fileObject[0].fileName}  file_id={index}  backend_url={backend_url} />
                 </Group>
-            </Table.Cell> */}
+            </Table.Cell>
         </Table.Row>
     })
 
-    // const smallScreenView = files?.map((item: ApiFileInfo) => (
-    //     <Box key={`sm_${item}`} bg={'gray.100'} _dark={{
-    //         bg: 'blackAlpha.950'
-    //     }} p={2} borderRadius={'10px'}>
-    //         <VStack textAlign={'start'}>
-    //             <Text textAlign={'start'} w={'100%'}>{item.fileObject.fileName}</Text>
-    //             <Group alignItems={'start'} flexWrap={'wrap'}>
-    //                 <ShareButton id={item.id} file_id={item.id} filename={item.fileObject.fileName} />
-    //                 <DownloadAquaChain file={item} />
-    //                 <ChainDetailsBtn fileInfo={item} />
-    //                 <WitnessAquaChain filename={item.fileObject.fileName} file_id={item.id} backend_url={backend_url} lastRevisionVerificationHash={getLastRevisionVerificationHash(JSON.parse(item.page_data))} />
-    //                 <SignAquaChain filename={item.fileObject.fileName} file_id={item.id} backend_url={backend_url} lastRevisionVerificationHash={getLastRevisionVerificationHash(JSON.parse(item.page_data))} />
-    //                 <DeleteAquaChain filename={item.fileObject.fileName} file_id={item.id} backend_url={backend_url} />
-    //             </Group>
-    //         </VStack>
-    //     </Box>
-    // ))
+    const smallScreenView = files?.map((item: ApiFileInfo) => (
+        <Box key={`sm_${item}`} bg={'gray.100'} _dark={{
+            bg: 'blackAlpha.950'
+        }} p={2} borderRadius={'10px'}>
+            <VStack textAlign={'start'}>
+                <Text textAlign={'start'} w={'100%'}>{item.fileObject[0].fileName}</Text>
+                <Group alignItems={'start'} flexWrap={'wrap'}>
+                    <ShareButton id={0} file_id={0} filename={item.fileObject[0].fileName} />
+                    <DownloadAquaChain file={item} />
+                    <ChainDetailsBtn fileInfo={item} />
+                    <WitnessAquaChain filename={item.fileObject[0].fileName} file_id={0} backend_url={backend_url} lastRevisionVerificationHash={getLastRevisionVerificationHash(item.aquaTree!)} />
+                    <SignAquaChain filename={item.fileObject[0].fileName} file_id={0} backend_url={backend_url} lastRevisionVerificationHash={getLastRevisionVerificationHash(item.aquaTree!)} />
+                    <DeleteAquaChain filename={item.fileObject[0].fileName} file_id={0} backend_url={backend_url} />
+                </Group>
+            </VStack>
+        </Box>
+    ))
 
     useEffect(() => {
         if (files) {
@@ -134,7 +135,7 @@ const FilesTable = () => {
             <CardBody px={0}>
                 <Box hideFrom={'md'}>
                     <VStack gap={4}>
-                        {/* {smallScreenView} */}
+                        {smallScreenView}
                     </VStack>
                 </Box>
                 <Table.ScrollArea hideBelow={'md'}>
@@ -142,16 +143,19 @@ const FilesTable = () => {
                         <Table.Header>
                             <Table.Row>
                                 <Table.ColumnHeader w="6">
-                                    {/* <Checkbox
+                                    <Checkbox
                                         top="1"
                                         aria-label="Select all rows"
                                         checked={indeterminate ? "indeterminate" : selection.length > 0}
-                                        onCheckedChange={(changes) => {
-                                            setSelection(
-                                                changes.checked ? files.map((item: ApiFileInfo) => item.id.toString()) : [],
-                                            )
+                                        onCheckedChange={(_changes) => {
+                                            //todo fix me
+                                            // let genesis =  Object.values(files.)
+                                            // let fileHash =   getFileHashFromUrl()
+                                            // setSelection(
+                                            //     changes.checked ? files.map((item: ApiFileInfo) => item.id.toString()) : [],
+                                            // )
                                         }}
-                                    /> */}
+                                    />
                                 </Table.ColumnHeader>
                                 <Table.ColumnHeader fontWeight={600} fontSize={{ base: 'sm', md: 'md' }}>File Name</Table.ColumnHeader>
                                 <Table.ColumnHeader fontWeight={600} fontSize={{ base: 'sm', md: 'md' }}>Type</Table.ColumnHeader>
