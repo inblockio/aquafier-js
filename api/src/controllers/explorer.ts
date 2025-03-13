@@ -517,44 +517,32 @@ export default async function explorerController(fastify: FastifyInstance) {
     });
 
 
-
-
     fastify.post('/explorer_delete_file', async (request, reply) => {
         // Read `nonce` from headers
         const nonce = request.headers['nonce']; // Headers are case-insensitive
-
+    
         // Check if `nonce` is missing or empty
         if (!nonce || typeof nonce !== 'string' || nonce.trim() === '') {
             return reply.code(401).send({ error: 'Unauthorized: Missing or empty nonce header' });
         }
-
+    
         const session = await prisma.siweSession.findUnique({
             where: { nonce }
         });
-
+    
         if (!session) {
-            return reply.code(403).send({ success: false, message: "Nounce  is invalid" });
+            return reply.code(403).send({ success: false, message: "Nonce is invalid" });
         }
-
-
-        const revisionDataPar = request.body as DeleteRevision
-
+    
+        const revisionDataPar = request.body as DeleteRevision;
+    
         if (!revisionDataPar.revisionHash) {
             return reply.code(400).send({ success: false, message: "revision hash is required" });
         }
-
-        let filepubkeyhash = `${session.address}_${revisionDataPar.revisionHash}`
-
-        //delete latest
-        let resLatest = await prisma.latest.delete({
-            where: {
-                hash: filepubkeyhash
-            }
-        });
-
+    
+        let filepubkeyhash = `${session.address}_${revisionDataPar.revisionHash}`;
+       
         //fetch all the revisions 
-        // let revisionHashs: Array<string> = [];
-
         let revisionData = [];
         // fetch latest revision 
         let latestRevionData = await prisma.revision.findFirst({
@@ -562,102 +550,308 @@ export default async function explorerController(fastify: FastifyInstance) {
                 pubkey_hash: filepubkeyhash
             }
         });
-
+    
         if (latestRevionData == null) {
-            return reply.code(500).send({ success: false, message: `revision with hash ${latestRevionData} not found in system` });
+            return reply.code(500).send({ success: false, message: `revision with hash ${revisionDataPar.revisionHash} not found in system` });
         }
         revisionData.push(latestRevionData);
-
+    
         try {
-            console.log(`previous ${latestRevionData?.previous}`)
-            //if previosu verification hash is not empty find the previous one
+            console.log(`previous ${latestRevionData?.previous}`);
+            //if previous verification hash is not empty find the previous one
             if (latestRevionData?.previous !== null && latestRevionData?.previous?.length !== 0) {
                 let aquaTreerevision = await findAquaTreeRevision(latestRevionData?.previous!!);
-                revisionData.push(...aquaTreerevision)
+                revisionData.push(...aquaTreerevision);
             }
         } catch (e: any) {
-            return reply.code(500).send({ success: false, message: `Error fetching a revision ${JSON.stringify(error, null, 4)}` });
+            return reply.code(500).send({ success: false, message: `Error fetching a revision ${JSON.stringify(e, null, 4)}` });
         }
-
-
-        for (let item of revisionData) {
-            let latestRevionData = await prisma.revision.delete({
-                where: {
-                    pubkey_hash: item.pubkey_hash
-                }
-            });
-            console.log(`Data ${JSON.stringify(latestRevionData)}`)
-
-            if (item.previous == "" || item.previous == null || item.previous.trim().length == 0) {
-                let filesData = await prisma.file.findFirst({
-                    where: {
-                        hash: item.pubkey_hash
-                    }
-                });
-
-                if (filesData != null) {
-
-                    if (filesData.reference_count == 0) {
-
-                        await prisma.file.delete({
+    
+        try {
+            // Use Prisma transaction to ensure all or nothing execution
+            await prisma.$transaction(async (tx) => {
+                // Step 1: Handle file references and file index first
+                for (let item of revisionData) {
+                    if (item.previous == "" || item.previous == null || item.previous.trim().length == 0) {
+                        let filesData = await tx.file.findFirst({
                             where: {
                                 hash: item.pubkey_hash
                             }
-                        })
-
-                        if (filesData.content != null) {
-                            try {
-                                // delete the file
-                                fs.unlinkSync(filesData.content);
-                            } catch (er) {
-                                console.log("##########################################")
-                                console.log(er)
+                        });
+    
+                        if (filesData != null) {
+                            // Handle file index references first
+                            const fileIndexData = await tx.fileIndex.findFirst({
+                                where: {
+                                    hash: {
+                                        has: item.pubkey_hash
+                                    }
+                                }
+                            });
+    
+                            if (fileIndexData != null) {
+                                if (fileIndexData.reference_count ?? 0 <= 1) {
+                                    await tx.fileIndex.delete({
+                                        where: {
+                                            id: fileIndexData.id
+                                        }
+                                    });
+                                } else {
+                                    await tx.fileIndex.update({
+                                        where: {
+                                            id: fileIndexData.id
+                                        },
+                                        data: {
+                                            hash: fileIndexData.hash.filter((item2) => item2 != item.pubkey_hash),
+                                            reference_count: fileIndexData.reference_count! - 1
+                                        }
+                                    });
+                                }
+                            }
+    
+                            // Update the file reference count
+                            if (filesData.reference_count ?? 0 <= 0) {
+                                if (filesData.content != null) {
+                                    try {
+                                        // Note: File system operations are outside the transaction
+                                        // and will not be rolled back if transaction fails
+                                        fs.unlinkSync(filesData.content);
+                                    } catch (er) {
+                                        console.log("Error deleting file from filesystem:", er);
+                                        // Continue even if file deletion fails
+                                    }
+                                }
+                                
+                                await tx.file.delete({
+                                    where: {
+                                        hash: item.pubkey_hash
+                                    }
+                                });
+                            } else {
+                                await tx.file.update({
+                                    where: {
+                                        hash: item.pubkey_hash
+                                    },
+                                    data: {
+                                        reference_count: filesData.reference_count! - 1
+                                    }
+                                });
                             }
                         }
-                    } else {
-                        await prisma.file.update({
-                            where: {
-                                hash: item.pubkey_hash
-                            },
-                            data: {
-                                reference_count: filesData.reference_count! - 1
-                            }
-                        })
                     }
-
-                    const fileIndexData = await prisma.fileIndex.findFirst({
+                }
+    
+                // Step 2: Find any references to these revisions in other tables and handle them
+                // This is to fix the circular dependency between revision and latest
+    
+                // First, find any revisions that reference our revisions
+                const revisionPubkeyHashes = revisionData.map(rev => rev.pubkey_hash);
+                
+                // Remove any references to our revisions from other tables
+                // We need to update any tables that might have foreign keys to our revisions
+                
+                // For example, update other revisions that might reference these ones
+                await tx.revision.updateMany({
+                    where: {
+                        previous: {
+                            in: revisionPubkeyHashes
+                        }
+                    },
+                    data: {
+                        previous: null
+                    }
+                });
+    
+                // Step 3: Delete the latest entry - we need to do this before deleting revisions
+                try {
+                    await tx.latest.deleteMany({
                         where: {
                             hash: {
-                                has: item.pubkey_hash // The hash you're looking for
+                                in: revisionPubkeyHashes
                             }
                         }
                     });
-
-                    if (fileIndexData != null) {
-                        if (fileIndexData.reference_count == 0) {
-
-                            await prisma.fileIndex.delete({
-                                where: {
-                                    id: fileIndexData.id
-                                }
-                            })
-                        } else {
-                            await prisma.fileIndex.update({
-                                where: {
-                                    id: fileIndexData.id
-                                },
-                                data: {
-                                    hash: fileIndexData.hash.filter((item2) => item2 != item.pubkey_hash),
-                                    reference_count: fileIndexData.reference_count! - 1
-                                }
-                            })
-                        }
-                    }
+                } catch (e) {
+                    console.log("Warning: Error in deleting latest entries:", e);
+                    // We'll continue, as the transaction will roll back if it fails
                 }
-            }
+    
+                // Step 4: Now we can safely delete all revisions
+                for (let item of revisionData) {
+                    await tx.revision.delete({
+                        where: {
+                            pubkey_hash: item.pubkey_hash
+                        }
+                    });
+                    console.log(`Deleted revision with pubkey_hash: ${item.pubkey_hash}`);
+                }
+            });
+    
+            return reply.code(200).send({ success: true, message: "File and revisions deleted successfully" });
+        } catch (error: any) {
+            console.error("Error in delete operation:", error);
+            return reply.code(500).send({ 
+                success: false, 
+                message: `Error deleting file: ${error.message}`, 
+                details: error 
+            });
         }
-
     });
+
+
+    // fastify.post('/explorer_delete_file', async (request, reply) => {
+    //     // Read `nonce` from headers
+    //     const nonce = request.headers['nonce']; // Headers are case-insensitive
+
+    //     // Check if `nonce` is missing or empty
+    //     if (!nonce || typeof nonce !== 'string' || nonce.trim() === '') {
+    //         return reply.code(401).send({ error: 'Unauthorized: Missing or empty nonce header' });
+    //     }
+
+    //     const session = await prisma.siweSession.findUnique({
+    //         where: { nonce }
+    //     });
+
+    //     if (!session) {
+    //         return reply.code(403).send({ success: false, message: "Nounce is invalid" });
+    //     }
+
+    //     const revisionDataPar = request.body as DeleteRevision;
+
+    //     if (!revisionDataPar.revisionHash) {
+    //         return reply.code(400).send({ success: false, message: "revision hash is required" });
+    //     }
+
+    //     let filepubkeyhash = `${session.address}_${revisionDataPar.revisionHash}`;
+
+    //     //fetch all the revisions 
+    //     let revisionData = [];
+    //     // fetch latest revision 
+    //     let latestRevionData = await prisma.revision.findFirst({
+    //         where: {
+    //             pubkey_hash: filepubkeyhash
+    //         }
+    //     });
+
+    //     if (latestRevionData == null) {
+    //         return reply.code(500).send({ success: false, message: `revision with hash ${revisionDataPar.revisionHash} not found in system` });
+    //     }
+    //     revisionData.push(latestRevionData);
+
+    //     try {
+    //         console.log(`previous ${latestRevionData?.previous}`);
+    //         //if previous verification hash is not empty find the previous one
+    //         if (latestRevionData?.previous !== null && latestRevionData?.previous?.length !== 0) {
+    //             let aquaTreerevision = await findAquaTreeRevision(latestRevionData?.previous!!);
+    //             revisionData.push(...aquaTreerevision);
+    //         }
+    //     } catch (e: any) {
+    //         return reply.code(500).send({ success: false, message: `Error fetching a revision ${JSON.stringify(e, null, 4)}` });
+    //     }
+
+    //     try {
+    //         // First, handle the file references and delete related file entries
+    //         for (let item of revisionData) {
+    //             if (item.previous == "" || item.previous == null || item.previous.trim().length == 0) {
+    //                 let filesData = await prisma.file.findFirst({
+    //                     where: {
+    //                         hash: item.pubkey_hash
+    //                     }
+    //                 });
+
+    //                 if (filesData != null) {
+    //                     // Handle file index references first
+    //                     const fileIndexData = await prisma.fileIndex.findFirst({
+    //                         where: {
+    //                             hash: {
+    //                                 has: item.pubkey_hash
+    //                             }
+    //                         }
+    //                     });
+
+    //                     if (fileIndexData != null) {
+    //                         if (fileIndexData.reference_count ?? 0  <= 1) {
+    //                             await prisma.fileIndex.delete({
+    //                                 where: {
+    //                                     id: fileIndexData.id
+    //                                 }
+    //                             });
+    //                         } else {
+    //                             await prisma.fileIndex.update({
+    //                                 where: {
+    //                                     id: fileIndexData.id
+    //                                 },
+    //                                 data: {
+    //                                     hash: fileIndexData.hash.filter((item2) => item2 != item.pubkey_hash),
+    //                                     reference_count: fileIndexData.reference_count! - 1
+    //                                 }
+    //                             });
+    //                         }
+    //                     }
+
+    //                     // Now handle the file
+    //                     if (filesData.reference_count ?? 0 <= 0) {
+    //                         if (filesData.content != null) {
+    //                             try {
+    //                                 // delete the file from filesystem
+    //                                 fs.unlinkSync(filesData.content);
+    //                             } catch (er) {
+    //                                 console.log("##########################################");
+    //                                 console.log(er);
+    //                             }
+    //                         }
+
+    //                         await prisma.file.delete({
+    //                             where: {
+    //                                 hash: item.pubkey_hash
+    //                             }
+    //                         });
+    //                     } else {
+    //                         await prisma.file.update({
+    //                             where: {
+    //                                 hash: item.pubkey_hash
+    //                             },
+    //                             data: {
+    //                                 reference_count: filesData.reference_count! - 1
+    //                             }
+    //                         });
+    //                     }
+    //                 }
+    //             }
+    //         }
+
+    //         // Delete the "latest" entry before attempting to delete revisions
+    //         try {
+    //             await prisma.latest.delete({
+    //                 where: {
+    //                     hash: filepubkeyhash
+    //                 }
+    //             });
+    //         } catch (e) {
+    //             console.log("Error deleting latest entry:", e);
+    //             // Continue with the process even if this fails
+    //         }
+
+    //         // Now that we've handled all the dependencies, delete the revisions
+    //         for (let item of revisionData) {
+    //             await prisma.revision.delete({
+    //                 where: {
+    //                     pubkey_hash: item.pubkey_hash
+    //                 }
+    //             });
+    //             console.log(`Deleted revision with pubkey_hash: ${item.pubkey_hash}`);
+    //         }
+
+    //         return reply.code(200).send({ success: true, message: "File and revisions deleted successfully" });
+    //     } catch (error: any) {
+    //         console.error("Error in delete operation:", error);
+    //         return reply.code(500).send({
+    //             success: false,
+    //             message: `Error deleting file: ${error.message}`,
+    //             details: error
+    //         });
+    //     }
+    // });
 
 }
 

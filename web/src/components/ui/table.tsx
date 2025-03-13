@@ -32,7 +32,7 @@ const FilesTable = () => {
 
     const rows = files?.map((item: ApiFileInfo, index: number) => {
 
-
+       
 
 
         return <Table.Row
@@ -165,7 +165,7 @@ const FilesTable = () => {
                             </Table.Row>
                         </Table.Header>
                         <Table.Body>
-                            {rows}
+                            
                             {filesToDisplay.length === 0 ?
                                 <Table.Row>
                                     <Table.Cell colSpan={6}>
@@ -175,7 +175,11 @@ const FilesTable = () => {
                                     </Table.Cell>
                                 </Table.Row>
                                 :
-                                null
+                                <>
+                                {/* { files != null && files.length > 0 ? rows : <></>} */}
+
+                                {JSON.stringify(files)}
+                                </>
                             }
                         </Table.Body>
                     </Table.Root>

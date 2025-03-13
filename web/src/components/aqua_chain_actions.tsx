@@ -288,34 +288,42 @@ export const DeleteAquaChain = ({ apiFileInfo, backendUrl, nonce }: RevionOperat
     const deleteFile = async () => {
         setDeleting(true)
 
-        const allRevisionHashes = Object.keys(apiFileInfo.aquaTree!.revisions!);
-        const lastRevisionHash = allRevisionHashes[allRevisionHashes.length - 1]
-        const url = `${backendUrl}/explorer_delete_file`
-        const response = await axios.post(url, {
-            "fileHash": lastRevisionHash
-        }, {
-            headers: {
-                'nonce': nonce
-            }
-        });
-
-        if (response.status === 200) {
-            console.log("update state ...")
-            const newFiles: ApiFileInfo[] = [];
-            const keysPar = Object.keys(apiFileInfo.aquaTree!.revisions!)
-            files.forEach((item) => {
-                const keys = Object.keys(item.aquaTree!.revisions!)
-                if (areArraysEqual(keys, keysPar)) {
-                    console.log("ignore revision files ...")
-                } else {
-                    newFiles.push(item)
+        try {
+            const allRevisionHashes = Object.keys(apiFileInfo.aquaTree!.revisions!);
+            const lastRevisionHash = allRevisionHashes[allRevisionHashes.length - 1]
+            const url = `${backendUrl}/explorer_delete_file`
+            const response = await axios.post(url, {
+                "revisionHash": lastRevisionHash
+            }, {
+                headers: {
+                    'nonce': nonce
                 }
-            })
+            });
 
-            setFiles(newFiles)
+            if (response.status === 200) {
+                console.log("update state ...")
+                const newFiles: ApiFileInfo[] = [];
+                const keysPar = Object.keys(apiFileInfo.aquaTree!.revisions!)
+                files.forEach((item) => {
+                    const keys = Object.keys(item.aquaTree!.revisions!)
+                    if (areArraysEqual(keys, keysPar)) {
+                        console.log("ignore revision files ...")
+                    } else {
+                        newFiles.push(item)
+                    }
+                })
+
+                setFiles(newFiles)
+                toaster.create({
+                    description: "File deleted successfully",
+                    type: "success"
+                })
+            }
+        } catch (e) {
+            console.log(`Error ${e}`)
             toaster.create({
-                description: "File deleted successfully",
-                type: "success"
+                description: "File deletion error",
+                type: "error"
             })
         }
         setDeleting(false)
@@ -337,7 +345,7 @@ export const DownloadAquaChain = ({ file }: { file: ApiFileInfo }) => {
     const downloadAquaJson = async () => {
         try {
             setDownloading(true)
-           
+
             // Convert the PageData object to a formatted JSON string
             const jsonString = JSON.stringify(file.aquaTree, null, 2);
 
@@ -364,25 +372,25 @@ export const DownloadAquaChain = ({ file }: { file: ApiFileInfo }) => {
 
 
 
-              // Loop through each file object and download the content
-              for (const fileObj of file.fileObject) {
+            // Loop through each file object and download the content
+            for (const fileObj of file.fileObject) {
                 // Check if fileContent is a string (URL)
                 if (typeof fileObj.fileContent === 'string' && fileObj.fileContent.startsWith('http')) {
                     try {
                         // Fetch the file from the URL
                         const response = await fetch(fileObj.fileContent);
                         const blob = await response.blob();
-                        
+
                         // Create URL from blob
                         const url = URL.createObjectURL(blob);
-                        
+
                         // Create temporary anchor and trigger download
                         const a = document.createElement('a');
                         a.href = url;
                         a.download = fileObj.fileName;
                         document.body.appendChild(a);
                         a.click();
-                        
+
                         // Clean up
                         document.body.removeChild(a);
                         URL.revokeObjectURL(url);
@@ -395,13 +403,13 @@ export const DownloadAquaChain = ({ file }: { file: ApiFileInfo }) => {
                     }
                 }
             }
-            
+
             toaster.create({
                 description: `Files downloaded successfully`,
                 type: "success"
             });
             setDownloading(false)
-        } catch (error  ) {
+        } catch (error) {
             toaster.create({
                 description: `Error downloading JSON: ${error}`,
                 type: "error"
