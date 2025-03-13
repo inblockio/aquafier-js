@@ -599,13 +599,23 @@ export default async function explorerController(fastify: FastifyInstance) {
 
                     if (filesData.reference_count == 0) {
 
-                        prisma.file.delete({
+                        await prisma.file.delete({
                             where: {
                                 hash: item.pubkey_hash
                             }
                         })
+
+                        if (filesData.content != null) {
+                            try {
+                                // delete the file
+                                fs.unlinkSync(filesData.content);
+                            } catch (er) {
+                                console.log("##########################################")
+                                console.log(er)
+                            }
+                        }
                     } else {
-                        prisma.file.update({
+                        await prisma.file.update({
                             where: {
                                 hash: item.pubkey_hash
                             },
@@ -626,13 +636,13 @@ export default async function explorerController(fastify: FastifyInstance) {
                     if (fileIndexData != null) {
                         if (fileIndexData.reference_count == 0) {
 
-                            prisma.fileIndex.delete({
+                            await prisma.fileIndex.delete({
                                 where: {
                                     id: fileIndexData.id
                                 }
                             })
                         } else {
-                            prisma.fileIndex.update({
+                            await prisma.fileIndex.update({
                                 where: {
                                     id: fileIndexData.id
                                 },

@@ -22,7 +22,7 @@ import { ApiFileInfo } from "../../models/FileInfo"
 
 const FilesTable = () => {
     const [filesToDisplay, setFilesToDisplay] = useState<ApiFileInfo[]>([])
-    const { files, backend_url } = useStore(appStore)
+    const { files, backend_url, session } = useStore(appStore)
     const [selection, setSelection] = useState<string[]>([])
 
 
@@ -69,9 +69,9 @@ const FilesTable = () => {
                     <ShareButton id={index} file_id={index} filename={item.fileObject[0].fileName} />
                     <DownloadAquaChain file={item} />
                     <ChainDetailsBtn fileInfo={item} />
-                    <WitnessAquaChain filename={item.fileObject[0].fileName} file_id={index}  backend_url={backend_url} lastRevisionVerificationHash={getLastRevisionVerificationHash(item.aquaTree!)} />
-                    <SignAquaChain filename={item.fileObject[0].fileName} file_id={index}  backend_url={backend_url} lastRevisionVerificationHash={getLastRevisionVerificationHash(item.aquaTree!)} />
-                    <DeleteAquaChain filename={item.fileObject[0].fileName}  file_id={index}  backend_url={backend_url} />
+                    <WitnessAquaChain apiFileInfo={item}  backendUrl={backend_url} nonce={session?.nonce ?? ""} revision="" />
+                    <SignAquaChain apiFileInfo={item}  backendUrl={backend_url} nonce={session?.nonce ?? ""} revision="" />
+                    <DeleteAquaChain apiFileInfo={item}  backendUrl={backend_url} nonce={session?.nonce ?? ""} revision="" />
                 </Group>
             </Table.Cell>
         </Table.Row>
@@ -87,9 +87,9 @@ const FilesTable = () => {
                     <ShareButton id={0} file_id={0} filename={item.fileObject[0].fileName} />
                     <DownloadAquaChain file={item} />
                     <ChainDetailsBtn fileInfo={item} />
-                    <WitnessAquaChain filename={item.fileObject[0].fileName} file_id={0} backend_url={backend_url} lastRevisionVerificationHash={getLastRevisionVerificationHash(item.aquaTree!)} />
-                    <SignAquaChain  backend_url={backend_url}  />
-                    <DeleteAquaChain filename={item.fileObject[0].fileName} file_id={0} backend_url={backend_url} />
+                    <WitnessAquaChain apiFileInfo={item}  backendUrl={backend_url} nonce={session?.nonce ?? ""} revision="" />
+                    <SignAquaChain  apiFileInfo={item}  backendUrl={backend_url} nonce={session?.nonce ?? ""} revision=""  />
+                    <DeleteAquaChain apiFileInfo={item}  backendUrl={backend_url} nonce={session?.nonce ?? ""} revision="" />
                 </Group>
             </VStack>
         </Box>
