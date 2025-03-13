@@ -82,18 +82,6 @@ model File {
     @@map("file")
 }
 
-model Link {
-  hash                                String        @id
-  link_type                           String?
-  link_require_indepth_verification   Boolean?
-  link_verification_hash              Json?
-  reference_count                     Int?
-  Revision                            Revision      @relation(fields: [hash], references: [pubkey_hash])
-  // FileIndex                           FileIndex?    @relation(fields: [hash], references: [hash])
-
-  @@map("link")
-}
-
 model FileIndex {
   id               String            @id @default(uuid())
   hash             String[]
@@ -108,6 +96,18 @@ model FileIndex {
   // @@id([hash, file_hash])
 
   @@map("file_index")
+}
+
+model Link {
+  hash                                String        @id
+  link_type                           String?
+  link_require_indepth_verification   Boolean?
+  link_verification_hash              Json?
+  reference_count                     Int?
+  Revision                            Revision      @relation(fields: [hash], references: [pubkey_hash])
+  // FileIndex                           FileIndex?    @relation(fields: [hash], references: [hash])
+
+  @@map("link")
 }
 
 model Signature {
