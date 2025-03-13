@@ -1,7 +1,7 @@
-import { AquaTree } from "aqua-js-sdk";
+import { ApiFileInfo } from "./FileInfo";
 
 export interface RevionOperation {
-    aquaTree: AquaTree 
+    apiFileInfo:  ApiFileInfo 
     backendUrl : string,
     revision : string,
     nonce : string

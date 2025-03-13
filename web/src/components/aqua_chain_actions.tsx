@@ -1,7 +1,7 @@
 import { LuDelete, LuDownload, LuGlasses, LuShare2, LuSignature } from "react-icons/lu"
 import { Button } from "./ui/button"
 import { ethers } from "ethers"
-import { dummyCredential, getCurrentNetwork, switchNetwork } from "../utils/functions"
+import { areArraysEqual, dummyCredential, getCurrentNetwork, switchNetwork } from "../utils/functions"
 import { ETH_CHAIN_ADDRESSES_MAP, ETH_CHAINID_MAP } from "../utils/constants"
 import { useStore } from "zustand"
 import appStore from "../store"
@@ -66,16 +66,10 @@ async function storeWitnessTx(file_id: number, filename: string, txhash: string,
 }
 
 
-// interface ISigningAndWitnessing {
-//     file_id: number,
-//     filename: string,
-//     lastRevisionVerificationHash?: string,
-//     backend_url: string
-// }
 
-export const WitnessAquaChain = ({ aquaTree, backendUrl, nonce }: RevionOperation) => {
-// export const WitnessAquaChain = ({ file_id, filename, lastRevisionVerificationHash }: ISigningAndWitnessing) => {
-    const { user_profile, files, setFiles, metamaskAddress, backend_url } = useStore(appStore)
+
+export const WitnessAquaChain = ({ apiFileInfo, backendUrl, nonce }: RevionOperation) => {
+   const {  files, setFiles, metamaskAddress } = useStore(appStore)
     const [witnessing, setWitnessing] = useState(false)
 
 
@@ -95,48 +89,70 @@ export const WitnessAquaChain = ({ aquaTree, backendUrl, nonce }: RevionOperatio
                     return;
                 }
 
-                // const networkId = await getCurrentNetwork()
-                // const currentChainId = ETH_CHAINID_MAP[user_profile.witness_network]
-                // if (networkId !== currentChainId) {
-                //     await switchNetwork(currentChainId)
-                // }
-                // const contract_address = ETH_CHAIN_ADDRESSES_MAP[user_profile.witness_network]
-                // const network = user_profile.witness_network
+                const aquafier = new Aquafier();
 
-                // const params = [
-                //     {
-                //         from: walletAddress,
-                //         // to: SEPOLIA_SMART_CONTRACT_ADDRESS,
-                //         to: contract_address,
-                //         // gas and gasPrice are optional values which are
-                //         // automatically set by MetaMask.
-                //         // gas: '0x7cc0', // 30400
-                //         // gasPrice: '0x328400000',
-                //         data: '0x9cef4ea1' + witness_event_verification_hash,
-                //     },
-                // ]
-                // window.ethereum
-                //     .request({
-                //         method: 'eth_sendTransaction',
-                //         params: params,
-                //     })
-                //     .then(txhash => {
-                //         storeWitnessTx(file_id, filename, txhash, ethers.getAddress(walletAddress), network, files, setFiles, backend_url).then(() => {
+                const aquaTreeWrapper: AquaTreeWrapper = {
+                    aquaTree: apiFileInfo.aquaTree!,
+                    revision: "",
+                    fileObject: undefined
+                }
+                const result = await aquafier.witnessAquaTree(aquaTreeWrapper, "eth", "sepolia", "metamask", dummyCredential())
+                if (result.isErr()) {
+                    toaster.create({
+                        description: `Error witnessing failed`,
+                        type: "error"
+                    })
+                } else {
 
-                //         }).catch(() => {
+                    const revisionHashes = result.data.aquaTree?.revisions ? Object.keys(result.data.aquaTree.revisions) : [];
 
-                //         })
-                //     })
-                //     .catch((error: AxiosError) => {
-                //         if (error?.message) {
-                //             toaster.create({
-                //                 description: error.message,
-                //                 type: "error"
-                //             })
-                //         }
-                //     }).finally(() => {
-                //         setWitnessing(false)
-                //     })
+                    if (revisionHashes.length == 0) {
+                        toaster.create({
+                            description: `Error witnessing failed (aqua tree structure)`,
+                            type: "error"
+                        })
+                    }
+                    const lastHash = revisionHashes[revisionHashes.length - 1]
+                    const lastRevision = result.data.aquaTree?.revisions[lastHash]
+                    // send to server
+                    const url = `${backendUrl}/tree`;
+
+                    const response = await axios.post(url, {
+                        "revision": lastRevision,
+                        "revisionHash": lastHash,
+
+                    }, {
+                        headers: {
+                            "nonce": nonce
+                        }
+                    });
+
+                    if (response.status === 200 || response.status === 201) {
+                        console.log("update state ...")
+                        const newFiles: ApiFileInfo[] = [];
+                        const keysPar = Object.keys(apiFileInfo.aquaTree!.revisions!)
+                        files.forEach((item) => {
+                            const keys = Object.keys(item.aquaTree!.revisions!)
+                            if (areArraysEqual(keys, keysPar)) {
+                                newFiles.push({
+                                    ...apiFileInfo,
+                                    aquaTree: result.data.aquaTree!,
+                                })
+                            } else {
+                                newFiles.push(item)
+                            }
+                        })
+
+                        setFiles(newFiles)
+                    }
+
+                    toaster.create({
+                        description: `Witnessing successfull`,
+                        type: "success"
+                    })
+                }
+
+                setWitnessing(false)
 
             } catch (error: any) {
                 console.log("Error  ", error)
@@ -167,8 +183,8 @@ export const WitnessAquaChain = ({ aquaTree, backendUrl, nonce }: RevionOperatio
     )
 }
 
-export const SignAquaChain = ({ aquaTree, backendUrl, nonce }: RevionOperation) => {
-    // const { user_profile, files, setFiles, metamaskAddress, backend_url } = useStore(appStore)
+export const SignAquaChain = ({ apiFileInfo, backendUrl, nonce }: RevionOperation) => {
+    const {  files, setFiles} = useStore(appStore)
     const [signing, setSigning] = useState(false)
     const signFileHandler = async () => {
         setSigning(true)
@@ -178,7 +194,7 @@ export const SignAquaChain = ({ aquaTree, backendUrl, nonce }: RevionOperation) 
                 const aquafier = new Aquafier();
 
                 const aquaTreeWrapper: AquaTreeWrapper = {
-                    aquaTree: aquaTree,
+                    aquaTree: apiFileInfo.aquaTree!,
                     revision: "",
                     fileObject: undefined
                 }
@@ -214,7 +230,24 @@ export const SignAquaChain = ({ aquaTree, backendUrl, nonce }: RevionOperation) 
                     });
 
                     if (response.status === 200 || response.status === 201) {
-                        console.log("update state ...")
+                        if (response.status === 200 || response.status === 201) {
+                            console.log("update state ...")
+                            const newFiles: ApiFileInfo[] = [];
+                            const keysPar = Object.keys(apiFileInfo.aquaTree!.revisions!)
+                            files.forEach((item) => {
+                                const keys = Object.keys(item.aquaTree!.revisions!)
+                                if (areArraysEqual(keys, keysPar)) {
+                                    newFiles.push({
+                                        ...apiFileInfo,
+                                        aquaTree: result.data.aquaTree!,
+                                    })
+                                } else {
+                                    newFiles.push(item)
+                                }
+                            })
+    
+                            setFiles(newFiles)
+                        }
                     }
 
                     toaster.create({
@@ -247,131 +280,11 @@ export const SignAquaChain = ({ aquaTree, backendUrl, nonce }: RevionOperation) 
         </Button>
     )
 
-    // const lastRevisionVerificationHash=getLastRevisionVerificationHash(aquaTree!)
-    // const signFileHandler = async () => {
-    // setSigning(true)
-    // if (window.ethereum) {
-    //     try {
-    //             // We query the wallet address from storage
-    //             const walletAddress = metamaskAddress;
-
-    //             if (!walletAddress) {
-    //                 setSigning(false)
-    //                 toaster.create({
-    //                     description: `Please connect your wallet to continue`,
-    //                     type: "info"
-    //                 })
-    //                 return;
-    //             }
-
-    //             // Message to sign
-    //             const message = "I sign the following page verification_hash: [0x" + lastRevisionVerificationHash + "]"
-
-    //             // Create an ethers provider
-    //             const provider = new ethers.BrowserProvider(window.ethereum);
-
-    //             const networkId = await getCurrentNetwork()
-    //             const currentChainId = ETH_CHAINID_MAP[user_profile.witness_network]
-    //             if (networkId !== currentChainId) {
-    //                 await switchNetwork(currentChainId)
-    //             }
-
-    //             const signer = await provider.getSigner();
-
-    //             // Hash the message (optional but recommended)
-    //             const messageHash = ethers.hashMessage(message);
-
-    //             // Sign the message using ethers.js
-    //             const signature = await signer.signMessage(message);
-    //             const signerAddress = await signer.getAddress()
-
-    //             if (signature) {
-    //                 try {
-    //                     // Recover the public key from the signature; This returns an address same as wallet address
-    //                     // const publicKey = ethers.recoverAddress(messageHash, signature)
-    //                     const publicKey = ethers.SigningKey.recoverPublicKey(
-    //                         messageHash,
-    //                         signature,
-    //                     )
-    //                     console.log("File id not none ==> ", file_id)
-
-    //                     const formData = new URLSearchParams();
-    //                     formData.append('file_id', file_id.toString());
-    //                     formData.append('filename', filename);
-    //                     formData.append('signature', signature);
-    //                     /* Recovered public key if needed */
-    //                     // formData.append('publickey', walletAddress);
-    //                     /* Hardcoded public key value for now; Remove this once a fix for obtaining public keys is found */
-    //                     // formData.append('publickey', "0x04c56c1231c8a69a375c3f81e549413eb0f415cfd56d40c9a5622456a3f77be0625e1fe8a50cb6274e5d0959625bf33f3c8d1606b5782064bad2e4b46c5e2a7428");
-    //                     formData.append('publickey', publicKey)
-    //                     formData.append('wallet_address', signerAddress);
-
-    //                     const url = `${backend_url}/explorer_sign_revision`;
-    //                     const response = await axios.post(url, formData, {
-    //                         headers: {
-    //                             'Content-Type': 'application/x-www-form-urlencoded'
-    //                         }
-    //                     });
-
-    //                     // const res = await response.data;
-    //                     // Logs from api backend
-    //                     // let logs: Array<string> = res.logs
-    //                     // logs.forEach((item) => {
-    //                     //     console.log("**>" + item + "\n.")
-    //                     // })
-
-    //                     if (response.status === 200) {
-    //                         throw Error("Fix me ....")
-    //                         // const resp: ApiFileInfo = res.file
-
-    //                         // const array: ApiFileInfo[] = [];
-    //                         // for (let index = 0; index < files.length; index++) {
-    //                         //     const file = files[index];
-    //                         //     if (file.id === file_id) {
-    //                         //         array.push(resp)
-    //                         //     } else {
-    //                         //         array.push(file)
-    //                         //     }
-    //                         // }
-    //                         // setFiles(array)
-    //                         toaster.create({
-    //                             description: "File signed successfully",
-    //                             type: "success"
-    //                         })
-    //                     }
-
-    //                 } catch (error: any) {
-    //                     console.error("Network Error", error)
-    //                     toaster.create({
-    //                         description: `Error during signature submission`,
-    //                         type: "error"
-    //                     })
-    //                 }
-    //             }
-    //     setSigning(false)
-    // } catch (error) {
-    //     console.error("An Error", error)
-    //     setSigning(false)
-    //     toaster.create({
-    //         description: `Error during signing`,
-    //         type: "error"
-    //     })
-    // }
-    // } else {
-    //     setSigning(false)
-    //     toaster.create({
-    //         description: `MetaMask is not installed`,
-    //         type: "info"
-    //     })
-    // }
-    // };
-
-
 
 }
 
 
-export const DeleteAquaChain = ({ file_id, filename, backend_url }: ISigningAndWitnessing) => {
+export const DeleteAquaChain = ({ apiFileInfo, backendUrl, nonce }: RevionOperation) => {
     const { files, setFiles } = useStore(appStore)
     const [deleting, setDeleting] = useState(false)
 
@@ -381,7 +294,7 @@ export const DeleteAquaChain = ({ file_id, filename, backend_url }: ISigningAndW
         formData.append('filename', filename);
         formData.append('file_id', file_id.toString());
 
-        const url = `${backend_url}/explorer_delete_file`
+        const url = `${backendUrl}/explorer_delete_file`
         const response = await axios.post(url, formData, {
             headers: {
                 'Content-Type': 'application/x-www-form-urlencoded'

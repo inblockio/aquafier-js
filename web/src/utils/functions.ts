@@ -270,6 +270,32 @@ export function dummyCredential():CredentialsData{
     }
 }
 
+export function areArraysEqual(array1 : Array<string>, array2: Array<string>) {
+    // Check if arrays have the same length
+    if (array1.length !== array2.length) {
+      return false;
+    }
+    
+    // Create a copy of array2 to modify
+    const array2Copy = [...array2];
+    
+    // Check each element in array1
+    for (const item of array1) {
+      const index = array2Copy.indexOf(item);
+      
+      // If element not found in array2Copy
+      if (index === -1) {
+        return false;
+      }
+      
+      // Remove the found element from array2Copy
+      array2Copy.splice(index, 1);
+    }
+    
+    // If we've removed all elements from array2Copy, arrays are equal
+    return array2Copy.length === 0;
+  }
+
 export function displayTime(input: number | string): string {
     // Handle number input
     if (typeof input === 'number') {
