@@ -12,7 +12,7 @@ import { Checkbox } from "./checkbox"
 import { SetStateAction, useEffect, useState } from "react"
 import { useStore } from "zustand"
 import appStore from "../../store"
-import { displayTime, getFileCategory, getFileExtension, getLastRevisionVerificationHash } from "../../utils/functions"
+import { displayTime, getFileCategory, getFileExtension, humanReadableFileSize } from "../../utils/functions"
 
 import { DeleteAquaChain, DownloadAquaChain, ShareButton, SignAquaChain, WitnessAquaChain } from "../aqua_chain_actions"
 import { ChainDetailsBtn } from "./navigation/CustomDrawer"
@@ -28,16 +28,16 @@ const FilesTable = () => {
 
     const hasSelection = selection.length > 0
     const indeterminate = hasSelection && selection.length < files.length
- 
+
 
     const rows = files?.map((item: ApiFileInfo, index: number) => {
 
-       
+
 
 
         return <Table.Row
             key={index}
-            // data-selected={selection.includes(item.fileObject[0].fileName)?? "--" ? "" : undefined}
+        // data-selected={selection.includes(item.fileObject[0].fileName)?? "--" ? "" : undefined}
         >
             <Table.Cell>
                 <Checkbox
@@ -61,7 +61,7 @@ const FilesTable = () => {
             </Table.Cell>
             <Table.Cell minW={'100px'} maxW={'100px'} textWrap={'wrap'}>
                 <FormatByte value={
-                    0 //sumFileContentSize(JSON.parse(item.page_data))
+                    humanReadableFileSize(item.fileObject[0].fileSize ?? 0) //sumFileContentSize(JSON.parse(item.page_data))
                 } />
             </Table.Cell>
             <Table.Cell minW={'220px'} maxW={'220px'} textWrap={'wrap'}>
@@ -69,16 +69,16 @@ const FilesTable = () => {
                     <ShareButton id={index} file_id={index} filename={item.fileObject[0].fileName} />
                     <DownloadAquaChain file={item} />
                     <ChainDetailsBtn fileInfo={item} />
-                    <WitnessAquaChain apiFileInfo={item}  backendUrl={backend_url} nonce={session?.nonce ?? ""} revision="" />
-                    <SignAquaChain apiFileInfo={item}  backendUrl={backend_url} nonce={session?.nonce ?? ""} revision="" />
-                    <DeleteAquaChain apiFileInfo={item}  backendUrl={backend_url} nonce={session?.nonce ?? ""} revision="" />
+                    <WitnessAquaChain apiFileInfo={item} backendUrl={backend_url} nonce={session?.nonce ?? ""} revision="" />
+                    <SignAquaChain apiFileInfo={item} backendUrl={backend_url} nonce={session?.nonce ?? ""} revision="" />
+                    <DeleteAquaChain apiFileInfo={item} backendUrl={backend_url} nonce={session?.nonce ?? ""} revision="" />
                 </Group>
             </Table.Cell>
         </Table.Row>
     })
 
     const smallScreenView = files?.map((item: ApiFileInfo) => (
-        <Box key={`sm_${item}`} bg={'gray.100'} _dark={{
+        <Box key={`sm_${Object.keys(item.aquaTree!.revisions!)[0]}`} bg={'gray.100'} _dark={{
             bg: 'blackAlpha.950'
         }} p={2} borderRadius={'10px'}>
             <VStack textAlign={'start'}>
@@ -87,9 +87,9 @@ const FilesTable = () => {
                     <ShareButton id={0} file_id={0} filename={item.fileObject[0].fileName} />
                     <DownloadAquaChain file={item} />
                     <ChainDetailsBtn fileInfo={item} />
-                    <WitnessAquaChain apiFileInfo={item}  backendUrl={backend_url} nonce={session?.nonce ?? ""} revision="" />
-                    <SignAquaChain  apiFileInfo={item}  backendUrl={backend_url} nonce={session?.nonce ?? ""} revision=""  />
-                    <DeleteAquaChain apiFileInfo={item}  backendUrl={backend_url} nonce={session?.nonce ?? ""} revision="" />
+                    <WitnessAquaChain apiFileInfo={item} backendUrl={backend_url} nonce={session?.nonce ?? ""} revision="" />
+                    <SignAquaChain apiFileInfo={item} backendUrl={backend_url} nonce={session?.nonce ?? ""} revision="" />
+                    <DeleteAquaChain apiFileInfo={item} backendUrl={backend_url} nonce={session?.nonce ?? ""} revision="" />
                 </Group>
             </VStack>
         </Box>
@@ -165,7 +165,7 @@ const FilesTable = () => {
                             </Table.Row>
                         </Table.Header>
                         <Table.Body>
-                            
+                            {rows}
                             {filesToDisplay.length === 0 ?
                                 <Table.Row>
                                     <Table.Cell colSpan={6}>
@@ -176,9 +176,8 @@ const FilesTable = () => {
                                 </Table.Row>
                                 :
                                 <>
-                                {/* { files != null && files.length > 0 ? rows : <></>} */}
 
-                                {JSON.stringify(files)}
+
                                 </>
                             }
                         </Table.Body>

@@ -10,9 +10,9 @@ import util from 'util';
 import { pipeline } from 'stream';
 import * as fs from "fs"
 import { error } from 'console';
-import { findAquaTreeRevision } from '@/utils/revisions_utils';
+import { FetchRevisionInfo, findAquaTreeRevision } from '@/utils/revisions_utils';
 import { fileURLToPath } from 'url';
-import { FileIndex } from '@prisma/client';
+import { AquaForms, FileIndex, Signature, Witness, WitnessEvent } from '@prisma/client';
 import { getHost, getPort } from '@/utils/api_utils';
 import { DeleteRevision } from '@/models/request_models';
 // Promisify pipeline
@@ -114,6 +114,9 @@ export default async function explorerController(fastify: FastifyInstance) {
                     console.log(`reading ${JSON.stringify(fileItem, null, 4)}`)
                     // let fileContent = fs.readFileSync(fileItem.content!!);
 
+                    const stats = fs.statSync(fileItem.content!!);
+                    const fileSizeInBytes = stats.size;
+                    console.log(`File size: ${fileSizeInBytes} bytes`);
 
                     // Extract just the original filename (without the UUID prefix)
                     const fullFilename = path.basename(fileItem.content!!) // Gets filename.ext from full path
@@ -157,7 +160,8 @@ export default async function explorerController(fastify: FastifyInstance) {
                     fileObject.push({
                         fileContent: fullUrl,//fileContent.toString(),
                         fileName: fileIndex.uri!!,
-                        path: ""
+                        path: "",
+                        fileSize: fileSizeInBytes
                     })
 
                 }
@@ -190,22 +194,52 @@ export default async function explorerController(fastify: FastifyInstance) {
                 }
 
 
-                // forms
-                let fileFormData = await prisma.aquaForms.findMany({
-                    where: {
-                        hash: revisionItem.pubkey_hash
-                    }
-                })
+                let revisionInfoData = await FetchRevisionInfo(revisionItem.pubkey_hash, revisionItem)
 
-                if (fileFormData != null) {
+                if (revisionInfoData == null) {
+                    return reply.code(500).send({ success: false, message: `Error revision not found` });
+
+                }
+
+                if (revisionItem.revision_type == "form") {
+
+                    let fileFormData = revisionInfoData as AquaForms[];
                     for (let formItem of fileFormData) {
                         revisionWithData[formItem.key!!] = formItem.value
                     }
+
+                } else if (revisionItem.revision_type == "witness") {
+                    let witnessData = revisionInfoData as WitnessEvent;
+                    revisionWithData.witness_merkle_root = witnessData.Witness_merkle_root;
+                    revisionWithData.witness_timestamp = witnessData.Witness_timestamp!.getTime();
+                    revisionWithData.witness_network = witnessData.Witness_network!;
+                    revisionWithData.witness_smart_contract_address = witnessData.Witness_smart_contract_address!;
+                    revisionWithData.witness_transaction_hash = witnessData.Witness_transaction_hash!;
+                    revisionWithData.witness_sender_account_address = witnessData.Witness_sender_account_address!;
+                    revisionWithData.witness_merkle_proof = [];// todo fix me from db 
+
+
+                } else if (revisionItem.revision_type == "signature") {
+                    let signatureData = revisionInfoData as Signature;
+                    let sig: string | Object = signatureData.signature_digest!
+                    try {
+                        if (signatureData.signature_type?.includes("did")) {
+                            sig = JSON.parse(signatureData.signature_digest!)
+                        }
+                    } catch (error) {
+                        console.log(`Error fix me ${error} `)
+                    }
+                    revisionWithData.signature = sig;
+
+                    revisionWithData.signature_public_key = signatureData.signature_public_key!;
+                    revisionWithData.signature_wallet_address = signatureData.signature_wallet_address!;
+                    revisionWithData.signature_type = signatureData.signature_type!;
+
+                } else {
+                    return reply.code(500).send({ success: false, message: `implment for revisionItem.revision_type  ` });
                 }
 
-
-
-
+                // update file index for genesis revision 
                 if (revisionItem.previous == null || revisionItem.previous.length == 0) {
                     console.log("****************************************************************")
                     console.log(`fileIndexes ${JSON.stringify(fileIndexes)} -- hash ${revisionItem.pubkey_hash}`)
@@ -225,8 +259,6 @@ export default async function explorerController(fastify: FastifyInstance) {
                     revisionWithData["file_hash"] = name?.file_hash ?? "--error--"
 
 
-
-
                 }
 
 
@@ -241,7 +273,7 @@ export default async function explorerController(fastify: FastifyInstance) {
             })
 
         }
-        return reply.code(200).send(displayData)
+        return reply.code(200).send({ data: displayData })
     });
 
 
@@ -520,28 +552,28 @@ export default async function explorerController(fastify: FastifyInstance) {
     fastify.post('/explorer_delete_file', async (request, reply) => {
         // Read `nonce` from headers
         const nonce = request.headers['nonce']; // Headers are case-insensitive
-    
+
         // Check if `nonce` is missing or empty
         if (!nonce || typeof nonce !== 'string' || nonce.trim() === '') {
             return reply.code(401).send({ error: 'Unauthorized: Missing or empty nonce header' });
         }
-    
+
         const session = await prisma.siweSession.findUnique({
             where: { nonce }
         });
-    
+
         if (!session) {
             return reply.code(403).send({ success: false, message: "Nonce is invalid" });
         }
-    
+
         const revisionDataPar = request.body as DeleteRevision;
-    
+
         if (!revisionDataPar.revisionHash) {
             return reply.code(400).send({ success: false, message: "revision hash is required" });
         }
-    
+
         let filepubkeyhash = `${session.address}_${revisionDataPar.revisionHash}`;
-       
+
         //fetch all the revisions 
         let revisionData = [];
         // fetch latest revision 
@@ -550,12 +582,13 @@ export default async function explorerController(fastify: FastifyInstance) {
                 pubkey_hash: filepubkeyhash
             }
         });
-    
+
         if (latestRevionData == null) {
             return reply.code(500).send({ success: false, message: `revision with hash ${revisionDataPar.revisionHash} not found in system` });
         }
         revisionData.push(latestRevionData);
-    
+
+
         try {
             console.log(`previous ${latestRevionData?.previous}`);
             //if previous verification hash is not empty find the previous one
@@ -566,7 +599,7 @@ export default async function explorerController(fastify: FastifyInstance) {
         } catch (e: any) {
             return reply.code(500).send({ success: false, message: `Error fetching a revision ${JSON.stringify(e, null, 4)}` });
         }
-    
+
         try {
             // Use Prisma transaction to ensure all or nothing execution
             await prisma.$transaction(async (tx) => {
@@ -578,7 +611,7 @@ export default async function explorerController(fastify: FastifyInstance) {
                                 hash: item.pubkey_hash
                             }
                         });
-    
+
                         if (filesData != null) {
                             // Handle file index references first
                             const fileIndexData = await tx.fileIndex.findFirst({
@@ -588,7 +621,7 @@ export default async function explorerController(fastify: FastifyInstance) {
                                     }
                                 }
                             });
-    
+
                             if (fileIndexData != null) {
                                 if (fileIndexData.reference_count ?? 0 <= 1) {
                                     await tx.fileIndex.delete({
@@ -608,7 +641,7 @@ export default async function explorerController(fastify: FastifyInstance) {
                                     });
                                 }
                             }
-    
+
                             // Update the file reference count
                             if (filesData.reference_count ?? 0 <= 0) {
                                 if (filesData.content != null) {
@@ -621,7 +654,7 @@ export default async function explorerController(fastify: FastifyInstance) {
                                         // Continue even if file deletion fails
                                     }
                                 }
-                                
+
                                 await tx.file.delete({
                                     where: {
                                         hash: item.pubkey_hash
@@ -640,16 +673,16 @@ export default async function explorerController(fastify: FastifyInstance) {
                         }
                     }
                 }
-    
+
                 // Step 2: Find any references to these revisions in other tables and handle them
                 // This is to fix the circular dependency between revision and latest
-    
+
                 // First, find any revisions that reference our revisions
                 const revisionPubkeyHashes = revisionData.map(rev => rev.pubkey_hash);
-                
+
                 // Remove any references to our revisions from other tables
                 // We need to update any tables that might have foreign keys to our revisions
-                
+
                 // For example, update other revisions that might reference these ones
                 await tx.revision.updateMany({
                     where: {
@@ -661,7 +694,7 @@ export default async function explorerController(fastify: FastifyInstance) {
                         previous: null
                     }
                 });
-    
+
                 // Step 3: Delete the latest entry - we need to do this before deleting revisions
                 try {
                     await tx.latest.deleteMany({
@@ -675,7 +708,7 @@ export default async function explorerController(fastify: FastifyInstance) {
                     console.log("Warning: Error in deleting latest entries:", e);
                     // We'll continue, as the transaction will roll back if it fails
                 }
-    
+
                 // Step 4: Now we can safely delete all revisions
                 for (let item of revisionData) {
                     await tx.revision.delete({
@@ -686,14 +719,14 @@ export default async function explorerController(fastify: FastifyInstance) {
                     console.log(`Deleted revision with pubkey_hash: ${item.pubkey_hash}`);
                 }
             });
-    
+
             return reply.code(200).send({ success: true, message: "File and revisions deleted successfully" });
         } catch (error: any) {
             console.error("Error in delete operation:", error);
-            return reply.code(500).send({ 
-                success: false, 
-                message: `Error deleting file: ${error.message}`, 
-                details: error 
+            return reply.code(500).send({
+                success: false,
+                message: `Error deleting file: ${error.message}`,
+                details: error
             });
         }
     });

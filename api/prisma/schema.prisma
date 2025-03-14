@@ -43,7 +43,7 @@ model Latest {
   hash             String        @id
   user             String
   User             User          @relation(fields: [user], references: [user])
-  Revision         Revision[]
+  // Revision         Revision[]
 
     @@map("latest")
 }
@@ -59,7 +59,7 @@ model Revision {
   revision_type    String?
   has_content       Boolean @default(false)
   verification_leaves String[]
-  Latest           Latest        @relation(fields: [pubkey_hash], references: [hash])
+  // Latest           Latest        @relation(fields: [pubkey_hash], references: [hash])
   File             File[]
   Signature        Signature[]
   Witness          Witness[]
@@ -114,6 +114,7 @@ model Signature {
   hash                      String        @id
   signature_digest          String?
   signature_wallet_address  String?
+  signature_public_key  String?
   signature_type            String?
   reference_count           Int?
   Revision                  Revision      @relation(fields: [hash], references: [pubkey_hash])

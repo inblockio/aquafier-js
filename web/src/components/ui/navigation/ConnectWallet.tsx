@@ -116,6 +116,8 @@ export default function ConnectWallet() {
             console.log("url is ", url);
 
             const files = await fetchFiles(walletAddress, url,responseData.session.nonce );
+          
+            console.log(`Files ..........${files}`)
             setFiles(files);
           // }
         }

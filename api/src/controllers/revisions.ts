@@ -1,5 +1,6 @@
 import { prisma } from '@/database/db';
 import { SaveRevision } from '@/models/request_models';
+import { formatTimestamp } from '@/utils/time_utils';
 import { WitnessEvent } from '@prisma/client';
 import { Revision } from 'aqua-js-sdk';
 import { FastifyInstance } from 'fastify';
@@ -64,6 +65,7 @@ export default async function revisionsController(fastify: FastifyInstance) {
 
             let filePubKeyHash = `${session.address}_${revisionData.revisionHash}`
 
+            
             await prisma.latest.update({
                 where: {
                     hash: oldFilePubKeyHash
@@ -75,6 +77,18 @@ export default async function revisionsController(fastify: FastifyInstance) {
             });
 
 
+            const existingRevision = await prisma.revision.findUnique({
+                where: {
+                    pubkey_hash: filePubKeyHash
+                }
+            });
+            
+            if (existingRevision) {
+                // Handle the case where the revision already exists
+                // Maybe return an error or update the existing record
+                return reply.code(409).send({ success: false, message: "Revision with this hash already exists" });
+            }
+
             // Insert new revision into the database
             await prisma.revision.create({
                 data: {
@@ -84,9 +98,9 @@ export default async function revisionsController(fastify: FastifyInstance) {
                     // contract: revisionData.witness_smart_contract_address
                     //     ? [{ address: revisionData.witness_smart_contract_address }]
                     //     : [],
-                    previous: revisionData.revision.previous_verification_hash,
+                    previous: `${session.address}_${revisionData.revision.previous_verification_hash}`,
                     // children: {},
-                    local_timestamp: revisionData.revision.local_timestamp,
+                    local_timestamp: formatTimestamp(revisionData.revision.local_timestamp), // revisionData.revision.local_timestamp,
                     revision_type: revisionData.revision.revision_type,
                     verification_leaves: revisionData.revision.leaves || [],
 
@@ -133,6 +147,7 @@ export default async function revisionsController(fastify: FastifyInstance) {
                         signature_digest: signature,
                         signature_wallet_address: revisionData.revision.signature.wallet_address,
                         signature_type: revisionData.revision.signature_type,
+                        signature_public_key : revisionData.revision.signature_public_key,
                         reference_count: 1
                     }
                 });

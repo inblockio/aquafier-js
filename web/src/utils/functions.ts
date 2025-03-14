@@ -91,10 +91,11 @@ export async function fetchFiles(publicMetaMaskAddress: string, url: string, non
             throw new Error(`HTTP error! status: ${query.status}`);
         }
 
-        return response;
+        console.log(`Res ==> ${JSON.stringify(response, null, 4)}`)
+        return response.data;
+        
         // const res = response;
 
-        // console.log(`Res ==> ${JSON.stringify(res, null, 4)}`)
         // return 
 
         // const logs: Array<string> = res.logs

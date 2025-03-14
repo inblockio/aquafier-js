@@ -86,7 +86,9 @@ const FileUploadItem = (props: FileUploadItemProps) => {
     <ChakraFileUpload.Item file={file}>
       <ChakraFileUpload.ItemPreview asChild>
         <Icon fontSize="lg" color="fg.muted">
-          <LuFile />
+          <Box>
+            <LuFile />
+          </Box>
         </Icon>
       </ChakraFileUpload.ItemPreview>
 

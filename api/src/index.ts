@@ -18,6 +18,7 @@ import verifyController from './controllers/verify.js';
 import { fileURLToPath } from 'url';
 import { getFileUploadDirectory } from './utils/file_utils';
 import { getHost, getPort } from './utils/api_utils';
+import revisionsController from './controllers/revisions';
 
 
 // Read host and port from environment variables
@@ -79,6 +80,7 @@ const start = async () => {
     fastify.register(filesController);
     fastify.register(explorerController);
     fastify.register(verifyController);
+    fastify.register(revisionsController);
 
     await fastify.listen({ port: PORT, host: HOST });
     console.log(`\n`);
