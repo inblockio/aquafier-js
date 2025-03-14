@@ -1,4 +1,4 @@
-import Aquafier, { AquaTree, FileObject, getHashSum, LogData, LogType, Revision } from 'aqua-js-sdk';
+import Aquafier, { AquaTree, FileObject, getHashSum, LogData, LogType, OrderRevisionInAquaTree, Revision } from 'aqua-js-sdk';
 import { FastifyInstance } from 'fastify';
 import { prisma } from '../database/db';
 import { BusboyFileStream } from '@fastify/busboy';
@@ -189,54 +189,56 @@ export default async function explorerController(fastify: FastifyInstance) {
 
                 if (revisionItem.has_content) {
                     let fileItem = files.find((e) => e.hash == revisionItem.pubkey_hash)
-                    let fileContent = fs.readFileSync(fileItem?.content ?? "--error--");
+                    let fileContent = fs.readFileSync(fileItem?.content ?? "--error--", 'utf8');
                     revisionWithData["content"] = fileContent
                 }
 
+                if (revisionItem.revision_type != "file") {
 
-                let revisionInfoData = await FetchRevisionInfo(revisionItem.pubkey_hash, revisionItem)
+                    let revisionInfoData = await FetchRevisionInfo(revisionItem.pubkey_hash, revisionItem)
 
-                if (revisionInfoData == null) {
-                    return reply.code(500).send({ success: false, message: `Error revision not found` });
+                    if (revisionInfoData == null) {
+                        return reply.code(500).send({ success: false, message: `Error revision not found` });
 
-                }
-
-                if (revisionItem.revision_type == "form") {
-
-                    let fileFormData = revisionInfoData as AquaForms[];
-                    for (let formItem of fileFormData) {
-                        revisionWithData[formItem.key!!] = formItem.value
                     }
 
-                } else if (revisionItem.revision_type == "witness") {
-                    let witnessData = revisionInfoData as WitnessEvent;
-                    revisionWithData.witness_merkle_root = witnessData.Witness_merkle_root;
-                    revisionWithData.witness_timestamp = witnessData.Witness_timestamp!.getTime();
-                    revisionWithData.witness_network = witnessData.Witness_network!;
-                    revisionWithData.witness_smart_contract_address = witnessData.Witness_smart_contract_address!;
-                    revisionWithData.witness_transaction_hash = witnessData.Witness_transaction_hash!;
-                    revisionWithData.witness_sender_account_address = witnessData.Witness_sender_account_address!;
-                    revisionWithData.witness_merkle_proof = [];// todo fix me from db 
+                    if (revisionItem.revision_type == "form") {
 
-
-                } else if (revisionItem.revision_type == "signature") {
-                    let signatureData = revisionInfoData as Signature;
-                    let sig: string | Object = signatureData.signature_digest!
-                    try {
-                        if (signatureData.signature_type?.includes("did")) {
-                            sig = JSON.parse(signatureData.signature_digest!)
+                        let fileFormData = revisionInfoData as AquaForms[];
+                        for (let formItem of fileFormData) {
+                            revisionWithData[formItem.key!!] = formItem.value
                         }
-                    } catch (error) {
-                        console.log(`Error fix me ${error} `)
+
+                    } else if (revisionItem.revision_type == "witness") {
+                        let witnessData = revisionInfoData as WitnessEvent;
+                        revisionWithData.witness_merkle_root = witnessData.Witness_merkle_root;
+                        revisionWithData.witness_timestamp = witnessData.Witness_timestamp!.getTime();
+                        revisionWithData.witness_network = witnessData.Witness_network!;
+                        revisionWithData.witness_smart_contract_address = witnessData.Witness_smart_contract_address!;
+                        revisionWithData.witness_transaction_hash = witnessData.Witness_transaction_hash!;
+                        revisionWithData.witness_sender_account_address = witnessData.Witness_sender_account_address!;
+                        revisionWithData.witness_merkle_proof = [];// todo fix me from db 
+
+
+                    } else if (revisionItem.revision_type == "signature") {
+                        let signatureData = revisionInfoData as Signature;
+                        let sig: string | Object = signatureData.signature_digest!
+                        try {
+                            if (signatureData.signature_type?.includes("did")) {
+                                sig = JSON.parse(signatureData.signature_digest!)
+                            }
+                        } catch (error) {
+                            console.log(`Error fix me ${error} `)
+                        }
+                        revisionWithData.signature = sig;
+
+                        revisionWithData.signature_public_key = signatureData.signature_public_key!;
+                        revisionWithData.signature_wallet_address = signatureData.signature_wallet_address!;
+                        revisionWithData.signature_type = signatureData.signature_type!;
+
+                    } else {
+                        return reply.code(500).send({ success: false, message: `implment for revisionItem.revision_type  ` });
                     }
-                    revisionWithData.signature = sig;
-
-                    revisionWithData.signature_public_key = signatureData.signature_public_key!;
-                    revisionWithData.signature_wallet_address = signatureData.signature_wallet_address!;
-                    revisionWithData.signature_type = signatureData.signature_type!;
-
-                } else {
-                    return reply.code(500).send({ success: false, message: `implment for revisionItem.revision_type  ` });
                 }
 
                 // update file index for genesis revision 
@@ -266,9 +268,12 @@ export default async function explorerController(fastify: FastifyInstance) {
             }
 
 
+
+            console.log(`----> ${JSON.stringify(anAquaTree, null, 4)}`)
+            let sortedAquaTree = OrderRevisionInAquaTree(anAquaTree)
             displayData.push({
 
-                aquaTree: anAquaTree,
+                aquaTree: sortedAquaTree,
                 fileObject: fileObject
             })
 
@@ -440,7 +445,7 @@ export default async function explorerController(fastify: FastifyInstance) {
                         // contract: revisionData.witness_smart_contract_address
                         //     ? [{ address: revisionData.witness_smart_contract_address }]
                         //     : [],
-                        previous: revisionData.previous_verification_hash || null,
+                        previous: revisionData.previous_verification_hash || "",
                         // children: {},
                         local_timestamp: localTimestamp,
                         revision_type: revisionData.revision_type,
