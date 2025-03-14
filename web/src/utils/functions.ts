@@ -584,14 +584,15 @@ function getExtensionFromBytes(hex: string) {
 //     return blob;
 // };
 
-export function fileType(file: ApiFileInfo): string {
-    if (imageTypes.includes(file.extension.replace(/\s+/g, ''))) {
+export function fileType(fileName: string): string {
+    let extension = getFileExtension(fileName)
+    if (imageTypes.includes(extension.replace(/\s+/g, ''))) {
         return "Image";
-    } else if (documentTypes.includes(file.extension.replace(/\s+/g, ''))) {
+    } else if (documentTypes.includes(extension.replace(/\s+/g, ''))) {
         return "Document";
-    } else if (musicTypes.includes(file.extension.replace(/\s+/g, ''))) {
+    } else if (musicTypes.includes(extension.replace(/\s+/g, ''))) {
         return "Music";
-    } else if (videoTypes.includes(file.extension.replace(/\s+/g, ''))) {
+    } else if (videoTypes.includes(extension.replace(/\s+/g, ''))) {
         return "Video";
     } else {
         return "unknown";

@@ -576,6 +576,8 @@ const ChainDetails = ({ fileInfo, callBack }: IPageDataDetails) => {
 
 export const ChainDetailsBtn = ({ fileInfo }: IPageDataDetails) => {
 
+    console.log("File info: ", fileInfo)
+
     const [showMoreDetails, setShowMoreDetails] = useState(false)
 
     const { backend_url } = useStore(appStore)
@@ -591,12 +593,12 @@ export const ChainDetailsBtn = ({ fileInfo }: IPageDataDetails) => {
     }
 
     useEffect(() => {
-        const revisonHashes = Object.keys(fileInfo.aquaTree.revisions)
+        const revisonHashes = Object.keys(fileInfo?.aquaTree?.revisions!!)
         const hash = revisonHashes[revisonHashes.length - 1]//getLastRevisionVerificationHash(pageData)
         setLastVerificationHash(hash)
         console.log("ChainDetailsBtn == > " + JSON.stringify(fileInfo))
-        const name = fileInfo.aquaTree.file_index[revisonHashes[0]]
-        setFileName(name)
+        const name = fileInfo?.aquaTree?.file_index[revisonHashes[0]]
+        setFileName(`${name}`)
     }, [fileInfo])
 
     useEffect(() => {
@@ -633,12 +635,12 @@ export const ChainDetailsBtn = ({ fileInfo }: IPageDataDetails) => {
                     <DrawerBody py={'lg'} px={1}>
                         <Card.Root border={'none'} shadow={'md'} borderRadius={'xl'}>
                             <Card.Body>
-                                <FilePreview fileInfo={fileInfo} />
+                                <FilePreview fileInfo={fileInfo.fileObject[0]} />
                             </Card.Body>
                         </Card.Root>
                         <Spacer height={'20px'} />
 
-                        <Card.Root borderRadius={'lg'}>
+                        {/* <Card.Root borderRadius={'lg'}>
                             <Card.Body>
                                 <VStack gap={'4'}>
                                     <Alert status={isVerificationSuccessful ? 'success' : 'error'} title={isVerificationSuccessful ? "This chain is valid" : "This chain is invalid"} />
@@ -657,17 +659,17 @@ export const ChainDetailsBtn = ({ fileInfo }: IPageDataDetails) => {
                                     <Box minH={'400px'} />
                                 </VStack>
                             </Card.Body>
-                        </Card.Root>
+                        </Card.Root> */}
 
                     </DrawerBody>
                     <DrawerFooter flexWrap={'wrap'}>
                         <DrawerActionTrigger asChild>
                             <Button variant="outline" size={'sm'}>Close</Button>
                         </DrawerActionTrigger>
-                        <DownloadAquaChain file={fileInfo} />
-                        <WitnessAquaChain backend_url={backend_url} file_id={fileInfo.id} filename={fileName} lastRevisionVerificationHash={lastVerificationHash ?? ""} />
+                        {/* <DownloadAquaChain file={fileInfo} /> */}
+                        {/* <WitnessAquaChain backend_url={backend_url} file_id={fileInfo.id} filename={fileName} lastRevisionVerificationHash={lastVerificationHash ?? ""} />
                         <SignAquaChain backend_url={backend_url} file_id={fileInfo.id} filename={fileName} lastRevisionVerificationHash={lastVerificationHash ?? ""} />
-                        <DeleteAquaChain backend_url={backend_url} file_id={fileInfo.id} filename={fileName} />
+                        <DeleteAquaChain backend_url={backend_url} file_id={fileInfo.id} filename={fileName} /> */}
                     </DrawerFooter>
                     <DrawerCloseTrigger />
                 </DrawerContent>
