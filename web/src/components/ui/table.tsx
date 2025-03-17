@@ -68,7 +68,7 @@ const FilesTable = () => {
                 <Group alignItems={'start'} flexWrap={'wrap'}>
                     <ShareButton id={index} file_id={index} filename={item.fileObject[0].fileName} />
                     <DownloadAquaChain file={item} />
-                    <ChainDetailsBtn fileInfo={item} />
+                    <ChainDetailsBtn fileInfo={item}  session={session}/>
                     <WitnessAquaChain apiFileInfo={item} backendUrl={backend_url} nonce={session?.nonce ?? ""} revision="" />
                     <SignAquaChain apiFileInfo={item} backendUrl={backend_url} nonce={session?.nonce ?? ""} revision="" />
                     <DeleteAquaChain apiFileInfo={item} backendUrl={backend_url} nonce={session?.nonce ?? ""} revision="" />

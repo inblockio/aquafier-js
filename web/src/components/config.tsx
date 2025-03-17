@@ -32,7 +32,7 @@ const LoadConfiguration = () => {
                         setAvatar(avatar) 
                         const files = await fetchFiles(address, url2, nonce);
                         setFiles(files)
-                        fetchUserProfile(_address)
+                        fetchUserProfile(_address,nonce)
                     }
                 }
             }
@@ -58,15 +58,15 @@ const LoadConfiguration = () => {
         }
     }
 
-    const fetchUserProfile = async (address: string) => {
+    const fetchUserProfile = async (address: string, nonce : string) => {
 
         const url = `${backend_url}/explorer_fetch_user_settings`;
         console.log("url is ", url);
 
         const response = await axios.get(url, {
             headers: {
-                'Content-Type': 'application/x-www-form-urlencoded',
-                'metamask_address': address
+                'metamask_address': address,
+                'nonce': nonce
             }
         });
 
@@ -78,7 +78,7 @@ const LoadConfiguration = () => {
             //     contractAddress: response.data.user_profile.contract,
             // })
             setUserProfile({
-                ...response.data.user_settings,
+                ...response.data,
             });
         }
     }

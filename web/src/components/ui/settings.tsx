@@ -27,8 +27,8 @@ const networks = createListCollection({
 // })
 
 const SettingsForm = () => {
-    const { setUserProfile, user_profile , backend_url, metamaskAddress} = useStore(appStore)
-    const {  colorMode } = useColorMode()
+    const { setUserProfile, user_profile, backend_url, metamaskAddress, session } = useStore(appStore)
+    const { colorMode } = useColorMode()
     /**
      * 
      * user_pub_key : string,
@@ -51,20 +51,28 @@ const SettingsForm = () => {
         "theme": null
      */
     const updateUserProfile = async () => {
-        const formData = new URLSearchParams();
-        formData.append('cli_priv_key', cliPrivKey);
-        formData.append('cli_pub_key', cliPubKey);
-        formData.append('witness_contract_address', contract);
-        formData.append('witness_network', activeNetwork);
-        formData.append("user_pub_key", metamaskAddress ?? user_profile.user_pub_key)
-        formData.append('theme', colorMode ?? "light");
+        // const formData = new URLSearchParams();
+        // formData.append('cli_priv_key', cliPrivKey);
+        // formData.append('cli_pub_key', cliPubKey);
+        // formData.append('witness_contract_address', contract);
+        // formData.append('witness_network', activeNetwork);
+        // formData.append("user_pub_key", metamaskAddress ?? user_profile.user_pub_key)
+        // formData.append('theme', colorMode ?? "light");
 
 
         const url = `${backend_url}/explorer_update_user_settings`;
-        
-        const response = await axios.post(url, formData, {
+
+        const response = await axios.post(url, {
+            'cli_priv_key': cliPrivKey,
+            'cli_pub_key': cliPubKey,
+            'witness_contract_address': contract,
+            'witness_network': activeNetwork,
+            'user_pub_key': metamaskAddress ?? user_profile.user_pub_key,
+            'theme': colorMode ?? "light",
+        }, {
             headers: {
-                'metamask_address' : metamaskAddress ?? user_profile.user_pub_key
+                'metamask_address': metamaskAddress ?? user_profile.user_pub_key,
+                'nonce': session?.nonce
                 // 'Content-Type': 'application/x-www-form-urlencoded'
             }
         });
@@ -77,7 +85,7 @@ const SettingsForm = () => {
                 witness_network: activeNetwork,
                 theme: colorMode ?? "light",
                 witness_contract_address: contract ?? '0x45f59310ADD88E6d23ca58A0Fa7A55BEE6d2a611',
-          
+
             })
 
             toaster.create({
@@ -99,7 +107,7 @@ const SettingsForm = () => {
                 </Card.Body>
             </Card.Root>
             <Field invalid={false} label="Public address" helperText="self-issued identity claim used for generating/verifying aqua chain" errorText="This field is required">
-                <Input placeholder="User Public address" disabled={true} value={user_profile.user_pub_key}  />
+                <Input placeholder="User Public address" disabled={true} value={user_profile.user_pub_key} />
             </Field>
             <Field invalid={false} label="CLI public key " helperText="self-issued identity claim used for generating/verifying aqua chain" errorText="This field is required">
                 <Input placeholder="XXXXXXX" value={cliPubKey} onChange={e => setCliPubKey(e.currentTarget.value)} />
@@ -110,7 +118,7 @@ const SettingsForm = () => {
             <Field invalid={false} label="Contract Address" errorText="This field is required" >
                 <Input placeholder="Contract Address" value={contract} onChange={e => setContract(e.currentTarget.value)} />
             </Field>
-            <Field invalid={false} label="Select Network" errorText="This field is required" >
+            <Field invalid={false} label={"Select Network " + activeNetwork} errorText="This field is required" >
                 <RadioCardRoot value={activeNetwork} onValueChange={e => setActiveNetwork(e.value)}>
                     <HStack align="stretch">
                         {networks.items.map((item) => (
@@ -158,7 +166,7 @@ const DeleteFiles = () => {
             const response = await axios.get(url, {
                 headers: {
                     'Content-Type': 'application/x-www-form-urlencoded',
-                    'metamask_address':metamaskAddress ?? ''
+                    'metamask_address': metamaskAddress ?? ''
                 }
             });
 

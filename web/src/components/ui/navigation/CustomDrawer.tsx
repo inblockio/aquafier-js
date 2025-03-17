@@ -16,7 +16,7 @@ import { LuCheck, LuChevronDown, LuChevronUp, LuExternalLink, LuEye, LuX } from 
 import { Box, Card, Collapsible, For, Group, Icon, IconButton, Link, Spacer, Span, Text, VStack } from "@chakra-ui/react"
 import { TimelineConnector, TimelineContent, TimelineDescription, TimelineItem, TimelineRoot, TimelineTitle } from "../timeline"
 // import { PageData, Revision } from "../../../models/PageData"
-import { displayTime, formatCryptoAddress, getLastRevisionVerificationHash, timeToHumanFriendly } from "../../../utils/functions"
+import { displayTime, formatCryptoAddress } from "../../../utils/functions"
 import { Alert } from "../alert"
 import { ClipboardIconButton, ClipboardRoot } from "../clipboard"
 import Aquafier, { AquaOperationData, AquaTree, FileObject, LogData, Result, Revision } from "aqua-js-sdk";
@@ -28,6 +28,7 @@ import { ApiFileInfo } from "../../../models/FileInfo"
 import FilePreview from "../../FilePreview"
 import { useStore } from "zustand"
 import appStore from "../../../store"
+import { Session } from "../../../types"
 
 
 interface IItemDetail {
@@ -57,11 +58,12 @@ interface IRevisionDisplay {
     aquaTree: AquaTree
     revision: Revision
     revisionHash: string
+    callBack: (res: boolean) => void
     // failedVerifications: string[]
     // verificationResult: AquaOperationData[]
 }
 
-const RevisionDisplay = ({ aquaTree, revision, revisionHash, fileObjects }: IRevisionDisplay) => {
+const RevisionDisplay = ({ aquaTree, revision, revisionHash, fileObjects, callBack }: IRevisionDisplay) => {
 
     const [verificationResult, setVerificationResult] = useState<Result<AquaOperationData, LogData[]> | null>(null)
 
@@ -70,23 +72,15 @@ const RevisionDisplay = ({ aquaTree, revision, revisionHash, fileObjects }: IRev
         const verifier = new Aquafier();
         if (aquaTree) {
             try {
-                // const results: AquaOperationData[] = [];
-                // const revisionHashes = Object.keys(aquaTree.revisions);
-                // for (const hash of revisionHashes) {
-                // console.log("Revision : ", hash);
-                // const revision = aquaTree.revisions[hash]
+
                 const res = await verifier.verifyAquaTreeRevision(aquaTree, revision, revisionHash, fileObjects);
                 setVerificationResult(res)
-                // if (res.isOk()) {
-                //     results.push(res.data);
-                // } else {
-                //     setFailedVerifications([...failedVerifications, hash]);
-                // }
-                // }
-                // setVerificationResult(results);
-                //todo @Dalmas please verify
-                //     const isSuccess = failedVerifications.length === 0;
-                //    ( callBack && callBack(isSuccess))
+                let isSuccess = true;
+                if (res.isErr()) {
+                    isSuccess = false
+                }
+                callBack(isSuccess)
+
             } catch (error: any) {
                 console.error("Failed to verify aqua chain: ", error)
             }
@@ -118,9 +112,9 @@ const RevisionDisplay = ({ aquaTree, revision, revisionHash, fileObjects }: IRev
             return null
         }
 
-    
+
         if (verificationResult.isErr()) {
-            return  false
+            return false
         }
         return true
 
@@ -173,7 +167,7 @@ const RevisionDisplay = ({ aquaTree, revision, revisionHash, fileObjects }: IRev
         }
 
     }
-  
+
     return (
         <div>
             <TimelineItem>
@@ -197,7 +191,7 @@ const RevisionDisplay = ({ aquaTree, revision, revisionHash, fileObjects }: IRev
                     </Icon>
                 </TimelineConnector>
                 <TimelineContent gap="4">
-                    
+
                     <TimelineTitle>
                         <Span>Revision: </Span>
                         <Span color="fg.muted" fontFamily={'monospace'}>{revisionHash}</Span>
@@ -207,16 +201,15 @@ const RevisionDisplay = ({ aquaTree, revision, revisionHash, fileObjects }: IRev
                         <Card.Body textStyle="sm" lineHeight="tall">
                             <TimelineRoot size="lg" variant="subtle" maxW="md">
 
-                                <TimelineItem>
+                                {/* <TimelineItem>
                                     <TimelineConnector
                                         bg={returnBgColor()}
                                     >
-                                        {/* {verificationResult?.content_verification.successful ? "green" : "red"} */}
+                                        
                                         <Icon fontSize="xs" color={'white'}>
                                             {
                                                 verificationStatusIcon()
-                                                // verificationResult?.content_verification.successful ? <LuCheck /> :
-                                                //     <LuX />
+                                                
                                             }
                                         </Icon>
                                     </TimelineConnector>
@@ -226,12 +219,11 @@ const RevisionDisplay = ({ aquaTree, revision, revisionHash, fileObjects }: IRev
                                                 Revision content is
                                                 {
                                                     verificationStatusText()
-                                                    /* {verificationResult?.content_verification.successful ? ' valid' : ' invalid'} */
                                                 }
                                             </Span>
                                         </TimelineTitle>
                                     </TimelineContent>
-                                </TimelineItem>
+                                </TimelineItem> */}
 
                                 <TimelineItem>
                                     <TimelineConnector
@@ -251,14 +243,14 @@ const RevisionDisplay = ({ aquaTree, revision, revisionHash, fileObjects }: IRev
                                     <TimelineContent gap="2">
                                         <TimelineTitle>
                                             <Span>
-                                                Revision  is
+                                                Revision  is &nbsp;
                                                 {
-                                                    revision.previous_verification_hash.length == 0 ? "Genesis Revision" : "Not Genesis Revision"
+                                                    revision.previous_verification_hash.length == 0 ? "Genesis Revision" : revision.revision_type
                                                     // verificationResult?.metadata_verification.successful ? ' valid' : ' invalid'
                                                 }
                                             </Span>
                                         </TimelineTitle>
-                                        <TimelineDescription>{timeToHumanFriendly(revision.local_timestamp, true)}&nbsp;(UTC)</TimelineDescription>
+                                        <TimelineDescription>{displayTime(revision.local_timestamp, true)}&nbsp;(UTC)</TimelineDescription>
 
                                         {/* <ItemDetail label="Metadata Hash:"
                                             displayValue={formatCryptoAddress(revision.metadata.metadata_hash, 4, 6)}
@@ -299,8 +291,8 @@ const RevisionDisplay = ({ aquaTree, revision, revisionHash, fileObjects }: IRev
                                                     value={revision.signature} showCopyIcon={true}
                                                 />
                                                 <ItemDetail label="Signature Type:"
-                                                    displayValue={revision.signature_type}
-                                                    value={revision.signature_type} showCopyIcon={true}
+                                                    displayValue={revision.signature_type!}
+                                                    value={revision.signature_type!} showCopyIcon={true}
                                                 />
                                                 <ItemDetail label="Wallet Address:"
                                                     // displayValue={formatCryptoAddress(revision.signature.signature_wallet_address, 4, 6)}
@@ -422,7 +414,8 @@ const RevisionDisplay = ({ aquaTree, revision, revisionHash, fileObjects }: IRev
     )
 }
 interface IRevisionDetailsSummary {
-    fileInfo: ApiFileInfo
+    fileInfo: ApiFileInfo,
+    callBack?: (res: boolean) => void
 }
 
 export const RevisionDetailsSummary = ({ fileInfo }: IRevisionDetailsSummary) => {
@@ -544,13 +537,15 @@ export const RevisionDetailsSummary = ({ fileInfo }: IRevisionDetailsSummary) =>
 
 interface IPageDataDetails {
     fileInfo: ApiFileInfo
-    callBack?: (res: boolean) => void
+    session: Session
+    callBack: (res: Array<boolean>, revisionCount: number) => void
 }
 
 const ChainDetails = ({ fileInfo, callBack }: IPageDataDetails) => {
 
     const [aquaTree, setAquaTreeData] = useState<AquaTree | null>()
-
+   
+    let revisionValidationSuccess: Array<boolean> = [];
 
 
 
@@ -568,7 +563,11 @@ const ChainDetails = ({ fileInfo, callBack }: IPageDataDetails) => {
                             each={Object.keys(aquaTree.revisions)}
                         >
                             {(revisionHash, index) => (
-                                <RevisionDisplay key={`revision_${index}`} revision={aquaTree.revisions[revisionHash]} revisionHash={revisionHash} aquaTree={aquaTree} fileObjects={[...fileInfo.fileObject]}  />
+                                <RevisionDisplay key={`revision_${index}`} revision={aquaTree.revisions[revisionHash]} revisionHash={revisionHash} aquaTree={aquaTree} fileObjects={[...fileInfo.fileObject]} callBack={(res) => {
+                                    const newData = [...revisionValidationSuccess, res]
+                                    revisionValidationSuccess = newData
+                                    callBack(newData, Object.keys(aquaTree!.revisions).length)
+                                }} />
 
                             )}
                         </For>
@@ -579,7 +578,7 @@ const ChainDetails = ({ fileInfo, callBack }: IPageDataDetails) => {
     )
 }
 
-export const ChainDetailsBtn = ({ fileInfo }: IPageDataDetails) => {
+export const ChainDetailsBtn = ({ fileInfo, session }: IPageDataDetails) => {
 
     console.log("File info: ", fileInfo)
 
@@ -589,21 +588,29 @@ export const ChainDetailsBtn = ({ fileInfo }: IPageDataDetails) => {
     const [isOpen, setIsOpen] = useState(false)
     // const pageData: PageData = JSON.parse(fileInfo.page_data)
     const [isVerificationSuccessful, setIsVerificationSuccessful] = useState<boolean | null>(null)
-    const [lastVerificationHash, setLastVerificationHash] = useState<string | null>(null)
+    // const [lastVerificationHash, setLastVerificationHash] = useState<string | null>(null)
     const [fileName, setFileName] = useState<string>("")
 
 
-    const updateVerificationStatus = (result: boolean) => {
-        setIsVerificationSuccessful(result)
+    const updateVerificationStatus = (revisionResults: Array<boolean>, revisionCount: number) => {
+        console.log(`revisionResults   ${revisionResults}   revisionCount ${revisionCount}`)
+        if (revisionResults.length >= revisionCount) {
+            const containsFailure = revisionResults.filter((e) => e == false);
+            if (containsFailure.length > 0) {
+                setIsVerificationSuccessful(false)
+            } else {
+                setIsVerificationSuccessful(true)
+            }
+        }
+
     }
 
 
 
     useEffect(() => {
-        const revisonHashes = Object.keys(fileInfo?.aquaTree?.revisions!!)
-        const hash = revisonHashes[revisonHashes.length - 1]//getLastRevisionVerificationHash(pageData)
-        setLastVerificationHash(hash)
-        console.log("ChainDetailsBtn == > " + JSON.stringify(fileInfo))
+        const revisonHashes = Object.keys(fileInfo?.aquaTree!.revisions)
+        // const hash = revisonHashes[revisonHashes.length - 1]
+        // setLastVerificationHash(hash)
         const name = fileInfo?.aquaTree?.file_index[revisonHashes[0]]
         setFileName(`${name}`)
     }, [fileInfo])
@@ -686,7 +693,7 @@ export const ChainDetailsBtn = ({ fileInfo }: IPageDataDetails) => {
                                                 <Alert w={'100%'} status={"info"} textAlign={'start'} title={showMoreDetails ? `Show less Details` : `Show more Details`} icon={showMoreDetails ? <LuChevronUp /> : <LuChevronDown />} />
                                             </Collapsible.Trigger>
                                             <Collapsible.Content py={'4'}>
-                                                <ChainDetails fileInfo={fileInfo} callBack={updateVerificationStatus} />
+                                                <ChainDetails session={session} fileInfo={fileInfo} callBack={updateVerificationStatus} />
                                             </Collapsible.Content>
                                         </Collapsible.Root>
                                     </Box>
@@ -700,7 +707,11 @@ export const ChainDetailsBtn = ({ fileInfo }: IPageDataDetails) => {
                         <DrawerActionTrigger asChild>
                             <Button variant="outline" size={'sm'}>Close</Button>
                         </DrawerActionTrigger>
-                        {/* <DownloadAquaChain file={fileInfo} /> */}
+                        <DownloadAquaChain file={fileInfo} />
+                        <WitnessAquaChain apiFileInfo={fileInfo} backendUrl={backend_url} nonce={session?.nonce ?? ""} revision="" />
+                        <SignAquaChain apiFileInfo={fileInfo} backendUrl={backend_url} nonce={session?.nonce ?? ""} revision="" />
+                        <DeleteAquaChain apiFileInfo={fileInfo} backendUrl={backend_url} nonce={session?.nonce ?? ""} revision="" />
+
                         {/* <WitnessAquaChain backend_url={backend_url} file_id={fileInfo.id} filename={fileName} lastRevisionVerificationHash={lastVerificationHash ?? ""} />
                         <SignAquaChain backend_url={backend_url} file_id={fileInfo.id} filename={fileName} lastRevisionVerificationHash={lastVerificationHash ?? ""} />
                         <DeleteAquaChain backend_url={backend_url} file_id={fileInfo.id} filename={fileName} /> */}
