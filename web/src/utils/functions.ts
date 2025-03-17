@@ -91,34 +91,8 @@ export async function fetchFiles(publicMetaMaskAddress: string, url: string, non
             throw new Error(`HTTP error! status: ${query.status}`);
         }
 
-        console.log(`Res ==> ${JSON.stringify(response, null, 4)}`)
         return response.data;
-        
-        // const res = response;
 
-        // return 
-
-        // const logs: Array<string> = res.logs
-        // logs.forEach((item) => {
-        //     console.log("**>" + item + "\n.")
-        // })
-
-        // console.log("fetchFiles Response " + response.body)
-
-        // Parse the response body as JSON
-        // const data = res.files;
-
-        // Assuming the API returns an array of FileInfo objects
-        // const files: Array<ApiFileInfo> = data.map((item: any) => ({
-        //     id: item.id,
-        //     name: item.name,
-        //     extension: item.extension,
-        //     page_data: item.page_data,
-        //     mode: item.mode,
-        //     owner: item.owner,
-        // }));
-
-        return files;
     } catch (error) {
         console.error("Error fetching files:", error);
         return [];
@@ -260,7 +234,7 @@ export function timeToHumanFriendly(timestamp: string | undefined, showFull: boo
     return date.toLocaleDateString('en-US', showFull ? fullOptions : dateOptions);
 }
 
-export function dummyCredential():CredentialsData{
+export function dummyCredential(): CredentialsData {
     return {
         mnemonic: "",
         nostr_sk: "",
@@ -271,55 +245,55 @@ export function dummyCredential():CredentialsData{
     }
 }
 
-export function areArraysEqual(array1 : Array<string>, array2: Array<string>) {
+export function areArraysEqual(array1: Array<string>, array2: Array<string>) {
     // Check if arrays have the same length
     if (array1.length !== array2.length) {
-      return false;
+        return false;
     }
-    
+
     // Create a copy of array2 to modify
     const array2Copy = [...array2];
-    
+
     // Check each element in array1
     for (const item of array1) {
-      const index = array2Copy.indexOf(item);
-      
-      // If element not found in array2Copy
-      if (index === -1) {
-        return false;
-      }
-      
-      // Remove the found element from array2Copy
-      array2Copy.splice(index, 1);
+        const index = array2Copy.indexOf(item);
+
+        // If element not found in array2Copy
+        if (index === -1) {
+            return false;
+        }
+
+        // Remove the found element from array2Copy
+        array2Copy.splice(index, 1);
     }
-    
+
     // If we've removed all elements from array2Copy, arrays are equal
     return array2Copy.length === 0;
-  }
+}
 
 export function displayTime(input: number | string): string {
     // Handle number input
     if (typeof input === 'number') {
-      const date = new Date(input);
-      return date.toDateString(); // Returns format like "Thu Mar 13 2025"
+        const date = new Date(input);
+        return date.toDateString(); // Returns format like "Thu Mar 13 2025"
     }
-    
+
     // Handle string input
     if (typeof input === 'string') {
-      // Check if string contains only numbers
-      if (/^\d+$/.test(input)) {
-        // Parse as number and convert to date
-        const date = new Date(parseInt(input, 10));
-        return date.toDateString();
-      } else {
-        // String contains alphabets, just display it
-        return input;
-      }
+        // Check if string contains only numbers
+        if (/^\d+$/.test(input)) {
+            // Parse as number and convert to date
+            const date = new Date(parseInt(input, 10));
+            return date.toDateString();
+        } else {
+            // String contains alphabets, just display it
+            return input;
+        }
     }
-    
+
     // Handle invalid input
     return "Invalid input";
-  }
+}
 
 export const getFileHashFromUrl = (url: string) => {
     // Using a regular expression to match the file ID

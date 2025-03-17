@@ -15,12 +15,10 @@ import { Button } from "../button"
 import { LuCheck, LuChevronDown, LuChevronUp, LuExternalLink, LuEye, LuX } from "react-icons/lu"
 import { Box, Card, Collapsible, For, Group, Icon, IconButton, Link, Spacer, Span, Text, VStack } from "@chakra-ui/react"
 import { TimelineConnector, TimelineContent, TimelineDescription, TimelineItem, TimelineRoot, TimelineTitle } from "../timeline"
-// import { PageData, Revision } from "../../../models/PageData"
 import { displayTime, formatCryptoAddress } from "../../../utils/functions"
 import { Alert } from "../alert"
 import { ClipboardIconButton, ClipboardRoot } from "../clipboard"
 import Aquafier, { AquaOperationData, AquaTree, FileObject, LogData, Result, Revision } from "aqua-js-sdk";
-// import AquaVerifier, { RevisionAquaChainResult, RevisionVerificationResult } from "aqua-verifier";
 import ReactLoading from "react-loading"
 import { WITNESS_NETWORK_MAP } from "../../../utils/constants"
 import { DownloadAquaChain, WitnessAquaChain, SignAquaChain, DeleteAquaChain } from "../../aqua_chain_actions"
@@ -580,8 +578,7 @@ const ChainDetails = ({ fileInfo, callBack }: IPageDataDetails) => {
 
 export const ChainDetailsBtn = ({ fileInfo, session }: IPageDataDetails) => {
 
-    console.log("File info: ", fileInfo)
-
+   
     const [showMoreDetails, setShowMoreDetails] = useState(false)
 
     const { backend_url } = useStore(appStore)

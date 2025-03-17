@@ -112,6 +112,28 @@ export default async function authController(fastify: FastifyInstance) {
 
 
 
+      let settingsData = await prisma.settings.findFirst({
+        where: {
+          user_pub_key: siweData.address!!
+        }
+      })
+
+      if (settingsData == null) {
+        let defaultData = {
+          user_pub_key: siweData.address!!,
+          cli_pub_key: "",
+          cli_priv_key: "",
+          witness_network: "sepolia",
+          theme: "light",
+          witness_contract_address: '0x45f59310ADD88E6d23ca58A0Fa7A55BEE6d2a611',
+        }
+        await prisma.settings.create({
+          data: defaultData
+        })
+      }
+
+
+
       return reply.code(201).send({
         success: true,
         logs,

@@ -71,14 +71,8 @@ const LoadConfiguration = () => {
         });
 
         if (response.status === 200) {
-            // setUserProfile({
-            //     network: response.data.user_profile.chain,
-            //     domain: response.data.user_profile.domain,
-            //     fileMode: response.data.user_profile.mode,
-            //     contractAddress: response.data.user_profile.contract,
-            // })
-            setUserProfile({
-                ...response.data,
+               setUserProfile({
+                ...response.data.data,
             });
         }
     }
