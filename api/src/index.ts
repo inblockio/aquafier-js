@@ -9,6 +9,7 @@ import * as fs from "fs"
 
 
 // Import controllers
+import userController from './controllers/user';
 import authController from './controllers/auth';
 import indexController from './controllers/index';
 import versionController from './controllers/version';
@@ -75,6 +76,7 @@ const start = async () => {
 
     // Register controllers
     fastify.register(authController);
+    fastify.register(userController);
     fastify.register(indexController);
     fastify.register(versionController);
     fastify.register(filesController);
