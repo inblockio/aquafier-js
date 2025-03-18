@@ -8,6 +8,10 @@ export interface VerifyRequestBody {
 }
 
 
+export interface FetchAquaTreeRequest {
+ latestRevisionHash : string
+
+}
 export interface SiweRequest {
   message: string;
   signature: string;
