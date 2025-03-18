@@ -478,6 +478,8 @@ export default async function explorerController(fastify: FastifyInstance) {
                     where: { file_hash: fileHash },
                 });
 
+                
+
                 let existingFileIndex = await prisma.fileIndex.findFirst({
                     where: { file_hash: fileHash },
                 });

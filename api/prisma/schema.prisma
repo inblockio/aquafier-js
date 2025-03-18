@@ -28,7 +28,7 @@ model SiweSession {
 
 model Contract {
   hash             String        @id
-  latest           Json?
+  latest           String? //Json?
   sender           String?
   receiver         String?
   option           String?

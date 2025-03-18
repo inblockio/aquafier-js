@@ -4,12 +4,21 @@ import { prisma } from '../database/db';
 import { Settings } from '@prisma/client';
 import { SessionQuery, ShareRequest, SiweRequest } from '../models/request_models';
 import { verifySiweMessage } from '@/utils/auth_utils';
+import { AquaTree, FileObject, OrderRevisionInAquaTree } from 'aqua-js-sdk';
+import { getHost, getPort } from '@/utils/api_utils';
+import { createAquaTreeFromRevisions, fetchAquaTreeWithForwardRevisions, saveAquaTree } from '@/utils/revisions_utils';
 
 export default async function shareController(fastify: FastifyInstance) {
     // get current session
 
-    fastify.get('/share_data', async (request, reply) => {
+    fastify.get('/share_data/:hash', async (request, reply) => {
 
+        // Extract the hash parameter from the URL
+        const { hash } = request.params as { hash: string };
+        if (hash == null || hash == undefined || hash == "") {
+            return reply.code(406).send({ success: false, message: "hash not found in url" });
+
+        }
         const nonce = request.headers['nonce'];
 
         if (!nonce || typeof nonce !== 'string' || nonce.trim() === '') {
@@ -22,7 +31,7 @@ export default async function shareController(fastify: FastifyInstance) {
             });
 
             if (!session) {
-                return reply.code(404).send({ success: false, message: "Session not found" });
+                return reply.code(401).send({ success: false, message: "Session not found" });
             }
 
             // Check if session is expired
@@ -30,21 +39,58 @@ export default async function shareController(fastify: FastifyInstance) {
                 return reply.code(401).send({ success: false, message: "Session expired" });
             }
 
-
-            // 
-
-            const { id, hash, recepient } = request.body as ShareRequest;
-
-            let res = prisma.contract.create({
-                data: {
-                    hash: `${}_${hash}`;
-                    latest: JsonValue | null;
-                    sender: string | null;
-                    receiver: recepient;
-                    option: "";
-                    reference_count: 0;
+            // check in contracts table if the current user has been granted access to the tree
+            let contractData = await prisma.contract.findFirst({
+                where: {
+                    hash: hash
                 }
             })
+
+            if (contractData == null) {
+                return reply.code(500).send({ success: false, message: "The aqua tree share cntract does not exist" });
+
+            }
+
+            if (contractData?.receiver != "everyone" && contractData?.receiver != session.address) {
+                return reply.code(401).send({ success: false, message: "The aqua tree is not shared with you" });
+            }
+
+            // user has permission hence  fetch the enire aqua tree
+            // if option is latest traverse tree into the future from the latest to the latest
+
+            // Get the host from the request headers
+            const host = request.headers.host || `${getHost()}:${getPort()}`;
+
+            // Get the protocol (http or https)
+            const protocol = request.protocol || 'https'
+
+            // Construct the full URL
+            const url = `${protocol}://${host}`;
+
+            let displayData: Array<{
+                aquaTree: AquaTree,
+                fileObject: FileObject[]
+            }> = []
+
+            let anAquaTree: AquaTree
+            let fileObject: FileObject[]
+            if (contractData.option == "latest") {
+                [anAquaTree, fileObject] = await fetchAquaTreeWithForwardRevisions(contractData.latest!, url)
+            } else {
+                [anAquaTree, fileObject] = await createAquaTreeFromRevisions(contractData.latest!, url)
+
+            }
+            let sortedAquaTree = OrderRevisionInAquaTree(anAquaTree)
+
+            displayData.push({
+                aquaTree: sortedAquaTree,
+                fileObject: fileObject
+            })
+            // save the aqua tree 
+            await saveAquaTree(sortedAquaTree, session.address)
+
+            // return aqua tree
+            return displayData
 
 
         } catch (error) {
@@ -88,6 +134,11 @@ export default async function shareController(fastify: FastifyInstance) {
             return reply.code(406).send({ success: false, message: "Nounce  is invalid" });
         }
 
+        //validation to check owner is the one sharings
+        if (findRevision.pubkey_hash.split("_")[0] == session.address) {
+            return reply.code(406).send({ success: false, message: `latest ${latest}  does not belong ${session.address} ` });
+        }
+
         //insert into contract
         await prisma.contract.create({
             data: {
@@ -98,7 +149,7 @@ export default async function shareController(fastify: FastifyInstance) {
                 option: option,
                 reference_count: 1
             }
-        })
+        });
 
     });
 }

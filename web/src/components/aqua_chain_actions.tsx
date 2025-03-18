@@ -479,11 +479,15 @@ export const ShareButton = ({ item, nonce }: IShareButton) => {
         // 
         const allHashes = Object.keys(item.aquaTree!.revisions!);
         const latest = allHashes[allHashes.length - 1]
+        let recepientWalletData = recipient;
+        if (recipient == "") {
+            recepientWalletData = "0xPUBACC150PEN2A1100000000000000000000000"
+        }
         const response = await axios.post(url, {
             "latest": latest,
             "hash": unique_identifier,
-            "recipient": recipient,
-            "option": "forward"
+            "recipient": recepientWalletData,
+            "option": optionType
         }, {
             headers: {
                 'nonce': nonce
@@ -571,14 +575,14 @@ export const ShareButton = ({ item, nonce }: IShareButton) => {
                             <Box width="100%">
                                 <Text>Would the recipient to get the the  Aqua Tree as is Or receive the tree with any new revisins you will add </Text>
 
-                                <HStack justifyContent="space-between" width="80%" style={{marginLeft:"30px",  marginTop:"10px"}}>
+                                <HStack justifyContent="space-between" width="80%" style={{ marginLeft: "30px", marginTop: "10px" }}>
                                     <Text>1. Share latest revision in tree</Text>
                                     <Checkbox
                                         checked={optionType === "latest"}
                                         onCheckedChange={(e) => setOptionType(e.checked ? "latest" : "current")}
                                     />
                                 </HStack>
-                                <HStack justifyContent="space-between" width="80%" style={{marginLeft:"30px", marginTop:"10px"}}>
+                                <HStack justifyContent="space-between" width="80%" style={{ marginLeft: "30px", marginTop: "10px" }}>
                                     <Text>2. share current  tree</Text>
                                     <Checkbox
                                         checked={optionType === "current"}
