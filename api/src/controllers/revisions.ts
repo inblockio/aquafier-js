@@ -10,7 +10,8 @@ import * as fs from "fs"
 import path from 'path';
 
 export default async function revisionsController(fastify: FastifyInstance) {
-    fastify.post('/tree', async (request, reply) => {
+    // fetch aqua tree from a revision hash
+    fastify.post('/tree/data', async (request, reply) => {
 
         const { latestRevisionHash } = request.body as FetchAquaTreeRequest;
         // fetch all from latetst
@@ -63,6 +64,8 @@ export default async function revisionsController(fastify: FastifyInstance) {
         return reply.code(200).send({ data: displayData })
 
     });
+
+    // save revision 
     fastify.post('/tree', async (request, reply) => {
         try {
             // Read `nonce` from headers
