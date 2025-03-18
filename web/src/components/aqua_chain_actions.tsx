@@ -6,12 +6,13 @@ import appStore from "../store"
 import axios from "axios"
 import { ApiFileInfo } from "../models/FileInfo"
 import { toaster } from "./ui/toaster"
-import { useState } from "react"
+import { useEffect, useState } from "react"
 
 import { DialogActionTrigger, DialogBody, DialogCloseTrigger, DialogContent, DialogFooter, DialogHeader, DialogRoot, DialogTitle } from "./ui/dialog"
 import { generateNonce } from "siwe"
 import Loading from "react-loading"
-import { Box, Center, Text, VStack } from "@chakra-ui/react"
+import { Checkbox } from "../components/ui/checkbox"
+import { Box, Center, Input, HStack, Text, VStack } from "@chakra-ui/react"
 import { ClipboardButton, ClipboardIconButton, ClipboardInput, ClipboardLabel, ClipboardRoot } from "./ui/clipboard"
 import { InputGroup } from "./ui/input-group"
 import Aquafier, { AquaTreeWrapper } from "aqua-js-sdk"
@@ -430,31 +431,62 @@ export const DownloadAquaChain = ({ file }: { file: ApiFileInfo }) => {
 }
 
 interface IShareButton {
-    id: number | null
-    file_id: number
-    filename: string | null
+    item: ApiFileInfo
+    nonce: string
 }
 
-export const ShareButton = ({ filename, file_id }: IShareButton) => {
+export const ShareButton = ({ item, nonce }: IShareButton) => {
     const { backend_url } = useStore(appStore)
     const [isOpen, setIsOpen] = useState(false)
     const [sharing, setSharing] = useState(false)
+    const [fileName, setFileName] = useState("")
     const [shared, setShared] = useState<string | null>(null)
 
+    const [recipientType, setRecipientType] = useState<"everyone" | "specific">("everyone")
+    const [walletAddress, setWalletAddress] = useState("")
+    const [optionType, setOptionType] = useState<"latest" | "current">("latest")
+
+    // const hashToShare = optionType === "latest" ? latest : item.aquaTree!.currentHash
+    const recipient = recipientType === "everyone" ? "everyone" : walletAddress
+
+    useEffect(() => {
+
+        if (item) {
+            const name = item.fileObject[0].fileName;
+            setFileName(name)
+        }
+    })
+
     const handleShare = async () => {
+
+        if (recipientType == "specific" && (walletAddress == "")) {
+            toaster.create({
+                description: `If recipient is specific a wallet address has to be sepcified.`,
+                type: "error"
+            })
+            return
+        }
         setSharing(true)
         // let id_to_share = id;
         const unique_identifier = `${Date.now()}_${generateNonce()}`
 
         const url = `${backend_url}/share_data`;
-        const formData = new URLSearchParams();
-        formData.append('file_id', file_id.toString());
-        formData.append('filename', filename ?? "");
-        formData.append('identifier', unique_identifier);
+        // const formData = new URLSearchParams();
+        // formData.append('file_id', file_id.toString());
+        // formData.append('filename', filename ?? "");
+        // formData.append('identifier', unique_identifier);
 
-        const response = await axios.post(url, formData, {
+        // 
+        const allHashes = Object.keys(item.aquaTree!.revisions!);
+        const latest = allHashes[allHashes.length - 1]
+        const response = await axios.post(url, {
+            "latest": latest,
+            "hash": unique_identifier,
+            "recipient": recipient,
+            "option": "forward"
+        }, {
             headers: {
-                'Content-Type': 'application/x-www-form-urlencoded'
+                'nonce': nonce
             }
         });
 
@@ -474,6 +506,14 @@ export const ShareButton = ({ filename, file_id }: IShareButton) => {
 
     }
 
+    // const handleRecipientChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    //     setRecipientType(e.target.checked ? "specific" : "everyone")
+    // }
+
+    // const handleVersionChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    //     setOptionType(e.target.checked ? "current" : "latest")
+    // }
+
     return (
         <>
             <Button size={'xs'} colorPalette={'orange'} variant={'subtle'} w={'168px'} onClick={() => setIsOpen(true)}>
@@ -488,13 +528,66 @@ export const ShareButton = ({ filename, file_id }: IShareButton) => {
                 </DialogTrigger> */}
                 <DialogContent>
                     <DialogHeader>
-                        <DialogTitle>{`Sharing ${filename}`}</DialogTitle>
+                        <DialogTitle>{`Sharing ${fileName}`}</DialogTitle>
                     </DialogHeader>
                     <DialogBody>
                         <VStack textAlign={'start'}>
                             <p>
-                                {`You are about to share ${filename}. Once a file is shared, don't delete it otherwise it will be broken if one tries to import it.`}
+                                {`You are about to share ${fileName}. Once a file is shared, don't delete it otherwise it will be broken if one tries to import it.`}
                             </p>
+
+
+                            {/* Recipient Toggle */}
+                            <Box width="100%">
+                                <HStack justifyContent="space-between" width="100%">
+                                    <Text>Share with specific wallet</Text>
+
+
+                                    <Checkbox
+
+                                        checked={recipientType === "specific"}
+                                        onCheckedChange={(changes) => setRecipientType(changes.checked ? "specific" : "everyone")}
+                                    />
+                                </HStack>
+
+                                {recipientType === "specific" && (
+                                    <Input
+                                        mt={2}
+                                        placeholder="Enter wallet address"
+                                        value={walletAddress}
+                                        onChange={(e) => setWalletAddress(e.target.value)}
+                                    />
+                                )}
+                            </Box>
+                            {/* Custom Divider */}
+                            <Box
+                                width="100%"
+                                height="1px"
+                                bg="gray.200"
+                                my={3}
+                            />
+
+                            {/* Version Toggle */}
+                            <Box width="100%">
+                                <Text>Would the recipient to get the the  Aqua Tree as is Or receive the tree with any new revisins you will add </Text>
+
+                                <HStack justifyContent="space-between" width="80%" style={{marginLeft:"30px",  marginTop:"10px"}}>
+                                    <Text>1. Share latest revision in tree</Text>
+                                    <Checkbox
+                                        checked={optionType === "latest"}
+                                        onCheckedChange={(e) => setOptionType(e.checked ? "latest" : "current")}
+                                    />
+                                </HStack>
+                                <HStack justifyContent="space-between" width="80%" style={{marginLeft:"30px", marginTop:"10px"}}>
+                                    <Text>2. share current  tree</Text>
+                                    <Checkbox
+                                        checked={optionType === "current"}
+                                        onCheckedChange={(e) => setOptionType(e.checked ? "current" : "latest")}
+                                    />
+                                </HStack>
+                            </Box>
+
+
                             {
                                 sharing ?
                                     <Center>

@@ -1,6 +1,3 @@
-
-
-
 import { FastifyInstance, FastifyRequest } from 'fastify';
 import { SiweMessage } from 'siwe';
 import { prisma } from '../database/db';

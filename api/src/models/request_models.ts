@@ -14,6 +14,13 @@ export interface SiweRequest {
   domain: string;
 }
 
+export interface ShareRequest {
+  latest: string;
+  recipient: string;
+  option: string;
+  hash: string;
+}
+
 
 export interface SessionQuery {
   nonce?: string;
