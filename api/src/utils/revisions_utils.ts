@@ -28,7 +28,7 @@ export async function saveAquaTree(aquaTree: AquaTree, userAddress: string) {
     });
 
     // insert the revisions
-    for (const revisinHash of latestHash) {
+    for (const revisinHash of allHash) {
         let revisionData = aquaTree.revisions[revisinHash];
         let pubKeyHash = `${userAddress}_${revisinHash}`
 
@@ -39,12 +39,12 @@ export async function saveAquaTree(aquaTree: AquaTree, userAddress: string) {
             data: {
                 pubkey_hash: pubKeyHash,
                 // user: session.address, // Replace with actual user identifier (e.g., request.user.id)
-                nonce: revisionData.file_nonce || "",
+                nonce: revisionData.file_nonce ?? "",
                 shared: [],
-                previous: revisionData.previous_verification_hash || "",
-                local_timestamp: revisionData.local_timestamp,
+                previous: revisionData.previous_verification_hash ?? "",
+                local_timestamp: Number.parseInt(revisionData.local_timestamp),
                 revision_type: revisionData.revision_type,
-                verification_leaves: revisionData.leaves || [],
+                verification_leaves: revisionData.leaves ?? [],
 
             },
         });
@@ -303,7 +303,7 @@ export async function createAquaTreeFromRevisions(latestRevisionHash: string, ur
         let revisionWithData: AquaRevision = {
             revision_type: revisionItem.revision_type!! as "link" | "file" | "witness" | "signature" | "form",
             previous_verification_hash: previousHashOnly,
-            local_timestamp: revisionItem.local_timestamp!.toDateString(),
+            local_timestamp: revisionItem.local_timestamp!.toString(),
             file_nonce: revisionItem.nonce ?? "--error--",
             "version": "https://aqua-protocol.org/docs/v3/schema_2 | SHA256 | Method: scalar",
         }

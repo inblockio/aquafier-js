@@ -183,7 +183,7 @@ export default async function explorerController(fastify: FastifyInstance) {
                 let revisionWithData: Revision = {
                     revision_type: revisionItem.revision_type!! as "link" | "file" | "witness" | "signature" | "form",
                     previous_verification_hash: previousHashOnly,
-                    local_timestamp: revisionItem.local_timestamp!.toDateString(),
+                    local_timestamp: revisionItem.local_timestamp!.toString(),
                     file_nonce: revisionItem.nonce ?? "--error--",
                     "version": "https://aqua-protocol.org/docs/v3/schema_2 | SHA256 | Method: scalar",
                 }
@@ -416,16 +416,16 @@ export default async function explorerController(fastify: FastifyInstance) {
             try {
 
                 // Parse the timestamp string into a valid Date object
-                const localTimestamp = new Date(
-                    Date.UTC(
-                        parseInt(revisionData.local_timestamp.slice(0, 4)),   // Year
-                        parseInt(revisionData.local_timestamp.slice(4, 6)) - 1,  // Month (0-indexed)
-                        parseInt(revisionData.local_timestamp.slice(6, 8)),   // Day
-                        parseInt(revisionData.local_timestamp.slice(8, 10)),  // Hours
-                        parseInt(revisionData.local_timestamp.slice(10, 12)), // Minutes
-                        parseInt(revisionData.local_timestamp.slice(12, 14))  // Seconds
-                    )
-                );
+                // const localTimestamp = new Date(
+                //     Date.UTC(
+                //         parseInt(revisionData.local_timestamp.slice(0, 4)),   // Year
+                //         parseInt(revisionData.local_timestamp.slice(4, 6)) - 1,  // Month (0-indexed)
+                //         parseInt(revisionData.local_timestamp.slice(6, 8)),   // Day
+                //         parseInt(revisionData.local_timestamp.slice(8, 10)),  // Hours
+                //         parseInt(revisionData.local_timestamp.slice(10, 12)), // Minutes
+                //         parseInt(revisionData.local_timestamp.slice(12, 14))  // Seconds
+                //     )
+                // );
 
                 let filepubkeyhash = `${session.address}_${allHash[0]}`
 
@@ -448,7 +448,7 @@ export default async function explorerController(fastify: FastifyInstance) {
                         //     : [],
                         previous: revisionData.previous_verification_hash || "",
                         // children: {},
-                        local_timestamp: localTimestamp,
+                        local_timestamp: Number.parseInt(revisionData.local_timestamp),
                         revision_type: revisionData.revision_type,
                         verification_leaves: revisionData.leaves || [],
 
