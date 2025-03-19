@@ -10,15 +10,87 @@ import util from 'util';
 import { pipeline } from 'stream';
 import * as fs from "fs"
 import { error } from 'console';
-import { createAquaTreeFromRevisions, FetchRevisionInfo, findAquaTreeRevision } from '@/utils/revisions_utils';
+import { createAquaTreeFromRevisions, FetchRevisionInfo, findAquaTreeRevision, saveAquaTree } from '@/utils/revisions_utils';
 import { fileURLToPath } from 'url';
 import { AquaForms, FileIndex, Signature, Witness, WitnessEvent } from '@prisma/client';
 import { getHost, getPort } from '@/utils/api_utils';
-import { DeleteRevision } from '@/models/request_models';
+import { DeleteRevision, SaveAquaTree } from '@/models/request_models';
 // Promisify pipeline
 const pump = util.promisify(pipeline);
 
 export default async function explorerController(fastify: FastifyInstance) {
+
+
+
+    fastify.post('/explorer_aqua_file_upload', async (request, reply) => {
+
+        // Read `nonce` from headers
+        const nonce = request.headers['nonce']; // Headers are case-insensitive
+
+        // Check if `nonce` is missing or empty
+        if (!nonce || typeof nonce !== 'string' || nonce.trim() === '') {
+            return reply.code(401).send({ error: 'Unauthorized: Missing or empty nonce header' });
+        }
+
+        const session = await prisma.siweSession.findUnique({
+            where: { nonce }
+        });
+
+        if (!session) {
+            return reply.code(403).send({ success: false, message: "Nounce  is invalid" });
+        }
+
+
+        let aquafier = new Aquafier();
+
+
+        // Check if the request is multipart
+        const isMultipart = request.isMultipart();
+
+        if (!isMultipart) {
+            return reply.code(400).send({ error: 'Expected multipart form data' });
+        }
+
+        try {
+            // Process the multipart data
+            const data = await request.file();
+
+            if (data == undefined || data.file === undefined) {
+                return reply.code(400).send({ error: 'No file uploaded' });
+            }
+            // Verify file size (20MB = 20 * 1024 * 1024 bytes)
+            const maxFileSize = 20 * 1024 * 1024;
+            if (data.file.bytesRead > maxFileSize) {
+                return reply.code(413).send({ error: 'File too large. Maximum file size is 20MB' });
+            }
+
+            const fileBuffer = await streamToBuffer(data.file);
+            let fileContent = fileBuffer.toString('utf-8');
+
+            let aquaTreeWithFileObject: SaveAquaTree = JSON.parse(fileContent)
+            console.log("----------------------------------------------------------------------")
+            console.log(`Make sure its an aqua tree with file objects ${JSON.stringify(aquaTreeWithFileObject, null, 4)} `)
+            // verify the aqua tree 
+
+            let res = await aquafier.verifyAquaTree(aquaTreeWithFileObject.tree, aquaTreeWithFileObject.fileObject)
+
+            if (res.isErr()) {
+                return reply.code(403).send({ error: 'aqua tree is not valid', logs: res.data });
+            }
+
+            // save the aqua tree 
+            await saveAquaTree(aquaTreeWithFileObject.tree, session.address)
+
+            return reply.code(200).send({ error: 'aqua tree saved successfully' });
+        } catch (error) {
+            request.log.error(error);
+            return reply.code(500).send({ error: 'File upload failed' });
+        }
+
+
+
+    });
+
     // get file using file hash
     fastify.get('/explorer_files', async (request, reply) => {
         // const { fileHash } = request.params as { fileHash: string };

@@ -11,6 +11,7 @@ import { createAquaTreeFromRevisions, fetchAquaTreeWithForwardRevisions, saveAqu
 export default async function shareController(fastify: FastifyInstance) {
     // get current session
 
+    
     fastify.get('/share_data/:hash', async (request, reply) => {
 
         // Extract the hash parameter from the URL
@@ -86,13 +87,11 @@ export default async function shareController(fastify: FastifyInstance) {
             let sortedAquaTree = OrderRevisionInAquaTree(anAquaTree)
 
             console.log(`Aqua tree ${JSON.stringify(sortedAquaTree)}`);
-            
+
             displayData.push({
                 aquaTree: sortedAquaTree,
                 fileObject: fileObject
             })
-            // save the aqua tree 
-            await saveAquaTree(sortedAquaTree, session.address)
 
             // return aqua tree
             return displayData

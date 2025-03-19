@@ -1,5 +1,9 @@
 import { AquaTree, Revision, FileObject } from "aqua-js-sdk";
 
+export interface SaveAquaTree {
+  tree: AquaTree;
+  fileObject: FileObject[];
+}
 export interface VerifyRequestBody {
   tree: AquaTree;
   revision: Revision;
