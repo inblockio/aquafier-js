@@ -307,12 +307,21 @@ export async function createAquaTreeFromRevisions(latestRevisionHash: string, ur
 
     // files 
 
+    // let  = await prisma.file.findMany({
+    //     where: {
+    //         hash: lastRevision.pubkey_hash
+    //     }
+    // })
+
     let files = await prisma.file.findMany({
         where: {
-            hash: lastRevision.pubkey_hash
+            hash: {
+                contains: lastRevisionHash,
+                mode: 'insensitive' // Case-insensitive matching
+            }
         }
-    })
 
+    })
 
     let fileObject: FileObject[] = [];
     let fileIndexes: FileIndex[] = [];
@@ -396,7 +405,6 @@ export async function createAquaTreeFromRevisions(latestRevisionHash: string, ur
         }
 
         if (revisionItem.revision_type == "file") {
-            let hashOnly = lastRevisionHash.split("_")[1]
             let fileResult = await prisma.file.findFirst({
                 where: {
                     hash: {
