@@ -40,7 +40,7 @@ export const videoTypes = ["video/mp4", "video/mpeg", "video/webm"];
 
 // Function to initialize the backend URL
 export const initializeBackendUrl = async (): Promise<string> => {
-  let BACKEND_URL = "http://127.0.0.1:3600";
+  let BACKEND_URL = "http://127.0.0.1:3000";
   try {
     // Fetch the config.json file from the public folder
     const response = await fetch('/config.json');
@@ -55,9 +55,9 @@ export const initializeBackendUrl = async (): Promise<string> => {
 
     console.log("Data from config ", configData);
     // Update the BACKEND_URL
-    BACKEND_URL = configData.BACKEND_URL || "http://127.0.0.1:3600";
+    BACKEND_URL = configData.BACKEND_URL || "http://127.0.0.1:3000";
     if (BACKEND_URL == "BACKEND_URL_PLACEHOLDER"){
-      BACKEND_URL="http://127.0.0.1:3600";
+      BACKEND_URL="http://127.0.0.1:3000";
     }
     console.log("Config Backend URL", BACKEND_URL);
   } catch (err) {

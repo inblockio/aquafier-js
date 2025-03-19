@@ -14,7 +14,7 @@ import { Alert } from '../components/ui/alert'
 import { LuChevronUp, LuChevronDown } from 'react-icons/lu'
 
 const SharePage = () => {
-    const { backend_url, metamaskAddress } = useStore(appStore)
+    const { backend_url, metamaskAddress , session} = useStore(appStore)
     const [fileInfo, setFileInfo] = useState<ApiFileInfo | null>(null)
     const [loading, setLoading] = useState(false)
     const [hasError, setHasError] = useState<string | null>(null);
@@ -32,7 +32,8 @@ const SharePage = () => {
                 console.log("url is ", url)
                 const response = await axios.get(url, {
                     headers: {
-                        'Content-Type': 'application/x-www-form-urlencoded'
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                        'nonce': session?.nonce ?? ""
                     }
                 });
                 console.log(response)

@@ -47,7 +47,7 @@ export default async function shareController(fastify: FastifyInstance) {
             })
 
             if (contractData == null) {
-                return reply.code(500).send({ success: false, message: "The aqua tree share cntract does not exist" });
+                return reply.code(500).send({ success: false, message: "The aqua tree share contract does not exist" });
 
             }
 
@@ -74,10 +74,13 @@ export default async function shareController(fastify: FastifyInstance) {
 
             let anAquaTree: AquaTree
             let fileObject: FileObject[]
+            let revision_pubkey_hash = `${contractData.sender}_${contractData.latest}`
+            console.log(`revision_pubkey_hash == > ${revision_pubkey_hash}`);
+            
             if (contractData.option == "latest") {
-                [anAquaTree, fileObject] = await fetchAquaTreeWithForwardRevisions(contractData.latest!, url)
+                [anAquaTree, fileObject] = await fetchAquaTreeWithForwardRevisions(revision_pubkey_hash, url)
             } else {
-                [anAquaTree, fileObject] = await createAquaTreeFromRevisions(contractData.latest!, url)
+                [anAquaTree, fileObject] = await createAquaTreeFromRevisions(revision_pubkey_hash, url)
 
             }
             let sortedAquaTree = OrderRevisionInAquaTree(anAquaTree)
@@ -113,10 +116,10 @@ export default async function shareController(fastify: FastifyInstance) {
         }
 
         const session = await prisma.siweSession.findUnique({
-            where: { nonce }
+            where: { nonce: nonce }
         });
 
-        if (!session) {
+        if (session == null) {
             return reply.code(403).send({ success: false, message: "Nounce  is invalid" });
         }
 
@@ -127,15 +130,15 @@ export default async function shareController(fastify: FastifyInstance) {
 
         let findRevision = await prisma.revision.findFirst({
             where: {
-                pubkey_hash: latest
+                pubkey_hash: `${session.address}_${latest}`
             }
         })
         if (findRevision == null) {
-            return reply.code(406).send({ success: false, message: "Nounce  is invalid" });
+            return reply.code(406).send({ success: false, message: "revision with hash  is invalid" });
         }
 
         //validation to check owner is the one sharings
-        if (findRevision.pubkey_hash.split("_")[0] == session.address) {
+        if (findRevision.pubkey_hash.split("_")[0] != session.address) {
             return reply.code(406).send({ success: false, message: `latest ${latest}  does not belong ${session.address} ` });
         }
 
@@ -150,6 +153,8 @@ export default async function shareController(fastify: FastifyInstance) {
                 reference_count: 1
             }
         });
+
+        return reply.code(200).send({ success: true, message: "share contract created successfully." });
 
     });
 }

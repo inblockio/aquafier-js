@@ -66,9 +66,9 @@ const FilesTable = () => {
             </Table.Cell>
             <Table.Cell minW={'220px'} maxW={'220px'} textWrap={'wrap'}>
                 <Group alignItems={'start'} flexWrap={'wrap'}>
-                    <ShareButton  nonce={session!.nonce} item={item} />
+                    <ShareButton  nonce={session?.nonce ?? ""} item={item} />
                     <DownloadAquaChain file={item} />
-                    <ChainDetailsBtn fileInfo={item}  session={session!}/>
+                    <ChainDetailsBtn fileInfo={item}  session={session}/>
                     <WitnessAquaChain apiFileInfo={item} backendUrl={backend_url} nonce={session?.nonce ?? ""} revision="" />
                     <SignAquaChain apiFileInfo={item} backendUrl={backend_url} nonce={session?.nonce ?? ""} revision="" />
                     <DeleteAquaChain apiFileInfo={item} backendUrl={backend_url} nonce={session?.nonce ?? ""} revision="" />

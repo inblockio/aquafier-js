@@ -11,7 +11,7 @@ model User {
   user             String        @id
   Latest           Latest[]
   Settings         Settings?
-  Contract         Contract[]
+  // Contract         Contract[]
 
   @@map("user")
 }
@@ -33,7 +33,7 @@ model Contract {
   receiver         String?
   option           String?
   reference_count  Int?
-  User             User?         @relation(fields: [hash], references: [user])
+  // User             User?         @relation(fields: [hash], references: [user])
   // Revision         Revision?     @relation(fields: [hash], references: [pubkey_hash])
 
    @@map("contract")

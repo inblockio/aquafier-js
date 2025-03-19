@@ -12,8 +12,16 @@ export async function saveAquaTree(aquaTree: AquaTree, userAddress: string) {
     let allHash = Object.keys(aquaTree.revisions)
     let latestHash = allHash[allHash.length - 1]
     let lastPubKeyHash = `${userAddress}_${latestHash}`
-    await prisma.latest.create({
-        data: {
+
+    await prisma.latest.upsert({
+        where:{
+            hash:lastPubKeyHash
+        },
+        create: {
+            hash: lastPubKeyHash,
+            user: userAddress,
+        },
+        update: {
             hash: lastPubKeyHash,
             user: userAddress,
         }
@@ -23,6 +31,9 @@ export async function saveAquaTree(aquaTree: AquaTree, userAddress: string) {
     for (const revisinHash of latestHash) {
         let revisionData = aquaTree.revisions[revisinHash];
         let pubKeyHash = `${userAddress}_${revisinHash}`
+
+        console.log("%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%")
+        console.log(`revisinHash ${revisinHash} --- \n Revision item ${JSON.stringify(revisionData)} `)
         // Insert new revision into the database
         await prisma.revision.create({
             data: {
