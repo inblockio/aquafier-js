@@ -14,8 +14,8 @@ export async function saveAquaTree(aquaTree: AquaTree, userAddress: string) {
     let lastPubKeyHash = `${userAddress}_${latestHash}`
 
     await prisma.latest.upsert({
-        where:{
-            hash:lastPubKeyHash
+        where: {
+            hash: lastPubKeyHash
         },
         create: {
             hash: lastPubKeyHash,
@@ -36,8 +36,8 @@ export async function saveAquaTree(aquaTree: AquaTree, userAddress: string) {
         console.log(`revisinHash ${revisinHash} --- \n Revision item ${JSON.stringify(revisionData)} `)
         // Insert new revision into the database
         await prisma.revision.upsert({
-            where:{
-                pubkey_hash:pubKeyHash
+            where: {
+                pubkey_hash: pubKeyHash
             },
             create: {
                 pubkey_hash: pubKeyHash,
@@ -69,8 +69,8 @@ export async function saveAquaTree(aquaTree: AquaTree, userAddress: string) {
             for (let formItem in revisioValue) {
                 if (formItem.startsWith("form_")) {
                     await prisma.aquaForms.upsert({
-                        where:{
-                            hash:pubKeyHash
+                        where: {
+                            hash: pubKeyHash
                         },
                         create: {
                             hash: pubKeyHash,
@@ -89,12 +89,12 @@ export async function saveAquaTree(aquaTree: AquaTree, userAddress: string) {
             }
         }
 
-        if (revisionData.revision.revision_type == "signature") {
+        if (revisionData.revision_type == "signature") {
             let signature = "";
-            if (typeof revisionData.revision.signature == "string") {
-                signature = revisionData.revision.signature
+            if (typeof revisionData.signature == "string") {
+                signature = revisionData.signature
             } else {
-                signature = JSON.stringify(revisionData.revision.signature)
+                signature = JSON.stringify(revisionData.signature)
             }
 
 
@@ -111,9 +111,9 @@ export async function saveAquaTree(aquaTree: AquaTree, userAddress: string) {
                 create: {
                     hash: pubKeyHash,
                     signature_digest: signature,
-                    signature_wallet_address: revisionData.revision.signature.wallet_address,
-                    signature_type: revisionData.revision.signature_type,
-                    signature_public_key: revisionData.revision.signature_public_key,
+                    signature_wallet_address: revisionData.signature.wallet_address,
+                    signature_type: revisionData.signature_type,
+                    signature_public_key: revisionData.signature_public_key,
                     reference_count: 1
                 }
             });
@@ -121,7 +121,7 @@ export async function saveAquaTree(aquaTree: AquaTree, userAddress: string) {
         }
 
 
-        if (revisionData.revision.revision_type == "witness") {
+        if (revisionData.revision_type == "witness") {
 
             await prisma.witness.upsert({
                 where: {
@@ -134,7 +134,7 @@ export async function saveAquaTree(aquaTree: AquaTree, userAddress: string) {
                 },
                 create: {
                     hash: pubKeyHash,
-                    Witness_merkle_root: revisionData.revision.witness_merkle_root,
+                    Witness_merkle_root: revisionData.witness_merkle_root,
                     reference_count: 1  // Starting with 1 since this is the first reference
                 }
             });
@@ -142,24 +142,24 @@ export async function saveAquaTree(aquaTree: AquaTree, userAddress: string) {
             // const witnessTimestamp = new Date(!);
             await prisma.witnessEvent.upsert({
                 where: {
-                    Witness_merkle_root: revisionData.revision.witness_merkle_root!,
+                    Witness_merkle_root: revisionData.witness_merkle_root!,
                 },
                 update: {
-                    Witness_merkle_root: revisionData.revision.witness_merkle_root!,
-                    Witness_timestamp: revisionData.revision.witness_timestamp,
-                    Witness_network: revisionData.revision.witness_network,
-                    Witness_smart_contract_address: revisionData.revision.witness_smart_contract_address,
-                    Witness_transaction_hash: revisionData.revision.witness_transaction_hash,
-                    Witness_sender_account_address: revisionData.revision.witness_sender_account_address
+                    Witness_merkle_root: revisionData.witness_merkle_root!,
+                    Witness_timestamp: revisionData.witness_timestamp,
+                    Witness_network: revisionData.witness_network,
+                    Witness_smart_contract_address: revisionData.witness_smart_contract_address,
+                    Witness_transaction_hash: revisionData.witness_transaction_hash,
+                    Witness_sender_account_address: revisionData.witness_sender_account_address
 
                 },
                 create: {
-                    Witness_merkle_root: revisionData.revision.witness_merkle_root!,
-                    Witness_timestamp: revisionData.revision.witness_timestamp,
-                    Witness_network: revisionData.revision.witness_network,
-                    Witness_smart_contract_address: revisionData.revision.witness_smart_contract_address,
-                    Witness_transaction_hash: revisionData.revision.witness_transaction_hash,
-                    Witness_sender_account_address: revisionData.revision.witness_sender_account_address
+                    Witness_merkle_root: revisionData.witness_merkle_root!,
+                    Witness_timestamp: revisionData.witness_timestamp,
+                    Witness_network: revisionData.witness_network,
+                    Witness_smart_contract_address: revisionData.witness_smart_contract_address,
+                    Witness_transaction_hash: revisionData.witness_transaction_hash,
+                    Witness_sender_account_address: revisionData.witness_sender_account_address
 
                 }
             });
@@ -167,13 +167,58 @@ export async function saveAquaTree(aquaTree: AquaTree, userAddress: string) {
 
 
 
-        if (revisionData.revision.revision_type == "link" || revisionData.revision.revision_type == "file") {
+        if (revisionData.revision_type == "file") {
+            if (revisionData.file_hash == null || revisionData.file_hash == undefined) {
+                throw Error(`revision with hash ${revisinHash} is detected to be a file but file_hash is mising`);
+            }
 
-            throw Error(`revision with hash ${revisinHash} is detected to be ${revisionData.revision.revision_type} which is not supported .`)
-        
+            let fileResult = await prisma.file.findFirst({
+                where: {
+                    hash: {
+                        contains: revisinHash,
+                        mode: 'insensitive' // Case-insensitive matching
+                    }
+                }
+            })
+
+            if (fileResult == null) {
+                throw Error(`file data should be in database but is not found.`);
+            }
+
+            await prisma.file.update({
+                where: {
+                    hash: fileResult.hash
+                },
+                data: {
+                    reference_count: fileResult.reference_count! + 1
+                }
+            })
+
+
+            // update  file index
+
+            let existingFileIndex = await prisma.fileIndex.findFirst({
+                where: { id: fileResult.hash },
+            });
+
+            if (existingFileIndex) {
+                existingFileIndex.hash = [...existingFileIndex.hash, pubKeyHash]
+                await prisma.fileIndex.update({
+                    data: existingFileIndex,
+                    where: {
+                        id: existingFileIndex.id
+                    }
+                })
+
+
+
+            }
         }
+        if (revisionData.revision_type == "link") {
 
+            throw Error(`revision with hash ${revisinHash} is detected to be ${revisionData.revision_type} which is not supported .`)
 
+        }
 
 
 
@@ -181,8 +226,8 @@ export async function saveAquaTree(aquaTree: AquaTree, userAddress: string) {
         if (revisionData.previous_verification_hash == null || revisionData.previous_verification_hash == "") {
 
             let fileHash = revisionData.file_hash;
-            
-            if (fileHash == null){
+
+            if (fileHash == null) {
                 throw Error(`revision with hash ${revisinHash} is detected to be a genesis but the file hash is null.`)
             }
             // file and file indexes
@@ -334,12 +379,13 @@ export async function createAquaTreeFromRevisions(latestRevisionHash: string, ur
 
     for (let revisionItem of revisionData) {
         let hashOnly = revisionItem.pubkey_hash.split("_")[1]
-        let previousHashOnly = revisionItem.previous === null ? "" : revisionItem.previous.split("_")[1]
+        let previousHashOnly = revisionItem.previous == null || revisionItem.previous == undefined || revisionItem.previous == "" ? "" : revisionItem.previous.split("_")[1]
+
+        console.log(`previousHashOnly == > ${previousHashOnly} RAW ${revisionItem.previous}`)
         let revisionWithData: AquaRevision = {
             revision_type: revisionItem.revision_type!! as "link" | "file" | "witness" | "signature" | "form",
             previous_verification_hash: previousHashOnly,
             local_timestamp: revisionItem.local_timestamp!.toString(),
-            file_nonce: revisionItem.nonce ?? "--error--",
             "version": "https://aqua-protocol.org/docs/v3/schema_2 | SHA256 | Method: scalar",
         }
 
@@ -349,8 +395,23 @@ export async function createAquaTreeFromRevisions(latestRevisionHash: string, ur
             revisionWithData["content"] = fileContent
         }
 
-        if (revisionItem.revision_type != "file") {
+        if (revisionItem.revision_type == "file") {
+            let hashOnly = lastRevisionHash.split("_")[1]
+            let fileResult = await prisma.file.findFirst({
+                where: {
+                    hash: {
+                        contains: hashOnly,
+                        mode: 'insensitive' // Case-insensitive matching
+                    }
+                }
 
+            })
+            if (fileResult == null) {
+                throw Error("Revision file data  not found")
+            }
+            revisionWithData["file_nonce"] = revisionItem.nonce ?? "--error--"
+            revisionWithData["file_hash"] = fileResult.file_hash ?? "--error--"
+        } else {
             let revisionInfoData = await FetchRevisionInfo(revisionItem.pubkey_hash, revisionItem)
 
             if (revisionInfoData == null) {
@@ -367,7 +428,7 @@ export async function createAquaTreeFromRevisions(latestRevisionHash: string, ur
             } else if (revisionItem.revision_type == "witness") {
                 let witnessData = revisionInfoData as WitnessEvent;
                 revisionWithData.witness_merkle_root = witnessData.Witness_merkle_root;
-                revisionWithData.witness_timestamp = witnessData.Witness_timestamp!.getTime();
+                revisionWithData.witness_timestamp = witnessData.Witness_timestamp!;
                 revisionWithData.witness_network = witnessData.Witness_network!;
                 revisionWithData.witness_smart_contract_address = witnessData.Witness_smart_contract_address!;
                 revisionWithData.witness_transaction_hash = witnessData.Witness_transaction_hash!;
@@ -397,6 +458,9 @@ export async function createAquaTreeFromRevisions(latestRevisionHash: string, ur
             }
         }
 
+
+
+
         // update file index for genesis revision 
         if (previousHashOnly == null || previousHashOnly.length == 0) {
             console.log("****************************************************************")
@@ -419,6 +483,9 @@ export async function createAquaTreeFromRevisions(latestRevisionHash: string, ur
         }
         anAquaTree.revisions[hashOnly] = revisionWithData;
     }
+
+
+    console.log(`YOU should see me ${JSON.stringify(anAquaTree, null, 4)}`)
 
     return [anAquaTree, fileObject]
 }

@@ -14,8 +14,9 @@ import { Alert } from '../components/ui/alert'
 import { LuChevronUp, LuChevronDown } from 'react-icons/lu'
 
 const SharePage = () => {
-    const { backend_url, metamaskAddress , session} = useStore(appStore)
+    const { backend_url, metamaskAddress, session } = useStore(appStore)
     const [fileInfo, setFileInfo] = useState<ApiFileInfo | null>(null)
+    const [fetchFromUrl, setFetchFromUrl] = useState(false)
     const [loading, setLoading] = useState(false)
     const [hasError, setHasError] = useState<string | null>(null);
     const [isVerificationSuccesful, setIsVerificationSuccessful] = useState(false)
@@ -24,6 +25,9 @@ const SharePage = () => {
     const params = useParams()
 
     const loadPageData = async () => {
+        if (!session?.nonce || !params?.identifier) {
+            return
+        }
         if (!backend_url.includes('0.0.0.0')) {
             try {
 
@@ -39,7 +43,7 @@ const SharePage = () => {
                 console.log(response)
 
                 if (response.status === 200) {
-                    setFileInfo(response.data.file_data)
+                    setFileInfo(response.data[0])
                 }
                 setLoading(false)
             }
@@ -62,19 +66,20 @@ const SharePage = () => {
     }
 
     useEffect(() => {
-        if (params.identifier) {
-            loadPageData()
-        }
-    }, [params, metamaskAddress, backend_url])
+        // if (fetchFromUrl == false) {
+        //     console.log("Trigered ...")
+            if (params.identifier) {
+                loadPageData()
+            }
+        //     setFetchFromUrl(true);
+        // }else{
+        //     console.log("No.........Trigered ...") 
+        // }
+    }, [params])
 
-    useEffect(() => {
-        // if (!metamaskAddress) {
-        //     toaster.create({
-        //         description: "Sign In is required",
-        //         type: "info"
-        //     })
-        // } 
-    }, [])
+    // useEffect(() => {
+    //     loadPageData()
+    // }, [])
 
     const showProperWidget = () => {
         if (hasError) {

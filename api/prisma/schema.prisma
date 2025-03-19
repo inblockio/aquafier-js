@@ -72,7 +72,7 @@ model Revision {
 }
 
 model File {
-  hash             String        @id
+  hash             String        @id // pub_key_revision_hash 
   content          String?
   file_hash        String?
   reference_count  Int?
