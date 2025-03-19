@@ -278,7 +278,7 @@ export const ImportAquaChainFromChain = ({ fileInfo, isVerificationSuccessful }:
 
     console.log(revisionsToImport)
 
-    const { metamaskAddress, setFiles, files, user_profile, backend_url } = useStore(appStore)
+    const { metamaskAddress, setFiles, files, user_profile, backend_url, session } = useStore(appStore)
 
     let navigate = useNavigate();
 
@@ -375,7 +375,8 @@ export const ImportAquaChainFromChain = ({ fileInfo, isVerificationSuccessful }:
             const response = await axios.post(url, formData, {
                 headers: {
                     'Content-Type': 'multipart/form-data',
-                    "metamask_address": metamaskAddress
+                    "metamask_address": metamaskAddress,
+                    "nonce": session?.nonce
                 },
             });
 
