@@ -35,8 +35,22 @@ export async function saveAquaTree(aquaTree: AquaTree, userAddress: string) {
         console.log("%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%")
         console.log(`revisinHash ${revisinHash} --- \n Revision item ${JSON.stringify(revisionData)} `)
         // Insert new revision into the database
-        await prisma.revision.create({
-            data: {
+        await prisma.revision.upsert({
+            where:{
+                pubkey_hash:pubKeyHash
+            },
+            create: {
+                pubkey_hash: pubKeyHash,
+                // user: session.address, // Replace with actual user identifier (e.g., request.user.id)
+                nonce: revisionData.file_nonce ?? "",
+                shared: [],
+                previous: revisionData.previous_verification_hash ?? "",
+                local_timestamp: Number.parseInt(revisionData.local_timestamp),
+                revision_type: revisionData.revision_type,
+                verification_leaves: revisionData.leaves ?? [],
+
+            },
+            update: {
                 pubkey_hash: pubKeyHash,
                 // user: session.address, // Replace with actual user identifier (e.g., request.user.id)
                 nonce: revisionData.file_nonce ?? "",
@@ -54,8 +68,17 @@ export async function saveAquaTree(aquaTree: AquaTree, userAddress: string) {
             let revisioValue = Object.keys(revisionData);
             for (let formItem in revisioValue) {
                 if (formItem.startsWith("form_")) {
-                    await prisma.aquaForms.create({
-                        data: {
+                    await prisma.aquaForms.upsert({
+                        where:{
+                            hash:pubKeyHash
+                        },
+                        create: {
+                            hash: pubKeyHash,
+                            key: formItem,
+                            value: revisioValue[formItem],
+                            type: typeof revisioValue[formItem]
+                        },
+                        update: {
                             hash: pubKeyHash,
                             key: formItem,
                             value: revisioValue[formItem],
@@ -116,11 +139,23 @@ export async function saveAquaTree(aquaTree: AquaTree, userAddress: string) {
                 }
             });
 
-            const witnessTimestamp = new Date(revisionData.revision.witness_timestamp!);
-            await prisma.witnessEvent.create({
-                data: {
+            // const witnessTimestamp = new Date(!);
+            await prisma.witnessEvent.upsert({
+                where: {
                     Witness_merkle_root: revisionData.revision.witness_merkle_root!,
-                    Witness_timestamp: witnessTimestamp,
+                },
+                update: {
+                    Witness_merkle_root: revisionData.revision.witness_merkle_root!,
+                    Witness_timestamp: revisionData.revision.witness_timestamp,
+                    Witness_network: revisionData.revision.witness_network,
+                    Witness_smart_contract_address: revisionData.revision.witness_smart_contract_address,
+                    Witness_transaction_hash: revisionData.revision.witness_transaction_hash,
+                    Witness_sender_account_address: revisionData.revision.witness_sender_account_address
+
+                },
+                create: {
+                    Witness_merkle_root: revisionData.revision.witness_merkle_root!,
+                    Witness_timestamp: revisionData.revision.witness_timestamp,
                     Witness_network: revisionData.revision.witness_network,
                     Witness_smart_contract_address: revisionData.revision.witness_smart_contract_address,
                     Witness_transaction_hash: revisionData.revision.witness_transaction_hash,
