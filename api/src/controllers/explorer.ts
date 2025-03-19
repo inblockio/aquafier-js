@@ -67,19 +67,19 @@ export default async function explorerController(fastify: FastifyInstance) {
             const fileBuffer = await streamToBuffer(data.file);
             let fileContent = fileBuffer.toString('utf-8');
 
-            let aquaTreeWithFileObject: SaveAquaTree = JSON.parse(fileContent)
-            console.log("----------------------------------------------------------------------")
-            console.log(`Make sure its an aqua tree with file objects ${JSON.stringify(aquaTreeWithFileObject, null, 4)} `)
-            // verify the aqua tree 
+            let aquaTreeWithFileObject: AquaTree = JSON.parse(fileContent)
+            // console.log("----------------------------------------------------------------------")
+            // console.log(`Make sure its an aqua tree with file objects ${JSON.stringify(aquaTreeWithFileObject, null, 4)} `)
+            // // verify the aqua tree 
 
-            let res = await aquafier.verifyAquaTree(aquaTreeWithFileObject.tree, aquaTreeWithFileObject.fileObject)
+            // let res = await aquafier.verifyAquaTree(aquaTreeWithFileObject.tree, aquaTreeWithFileObject.fileObject)
 
-            if (res.isErr()) {
-                return reply.code(403).send({ error: 'aqua tree is not valid', logs: res.data });
-            }
+            // if (res.isErr()) {
+            //     return reply.code(403).send({ error: 'aqua tree is not valid', logs: res.data });
+            // }
 
             // save the aqua tree 
-            await saveAquaTree(aquaTreeWithFileObject.tree, session.address)
+            await saveAquaTree(aquaTreeWithFileObject, session.address)
 
             return reply.code(200).send({ error: 'aqua tree saved successfully' });
         } catch (error) {
@@ -327,7 +327,7 @@ export default async function explorerController(fastify: FastifyInstance) {
                         //     : [],
                         previous: revisionData.previous_verification_hash || "",
                         // children: {},
-                        local_timestamp: Number.parseInt(revisionData.local_timestamp),
+                        local_timestamp: revisionData.local_timestamp,
                         revision_type: revisionData.revision_type,
                         verification_leaves: revisionData.leaves || [],
 

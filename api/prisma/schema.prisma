@@ -55,7 +55,7 @@ model Revision {
   contract         String[]
   previous         String?
   children         String?
-  local_timestamp  Int?
+  local_timestamp  String?
   revision_type    String?
   has_content       Boolean @default(false)
   verification_leaves String[]
@@ -135,7 +135,7 @@ model Witness {
 
 model WitnessEvent {
   Witness_merkle_root               String        @id
-  Witness_timestamp                 Int?
+  Witness_timestamp                 String?
   Witness_network                   String?
   Witness_smart_contract_address    String?
   Witness_transaction_hash          String?

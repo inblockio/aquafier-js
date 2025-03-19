@@ -70,12 +70,12 @@ export const UploadFile = ({ file, uploadedIndexes, fileIndex, updateUploadedInd
 
             const res = response.data
 
-            const fileInfo : ApiFileInfo = {
+            const fileInfo: ApiFileInfo = {
                 aquaTree: res.aquaTree,
-                fileObject:  [res.fileObject],
+                fileObject: [res.fileObject],
                 linkedFileObjects: [],
-                mode:"private",
-                owner: metamaskAddress??""
+                mode: "private",
+                owner: metamaskAddress ?? ""
             }
             // const base64Content = await encodeFileToBase64(file);
             // Assuming the API returns an array of FileInfo objects
@@ -282,11 +282,12 @@ export const ImportAquaChainFromChain = ({ fileInfo, isVerificationSuccessful }:
 
     let navigate = useNavigate();
 
+    console.log("Chain to import: ", fileInfo)
+    console.log("My db files: ", dbFiles)
+
     const importAquaChain = async () => {
 
-        // const existingChainFile = dbFiles.find(file => file.name === fileInfo.name)
-        const chainToImport: HashChain = JSON.parse(fileInfo.page_data).pages[0]
-        const existingChainFile = dbFiles.find(file => JSON.parse(file.page_data).pages[0].genesis_hash === chainToImport.genesis_hash)
+        const existingChainFile = dbFiles.find(file => Object.keys(file?.aquaTree?.revisions ?? {})[0] === Object.keys(fileInfo?.aquaTree?.revisions ?? {})[0])
 
         // 1. update local chain with new revisions. (importing chain is bigger)
         // 2. delete revsiion in local chain if the locl one has more revision than the importing one (ie remote has less and theyare the same revision)
@@ -294,8 +295,8 @@ export const ImportAquaChainFromChain = ({ fileInfo, isVerificationSuccessful }:
 
         if (existingChainFile) {
 
-            const existingFileRevisions = Object.keys(JSON.parse(existingChainFile.page_data).pages[0].revisions)
-            const fileToImportRevisions = Object.keys(chainToImport.revisions)
+            const existingFileRevisions = Object.keys(existingChainFile?.aquaTree?.revisions ?? {})
+            const fileToImportRevisions = Object.keys(fileInfo?.aquaTree?.revisions ?? {})
 
             // console.log(existingFileRevisions, fileToImportRevisions)
             const mergeResult = analyzeAndMergeRevisions(existingFileRevisions, fileToImportRevisions)
@@ -329,7 +330,7 @@ export const ImportAquaChainFromChain = ({ fileInfo, isVerificationSuccessful }:
                 for (let i = 0; i < mergeResult.divergences.length; i++) {
                     const div = mergeResult.divergences[i];
                     if (div.upcomingRevisionHash) {
-                        _revisionsToImport.push(chainToImport.revisions[div.upcomingRevisionHash])
+                        _revisionsToImport.push(fileInfo?.aquaTree?.revisions[div.upcomingRevisionHash])
                     }
                 }
             }
@@ -339,7 +340,9 @@ export const ImportAquaChainFromChain = ({ fileInfo, isVerificationSuccessful }:
             setLastIdenticalRevisionHash(mergeResult.lastIdenticalRevisionHash)
             setRevisionsToImport(_revisionsToImport)
             setModalOpen(true)
-            setExistingFileId(existingChainFile.id)
+
+            // TODO: FIX ME
+            // setExistingFileId(existingChainFile.id)
 
 
             // toaster.create({
@@ -350,8 +353,12 @@ export const ImportAquaChainFromChain = ({ fileInfo, isVerificationSuccessful }:
         }
 
         // Create a JSON file from the page_data object
-        const fileData = fileInfo.page_data // JSON.stringify(fileInfo.page_data, null, 2); // Convert to JSON string
-        const file = new File([fileData], fileInfo.name, {
+        const fileData = JSON.stringify(fileInfo?.aquaTree, null, 4) // JSON.stringify(fileInfo.page_data, null, 2); // Convert to JSON string
+        let fileName = fileInfo.fileObject[0].fileName
+
+        // Object.keys(e)
+
+        const file = new File([fileData], fileName, {
             type: "application/json",
         });
 
@@ -390,14 +397,7 @@ export const ImportAquaChainFromChain = ({ fileInfo, isVerificationSuccessful }:
             // console.log("Upload res: ", res)
 
             // Assuming the API returns an array of FileInfo objects
-            const file: ApiFileInfo = {
-                id: res.file.id,
-                name: res.file.name,
-                extension: res.file.extension,
-                page_data: res.file.page_data,
-                mode: user_profile.fileMode ?? "",
-                owner: metamaskAddress ?? "",
-            };
+            const file: ApiFileInfo = fileInfo;
             setFiles([...files, file])
             // setUploadedFilesIndexes(value => [...value, fileIndex])
             toaster.create({
@@ -420,49 +420,49 @@ export const ImportAquaChainFromChain = ({ fileInfo, isVerificationSuccessful }:
     };
 
     const handleMergeRevisions = async () => {
-        try {
-            setUploading(true)
-            const response = await axios.post(`${backend_url}/explorer_merge_chain`, {
-                file_id: existingFileId,
-                last_identical_revision_hash: lastIdenticalRevisionHash,
-                revisions_to_import: revisionsToImport
-            })
-            if (response.status === 200) {
-                toaster.create({
-                    title: "Aqua chain import",
-                    description: "Chain merged successfully",
-                    type: "success"
-                })
-                setUploading(false)
-                setUploaded(true)
+        // try {
+        //     setUploading(true)
+        //     const response = await axios.post(`${backend_url}/explorer_merge_chain`, {
+        //         file_id: existingFileId,
+        //         last_identical_revision_hash: lastIdenticalRevisionHash,
+        //         revisions_to_import: revisionsToImport
+        //     })
+        //     if (response.status === 200) {
+        //         toaster.create({
+        //             title: "Aqua chain import",
+        //             description: "Chain merged successfully",
+        //             type: "success"
+        //         })
+        //         setUploading(false)
+        //         setUploaded(true)
 
-                const res: ApiFileInfo = response.data
-                console.log(res)
+        //         const res: ApiFileInfo = response.data
+        //         console.log(res)
 
-                const newFiles: ApiFileInfo[] = [];
-                setFiles(newFiles)
+        //         const newFiles: ApiFileInfo[] = [];
+        //         setFiles(newFiles)
 
-                for (let index = 0; index < files.length; index++) {
-                    const file = files[index];
-                    if (file.id === res.id) {
-                        newFiles.push(res)
-                    } else {
-                        newFiles.push(file)
-                    }
-                }
+        //         for (let index = 0; index < files.length; index++) {
+        //             const file = files[index];
+        //             if (file.id === res.id) {
+        //                 newFiles.push(res)
+        //             } else {
+        //                 newFiles.push(file)
+        //             }
+        //         }
 
-                navigate("/loading?reload=true");
-            }
-        } catch (e: any) {
-            setUploading(false)
-            if (e.message) {
-                toaster.create({
-                    title: "Error occured",
-                    description: e.message,
-                    type: "error"
-                })
-            }
-        }
+        //         navigate("/loading?reload=true");
+        //     }
+        // } catch (e: any) {
+        //     setUploading(false)
+        //     if (e.message) {
+        //         toaster.create({
+        //             title: "Error occured",
+        //             description: e.message,
+        //             type: "error"
+        //         })
+        //     }
+        // }
     }
 
     console.log(comparisonResult)

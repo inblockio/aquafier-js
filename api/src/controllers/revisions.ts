@@ -160,7 +160,7 @@ export default async function revisionsController(fastify: FastifyInstance) {
                     //     : [],
                     previous: `${session.address}_${revisionData.revision.previous_verification_hash}`,
                     // children: {},
-                    local_timestamp: Number.parseInt(revisionData.revision.local_timestamp), // revisionData.revision.local_timestamp,
+                    local_timestamp: revisionData.revision.local_timestamp, // revisionData.revision.local_timestamp,
                     revision_type: revisionData.revision.revision_type,
                     verification_leaves: revisionData.revision.leaves || [],
 
