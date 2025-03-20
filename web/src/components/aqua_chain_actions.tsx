@@ -768,16 +768,19 @@ export const LinkButton = ({ item, nonce }: IShareButton) => {
                             files?.map((itemLoop: ApiFileInfo, index: number) => {
                                 const keys = Object.keys(itemLoop.aquaTree!.revisions!)
                                 const keysPar = Object.keys(item.aquaTree!.revisions!)
-                                    if (areArraysEqual(keys, keysPar)) {
-                        return <></>
+                                const res = areArraysEqual(keys, keysPar)
+                                console.log(`res ${res} ${JSON.stringify(itemLoop.fileObject)}`)
+                                    if ( res) {
+                        return <div key={index}> </div>
                                     }
                                 return <Checkbox
                                     key={index}
                                     aria-label="Select File"
-                                    checked={Object.keys(linkItem?.aquaTree?.revisions!)[0] === Object.keys(item.aquaTree?.revisions!)[0]}
+                                    checked={ linkItem == null ? false :
+                                        Object.keys(linkItem?.aquaTree?.revisions!)[0] === Object.keys(itemLoop.aquaTree?.revisions!)[0]}
                                     onCheckedChange={(changes) => {
-                                        if( changes.checked){
-                                            setLinkItem(item)
+                                        if(changes.checked){
+                                            setLinkItem(itemLoop)
                                         }else{
                                             setLinkItem(null)
                                         }
@@ -785,7 +788,7 @@ export const LinkButton = ({ item, nonce }: IShareButton) => {
                                     }}
                                     value={index.toString()}
                                 >
-                                    {item.fileObject[0].fileName}
+                                    {itemLoop.fileObject[0].fileName}
                                 </Checkbox>
                             })
                           }
@@ -809,7 +812,7 @@ export const LinkButton = ({ item, nonce }: IShareButton) => {
                           
                     {files?.length <= 1 ? <></>
  :<>
-       <Button onClick={handleLink} borderRadius={'md'}>Share</Button>
+       <Button onClick={handleLink} borderRadius={'md'}>Link</Button>
                           
  </> }                    
                     </DialogFooter>

@@ -246,6 +246,7 @@ export function dummyCredential(): CredentialsData {
 }
 
 export function areArraysEqual(array1: Array<string>, array2: Array<string>) {
+    console.log(`areArraysEqual array1 ${array1} == array2 ${array2} `)
     // Check if arrays have the same length
     if (array1.length !== array2.length) {
         return false;
