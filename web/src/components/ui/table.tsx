@@ -14,7 +14,7 @@ import { useStore } from "zustand"
 import appStore from "../../store"
 import { displayTime, getFileCategory, getFileExtension, humanReadableFileSize } from "../../utils/functions"
 
-import { DeleteAquaChain, DownloadAquaChain, ShareButton, SignAquaChain, WitnessAquaChain } from "../aqua_chain_actions"
+import { DeleteAquaChain, LinkButton, DownloadAquaChain, ShareButton, SignAquaChain, WitnessAquaChain } from "../aqua_chain_actions"
 import { ChainDetailsBtn } from "./navigation/CustomDrawer"
 import { Alert } from "./alert"
 import { ApiFileInfo } from "../../models/FileInfo"
@@ -67,6 +67,7 @@ const FilesTable = () => {
             <Table.Cell minW={'220px'} maxW={'220px'} textWrap={'wrap'}>
                 <Group alignItems={'start'} flexWrap={'wrap'}>
                     <ShareButton nonce={session?.nonce ?? ""} item={item} />
+                    <LinkButton item={item} nonce={session?.nonce ?? ""}   />
                     <DownloadAquaChain file={item} />
                     <ChainDetailsBtn fileInfo={item} session={session} />
                     <WitnessAquaChain apiFileInfo={item} backendUrl={backend_url} nonce={session?.nonce ?? ""} revision="" />
@@ -84,9 +85,10 @@ const FilesTable = () => {
             <VStack textAlign={'start'}>
                 <Text textAlign={'start'} w={'100%'}>{item.fileObject[0].fileName}</Text>
                 <Group alignItems={'start'} flexWrap={'wrap'}>
-                    <ShareButton id={0} file_id={0} filename={item.fileObject[0].fileName} />
+                    <ShareButton item={item} nonce={session?.nonce ?? ""} />
+                    <LinkButton item={item} nonce={session?.nonce ?? ""}  />
                     <DownloadAquaChain file={item} />
-                    <ChainDetailsBtn fileInfo={item} />
+                    <ChainDetailsBtn fileInfo={item} session={session!} callBack={(res, revisionCount) => { }} />
                     <WitnessAquaChain apiFileInfo={item} backendUrl={backend_url} nonce={session?.nonce ?? ""} revision="" />
                     <SignAquaChain apiFileInfo={item} backendUrl={backend_url} nonce={session?.nonce ?? ""} revision="" />
                     <DeleteAquaChain apiFileInfo={item} backendUrl={backend_url} nonce={session?.nonce ?? ""} revision="" />

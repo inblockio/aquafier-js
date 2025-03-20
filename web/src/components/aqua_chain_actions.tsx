@@ -1,4 +1,4 @@
-import { LuDelete, LuDownload, LuGlasses, LuShare2, LuSignature } from "react-icons/lu"
+import { LuDelete, LuDownload, LuGlasses, LuLink2, LuShare2, LuSignature } from "react-icons/lu"
 import { Button } from "./ui/button"
 import { areArraysEqual, dummyCredential } from "../utils/functions"
 import { useStore } from "zustand"
@@ -15,7 +15,7 @@ import { Checkbox } from "../components/ui/checkbox"
 import { Box, Center, Input, HStack, Text, VStack } from "@chakra-ui/react"
 import { ClipboardButton, ClipboardIconButton, ClipboardInput, ClipboardLabel, ClipboardRoot } from "./ui/clipboard"
 import { InputGroup } from "./ui/input-group"
-import Aquafier, { AquaTreeWrapper } from "aqua-js-sdk"
+import Aquafier, { AquaTree, AquaTreeWrapper } from "aqua-js-sdk"
 import { RevionOperation } from "../models/RevisionOperation"
 
 // async function storeWitnessTx(file_id: number, filename: string, txhash: string, ownerAddress: string, network: string, files: ApiFileInfo[], setFiles: any, backend_url: string) {
@@ -423,7 +423,7 @@ export const DownloadAquaChain = ({ file }: { file: ApiFileInfo }) => {
     }
 
     return (
-        <Button size={'xs'} colorPalette={'blackAlpha'} variant={'subtle'} w={'168px'} onClick={downloadAquaJson} loading={downloading}>
+        <Button size={'xs'} colorPalette={'blackAlpha'} variant={'subtle'} w={'165px'} onClick={downloadAquaJson} loading={downloading}>
             <LuDownload />
             Download Aqua-Chain
         </Button>
@@ -433,6 +433,7 @@ export const DownloadAquaChain = ({ file }: { file: ApiFileInfo }) => {
 interface IShareButton {
     item: ApiFileInfo
     nonce: string
+
 }
 
 export const ShareButton = ({ item, nonce }: IShareButton) => {
@@ -520,7 +521,7 @@ export const ShareButton = ({ item, nonce }: IShareButton) => {
 
     return (
         <>
-            <Button size={'xs'} colorPalette={'orange'} variant={'subtle'} w={'168px'} onClick={() => setIsOpen(true)}>
+            <Button size={'xs'} colorPalette={'orange'} variant={'subtle'} w={'90px'} onClick={() => setIsOpen(true)}>
                 <LuShare2 />
                 Share
             </Button>
@@ -632,5 +633,155 @@ export const ShareButton = ({ item, nonce }: IShareButton) => {
                 </DialogContent>
             </DialogRoot>
         </>
+    )
+}
+
+
+export const LinkButton = ({ item, nonce }: IShareButton) => {
+    const { backend_url , setFiles, files} = useStore(appStore)
+    const [isOpen, setIsOpen] = useState(false)
+    const [linking, setLinking] = useState(false)
+    const [linkItem, setLinkItem] = useState<ApiFileInfo | null>(null)
+    
+    const handleLink = async () => {
+        if(linkItem==null){
+            toaster.create({
+                description: `Please select an AquaTree to link`,
+                type: "error"
+            });
+            return; 
+        }
+       try {
+        let aquafier= new Aquafier();
+        setLinking(true)
+        let aquaTreeWrapper: AquaTreeWrapper = {
+            aquaTree: item.aquaTree!,
+            revision:  "",
+            fileObject: item.fileObject[0]
+        };
+        let linkAquaTreeWrapper: AquaTreeWrapper = {
+            aquaTree: linkItem!.aquaTree,
+            revision:  "",
+            fileObject: linkItem!.fileObject[0]
+        };
+      let result =   await aquafier.linkAquaTree(aquaTreeWrapper,linkAquaTreeWrapper)
+
+      if(result.isErr()){
+        toaster.create({
+            description: `An error occurred when linking`,
+            type: "error"
+        });
+        return;
+      }
+
+      let newAquaTree = result.data.aquaTree!
+      let revisionHashes =  Object.keys(newAquaTree.revisions)
+      const lastHash = revisionHashes[revisionHashes.length - 1]
+      const lastRevision = result.data.aquaTree?.revisions[lastHash]
+      // send to server
+      const url = `${backend_url}/tree`;
+
+      const response = await axios.post(url, {
+          "revision": lastRevision,
+          "revisionHash": lastHash,
+
+      }, {
+          headers: {
+              "nonce": nonce
+          }
+      });
+
+      if (response.status === 200 || response.status === 201) {
+          console.log("update state ...")
+          const newFiles: ApiFileInfo[] = [];
+          const keysPar = Object.keys(item.aquaTree!.revisions!)
+          files.forEach((itemFile) => {
+              const keys = Object.keys(itemFile.aquaTree!.revisions!)
+              if (areArraysEqual(keys, keysPar)) {
+                  newFiles.push({
+                      ...itemFile,
+                      aquaTree: result.data.aquaTree!,
+                  })
+              } else {
+                  newFiles.push(itemFile)
+              }
+          })
+
+          setFiles(newFiles)
+      }
+
+      toaster.create({
+          description: `Linking successfull`,
+          type: "success"
+      })
+
+
+  
+       } catch (error) {
+        toaster.create({
+            description: `An error occurred`,
+            type: "error"
+        });
+       }
+       setLinking(false)
+    }
+    return (
+        <>
+            <Button size={'xs'} colorPalette={'yellow'} variant={'subtle'} w={'80px'} onClick={() => setIsOpen(true)}>
+                <LuLink2 />
+                Link
+            </Button>
+
+            <DialogRoot open={isOpen} onOpenChange={e => setIsOpen(e.open)}>
+                {/* <DialogTrigger asChild>
+                    <Button variant="outline" size="sm">
+                        Open Dialog
+                    </Button>
+                </DialogTrigger> */}
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>{`Link ${item.fileObject[0].fileName} To another file (Aquatree)`}</DialogTitle>
+                    </DialogHeader>
+                    <DialogBody>
+                        <VStack textAlign={'start'}>
+                            <p>
+                                {`You are about to link ${item.fileObject[0].fileName}. Once a file is linked, don't delete it otherwise it will be broken if one tries to use the Aqua tree.`}
+                            </p>
+
+
+                            
+                            {/* Custom Divider */}
+                            <Box
+                                width="100%"
+                                height="1px"
+                                bg="gray.200"
+                                my={3}
+                            />
+
+                          
+
+                            {
+                                linking ?
+                                    <Center>
+                                        <Loading />
+                                    </Center>
+                                    : null
+                            }
+                            
+                        </VStack>
+                    </DialogBody>
+                    <DialogFooter>
+                        <DialogActionTrigger asChild>
+                            <Button variant="outline" borderRadius={'md'}>Cancel</Button>
+                        </DialogActionTrigger>
+                      
+                                <Button onClick={handleLink} borderRadius={'md'}>Share</Button>
+                          
+                    </DialogFooter>
+                    <DialogCloseTrigger />
+                </DialogContent>
+            </DialogRoot>
+
+            </>
     )
 }
