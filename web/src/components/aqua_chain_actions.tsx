@@ -746,7 +746,7 @@ export const LinkButton = ({ item, nonce }: IShareButton) => {
                     <DialogBody>
 
                         {files?.length <= 1  ? <VStack>
-                            <Alert status="warning" title={"For linkingto work you need multiplefiles, curently you only have " +files?.length} />
+                            <Alert status="warning" title={"For linking to work you need multiple files, curently you only have " +files?.length} />
                         </VStack>:
                         <VStack textAlign={'start'}>
                             <p>
@@ -802,12 +802,16 @@ export const LinkButton = ({ item, nonce }: IShareButton) => {
 }
                     </DialogBody>
                     <DialogFooter>
-                        <DialogActionTrigger asChild>
+                    <DialogActionTrigger asChild>
                             <Button variant="outline" onClick={cancelClick} borderRadius={'md'}>Cancel</Button>
                         </DialogActionTrigger>
                       
-                                <Button onClick={handleLink} borderRadius={'md'}>Share</Button>
                           
+                    {files?.length <= 1 ? <></>
+ :<>
+       <Button onClick={handleLink} borderRadius={'md'}>Share</Button>
+                          
+ </> }                    
                     </DialogFooter>
                     <DialogCloseTrigger />
                 </DialogContent>

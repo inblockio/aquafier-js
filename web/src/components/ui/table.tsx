@@ -57,11 +57,13 @@ const FilesTable = () => {
             <Table.Cell minW={'120px'} maxW={'120px'} textWrap={'wrap'}>{getFileCategory(getFileExtension(item.fileObject[0].fileName))}</Table.Cell>
 
             <Table.Cell minW={'140px'} maxW={'140px'} textWrap={'wrap'}>
-                {displayTime(Object.values(item.aquaTree!.revisions!)[0].local_timestamp)}
+                {
+                 displayTime(Object.values(item.aquaTree!.revisions!)[0].local_timestamp)
+                }
             </Table.Cell>
             <Table.Cell minW={'100px'} maxW={'100px'} textWrap={'wrap'}>
                 <FormatByte value={
-                    humanReadableFileSize(item.fileObject[0].fileSize ?? 0) //sumFileContentSize(JSON.parse(item.page_data))
+                   item.fileObject[0].fileSize ?? 0 
                 } />
             </Table.Cell>
             <Table.Cell minW={'220px'} maxW={'220px'} textWrap={'wrap'}>

@@ -274,7 +274,7 @@ export function areArraysEqual(array1: Array<string>, array2: Array<string>) {
 export function displayTime(input: number | string): string {
     // Handle number input
     if (typeof input === 'number') {
-        const date = new Date(input);
+        const date = new Date(input * 1000); // Convert seconds to milliseconds
         return date.toDateString(); // Returns format like "Thu Mar 13 2025"
     }
 
@@ -282,8 +282,8 @@ export function displayTime(input: number | string): string {
     if (typeof input === 'string') {
         // Check if string contains only numbers
         if (/^\d+$/.test(input)) {
-            // Parse as number and convert to date
-            const date = new Date(parseInt(input, 10));
+            // Parse as number and convert to date (converting seconds to milliseconds)
+            const date = new Date(parseInt(input, 10) * 1000);
             return date.toDateString();
         } else {
             // String contains alphabets, just display it
