@@ -7,7 +7,7 @@ import axios from "axios"
 import { ApiFileInfo } from "../models/FileInfo"
 import { toaster } from "./ui/toaster"
 import { useEffect, useState } from "react"
-import { Alert } from "../alert"
+import { Alert } from "./ui/alert"
 import { DialogActionTrigger, DialogBody, DialogCloseTrigger, DialogContent, DialogFooter, DialogHeader, DialogRoot, DialogTitle } from "./ui/dialog"
 import { generateNonce } from "siwe"
 import Loading from "react-loading"
@@ -664,7 +664,7 @@ export const LinkButton = ({ item, nonce }: IShareButton) => {
             fileObject: item.fileObject[0]
         };
         let linkAquaTreeWrapper: AquaTreeWrapper = {
-            aquaTree: linkItem!.aquaTree,
+            aquaTree: linkItem!.aquaTree!,
             revision:  "",
             fileObject: linkItem!.fileObject[0]
         };
@@ -746,7 +746,7 @@ export const LinkButton = ({ item, nonce }: IShareButton) => {
                     <DialogBody>
 
                         {files?.length <= 1  ? <VStack>
-                            <Alert status="warning" title=`For linkingto work you need multiplefiles, curently you only have ${files?.length}` />
+                            <Alert status="warning" title={"For linkingto work you need multiplefiles, curently you only have " +files?.length} />
                         </VStack>:
                         <VStack textAlign={'start'}>
                             <p>
