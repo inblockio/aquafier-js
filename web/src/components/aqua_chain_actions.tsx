@@ -718,6 +718,9 @@ export const LinkButton = ({ item, nonce }: IShareButton) => {
           description: `Linking successfull`,
           type: "success"
       })
+      setLinkItem(null)
+      setIsOpen(false)
+
        } catch (error) {
         toaster.create({
             description: `An error occurred`,

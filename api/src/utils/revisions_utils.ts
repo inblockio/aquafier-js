@@ -1,7 +1,7 @@
 import { AquaTree, FileObject, Revision as AquaRevision } from 'aqua-js-sdk';
 import { prisma } from '../database/db';
 // For specific model types
-import { User, Latest, Signature, Revision, Witness, AquaForms, WitnessEvent, FileIndex } from '@prisma/client';
+import { User, Latest, Signature, Revision, Witness, AquaForms, WitnessEvent, FileIndex, Link } from '@prisma/client';
 import * as fs from "fs"
 import path from 'path';
 
@@ -273,7 +273,7 @@ export async function fetchAquaTreeWithForwardRevisions(latestRevisionHash: stri
  */
 export function estimateStringFileSize(str: string): number {
     if (!str) return 0;
-    
+
     return str.split('').reduce((acc, char) => {
         const code = char.charCodeAt(0);
         // UTF-8 encoding rules:
@@ -484,27 +484,47 @@ export async function createAquaTreeFromRevisions(latestRevisionHash: string, ur
                 revisionWithData.signature_type = signatureData.signature_type!;
 
             } else if (revisionItem.revision_type == "link") {
-console.log("link revision goes here ")
+                console.log("link revision goes here ")
+                let linkData = revisionInfoData as Link;
 
-// let  [aquaTreeLinked, fileObjectLinked ] =await createAquaTreeFromRevisions(revisionItem.pubkey_hash, url);
-
-// let name = Object.values(aquaTreeLinked.file_index)[0] ?? "--error--"
-// fileObject.push({
-//     fileContent : aquaTreeLinked,
-//     fileName:`${name}.aqua.json`,
-//     path:"",
-//     fileSize: estimateStringFileSize(JSON.stringify(aquaTreeLinked, null, 4))
-// })
+                revisionWithData.link_type = linkData.link_type
+                revisionWithData.link_verification_hashes = linkData.link_verification_hashes
+                revisionWithData.link_file_hashes = linkData.link_file_hashes
 
 
-//  fileObject.push(...fileObjectLinked)
-//             } else {
-//                 throw Error(`Revision of type ${revisionItem.revision_type} is unknown`)
-//             }
+                let hashSearchText = linkData.link_verification_hashes[0]
+                console.log(`link ....search for ${hashSearchText} --> `)
+                let filesData = await prisma.fileIndex.findFirst({
+                    where: {
+                        id: {
+                            contains: hashSearchText,
+                            mode: 'insensitive' // Case-insensitive matching
+                        }
+                    }
+                })
+
+                if (filesData == null) {
+                    throw Error(`File index with hash ${hashSearchText} not found `)
+                }
+                anAquaTree.file_index[hashSearchText] = filesData?.uri ?? "--error--."
+
+
+                let [aquaTreeLinked, fileObjectLinked] = await createAquaTreeFromRevisions(filesData.id, url);
+
+                let name = Object.values(aquaTreeLinked.file_index)[0] ?? "--error--"
+                fileObject.push({
+                    fileContent: aquaTreeLinked,
+                    fileName: `${name}.aqua.json`,
+                    path: "",
+                    fileSize: estimateStringFileSize(JSON.stringify(aquaTreeLinked, null, 4))
+                })
+
+
+                fileObject.push(...fileObjectLinked)
+            } else {
+                throw Error(`Revision of type ${revisionItem.revision_type} is unknown`)
+            }
         }
-    }
-
-
 
 
         // update file index for genesis revision 
@@ -565,7 +585,7 @@ export async function findAquaTreeRevision(revisionHash: string): Promise<Array<
 }
 
 
-export async function FetchRevisionInfo(hash: string, revision: Revision): Promise<Signature | WitnessEvent | AquaForms[] | Object |null> {
+export async function FetchRevisionInfo(hash: string, revision: Revision): Promise<Signature | WitnessEvent | AquaForms[] | Link | null> {
 
     if (revision.revision_type == "signature") {
         console.log(`signature with hash ${hash}`)
@@ -603,8 +623,12 @@ export async function FetchRevisionInfo(hash: string, revision: Revision): Promi
         })
 
     } else if (revision.revision_type == "link") {
-        console.log("link revision ..")
-        return {}
+
+        return await prisma.link.findFirst({
+            where: {
+                hash: hash
+            }
+        })
     } else {
 
         console.log(`type ${revision.revision_type} with hash ${hash}`)

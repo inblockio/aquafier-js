@@ -254,7 +254,7 @@ export default async function revisionsController(fastify: FastifyInstance) {
                         hash: filePubKeyHash,
                         link_type        :                   "aqua",
                         link_require_indepth_verification :   false,
-                        link_verification_hash    :           revisionData.revision.link_verification_hash,
+                        link_verification_hashes    :           revisionData.revision.link_verification_hashes,
                         link_file_hashes : revisionData.revision.link_file_hashes,
                         reference_count    :                  0
                     }
