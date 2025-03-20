@@ -7,7 +7,7 @@ import axios from "axios"
 import { ApiFileInfo } from "../models/FileInfo"
 import { toaster } from "./ui/toaster"
 import { useEffect, useState } from "react"
-
+import { Alert } from "../alert"
 import { DialogActionTrigger, DialogBody, DialogCloseTrigger, DialogContent, DialogFooter, DialogHeader, DialogRoot, DialogTitle } from "./ui/dialog"
 import { generateNonce } from "siwe"
 import Loading from "react-loading"
@@ -643,6 +643,10 @@ export const LinkButton = ({ item, nonce }: IShareButton) => {
     const [linking, setLinking] = useState(false)
     const [linkItem, setLinkItem] = useState<ApiFileInfo | null>(null)
     
+    const cancelClick = ()=>{
+        setLinkItem(null)
+        setIsOpen(false)
+    }
     const handleLink = async () => {
         if(linkItem==null){
             toaster.create({
@@ -714,9 +718,6 @@ export const LinkButton = ({ item, nonce }: IShareButton) => {
           description: `Linking successfull`,
           type: "success"
       })
-
-
-  
        } catch (error) {
         toaster.create({
             description: `An error occurred`,
@@ -743,6 +744,10 @@ export const LinkButton = ({ item, nonce }: IShareButton) => {
                         <DialogTitle>{`Link ${item.fileObject[0].fileName} To another file (Aquatree)`}</DialogTitle>
                     </DialogHeader>
                     <DialogBody>
+
+                        {files?.length <= 1  ? <VStack>
+                            <Alert status="warning" title=`For linkingto work you need multiplefiles, curently you only have ${files?.length}` />
+                        </VStack>:
                         <VStack textAlign={'start'}>
                             <p>
                                 {`You are about to link ${item.fileObject[0].fileName}. Once a file is linked, don't delete it otherwise it will be broken if one tries to use the Aqua tree.`}
@@ -759,6 +764,31 @@ export const LinkButton = ({ item, nonce }: IShareButton) => {
                             />
 
                           
+                          {
+                            files?.map((itemLoop: ApiFileInfo, index: number) => {
+                                const keys = Object.keys(itemLoop.aquaTree!.revisions!)
+                                const keysPar = Object.keys(item.aquaTree!.revisions!)
+                                    if (areArraysEqual(keys, keysPar)) {
+                        return <></>
+                                    }
+                                return <Checkbox
+                                    key={index}
+                                    aria-label="Select File"
+                                    checked={Object.keys(linkItem?.aquaTree?.revisions!)[0] === Object.keys(item.aquaTree?.revisions!)[0]}
+                                    onCheckedChange={(changes) => {
+                                        if( changes.checked){
+                                            setLinkItem(item)
+                                        }else{
+                                            setLinkItem(null)
+                                        }
+                                        
+                                    }}
+                                    value={index.toString()}
+                                >
+                                    {item.fileObject[0].fileName}
+                                </Checkbox>
+                            })
+                          }
 
                             {
                                 linking ?
@@ -769,10 +799,11 @@ export const LinkButton = ({ item, nonce }: IShareButton) => {
                             }
                             
                         </VStack>
+}
                     </DialogBody>
                     <DialogFooter>
                         <DialogActionTrigger asChild>
-                            <Button variant="outline" borderRadius={'md'}>Cancel</Button>
+                            <Button variant="outline" onClick={cancelClick} borderRadius={'md'}>Cancel</Button>
                         </DialogActionTrigger>
                       
                                 <Button onClick={handleLink} borderRadius={'md'}>Share</Button>
