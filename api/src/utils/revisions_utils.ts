@@ -1,5 +1,3 @@
-
-
 import { AquaTree, FileObject, Revision as AquaRevision } from 'aqua-js-sdk';
 import { prisma } from '../database/db';
 // For specific model types
@@ -266,6 +264,30 @@ export async function fetchAquaTreeWithForwardRevisions(latestRevisionHash: stri
     return [anAquaTree, fileObject];
 
 }
+
+/**
+ * Estimates the size in bytes that a string would occupy if saved to a file
+ * Uses UTF-8 encoding rules where ASCII chars take 1 byte and others take 2-4 bytes
+ * @param str Input string to estimate size for
+ * @returns Estimated size in bytes
+ */
+export function estimateStringFileSize(str: string): number {
+    if (!str) return 0;
+    
+    return str.split('').reduce((acc, char) => {
+        const code = char.charCodeAt(0);
+        // UTF-8 encoding rules:
+        // 1 byte for ASCII (0-127)
+        // 2 bytes for extended ASCII (128-2047)
+        // 3 bytes for most other characters (2048-65535)
+        // 4 bytes for remaining Unicode (65536+)
+        if (code < 128) return acc + 1;
+        if (code < 2048) return acc + 2;
+        if (code < 65536) return acc + 3;
+        return acc + 4;
+    }, 0);
+}
+
 export async function createAquaTreeFromRevisions(latestRevisionHash: string, url: string): Promise<[AquaTree, FileObject[]]> {
 
     // construct the return data
@@ -461,10 +483,26 @@ export async function createAquaTreeFromRevisions(latestRevisionHash: string, ur
                 revisionWithData.signature_wallet_address = signatureData.signature_wallet_address!;
                 revisionWithData.signature_type = signatureData.signature_type!;
 
-            } else {
-                throw Error(`Revision of type ${revisionItem.revision_type} is unknown`)
-            }
+            } else if (revisionItem.revision_type == "link") {
+console.log("link revision goes here ")
+
+// let  [aquaTreeLinked, fileObjectLinked ] =await createAquaTreeFromRevisions(revisionItem.pubkey_hash, url);
+
+// let name = Object.values(aquaTreeLinked.file_index)[0] ?? "--error--"
+// fileObject.push({
+//     fileContent : aquaTreeLinked,
+//     fileName:`${name}.aqua.json`,
+//     path:"",
+//     fileSize: estimateStringFileSize(JSON.stringify(aquaTreeLinked, null, 4))
+// })
+
+
+//  fileObject.push(...fileObjectLinked)
+//             } else {
+//                 throw Error(`Revision of type ${revisionItem.revision_type} is unknown`)
+//             }
         }
+    }
 
 
 
@@ -527,7 +565,7 @@ export async function findAquaTreeRevision(revisionHash: string): Promise<Array<
 }
 
 
-export async function FetchRevisionInfo(hash: string, revision: Revision): Promise<Signature | WitnessEvent | AquaForms[] | null> {
+export async function FetchRevisionInfo(hash: string, revision: Revision): Promise<Signature | WitnessEvent | AquaForms[] | Object |null> {
 
     if (revision.revision_type == "signature") {
         console.log(`signature with hash ${hash}`)
@@ -564,6 +602,9 @@ export async function FetchRevisionInfo(hash: string, revision: Revision): Promi
             }
         })
 
+    } else if (revision.revision_type == "link") {
+        console.log("link revision ..")
+        return {}
     } else {
 
         console.log(`type ${revision.revision_type} with hash ${hash}`)
@@ -572,7 +613,3 @@ export async function FetchRevisionInfo(hash: string, revision: Revision): Promi
 
     }
 }
-
-
-
-

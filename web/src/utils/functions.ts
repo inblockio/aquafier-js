@@ -272,22 +272,45 @@ export function areArraysEqual(array1: Array<string>, array2: Array<string>) {
     return array2Copy.length === 0;
 }
 
+
 export function displayTime(input: number | string): string {
     // Handle number input
     if (typeof input === 'number') {
-        const date = new Date(input * 1000); // Convert seconds to milliseconds
-        return date.toDateString(); // Returns format like "Thu Mar 13 2025"
+        // Convert to string for consistent processing
+        input = input.toString();
     }
-
+    
     // Handle string input
     if (typeof input === 'string') {
         // Check if string contains only numbers
         if (/^\d+$/.test(input)) {
-            // Parse as number and convert to date (converting seconds to milliseconds)
-            const date = new Date(parseInt(input, 10) * 1000);
-            return date.toDateString();
+            // If it's a 14-digit number (YYYYMMDDhhmmss format)
+            if (input.length === 14) {
+                const year = input.substring(0, 4);
+                const month = parseInt(input.substring(4, 6)) - 1; // JS months are 0-indexed
+                const day = input.substring(6, 8);
+                const hour = input.substring(8, 10);
+                const minute = input.substring(10, 12);
+                const second = input.substring(12, 14);
+                
+                const date = new Date(
+                    parseInt(year), 
+                    month, 
+                    parseInt(day), 
+                    parseInt(hour), 
+                    parseInt(minute), 
+                    parseInt(second)
+                );
+                
+                return date.toDateString(); // Returns format like "Thu Mar 20 2025"
+            } 
+            // Regular Unix timestamp (seconds since epoch)
+            else {
+                const date = new Date(parseInt(input, 10) * 1000); // Convert seconds to milliseconds
+                return date.toDateString();
+            }
         } else {
-            // String contains alphabets, just display it
+            // String contains non-numeric characters, just display it
             return input;
         }
     }

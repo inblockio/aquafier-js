@@ -86,6 +86,8 @@ const RevisionDisplay = ({ aquaTree, revision, revisionHash, fileObjects, callBa
         }
     }
 
+    
+
     useEffect(() => {
         if (aquaTree) {
             verifyAquaChain()

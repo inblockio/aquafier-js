@@ -102,8 +102,9 @@ model Link {
   hash                                String        @id
   link_type                           String?
   link_require_indepth_verification   Boolean?
-  link_verification_hash              Json?
+  link_verification_hash              String[]
   reference_count                     Int?
+  link_file_hashes                    String[]
   Revision                            Revision      @relation(fields: [hash], references: [pubkey_hash])
   // FileIndex                           FileIndex?    @relation(fields: [hash], references: [hash])
 
