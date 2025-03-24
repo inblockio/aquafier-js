@@ -32,7 +32,7 @@ export default async function indexController(fastify: FastifyInstance) {
           body.fileObject, 
         );
 
-        // console.log("Data " + JSON.stringify(result, null, 4))
+        //// // // //  console.log("Data " + JSON.stringify(result, null, 4))
         if (result!.isOk()) {
           result.data.logData.push({
             log: `\n`,
@@ -67,7 +67,7 @@ export default async function indexController(fastify: FastifyInstance) {
     //Retrieves the branch from the specified hash back to the genesis hash (backward traversal only)
     fastify.get('/trees/:revisionHash/latest', async (request, reply) => {
         const { revisionHash } = request.params as { revisionHash: string };
-        console.log(`Received revisionHash: ${revisionHash}`);
+       // //  console.log(`Received revisionHash: ${revisionHash}`);
         return { message: 'Latest revision hash data', revisionHash: revisionHash };
     });
 
@@ -75,7 +75,7 @@ export default async function indexController(fastify: FastifyInstance) {
     //Retrieves details of a specific revision hash
     fastify.get('/trees/:revisionHash', async (request, reply) => {
         const { revisionHash } = request.params as { revisionHash: string };
-        console.log(`Received revisionHash: ${revisionHash}`);
+       // //  console.log(`Received revisionHash: ${revisionHash}`);
         return { message: 'Latest revision hash data', revisionHash: revisionHash };
     });
 

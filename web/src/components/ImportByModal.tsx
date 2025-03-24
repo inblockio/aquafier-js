@@ -31,7 +31,7 @@ const ImportByModal = ({ file }: IImportByModalProps) => {
                     }
                     setApiFileInfo(hashChain)
                     // const hashChainString = JSON.stringify(hashChain)
-                    // console.log("JSON data:", hashChain);
+                    ////  console.log("JSON data:", hashChain);
                     // setAppState("selectedFileFromApi", hashChain);
                     // navigate("/details");
                     // Handle the JSON data here

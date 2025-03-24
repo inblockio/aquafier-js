@@ -25,11 +25,11 @@ function App() {
     // const aquaProtocol = new Aquafier()
 
     // let result = await aquaProtocol.verifyWitness(testWitness as any, false)
-    // console.log("Result:", result)
+    ////  console.log("Result:", result)
   }
 
   useEffect(() => {
-    console.log("backedn url is", backend_url);
+   //  console.log("backedn url is", backend_url);
     // Properly handle async initialization
     const initBackend = async () => {
       const url = await initializeBackendUrl();

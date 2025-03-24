@@ -164,8 +164,8 @@ export default async function verifyController(fastify: FastifyInstance) {
 
             const aquafier = new Aquafier();
 
-            // console.log(`fileObjects ${JSON.stringify(fileObjects, null, 4)}`)
-            // console.log(`aquaTree ${JSON.stringify(aquaTree, null, 4)}`)
+            ////  console.log(`fileObjects ${JSON.stringify(fileObjects, null, 4)}`)
+            ////  console.log(`aquaTree ${JSON.stringify(aquaTree, null, 4)}`)
             let res = await aquafier.verifyAquaTree(aquaTree, fileObjects)
 
             if (res.isOk()) {

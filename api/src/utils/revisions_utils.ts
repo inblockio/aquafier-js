@@ -13,7 +13,7 @@ export async function fetchAquatreeFoUser(url: string, latest: Array<{
     fileObject: FileObject[]
 }>> {
     // traverse from the latest to the genesis of each 
-    console.log(`data ${JSON.stringify(latest, null, 4)}`)
+    //  console.log(`data ${JSON.stringify(latest, null, 4)}`)
 
 
     let displayData: Array<{
@@ -27,7 +27,7 @@ export async function fetchAquatreeFoUser(url: string, latest: Array<{
 
         let [anAquaTree, fileObject] = await createAquaTreeFromRevisions(revisonLatetsItem.hash, url)
 
-        console.log(`----> ${JSON.stringify(anAquaTree, null, 4)}`)
+        //  console.log(`----> ${JSON.stringify(anAquaTree, null, 4)}`)
         let sortedAquaTree = OrderRevisionInAquaTree(anAquaTree)
         displayData.push({
 
@@ -65,9 +65,12 @@ export async function saveAquaTree(aquaTree: AquaTree, userAddress: string,) {
     for (const revisinHash of allHash) {
         let revisionData = aquaTree.revisions[revisinHash];
         let pubKeyHash = `${userAddress}_${revisinHash}`
-
+        let pubKeyPrevious = ""
+        if (revisionData.previous_verification_hash.length > 0) {
+            pubKeyPrevious = `${userAddress}_${revisionData.previous_verification_hash}`
+        }
         console.log("%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%")
-        console.log(`revisinHash ${revisinHash} --- \n Revision item ${JSON.stringify(revisionData)} `)
+        console.log(`revisinHash ${revisinHash} \n pubKeyPrevious ${pubKeyPrevious} --- \n Revision item ${JSON.stringify(revisionData)} `)
         // Insert new revision into the database
         await prisma.revision.upsert({
             where: {
@@ -78,7 +81,7 @@ export async function saveAquaTree(aquaTree: AquaTree, userAddress: string,) {
                 // user: session.address, // Replace with actual user identifier (e.g., request.user.id)
                 nonce: revisionData.file_nonce ?? "",
                 shared: [],
-                previous: revisionData.previous_verification_hash ?? "",
+                previous: pubKeyPrevious,
                 local_timestamp: revisionData.local_timestamp,
                 revision_type: revisionData.revision_type,
                 verification_leaves: revisionData.leaves ?? [],
@@ -89,7 +92,7 @@ export async function saveAquaTree(aquaTree: AquaTree, userAddress: string,) {
                 // user: session.address, // Replace with actual user identifier (e.g., request.user.id)
                 nonce: revisionData.file_nonce ?? "",
                 shared: [],
-                previous: revisionData.previous_verification_hash ?? "",
+                previous: pubKeyPrevious,
                 local_timestamp: revisionData.local_timestamp,
                 revision_type: revisionData.revision_type,
                 verification_leaves: revisionData.leaves ?? [],
@@ -255,7 +258,7 @@ export async function saveAquaTree(aquaTree: AquaTree, userAddress: string,) {
 
         if (revisionData.revision_type == "link") {
 
-            console.log(`Revsion data ${JSON.stringify()}`)
+            //  console.log(`Revsion data ${JSON.stringify()}`)
             await prisma.link.create({
                 data: {
                     hash: pubKeyHash,
@@ -347,7 +350,7 @@ export async function createAquaTreeFromRevisions(latestRevisionHash: string, ur
     };
 
 
-    // console.log(`Find ${JSON.stringify(revisonLatetsItem, null, 4)}.`)
+    ////  console.log(`Find ${JSON.stringify(revisonLatetsItem, null, 4)}.`)
     let revisionData = [];
     // fetch latest revision 
     let latestRevionData = await prisma.revision.findFirst({
@@ -363,13 +366,12 @@ export async function createAquaTreeFromRevisions(latestRevisionHash: string, ur
     revisionData.push(latestRevionData);
 
     try {
-        console.log(`previous ${latestRevionData?.previous}`)
+        console.log(`%%%%%%%%%%%%%%%%%%%%%%%%%%% previous ${latestRevionData?.previous} \n ${JSON.stringify(latestRevionData, null, 4)}`)
         let pubKey = latestRevisionHash.split("_")[0];
         let previousWithPubKey = latestRevionData?.previous!!;
 
-        if (!latestRevionData?.previous!!.includes("_")) {
-            previousWithPubKey = `${pubKey}_${latestRevionData?.previous!!}`
-        }
+
+        console.log(`$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$  previous ${previousWithPubKey} `)
         //if previosu verification hash is not empty find the previous one
         if (latestRevionData?.previous !== null && latestRevionData?.previous?.length !== 0) {
             let aquaTreerevision = await findAquaTreeRevision(previousWithPubKey);
@@ -404,21 +406,21 @@ export async function createAquaTreeFromRevisions(latestRevisionHash: string, ur
     let fileObject: FileObject[] = [];
     let fileIndexes: FileIndex[] = [];
     if (files != null) {
-        console.log("#### file is not null ")
+        //  console.log("#### file is not null ")
 
         for (let fileItem of files) {
-            console.log("=================================================")
-            console.log(`reading ${JSON.stringify(fileItem, null, 4)}`)
+            //  console.log("=================================================")
+            //  console.log(`reading ${JSON.stringify(fileItem, null, 4)}`)
             // let fileContent = fs.readFileSync(fileItem.content!!);
 
             const stats = fs.statSync(fileItem.content!!);
             const fileSizeInBytes = stats.size;
-            console.log(`File size: ${fileSizeInBytes} bytes`);
+            //  console.log(`File size: ${fileSizeInBytes} bytes`);
 
             // Extract just the original filename (without the UUID prefix)
             const fullFilename = path.basename(fileItem.content!!) // Gets filename.ext from full path
             const originalFilename = fullFilename.substring(fullFilename.indexOf('-') + 1) // Removes UUID-
-            console.log(`Original filename: ${originalFilename}`)
+            //  console.log(`Original filename: ${originalFilename}`)
 
 
 
@@ -428,7 +430,7 @@ export async function createAquaTreeFromRevisions(latestRevisionHash: string, ur
                 }
             })
 
-            console.log("File index: ", fileIndex)
+            //  console.log("File index: ", fileIndex)
 
 
             if (fileIndex == null) {
@@ -461,14 +463,14 @@ export async function createAquaTreeFromRevisions(latestRevisionHash: string, ur
         }
     }
 
-    console.log(`File indexes for hash: ${lastRevisionHash}\n${JSON.stringify(fileIndexes, null, 4)}`)
+    //  console.log(`File indexes for hash: ${lastRevisionHash}\n${JSON.stringify(fileIndexes, null, 4)}`)
 
 
     for (let revisionItem of revisionData) {
         let hashOnly = revisionItem.pubkey_hash.split("_")[1]
         let previousHashOnly = revisionItem.previous == null || revisionItem.previous == undefined || revisionItem.previous == "" ? "" : revisionItem.previous.split("_")[1]
 
-        console.log(`previousHashOnly == > ${previousHashOnly} RAW ${revisionItem.previous}`)
+        //  console.log(`previousHashOnly == > ${previousHashOnly} RAW ${revisionItem.previous}`)
         let revisionWithData: AquaRevision = {
             revision_type: revisionItem.revision_type!! as "link" | "file" | "witness" | "signature" | "form",
             previous_verification_hash: previousHashOnly,
@@ -530,8 +532,8 @@ export async function createAquaTreeFromRevisions(latestRevisionHash: string, ur
                         sig = JSON.parse(signatureData.signature_digest!)
                     }
                 } catch (error) {
-                    console.log("======================================")
-                    console.log(`Error fix me ${error} `)
+                    //  console.log("======================================")
+                    //  console.log(`Error fix me ${error} `)
                 }
                 revisionWithData.signature = sig;
 
@@ -540,16 +542,16 @@ export async function createAquaTreeFromRevisions(latestRevisionHash: string, ur
                 revisionWithData.signature_type = signatureData.signature_type!;
 
             } else if (revisionItem.revision_type == "link") {
-                console.log("link revision goes here ")
+                //  console.log("link revision goes here ")
                 let linkData = revisionInfoData as Link;
 
-                revisionWithData.link_type = linkData.link_type
+                revisionWithData.link_type = linkData.link_type ?? ""
                 revisionWithData.link_verification_hashes = linkData.link_verification_hashes
                 revisionWithData.link_file_hashes = linkData.link_file_hashes
 
 
                 let hashSearchText = linkData.link_verification_hashes[0]
-                console.log(`link ....search for ${hashSearchText} --> `)
+                //  console.log(`link ....search for ${hashSearchText} --> `)
                 let filesData = await prisma.fileIndex.findFirst({
                     where: {
                         id: {
@@ -585,8 +587,8 @@ export async function createAquaTreeFromRevisions(latestRevisionHash: string, ur
 
         // update file index for genesis revision 
         if (previousHashOnly == null || previousHashOnly.length == 0) {
-            console.log("****************************************************************")
-            console.log(`fileIndexes ${JSON.stringify(fileIndexes)} -- hash ${revisionItem.pubkey_hash}`)
+            //  console.log("****************************************************************")
+            //  console.log(`fileIndexes ${JSON.stringify(fileIndexes)} -- hash ${revisionItem.pubkey_hash}`)
             let name = fileIndexes.find((item) => {
                 // return item.hash.includes(revisionItem.pubkey_hash) || item.hash.map((item) => item.includes(hashOnly)).length > 0
 
@@ -598,7 +600,7 @@ export async function createAquaTreeFromRevisions(latestRevisionHash: string, ur
                 // Check if any hash in the array contains the hashOnly part
                 return item.hash.some((hashItem: string) => hashItem.includes(hashOnly));
             })
-            console.log(`----------  name ${JSON.stringify(name, null, 4)}`)
+            //  console.log(`----------  name ${JSON.stringify(name, null, 4)}`)
             anAquaTree.file_index[hashOnly] = name?.uri ?? "--error--."
             revisionWithData["file_hash"] = name?.file_hash ?? "--error--"
 
@@ -607,7 +609,7 @@ export async function createAquaTreeFromRevisions(latestRevisionHash: string, ur
     }
 
 
-    console.log(`YOU should see me ${JSON.stringify(anAquaTree, null, 4)}`)
+    //  console.log(`YOU should see me ${JSON.stringify(anAquaTree, null, 4)}`)
 
     return [anAquaTree, fileObject]
 }
@@ -651,7 +653,7 @@ export async function findAquaTreeRevision(revisionHash: string): Promise<Array<
 export async function FetchRevisionInfo(hash: string, revision: Revision): Promise<Signature | WitnessEvent | AquaForms[] | Link | null> {
 
     if (revision.revision_type == "signature") {
-        console.log(`signature with hash ${hash}`)
+        //  console.log(`signature with hash ${hash}`)
         return await prisma.signature.findFirst({
             where: {
                 hash: hash
@@ -694,7 +696,7 @@ export async function FetchRevisionInfo(hash: string, revision: Revision): Promi
         })
     } else {
 
-        console.log(`type ${revision.revision_type} with hash ${hash}`)
+        //  console.log(`type ${revision.revision_type} with hash ${hash}`)
         return null
         // throw new Error(`implment for ${revision.revision_type}`);
 

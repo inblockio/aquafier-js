@@ -592,7 +592,7 @@ export const ChainDetailsBtn = ({ fileInfo, session }: IPageDataDetails) => {
 
 
     const updateVerificationStatus = (revisionResults: Array<boolean>, revisionCount: number) => {
-        console.log(`revisionResults   ${revisionResults}   revisionCount ${revisionCount}`)
+       //  console.log(`revisionResults   ${revisionResults}   revisionCount ${revisionCount}`)
         if (revisionResults.length >= revisionCount) {
             const containsFailure = revisionResults.filter((e) => e == false);
             if (containsFailure.length > 0) {

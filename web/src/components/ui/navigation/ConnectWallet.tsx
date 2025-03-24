@@ -75,7 +75,7 @@ export default function ConnectWallet() {
         // formData.append("domain", domain);
 
         const url = `${backend_url}/session`;
-        // console.log("url is ", url);
+        ////  console.log("url is ", url);
         // const response = await axios.post(url, formData, {
         //   headers: {
         //     "Content-Type": "application/x-www-form-urlencoded",
@@ -90,7 +90,7 @@ export default function ConnectWallet() {
 
         if (response.status === 200 || response.status === 201) {
           // if (signature) {
-          console.log(response.data)
+         //  console.log(response.data)
             const responseData = response.data;
             const walletAddress = ethers.getAddress(responseData?.session?.address);
             setMetamaskAddress(walletAddress);
@@ -113,11 +113,11 @@ export default function ConnectWallet() {
             })
 
             const url = `${backend_url}/explorer_files`;
-            console.log("url is ", url);
+           //  console.log("url is ", url);
 
             const files = await fetchFiles(walletAddress, url,responseData.session.nonce );
           
-            console.log(`Files ..........${files}`)
+           //  console.log(`Files ..........${files}`)
             setFiles(files);
           // }
         }
@@ -169,7 +169,7 @@ export default function ConnectWallet() {
       // formData.append("nonce", nonce);
 
       const url = `${backend_url}/siwe_logout`;
-      console.log("url is ", url);
+     //  console.log("url is ", url);
       const response = await axios.post(url, {
         "pkc_nonce": nonce
       });

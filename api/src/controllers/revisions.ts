@@ -28,7 +28,7 @@ export default async function revisionsController(fastify: FastifyInstance) {
         }
 
         // traverse from the latest to the genesis of each 
-        console.log(`data ${JSON.stringify(latestRevisionHash, null, 4)}`)
+       //  console.log(`data ${JSON.stringify(latestRevisionHash, null, 4)}`)
 
 
         let displayData: Array<{
@@ -50,7 +50,7 @@ export default async function revisionsController(fastify: FastifyInstance) {
 
             const [anAquaTree, fileObject] = await createAquaTreeFromRevisions(latestRevisionHash, url)
 
-            // console.log(`----> ${JSON.stringify(anAquaTree, null, 4)}`)
+            ////  console.log(`----> ${JSON.stringify(anAquaTree, null, 4)}`)
             let sortedAquaTree = OrderRevisionInAquaTree(anAquaTree)
             displayData.push({
                 aquaTree: sortedAquaTree,

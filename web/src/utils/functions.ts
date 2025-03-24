@@ -45,7 +45,7 @@ export async function getCurrentNetwork() {
     if (typeof window.ethereum !== 'undefined') {
         try {
             const chainId = await window.ethereum.request({ method: 'eth_chainId' });
-            console.log("Current chain ID:", chainId);
+           //  console.log("Current chain ID:", chainId);
             return chainId;
         } catch (error) {
             console.error("Error fetching chain ID:", error);
@@ -64,7 +64,7 @@ export async function switchNetwork(chainId: string) {
                 method: 'wallet_switchEthereumChain',
                 params: [{ chainId }],
             });
-            console.log("Network switched successfully");
+           //  console.log("Network switched successfully");
         } catch (error) {
             // If the network is not added, request MetaMask to add it
 
@@ -246,7 +246,7 @@ export function dummyCredential(): CredentialsData {
 }
 
 export function areArraysEqual(array1: Array<string>, array2: Array<string>) {
-    console.log(`areArraysEqual array1 ${array1} == array2 ${array2} `)
+   //  console.log(`areArraysEqual array1 ${array1} == array2 ${array2} `)
     // Check if arrays have the same length
     if (array1.length !== array2.length) {
         return false;
@@ -342,7 +342,7 @@ export const getFileName = (apiFileInfo: ApiFileInfo) => {
     }
 
     let name = apiFileInfo.aquaTree!.file_index[fileIndexhash];
-    console.log(`getFileName ${name} from hash ${fileIndexhash}`)
+   //  console.log(`getFileName ${name} from hash ${fileIndexhash}`)
     return name;
 
 }

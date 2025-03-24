@@ -87,7 +87,7 @@ const FilePreviewOld = ({ fileInfo }: IFilePreview) => {
             // Decode base64 to string
             const decodedContent = atob(fileContent);
 
-            console.log("decodedContent ==>", decodedContent)
+           //  console.log("decodedContent ==>", decodedContent)
 
             // Determine syntax highlighting and formatting based on file type
             let formattedContent = decodedContent;
@@ -102,7 +102,7 @@ const FilePreviewOld = ({ fileInfo }: IFilePreview) => {
                 }
             }
 
-            console.log("formattedContent ==> ", formattedContent)
+           //  console.log("formattedContent ==> ", formattedContent)
 
             return (
                 <div
@@ -122,7 +122,7 @@ const FilePreviewOld = ({ fileInfo }: IFilePreview) => {
                 </div>
             );
         } else {
-            console.log("document not captured ", fileTypeInfo)
+           //  console.log("document not captured ", fileTypeInfo)
         }
         // }
     }

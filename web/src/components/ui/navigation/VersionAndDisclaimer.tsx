@@ -41,7 +41,7 @@ export default function VersionAndDisclaimer() {
                 setVersionDetails(res)
             }
         } catch (e: unknown) {
-            console.log("Error fetching version ", e)
+           //  console.log("Error fetching version ", e)
             toaster.create({
                 description: "Error fetching version details",
                 type: "error"

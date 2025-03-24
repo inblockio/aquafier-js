@@ -76,7 +76,7 @@ export default async function shareController(fastify: FastifyInstance) {
             let anAquaTree: AquaTree
             let fileObject: FileObject[]
             let revision_pubkey_hash = `${contractData.sender}_${contractData.latest}`
-            console.log(`revision_pubkey_hash == > ${revision_pubkey_hash}`);
+           //  console.log(`revision_pubkey_hash == > ${revision_pubkey_hash}`);
             
             if (contractData.option == "latest") {
                 [anAquaTree, fileObject] = await fetchAquaTreeWithForwardRevisions(revision_pubkey_hash, url)
@@ -86,7 +86,7 @@ export default async function shareController(fastify: FastifyInstance) {
             }
             let sortedAquaTree = OrderRevisionInAquaTree(anAquaTree)
 
-            console.log(`Aqua tree ${JSON.stringify(sortedAquaTree)}`);
+           //  console.log(`Aqua tree ${JSON.stringify(sortedAquaTree)}`);
 
             displayData.push({
                 aquaTree: sortedAquaTree,

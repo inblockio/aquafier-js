@@ -62,7 +62,7 @@ export const UploadFile = ({ file, uploadedIndexes, fileIndex, updateUploadedInd
         setUploading(true)
         try {
             const url = `${backend_url}/explorer_files`
-            console.log("url ", url)
+           //  console.log("url ", url)
             const response = await axios.post(url, formData, {
                 headers: {
                     'Content-Type': 'multipart/form-data',
@@ -152,7 +152,7 @@ export const ImportAquaTreeZip = ({ file, uploadedIndexes, fileIndex, updateUplo
         setUploading(true)
         try {
             const url = `${backend_url}/explorer_aqua_zip`
-            console.log("url ", url)
+           //  console.log("url ", url)
             const response = await axios.post(url, formData, {
                 headers: {
                     'Content-Type': 'multipart/form-data',
@@ -258,7 +258,7 @@ export const VerifyFile = ({ file }: IDropzoneAction) => {
                 }
                 setHashChain(hashChain)
                 // const hashChainString = JSON.stringify(hashChain)
-                // console.log("JSON data:", hashChain);
+                ////  console.log("JSON data:", hashChain);
                 // setAppState("selectedFileFromApi", hashChain);
                 // navigate("/details");
                 // Handle the JSON data here
@@ -313,7 +313,7 @@ export const ImportAquaChainFromFile = ({ file, uploadedIndexes, fileIndex, upda
         setUploading(true)
         try {
             const url = `${backend_url}/explorer_aqua_file_upload`;
-            console.log("importAquaChain url ", url)
+           //  console.log("importAquaChain url ", url)
             const response = await axios.post(url, formData, {
                 headers: {
                     'Content-Type': 'multipart/form-data',
@@ -325,10 +325,10 @@ export const ImportAquaChainFromFile = ({ file, uploadedIndexes, fileIndex, upda
 
             // let logs: Array<string> = res.logs
             // logs.forEach((item) => {
-            //     console.log("**>" + item + "\n.")
+            //    //  console.log("**>" + item + "\n.")
             // })
 
-            // console.log("Upload res: ", res)
+            ////  console.log("Upload res: ", res)
 
             // Assuming the API returns an array of FileInfo objects
             const file: ApiFileInfo = {
@@ -390,14 +390,14 @@ export const ImportAquaChainFromChain = ({ fileInfo, isVerificationSuccessful }:
         color: "blue"
     })
 
-    console.log(revisionsToImport)
+   //  console.log(revisionsToImport)
 
     const { metamaskAddress, setFiles, files, user_profile, backend_url, session } = useStore(appStore)
 
     let navigate = useNavigate();
 
-    console.log("Chain to import: ", fileInfo)
-    console.log("My db files: ", dbFiles)
+   //  console.log("Chain to import: ", fileInfo)
+   //  console.log("My db files: ", dbFiles)
 
     const importAquaChain = async () => {
 
@@ -412,7 +412,7 @@ export const ImportAquaChainFromChain = ({ fileInfo, isVerificationSuccessful }:
             const existingFileRevisions = Object.keys(existingChainFile?.aquaTree?.revisions ?? {})
             const fileToImportRevisions = Object.keys(fileInfo?.aquaTree?.revisions ?? {})
 
-            // console.log(existingFileRevisions, fileToImportRevisions)
+            ////  console.log(existingFileRevisions, fileToImportRevisions)
             const mergeResult = analyzeAndMergeRevisions(existingFileRevisions, fileToImportRevisions)
             let _revisionsToImport: Revision[] = []
 
@@ -449,7 +449,7 @@ export const ImportAquaChainFromChain = ({ fileInfo, isVerificationSuccessful }:
                 }
             }
 
-            // console.log(mergeResult)
+            ////  console.log(mergeResult)
             setComparisonResult(mergeResult)
             setLastIdenticalRevisionHash(mergeResult.lastIdenticalRevisionHash)
             setRevisionsToImport(_revisionsToImport)
@@ -492,7 +492,7 @@ export const ImportAquaChainFromChain = ({ fileInfo, isVerificationSuccessful }:
 
         try {
             const url = `${backend_url}/explorer_aqua_file_upload`
-            console.log("importAquaChain url ", url)
+           //  console.log("importAquaChain url ", url)
             const response = await axios.post(url, formData, {
                 headers: {
                     'Content-Type': 'multipart/form-data',
@@ -505,10 +505,10 @@ export const ImportAquaChainFromChain = ({ fileInfo, isVerificationSuccessful }:
 
             // let logs: Array<string> = res.logs
             // logs.forEach((item) => {
-            //     console.log("**>" + item + "\n.")
+            //    //  console.log("**>" + item + "\n.")
             // })
 
-            // console.log("Upload res: ", res)
+            ////  console.log("Upload res: ", res)
 
             // Assuming the API returns an array of FileInfo objects
             const file: ApiFileInfo = fileInfo;
@@ -551,7 +551,7 @@ export const ImportAquaChainFromChain = ({ fileInfo, isVerificationSuccessful }:
         //         setUploaded(true)
 
         //         const res: ApiFileInfo = response.data
-        //         console.log(res)
+        //        //  console.log(res)
 
         //         const newFiles: ApiFileInfo[] = [];
         //         setFiles(newFiles)
@@ -579,7 +579,7 @@ export const ImportAquaChainFromChain = ({ fileInfo, isVerificationSuccessful }:
         // }
     }
 
-    console.log(comparisonResult)
+   //  console.log(comparisonResult)
 
     useEffect(() => {
         setDbFiles(files)

@@ -24,7 +24,7 @@ const LoadConfiguration = () => {
                 if (response.status === 200) {
                     const url2 = `${backend_url}/explorer_files`;
                     const _address = response.data?.session.address
-                    console.log(`address ${_address} ..`)
+                   //  console.log(`address ${_address} ..`)
                     if (_address) {
                         const address = ethers.getAddress(_address)
                         setMetamaskAddress(address)
@@ -53,7 +53,7 @@ const LoadConfiguration = () => {
 
                 })
                 // } else {
-                //     console.log("An error from the api ", error);
+                //    //  console.log("An error from the api ", error);
                 // }
             }
         }
@@ -62,7 +62,7 @@ const LoadConfiguration = () => {
     const fetchUserProfile = async (address: string, nonce : string) => {
 
         const url = `${backend_url}/explorer_fetch_user_settings`;
-        console.log("url is ", url);
+       //  console.log("url is ", url);
 
         const response = await axios.get(url, {
             headers: {

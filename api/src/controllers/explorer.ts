@@ -90,7 +90,7 @@ export default async function explorerController(fastify: FastifyInstance) {
                     const file = zipData.files[fileName];
 
                     let fileContent = await file.async('text');
-                    console.log(`aqua.json => File name: ${fileName}, Content: ${fileContent}`);
+                   //  console.log(`aqua.json => File name: ${fileName}, Content: ${fileContent}`);
 
                     let aquaData: AquaJsonInZip = JSON.parse(fileContent)
 
@@ -98,7 +98,7 @@ export default async function explorerController(fastify: FastifyInstance) {
                     for (let nameHash of aquaData.name_with_hash) {
 
                         let aquaFileName = `${nameHash.name}.aqua.json`;
-                        console.log(`name ${aquaFileName} ............ `)
+                       //  console.log(`name ${aquaFileName} ............ `)
                         const aquaFile = zipData.files[aquaFileName];
                         if (aquaFile == null || aquaFile == undefined) {
                             return reply.code(500).send({ error: `Expected to find ${aquaFileName} as defined in aqua.json but file not found ` });
@@ -145,7 +145,7 @@ export default async function explorerController(fastify: FastifyInstance) {
                             const filePath = path.join(UPLOAD_DIR, uniqueFileName);
 
                             await fs.promises.writeFile(filePath, fileContent);
-                            console.log(`------> Saved file: ${filePath}`);
+                           //  console.log(`------> Saved file: ${filePath}`);
 
 
                             let fileData = {
@@ -155,7 +155,7 @@ export default async function explorerController(fastify: FastifyInstance) {
                                 hash: filepubkeyhash,
                                 reference_count: 1,
                             }
-                            console.log(`--> File Data ${JSON.stringify(fileData, null, 4)} `)
+                           //  console.log(`--> File Data ${JSON.stringify(fileData, null, 4)} `)
                             fileResult = await prisma.file.create({
 
                                 data: fileData
@@ -213,13 +213,13 @@ export default async function explorerController(fastify: FastifyInstance) {
             }
 
             for (const fileName in zipData.files) {
-                console.log(`=> file name ${fileName}`)
+               //  console.log(`=> file name ${fileName}`)
                 const file = zipData.files[fileName];
 
                 try {
                     if (fileName.endsWith(".aqua.json")) {
                         let fileContent = await file.async('text');
-                        console.log(`=> File name: ${fileName}, Content: ${fileContent}`);
+                       //  console.log(`=> File name: ${fileName}, Content: ${fileContent}`);
 
                         let aquaTree: AquaTree = JSON.parse(fileContent);
 
@@ -230,9 +230,9 @@ export default async function explorerController(fastify: FastifyInstance) {
 
                     } else if (fileName == 'aqua.json') {
                         //ignored for now
-                        console.log(`ignore aqua.json in second loop`)
+                       //  console.log(`ignore aqua.json in second loop`)
                     } else {
-                        console.log(`ignore the asset  ${fileName}`)
+                       //  console.log(`ignore the asset  ${fileName}`)
 
                     }
                 } catch (e) {
@@ -338,7 +338,7 @@ export default async function explorerController(fastify: FastifyInstance) {
     // get file using file hash
     fastify.get('/explorer_files', async (request, reply) => {
         // const { fileHash } = request.params as { fileHash: string };
-        // console.log(`Received fileHash: ${fileHash}`);
+        ////  console.log(`Received fileHash: ${fileHash}`);
         // file content from db
         // return as a blob
 
@@ -465,7 +465,7 @@ export default async function explorerController(fastify: FastifyInstance) {
             const fileBuffer = await streamToBuffer(data.file);
             let fileContent = fileBuffer.toString('utf-8');
             const fileSizeInBytes = fileBuffer.length;
-            console.log(`File size: ${fileSizeInBytes} bytes`);
+           //  console.log(`File size: ${fileSizeInBytes} bytes`);
 
 
             let fileObjectPar: FileObject = {
@@ -638,7 +638,7 @@ export default async function explorerController(fastify: FastifyInstance) {
                         }
                     })
 
-                    console.log(JSON.stringify(fileCreation, null, 4))
+                   //  console.log(JSON.stringify(fileCreation, null, 4))
                     console.error("====We are through here: ", fileCreation.hash)
 
                     await prisma.fileIndex.create({
@@ -650,12 +650,12 @@ export default async function explorerController(fastify: FastifyInstance) {
                             reference_count: 1
                         }
                     })
-                    console.log("Saved successfully")
+                   //  console.log("Saved successfully")
                 }
 
             } catch (error) {
-                console.log("======================================")
-                console.log(`error ${error}`)
+               //  console.log("======================================")
+               //  console.log(`error ${error}`)
                 let logs: LogData[] = []
                 logs.push({
                     log: `Error saving genesis revision`,
@@ -721,7 +721,7 @@ export default async function explorerController(fastify: FastifyInstance) {
         revisionData.push(latestRevionData);
 
         try {
-            console.log(`previous ${latestRevionData?.previous}`);
+           //  console.log(`previous ${latestRevionData?.previous}`);
             //if previous verification hash is not empty find the previous one
             if (latestRevionData?.previous !== null && latestRevionData?.previous?.length !== 0) {
                 let aquaTreerevision = await findAquaTreeRevision(latestRevionData?.previous!!);
@@ -852,7 +852,7 @@ export default async function explorerController(fastify: FastifyInstance) {
                             try {
                                 fs.unlinkSync(file.content);
                             } catch (er) {
-                                console.log("Error deleting file from filesystem:", er);
+                               //  console.log("Error deleting file from filesystem:", er);
                                 // Continue even if file deletion fails
                             }
                         }
@@ -903,7 +903,7 @@ export default async function explorerController(fastify: FastifyInstance) {
                             pubkey_hash: item.pubkey_hash
                         }
                     });
-                    console.log(`Deleted revision with pubkey_hash: ${item.pubkey_hash}`);
+                   //  console.log(`Deleted revision with pubkey_hash: ${item.pubkey_hash}`);
                 }
             });
 
@@ -959,7 +959,7 @@ export default async function explorerController(fastify: FastifyInstance) {
 
 
     //     try {
-    //         console.log(`previous ${latestRevionData?.previous}`);
+    //        //  console.log(`previous ${latestRevionData?.previous}`);
     //         //if previous verification hash is not empty find the previous one
     //         if (latestRevionData?.previous !== null && latestRevionData?.previous?.length !== 0) {
     //             let aquaTreerevision = await findAquaTreeRevision(latestRevionData?.previous!!);
@@ -1019,7 +1019,7 @@ export default async function explorerController(fastify: FastifyInstance) {
     //                                     // and will not be rolled back if transaction fails
     //                                     fs.unlinkSync(filesData.content);
     //                                 } catch (er) {
-    //                                     console.log("Error deleting file from filesystem:", er);
+    //                                    //  console.log("Error deleting file from filesystem:", er);
     //                                     // Continue even if file deletion fails
     //                                 }
     //                             }
@@ -1076,7 +1076,7 @@ export default async function explorerController(fastify: FastifyInstance) {
     //                     }
     //                 });
     //             } catch (e) {
-    //                 console.log("Warning: Error in deleting latest entries:", e);
+    //                //  console.log("Warning: Error in deleting latest entries:", e);
     //                 // We'll continue, as the transaction will roll back if it fails
     //             }
 
@@ -1090,7 +1090,7 @@ export default async function explorerController(fastify: FastifyInstance) {
     //                     }
     //                 });
     //             } catch (e) {
-    //                 console.log("Warning: Error in deleting link  entries:", e);
+    //                //  console.log("Warning: Error in deleting link  entries:", e);
     //                 // We'll continue, as the transaction will roll back if it fails
     //             }
 
@@ -1101,7 +1101,7 @@ export default async function explorerController(fastify: FastifyInstance) {
     //                         pubkey_hash: item.pubkey_hash
     //                     }
     //                 });
-    //                 console.log(`Deleted revision with pubkey_hash: ${item.pubkey_hash}`);
+    //                //  console.log(`Deleted revision with pubkey_hash: ${item.pubkey_hash}`);
     //             }
     //         });
 

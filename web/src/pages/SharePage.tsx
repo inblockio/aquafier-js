@@ -33,14 +33,14 @@ const SharePage = () => {
 
                 setLoading(true)
                 const url = `${backend_url}/share_data/${params.identifier}`;
-                console.log("url is ", url)
+               //  console.log("url is ", url)
                 const response = await axios.get(url, {
                     headers: {
                         'Content-Type': 'application/x-www-form-urlencoded',
                         'nonce': session?.nonce ?? ""
                     }
                 });
-                console.log(response)
+               //  console.log(response)
 
                 if (response.status === 200) {
                     setFileInfo(response.data[0])
@@ -67,13 +67,13 @@ const SharePage = () => {
 
     useEffect(() => {
         // if (fetchFromUrl == false) {
-        //     console.log("Trigered ...")
+        //    //  console.log("Trigered ...")
             if (params.identifier) {
                 loadPageData()
             }
         //     setFetchFromUrl(true);
         // }else{
-        //     console.log("No.........Trigered ...") 
+        //    //  console.log("No.........Trigered ...") 
         // }
     }, [params])
 
