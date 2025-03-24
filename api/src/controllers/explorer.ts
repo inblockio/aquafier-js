@@ -4,7 +4,7 @@ import { prisma } from '../database/db';
 import { BusboyFileStream } from '@fastify/busboy';
 import { getFileUploadDirectory, isTextFile, isTextFileProbability, streamToBuffer } from '../utils/file_utils';
 import path from 'path';
-
+import JSZip from "jszip";
 import { randomUUID } from 'crypto';
 import util from 'util';
 import { pipeline } from 'stream';
@@ -14,13 +14,222 @@ import { createAquaTreeFromRevisions, FetchRevisionInfo, findAquaTreeRevision, s
 import { fileURLToPath } from 'url';
 import { AquaForms, FileIndex, Signature, Witness, WitnessEvent } from '@prisma/client';
 import { getHost, getPort } from '@/utils/api_utils';
-import { DeleteRevision, SaveAquaTree } from '@/models/request_models';
+import { AquaJsonInZip, DeleteRevision, SaveAquaTree } from '@/models/request_models';
+import getStream from 'get-stream';
 // Promisify pipeline
 const pump = util.promisify(pipeline);
 
 export default async function explorerController(fastify: FastifyInstance) {
 
 
+
+    fastify.post('/explorer_aqua_zip', async (request, reply) => {
+
+        // Read `nonce` from headers
+        const nonce = request.headers['nonce']; // Headers are case-insensitive
+
+        // Check if `nonce` is missing or empty
+        if (!nonce || typeof nonce !== 'string' || nonce.trim() === '') {
+            return reply.code(401).send({ error: 'Unauthorized: Missing or empty nonce header' });
+        }
+
+        const session = await prisma.siweSession.findUnique({
+            where: { nonce }
+        });
+
+        if (!session) {
+            return reply.code(403).send({ success: false, message: "Nounce  is invalid" });
+        }
+
+
+        let aquafier = new Aquafier();
+
+
+        // Check if the request is multipart
+        const isMultipart = request.isMultipart();
+
+        if (!isMultipart) {
+            return reply.code(400).send({ error: 'Expected multipart form data' });
+        }
+
+        try {
+            // Process the multipart data
+            const data = await request.file();
+
+            if (data == undefined || data.file === undefined) {
+                return reply.code(400).send({ error: 'No file uploaded' });
+            }
+            // Verify file size (20MB = 20 * 1024 * 1024 bytes)
+            const maxFileSize = 20 * 1024 * 1024;
+            if (data.file.bytesRead > maxFileSize) {
+                return reply.code(413).send({ error: 'File too large. Maximum file size is 20MB' });
+            }
+
+            let genesis_name = "";
+            // const zip = new JSZip();
+            // **Convert the file stream to a Buffer**
+            // const fileBuffer = await getStream.buffer(data.file);
+            // const zipData = await zip.loadAsync(fileBuffer);
+            // Convert the stream to a Buffer manually
+            const chunks = [];
+            for await (const chunk of data.file) {
+                chunks.push(chunk);
+            }
+            const fileBuffer = Buffer.concat(chunks);
+
+            // Load ZIP contents
+            const zip = new JSZip();
+            const zipData = await zip.loadAsync(fileBuffer);
+
+
+            for (const fileName in zipData.files) {
+                if (fileName == 'aqua.json') {
+                    const file = zipData.files[fileName];
+
+                    let fileContent = await file.async('text');
+                    console.log(`aqua.json => File name: ${fileName}, Content: ${fileContent}`);
+
+                    let aquaData: AquaJsonInZip = JSON.parse(fileContent)
+
+
+                    for (let nameHash of aquaData.name_with_hash) {
+
+
+                        let aquaFileName = `${nameHash}.aqua.json`;
+                        const aquaFile = zipData.files[aquaFileName];
+                        if (aquaFile == null || aquaFile == undefined) {
+                            return reply.code(500).send({ error: `Expected to find ${aquaFileName} as defined in aqua.json but file not found ` });
+                        }
+
+                        let aquaFileDataText = await file.async('text');
+
+                        let aquaData: AquaTree = JSON.parse(aquaFileDataText)
+
+
+                        let fileResult = await prisma.file.findFirst({
+                            where: {
+                                file_hash: nameHash.hash
+                            }
+                        })
+
+                        let allHashes = Object.keys(aquaData.revisions);
+                        let genesisHash = allHashes[0];
+                        for (let hashItem in allHashes) {
+                            let revision = aquaData.revisions[hashItem];
+                            if (revision.previous_verification_hash == null || revision.previous_verification_hash == undefined || revision.previous_verification_hash == "") {
+                                if (genesisHash != hashItem) {
+                                    genesisHash = hashItem
+                                }
+                                break
+                            }
+                        }
+
+                        let filepubkeyhash = `${session.address}_${genesisHash}`
+
+
+                        if (fileResult == null) {
+
+
+                            // Save the asset to the file system
+                            const fileContent = await file.async('nodebuffer'); // Correctly handle binary files
+
+                            const UPLOAD_DIR = getFileUploadDirectory();
+                            await fs.promises.mkdir(UPLOAD_DIR, { recursive: true }); // Ensure directory exists
+
+                            const uniqueFileName = `${randomUUID()}-${path.basename(fileName)}`;
+                            const filePath = path.join(UPLOAD_DIR, uniqueFileName);
+
+                            await fs.promises.writeFile(filePath, fileContent);
+                            console.log(`Saved file: ${filePath}`);
+
+
+                            fileResult = await prisma.file.create({
+
+                                data: {
+                                    content: filePath,
+                                    file_hash: nameHash.hash,
+                                    hash: filepubkeyhash,
+                                    reference_count: 1,
+                                }
+                            })
+
+                        } else {
+
+                            await prisma.file.update({
+                                where: {
+                                    hash: fileResult.hash
+                                },
+                                data: {
+                                    reference_count: fileResult.reference_count! + 1
+                                }
+                            })
+                        }
+
+                        // update  file index
+
+                        let existingFileIndex = await prisma.fileIndex.findFirst({
+                            where: { file_hash: nameHash.hash },
+                        });
+
+                        if (existingFileIndex) {
+                            existingFileIndex.hash = [...existingFileIndex.hash, filepubkeyhash]
+                            await prisma.fileIndex.update({
+                                data: existingFileIndex,
+                                where: {
+                                    id: existingFileIndex.id
+                                }
+                            })
+                        } else {
+                            await prisma.fileIndex.create({
+
+                                data: {
+                                    id: fileResult.hash,
+                                    hash: [filepubkeyhash],
+                                    file_hash: nameHash.hash,
+                                    uri: nameHash.name,
+                                    reference_count: 1
+
+                                }
+                            })
+
+                        }
+                    }
+                    break;
+                }
+
+            }
+
+            for (const fileName in zipData.files) {
+                console.log(`=> file name ${fileName}`)
+                const file = zipData.files[fileName];
+
+                if (fileName.endsWith(".aqua.json")) {
+                    let fileContent = await file.async('text');
+                    console.log(`=> File name: ${fileName}, Content: ${fileContent}`);
+
+                    let aquaTree: AquaTree = JSON.parse(fileContent);
+
+                    // save the aqua tree 
+                    await saveAquaTree(aquaTree, session.address)
+
+
+
+                } else if (fileName == 'aqua.json') {
+                    //ignored for now
+                    console.log(`ignore aqua.json in second loop`)
+                } else {
+                    console.log(`ignore the asset  ${fileName}`)
+
+                }
+            }
+
+            return reply.code(200).send({ error: 'aqua tree saved successfully' });
+        } catch (error) {
+            request.log.error(error);
+            return reply.code(500).send({ error: 'File upload failed' });
+        }
+
+    });
 
     fastify.post('/explorer_aqua_file_upload', async (request, reply) => {
 
@@ -68,15 +277,6 @@ export default async function explorerController(fastify: FastifyInstance) {
             let fileContent = fileBuffer.toString('utf-8');
 
             let aquaTreeWithFileObject: AquaTree = JSON.parse(fileContent)
-            // console.log("----------------------------------------------------------------------")
-            // console.log(`Make sure its an aqua tree with file objects ${JSON.stringify(aquaTreeWithFileObject, null, 4)} `)
-            // // verify the aqua tree 
-
-            // let res = await aquafier.verifyAquaTree(aquaTreeWithFileObject.tree, aquaTreeWithFileObject.fileObject)
-
-            // if (res.isErr()) {
-            //     return reply.code(403).send({ error: 'aqua tree is not valid', logs: res.data });
-            // }
 
             // save the aqua tree 
             await saveAquaTree(aquaTreeWithFileObject, session.address)
@@ -235,12 +435,12 @@ export default async function explorerController(fastify: FastifyInstance) {
             }
 
 
-            
+
             const fileBuffer = await streamToBuffer(data.file);
             let fileContent = fileBuffer.toString('utf-8');
             const fileSizeInBytes = fileBuffer.length;
             console.log(`File size: ${fileSizeInBytes} bytes`);
-            
+
 
             let fileObjectPar: FileObject = {
                 fileContent: fileContent,
@@ -276,12 +476,24 @@ export default async function explorerController(fastify: FastifyInstance) {
             }
 
 
-            
+
             // let fileHash = getHashSum(data.file)
             let resData: AquaTree = res.data.aquaTree!!;
-            let allHash: string[] = Object.keys(resData.revisions);
+            let allHashes: string[] = Object.keys(resData.revisions);
 
-            let revisionData: Revision = resData.revisions[allHash[0]];
+            let genesisHash = allHashes[0];
+            for (let hashItem in allHashes) {
+                let revision = resData.revisions[hashItem];
+                if (revision.previous_verification_hash == null || revision.previous_verification_hash == undefined || revision.previous_verification_hash == "") {
+                    if (genesisHash != hashItem) {
+                        genesisHash = hashItem
+                    }
+                    break
+                }
+            }
+
+
+            let revisionData: Revision = resData.revisions[genesisHash];
             let fileHash = revisionData.file_hash; // Extract file hash
 
 
@@ -313,7 +525,7 @@ export default async function explorerController(fastify: FastifyInstance) {
                 //     )
                 // );
 
-                let filepubkeyhash = `${session.address}_${allHash[0]}`
+                let filepubkeyhash = `${session.address}_${genesisHash}`
 
                 await prisma.latest.create({
                     data: {
@@ -372,7 +584,7 @@ export default async function explorerController(fastify: FastifyInstance) {
 
                 if (existingFileIndex) {
                     existingFileIndex.reference_count = existingFileIndex.reference_count! + 1;
-                    existingFileIndex.hash = [...existingFileIndex.hash, allHash[0]]
+                    existingFileIndex.hash = [...existingFileIndex.hash, genesisHash]
                     await prisma.fileIndex.update({
                         data: existingFileIndex,
                         where: {
@@ -382,7 +594,6 @@ export default async function explorerController(fastify: FastifyInstance) {
                 } else {
 
 
-                    let firstRevisionHash = allHash[0]
                     const UPLOAD_DIR = getFileUploadDirectory();
                     // Create unique filename
                     const filename = `${randomUUID()}-${data.filename}`;
@@ -447,28 +658,28 @@ export default async function explorerController(fastify: FastifyInstance) {
     fastify.post('/explorer_delete_file', async (request, reply) => {
         // Read `nonce` from headers
         const nonce = request.headers['nonce']; // Headers are case-insensitive
-    
+
         // Check if `nonce` is missing or empty
         if (!nonce || typeof nonce !== 'string' || nonce.trim() === '') {
             return reply.code(401).send({ error: 'Unauthorized: Missing or empty nonce header' });
         }
-    
+
         const session = await prisma.siweSession.findUnique({
             where: { nonce }
         });
-    
+
         if (!session) {
             return reply.code(403).send({ success: false, message: "Nonce is invalid" });
         }
-    
+
         const revisionDataPar = request.body as DeleteRevision;
-    
+
         if (!revisionDataPar.revisionHash) {
             return reply.code(400).send({ success: false, message: "revision hash is required" });
         }
-    
+
         let filepubkeyhash = `${session.address}_${revisionDataPar.revisionHash}`;
-    
+
         //fetch all the revisions 
         let revisionData = [];
         // fetch latest revision 
@@ -477,12 +688,12 @@ export default async function explorerController(fastify: FastifyInstance) {
                 pubkey_hash: filepubkeyhash
             }
         });
-    
+
         if (latestRevionData == null) {
             return reply.code(500).send({ success: false, message: `revision with hash ${revisionDataPar.revisionHash} not found in system` });
         }
         revisionData.push(latestRevionData);
-    
+
         try {
             console.log(`previous ${latestRevionData?.previous}`);
             //if previous verification hash is not empty find the previous one
@@ -493,15 +704,15 @@ export default async function explorerController(fastify: FastifyInstance) {
         } catch (e: any) {
             return reply.code(500).send({ success: false, message: `Error fetching a revision ${JSON.stringify(e, null, 4)}` });
         }
-    
+
         try {
             // Use Prisma transaction to ensure all or nothing execution
             await prisma.$transaction(async (tx) => {
                 const revisionPubkeyHashes = revisionData.map(rev => rev.pubkey_hash);
-    
+
                 // Step 1: First delete all entries in related tables that reference our revisions
                 // We need to delete child records before parent records to avoid foreign key constraints
-    
+
                 // Delete AquaForms entries
                 await tx.aquaForms.deleteMany({
                     where: {
@@ -510,7 +721,7 @@ export default async function explorerController(fastify: FastifyInstance) {
                         }
                     }
                 });
-    
+
                 // Delete Signature entries
                 await tx.signature.deleteMany({
                     where: {
@@ -519,7 +730,7 @@ export default async function explorerController(fastify: FastifyInstance) {
                         }
                     }
                 });
-    
+
                 // Delete Witness entries (note: we need to handle WitnessEvent separately)
                 const witnesses = await tx.witness.findMany({
                     where: {
@@ -528,9 +739,9 @@ export default async function explorerController(fastify: FastifyInstance) {
                         }
                     }
                 });
-                
+
                 const witnessRoots = witnesses.map(w => w.Witness_merkle_root).filter(Boolean);
-                
+
                 await tx.witness.deleteMany({
                     where: {
                         hash: {
@@ -538,7 +749,7 @@ export default async function explorerController(fastify: FastifyInstance) {
                         }
                     }
                 });
-                
+
                 // Check if any WitnessEvents are no longer referenced
                 for (const root of witnessRoots) {
                     const remainingWitnesses = await tx.witness.count({
@@ -546,7 +757,7 @@ export default async function explorerController(fastify: FastifyInstance) {
                             Witness_merkle_root: root
                         }
                     });
-                    
+
                     if (remainingWitnesses === 0 && root) {
                         await tx.witnessEvent.delete({
                             where: {
@@ -555,7 +766,7 @@ export default async function explorerController(fastify: FastifyInstance) {
                         });
                     }
                 }
-    
+
                 // Delete Link entries
                 await tx.link.deleteMany({
                     where: {
@@ -564,7 +775,7 @@ export default async function explorerController(fastify: FastifyInstance) {
                         }
                     }
                 });
-    
+
                 // Handle File entries
                 // First, find all files related to our revisions
                 const files = await tx.file.findMany({
@@ -574,7 +785,7 @@ export default async function explorerController(fastify: FastifyInstance) {
                         }
                     }
                 });
-                
+
                 // Handle FileIndex entries first (as they reference files)
                 for (const file of files) {
                     // Find FileIndex entries that reference this file
@@ -585,7 +796,7 @@ export default async function explorerController(fastify: FastifyInstance) {
                             }
                         }
                     });
-                    
+
                     for (const fileIndex of fileIndexEntries) {
                         if ((fileIndex.reference_count || 0) <= 1) {
                             // If this is the last reference, delete the FileIndex entry
@@ -607,7 +818,7 @@ export default async function explorerController(fastify: FastifyInstance) {
                             });
                         }
                     }
-                    
+
                     // Now we can safely handle the file itself
                     if ((file.reference_count || 0) <= 1) {
                         // If this is the last reference, delete the file
@@ -619,7 +830,7 @@ export default async function explorerController(fastify: FastifyInstance) {
                                 // Continue even if file deletion fails
                             }
                         }
-                        
+
                         await tx.file.delete({
                             where: {
                                 hash: file.hash
@@ -637,7 +848,7 @@ export default async function explorerController(fastify: FastifyInstance) {
                         });
                     }
                 }
-    
+
                 // Step 2: Remove any references to our revisions from other revisions
                 await tx.revision.updateMany({
                     where: {
@@ -649,7 +860,7 @@ export default async function explorerController(fastify: FastifyInstance) {
                         previous: null
                     }
                 });
-    
+
                 // Step 3: Delete the latest entry - we need to do this before deleting revisions
                 await tx.latest.deleteMany({
                     where: {
@@ -658,7 +869,7 @@ export default async function explorerController(fastify: FastifyInstance) {
                         }
                     }
                 });
-    
+
                 // Step 4: Finally, delete all revisions
                 for (let item of revisionData) {
                     await tx.revision.delete({
@@ -669,7 +880,7 @@ export default async function explorerController(fastify: FastifyInstance) {
                     console.log(`Deleted revision with pubkey_hash: ${item.pubkey_hash}`);
                 }
             });
-    
+
             return reply.code(200).send({ success: true, message: "File and revisions deleted successfully" });
         } catch (error: any) {
             console.error("Error in delete operation:", error);

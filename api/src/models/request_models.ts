@@ -13,7 +13,7 @@ export interface VerifyRequestBody {
 
 
 export interface FetchAquaTreeRequest {
- latestRevisionHash : string
+  latestRevisionHash: string
 
 }
 export interface SiweRequest {
@@ -41,4 +41,13 @@ export interface DeleteRevision {
 export interface SaveRevision {
   revision: Revision,
   revisionHash: string
+}
+
+export interface AquaNameWithHash {
+  name: string,
+  hash: string
+}
+export interface AquaJsonInZip {
+  genesis: string,
+  name_with_hash: Array<AquaNameWithHash>
 }

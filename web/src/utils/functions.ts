@@ -279,7 +279,7 @@ export function displayTime(input: number | string): string {
         // Convert to string for consistent processing
         input = input.toString();
     }
-    
+
     // Handle string input
     if (typeof input === 'string') {
         // Check if string contains only numbers
@@ -292,18 +292,18 @@ export function displayTime(input: number | string): string {
                 const hour = input.substring(8, 10);
                 const minute = input.substring(10, 12);
                 const second = input.substring(12, 14);
-                
+
                 const date = new Date(
-                    parseInt(year), 
-                    month, 
-                    parseInt(day), 
-                    parseInt(hour), 
-                    parseInt(minute), 
+                    parseInt(year),
+                    month,
+                    parseInt(day),
+                    parseInt(hour),
+                    parseInt(minute),
                     parseInt(second)
                 );
-                
+
                 return date.toDateString(); // Returns format like "Thu Mar 20 2025"
-            } 
+            }
             // Regular Unix timestamp (seconds since epoch)
             else {
                 const date = new Date(parseInt(input, 10) * 1000); // Convert seconds to milliseconds
@@ -326,6 +326,59 @@ export const getFileHashFromUrl = (url: string) => {
 
     // Return the captured group if found, otherwise empty string
     return match ? match[1] : '';
+}
+
+
+export const getFileName = (apiFileInfo: ApiFileInfo) => {
+
+    let hashes = Object.keys(apiFileInfo.aquaTree!.revisions);
+    let fileIndexhash = "";
+    for (let item of hashes) {
+        let revision = apiFileInfo.aquaTree!.revisions[item];
+        if (revision.previous_verification_hash == null || revision.previous_verification_hash == "") {
+            fileIndexhash = item;
+            break
+        }
+    }
+
+    let name = apiFileInfo.aquaTree!.file_index[fileIndexhash];
+    console.log(`getFileName ${name} from hash ${fileIndexhash}`)
+    return name;
+
+}
+
+export function extractFileHash(url: string):  string | undefined{
+    try {
+        const urlObj = new URL(url);
+        const parts = urlObj.pathname.split('/');
+        return parts.pop(); // Get the last part of the URL path
+    } catch (error) {
+        console.error('Invalid URL:', error);
+        return undefined;
+    }
+}
+
+/**
+ * Estimates the size in bytes that a string would occupy if saved to a file
+ * Uses UTF-8 encoding rules where ASCII chars take 1 byte and others take 2-4 bytes
+ * @param str Input string to estimate size for
+ * @returns Estimated size in bytes
+ */
+export function estimateStringFileSize(str: string): number {
+    if (!str) return 0;
+
+    return str.split('').reduce((acc, char) => {
+        const code = char.charCodeAt(0);
+        // UTF-8 encoding rules:
+        // 1 byte for ASCII (0-127)
+        // 2 bytes for extended ASCII (128-2047)
+        // 3 bytes for most other characters (2048-65535)
+        // 4 bytes for remaining Unicode (65536+)
+        if (code < 128) return acc + 1;
+        if (code < 2048) return acc + 2;
+        if (code < 65536) return acc + 3;
+        return acc + 4;
+    }, 0);
 }
 
 export const getLastRevisionVerificationHash = (aquaTree: AquaTree) => {

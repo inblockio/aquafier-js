@@ -221,7 +221,6 @@ export const ImportAquaTreeZip = ({ file, uploadedIndexes, fileIndex, updateUplo
                         break;
                     }
                 }
-
                 if (!hasAquaJson) {
                     toaster.create({
                         description: "Aqua Json not found.",

@@ -1,6 +1,6 @@
 import { LuDelete, LuDownload, LuGlasses, LuLink2, LuShare2, LuSignature } from "react-icons/lu"
 import { Button } from "./ui/button"
-import { areArraysEqual, dummyCredential } from "../utils/functions"
+import { areArraysEqual, dummyCredential, estimateStringFileSize, extractFileHash, getFileName } from "../utils/functions"
 import { useStore } from "zustand"
 import appStore from "../store"
 import axios from "axios"
@@ -18,6 +18,7 @@ import { InputGroup } from "./ui/input-group"
 import Aquafier, { AquaTree, AquaTreeWrapper, Revision } from "aqua-js-sdk"
 import { RevionOperation } from "../models/RevisionOperation"
 import JSZip from "jszip";
+import { AquaJsonInZip, AquaNameWithHash } from "../models/Aqua"
 
 // async function storeWitnessTx(file_id: number, filename: string, txhash: string, ownerAddress: string, network: string, files: ApiFileInfo[], setFiles: any, backend_url: string) {
 
@@ -347,7 +348,7 @@ export const DownloadAquaChain = ({ file }: { file: ApiFileInfo }) => {
 
     const downloadLinkAquaJson = async () => {
         const zip = new JSZip();
-
+        let aquafier = new Aquafier();
         let mainAquaFileName = "";
         let mainAquaHash = "";
         // fetch the genesis 
@@ -363,6 +364,7 @@ export const DownloadAquaChain = ({ file }: { file: ApiFileInfo }) => {
 
         zip.file(`${mainAquaFileName}.aqua.json`, JSON.stringify(file.aquaTree));
 
+        let nameWithHashes: Array<AquaNameWithHash> = []
         for (let fileObj of file.fileObject) {
             if (typeof fileObj.fileContent === 'string' && fileObj.fileContent.startsWith('http')) {
                 try {
@@ -374,6 +376,18 @@ export const DownloadAquaChain = ({ file }: { file: ApiFileInfo }) => {
                         }
                     });
                     const blob = await response.blob();
+
+
+                    let hashData = extractFileHash(fileObj.fileContent)
+                    if (hashData == undefined) {
+                        hashData = aquafier.getFileHash(blob.toString())
+                    }
+
+                    nameWithHashes.push({
+                        name: fileObj.fileName,
+                        hash: hashData
+                    })
+
                     zip.file(fileObj.fileName, blob, { binary: true })
 
                 } catch (error) {
@@ -384,15 +398,17 @@ export const DownloadAquaChain = ({ file }: { file: ApiFileInfo }) => {
                     });
                 }
             } else {
+
                 zip.file(fileObj.fileName, JSON.stringify(fileObj.fileContent as AquaTree));
             }
         }
 
         //create aqua.json
-        let aquaObject = {
-            'genesis': mainAquaFileName
+        let aquaObject :  AquaJsonInZip = {
+            'genesis': mainAquaFileName,
+            'name_with_hash': nameWithHashes
         };
-        zip.file('aqua.json', JSON.stringify(aquaObject) )
+        zip.file('aqua.json', JSON.stringify(aquaObject))
 
         // Generate the zip file
         zip.generateAsync({ type: "blob" }).then((blob) => {
@@ -794,16 +810,29 @@ export const LinkButton = ({ item, nonce }: IShareButton) => {
                 files.forEach((itemFile) => {
                     const keys = Object.keys(itemFile.aquaTree!.revisions!)
                     if (areArraysEqual(keys, keysPar)) {
-                        newFiles.push({
+                        let newData = {
                             ...itemFile,
                             aquaTree: result.data.aquaTree!,
+                        }
+
+                        let name = getFileName(linkItem)
+
+                        newData.fileObject.push({
+                            fileContent: linkItem!.aquaTree!,
+                            path: "",
+                            fileName: `${name}.aqua.json`,
+                            fileSize: estimateStringFileSize(JSON.stringify(linkItem!.aquaTree!, null, 4))
                         })
+                        newFiles.push(newData)
+
                     } else {
                         newFiles.push(itemFile)
                     }
                 })
 
+                console.log(`new file ${JSON.stringify(newFiles, null, 4)}`)
                 setFiles(newFiles)
+
             }
 
             toaster.create({
