@@ -235,13 +235,18 @@ export default async function explorerController(fastify: FastifyInstance) {
             }
 
 
+            
             const fileBuffer = await streamToBuffer(data.file);
             let fileContent = fileBuffer.toString('utf-8');
+            const fileSizeInBytes = fileBuffer.length;
+            console.log(`File size: ${fileSizeInBytes} bytes`);
+            
 
             let fileObjectPar: FileObject = {
                 fileContent: fileContent,
                 fileName: data.filename,
                 path: "./",
+                fileSize: fileSizeInBytes
             }
 
             // Get the host from the request headers
@@ -291,6 +296,7 @@ export default async function explorerController(fastify: FastifyInstance) {
                 fileContent: fullUrl, // fileContent,
                 fileName: data.filename,
                 path: "./",
+                fileSize: fileSizeInBytes
             }
 
             try {

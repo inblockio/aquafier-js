@@ -144,7 +144,7 @@ export async function saveAquaTree(aquaTree: AquaTree, userAddress: string) {
                 },
                 update: {
                     Witness_merkle_root: revisionData.witness_merkle_root!,
-                    Witness_timestamp: revisionData.witness_timestamp,
+                    Witness_timestamp: revisionData.witness_timestamp?.toString(),
                     Witness_network: revisionData.witness_network,
                     Witness_smart_contract_address: revisionData.witness_smart_contract_address,
                     Witness_transaction_hash: revisionData.witness_transaction_hash,
@@ -153,7 +153,7 @@ export async function saveAquaTree(aquaTree: AquaTree, userAddress: string) {
                 },
                 create: {
                     Witness_merkle_root: revisionData.witness_merkle_root!,
-                    Witness_timestamp: revisionData.witness_timestamp,
+                    Witness_timestamp: revisionData.witness_timestamp?.toString(),
                     Witness_network: revisionData.witness_network,
                     Witness_smart_contract_address: revisionData.witness_smart_contract_address,
                     Witness_transaction_hash: revisionData.witness_transaction_hash,
@@ -458,7 +458,7 @@ export async function createAquaTreeFromRevisions(latestRevisionHash: string, ur
             } else if (revisionItem.revision_type == "witness") {
                 let witnessData = revisionInfoData as WitnessEvent;
                 revisionWithData.witness_merkle_root = witnessData.Witness_merkle_root;
-                revisionWithData.witness_timestamp = witnessData.Witness_timestamp!;
+                revisionWithData.witness_timestamp = Number.parseInt(witnessData.Witness_timestamp!);
                 revisionWithData.witness_network = witnessData.Witness_network!;
                 revisionWithData.witness_smart_contract_address = witnessData.Witness_smart_contract_address!;
                 revisionWithData.witness_transaction_hash = witnessData.Witness_transaction_hash!;

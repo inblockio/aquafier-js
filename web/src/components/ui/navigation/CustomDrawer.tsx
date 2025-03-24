@@ -352,33 +352,33 @@ const RevisionDisplay = ({ aquaTree, revision, revisionHash, fileObjects, callBa
                                                         }
                                                     </Span>
                                                 </TimelineTitle>
-                                                <ItemDetail label="Domain snapshot Hash:"
+                                                {/* <ItemDetail label="Domain snapshot Hash:"
                                                     displayValue={formatCryptoAddress(revision.witness.domain_snapshot_genesis_hash, 4, 6)}
                                                     value={revision.witness.domain_snapshot_genesis_hash} showCopyIcon={true}
-                                                />
-                                                <ItemDetail label="Network:"
+                                                /> */}
+                                                {/* <ItemDetail label="Network:"
                                                     displayValue={formatCryptoAddress(revision.witness.witness_network, 4, 6)}
-                                                    value={revision.witness.witness_network} showCopyIcon={false}
+                                                    value={revision.witness_network} showCopyIcon={false}
                                                 />
                                                 <ItemDetail label="Witness Hash:"
                                                     displayValue={formatCryptoAddress(revision.witness.witness_hash, 4, 6)}
-                                                    value={revision.witness.witness_hash} showCopyIcon={true}
+                                                    value={revision.witness_hash} showCopyIcon={true}
                                                 />
                                                 <Group>
                                                     <ItemDetail label="Transaction Hash:"
                                                         displayValue={formatCryptoAddress(revision.witness.witness_event_transaction_hash.startsWith('0x') ? revision.witness.witness_event_transaction_hash : `0x${revision.witness.witness_event_transaction_hash}`, 4, 6)}
-                                                        value={`0x${revision.witness.witness_event_transaction_hash}`} showCopyIcon={true}
+                                                        value={`0x${revision.witness_event_transaction_hash}`} showCopyIcon={true}
                                                     />
-                                                    <Link outline={'none'} href={`${WITNESS_NETWORK_MAP[revision.witness.witness_network]}/${revision.witness.witness_event_transaction_hash}`} target="_blank">
+                                                    <Link outline={'none'} href={`${WITNESS_NETWORK_MAP[revision.witness_network]}/${revision.witness.witness_event_transaction_hash}`} target="_blank">
                                                         <Icon size={'lg'} color={'blue.500'}>
                                                             <LuExternalLink />
                                                         </Icon>
                                                     </Link>
                                                 </Group>
                                                 <ItemDetail label="Verification Hash:"
-                                                    displayValue={formatCryptoAddress(revision.witness.witness_event_verification_hash, 4, 6)}
-                                                    value={revision.witness.witness_event_verification_hash} showCopyIcon={true}
-                                                />
+                                                    displayValue={formatCryptoAddress(revision.witness_event_verification_hash, 4, 6)}
+                                                    value={revision.witness_event_verification_hash} showCopyIcon={true}
+                                                /> */}
                                             </TimelineContent>
                                         </TimelineItem>
                                     ) : (

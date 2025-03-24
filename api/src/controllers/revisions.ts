@@ -217,6 +217,22 @@ export default async function revisionsController(fastify: FastifyInstance) {
 
             if (revisionData.revision.revision_type == "witness") {
 
+              
+
+                // const witnessTimestamp = new Date();
+                await prisma.witnessEvent.create({
+                    data: {
+                        Witness_merkle_root: revisionData.revision.witness_merkle_root!,
+                        Witness_timestamp: revisionData.revision.witness_timestamp!.toString(),
+                        Witness_network: revisionData.revision.witness_network,
+                        Witness_smart_contract_address: revisionData.revision.witness_smart_contract_address,
+                        Witness_transaction_hash: revisionData.revision.witness_transaction_hash,
+                        Witness_sender_account_address: revisionData.revision.witness_sender_account_address
+
+                    }
+                });
+
+
                 await prisma.witness.upsert({
                     where: {
                         hash: filePubKeyHash
@@ -230,19 +246,6 @@ export default async function revisionsController(fastify: FastifyInstance) {
                         hash: filePubKeyHash,
                         Witness_merkle_root: revisionData.revision.witness_merkle_root,
                         reference_count: 1  // Starting with 1 since this is the first reference
-                    }
-                });
-
-                const witnessTimestamp = new Date(revisionData.revision.witness_timestamp!);
-                await prisma.witnessEvent.create({
-                    data: {
-                        Witness_merkle_root: revisionData.revision.witness_merkle_root!,
-                        Witness_timestamp: witnessTimestamp,
-                        Witness_network: revisionData.revision.witness_network,
-                        Witness_smart_contract_address: revisionData.revision.witness_smart_contract_address,
-                        Witness_transaction_hash: revisionData.revision.witness_transaction_hash,
-                        Witness_sender_account_address: revisionData.revision.witness_sender_account_address
-
                     }
                 });
             }
