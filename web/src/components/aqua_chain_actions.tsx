@@ -364,6 +364,7 @@ export const DownloadAquaChain = ({ file }: { file: ApiFileInfo }) => {
 
         zip.file(`${mainAquaFileName}.aqua.json`, JSON.stringify(file.aquaTree));
 
+        console.log(`in call dalmas kenn ${JSON.stringify(file.fileObject, null , 4)}`)
         let nameWithHashes: Array<AquaNameWithHash> = []
         for (let fileObj of file.fileObject) {
             if (typeof fileObj.fileContent === 'string' && fileObj.fileContent.startsWith('http')) {
@@ -823,6 +824,9 @@ export const LinkButton = ({ item, nonce }: IShareButton) => {
                             fileName: `${name}.aqua.json`,
                             fileSize: estimateStringFileSize(JSON.stringify(linkItem!.aquaTree!, null, 4))
                         })
+
+                        newData.fileObject.push(...linkItem.fileObject)
+
                         newFiles.push(newData)
 
                     } else {

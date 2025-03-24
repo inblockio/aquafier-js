@@ -10,7 +10,7 @@ import util from 'util';
 import { pipeline } from 'stream';
 import * as fs from "fs"
 import { error } from 'console';
-import { createAquaTreeFromRevisions, FetchRevisionInfo, findAquaTreeRevision, saveAquaTree } from '@/utils/revisions_utils';
+import { createAquaTreeFromRevisions, fetchAquatreeFoUser, FetchRevisionInfo, findAquaTreeRevision, saveAquaTree } from '@/utils/revisions_utils';
 import { fileURLToPath } from 'url';
 import { AquaForms, FileIndex, Signature, Witness, WitnessEvent } from '@prisma/client';
 import { getHost, getPort } from '@/utils/api_utils';
@@ -82,6 +82,9 @@ export default async function explorerController(fastify: FastifyInstance) {
             const zipData = await zip.loadAsync(fileBuffer);
 
 
+
+
+
             for (const fileName in zipData.files) {
                 if (fileName == 'aqua.json') {
                     const file = zipData.files[fileName];
@@ -127,30 +130,35 @@ export default async function explorerController(fastify: FastifyInstance) {
                         let filepubkeyhash = `${session.address}_${genesisHash}`
 
 
+                        const fileAsset = zipData.files[nameHash.name];
+
                         if (fileResult == null) {
 
 
                             // Save the asset to the file system
-                            const fileContent = await file.async('nodebuffer'); // Correctly handle binary files
+                            const fileContent = await fileAsset.async('nodebuffer'); // Correctly handle binary files
 
                             const UPLOAD_DIR = getFileUploadDirectory();
                             await fs.promises.mkdir(UPLOAD_DIR, { recursive: true }); // Ensure directory exists
 
-                            const uniqueFileName = `${randomUUID()}-${path.basename(fileName)}`;
+                            const uniqueFileName = `${randomUUID()}-${path.basename(nameHash.name)}`;
                             const filePath = path.join(UPLOAD_DIR, uniqueFileName);
 
                             await fs.promises.writeFile(filePath, fileContent);
-                            console.log(`Saved file: ${filePath}`);
+                            console.log(`------> Saved file: ${filePath}`);
 
 
+                            let fileData = {
+
+                                content: filePath,
+                                file_hash: nameHash.hash,
+                                hash: filepubkeyhash,
+                                reference_count: 1,
+                            }
+                            console.log(`--> File Data ${JSON.stringify(fileData, null, 4)} `)
                             fileResult = await prisma.file.create({
 
-                                data: {
-                                    content: filePath,
-                                    file_hash: nameHash.hash,
-                                    hash: filepubkeyhash,
-                                    reference_count: 1,
-                                }
+                                data: fileData
                             })
 
                         } else {
@@ -163,6 +171,11 @@ export default async function explorerController(fastify: FastifyInstance) {
                                     reference_count: fileResult.reference_count! + 1
                                 }
                             })
+                        }
+
+
+                        if (fileResult == null) {
+                            return reply.code(500).send({ success: false, message: `File index should not be null` });
                         }
 
                         // update  file index
@@ -203,27 +216,58 @@ export default async function explorerController(fastify: FastifyInstance) {
                 console.log(`=> file name ${fileName}`)
                 const file = zipData.files[fileName];
 
-                if (fileName.endsWith(".aqua.json")) {
-                    let fileContent = await file.async('text');
-                    console.log(`=> File name: ${fileName}, Content: ${fileContent}`);
+                try {
+                    if (fileName.endsWith(".aqua.json")) {
+                        let fileContent = await file.async('text');
+                        console.log(`=> File name: ${fileName}, Content: ${fileContent}`);
 
-                    let aquaTree: AquaTree = JSON.parse(fileContent);
+                        let aquaTree: AquaTree = JSON.parse(fileContent);
 
-                    // save the aqua tree 
-                    await saveAquaTree(aquaTree, session.address)
+                        // save the aqua tree 
+                        await saveAquaTree(aquaTree, session.address)
 
 
 
-                } else if (fileName == 'aqua.json') {
-                    //ignored for now
-                    console.log(`ignore aqua.json in second loop`)
-                } else {
-                    console.log(`ignore the asset  ${fileName}`)
+                    } else if (fileName == 'aqua.json') {
+                        //ignored for now
+                        console.log(`ignore aqua.json in second loop`)
+                    } else {
+                        console.log(`ignore the asset  ${fileName}`)
 
+                    }
+                } catch (e) {
+                    return reply.code(500).send({ error: `An error occured ${e}` });
                 }
             }
 
-            return reply.code(200).send({ error: 'aqua tree saved successfully' });
+            // fetch all explorer files belonging to this user.
+
+
+            // fetch all from latetst
+
+            let latest = await prisma.latest.findMany({
+                where: {
+                    user: session.address
+                }
+            });
+
+            if (latest.length == 0) {
+                return reply.code(200).send({ data: [] });
+            }
+
+
+            // Get the host from the request headers
+            const host = request.headers.host || `${getHost()}:${getPort()}`;
+
+            // Get the protocol (http or https)
+            const protocol = request.protocol || 'https'
+
+            // Construct the full URL
+            const url = `${protocol}://${host}`;
+
+            let displayData = await fetchAquatreeFoUser(url, latest)
+
+            return reply.code(200).send({ data: displayData });
         } catch (error) {
             request.log.error(error);
             return reply.code(500).send({ error: 'File upload failed' });
@@ -327,14 +371,6 @@ export default async function explorerController(fastify: FastifyInstance) {
             return reply.code(200).send({ data: [] });
         }
 
-        // traverse from the latest to the genesis of each 
-        console.log(`data ${JSON.stringify(latest, null, 4)}`)
-
-
-        let displayData: Array<{
-            aquaTree: AquaTree,
-            fileObject: FileObject[]
-        }> = []
 
         // Get the host from the request headers
         const host = request.headers.host || `${getHost()}:${getPort()}`;
@@ -345,19 +381,9 @@ export default async function explorerController(fastify: FastifyInstance) {
         // Construct the full URL
         const url = `${protocol}://${host}`;
 
-        for (let revisonLatetsItem of latest) {
+        let displayData = await fetchAquatreeFoUser(url, latest)
 
-            let [anAquaTree, fileObject] = await createAquaTreeFromRevisions(revisonLatetsItem.hash, url)
 
-            console.log(`----> ${JSON.stringify(anAquaTree, null, 4)}`)
-            let sortedAquaTree = OrderRevisionInAquaTree(anAquaTree)
-            displayData.push({
-
-                aquaTree: sortedAquaTree,
-                fileObject: fileObject
-            })
-
-        }
         return reply.code(200).send({ data: displayData })
     });
 
@@ -482,7 +508,7 @@ export default async function explorerController(fastify: FastifyInstance) {
             let allHashes: string[] = Object.keys(resData.revisions);
 
             let genesisHash = allHashes[0];
-            for (let hashItem in allHashes) {
+            for (let hashItem of allHashes) {
                 let revision = resData.revisions[hashItem];
                 if (revision.previous_verification_hash == null || revision.previous_verification_hash == undefined || revision.previous_verification_hash == "") {
                     if (genesisHash != hashItem) {

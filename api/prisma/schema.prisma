@@ -60,7 +60,7 @@ model Revision {
   has_content       Boolean @default(false)
   verification_leaves String[]
   // Latest           Latest        @relation(fields: [pubkey_hash], references: [hash])
-  File             File[]
+  // File             File[]
   Signature        Signature[]
   Witness          Witness[]
   Link             Link[]
@@ -76,7 +76,7 @@ model File {
   content          String?
   file_hash        String?
   reference_count  Int?
-  Revision         Revision      @relation(fields: [hash], references: [pubkey_hash])
+  // Revision         Revision      @relation(fields: [hash], references: [pubkey_hash])
   FileIndex        FileIndex[]
 
     @@map("file")

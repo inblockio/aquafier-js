@@ -1,11 +1,47 @@
-import { AquaTree, FileObject, Revision as AquaRevision } from 'aqua-js-sdk';
+import { AquaTree, FileObject, Revision as AquaRevision, OrderRevisionInAquaTree } from 'aqua-js-sdk';
 import { prisma } from '../database/db';
 // For specific model types
 import { User, Latest, Signature, Revision, Witness, AquaForms, WitnessEvent, FileIndex, Link } from '@prisma/client';
 import * as fs from "fs"
 import path from 'path';
 
-export async function saveAquaTree(aquaTree: AquaTree, userAddress: string) {
+export async function fetchAquatreeFoUser(url: string, latest: Array<{
+    hash: string;
+    user: string;
+}>): Promise<Array<{
+    aquaTree: AquaTree,
+    fileObject: FileObject[]
+}>> {
+    // traverse from the latest to the genesis of each 
+    console.log(`data ${JSON.stringify(latest, null, 4)}`)
+
+
+    let displayData: Array<{
+        aquaTree: AquaTree,
+        fileObject: FileObject[]
+    }> = []
+
+
+
+    for (let revisonLatetsItem of latest) {
+
+        let [anAquaTree, fileObject] = await createAquaTreeFromRevisions(revisonLatetsItem.hash, url)
+
+        console.log(`----> ${JSON.stringify(anAquaTree, null, 4)}`)
+        let sortedAquaTree = OrderRevisionInAquaTree(anAquaTree)
+        displayData.push({
+
+            aquaTree: sortedAquaTree,
+            fileObject: fileObject
+        })
+
+
+    }
+
+    return displayData
+
+}
+export async function saveAquaTree(aquaTree: AquaTree, userAddress: string,) {
 
     let allHash = Object.keys(aquaTree.revisions)
     let latestHash = allHash[allHash.length - 1]
@@ -216,15 +252,17 @@ export async function saveAquaTree(aquaTree: AquaTree, userAddress: string) {
                 throw Error(`file index data should be in database but is not found.`);
             }
         }
+
         if (revisionData.revision_type == "link") {
 
+            console.log(`Revsion data ${JSON.stringify()}`)
             await prisma.link.create({
                 data: {
                     hash: pubKeyHash,
                     link_type: "aqua",
                     link_require_indepth_verification: false,
-                    link_verification_hashes: revisionData.revision.link_verification_hashes,
-                    link_file_hashes: revisionData.revision.link_file_hashes,
+                    link_verification_hashes: revisionData.link_verification_hashes,
+                    link_file_hashes: revisionData.link_file_hashes,
                     reference_count: 0
                 }
             })
@@ -326,9 +364,15 @@ export async function createAquaTreeFromRevisions(latestRevisionHash: string, ur
 
     try {
         console.log(`previous ${latestRevionData?.previous}`)
+        let pubKey = latestRevisionHash.split("_")[0];
+        let previousWithPubKey = latestRevionData?.previous!!;
+
+        if (!latestRevionData?.previous!!.includes("_")) {
+            previousWithPubKey = `${pubKey}_${latestRevionData?.previous!!}`
+        }
         //if previosu verification hash is not empty find the previous one
         if (latestRevionData?.previous !== null && latestRevionData?.previous?.length !== 0) {
-            let aquaTreerevision = await findAquaTreeRevision(latestRevionData?.previous!!);
+            let aquaTreerevision = await findAquaTreeRevision(previousWithPubKey);
             revisionData.push(...aquaTreerevision)
         }
     } catch (e: any) {
@@ -588,7 +632,14 @@ export async function findAquaTreeRevision(revisionHash: string): Promise<Array<
     revisions.push(latestRevionData);
 
     if (latestRevionData?.previous) {
-        let aquaTreerevision = await findAquaTreeRevision(latestRevionData?.previous!!);
+
+        let pubKey = revisionHash.split("_")[0];
+        let previousWithPubKey = latestRevionData?.previous!!;
+
+        if (!latestRevionData?.previous!!.includes("_")) {
+            previousWithPubKey = `${pubKey}_${latestRevionData?.previous!!}`
+        }
+        let aquaTreerevision = await findAquaTreeRevision(previousWithPubKey);
         revisions.push(...aquaTreerevision)
     }
 

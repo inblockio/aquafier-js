@@ -169,24 +169,8 @@ export const ImportAquaTreeZip = ({ file, uploadedIndexes, fileIndex, updateUplo
                 mode: "private",
                 owner: metamaskAddress ?? ""
             }
-            // const base64Content = await encodeFileToBase64(file);
-            // Assuming the API returns an array of FileInfo objects
-            // const fileInfo: ApiFileInfo = {
-            //     fileObject: {
-            //         fileName: res.file.name,
-            //         fileContent: base64Content,
-            //         path: "aqua::",
-            //     },
-            //     // name: res.file.name,
-            //     // extension: res.file.extension,
-            //     // page_data: res.file.page_data,
-            //     mode: res.file.mode,
-            //     owner: res.file.owner,
-            //     aquaTree: null,
-            //     linkedFileObjects: []
-            // };
-
-            setFiles([...files, fileInfo])
+            
+            setFiles([...res.data])
             setUploaded(true)
             setUploading(false)
             toaster.create({
