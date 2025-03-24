@@ -392,7 +392,7 @@ export const DownloadAquaChain = ({ file }: { file: ApiFileInfo }) => {
         let aquaObject = {
             'genesis': mainAquaFileName
         };
-        zip.file('aqau.json', JSON.stringify(aquaObject) )
+        zip.file('aqua.json', JSON.stringify(aquaObject) )
 
         // Generate the zip file
         zip.generateAsync({ type: "blob" }).then((blob) => {

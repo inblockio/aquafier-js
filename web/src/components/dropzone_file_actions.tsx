@@ -16,7 +16,7 @@ import { DialogActionTrigger, DialogBody, DialogContent, DialogFooter, DialogHea
 import { TimelineConnector, TimelineContent, TimelineDescription, TimelineItem, TimelineRoot, TimelineTitle } from "./ui/timeline";
 import { RevisionsComparisonResult } from "../models/revision_merge";
 import { HashChain, Revision } from "aqua-verifier";
-
+import JSZip from "jszip";
 
 interface IDropzoneAction {
     file: File
@@ -32,11 +32,11 @@ export const UploadFile = ({ file, uploadedIndexes, fileIndex, updateUploadedInd
 
     const { metamaskAddress, setFiles, files, backend_url, session } = useStore(appStore)
 
-  
+
 
     const uploadFile = async () => {
 
-        const existingChainFile = files.find(_file => file.name === _file.name)
+        const existingChainFile = files.find(_file => _file.fileObject.find((e) => e.fileName == file.name) != undefined)
 
         if (existingChainFile) {
             toaster.create({
@@ -118,6 +118,135 @@ export const UploadFile = ({ file, uploadedIndexes, fileIndex, updateUploadedInd
         <Button size={'xs'} colorPalette={'blackAlpha'} variant={'subtle'} w={'80px'} onClick={uploadFile} disabled={uploadedIndexes.includes(fileIndex) || uploaded} loading={uploading}>
             <LuUpload />
             Upload
+        </Button>
+    )
+}
+
+
+
+export const ImportAquaTreeZip = ({ file, uploadedIndexes, fileIndex, updateUploadedIndex }: IDropzoneAction) => {
+
+    const [uploading, setUploading] = useState(false)
+    const [uploaded, setUploaded] = useState(false)
+
+    const { metamaskAddress, setFiles, files, backend_url, session } = useStore(appStore)
+
+
+
+    const uploadFileData = async () => {
+
+
+
+        if (!file) {
+            toaster.create({
+                description: "No file selected!",
+                type: "info"
+            })
+            return;
+        }
+
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('account', `${metamaskAddress}`);
+
+        setUploading(true)
+        try {
+            const url = `${backend_url}/explorer_aqua_zip`
+            console.log("url ", url)
+            const response = await axios.post(url, formData, {
+                headers: {
+                    'Content-Type': 'multipart/form-data',
+                    "nonce": session?.nonce
+                },
+            });
+
+            const res = response.data
+
+            const fileInfo: ApiFileInfo = {
+                aquaTree: res.aquaTree,
+                fileObject: [res.fileObject],
+                linkedFileObjects: [],
+                mode: "private",
+                owner: metamaskAddress ?? ""
+            }
+            // const base64Content = await encodeFileToBase64(file);
+            // Assuming the API returns an array of FileInfo objects
+            // const fileInfo: ApiFileInfo = {
+            //     fileObject: {
+            //         fileName: res.file.name,
+            //         fileContent: base64Content,
+            //         path: "aqua::",
+            //     },
+            //     // name: res.file.name,
+            //     // extension: res.file.extension,
+            //     // page_data: res.file.page_data,
+            //     mode: res.file.mode,
+            //     owner: res.file.owner,
+            //     aquaTree: null,
+            //     linkedFileObjects: []
+            // };
+
+            setFiles([...files, fileInfo])
+            setUploaded(true)
+            setUploading(false)
+            toaster.create({
+                description: "File uploaded successfuly",
+                type: "success"
+            })
+            updateUploadedIndex(fileIndex)
+            return;
+        } catch (error) {
+            setUploading(false)
+            toaster.create({
+                description: `Failed to upload file: ${error}`,
+                type: "error"
+            })
+        }
+    }
+    const importFile = async () => {
+
+
+        const reader = new FileReader();
+
+        reader.onload = async function (e) {
+
+            try {
+
+                let hasAquaJson = false
+                const zip = new JSZip();
+                const zipData = await zip.loadAsync(file);
+                for (const fileName in zipData.files) {
+                    if (fileName == 'aqua.json') {
+                        hasAquaJson = true
+                        break;
+                    }
+                }
+
+                if (!hasAquaJson) {
+                    toaster.create({
+                        description: "Aqua Json not found.",
+                        type: "info"
+                    })
+                    return
+                }
+
+                await  uploadFileData()
+
+
+            } catch (error) {
+                console.error("Error reading ZIP file:", error);
+                alert("Failed to read ZIP file.");
+            }
+        };
+
+        reader.readAsArrayBuffer(file);
+
+    };
+
+    return (
+        <Button size={'xs'} colorPalette={'blackAlpha'} variant={'subtle'} w={'80px'} onClick={importFile} disabled={uploadedIndexes.includes(fileIndex) || uploaded} loading={uploading}>
+            <LuScan />
+            Import
         </Button>
     )
 }

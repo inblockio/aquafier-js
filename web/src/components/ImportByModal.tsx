@@ -56,7 +56,7 @@ const ImportByModal = ({ file }: IImportByModalProps) => {
                 </DialogTrigger>
                 <DialogContent borderRadius={'lg'}>
                     <DialogHeader>
-                        <DialogTitle>Import Aqua Chain</DialogTitle>
+                        <DialogTitle>Import Aqua Tree</DialogTitle>
                     </DialogHeader>
                     <DialogBody>
                         {
