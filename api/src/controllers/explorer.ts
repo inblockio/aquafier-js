@@ -94,14 +94,14 @@ export default async function explorerController(fastify: FastifyInstance) {
 
                     for (let nameHash of aquaData.name_with_hash) {
 
-
-                        let aquaFileName = `${nameHash}.aqua.json`;
+                        let aquaFileName = `${nameHash.name}.aqua.json`;
+                        console.log(`name ${aquaFileName} ............ `)
                         const aquaFile = zipData.files[aquaFileName];
                         if (aquaFile == null || aquaFile == undefined) {
                             return reply.code(500).send({ error: `Expected to find ${aquaFileName} as defined in aqua.json but file not found ` });
                         }
 
-                        let aquaFileDataText = await file.async('text');
+                        let aquaFileDataText = await aquaFile.async('text');
 
                         let aquaData: AquaTree = JSON.parse(aquaFileDataText)
 
@@ -114,7 +114,7 @@ export default async function explorerController(fastify: FastifyInstance) {
 
                         let allHashes = Object.keys(aquaData.revisions);
                         let genesisHash = allHashes[0];
-                        for (let hashItem in allHashes) {
+                        for (let hashItem of allHashes) {
                             let revision = aquaData.revisions[hashItem];
                             if (revision.previous_verification_hash == null || revision.previous_verification_hash == undefined || revision.previous_verification_hash == "") {
                                 if (genesisHash != hashItem) {

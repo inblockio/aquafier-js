@@ -183,9 +183,14 @@ export async function saveAquaTree(aquaTree: AquaTree, userAddress: string) {
                 throw Error(`file data should be in database but is not found.`);
             }
 
-            await prisma.file.update({
+            await prisma.file.updateMany({
                 where: {
-                    hash: fileResult.hash
+
+                    OR: [
+                        { hash: fileResult.hash },
+                        { hash: { contains: fileResult.hash, mode: 'insensitive' } }
+                    ]
+
                 },
                 data: {
                     reference_count: fileResult.reference_count! + 1
@@ -207,15 +212,22 @@ export async function saveAquaTree(aquaTree: AquaTree, userAddress: string) {
                         id: existingFileIndex.id
                     }
                 })
-
-
-
+            } else {
+                throw Error(`file index data should be in database but is not found.`);
             }
         }
         if (revisionData.revision_type == "link") {
 
-            throw Error(`revision with hash ${revisinHash} is detected to be ${revisionData.revision_type} which is not supported .`)
-
+            await prisma.link.create({
+                data: {
+                    hash: pubKeyHash,
+                    link_type: "aqua",
+                    link_require_indepth_verification: false,
+                    link_verification_hashes: revisionData.revision.link_verification_hashes,
+                    link_file_hashes: revisionData.revision.link_file_hashes,
+                    reference_count: 0
+                }
+            })
         }
 
 
