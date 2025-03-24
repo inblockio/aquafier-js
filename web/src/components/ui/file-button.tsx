@@ -14,7 +14,7 @@ import {
 } from "@chakra-ui/react"
 import { forwardRef, useState } from "react"
 import { LuFile, LuUpload, LuX } from "react-icons/lu"
-import { ImportAquaTreeZip, UploadFile } from "../dropzone_file_actions"
+import { FormRevisionFile, ImportAquaTreeZip, UploadFile } from "../dropzone_file_actions"
 import { determineFileType, isJSONFile, isZipFile } from "../../utils/functions"
 import React from "react"
 import ImportByModal from "../ImportByModal"
@@ -88,7 +88,8 @@ const FileUploadItem = (props: FileUploadItemProps) => {
 
     if (isJson) {
       return <>
-        <ImportByModal file={file} fileIndex={fileIndex} uploadedIndexes={uploadedIndexes} updateUploadedIndex={updateUploadedIndex} />
+        <FormRevisionFile file={file} fileIndex={fileIndex} uploadedIndexes={uploadedIndexes} updateUploadedIndex={updateUploadedIndex} />
+        {/* <ImportByModal file={file} fileIndex={fileIndex} uploadedIndexes={uploadedIndexes} updateUploadedIndex={updateUploadedIndex} /> */}
         {/* <ImportAquaChainFromFile file={file} fileIndex={fileIndex} uploadedIndexes={uploadedIndexes} updateUploadedIndex={updateUploadedIndex} /> */}
         {/* <VerifyFile file={file} fileIndex={fileIndex} uploadedIndexes={uploadedIndexes} updateUploadedIndex={updateUploadedIndex} /> */}
         {/* <ChainDetails pageData={JSON.parse(item.page_data)} /> */}

@@ -69,8 +69,8 @@ export async function saveAquaTree(aquaTree: AquaTree, userAddress: string,) {
         if (revisionData.previous_verification_hash.length > 0) {
             pubKeyPrevious = `${userAddress}_${revisionData.previous_verification_hash}`
         }
-        console.log("%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%")
-        console.log(`revisinHash ${revisinHash} \n pubKeyPrevious ${pubKeyPrevious} --- \n Revision item ${JSON.stringify(revisionData)} `)
+        // console.log("%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%")
+        // console.log(`revisinHash ${revisinHash} \n pubKeyPrevious ${pubKeyPrevious} --- \n Revision item ${JSON.stringify(revisionData)} `)
         // Insert new revision into the database
         await prisma.revision.upsert({
             where: {
@@ -259,8 +259,19 @@ export async function saveAquaTree(aquaTree: AquaTree, userAddress: string,) {
         if (revisionData.revision_type == "link") {
 
             //  console.log(`Revsion data ${JSON.stringify()}`)
-            await prisma.link.create({
-                data: {
+            await prisma.link.upsert({
+                where:{
+                    hash: pubKeyHash,
+                },
+                update:{
+                    hash: pubKeyHash,
+                    link_type: "aqua",
+                    link_require_indepth_verification: false,
+                    link_verification_hashes: revisionData.link_verification_hashes,
+                    link_file_hashes: revisionData.link_file_hashes,
+                    reference_count: 0
+                },
+                create: {
                     hash: pubKeyHash,
                     link_type: "aqua",
                     link_require_indepth_verification: false,
