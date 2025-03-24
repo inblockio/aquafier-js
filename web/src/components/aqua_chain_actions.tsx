@@ -15,8 +15,9 @@ import { Checkbox } from "../components/ui/checkbox"
 import { Box, Center, Input, HStack, Text, VStack } from "@chakra-ui/react"
 import { ClipboardButton, ClipboardIconButton, ClipboardInput, ClipboardLabel, ClipboardRoot } from "./ui/clipboard"
 import { InputGroup } from "./ui/input-group"
-import Aquafier, { AquaTree, AquaTreeWrapper } from "aqua-js-sdk"
+import Aquafier, { AquaTree, AquaTreeWrapper, Revision } from "aqua-js-sdk"
 import { RevionOperation } from "../models/RevisionOperation"
+import JSZip from "jszip";
 
 // async function storeWitnessTx(file_id: number, filename: string, txhash: string, ownerAddress: string, network: string, files: ApiFileInfo[], setFiles: any, backend_url: string) {
 
@@ -341,69 +342,159 @@ export const DeleteAquaChain = ({ apiFileInfo, backendUrl, nonce }: RevionOperat
 }
 
 export const DownloadAquaChain = ({ file }: { file: ApiFileInfo }) => {
+    const { session } = useStore(appStore)
     const [downloading, setDownloading] = useState(false)
 
-    const downloadAquaJson = async () => {
-        try {
-            setDownloading(true)
+    const downloadLinkAquaJson = async () => {
+        const zip = new JSZip();
 
-            // Convert the PageData object to a formatted JSON string
-            const jsonString = JSON.stringify(file.aquaTree, null, 2);
+        let mainAquaFileName = "";
+        let mainAquaHash = "";
+        // fetch the genesis 
+        let revisionHashes = Object.keys(file.aquaTree!.revisions!)
+        for (let revisionHash of revisionHashes) {
+            let revisionData = file.aquaTree!.revisions![revisionHash];
+            if (revisionData.previous_verification_hash == null || revisionData.previous_verification_hash == "") {
+                mainAquaHash = revisionHash;
+                break;
+            }
+        }
+        mainAquaFileName = file.aquaTree!.file_index[mainAquaHash];
 
-            // Create a Blob from the JSON string
-            const blob = new Blob([jsonString], { type: 'application/json' });
+        zip.file(`${mainAquaFileName}.aqua.json`, JSON.stringify(file.aquaTree));
 
-            // Create a URL for the Blob
-            const url = URL.createObjectURL(blob);
+        for (let fileObj of file.fileObject) {
+            if (typeof fileObj.fileContent === 'string' && fileObj.fileContent.startsWith('http')) {
+                try {
+                    // Fetch the file from the URL
+                    const response = await fetch(fileObj.fileContent, {
+                        method: 'GET',
+                        headers: {
+                            'Nonce': session?.nonce ?? "--error--" // Add the nonce directly as a custom header if needed
+                        }
+                    });
+                    const blob = await response.blob();
+                    zip.file(fileObj.fileName, blob, { binary: true })
 
-            // Create a temporary anchor element and trigger the download
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `${file.fileObject[0].fileName}-aqua.json`;
-            document.body.appendChild(a);
-            a.click();
+                } catch (error) {
+                    console.error(`Error downloading ${fileObj.fileName}:`, error);
+                    toaster.create({
+                        description: `Error downloading ${fileObj.fileName}: ${error}`,
+                        type: "error"
+                    });
+                }
+            } else {
+                zip.file(fileObj.fileName, JSON.stringify(fileObj.fileContent as AquaTree));
+            }
+        }
 
-            // Clean up
-            document.body.removeChild(a);
-            URL.revokeObjectURL(url);
-            toaster.create({
-                description: `Aqua Chain Downloaded successfully`,
-                type: "success"
-            })
+        //create aqua.json
+        let aquaObject = {
+            'genesis': mainAquaFileName
+        };
+        zip.file('aqau.json', JSON.stringify(aquaObject) )
+
+        // Generate the zip file
+        zip.generateAsync({ type: "blob" }).then((blob) => {
+            // Create a download link
+            const link = document.createElement("a");
+            link.href = URL.createObjectURL(blob);
+            link.download = "aqua_chain.zip";
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        });
+
+    }
+
+    const downloadSimpleAquaJson = async () => {
+
+        // Convert the PageData object to a formatted JSON string
+        const jsonString = JSON.stringify(file.aquaTree, null, 2);
+
+        // Create a Blob from the JSON string
+        const blob = new Blob([jsonString], { type: 'application/json' });
+
+        // Create a URL for the Blob
+        const url = URL.createObjectURL(blob);
+
+        // Create a temporary anchor element and trigger the download
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `${file.fileObject[0].fileName}-aqua.json`;
+        document.body.appendChild(a);
+        a.click();
+
+        // Clean up
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        toaster.create({
+            description: `Aqua Chain Downloaded successfully`,
+            type: "success"
+        })
 
 
 
-            // Loop through each file object and download the content
-            for (const fileObj of file.fileObject) {
-                // Check if fileContent is a string (URL)
-                if (typeof fileObj.fileContent === 'string' && fileObj.fileContent.startsWith('http')) {
-                    try {
-                        // Fetch the file from the URL
-                        const response = await fetch(fileObj.fileContent);
-                        const blob = await response.blob();
+        // Loop through each file object and download the content
+        for (const fileObj of file.fileObject) {
+            // Check if fileContent is a string (URL)
+            if (typeof fileObj.fileContent === 'string' && fileObj.fileContent.startsWith('http')) {
+                try {
+                    // Fetch the file from the URL
+                    const response = await fetch(fileObj.fileContent, {
+                        method: 'GET',
+                        headers: {
+                            'Nonce': session?.nonce ?? "--error--" // Add the nonce directly as a custom header if needed
+                        }
+                    });
+                    const blob = await response.blob();
 
-                        // Create URL from blob
-                        const url = URL.createObjectURL(blob);
+                    // Create URL from blob
+                    const url = URL.createObjectURL(blob);
 
-                        // Create temporary anchor and trigger download
-                        const a = document.createElement('a');
-                        a.href = url;
-                        a.download = fileObj.fileName;
-                        document.body.appendChild(a);
-                        a.click();
+                    // Create temporary anchor and trigger download
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = fileObj.fileName;
+                    document.body.appendChild(a);
+                    a.click();
 
-                        // Clean up
-                        document.body.removeChild(a);
-                        URL.revokeObjectURL(url);
-                    } catch (error) {
-                        console.error(`Error downloading ${fileObj.fileName}:`, error);
-                        toaster.create({
-                            description: `Error downloading ${fileObj.fileName}: ${error}`,
-                            type: "error"
-                        });
-                    }
+                    // Clean up
+                    document.body.removeChild(a);
+                    URL.revokeObjectURL(url);
+                } catch (error) {
+                    console.error(`Error downloading ${fileObj.fileName}:`, error);
+                    toaster.create({
+                        description: `Error downloading ${fileObj.fileName}: ${error}`,
+                        type: "error"
+                    });
                 }
             }
+        }
+
+    }
+    const downloadAquaJson = async () => {
+        try {
+
+
+            setDownloading(true)
+            let containsLink = false;
+            //check if it contains a link revision
+            let allHashes = Object.keys(file.aquaTree!.revisions!)
+            for (let hashItem of allHashes) {
+                let revision: Revision = file.aquaTree!.revisions![hashItem];
+                if (revision.revision_type == "link") {
+                    containsLink = true;
+                    break
+                }
+            }
+
+            if (containsLink) {
+                await downloadLinkAquaJson()
+            } else {
+                await downloadSimpleAquaJson()
+            }
+
 
             toaster.create({
                 description: `Files downloaded successfully`,
@@ -419,8 +510,9 @@ export const DownloadAquaChain = ({ file }: { file: ApiFileInfo }) => {
             setDownloading(false)
         }
 
-
     }
+
+
 
     return (
         <Button size={'xs'} colorPalette={'blackAlpha'} variant={'subtle'} w={'165px'} onClick={downloadAquaJson} loading={downloading}>
@@ -638,96 +730,96 @@ export const ShareButton = ({ item, nonce }: IShareButton) => {
 
 
 export const LinkButton = ({ item, nonce }: IShareButton) => {
-    const { backend_url , setFiles, files} = useStore(appStore)
+    const { backend_url, setFiles, files } = useStore(appStore)
     const [isOpen, setIsOpen] = useState(false)
     const [linking, setLinking] = useState(false)
     const [linkItem, setLinkItem] = useState<ApiFileInfo | null>(null)
-    
-    const cancelClick = ()=>{
+
+    const cancelClick = () => {
         setLinkItem(null)
         setIsOpen(false)
     }
     const handleLink = async () => {
-        if(linkItem==null){
+        if (linkItem == null) {
             toaster.create({
                 description: `Please select an AquaTree to link`,
                 type: "error"
             });
-            return; 
+            return;
         }
-       try {
-        let aquafier= new Aquafier();
-        setLinking(true)
-        let aquaTreeWrapper: AquaTreeWrapper = {
-            aquaTree: item.aquaTree!,
-            revision:  "",
-            fileObject: item.fileObject[0]
-        };
-        let linkAquaTreeWrapper: AquaTreeWrapper = {
-            aquaTree: linkItem!.aquaTree!,
-            revision:  "",
-            fileObject: linkItem!.fileObject[0]
-        };
-      let result =   await aquafier.linkAquaTree(aquaTreeWrapper,linkAquaTreeWrapper)
+        try {
+            let aquafier = new Aquafier();
+            setLinking(true)
+            let aquaTreeWrapper: AquaTreeWrapper = {
+                aquaTree: item.aquaTree!,
+                revision: "",
+                fileObject: item.fileObject[0]
+            };
+            let linkAquaTreeWrapper: AquaTreeWrapper = {
+                aquaTree: linkItem!.aquaTree!,
+                revision: "",
+                fileObject: linkItem!.fileObject[0]
+            };
+            let result = await aquafier.linkAquaTree(aquaTreeWrapper, linkAquaTreeWrapper)
 
-      if(result.isErr()){
-        toaster.create({
-            description: `An error occurred when linking`,
-            type: "error"
-        });
-        return;
-      }
+            if (result.isErr()) {
+                toaster.create({
+                    description: `An error occurred when linking`,
+                    type: "error"
+                });
+                return;
+            }
 
-      let newAquaTree = result.data.aquaTree!
-      let revisionHashes =  Object.keys(newAquaTree.revisions)
-      const lastHash = revisionHashes[revisionHashes.length - 1]
-      const lastRevision = result.data.aquaTree?.revisions[lastHash]
-      // send to server
-      const url = `${backend_url}/tree`;
+            let newAquaTree = result.data.aquaTree!
+            let revisionHashes = Object.keys(newAquaTree.revisions)
+            const lastHash = revisionHashes[revisionHashes.length - 1]
+            const lastRevision = result.data.aquaTree?.revisions[lastHash]
+            // send to server
+            const url = `${backend_url}/tree`;
 
-      const response = await axios.post(url, {
-          "revision": lastRevision,
-          "revisionHash": lastHash,
+            const response = await axios.post(url, {
+                "revision": lastRevision,
+                "revisionHash": lastHash,
 
-      }, {
-          headers: {
-              "nonce": nonce
-          }
-      });
+            }, {
+                headers: {
+                    "nonce": nonce
+                }
+            });
 
-      if (response.status === 200 || response.status === 201) {
-          console.log("update state ...")
-          const newFiles: ApiFileInfo[] = [];
-          const keysPar = Object.keys(item.aquaTree!.revisions!)
-          files.forEach((itemFile) => {
-              const keys = Object.keys(itemFile.aquaTree!.revisions!)
-              if (areArraysEqual(keys, keysPar)) {
-                  newFiles.push({
-                      ...itemFile,
-                      aquaTree: result.data.aquaTree!,
-                  })
-              } else {
-                  newFiles.push(itemFile)
-              }
-          })
+            if (response.status === 200 || response.status === 201) {
+                console.log("update state ...")
+                const newFiles: ApiFileInfo[] = [];
+                const keysPar = Object.keys(item.aquaTree!.revisions!)
+                files.forEach((itemFile) => {
+                    const keys = Object.keys(itemFile.aquaTree!.revisions!)
+                    if (areArraysEqual(keys, keysPar)) {
+                        newFiles.push({
+                            ...itemFile,
+                            aquaTree: result.data.aquaTree!,
+                        })
+                    } else {
+                        newFiles.push(itemFile)
+                    }
+                })
 
-          setFiles(newFiles)
-      }
+                setFiles(newFiles)
+            }
 
-      toaster.create({
-          description: `Linking successfull`,
-          type: "success"
-      })
-      setLinkItem(null)
-      setIsOpen(false)
+            toaster.create({
+                description: `Linking successfull`,
+                type: "success"
+            })
+            setLinkItem(null)
+            setIsOpen(false)
 
-       } catch (error) {
-        toaster.create({
-            description: `An error occurred`,
-            type: "error"
-        });
-       }
-       setLinking(false)
+        } catch (error) {
+            toaster.create({
+                description: `An error occurred`,
+                type: "error"
+            });
+        }
+        setLinking(false)
     }
     return (
         <>
@@ -748,81 +840,81 @@ export const LinkButton = ({ item, nonce }: IShareButton) => {
                     </DialogHeader>
                     <DialogBody>
 
-                        {files?.length <= 1  ? <VStack>
-                            <Alert status="warning" title={"For linking to work you need multiple files, curently you only have " +files?.length} />
-                        </VStack>:
-                        <VStack textAlign={'start'}>
-                            <p>
-                                {`You are about to link ${item.fileObject[0].fileName}. Once a file is linked, don't delete it otherwise it will be broken if one tries to use the Aqua tree.`}
-                            </p>
+                        {files?.length <= 1 ? <VStack>
+                            <Alert status="warning" title={"For linking to work you need multiple files, curently you only have " + files?.length} />
+                        </VStack> :
+                            <VStack textAlign={'start'}>
+                                <p>
+                                    {`You are about to link ${item.fileObject[0].fileName}. Once a file is linked, don't delete it otherwise it will be broken if one tries to use the Aqua tree.`}
+                                </p>
 
 
-                            
-                            {/* Custom Divider */}
-                            <Box
-                                width="100%"
-                                height="1px"
-                                bg="gray.200"
-                                my={3}
-                            />
 
-                          
-                          {
-                            files?.map((itemLoop: ApiFileInfo, index: number) => {
-                                const keys = Object.keys(itemLoop.aquaTree!.revisions!)
-                                const keysPar = Object.keys(item.aquaTree!.revisions!)
-                                const res = areArraysEqual(keys, keysPar)
-                                console.log(`res ${res} ${JSON.stringify(itemLoop.fileObject)}`)
-                                    if ( res) {
-                        return <div key={index}> </div>
-                                    }
-                                return <Checkbox
-                                    key={index}
-                                    aria-label="Select File"
-                                    checked={ linkItem == null ? false :
-                                        Object.keys(linkItem?.aquaTree?.revisions!)[0] === Object.keys(itemLoop.aquaTree?.revisions!)[0]}
-                                    onCheckedChange={(changes) => {
-                                        if(changes.checked){
-                                            setLinkItem(itemLoop)
-                                        }else{
-                                            setLinkItem(null)
+                                {/* Custom Divider */}
+                                <Box
+                                    width="100%"
+                                    height="1px"
+                                    bg="gray.200"
+                                    my={3}
+                                />
+
+
+                                {
+                                    files?.map((itemLoop: ApiFileInfo, index: number) => {
+                                        const keys = Object.keys(itemLoop.aquaTree!.revisions!)
+                                        const keysPar = Object.keys(item.aquaTree!.revisions!)
+                                        const res = areArraysEqual(keys, keysPar)
+                                        console.log(`res ${res} ${JSON.stringify(itemLoop.fileObject)}`)
+                                        if (res) {
+                                            return <div key={index}> </div>
                                         }
-                                        
-                                    }}
-                                    value={index.toString()}
-                                >
-                                    {itemLoop.fileObject[0].fileName}
-                                </Checkbox>
-                            })
-                          }
+                                        return <Checkbox
+                                            key={index}
+                                            aria-label="Select File"
+                                            checked={linkItem == null ? false :
+                                                Object.keys(linkItem?.aquaTree?.revisions!)[0] === Object.keys(itemLoop.aquaTree?.revisions!)[0]}
+                                            onCheckedChange={(changes) => {
+                                                if (changes.checked) {
+                                                    setLinkItem(itemLoop)
+                                                } else {
+                                                    setLinkItem(null)
+                                                }
 
-                            {
-                                linking ?
-                                    <Center>
-                                        <Loading />
-                                    </Center>
-                                    : null
-                            }
-                            
-                        </VStack>
-}
+                                            }}
+                                            value={index.toString()}
+                                        >
+                                            {itemLoop.fileObject[0].fileName}
+                                        </Checkbox>
+                                    })
+                                }
+
+                                {
+                                    linking ?
+                                        <Center>
+                                            <Loading />
+                                        </Center>
+                                        : null
+                                }
+
+                            </VStack>
+                        }
                     </DialogBody>
                     <DialogFooter>
-                    <DialogActionTrigger asChild>
+                        <DialogActionTrigger asChild>
                             <Button variant="outline" onClick={cancelClick} borderRadius={'md'}>Cancel</Button>
                         </DialogActionTrigger>
-                      
-                          
-                    {files?.length <= 1 ? <></>
- :<>
-       <Button onClick={handleLink} borderRadius={'md'}>Link</Button>
-                          
- </> }                    
+
+
+                        {files?.length <= 1 ? <></>
+                            : <>
+                                <Button onClick={handleLink} borderRadius={'md'}>Link</Button>
+
+                            </>}
                     </DialogFooter>
                     <DialogCloseTrigger />
                 </DialogContent>
             </DialogRoot>
 
-            </>
+        </>
     )
 }

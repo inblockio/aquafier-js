@@ -32,6 +32,8 @@ export const UploadFile = ({ file, uploadedIndexes, fileIndex, updateUploadedInd
 
     const { metamaskAddress, setFiles, files, backend_url, session } = useStore(appStore)
 
+  
+
     const uploadFile = async () => {
 
         const existingChainFile = files.find(_file => file.name === _file.name)
