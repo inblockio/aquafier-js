@@ -58,7 +58,7 @@ export async function checkAndUseExtension() {
            //  console.log('Extension is installed!');
 
             // Example: Call a specific function in the extension
-            const result = await sendMessageToExtension(EXTENSION_ID, {
+            const _result = await sendMessageToExtension(EXTENSION_ID, {
                 type: 'CALL_SPECIFIC_FUNCTION',
                 data: {
                     functionName: 'exampleFunction',

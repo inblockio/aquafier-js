@@ -17,7 +17,7 @@ declare global {
 }
 
 function App() {
-  const { backend_url, setBackEndUrl } = useStore(appStore)
+  const {  setBackEndUrl } = useStore(appStore)
 
 
   const verifyAquaChain = async() => {

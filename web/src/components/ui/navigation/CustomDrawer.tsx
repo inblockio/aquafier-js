@@ -86,7 +86,7 @@ const RevisionDisplay = ({ aquaTree, revision, revisionHash, fileObjects, callBa
         }
     }
 
-    
+
 
     useEffect(() => {
         if (aquaTree) {
@@ -413,6 +413,7 @@ const RevisionDisplay = ({ aquaTree, revision, revisionHash, fileObjects, callBa
         </div>
     )
 }
+
 interface IRevisionDetailsSummary {
     fileInfo: ApiFileInfo,
     callBack?: (res: boolean) => void
@@ -425,7 +426,7 @@ export const RevisionDetailsSummary = ({ fileInfo }: IRevisionDetailsSummary) =>
     // const revisionHashes = Object.keys(pageData.pages[0].revisions)
     const revisionHashes = Object.keys(fileInfo!.aquaTree!.revisions)
 
-    // 
+    //  
     const revisionsWithSignatures: Array<Revision> = [];
     const revisionsWithWitness: Array<Revision> = [];
 
@@ -544,7 +545,7 @@ interface IPageDataDetails {
 const ChainDetails = ({ fileInfo, callBack }: IPageDataDetails) => {
 
     const [aquaTree, setAquaTreeData] = useState<AquaTree | null>()
-   
+
     let revisionValidationSuccess: Array<boolean> = [];
 
 
@@ -580,7 +581,7 @@ const ChainDetails = ({ fileInfo, callBack }: IPageDataDetails) => {
 
 export const ChainDetailsBtn = ({ fileInfo, session }: IPageDataDetails) => {
 
-   
+
     const [showMoreDetails, setShowMoreDetails] = useState(false)
 
     const { backend_url } = useStore(appStore)
@@ -592,7 +593,7 @@ export const ChainDetailsBtn = ({ fileInfo, session }: IPageDataDetails) => {
 
 
     const updateVerificationStatus = (revisionResults: Array<boolean>, revisionCount: number) => {
-       //  console.log(`revisionResults   ${revisionResults}   revisionCount ${revisionCount}`)
+        //  console.log(`revisionResults   ${revisionResults}   revisionCount ${revisionCount}`)
         if (revisionResults.length >= revisionCount) {
             const containsFailure = revisionResults.filter((e) => e == false);
             if (containsFailure.length > 0) {

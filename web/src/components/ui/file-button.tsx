@@ -17,7 +17,7 @@ import { LuFile, LuUpload, LuX } from "react-icons/lu"
 import { FormRevisionFile, ImportAquaTreeZip, UploadFile } from "../dropzone_file_actions"
 import { determineFileType, isJSONFile, isZipFile } from "../../utils/functions"
 import React from "react"
-import ImportByModal from "../ImportByModal"
+// import ImportByModal from "../ImportByModal"
 
 export interface FileUploadRootProps extends ChakraFileUpload.RootProps {
   inputProps?: React.InputHTMLAttributes<HTMLInputElement>

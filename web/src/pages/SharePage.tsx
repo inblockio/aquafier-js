@@ -12,11 +12,12 @@ import FilePreview from '../components/FilePreview'
 import { ImportAquaChainFromChain } from '../components/dropzone_file_actions'
 import { Alert } from '../components/ui/alert'
 import { LuChevronUp, LuChevronDown } from 'react-icons/lu'
+import { getAquaTreeFileObject } from '../utils/functions'
 
 const SharePage = () => {
     const { backend_url, metamaskAddress, session } = useStore(appStore)
     const [fileInfo, setFileInfo] = useState<ApiFileInfo | null>(null)
-    const [fetchFromUrl, setFetchFromUrl] = useState(false)
+    // const [fetchFromUrl, setFetchFromUrl] = useState(false)
     const [loading, setLoading] = useState(false)
     const [hasError, setHasError] = useState<string | null>(null);
     const [isVerificationSuccesful, setIsVerificationSuccessful] = useState(false)
@@ -131,7 +132,7 @@ const SharePage = () => {
                             <Box w={'100%'}>
                                 <Card.Root border={'none'} shadow={'md'} borderRadius={'xl'}>
                                     <Card.Body>
-                                        <FilePreview fileInfo={fileInfo} />
+                                        <FilePreview fileInfo={getAquaTreeFileObject(fileInfo)!!} />
                                     </Card.Body>
                                 </Card.Root>
                             </Box>
@@ -148,7 +149,7 @@ const SharePage = () => {
                                                         <Alert w={'100%'} status={"info"} textAlign={'start'} title={`Show more Details`} icon={showMoreDetails ? <LuChevronUp /> : <LuChevronDown />} />
                                                     </Collapsible.Trigger>
                                                     <Collapsible.Content py={'4'}>
-                                                        <ChainDetails fileInfo={fileInfo} callBack={(res) => setIsVerificationSuccessful(res)} />
+                                                        <ChainDetails  session={session!!} fileInfo={fileInfo} callBack={(res) => setIsVerificationSuccessful(res)} />
                                                     </Collapsible.Content>
                                                 </Collapsible.Root>
                                             </Box>

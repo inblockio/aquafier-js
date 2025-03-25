@@ -1,7 +1,7 @@
-import { ethers } from "ethers";
+// import { ethers } from "ethers";
 import { ApiFileInfo } from "../models/FileInfo";
 import { documentTypes, imageTypes, musicTypes, videoTypes } from "./constants";
-import { AvatarGenerator } from 'random-avatar-generator';
+// import { AvatarGenerator } from 'random-avatar-generator';
 import { AquaTree, CredentialsData, FileObject } from "aqua-js-sdk";
 import jdenticon from "jdenticon/standalone";
 
@@ -41,11 +41,30 @@ export function setCookie(name: string, value: string, expirationTime: Date) {
     document.cookie = `${name}=${value}; expires=${expirationDate}; path=/; Secure; SameSite=Strict`;
 }
 
+export  function getAquaTreeFileObject(fileInfo: ApiFileInfo): FileObject | undefined {
+
+    let mainAquaFileName = "";
+    let mainAquaHash = "";
+    // fetch the genesis 
+    let revisionHashes = Object.keys(fileInfo.aquaTree!.revisions!)
+    for (let revisionHash of revisionHashes) {
+        let revisionData = fileInfo.aquaTree!.revisions![revisionHash];
+        if (revisionData.previous_verification_hash == null || revisionData.previous_verification_hash == "") {
+            mainAquaHash = revisionHash;
+            break;
+        }
+    }
+    mainAquaFileName = fileInfo.aquaTree!.file_index[mainAquaHash];
+
+    return fileInfo.fileObject.find((e)=>e.fileName == mainAquaFileName);
+
+
+}
 export async function getCurrentNetwork() {
     if (typeof window.ethereum !== 'undefined') {
         try {
             const chainId = await window.ethereum.request({ method: 'eth_chainId' });
-           //  console.log("Current chain ID:", chainId);
+            //  console.log("Current chain ID:", chainId);
             return chainId;
         } catch (error) {
             console.error("Error fetching chain ID:", error);
@@ -64,7 +83,7 @@ export async function switchNetwork(chainId: string) {
                 method: 'wallet_switchEthereumChain',
                 params: [{ chainId }],
             });
-           //  console.log("Network switched successfully");
+            //  console.log("Network switched successfully");
         } catch (error) {
             // If the network is not added, request MetaMask to add it
 
@@ -246,7 +265,7 @@ export function dummyCredential(): CredentialsData {
 }
 
 export function areArraysEqual(array1: Array<string>, array2: Array<string>) {
-   //  console.log(`areArraysEqual array1 ${array1} == array2 ${array2} `)
+    //  console.log(`areArraysEqual array1 ${array1} == array2 ${array2} `)
     // Check if arrays have the same length
     if (array1.length !== array2.length) {
         return false;
@@ -342,12 +361,12 @@ export const getFileName = (apiFileInfo: ApiFileInfo) => {
     }
 
     let name = apiFileInfo.aquaTree!.file_index[fileIndexhash];
-   //  console.log(`getFileName ${name} from hash ${fileIndexhash}`)
+    //  console.log(`getFileName ${name} from hash ${fileIndexhash}`)
     return name;
 
 }
 
-export function extractFileHash(url: string):  string | undefined{
+export function extractFileHash(url: string): string | undefined {
     try {
         const urlObj = new URL(url);
         const parts = urlObj.pathname.split('/');
@@ -393,14 +412,14 @@ export function filterFilesByType(files: ApiFileInfo[], fileType: string): ApiFi
     switch (fileType) {
         case "image":
             return files.filter(file => {
-                return imageTypes.includes(getFileExtension(file.fileObject.fileName).replace(/\s+/g, ''))
+                return imageTypes.includes(getFileExtension(file.fileObject[0].fileName).replace(/\s+/g, ''))
             });
         case "document":
-            return files.filter(file => documentTypes.includes(getFileExtension(file.fileObject.fileName).replace(/\s+/g, '')));
+            return files.filter(file => documentTypes.includes(getFileExtension(file.fileObject[0].fileName).replace(/\s+/g, '')));
         case "music":
-            return files.filter(file => musicTypes.includes(getFileExtension(file.fileObject.fileName).replace(/\s+/g, '')));
+            return files.filter(file => musicTypes.includes(getFileExtension(file.fileObject[0].fileName).replace(/\s+/g, '')));
         case "video":
-            return files.filter(file => videoTypes.includes(getFileExtension(file.fileObject.fileName).replace(/\s+/g, '')));
+            return files.filter(file => videoTypes.includes(getFileExtension(file.fileObject[0].fileName).replace(/\s+/g, '')));
         default:
             return [];
     }
@@ -589,33 +608,33 @@ export function getFileExtension(fileName: string): string {
     return "";
 }
 
-function getExtensionFromMime(mimeType: string | number) {
-    const mimeToExt = {
-        'image/jpeg': 'jpg',
-        'image/png': 'png',
-        'image/gif': 'gif',
-        'application/pdf': 'pdf',
-        'text/plain': 'txt',
-        'application/zip': 'zip'
-    };
-    return mimeToExt[mimeType] || null;
-}
+// function getExtensionFromMime(mimeType: string | number) {
+//     const mimeToExt = {
+//         'image/jpeg': 'jpg',
+//         'image/png': 'png',
+//         'image/gif': 'gif',
+//         'application/pdf': 'pdf',
+//         'text/plain': 'txt',
+//         'application/zip': 'zip'
+//     };
+//     return mimeToExt[mimeType] || null;
+// }
 
-function getExtensionFromBytes(hex: string) {
-    const magicNumbers = {
-        'ffd8ff': 'jpg',
-        '89504e47': 'png',
-        '47494638': 'gif',
-        '25504446': 'pdf',
-        '504b0304': 'zip'
-    };
-    for (const [magic, ext] of Object.entries(magicNumbers)) {
-        if (hex.startsWith(magic)) {
-            return ext;
-        }
-    }
-    return null;
-}
+// function getExtensionFromBytes(hex: string) {
+//     const magicNumbers = {
+//         'ffd8ff': 'jpg',
+//         '89504e47': 'png',
+//         '47494638': 'gif',
+//         '25504446': 'pdf',
+//         '504b0304': 'zip'
+//     };
+//     for (const [magic, ext] of Object.entries(magicNumbers)) {
+//         if (hex.startsWith(magic)) {
+//             return ext;
+//         }
+//     }
+//     return null;
+// }
 
 
 // const b64toBlob = (b64Data: string, contentType = "", sliceSize = 512) => {

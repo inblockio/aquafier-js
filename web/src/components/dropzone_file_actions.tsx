@@ -6,7 +6,7 @@ import appStore from "../store";
 import { useEffect, useState } from "react";
 import { ApiFileInfo } from "../models/FileInfo";
 import { toaster } from "./ui/toaster";
-import { encodeFileToBase64, formatCryptoAddress, readJsonFile } from "../utils/functions";
+import { formatCryptoAddress } from "../utils/functions";
 import { ChainDetailsBtn } from "./ui/navigation/CustomDrawer";
 import { Container, DialogCloseTrigger, Group, List, Text } from "@chakra-ui/react";
 import { Alert } from "./ui/alert";
@@ -15,7 +15,7 @@ import { analyzeAndMergeRevisions } from "../utils/aqua_funcs";
 import { DialogActionTrigger, DialogBody, DialogContent, DialogFooter, DialogHeader, DialogRoot, DialogTitle } from "./ui/dialog";
 import { TimelineConnector, TimelineContent, TimelineDescription, TimelineItem, TimelineRoot, TimelineTitle } from "./ui/timeline";
 import { RevisionsComparisonResult } from "../models/revision_merge";
-import { HashChain, Revision } from "aqua-verifier";
+import { Revision } from "aqua-js-sdk";
 import JSZip from "jszip";
 
 interface IDropzoneAction {
@@ -63,7 +63,7 @@ export const FormRevisionFile = ({ file, uploadedIndexes, fileIndex, updateUploa
         setUploading(true)
         try {
             const url = `${backend_url}/explorer_files`
-           //  console.log("url ", url)
+            //  console.log("url ", url)
             const response = await axios.post(url, formData, {
                 headers: {
                     'Content-Type': 'multipart/form-data',
@@ -118,7 +118,7 @@ export const FormRevisionFile = ({ file, uploadedIndexes, fileIndex, updateUploa
     return (
         <Button size={'xs'} colorPalette={'blackAlpha'} variant={'subtle'} w={'120px'} onClick={uploadFile} disabled={uploadedIndexes.includes(fileIndex) || uploaded} loading={uploading}>
             <LuDock />
-            Create Form 
+            Create Form
         </Button>
     )
 }
@@ -160,7 +160,7 @@ export const UploadFile = ({ file, uploadedIndexes, fileIndex, updateUploadedInd
         setUploading(true)
         try {
             const url = `${backend_url}/explorer_files`
-           //  console.log("url ", url)
+            //  console.log("url ", url)
             const response = await axios.post(url, formData, {
                 headers: {
                     'Content-Type': 'multipart/form-data',
@@ -227,7 +227,7 @@ export const ImportAquaTreeZip = ({ file, uploadedIndexes, fileIndex, updateUplo
     const [uploading, setUploading] = useState(false)
     const [uploaded, setUploaded] = useState(false)
 
-    const { metamaskAddress, setFiles, files, backend_url, session } = useStore(appStore)
+    const { metamaskAddress, setFiles, backend_url, session } = useStore(appStore)
 
 
 
@@ -250,7 +250,7 @@ export const ImportAquaTreeZip = ({ file, uploadedIndexes, fileIndex, updateUplo
         setUploading(true)
         try {
             const url = `${backend_url}/explorer_aqua_zip`
-           //  console.log("url ", url)
+            //  console.log("url ", url)
             const response = await axios.post(url, formData, {
                 headers: {
                     'Content-Type': 'multipart/form-data',
@@ -267,7 +267,7 @@ export const ImportAquaTreeZip = ({ file, uploadedIndexes, fileIndex, updateUplo
                 mode: "private",
                 owner: metamaskAddress ?? ""
             }
-            
+
             setFiles([...res.data])
             setUploaded(true)
             setUploading(false)
@@ -290,7 +290,7 @@ export const ImportAquaTreeZip = ({ file, uploadedIndexes, fileIndex, updateUplo
 
         const reader = new FileReader();
 
-        reader.onload = async function (e) {
+        reader.onload = async function (_e) {
 
             try {
 
@@ -311,7 +311,7 @@ export const ImportAquaTreeZip = ({ file, uploadedIndexes, fileIndex, updateUplo
                     return
                 }
 
-                await  uploadFileData()
+                await uploadFileData()
 
 
             } catch (error) {
@@ -339,43 +339,46 @@ export const VerifyFile = ({ file }: IDropzoneAction) => {
     const [hashChainForVerification, setHashChain] = useState<ApiFileInfo>()
     const [_isVerificationSuccessful, setIsVerificationSuccessful] = useState(false)
     // const [uploaded, setUploaded] = useState(false)
-
+    const { session } = useStore(appStore)
     // const { metamaskAddress, setFiles, files } = useStore(appStore)
 
-    const handleVerifyAquaJsonFile = () => {
-        setVerifying(true)
-        readJsonFile(file)
-            .then((jsonData) => {
-                const hashChain: ApiFileInfo = {
-                    id: 0,
-                    name: '',
-                    extension: '',
-                    page_data: JSON.stringify(jsonData),
-                    mode: '',
-                    owner: ''
-                }
-                setHashChain(hashChain)
-                // const hashChainString = JSON.stringify(hashChain)
-                ////  console.log("JSON data:", hashChain);
-                // setAppState("selectedFileFromApi", hashChain);
-                // navigate("/details");
-                // Handle the JSON data here
-            })
-            .catch(() => {
-                // Handle the error here
-            });
-        setVerifying(false)
-    };
+    // const handleVerifyAquaJsonFile = () => {
+    //     setVerifying(true)
+    //     readJsonFile(file)
+    //         .then((jsonData) => {
+    //             const hashChain: ApiFileInfo = {
+    //                 id: 0,
+    //                 name: '',
+    //                 extension: '',
+    //                 page_data: JSON.stringify(jsonData),
+    //                 mode: '',
+    //                 owner: ''
+    //             }
+    //             setHashChain(hashChain)
+    //             // const hashChainString = JSON.stringify(hashChain)
+    //             ////  console.log("JSON data:", hashChain);
+    //             // setAppState("selectedFileFromApi", hashChain);
+    //             // navigate("/details");
+    //             // Handle the JSON data here
+    //         })
+    //         .catch(() => {
+    //             // Handle the error here
+    //         });
+    //     setVerifying(false)
+    // };
 
-    useEffect(() => {
-        handleVerifyAquaJsonFile()
-    }, [])
+    // useEffect(() => {
+    //     handleVerifyAquaJsonFile()
+    // }, [])
 
     return (
         <>
             {
                 hashChainForVerification ? (
-                    <ChainDetailsBtn fileInfo={hashChainForVerification} callBack={(res) => setIsVerificationSuccessful(res)} />
+                    <ChainDetailsBtn session={session!!} fileInfo={hashChainForVerification} callBack={(res) => {
+                        console.log(`ChainDetailsBtn Callback FIX me ${res}`);
+                        setIsVerificationSuccessful(res[0])
+                    }} />
                 ) : (
                     <Button size={'xs'} colorPalette={'blackAlpha'} variant={'subtle'} w={'80px'} loading={verifying} disabled>
                         <LuScan />
@@ -411,7 +414,7 @@ export const ImportAquaChainFromFile = ({ file, uploadedIndexes, fileIndex, upda
         setUploading(true)
         try {
             const url = `${backend_url}/explorer_aqua_file_upload`;
-           //  console.log("importAquaChain url ", url)
+            //  console.log("importAquaChain url ", url)
             const response = await axios.post(url, formData, {
                 headers: {
                     'Content-Type': 'multipart/form-data',
@@ -425,18 +428,18 @@ export const ImportAquaChainFromFile = ({ file, uploadedIndexes, fileIndex, upda
             // logs.forEach((item) => {
             //    //  console.log("**>" + item + "\n.")
             // })
-
             ////  console.log("Upload res: ", res)
-
             // Assuming the API returns an array of FileInfo objects
-            const file: ApiFileInfo = {
-                id: res.file.id,
-                name: res.file.name,
-                extension: res.file.extension,
-                page_data: res.file.page_data,
-                mode: user_profile.fileMode ?? "",
-                owner: metamaskAddress ?? "",
-            };
+            // const file: ApiFileInfo = {
+                // id: res.file.id,
+                // name: res.file.name,
+                // extension: res.file.extension,
+                // page_data: res.file.page_data,
+                // mode: user_profile.fileMode ?? "",
+                // owner: metamaskAddress ?? "",
+            // };
+
+            const file: ApiFileInfo = res
             setFiles([...files, file])
             // setUploadedFilesIndexes(value => [...value, fileIndex])
             toaster.create({
@@ -479,23 +482,23 @@ export const ImportAquaChainFromChain = ({ fileInfo, isVerificationSuccessful }:
     const [comparisonResult, setComparisonResult] = useState<RevisionsComparisonResult | null>(null)
     const [modalOpen, setModalOpen] = useState(false)
 
-    const [existingFileId, setExistingFileId] = useState<number | null>(null)
-    const [lastIdenticalRevisionHash, setLastIdenticalRevisionHash] = useState<string | null>(null)
-    const [revisionsToImport, setRevisionsToImport] = useState<Revision[]>([])
+    // const [_existingFileId, _setExistingFileId] = useState<number | null>(null)
+    const [_lastIdenticalRevisionHash, setLastIdenticalRevisionHash] = useState<string | null>(null)
+    const [_revisionsToImport, setRevisionsToImport] = useState<Revision[]>([])
     const [updateMessage, setUpdateMessage] = useState<string | null>(null)
     const [btnText, setBtnText] = useState<BtnContent>({
         text: "Submit chain",
         color: "blue"
     })
 
-   //  console.log(revisionsToImport)
+    //  console.log(revisionsToImport)
 
-    const { metamaskAddress, setFiles, files, user_profile, backend_url, session } = useStore(appStore)
+    const { metamaskAddress, setFiles, files,  backend_url, session } = useStore(appStore)
 
     let navigate = useNavigate();
 
-   //  console.log("Chain to import: ", fileInfo)
-   //  console.log("My db files: ", dbFiles)
+    //  console.log("Chain to import: ", fileInfo)
+    //  console.log("My db files: ", dbFiles)
 
     const importAquaChain = async () => {
 
@@ -542,7 +545,7 @@ export const ImportAquaChainFromChain = ({ fileInfo, isVerificationSuccessful }:
                 for (let i = 0; i < mergeResult.divergences.length; i++) {
                     const div = mergeResult.divergences[i];
                     if (div.upcomingRevisionHash) {
-                        _revisionsToImport.push(fileInfo?.aquaTree?.revisions[div.upcomingRevisionHash])
+                        _revisionsToImport.push(fileInfo?.aquaTree?.revisions[div.upcomingRevisionHash]!!)
                     }
                 }
             }
@@ -590,7 +593,7 @@ export const ImportAquaChainFromChain = ({ fileInfo, isVerificationSuccessful }:
 
         try {
             const url = `${backend_url}/explorer_aqua_file_upload`
-           //  console.log("importAquaChain url ", url)
+            //  console.log("importAquaChain url ", url)
             const response = await axios.post(url, formData, {
                 headers: {
                     'Content-Type': 'multipart/form-data',
@@ -606,7 +609,7 @@ export const ImportAquaChainFromChain = ({ fileInfo, isVerificationSuccessful }:
             //    //  console.log("**>" + item + "\n.")
             // })
 
-            ////  console.log("Upload res: ", res)
+             console.log(`=> Upload res:  ${res} \n `)
 
             // Assuming the API returns an array of FileInfo objects
             const file: ApiFileInfo = fileInfo;
@@ -677,7 +680,7 @@ export const ImportAquaChainFromChain = ({ fileInfo, isVerificationSuccessful }:
         // }
     }
 
-   //  console.log(comparisonResult)
+    //  console.log(comparisonResult)
 
     useEffect(() => {
         setDbFiles(files)
@@ -931,7 +934,3 @@ export const ImportAquaChainFromChain = ({ fileInfo, isVerificationSuccessful }:
         </Container >
     )
 }
-function streamToBuffer(file: any) {
-    throw new Error("Function not implemented.");
-}
-

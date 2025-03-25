@@ -1,0 +1,63 @@
+services:
+  aqua-container:
+    image: aqua-container:latest
+    build: 
+      context: .
+      dockerfile: actionfiles/aquafier-ts/dockerfile/Dockerfile
+    ports:
+      - 3000:3000
+      - 3600:3600
+    volumes:
+      - app_data:/app/data
+    environment:
+      LETSENCRYPT_HOST: ${FRONTEND_URL},${BACKEND_URL}
+      VIRTUAL_HOST_MULTIPORTS: |-
+        ${FRONTEND_URL}:
+          "/":
+            port: 3000
+        ${BACKEND_URL}:
+          "/":
+            port: 3600
+    env_file:
+      - .env
+
+  proxy:
+    image: ghcr.io/inblockio/ngnix-proxy:master
+    container_name: proxy_server_proxy_1
+    labels:
+      - "com.github.jrcs.letsencrypt_nginx_proxy_companion.nginx_proxy=true"
+    environment:
+      HTTP_PORT: 80
+      HTTPS_PORT: 443
+    ports:
+      - 80:80
+      - 443:443
+    volumes:
+      - proxy_data_conf_d:/etc/nginx/conf.d:rw
+      - proxy_data_vhost_d:/etc/nginx/vhost.d:rw
+      - proxy_data_html:/usr/share/nginx/html:rw
+      - proxy_data_certs:/etc/nginx/certs:ro
+      - /var/run/docker.sock:/tmp/docker.sock:ro
+    restart: unless-stopped
+
+  letsencrypt:
+    image: nginxproxy/acme-companion:latest
+    container_name: proxy_server_letsencrypt_1
+    depends_on:
+      - proxy
+    volumes:
+      - proxy_data_acme:/etc/acme.sh
+      - proxy_data_conf_d:/etc/nginx/conf.d:rw
+      - proxy_data_vhost_d:/etc/nginx/vhost.d:rw
+      - proxy_data_html:/usr/share/nginx/html:rw
+      - proxy_data_certs:/etc/nginx/certs:rw
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    restart: unless-stopped
+
+volumes:
+  app_data:
+  proxy_data_acme:
+  proxy_data_conf_d:
+  proxy_data_vhost_d:
+  proxy_data_html:
+  proxy_data_certs:

@@ -1,136 +1,136 @@
-CREATE TABLE IF NOT EXISTS siwe_sessions (
-  id SERIAL PRIMARY KEY,
-  address TEXT NOT NULL,
-  nonce TEXT NOT NULL,
-  issued_at TIMESTAMPTZ NOT NULL,
-  -- Using TIMESTAMPTZ for timestamp with time zone
-  expiration_time TIMESTAMPTZ -- TIMESTAMPTZ to handle expiration timestamps with time zone
+-- PostgreSQL Schema Creation Script
+
+-- Create User table
+CREATE TABLE "user" (
+    "user" VARCHAR(255) PRIMARY KEY
 );
-CREATE TABLE "User" ("user" pubkey PRIMARY KEY);
-CREATE TABLE "Contract" (
-  "hash" hash PRIMARY KEY,
-  "latest" array,
-  "sender" pubkey,
-  "receiver" pubkey,
-  "option" string,
-  "reference_count" int
+
+-- Create SiweSession table
+CREATE TABLE "siwe_session" (
+    "id" SERIAL PRIMARY KEY,
+    "address" VARCHAR(255) NOT NULL,
+    "nonce" VARCHAR(255) UNIQUE NOT NULL,
+    "issued_at" TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    "expiration_time" TIMESTAMP
 );
-CREATE TABLE "Latest" ("hash" hash PRIMARY KEY, "user" pubkey);
-CREATE TABLE "Revision" (
-  "hash" hash PRIMARY KEY,
-  "user" pubkey,
-  "nonce" string,
-  "shared" array_pubkey,
-  "contract" array,
-  "previous" varchar,
-  "children" hash_map,
-  "local_timestamp" timestamp,
-  "Revision_type" string,
-  "Verification_leaves" hash_map
+
+-- Create Contract table
+CREATE TABLE "contract" (
+    "hash" VARCHAR(255) PRIMARY KEY,
+    "latest" TEXT,
+    "sender" VARCHAR(255),
+    "receiver" VARCHAR(255),
+    "option" VARCHAR(255),
+    "reference_count" INTEGER
 );
-CREATE TABLE "FileNames" (
-  "id" SERIAL PRIMARY KEY,
-  "name" text,
-  fileId integer,
+
+-- Create Latest table
+CREATE TABLE "latest" (
+    "hash" VARCHAR(255) PRIMARY KEY,
+    "user" VARCHAR(255) NOT NULL,
+    FOREIGN KEY ("user") REFERENCES "user"("user")
 );
-CREATE TABLE "File" (
-  "hash" hash PRIMARY KEY,
-  "content" utf8_content,
-  "file_hash" hash,
-  "reference_count" int
+
+-- Create Revision table
+CREATE TABLE "revision" (
+    "pubkey_hash" VARCHAR(255) PRIMARY KEY,
+    "nonce" VARCHAR(255),
+    "shared" TEXT[],
+    "contract" TEXT[],
+    "previous" VARCHAR(255),
+    "children" VARCHAR(255),
+    "local_timestamp" VARCHAR(255),
+    "revision_type" VARCHAR(255),
+    "has_content" BOOLEAN DEFAULT false,
+    "verification_leaves" TEXT[]
 );
-CREATE TABLE "Link" (
-  "hash" hash PRIMARY KEY,
-  "link_type" string,
-  "link_require_indepth_verification" boolean,
-  "link_verification_hash" hash_map,
-  "reference_count" int
+
+-- Create File table
+CREATE TABLE "file" (
+    "hash" VARCHAR(255) PRIMARY KEY,
+    "content" TEXT,
+    "file_hash" VARCHAR(255),
+    "reference_count" INTEGER
 );
-CREATE TABLE "Index" (
-  "hash" array,
-  "file_hash" hash,
-  "uri" URLPath_and_Title,
-  "reference_count" int,
-  PRIMARY KEY ("hash", "file_hash")
+
+-- Create FileIndex table
+CREATE TABLE "file_index" (
+    "id" UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    "hash" TEXT[],
+    "file_hash" VARCHAR(255),
+    "uri" VARCHAR(255),
+    "reference_count" INTEGER,
+    FOREIGN KEY ("id") REFERENCES "file"("hash")
 );
-CREATE TABLE "Signature" (
-  "hash" hash PRIMARY KEY,
-  "signature_digest" string,
-  "signature_wallet_address" varchar,
-  "signature_type" hash,
-  "reference_count" int
+
+-- Create Link table
+CREATE TABLE "link" (
+    "hash" VARCHAR(255) PRIMARY KEY,
+    "link_type" VARCHAR(255),
+    "link_require_indepth_verification" BOOLEAN,
+    "link_verification_hashes" TEXT[],
+    "reference_count" INTEGER,
+    "link_file_hashes" TEXT[],
+    FOREIGN KEY ("hash") REFERENCES "revision"("pubkey_hash")
 );
-CREATE TABLE "Witness" (
-  "hash" hash PRIMARY KEY,
-  "Witness_merkle_root" hash,
-  "reference_count" int
+
+-- Create Signature table
+CREATE TABLE "signature" (
+    "hash" VARCHAR(255) PRIMARY KEY,
+    "signature_digest" TEXT,
+    "signature_wallet_address" VARCHAR(255),
+    "signature_public_key" VARCHAR(255),
+    "signature_type" VARCHAR(255),
+    "reference_count" INTEGER,
+    FOREIGN KEY ("hash") REFERENCES "revision"("pubkey_hash")
 );
-CREATE TABLE "WitnessEvent" (
-  "Witness_merkle_root" hash PRIMARY KEY,
-  "Witness_timestamp" timestamp,
-  "Witness_network" chain_id,
-  "Witness_smart_contract_address" hash,
-  "Witness_transaction_hash" tx_hash,
-  "Witness_sender_account_address" pubkey
+
+-- Create WitnessEvent table
+CREATE TABLE "witness_event" (
+    "witness_merkle_root" VARCHAR(255) PRIMARY KEY,
+    "witness_timestamp" VARCHAR(255),
+    "witness_network" VARCHAR(255),
+    "witness_smart_contract_address" VARCHAR(255),
+    "witness_transaction_hash" VARCHAR(255),
+    "witness_sender_account_address" VARCHAR(255)
 );
-CREATE TABLE "MerkleNodes" (
-  "node_hash" TEXT,
-  "parent_hash" TEXT,
-  "height" INTEGER,
-  "is_leaf" BOOLEAN,
-  "left_child_hash" TEXT,
-  "right_child_hash" TEXT
+
+-- Create Witness table
+CREATE TABLE "witness" (
+    "hash" VARCHAR(255) PRIMARY KEY,
+    "witness_merkle_root" VARCHAR(255),
+    "reference_count" INTEGER,
+    FOREIGN KEY ("hash") REFERENCES "revision"("pubkey_hash"),
+    FOREIGN KEY ("witness_merkle_root") REFERENCES "witness_event"("witness_merkle_root")
 );
-CREATE TABLE "AquaForms" (
-  "hash" hash PRIMARY KEY,
-  "key" string,
-  "value" object,
-  "type" string,
-  "reference_count" int
+
+-- Create MerkleNodes table
+CREATE TABLE "merkle_nodes" (
+    "node_hash" VARCHAR(255) PRIMARY KEY,
+    "parent_hash" VARCHAR(255),
+    "height" INTEGER,
+    "is_leaf" BOOLEAN,
+    "left_child_hash" VARCHAR(255),
+    "right_child_hash" VARCHAR(255)
 );
-CREATE TABLE "Settings" (
-  "user_pub_key" pubkey PRIMARY KEY,
-  "cli_pub_key" pubkey,
-  "cli_priv_key" private_key,
-  "Witness_network" chain_id,
-  "Witness_contract_address" hash,
-  "theme" string
+
+-- Create AquaForms table
+CREATE TABLE "aqua_forms" (
+    "hash" VARCHAR(255) PRIMARY KEY,
+    "key" VARCHAR(255),
+    "value" JSONB,
+    "type" VARCHAR(255),
+    "reference_count" INTEGER,
+    FOREIGN KEY ("hash") REFERENCES "revision"("pubkey_hash")
 );
-ALTER TABLE "Latest"
-ADD FOREIGN KEY ("hash") REFERENCES "User" ("user");
-ALTER TABLE "Settings"
-ADD FOREIGN KEY ("user_pub_key") REFERENCES "User" ("user");
-ALTER TABLE "Contract"
-ADD FOREIGN KEY ("hash") REFERENCES "User" ("user");
-ALTER TABLE "Revision"
-ADD FOREIGN KEY ("hash") REFERENCES "Latest" ("hash");
-ALTER TABLE "File"
-ADD FOREIGN KEY ("hash") REFERENCES "Revision" ("hash");
-ALTER TABLE "Signature"
-ADD FOREIGN KEY ("hash") REFERENCES "Revision" ("hash");
-ALTER TABLE "Witness"
-ADD FOREIGN KEY ("hash") REFERENCES "Revision" ("hash");
-ALTER TABLE "Link"
-ADD FOREIGN KEY ("hash") REFERENCES "Revision" ("hash");
-ALTER TABLE "Contract"
-ADD FOREIGN KEY ("hash") REFERENCES "Revision" ("hash");
-ALTER TABLE "Index"
-ADD FOREIGN KEY ("hash") REFERENCES "File" ("hash");
-ALTER TABLE "Link"
-ADD FOREIGN KEY ("link_verification_hash") REFERENCES "Index" ("hash");
-ALTER TABLE "Revision"
-ADD FOREIGN KEY ("hash") REFERENCES "Index" ("file_hash");
-ALTER TABLE "Witness"
-ADD FOREIGN KEY ("Witness_merkle_root") REFERENCES "WitnessEvent" ("Witness_merkle_root");
-ALTER TABLE "MerkleNodes"
-ADD FOREIGN KEY ("node_hash") REFERENCES "Witness" ("hash");
-ALTER TABLE "MerkleNodes"
-ADD FOREIGN KEY ("node_hash") REFERENCES "WitnessEvent" ("Witness_merkle_root");
-ALTER TABLE "MerkleNodes"
-ADD FOREIGN KEY ("node_hash") REFERENCES "MerkleNodes" ("parent_hash");
-ALTER TABLE "MerkleNodes"
-ADD FOREIGN KEY ("node_hash") REFERENCES "MerkleNodes" ("left_child_hash");
-ALTER TABLE "MerkleNodes"
-ADD FOREIGN KEY ("node_hash") REFERENCES "MerkleNodes" ("right_child_hash");
-ALTER TABLE "AquaForms"
-ADD FOREIGN KEY ("hash") REFERENCES "Revision" ("hash");
+
+-- Create Settings table
+CREATE TABLE "settings" (
+    "user_pub_key" VARCHAR(255) PRIMARY KEY,
+    "cli_pub_key" VARCHAR(255),
+    "cli_priv_key" VARCHAR(255),
+    "witness_network" VARCHAR(255),
+    "witness_contract_address" VARCHAR(255),
+    "theme" VARCHAR(255),
+    FOREIGN KEY ("user_pub_key") REFERENCES "user"("user")
+);
