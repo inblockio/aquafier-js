@@ -1,7 +1,7 @@
 #!/bin/bash
 
 if [[ -z "${BACKEND_URL}" ]]; then
-  export BACKEND_URL=http://127.0.0.1:3600
+  export BACKEND_URL=http://127.0.0.1:3000
 else
   export BACKEND_URL=https://${BACKEND_URL}
 fi
