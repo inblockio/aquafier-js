@@ -11,11 +11,11 @@ sed -i -e "s|BACKEND_URL_PLACEHOLDER|$BACKEND_URL|g" /app/frontend/config.json
 
 # Start backend in the background
 cd /app/backend
-npm run serve &
+npm run dev &
 
 # Serve frontend
 cd /app/frontend
-serve -s . -l 3000 &
+serve -s . -l 3600 &
 
 # Wait for any process to exit
 wait -n
