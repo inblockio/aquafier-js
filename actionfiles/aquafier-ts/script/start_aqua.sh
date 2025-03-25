@@ -1,5 +1,45 @@
 #!/bin/bash
 
+# Set default values if not provided
+DB_USER=${DB_USER:-aquafier}
+DB_PASSWORD=${DB_PASSWORD:-changeme}
+POSTGRES_DB=${POSTGRES_DB:-aquafier}
+
+# Wait for database to be ready with improved error handling
+max_attempts=30
+attempt=0
+
+while [ $attempt -lt $max_attempts ]; do
+  # Use PGPASSWORD to avoid interactive password prompt
+  export PGPASSWORD=$DB_PASSWORD
+
+  # Try to connect to PostgreSQL and check if it responds
+  if psql -h postgres -U "$DB_USER" -d "$POSTGRES_DB" -c "SELECT 1" > /dev/null 2>&1; then
+    echo "Database is ready!"
+    break
+  fi
+
+  echo "Waiting for database connection... (Attempt $((attempt+1))/$max_attempts)"
+  sleep 5
+  attempt=$((attempt+1))
+
+  if [ $attempt -eq $max_attempts ]; then
+    echo "ERROR: Could not connect to database after $max_attempts attempts"
+    exit 1
+  fi
+done
+
+# Unset PGPASSWORD for security
+unset PGPASSWORD
+
+# Run Prisma migrations
+cd /app/backend
+prisma migrate deploy || {
+  echo "ERROR: Prisma migration failed"
+  exit 1
+}
+
+# Set backend URL
 if [[ -z "${BACKEND_URL}" ]]; then
   export BACKEND_URL=http://127.0.0.1:3000
 else

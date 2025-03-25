@@ -1,4 +1,4 @@
-FROM node:18 as builder_npm_web
+FROM node:18 AS builder_npm_web
 
 WORKDIR /build/web
 COPY web/package*.json ./
@@ -8,6 +8,12 @@ COPY web .
 RUN npm run build
 
 FROM node:18
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    postgresql-client \
+    netcat-openbsd \
+    && rm -rf /var/lib/apt/lists/*
 
 EXPOSE 3000
 EXPOSE 3600
@@ -22,7 +28,13 @@ WORKDIR /app/backend
 COPY api/package*.json ./
 RUN npm ci
 
+# Install Prisma CLI globally
+RUN npm install -g prisma
+
 COPY api .
+
+# Generate Prisma client
+RUN prisma generate
 
 # Copy frontend build artifacts
 WORKDIR /app/frontend
