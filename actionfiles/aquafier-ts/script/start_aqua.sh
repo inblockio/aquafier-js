@@ -41,8 +41,10 @@ prisma migrate deploy || {
 
 # Set backend URL
 if [[ -z "${BACKEND_URL}" ]]; then
+  echo "BACKEND_URL is not set. Defaulting to http://127.0.0.1:3000"
   export BACKEND_URL=http://127.0.0.1:3000
 else
+  echo "BACKEND_URL is set to: ${BACKEND_URL}"
   export BACKEND_URL=https://${BACKEND_URL}
 fi
 
