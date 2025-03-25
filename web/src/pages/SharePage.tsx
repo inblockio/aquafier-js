@@ -149,7 +149,11 @@ const SharePage = () => {
                                                         <Alert w={'100%'} status={"info"} textAlign={'start'} title={`Show more Details`} icon={showMoreDetails ? <LuChevronUp /> : <LuChevronDown />} />
                                                     </Collapsible.Trigger>
                                                     <Collapsible.Content py={'4'}>
-                                                        <ChainDetails  session={session!!} fileInfo={fileInfo} callBack={(res) => setIsVerificationSuccessful(res)} />
+                                                        <ChainDetails  session={session!!} fileInfo={fileInfo} callBack={(res) => {
+                                                            console.log(`============ Verification is success=========  ${res}`)
+                                                            console.log(`FIX ME......................`)
+                                                            setIsVerificationSuccessful(res[0])
+                                                        }} />
                                                     </Collapsible.Content>
                                                 </Collapsible.Root>
                                             </Box>

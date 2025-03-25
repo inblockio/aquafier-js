@@ -7,7 +7,6 @@ import { useEffect, useState } from "react";
 import { ApiFileInfo } from "../models/FileInfo";
 import { toaster } from "./ui/toaster";
 import { formatCryptoAddress } from "../utils/functions";
-import { ChainDetailsBtn } from "./ui/navigation/CustomDrawer";
 import { Container, DialogCloseTrigger, Group, List, Text } from "@chakra-ui/react";
 import { Alert } from "./ui/alert";
 import { useNavigate } from "react-router-dom";
@@ -258,15 +257,9 @@ export const ImportAquaTreeZip = ({ file, uploadedIndexes, fileIndex, updateUplo
                 },
             });
 
+            // return all user files
             const res = response.data
 
-            const fileInfo: ApiFileInfo = {
-                aquaTree: res.aquaTree,
-                fileObject: [res.fileObject],
-                linkedFileObjects: [],
-                mode: "private",
-                owner: metamaskAddress ?? ""
-            }
 
             setFiles([...res.data])
             setUploaded(true)
@@ -333,13 +326,13 @@ export const ImportAquaTreeZip = ({ file, uploadedIndexes, fileIndex, updateUplo
 }
 
 
-export const VerifyFile = ({ file }: IDropzoneAction) => {
+// export const VerifyFile = ({ file }: IDropzoneAction) => {
 
-    const [verifying, setVerifying] = useState(false)
-    const [hashChainForVerification, setHashChain] = useState<ApiFileInfo>()
-    const [_isVerificationSuccessful, setIsVerificationSuccessful] = useState(false)
+    // const [verifying, setVerifying] = useState(false)
+    // const [hashChainForVerification, setHashChain] = useState<ApiFileInfo>()
+    // const [_isVerificationSuccessful, setIsVerificationSuccessful] = useState(false)
     // const [uploaded, setUploaded] = useState(false)
-    const { session } = useStore(appStore)
+    // const { session } = useStore(appStore)
     // const { metamaskAddress, setFiles, files } = useStore(appStore)
 
     // const handleVerifyAquaJsonFile = () => {
@@ -371,24 +364,24 @@ export const VerifyFile = ({ file }: IDropzoneAction) => {
     //     handleVerifyAquaJsonFile()
     // }, [])
 
-    return (
-        <>
-            {
-                hashChainForVerification ? (
-                    <ChainDetailsBtn session={session!!} fileInfo={hashChainForVerification} callBack={(res) => {
-                        console.log(`ChainDetailsBtn Callback FIX me ${res}`);
-                        setIsVerificationSuccessful(res[0])
-                    }} />
-                ) : (
-                    <Button size={'xs'} colorPalette={'blackAlpha'} variant={'subtle'} w={'80px'} loading={verifying} disabled>
-                        <LuScan />
-                        Loading Chain
-                    </Button>
-                )
-            }
-        </>
-    )
-}
+//     return (
+//         <>
+//             {
+//                 hashChainForVerification ? (
+//                     <ChainDetailsBtn session={session!!} fileInfo={hashChainForVerification} callBack={(res) => {
+//                         console.log(`ChainDetailsBtn Callback FIX me ${res}`);
+//                         setIsVerificationSuccessful(res[0])
+//                     }} />
+//                 ) : (
+//                     <Button size={'xs'} colorPalette={'blackAlpha'} variant={'subtle'} w={'80px'} loading={verifying} disabled>
+//                         <LuScan />
+//                         Loading Chain
+//                     </Button>
+//                 )
+//             }
+//         </>
+//     )
+// }
 
 
 export const ImportAquaChainFromFile = ({ file, uploadedIndexes, fileIndex, updateUploadedIndex }: IDropzoneAction) => {
@@ -396,7 +389,7 @@ export const ImportAquaChainFromFile = ({ file, uploadedIndexes, fileIndex, upda
     const [uploading, setUploading] = useState(false)
     const [uploaded, setUploaded] = useState(false)
 
-    const { metamaskAddress, setFiles, files, user_profile, backend_url } = useStore(appStore)
+    const { metamaskAddress, setFiles, files,  backend_url } = useStore(appStore)
 
     const importAquaChain = async () => {
 

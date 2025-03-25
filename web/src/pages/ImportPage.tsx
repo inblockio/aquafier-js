@@ -14,7 +14,7 @@ interface IImportPage {
 }
 
 const ImportPage = ({ incomingFileInfo }: IImportPage) => {
-    const { metamaskAddress } = useStore(appStore)
+    const { metamaskAddress, session } = useStore(appStore)
     const [isVerificationSuccesful, setIsVerificationSuccessful] = useState(false)
     const [showMoreDetails, setShowMoreDetails] = useState(false)
     const fileInfo = incomingFileInfo
@@ -68,7 +68,11 @@ const ImportPage = ({ incomingFileInfo }: IImportPage) => {
                                                         <Alert w={'100%'} status={"info"} textAlign={'start'} title={`Show more Details`} icon={showMoreDetails ? <LuChevronUp /> : <LuChevronDown />} />
                                                     </Collapsible.Trigger>
                                                     <Collapsible.Content py={'4'}>
-                                                        <ChainDetails fileInfo={fileInfo} callBack={(res) => setIsVerificationSuccessful(res)} />
+                                                        <ChainDetails session={session!} fileInfo={fileInfo} callBack={(res) => {
+                                                            console.log(`============ Verification is success=========  ${res}`)
+                                                            console.log(`FIX ME......................`)
+                                                            setIsVerificationSuccessful(res[0])
+                                                        }} />
                                                     </Collapsible.Content>
                                                 </Collapsible.Root>
                                             </Box>

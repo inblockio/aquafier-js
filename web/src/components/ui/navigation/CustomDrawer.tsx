@@ -26,7 +26,7 @@ import { ApiFileInfo } from "../../../models/FileInfo"
 import FilePreview from "../../FilePreview"
 import { useStore } from "zustand"
 import appStore from "../../../store"
-import { Session } from "../../../types"
+import { AquaTreeDetails } from "../../../models/AquaTreeDetails"
 
 
 interface IItemDetail {
@@ -250,7 +250,7 @@ const RevisionDisplay = ({ aquaTree, revision, revisionHash, fileObjects, callBa
                                                 }
                                             </Span>
                                         </TimelineTitle>
-                                        <TimelineDescription>{displayTime(revision.local_timestamp, true)}&nbsp;(UTC)</TimelineDescription>
+                                        <TimelineDescription>{displayTime(revision.local_timestamp)}&nbsp;(UTC)</TimelineDescription>
 
                                         {/* <ItemDetail label="Metadata Hash:"
                                             displayValue={formatCryptoAddress(revision.metadata.metadata_hash, 4, 6)}
@@ -536,13 +536,9 @@ export const RevisionDetailsSummary = ({ fileInfo }: IRevisionDetailsSummary) =>
     )
 }
 
-interface IPageDataDetails {
-    fileInfo: ApiFileInfo
-    session: Session
-    callBack: (res: Array<boolean>, revisionCount: number) => void
-}
 
-const ChainDetails = ({ fileInfo, callBack }: IPageDataDetails) => {
+
+const ChainDetails = ({ fileInfo, callBack }: AquaTreeDetails) => {
 
     const [aquaTree, setAquaTreeData] = useState<AquaTree | null>()
 
@@ -579,7 +575,7 @@ const ChainDetails = ({ fileInfo, callBack }: IPageDataDetails) => {
     )
 }
 
-export const ChainDetailsBtn = ({ fileInfo, session }: IPageDataDetails) => {
+export const ChainDetailsBtn = ({ fileInfo, session }: AquaTreeDetails) => {
 
 
     const [showMoreDetails, setShowMoreDetails] = useState(false)

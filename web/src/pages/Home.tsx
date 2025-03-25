@@ -1,6 +1,5 @@
 import { Box, Container, VStack } from "@chakra-ui/react"
 import { FileUploadDropzone, FileUploadList, FileUploadRoot } from "../components/ui/file-button"
-import Statistics from "../components/Stats"
 import FilesTable from "../components/ui/table"
 
 const Home = () => {

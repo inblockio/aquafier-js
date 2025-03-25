@@ -591,8 +591,9 @@ export const ShareButton = ({ item, nonce }: IShareButton) => {
         const latest = allHashes[allHashes.length - 1]
         let recepientWalletData = recipient;
         if (recipient == "") {
-            recepientWalletData = "0xPUBACC150PEN2A1100000000000000000000000"
+            recepientWalletData = "0xfabacc150f2a0000000000000000000000000000"
         }
+      
         const response = await axios.post(url, {
             "latest": latest,
             "hash": unique_identifier,
