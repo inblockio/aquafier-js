@@ -33,6 +33,9 @@ services:
       DATABASE_URL: postgresql://${DB_USER:-aquafier}:${DB_PASSWORD:-changeme}@postgres:5432/aquafier
       BACKEND_URL: ${BACKEND_URL:-localhost:3000}
       FRONTEND_URL: ${FRONTEND_URL:-localhost:3600}
+      VIRTUAL_HOST: ${FRONTEND_URL}, ${BACKEND_URL}
+      LETSENCRYPT_HOST: ${FRONTEND_URL}, ${BACKEND_URL}
+      LETSENCRYPT_EMAIL: ${LETSENCRYPT_EMAIL}
     env_file:
       - .env
     volumes:
