@@ -1,0 +1,20 @@
+name: "Deploy Dev-Environment"
+
+on:
+  workflow_call:
+  workflow_dispatch:
+  push:
+    branches:
+      - make-docker-greate-again
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Execute update on host
+        uses: appleboy/ssh-action@v1
+        with:
+          host: "https://aquafier.inblock.io/"
+          username: "sammy"
+          key: ${{ secrets.RUNNER_PRIVATE_KEY }}
+          script: /home/sammy/scripts/pull_latest_version_aquafier-js.sh
