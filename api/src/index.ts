@@ -51,7 +51,16 @@ const start = async () => {
     // Register the CORS plugin
     await fastify.register(cors, {
       // Configure CORS options
-      origin: ['http://localhost:5173', 'http://127.0.0.1:5173'], // Allow your React app origins
+      origin: [
+        'http://localhost:5173', 
+        'http://127.0.0.1:5173', 
+        'http://localhost:3000', 
+        'http://127.0.0.1:3000', 
+        'http://localhost:3600', 
+        'http://127.0.0.1:3600',
+        'https://aquafier.inblock.io',
+        'http://aquafier.inblock.io'
+      ], // Allow your React app origins
       methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
       credentials: true, // Allow cookies if needed
       allowedHeaders: ['Content-Type', 'Authorization', 'nonce', 'metamask_address']
