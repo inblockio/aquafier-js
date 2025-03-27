@@ -8,6 +8,7 @@ on:
   push:
     branches:
       - main
+      - make-docker-greate-again
 
 jobs:
   build:
@@ -37,3 +38,7 @@ jobs:
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           file: actionfiles/aquafier-ts/dockerfile/Dockerfile
+
+  deploy:
+    needs: build
+    uses: ./.github/workflows/deploy-dev.yml
