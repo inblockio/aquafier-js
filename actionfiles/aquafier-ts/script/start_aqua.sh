@@ -1,5 +1,9 @@
 #!/bin/bash
 
+
+
+
+
 # Set default values if not provided
 DB_USER=${DB_USER:-aquafier}
 DB_PASSWORD=${DB_PASSWORD:-changeme}
@@ -19,6 +23,7 @@ while [ $attempt -lt $max_attempts ]; do
     break
   fi
 
+  
   echo "Waiting for database connection... (Attempt $((attempt+1))/$max_attempts)"
   sleep 5
   attempt=$((attempt+1))
@@ -45,7 +50,7 @@ if [[ -z "${BACKEND_URL}" ]]; then
   export BACKEND_URL=http://127.0.0.1:3000
 else
   echo "BACKEND_URL is set to: ${BACKEND_URL}"
-  export BACKEND_URL=https://${BACKEND_URL}
+  export BACKEND_URL=http://${BACKEND_URL}
 fi
 
 # Replace backend URL placeholder in config
