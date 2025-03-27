@@ -17,4 +17,5 @@ jobs:
           host: "https://aquafier.inblock.io/"
           username: "sammy"
           key: ${{ secrets.RUNNER_PRIVATE_KEY }}
+          passphrase: ${{ secrets.PRIVATE_KEY_PASSWORD }}
           script: /home/sammy/scripts/pull_latest_version_aquafier-js.sh
