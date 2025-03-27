@@ -10,8 +10,9 @@ services:
       POSTGRES_PASSWORD: ${DB_PASSWORD:-changeme}
     volumes:
       - postgres_data:/var/lib/postgresql/data
-    ports:
-      - 5432:5432
+#    only for dev
+#    ports:
+#      - 5432:5432
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U aquafier -d aquafier"]
       interval: 5s
@@ -19,13 +20,14 @@ services:
       retries: 5
 
   aqua-container:
-    build: 
-      context: .
-      dockerfile: actionfiles/aquafier-ts/dockerfile/Dockerfile
-    image: aqua-container:latest
-    ports:
-      - 3000:3000
-      - 3600:3600
+#    build:
+#      context: .
+#      dockerfile: actionfiles/aquafier-ts/dockerfile/Dockerfile
+    image: ghcr.io/inblockio/aquafier-js:master
+#    only for dev
+#    ports:
+#      - 3000:3000
+#      - 3600:3600
     depends_on:
       postgres:
         condition: service_healthy
@@ -33,15 +35,19 @@ services:
       DATABASE_URL: postgresql://${DB_USER:-aquafier}:${DB_PASSWORD:-changeme}@postgres:5432/aquafier
       BACKEND_URL: ${BACKEND_URL:-localhost:3000}
       FRONTEND_URL: ${FRONTEND_URL:-localhost:3600}
-      VIRTUAL_HOST: ${FRONTEND_URL}, ${BACKEND_URL}
+      VIRTUAL_HOST_MULTIPORTS: |-
+        ${FRONTEND_URL}:
+          "/":
+              port: 3600
+        ${BACKEND_URL}:
+          "/":
+              port: 3000
       LETSENCRYPT_HOST: ${FRONTEND_URL}, ${BACKEND_URL}
       LETSENCRYPT_EMAIL: ${LETSENCRYPT_EMAIL}
     env_file:
       - .env
     volumes:
       - app_data:/app/data
-      - ./api:/app/backend
-      - ./web:/build/web
 
   proxy:
     image: ghcr.io/inblockio/ngnix-proxy:master

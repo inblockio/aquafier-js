@@ -1,10 +1,9 @@
 FROM node:18 AS builder_npm_web
 
 WORKDIR /build/web
-COPY web/package*.json ./
+COPY web .
 RUN npm ci
 
-COPY web .
 RUN npm run build
 
 FROM node:18
@@ -18,20 +17,16 @@ RUN apt-get update && apt-get install -y \
 EXPOSE 3000
 EXPOSE 3600
 
-WORKDIR /app
-
 # Create necessary directories
 RUN mkdir -p /app/backend /app/frontend /app/data
 
 # Copy and prepare backend
 WORKDIR /app/backend
-COPY api/package*.json ./
+COPY api .
 RUN npm ci
 
 # Install Prisma CLI globally
 RUN npm install -g prisma
-
-COPY api .
 
 # Generate Prisma client
 RUN prisma generate
