@@ -53,7 +53,7 @@ sed -i -e "s|BACKEND_URL_PLACEHOLDER|$BACKEND_URL|g" /app/frontend/config.json
 
 # Start backend in the background
 cd /app/backend
-npm run dev &
+node dist/index.js &
 
 # Serve frontend
 cd /app/frontend

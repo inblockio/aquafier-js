@@ -36,6 +36,9 @@ COPY api .
 # Generate Prisma client
 RUN prisma generate
 
+# Compile TypeScript to JavaScript
+RUN npm run build
+
 # Copy frontend build artifacts
 WORKDIR /app/frontend
 COPY --from=builder_npm_web /build/web/dist .
