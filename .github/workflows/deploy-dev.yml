@@ -14,7 +14,7 @@ jobs:
       - name: Execute update on host
         uses: appleboy/ssh-action@v1
         with:
-          host: "https://aquafier.inblock.io:22/"
+          host: "aquafier.inblock.io"
           username: "sammy"
           key: ${{ secrets.RUNNER_PRIVATE_KEY }}
           passphrase: ${{ secrets.PRIVATE_KEY_PASSWORD }}
