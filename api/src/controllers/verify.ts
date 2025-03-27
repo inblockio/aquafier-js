@@ -1,6 +1,6 @@
 
 
-import { streamToBuffer } from "@/utils/file_utils";
+import { streamToBuffer } from "../utils/file_utils";
 import Aquafier, { AquaTree, FileObject, LogData, LogType, Revision } from "aqua-js-sdk";
 import { FastifyInstance } from "fastify";
 

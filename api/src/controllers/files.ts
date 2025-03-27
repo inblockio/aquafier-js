@@ -1,5 +1,5 @@
-import { prisma } from '@/database/db';
-import { isTextFile, isTextFileProbability, streamToBuffer } from '@/utils/file_utils.js';
+import { prisma } from '../database/db';
+import { isTextFile, isTextFileProbability, streamToBuffer } from '../utils/file_utils.js';
 import Aquafier, { AquaTree, FileObject, LogType } from 'aqua-js-sdk';
 import { FastifyInstance } from 'fastify';
 import path from 'path';

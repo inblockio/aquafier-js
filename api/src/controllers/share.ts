@@ -3,10 +3,10 @@ import { SiweMessage } from 'siwe';
 import { prisma } from '../database/db';
 import { Settings } from '@prisma/client';
 import { SessionQuery, ShareRequest, SiweRequest } from '../models/request_models';
-import { verifySiweMessage } from '@/utils/auth_utils';
+// import { verifySiweMessage } from '../utils/auth_utils';
 import { AquaTree, FileObject, OrderRevisionInAquaTree } from 'aqua-js-sdk';
-import { getHost, getPort } from '@/utils/api_utils';
-import { createAquaTreeFromRevisions, fetchAquaTreeWithForwardRevisions, saveAquaTree } from '@/utils/revisions_utils';
+import { getHost, getPort } from '../utils/api_utils';
+import { createAquaTreeFromRevisions, fetchAquaTreeWithForwardRevisions, saveAquaTree } from '../utils/revisions_utils';
 
 export default async function shareController(fastify: FastifyInstance) {
     // get current session

@@ -10,11 +10,11 @@ import util from 'util';
 import { pipeline } from 'stream';
 import * as fs from "fs"
 import { error } from 'console';
-import { createAquaTreeFromRevisions, fetchAquatreeFoUser, FetchRevisionInfo, findAquaTreeRevision, saveAquaTree } from '@/utils/revisions_utils';
+import { createAquaTreeFromRevisions, fetchAquatreeFoUser, FetchRevisionInfo, findAquaTreeRevision, saveAquaTree } from '../utils/revisions_utils';
 import { fileURLToPath } from 'url';
 import { AquaForms, FileIndex, Signature, Witness, WitnessEvent } from '@prisma/client';
-import { getHost, getPort } from '@/utils/api_utils';
-import { AquaJsonInZip, DeleteRevision, SaveAquaTree } from '@/models/request_models';
+import { getHost, getPort } from '../utils/api_utils';
+import { AquaJsonInZip, DeleteRevision, SaveAquaTree } from '../models/request_models';
 // import getStream from 'get-stream';
 // Promisify pipeline
 const pump = util.promisify(pipeline);

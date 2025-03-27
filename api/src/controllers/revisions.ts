@@ -1,9 +1,9 @@
-import { prisma } from '@/database/db';
-import { FetchAquaTreeRequest, SaveRevision } from '@/models/request_models';
-import { getHost, getPort } from '@/utils/api_utils';
-import { createAquaTreeFromRevisions, FetchRevisionInfo, findAquaTreeRevision } from '@/utils/revisions_utils';
-import { formatTimestamp } from '@/utils/time_utils';
-import { AquaForms, FileIndex, Signature, WitnessEvent, Revision as RevisonDB } from '@prisma/client';
+import { prisma } from '../database/db';
+import { FetchAquaTreeRequest, SaveRevision } from '../models/request_models';
+import { getHost, getPort } from '../utils/api_utils';
+import { createAquaTreeFromRevisions, FetchRevisionInfo, findAquaTreeRevision } from '../utils/revisions_utils';
+// import { formatTimestamp } from '../utils/time_utils';
+// import { AquaForms, FileIndex, Signature, WitnessEvent, Revision as RevisonDB } from 'prisma/client';
 import { AquaTree, FileObject, OrderRevisionInAquaTree, Revision } from 'aqua-js-sdk';
 import { FastifyInstance } from 'fastify';
 import * as fs from "fs"

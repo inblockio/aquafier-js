@@ -3,7 +3,7 @@ import { SiweMessage } from 'siwe';
 import { prisma } from '../database/db';
 import { Settings } from '@prisma/client';
 import { SessionQuery, SiweRequest } from '../models/request_models';
-import { verifySiweMessage } from '@/utils/auth_utils';
+import { verifySiweMessage } from '../utils/auth_utils';
 
 export default async function userController(fastify: FastifyInstance) {
     // get current session
