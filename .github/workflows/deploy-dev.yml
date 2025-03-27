@@ -2,10 +2,12 @@ name: "Deploy Dev-Environment"
 
 on:
   workflow_call:
+    secrets:
+      RUNNER_PRIVATE_KEY:
+        required: true
+      PRIVATE_KEY_PASSWORD:
+        required: true
   workflow_dispatch:
-  push:
-    branches:
-      - make-docker-greate-again
 
 jobs:
   deploy:
