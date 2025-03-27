@@ -15,7 +15,7 @@ import { fileURLToPath } from 'url';
 import { AquaForms, FileIndex, Signature, Witness, WitnessEvent } from '@prisma/client';
 import { getHost, getPort } from '@/utils/api_utils';
 import { AquaJsonInZip, DeleteRevision, SaveAquaTree } from '@/models/request_models';
-import getStream from 'get-stream';
+// import getStream from 'get-stream';
 // Promisify pipeline
 const pump = util.promisify(pipeline);
 
