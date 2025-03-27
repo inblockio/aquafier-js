@@ -3,7 +3,7 @@ import { Button } from "./ui/button";
 import axios from "axios";
 import { useStore } from "zustand";
 import appStore from "../store";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ApiFileInfo } from "../models/FileInfo";
 import { toaster } from "./ui/toaster";
 import { formatCryptoAddress } from "../utils/functions";
@@ -210,6 +210,17 @@ export const UploadFile = ({ file, uploadedIndexes, fileIndex, updateUploadedInd
             })
         }
     };
+
+    // Use a ref to track if the upload has already been triggered
+    const uploadInitiatedRef = useRef(false)
+    
+    useEffect(() => {
+        // Only upload if it hasn't been initiated yet
+        if (!uploadInitiatedRef.current) {
+            uploadInitiatedRef.current = true
+            uploadFile()
+        }
+    }, [])
 
     return (
         <Button size={'xs'} colorPalette={'blackAlpha'} variant={'subtle'} w={'80px'} onClick={uploadFile} disabled={uploadedIndexes.includes(fileIndex) || uploaded} loading={uploading}>
