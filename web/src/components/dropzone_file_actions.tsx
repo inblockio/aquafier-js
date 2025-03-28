@@ -213,7 +213,7 @@ export const UploadFile = ({ file, uploadedIndexes, fileIndex, updateUploadedInd
 
     // Use a ref to track if the upload has already been triggered
     const uploadInitiatedRef = useRef(false)
-    
+
     useEffect(() => {
         // Only upload if it hasn't been initiated yet
         if (!uploadInitiatedRef.current) {
@@ -339,41 +339,41 @@ export const ImportAquaTreeZip = ({ file, uploadedIndexes, fileIndex, updateUplo
 
 // export const VerifyFile = ({ file }: IDropzoneAction) => {
 
-    // const [verifying, setVerifying] = useState(false)
-    // const [hashChainForVerification, setHashChain] = useState<ApiFileInfo>()
-    // const [_isVerificationSuccessful, setIsVerificationSuccessful] = useState(false)
-    // const [uploaded, setUploaded] = useState(false)
-    // const { session } = useStore(appStore)
-    // const { metamaskAddress, setFiles, files } = useStore(appStore)
+// const [verifying, setVerifying] = useState(false)
+// const [hashChainForVerification, setHashChain] = useState<ApiFileInfo>()
+// const [_isVerificationSuccessful, setIsVerificationSuccessful] = useState(false)
+// const [uploaded, setUploaded] = useState(false)
+// const { session } = useStore(appStore)
+// const { metamaskAddress, setFiles, files } = useStore(appStore)
 
-    // const handleVerifyAquaJsonFile = () => {
-    //     setVerifying(true)
-    //     readJsonFile(file)
-    //         .then((jsonData) => {
-    //             const hashChain: ApiFileInfo = {
-    //                 id: 0,
-    //                 name: '',
-    //                 extension: '',
-    //                 page_data: JSON.stringify(jsonData),
-    //                 mode: '',
-    //                 owner: ''
-    //             }
-    //             setHashChain(hashChain)
-    //             // const hashChainString = JSON.stringify(hashChain)
-    //             ////  console.log("JSON data:", hashChain);
-    //             // setAppState("selectedFileFromApi", hashChain);
-    //             // navigate("/details");
-    //             // Handle the JSON data here
-    //         })
-    //         .catch(() => {
-    //             // Handle the error here
-    //         });
-    //     setVerifying(false)
-    // };
+// const handleVerifyAquaJsonFile = () => {
+//     setVerifying(true)
+//     readJsonFile(file)
+//         .then((jsonData) => {
+//             const hashChain: ApiFileInfo = {
+//                 id: 0,
+//                 name: '',
+//                 extension: '',
+//                 page_data: JSON.stringify(jsonData),
+//                 mode: '',
+//                 owner: ''
+//             }
+//             setHashChain(hashChain)
+//             // const hashChainString = JSON.stringify(hashChain)
+//             ////  console.log("JSON data:", hashChain);
+//             // setAppState("selectedFileFromApi", hashChain);
+//             // navigate("/details");
+//             // Handle the JSON data here
+//         })
+//         .catch(() => {
+//             // Handle the error here
+//         });
+//     setVerifying(false)
+// };
 
-    // useEffect(() => {
-    //     handleVerifyAquaJsonFile()
-    // }, [])
+// useEffect(() => {
+//     handleVerifyAquaJsonFile()
+// }, [])
 
 //     return (
 //         <>
@@ -400,7 +400,7 @@ export const ImportAquaChainFromFile = ({ file, uploadedIndexes, fileIndex, upda
     const [uploading, setUploading] = useState(false)
     const [uploaded, setUploaded] = useState(false)
 
-    const { metamaskAddress, setFiles, files,  backend_url } = useStore(appStore)
+    const { metamaskAddress, setFiles, files, backend_url } = useStore(appStore)
 
     const importAquaChain = async () => {
 
@@ -435,12 +435,12 @@ export const ImportAquaChainFromFile = ({ file, uploadedIndexes, fileIndex, upda
             ////  console.log("Upload res: ", res)
             // Assuming the API returns an array of FileInfo objects
             // const file: ApiFileInfo = {
-                // id: res.file.id,
-                // name: res.file.name,
-                // extension: res.file.extension,
-                // page_data: res.file.page_data,
-                // mode: user_profile.fileMode ?? "",
-                // owner: metamaskAddress ?? "",
+            // id: res.file.id,
+            // name: res.file.name,
+            // extension: res.file.extension,
+            // page_data: res.file.page_data,
+            // mode: user_profile.fileMode ?? "",
+            // owner: metamaskAddress ?? "",
             // };
 
             const file: ApiFileInfo = res
@@ -497,7 +497,7 @@ export const ImportAquaChainFromChain = ({ fileInfo, isVerificationSuccessful }:
 
     //  console.log(revisionsToImport)
 
-    const { metamaskAddress, setFiles, files,  backend_url, session } = useStore(appStore)
+    const { metamaskAddress, setFiles, files, backend_url, session } = useStore(appStore)
 
     let navigate = useNavigate();
 
@@ -613,7 +613,7 @@ export const ImportAquaChainFromChain = ({ fileInfo, isVerificationSuccessful }:
             //    //  console.log("**>" + item + "\n.")
             // })
 
-             console.log(`=> Upload res:  ${res} \n `)
+            console.log(`=> Upload res:  ${res} \n `)
 
             // Assuming the API returns an array of FileInfo objects
             const file: ApiFileInfo = fileInfo;
@@ -639,49 +639,53 @@ export const ImportAquaChainFromChain = ({ fileInfo, isVerificationSuccessful }:
     };
 
     const handleMergeRevisions = async () => {
-        // try {
-        //     setUploading(true)
-        //     const response = await axios.post(`${backend_url}/explorer_merge_chain`, {
-        //         file_id: existingFileId,
-        //         last_identical_revision_hash: lastIdenticalRevisionHash,
-        //         revisions_to_import: revisionsToImport
-        //     })
-        //     if (response.status === 200) {
-        //         toaster.create({
-        //             title: "Aqua chain import",
-        //             description: "Chain merged successfully",
-        //             type: "success"
-        //         })
-        //         setUploading(false)
-        //         setUploaded(true)
+        try {
+            setUploading(true)
+            const revisionsToImport: Array<[string, Revision]> = []
+            const existingChainFile = dbFiles.find(file => Object.keys(file?.aquaTree?.revisions ?? {})[0] === Object.keys(fileInfo?.aquaTree?.revisions ?? {})[0])
 
-        //         const res: ApiFileInfo = response.data
-        //        //  console.log(res)
+            comparisonResult?.divergences?.forEach((divergence) => {
+                const upcomingRevisionHash = divergence.upcomingRevisionHash
+                if (!upcomingRevisionHash) return
 
-        //         const newFiles: ApiFileInfo[] = [];
-        //         setFiles(newFiles)
+                if (existingChainFile) {
+                    const fileToImportRevisions = fileInfo?.aquaTree?.revisions
+                    let revisionToImport = fileToImportRevisions?.[upcomingRevisionHash]
+                    if (!revisionToImport) return
+                    revisionsToImport.push([upcomingRevisionHash, revisionToImport])
+                }
+            })
+            setUploading(false)
 
-        //         for (let index = 0; index < files.length; index++) {
-        //             const file = files[index];
-        //             if (file.id === res.id) {
-        //                 newFiles.push(res)
-        //             } else {
-        //                 newFiles.push(file)
-        //             }
-        //         }
-
-        //         navigate("/loading?reload=true");
-        //     }
-        // } catch (e: any) {
-        //     setUploading(false)
-        //     if (e.message) {
-        //         toaster.create({
-        //             title: "Error occured",
-        //             description: e.message,
-        //             type: "error"
-        //         })
-        //     }
-        // }
+            const url = `${backend_url}/tree`;
+            // make this work sequentially, one after the other
+            for (const revision of revisionsToImport) {
+                await axios.post(url, {
+                    "revision": revision[1],
+                    "revisionHash": revision[0],
+                }, {
+                    headers: {
+                        "nonce": session?.nonce
+                    }
+                }).then(() => {
+                    toaster.create({
+                        title: "Aqua chain import",
+                        description: "Chain merged successfully",
+                        type: "success"
+                    })
+                })
+            }
+            // navigate("/loading?reload=true");
+        } catch (e: any) {
+            setUploading(false)
+            if (e.message) {
+                toaster.create({
+                    title: "Error occured",
+                    description: e.message,
+                    type: "error"
+                })
+            }
+        }
     }
 
     //  console.log(comparisonResult)

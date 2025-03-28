@@ -186,6 +186,7 @@ export const WitnessAquaChain = ({ apiFileInfo, backendUrl, nonce }: RevionOpera
 export const SignAquaChain = ({ apiFileInfo, backendUrl, nonce }: RevionOperation) => {
     const { files, setFiles } = useStore(appStore)
     const [signing, setSigning] = useState(false)
+    
     const signFileHandler = async () => {
         setSigning(true)
         if (window.ethereum) {
@@ -213,6 +214,7 @@ export const SignAquaChain = ({ apiFileInfo, backendUrl, nonce }: RevionOperatio
                             description: `Error signing failed (aqua tree structure)`,
                             type: "error"
                         })
+                        return
                     }
                     const lastHash = revisionHashes[revisionHashes.length - 1]
                     const lastRevision = result.data.aquaTree?.revisions[lastHash]
