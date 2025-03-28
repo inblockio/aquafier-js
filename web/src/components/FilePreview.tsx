@@ -228,9 +228,12 @@ const FilePreview: React.FC<IFilePreview> = ({ fileInfo }) => {
 
                 let actualUrlToFetch = fileContentUrl
 
-                if(actualUrlToFetch.includes("inblock.io") && !actualUrlToFetch.includes("https")){
+                console.log(`== Data before ${actualUrlToFetch}`)
+                if(actualUrlToFetch.includes("inblock.io")){
+                    
                     actualUrlToFetch = actualUrlToFetch.replace("http", "https")
                 }
+                console.log(`== Data after ${actualUrlToFetch}`)
 
                 const response = await fetch(actualUrlToFetch, {
                     headers: {

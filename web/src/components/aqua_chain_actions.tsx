@@ -534,7 +534,7 @@ export const DownloadAquaChain = ({ file }: { file: ApiFileInfo }) => {
     return (
         <Button size={'xs'} colorPalette={'blackAlpha'} variant={'subtle'} w={'165px'} onClick={downloadAquaJson} loading={downloading}>
             <LuDownload />
-            Download Aqua-Chain
+            Download
         </Button>
     )
 }
