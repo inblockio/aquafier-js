@@ -16,12 +16,6 @@ RUN npm ci
 # Compile TypeScript to JavaScript
 RUN npm run build
 
-# Install Prisma CLI globally
-RUN npm install -g prisma
-
-# Generate Prisma client
-RUN prisma generate
-
 FROM node:18
 
 # Install system dependencies
@@ -36,12 +30,28 @@ EXPOSE 3600
 # Create necessary directories
 RUN mkdir -p /app/backend /app/frontend /app/data
 
+COPY api/prisma /app/backend/prisma
+
+#we need prisma migration
+WORKDIR /app/backend
+
+# Install Prisma CLI globally
+RUN npm install -g prisma
+
+# Generate Prisma client
+RUN prisma generate
+
 # Install serve for frontend
 RUN npm install -g serve
 
 # Copy frontend and backend build artifacts
 COPY --from=builder_npm_web /build/web/dist /app/frontend
-COPY --from=builder_npm_api /build/api/dist /app/backend
+COPY --from=builder_npm_api /build/api/dist /app/backend/dist
+COPY --from=builder_npm_api /build/api/package.json /app/backend/package.json
+COPY --from=builder_npm_api /build/api/package-lock.json /app/backend/package-lock.json
+
+# Install backend dependencies
+RUN npm ci --only=production
 
 # Copy startup script
 COPY actionfiles/aquafier-ts/script/start_aqua.sh /app/start_aqua.sh

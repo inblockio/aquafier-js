@@ -39,7 +39,7 @@ unset PGPASSWORD
 
 # Run Prisma migrations
 cd /app/backend
-prisma migrate deploy || {
+npx prisma migrate dev --name init || {
   echo "ERROR: Prisma migration failed"
   exit 1
 }
@@ -50,7 +50,7 @@ if [[ -z "${BACKEND_URL}" ]]; then
   export BACKEND_URL=http://127.0.0.1:3000
 else
   echo "BACKEND_URL is set to: ${BACKEND_URL}"
-  export BACKEND_URL=https://${BACKEND_URL}
+  export BACKEND_URL=http://${BACKEND_URL}
 fi
 
 # Replace backend URL placeholder in config
