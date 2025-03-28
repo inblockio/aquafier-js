@@ -53,6 +53,7 @@ export default function ConnectWallet() {
   }
 
   const signAndConnect = async () => {
+    console.log("Connecting")
     if (window.ethereum) {
       setLoading(true);
       setConnectionState("connecting");

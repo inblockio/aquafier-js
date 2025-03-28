@@ -6,19 +6,18 @@ import {
     DrawerCloseTrigger,
     DrawerContent,
     DrawerFooter,
-    DrawerHeader,
     DrawerRoot,
     DrawerTitle,
 
 } from "../drawer"
 import { Button } from "../button"
 import { LuCheck, LuChevronDown, LuChevronUp, LuExternalLink, LuEye, LuX } from "react-icons/lu"
-import { Box, Card, Collapsible, For, Group, Icon, IconButton, Link, Spacer, Span, Text, VStack } from "@chakra-ui/react"
+import { Box, Card, Collapsible, Drawer, For, GridItem, Group, Icon, IconButton, Link, Portal, SimpleGrid, Span, Text, VStack } from "@chakra-ui/react"
 import { TimelineConnector, TimelineContent, TimelineDescription, TimelineItem, TimelineRoot, TimelineTitle } from "../timeline"
 import { displayTime, formatCryptoAddress } from "../../../utils/functions"
 import { Alert } from "../alert"
 import { ClipboardIconButton, ClipboardRoot } from "../clipboard"
-import Aquafier, { AquaOperationData, AquaTree, FileObject, LogData, Result, Revision } from "aqua-js-sdk";
+import Aquafier, { AquaOperationData, AquaTree, FileObject, LogData, LogTypeEmojis, Result, Revision } from "aqua-js-sdk";
 import ReactLoading from "react-loading"
 import { WITNESS_NETWORK_MAP } from "../../../utils/constants"
 import { DownloadAquaChain, WitnessAquaChain, SignAquaChain, DeleteAquaChain } from "../../aqua_chain_actions"
@@ -62,6 +61,8 @@ interface IRevisionDisplay {
 }
 
 const RevisionDisplay = ({ aquaTree, revision, revisionHash, fileObjects, callBack }: IRevisionDisplay) => {
+
+    const [showRevisionDetails, setShowRevisionDetails] = useState(false)
 
     const [verificationResult, setVerificationResult] = useState<Result<AquaOperationData, LogData[]> | null>(null)
 
@@ -168,6 +169,8 @@ const RevisionDisplay = ({ aquaTree, revision, revisionHash, fileObjects, callBa
 
     }
 
+    const revisionTypeEmoji = LogTypeEmojis[revision.revision_type]
+
     return (
         <div>
             <TimelineItem>
@@ -192,171 +195,134 @@ const RevisionDisplay = ({ aquaTree, revision, revisionHash, fileObjects, callBa
                 </TimelineConnector>
                 <TimelineContent gap="4">
 
-                    <TimelineTitle>
-                        <Span>Revision: </Span>
+                    <TimelineTitle onClick={() => setShowRevisionDetails(prev => !prev)} cursor={"pointer"}>
+                        <Span textTransform={"capitalize"}>{`${revisionTypeEmoji ? revisionTypeEmoji : ''} ${revision?.revision_type} Revision`}</Span>
                         <Span color="fg.muted" fontFamily={'monospace'}>{revisionHash}</Span>
                     </TimelineTitle>
-                    <Card.Root size="sm">
+                    <Collapsible.Root open={showRevisionDetails}>
+                        <Collapsible.Content>
+                            <Card.Root size="sm">
+                                <Card.Body textStyle="sm" lineHeight="tall">
+                                    <TimelineRoot size="lg" variant="subtle" maxW="md">
 
-                        <Card.Body textStyle="sm" lineHeight="tall">
-                            <TimelineRoot size="lg" variant="subtle" maxW="md">
-
-                                {/* <TimelineItem>
-                                    <TimelineConnector
-                                        bg={returnBgColor()}
-                                    >
-                                        
-                                        <Icon fontSize="xs" color={'white'}>
-                                            {
-                                                verificationStatusIcon()
-                                                
-                                            }
-                                        </Icon>
-                                    </TimelineConnector>
-                                    <TimelineContent gap="2">
-                                        <TimelineTitle>
-                                            <Span>
-                                                Revision content is
-                                                {
-                                                    verificationStatusText()
+                                        <TimelineItem>
+                                            <TimelineConnector
+                                                bg={
+                                                    returnBgColor()
+                                                    // verificationResult?.metadata_verification.successful ? "green" : "red"
                                                 }
-                                            </Span>
-                                        </TimelineTitle>
-                                    </TimelineContent>
-                                </TimelineItem> */}
+                                            >
+                                                <Icon fontSize="xs" color={'white'}>
+                                                    {
+                                                        verificationStatusIcon()
+                                                        // verificationResult?.metadata_verification.successful ? <LuCheck /> :
+                                                        //     <LuX />
+                                                    }
+                                                </Icon>
+                                            </TimelineConnector>
+                                            <TimelineContent gap="2">
+                                                <TimelineTitle>
+                                                    <Span>
+                                                        Revision  is &nbsp;
+                                                        {
+                                                            revision.previous_verification_hash.length == 0 ? "Genesis Revision" : revision.revision_type
+                                                        }
+                                                    </Span>
+                                                </TimelineTitle>
+                                                <TimelineDescription>{displayTime(revision.local_timestamp)}&nbsp;(UTC)</TimelineDescription>
+                                                {
+                                                    revision.revision_type === "file" ? (
+                                                        <ItemDetail label="File Hash:"
+                                                            // displayValue={formatCryptoAddress(revision.signature.signature_wallet_address, 4, 6)}
+                                                            displayValue={formatCryptoAddress(revision.file_hash!, 10, 15)}
+                                                            value={revision.file_hash!} showCopyIcon={true}
+                                                        />
+                                                    ) : null
+                                                }
+                                            </TimelineContent>
+                                        </TimelineItem>
 
-                                <TimelineItem>
-                                    <TimelineConnector
-                                        bg={
-                                            returnBgColor()
-                                            // verificationResult?.metadata_verification.successful ? "green" : "red"
+                                        {
+                                            revision.revision_type == "signature" ? (
+                                                <TimelineItem>
+                                                    <TimelineConnector
+                                                        bg={
+                                                            returnBgColor()
+                                                            // verificationResult?.signature_verification.successful ? "green" : "red"
+                                                        }
+                                                    >
+                                                        <Icon fontSize="xs" color={'white'}>
+                                                            {
+                                                                verificationStatusIcon()
+                                                                // verificationResult?.signature_verification.successful ? <LuCheck /> :
+                                                                //     <LuX />
+                                                            }
+                                                        </Icon>
+                                                    </TimelineConnector>
+                                                    <TimelineContent gap="2">
+                                                        <TimelineTitle>
+                                                            <Span>
+                                                                Revision signature is
+                                                                {
+                                                                    // verificationResult?.signature_verification.successful ? ' valid' : ' invalid'
+                                                                    verificationStatusText()
+                                                                }
+                                                            </Span>
+                                                        </TimelineTitle>
+                                                        <ItemDetail label="Signature:"
+                                                            displayValue={formatCryptoAddress(revision.signature, 4, 6)}
+                                                            value={revision.signature} showCopyIcon={true}
+                                                        />
+                                                        <ItemDetail label="Signature Type:"
+                                                            displayValue={revision.signature_type!}
+                                                            value={revision.signature_type!} showCopyIcon={true}
+                                                        />
+                                                        <ItemDetail label="Wallet Address:"
+                                                            // displayValue={formatCryptoAddress(revision.signature.signature_wallet_address, 4, 6)}
+                                                            displayValue={revision.signature_wallet_address!}
+                                                            value={revision.signature_wallet_address!} showCopyIcon={true}
+                                                        />
+                                                        <ItemDetail label="Public Key:"
+                                                            displayValue={formatCryptoAddress(revision.signature_public_key, 4, 6)}
+                                                            value={revision.signature_public_key!} showCopyIcon={true}
+                                                        />
+                                                    </TimelineContent>
+                                                </TimelineItem>
+                                            ) : null
                                         }
-                                    >
-                                        <Icon fontSize="xs" color={'white'}>
-                                            {
-                                                verificationStatusIcon()
-                                                // verificationResult?.metadata_verification.successful ? <LuCheck /> :
-                                                //     <LuX />
-                                            }
-                                        </Icon>
-                                    </TimelineConnector>
-                                    <TimelineContent gap="2">
-                                        <TimelineTitle>
-                                            <Span>
-                                                Revision  is &nbsp;
-                                                {
-                                                    revision.previous_verification_hash.length == 0 ? "Genesis Revision" : revision.revision_type
-                                                    // verificationResult?.metadata_verification.successful ? ' valid' : ' invalid'
-                                                }
-                                            </Span>
-                                        </TimelineTitle>
-                                        <TimelineDescription>{displayTime(revision.local_timestamp)}&nbsp;(UTC)</TimelineDescription>
 
-                                        {/* <ItemDetail label="Metadata Hash:"
-                                            displayValue={formatCryptoAddress(revision.metadata.metadata_hash, 4, 6)}
-                                            value={revision.metadata.metadata_hash} showCopyIcon={true}
-                                        /> */}
-                                    </TimelineContent>
-                                </TimelineItem>
-
-                                {
-                                    revision.revision_type == "signature" ? (
-                                        <TimelineItem>
-                                            <TimelineConnector
-                                                bg={
-                                                    returnBgColor()
-                                                    // verificationResult?.signature_verification.successful ? "green" : "red"
-                                                }
-                                            >
-                                                <Icon fontSize="xs" color={'white'}>
-                                                    {
-                                                        verificationStatusIcon()
-                                                        // verificationResult?.signature_verification.successful ? <LuCheck /> :
-                                                        //     <LuX />
-                                                    }
-                                                </Icon>
-                                            </TimelineConnector>
-                                            <TimelineContent gap="2">
-                                                <TimelineTitle>
-                                                    <Span>
-                                                        Revision signature is
-                                                        {
-                                                            // verificationResult?.signature_verification.successful ? ' valid' : ' invalid'
-                                                            verificationStatusText()
+                                        {
+                                            revision.revision_type == "witness" ? (
+                                                <TimelineItem>
+                                                    <TimelineConnector
+                                                        bg={
+                                                            returnBgColor()
+                                                            // verificationResult?.witness_verification.successful ? "green" : "red"
                                                         }
-                                                    </Span>
-                                                </TimelineTitle>
-                                                <ItemDetail label="Signature:"
-                                                    displayValue={formatCryptoAddress(revision.signature, 4, 6)}
-                                                    value={revision.signature} showCopyIcon={true}
-                                                />
-                                                <ItemDetail label="Signature Type:"
-                                                    displayValue={revision.signature_type!}
-                                                    value={revision.signature_type!} showCopyIcon={true}
-                                                />
-                                                <ItemDetail label="Wallet Address:"
-                                                    // displayValue={formatCryptoAddress(revision.signature.signature_wallet_address, 4, 6)}
-                                                    displayValue={revision.signature_wallet_address!}
-                                                    value={revision.signature_wallet_address!} showCopyIcon={true}
-                                                />
-                                                <ItemDetail label="Public Key:"
-                                                    displayValue={formatCryptoAddress(revision.signature_public_key, 4, 6)}
-                                                    value={revision.signature_public_key!} showCopyIcon={true}
-                                                />
-                                            </TimelineContent>
-                                        </TimelineItem>
-                                    ) : (
-
-                                        <TimelineItem>
-                                            <TimelineConnector
-                                                bg={'gray.400'}
-                                            >
-                                                <Icon fontSize="xs" color={'white'}>
-                                                    <LuX />
-                                                </Icon>
-                                            </TimelineConnector>
-                                            <TimelineContent gap="2">
-                                                <TimelineTitle>
-                                                    <Span>Revision has no signature</Span>
-                                                </TimelineTitle>
-                                            </TimelineContent>
-                                        </TimelineItem>
-
-                                    )
-                                }
-
-                                {
-                                    revision.revision_type == "witness" ? (
-                                        <TimelineItem>
-                                            <TimelineConnector
-                                                bg={
-                                                    returnBgColor()
-                                                    // verificationResult?.witness_verification.successful ? "green" : "red"
-                                                }
-                                            >
-                                                <Icon fontSize="xs" color={'white'}>
-                                                    {
-                                                        verificationStatusIcon()
-                                                        // verificationResult?.witness_verification.successful ? <LuCheck /> :
-                                                        //     <LuX />
-                                                    }
-                                                </Icon>
-                                            </TimelineConnector>
-                                            <TimelineContent gap="2">
-                                                <TimelineTitle>
-                                                    <Span>
-                                                        Revision witness is
-                                                        {
-                                                            verificationStatusText()
-                                                            // verificationResult?.witness_verification.successful ? ' valid' : ' invalid'
-                                                        }
-                                                    </Span>
-                                                </TimelineTitle>
-                                                {/* <ItemDetail label="Domain snapshot Hash:"
+                                                    >
+                                                        <Icon fontSize="xs" color={'white'}>
+                                                            {
+                                                                verificationStatusIcon()
+                                                                // verificationResult?.witness_verification.successful ? <LuCheck /> :
+                                                                //     <LuX />
+                                                            }
+                                                        </Icon>
+                                                    </TimelineConnector>
+                                                    <TimelineContent gap="2">
+                                                        <TimelineTitle>
+                                                            <Span>
+                                                                Revision witness is
+                                                                {
+                                                                    verificationStatusText()
+                                                                    // verificationResult?.witness_verification.successful ? ' valid' : ' invalid'
+                                                                }
+                                                            </Span>
+                                                        </TimelineTitle>
+                                                        {/* <ItemDetail label="Domain snapshot Hash:"
                                                     displayValue={formatCryptoAddress(revision.witness.domain_snapshot_genesis_hash, 4, 6)}
                                                     value={revision.witness.domain_snapshot_genesis_hash} showCopyIcon={true}
                                                 /> */}
-                                                {/* <ItemDetail label="Network:"
+                                                        {/* <ItemDetail label="Network:"
                                                     displayValue={formatCryptoAddress(revision.witness.witness_network, 4, 6)}
                                                     value={revision.witness_network} showCopyIcon={false}
                                                 />
@@ -379,35 +345,20 @@ const RevisionDisplay = ({ aquaTree, revision, revisionHash, fileObjects, callBa
                                                     displayValue={formatCryptoAddress(revision.witness_event_verification_hash, 4, 6)}
                                                     value={revision.witness_event_verification_hash} showCopyIcon={true}
                                                 /> */}
-                                            </TimelineContent>
-                                        </TimelineItem>
-                                    ) : (
+                                                    </TimelineContent>
+                                                </TimelineItem>
+                                            ) : null
+                                        }
 
-                                        <TimelineItem>
-                                            <TimelineConnector
-                                                bg={'gray.400'}
-                                            >
-                                                <Icon fontSize="xs" color={'white'}>
-                                                    <LuX />
-                                                </Icon>
-                                            </TimelineConnector>
-                                            <TimelineContent gap="2">
-                                                <TimelineTitle>
-                                                    <Span>Revision has no witness</Span>
-                                                </TimelineTitle>
-                                            </TimelineContent>
-                                        </TimelineItem>
+                                    </TimelineRoot>
 
-                                    )
-                                }
-
-                            </TimelineRoot>
-
-                        </Card.Body>
-                        <Card.Footer>
-                            {displayAlert()}
-                        </Card.Footer>
-                    </Card.Root>
+                                </Card.Body>
+                                <Card.Footer>
+                                    {displayAlert()}
+                                </Card.Footer>
+                            </Card.Root>
+                        </Collapsible.Content>
+                    </Collapsible.Root>
                 </TimelineContent>
             </TimelineItem>
         </div>
@@ -657,63 +608,71 @@ export const ChainDetailsBtn = ({ fileInfo, session }: AquaTreeDetails) => {
                 Details
             </Button>
 
-            <DrawerRoot open={isOpen} size={{ base: 'full', md: 'lg' }} id="aqua-chain-details-modal" onOpenChange={(e) => setIsOpen(e.open)}>
-                <DrawerBackdrop />
-                {/* <DrawerTrigger asChild>
-                    <Button size={'xs'} colorPalette={'green'} variant={'subtle'} w={'80px'}>
-                        <LuEye />
-                        Details
-                    </Button>
-                </DrawerTrigger> */}
-                <DrawerContent borderLeftRadius={'xl'} overflow={'hidden'}>
-                    <DrawerHeader bg={{ base: displayColorBasedOnVerificationStatusLight(), _dark: displayColorBasedOnVerificationStatusDark() }}>
-                        <DrawerTitle>{fileName}</DrawerTitle>
-                    </DrawerHeader>
-                    <DrawerBody py={'lg'} px={1}>
-                        <Card.Root border={'none'} shadow={'md'} borderRadius={'xl'}>
-                            <Card.Body>
-                                <FilePreview fileInfo={fileInfo.fileObject[0]} />
-                            </Card.Body>
-                        </Card.Root>
-                        <Spacer height={'20px'} />
+            <DrawerRoot open={isOpen} size={{ base: 'full', mdToXl: "xl" }} id="aqua-chain-details-modal"
+                onOpenChange={(e) => setIsOpen(e.open)} closeOnEscape={true}>
+                <Portal>
+                    <DrawerBackdrop />
+                    <Drawer.Positioner>
+                        <DrawerContent borderLeftRadius={'xl'} overflow={'hidden'}>
+                            <Drawer.Header bg={{ base: displayColorBasedOnVerificationStatusLight(), _dark: displayColorBasedOnVerificationStatusDark() }}>
+                                <DrawerTitle flex="1">{fileName}</DrawerTitle>
+                                {/* <DrawerCloseTrigger colorPalette={"red"} boxSize={"20"} borderRadius={"full"} pos={"initial"}>
+                                        <LuX size={"42px"} />
+                                </DrawerCloseTrigger> */}
+                            </Drawer.Header>
+                            <DrawerBody py={'lg'} px={1}>
+                                <Box>
+                                    <SimpleGrid columns={{ base: 1, md: 2 }}>
+                                        <GridItem>
+                                            <Card.Root border={'none'} shadow={'none'} borderRadius={'xl'}>
+                                                <Card.Body>
+                                                    <FilePreview fileInfo={fileInfo.fileObject[0]} />
+                                                </Card.Body>
+                                            </Card.Root>
+                                        </GridItem>
+                                        <GridItem>
+                                            <Card.Root borderRadius={'lg'} shadow={"none"}>
+                                                <Card.Body>
+                                                    <VStack gap={'4'}>
+                                                        <Alert status={displayColorBasedOnVerificationAlert()} title={displayBasedOnVerificationStatusText()} />
 
-                        <Card.Root borderRadius={'lg'}>
-                            <Card.Body>
-                                <VStack gap={'4'}>
-                                    <Alert status={displayColorBasedOnVerificationAlert()} title={displayBasedOnVerificationStatusText()} />
+                                                        <RevisionDetailsSummary fileInfo={fileInfo} />
+                                                        <Box w={'100%'}>
+                                                            <Collapsible.Root open={showMoreDetails}>
+                                                                <Collapsible.Trigger w="100%" py={'md'} onClick={() => setShowMoreDetails(open => !open)} cursor={'pointer'}>
+                                                                    <Alert w={'100%'} status={"info"} textAlign={'start'} title={showMoreDetails ? `Show less Details` : `Show more Details`} icon={showMoreDetails ? <LuChevronUp /> : <LuChevronDown />} />
+                                                                </Collapsible.Trigger>
+                                                                <Collapsible.Content py={'4'}>
+                                                                    <ChainDetails session={session} fileInfo={fileInfo} callBack={updateVerificationStatus} />
+                                                                </Collapsible.Content>
+                                                            </Collapsible.Root>
+                                                        </Box>
+                                                        <Box minH={'400px'} />
+                                                    </VStack>
+                                                </Card.Body>
+                                            </Card.Root>
+                                        </GridItem>
+                                    </SimpleGrid>
+                                </Box>
 
-                                    <RevisionDetailsSummary fileInfo={fileInfo} />
-                                    <Box w={'100%'}>
-                                        <Collapsible.Root open={showMoreDetails}>
-                                            <Collapsible.Trigger w="100%" py={'md'} onClick={() => setShowMoreDetails(open => !open)} cursor={'pointer'}>
-                                                <Alert w={'100%'} status={"info"} textAlign={'start'} title={showMoreDetails ? `Show less Details` : `Show more Details`} icon={showMoreDetails ? <LuChevronUp /> : <LuChevronDown />} />
-                                            </Collapsible.Trigger>
-                                            <Collapsible.Content py={'4'}>
-                                                <ChainDetails session={session} fileInfo={fileInfo} callBack={updateVerificationStatus} />
-                                            </Collapsible.Content>
-                                        </Collapsible.Root>
-                                    </Box>
-                                    <Box minH={'400px'} />
-                                </VStack>
-                            </Card.Body>
-                        </Card.Root>
+                            </DrawerBody>
+                            <DrawerFooter flexWrap={'wrap'}>
+                                <DrawerActionTrigger asChild>
+                                    <Button variant="outline" size={'sm'}>Close</Button>
+                                </DrawerActionTrigger>
+                                <DownloadAquaChain file={fileInfo} />
+                                <WitnessAquaChain apiFileInfo={fileInfo} backendUrl={backend_url} nonce={session?.nonce ?? ""} revision="" />
+                                <SignAquaChain apiFileInfo={fileInfo} backendUrl={backend_url} nonce={session?.nonce ?? ""} revision="" />
+                                <DeleteAquaChain apiFileInfo={fileInfo} backendUrl={backend_url} nonce={session?.nonce ?? ""} revision="" />
 
-                    </DrawerBody>
-                    <DrawerFooter flexWrap={'wrap'}>
-                        <DrawerActionTrigger asChild>
-                            <Button variant="outline" size={'sm'}>Close</Button>
-                        </DrawerActionTrigger>
-                        <DownloadAquaChain file={fileInfo} />
-                        <WitnessAquaChain apiFileInfo={fileInfo} backendUrl={backend_url} nonce={session?.nonce ?? ""} revision="" />
-                        <SignAquaChain apiFileInfo={fileInfo} backendUrl={backend_url} nonce={session?.nonce ?? ""} revision="" />
-                        <DeleteAquaChain apiFileInfo={fileInfo} backendUrl={backend_url} nonce={session?.nonce ?? ""} revision="" />
-
-                        {/* <WitnessAquaChain backend_url={backend_url} file_id={fileInfo.id} filename={fileName} lastRevisionVerificationHash={lastVerificationHash ?? ""} />
+                                {/* <WitnessAquaChain backend_url={backend_url} file_id={fileInfo.id} filename={fileName} lastRevisionVerificationHash={lastVerificationHash ?? ""} />
                         <SignAquaChain backend_url={backend_url} file_id={fileInfo.id} filename={fileName} lastRevisionVerificationHash={lastVerificationHash ?? ""} />
                         <DeleteAquaChain backend_url={backend_url} file_id={fileInfo.id} filename={fileName} /> */}
-                    </DrawerFooter>
-                    <DrawerCloseTrigger />
-                </DrawerContent>
+                            </DrawerFooter>
+                            <DrawerCloseTrigger />
+                        </DrawerContent>
+                    </Drawer.Positioner>
+                </Portal>
             </DrawerRoot>
 
         </>

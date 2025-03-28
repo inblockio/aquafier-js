@@ -189,7 +189,68 @@ const DeleteFiles = () => {
     }
 
     return (
-        <Button loading={deleting} colorPalette={'red'} borderRadius={'md'} variant={'subtle'} onClick={deleteFile}>Delete all Data</Button>
+        <Button loading={deleting} colorPalette={'red'} borderRadius={'md'} variant={'subtle'} onClick={deleteFile}>Delete all Files</Button>
+    )
+}
+
+const DeleteUserData = () => {
+    const [deleting, setDeleting] = useState(false)
+    const { setUserProfile, setFiles, setSession, setMetamaskAddress, setAvatar, backend_url, session } = useStore(appStore)
+
+    const deleteUserData = async () => {
+        try {
+            if (!session?.nonce) {
+                toaster.create({
+                    description: "You must be logged in to clear user data",
+                    type: "error"
+                })
+                return
+            }
+
+            setDeleting(true)
+            const url = `${backend_url}/user_data`;
+            const response = await axios.delete(url, {
+                headers: {
+                    'nonce': session.nonce
+                }
+            });
+
+            if (response.status === 200) {
+                // Clear local state
+                setUserProfile({
+                    user_pub_key: "",
+                    cli_pub_key: "",
+                    cli_priv_key: "",
+                    witness_network: "",
+                    theme: "light",
+                    witness_contract_address: '0x45f59310ADD88E6d23ca58A0Fa7A55BEE6d2a611',
+                })
+                setFiles([])
+                setSession(null)
+                setMetamaskAddress(null)
+                setAvatar(undefined)
+                
+                // Remove cookie
+                document.cookie = "pkc_nonce=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;"
+                
+                toaster.create({
+                    description: "User data cleared successfully. You have been logged out.",
+                    type: "success"
+                })
+            }
+            setDeleting(false)
+        }
+        catch (e: any) {
+            toaster.create({
+                description: `Failed to clear user data: ${e instanceof Error ? e.message : String(e)}`,
+                type: "error"
+            })
+            setDeleting(false)
+        }
+    }
+
+    return (
+        <Button loading={deleting} colorPalette={'red'} borderRadius={'md'} variant={'outline'} onClick={deleteUserData}>Clear Account Data</Button>
     )
 }
 
@@ -223,7 +284,10 @@ const Settings = () => {
                     </DialogBody>
                     <DialogFooter>
                         <HStack w={'100%'} justifyContent={'space-between'}>
-                            <DeleteFiles />
+                            <VStack alignItems={'flex-start'} gap={2}>
+                                <DeleteFiles />
+                                <DeleteUserData />
+                            </VStack>
                             <HStack>
                                 <DialogActionTrigger asChild>
                                     <Button variant="outline">Cancel</Button>
