@@ -144,6 +144,11 @@ export default function ConnectWallet() {
         }
       }
     } else {
+      if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
+        if (!window.ethereum) {
+          window.location.href = "metamask://dapp/https://aquafier.inblock.io/";
+        }
+      }
       alert("MetaMask is not installed");
     }
   };

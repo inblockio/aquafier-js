@@ -20,11 +20,10 @@ services:
       retries: 5
 
   aqua-container:
-# only for dev
-    build:
-      context: .
-      dockerfile: actionfiles/aquafier-ts/dockerfile/Dockerfile
-    image: ghcr.io/inblockio/aquafier-js:master
+#    build:
+#      context: .
+#      dockerfile: actionfiles/aquafier-ts/dockerfile/Dockerfile
+    image: ghcr.io/inblockio/aquafier-js:main
 #    only for dev
     ports:
      - 3000:3000
