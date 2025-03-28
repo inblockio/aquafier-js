@@ -232,7 +232,7 @@ const FilePreview: React.FC<IFilePreview> = ({ fileInfo }) => {
                     actualUrlToFetch = actualUrlToFetch.replace("http", "https")
                 }
 
-                const response = await fetch(fileContentUrl, {
+                const response = await fetch(actualUrlToFetch, {
                     headers: {
                         nonce: `${session?.nonce}`
                     }
@@ -241,42 +241,77 @@ const FilePreview: React.FC<IFilePreview> = ({ fileInfo }) => {
 
                 // Get MIME type from headers
                 let contentType = response.headers.get("Content-Type") || "";
+                console.log("Original Content-Type from headers:", contentType);
 
-                // Clone the response so we can use it twice
+                // Clone the response for potential text extraction
                 const responseClone = response.clone();
-
-                // Convert to Blob
-                const blob = await response.blob();
-
-                // If it's octet-stream or unknown, try to detect from content
+                
+                // Get the raw data as ArrayBuffer first
+                const arrayBuffer = await response.arrayBuffer();
+                console.log("ArrayBuffer size:", arrayBuffer.byteLength);
+                
+                // If content type is missing or generic, try to detect it
                 if (contentType === "application/octet-stream" || contentType === "") {
-                    const arrayBuffer = await blob.arrayBuffer();
                     const uint8Array = new Uint8Array(arrayBuffer);
                     contentType = detectFileType(uint8Array);
-
-                    // If detected as text, read the text content
-                    if (contentType === "text/plain") {
-                        try {
-                            const text = await responseClone.text();
-                            setTextContent(text);
-                        } catch (error) {
-                            console.error("Error reading text content:", error);
-                        }
+                    console.log("Detected file type:", contentType);
+                }
+                
+                // For PDF files, ensure proper content type
+                if (contentType === "application/pdf" || 
+                    (fileInfo.fileName && fileInfo.fileName.toLowerCase().endsWith(".pdf"))) {
+                    contentType = "application/pdf";
+                }
+                
+                // Handle audio files
+                if (contentType.startsWith("audio/") || 
+                    (fileInfo.fileName && (/\.(mp3|wav|ogg|aac|flac|m4a)$/i).test(fileInfo.fileName))) {
+                    if (!contentType.startsWith("audio/")) {
+                        // Set a default audio MIME type if needed
+                        contentType = "audio/mpeg";
                     }
-                } else if (contentType === "text/plain") {
-                    // If already identified as text, read the text content
+                }
+                
+                // Handle video files
+                if (contentType.startsWith("video/") || 
+                    (fileInfo.fileName && (/\.(mp4|webm|ogg|mov|avi|wmv|flv|mkv)$/i).test(fileInfo.fileName))) {
+                    if (!contentType.startsWith("video/")) {
+                        // Set a default video MIME type if needed
+                        contentType = "video/mp4";
+                    }
+                }
+                
+                // Handle text-based content types
+                if (contentType.startsWith("text/") || 
+                    contentType === "application/json" ||
+                    contentType === "application/xml" ||
+                    contentType === "application/javascript") {
                     try {
                         const text = await responseClone.text();
                         setTextContent(text);
                     } catch (error) {
                         console.error("Error reading text content:", error);
+                        // Try decoding the array buffer as UTF-8 text as fallback
+                        try {
+                            const decoder = new TextDecoder("utf-8");
+                            const text = decoder.decode(arrayBuffer);
+                            setTextContent(text);
+                        } catch (decodeError) {
+                            console.error("Error decoding text content:", decodeError);
+                        }
                     }
                 }
-
+                
+                // Create a proper blob with the correct content type
+                const blob = new Blob([arrayBuffer], { type: contentType });
+                console.log("Created blob with type:", contentType, "size:", blob.size);
+                
                 setFileType(contentType);
-
-                // Create URL
+                console.log("Final content type set to:", contentType);
+                
+                // Create URL from the properly typed blob
                 const objectURL = URL.createObjectURL(blob);
+                console.log("Object URL created:", objectURL);
                 setFileURL(objectURL);
             } catch (error) {
                 console.error("Error fetching file:", error);
@@ -294,27 +329,41 @@ const FilePreview: React.FC<IFilePreview> = ({ fileInfo }) => {
 
     if (isLoading) return <p>Loading...</p>;
 
+    console.log("Rendering file with type:", fileType);
+    
     // Render based on file type
     if (fileType.startsWith("image/")) {
-        return <img src={fileURL} alt="Fetched file" className="max-w-full h-auto" />;
+        return <img src={fileURL} alt="Fetched file" style={{ maxWidth: "100%", height: "auto" }} />;
     }
 
     if (fileType === "application/pdf") {
         return (
-            <iframe
-                src={fileURL}
+            <object
+                data={fileURL}
+                type="application/pdf"
                 width="100%"
                 height="600px"
-                title="PDF Viewer"
-            ></iframe>
+                style={{ border: "none" }}
+            >
+                <p>Unable to display PDF file. <a href={fileURL} target="_blank" rel="noopener noreferrer">Download</a> instead.</p>
+            </object>
         );
     }
 
-    if (fileType === "text/plain") {
+    if (fileType.startsWith("text/") || 
+        fileType === "application/json" || 
+        fileType === "application/xml" || 
+        fileType === "application/javascript") {
         return (
             <div style={{
                 whiteSpace: "pre-wrap",  // Preserves spaces and line breaks
-                wordBreak: "break-word"   // Prevents overflow on long words
+                wordBreak: "break-word",  // Prevents overflow on long words
+                fontFamily: "monospace",
+                padding: "10px",
+                border: "1px solid #ccc",
+                borderRadius: "4px",
+                maxHeight: "600px",
+                overflow: "auto"
             }}>
                 {textContent}
             </div>
@@ -323,19 +372,33 @@ const FilePreview: React.FC<IFilePreview> = ({ fileInfo }) => {
 
     if (fileType.startsWith("audio/")) {
         return (
-            <audio controls className="w-full">
-                <source src={fileURL} type={fileType} />
-                Your browser does not support the audio element.
-            </audio>
+            <div>
+                <audio controls style={{ width: "100%" }}>
+                    <source src={fileURL} type={fileType} />
+                    Your browser does not support the audio element.
+                </audio>
+                <div style={{ marginTop: "10px" }}>
+                    <a href={fileURL} download={fileInfo.fileName || "audio"} style={{ color: "blue", textDecoration: "underline" }}>
+                        Download audio file
+                    </a>
+                </div>
+            </div>
         );
     }
 
     if (fileType.startsWith("video/")) {
         return (
-            <video controls className="max-w-full h-auto">
-                <source src={fileURL} type={fileType} />
-                Your browser does not support the video element.
-            </video>
+            <div>
+                <video controls style={{ maxWidth: "100%", height: "auto", backgroundColor: "#000" }}>
+                    <source src={fileURL} type={fileType} />
+                    Your browser does not support the video element.
+                </video>
+                <div style={{ marginTop: "10px" }}>
+                    <a href={fileURL} download={fileInfo.fileName || "video"} style={{ color: "blue", textDecoration: "underline" }}>
+                        Download video file
+                    </a>
+                </div>
+            </div>
         );
     }
 
