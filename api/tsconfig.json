@@ -1,8 +1,8 @@
 {
   "compilerOptions": {
-    "target": "ES2020",
+    "target": "ES2022",
     "module": "ESNext",
-    "moduleResolution": "node",
+    "moduleResolution": "Node",
     "baseUrl": ".",
     "paths": {
       "@/*": [
@@ -16,9 +16,7 @@
     "resolveJsonModule": true,
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
-    "noEmit": false,
-    
-    
+    "noEmit": false
   },
   "ts-node": {
     "esm": true,
