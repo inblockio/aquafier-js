@@ -32,11 +32,11 @@ RUN mkdir -p /app/backend /app/frontend /app/data
 
 COPY api/prisma /app/backend/prisma
 
-# Install Prisma CLI globally
-RUN npm install -g prisma
-
 #we need prisma migration
 WORKDIR /app/backend
+
+# Install Prisma CLI globally
+RUN npm install -g prisma
 
 # Generate Prisma client
 RUN prisma generate
@@ -51,7 +51,6 @@ COPY --from=builder_npm_api /build/api/package.json /app/backend/package.json
 COPY --from=builder_npm_api /build/api/package-lock.json /app/backend/package-lock.json
 
 # Install backend dependencies
-WORKDIR /app/backend
 RUN npm ci --only=production
 
 # Copy startup script

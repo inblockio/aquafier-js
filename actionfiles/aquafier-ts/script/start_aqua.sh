@@ -39,7 +39,7 @@ unset PGPASSWORD
 
 # Run Prisma migrations
 cd /app/backend
-prisma migrate deploy || {
+npx prisma migrate dev --name init || {
   echo "ERROR: Prisma migration failed"
   exit 1
 }
