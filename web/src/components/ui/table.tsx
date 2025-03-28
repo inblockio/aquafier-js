@@ -68,15 +68,18 @@ const FilesTable = () => {
             </Table.Cell>
             <Table.Cell minW={'220px'} maxW={'220px'} textWrap={'wrap'}>
                 <Group alignItems={'start'} flexWrap={'wrap'}>
-                    <ShareButton nonce={session?.nonce ?? ""} item={item} />
-                    <LinkButton item={item} nonce={session?.nonce ?? ""}   />
-                    <DownloadAquaChain file={item} />
-                    <ChainDetailsBtn fileInfo={item} session={session!!} callBack={()=>{
+                   
+                <ChainDetailsBtn fileInfo={item} session={session!!} callBack={()=>{
                         console.log("Details callback")
                     }} />
-                    <WitnessAquaChain apiFileInfo={item} backendUrl={backend_url} nonce={session?.nonce ?? ""} revision="" />
                     <SignAquaChain apiFileInfo={item} backendUrl={backend_url} nonce={session?.nonce ?? ""} revision="" />
+                    <WitnessAquaChain apiFileInfo={item} backendUrl={backend_url} nonce={session?.nonce ?? ""} revision="" />
+                    <LinkButton item={item} nonce={session?.nonce ?? ""}   />
+
+                    <ShareButton nonce={session?.nonce ?? ""} item={item} />
                     <DeleteAquaChain apiFileInfo={item} backendUrl={backend_url} nonce={session?.nonce ?? ""} revision="" />
+                    <DownloadAquaChain file={item} />
+                   
                 </Group>
             </Table.Cell>
         </Table.Row>
@@ -89,13 +92,13 @@ const FilesTable = () => {
             <VStack textAlign={'start'}>
                 <Text textAlign={'start'} w={'100%'}>{item.fileObject[0].fileName}</Text>
                 <Group alignItems={'start'} flexWrap={'wrap'}>
-                    <ShareButton item={item} nonce={session?.nonce ?? ""} />
-                    <LinkButton item={item} nonce={session?.nonce ?? ""}  />
-                    <DownloadAquaChain file={item} />
                     <ChainDetailsBtn fileInfo={item} session={session!} callBack={(_res, _revisionCount) => { }} />
-                    <WitnessAquaChain apiFileInfo={item} backendUrl={backend_url} nonce={session?.nonce ?? ""} revision="" />
                     <SignAquaChain apiFileInfo={item} backendUrl={backend_url} nonce={session?.nonce ?? ""} revision="" />
+                    <WitnessAquaChain apiFileInfo={item} backendUrl={backend_url} nonce={session?.nonce ?? ""} revision="" />
+                    <LinkButton item={item} nonce={session?.nonce ?? ""}  />
+                    <ShareButton item={item} nonce={session?.nonce ?? ""} />
                     <DeleteAquaChain apiFileInfo={item} backendUrl={backend_url} nonce={session?.nonce ?? ""} revision="" />
+                    <DownloadAquaChain file={item} />
                 </Group>
             </VStack>
         </Box>
