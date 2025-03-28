@@ -14,7 +14,7 @@ const Home = () => {
                 session ? (
                     <Container fluid maxWidth={{ base: 'vw', md: '10/12' }} py={'14'} px={{ base: 1, md: 10 }}>
                         <VStack alignItems={'start'} gap={'10'}>
-                            <FileUploadRoot borderRadius={'2xl'} alignItems="stretch" maxFiles={10} cursor={'pointer'} >
+                            <FileUploadRoot borderRadius={'2xl'} alignItems="stretch" maxFiles={10} cursor={'pointer'}>
                                 <FileUploadDropzone
                                     borderRadius={'2xl'}
                                     label="Drag and drop here to upload"
@@ -23,6 +23,7 @@ const Home = () => {
                                         outline: "4px dashed",
                                         outlineOffset: '4px'
                                     }}
+                                    maxHeight={{base: "100px", md: "200px"}}
                                 />
                                 {/* 
                             I have set clearable to false since when selecting new files. 

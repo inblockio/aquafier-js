@@ -223,7 +223,16 @@ const FilePreview: React.FC<IFilePreview> = ({ fileInfo }) => {
         const fetchFile = async () => {
             setIsLoading(true);
             try {
-                const response = await fetch(fileInfo.fileContent as string, {
+                const fileContentUrl: string = fileInfo.fileContent as string
+                console.log("File content url: ", fileContentUrl)
+
+                let actualUrlToFetch = fileContentUrl
+
+                if(actualUrlToFetch.includes("inblock.io") && !actualUrlToFetch.includes("https")){
+                    actualUrlToFetch = actualUrlToFetch.replace("http", "https")
+                }
+
+                const response = await fetch(fileContentUrl, {
                     headers: {
                         nonce: `${session?.nonce}`
                     }

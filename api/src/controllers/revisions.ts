@@ -28,7 +28,7 @@ export default async function revisionsController(fastify: FastifyInstance) {
         }
 
         // traverse from the latest to the genesis of each 
-       //  console.log(`data ${JSON.stringify(latestRevisionHash, null, 4)}`)
+        //  console.log(`data ${JSON.stringify(latestRevisionHash, null, 4)}`)
 
 
         let displayData: Array<{
@@ -42,9 +42,24 @@ export default async function revisionsController(fastify: FastifyInstance) {
 
         // Get the protocol (http or https)
         const protocol = request.protocol || 'https'
-
+        // if(backendurl)
         // Construct the full URL
         const url = `${protocol}://${host}`;
+
+        // // Get the host from the request headers, with more robust fallback
+        // const host = request.headers.host ||
+        //     request.headers['x-forwarded-host'] ||
+        //     `${getHost()}:${getPort()}`;
+
+        // // Get the protocol with more robust detection
+        // const protocol = Array.isArray(request.headers['x-forwarded-proto']) 
+        //     ? request.headers['x-forwarded-proto'][0] 
+        //     : (request.headers['x-forwarded-proto'] as string | undefined) ||
+        //       request.protocol ||
+        //       'https';  // Default to https
+
+        // // Construct the full URL
+        // const url = `${protocol}://${host}`;
 
         try {
 
@@ -217,7 +232,7 @@ export default async function revisionsController(fastify: FastifyInstance) {
 
             if (revisionData.revision.revision_type == "witness") {
 
-              
+
 
                 // const witnessTimestamp = new Date();
                 await prisma.witnessEvent.create({
@@ -251,15 +266,15 @@ export default async function revisionsController(fastify: FastifyInstance) {
             }
 
 
-            if (revisionData.revision.revision_type == "link"){
+            if (revisionData.revision.revision_type == "link") {
                 await prisma.link.create({
                     data: {
                         hash: filePubKeyHash,
-                        link_type        :                   "aqua",
-                        link_require_indepth_verification :   false,
-                        link_verification_hashes    :           revisionData.revision.link_verification_hashes,
-                        link_file_hashes : revisionData.revision.link_file_hashes,
-                        reference_count    :                  0
+                        link_type: "aqua",
+                        link_require_indepth_verification: false,
+                        link_verification_hashes: revisionData.revision.link_verification_hashes,
+                        link_file_hashes: revisionData.revision.link_file_hashes,
+                        reference_count: 0
                     }
                 })
             }
