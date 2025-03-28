@@ -30,7 +30,7 @@ EXPOSE 3600
 # Create necessary directories
 RUN mkdir -p /app/backend /app/frontend /app/data
 
-COPY api/prisma /app/backend
+COPY api/prisma /app/backend/prisma
 
 # Install Prisma CLI globally
 RUN npm install -g prisma
