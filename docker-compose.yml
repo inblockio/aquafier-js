@@ -68,19 +68,19 @@ services:
       - /var/run/docker.sock:/tmp/docker.sock
     restart: unless-stopped
 
-  # letsencrypt:
-  #   image: nginxproxy/acme-companion:latest
-  #   container_name: proxy_server_letsencrypt_1
-  #   depends_on:
-  #     - proxy
-  #   volumes:
-  #     - proxy_data_acme:/etc/acme.sh
-  #     - proxy_data_conf_d:/etc/nginx/conf.d
-  #     - proxy_data_vhost_d:/etc/nginx/vhost.d
-  #     - proxy_data_html:/usr/share/nginx/html
-  #     - proxy_data_certs:/etc/nginx/certs
-  #     - /var/run/docker.sock:/var/run/docker.sock
-  #   restart: unless-stopped
+  letsencrypt:
+    image: nginxproxy/acme-companion:latest
+    container_name: proxy_server_letsencrypt_1
+    depends_on:
+      - proxy
+    volumes:
+      - proxy_data_acme:/etc/acme.sh
+      - proxy_data_conf_d:/etc/nginx/conf.d
+      - proxy_data_vhost_d:/etc/nginx/vhost.d
+      - proxy_data_html:/usr/share/nginx/html
+      - proxy_data_certs:/etc/nginx/certs
+      - /var/run/docker.sock:/var/run/docker.sock
+    restart: unless-stopped
 
 volumes:
   app_data:

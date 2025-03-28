@@ -46,7 +46,13 @@ RUN npm install -g serve
 
 # Copy frontend and backend build artifacts
 COPY --from=builder_npm_web /build/web/dist /app/frontend
-COPY --from=builder_npm_api /build/api/dist /app/backend
+COPY --from=builder_npm_api /build/api/dist /app/backend/dist
+COPY --from=builder_npm_api /build/api/package.json /app/backend/package.json
+COPY --from=builder_npm_api /build/api/package-lock.json /app/backend/package-lock.json
+
+# Install backend dependencies
+WORKDIR /app/backend
+RUN npm ci --only=production
 
 # Copy startup script
 COPY actionfiles/aquafier-ts/script/start_aqua.sh /app/start_aqua.sh
