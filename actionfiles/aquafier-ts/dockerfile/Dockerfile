@@ -16,12 +16,6 @@ RUN npm ci
 # Compile TypeScript to JavaScript
 RUN npm run build
 
-# Install Prisma CLI globally
-RUN npm install -g prisma
-
-# Generate Prisma client
-RUN prisma generate
-
 FROM node:18
 
 # Install system dependencies
@@ -35,6 +29,17 @@ EXPOSE 3600
 
 # Create necessary directories
 RUN mkdir -p /app/backend /app/frontend /app/data
+
+COPY api/prisma /app/backend/prisma
+
+# Install Prisma CLI globally
+RUN npm install -g prisma
+
+#we need prisma migration
+WORKDIR /app/backend
+
+# Generate Prisma client
+RUN prisma generate
 
 # Install serve for frontend
 RUN npm install -g serve
