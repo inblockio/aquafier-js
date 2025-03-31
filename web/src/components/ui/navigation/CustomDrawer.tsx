@@ -3,7 +3,6 @@ import {
     DrawerActionTrigger,
     DrawerBackdrop,
     DrawerBody,
-    DrawerCloseTrigger,
     DrawerContent,
     DrawerFooter,
     DrawerRoot,
@@ -12,7 +11,7 @@ import {
 } from "../drawer"
 import { Button } from "../button"
 import { LuCheck, LuChevronDown, LuChevronUp, LuExternalLink, LuEye, LuX } from "react-icons/lu"
-import { Box, Card, Collapsible, Drawer, DrawerHeader, For, GridItem, Group, Icon, IconButton, Link, Portal, SimpleGrid, Span, Text, VStack } from "@chakra-ui/react"
+import { Box, Card, Collapsible, Drawer,  For, GridItem, Group, Icon, IconButton, Link, Portal, SimpleGrid, Span, Text, VStack } from "@chakra-ui/react"
 import { TimelineConnector, TimelineContent, TimelineDescription, TimelineItem, TimelineRoot, TimelineTitle } from "../timeline"
 import { displayTime, formatCryptoAddress, fetchLinkedFileName } from "../../../utils/functions"
 import { Alert } from "../alert"
@@ -26,7 +25,6 @@ import FilePreview from "../../FilePreview"
 import { useStore } from "zustand"
 import appStore from "../../../store"
 import { AquaTreeDetails } from "../../../models/AquaTreeDetails"
-import { CloseButton } from "../close-button"
 
 
 interface IItemDetail {

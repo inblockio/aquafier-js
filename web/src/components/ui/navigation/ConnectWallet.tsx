@@ -117,7 +117,7 @@ export default function ConnectWallet() {
           setLoading(false);
           setMessage(null);
         }, 2000);
-      } catch (error) {
+      } catch (error : any) {
         if (error.toString().includes("4001")) {
           setConnectionState("error");
           setLoading(false);
