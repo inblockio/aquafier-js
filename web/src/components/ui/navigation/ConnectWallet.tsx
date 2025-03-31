@@ -55,139 +55,253 @@ export default function ConnectWallet() {
   const signAndConnect = async () => {
     console.log("Connecting");
 
-    // Check if on mobile device
     const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
 
-    // If MetaMask is available, proceed with connection
-    if (window.ethereum) {
-      setLoading(true);
-      setConnectionState("connecting");
-      const provider = new BrowserProvider(window.ethereum);
-      try {
-        // Connect wallet
-        await window.ethereum.request({ method: "eth_requestAccounts" });
-        const signer = await provider.getSigner();
+    // Function to check if MetaMask is installed
+    const isMetaMaskInstalled = () => !!window.ethereum;
 
-        // Create a SIWE msg for signing
-        const domain = window.location.host;
-        const message = createSiweMessage(signer.address, "Sign in with Ethereum to the app.");
-
-        const signature = await signer.signMessage(message);
-
-        const url = `${backend_url}/session`;
-        const response = await axios.post(url, {
-          "message": message,
-          "signature": signature,
-          "domain": domain
-        });
-
-        if (response.status === 200 || response.status === 201) {
-          const responseData = response.data;
-          const walletAddress = ethers.getAddress(responseData?.session?.address);
-          setMetamaskAddress(walletAddress);
-          const avatar = generateAvatar(walletAddress);
-          setAvatar(avatar);
-          const expirationDate = new Date(responseData?.session?.expiration_time);
-          setCookie(SESSION_COOKIE_NAME, `${responseData.session.nonce}`, expirationDate);
-          setConnectionState("success");
-
-          setUserProfile({
-            ...response.data.user_settings,
-          });
-
-          setSession({
-            ...response.data.session
-          });
-
-          const url = `${backend_url}/explorer_files`;
-          const files = await fetchFiles(walletAddress, url, responseData.session.nonce);
-          setFiles(files);
-        }
-
-        setLoading(false);
-        setMessage(null);
-        toaster.create({
-          description: "Sign In successful",
-          type: "success",
-        });
-
-        setTimeout(() => {
-          setIsOpen(false);
-          resetState();
-          setLoading(false);
-          setMessage(null);
-        }, 2000);
-      } catch (error : any) {
-        if (error.toString().includes("4001")) {
-          setConnectionState("error");
-          setLoading(false);
-          setMessage("You have rejected signing the message.");
-        } else {
-          setConnectionState("error");
-          setLoading(false);
-          setMessage("An error occurred while connecting.");
-        }
-      }
-    } else {
-      // MetaMask is not installed
-      if (isMobile) {
-        // // On mobile, try deep linking to MetaMask
-        // const currentUrl = encodeURIComponent(window.location.href);
-
-        // // Universal link pattern for MetaMask
-        // const metamaskDeepLink = `https://metamask.app.link/dapp/${domain}${window.location.pathname}`;
-
-        // // Alternative formats for different devices
-        // const metamaskAppLink = `metamask://dapp/${domain}${window.location.pathname}`;
-
-        // On mobile, try deep linking to MetaMask
-        const currentDomain = window.location.host;
-        const currentPath = window.location.pathname;
-
-        // Universal link pattern for MetaMask
-        const metamaskDeepLink = `https://metamask.app.link/dapp/${currentDomain}${currentPath}`;
-
-        // Alternative formats for different devices
-        const metamaskAppLink = `metamask://dapp/${currentDomain}${currentPath}`;
-
+    if (isMetaMaskInstalled()) {
+        setLoading(true);
+        setConnectionState("connecting");
+        const provider = new BrowserProvider(window.ethereum);
 
         try {
-          // Try the primary deep link first
-          window.location.href = metamaskDeepLink;
+            // Request connection
+            await window.ethereum.request({ method: "eth_requestAccounts" });
+            const signer = await provider.getSigner();
 
-          // Set a timeout to try the alternative link if the first one doesn't work
-          setTimeout(() => {
-            // If we're still here after a brief delay, try the alternative format
-            window.location.href = metamaskAppLink;
+            // Generate SIWE message
+            const domain = window.location.host;
+            const message = createSiweMessage(signer.address, "Sign in with Ethereum to the app.");
+            const signature = await signer.signMessage(message);
 
-            // Finally, if deep linking fails, offer to download MetaMask
+            // Send session request
+            const response = await axios.post(`${backend_url}/session`, {
+                message,
+                signature,
+                domain
+            });
+
+            if (response.status === 200 || response.status === 201) {
+                const responseData = response.data;
+                const walletAddress = ethers.getAddress(responseData?.session?.address);
+                setMetamaskAddress(walletAddress);
+                setAvatar(generateAvatar(walletAddress));
+
+                setCookie(SESSION_COOKIE_NAME, `${responseData.session.nonce}`, 
+                          new Date(responseData?.session?.expiration_time));
+                
+                setConnectionState("success");
+                setUserProfile({ ...response.data.user_settings });
+                setSession({ ...response.data.session });
+
+                const files = await fetchFiles(walletAddress, `${backend_url}/explorer_files`, responseData.session.nonce);
+                setFiles(files);
+            }
+
+            setLoading(false);
+            setMessage(null);
+            toaster.create({
+                description: "Sign In successful",
+                type: "success",
+            });
+
             setTimeout(() => {
-              if (!window.ethereum) {
+                setIsOpen(false);
+                resetState();
+                setLoading(false);
+                setMessage(null);
+            }, 2000);
+        } catch (error: any) {
+            console.error("Error connecting:", error);
+            setConnectionState("error");
+            setLoading(false);
+            setMessage(error.toString().includes("4001") ? 
+                "You have rejected signing the message." : 
+                "An error occurred while connecting.");
+        }
+    } else {
+        // Handle mobile deep linking if MetaMask is not installed
+        if (isMobile) {
+            const currentDomain = window.location.host;
+            const currentPath = window.location.pathname;
+
+            const metamaskDeepLink = `https://metamask.app.link/dapp/${currentDomain}${currentPath}`;
+            const metamaskAppLink = `metamask://dapp/${currentDomain}${currentPath}`;
+
+            try {
+                // Open MetaMask deep link in a new tab
+                window.open(metamaskDeepLink, "_self");
+
+                // If MetaMask doesn't open, fall back to alternative link
+                setTimeout(() => {
+                    window.open(metamaskAppLink, "_self");
+                    
+                    // If still no response, redirect to MetaMask download page
+                    setTimeout(() => {
+                        if (!isMetaMaskInstalled()) {
+                            toaster.create({
+                                description: "MetaMask is not installed. Redirecting to download page.",
+                                type: "info",
+                            });
+                            window.location.href = "https://metamask.io/download/";
+                        }
+                    }, 2000);
+                }, 1000);
+            } catch (e) {
+                console.error("Deep link error:", e);
                 toaster.create({
-                  description: "MetaMask is not installed. Redirecting to download page.",
-                  type: "info",
+                    description: "Failed to open MetaMask. You may need to install it first.",
+                    type: "error",
                 });
                 window.location.href = "https://metamask.io/download/";
-              }
-            }, 1500);
-          }, 1000);
-        } catch (e) {
-          // If there's an error with the deep link, redirect to MetaMask download
-          toaster.create({
-            description: "Failed to open MetaMask. You may need to install it first.",
-            type: "error",
-          });
-          window.location.href = "https://metamask.io/download/";
+            }
+        } else {
+            toaster.create({
+                description: "MetaMask is not installed. Please install it to connect.",
+                type: "error",
+            });
         }
-      } else {
-        // On desktop, show an alert or toast
-        toaster.create({
-          description: "MetaMask is not installed. Please install it to connect.",
-          type: "error",
-        });
-      }
     }
-  };
+};
+
+
+  // const signAndConnect = async () => {
+  //   console.log("Connecting");
+
+  //   // Check if on mobile device
+  //   const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+
+  //   // If MetaMask is available, proceed with connection
+  //   if (window.ethereum) {
+  //     setLoading(true);
+  //     setConnectionState("connecting");
+  //     const provider = new BrowserProvider(window.ethereum);
+  //     try {
+  //       // Connect wallet
+  //       await window.ethereum.request({ method: "eth_requestAccounts" });
+  //       const signer = await provider.getSigner();
+
+  //       // Create a SIWE msg for signing
+  //       const domain = window.location.host;
+  //       const message = createSiweMessage(signer.address, "Sign in with Ethereum to the app.");
+
+  //       const signature = await signer.signMessage(message);
+
+  //       const url = `${backend_url}/session`;
+  //       const response = await axios.post(url, {
+  //         "message": message,
+  //         "signature": signature,
+  //         "domain": domain
+  //       });
+
+  //       if (response.status === 200 || response.status === 201) {
+  //         const responseData = response.data;
+  //         const walletAddress = ethers.getAddress(responseData?.session?.address);
+  //         setMetamaskAddress(walletAddress);
+  //         const avatar = generateAvatar(walletAddress);
+  //         setAvatar(avatar);
+  //         const expirationDate = new Date(responseData?.session?.expiration_time);
+  //         setCookie(SESSION_COOKIE_NAME, `${responseData.session.nonce}`, expirationDate);
+  //         setConnectionState("success");
+
+  //         setUserProfile({
+  //           ...response.data.user_settings,
+  //         });
+
+  //         setSession({
+  //           ...response.data.session
+  //         });
+
+  //         const url = `${backend_url}/explorer_files`;
+  //         const files = await fetchFiles(walletAddress, url, responseData.session.nonce);
+  //         setFiles(files);
+  //       }
+
+  //       setLoading(false);
+  //       setMessage(null);
+  //       toaster.create({
+  //         description: "Sign In successful",
+  //         type: "success",
+  //       });
+
+  //       setTimeout(() => {
+  //         setIsOpen(false);
+  //         resetState();
+  //         setLoading(false);
+  //         setMessage(null);
+  //       }, 2000);
+  //     } catch (error : any) {
+  //       if (error.toString().includes("4001")) {
+  //         setConnectionState("error");
+  //         setLoading(false);
+  //         setMessage("You have rejected signing the message.");
+  //       } else {
+  //         setConnectionState("error");
+  //         setLoading(false);
+  //         setMessage("An error occurred while connecting.");
+  //       }
+  //     }
+  //   } else {
+  //     // MetaMask is not installed
+  //     if (isMobile) {
+  //       // // On mobile, try deep linking to MetaMask
+  //       // const currentUrl = encodeURIComponent(window.location.href);
+
+  //       // // Universal link pattern for MetaMask
+  //       // const metamaskDeepLink = `https://metamask.app.link/dapp/${domain}${window.location.pathname}`;
+
+  //       // // Alternative formats for different devices
+  //       // const metamaskAppLink = `metamask://dapp/${domain}${window.location.pathname}`;
+
+  //       // On mobile, try deep linking to MetaMask
+  //       const currentDomain = window.location.host;
+  //       const currentPath = window.location.pathname;
+
+  //       // Universal link pattern for MetaMask
+  //       const metamaskDeepLink = `https://metamask.app.link/dapp/${currentDomain}${currentPath}`;
+
+  //       // Alternative formats for different devices
+  //       const metamaskAppLink = `metamask://dapp/${currentDomain}${currentPath}`;
+
+
+  //       try {
+  //         // Try the primary deep link first
+  //         window.location.href = metamaskDeepLink;
+
+  //         // Set a timeout to try the alternative link if the first one doesn't work
+  //         setTimeout(() => {
+  //           // If we're still here after a brief delay, try the alternative format
+  //           window.location.href = metamaskAppLink;
+
+  //           // Finally, if deep linking fails, offer to download MetaMask
+  //           setTimeout(() => {
+  //             if (!window.ethereum) {
+  //               toaster.create({
+  //                 description: "MetaMask is not installed. Redirecting to download page.",
+  //                 type: "info",
+  //               });
+  //               window.location.href = "https://metamask.io/download/";
+  //             }
+  //           }, 1500);
+  //         }, 1000);
+  //       } catch (e) {
+  //         // If there's an error with the deep link, redirect to MetaMask download
+  //         toaster.create({
+  //           description: "Failed to open MetaMask. You may need to install it first.",
+  //           type: "error",
+  //         });
+  //         window.location.href = "https://metamask.io/download/";
+  //       }
+  //     } else {
+  //       // On desktop, show an alert or toast
+  //       toaster.create({
+  //         description: "MetaMask is not installed. Please install it to connect.",
+  //         type: "error",
+  //       });
+  //     }
+  //   }
+  // };
 
   // const signAndConnect = async () => {
   //   console.log("Connecting")
