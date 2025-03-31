@@ -63,11 +63,11 @@ export default function ConnectWallet() {
     if (isMetaMaskInstalled()) {
         setLoading(true);
         setConnectionState("connecting");
-        const provider = new BrowserProvider(window.ethereum);
+        const provider = new BrowserProvider(window.ethereum!);
 
         try {
             // Request connection
-            await window.ethereum.request({ method: "eth_requestAccounts" });
+            await window.ethereum!.request({ method: "eth_requestAccounts" });
             const signer = await provider.getSigner();
 
             // Generate SIWE message
