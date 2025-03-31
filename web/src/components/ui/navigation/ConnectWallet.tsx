@@ -4,7 +4,7 @@ import { DialogBody, DialogCloseTrigger, DialogContent, DialogHeader, DialogTitl
 import { Center, Dialog, Text, VStack } from "@chakra-ui/react";
 import { LuCircleCheck, LuCircleX, LuLogOut, LuWallet } from "react-icons/lu";
 import ReactLoading from "react-loading";
-import { fetchFiles, formatCryptoAddress, generateAvatar, getCookie,  setCookie } from "../../../utils/functions";
+import { fetchFiles, formatCryptoAddress, generateAvatar, getCookie, setCookie } from "../../../utils/functions";
 import { SiweMessage, generateNonce } from "siwe";
 import { SESSION_COOKIE_NAME } from "../../../utils/constants";
 import axios from "axios";
@@ -15,7 +15,7 @@ import { Avatar } from "../avatar";
 import { toaster } from "../toaster";
 
 export default function ConnectWallet() {
-  const {  setMetamaskAddress, session,  setFiles, avatar, setAvatar, setUserProfile, backend_url, setSession } = useStore(appStore);
+  const { setMetamaskAddress, session, setFiles, avatar, setAvatar, setUserProfile, backend_url, setSession } = useStore(appStore);
 
   const [isOpen, setIsOpen] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -53,7 +53,12 @@ export default function ConnectWallet() {
   }
 
   const signAndConnect = async () => {
-    console.log("Connecting")
+    console.log("Connecting");
+
+    // Check if on mobile device
+    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+
+    // If MetaMask is available, proceed with connection
     if (window.ethereum) {
       setLoading(true);
       setConnectionState("connecting");
@@ -68,21 +73,8 @@ export default function ConnectWallet() {
         const message = createSiweMessage(signer.address, "Sign in with Ethereum to the app.");
 
         const signature = await signer.signMessage(message);
-  
-        // const formData = new URLSearchParams();
-
-        // formData.append("message", message);
-        // formData.append("signature", remove0xPrefix(signature));
-        // formData.append("domain", domain);
 
         const url = `${backend_url}/session`;
-        ////  console.log("url is ", url);
-        // const response = await axios.post(url, formData, {
-        //   headers: {
-        //     "Content-Type": "application/x-www-form-urlencoded",
-        //   },
-        // });
-
         const response = await axios.post(url, {
           "message": message,
           "signature": signature,
@@ -90,51 +82,42 @@ export default function ConnectWallet() {
         });
 
         if (response.status === 200 || response.status === 201) {
-          // if (signature) {
-         //  console.log(response.data)
-            const responseData = response.data;
-            const walletAddress = ethers.getAddress(responseData?.session?.address);
-            setMetamaskAddress(walletAddress);
-            const avatar = generateAvatar(walletAddress);
-            setAvatar(avatar);
-            const expirationDate = new Date(responseData?.session?.expiration_time);
-            setCookie(SESSION_COOKIE_NAME, `${responseData.session.nonce}`, expirationDate);
-            setConnectionState("success");
+          const responseData = response.data;
+          const walletAddress = ethers.getAddress(responseData?.session?.address);
+          setMetamaskAddress(walletAddress);
+          const avatar = generateAvatar(walletAddress);
+          setAvatar(avatar);
+          const expirationDate = new Date(responseData?.session?.expiration_time);
+          setCookie(SESSION_COOKIE_NAME, `${responseData.session.nonce}`, expirationDate);
+          setConnectionState("success");
 
-            // network: response.data.user_profile.chain,
-            // domain: response.data.user_profile.domain_name,
-            // fileMode: response.data.user_profile.file_mode,
-            // contractAddress: response.data.user_profile.contract_address,
-            setUserProfile({
-              ...response.data.user_settings,
-            });
-            
-            setSession({
-              ...response.data.session
-            })
+          setUserProfile({
+            ...response.data.user_settings,
+          });
 
-            const url = `${backend_url}/explorer_files`;
-           //  console.log("url is ", url);
+          setSession({
+            ...response.data.session
+          });
 
-            const files = await fetchFiles(walletAddress, url,responseData.session.nonce );
-          
-           //  console.log(`Files ..........${files}`)
-            setFiles(files);
-          // }
+          const url = `${backend_url}/explorer_files`;
+          const files = await fetchFiles(walletAddress, url, responseData.session.nonce);
+          setFiles(files);
         }
+
         setLoading(false);
         setMessage(null);
         toaster.create({
           description: "Sign In successful",
           type: "success",
         });
+
         setTimeout(() => {
           setIsOpen(false);
           resetState();
           setLoading(false);
           setMessage(null);
         }, 2000);
-      } catch (error: any) {
+      } catch (error) {
         if (error.toString().includes("4001")) {
           setConnectionState("error");
           setLoading(false);
@@ -142,17 +125,171 @@ export default function ConnectWallet() {
         } else {
           setConnectionState("error");
           setLoading(false);
+          setMessage("An error occurred while connecting.");
         }
       }
     } else {
-      if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
-        if (!window.ethereum) {
-          window.location.href = "metamask://dapp/https://aquafier.inblock.io/";
+      // MetaMask is not installed
+      if (isMobile) {
+        // // On mobile, try deep linking to MetaMask
+        // const currentUrl = encodeURIComponent(window.location.href);
+
+        // // Universal link pattern for MetaMask
+        // const metamaskDeepLink = `https://metamask.app.link/dapp/${domain}${window.location.pathname}`;
+
+        // // Alternative formats for different devices
+        // const metamaskAppLink = `metamask://dapp/${domain}${window.location.pathname}`;
+
+        // On mobile, try deep linking to MetaMask
+        const currentDomain = window.location.host;
+        const currentPath = window.location.pathname;
+
+        // Universal link pattern for MetaMask
+        const metamaskDeepLink = `https://metamask.app.link/dapp/${currentDomain}${currentPath}`;
+
+        // Alternative formats for different devices
+        const metamaskAppLink = `metamask://dapp/${currentDomain}${currentPath}`;
+
+
+        try {
+          // Try the primary deep link first
+          window.location.href = metamaskDeepLink;
+
+          // Set a timeout to try the alternative link if the first one doesn't work
+          setTimeout(() => {
+            // If we're still here after a brief delay, try the alternative format
+            window.location.href = metamaskAppLink;
+
+            // Finally, if deep linking fails, offer to download MetaMask
+            setTimeout(() => {
+              if (!window.ethereum) {
+                toaster.create({
+                  description: "MetaMask is not installed. Redirecting to download page.",
+                  type: "info",
+                });
+                window.location.href = "https://metamask.io/download/";
+              }
+            }, 1500);
+          }, 1000);
+        } catch (e) {
+          // If there's an error with the deep link, redirect to MetaMask download
+          toaster.create({
+            description: "Failed to open MetaMask. You may need to install it first.",
+            type: "error",
+          });
+          window.location.href = "https://metamask.io/download/";
         }
+      } else {
+        // On desktop, show an alert or toast
+        toaster.create({
+          description: "MetaMask is not installed. Please install it to connect.",
+          type: "error",
+        });
       }
-      alert("MetaMask is not installed");
     }
   };
+
+  // const signAndConnect = async () => {
+  //   console.log("Connecting")
+  //   if (window.ethereum) {
+  //     setLoading(true);
+  //     setConnectionState("connecting");
+  //     const provider = new BrowserProvider(window.ethereum);
+  //     try {
+  //       // Connect wallet
+  //       await window.ethereum.request({ method: "eth_requestAccounts" });
+  //       const signer = await provider.getSigner();
+
+  //       // Create a SIWE msg for signing
+  //       const domain = window.location.host;
+  //       const message = createSiweMessage(signer.address, "Sign in with Ethereum to the app.");
+
+  //       const signature = await signer.signMessage(message);
+
+  //       // const formData = new URLSearchParams();
+
+  //       // formData.append("message", message);
+  //       // formData.append("signature", remove0xPrefix(signature));
+  //       // formData.append("domain", domain);
+
+  //       const url = `${backend_url}/session`;
+  //       ////  console.log("url is ", url);
+  //       // const response = await axios.post(url, formData, {
+  //       //   headers: {
+  //       //     "Content-Type": "application/x-www-form-urlencoded",
+  //       //   },
+  //       // });
+
+  //       const response = await axios.post(url, {
+  //         "message": message,
+  //         "signature": signature,
+  //         "domain": domain
+  //       });
+
+  //       if (response.status === 200 || response.status === 201) {
+  //         // if (signature) {
+  //        //  console.log(response.data)
+  //           const responseData = response.data;
+  //           const walletAddress = ethers.getAddress(responseData?.session?.address);
+  //           setMetamaskAddress(walletAddress);
+  //           const avatar = generateAvatar(walletAddress);
+  //           setAvatar(avatar);
+  //           const expirationDate = new Date(responseData?.session?.expiration_time);
+  //           setCookie(SESSION_COOKIE_NAME, `${responseData.session.nonce}`, expirationDate);
+  //           setConnectionState("success");
+
+  //           // network: response.data.user_profile.chain,
+  //           // domain: response.data.user_profile.domain_name,
+  //           // fileMode: response.data.user_profile.file_mode,
+  //           // contractAddress: response.data.user_profile.contract_address,
+  //           setUserProfile({
+  //             ...response.data.user_settings,
+  //           });
+
+  //           setSession({
+  //             ...response.data.session
+  //           })
+
+  //           const url = `${backend_url}/explorer_files`;
+  //          //  console.log("url is ", url);
+
+  //           const files = await fetchFiles(walletAddress, url,responseData.session.nonce );
+
+  //          //  console.log(`Files ..........${files}`)
+  //           setFiles(files);
+  //         // }
+  //       }
+  //       setLoading(false);
+  //       setMessage(null);
+  //       toaster.create({
+  //         description: "Sign In successful",
+  //         type: "success",
+  //       });
+  //       setTimeout(() => {
+  //         setIsOpen(false);
+  //         resetState();
+  //         setLoading(false);
+  //         setMessage(null);
+  //       }, 2000);
+  //     } catch (error: any) {
+  //       if (error.toString().includes("4001")) {
+  //         setConnectionState("error");
+  //         setLoading(false);
+  //         setMessage("You have rejected signing the message.");
+  //       } else {
+  //         setConnectionState("error");
+  //         setLoading(false);
+  //       }
+  //     }
+  //   } else {
+  //     if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
+  //       if (!window.ethereum) {
+  //         window.location.href = "metamask://dapp/https://aquafier.inblock.io/";
+  //       }
+  //     }
+  //     alert("MetaMask is not installed");
+  //   }
+  // };
 
   const signOut = () => {
     setLoading(true);
@@ -175,7 +312,7 @@ export default function ConnectWallet() {
       // formData.append("nonce", nonce);
 
       const url = `${backend_url}/siwe_logout`;
-     //  console.log("url is ", url);
+      //  console.log("url is ", url);
       const response = await axios.post(url, {
         "pkc_nonce": nonce
       });
