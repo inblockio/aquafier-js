@@ -41,7 +41,7 @@ export function setCookie(name: string, value: string, expirationTime: Date) {
     document.cookie = `${name}=${value}; expires=${expirationDate}; path=/; Secure; SameSite=Strict`;
 }
 
-export  function getAquaTreeFileObject(fileInfo: ApiFileInfo): FileObject | undefined {
+export function getAquaTreeFileObject(fileInfo: ApiFileInfo): FileObject | undefined {
 
     let mainAquaFileName = "";
     let mainAquaHash = "";
@@ -56,7 +56,7 @@ export  function getAquaTreeFileObject(fileInfo: ApiFileInfo): FileObject | unde
     }
     mainAquaFileName = fileInfo.aquaTree!.file_index[mainAquaHash];
 
-    return fileInfo.fileObject.find((e)=>e.fileName == mainAquaFileName);
+    return fileInfo.fileObject.find((e) => e.fileName == mainAquaFileName);
 
 
 }
@@ -292,14 +292,17 @@ export function areArraysEqual(array1: Array<string>, array2: Array<string>) {
 }
 
 
-export function fetchLinkedFileName(aquaTree: AquaTree, revision: Revision) : string {
-    let lonkedHash = revision.link_verification_hashes[0];
-    if (lonkedHash == undefined){
-        return "--error--"
+export function fetchLinkedFileName(aquaTree: AquaTree, revision: Revision): string {
+    if (revision.link_verification_hashes == undefined) {
+        return "--error--."
+    }
+    let lonkedHash = revision.link_verification_hashes![0];
+    if (lonkedHash == undefined) {
+        return "--error--.."
     }
     let name = aquaTree.file_index[lonkedHash];
-    if (name==undefined){
-        return "--error--"
+    if (name == undefined) {
+        return "--error--..."
     }
     return name
 }
