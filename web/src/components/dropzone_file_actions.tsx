@@ -22,6 +22,7 @@ interface IDropzoneAction {
     fileIndex: number
     uploadedIndexes: number[]
     updateUploadedIndex: (fileIndex: number) => void
+    autoUpload: boolean
 }
 
 export const FormRevisionFile = ({ file, uploadedIndexes, fileIndex, updateUploadedIndex }: IDropzoneAction) => {
@@ -46,10 +47,23 @@ export const FormRevisionFile = ({ file, uploadedIndexes, fileIndex, updateUploa
         }
 
 
+
+
         if (!file) {
             toaster.create({
                 description: "No file selected!",
                 type: "info"
+            })
+            return;
+        }
+
+
+        // Check file size - 200MB = 200 * 1024 * 1024 bytes
+        const maxSize = 200 * 1024 * 1024; // 200MB in bytes
+        if (file.size > maxSize) {
+            toaster.create({
+                description: "File size exceeds 200MB limit. Please upload a smaller file.",
+                type: "error"
             })
             return;
         }
@@ -122,7 +136,7 @@ export const FormRevisionFile = ({ file, uploadedIndexes, fileIndex, updateUploa
     )
 }
 
-export const UploadFile = ({ file, uploadedIndexes, fileIndex, updateUploadedIndex }: IDropzoneAction) => {
+export const UploadFile = ({ file, uploadedIndexes, fileIndex, updateUploadedIndex, autoUpload }: IDropzoneAction) => {
 
     const [uploading, setUploading] = useState(false)
     const [uploaded, setUploaded] = useState(false)
@@ -215,10 +229,13 @@ export const UploadFile = ({ file, uploadedIndexes, fileIndex, updateUploadedInd
     const uploadInitiatedRef = useRef(false)
 
     useEffect(() => {
-        // Only upload if it hasn't been initiated yet
-        if (!uploadInitiatedRef.current) {
-            uploadInitiatedRef.current = true
-            uploadFile()
+        if (autoUpload) {
+            // Only upload if it hasn't been initiated yet
+            if (!uploadInitiatedRef.current) {
+                uploadInitiatedRef.current = true
+
+                uploadFile()
+            }
         }
     }, [])
 

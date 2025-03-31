@@ -618,9 +618,6 @@ export const ChainDetailsBtn = ({ fileInfo, session }: AquaTreeDetails) => {
                 onOpenChange={(e) => setIsOpen(e.open)} closeOnEscape={true} >
 
 
-
-
-
                 <Portal>
                     <DrawerBackdrop />
                     <Drawer.Positioner>
