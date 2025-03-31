@@ -12,7 +12,7 @@ import {
 } from "../drawer"
 import { Button } from "../button"
 import { LuCheck, LuChevronDown, LuChevronUp, LuExternalLink, LuEye, LuX } from "react-icons/lu"
-import { Box, Card, Collapsible, Drawer, For, GridItem, Group, Icon, IconButton, Link, Portal, SimpleGrid, Span, Text, VStack } from "@chakra-ui/react"
+import { Box, Card, Collapsible, Drawer, DrawerHeader, For, GridItem, Group, Icon, IconButton, Link, Portal, SimpleGrid, Span, Text, VStack } from "@chakra-ui/react"
 import { TimelineConnector, TimelineContent, TimelineDescription, TimelineItem, TimelineRoot, TimelineTitle } from "../timeline"
 import { displayTime, formatCryptoAddress, fetchLinkedFileName } from "../../../utils/functions"
 import { Alert } from "../alert"
@@ -20,12 +20,13 @@ import { ClipboardIconButton, ClipboardRoot } from "../clipboard"
 import Aquafier, { AquaOperationData, AquaTree, FileObject, LogData, LogTypeEmojis, Result, Revision } from "aqua-js-sdk";
 import ReactLoading from "react-loading"
 import { WITNESS_NETWORK_MAP } from "../../../utils/constants"
-import { DownloadAquaChain, WitnessAquaChain, SignAquaChain, DeleteAquaChain } from "../../aqua_chain_actions"
+import { WitnessAquaChain, SignAquaChain, DeleteAquaChain, ShareButton } from "../../aqua_chain_actions"
 import { ApiFileInfo } from "../../../models/FileInfo"
 import FilePreview from "../../FilePreview"
 import { useStore } from "zustand"
 import appStore from "../../../store"
 import { AquaTreeDetails } from "../../../models/AquaTreeDetails"
+import { CloseButton } from "../close-button"
 
 
 interface IItemDetail {
@@ -206,7 +207,7 @@ const RevisionDisplay = ({ aquaTree, revision, revisionHash, fileObjects, callBa
                                     <TimelineRoot size="lg" variant="subtle" maxW="md">
 
                                         {
-                                            revision.revision_type == "file"  || revision.revision_type == "form" || revision.revision_type == "link" ?
+                                            revision.revision_type == "file" || revision.revision_type == "form" || revision.revision_type == "link" ?
                                                 <>
                                                     <TimelineItem>
                                                         <TimelineConnector
@@ -614,16 +615,36 @@ export const ChainDetailsBtn = ({ fileInfo, session }: AquaTreeDetails) => {
             </Button>
 
             <DrawerRoot open={isOpen} size={{ base: 'full', mdToXl: "xl" }} id="aqua-chain-details-modal"
-                onOpenChange={(e) => setIsOpen(e.open)} closeOnEscape={true}>
+                onOpenChange={(e) => setIsOpen(e.open)} closeOnEscape={true} >
+
+
+
+
+
                 <Portal>
                     <DrawerBackdrop />
                     <Drawer.Positioner>
                         <DrawerContent borderLeftRadius={'xl'} overflow={'hidden'}>
                             <Drawer.Header bg={{ base: displayColorBasedOnVerificationStatusLight(), _dark: displayColorBasedOnVerificationStatusDark() }}>
+
+
                                 <DrawerTitle flex="1">{fileName}</DrawerTitle>
-                                {/* <DrawerCloseTrigger colorPalette={"red"} boxSize={"20"} borderRadius={"full"} pos={"initial"}>
-                                        <LuX size={"42px"} />
+                                {/* <DrawerCloseTrigger asChild  position="absolute" right="8px"
+                                    top="8px" colorPalette={"red"} boxSize={"10"} borderRadius={"full"} pos={"initial"}>
+                                    <LuX size={"12px"} />
                                 </DrawerCloseTrigger> */}
+                                <Button
+                                    position="absolute"
+                                    right="8px"
+                                    top="8px"
+                                    colorPalette="red"
+                                    variant="subtle"
+                                    size="md"
+                                    onClick={() => setIsOpen(false)}
+                                    aria-label="Close drawer"
+                                >
+                                    <LuX />
+                                </Button>
                             </Drawer.Header>
                             <DrawerBody py={'lg'} px={1}>
                                 <Box>
@@ -665,19 +686,18 @@ export const ChainDetailsBtn = ({ fileInfo, session }: AquaTreeDetails) => {
                                 <DrawerActionTrigger asChild>
                                     <Button variant="outline" size={'sm'}>Close</Button>
                                 </DrawerActionTrigger>
-                                <DownloadAquaChain file={fileInfo} />
+                                <ShareButton nonce={session?.nonce ?? ""} item={fileInfo} />
                                 <WitnessAquaChain apiFileInfo={fileInfo} backendUrl={backend_url} nonce={session?.nonce ?? ""} revision="" />
                                 <SignAquaChain apiFileInfo={fileInfo} backendUrl={backend_url} nonce={session?.nonce ?? ""} revision="" />
                                 <DeleteAquaChain apiFileInfo={fileInfo} backendUrl={backend_url} nonce={session?.nonce ?? ""} revision="" />
 
-                                {/* <WitnessAquaChain backend_url={backend_url} file_id={fileInfo.id} filename={fileName} lastRevisionVerificationHash={lastVerificationHash ?? ""} />
-                        <SignAquaChain backend_url={backend_url} file_id={fileInfo.id} filename={fileName} lastRevisionVerificationHash={lastVerificationHash ?? ""} />
-                        <DeleteAquaChain backend_url={backend_url} file_id={fileInfo.id} filename={fileName} /> */}
+
                             </DrawerFooter>
-                            <DrawerCloseTrigger />
+
                         </DrawerContent>
                     </Drawer.Positioner>
                 </Portal>
+
             </DrawerRoot>
 
         </>
