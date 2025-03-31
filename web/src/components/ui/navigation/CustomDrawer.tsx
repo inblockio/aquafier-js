@@ -14,7 +14,7 @@ import { Button } from "../button"
 import { LuCheck, LuChevronDown, LuChevronUp, LuExternalLink, LuEye, LuX } from "react-icons/lu"
 import { Box, Card, Collapsible, Drawer, For, GridItem, Group, Icon, IconButton, Link, Portal, SimpleGrid, Span, Text, VStack } from "@chakra-ui/react"
 import { TimelineConnector, TimelineContent, TimelineDescription, TimelineItem, TimelineRoot, TimelineTitle } from "../timeline"
-import { displayTime, formatCryptoAddress } from "../../../utils/functions"
+import { displayTime, formatCryptoAddress, fetchLinkedFileName } from "../../../utils/functions"
 import { Alert } from "../alert"
 import { ClipboardIconButton, ClipboardRoot } from "../clipboard"
 import Aquafier, { AquaOperationData, AquaTree, FileObject, LogData, LogTypeEmojis, Result, Revision } from "aqua-js-sdk";
@@ -205,42 +205,50 @@ const RevisionDisplay = ({ aquaTree, revision, revisionHash, fileObjects, callBa
                                 <Card.Body textStyle="sm" lineHeight="tall">
                                     <TimelineRoot size="lg" variant="subtle" maxW="md">
 
-                                        <TimelineItem>
-                                            <TimelineConnector
-                                                bg={
-                                                    returnBgColor()
-                                                    // verificationResult?.metadata_verification.successful ? "green" : "red"
-                                                }
-                                            >
-                                                <Icon fontSize="xs" color={'white'}>
-                                                    {
-                                                        verificationStatusIcon()
-                                                        // verificationResult?.metadata_verification.successful ? <LuCheck /> :
-                                                        //     <LuX />
-                                                    }
-                                                </Icon>
-                                            </TimelineConnector>
-                                            <TimelineContent gap="2">
-                                                <TimelineTitle>
-                                                    <Span>
-                                                        Revision  is &nbsp;
-                                                        {
-                                                            revision.previous_verification_hash.length == 0 ? "Genesis Revision" : revision.revision_type
-                                                        }
-                                                    </Span>
-                                                </TimelineTitle>
-                                                <TimelineDescription>{displayTime(revision.local_timestamp)}&nbsp;(UTC)</TimelineDescription>
-                                                {
-                                                    revision.revision_type === "file" ? (
-                                                        <ItemDetail label="File Hash:"
-                                                            // displayValue={formatCryptoAddress(revision.signature.signature_wallet_address, 4, 6)}
-                                                            displayValue={formatCryptoAddress(revision.file_hash!, 10, 15)}
-                                                            value={revision.file_hash!} showCopyIcon={true}
-                                                        />
-                                                    ) : null
-                                                }
-                                            </TimelineContent>
-                                        </TimelineItem>
+                                        {
+                                            revision.revision_type == "file"  || revision.revision_type == "form" || revision.revision_type == "link" ?
+                                                <>
+                                                    <TimelineItem>
+                                                        <TimelineConnector
+                                                            bg={
+                                                                returnBgColor()
+                                                                // verificationResult?.metadata_verification.successful ? "green" : "red"
+                                                            }
+                                                        >
+                                                            <Icon fontSize="xs" color={'white'}>
+                                                                {
+                                                                    verificationStatusIcon()
+                                                                    // verificationResult?.metadata_verification.successful ? <LuCheck /> :
+                                                                    //     <LuX />
+                                                                }
+                                                            </Icon>
+                                                        </TimelineConnector>
+
+                                                        <TimelineContent gap="2">
+                                                            <TimelineTitle>
+                                                                <Span>
+                                                                    Revision  is &nbsp;
+                                                                    {
+                                                                        revision.previous_verification_hash.length == 0 ? "Genesis Revision" : revision.revision_type == "link" ? <>{`linked to ${fetchLinkedFileName(aquaTree, revision)}`}</> : revision.revision_type
+                                                                    }
+                                                                </Span>
+                                                            </TimelineTitle>
+                                                            <TimelineDescription>{displayTime(revision.local_timestamp)}&nbsp;(UTC)</TimelineDescription>
+                                                            {
+                                                                revision.revision_type === "file" ? (
+                                                                    <ItemDetail label="File Hash:"
+                                                                        // displayValue={formatCryptoAddress(revision.signature.signature_wallet_address, 4, 6)}
+                                                                        displayValue={formatCryptoAddress(revision.file_hash!, 10, 15)}
+                                                                        value={revision.file_hash!} showCopyIcon={true}
+                                                                    />
+                                                                ) : null
+                                                            }
+
+                                                        </TimelineContent>
+
+                                                    </TimelineItem>
+                                                </> : null
+                                        }
 
                                         {
                                             revision.revision_type == "signature" ? (
@@ -311,40 +319,37 @@ const RevisionDisplay = ({ aquaTree, revision, revisionHash, fileObjects, callBa
                                                     <TimelineContent gap="2">
                                                         <TimelineTitle>
                                                             <Span>
-                                                                Revision witness is
+                                                                Revision witness is &nbsp;
                                                                 {
                                                                     verificationStatusText()
                                                                     // verificationResult?.witness_verification.successful ? ' valid' : ' invalid'
                                                                 }
                                                             </Span>
                                                         </TimelineTitle>
-                                                        {/* <ItemDetail label="Domain snapshot Hash:"
-                                                    displayValue={formatCryptoAddress(revision.witness.domain_snapshot_genesis_hash, 4, 6)}
-                                                    value={revision.witness.domain_snapshot_genesis_hash} showCopyIcon={true}
-                                                /> */}
-                                                        {/* <ItemDetail label="Network:"
-                                                    displayValue={formatCryptoAddress(revision.witness.witness_network, 4, 6)}
-                                                    value={revision.witness_network} showCopyIcon={false}
-                                                />
-                                                <ItemDetail label="Witness Hash:"
-                                                    displayValue={formatCryptoAddress(revision.witness.witness_hash, 4, 6)}
-                                                    value={revision.witness_hash} showCopyIcon={true}
-                                                />
-                                                <Group>
-                                                    <ItemDetail label="Transaction Hash:"
-                                                        displayValue={formatCryptoAddress(revision.witness.witness_event_transaction_hash.startsWith('0x') ? revision.witness.witness_event_transaction_hash : `0x${revision.witness.witness_event_transaction_hash}`, 4, 6)}
-                                                        value={`0x${revision.witness_event_transaction_hash}`} showCopyIcon={true}
-                                                    />
-                                                    <Link outline={'none'} href={`${WITNESS_NETWORK_MAP[revision.witness_network]}/${revision.witness.witness_event_transaction_hash}`} target="_blank">
-                                                        <Icon size={'lg'} color={'blue.500'}>
-                                                            <LuExternalLink />
-                                                        </Icon>
-                                                    </Link>
-                                                </Group>
-                                                <ItemDetail label="Verification Hash:"
-                                                    displayValue={formatCryptoAddress(revision.witness_event_verification_hash, 4, 6)}
-                                                    value={revision.witness_event_verification_hash} showCopyIcon={true}
-                                                /> */}
+
+                                                        <ItemDetail label="Network:"
+                                                            displayValue={formatCryptoAddress(revision.witness_network, 4, 6)}
+                                                            value={revision.witness_network!!} showCopyIcon={false}
+                                                        />
+                                                        <ItemDetail label="Witness Account:"
+                                                            displayValue={formatCryptoAddress(revision.witness_sender_account_address, 4, 6)}
+                                                            value={revision.witness_sender_account_address!} showCopyIcon={true}
+                                                        />
+                                                        <Group>
+                                                            <ItemDetail label="Transaction Hash:"
+                                                                displayValue={formatCryptoAddress(revision.witness_transaction_hash!.startsWith('0x') ? revision.witness_transaction_hash : `0x${revision.witness_transaction_hash}`, 4, 6)}
+                                                                value={`0x${revision.witness_transaction_hash}`} showCopyIcon={true}
+                                                            />
+                                                            <Link outline={'none'} href={`${WITNESS_NETWORK_MAP[revision.witness_network!!]}/${revision.witness_transaction_hash}`} target="_blank">
+                                                                <Icon size={'lg'} color={'blue.500'}>
+                                                                    <LuExternalLink />
+                                                                </Icon>
+                                                            </Link>
+                                                        </Group>
+                                                        <ItemDetail label="Contract address:"
+                                                            displayValue={formatCryptoAddress(revision.witness_smart_contract_address, 4, 6)}
+                                                            value={revision.witness_smart_contract_address!} showCopyIcon={true}
+                                                        />
                                                     </TimelineContent>
                                                 </TimelineItem>
                                             ) : null

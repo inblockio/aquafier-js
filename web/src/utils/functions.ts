@@ -2,7 +2,7 @@
 import { ApiFileInfo } from "../models/FileInfo";
 import { documentTypes, imageTypes, musicTypes, videoTypes } from "./constants";
 // import { AvatarGenerator } from 'random-avatar-generator';
-import { AquaTree, CredentialsData, FileObject } from "aqua-js-sdk";
+import { AquaTree, CredentialsData, FileObject, Revision } from "aqua-js-sdk";
 import jdenticon from "jdenticon/standalone";
 
 export function formatCryptoAddress(address?: string, start: number = 10, end: number = 4, message?: string): string {
@@ -292,6 +292,17 @@ export function areArraysEqual(array1: Array<string>, array2: Array<string>) {
 }
 
 
+export function fetchLinkedFileName(aquaTree: AquaTree, revision: Revision) : string {
+    let lonkedHash = revision.link_verification_hashes[0];
+    if (lonkedHash == undefined){
+        return "--error--"
+    }
+    let name = aquaTree.file_index[lonkedHash];
+    if (name==undefined){
+        return "--error--"
+    }
+    return name
+}
 export function displayTime(input: number | string): string {
     // Handle number input
     if (typeof input === 'number') {
