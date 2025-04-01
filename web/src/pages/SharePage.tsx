@@ -12,7 +12,6 @@ import FilePreview from '../components/FilePreview'
 import { ImportAquaChainFromChain } from '../components/dropzone_file_actions'
 import { Alert } from '../components/ui/alert'
 import { LuChevronUp, LuChevronDown } from 'react-icons/lu'
-import { getAquaTreeFileObject } from '../utils/functions'
 
 const SharePage = () => {
     const { backend_url, metamaskAddress, session } = useStore(appStore)

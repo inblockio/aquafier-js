@@ -122,6 +122,7 @@ export default async function revisionsController(fastify: FastifyInstance) {
 
 
 
+
             let oldFilePubKeyHash = `${session.address}_${revisionData.revision.previous_verification_hash}`
 
 
@@ -132,23 +133,29 @@ export default async function revisionsController(fastify: FastifyInstance) {
             });
 
             if (existData == null) {
-                return reply.code(401).send({ success: false, message: "previous  hash  not found" });
+                return reply.code(401).send({ success: false, message: `previous  hash  not found ${oldFilePubKeyHash}` });
 
             }
 
             let filePubKeyHash = `${session.address}_${revisionData.revisionHash}`
 
 
-            await prisma.latest.update({
+            await prisma.latest.updateMany({
                 where: {
-                    hash: oldFilePubKeyHash
+                    OR: [
+                        { hash: oldFilePubKeyHash },
+                        {
+                            hash: {
+                                contains: oldFilePubKeyHash,
+                                mode: 'insensitive'
+                            }
+                        }
+                    ]
                 },
                 data: {
                     hash: filePubKeyHash
                 }
-
             });
-
 
             const existingRevision = await prisma.revision.findUnique({
                 where: {
@@ -320,14 +327,26 @@ export default async function revisionsController(fastify: FastifyInstance) {
             return reply.code(400).send({ success: false, message: "revision hash is required" });
         }
 
+        //fetch aqua tree 
+        // filterthe revsion to delet
+        // organise aqua trre
+        // make sure to updat latest 
+
+
+
         const revisionHashestoDelete: Array<String> = revisionDataPar.revisionHash.split(",")
 
         for (let i = 0; i < revisionHashestoDelete.length; i++) {
 
+
             let currentHash = revisionHashestoDelete[i]
             let pubkeyhash = `${session.address}_${currentHash}`;
-            console.log(`Public_key_hash_to_delete: ${pubkeyhash}` )
-            break;
+            console.log(`Public_key_hash_to_delete: ${pubkeyhash}`)
+
+
+
+
+
             // fetch specific revision 
             let latestRevionData = await prisma.revision.findFirst({
                 where: {
@@ -337,6 +356,26 @@ export default async function revisionsController(fastify: FastifyInstance) {
 
             if (latestRevionData == null) {
                 return reply.code(500).send({ success: false, message: `revision with hash ${currentHash} not found in system` });
+            }
+
+
+            //
+            const latestExist = await prisma.latest.findUnique({
+                where: { hash: pubkeyhash }
+            });
+
+            if (latestExist != null) {
+
+                if (latestRevionData.previous != null) {
+                    await prisma.latest.update({
+                        where: {
+                            hash: pubkeyhash
+                        },
+                        data: {
+                            hash: latestRevionData.previous
+                        }
+                    })
+                }
             }
 
             try {
@@ -496,14 +535,7 @@ export default async function revisionsController(fastify: FastifyInstance) {
                         }
                     });
 
-                    // Step 3: Delete the latest entry - we need to do this before deleting revisions
-                    await tx.latest.deleteMany({
-                        where: {
-                            hash: {
-                                in: revisionPubkeyHashes
-                            }
-                        }
-                    });
+
 
                     // Step 4: Finally, delete all revisions
                     await tx.revision.delete({
@@ -523,7 +555,7 @@ export default async function revisionsController(fastify: FastifyInstance) {
                 });
             }
         }
-        
+
     });
 
 }

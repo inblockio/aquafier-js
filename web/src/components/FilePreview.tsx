@@ -1,10 +1,16 @@
 // import { Image } from "@chakra-ui/react";
 // import { fileType } from "../utils/functions";
 import { FileObject } from "aqua-js-sdk";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useStore } from "zustand";
 import appStore from "../store";
 
+// Add type declaration for PDF.js
+declare global {
+    interface Window {
+        'pdfjs-dist/build/pdf': any;
+    }
+}
 
 interface IFilePreview {
     fileInfo: FileObject
@@ -217,7 +223,25 @@ const FilePreview: React.FC<IFilePreview> = ({ fileInfo }) => {
     const [fileURL, setFileURL] = useState<string>("");
     const [textContent, setTextContent] = useState<string>("");
     const [isLoading, setIsLoading] = useState<boolean>(true);
+    const [isMobile, setIsMobile] = useState<boolean>(false);
+    const [pdfBlob, setPdfBlob] = useState<Blob | null>(null);
     const { session } = useStore(appStore);
+    const pdfCanvasRef = useRef<HTMLCanvasElement>(null);
+
+    // Detect mobile devices on component mount
+    useEffect(() => {
+        const checkIfMobile = () => {
+            const userAgent = navigator.userAgent || navigator.vendor || (window as any).opera;
+            const mobileRegex = /android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini/i;
+            setIsMobile(mobileRegex.test(userAgent.toLowerCase()));
+        };
+        
+        checkIfMobile();
+        
+        // Also check on resize in case of orientation change
+        window.addEventListener('resize', checkIfMobile);
+        return () => window.removeEventListener('resize', checkIfMobile);
+    }, []);
 
     useEffect(() => {
         const fetchFile = async () => {
@@ -264,6 +288,10 @@ const FilePreview: React.FC<IFilePreview> = ({ fileInfo }) => {
                 if (contentType === "application/pdf" || 
                     (fileInfo.fileName && fileInfo.fileName.toLowerCase().endsWith(".pdf"))) {
                     contentType = "application/pdf";
+                    
+                    // Store PDF blob for direct rendering if needed
+                    const pdfBlob = new Blob([arrayBuffer], { type: "application/pdf" });
+                    setPdfBlob(pdfBlob);
                 }
                 
                 // Handle audio files
@@ -330,9 +358,70 @@ const FilePreview: React.FC<IFilePreview> = ({ fileInfo }) => {
         };
     }, [fileInfo.fileContent, session?.nonce]);
 
+    // Effect to render first page of PDF for mobile
+    useEffect(() => {
+        const renderPdfFirstPage = async () => {
+            if (fileType === "application/pdf" && isMobile && pdfBlob && pdfCanvasRef.current) {
+                try {
+                    // Load the PDF.js library dynamically
+                    // This assumes you've added PDF.js to your project or are loading it from CDN
+                    // You'll need to add this script to your HTML or bundle:
+                    // <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js"></script>
+                    const pdfjsLib = window['pdfjs-dist/build/pdf'];
+                    
+                    if (!pdfjsLib) {
+                        console.error("PDF.js library not found");
+                        return;
+                    }
+                    
+                    // Load the PDF document
+                    const loadingTask = pdfjsLib.getDocument(fileURL);
+                    const pdf = await loadingTask.promise;
+                    
+                    // Get the first page
+                    const page = await pdf.getPage(1);
+                    
+                    // Set up canvas for rendering
+                    const canvas = pdfCanvasRef.current;
+                    const context = canvas.getContext('2d');
+                    
+                    // Calculate scale to fit width
+                    const viewport = page.getViewport({ scale: 1 });
+                    const containerWidth = canvas.parentElement?.clientWidth || window.innerWidth;
+                    const scale = containerWidth / viewport.width;
+                    const scaledViewport = page.getViewport({ scale });
+                    
+                    // Set canvas dimensions
+                    canvas.height = scaledViewport.height;
+                    canvas.width = scaledViewport.width;
+                    
+                    // Clear any previous content with transparent background
+                    context?.clearRect(0, 0, canvas.width, canvas.height);
+                    
+                    // Render the page
+                    const renderContext = {
+                        canvasContext: context,
+                        viewport: scaledViewport,
+                        background: 'transparent'
+                    };
+                    
+                    await page.render(renderContext).promise;
+                    console.log("PDF first page rendered successfully");
+                    
+                } catch (error) {
+                    console.error("Error rendering PDF first page:", error);
+                }
+            }
+        };
+        
+        if (isLoading === false) {
+            renderPdfFirstPage();
+        }
+    }, [fileType, isMobile, pdfBlob, isLoading, fileURL]);
+
     if (isLoading) return <p>Loading...</p>;
 
-    console.log("Rendering file with type:", fileType);
+    console.log("Rendering file with type:", fileType, "Mobile:", isMobile);
     
     // Render based on file type
     if (fileType.startsWith("image/")) {
@@ -340,17 +429,76 @@ const FilePreview: React.FC<IFilePreview> = ({ fileInfo }) => {
     }
 
     if (fileType === "application/pdf") {
-        return (
-            <object
-                data={fileURL}
-                type="application/pdf"
-                width="100%"
-                height="600px"
-                style={{ border: "none" }}
-            >
-                <p>Unable to display PDF file. <a href={fileURL} target="_blank" rel="noopener noreferrer">Download</a> instead.</p>
-            </object>
-        );
+        // Mobile-friendly approach for PDF viewing with thumbnail fallback
+        if (isMobile) {
+            return (
+                <div style={{ width: "100%", backgroundColor: "transparent" }}>
+                    {/* Canvas for rendering the first page preview */}
+                    <div style={{ 
+                        width: "100%", 
+                        marginBottom: "10px", 
+                        textAlign: "center",
+                        backgroundColor: "transparent"
+                    }}>
+                        <canvas 
+                            ref={pdfCanvasRef} 
+                            style={{ 
+                                width: "100%", 
+                                maxWidth: "100%", 
+                                height: "auto",
+                                backgroundColor: "transparent",
+                                display: "block", // Removes any potential spacing
+                                margin: "0 auto" // Centers the canvas
+                            }}
+                        />
+                    </div>
+                    
+                    {/* Fallback iframe (might work on some mobile browsers) */}
+                    <div style={{ width: "100%", height: "400px", backgroundColor: "transparent" }}>
+                        <iframe
+                            src={fileURL}
+                            title="PDF Viewer"
+                            width="100%"
+                            height="100%"
+                            style={{ border: "none" }}
+                        >
+                            <p>Unable to display PDF file.</p>
+                        </iframe>
+                    </div>
+                    
+                    {/* Download link as another fallback option */}
+                    <div style={{ marginTop: "15px", textAlign: "center" }}>
+                        <a 
+                            href={fileURL} 
+                            download={fileInfo.fileName || "document.pdf"} 
+                            style={{ 
+                                color: "#fff", 
+                                backgroundColor: "#4285f4", 
+                                padding: "10px 15px", 
+                                borderRadius: "4px", 
+                                textDecoration: "none",
+                                display: "inline-block"
+                            }}
+                        >
+                            Download PDF
+                        </a>
+                    </div>
+                </div>
+            );
+        } else {
+            // Original desktop approach
+            return (
+                <object
+                    data={fileURL}
+                    type="application/pdf"
+                    width="100%"
+                    height="600px"
+                    style={{ border: "none" }}
+                >
+                    <p>Unable to display PDF file. <a href={fileURL} target="_blank" rel="noopener noreferrer">Download</a> instead.</p>
+                </object>
+            );
+        }
     }
 
     if (fileType.startsWith("text/") || 

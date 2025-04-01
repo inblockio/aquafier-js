@@ -713,23 +713,41 @@ export const ImportAquaChainFromChain = ({ fileInfo, isVerificationSuccessful }:
 
             const url = `${backend_url}/tree`;
             // // make this work sequentially, one after the other
-            // for (const revision of revisionsToImport) {
-            //     await axios.post(url, {
-            //         "revision": revision[1],
-            //         "revisionHash": revision[0],
-            //     }, {
-            //         headers: {
-            //             "nonce": session?.nonce
-            //         }
-            //     }).then(() => {
-            //         toaster.create({
-            //             title: "Aqua chain import",
-            //             description: "Chain merged successfully",
-            //             type: "success"
-            //         })
-            //     })
-            // }
-            // navigate("/loading?reload=true");
+            for (const revision of revisionsToImport) {
+
+                try {
+                    let res = await axios.post(url, {
+                        "revision": revision[1],
+                        "revisionHash": revision[0],
+                    }, {
+                        headers: {
+                            "nonce": session?.nonce
+                        }
+                    })
+                    if (res.status == 200) {
+
+                        toaster.create({
+                            title: "Aqua chain import",
+                            description: "Chain merged successfully",
+                            type: "success"
+                        })
+                    }else{
+                        toaster.create({
+                            title: "Aqua chain import failed..",
+                            description: "Chain merged failed...",
+                            type: "error"
+                        })
+                    }
+                } catch (e) {
+                    toaster.create({
+                        title: "Aqua chain import failed",
+                        description: "Chain merged failed",
+                        type: "error"
+                    })
+                    break
+                }
+            }
+            navigate("/loading?reload=true");
             setUploading(false)
         } catch (e: any) {
             setUploading(false)
