@@ -10,7 +10,7 @@
             END LOOP;
         END $$;
     ```
-- after clearing all tables , drop all constrains
+- after dropping all tables , drop all constrains
     ```sql
                 DO $$
         DECLARE
@@ -67,7 +67,7 @@
             END LOOP;
         END $$;
     ```
-- To clea all the data in all the tables 
+- To clear all the data in all the tables 
     ```sql
         DO $$
         DECLARE

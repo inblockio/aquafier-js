@@ -643,15 +643,15 @@ export const ChainDetailsBtn = ({ fileInfo, session }: AquaTreeDetails) => {
                             </Drawer.Header>
                             <DrawerBody py={'lg'} px={1}>
                                 <Box>
-                                    <SimpleGrid columns={{ base: 1, md: 2 }}>
-                                        <GridItem>
+                                    <SimpleGrid columns={{ base: 1, md: 5 }}>
+                                    <GridItem colSpan={{ base: 1, md: 3 }}>
                                             <Card.Root border={'none'} shadow={'none'} borderRadius={'xl'}>
                                                 <Card.Body>
                                                     <FilePreview fileInfo={fileInfo.fileObject[0]} />
                                                 </Card.Body>
                                             </Card.Root>
                                         </GridItem>
-                                        <GridItem>
+                                        <GridItem colSpan={{ base: 1, md: 2 }}>
                                             <Card.Root borderRadius={'lg'} shadow={"none"}>
                                                 <Card.Body>
                                                     <VStack gap={'4'}>
