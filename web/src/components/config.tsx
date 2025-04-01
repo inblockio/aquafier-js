@@ -20,7 +20,7 @@ const LoadConfiguration = () => {
                         'Content-Type': 'application/x-www-form-urlencoded'
                     }
                 });
-
+                console.log(response)
                 if (response.status === 200) {
                     const url2 = `${backend_url}/explorer_files`;
                     const _address = response.data?.session.address
@@ -39,6 +39,7 @@ const LoadConfiguration = () => {
             }
             catch (error: any) {
                 // if (error?.response?.status === 404) {
+                console.log("Error: ", error)
                 setMetamaskAddress(null)
                 setAvatar(undefined)
                 setSession(null)
@@ -80,17 +81,32 @@ const LoadConfiguration = () => {
 
     useEffect(() => {
         if (!backend_url.includes("0.0.0.0")) {
+            console.log("here 1")
             const nonce = getCookie("pkc_nonce");
             if (nonce) {
+
                 fetchAddressGivenANonce(nonce)
             } else {
                 setMetamaskAddress(null)
                 setAvatar(undefined)
+                setSession(null)
+                setFiles([])
+                setUserProfile({
+                    user_pub_key: "",
+                    cli_pub_key: "",
+                    cli_priv_key: "",
+                    witness_network: "",
+                    theme: "light",
+                    witness_contract_address: '0x45f59310ADD88E6d23ca58A0Fa7A55BEE6d2a611',
+
+                })
                 toaster.create({
                     description: "You are not logged in! Please login",
                     type: "info",
                 })
             }
+        }else{
+            console.log("here 2")
         }
     }, [backend_url]);
 

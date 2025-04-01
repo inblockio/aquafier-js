@@ -38,6 +38,7 @@ export interface SessionQuery {
 export interface DeleteRevision {
   revisionHash: string
 }
+
 export interface SaveRevision {
   revision: Revision,
   revisionHash: string

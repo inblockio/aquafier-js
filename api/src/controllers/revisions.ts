@@ -1,5 +1,5 @@
 import { prisma } from '../database/db';
-import { FetchAquaTreeRequest, SaveRevision } from '../models/request_models';
+import { DeleteRevision, FetchAquaTreeRequest, SaveRevision } from '../models/request_models';
 import { getHost, getPort } from '../utils/api_utils';
 import { createAquaTreeFromRevisions, FetchRevisionInfo, findAquaTreeRevision } from '../utils/revisions_utils';
 // import { formatTimestamp } from '../utils/time_utils';
@@ -297,4 +297,227 @@ export default async function revisionsController(fastify: FastifyInstance) {
             return reply.code(500).send({ error: "Failed to process revisions" });
         }
     });
+    
+    fastify.delete('/tree', async (request, reply) => {
+            // Read `nonce` from headers
+            const nonce = request.headers['nonce']; // Headers are case-insensitive
+    
+            // Check if `nonce` is missing or empty
+            if (!nonce || typeof nonce !== 'string' || nonce.trim() === '') {
+                return reply.code(401).send({ error: 'Unauthorized: Missing or empty nonce header' });
+            }
+    
+            const session = await prisma.siweSession.findUnique({
+                where: { nonce }
+            });
+    
+            if (!session) {
+                return reply.code(403).send({ success: false, message: "Nonce is invalid" });
+            }
+    
+            const revisionDataPar = request.body as DeleteRevision;
+    
+            if (!revisionDataPar.revisionHash) {
+                return reply.code(400).send({ success: false, message: "revision hash is required" });
+            }
+    
+            let pubkeyhash = `${session.address}_${revisionDataPar.revisionHash}`;
+    
+            // fetch specific revision 
+            let latestRevionData = await prisma.revision.findFirst({
+                where: {
+                    pubkey_hash: pubkeyhash
+                }
+            });
+    
+            if (latestRevionData == null) {
+                return reply.code(500).send({ success: false, message: `revision with hash ${revisionDataPar.revisionHash} not found in system` });
+            }
+
+            try {
+                // Use Prisma transaction to ensure all or nothing execution
+                await prisma.$transaction(async (tx) => {
+                    // const revisionPubkeyHashes = revisionData.map(rev => rev.pubkey_hash);
+                    const revisionPubkeyHashes = [pubkeyhash]
+    
+                    // Step 1: First delete all entries in related tables that reference our revisions
+                    // We need to delete child records before parent records to avoid foreign key constraints
+    
+                    // Delete AquaForms entries
+                    await tx.aquaForms.deleteMany({
+                        where: {
+                            hash: {
+                                in: revisionPubkeyHashes
+                            }
+                        }
+                    });
+    
+                    // Delete Signature entries
+                    await tx.signature.deleteMany({
+                        where: {
+                            hash: {
+                                in: revisionPubkeyHashes
+                            }
+                        }
+                    });
+    
+                    // Delete Witness entries (note: we need to handle WitnessEvent separately)
+                    const witnesses = await tx.witness.findMany({
+                        where: {
+                            hash: {
+                                in: revisionPubkeyHashes
+                            }
+                        }
+                    });
+    
+                    const witnessRoots = witnesses.map(w => w.Witness_merkle_root).filter(Boolean);
+    
+                    await tx.witness.deleteMany({
+                        where: {
+                            hash: {
+                                in: revisionPubkeyHashes
+                            }
+                        }
+                    });
+    
+                    // Check if any WitnessEvents are no longer referenced
+                    for (const root of witnessRoots) {
+                        const remainingWitnesses = await tx.witness.count({
+                            where: {
+                                Witness_merkle_root: root
+                            }
+                        });
+    
+                        if (remainingWitnesses === 0 && root) {
+                            await tx.witnessEvent.delete({
+                                where: {
+                                    Witness_merkle_root: root
+                                }
+                            });
+                        }
+                    }
+    
+                    // Delete Link entries
+                    await tx.link.deleteMany({
+                        where: {
+                            hash: {
+                                in: revisionPubkeyHashes
+                            }
+                        }
+                    });
+    
+                    // Handle File entries
+                    // First, find all files related to our revisions
+                    const files = await tx.file.findMany({
+                        where: {
+                            hash: {
+                                in: revisionPubkeyHashes
+                            }
+                        }
+                    });
+    
+                    // Handle FileIndex entries first (as they reference files)
+                    for (const file of files) {
+                        // Find FileIndex entries that reference this file
+                        const fileIndexEntries = await tx.fileIndex.findMany({
+                            where: {
+                                hash: {
+                                    has: file.hash
+                                }
+                            }
+                        });
+    
+                        for (const fileIndex of fileIndexEntries) {
+                            if ((fileIndex.reference_count || 0) <= 1) {
+                                // If this is the last reference, delete the FileIndex entry
+                                await tx.fileIndex.delete({
+                                    where: {
+                                        id: fileIndex.id
+                                    }
+                                });
+                            } else {
+                                // Otherwise, remove the reference and decrement the count
+                                await tx.fileIndex.update({
+                                    where: {
+                                        id: fileIndex.id
+                                    },
+                                    data: {
+                                        hash: fileIndex.hash.filter(h => h !== file.hash),
+                                        reference_count: (fileIndex.reference_count || 0) - 1
+                                    }
+                                });
+                            }
+                        }
+    
+                        // Now we can safely handle the file itself
+                        if ((file.reference_count || 0) <= 1) {
+                            // If this is the last reference, delete the file
+                            if (file.content) {
+                                try {
+                                    fs.unlinkSync(file.content);
+                                } catch (er) {
+                                   //  console.log("Error deleting file from filesystem:", er);
+                                    // Continue even if file deletion fails
+                                }
+                            }
+    
+                            await tx.file.delete({
+                                where: {
+                                    hash: file.hash
+                                }
+                            });
+                        } else {
+                            // Otherwise, decrement the reference count
+                            await tx.file.update({
+                                where: {
+                                    hash: file.hash
+                                },
+                                data: {
+                                    reference_count: (file.reference_count || 0) - 1
+                                }
+                            });
+                        }
+                    }
+    
+                    // Step 2: Remove any references to our revisions from other revisions
+                    await tx.revision.updateMany({
+                        where: {
+                            previous: {
+                                in: revisionPubkeyHashes
+                            }
+                        },
+                        data: {
+                            previous: null
+                        }
+                    });
+    
+                    // Step 3: Delete the latest entry - we need to do this before deleting revisions
+                    await tx.latest.deleteMany({
+                        where: {
+                            hash: {
+                                in: revisionPubkeyHashes
+                            }
+                        }
+                    });
+    
+                    // Step 4: Finally, delete all revisions
+                    await tx.revision.delete({
+                        where: {
+                            pubkey_hash: pubkeyhash
+                        }
+                    });
+                });
+    
+                return reply.code(200).send({ success: true, message: "File and revisions deleted successfully" });
+            } catch (error: any) {
+                console.error("Error in delete operation:", error);
+                return reply.code(500).send({
+                    success: false,
+                    message: `Error deleting file: ${error.message}`,
+                    details: error
+                });
+            }
+        });
+    
+
 }

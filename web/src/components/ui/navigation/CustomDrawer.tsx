@@ -618,13 +618,7 @@ export const ChainDetailsBtn = ({ fileInfo, session }: AquaTreeDetails) => {
                     <Drawer.Positioner>
                         <DrawerContent borderLeftRadius={'xl'} overflow={'hidden'}>
                             <Drawer.Header bg={{ base: displayColorBasedOnVerificationStatusLight(), _dark: displayColorBasedOnVerificationStatusDark() }}>
-
-
                                 <DrawerTitle flex="1">{fileName}</DrawerTitle>
-                                {/* <DrawerCloseTrigger asChild  position="absolute" right="8px"
-                                    top="8px" colorPalette={"red"} boxSize={"10"} borderRadius={"full"} pos={"initial"}>
-                                    <LuX size={"12px"} />
-                                </DrawerCloseTrigger> */}
                                 <Button
                                     position="absolute"
                                     right="8px"
@@ -665,7 +659,7 @@ export const ChainDetailsBtn = ({ fileInfo, session }: AquaTreeDetails) => {
                                                                 </Collapsible.Content>
                                                             </Collapsible.Root>
                                                         </Box>
-                                                        <Box minH={'400px'} />
+                                                        {/* <Box minH={'400px'} /> */}
                                                     </VStack>
                                                 </Card.Body>
                                             </Card.Root>
@@ -682,8 +676,6 @@ export const ChainDetailsBtn = ({ fileInfo, session }: AquaTreeDetails) => {
                                 <WitnessAquaChain apiFileInfo={fileInfo} backendUrl={backend_url} nonce={session?.nonce ?? ""} revision="" />
                                 <SignAquaChain apiFileInfo={fileInfo} backendUrl={backend_url} nonce={session?.nonce ?? ""} revision="" />
                                 <DeleteAquaChain apiFileInfo={fileInfo} backendUrl={backend_url} nonce={session?.nonce ?? ""} revision="" />
-
-
                             </DrawerFooter>
 
                         </DrawerContent>

@@ -659,10 +659,15 @@ export const ImportAquaChainFromChain = ({ fileInfo, isVerificationSuccessful }:
         try {
             setUploading(true)
             const revisionsToImport: Array<[string, Revision]> = []
+            const revisionsToDelete: Array<string> = []
             const existingChainFile = dbFiles.find(file => Object.keys(file?.aquaTree?.revisions ?? {})[0] === Object.keys(fileInfo?.aquaTree?.revisions ?? {})[0])
 
             comparisonResult?.divergences?.forEach((divergence) => {
                 const upcomingRevisionHash = divergence.upcomingRevisionHash
+                const outgoingRevisionHash = divergence.existingRevisionHash
+                if(outgoingRevisionHash){
+                    revisionsToDelete.push(outgoingRevisionHash)
+                }
                 if (!upcomingRevisionHash) return
 
                 if (existingChainFile) {
@@ -671,13 +676,12 @@ export const ImportAquaChainFromChain = ({ fileInfo, isVerificationSuccessful }:
                     if (!revisionToImport) return
                     revisionsToImport.push([upcomingRevisionHash, revisionToImport])
                 }
-            })
-            setUploading(false)
+            })  
 
-            const url = `${backend_url}/tree`;
-            // make this work sequentially, one after the other
+            console.log("Revisions to Delete: ", revisionsToDelete)
+            const revisionDeleteUrl = `${backend_url}/tree`;
             for (const revision of revisionsToImport) {
-                await axios.post(url, {
+                await axios.post(revisionDeleteUrl, {
                     "revision": revision[1],
                     "revisionHash": revision[0],
                 }, {
@@ -692,7 +696,32 @@ export const ImportAquaChainFromChain = ({ fileInfo, isVerificationSuccessful }:
                     })
                 })
             }
+
+            console.log("Revisions to import: ", revisionsToImport)
+
+            // Delete the existing revisions
+            // setUploading(false)
+
+            // const url = `${backend_url}/tree`;
+            // // make this work sequentially, one after the other
+            // for (const revision of revisionsToImport) {
+            //     await axios.post(url, {
+            //         "revision": revision[1],
+            //         "revisionHash": revision[0],
+            //     }, {
+            //         headers: {
+            //             "nonce": session?.nonce
+            //         }
+            //     }).then(() => {
+            //         toaster.create({
+            //             title: "Aqua chain import",
+            //             description: "Chain merged successfully",
+            //             type: "success"
+            //         })
+            //     })
+            // }
             // navigate("/loading?reload=true");
+            setUploading(false)
         } catch (e: any) {
             setUploading(false)
             if (e.message) {

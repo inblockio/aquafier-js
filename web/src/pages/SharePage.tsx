@@ -6,7 +6,7 @@ import axios from 'axios'
 import { ApiFileInfo } from '../models/FileInfo'
 import { toaster } from '../components/ui/toaster'
 import Loading from 'react-loading'
-import { Box, Card, Center, Collapsible, Container, Group, VStack } from '@chakra-ui/react'
+import { Box, Card, Center, Collapsible, Container, GridItem, Group, SimpleGrid, VStack } from '@chakra-ui/react'
 import ChainDetails, { RevisionDetailsSummary } from '../components/ui/navigation/CustomDrawer'
 import FilePreview from '../components/FilePreview'
 import { ImportAquaChainFromChain } from '../components/dropzone_file_actions'
@@ -34,14 +34,14 @@ const SharePage = () => {
 
                 setLoading(true)
                 const url = `${backend_url}/share_data/${params.identifier}`;
-               //  console.log("url is ", url)
+                //  console.log("url is ", url)
                 const response = await axios.get(url, {
                     headers: {
                         'Content-Type': 'application/x-www-form-urlencoded',
                         'nonce': session?.nonce ?? ""
                     }
                 });
-               //  console.log(response)
+                //  console.log(response)
 
                 if (response.status === 200) {
                     setFileInfo(response.data[0])
@@ -69,14 +69,14 @@ const SharePage = () => {
     useEffect(() => {
         // if (fetchFromUrl == false) {
         //    //  console.log("Trigered ...")
-            if (params.identifier) {
-                loadPageData()
-            }
+        if (params.identifier) {
+            loadPageData()
+        }
         //     setFetchFromUrl(true);
         // }else{
         //    //  console.log("No.........Trigered ...") 
         // }
-    }, [params])
+    }, [params, session])
 
     // useEffect(() => {
     //     loadPageData()
@@ -98,6 +98,19 @@ const SharePage = () => {
         return <div />
     }
 
+    const updateVerificationStatus = (revisionResults: Array<boolean>, revisionCount: number) => {
+        //  console.log(`revisionResults   ${revisionResults}   revisionCount ${revisionCount}`)
+        if (revisionResults.length >= revisionCount) {
+            const containsFailure = revisionResults.filter((e) => e == false);
+            if (containsFailure.length > 0) {
+                setIsVerificationSuccessful(false)
+            } else {
+                setIsVerificationSuccessful(true)
+            }
+        }
+
+    }
+
     useEffect(() => {
         if (fileInfo) {
             const elementToReplace = document.getElementById('replace-here');
@@ -112,60 +125,72 @@ const SharePage = () => {
 
     return (
         <div id='replace-here'>
-            {
-                showProperWidget()
-            }
-            {
-                fileInfo ? (
-                    <Container mt={'40px'}>
-                        <VStack gap={'10'}>
-                            <Group justifyContent={'center'} w={'100%'}>
-                                {
-                                    !metamaskAddress ? (
-                                        // <ConnectWallet />
-                                        <Box />
-                                    ) : (
-                                        <ImportAquaChainFromChain fileInfo={fileInfo} isVerificationSuccessful={isVerificationSuccesful} />
-                                    )
-                                }
-                            </Group>
-                            <Box w={'100%'}>
-                                <Card.Root border={'none'} shadow={'md'} borderRadius={'xl'}>
-                                    <Card.Body>
-                                        <FilePreview fileInfo={getAquaTreeFileObject(fileInfo)!!} />
-                                    </Card.Body>
-                                </Card.Root>
-                            </Box>
-                            <Box w={'100%'}>
-                                <RevisionDetailsSummary fileInfo={fileInfo} />
-                                {/* <ChainDetails fileInfo={fileInfo} callBack={(res) => setIsVerificationSuccessful(res)} /> */}
-                                <Card.Root borderRadius={'lg'}>
-                                    <Card.Body>
-                                        <VStack gap={'4'}>
-                                            <Alert status={isVerificationSuccesful ? 'success' : 'error'} title={isVerificationSuccesful ? "This chain is valid" : "This chain is invalid"} />
-                                            <Box w={'100%'}>
-                                                <Collapsible.Root open={showMoreDetails}>
-                                                    <Collapsible.Trigger w="100%" py={'md'} onClick={() => setShowMoreDetails(open => !open)} cursor={'pointer'}>
-                                                        <Alert w={'100%'} status={"info"} textAlign={'start'} title={`Show more Details`} icon={showMoreDetails ? <LuChevronUp /> : <LuChevronDown />} />
-                                                    </Collapsible.Trigger>
-                                                    <Collapsible.Content py={'4'}>
-                                                        <ChainDetails  session={session!!} fileInfo={fileInfo} callBack={(res) => {
-                                                            console.log(`============ Verification is success=========  ${res}`)
-                                                            console.log(`FIX ME......................`)
-                                                            setIsVerificationSuccessful(res[0])
-                                                        }} />
-                                                    </Collapsible.Content>
-                                                </Collapsible.Root>
-                                            </Box>
-                                            <Box minH={'400px'} />
-                                        </VStack>
-                                    </Card.Body>
-                                </Card.Root>
-                            </Box>
-                        </VStack>
-                    </Container>
-                ) : null
-            }
+            <Container fluid py={"4"}>
+                {
+                    !session ? (
+                        <Center>
+                            <Alert title="Login Required">
+                                You need to be logged in to view this file!
+                            </Alert>
+                        </Center>
+                    ) : null
+                }
+                {
+                    showProperWidget()
+                }
+                {
+                    fileInfo ? (
+                        <Container mt={'40px'} fluid>
+                            <VStack gap={'10'}>
+                                <Group justifyContent={'center'} w={'100%'}>
+                                    {
+                                        !metamaskAddress ? (
+                                            // <ConnectWallet />
+                                            <Box />
+                                        ) : (
+                                            <ImportAquaChainFromChain fileInfo={fileInfo} isVerificationSuccessful={isVerificationSuccesful} />
+                                        )
+                                    }
+                                </Group>
+
+                                <Box>
+                                    <SimpleGrid columns={{ base: 1, md: 5 }}>
+                                        <GridItem colSpan={{ base: 1, md: 3 }}>
+                                            <Card.Root border={'none'} shadow={'none'} borderRadius={'xl'}>
+                                                <Card.Body>
+                                                    <FilePreview fileInfo={fileInfo.fileObject[0]} />
+                                                </Card.Body>
+                                            </Card.Root>
+                                        </GridItem>
+                                        <GridItem colSpan={{ base: 1, md: 2 }}>
+                                            <Card.Root borderRadius={'lg'} shadow={"none"}>
+                                                <Card.Body>
+                                                    <VStack gap={'4'}>
+                                                        {/* <Alert status={displayColorBasedOnVerificationAlert()} title={displayBasedOnVerificationStatusText()} /> */}
+
+                                                        <RevisionDetailsSummary fileInfo={fileInfo} />
+                                                        <Box w={'100%'}>
+                                                            <Collapsible.Root open={showMoreDetails}>
+                                                                <Collapsible.Trigger w="100%" py={'md'} onClick={() => setShowMoreDetails(open => !open)} cursor={'pointer'}>
+                                                                    <Alert w={'100%'} status={"info"} textAlign={'start'} title={showMoreDetails ? `Show less Details` : `Show more Details`} icon={showMoreDetails ? <LuChevronUp /> : <LuChevronDown />} />
+                                                                </Collapsible.Trigger>
+                                                                <Collapsible.Content py={'4'}>
+                                                                    <ChainDetails session={session!!} fileInfo={fileInfo} callBack={updateVerificationStatus} />
+                                                                </Collapsible.Content>
+                                                            </Collapsible.Root>
+                                                        </Box>
+                                                    </VStack>
+                                                </Card.Body>
+                                            </Card.Root>
+                                        </GridItem>
+                                    </SimpleGrid>
+                                </Box>
+
+                            </VStack>
+                        </Container>
+                    ) : null
+                }
+            </Container>
         </div>
     )
 }
