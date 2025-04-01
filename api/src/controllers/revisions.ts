@@ -207,7 +207,8 @@ export default async function revisionsController(fastify: FastifyInstance) {
                 }
 
 
-                //todo consult dalmas if signature_public_key needs tobe stored
+console.log(`Data stringify  ${JSON.stringify(revisionData.revision, null, 4)}`)
+                // process.exit(1);
                 await prisma.signature.upsert({
                     where: {
                         hash: filePubKeyHash
