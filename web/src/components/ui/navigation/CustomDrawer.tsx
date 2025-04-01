@@ -11,7 +11,7 @@ import {
 } from "../drawer"
 import { Button } from "../button"
 import { LuCheck, LuChevronDown, LuChevronUp, LuExternalLink, LuEye, LuX } from "react-icons/lu"
-import { Box, Card, Collapsible, Drawer,  For, GridItem, Group, Icon, IconButton, Link, Portal, SimpleGrid, Span, Text, VStack } from "@chakra-ui/react"
+import { Box, Card, Collapsible, Drawer, For, GridItem, Group, Icon, IconButton, Link, Portal, SimpleGrid, Span, Text, VStack } from "@chakra-ui/react"
 import { TimelineConnector, TimelineContent, TimelineDescription, TimelineItem, TimelineRoot, TimelineTitle } from "../timeline"
 import { displayTime, formatCryptoAddress, fetchLinkedFileName } from "../../../utils/functions"
 import { Alert } from "../alert"
@@ -418,6 +418,7 @@ export const RevisionDetailsSummary = ({ fileInfo }: IRevisionDetailsSummary) =>
                         </IconButton>
 
                         <Box>
+                            {/* <Text style={{ whiteSpace: "pre-wrap" }}>{JSON.stringify(revision, null, 4)}</Text> */}
 
                             {/* <Text>{index}. {revision.signature?.signature} </Text> */}
                             <ItemDetail label="Signature Hash:"
@@ -432,7 +433,7 @@ export const RevisionDetailsSummary = ({ fileInfo }: IRevisionDetailsSummary) =>
                             <ItemDetail label="Timestamp (UTC) : "
                                 // displayValue={formatCryptoAddress(revision.signature.signature_wallet_address, 4, 6)}
                                 displayValue={displayTime(revision.local_timestamp)}
-                                value={revision.signature_wallet_address ?? ""} showCopyIcon={false}
+                                value={revision.local_timestamp ?? ""} showCopyIcon={false}
                             />
                         </Box>
                     </Group>
@@ -457,26 +458,22 @@ export const RevisionDetailsSummary = ({ fileInfo }: IRevisionDetailsSummary) =>
                         {/* <Text>{index}. {revision.signature?.signature} </Text> */}
                         <Box>
                             <ItemDetail label="Network:"
-                                displayValue={formatCryptoAddress(revision.witness?.witness_network ?? "", 4, 6)}
-                                value={revision.witness?.witness_network ?? " "} showCopyIcon={false}
+                                displayValue={formatCryptoAddress(revision.witness_network ?? "", 4, 6)}
+                                value={revision.witness_network ?? " "} showCopyIcon={false}
                             />
                             <br />
                             <ItemDetail label="Timestamp (UTC) : "
-                                displayValue={displayTime(revision.local_timestamp)}
-                                value={revision.signature?.signature_wallet_address ?? ""} showCopyIcon={false}
+                                displayValue={displayTime(revision.witness_timestamp?.toString() ?? "")}
+                                value={revision.witness_timestamp?.toString() ?? ""} showCopyIcon={false}
                             />
                             <br />
-                            <ItemDetail label="Witness Hash:"
-                                displayValue={formatCryptoAddress(revision.witness_hash ?? "", 4, 6)}
-                                value={revision.witness?.witness_hash ?? ""} showCopyIcon={true}
-                            />
-                            <br />
+                           
                             <Group>
                                 <ItemDetail label="Transaction Hash:"
-                                    displayValue={formatCryptoAddress(revision.witness_event_transaction_hash.startsWith('0x') ? revision.witness_event_transaction_hash ?? "" : `0x${revision.witness_event_transaction_hash ?? ""}`, 4, 6)}
-                                    value={`0x${revision.witness_event_transaction_hash ?? ""}`} showCopyIcon={true}
+                                    displayValue={formatCryptoAddress(revision.witness_transaction_hash?.startsWith('0x') ? revision.witness_transaction_hash ?? "" : `0x${revision.witness_transaction_hash ?? ""}`, 4, 6)}
+                                    value={`0x${revision.witness_transaction_hash ?? ""}`} showCopyIcon={true}
                                 />
-                                <Link outline={'none'} href={`${WITNESS_NETWORK_MAP[revision.witness_network ?? ""]}/${revision.witness_event_transaction_hash}`} target="_blank">
+                                <Link outline={'none'} href={`${WITNESS_NETWORK_MAP[revision.witness_network ?? ""]}/${revision.witness_transaction_hash}`} target="_blank">
                                     <Icon size={'sm'} color={'blue.500'}>
                                         <LuExternalLink />
                                     </Icon>
@@ -644,7 +641,7 @@ export const ChainDetailsBtn = ({ fileInfo, session }: AquaTreeDetails) => {
                             <DrawerBody py={'lg'} px={1}>
                                 <Box>
                                     <SimpleGrid columns={{ base: 1, md: 5 }}>
-                                    <GridItem colSpan={{ base: 1, md: 3 }}>
+                                        <GridItem colSpan={{ base: 1, md: 3 }}>
                                             <Card.Root border={'none'} shadow={'none'} borderRadius={'xl'}>
                                                 <Card.Body>
                                                     <FilePreview fileInfo={fileInfo.fileObject[0]} />

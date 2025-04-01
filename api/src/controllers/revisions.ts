@@ -220,7 +220,7 @@ export default async function revisionsController(fastify: FastifyInstance) {
                     create: {
                         hash: filePubKeyHash,
                         signature_digest: signature,
-                        signature_wallet_address: revisionData.revision.signature.wallet_address,
+                        signature_wallet_address: revisionData.revision.signature_wallet_address,
                         signature_type: revisionData.revision.signature_type,
                         signature_public_key: revisionData.revision.signature_public_key,
                         reference_count: 1

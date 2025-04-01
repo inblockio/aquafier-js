@@ -128,7 +128,7 @@ export const WitnessAquaChain = ({ apiFileInfo, backendUrl, nonce }: RevionOpera
                     });
 
                     if (response.status === 200 || response.status === 201) {
-                       //  console.log("update state ...")
+                        //  console.log("update state ...")
                         const newFiles: ApiFileInfo[] = [];
                         const keysPar = Object.keys(apiFileInfo.aquaTree!.revisions!)
                         files.forEach((item) => {
@@ -155,7 +155,7 @@ export const WitnessAquaChain = ({ apiFileInfo, backendUrl, nonce }: RevionOpera
                 setWitnessing(false)
 
             } catch (error) {
-               //  console.log("Error  ", error)
+                //  console.log("Error  ", error)
                 setWitnessing(false)
                 toaster.create({
                     description: `Error during witnessing`,
@@ -186,7 +186,7 @@ export const WitnessAquaChain = ({ apiFileInfo, backendUrl, nonce }: RevionOpera
 export const SignAquaChain = ({ apiFileInfo, backendUrl, nonce }: RevionOperation) => {
     const { files, setFiles } = useStore(appStore)
     const [signing, setSigning] = useState(false)
-    
+
     const signFileHandler = async () => {
         setSigning(true)
         if (window.ethereum) {
@@ -233,7 +233,7 @@ export const SignAquaChain = ({ apiFileInfo, backendUrl, nonce }: RevionOperatio
 
                     if (response.status === 200 || response.status === 201) {
                         if (response.status === 200 || response.status === 201) {
-                           //  console.log("update state ...")
+                            //  console.log("update state ...")
                             const newFiles: ApiFileInfo[] = [];
                             const keysPar = Object.keys(apiFileInfo.aquaTree!.revisions!)
                             files.forEach((item) => {
@@ -306,13 +306,13 @@ export const DeleteAquaChain = ({ apiFileInfo, backendUrl, nonce }: RevionOperat
             });
 
             if (response.status === 200) {
-               //  console.log("update state ...")
+                //  console.log("update state ...")
                 const newFiles: ApiFileInfo[] = [];
                 const keysPar = Object.keys(apiFileInfo.aquaTree!.revisions!)
                 files.forEach((item) => {
                     const keys = Object.keys(item.aquaTree!.revisions!)
                     if (areArraysEqual(keys, keysPar)) {
-                       //  console.log("ignore revision files ...")
+                        //  console.log("ignore revision files ...")
                     } else {
                         newFiles.push(item)
                     }
@@ -325,7 +325,7 @@ export const DeleteAquaChain = ({ apiFileInfo, backendUrl, nonce }: RevionOperat
                 })
             }
         } catch (e) {
-           //  console.log(`Error ${e}`)
+            //  console.log(`Error ${e}`)
             toaster.create({
                 description: "File deletion error",
                 type: "error"
@@ -366,13 +366,23 @@ export const DownloadAquaChain = ({ file }: { file: ApiFileInfo }) => {
 
         zip.file(`${mainAquaFileName}.aqua.json`, JSON.stringify(file.aquaTree));
 
-       //  console.log(`in call dalmas kenn ${JSON.stringify(file.fileObject, null , 4)}`)
+        //  console.log(`in call dalmas kenn ${JSON.stringify(file.fileObject, null , 4)}`)
         let nameWithHashes: Array<AquaNameWithHash> = []
         for (let fileObj of file.fileObject) {
             if (typeof fileObj.fileContent === 'string' && fileObj.fileContent.startsWith('http')) {
                 try {
+
+
+                    let actualUrlToFetch = fileObj.fileContent
+
+                    console.log(`== Data before ${actualUrlToFetch}`)
+                    if (actualUrlToFetch.includes("inblock.io")) {
+
+                        actualUrlToFetch = actualUrlToFetch.replace("http", "https")
+                    }
+
                     // Fetch the file from the URL
-                    const response = await fetch(fileObj.fileContent, {
+                    const response = await fetch(actualUrlToFetch, {
                         method: 'GET',
                         headers: {
                             'Nonce': session?.nonce ?? "--error--" // Add the nonce directly as a custom header if needed
@@ -407,7 +417,7 @@ export const DownloadAquaChain = ({ file }: { file: ApiFileInfo }) => {
         }
 
         //create aqua.json
-        let aquaObject :  AquaJsonInZip = {
+        let aquaObject: AquaJsonInZip = {
             'genesis': mainAquaFileName,
             'name_with_hash': nameWithHashes
         };
@@ -459,8 +469,16 @@ export const DownloadAquaChain = ({ file }: { file: ApiFileInfo }) => {
             // Check if fileContent is a string (URL)
             if (typeof fileObj.fileContent === 'string' && fileObj.fileContent.startsWith('http')) {
                 try {
+                    let actualUrlToFetch = fileObj.fileContent
+
+                    console.log(`== Data before ${actualUrlToFetch}`)
+                    if (actualUrlToFetch.includes("inblock.io")) {
+
+                        actualUrlToFetch = actualUrlToFetch.replace("http", "https")
+                    }
+
                     // Fetch the file from the URL
-                    const response = await fetch(fileObj.fileContent, {
+                    const response = await fetch(actualUrlToFetch, {
                         method: 'GET',
                         headers: {
                             'Nonce': session?.nonce ?? "--error--" // Add the nonce directly as a custom header if needed
@@ -595,7 +613,7 @@ export const ShareButton = ({ item, nonce }: IShareButton) => {
         if (recipient == "") {
             recepientWalletData = "0xfabacc150f2a0000000000000000000000000000"
         }
-      
+
         const response = await axios.post(url, {
             "latest": latest,
             "hash": unique_identifier,
@@ -607,7 +625,7 @@ export const ShareButton = ({ item, nonce }: IShareButton) => {
             }
         });
 
-       //  console.log(response)
+        //  console.log(response)
 
         if (response.status === 200) {
             setSharing(false)
@@ -808,7 +826,7 @@ export const LinkButton = ({ item, nonce }: IShareButton) => {
             });
 
             if (response.status === 200 || response.status === 201) {
-               //  console.log("update state ...")
+                //  console.log("update state ...")
                 const newFiles: ApiFileInfo[] = [];
                 const keysPar = Object.keys(item.aquaTree!.revisions!)
                 files.forEach((itemFile) => {
@@ -837,7 +855,7 @@ export const LinkButton = ({ item, nonce }: IShareButton) => {
                     }
                 })
 
-               //  console.log(`new file ${JSON.stringify(newFiles, null, 4)}`)
+                //  console.log(`new file ${JSON.stringify(newFiles, null, 4)}`)
                 setFiles(newFiles)
 
             }
@@ -900,7 +918,7 @@ export const LinkButton = ({ item, nonce }: IShareButton) => {
                                         const keys = Object.keys(itemLoop.aquaTree!.revisions!)
                                         const keysPar = Object.keys(item.aquaTree!.revisions!)
                                         const res = areArraysEqual(keys, keysPar)
-                                       //  console.log(`res ${res} ${JSON.stringify(itemLoop.fileObject)}`)
+                                        //  console.log(`res ${res} ${JSON.stringify(itemLoop.fileObject)}`)
                                         if (res) {
                                             return <div key={index}> </div>
                                         }
