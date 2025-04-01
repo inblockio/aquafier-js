@@ -467,16 +467,16 @@ export const RevisionDetailsSummary = ({ fileInfo }: IRevisionDetailsSummary) =>
                             />
                             <br />
                             <ItemDetail label="Witness Hash:"
-                                displayValue={formatCryptoAddress(revision.witness?.witness_hash ?? "", 4, 6)}
+                                displayValue={formatCryptoAddress(revision.witness_hash ?? "", 4, 6)}
                                 value={revision.witness?.witness_hash ?? ""} showCopyIcon={true}
                             />
                             <br />
                             <Group>
                                 <ItemDetail label="Transaction Hash:"
-                                    displayValue={formatCryptoAddress(revision.witness?.witness_event_transaction_hash.startsWith('0x') ? revision.witness?.witness_event_transaction_hash ?? "" : `0x${revision.witness?.witness_event_transaction_hash ?? ""}`, 4, 6)}
-                                    value={`0x${revision.witness?.witness_event_transaction_hash ?? ""}`} showCopyIcon={true}
+                                    displayValue={formatCryptoAddress(revision.witness_event_transaction_hash.startsWith('0x') ? revision.witness_event_transaction_hash ?? "" : `0x${revision.witness_event_transaction_hash ?? ""}`, 4, 6)}
+                                    value={`0x${revision.witness_event_transaction_hash ?? ""}`} showCopyIcon={true}
                                 />
-                                <Link outline={'none'} href={`${WITNESS_NETWORK_MAP[revision.witness?.witness_network ?? ""]}/${revision.witness?.witness_event_transaction_hash}`} target="_blank">
+                                <Link outline={'none'} href={`${WITNESS_NETWORK_MAP[revision.witness_network ?? ""]}/${revision.witness_event_transaction_hash}`} target="_blank">
                                     <Icon size={'sm'} color={'blue.500'}>
                                         <LuExternalLink />
                                     </Icon>
@@ -632,8 +632,8 @@ export const ChainDetailsBtn = ({ fileInfo, session }: AquaTreeDetails) => {
                                     position="absolute"
                                     right="8px"
                                     top="8px"
-                                    colorPalette="red"
-                                    variant="subtle"
+                                    colorPalette="whitesmoke"
+                                    variant="solid"
                                     size="md"
                                     onClick={() => setIsOpen(false)}
                                     aria-label="Close drawer"

@@ -260,10 +260,10 @@ export async function saveAquaTree(aquaTree: AquaTree, userAddress: string,) {
 
             //  console.log(`Revsion data ${JSON.stringify()}`)
             await prisma.link.upsert({
-                where:{
+                where: {
                     hash: pubKeyHash,
                 },
-                update:{
+                update: {
                     hash: pubKeyHash,
                     link_type: "aqua",
                     link_require_indepth_verification: false,
@@ -320,11 +320,38 @@ export async function saveAquaTree(aquaTree: AquaTree, userAddress: string,) {
 
 export async function fetchAquaTreeWithForwardRevisions(latestRevisionHash: string, url: string): Promise<[AquaTree, FileObject[]]> {
 
-    const [anAquaTree, fileObject] = await createAquaTreeFromRevisions(latestRevisionHash, url)
+    // now fetch forwad revision
+    let revisionData = [];
+    let queryHash = latestRevisionHash
+    while (true) {
+        // fetch latest revision 
+        let latestRevionData = await prisma.revision.findFirst({
+            where: {
+                previous: queryHash,
+            }
+        });
 
-    //now fetch forwad revision
+        if (latestRevionData == null) {
+            break
+        }
 
-    // todo 
+        revisionData.push(latestRevionData)
+        queryHash = latestRevionData.pubkey_hash
+    }
+
+    let createAquaTreeFrom = latestRevisionHash;
+    if (revisionData.length > 1) {
+        //find latest hash 
+        createAquaTreeFrom = revisionData[revisionData.length - 1].pubkey_hash
+    }else{
+        console.log(`the aqua tree has no new revision  from  ${latestRevisionHash} `)
+    }
+
+
+
+
+    const [anAquaTree, fileObject] = await createAquaTreeFromRevisions(createAquaTreeFrom, url)
+
     return [anAquaTree, fileObject];
 
 }
@@ -363,6 +390,7 @@ export async function createAquaTreeFromRevisions(latestRevisionHash: string, ur
 
     ////  console.log(`Find ${JSON.stringify(revisonLatetsItem, null, 4)}.`)
     let revisionData = [];
+
     // fetch latest revision 
     let latestRevionData = await prisma.revision.findFirst({
         where: {
@@ -378,7 +406,7 @@ export async function createAquaTreeFromRevisions(latestRevisionHash: string, ur
 
     try {
         console.log(`%%%%%%%%%%%%%%%%%%%%%%%%%%% previous ${latestRevionData?.previous} \n ${JSON.stringify(latestRevionData, null, 4)}`)
-        let pubKey = latestRevisionHash.split("_")[0];
+        // let pubKey = latestRevisionHash.split("_")[0];
         let previousWithPubKey = latestRevionData?.previous!!;
 
 
