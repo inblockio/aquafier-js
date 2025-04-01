@@ -148,7 +148,7 @@ export async function saveAquaTree(aquaTree: AquaTree, userAddress: string,) {
                 create: {
                     hash: pubKeyHash,
                     signature_digest: signature,
-                    signature_wallet_address: revisionData.signature.wallet_address,
+                    signature_wallet_address: revisionData.signature_wallet_address,
                     signature_type: revisionData.signature_type,
                     signature_public_key: revisionData.signature_public_key,
                     reference_count: 1
@@ -542,6 +542,7 @@ export async function createAquaTreeFromRevisions(latestRevisionHash: string, ur
             let revisionInfoData = await FetchRevisionInfo(revisionItem.pubkey_hash, revisionItem)
 
             if (revisionInfoData == null) {
+                console.log(`Revision data ${JSON.stringify(revisionItem, null, 4)}`)
                 throw Error("Revision info not found")
             }
 
