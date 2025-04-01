@@ -23,7 +23,7 @@ const Home = () => {
                                         outline: "4px dashed",
                                         outlineOffset: '4px'
                                     }}
-                                    maxHeight={{base: "100px", md: "200px"}}
+                                    maxHeight={{ base: "100px", md: "200px" }}
                                 />
                                 {/* 
                             I have set clearable to false since when selecting new files. 

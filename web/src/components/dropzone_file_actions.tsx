@@ -666,7 +666,7 @@ export const ImportAquaChainFromChain = ({ fileInfo, isVerificationSuccessful }:
             comparisonResult?.divergences?.forEach((divergence) => {
                 const upcomingRevisionHash = divergence.upcomingRevisionHash
                 const outgoingRevisionHash = divergence.existingRevisionHash
-                if(outgoingRevisionHash){
+                if (outgoingRevisionHash) {
                     revisionsToDelete.push(outgoingRevisionHash)
                 }
                 if (!upcomingRevisionHash) return
@@ -677,33 +677,41 @@ export const ImportAquaChainFromChain = ({ fileInfo, isVerificationSuccessful }:
                     if (!revisionToImport) return
                     revisionsToImport.push([upcomingRevisionHash, revisionToImport])
                 }
-            })  
+            })
+
+            console.log(comparisonResult)
 
             console.log("Revisions to Delete: ", revisionsToDelete)
+            const revisionHashes = revisionsToDelete.join(",")
             const revisionDeleteUrl = `${backend_url}/tree`;
-            for (const revision of revisionsToImport) {
-                await axios.post(revisionDeleteUrl, {
-                    "revision": revision[1],
-                    "revisionHash": revision[0],
-                }, {
+            console.log("----- Revisions to delete: ", revisionsToDelete)
+            try {
+                let deletionResults = await axios.delete(revisionDeleteUrl, {
+                    data: {
+                        revisionHash: revisionHashes
+                    },
+                    params: {
+                    },
                     headers: {
                         "nonce": session?.nonce
                     }
-                }).then(() => {
-                    toaster.create({
-                        title: "Aqua chain import",
-                        description: "Chain merged successfully",
-                        type: "success"
-                    })
+                })
+
+                console.log("Deletion results: ", deletionResults)
+            }
+            catch (error: any) {
+                console.log("Deletion Error: ", error)
+                toaster.create({
+                    title: "Revision Deletion Error",
+                    description: `An error occured deleting some revisions: ${error}`,
+                    type: "error"
                 })
             }
-
-            console.log("Revisions to import: ", revisionsToImport)
 
             // Delete the existing revisions
             // setUploading(false)
 
-            // const url = `${backend_url}/tree`;
+            const url = `${backend_url}/tree`;
             // // make this work sequentially, one after the other
             // for (const revision of revisionsToImport) {
             //     await axios.post(url, {

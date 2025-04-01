@@ -99,8 +99,6 @@ export default async function revisionsController(fastify: FastifyInstance) {
                 return reply.code(403).send({ success: false, message: "Nounce  is invalid" });
             }
 
-
-
             const revisionData = request.body as SaveRevision
 
             if (!revisionData.revision) {
@@ -207,7 +205,7 @@ export default async function revisionsController(fastify: FastifyInstance) {
                 }
 
 
-console.log(`Data stringify  ${JSON.stringify(revisionData.revision, null, 4)}`)
+                console.log(`Data stringify  ${JSON.stringify(revisionData.revision, null, 4)}`)
                 // process.exit(1);
                 await prisma.signature.upsert({
                     where: {
@@ -298,41 +296,47 @@ console.log(`Data stringify  ${JSON.stringify(revisionData.revision, null, 4)}`)
             return reply.code(500).send({ error: "Failed to process revisions" });
         }
     });
-    
+
     fastify.delete('/tree', async (request, reply) => {
-            // Read `nonce` from headers
-            const nonce = request.headers['nonce']; // Headers are case-insensitive
-    
-            // Check if `nonce` is missing or empty
-            if (!nonce || typeof nonce !== 'string' || nonce.trim() === '') {
-                return reply.code(401).send({ error: 'Unauthorized: Missing or empty nonce header' });
-            }
-    
-            const session = await prisma.siweSession.findUnique({
-                where: { nonce }
-            });
-    
-            if (!session) {
-                return reply.code(403).send({ success: false, message: "Nonce is invalid" });
-            }
-    
-            const revisionDataPar = request.body as DeleteRevision;
-    
-            if (!revisionDataPar.revisionHash) {
-                return reply.code(400).send({ success: false, message: "revision hash is required" });
-            }
-    
-            let pubkeyhash = `${session.address}_${revisionDataPar.revisionHash}`;
-    
+        // Read `nonce` from headers
+        const nonce = request.headers['nonce']; // Headers are case-insensitive
+
+        // Check if `nonce` is missing or empty
+        if (!nonce || typeof nonce !== 'string' || nonce.trim() === '') {
+            return reply.code(401).send({ error: 'Unauthorized: Missing or empty nonce header' });
+        }
+
+        const session = await prisma.siweSession.findUnique({
+            where: { nonce }
+        });
+
+        if (!session) {
+            return reply.code(403).send({ success: false, message: "Nonce is invalid" });
+        }
+
+        const revisionDataPar = request.body as DeleteRevision;
+
+        if (!revisionDataPar.revisionHash) {
+            return reply.code(400).send({ success: false, message: "revision hash is required" });
+        }
+
+        const revisionHashestoDelete: Array<String> = revisionDataPar.revisionHash.split(",")
+
+        for (let i = 0; i < revisionHashestoDelete.length; i++) {
+
+            let currentHash = revisionHashestoDelete[i]
+            let pubkeyhash = `${session.address}_${currentHash}`;
+            console.log(`Public_key_hash_to_delete: ${pubkeyhash}` )
+            break;
             // fetch specific revision 
             let latestRevionData = await prisma.revision.findFirst({
                 where: {
                     pubkey_hash: pubkeyhash
                 }
             });
-    
+
             if (latestRevionData == null) {
-                return reply.code(500).send({ success: false, message: `revision with hash ${revisionDataPar.revisionHash} not found in system` });
+                return reply.code(500).send({ success: false, message: `revision with hash ${currentHash} not found in system` });
             }
 
             try {
@@ -340,10 +344,10 @@ console.log(`Data stringify  ${JSON.stringify(revisionData.revision, null, 4)}`)
                 await prisma.$transaction(async (tx) => {
                     // const revisionPubkeyHashes = revisionData.map(rev => rev.pubkey_hash);
                     const revisionPubkeyHashes = [pubkeyhash]
-    
+
                     // Step 1: First delete all entries in related tables that reference our revisions
                     // We need to delete child records before parent records to avoid foreign key constraints
-    
+
                     // Delete AquaForms entries
                     await tx.aquaForms.deleteMany({
                         where: {
@@ -352,7 +356,7 @@ console.log(`Data stringify  ${JSON.stringify(revisionData.revision, null, 4)}`)
                             }
                         }
                     });
-    
+
                     // Delete Signature entries
                     await tx.signature.deleteMany({
                         where: {
@@ -361,7 +365,7 @@ console.log(`Data stringify  ${JSON.stringify(revisionData.revision, null, 4)}`)
                             }
                         }
                     });
-    
+
                     // Delete Witness entries (note: we need to handle WitnessEvent separately)
                     const witnesses = await tx.witness.findMany({
                         where: {
@@ -370,9 +374,9 @@ console.log(`Data stringify  ${JSON.stringify(revisionData.revision, null, 4)}`)
                             }
                         }
                     });
-    
+
                     const witnessRoots = witnesses.map(w => w.Witness_merkle_root).filter(Boolean);
-    
+
                     await tx.witness.deleteMany({
                         where: {
                             hash: {
@@ -380,7 +384,7 @@ console.log(`Data stringify  ${JSON.stringify(revisionData.revision, null, 4)}`)
                             }
                         }
                     });
-    
+
                     // Check if any WitnessEvents are no longer referenced
                     for (const root of witnessRoots) {
                         const remainingWitnesses = await tx.witness.count({
@@ -388,7 +392,7 @@ console.log(`Data stringify  ${JSON.stringify(revisionData.revision, null, 4)}`)
                                 Witness_merkle_root: root
                             }
                         });
-    
+
                         if (remainingWitnesses === 0 && root) {
                             await tx.witnessEvent.delete({
                                 where: {
@@ -397,7 +401,7 @@ console.log(`Data stringify  ${JSON.stringify(revisionData.revision, null, 4)}`)
                             });
                         }
                     }
-    
+
                     // Delete Link entries
                     await tx.link.deleteMany({
                         where: {
@@ -406,7 +410,7 @@ console.log(`Data stringify  ${JSON.stringify(revisionData.revision, null, 4)}`)
                             }
                         }
                     });
-    
+
                     // Handle File entries
                     // First, find all files related to our revisions
                     const files = await tx.file.findMany({
@@ -416,7 +420,7 @@ console.log(`Data stringify  ${JSON.stringify(revisionData.revision, null, 4)}`)
                             }
                         }
                     });
-    
+
                     // Handle FileIndex entries first (as they reference files)
                     for (const file of files) {
                         // Find FileIndex entries that reference this file
@@ -427,7 +431,7 @@ console.log(`Data stringify  ${JSON.stringify(revisionData.revision, null, 4)}`)
                                 }
                             }
                         });
-    
+
                         for (const fileIndex of fileIndexEntries) {
                             if ((fileIndex.reference_count || 0) <= 1) {
                                 // If this is the last reference, delete the FileIndex entry
@@ -449,7 +453,7 @@ console.log(`Data stringify  ${JSON.stringify(revisionData.revision, null, 4)}`)
                                 });
                             }
                         }
-    
+
                         // Now we can safely handle the file itself
                         if ((file.reference_count || 0) <= 1) {
                             // If this is the last reference, delete the file
@@ -457,11 +461,11 @@ console.log(`Data stringify  ${JSON.stringify(revisionData.revision, null, 4)}`)
                                 try {
                                     fs.unlinkSync(file.content);
                                 } catch (er) {
-                                   //  console.log("Error deleting file from filesystem:", er);
+                                    //  console.log("Error deleting file from filesystem:", er);
                                     // Continue even if file deletion fails
                                 }
                             }
-    
+
                             await tx.file.delete({
                                 where: {
                                     hash: file.hash
@@ -479,7 +483,7 @@ console.log(`Data stringify  ${JSON.stringify(revisionData.revision, null, 4)}`)
                             });
                         }
                     }
-    
+
                     // Step 2: Remove any references to our revisions from other revisions
                     await tx.revision.updateMany({
                         where: {
@@ -491,7 +495,7 @@ console.log(`Data stringify  ${JSON.stringify(revisionData.revision, null, 4)}`)
                             previous: null
                         }
                     });
-    
+
                     // Step 3: Delete the latest entry - we need to do this before deleting revisions
                     await tx.latest.deleteMany({
                         where: {
@@ -500,7 +504,7 @@ console.log(`Data stringify  ${JSON.stringify(revisionData.revision, null, 4)}`)
                             }
                         }
                     });
-    
+
                     // Step 4: Finally, delete all revisions
                     await tx.revision.delete({
                         where: {
@@ -508,7 +512,7 @@ console.log(`Data stringify  ${JSON.stringify(revisionData.revision, null, 4)}`)
                         }
                     });
                 });
-    
+
                 return reply.code(200).send({ success: true, message: "File and revisions deleted successfully" });
             } catch (error: any) {
                 console.error("Error in delete operation:", error);
@@ -518,7 +522,8 @@ console.log(`Data stringify  ${JSON.stringify(revisionData.revision, null, 4)}`)
                     details: error
                 });
             }
-        });
-    
+        }
+        
+    });
 
 }
