@@ -141,7 +141,7 @@ export const UploadFile = ({ file, uploadedIndexes, fileIndex, updateUploadedInd
     const [uploading, setUploading] = useState(false)
     const [uploaded, setUploaded] = useState(false)
 
-    const { metamaskAddress, setFiles, files, backend_url, session } = useStore(appStore)
+    const { metamaskAddress, addFile, files, backend_url, session } = useStore(appStore)
 
 
 
@@ -216,7 +216,12 @@ export const UploadFile = ({ file, uploadedIndexes, fileIndex, updateUploadedInd
             //     linkedFileObjects: []
             // };
 
-            setFiles([...files, fileInfo])
+            
+            let newFilesData = [...files, fileInfo] ;
+            console.log(`newFilesData -, ${JSON.stringify(newFilesData)}`)
+
+            addFile(fileInfo)
+        
             setUploaded(true)
             setUploading(false)
             toaster.create({

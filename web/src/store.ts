@@ -36,7 +36,10 @@ type AppStoreActions = {
     ) => void,
     setFiles: (
         files: AppStoreState['files'],
-    ) => void
+    ) => void,
+    addFile: (
+        file: ApiFileInfo,
+    ) => void,
     setBackEndUrl: (
         backend_url: AppStoreState['backend_url'],
     ) => void
@@ -98,6 +101,12 @@ const appStore = createStore<TAppStore>()(
             setFiles: (
                 files: AppStoreState['files'],
             ) => set({ files: files }),
+            addFile: (
+                file: ApiFileInfo,
+            ) => {
+                const { files } = appStore.getState()
+                set({ files: [...files, file] })
+            },
             setBackEndUrl: (
                 backend_url: AppStoreState['backend_url'],
             ) => set({ backend_url: backend_url }),
