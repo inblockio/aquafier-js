@@ -78,7 +78,7 @@ const start = async () => {
     // Register the plugin
     await fastify.register(fastifyMultipart, {
       limits: {
-        fileSize: 20 * 1024 * 1024 * 10 // 200MB - Adding this here as well for early rejection
+        fileSize: 200 * 1024 * 1024 * 10 // 200MB - Adding this here as well for early rejection
       }
     });
 
