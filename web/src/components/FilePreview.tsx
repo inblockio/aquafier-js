@@ -8,6 +8,9 @@ import appStore from "../store";
 // Add type declaration for PDF.js
 declare global {
     interface Window {
+        mammoth: {
+            convertToHtml: (options: { arrayBuffer: ArrayBuffer }) => Promise<{ value: string }>;
+        };
         'pdfjs-dist/build/pdf': any;
     }
 }
@@ -238,9 +241,9 @@ const FilePreview: React.FC<IFilePreview> = ({ fileInfo }) => {
             const mobileRegex = /android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini/i;
             setIsMobile(mobileRegex.test(userAgent.toLowerCase()));
         };
-        
+
         checkIfMobile();
-        
+
         // Also check on resize in case of orientation change
         window.addEventListener('resize', checkIfMobile);
         return () => window.removeEventListener('resize', checkIfMobile);
@@ -256,8 +259,8 @@ const FilePreview: React.FC<IFilePreview> = ({ fileInfo }) => {
                 let actualUrlToFetch = fileContentUrl
 
                 console.log(`== Data before ${actualUrlToFetch}`)
-                if(actualUrlToFetch.includes("inblock.io")){
-                    
+                if (actualUrlToFetch.includes("inblock.io")) {
+
                     actualUrlToFetch = actualUrlToFetch.replace("http", "https")
                 }
                 console.log(`== Data after ${actualUrlToFetch}`)
@@ -275,11 +278,11 @@ const FilePreview: React.FC<IFilePreview> = ({ fileInfo }) => {
 
                 // Clone the response for potential text extraction
                 const responseClone = response.clone();
-                
+
                 // Get the raw data as ArrayBuffer first
                 const arrayBuffer = await response.arrayBuffer();
                 console.log("ArrayBuffer size:", arrayBuffer.byteLength);
-                
+
                 // If content type is missing or generic, try to detect it
                 if (contentType === "application/octet-stream" || contentType === "") {
                     const uint8Array = new Uint8Array(arrayBuffer);
@@ -294,10 +297,11 @@ const FilePreview: React.FC<IFilePreview> = ({ fileInfo }) => {
                     } else if (fileInfo.fileName.toLowerCase().endsWith('.doc')) {
                         contentType = "application/msword";
                     }
-                    
+
                     // Try to convert Word document to HTML for preview
                     try {
-                        if (window.mammoth) {
+                        let mammothLib =  (window as any).mammoth;
+                        if (mammothLib) {
                             const result = await window.mammoth.convertToHtml({ arrayBuffer });
                             setWordContent(result.value);
                             console.log("Word document converted to HTML");
@@ -308,37 +312,37 @@ const FilePreview: React.FC<IFilePreview> = ({ fileInfo }) => {
                         console.error("Error converting Word document:", error);
                     }
                 }
-                
+
                 // For PDF files, ensure proper content type
-                if (contentType === "application/pdf" || 
+                if (contentType === "application/pdf" ||
                     (fileInfo.fileName && fileInfo.fileName.toLowerCase().endsWith(".pdf"))) {
                     contentType = "application/pdf";
-                    
+
                     // Store PDF blob for direct rendering if needed
                     const pdfBlob = new Blob([arrayBuffer], { type: "application/pdf" });
                     setPdfBlob(pdfBlob);
                 }
-                
+
                 // Handle audio files
-                if (contentType.startsWith("audio/") || 
+                if (contentType.startsWith("audio/") ||
                     (fileInfo.fileName && (/\.(mp3|wav|ogg|aac|flac|m4a)$/i).test(fileInfo.fileName))) {
                     if (!contentType.startsWith("audio/")) {
                         // Set a default audio MIME type if needed
                         contentType = "audio/mpeg";
                     }
                 }
-                
+
                 // Handle video files
-                if (contentType.startsWith("video/") || 
+                if (contentType.startsWith("video/") ||
                     (fileInfo.fileName && (/\.(mp4|webm|ogg|mov|avi|wmv|flv|mkv)$/i).test(fileInfo.fileName))) {
                     if (!contentType.startsWith("video/")) {
                         // Set a default video MIME type if needed
                         contentType = "video/mp4";
                     }
                 }
-                
+
                 // Handle text-based content types
-                if (contentType.startsWith("text/") || 
+                if (contentType.startsWith("text/") ||
                     contentType === "application/json" ||
                     contentType === "application/xml" ||
                     contentType === "application/javascript") {
@@ -357,14 +361,14 @@ const FilePreview: React.FC<IFilePreview> = ({ fileInfo }) => {
                         }
                     }
                 }
-                
+
                 // Create a proper blob with the correct content type
                 const blob = new Blob([arrayBuffer], { type: contentType });
                 console.log("Created blob with type:", contentType, "size:", blob.size);
-                
+
                 setFileType(contentType);
                 console.log("Final content type set to:", contentType);
-                
+
                 // Create URL from the properly typed blob
                 const objectURL = URL.createObjectURL(blob);
                 console.log("Object URL created:", objectURL);
@@ -393,52 +397,52 @@ const FilePreview: React.FC<IFilePreview> = ({ fileInfo }) => {
                     // You'll need to add this script to your HTML or bundle:
                     // <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js"></script>
                     const pdfjsLib = window['pdfjs-dist/build/pdf'];
-                    
+
                     if (!pdfjsLib) {
                         console.error("PDF.js library not found");
                         return;
                     }
-                    
+
                     // Load the PDF document
                     const loadingTask = pdfjsLib.getDocument(fileURL);
                     const pdf = await loadingTask.promise;
-                    
+
                     // Get the first page
                     const page = await pdf.getPage(1);
-                    
+
                     // Set up canvas for rendering
                     const canvas = pdfCanvasRef.current;
                     const context = canvas.getContext('2d');
-                    
+
                     // Calculate scale to fit width
                     const viewport = page.getViewport({ scale: 1 });
                     const containerWidth = canvas.parentElement?.clientWidth || window.innerWidth;
                     const scale = containerWidth / viewport.width;
                     const scaledViewport = page.getViewport({ scale });
-                    
+
                     // Set canvas dimensions
                     canvas.height = scaledViewport.height;
                     canvas.width = scaledViewport.width;
-                    
+
                     // Clear any previous content with transparent background
                     context?.clearRect(0, 0, canvas.width, canvas.height);
-                    
+
                     // Render the page
                     const renderContext = {
                         canvasContext: context,
                         viewport: scaledViewport,
                         background: 'transparent'
                     };
-                    
+
                     await page.render(renderContext).promise;
                     console.log("PDF first page rendered successfully");
-                    
+
                 } catch (error) {
                     console.error("Error rendering PDF first page:", error);
                 }
             }
         };
-        
+
         if (isLoading === false) {
             renderPdfFirstPage();
         }
@@ -446,7 +450,7 @@ const FilePreview: React.FC<IFilePreview> = ({ fileInfo }) => {
 
     // Function to load mammoth.js script if needed
     const loadMammothScript = () => {
-        if (!window.mammoth && (fileType === "application/msword" || 
+        if (!window.mammoth && (fileType === "application/msword" ||
             fileType === "application/vnd.openxmlformats-officedocument.wordprocessingml.document")) {
             const script = document.createElement('script');
             script.src = "https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js";
@@ -459,7 +463,7 @@ const FilePreview: React.FC<IFilePreview> = ({ fileInfo }) => {
 
     // Load mammoth.js when needed
     useEffect(() => {
-        if (fileType === "application/msword" || 
+        if (fileType === "application/msword" ||
             fileType === "application/vnd.openxmlformats-officedocument.wordprocessingml.document") {
             loadMammothScript();
         }
@@ -468,22 +472,22 @@ const FilePreview: React.FC<IFilePreview> = ({ fileInfo }) => {
     if (isLoading) return <p>Loading...</p>;
 
     console.log("Rendering file with type:", fileType, "Mobile:", isMobile);
-    
+
     // Render based on file type
     if (fileType.startsWith("image/")) {
         return <img src={fileURL} alt="Fetched file" style={{ maxWidth: "100%", height: "auto" }} />;
     }
 
     // Render Word documents
-    if (fileType === "application/msword" || 
+    if (fileType === "application/msword" ||
         fileType === "application/vnd.openxmlformats-officedocument.wordprocessingml.document") {
-        
+
         if (wordContent) {
             // If we have successfully converted Word content to HTML, display it
             return (
                 <div>
-                    <div 
-                        className="word-preview" 
+                    <div
+                        className="word-preview"
                         style={{
                             padding: "20px",
                             border: "1px solid #ddd",
@@ -495,14 +499,14 @@ const FilePreview: React.FC<IFilePreview> = ({ fileInfo }) => {
                         dangerouslySetInnerHTML={{ __html: wordContent }}
                     />
                     <div style={{ marginTop: "15px", textAlign: "center" }}>
-                        <a 
-                            href={fileURL} 
-                            download={fileInfo.fileName || "document.docx"} 
-                            style={{ 
-                                color: "#fff", 
-                                backgroundColor: "#4285f4", 
-                                padding: "10px 15px", 
-                                borderRadius: "4px", 
+                        <a
+                            href={fileURL}
+                            download={fileInfo.fileName || "document.docx"}
+                            style={{
+                                color: "#fff",
+                                backgroundColor: "#4285f4",
+                                padding: "10px 15px",
+                                borderRadius: "4px",
                                 textDecoration: "none",
                                 display: "inline-block"
                             }}
@@ -517,14 +521,14 @@ const FilePreview: React.FC<IFilePreview> = ({ fileInfo }) => {
             return (
                 <div style={{ textAlign: "center", padding: "20px" }}>
                     <p>Preview not available for this Word document.</p>
-                    <a 
-                        href={fileURL} 
-                        download={fileInfo.fileName || "document.docx"} 
-                        style={{ 
-                            color: "#fff", 
-                            backgroundColor: "#4285f4", 
-                            padding: "10px 15px", 
-                            borderRadius: "4px", 
+                    <a
+                        href={fileURL}
+                        download={fileInfo.fileName || "document.docx"}
+                        style={{
+                            color: "#fff",
+                            backgroundColor: "#4285f4",
+                            padding: "10px 15px",
+                            borderRadius: "4px",
                             textDecoration: "none",
                             display: "inline-block",
                             marginTop: "10px"
@@ -543,17 +547,17 @@ const FilePreview: React.FC<IFilePreview> = ({ fileInfo }) => {
             return (
                 <div style={{ width: "100%", backgroundColor: "transparent" }}>
                     {/* Canvas for rendering the first page preview */}
-                    <div style={{ 
-                        width: "100%", 
-                        marginBottom: "10px", 
+                    <div style={{
+                        width: "100%",
+                        marginBottom: "10px",
                         textAlign: "center",
                         backgroundColor: "transparent"
                     }}>
-                        <canvas 
-                            ref={pdfCanvasRef} 
-                            style={{ 
-                                width: "100%", 
-                                maxWidth: "100%", 
+                        <canvas
+                            ref={pdfCanvasRef}
+                            style={{
+                                width: "100%",
+                                maxWidth: "100%",
                                 height: "auto",
                                 backgroundColor: "transparent",
                                 display: "block", // Removes any potential spacing
@@ -561,7 +565,7 @@ const FilePreview: React.FC<IFilePreview> = ({ fileInfo }) => {
                             }}
                         />
                     </div>
-                    
+
                     {/* Fallback iframe (might work on some mobile browsers) */}
                     <div style={{ width: "100%", height: "400px", backgroundColor: "transparent" }}>
                         <iframe
@@ -574,17 +578,17 @@ const FilePreview: React.FC<IFilePreview> = ({ fileInfo }) => {
                             <p>Unable to display PDF file.</p>
                         </iframe>
                     </div>
-                    
+
                     {/* Download link as another fallback option */}
                     <div style={{ marginTop: "15px", textAlign: "center" }}>
-                        <a 
-                            href={fileURL} 
-                            download={fileInfo.fileName || "document.pdf"} 
-                            style={{ 
-                                color: "#fff", 
-                                backgroundColor: "#4285f4", 
-                                padding: "10px 15px", 
-                                borderRadius: "4px", 
+                        <a
+                            href={fileURL}
+                            download={fileInfo.fileName || "document.pdf"}
+                            style={{
+                                color: "#fff",
+                                backgroundColor: "#4285f4",
+                                padding: "10px 15px",
+                                borderRadius: "4px",
                                 textDecoration: "none",
                                 display: "inline-block"
                             }}
@@ -610,9 +614,9 @@ const FilePreview: React.FC<IFilePreview> = ({ fileInfo }) => {
         }
     }
 
-    if (fileType.startsWith("text/") || 
-        fileType === "application/json" || 
-        fileType === "application/xml" || 
+    if (fileType.startsWith("text/") ||
+        fileType === "application/json" ||
+        fileType === "application/xml" ||
         fileType === "application/javascript") {
         return (
             <div style={{
