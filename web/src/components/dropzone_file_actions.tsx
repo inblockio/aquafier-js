@@ -166,6 +166,15 @@ export const UploadFile = ({ file, uploadedIndexes, fileIndex, updateUploadedInd
             return;
         }
 
+        const maxSize = 200 * 1024 * 1024; // 200MB in bytes
+        if (file.size > maxSize) {
+            toaster.create({
+                description: "File size exceeds 200MB limit. Please upload a smaller file.",
+                type: "error"
+            })
+            return;
+        }
+
         const formData = new FormData();
         formData.append('file', file);
         formData.append('account', `${metamaskAddress}`);

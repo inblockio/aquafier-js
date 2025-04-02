@@ -18,7 +18,7 @@ const Home = () => {
                                 <FileUploadDropzone
                                     borderRadius={'2xl'}
                                     label="Drag and drop here to upload"
-                                    description=".png, .jpg up to 20MB"
+                                    description="Any file up to 200MB"
                                     _hover={{
                                         outline: "4px dashed",
                                         outlineOffset: '4px'
