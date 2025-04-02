@@ -175,7 +175,7 @@ export const WitnessAquaChain = ({ apiFileInfo, backendUrl, nonce }: RevionOpera
     return (
         <>
 
-            <Button size={'xs'} w={'80px'} onClick={witnessFileHandler} loading={witnessing}>
+            <Button size={'xs'} w={'100px'} onClick={witnessFileHandler} loading={witnessing}>
                 <LuGlasses />
                 Witness
             </Button>
@@ -276,7 +276,7 @@ export const SignAquaChain = ({ apiFileInfo, backendUrl, nonce }: RevionOperatio
         }
     };
     return (
-        <Button size={'xs'} colorPalette={'blue'} variant={'subtle'} w={'80px'} onClick={signFileHandler} loading={signing}>
+        <Button size={'xs'} colorPalette={'blue'} variant={'subtle'} w={'100px'} onClick={signFileHandler} loading={signing}>
             <LuSignature />
             Sign
         </Button>
@@ -337,7 +337,7 @@ export const DeleteAquaChain = ({ apiFileInfo, backendUrl, nonce }: RevionOperat
 
 
     return (
-        <Button size={'xs'} colorPalette={'red'} variant={'subtle'} w={'80px'} onClick={deleteFile} loading={deleting}>
+        <Button size={'xs'} colorPalette={'red'} variant={'subtle'} w={'100px'} onClick={deleteFile} loading={deleting}>
             <LuDelete />
             Delete
         </Button>
@@ -549,10 +549,10 @@ export const DownloadAquaChain = ({ file }: { file: ApiFileInfo }) => {
 
     }
 
-
+ 
 
     return (
-        <Button size={'xs'} colorPalette={'blackAlpha'} variant={'subtle'} w={'165px'} onClick={downloadAquaJson} loading={downloading}>
+        <Button size={'xs'} colorPalette={'purple'} variant={'subtle'} w={'100px'} onClick={downloadAquaJson} loading={downloading}>
             <LuDownload />
             Download
         </Button>
@@ -651,7 +651,7 @@ export const ShareButton = ({ item, nonce }: IShareButton) => {
 
     return (
         <>
-            <Button size={'xs'} colorPalette={'orange'} variant={'subtle'} w={'90px'} onClick={() => setIsOpen(true)}>
+            <Button size={'xs'} colorPalette={'orange'} variant={'subtle'} w={'100px'} onClick={() => setIsOpen(true)}>
                 <LuShare2 />
                 Share
             </Button>
@@ -877,7 +877,7 @@ export const LinkButton = ({ item, nonce }: IShareButton) => {
     }
     return (
         <>
-            <Button size={'xs'} colorPalette={'yellow'} variant={'subtle'} w={'80px'} onClick={() => setIsOpen(true)}>
+            <Button size={'xs'} colorPalette={'yellow'} variant={'subtle'} w={'100px'} onClick={() => setIsOpen(true)}>
                 <LuLink2 />
                 Link
             </Button>

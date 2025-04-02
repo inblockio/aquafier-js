@@ -67,7 +67,7 @@ const FilesTable = () => {
                 } />
             </Table.Cell>
             <Table.Cell minW={'220px'} maxW={'220px'} textWrap={'wrap'}>
-                <Group alignItems={'start'} flexWrap={'wrap'}>
+                <Group alignItems={'space-between'} flexWrap={'wrap'} >
                    
                 <ChainDetailsBtn fileInfo={item} session={session!!} callBack={()=>{
                         console.log("Details callback")

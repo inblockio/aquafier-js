@@ -604,7 +604,7 @@ export const ChainDetailsBtn = ({ fileInfo, session }: AquaTreeDetails) => {
     }
     return (
         <>
-            <Button size={'xs'} colorPalette={'green'} variant={'subtle'} w={'80px'} onClick={() => setIsOpen(true)}>
+            <Button size={'xs'} colorPalette={'green'} variant={'subtle'} w={'100px'} onClick={() => setIsOpen(true)}>
                 <LuEye />
                 Details
             </Button>
