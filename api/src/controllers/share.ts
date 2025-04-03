@@ -10,8 +10,8 @@ import { createAquaTreeFromRevisions, fetchAquaTreeWithForwardRevisions, saveAqu
 
 export default async function shareController(fastify: FastifyInstance) {
     // get current session
+    // Can session be used as a middleware?
 
-    
     fastify.get('/share_data/:hash', async (request, reply) => {
 
         // Extract the hash parameter from the URL
@@ -158,4 +158,104 @@ export default async function shareController(fastify: FastifyInstance) {
         return reply.code(200).send({ success: true, message: "share contract created successfully." });
 
     });
+
+    fastify.delete('/share_data/:hash', async (request, reply) => {
+
+        // Extract the hash parameter from the URL
+        const { hash } = request.params as { hash: string };
+        if (hash == null || hash == undefined || hash == "") {
+            return reply.code(406).send({ success: false, message: "hash not found in url" });
+        }
+        const nonce = request.headers['nonce'];
+
+        if (!nonce || typeof nonce !== 'string' || nonce.trim() === '') {
+            return reply.code(401).send({ error: 'Unauthorized: Missing or empty nonce header' });
+        }
+
+        try {
+            const session = await prisma.siweSession.findUnique({
+                where: { nonce: nonce }
+            });
+
+            if (session == null) {
+                return reply.code(403).send({ success: false, message: "Nounce  is invalid" });
+            }
+
+            // Check if `hash` is missing or empty
+            if (hash == null || hash == "") {
+                return reply.code(403).send({ success: false, message: "Hash need to specified" });
+            }
+            // Query the contract first, if contract.sender === session.address
+            const contract = await prisma.contract.findFirst({
+                where: {
+                    hash: hash
+                }
+            });
+            if (contract == null) {
+                return reply.code(404).send({ success: false, message: "Contract not found" });
+            }
+            if (contract.sender !== session.address) {
+                return reply.code(403).send({ success: false, message: "Unauthorized: You are not the owner of this contract" });
+            }
+            
+            // Delete the contract
+            await prisma.contract.delete({
+                where: {
+                    hash: hash
+                }
+            });
+
+            return reply.code(200).send({ success: true, message: "Share contract deleted successfully." });
+        } catch (error) {
+            console.error("Error deleting contract:", error);
+            return reply.code(500).send({ success: false, message: "Internal server error" });
+        }
+    });
+
+    fastify.put('/share_data/:hash', async (request, reply) => {
+        // Extract the hash parameter from the URL
+        const { hash } = request.params as { hash: string };
+        const { recipient, latest, option } = request.body as ShareRequest;
+        if (hash == null || hash == undefined || hash == "") {
+            return reply.code(406).send({ success: false, message: "hash not found in url" });
+        }
+        const nonce = request.headers['nonce'];
+
+        if (!nonce || typeof nonce !== 'string' || nonce.trim() === '') {
+            return reply.code(401).send({ error: 'Unauthorized: Missing or empty nonce header' });
+        }
+
+        try {
+            const session = await prisma.siweSession.findUnique({
+                where: { nonce: nonce }
+            });
+
+            if (session == null) {
+                return reply.code(403).send({ success: false, message: "Nounce  is invalid" });
+            }
+
+            // Check if `hash` is missing or empty
+            if (hash == null || hash == "") {
+                return reply.code(403).send({ success: false, message: "Hash need to specified" });
+            }
+
+            // Update the contract
+            await prisma.contract.update({
+                where: {
+                    hash: hash
+                },
+                data: {
+                    latest: latest,
+                    option: option,
+                    receiver: recipient
+                }
+            });
+
+            return reply.code(200).send({ success: true, message: "Share contract updated successfully." });
+        } catch (error) {
+            console.error("Error updating contract:", error);
+            return reply.code(500).send({ success: false, message: "Internal server error" });
+        }
+    });
+
 }

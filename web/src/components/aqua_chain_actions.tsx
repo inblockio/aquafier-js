@@ -676,10 +676,7 @@ export const ShareButton = ({ item, nonce }: IShareButton) => {
                             <Box width="100%">
                                 <HStack justifyContent="space-between" width="100%">
                                     <Text>Share with specific wallet</Text>
-
-
                                     <Checkbox
-
                                         checked={recipientType === "specific"}
                                         onCheckedChange={(changes) => setRecipientType(changes.checked ? "specific" : "everyone")}
                                     />
