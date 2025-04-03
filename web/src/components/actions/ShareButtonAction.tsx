@@ -68,57 +68,66 @@ const CreateContractForm = ({ mutate, contract, updating, genesis_hash, latest_h
     const [sharing, setSharing] = useState(false)
 
     const handleShare = async () => {
+        try {
 
-        let recipientWalletAddress = recipient
-        console.log("recipientWalletAddress: ", recipientWalletAddress)
-        if (shareWithSpecificWallet && !recipient) {
-            toaster.create({
-                description: `Enter wallet address of recipient.`,
-                type: "error"
-            })
-            return
-        }
-        if(!shareWithSpecificWallet){
-            recipientWalletAddress = "0xfabacc150f2a0000000000000000000000000000"
-        }
-
-        setSharing(true)
-        const unique_identifier = `${Date.now()}_${generateNonce()}`
-
-        let url = `${backend_url}/share_data`;
-        let method = "POST"
-        let data = {
-            "latest": latest_hash,
-            "genesis_hash": genesis_hash,
-            "hash": unique_identifier,
-            "recipient": recipientWalletAddress,
-            "option": option
-        }
-        console.log(data)
-        if (updating) {
-            url = `${backend_url}/contracts/${contract?.hash}`
-            method = "PUT"
-        }
-
-        const response = await axios({
-            method,
-            url,
-            data,
-            headers: {
-                'nonce': session?.nonce
+            let recipientWalletAddress = recipient
+            if (shareWithSpecificWallet && !recipient) {
+                toaster.create({
+                    description: `Enter wallet address of recipient.`,
+                    type: "error"
+                })
+                return
             }
-        });
+            if (!shareWithSpecificWallet) {
+                recipientWalletAddress = "0xfabacc150f2a0000000000000000000000000000"
+            }
 
-        //  console.log(response)
+            setSharing(true)
+            const unique_identifier = `${Date.now()}_${generateNonce()}`
 
-        if (response.status === 200) {
+            let url = `${backend_url}/share_data`;
+            let method = "POST"
+            let data = {
+                "latest": latest_hash,
+                "genesis_hash": genesis_hash,
+                "hash": unique_identifier,
+                "recipient": recipientWalletAddress,
+                "option": option
+            }
+            console.log(data)
+            if (updating) {
+                url = `${backend_url}/contracts/${contract?.hash}`
+                method = "PUT"
+            }
+
+            const response = await axios({
+                method,
+                url,
+                data,
+                headers: {
+                    'nonce': session?.nonce
+                }
+            });
+
+            //  console.log(response)
+
+            if (response.status === 200) {
+                const domain = window.location.origin;
+                const sharingLink = `${domain}/share/${unique_identifier}`
+                setShared(sharingLink)
+                mutate()
+            }
+            else {
+                toaster.create({
+                    description: "Error sharing",
+                    type: "error"
+                })
+            }
             setSharing(false)
-            const domain = window.location.origin;
-            const sharingLink = `${domain}/share/${unique_identifier}`
-            setShared(sharingLink)
-            mutate()
         }
-        else {
+        catch (error) {
+            console.error(error)
+            setSharing(false)
             toaster.create({
                 description: "Error sharing",
                 type: "error"

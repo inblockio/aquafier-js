@@ -19,37 +19,15 @@ const networks = createListCollection({
     ],
 })
 
-// const fileModes = createListCollection({
-//     items: [
-//         { label: "Public", value: "public" },
-//         { label: "Private", value: "private" },
-//     ],
-// })
-
 const SettingsForm = () => {
     const { setUserProfile, user_profile, backend_url, metamaskAddress, session } = useStore(appStore)
     const { colorMode } = useColorMode()
-    /**
-     * 
-     * user_pub_key : string,
-        cli_pub_key: string,
-        cli_priv_key: string,
-        theme: string,
-     */
     const [activeNetwork, setActiveNetwork] = useState<string>(user_profile.witness_network)
-    // const [userPubKey, setUserPubKey] = useState<string>(user_profile.user_pub_key)
     const [cliPubKey, setCliPubKey] = useState<string>(user_profile.cli_pub_key)
     const [cliPrivKey, setCliPrivKey] = useState<string>(user_profile.cli_priv_key)
     const [contract, setContract] = useState<string>(user_profile.witness_contract_address ?? "0x45f59310ADD88E6d23ca58A0Fa7A55BEE6d2a611")
 
-    /**
-     * "": "0x6c5544021930b7887455e21f00b157b2fa572667",
-        "cli_pub_key": null,
-        "cli_priv_key": null,
-        "witness_network": null,
-        "witness_contract_address": null,
-        "theme": null
-     */
+
     const updateUserProfile = async () => {
         // const formData = new URLSearchParams();
         // formData.append('cli_priv_key', cliPrivKey);
@@ -154,45 +132,6 @@ const SettingsForm = () => {
     )
 }
 
-const DeleteFiles = () => {
-    const [deleting, setDeleting] = useState(false)
-    const { setFiles, backend_url, metamaskAddress } = useStore(appStore)
-
-    const deleteFile = async () => {
-        try {
-
-            setDeleting(true)
-            const url = `${backend_url}/explorer_delete_all_files`;
-            const response = await axios.get(url, {
-                headers: {
-                    'Content-Type': 'application/x-www-form-urlencoded',
-                    'metamask_address': metamaskAddress ?? ''
-                }
-            });
-
-            if (response.status === 200) {
-                setFiles([])
-                toaster.create({
-                    description: "Files cleared successfully",
-                    type: "success"
-                })
-            }
-            setDeleting(false)
-        }
-        catch (e: any) {
-            toaster.create({
-                description: `Failed to clear files ${e}`,
-                type: "error"
-            })
-            setDeleting(false)
-        }
-    }
-
-    return (
-        <Button loading={deleting} colorPalette={'red'} borderRadius={'md'} variant={'subtle'} onClick={deleteFile}>Delete all Files</Button>
-    )
-}
-
 const DeleteUserData = () => {
     const [deleting, setDeleting] = useState(false)
     const { setUserProfile, setFiles, setSession, setMetamaskAddress, setAvatar, backend_url, session } = useStore(appStore)
@@ -285,7 +224,6 @@ const Settings = () => {
                     <DialogFooter>
                         <HStack w={'100%'} justifyContent={'space-between'}>
                             <VStack alignItems={'flex-start'} gap={2}>
-                                {/* <DeleteFiles /> */}
                                 <DeleteUserData />
                             </VStack>
                             <HStack>

@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { DialogBody, DialogCloseTrigger, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "../dialog";
-import { Circle, Dialog, Float, HStack, IconButton, Text } from "@chakra-ui/react";
+import { Circle, Dialog, Float, HStack, IconButton, Stack, Text } from "@chakra-ui/react";
 import { LuLink2, LuShare2 } from "react-icons/lu";
 import { useStore } from 'zustand'
 import appStore from '../../../store'
@@ -55,19 +55,21 @@ export default function AccountContracts() {
                     </DialogTitle>
                 </DialogHeader>
                 <DialogBody py={"8"} px={"5"}>
-                    {contracts?.map((contract, i: number) => (
-                        <HStack key={contract.hash}>
-                            <IconButton>
-                                {i + 1}
-                            </IconButton>
-                            <Text flex={1} wordBreak={'break-word'}>{contract.sender}</Text>
-                            <Link to={`/share/${contract.hash}`}>
-                                <IconButton onClick={() => { setOpen(false) }}>
-                                    <LuLink2 />
+                    <Stack>
+                        {contracts?.map((contract, i: number) => (
+                            <HStack key={`${contract.hash}-${i}`}>
+                                <IconButton>
+                                    {i + 1}
                                 </IconButton>
-                            </Link>
-                        </HStack>
-                    ))}
+                                <Text flex={1} wordBreak={'break-word'}>{contract.sender}</Text>
+                                <Link to={`/share/${contract.hash}`}>
+                                    <IconButton onClick={() => { setOpen(false) }}>
+                                        <LuLink2 />
+                                    </IconButton>
+                                </Link>
+                            </HStack>
+                        ))}
+                    </Stack>
                 </DialogBody>
                 <DialogCloseTrigger />
             </DialogContent>

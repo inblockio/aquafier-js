@@ -123,3 +123,11 @@
         # Reset the database completely
         npx prisma migrate reset --force
     ```
+
+## Quick helpful debug queries
+
+```sql
+select pubkey_hash from revision;
+select file_hash, reference_count from file;
+select file_hash, reference_count from file_index;
+```

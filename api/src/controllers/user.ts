@@ -152,7 +152,7 @@ export default async function userController(fastify: FastifyInstance) {
                             contains: session.address,
                             mode: 'insensitive' // Case-insensitive matching
                         }
-                    }  
+                    }
                 })
 
                 await tx.link.deleteMany({
@@ -161,7 +161,7 @@ export default async function userController(fastify: FastifyInstance) {
                             contains: session.address,
                             mode: 'insensitive' // Case-insensitive matching
                         }
-                    }  
+                    }
                 })
 
                 await tx.signature.deleteMany({
@@ -170,7 +170,7 @@ export default async function userController(fastify: FastifyInstance) {
                             contains: session.address,
                             mode: 'insensitive' // Case-insensitive matching
                         }
-                    }  
+                    }
                 })
 
                 // First, get the list of files to be deleted
@@ -185,33 +185,60 @@ export default async function userController(fastify: FastifyInstance) {
                         hash: true
                     }
                 });
-                
+
                 // Extract the file hashes
                 const fileHashes = filesToDelete.map(file => file.hash);
-                
+
                 // Delete file indexes associated with the deleted files
                 if (fileHashes.length > 0) {
-                    // When deleting file index, should check if the fileIndex reference_count is less than or equal to 1 else, should reduce the reference_count by 1
-                    // Do 2 logics here
-                    // 1. If reference_count is less than or equal to 1, delete the file index
-                    // 2. If reference_count is greater than 1, reduce the reference_count by 1
-                    await tx.fileIndex.updateMany({
+
+                    let fileIndexesWithReferenceCountGreaterThan1 = await tx.fileIndex.findMany({
                         where: {
                             id: {
                                 in: fileHashes
                             },
                             reference_count: {
-                                gt: 1
+                                gte: 2
                             }
                         },
-                        data: {
-                            reference_count: {
-                                decrement: 1
-                            }
-                        }
                     });
+                    let fileIndexesWithReferenceCountGreaterThan1Ids = fileIndexesWithReferenceCountGreaterThan1.map(fileIndex => fileIndex.id)
+                    if (fileIndexesWithReferenceCountGreaterThan1.length > 0) {
+                        await tx.fileIndex.updateMany({
+                            where: {
+                                id: {
+                                    in: fileIndexesWithReferenceCountGreaterThan1Ids
+                                },
+                                // reference_count: {
+                                //     gt: 1
+                                // }
+                            },
+                            data: {
+                                reference_count: {
+                                    decrement: 1
+                                }
+                            }
+                        });
+                        // Update files linked to this file indexes reduce reference count by 1
+                        let fileHashesToUpdate = fileIndexesWithReferenceCountGreaterThan1.map(fileIndex => fileIndex.file_hash)
+                        await tx.file.updateMany({
+                            where: {
+                                file_hash: {
+                                    in: fileHashesToUpdate,
+                                },
+                                // reference_count: {
+                                //     gte: 2
+                                // }
+                            },
+                            data: {
+                                reference_count: {
+                                    decrement: 1
+                                }
+                            }
+                        });
+                    }
 
-                    let fileIndexesToDelete = await tx.fileIndex.findMany({
+                    let fileIndexesWithReferenceCountLessThan1 = await tx.fileIndex.findMany({
                         where: {
                             id: {
                                 in: fileHashes
@@ -222,51 +249,42 @@ export default async function userController(fastify: FastifyInstance) {
                             ]
                         }
                     });
-                    let fileHashesToDelete = fileIndexesToDelete.map(fileIndex => fileIndex.file_hash);
-                    // Delete the file indexes
-                    await tx.fileIndex.deleteMany({
-                        where: {
-                            file_hash: {
-                                in: fileHashesToDelete
-                            }
-                        }
-                    });
-                    
-                    // Delete the files
-                    await tx.file.deleteMany({
-                        where: {
-                            hash: {
-                                in: fileHashesToDelete
-                            }
-                        }
-                    });
 
-                    // How can you delete files that don't have any file index
-                    
-                    
-                }
-                
-                // Now delete the files
-                // This will delete all files associated with the user which might lead to an error, only delete files that don't have any file index
-                // Do you thing based on the above comment
-                await tx.fileIndex.deleteMany({
-                    where: {
-                        id: {
-                            in: fileHashes
-                        },
-                        
+                    let fileIndexesWithReferenceCountLessThan1Ids = fileIndexesWithReferenceCountLessThan1.map(fileIndex => fileIndex.id)
+                    let realFileIndexesToDelete = fileIndexesWithReferenceCountLessThan1Ids.filter(
+                        id => !fileIndexesWithReferenceCountGreaterThan1Ids.includes(id)
+                    );
+
+                    if (realFileIndexesToDelete.length > 0) {
+                        console.log(`fileIndexesWithReferenceCountLessThan1 ${JSON.stringify(realFileIndexesToDelete, null, 4)}`)
+                        // Lets obtain file_hashes to enable us delete the files
+                        let fileHashes = realFileIndexesToDelete.map(fileId => {
+                            let fileHash = fileIndexesWithReferenceCountLessThan1.find(fileIndex => fileIndex.id === fileId)?.file_hash
+                            return fileHash
+                        })
+                        await tx.fileIndex.deleteMany({
+                            where: {
+                                id: {
+                                    in: realFileIndexesToDelete
+                                },
+                                OR: [
+                                    { reference_count: { lte: 1 } },
+                                    // { reference_count: null }
+                                ]
+                            }
+                        });
+
+                        // Delete the files
+                        await tx.file.deleteMany({
+                            where: {
+                                file_hash: {
+                                    in: fileHashes.filter(Boolean) as string[]
+                                }
+                            }
+                        });
                     }
-                })
-                
-                await tx.file.deleteMany({
-                    where: {
-                        hash: {
-                            contains: session.address,
-                            mode: 'insensitive' // Case-insensitive matching
-                        }
-                    }  
-                });
-                
+
+                }
 
                 await tx.revision.deleteMany({
                     where: {
@@ -274,7 +292,7 @@ export default async function userController(fastify: FastifyInstance) {
                             contains: session.address,
                             mode: 'insensitive' // Case-insensitive matching
                         }
-                    }  
+                    }
                 })
 
                 // Keep the user record but delete related data
@@ -286,14 +304,14 @@ export default async function userController(fastify: FastifyInstance) {
                 where: { nonce }
             });
 
-            return reply.code(200).send({ 
-                success: true, 
-                message: 'All user data has been cleared successfully' 
+            return reply.code(200).send({
+                success: true,
+                message: 'All user data has been cleared successfully'
             });
         } catch (error) {
             console.error('Error clearing user data:', error);
-            return reply.code(500).send({ 
-                success: false, 
+            return reply.code(500).send({
+                success: false,
                 message: 'Internal server error while clearing user data',
                 error: error instanceof Error ? error.message : String(error)
             });

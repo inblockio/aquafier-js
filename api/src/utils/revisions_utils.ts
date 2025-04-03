@@ -244,9 +244,12 @@ export async function saveAquaTree(aquaTree: AquaTree, userAddress: string,) {
             });
 
             if (existingFileIndex) {
-                existingFileIndex.hash = [...existingFileIndex.hash, pubKeyHash]
+                // existingFileIndex.hash = [...existingFileIndex.hash, pubKeyHash]
                 await prisma.fileIndex.update({
-                    data: existingFileIndex,
+                    data: {
+                        hash: [...existingFileIndex.hash, pubKeyHash],
+                        reference_count: existingFileIndex.reference_count! + 1
+                    },
                     where: {
                         id: existingFileIndex.id
                     }
