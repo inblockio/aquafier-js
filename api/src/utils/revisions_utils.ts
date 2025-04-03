@@ -340,15 +340,17 @@ export async function fetchAquaTreeWithForwardRevisions(latestRevisionHash: stri
     }
 
     let createAquaTreeFrom = latestRevisionHash;
-    if (revisionData.length > 1) {
+    if (revisionData.length > 0) {
         //find latest hash 
         createAquaTreeFrom = revisionData[revisionData.length - 1].pubkey_hash
     }else{
         console.log(`the aqua tree has no new revision  from  ${latestRevisionHash} `)
     }
 
+    console.log(`Revision Data: \n${JSON.stringify(revisionData, null, 4)}`)
 
 
+    console.log(`Create aqua tree from hash: ${createAquaTreeFrom}`)
 
     const [anAquaTree, fileObject] = await createAquaTreeFromRevisions(createAquaTreeFrom, url)
 
