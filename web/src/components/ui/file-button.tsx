@@ -6,7 +6,6 @@ import {
   Button,
   FileUpload as ChakraFileUpload,
   Icon,
-  IconButton,
   Span,
   Text,
   useFileUploadContext,
