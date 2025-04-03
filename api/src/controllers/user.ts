@@ -191,7 +191,27 @@ export default async function userController(fastify: FastifyInstance) {
                 
                 // Delete file indexes associated with the deleted files
                 if (fileHashes.length > 0) {
-                    await tx.fileIndex.deleteMany({
+                    // When deleting file index, should check if the fileIndex reference_count is less than or equal to 1 else, should reduce the reference_count by 1
+                    // Do 2 logics here
+                    // 1. If reference_count is less than or equal to 1, delete the file index
+                    // 2. If reference_count is greater than 1, reduce the reference_count by 1
+                    await tx.fileIndex.updateMany({
+                        where: {
+                            id: {
+                                in: fileHashes
+                            },
+                            reference_count: {
+                                gt: 1
+                            }
+                        },
+                        data: {
+                            reference_count: {
+                                decrement: 1
+                            }
+                        }
+                    });
+
+                    let fileIndexesToDelete = await tx.fileIndex.findMany({
                         where: {
                             id: {
                                 in: fileHashes
@@ -202,9 +222,42 @@ export default async function userController(fastify: FastifyInstance) {
                             ]
                         }
                     });
+                    let fileHashesToDelete = fileIndexesToDelete.map(fileIndex => fileIndex.file_hash);
+                    // Delete the file indexes
+                    await tx.fileIndex.deleteMany({
+                        where: {
+                            file_hash: {
+                                in: fileHashesToDelete
+                            }
+                        }
+                    });
+                    
+                    // Delete the files
+                    await tx.file.deleteMany({
+                        where: {
+                            hash: {
+                                in: fileHashesToDelete
+                            }
+                        }
+                    });
+
+                    // How can you delete files that don't have any file index
+                    
+                    
                 }
                 
                 // Now delete the files
+                // This will delete all files associated with the user which might lead to an error, only delete files that don't have any file index
+                // Do you thing based on the above comment
+                await tx.fileIndex.deleteMany({
+                    where: {
+                        id: {
+                            in: fileHashes
+                        },
+                        
+                    }
+                })
+                
                 await tx.file.deleteMany({
                     where: {
                         hash: {

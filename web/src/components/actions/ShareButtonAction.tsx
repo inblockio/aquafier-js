@@ -59,7 +59,7 @@ interface ICreateContractForm {
 
 const CreateContractForm = ({ mutate, contract, updating, genesis_hash, latest_hash }: ICreateContractForm) => {
 
-    const [recipient, setRecipient] = useState<string | null>(contract?.receiver === "0xfabacc150f2a0000000000000000000000000000" ? null : contract?.receiver)
+    const [recipient, setRecipient] = useState<string | null>(contract?.receiver === "0xfabacc150f2a0000000000000000000000000000" ? "0xfabacc150f2a0000000000000000000000000000" : contract?.receiver)
     const [option, setOption] = useState(contract?.option || "latest")
     const [shareWithSpecificWallet, setShareWithSpecificWallet] = useState(contract?.receiver !== "0xfabacc150f2a0000000000000000000000000000" || false)
     const [shared, setShared] = useState<string | null>(null)
@@ -70,9 +70,10 @@ const CreateContractForm = ({ mutate, contract, updating, genesis_hash, latest_h
     const handleShare = async () => {
 
         let recipientWalletAddress = recipient
-        if (shareWithSpecificWallet && (recipient == "")) {
+        console.log("recipientWalletAddress: ", recipientWalletAddress)
+        if (shareWithSpecificWallet && !recipient) {
             toaster.create({
-                description: `If recipient is specific a wallet address has to be sepcified.`,
+                description: `Enter wallet address of recipient.`,
                 type: "error"
             })
             return
@@ -93,6 +94,7 @@ const CreateContractForm = ({ mutate, contract, updating, genesis_hash, latest_h
             "recipient": recipientWalletAddress,
             "option": option
         }
+        console.log(data)
         if (updating) {
             url = `${backend_url}/contracts/${contract?.hash}`
             method = "PUT"

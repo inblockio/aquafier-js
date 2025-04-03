@@ -124,8 +124,8 @@ export default async function shareController(fastify: FastifyInstance) {
             return reply.code(403).send({ success: false, message: "Nounce  is invalid" });
         }
 
-        if (hash == null || hash == "" || recipient == null || recipient == "") {
-            return reply.code(403).send({ success: false, message: "Hash and Recipient need to specified" });
+        if (recipient == null || recipient == "") {
+            return reply.code(403).send({ success: false, message: "Recipient need to specified" });
         }
 
 

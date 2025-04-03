@@ -285,7 +285,7 @@ const Settings = () => {
                     <DialogFooter>
                         <HStack w={'100%'} justifyContent={'space-between'}>
                             <VStack alignItems={'flex-start'} gap={2}>
-                                <DeleteFiles />
+                                {/* <DeleteFiles /> */}
                                 <DeleteUserData />
                             </VStack>
                             <HStack>
