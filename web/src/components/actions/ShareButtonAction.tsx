@@ -1,4 +1,4 @@
-import { Button, VStack, Box, HStack, Input, Center, Text, IconButton, Stack, Heading, Collapsible } from "@chakra-ui/react"
+import { Button, VStack, Box, HStack, Input, Text, IconButton, Stack, Heading, Collapsible } from "@chakra-ui/react"
 import axios from "axios"
 import { useState, useEffect } from "react"
 import { LuLoader, LuShare2, LuTrash2 } from "react-icons/lu"
@@ -6,12 +6,10 @@ import { generateNonce } from "siwe"
 import { useStore } from "zustand"
 import { ApiFileInfo } from "../../models/FileInfo"
 import appStore from "../../store"
-import { ClipboardIconButton, ClipboardButton, ClipboardRoot, ClipboardLabel, ClipboardInput, ClipboardLink } from "../ui/clipboard"
+import { ClipboardIconButton, ClipboardRoot, ClipboardLabel, ClipboardInput, ClipboardLink } from "../ui/clipboard"
 import { InputGroup } from "../ui/input-group"
 import { toaster } from "../ui/toaster"
-import { Checkbox } from "../ui/checkbox"
 import { DialogContent, DialogHeader, DialogRoot, DialogTitle, DialogBody, DialogFooter, DialogActionTrigger, DialogCloseTrigger } from "../ui/dialog"
-import Loading from "react-loading"
 
 import { RadioCard } from "@chakra-ui/react"
 import { Switch } from "../ui/switch"
@@ -259,7 +257,7 @@ interface IShareButtonAction {
 const ShareButtonAction = ({ item, nonce }: IShareButtonAction) => {
     const { backend_url } = useStore(appStore)
     const [isOpen, setIsOpen] = useState(false)
-    const [sharing, setSharing] = useState(false)
+    // const [sharing, setSharing] = useState(false)
     const [fileName, setFileName] = useState("")
     const [contracts, setContracts] = useState<any[]>([])
 
@@ -345,14 +343,6 @@ const ShareButtonAction = ({ item, nonce }: IShareButtonAction) => {
                                     ))}
                                 </VStack>
                             </Stack>
-
-                            {
-                                sharing ?
-                                    <Center>
-                                        <Loading />
-                                    </Center>
-                                    : null
-                            }
 
                         </VStack>
                     </DialogBody>
