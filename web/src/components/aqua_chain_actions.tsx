@@ -572,12 +572,12 @@ export const ShareButton = ({ item, nonce }: IShareButton) => {
     const [fileName, setFileName] = useState("")
     const [shared, setShared] = useState<string | null>(null)
 
-    const [recipientType, setRecipientType] = useState<"everyone" | "specific">("everyone")
+    const [recipientType, setRecipientType] = useState<"0xfabacc150f2a0000000000000000000000000000" | "specific">("0xfabacc150f2a0000000000000000000000000000")
     const [walletAddress, setWalletAddress] = useState("")
     const [optionType, setOptionType] = useState<"latest" | "current">("latest")
 
     // const hashToShare = optionType === "latest" ? latest : item.aquaTree!.currentHash
-    const recipient = recipientType === "everyone" ? "everyone" : walletAddress
+    const recipient = recipientType === "0xfabacc150f2a0000000000000000000000000000" ? "0xfabacc150f2a0000000000000000000000000000" : walletAddress
 
     useEffect(() => {
 
@@ -642,7 +642,7 @@ export const ShareButton = ({ item, nonce }: IShareButton) => {
     }
 
     // const handleRecipientChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    //     setRecipientType(e.target.checked ? "specific" : "everyone")
+    //     setRecipientType(e.target.checked ? "specific" : "0xfabacc150f2a0000000000000000000000000000")
     // }
 
     // const handleVersionChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -678,7 +678,7 @@ export const ShareButton = ({ item, nonce }: IShareButton) => {
                                     <Text>Share with specific wallet</Text>
                                     <Checkbox
                                         checked={recipientType === "specific"}
-                                        onCheckedChange={(changes) => setRecipientType(changes.checked ? "specific" : "everyone")}
+                                        onCheckedChange={(changes) => setRecipientType(changes.checked ? "specific" : "0xfabacc150f2a0000000000000000000000000000")}
                                     />
                                 </HStack>
 

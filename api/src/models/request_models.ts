@@ -27,6 +27,7 @@ export interface ShareRequest {
   recipient: string;
   option: string;
   hash: string;
+  genesis_hash: string;
 }
 
 

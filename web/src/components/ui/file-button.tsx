@@ -90,7 +90,7 @@ const FileUploadItem = (props: FileUploadItemProps) => {
       return <>
         <FormRevisionFile file={file} fileIndex={fileIndex} uploadedIndexes={uploadedIndexes} updateUploadedIndex={updateUploadedIndex} autoUpload={false} />
         {/* <ImportByModal file={file} fileIndex={fileIndex} uploadedIndexes={uploadedIndexes} updateUploadedIndex={updateUploadedIndex} /> */}
-        {/* <ImportAquaChainFromFile file={file} fileIndex={fileIndex} uploadedIndexes={uploadedIndexes} updateUploadedIndex={updateUploadedIndex} /> */}
+        {/* <ImportAquaChainFromFile file={file} fileIndex={fileIndex} uploadedIndexes={uploadedIndexes} updateUploadedIndex={zupdateUploadedIndex} /> */}
         {/* <VerifyFile file={file} fileIndex={fileIndex} uploadedIndexes={uploadedIndexes} updateUploadedIndex={updateUploadedIndex} /> */}
         {/* <ChainDetails pageData={JSON.parse(item.page_data)} /> */}
       </>

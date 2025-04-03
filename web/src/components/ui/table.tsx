@@ -14,10 +14,11 @@ import { useStore } from "zustand"
 import appStore from "../../store"
 import { displayTime, getFileCategory, getFileExtension } from "../../utils/functions"
 
-import { DeleteAquaChain, LinkButton, DownloadAquaChain, ShareButton, SignAquaChain, WitnessAquaChain } from "../aqua_chain_actions"
+import { DeleteAquaChain, LinkButton, DownloadAquaChain, SignAquaChain, WitnessAquaChain, ShareButton } from "../aqua_chain_actions"
 import { ChainDetailsBtn } from "./navigation/CustomDrawer"
 import { Alert } from "./alert"
 import { ApiFileInfo } from "../../models/FileInfo"
+import ShareButtonAction from "../actions/ShareButtonAction"
 
 
 const FilesTable = () => {
@@ -67,7 +68,7 @@ const FilesTable = () => {
                 } />
             </Table.Cell>
             <Table.Cell minW={'220px'} maxW={'220px'} textWrap={'wrap'}>
-                <Group alignItems={'space-between'} flexWrap={'wrap'} >
+                <Group alignItems={'space-between'} flexWrap={'wrap'} position={"relative"}>
                    
                 <ChainDetailsBtn fileInfo={item} session={session!!} callBack={()=>{
                         console.log("Details callback")
@@ -76,7 +77,8 @@ const FilesTable = () => {
                     <WitnessAquaChain apiFileInfo={item} backendUrl={backend_url} nonce={session?.nonce ?? ""} revision="" />
                     <LinkButton item={item} nonce={session?.nonce ?? ""}   />
 
-                    <ShareButton nonce={session?.nonce ?? ""} item={item} />
+                    {/* <ShareButton nonce={session?.nonce ?? ""} item={item} /> */}
+                    <ShareButtonAction nonce={session?.nonce ?? ""} item={item} />
                     <DeleteAquaChain apiFileInfo={item} backendUrl={backend_url} nonce={session?.nonce ?? ""} revision="" />
                     <DownloadAquaChain file={item} />
                    
@@ -96,7 +98,8 @@ const FilesTable = () => {
                     <SignAquaChain apiFileInfo={item} backendUrl={backend_url} nonce={session?.nonce ?? ""} revision="" />
                     <WitnessAquaChain apiFileInfo={item} backendUrl={backend_url} nonce={session?.nonce ?? ""} revision="" />
                     <LinkButton item={item} nonce={session?.nonce ?? ""}  />
-                    <ShareButton item={item} nonce={session?.nonce ?? ""} />
+                    {/* <ShareButton nonce={session?.nonce ?? ""} item={item} /> */}
+                    <ShareButtonAction item={item} nonce={session?.nonce ?? ""} />
                     <DeleteAquaChain apiFileInfo={item} backendUrl={backend_url} nonce={session?.nonce ?? ""} revision="" />
                     <DownloadAquaChain file={item} />
                 </Group>

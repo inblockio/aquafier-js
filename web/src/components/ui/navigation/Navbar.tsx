@@ -6,6 +6,7 @@ import appStore from "../../../store"
 import { useStore } from "zustand"
 import VersionAndDisclaimer from "./VersionAndDisclaimer"
 import { Link } from "react-router-dom"
+import AccountContracts from "./AccountContracts"
 
 
 const Navbar = () => {
@@ -23,8 +24,10 @@ const Navbar = () => {
                         <VersionAndDisclaimer />
                         <ConnectWallet />
                         {
-                            session ? (
-                                <Settings />
+                            session ? (<>
+                                <AccountContracts />
+                            <Settings />
+                            </>
                             ) : null
                         }
                     </HStack>
