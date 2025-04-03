@@ -6,16 +6,15 @@ import {
   Button,
   FileUpload as ChakraFileUpload,
   Icon,
-  IconButton,
   Span,
   Text,
   useFileUploadContext,
   useRecipe,
 } from "@chakra-ui/react"
-import { forwardRef, useState } from "react"
+import { forwardRef, useEffect, useState } from "react"
 import { LuFile, LuUpload, LuX } from "react-icons/lu"
-import { FormRevisionFile, ImportAquaTreeZip, UploadFile } from "../dropzone_file_actions"
-import { determineFileType, isJSONFile, isZipFile } from "../../utils/functions"
+import { FormRevisionFile, ImportAquaTree, ImportAquaTreeZip, UploadFile } from "../dropzone_file_actions"
+import { determineFileType, isJSONFile, isJSONKeyValueStringContent, isZipFile, readFileContent } from "../../utils/functions"
 import React from "react"
 // import ImportByModal from "../ImportByModal"
 
@@ -77,8 +76,28 @@ interface FileUploadItemProps extends VisibilityProps {
 const FileUploadItem = (props: FileUploadItemProps) => {
   const { file, showSize, clearable, fileIndex, uploadedIndexes, updateUploadedIndex } = props
   const isJson = isJSONFile(file.name)
-  const isZIp = isZipFile(file.name)
 
+  const isZIp = isZipFile(file.name)
+  const [isJsonForm, setIsJsonForm] = useState<boolean>(false)
+
+  useEffect(() => {
+    const checkFileContent = async () => {
+      if (isJson) {
+        try {
+          let content = await readFileContent(file);
+          let isForm = isJSONKeyValueStringContent(content as string);
+          if (isForm) {
+            setIsJsonForm(true);
+          }
+        } catch (error) {
+          console.error("Error reading file content:", error);
+        }
+      }
+    };
+  
+    checkFileContent();
+  }, [isJson, file]);
+  
   // if file uploaded remove from file upload item
   if (uploadedIndexes.includes(fileIndex)) {
     return (<div></div>)
@@ -88,7 +107,12 @@ const FileUploadItem = (props: FileUploadItemProps) => {
 
     if (isJson) {
       return <>
-        <FormRevisionFile file={file} fileIndex={fileIndex} uploadedIndexes={uploadedIndexes} updateUploadedIndex={updateUploadedIndex} autoUpload={false} />
+
+        <>
+          {isJsonForm ? <FormRevisionFile file={file} fileIndex={fileIndex} uploadedIndexes={uploadedIndexes} updateUploadedIndex={updateUploadedIndex} autoUpload={false} /> : <></>}
+        </>
+        <ImportAquaTree file={file} fileIndex={fileIndex} uploadedIndexes={uploadedIndexes} updateUploadedIndex={updateUploadedIndex} autoUpload={false} />
+
         {/* <ImportByModal file={file} fileIndex={fileIndex} uploadedIndexes={uploadedIndexes} updateUploadedIndex={updateUploadedIndex} /> */}
         {/* <ImportAquaChainFromFile file={file} fileIndex={fileIndex} uploadedIndexes={uploadedIndexes} updateUploadedIndex={zupdateUploadedIndex} /> */}
         {/* <VerifyFile file={file} fileIndex={fileIndex} uploadedIndexes={uploadedIndexes} updateUploadedIndex={updateUploadedIndex} /> */}
@@ -97,8 +121,10 @@ const FileUploadItem = (props: FileUploadItemProps) => {
     }
 
     if (isZIp) {
+
+
       return <>
-        <UploadFile file={file} fileIndex={fileIndex} uploadedIndexes={uploadedIndexes} updateUploadedIndex={updateUploadedIndex}  autoUpload={false}/>
+        <UploadFile file={file} fileIndex={fileIndex} uploadedIndexes={uploadedIndexes} updateUploadedIndex={updateUploadedIndex} autoUpload={false} />
         <ImportAquaTreeZip file={file} fileIndex={fileIndex} uploadedIndexes={uploadedIndexes} updateUploadedIndex={updateUploadedIndex} autoUpload={false} />
       </>
     }
@@ -129,11 +155,18 @@ const FileUploadItem = (props: FileUploadItemProps) => {
 
       {showUploadIcon()}
 
-      {clearable && (
+      {(clearable || isJson || isZIp) && (
         <ChakraFileUpload.ItemDeleteTrigger asChild>
-          <IconButton variant="ghost" color="fg.muted" size="xs">
+
+          {/* <IconButton variant="ghost" color="fg.muted" size="xs">
+            Clear
             <LuX />
-          </IconButton>
+          </IconButton> */}
+
+          <Button size={'xs'} colorPalette={'red'} variant={'subtle'} w={'100px'} >
+            Delete
+            <LuX />
+          </Button>
         </ChakraFileUpload.ItemDeleteTrigger>
       )}
     </ChakraFileUpload.Item>

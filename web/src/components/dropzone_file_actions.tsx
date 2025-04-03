@@ -6,16 +6,28 @@ import appStore from "../store";
 import { useEffect, useRef, useState } from "react";
 import { ApiFileInfo } from "../models/FileInfo";
 import { toaster } from "./ui/toaster";
-import { formatCryptoAddress } from "../utils/functions";
-import { Container, DialogCloseTrigger, Group, List, Text } from "@chakra-ui/react";
+import { formatCryptoAddress, readFileAsText, validateAquaTree, getFileName, estimateFileSize, blobToBase64, readFileContent, checkIfFileExistInUserFiles } from "../utils/functions";
+import { Box, Container, DialogCloseTrigger, Group, Input, List, Text, VStack } from "@chakra-ui/react";
+import {
+    Modal,
+    ModalBody,
+    ModalCloseButton,
+    ModalContent,
+    ModalFooter,
+    ModalHeader,
+    ModalOverlay,
+} from '@chakra-ui/modal'
+
 import { Alert } from "./ui/alert";
 import { useNavigate } from "react-router-dom";
 import { analyzeAndMergeRevisions } from "../utils/aqua_funcs";
 import { DialogActionTrigger, DialogBody, DialogContent, DialogFooter, DialogHeader, DialogRoot, DialogTitle } from "./ui/dialog";
 import { TimelineConnector, TimelineContent, TimelineDescription, TimelineItem, TimelineRoot, TimelineTitle } from "./ui/timeline";
 import { RevisionsComparisonResult } from "../models/revision_merge";
-import { Revision } from "aqua-js-sdk";
+import Aquafier, { AquaTree, FileObject, Revision } from "aqua-js-sdk";
 import JSZip from "jszip";
+import { useDisclosure } from '@chakra-ui/hooks'
+import { maxFileSizeForUpload } from "../utils/constants";
 
 interface IDropzoneAction {
     file: File
@@ -36,9 +48,9 @@ export const FormRevisionFile = ({ file, uploadedIndexes, fileIndex, updateUploa
 
     const uploadFile = async () => {
 
-        const existingChainFile = files.find(_file => _file.fileObject.find((e) => e.fileName == file.name) != undefined)
+         let fileExist = await checkIfFileExistInUserFiles(file, files)
 
-        if (existingChainFile) {
+        if (fileExist) {
             toaster.create({
                 description: "You already have the file. Delete before importing this",
                 type: "info"
@@ -58,9 +70,7 @@ export const FormRevisionFile = ({ file, uploadedIndexes, fileIndex, updateUploa
         }
 
 
-        // Check file size - 200MB = 200 * 1024 * 1024 bytes
-        const maxSize = 200 * 1024 * 1024; // 200MB in bytes
-        if (file.size > maxSize) {
+        if (file.size > maxFileSizeForUpload) {
             toaster.create({
                 description: "File size exceeds 200MB limit. Please upload a smaller file.",
                 type: "error"
@@ -129,7 +139,7 @@ export const FormRevisionFile = ({ file, uploadedIndexes, fileIndex, updateUploa
     };
 
     return (
-        <Button size={'xs'} colorPalette={'blackAlpha'} variant={'subtle'} w={'120px'} onClick={uploadFile} disabled={uploadedIndexes.includes(fileIndex) || uploaded} loading={uploading}>
+        <Button size={'xs'} colorPalette={'yellow'} variant={'subtle'} w={'120px'} onClick={uploadFile} disabled={uploadedIndexes.includes(fileIndex) || uploaded} loading={uploading}>
             <LuDock />
             Create Form
         </Button>
@@ -147,17 +157,11 @@ export const UploadFile = ({ file, uploadedIndexes, fileIndex, updateUploadedInd
 
     const uploadFile = async () => {
 
-        const existingChainFile = files.find(_file => _file.fileObject.find((e) => e.fileName == file.name) != undefined)
+        // let aquafier = new Aquafier();
+        // let fileContent = await  readFileContent()
+        // const existingChainFile = files.find(_file => _file.fileObject.find((e) => e.fileName == file.name) != undefined)
 
-        if (existingChainFile) {
-            toaster.create({
-                description: "You already have the file. Delete before importing this",
-                type: "info"
-            })
-            return
-        }
-
-
+        //
         if (!file) {
             toaster.create({
                 description: "No file selected!",
@@ -166,8 +170,21 @@ export const UploadFile = ({ file, uploadedIndexes, fileIndex, updateUploadedInd
             return;
         }
 
-        const maxSize = 200 * 1024 * 1024; // 200MB in bytes
-        if (file.size > maxSize) {
+        let fileExist = await checkIfFileExistInUserFiles(file, files)
+
+        if (fileExist) {
+            toaster.create({
+                description: "You already have the file. Delete before importing this",
+                type: "info"
+            })
+            return
+        }
+
+
+
+
+
+        if (file.size > maxFileSizeForUpload) {
             toaster.create({
                 description: "File size exceeds 200MB limit. Please upload a smaller file.",
                 type: "error"
@@ -216,12 +233,12 @@ export const UploadFile = ({ file, uploadedIndexes, fileIndex, updateUploadedInd
             //     linkedFileObjects: []
             // };
 
-            
-            let newFilesData = [...files, fileInfo] ;
-            console.log(`newFilesData -, ${JSON.stringify(newFilesData)}`)
+
+            // let newFilesData = [...files, fileInfo];
+            // console.log(`newFilesData -, ${JSON.stringify(newFilesData)}`)
 
             addFile(fileInfo)
-        
+
             setUploaded(true)
             setUploading(false)
             toaster.create({
@@ -261,6 +278,375 @@ export const UploadFile = ({ file, uploadedIndexes, fileIndex, updateUploadedInd
     )
 }
 
+
+
+export const ImportAquaTree = ({ file, uploadedIndexes, fileIndex, updateUploadedIndex }: IDropzoneAction) => {
+
+    let aquafier = new Aquafier();
+    const [uploading, setUploading] = useState(false)
+    const [uploaded, setUploaded] = useState(false)
+    const [requiredFileHash, setRequiredFileHash] = useState<string | null>(null)
+    const fileInputRef = useRef<HTMLInputElement>(null)
+    const [selectedFile, setSelectedFile] = useState<File | null>(null)
+    const { isOpen, onOpen, onClose } = useDisclosure()
+
+    const { metamaskAddress, setFiles, backend_url, session } = useStore(appStore)
+
+
+
+    const uploadFileData = async () => {
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('account', `${metamaskAddress}`);
+
+        setUploading(true)
+        try {
+            const url = `${backend_url}/explorer_aqua_tree_upload`
+            //  console.log("url ", url)
+            const response = await axios.post(url, formData, {
+                headers: {
+                    'Content-Type': 'multipart/form-data',
+                    "nonce": session?.nonce
+                },
+            });
+
+            // return all user files
+            const res = response.data
+
+
+            setFiles([...res.data])
+            setUploaded(true)
+            setUploading(false)
+            toaster.create({
+                description: "File uploaded successfuly",
+                type: "success"
+            })
+            updateUploadedIndex(fileIndex)
+            return;
+        } catch (error) {
+            setUploading(false)
+            toaster.create({
+                description: `Failed to upload file: ${error}`,
+                type: "error"
+            })
+        }
+
+
+    }
+
+    const importFile = async () => {
+
+
+        try {
+            setUploading(true)
+            //check if the file is a valid aqua tree 
+            let fileContent = await readFileAsText(file)
+            let aquaTree: AquaTree = JSON.parse(fileContent)
+            let [isValidAquaTree, failureReason] = validateAquaTree(aquaTree)
+            console.log(`is aqua tree valid ${isValidAquaTree} failure reason ${failureReason}`)
+            if (!isValidAquaTree) {
+                setUploading(false)
+                toaster.create({
+                    description: `Aqua tree has an error: ${failureReason}`,
+                    type: "error"
+                })
+                return;
+            }
+
+            // Find file hash from aqua tree
+            let fileHash = ""
+            for (let item of Object.values(aquaTree.revisions)) {
+                if (item.revision_type === "file" && item.file_hash) {
+                    fileHash = item.file_hash
+                    break
+                }
+            }
+
+            let actualUrlToFetch = backend_url
+            // check if the file hash exist 
+            console.log(`== Data before ${actualUrlToFetch}`)
+            if (actualUrlToFetch.includes("inblock.io")) {
+                actualUrlToFetch = actualUrlToFetch.replace("http", "https")
+            }
+
+            // Fetch the file from the URL
+            const response = await fetch(`${actualUrlToFetch}/files/${fileHash}`, {
+                method: 'GET',
+                headers: {
+                    'Nonce': session?.nonce ?? "--error--" // Add the nonce directly as a custom header if needed
+                }
+            });
+
+
+            // If response is not ok, prompt user to select a file
+            if (!response.ok) {
+
+
+                if (fileHash) {
+                    setRequiredFileHash(fileHash)
+                    onOpen() // Open dialog to select file
+                    // setUploading(false)
+                    return
+                } else {
+                    setUploading(false)
+                    toaster.create({
+                        description: `Could not determine required file hash from AquaTree`,
+                        type: "error"
+                    })
+                    return
+
+                }
+            }
+
+
+            const blob = await response.blob();
+
+
+            let fileName = getFileName(aquaTree)
+            let fileDataContent = await blobToBase64(blob)
+            let fileObject: FileObject = {
+                fileName: fileName,
+                fileContent: fileDataContent,
+                path: ".",
+                fileSize: estimateFileSize(fileDataContent)
+            }
+
+
+
+            // check linked revsion exist and throw an error 
+            // linked revsision should be in zip 
+            for (let item of Object.values(aquaTree!.revisions)) {
+                if (item.revision_type == "link") {
+                    setUploading(false)
+                    toaster.create({
+                        description: `Aqua tree has a link revision please import the Aquatree using the zip format`,
+                        type: "error"
+                    })
+                    return
+                }
+            }
+
+
+
+
+            // check if the aqua tree is valid 
+
+            let result = await aquafier.verifyAquaTree(aquaTree, [fileObject]);
+
+            if (result.isErr()) {
+                toaster.create({
+                    description: `Aqua tree is not valid: ${JSON.stringify(result)}`,
+                    type: "error"
+                })
+                return;
+            }
+
+
+
+        } catch (e) {
+            setUploading(false)
+            toaster.create({
+                description: `Failed to import aqua tree file: ${e}`,
+                type: "error"
+            })
+        }
+    }
+
+    const modalSelectedFile = async (file: File) => {
+        setSelectedFile(file)
+
+        // Verify file hash matches required hash
+        if (requiredFileHash) {
+            let fileDataContent = await readFileContent(file);
+            const fileHash = aquafier.getFileHash(fileDataContent)
+            console.log(`calculated fileHash ${fileHash} and from chain ${requiredFileHash} file name ${file.name}`)
+            if (fileHash !== requiredFileHash) {
+                toaster.create({
+                    description: "Dropped file hash doesn't match the required hash in the AquaTree..",
+                    type: "error"
+                })
+            } else {
+                await handleContinue(file)
+            }
+        }
+    }
+    const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (e.target.files && e.target.files.length > 0) {
+            const file = e.target.files[0]
+            await modalSelectedFile(file)
+        }
+    }
+
+    const handleDrop = async (event: React.DragEvent<HTMLDivElement>) => {
+        event.preventDefault()
+
+        if (event.dataTransfer.files && event.dataTransfer.files.length > 0) {
+            const file = event.dataTransfer.files[0]
+            await modalSelectedFile(file)
+        }
+    }
+
+    const handleDragOver = (event: React.DragEvent<HTMLDivElement>) => {
+        event.preventDefault()
+    }
+
+    const handleContinue = async (file: File) => {
+        if (!file) {
+            toaster.create({
+                description: "Please select a file first.",
+                type: "warning"
+            })
+            return
+        }
+
+        // close modal
+        onClose()
+
+
+        try {
+
+            // Upload the file and aqua tree
+            await uploadFileData()
+        } catch (error) {
+            toaster.create({
+                description: `Error processing: ${error instanceof Error ? error.message : String(error)}`,
+                type: "error"
+            })
+            setUploading(false)
+        }
+    }
+
+
+
+    return (
+        <>
+
+            <Button size={'xs'} colorPalette={'green'} variant={'subtle'} w={'100px'} onClick={importFile} disabled={uploadedIndexes.includes(fileIndex) || uploaded} loading={uploading}>
+                <LuImport />
+                Import
+            </Button>
+            <Modal isOpen={isOpen} onClose={() => {
+                setUploading(false)
+                onClose()
+            }} isCentered>
+                <ModalOverlay
+                    backgroundColor="rgba(0, 0, 0, 0.5)"
+                    backdropFilter="blur(2px)"
+                />
+                <ModalContent
+                    maxW="650px"
+                    w="90%"
+                    mx="auto"
+                    mt="50px"
+                    borderRadius="16px"
+                    boxShadow="0 5px 15px rgba(0, 0, 0, 0.5)"
+                    bg="white"
+                    border="1px solid rgba(0, 0, 0, 0.2)"
+                    p={25}
+                    overflow="hidden"
+                >
+                    <ModalHeader
+                        borderBottom="1px solid #e9ecef"
+                        py={3}
+                        px={4}
+                        fontSize="16px"
+                        fontWeight="500"
+                    >
+                        Please provide the required file
+                    </ModalHeader>
+                    <ModalCloseButton
+                        position="absolute"
+                        right="10px"
+                        top="10px"
+                        size="sm"
+                        borderRadius="50%"
+                        bg="transparent"
+                        border="none"
+                        _hover={{ bg: "gray.100" }}
+                    />
+                    <ModalBody py={4} px={4}>
+                        <VStack gap={3} alignItems={'center'} flex={1}>
+                            <Text fontSize="14px">
+                                We couldn't fetch the file associated with this AquaTree. Please select or drop the file:
+                            </Text>
+
+                            <Box
+                                border="1px dashed"
+                                borderColor="gray.300"
+                                borderRadius="md"
+                                p={4}
+                                w="100%"
+                                textAlign="center"
+                                onDrop={handleDrop}
+                                onDragOver={handleDragOver}
+                                bg="gray.50"
+                            >
+                                <Text mb={2} fontSize="14px">Drag and drop file here</Text>
+                                <Text fontSize="14px">or</Text>
+                                <Button
+                                    mt={2}
+                                    onClick={() => fileInputRef.current?.click()}
+                                    bg="black"
+                                    color="white"
+                                    _hover={{ bg: "gray.800" }}
+                                    size="sm"
+                                    borderRadius="sm"
+                                >
+                                    Select File
+                                </Button>
+                                <Input
+                                    type="file"
+                                    hidden
+                                    ref={fileInputRef}
+                                    onChange={handleFileSelect}
+                                />
+                            </Box>
+
+                            {selectedFile && (
+                                <Text fontSize="14px">Selected: {selectedFile.name}</Text>
+                            )}
+                        </VStack>
+                    </ModalBody>
+
+                    <ModalFooter
+                        borderTop="1px solid #e9ecef"
+                        py={3}
+                        px={4}
+                        justifyContent="flex-end"
+                    >
+                        <Button
+                            bg="black"
+                            color="white"
+                            mr={3}
+                            onClick={() => {
+                                setUploading(false)
+                                onClose()
+                            }}
+                            size="sm"
+                            borderRadius="sm"
+                            _hover={{ bg: "gray.800" }}
+                        >
+                            Cancel
+                        </Button>
+                        {/* <Button
+                            bg="gray.500"
+                            color="white"
+                            onClick={handleContinue}
+                            disabled={!selectedFile}
+                            size="sm"
+                            _hover={{ bg: "gray.600" }}
+                            borderRadius="sm"
+                        >
+                            Continue
+                        </Button> */}
+                    </ModalFooter>
+                </ModalContent>
+            </Modal>
+        </>
+
+    )
+
+}
 
 
 export const ImportAquaTreeZip = ({ file, uploadedIndexes, fileIndex, updateUploadedIndex }: IDropzoneAction) => {
@@ -745,7 +1131,7 @@ export const ImportAquaChainFromChain = ({ fileInfo, isVerificationSuccessful }:
                             description: "Chain merged successfully",
                             type: "success"
                         })
-                    }else{
+                    } else {
                         toaster.create({
                             title: "Aqua chain import failed..",
                             description: "Chain merged failed...",

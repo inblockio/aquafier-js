@@ -834,7 +834,7 @@ export const LinkButton = ({ item, nonce }: IShareButton) => {
                             aquaTree: result.data.aquaTree!,
                         }
 
-                        let name = getFileName(linkItem)
+                        let name = getFileName(result.data.aquaTree!)
 
                         newData.fileObject.push({
                             fileContent: linkItem!.aquaTree!,
