@@ -134,44 +134,80 @@ export default async function userController(fastify: FastifyInstance) {
 
             // Start a transaction to ensure all operations succeed or fail together
             await prisma.$transaction(async (tx) => {
-                // Delete settings
-                // await tx.settings.delete({
-                //     where: { user_pub_key: userAddress }
-                // }).catch(() => {
-                //     // Ignore if not found
-                // });
-
-                // Delete latest entries
+                console.log('Starting user data deletion transaction');
+                
+                // First, identify all revisions associated with this user
+                const userRevisions = await tx.revision.findMany({
+                    where: {
+                        pubkey_hash: {
+                            contains: session.address,
+                            mode: 'insensitive'
+                        }
+                    },
+                    select: {
+                        pubkey_hash: true
+                    }
+                });
+                
+                const revisionHashes = userRevisions.map(rev => rev.pubkey_hash);
+                console.log(`Found ${revisionHashes.length} revisions to process`);
+                
+                // Step 1: Delete dependent records in the correct order to respect foreign key constraints
+                
+                // 1a. Delete latest entries (no foreign key dependencies)
                 await tx.latest.deleteMany({
                     where: { user: userAddress }
                 });
-
-                await tx.aquaForms.deleteMany({
-                    where: {
-                        hash: {
-                            contains: session.address,
-                            mode: 'insensitive' // Case-insensitive matching
+                console.log('Deleted latest entries');
+                
+                // 1b. Delete AquaForms (depends on Revision)
+                if (revisionHashes.length > 0) {
+                    await tx.aquaForms.deleteMany({
+                        where: {
+                            hash: {
+                                in: revisionHashes
+                            }
                         }
-                    }
-                })
-
-                await tx.link.deleteMany({
-                    where: {
-                        hash: {
-                            contains: session.address,
-                            mode: 'insensitive' // Case-insensitive matching
+                    });
+                    console.log('Deleted aqua forms');
+                }
+                
+                // 1c. Delete Witness records (depends on Revision)
+                // We need to handle this first because Witness has a foreign key to Revision
+                if (revisionHashes.length > 0) { 
+                    await tx.witness.deleteMany({
+                        where: {
+                            hash: {
+                                in: revisionHashes
+                            }
                         }
-                    }
-                })
-
-                await tx.signature.deleteMany({
-                    where: {
-                        hash: {
-                            contains: session.address,
-                            mode: 'insensitive' // Case-insensitive matching
+                    });
+                    console.log('Deleted witness records');
+                }
+                
+                // 1d. Delete Link records (depends on Revision)
+                if (revisionHashes.length > 0) {
+                    await tx.link.deleteMany({
+                        where: {
+                            hash: {
+                                in: revisionHashes
+                            }
                         }
-                    }
-                })
+                    });
+                    console.log('Deleted link records');
+                }
+                
+                // 1e. Delete Signature records (depends on Revision)
+                if (revisionHashes.length > 0) {
+                    await tx.signature.deleteMany({
+                        where: {
+                            hash: {
+                                in: revisionHashes
+                            }
+                        }
+                    });
+                    console.log('Deleted signature records');
+                }
 
                 // First, get the list of files to be deleted
                 // This works only if the file is uploaded by the user
@@ -341,18 +377,21 @@ export default async function userController(fastify: FastifyInstance) {
                     }
 
                 }
-
-                await tx.revision.deleteMany({
-                    where: {
-                        pubkey_hash: {
-                            contains: session.address,
-                            mode: 'insensitive' // Case-insensitive matching
+                // 1f. Now that all dependent records are deleted, we can delete the Revision records
+                if (revisionHashes.length > 0) {
+                    await tx.revision.deleteMany({
+                        where: {
+                            pubkey_hash: {
+                                in: revisionHashes
+                            }
                         }
-                    }
-                })
-
+                    });
+                    console.log('Deleted revision records');
+                }
+                
                 // Keep the user record but delete related data
                 // This is to maintain the user's account while clearing their data
+                console.log('User data deletion completed successfully');
             });
 
             // Delete the session as well (similar to logout)
