@@ -446,7 +446,7 @@ export const DownloadAquaChain = ({ file }: { file: ApiFileInfo }) => {
         // Create a temporary anchor element and trigger the download
         const a = document.createElement('a');
         a.href = url;
-        a.download = `${file.fileObject[0].fileName}-aqua.json`;
+        a.download = `${file.fileObject[0].fileName}.aqua.json`;
         document.body.appendChild(a);
         a.click();
 
