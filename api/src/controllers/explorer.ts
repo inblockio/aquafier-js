@@ -10,7 +10,7 @@ import util from 'util';
 import { pipeline } from 'stream';
 import * as fs from "fs"
 import { error } from 'console';
-import { createAquaTreeFromRevisions, fetchAquatreeFoUser, FetchRevisionInfo, findAquaTreeRevision, saveAquaTree } from '../utils/revisions_utils';
+import { createAquaTreeFromRevisions, fetchAquatreeFoUser, FetchRevisionInfo, findAquaTreeRevision, getGenesisHash, saveAquaTree, validateAquaTree } from '../utils/revisions_utils';
 import { fileURLToPath } from 'url';
 import { AquaForms, FileIndex, Signature, Witness, WitnessEvent } from '@prisma/client';
 import { getHost, getPort } from '../utils/api_utils';
@@ -90,7 +90,7 @@ export default async function explorerController(fastify: FastifyInstance) {
                     const file = zipData.files[fileName];
 
                     let fileContent = await file.async('text');
-                   //  console.log(`aqua.json => File name: ${fileName}, Content: ${fileContent}`);
+                    //  console.log(`aqua.json => File name: ${fileName}, Content: ${fileContent}`);
 
                     let aquaData: AquaJsonInZip = JSON.parse(fileContent)
 
@@ -98,7 +98,7 @@ export default async function explorerController(fastify: FastifyInstance) {
                     for (let nameHash of aquaData.name_with_hash) {
 
                         let aquaFileName = `${nameHash.name}.aqua.json`;
-                       //  console.log(`name ${aquaFileName} ............ `)
+                        //  console.log(`name ${aquaFileName} ............ `)
                         const aquaFile = zipData.files[aquaFileName];
                         if (aquaFile == null || aquaFile == undefined) {
                             return reply.code(500).send({ error: `Expected to find ${aquaFileName} as defined in aqua.json but file not found ` });
@@ -145,7 +145,7 @@ export default async function explorerController(fastify: FastifyInstance) {
                             const filePath = path.join(UPLOAD_DIR, uniqueFileName);
 
                             await fs.promises.writeFile(filePath, fileContent);
-                           //  console.log(`------> Saved file: ${filePath}`);
+                            //  console.log(`------> Saved file: ${filePath}`);
 
 
                             let fileData = {
@@ -155,7 +155,7 @@ export default async function explorerController(fastify: FastifyInstance) {
                                 hash: filepubkeyhash,
                                 reference_count: 1,
                             }
-                           //  console.log(`--> File Data ${JSON.stringify(fileData, null, 4)} `)
+                            //  console.log(`--> File Data ${JSON.stringify(fileData, null, 4)} `)
                             fileResult = await prisma.file.create({
 
                                 data: fileData
@@ -213,13 +213,13 @@ export default async function explorerController(fastify: FastifyInstance) {
             }
 
             for (const fileName in zipData.files) {
-               //  console.log(`=> file name ${fileName}`)
+                //  console.log(`=> file name ${fileName}`)
                 const file = zipData.files[fileName];
 
                 try {
                     if (fileName.endsWith(".aqua.json")) {
                         let fileContent = await file.async('text');
-                       //  console.log(`=> File name: ${fileName}, Content: ${fileContent}`);
+                        //  console.log(`=> File name: ${fileName}, Content: ${fileContent}`);
 
                         let aquaTree: AquaTree = JSON.parse(fileContent);
 
@@ -230,9 +230,9 @@ export default async function explorerController(fastify: FastifyInstance) {
 
                     } else if (fileName == 'aqua.json') {
                         //ignored for now
-                       //  console.log(`ignore aqua.json in second loop`)
+                        //  console.log(`ignore aqua.json in second loop`)
                     } else {
-                       //  console.log(`ignore the asset  ${fileName}`)
+                        //  console.log(`ignore the asset  ${fileName}`)
 
                     }
                 } catch (e) {
@@ -305,27 +305,161 @@ export default async function explorerController(fastify: FastifyInstance) {
         }
 
         try {
+
+
+
+
             // Process the multipart data
-            const data = await request.file();
+            // const data = await request.file();
 
-            if (data == undefined || data.file === undefined) {
-                return reply.code(400).send({ error: 'No file uploaded' });
+            // if (data == undefined || data.file === undefined) {
+            //     return reply.code(400).send({ error: 'No file uploaded' });
+            // }
+            // // Verify file size (200MB = 200 * 1024 * 1024 bytes)
+            // const maxFileSize = 200 * 1024 * 1024;
+            // if (data.file.bytesRead > maxFileSize) {
+            //     return reply.code(413).send({ error: 'File too large. Maximum file size is 200MB' });
+            // }
+
+            // const fileBuffer = await streamToBuffer(data.file);
+            // let fileContent = fileBuffer.toString('utf-8');
+
+            // let aquaTreeWithFileObject: AquaTree = JSON.parse(fileContent)
+
+            // // save the aqua tree 
+            // await saveAquaTree(aquaTreeWithFileObject, session.address)
+
+
+
+            try {
+                // Process the multipart form data
+                const parts = request.parts();
+
+                let fileBuffer;
+                let assetBuffer = null;
+                let hasAsset = false;
+                let assetFilename = "";
+
+                // Process each part of the multipart form
+                for await (const part of parts) {
+                    if (part.type === 'file') {
+                        if (part.fieldname === 'file') {
+                            // Verify file size (200MB = 200 * 1024 * 1024 bytes)
+                            const maxFileSize = 200 * 1024 * 1024;
+                            if (part.file.bytesRead > maxFileSize) {
+                                return reply.code(413).send({ error: 'File too large. Maximum file size is 200MB' });
+                            }
+                            fileBuffer = await streamToBuffer(part.file);
+                        } else if (part.fieldname === 'asset') {
+                            assetBuffer = await streamToBuffer(part.file);
+                            // Extract filename from the asset file
+                            assetFilename = part.filename;
+                        }
+                    } else if (part.type === 'field') {
+                        if (part.fieldname === 'has_asset') {
+                            hasAsset = part.value === 'true';
+                        } else if (part.fieldname === 'account') {
+                            // Store account if needed for further processing
+                            const account = part.value;
+                            // Verify account matches session address
+                            if (account !== session.address) {
+                                return reply.code(403).send({ error: 'Account mismatch with authenticated session' });
+                            }
+                        }
+                    }
+                }
+
+                if (!fileBuffer) {
+                    return reply.code(400).send({ error: 'No file uploaded' });
+                }
+
+                let fileContent = fileBuffer.toString('utf-8');
+                let aquaTree: AquaTree = JSON.parse(fileContent);
+
+
+                let [isValidAquaTree, failureReason] = validateAquaTree(aquaTree)
+                console.log(`is aqua tree valid ${isValidAquaTree} failure reason ${failureReason}`)
+                if (!isValidAquaTree) {
+                    return reply.code(412).send({ error: failureReason });
+                }
+
+
+
+                // Handle the asset if it exists
+                if (hasAsset && assetBuffer) {
+                    // Process the asset - this depends on your requirements
+                    // For example, you might want to store it separately or attach it to the aqua tree
+                    // aquaTreeWithFileObject.assetData = assetBuffer.toString('base64');
+                    // Or handle the asset in some other way based on your application's needs
+
+                    let aquafier = new Aquafier()
+
+                    const uint8Array = new Uint8Array(assetBuffer);
+                    let fileHash = aquafier.getFileHash(uint8Array);
+
+                    let genesisHash = getGenesisHash(aquaTree);
+                    if (genesisHash == null) {
+                        return reply.code(500).send({ error: 'Genesis hash not found in aqua tree' });
+                    }
+                    let filepubkeyhash = `${session.address}_${genesisHash}`
+                    const UPLOAD_DIR = getFileUploadDirectory();
+
+                    // Create unique filename
+                    let fileName = assetFilename;
+                    let aquaTreeName = await aquafier.getFileByHash(aquaTree, genesisHash);
+                    if (aquaTreeName.isOk()) {
+                        fileName = aquaTreeName.data
+                    }
+                    const filename = `${randomUUID()}-${fileName}`;
+                    const filePath = path.join(UPLOAD_DIR, filename);
+
+                    // Save the file
+                    // await pump(data.file, fs.createWriteStream(filePath))
+                    await fs.promises.writeFile(filePath, assetBuffer);
+
+                    let fileCreation = await prisma.file.create({
+                        data: {
+                            hash: filepubkeyhash,
+                            file_hash: fileHash,
+                            content: filePath,
+                            reference_count: 0, // we use 0 because  saveAquaTree increases file  by 1
+                        }
+                    })
+
+                
+                    await prisma.fileIndex.create({
+                        data: {
+                            id: fileCreation.hash,
+                            hash: [filepubkeyhash],
+                            file_hash: fileHash,
+                            uri: fileName,
+                            reference_count: 0 // we use 0 because  saveAquaTree increases file  undex  by 1
+                        }
+                    })
+
+
+
+
+                }
+
+                // Save the aqua tree
+                await saveAquaTree(aquaTree, session.address);
+
+                // Get all user files to return in response
+                // const userFiles = await getUserFiles(session.address);
+
+                return reply.code(200).send({
+                    success: true,
+                    message: 'Aqua tree saved successfully',
+                    // data: userFiles
+                });
+            } catch (error) {
+                request.log.error(error);
+                return reply.code(500).send({ error: 'File upload failed' });
             }
-            // Verify file size (200MB = 200 * 1024 * 1024 bytes)
-            const maxFileSize = 200 * 1024 * 1024;
-            if (data.file.bytesRead > maxFileSize) {
-                return reply.code(413).send({ error: 'File too large. Maximum file size is 200MB' });
-            }
 
-            const fileBuffer = await streamToBuffer(data.file);
-            let fileContent = fileBuffer.toString('utf-8');
 
-            let aquaTreeWithFileObject: AquaTree = JSON.parse(fileContent)
 
-            // save the aqua tree 
-            await saveAquaTree(aquaTreeWithFileObject, session.address)
-
-            return reply.code(200).send({ error: 'aqua tree saved successfully' });
         } catch (error) {
             request.log.error(error);
             return reply.code(500).send({ error: 'File upload failed' });
@@ -462,12 +596,12 @@ export default async function explorerController(fastify: FastifyInstance) {
 
 
 
-            const fileBuffer:Buffer<ArrayBufferLike> = await streamToBuffer(data.file);
+            const fileBuffer: Buffer<ArrayBufferLike> = await streamToBuffer(data.file);
             // const buffer = Buffer.from([1, 2, 3, 4]);
             const uint8Array = new Uint8Array(fileBuffer);
             // let fileContent = fileBuffer.toString('utf-8');
             const fileSizeInBytes = fileBuffer.length;
-           //  console.log(`File size: ${fileSizeInBytes} bytes`);
+            //  console.log(`File size: ${fileSizeInBytes} bytes`);
 
 
             let fileObjectPar: FileObject = {
@@ -507,18 +641,23 @@ export default async function explorerController(fastify: FastifyInstance) {
 
             // let fileHash = getHashSum(data.file)
             let resData: AquaTree = res.data.aquaTree!!;
-            let allHashes: string[] = Object.keys(resData.revisions);
 
-            let genesisHash = allHashes[0];
-            for (let hashItem of allHashes) {
-                let revision = resData.revisions[hashItem];
-                if (revision.previous_verification_hash == null || revision.previous_verification_hash == undefined || revision.previous_verification_hash == "") {
-                    if (genesisHash != hashItem) {
-                        genesisHash = hashItem
-                    }
-                    break
-                }
+            let genesisHash = getGenesisHash(resData);
+
+            if (!genesisHash) {
+                return reply.code(500).send({ error: 'Genesis revision cannot be found' });
             }
+            // let allHashes: string[] = Object.keys(resData.revisions);
+            // let genesisHash = allHashes[0];
+            // for (let hashItem of allHashes) {
+            //     let revision = resData.revisions[hashItem];
+            //     if (revision.previous_verification_hash == null || revision.previous_verification_hash == undefined || revision.previous_verification_hash == "") {
+            //         if (genesisHash != hashItem) {
+            //             genesisHash = hashItem
+            //         }
+            //         break
+            //     }
+            // }
 
 
             let revisionData: Revision = resData.revisions[genesisHash];
@@ -640,8 +779,8 @@ export default async function explorerController(fastify: FastifyInstance) {
                         }
                     })
 
-                   //  console.log(JSON.stringify(fileCreation, null, 4))
-                    console.error("====We are through here: ", fileCreation.hash)
+                    //  console.log(JSON.stringify(fileCreation, null, 4))
+                    // console.error("====We are through here: ", fileCreation.hash)
 
                     await prisma.fileIndex.create({
                         data: {
@@ -652,12 +791,12 @@ export default async function explorerController(fastify: FastifyInstance) {
                             reference_count: 1
                         }
                     })
-                   //  console.log("Saved successfully")
+                    //  console.log("Saved successfully")
                 }
 
             } catch (error) {
-               //  console.log("======================================")
-               //  console.log(`error ${error}`)
+                //  console.log("======================================")
+                //  console.log(`error ${error}`)
                 let logs: LogData[] = []
                 logs.push({
                     log: `Error saving genesis revision`,
@@ -819,7 +958,7 @@ export default async function explorerController(fastify: FastifyInstance) {
                 // Step 2: Handle File and FileIndex entries
                 // First, find all fileIndexes that reference our revisions
                 console.log('Finding FileIndex entries that reference the revisions to delete');
-                
+
                 // Start with exact matches using hasSome
                 const fileIndexesToProcess = await tx.fileIndex.findMany({
                     where: {
@@ -834,11 +973,11 @@ export default async function explorerController(fastify: FastifyInstance) {
                         hash: true
                     }
                 });
-                
+
                 // If few or no matches, try a more flexible search with case-insensitive partial matching
                 if (fileIndexesToProcess.length < revisionPubkeyHashes.length) {
                     console.log(`Found only ${fileIndexesToProcess.length} exact matches, trying partial matching`);
-                    
+
                     // For each revision hash, try to find partial matches
                     for (const revHash of revisionPubkeyHashes) {
                         // This is a complex query to find any FileIndex where any element in the hash array
@@ -868,7 +1007,7 @@ export default async function explorerController(fastify: FastifyInstance) {
                                 )
                             `;
                         }
-                        
+
                         // Convert raw query results and add to our list
                         const rawResults = rawQuery as { id: string, file_hash: string, reference_count: number | null, hash: string[] }[];
                         if (rawResults.length > 0) {
@@ -877,19 +1016,19 @@ export default async function explorerController(fastify: FastifyInstance) {
                         }
                     }
                 }
-                
+
                 console.log(`Found total of ${fileIndexesToProcess.length} FileIndex entries to process`);
-                
+
                 // Track which file indexes to delete and which to update
                 const fileIndexesToDelete = [];
                 const fileIndexesToUpdate = [];
                 const fileHashesToUpdate = new Set<string>();
                 const fileHashesToDelete = new Set<string>();
-                
+
                 // Process each file index based on its reference count
                 for (const fileIndex of fileIndexesToProcess) {
                     const refCount = fileIndex.reference_count;
-                    
+
                     if (refCount === null || refCount <= 1) {
                         // If reference count is null or ≤ 1, mark for deletion
                         fileIndexesToDelete.push(fileIndex.id);
@@ -902,7 +1041,7 @@ export default async function explorerController(fastify: FastifyInstance) {
                         if (fileIndex.file_hash) {
                             fileHashesToUpdate.add(fileIndex.file_hash);
                         }
-                        
+
                         // If it's exactly 2, it will become 1 after decrementing, so mark for deletion too
                         // if (refCount === 2) {
                         //     fileIndexesToDelete.push(fileIndex.id);
@@ -912,10 +1051,10 @@ export default async function explorerController(fastify: FastifyInstance) {
                         // }
                     }
                 }
-                
+
                 console.log(`FileIndex operations planned: ${fileIndexesToUpdate.length} to update, ${fileIndexesToDelete.length} to delete`);
                 console.log(`File operations planned: ${fileHashesToUpdate.size} to update, ${fileHashesToDelete.size} to delete`);
-                
+
                 // Step 2a: Update reference counts for file indexes that need updating
                 if (fileIndexesToUpdate.length > 0) {
                     // Decrement reference count for file indexes
@@ -932,7 +1071,7 @@ export default async function explorerController(fastify: FastifyInstance) {
                         }
                     });
                     console.log(`Updated ${updatedFileIndexes.count} FileIndex entries`);
-                    
+
                     // Update files linked to these file indexes
                     if (fileHashesToUpdate.size > 0) {
                         const updatedFiles = await tx.file.updateMany({
@@ -950,7 +1089,7 @@ export default async function explorerController(fastify: FastifyInstance) {
                         console.log(`Updated ${updatedFiles.count} File entries`);
                     }
                 }
-                
+
                 // Step 2b: Delete file indexes with reference count <= 1
                 if (fileIndexesToDelete.length > 0) {
                     const deletedFileIndexes = await tx.fileIndex.deleteMany({
@@ -961,12 +1100,12 @@ export default async function explorerController(fastify: FastifyInstance) {
                         }
                     });
                     console.log(`Deleted ${deletedFileIndexes.count} FileIndex entries`);
-                    
+
                     // Delete the files if they exist
                     if (fileHashesToDelete.size > 0) {
                         const uniqueFileHashes = Array.from(fileHashesToDelete).filter(Boolean) as string[];
                         console.log(`File hashes to delete: ${uniqueFileHashes.length}`);
-                        
+
                         // First get the files to delete so we can handle filesystem files
                         const filesToDelete = await tx.file.findMany({
                             where: {
@@ -975,7 +1114,7 @@ export default async function explorerController(fastify: FastifyInstance) {
                                 }
                             }
                         });
-                        
+
                         // Delete any filesystem files
                         for (const file of filesToDelete) {
                             if (file.content) {
@@ -988,7 +1127,7 @@ export default async function explorerController(fastify: FastifyInstance) {
                                 }
                             }
                         }
-                        
+
                         // Delete the database records
                         const deletedFiles = await tx.file.deleteMany({
                             where: {

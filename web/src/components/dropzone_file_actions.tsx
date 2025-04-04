@@ -299,11 +299,13 @@ export const ImportAquaTree = ({ file, uploadedIndexes, fileIndex, updateUploade
     const uploadFileData = async () => {
         const formData = new FormData();
         formData.append('file', file);
+        formData.append('has_asset', `${selectedFile != null}`);
+        formData.append('asset', selectedFile ?? file);
         formData.append('account', `${metamaskAddress}`);
 
         setUploading(true)
         try {
-            const url = `${backend_url}/explorer_aqua_tree_upload`
+            const url = `${backend_url}/explorer_aqua_file_upload`
             //  console.log("url ", url)
             const response = await axios.post(url, formData, {
                 headers: {
