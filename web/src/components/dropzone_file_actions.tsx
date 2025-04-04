@@ -177,6 +177,8 @@ export const UploadFile = ({ file, uploadedIndexes, fileIndex, updateUploadedInd
                 description: "You already have the file. Delete before importing this",
                 type: "info"
             })
+            updateUploadedIndex(fileIndex)
+            
             return
         }
 

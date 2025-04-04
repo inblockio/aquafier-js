@@ -742,3 +742,111 @@ export async function FetchRevisionInfo(hash: string, revision: Revision): Promi
 
     }
 }
+
+
+export const readFileContent = async (file: File): Promise<string | Uint8Array> => {
+    if (isTextFile(file)) {
+        // If it's a text file, read as text
+        return await readFileAsText(file);
+    } else {
+        console.log("binary data....")
+        // Otherwise for binary files, read as ArrayBuffer
+        const res = await readFileAsArrayBuffer(file)
+        return new Uint8Array(res);
+
+    }
+};
+
+
+// More comprehensive function to check if a file is text-based
+export const isTextFile = (file: File): boolean => {
+    // Check by MIME type first (most reliable when available)
+    if (file.type) {
+        // Common text MIME types
+        if (file.type.startsWith('text/')) return true;
+
+        // Text-based formats with application/ prefix
+        if (/^application\/(json|xml|javascript|x-javascript|ecmascript|x-ecmascript|typescript|x-typescript|ld\+json|graphql|yaml|x-yaml|x-www-form-urlencoded)/.test(file.type)) {
+            return true;
+        }
+
+        // Some markdown types
+        if (/^text\/(markdown|x-markdown|md)/.test(file.type)) {
+            return true;
+        }
+    }
+
+    // Check by file extension as fallback
+    const textExtensions = [
+        // Programming languages
+        '.txt', '.csv', '.json', '.xml', '.html', '.htm', '.css', '.js', '.jsx', '.ts', '.tsx',
+        '.md', '.markdown', '.rs', '.py', '.rb', '.c', '.cpp', '.h', '.hpp', '.cs', '.java',
+        '.kt', '.kts', '.swift', '.php', '.go', '.pl', '.pm', '.lua', '.sh', '.bash', '.zsh',
+        '.sql', '.r', '.dart', '.scala', '.groovy', '.m', '.mm',
+
+        // Config files
+        '.yml', '.yaml', '.toml', '.ini', '.cfg', '.conf', '.config', '.properties',
+        '.env', '.gitignore', '.gitattributes', '.editorconfig', '.babelrc', '.eslintrc',
+        '.prettierrc', '.stylelintrc', '.npmrc', '.yarnrc',
+
+        // Documentation
+        '.rst', '.adoc', '.tex', '.latex', '.rtf', '.log', '.svg',
+
+        // Data formats
+        '.csv', '.tsv', '.plist', '.graphql', '.gql'
+    ];
+
+    return textExtensions.some(ext => file.name.toLowerCase().endsWith(ext));
+};
+
+
+
+/**
+ * Reads a File object as text
+ * @param file The File object to read
+ * @returns Promise that resolves with the file contents as string
+ */
+export function readFileAsText(file: File): Promise<string> {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+
+        reader.onload = (event) => {
+            if (event.target?.result) {
+                resolve(event.target.result as string);
+            } else {
+                reject(new Error("Failed to read file content"));
+            }
+        };
+
+        reader.onerror = (error) => {
+            reject(error);
+        };
+
+        reader.readAsText(file);
+    });
+}
+
+/**
+ * Reads a File object as ArrayBuffer
+ * @param file The File object to read
+ * @returns Promise that resolves with the file contents as ArrayBuffer
+ */
+export function readFileAsArrayBuffer(file: File): Promise<ArrayBuffer> {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+
+        reader.onload = (event) => {
+            if (event.target?.result) {
+                resolve(event.target.result as ArrayBuffer);
+            } else {
+                reject(new Error("Failed to read file content"));
+            }
+        };
+
+        reader.onerror = (error) => {
+            reject(error);
+        };
+
+        reader.readAsArrayBuffer(file);
+    });
+}
