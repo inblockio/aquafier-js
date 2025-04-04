@@ -219,6 +219,7 @@ export async function saveAquaTree(aquaTree: AquaTree, userAddress: string,) {
             })
 
             if (fileResult == null) {
+               console.log(`-- > file data should be in database but is not found.hash  ${revisinHash}`);
                 throw Error(`file data should be in database but is not found.`);
             }
 
@@ -807,7 +808,7 @@ export function getGenesisHash(aquaTree: AquaTree) :  string | null{
         let revisionItem = aquaTree!.revisions[hash];
         if (revisionItem.previous_verification_hash == "" || revisionItem.previous_verification_hash == null || revisionItem.previous_verification_hash == undefined) {
 
-            aquaTreeGenesisHash = revisionItem.previous_verification_hash
+            aquaTreeGenesisHash = hash //revisionItem.previous_verification_hash
             break;
 
         }

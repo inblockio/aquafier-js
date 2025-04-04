@@ -378,15 +378,19 @@ export default async function explorerController(fastify: FastifyInstance) {
 
 
                 let [isValidAquaTree, failureReason] = validateAquaTree(aquaTree)
-                console.log(`is aqua tree valid ${isValidAquaTree} failure reason ${failureReason}`)
+                console.log(`is aqua tree valid ${isValidAquaTree} `);
                 if (!isValidAquaTree) {
+                    console.log(`failure reason ${failureReason}`)
                     return reply.code(412).send({ error: failureReason });
                 }
 
 
 
+                console.log(`\n has asset save file ${hasAsset}  `)
                 // Handle the asset if it exists
                 if (hasAsset && assetBuffer) {
+                    console.log(`---------------------------------------------------------------`)
+                    console.log(`\n has asset save file \n `)
                     // Process the asset - this depends on your requirements
                     // For example, you might want to store it separately or attach it to the aqua tree
                     // aquaTreeWithFileObject.assetData = assetBuffer.toString('base64');
@@ -398,10 +402,12 @@ export default async function explorerController(fastify: FastifyInstance) {
                     let fileHash = aquafier.getFileHash(uint8Array);
 
                     let genesisHash = getGenesisHash(aquaTree);
-                    if (genesisHash == null) {
+                    if (genesisHash == null || genesisHash == "") {
                         return reply.code(500).send({ error: 'Genesis hash not found in aqua tree' });
                     }
                     let filepubkeyhash = `${session.address}_${genesisHash}`
+
+                    console.log(`\n ## filepubkeyhash ${filepubkeyhash}`)
                     const UPLOAD_DIR = getFileUploadDirectory();
 
                     // Create unique filename
@@ -417,6 +423,7 @@ export default async function explorerController(fastify: FastifyInstance) {
                     // await pump(data.file, fs.createWriteStream(filePath))
                     await fs.promises.writeFile(filePath, assetBuffer);
 
+                    console.log('About to create file record in database');
                     let fileCreation = await prisma.file.create({
                         data: {
                             hash: filepubkeyhash,
@@ -425,8 +432,10 @@ export default async function explorerController(fastify: FastifyInstance) {
                             reference_count: 0, // we use 0 because  saveAquaTree increases file  by 1
                         }
                     })
+                    console.log('File record created:', fileCreation);
 
-                
+                    console.log('About to create fileIndex record');
+
                     await prisma.fileIndex.create({
                         data: {
                             id: fileCreation.hash,
@@ -437,8 +446,7 @@ export default async function explorerController(fastify: FastifyInstance) {
                         }
                     })
 
-
-
+                    console.log('FileIndex record created');
 
                 }
 
@@ -448,14 +456,42 @@ export default async function explorerController(fastify: FastifyInstance) {
                 // Get all user files to return in response
                 // const userFiles = await getUserFiles(session.address);
 
+
+                // fetch all from latetst
+
+                let latest = await prisma.latest.findMany({
+                    where: {
+                        user: session.address
+                    }
+                });
+
+                if (latest.length == 0) {
+                    console.log("This should never happen , the uploaded aqua tree  &  file was not inserted succesfully ")
+                    return reply.code(200).send({ data: [] });
+                }
+
+
+                // Get the host from the request headers
+                const host = request.headers.host || `${getHost()}:${getPort()}`;
+
+                // Get the protocol (http or https)
+                const protocol = request.protocol || 'https'
+
+                // Construct the full URL
+                const url = `${protocol}://${host}`;
+
+                let displayData = await fetchAquatreeFoUser(url, latest)
+
                 return reply.code(200).send({
                     success: true,
                     message: 'Aqua tree saved successfully',
-                    // data: userFiles
+                    files: displayData
+
                 });
             } catch (error) {
+                console.error('\n\n Specific error in file/fileIndex creation:', error);
                 request.log.error(error);
-                return reply.code(500).send({ error: 'File upload failed' });
+                return reply.code(500).send({ error: `Error ${error}` });
             }
 
 
@@ -464,8 +500,6 @@ export default async function explorerController(fastify: FastifyInstance) {
             request.log.error(error);
             return reply.code(500).send({ error: 'File upload failed' });
         }
-
-
 
     });
 

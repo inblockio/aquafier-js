@@ -61,7 +61,7 @@ export function getAquaTreeFileObject(fileInfo: ApiFileInfo): FileObject | undef
 
 }
 
-export function getGenesisHash(aquaTree: AquaTree) :  string | null{
+export function getGenesisHash(aquaTree: AquaTree): string | null {
     let aquaTreeGenesisHash: string | null = null;
     let allAquuaTreeHashes = Object.keys(aquaTree!.revisions);
 
@@ -69,7 +69,7 @@ export function getGenesisHash(aquaTree: AquaTree) :  string | null{
         let revisionItem = aquaTree!.revisions[hash];
         if (revisionItem.previous_verification_hash == "" || revisionItem.previous_verification_hash == null || revisionItem.previous_verification_hash == undefined) {
 
-            aquaTreeGenesisHash = revisionItem.previous_verification_hash
+            aquaTreeGenesisHash = hash //revisionItem.previous_verification_hash
             break;
 
         }
@@ -1086,4 +1086,17 @@ export function encodeFileToBase64(file: File): Promise<string> {
 export function generateAvatar(seed: string, size = 200) {
     const svg = jdenticon.toSvg(seed, size);
     return `data:image/svg+xml;base64,${btoa(svg)}`;
+}
+
+
+export function ensureDomainUrlHasSSL(actualUrlToFetch: string): string {
+    // check if the file hash exist 
+    console.log(`==URL Data before ${actualUrlToFetch}`)
+    if (actualUrlToFetch.includes("inblock.io")) {
+        if (!actualUrlToFetch.includes("https")) {
+            actualUrlToFetch = actualUrlToFetch.replace("http", "https")
+        }
+    }
+    console.log(`==URL Data after ${actualUrlToFetch}`)
+    return actualUrlToFetch
 }

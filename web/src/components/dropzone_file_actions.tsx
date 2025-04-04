@@ -6,7 +6,7 @@ import appStore from "../store";
 import { useEffect, useRef, useState } from "react";
 import { ApiFileInfo } from "../models/FileInfo";
 import { toaster } from "./ui/toaster";
-import { formatCryptoAddress, readFileAsText, validateAquaTree, getFileName, estimateFileSize, blobToBase64, readFileContent, checkIfFileExistInUserFiles, getGenesisHash } from "../utils/functions";
+import { formatCryptoAddress, readFileAsText, validateAquaTree, getFileName,   readFileContent, checkIfFileExistInUserFiles, getGenesisHash, ensureDomainUrlHasSSL } from "../utils/functions";
 import { Box, Container, DialogCloseTrigger, Group, Input, List, Text, VStack } from "@chakra-ui/react";
 import {
     Modal,
@@ -289,14 +289,14 @@ export const ImportAquaTree = ({ file, uploadedIndexes, fileIndex, updateUploade
     const [uploaded, setUploaded] = useState(false)
     const [requiredFileHash, setRequiredFileHash] = useState<string | null>(null)
     const fileInputRef = useRef<HTMLInputElement>(null)
-    const [selectedFile, setSelectedFile] = useState<File | null>(null)
+    const [selectedFileName, setSelectedFileName] = useState<string>("")
     const { isOpen, onOpen, onClose } = useDisclosure()
 
     const { files, metamaskAddress, setFiles, backend_url, session } = useStore(appStore)
 
 
 
-    const uploadFileData = async () => {
+    const uploadFileData = async (selectedFile : File | null ) => {
         const formData = new FormData();
         formData.append('file', file);
         formData.append('has_asset', `${selectedFile != null}`);
@@ -318,9 +318,10 @@ export const ImportAquaTree = ({ file, uploadedIndexes, fileIndex, updateUploade
             const res = response.data
 
 
-            setFiles([...res.data])
+            setFiles([...res.files])
             setUploaded(true)
             setUploading(false)
+            setSelectedFileName("")
             toaster.create({
                 description: "File uploaded successfuly",
                 type: "success"
@@ -329,6 +330,7 @@ export const ImportAquaTree = ({ file, uploadedIndexes, fileIndex, updateUploade
             return;
         } catch (error) {
             setUploading(false)
+            setSelectedFileName("")
             toaster.create({
                 description: `Failed to upload file: ${error}`,
                 type: "error"
@@ -366,12 +368,8 @@ export const ImportAquaTree = ({ file, uploadedIndexes, fileIndex, updateUploade
                 }
             }
 
-            let actualUrlToFetch = backend_url
-            // check if the file hash exist 
-            console.log(`== Data before ${actualUrlToFetch}`)
-            if (actualUrlToFetch.includes("inblock.io")) {
-                actualUrlToFetch = actualUrlToFetch.replace("http", "https")
-            }
+            let actualUrlToFetch = ensureDomainUrlHasSSL(backend_url)
+          
 
             // Fetch the file from the URL
             const response = await fetch(`${actualUrlToFetch}/files/${fileHash}`, {
@@ -472,7 +470,7 @@ export const ImportAquaTree = ({ file, uploadedIndexes, fileIndex, updateUploade
                 return;
             }
 
-            await uploadFileData()
+            await uploadFileData(null)
 
 
 
@@ -486,7 +484,7 @@ export const ImportAquaTree = ({ file, uploadedIndexes, fileIndex, updateUploade
     }
 
     const modalSelectedFile = async (file: File) => {
-        setSelectedFile(file)
+        
 
         // Verify file hash matches required hash
         if (requiredFileHash) {
@@ -532,6 +530,8 @@ export const ImportAquaTree = ({ file, uploadedIndexes, fileIndex, updateUploade
             return
         }
 
+        setSelectedFileName(file.name)
+
         // close modal
         onClose()
 
@@ -539,7 +539,7 @@ export const ImportAquaTree = ({ file, uploadedIndexes, fileIndex, updateUploade
         try {
 
             // Upload the file and aqua tree
-            await uploadFileData()
+            await uploadFileData(file)
         } catch (error) {
             toaster.create({
                 description: `Error processing: ${error instanceof Error ? error.message : String(error)}`,
@@ -635,9 +635,9 @@ export const ImportAquaTree = ({ file, uploadedIndexes, fileIndex, updateUploade
                                 />
                             </Box>
 
-                            {selectedFile && (
-                                <Text fontSize="14px">Selected: {selectedFile.name}</Text>
-                            )}
+                            {selectedFileName.length > 0  ? 
+                                <Text fontSize="14px">Selected: {selectedFileName}</Text>
+                            : <></>}
                         </VStack>
                     </ModalBody>
 
@@ -739,6 +739,7 @@ export const ImportAquaTreeZip = ({ file, uploadedIndexes, fileIndex, updateUplo
             })
         }
     }
+
     const importFile = async () => {
 
 

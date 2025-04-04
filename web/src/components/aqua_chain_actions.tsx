@@ -1,6 +1,6 @@
 import { LuDelete, LuDownload, LuGlasses, LuLink2, LuShare2, LuSignature } from "react-icons/lu"
 import { Button } from "./ui/button"
-import { areArraysEqual, dummyCredential, estimateStringFileSize, extractFileHash, getFileName } from "../utils/functions"
+import { areArraysEqual, dummyCredential, ensureDomainUrlHasSSL, estimateStringFileSize, extractFileHash, getFileName } from "../utils/functions"
 import { useStore } from "zustand"
 import appStore from "../store"
 import axios from "axios"
@@ -373,13 +373,9 @@ export const DownloadAquaChain = ({ file }: { file: ApiFileInfo }) => {
                 try {
 
 
-                    let actualUrlToFetch = fileObj.fileContent
+                    let actualUrlToFetch = ensureDomainUrlHasSSL(fileObj.fileContent)
 
-                    console.log(`== Data before ${actualUrlToFetch}`)
-                    if (actualUrlToFetch.includes("inblock.io")) {
-
-                        actualUrlToFetch = actualUrlToFetch.replace("http", "https")
-                    }
+                    
 
                     // Fetch the file from the URL
                     const response = await fetch(actualUrlToFetch, {
@@ -469,13 +465,9 @@ export const DownloadAquaChain = ({ file }: { file: ApiFileInfo }) => {
             // Check if fileContent is a string (URL)
             if (typeof fileObj.fileContent === 'string' && fileObj.fileContent.startsWith('http')) {
                 try {
-                    let actualUrlToFetch = fileObj.fileContent
+                    let actualUrlToFetch =ensureDomainUrlHasSSL( fileObj.fileContent)
 
-                    console.log(`== Data before ${actualUrlToFetch}`)
-                    if (actualUrlToFetch.includes("inblock.io")) {
-
-                        actualUrlToFetch = actualUrlToFetch.replace("http", "https")
-                    }
+                  
 
                     // Fetch the file from the URL
                     const response = await fetch(actualUrlToFetch, {

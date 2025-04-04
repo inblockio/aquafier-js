@@ -4,6 +4,7 @@ import { FileObject } from "aqua-js-sdk";
 import { useEffect, useRef, useState } from "react";
 import { useStore } from "zustand";
 import appStore from "../store";
+import { ensureDomainUrlHasSSL } from "../utils/functions";
 
 // Add type declaration for PDF.js
 declare global {
@@ -256,14 +257,7 @@ const FilePreview: React.FC<IFilePreview> = ({ fileInfo }) => {
                 const fileContentUrl: string = fileInfo.fileContent as string
                 console.log("File content url: ", fileContentUrl)
 
-                let actualUrlToFetch = fileContentUrl
-
-                console.log(`== Data before ${actualUrlToFetch}`)
-                if (actualUrlToFetch.includes("inblock.io")) {
-
-                    actualUrlToFetch = actualUrlToFetch.replace("http", "https")
-                }
-                console.log(`== Data after ${actualUrlToFetch}`)
+                let actualUrlToFetch = ensureDomainUrlHasSSL(fileContentUrl)
 
                 const response = await fetch(actualUrlToFetch, {
                     headers: {
@@ -300,7 +294,7 @@ const FilePreview: React.FC<IFilePreview> = ({ fileInfo }) => {
 
                     // Try to convert Word document to HTML for preview
                     try {
-                        let mammothLib =  (window as any).mammoth;
+                        let mammothLib = (window as any).mammoth;
                         if (mammothLib) {
                             const result = await window.mammoth.convertToHtml({ arrayBuffer });
                             setWordContent(result.value);
