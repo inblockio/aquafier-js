@@ -289,7 +289,8 @@ const ShareButtonAction = ({ item, nonce }: IShareButtonAction) => {
     }
 
     const loadAllContracts = async () => {
-        const genesis_hash = getGenesisRevision()
+        try{
+            const genesis_hash = getGenesisRevision()
         if (!genesis_hash) {
             return
         }
@@ -301,6 +302,9 @@ const ShareButtonAction = ({ item, nonce }: IShareButtonAction) => {
         });
         if (response.status === 200) {
             setContracts(response.data?.contracts)
+        }
+        }catch(e){
+            console.error(`Error fetching contracts for  ${JSON.stringify(item)}`)
         }
     }
 

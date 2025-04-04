@@ -61,6 +61,23 @@ export function getAquaTreeFileObject(fileInfo: ApiFileInfo): FileObject | undef
 
 }
 
+export function getGenesisHash(aquaTree: AquaTree) :  string | null{
+    let aquaTreeGenesisHash: string | null = null;
+    let allAquuaTreeHashes = Object.keys(aquaTree!.revisions);
+
+    for (let hash of allAquuaTreeHashes) {
+        let revisionItem = aquaTree!.revisions[hash];
+        if (revisionItem.previous_verification_hash == "" || revisionItem.previous_verification_hash == null || revisionItem.previous_verification_hash == undefined) {
+
+            aquaTreeGenesisHash = revisionItem.previous_verification_hash
+            break;
+
+        }
+    }
+
+    return aquaTreeGenesisHash
+}
+
 export async function getCurrentNetwork() {
     if (typeof window.ethereum !== 'undefined') {
         try {
@@ -510,7 +527,7 @@ export const checkIfFileExistInUserFiles = async (file: File, files: ApiFileInfo
     let fileContent = await readFileContent(file)
     let aquafier = new Aquafier()
     let fileHash = aquafier.getFileHash(fileContent)
-    console.log(`type of ${typeof(fileContent)} file hash generated  ${fileHash} `)
+    console.log(`type of ${typeof (fileContent)} file hash generated  ${fileHash} `)
 
     // loop through all the files the user has 
     for (let fileItem of files) {

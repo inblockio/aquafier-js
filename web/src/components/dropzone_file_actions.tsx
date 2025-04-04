@@ -6,7 +6,7 @@ import appStore from "../store";
 import { useEffect, useRef, useState } from "react";
 import { ApiFileInfo } from "../models/FileInfo";
 import { toaster } from "./ui/toaster";
-import { formatCryptoAddress, readFileAsText, validateAquaTree, getFileName, estimateFileSize, blobToBase64, readFileContent, checkIfFileExistInUserFiles } from "../utils/functions";
+import { formatCryptoAddress, readFileAsText, validateAquaTree, getFileName, estimateFileSize, blobToBase64, readFileContent, checkIfFileExistInUserFiles, getGenesisHash } from "../utils/functions";
 import { Box, Container, DialogCloseTrigger, Group, Input, List, Text, VStack } from "@chakra-ui/react";
 import {
     Modal,
@@ -48,7 +48,7 @@ export const FormRevisionFile = ({ file, uploadedIndexes, fileIndex, updateUploa
 
     const uploadFile = async () => {
 
-         let fileExist = await checkIfFileExistInUserFiles(file, files)
+        let fileExist = await checkIfFileExistInUserFiles(file, files)
 
         if (fileExist) {
             toaster.create({
@@ -178,7 +178,7 @@ export const UploadFile = ({ file, uploadedIndexes, fileIndex, updateUploadedInd
                 type: "info"
             })
             updateUploadedIndex(fileIndex)
-            
+
             return
         }
 
@@ -292,7 +292,7 @@ export const ImportAquaTree = ({ file, uploadedIndexes, fileIndex, updateUploade
     const [selectedFile, setSelectedFile] = useState<File | null>(null)
     const { isOpen, onOpen, onClose } = useDisclosure()
 
-    const { metamaskAddress, setFiles, backend_url, session } = useStore(appStore)
+    const { files, metamaskAddress, setFiles, backend_url, session } = useStore(appStore)
 
 
 
@@ -401,16 +401,20 @@ export const ImportAquaTree = ({ file, uploadedIndexes, fileIndex, updateUploade
             }
 
 
-            const blob = await response.blob();
+            const blob: Blob = await response.blob();
 
 
             let fileName = getFileName(aquaTree)
-            let fileDataContent = await blobToBase64(blob)
+
+
+            const arrayBuffer = await blob.arrayBuffer();
+            const uint8Array = new Uint8Array(arrayBuffer);
+
             let fileObject: FileObject = {
+                fileContent: uint8Array,
                 fileName: fileName,
-                fileContent: fileDataContent,
-                path: ".",
-                fileSize: estimateFileSize(fileDataContent)
+                path: "./",
+                fileSize: blob.size
             }
 
 
@@ -429,19 +433,44 @@ export const ImportAquaTree = ({ file, uploadedIndexes, fileIndex, updateUploade
             }
 
 
-
-
             // check if the aqua tree is valid 
 
             let result = await aquafier.verifyAquaTree(aquaTree, [fileObject]);
 
             if (result.isErr()) {
+                setUploading(false)
                 toaster.create({
                     description: `Aqua tree is not valid: ${JSON.stringify(result)}`,
                     type: "error"
                 })
                 return;
             }
+
+
+            // check if gensesi hash exist in user files
+            let importedAquaTreeGensisHash = getGenesisHash(aquaTree);
+            let userHasAquaTree = false;
+
+            for (let userFile of files) {
+                let aquaTreeGensisHash = getGenesisHash(userFile.aquaTree!!)
+                if (aquaTreeGensisHash) {
+                    if (aquaTreeGensisHash == importedAquaTreeGensisHash) {
+                        userHasAquaTree = true
+                        break;
+                    }
+                }
+            }
+
+            if (userHasAquaTree) {
+                setUploading(false)
+                toaster.create({
+                    description: `Aqua tree is not valid: Genesis hash not found`,
+                    type: "error"
+                })
+                return;
+            }
+
+            await uploadFileData()
 
 
 
