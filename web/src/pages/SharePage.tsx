@@ -50,6 +50,9 @@ const SharePage = () => {
             catch (error: any) {
                 if (error.response.status == 404) {
                     setHasError(`File could not be found (probably it was deleted)`);
+
+                } else if (error.response.status == 412) {
+                    setHasError(`Either share link was invalidated (or you account has no permission to access the aqua tree.)`);
                 } else {
                     setHasError(`Error : ${error}`);
                 }

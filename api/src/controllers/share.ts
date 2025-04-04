@@ -48,7 +48,7 @@ export default async function shareController(fastify: FastifyInstance) {
             })
 
             if (contractData == null) {
-                return reply.code(500).send({ success: false, message: "The aqua tree share contract does not exist" });
+                return reply.code(412).send({ success: false, message: "The aqua tree share contract does not exist" });
 
             }
 
