@@ -222,8 +222,6 @@ const detectFileType = (uint8Array: Uint8Array): string => {
     return 'application/octet-stream';
 };
 
-
-
 const FilePreview: React.FC<IFilePreview> = ({ fileInfo }) => {
     const [fileType, setFileType] = useState<string>("");
     const [fileURL, setFileURL] = useState<string>("");
@@ -231,9 +229,10 @@ const FilePreview: React.FC<IFilePreview> = ({ fileInfo }) => {
     const [isLoading, setIsLoading] = useState<boolean>(true);
     const [isMobile, setIsMobile] = useState<boolean>(false);
     const [pdfBlob, setPdfBlob] = useState<Blob | null>(null);
-    const [wordContent, setWordContent] = useState<string>("");
+    const [wordBlob, setWordBlob] = useState<Blob | null>(null);
     const { session } = useStore(appStore);
     const pdfCanvasRef = useRef<HTMLCanvasElement>(null);
+    const wordContainerRef = useRef<HTMLDivElement>(null);
 
     // Detect mobile devices on component mount
     useEffect(() => {
@@ -292,19 +291,9 @@ const FilePreview: React.FC<IFilePreview> = ({ fileInfo }) => {
                         contentType = "application/msword";
                     }
 
-                    // Try to convert Word document to HTML for preview
-                    try {
-                        let mammothLib = (window as any).mammoth;
-                        if (mammothLib) {
-                            const result = await window.mammoth.convertToHtml({ arrayBuffer });
-                            setWordContent(result.value);
-                            console.log("Word document converted to HTML");
-                        } else {
-                            console.log("Mammoth.js not loaded, cannot convert Word document");
-                        }
-                    } catch (error) {
-                        console.error("Error converting Word document:", error);
-                    }
+                    // Store Word blob for docx-preview rendering
+                    const wordBlob = new Blob([arrayBuffer], { type: contentType });
+                    setWordBlob(wordBlob);
                 }
 
                 // For PDF files, ensure proper content type
@@ -442,26 +431,133 @@ const FilePreview: React.FC<IFilePreview> = ({ fileInfo }) => {
         }
     }, [fileType, isMobile, pdfBlob, isLoading, fileURL]);
 
-    // Function to load mammoth.js script if needed
-    const loadMammothScript = () => {
-        if (!window.mammoth && (fileType === "application/msword" ||
-            fileType === "application/vnd.openxmlformats-officedocument.wordprocessingml.document")) {
-            const script = document.createElement('script');
-            script.src = "https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js";
-            script.async = true;
-            script.onload = () => console.log("Mammoth.js loaded successfully");
-            script.onerror = () => console.error("Failed to load Mammoth.js");
-            document.body.appendChild(script);
-        }
-    };
-
-    // Load mammoth.js when needed
+    // New effect to render Word documents using docx-preview
+    // New effect to render Word documents using docx-preview
     useEffect(() => {
-        if (fileType === "application/msword" ||
-            fileType === "application/vnd.openxmlformats-officedocument.wordprocessingml.document") {
-            loadMammothScript();
+        const renderWordDocument = async () => {
+            if ((fileType === "application/msword" ||
+                fileType === "application/vnd.openxmlformats-officedocument.wordprocessingml.document") &&
+                wordBlob &&
+                wordContainerRef.current) {
+
+                try {
+                    // Load the libraries
+                    await loadDocxPreviewScript();
+
+                    // Wait a bit to ensure everything is loaded
+                    await new Promise(resolve => setTimeout(resolve, 200));
+
+                    // Verify window.docx exists
+                    if (!window.docx) {
+                        throw new Error("docx-preview library not available");
+                    }
+
+                    // Clear any previous content
+                    if (wordContainerRef.current) {
+                        wordContainerRef.current.innerHTML = '';
+                    }
+
+                    // For DOCX files
+                    if (fileType === "application/vnd.openxmlformats-officedocument.wordprocessingml.document") {
+                        // Create a new blob to ensure it's processed correctly
+                        const docxBlob = new Blob([await wordBlob.arrayBuffer()],
+                            { type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' });
+
+                        // Use docx-preview to render the document
+                        await window.docx.renderAsync(
+                            docxBlob,
+                            wordContainerRef.current,
+                            null,
+                            {
+                                className: 'docx-preview',
+                                inWrapper: true,
+                                ignoreWidth: false,
+                                ignoreHeight: false,
+                                defaultFont: {
+                                    family: 'Arial',
+                                    size: 12
+                                }
+                            }
+                        );
+                    } else {
+                        // For DOC files, we can't use docx-preview directly
+                        // Show a message that DOC files can't be previewed
+                        if (wordContainerRef.current) {
+                            wordContainerRef.current.innerHTML = `
+                            <div style="text-align: center; padding: 20px;">
+                                <p>Preview not available for .DOC files (only .DOCX is supported).</p>
+                                <p>Please download the file to view it.</p>
+                            </div>
+                        `;
+                        }
+                    }
+
+                    console.log("Word document rendered successfully with docx-preview");
+                } catch (error) {
+                    console.error("Error rendering Word document with docx-preview:", error);
+
+                    // Display error message in the container
+                    if (wordContainerRef.current) {
+                        wordContainerRef.current.innerHTML = `
+                        <div style="text-align: center; padding: 20px;">
+                            <p>Unable to preview this document.</p>
+                            <p>Error: ${error.message || 'Unknown error'}</p>
+                            <p>Please download the file to view it.</p>
+                        </div>
+                    `;
+                    }
+                }
+            }
+        };
+
+        if (isLoading === false) {
+            renderWordDocument();
         }
-    }, [fileType]);
+    }, [fileType, wordBlob, isLoading]);
+
+
+    // Function to load docx-preview script
+    // Function to load docx-preview script
+    const loadDocxPreviewScript = () => {
+        return new Promise<void>((resolve, reject) => {
+            if (window.docx) {
+                resolve();
+                return;
+            }
+
+            // Load JSZip first (required by docx-preview)
+            const jsZipScript = document.createElement('script');
+            jsZipScript.src = "https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js";
+            jsZipScript.async = true;
+
+            jsZipScript.onload = () => {
+                // Then load docx-preview
+                const docxScript = document.createElement('script');
+                docxScript.src = "https://cdn.jsdelivr.net/npm/docx-preview@0.1.20/dist/docx-preview.min.js";
+                docxScript.async = true;
+
+                docxScript.onload = () => {
+                    console.log("docx-preview loaded successfully");
+                    // Small delay to ensure script is fully initialized
+                    setTimeout(() => resolve(), 100);
+                };
+
+                docxScript.onerror = () => {
+                    console.error("Failed to load docx-preview");
+                    reject(new Error("Failed to load docx-preview"));
+                };
+
+                document.body.appendChild(docxScript);
+            };
+
+            jsZipScript.onerror = () => {
+                console.error("Failed to load JSZip");
+                reject(new Error("Failed to load JSZip"));
+            };
+
+            document.body.appendChild(jsZipScript);
+        });
+    };
 
     if (isLoading) return <p>Loading...</p>;
 
@@ -472,49 +568,48 @@ const FilePreview: React.FC<IFilePreview> = ({ fileInfo }) => {
         return <img src={fileURL} alt="Fetched file" style={{ maxWidth: "100%", height: "auto" }} />;
     }
 
-    // Render Word documents
+    // Render Word documents with docx-preview
     if (fileType === "application/msword" ||
         fileType === "application/vnd.openxmlformats-officedocument.wordprocessingml.document") {
 
-        if (wordContent) {
-            // If we have successfully converted Word content to HTML, display it
-            return (
-                <div>
-                    <div
-                        className="word-preview"
-                        style={{
-                            padding: "20px",
-                            border: "1px solid #ddd",
-                            borderRadius: "4px",
-                            backgroundColor: "#fff",
-                            maxHeight: "600px",
-                            overflow: "auto"
-                        }}
-                        dangerouslySetInnerHTML={{ __html: wordContent }}
-                    />
-                    <div style={{ marginTop: "15px", textAlign: "center" }}>
-                        <a
-                            href={fileURL}
-                            download={fileInfo.fileName || "document.docx"}
-                            style={{
-                                color: "#fff",
-                                backgroundColor: "#4285f4",
-                                padding: "10px 15px",
-                                borderRadius: "4px",
-                                textDecoration: "none",
-                                display: "inline-block"
-                            }}
-                        >
-                            Download Word Document
-                        </a>
-                    </div>
+        // For DOC files, we can't use docx-preview directly
+        if (fileType === "application/msword") {
+            // Show a more visible message that DOC files can't be previewed
+            if (wordContainerRef.current) {
+                let data =  `
+                <div style="text-align: center; padding: 40px; color: #333; font-family: sans-serif;">
+                    <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="#666" stroke-width="2" style="margin-bottom: 16px">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                        <polyline points="14 2 14 8 20 8"></polyline>
+                        <path d="M9 15h6"></path>
+                        <path d="M9 11h6"></path>
+                    </svg>
+                    <h3 style="margin-bottom: 8px; font-size: 18px;">DOC File Format Not Supported</h3>
+                    <p style="margin-bottom: 16px; color: #666;">The preview feature only supports .DOCX files. This file is in the older .DOC format.</p>
+                    <p style="color: #444; font-weight: bold;">Please download the file to view it.</p>
                 </div>
-            );
-        } else {
-            // If conversion failed or mammoth.js isn't available, show a message and download link
-            return (
-                <div style={{ textAlign: "center", padding: "20px" }}>
-                    <p>Preview not available for this Word document.</p>
+            `;
+                wordContainerRef.current.innerHTML =data
+            }
+        }
+        return (
+            <div>
+                <div
+                    ref={wordContainerRef}
+                    className="word-preview-container"
+                    style={{
+                        padding: "20px",
+                        border: "1px solid #ddd",
+                        borderRadius: "4px",
+                        // backgroundColor: "#fff",
+                        // maxHeight: "600px",
+                        overflow: "auto",
+                        // minHeight: "400px"
+                    }}
+                >
+                    {/* docx-preview will render content here */}
+                </div>
+                <div style={{ marginTop: "15px", textAlign: "center" }}>
                     <a
                         href={fileURL}
                         download={fileInfo.fileName || "document.docx"}
@@ -524,15 +619,14 @@ const FilePreview: React.FC<IFilePreview> = ({ fileInfo }) => {
                             padding: "10px 15px",
                             borderRadius: "4px",
                             textDecoration: "none",
-                            display: "inline-block",
-                            marginTop: "10px"
+                            display: "inline-block"
                         }}
                     >
                         Download Word Document
                     </a>
                 </div>
-            );
-        }
+            </div>
+        );
     }
 
     if (fileType === "application/pdf") {
@@ -667,5 +761,28 @@ const FilePreview: React.FC<IFilePreview> = ({ fileInfo }) => {
         </a>
     );
 };
+
+// TypeScript declaration for docx-preview library
+declare global {
+    interface Window {
+        docx: {
+            renderAsync: (
+                file: Blob | ArrayBuffer,
+                container: HTMLElement,
+                viewerPlugins?: any,
+                options?: {
+                    className?: string;
+                    inWrapper?: boolean;
+                    ignoreWidth?: boolean;
+                    ignoreHeight?: boolean;
+                    defaultFont?: {
+                        family: string;
+                        size: number;
+                    };
+                }
+            ) => Promise<void>;
+        };
+    }
+}
 
 export default FilePreview;
