@@ -3,6 +3,7 @@ import { SiweMessage } from 'siwe';
 import { prisma } from '../database/db';
 import { SessionQuery, SiweRequest } from '../models/request_models';
 import { verifySiweMessage } from '../utils/auth_utils';
+import { getAddress } from 'ethers';
 
 export default async function authController(fastify: FastifyInstance) {
   // get current session
@@ -86,8 +87,13 @@ export default async function authController(fastify: FastifyInstance) {
         });
       }
 
+
+      // Then when storing addresses:
+      // const checksummedAddress = getAddress(siweData.address!!);
+      // console.log(`wallet address  \n before => ${siweData.address!!} \n after =>checksummedAddress`)
+
       // Generate nonce (for demonstration, normally should be stored in DB)
-      const nonce = Math.random().toString(36).substring(2, 15);
+      // const nonce = Math.random().toString(36).substring(2, 15);
 
       // Insert session into the database
       const session = await prisma.siweSession.create({

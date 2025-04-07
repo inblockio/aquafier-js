@@ -1209,6 +1209,43 @@ export default async function explorerController(fastify: FastifyInstance) {
                 }
                 console.log(`Deleted ${deletedRevisionCount} Revision entries`);
                 console.log('Revision chain deletion completed successfully');
+
+                let hashOnly: string[] = []
+
+                revisionPubkeyHashes.forEach((data) => {
+                    if (data.includes("_")) {
+                        let data2 = data.split("_")[1]
+                        hashOnly.push(data2)
+                    } else {
+                        hashOnly.push(data)
+                    }
+                })
+                console.log(`B4 revisionPubkeyHashes ${revisionPubkeyHashes} \n After hashOnly -- ${JSON.stringify(hashOnly)}`);
+
+                //delete contract
+                const deletedContract = await tx.contract.deleteMany({
+                    where: {
+                        OR: [
+                            {
+                                latest: {
+                                    in: hashOnly
+                                },
+                            },
+                            {
+                                genesis_hash: {
+                                    in: hashOnly
+                                }
+                            }
+                        ],
+                        AND: [
+                            {
+                                sender: session.address
+                            }
+                        ]
+                    }
+                });
+                console.log(`Deleted ${deletedContract.count} contract entries`);
+
             });
 
             return reply.code(200).send({ success: true, message: "File and revisions deleted successfully" });
