@@ -241,8 +241,19 @@ export default async function revisionsController(fastify: FastifyInstance) {
 
 
                 // const witnessTimestamp = new Date();
-                await prisma.witnessEvent.create({
-                    data: {
+                await prisma.witnessEvent.upsert({
+                    where: {
+                        Witness_merkle_root: revisionData.revision.witness_merkle_root!
+                    },
+                    update: {
+                        Witness_merkle_root: revisionData.revision.witness_merkle_root!,
+                        Witness_timestamp: revisionData.revision.witness_timestamp!.toString(),
+                        Witness_network: revisionData.revision.witness_network,
+                        Witness_smart_contract_address: revisionData.revision.witness_smart_contract_address,
+                        Witness_transaction_hash: revisionData.revision.witness_transaction_hash,
+                        Witness_sender_account_address: revisionData.revision.witness_sender_account_address
+                    },
+                    create: {
                         Witness_merkle_root: revisionData.revision.witness_merkle_root!,
                         Witness_timestamp: revisionData.revision.witness_timestamp!.toString(),
                         Witness_network: revisionData.revision.witness_network,

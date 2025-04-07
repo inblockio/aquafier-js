@@ -222,7 +222,8 @@ export default async function shareController(fastify: FastifyInstance) {
         // Get all contracts with the specified genesis hash
         const contracts = await prisma.contract.findMany({
             where: {
-                genesis_hash: genesis_hash
+                genesis_hash: genesis_hash,
+                sender : session?.address
             }
         });
         return reply.code(200).send({ success: true, contracts });

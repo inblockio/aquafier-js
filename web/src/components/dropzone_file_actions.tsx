@@ -1076,8 +1076,10 @@ export const ImportAquaChainFromChain = ({ fileInfo, isVerificationSuccessful }:
             })
             setUploading(false)
             setUploaded(true)
+
+            
             // This navigate doesn't go to fsa page why?
-            navigate("/loading?reload=true");
+            // navigate("/loading?reload=true");
 
             // window.location.reload()
             return;

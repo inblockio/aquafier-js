@@ -19,12 +19,13 @@ import { ClipboardIconButton, ClipboardRoot } from "../clipboard"
 import Aquafier, { AquaOperationData, AquaTree, FileObject, LogData, LogTypeEmojis, Result, Revision } from "aqua-js-sdk";
 import ReactLoading from "react-loading"
 import { WITNESS_NETWORK_MAP } from "../../../utils/constants"
-import { WitnessAquaChain, SignAquaChain, DeleteAquaChain, ShareButton } from "../../aqua_chain_actions"
+import { WitnessAquaChain, SignAquaChain, DeleteAquaChain } from "../../aqua_chain_actions"
 import { ApiFileInfo } from "../../../models/FileInfo"
 import FilePreview from "../../FilePreview"
 import { useStore } from "zustand"
 import appStore from "../../../store"
 import { AquaTreeDetails } from "../../../models/AquaTreeDetails"
+import ShareButtonAction from "../../actions/ShareButtonAction"
 
 
 interface IItemDetail {
@@ -672,7 +673,7 @@ export const ChainDetailsBtn = ({ fileInfo, session }: AquaTreeDetails) => {
                                 <DrawerActionTrigger asChild>
                                     <Button variant="outline" size={'sm'}>Close</Button>
                                 </DrawerActionTrigger>
-                                <ShareButton nonce={session?.nonce ?? ""} item={fileInfo} />
+                                <ShareButtonAction nonce={session?.nonce ?? ""} item={fileInfo} />
                                 <WitnessAquaChain apiFileInfo={fileInfo} backendUrl={backend_url} nonce={session?.nonce ?? ""} revision="" />
                                 <SignAquaChain apiFileInfo={fileInfo} backendUrl={backend_url} nonce={session?.nonce ?? ""} revision="" />
                                 <DeleteAquaChain apiFileInfo={fileInfo} backendUrl={backend_url} nonce={session?.nonce ?? ""} revision="" />
