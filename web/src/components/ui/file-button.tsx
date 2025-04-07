@@ -5,6 +5,7 @@ import {
   Box,
   Button,
   FileUpload as ChakraFileUpload,
+  Group,
   Icon,
   Span,
   Text,
@@ -94,10 +95,10 @@ const FileUploadItem = (props: FileUploadItemProps) => {
         }
       }
     };
-  
+
     checkFileContent();
   }, [isJson, file]);
-  
+
   // if file uploaded remove from file upload item
   if (uploadedIndexes.includes(fileIndex)) {
     return (<div></div>)
@@ -152,23 +153,22 @@ const FileUploadItem = (props: FileUploadItemProps) => {
         <ChakraFileUpload.ItemName flex="1" />
       )}
 
+      <Group>
+        {showUploadIcon()}
 
-      {showUploadIcon()}
+        {(clearable || isJson || isZIp) && (
+          <ChakraFileUpload.ItemDeleteTrigger asChild >
 
-      {(clearable || isJson || isZIp) && (
-        <ChakraFileUpload.ItemDeleteTrigger asChild>
 
-          {/* <IconButton variant="ghost" color="fg.muted" size="xs">
-            Clear
-            <LuX />
-          </IconButton> */}
 
-          <Button size={'xs'} colorPalette={'red'} variant={'subtle'} w={'100px'} >
-            Delete
-            <LuX />
-          </Button>
-        </ChakraFileUpload.ItemDeleteTrigger>
-      )}
+            <Button size={'xs'} colorPalette={'red'} variant={'subtle'} w={'100px'} >
+              Delete
+              <LuX />
+            </Button>
+          </ChakraFileUpload.ItemDeleteTrigger>
+        )}
+      </Group>
+
     </ChakraFileUpload.Item>
   )
 }

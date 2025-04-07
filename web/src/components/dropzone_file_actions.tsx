@@ -28,6 +28,7 @@ import Aquafier, { AquaTree, FileObject, Revision } from "aqua-js-sdk";
 import JSZip from "jszip";
 import { useDisclosure } from '@chakra-ui/hooks'
 import { maxFileSizeForUpload } from "../utils/constants";
+import { useColorMode } from "./ui/color-mode";
 
 interface IDropzoneAction {
     file: File
@@ -294,7 +295,7 @@ export const ImportAquaTree = ({ file, uploadedIndexes, fileIndex, updateUploade
 
     const { files, metamaskAddress, setFiles, backend_url, session } = useStore(appStore)
 
-
+    const { toggleColorMode, colorMode } = useColorMode()
 
     const uploadFileData = async (selectedFile : File | null ) => {
         const formData = new FormData();
@@ -599,7 +600,7 @@ export const ImportAquaTree = ({ file, uploadedIndexes, fileIndex, updateUploade
                     />
                     <ModalBody py={4} px={4}>
                         <VStack gap={3} alignItems={'center'} flex={1}>
-                            <Text fontSize="14px">
+                            <Text fontSize="14px" color={'black'} >
                                 We couldn't fetch the file associated with this AquaTree. Please select or drop the file:
                             </Text>
 
@@ -614,8 +615,8 @@ export const ImportAquaTree = ({ file, uploadedIndexes, fileIndex, updateUploade
                                 onDragOver={handleDragOver}
                                 bg="gray.50"
                             >
-                                <Text mb={2} fontSize="14px">Drag and drop file here</Text>
-                                <Text fontSize="14px">or</Text>
+                                <Text mb={2}  color={'black'} fontSize="14px">Drag and drop file here</Text>
+                                <Text fontSize="14px"  color={'black'} >or</Text>
                                 <Button
                                     mt={2}
                                     onClick={() => fileInputRef.current?.click()}
