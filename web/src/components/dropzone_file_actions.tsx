@@ -28,7 +28,6 @@ import Aquafier, { AquaTree, FileObject, Revision } from "aqua-js-sdk";
 import JSZip from "jszip";
 import { useDisclosure } from '@chakra-ui/hooks'
 import { maxFileSizeForUpload } from "../utils/constants";
-import { useColorMode } from "./ui/color-mode";
 
 interface IDropzoneAction {
     file: File

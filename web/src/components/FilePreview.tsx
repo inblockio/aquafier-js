@@ -5,6 +5,9 @@ import { useEffect, useRef, useState } from "react";
 import { useStore } from "zustand";
 import appStore from "../store";
 import { ensureDomainUrlHasSSL } from "../utils/functions";
+import { PDFJSViewer, PDFControlsProps } from "pdfjs-react-viewer"
+import { Group, IconButton, Text } from "@chakra-ui/react";
+import { LuChevronLeft, LuChevronRight } from "react-icons/lu";
 
 // Add type declaration for PDF.js
 declare global {
@@ -493,7 +496,7 @@ const FilePreview: React.FC<IFilePreview> = ({ fileInfo }) => {
                     }
 
                     console.log("Word document rendered successfully with docx-preview");
-                } catch (error) {
+                } catch (error: any) {
                     console.error("Error rendering Word document with docx-preview:", error);
 
                     // Display error message in the container
@@ -576,7 +579,7 @@ const FilePreview: React.FC<IFilePreview> = ({ fileInfo }) => {
         if (fileType === "application/msword") {
             // Show a more visible message that DOC files can't be previewed
             if (wordContainerRef.current) {
-                let data =  `
+                let data = `
                 <div style="text-align: center; padding: 40px; color: #333; font-family: sans-serif;">
                     <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="#666" stroke-width="2" style="margin-bottom: 16px">
                         <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
@@ -589,7 +592,7 @@ const FilePreview: React.FC<IFilePreview> = ({ fileInfo }) => {
                     <p style="color: #444; font-weight: bold;">Please download the file to view it.</p>
                 </div>
             `;
-                wordContainerRef.current.innerHTML =data
+                wordContainerRef.current.innerHTML = data
             }
         }
         return (
@@ -631,75 +634,95 @@ const FilePreview: React.FC<IFilePreview> = ({ fileInfo }) => {
 
     if (fileType === "application/pdf") {
         // Mobile-friendly approach for PDF viewing with thumbnail fallback
-        if (isMobile) {
-            return (
-                <div style={{ width: "100%", backgroundColor: "transparent" }}>
-                    {/* Canvas for rendering the first page preview */}
-                    <div style={{
-                        width: "100%",
-                        marginBottom: "10px",
-                        textAlign: "center",
-                        backgroundColor: "transparent"
-                    }}>
-                        <canvas
-                            ref={pdfCanvasRef}
-                            style={{
-                                width: "100%",
-                                maxWidth: "100%",
-                                height: "auto",
-                                backgroundColor: "transparent",
-                                display: "block", // Removes any potential spacing
-                                margin: "0 auto" // Centers the canvas
-                            }}
-                        />
-                    </div>
+        // if (isMobile) {
+        //     return (
+        //         <div style={{ width: "100%", backgroundColor: "transparent" }}>
+        //             {/* Canvas for rendering the first page preview */}
+        //             <div style={{
+        //                 width: "100%",
+        //                 marginBottom: "10px",
+        //                 textAlign: "center",
+        //                 backgroundColor: "transparent"
+        //             }}>
+        //                 <canvas
+        //                     ref={pdfCanvasRef}
+        //                     style={{
+        //                         width: "100%",
+        //                         maxWidth: "100%",
+        //                         height: "auto",
+        //                         backgroundColor: "transparent",
+        //                         display: "block", // Removes any potential spacing
+        //                         margin: "0 auto" // Centers the canvas
+        //                     }}
+        //                 />
+        //             </div>
 
-                    {/* Fallback iframe (might work on some mobile browsers) */}
-                    <div style={{ width: "100%", height: "400px", backgroundColor: "transparent" }}>
-                        <iframe
-                            src={fileURL}
-                            title="PDF Viewer"
-                            width="100%"
-                            height="100%"
-                            style={{ border: "none" }}
-                        >
-                            <p>Unable to display PDF file.</p>
-                        </iframe>
-                    </div>
+        //             {/* Fallback iframe (might work on some mobile browsers) */}
+        //             <div style={{ width: "100%", height: "400px", backgroundColor: "transparent" }}>
+        //                 <iframe
+        //                     src={fileURL}
+        //                     title="PDF Viewer"
+        //                     width="100%"
+        //                     height="100%"
+        //                     style={{ border: "none" }}
+        //                 >
+        //                     <p>Unable to display PDF file.</p>
+        //                 </iframe>
+        //             </div>
 
-                    {/* Download link as another fallback option */}
-                    <div style={{ marginTop: "15px", textAlign: "center" }}>
-                        <a
-                            href={fileURL}
-                            download={fileInfo.fileName || "document.pdf"}
-                            style={{
-                                color: "#fff",
-                                backgroundColor: "#4285f4",
-                                padding: "10px 15px",
-                                borderRadius: "4px",
-                                textDecoration: "none",
-                                display: "inline-block"
-                            }}
-                        >
-                            Download PDF
-                        </a>
-                    </div>
-                </div>
-            );
-        } else {
-            // Original desktop approach
+        //             {/* Download link as another fallback option */}
+        //             <div style={{ marginTop: "15px", textAlign: "center" }}>
+        //                 <a
+        //                     href={fileURL}
+        //                     download={fileInfo.fileName || "document.pdf"}
+        //                     style={{
+        //                         color: "#fff",
+        //                         backgroundColor: "#4285f4",
+        //                         padding: "10px 15px",
+        //                         borderRadius: "4px",
+        //                         textDecoration: "none",
+        //                         display: "inline-block"
+        //                     }}
+        //                 >
+        //                     Download PDF
+        //                 </a>
+        //             </div>
+        //         </div>
+        //     );
+        // } else {
+        //     // Original desktop approach
+        //     return (
+        //         <object
+        //             data={fileURL}
+        //             type="application/pdf"
+        //             width="100%"
+        //             height="600px"
+        //             style={{ border: "none" }}
+        //         >
+        //             <p>Unable to display PDF file. <a href={fileURL} target="_blank" rel="noopener noreferrer">Download</a> instead.</p>
+        //         </object>
+        //     );
+        // }
+        const PdfControls = ({currentPage, isNextDisabled, isPrevDisabled, onNextPage, onPrevPage, totalPages}: PDFControlsProps) => {
             return (
-                <object
-                    data={fileURL}
-                    type="application/pdf"
-                    width="100%"
-                    height="600px"
-                    style={{ border: "none" }}
-                >
-                    <p>Unable to display PDF file. <a href={fileURL} target="_blank" rel="noopener noreferrer">Download</a> instead.</p>
-                </object>
-            );
+                <Group mb={"4"}>
+                    <IconButton disabled={isPrevDisabled} onClick={onPrevPage} size={"xs"} borderRadius={"full"}>
+                        <LuChevronLeft />
+                    </IconButton>
+                    <Text>
+                        {`Page ${currentPage} / ${totalPages}`}
+                    </Text>
+                    <IconButton disabled={isNextDisabled} onClick={onNextPage} size={"xs"} borderRadius={"full"}>
+                        <LuChevronRight />
+                    </IconButton>
+                </Group>
+            )
         }
+        return (
+            <>
+                <PDFJSViewer pdfUrl={fileURL} renderControls={PdfControls} />
+            </>
+        )
     }
 
     if (fileType.startsWith("text/") ||
