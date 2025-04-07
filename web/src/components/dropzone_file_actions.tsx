@@ -295,8 +295,7 @@ export const ImportAquaTree = ({ file, uploadedIndexes, fileIndex, updateUploade
 
     const { files, metamaskAddress, setFiles, backend_url, session } = useStore(appStore)
 
-    const { toggleColorMode, colorMode } = useColorMode()
-
+  
     const uploadFileData = async (selectedFile : File | null ) => {
         const formData = new FormData();
         formData.append('file', file);
