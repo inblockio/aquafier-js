@@ -1,1 +1,1 @@
-install bruno http client and open diin this folder
+install bruno http client and open diin this folder..
