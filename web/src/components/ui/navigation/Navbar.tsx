@@ -22,6 +22,7 @@ const navlinks: INavlinkItem[] = [
     }
 ]
 
+
 const CustomNavlinkItem = ({ label, to, icon }: INavlinkItem) => {
 
     console.log(`Icon ${icon}`)
