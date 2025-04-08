@@ -2,7 +2,7 @@
 A tool that illustrates the capability & utility of Aqua protocol.
 
 ## Getting started 
-The api project structure is inspired by laravel project layout.<br/> The project is a fastify project with prisma ord (psql db)<br/><br/>
+The api project structure is inspired by laravel project layout.<br/> The project is a fastify project with prisma ord (psql db).<br/><br/>
 
 The web project is a react(typescript) project using chackra ui
 
@@ -24,3 +24,5 @@ chmod +x ./create_db.sh
 
 ## Deployment
 check out [docker.md](./docker.md)
+
+
