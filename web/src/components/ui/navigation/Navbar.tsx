@@ -24,6 +24,7 @@ const navlinks: INavlinkItem[] = [
 
 const CustomNavlinkItem = ({ label, to, icon }: INavlinkItem) => {
 
+    console.log(`Icon ${icon}`)
     return (
         <Link to={to}>
             <LinkBox>
