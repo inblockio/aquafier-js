@@ -62,7 +62,9 @@ node dist/index.js &
 
 # Serve frontend
 cd /app/frontend
-serve -s . -l 3600 &
+# serve -s . -l 3600 &
+serve -s . -l 3600 --cors --config '{"headers": {"Access-Control-Allow-Origin": "*", ".js": {"Content-Type": "application/javascript"}, ".mjs": {"Content-Type": "application/javascript"}}}' &
+
 
 # Wait for any process to exit
 wait -n
