@@ -4,17 +4,29 @@ datasource db {
 }
 
 generator client {
-  provider = "prisma-client-js"
+  provider      = "prisma-client-js"
   binaryTargets = ["native", "debian-openssl-3.0.x"]
 }
 
-model User {
-  user             String        @id
-  Latest           Latest[]
-  Settings         Settings?
-  // Contract         Contract[]
+model Users {
+  address       String          @id
+  ens_name      String?
+  email         String
+  Latest        Latest[]
+  Settings      Settings?
+  UserAddresses UserAddresses[]
 
-  @@map("user")
+  @@map("users")
+}
+
+model UserAddresses {
+  address     String @id
+  trust_level Int
+  ens_name String?
+  user        String
+  User        Users  @relation(fields: [user], references: [address])
+
+  @@map("user_address")
 }
 
 model SiweSession {
@@ -28,72 +40,71 @@ model SiweSession {
 }
 
 model Contract {
-  hash             String        @id
-  genesis_hash     String?
-  latest           String? //Json?
-  sender           String?
-  receiver         String?
-  option           String?
-  reference_count  Int?
+  hash            String  @id
+  genesis_hash    String?
+  latest          String? //Json?
+  sender          String?
+  receiver        String?
+  option          String?
+  reference_count Int?
   // User             User?         @relation(fields: [hash], references: [user])
   // Revision         Revision?     @relation(fields: [hash], references: [pubkey_hash])
 
-   @@map("contract")
+  @@map("contract")
 }
 
 model Latest {
-  hash             String        @id
-  user             String
-  User             User          @relation(fields: [user], references: [user])
+  hash String @id
+  user String
+  User Users  @relation(fields: [user], references: [address])
   // Revision         Revision[]
 
-    @@map("latest")
+  @@map("latest")
 }
 
 model Revision {
-  pubkey_hash      String        @id
-  nonce            String?
-  shared           String[]
-  contract         String[]
-  previous         String?
-  children         String?
-  local_timestamp  String?
-  revision_type    String?
-  has_content       Boolean @default(false)
+  pubkey_hash         String      @id
+  nonce               String?
+  shared              String[]
+  contract            String[]
+  previous            String?
+  children            String?
+  local_timestamp     String?
+  revision_type       String?
+  has_content         Boolean     @default(false)
   verification_leaves String[]
   // Latest           Latest        @relation(fields: [pubkey_hash], references: [hash])
   // File             File[]
-  Signature        Signature[]
-  Witness          Witness[]
-  Link             Link[]
+  Signature           Signature[]
+  Witness             Witness[]
+  Link                Link[]
   // Contract         Contract?
   // FileIndex        FileIndex[]
-  AquaForms        AquaForms[]
+  AquaForms           AquaForms[]
 
-    @@map("revision")
+  @@map("revision")
 }
 
 model File {
-  hash             String        @id // pub_key_revision_hash 
-  content          String?
-  file_hash        String?
-  reference_count  Int?
+  hash            String      @id // pub_key_revision_hash 
+  content         String?
+  file_hash       String?
+  reference_count Int?
   // Revision         Revision      @relation(fields: [hash], references: [pubkey_hash])
-  FileIndex        FileIndex[]
+  FileIndex       FileIndex[]
 
-    @@map("file")
+  @@map("file")
 }
 
 model FileIndex {
-  id               String            @id @default(uuid())
-  hash             String[]
-  file_hash        String          
-  uri              String?
-  reference_count  Int?
-  File             File            @relation(fields: [id], references: [hash])
+  id              String   @id @default(uuid())
+  hash            String[]
+  file_hash       String
+  uri             String?
+  reference_count Int?
+  File            File     @relation(fields: [id], references: [hash])
   // Revision         Revision        @relation(fields: [file_hash], references: [pubkey_hash])
   // Link             Link[]
-
 
   // @@id([hash, file_hash])
 
@@ -101,61 +112,61 @@ model FileIndex {
 }
 
 model Link {
-  hash                                String        @id
-  link_type                           String?
-  link_require_indepth_verification   Boolean?
-  link_verification_hashes              String[]
-  reference_count                     Int?
-  link_file_hashes                    String[]
-  Revision                            Revision      @relation(fields: [hash], references: [pubkey_hash])
+  hash                              String   @id
+  link_type                         String?
+  link_require_indepth_verification Boolean?
+  link_verification_hashes          String[]
+  reference_count                   Int?
+  link_file_hashes                  String[]
+  Revision                          Revision @relation(fields: [hash], references: [pubkey_hash])
   // FileIndex                           FileIndex?    @relation(fields: [hash], references: [hash])
 
   @@map("link")
 }
 
 model Signature {
-  hash                      String        @id
-  signature_digest          String?
-  signature_wallet_address  String?
-  signature_public_key  String?
-  signature_type            String?
-  reference_count           Int?
-  Revision                  Revision      @relation(fields: [hash], references: [pubkey_hash])
+  hash                     String   @id
+  signature_digest         String?
+  signature_wallet_address String?
+  signature_public_key     String?
+  signature_type           String?
+  reference_count          Int?
+  Revision                 Revision @relation(fields: [hash], references: [pubkey_hash])
 
-    @@map("signature")
+  @@map("signature")
 }
 
 model Witness {
-  hash                      String        @id
-  Witness_merkle_root       String?
-  reference_count           Int?
-  Revision                  Revision      @relation(fields: [hash], references: [pubkey_hash])
-  WitnessEvent              WitnessEvent? @relation(fields: [Witness_merkle_root], references: [Witness_merkle_root])
+  hash                String        @id
+  Witness_merkle_root String?
+  reference_count     Int?
+  Revision            Revision      @relation(fields: [hash], references: [pubkey_hash])
+  WitnessEvent        WitnessEvent? @relation(fields: [Witness_merkle_root], references: [Witness_merkle_root])
   // MerkleNodes               MerkleNodes[]
 
-   @@map("witness")
+  @@map("witness")
 }
 
 model WitnessEvent {
-  Witness_merkle_root               String        @id
-  Witness_timestamp                 String?
-  Witness_network                   String?
-  Witness_smart_contract_address    String?
-  Witness_transaction_hash          String?
-  Witness_sender_account_address    String?
-  Witness                            Witness[]
+  Witness_merkle_root            String    @id
+  Witness_timestamp              String?
+  Witness_network                String?
+  Witness_smart_contract_address String?
+  Witness_transaction_hash       String?
+  Witness_sender_account_address String?
+  Witness                        Witness[]
   // MerkleNodes                        MerkleNodes[]
 
-   @@map("witness_event")
+  @@map("witness_event")
 }
 
 model MerkleNodes {
-  node_hash            String        @id
-  parent_hash          String?
-  height               Int?
-  is_leaf              Boolean?
-  left_child_hash      String?
-  right_child_hash     String?
+  node_hash        String   @id
+  parent_hash      String?
+  height           Int?
+  is_leaf          Boolean?
+  left_child_hash  String?
+  right_child_hash String?
   // Witness              Witness?      @relation(fields: [node_hash], references: [hash])
   // WitnessEvent         WitnessEvent? @relation(fields: [node_hash], references: [Witness_merkle_root])
   // ParentNode           MerkleNodes?  @relation("MerkleNodesRelation", fields: [parent_hash], references: [node_hash])
@@ -166,24 +177,24 @@ model MerkleNodes {
 }
 
 model AquaForms {
-  hash                String        @id
-  key                String?
-  value              Json?
-  type               String?
-  reference_count    Int?
-  Revision           Revision       @relation(fields: [hash], references: [pubkey_hash])
+  hash            String   @id
+  key             String?
+  value           Json?
+  type            String?
+  reference_count Int?
+  Revision        Revision @relation(fields: [hash], references: [pubkey_hash])
 
   @@map("aqua_forms")
 }
 
 model Settings {
-  user_pub_key               String    @id
-  cli_pub_key                String?
-  cli_priv_key               String?
-  Witness_network            String?
-  Witness_contract_address   String?
-  theme                      String?
-  User                       User      @relation(fields: [user_pub_key], references: [user])
+  user_pub_key             String  @id
+  cli_pub_key              String?
+  cli_priv_key             String?
+  Witness_network          String?
+  Witness_contract_address String?
+  theme                    String?
+  User                     Users   @relation(fields: [user_pub_key], references: [address])
 
   @@map("settings")
 }

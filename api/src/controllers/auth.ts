@@ -3,7 +3,7 @@ import { SiweMessage } from 'siwe';
 import { prisma } from '../database/db';
 import { SessionQuery, SiweRequest } from '../models/request_models';
 import { verifySiweMessage } from '../utils/auth_utils';
-import { getAddress } from 'ethers';
+import { fetchEnsName } from '@/utils/api_utils';
 
 export default async function authController(fastify: FastifyInstance) {
   // get current session
@@ -87,15 +87,7 @@ export default async function authController(fastify: FastifyInstance) {
         });
       }
 
-
-      // Then when storing addresses:
-      // const checksummedAddress = getAddress(siweData.address!!);
-      // console.log(`wallet address  \n before => ${siweData.address!!} \n after =>checksummedAddress`)
-
-      // Generate nonce (for demonstration, normally should be stored in DB)
-      // const nonce = Math.random().toString(36).substring(2, 15);
-
-      // Insert session into the database
+   // Insert session into the database
       const session = await prisma.siweSession.create({
         data: {
           address: siweData.address!!,
@@ -106,16 +98,48 @@ export default async function authController(fastify: FastifyInstance) {
         },
       });
 
-      const user = await prisma.user.upsert({
-        where: {
-          user: siweData.address,
-        },
-        update: {}, // Optional: what to update if the user exists
-        create: {
-          user: siweData.address!! // What to create if the user doesn't exist
-        }
-      });
 
+      // check if user exist in users
+      const userData = await prisma.users.findFirst({
+        where: {
+          address: siweData.address,
+        }
+      })
+
+      // Check if we should attempt ENS lookup
+      const infuraProjectId = process.env.VITE_INFURA_PROJECT_ID;
+
+      if (userData == null) {
+        let ensName = null
+
+        if (infuraProjectId) {
+          ensName = await fetchEnsName(siweData.address!!, infuraProjectId)
+        }
+        await prisma.users.create({
+          data: {
+            address: siweData.address!!,
+            ens_name: ensName
+          }
+        });
+
+      } else {
+        console.log("User address exist in system")
+
+        if (userData.ens_name == null || userData.ens_name == undefined || userData.ens_name == "") {
+          if (infuraProjectId) {
+            const ensName = await fetchEnsName(siweData.address!!, infuraProjectId)
+
+            await prisma.users.update({
+              where: {
+                address: siweData.address,
+              },
+              data: {
+                ens_name: ensName
+              }
+            });
+          }
+        }
+      }
 
 
       let settingsData = await prisma.settings.findFirst({
@@ -158,3 +182,4 @@ export default async function authController(fastify: FastifyInstance) {
   });
 
 }
+

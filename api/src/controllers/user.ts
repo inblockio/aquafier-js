@@ -4,8 +4,107 @@ import { prisma } from '../database/db';
 import { Settings } from '@prisma/client';
 import { SessionQuery, SiweRequest } from '../models/request_models';
 import { verifySiweMessage } from '../utils/auth_utils';
+import { fetchEnsName } from '@/utils/api_utils';
 
 export default async function userController(fastify: FastifyInstance) {
+
+    fastify.put('/user_ens/:address', async (request, reply) => {
+
+        const { address } = request.params as { address: string };
+
+         // Add authorization
+         const nonce = request.headers['nonce'];
+         if (!nonce || typeof nonce !== 'string' || nonce.trim() === '') {
+             return reply.code(401).send({ error: 'Unauthorized: Missing or empty nonce header' });
+         }
+         const session = await prisma.siweSession.findUnique({
+             where: { nonce: nonce }
+         });
+         if (session == null) {
+             return reply.code(403).send({ success: false, message: "Nounce  is invalid" });
+         }
+
+         const addr = request.body as {name : string};
+
+
+        const userData = await prisma.users.update({
+            where: {
+                address: address,
+            },
+            data:{
+                ens_name: addr.name
+            }
+        });
+
+        return reply.code(200).send({ success: true, message: "ok" });
+
+
+    })
+    // fetch ens name if it exist 
+    fastify.get('/user_ens/:address', async (request, reply) => {
+        const { address } = request.params as { address: string };
+
+        // Add authorization
+        const nonce = request.headers['nonce'];
+        if (!nonce || typeof nonce !== 'string' || nonce.trim() === '') {
+            return reply.code(401).send({ error: 'Unauthorized: Missing or empty nonce header' });
+        }
+        const session = await prisma.siweSession.findUnique({
+            where: { nonce: nonce }
+        });
+        if (session == null) {
+            return reply.code(403).send({ success: false, message: "Nounce  is invalid" });
+        }
+
+        // check in out db first 
+        // check if user exist in users
+        const userData = await prisma.users.findFirst({
+            where: {
+                address: address,
+            }
+        });
+
+        if (userData) {
+            if (userData.ens_name) {
+                return reply.code(200).send({
+                    success: true,
+                    ens: userData.ens_name
+                });
+            }
+        }
+
+        // Check if we should attempt ENS lookup
+        const infuraProjectId = process.env.VITE_INFURA_PROJECT_ID;
+
+        let ensName = null
+        if (infuraProjectId) {
+            ensName = await fetchEnsName(address, infuraProjectId)
+        }
+        if (ensName) {
+            await prisma.users.update({
+                where: {
+                    address: address,
+                },
+                data: {
+                    ens_name: ensName
+                }
+            });
+
+            return reply.code(200).send({
+                success: true,
+                ens: ensName
+            });
+        }
+
+
+        return reply.code(200).send({
+            message: `ens not in system and ${infuraProjectId ? 'fetch ens failed ' : 'infura key not found in system'}`,
+            success: false,
+            ens: address
+        });
+    });
+
+
     // get current session
     fastify.get('/explorer_fetch_user_settings', async (request, reply) => {
         const nonce = request.headers['nonce'];
@@ -135,7 +234,7 @@ export default async function userController(fastify: FastifyInstance) {
             // Start a transaction to ensure all operations succeed or fail together
             await prisma.$transaction(async (tx) => {
                 console.log('Starting user data deletion transaction');
-                
+
                 // First, identify all revisions associated with this user
                 const userRevisions = await tx.revision.findMany({
                     where: {
@@ -148,18 +247,18 @@ export default async function userController(fastify: FastifyInstance) {
                         pubkey_hash: true
                     }
                 });
-                
+
                 const revisionHashes = userRevisions.map(rev => rev.pubkey_hash);
                 console.log(`Found ${revisionHashes.length} revisions to process`);
-                
+
                 // Step 1: Delete dependent records in the correct order to respect foreign key constraints
-                
+
                 // 1a. Delete latest entries (no foreign key dependencies)
                 await tx.latest.deleteMany({
                     where: { user: userAddress }
                 });
                 console.log('Deleted latest entries');
-                
+
                 // 1b. Delete AquaForms (depends on Revision)
                 if (revisionHashes.length > 0) {
                     await tx.aquaForms.deleteMany({
@@ -171,10 +270,10 @@ export default async function userController(fastify: FastifyInstance) {
                     });
                     console.log('Deleted aqua forms');
                 }
-                
+
                 // 1c. Delete Witness records (depends on Revision)
                 // We need to handle this first because Witness has a foreign key to Revision
-                if (revisionHashes.length > 0) { 
+                if (revisionHashes.length > 0) {
                     await tx.witness.deleteMany({
                         where: {
                             hash: {
@@ -184,7 +283,7 @@ export default async function userController(fastify: FastifyInstance) {
                     });
                     console.log('Deleted witness records');
                 }
-                
+
                 // 1d. Delete Link records (depends on Revision)
                 if (revisionHashes.length > 0) {
                     await tx.link.deleteMany({
@@ -196,7 +295,7 @@ export default async function userController(fastify: FastifyInstance) {
                     });
                     console.log('Deleted link records');
                 }
-                
+
                 // 1e. Delete Signature records (depends on Revision)
                 if (revisionHashes.length > 0) {
                     await tx.signature.deleteMany({
@@ -235,7 +334,7 @@ export default async function userController(fastify: FastifyInstance) {
                         id: true
                     }
                 });
-                
+
                 // If no exact matches, try a more flexible search with case-insensitive partial matching
                 if (filesToDelete.length === 0) {
                     console.log('No exact matches found, trying partial matching');
@@ -248,7 +347,7 @@ export default async function userController(fastify: FastifyInstance) {
                             WHERE LOWER(h) LIKE LOWER('%' || ${session.address} || '%')
                         )
                     `;
-                    
+
                     // Convert raw query results to the same format as our previous query
                     const rawResults = rawQuery as { id: string }[];
                     filesToDelete.push(...rawResults);
@@ -274,19 +373,19 @@ export default async function userController(fastify: FastifyInstance) {
                             reference_count: true
                         }
                     });
-                    
+
                     console.log(`All file indexes to process: ${JSON.stringify(allFileIndexes, null, 4)}`);
-                    
+
                     // Track which file indexes to delete and which to update
                     const fileIndexesToDelete = [];
                     const fileIndexesToUpdate = [];
                     const fileHashesToUpdate = new Set();
                     const fileHashesToDelete = new Set();
-                    
+
                     // Process each file index based on its reference count
                     for (const fileIndex of allFileIndexes) {
                         const refCount = fileIndex.reference_count;
-                        
+
                         if (refCount === null || refCount <= 1) {
                             // If reference count is null or ≤ 1, mark for deletion
                             fileIndexesToDelete.push(fileIndex.id);
@@ -302,7 +401,7 @@ export default async function userController(fastify: FastifyInstance) {
                                 fileHashesToUpdate.add(fileIndex.file_hash);
                                 // fileHashesToDelete.add(fileIndex.file_hash);
                             }
-                        } 
+                        }
                         // else if (refCount > 2) {
                         //     // If reference count > 2, just decrement it
                         //     fileIndexesToUpdate.push(fileIndex.id);
@@ -311,10 +410,10 @@ export default async function userController(fastify: FastifyInstance) {
                         //     }
                         // }
                     }
-                    
+
                     console.log(`File indexes to update: ${JSON.stringify(fileIndexesToUpdate, null, 4)}`);
                     console.log(`File indexes to delete: ${JSON.stringify(fileIndexesToDelete, null, 4)}`);
-                    
+
                     // Step 1: Update reference counts for files that need updating
                     if (fileIndexesToUpdate.length > 0) {
                         // Decrement reference count for file indexes
@@ -330,7 +429,7 @@ export default async function userController(fastify: FastifyInstance) {
                                 }
                             }
                         });
-                        
+
                         // Update files linked to these file indexes
                         if (fileHashesToUpdate.size > 0) {
                             await tx.file.updateMany({
@@ -351,7 +450,7 @@ export default async function userController(fastify: FastifyInstance) {
                     // Step 2: Delete file indexes with reference count <= 1 (including those we just decremented from 2 to 1)
                     if (fileIndexesToDelete.length > 0) {
                         console.log(`File indexes to delete after processing: ${JSON.stringify(fileIndexesToDelete, null, 4)}`);
-                        
+
                         // Delete the file indexes
                         await tx.fileIndex.deleteMany({
                             where: {
@@ -365,7 +464,7 @@ export default async function userController(fastify: FastifyInstance) {
                         if (fileHashesToDelete.size > 0) {
                             const uniqueFileHashes = Array.from(fileHashesToDelete).filter(Boolean);
                             console.log(`File hashes to delete: ${JSON.stringify(uniqueFileHashes, null, 4)}`);
-                            
+
                             await tx.file.deleteMany({
                                 where: {
                                     file_hash: {
@@ -388,7 +487,7 @@ export default async function userController(fastify: FastifyInstance) {
                     });
                     console.log('Deleted revision records');
                 }
-                
+
                 // Keep the user record but delete related data
                 // This is to maintain the user's account while clearing their data
                 console.log('User data deletion completed successfully');
