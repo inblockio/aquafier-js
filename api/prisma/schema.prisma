@@ -11,7 +11,7 @@ generator client {
 model Users {
   address       String          @id
   ens_name      String?
-  email         String
+  email         String?
   Latest        Latest[]
   Settings      Settings?
   UserAddresses UserAddresses[]

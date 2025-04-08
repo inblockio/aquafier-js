@@ -426,11 +426,7 @@ export const RevisionDetailsSummary = ({ fileInfo }: IRevisionDetailsSummary) =>
                                 displayValue={formatCryptoAddress(revision.signature, 4, 6)}
                                 value={revision.signature ?? ""} showCopyIcon={true}
                             />
-                            <ItemDetail label="Wallet Address:"
-                                // displayValue={formatCryptoAddress(revision.signature.signature_wallet_address, 4, 6)}
-                                displayValue={revision.signature_wallet_address ?? ""}
-                                value={revision.signature_wallet_address ?? ""} showCopyIcon={true}
-                            />
+                            ......
                             <ItemDetail label="Timestamp (UTC) : "
                                 // displayValue={formatCryptoAddress(revision.signature.signature_wallet_address, 4, 6)}
                                 displayValue={displayTime(revision.local_timestamp)}
