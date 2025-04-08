@@ -25,6 +25,7 @@ const SettingsForm = () => {
     const [activeNetwork, setActiveNetwork] = useState<string>(user_profile.witness_network)
     const [cliPubKey, setCliPubKey] = useState<string>(user_profile.cli_pub_key)
     const [cliPrivKey, setCliPrivKey] = useState<string>(user_profile.cli_priv_key)
+    const [ensName, setEnsName] = useState<string>(user_profile.ens_name)
     const [contract, setContract] = useState<string>(user_profile.witness_contract_address ?? "0x45f59310ADD88E6d23ca58A0Fa7A55BEE6d2a611")
 
 
@@ -41,6 +42,7 @@ const SettingsForm = () => {
         const url = `${backend_url}/explorer_update_user_settings`;
 
         const response = await axios.post(url, {
+            'ens_name': ensName,
             'cli_priv_key': cliPrivKey,
             'cli_pub_key': cliPubKey,
             'witness_contract_address': contract,
@@ -59,6 +61,7 @@ const SettingsForm = () => {
             setUserProfile({
                 user_pub_key: user_profile.user_pub_key,
                 cli_pub_key: cliPubKey,
+                ens_name: ensName,
                 cli_priv_key: cliPrivKey,
                 witness_network: activeNetwork,
                 theme: colorMode ?? "light",
@@ -79,19 +82,22 @@ const SettingsForm = () => {
             <Card.Root w={'100%'} shadow={'sm'} borderRadius={'SM'}>
                 <Card.Body p={'4px'} px={'20px'}>
                     <Group justifyContent={'space-between'} w="100%">
-                        <Text>Theme</Text>
+                        <Text>Themes</Text>
                         <ColorModeButton />
                     </Group>
                 </Card.Body>
             </Card.Root>
+            <Field invalid={false} label="ENS Name" errorText="This field is required" >
+                <Input placeholder="ENS Name" value={ensName} onChange={e => setEnsName(e.currentTarget.value)} />
+            </Field>
             <Field invalid={false} label="Public address" helperText="self-issued identity claim used for generating/verifying aqua chain" errorText="This field is required">
-                <Input placeholder="User Public address" disabled={true} value={user_profile.user_pub_key} />
+                <Input placeholder="User Public address" disabled={true} value={user_profile.user_pub_key}  autoComplete="off" />
             </Field>
             <Field invalid={false} label="CLI public key " helperText="self-issued identity claim used for generating/verifying aqua chain" errorText="This field is required">
-                <Input placeholder="XXXXXXX" value={cliPubKey} onChange={e => setCliPubKey(e.currentTarget.value)} />
+                <Input placeholder="XXXXXXX" value={cliPubKey} type="text" onChange={e => setCliPubKey(e.currentTarget.value)} autoComplete="off" />
             </Field>
             <Field invalid={false} label="CLI private key " helperText="self-issued identity claim used for generating/verifying aqua chain" errorText="This field is required">
-                <Input placeholder="XXXXXXXXX" value={cliPrivKey} type={"password"} onChange={e => setCliPrivKey(e.currentTarget.value)} />
+                <Input placeholder="XXXXXXXXX" value={cliPrivKey} type={"password"} onChange={e => setCliPrivKey(e.currentTarget.value)}  autoComplete="off" />
             </Field>
             <Field invalid={false} label="Contract Address" errorText="This field is required" >
                 <Input placeholder="Contract Address" value={contract} onChange={e => setContract(e.currentTarget.value)} />
@@ -162,6 +168,7 @@ const DeleteUserData = () => {
                     cli_priv_key: "",
                     witness_network: "",
                     theme: "light",
+                    ens_name:"",
                     witness_contract_address: '0x45f59310ADD88E6d23ca58A0Fa7A55BEE6d2a611',
                 })
                 setFiles([])

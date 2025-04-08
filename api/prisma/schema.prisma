@@ -191,8 +191,8 @@ model Settings {
   user_pub_key             String  @id
   cli_pub_key              String?
   cli_priv_key             String?
-  Witness_network          String?
-  Witness_contract_address String?
+  witness_network          String?
+  witness_contract_address String?
   theme                    String?
   User                     Users   @relation(fields: [user_pub_key], references: [address])
 

@@ -12,6 +12,7 @@ type AppStoreState = {
         cli_priv_key: string,
         witness_network: string,
         theme: string,
+        ens_name: string,
         witness_contract_address: string | null
     },
     session: Session | null,
@@ -77,6 +78,7 @@ const appStore = createStore<TAppStore>()(
         (set) => ({
             // Initial state
             user_profile: {
+                ens_name:"",
                 user_pub_key: "",
                 cli_pub_key: "",
                 cli_priv_key: "",
