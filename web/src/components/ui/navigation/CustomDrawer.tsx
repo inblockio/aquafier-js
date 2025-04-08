@@ -24,6 +24,7 @@ import { ApiFileInfo } from "../../../models/FileInfo"
 import FilePreview from "../../FilePreview"
 import { useStore } from "zustand"
 import appStore from "../../../store"
+import {WalletEnsView} from "../wallet_ens"
 import { AquaTreeDetails } from "../../../models/AquaTreeDetails"
 import ShareButtonAction from "../../actions/ShareButtonAction"
 
@@ -285,15 +286,17 @@ const RevisionDisplay = ({ aquaTree, revision, revisionHash, fileObjects, callBa
                                                             displayValue={revision.signature_type!}
                                                             value={revision.signature_type!} showCopyIcon={true}
                                                         />
-                                                        <ItemDetail label="Wallet Address:"
+                                                        <WalletEnsView walletAddress={revision.signature_wallet_address!}/>
+                                                            
+                                                            {/* <ItemDetail label="Wallet Address:"
                                                             // displayValue={formatCryptoAddress(revision.signature.signature_wallet_address, 4, 6)}
                                                             displayValue={revision.signature_wallet_address!}
                                                             value={revision.signature_wallet_address!} showCopyIcon={true}
-                                                        />
-                                                        <ItemDetail label="Public Key:"
-                                                            displayValue={formatCryptoAddress(revision.signature_public_key, 4, 6)}
-                                                            value={revision.signature_public_key!} showCopyIcon={true}
-                                                        />
+                                                        /> */}
+                                                            <ItemDetail label="Public Key:"
+                                                                displayValue={formatCryptoAddress(revision.signature_public_key, 4, 6)}
+                                                                value={revision.signature_public_key!} showCopyIcon={true}
+                                                            />
                                                     </TimelineContent>
                                                 </TimelineItem>
                                             ) : null
@@ -426,7 +429,7 @@ export const RevisionDetailsSummary = ({ fileInfo }: IRevisionDetailsSummary) =>
                                 displayValue={formatCryptoAddress(revision.signature, 4, 6)}
                                 value={revision.signature ?? ""} showCopyIcon={true}
                             />
-                            ......
+                            <WalletEnsView walletAddress={revision.signature_wallet_address!}></WalletEnsView>
                             <ItemDetail label="Timestamp (UTC) : "
                                 // displayValue={formatCryptoAddress(revision.signature.signature_wallet_address, 4, 6)}
                                 displayValue={displayTime(revision.local_timestamp)}
@@ -464,7 +467,7 @@ export const RevisionDetailsSummary = ({ fileInfo }: IRevisionDetailsSummary) =>
                                 value={revision.witness_timestamp?.toString() ?? ""} showCopyIcon={false}
                             />
                             <br />
-                           
+
                             <Group>
                                 <ItemDetail label="Transaction Hash:"
                                     displayValue={formatCryptoAddress(revision.witness_transaction_hash?.startsWith('0x') ? revision.witness_transaction_hash ?? "" : `0x${revision.witness_transaction_hash ?? ""}`, 4, 6)}

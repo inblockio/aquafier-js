@@ -1,10 +1,10 @@
-import { FastifyInstance, FastifyRequest } from 'fastify';
-import { SiweMessage } from 'siwe';
+import { FastifyInstance } from 'fastify';
+// import { SiweMessage } from 'siwe';
 import { prisma } from '../database/db';
-import { Settings } from '@prisma/client';
-import { SessionQuery, SiweRequest } from '../models/request_models';
-import { verifySiweMessage } from '../utils/auth_utils';
-import { fetchEnsName } from '@/utils/api_utils';
+// import { Settings } from '@prisma/client';
+import {  SettingsRequest } from '../models/request_models';
+// import { verifySiweMessage } from '../utils/auth_utils';
+import { fetchEnsName } from '../utils/api_utils';
 
 export default async function userController(fastify: FastifyInstance) {
 
@@ -12,26 +12,26 @@ export default async function userController(fastify: FastifyInstance) {
 
         const { address } = request.params as { address: string };
 
-         // Add authorization
-         const nonce = request.headers['nonce'];
-         if (!nonce || typeof nonce !== 'string' || nonce.trim() === '') {
-             return reply.code(401).send({ error: 'Unauthorized: Missing or empty nonce header' });
-         }
-         const session = await prisma.siweSession.findUnique({
-             where: { nonce: nonce }
-         });
-         if (session == null) {
-             return reply.code(403).send({ success: false, message: "Nounce  is invalid" });
-         }
+        // Add authorization
+        const nonce = request.headers['nonce'];
+        if (!nonce || typeof nonce !== 'string' || nonce.trim() === '') {
+            return reply.code(401).send({ error: 'Unauthorized: Missing or empty nonce header' });
+        }
+        const session = await prisma.siweSession.findUnique({
+            where: { nonce: nonce }
+        });
+        if (session == null) {
+            return reply.code(403).send({ success: false, message: "Nounce  is invalid" });
+        }
 
-         const addr = request.body as {name : string};
+        const addr = request.body as { name: string };
 
 
-        const userData = await prisma.users.update({
+        await prisma.users.update({
             where: {
                 address: address,
             },
-            data:{
+            data: {
                 ens_name: addr.name
             }
         });
@@ -60,10 +60,14 @@ export default async function userController(fastify: FastifyInstance) {
         // check if user exist in users
         const userData = await prisma.users.findFirst({
             where: {
-                address: address,
+                address: {
+                    equals: address,
+                    mode: 'insensitive'
+                }
             }
         });
 
+        console.log(`=> address ${address} \n Data ${JSON.stringify(userData)}`)
         if (userData) {
             if (userData.ens_name) {
                 return reply.code(200).send({
@@ -138,11 +142,12 @@ export default async function userController(fastify: FastifyInstance) {
             if (settingsData == null) {
                 let defaultData = {
                     user_pub_key: session.address,
+                    ens_name: "",
                     cli_pub_key: "",
                     cli_priv_key: "",
-                    Witness_network: "sepolia",
+                    witness_network: "sepolia",
                     theme: "light",
-                    Witness_contract_address: '0x45f59310ADD88E6d23ca58A0Fa7A55BEE6d2a611',
+                    witness_contract_address: '0x45f59310ADD88E6d23ca58A0Fa7A55BEE6d2a611',
                 }
                 await prisma.settings.create({
                     data: defaultData
@@ -153,9 +158,22 @@ export default async function userController(fastify: FastifyInstance) {
                 };
 
             } else {
+                let ensName = ""
+                // get ens from user 
+                const userData = await prisma.users.findFirst({
+                    where: {
+                        address: session.address,
+                    }
+                })
+                if (userData) {
+                    ensName = userData.ens_name ?? ""
+                }
                 return {
                     success: true,
-                    data: settingsData
+                    data: {
+                        ...settingsData,
+                        ens_name: ensName
+                    }
                 }
             }
         } catch (error) {
@@ -174,9 +192,9 @@ export default async function userController(fastify: FastifyInstance) {
         }
 
         try {
+            const settingsPar = request.body as SettingsRequest;
 
-            const settings = request.body as Settings;
-
+            const { ens_name, ...settings } = settingsPar;
 
             const session = await prisma.siweSession.findUnique({
                 where: { nonce }
@@ -200,6 +218,17 @@ export default async function userController(fastify: FastifyInstance) {
                     user_pub_key: session.address
                 }
             })
+
+            // update ens 
+            await prisma.users.update({
+                where: {
+                    address: session.address
+                },
+                data:{
+                    ens_name: ens_name
+                }
+            })
+
         } catch (error) {
             console.error("Error fetching session:", error);
             return reply.code(500).send({ success: false, message: "Internal server error" });

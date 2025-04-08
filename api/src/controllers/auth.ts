@@ -3,7 +3,7 @@ import { SiweMessage } from 'siwe';
 import { prisma } from '../database/db';
 import { SessionQuery, SiweRequest } from '../models/request_models';
 import { verifySiweMessage } from '../utils/auth_utils';
-import { fetchEnsName } from '@/utils/api_utils';
+import { fetchEnsName } from '../utils/api_utils';
 
 export default async function authController(fastify: FastifyInstance) {
   // get current session
@@ -153,9 +153,9 @@ export default async function authController(fastify: FastifyInstance) {
           user_pub_key: siweData.address!!,
           cli_pub_key: "",
           cli_priv_key: "",
-          Witness_network: "sepolia",
+          witness_network: "sepolia",
           theme: "light",
-          Witness_contract_address: '0x45f59310ADD88E6d23ca58A0Fa7A55BEE6d2a611',
+          witness_contract_address: '0x45f59310ADD88E6d23ca58A0Fa7A55BEE6d2a611',
         }
         await prisma.settings.create({
           data: defaultData
