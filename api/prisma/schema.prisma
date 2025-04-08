@@ -14,17 +14,17 @@ model Users {
   email         String?
   Latest        Latest[]
   Settings      Settings?
-  UserAddresses UserAddresses[]
+  UserAddresses UserAttestationAddresses[]
 
   @@map("users")
 }
 
-model UserAddresses {
-  address     String @id
-  trust_level Int
-  ens_name String?
-  user        String
-  User        Users  @relation(fields: [user], references: [address])
+model UserAttestationAddresses { 
+  id              String   @id @default(uuid())
+  owner     String  
+  address     String  
+  trust_level Int  
+  User        Users  @relation(fields: [owner], references: [address])
 
   @@map("user_address")
 }

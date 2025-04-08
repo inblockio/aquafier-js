@@ -45,6 +45,7 @@ const LoadConfiguration = () => {
                 setSession(null)
                 setFiles([])
                 setUserProfile({
+                    ens_name:"",
                     user_pub_key: "",
                     cli_pub_key: "",
                     cli_priv_key: "",
@@ -92,6 +93,7 @@ const LoadConfiguration = () => {
                 setSession(null)
                 setFiles([])
                 setUserProfile({
+                    ens_name:"",
                     user_pub_key: "",
                     cli_pub_key: "",
                     cli_priv_key: "",
