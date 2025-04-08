@@ -1,7 +1,7 @@
 import { AquaTree, FileObject, Revision as AquaRevision, OrderRevisionInAquaTree } from 'aqua-js-sdk';
 import { prisma } from '../database/db';
 // For specific model types
-import { User, Latest, Signature, Revision, Witness, AquaForms, WitnessEvent, FileIndex, Link } from '@prisma/client';
+import {  Latest, Signature, Revision, Witness, AquaForms, WitnessEvent, FileIndex, Link } from '@prisma/client';
 import * as fs from "fs"
 import path from 'path';
 

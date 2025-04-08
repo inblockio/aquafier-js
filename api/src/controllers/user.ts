@@ -12,26 +12,26 @@ export default async function userController(fastify: FastifyInstance) {
 
         const { address } = request.params as { address: string };
 
-         // Add authorization
-         const nonce = request.headers['nonce'];
-         if (!nonce || typeof nonce !== 'string' || nonce.trim() === '') {
-             return reply.code(401).send({ error: 'Unauthorized: Missing or empty nonce header' });
-         }
-         const session = await prisma.siweSession.findUnique({
-             where: { nonce: nonce }
-         });
-         if (session == null) {
-             return reply.code(403).send({ success: false, message: "Nounce  is invalid" });
-         }
+        // Add authorization
+        const nonce = request.headers['nonce'];
+        if (!nonce || typeof nonce !== 'string' || nonce.trim() === '') {
+            return reply.code(401).send({ error: 'Unauthorized: Missing or empty nonce header' });
+        }
+        const session = await prisma.siweSession.findUnique({
+            where: { nonce: nonce }
+        });
+        if (session == null) {
+            return reply.code(403).send({ success: false, message: "Nounce  is invalid" });
+        }
 
-         const addr = request.body as {name : string};
+        const addr = request.body as { name: string };
 
 
-        const userData = await prisma.users.update({
+        await prisma.users.update({
             where: {
                 address: address,
             },
-            data:{
+            data: {
                 ens_name: addr.name
             }
         });
@@ -60,10 +60,14 @@ export default async function userController(fastify: FastifyInstance) {
         // check if user exist in users
         const userData = await prisma.users.findFirst({
             where: {
-                address: address,
+                address: {
+                    equals: address,
+                    mode: 'insensitive'
+                }
             }
         });
 
+        console.log(`=> address ${address} \n Data ${JSON.stringify(userData)}`)
         if (userData) {
             if (userData.ens_name) {
                 return reply.code(200).send({
