@@ -1,10 +1,10 @@
-import { FastifyInstance, FastifyRequest } from 'fastify';
-import { SiweMessage } from 'siwe';
+import { FastifyInstance } from 'fastify';
+// import { SiweMessage } from 'siwe';
 import { prisma } from '../database/db';
-import { Settings } from '@prisma/client';
-import { SessionQuery, SettingsRequest, SiweRequest } from '../models/request_models';
-import { verifySiweMessage } from '../utils/auth_utils';
-import { fetchEnsName } from '@/utils/api_utils';
+// import { Settings } from '@prisma/client';
+import {  SettingsRequest } from '../models/request_models';
+// import { verifySiweMessage } from '../utils/auth_utils';
+import { fetchEnsName } from '../utils/api_utils';
 
 export default async function userController(fastify: FastifyInstance) {
 
