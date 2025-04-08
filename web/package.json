@@ -14,6 +14,7 @@
     "@chakra-ui/modal": "^2.3.1",
     "@chakra-ui/react": "^3.0.0",
     "@emotion/react": "^11.13.3",
+    "@types/uuid": "^10.0.0",
     "aqua-js-sdk": "github:inblockio/aqua-js-sdk#b43a60656bf5c228001dde4c1ea744db9b671fef",
     "axios": "^1.7.7",
     "docx-preview": "^0.3.5",
@@ -29,10 +30,12 @@
     "random-avatar-generator": "^2.0.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
+    "react-hook-form": "^7.55.0",
     "react-icons": "^5.4.0",
     "react-loading": "^2.0.3",
     "react-router-dom": "^7.0.2",
     "siwe": "^2.3.2",
+    "uuid": "^11.1.0",
     "zustand": "^5.0.1"
   },
   "devDependencies": {

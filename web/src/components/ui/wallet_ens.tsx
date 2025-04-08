@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react"
 
-import { ClipboardIconButton, ClipboardRoot } from "./clipboard"l
+import { ClipboardIconButton, ClipboardRoot } from "./clipboard"
 import { LuCheck, LuChevronDown, LuChevronUp, LuExternalLink, LuEye, LuX } from "react-icons/lu"
 import { Box, Card, Collapsible, Drawer, For, GridItem, Group, Icon, IconButton, Link, Portal, SimpleGrid, Span, Text, VStack } from "@chakra-ui/react"
 
