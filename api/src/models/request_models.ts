@@ -16,6 +16,10 @@ export interface FetchAquaTreeRequest {
   latestRevisionHash: string
 
 }
+export interface UserAttestationAddressesRequest {
+  address: string;
+  trust_level: number;
+}
 export interface SettingsRequest {
   user_pub_key: string;
   cli_pub_key: string | null;

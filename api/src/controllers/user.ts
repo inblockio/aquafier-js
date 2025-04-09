@@ -1,10 +1,12 @@
-import { FastifyInstance } from 'fastify';
+import { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 // import { SiweMessage } from 'siwe';
 import { prisma } from '../database/db';
 // import { Settings } from '@prisma/client';
-import {  SettingsRequest } from '../models/request_models';
+import { SettingsRequest, UserAttestationAddressesRequest } from '../models/request_models';
 // import { verifySiweMessage } from '../utils/auth_utils';
 import { fetchEnsName } from '../utils/api_utils';
+import { authenticate, AuthenticatedRequest } from '@/middleware/auth_middleware';
+import { UserAttestationAddresses } from '@prisma/client';
 
 export default async function userController(fastify: FastifyInstance) {
 
@@ -107,6 +109,132 @@ export default async function userController(fastify: FastifyInstance) {
             ens: address
         });
     });
+
+    fastify.get('/attestation_address', async (request: FastifyRequest, reply: FastifyReply) => {
+
+        // Authenticate the user
+        if (!(await authenticate(request, reply))) {
+            return; // The authenticate function already sent the appropriate error response
+        }
+
+        const user = (request as AuthenticatedRequest).user;
+
+        try {
+            let data = prisma.userAttestationAddresses.findMany({
+                where: {
+                    owner: user?.address!!
+                }
+            })
+            return reply.code(200).send({ success: true, message: "ok", data });
+
+        } catch (e: any) {
+            return reply.code(500).send({ success: true, message: `error : ${e}`, });
+
+        }
+
+
+    })    
+
+    fastify.post('/attestation_address', async (request, reply) => {
+        // Authenticate the user
+        if (!(await authenticate(request, reply))) {
+            return; // The authenticate function already sent the appropriate error response
+        }
+
+        const user = (request as AuthenticatedRequest).user;
+
+        const userAttestationAddressesRequest = request.body as UserAttestationAddressesRequest;
+
+        if (
+            userAttestationAddressesRequest.address == null ||
+            userAttestationAddressesRequest.address == undefined ||
+            userAttestationAddressesRequest.address == "" ||
+            userAttestationAddressesRequest.trust_level == null ||
+            userAttestationAddressesRequest.trust_level == null ||
+            typeof userAttestationAddressesRequest.trust_level != "number" ||
+            typeof userAttestationAddressesRequest.address != "string"
+        ) {
+            let errMssg = ""
+            if (typeof userAttestationAddressesRequest.trust_level != "number") {
+                errMssg = "trust_level shuld be an integer."
+            }
+            if (typeof userAttestationAddressesRequest.address != "string") {
+                errMssg = "address shuld be a string."
+            }
+            return reply.code(412).send({ success: true, message: `error  address and trust level are required ${errMssg}`, });
+
+        }
+        try {
+
+            prisma.userAttestationAddresses.create({
+                data: {
+                    address: userAttestationAddressesRequest.address,
+                    trust_level: userAttestationAddressesRequest.trust_level,
+                    owner: user?.address!!,
+                    id: undefined
+                }
+            })
+        } catch (e: any) {
+            return reply.code(500).send({ success: true, message: `error : ${e}`, });
+
+        }
+
+
+    })
+
+    fastify.put('/attestation_address', async (request, reply) => {
+        // Authenticate the user
+        if (!(await authenticate(request, reply))) {
+            return; // The authenticate function already sent the appropriate error response
+        }
+
+        const user = (request as AuthenticatedRequest).user;
+
+        const userAttestationAddresses = request.body as UserAttestationAddresses;
+
+        try {
+
+            prisma.userAttestationAddresses.update({
+                where: {
+                    id: userAttestationAddresses.id
+                },
+                data: {
+                    address: userAttestationAddresses.address,
+                    trust_level: userAttestationAddresses.trust_level,
+                }
+            })
+        } catch (e: any) {
+            return reply.code(500).send({ success: true, message: `error : ${e}`, });
+
+        }
+
+    })
+
+    fastify.delete('/attestation_address', async (request, reply) => {
+        // Authenticate the user
+        if (!(await authenticate(request, reply))) {
+            return; // The authenticate function already sent the appropriate error response
+        }
+
+        const user = (request as AuthenticatedRequest).user;
+
+        const userAttestationAddresses = request.body as UserAttestationAddresses;
+
+        try {
+
+            prisma.userAttestationAddresses.delete({
+                where: {
+                    id: userAttestationAddresses.id
+                },
+            })
+        } catch (e: any) {
+            return reply.code(500).send({ success: true, message: `error : ${e}`, });
+
+        }
+
+
+
+    })
 
 
     // get current session
@@ -224,7 +352,7 @@ export default async function userController(fastify: FastifyInstance) {
                 where: {
                     address: session.address
                 },
-                data:{
+                data: {
                     ens_name: ens_name
                 }
             })

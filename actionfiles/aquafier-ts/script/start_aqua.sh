@@ -1,9 +1,5 @@
 #!/bin/bash
 
-
-
-
-
 # Set default values if not provided
 DB_USER=${DB_USER:-aquafier}
 DB_PASSWORD=${DB_PASSWORD:-changeme}
