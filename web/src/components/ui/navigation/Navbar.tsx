@@ -16,14 +16,14 @@ interface INavlinkItem {
 }
 
 const navlinks: INavlinkItem[] = [
-    {
-        label: "Forms",
-        to: "/aqua-forms"
-    },
-    {
-        label: "Form Generator",
-        to: "/form-generator"
-    }
+    // {
+    //     label: "Forms",
+    //     to: "/aqua-forms"
+    // },
+    // {
+    //     label: "Form Generator",
+    //     to: "/form-generator"
+    // }
 ]
 
 const CustomNavlinkItem = ({ label, to }: INavlinkItem) => {

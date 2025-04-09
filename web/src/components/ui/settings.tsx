@@ -237,13 +237,13 @@ const Settings = () => {
                             <VStack alignItems={'flex-start'} gap={2}>
                                 <DeleteUserData />
                             </VStack>
-                            <DialogActionTrigger asChild>
+                            {/* <DialogActionTrigger asChild>
 
                                 <Button loading={false} colorPalette={'blue'} borderRadius={'md'} variant={'outline'} onClick={() => {
                                     navigate("/attestation_addresses");
                                 }}>Attestation Addresses</Button>
 
-                            </DialogActionTrigger>
+                            </DialogActionTrigger> */}
                             <HStack>
                                 <DialogActionTrigger asChild>
                                     <Button variant="outline">Cancel</Button>
