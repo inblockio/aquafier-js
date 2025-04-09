@@ -3,5 +3,6 @@
   "extends": [
     "config:recommended"
   ],
-  "baseBranches": ["dev"]
+  "baseBranches": ["dev"],
+  "prHourlyLimit":0
 }
