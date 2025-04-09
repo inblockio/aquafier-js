@@ -16,8 +16,8 @@ jobs:
       - name: Execute update on host
         uses: appleboy/ssh-action@v1
         with:
-          host: "aquafier.inblock.io"
-          username: "sammy"
-          key: ${{ secrets.RUNNER_PRIVATE_KEY }}
-          passphrase: ${{ secrets.PRIVATE_KEY_PASSWORD }}
-          script: /home/sammy/scripts/pull_latest_version_aquafier-js.sh
+          host: "dev.inblock.io"
+          username: "dev"
+          key: ${{ secrets.DEV_RUNNER_PRIVATE_KEY }}
+          passphrase: ${{ secrets.DEV_PRIVATE_KEY_PASSWORD }}
+          script: /home/dev/scripts/pull_latest_version_aquafier-js.sh
