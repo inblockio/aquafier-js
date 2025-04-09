@@ -1,0 +1,23 @@
+name: "Deploy Dev-Environment"
+
+on:
+  workflow_call:
+    secrets:
+      RUNNER_PRIVATE_KEY:
+        required: true
+      PRIVATE_KEY_PASSWORD:
+        required: true
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Execute update on host
+        uses: appleboy/ssh-action@v1
+        with:
+          host: "dev.inblock.io"
+          username: "dev"
+          key: ${{ secrets.DEV_RUNNER_PRIVATE_KEY }}
+          passphrase: ${{ secrets.DEV_PRIVATE_KEY_PASSWORD }}
+          script: /home/dev/scripts/pull_latest_version_aquafier-js.sh

@@ -19,6 +19,10 @@ const navlinks: INavlinkItem[] = [
     {
         label: "Forms",
         to: "/aqua-forms"
+    },
+    {
+        label: "Form Generator",
+        to: "/form-generator"
     }
 ]
 
