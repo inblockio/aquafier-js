@@ -5,9 +5,9 @@ env:
   IMAGE_NAME: dev-${{ github.repository }}
 
 on:
-  # push:
-  #   branches:
-  #     - dev
+  push:
+    branches:
+      - main
   workflow_dispatch: 
 
 jobs:
