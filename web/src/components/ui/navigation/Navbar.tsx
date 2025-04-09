@@ -22,7 +22,7 @@ const navlinks: INavlinkItem[] = [
     }
 ]
 
-const CustomNavlinkItem = ({ label, to, icon }: INavlinkItem) => {
+const CustomNavlinkItem = ({ label, to }: INavlinkItem) => {
 
     return (
         <Link to={to}>
