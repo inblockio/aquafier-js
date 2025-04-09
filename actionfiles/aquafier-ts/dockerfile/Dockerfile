@@ -1,4 +1,4 @@
-FROM node:18 AS builder_npm_web
+FROM node:18-slim AS builder_npm_web
 
 WORKDIR /build/web
 COPY web .
@@ -6,7 +6,7 @@ RUN npm ci
 
 RUN npm run build
 
-FROM node:18 as builder_npm_api
+FROM node:18-slim as builder_npm_api
 
 # Copy and prepare backend
 WORKDIR /build/api
@@ -16,7 +16,7 @@ RUN npm ci
 # Compile TypeScript to JavaScript
 RUN npm run build
 
-FROM node:18
+FROM node:18-slim
 
 # Install system dependencies
 RUN apt-get update && apt-get install -y \
@@ -36,14 +36,7 @@ COPY api/prisma /app/backend/prisma
 WORKDIR /app/backend
 
 # Install Prisma CLI globally
-RUN npm install -g prisma
-
-# Generate Prisma client
-RUN prisma generate
-
-# Install serve for frontend
-RUN npm install -g serve
-
+RUN npm install -g prisma && prisma generate && npm install -g serve
 
 # Copy frontend and backend build artifacts
 COPY --from=builder_npm_web /build/web/dist /app/frontend
