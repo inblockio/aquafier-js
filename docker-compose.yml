@@ -20,10 +20,11 @@ services:
       retries: 5
 
   aqua-container:
-    build:
-      context: .
-      dockerfile: actionfiles/aquafier-ts/dockerfile/Dockerfile
-    # image: ghcr.io/inblockio/aquafier-js:main
+    #ONLY USE THIS IN LOCAL DEPLOYMENT!!! DONT PUSH THIS TO GH!!!
+#    build:
+#      context: .
+#      dockerfile: actionfiles/aquafier-ts/dockerfile/Dockerfile
+    image: ghcr.io/inblockio/aquafier-js:main
 #    only for dev
     ports:
      - 3000:3000
