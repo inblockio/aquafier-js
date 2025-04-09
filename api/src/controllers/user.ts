@@ -5,7 +5,7 @@ import { prisma } from '../database/db';
 import { SettingsRequest, UserAttestationAddressesRequest } from '../models/request_models';
 // import { verifySiweMessage } from '../utils/auth_utils';
 import { fetchEnsName } from '../utils/api_utils';
-import { authenticate, AuthenticatedRequest } from '@/middleware/auth_middleware';
+import { authenticate, AuthenticatedRequest } from '../middleware/auth_middleware';
 import { UserAttestationAddresses } from '@prisma/client';
 
 export default async function userController(fastify: FastifyInstance) {
