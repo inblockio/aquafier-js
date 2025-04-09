@@ -10,6 +10,7 @@ import { useStore } from "zustand"
 import appStore from "../../store"
 import { toaster } from "./toaster"
 import { Button } from "./button"
+import { useNavigate } from "react-router-dom"
 
 const networks = createListCollection({
     items: [
@@ -91,13 +92,13 @@ const SettingsForm = () => {
                 <Input placeholder="ENS Name" value={ensName} onChange={e => setEnsName(e.currentTarget.value)} />
             </Field>
             <Field invalid={false} label="Public address" helperText="self-issued identity claim used for generating/verifying aqua chain" errorText="This field is required">
-                <Input placeholder="User Public address" disabled={true} value={user_profile.user_pub_key}  autoComplete="off" />
+                <Input placeholder="User Public address" disabled={true} value={user_profile.user_pub_key} autoComplete="off" />
             </Field>
             <Field invalid={false} label="CLI public key " helperText="self-issued identity claim used for generating/verifying aqua chain" errorText="This field is required">
                 <Input placeholder="XXXXXXX" value={cliPubKey} type="text" onChange={e => setCliPubKey(e.currentTarget.value)} autoComplete="off" />
             </Field>
             <Field invalid={false} label="CLI private key " helperText="self-issued identity claim used for generating/verifying aqua chain" errorText="This field is required">
-                <Input placeholder="XXXXXXXXX" value={cliPrivKey} type={"password"} onChange={e => setCliPrivKey(e.currentTarget.value)}  autoComplete="off" />
+                <Input placeholder="XXXXXXXXX" value={cliPrivKey} type={"password"} onChange={e => setCliPrivKey(e.currentTarget.value)} autoComplete="off" />
             </Field>
             <Field invalid={false} label="Contract Address" errorText="This field is required" >
                 <Input placeholder="Contract Address" value={contract} onChange={e => setContract(e.currentTarget.value)} />
@@ -168,17 +169,17 @@ const DeleteUserData = () => {
                     cli_priv_key: "",
                     witness_network: "",
                     theme: "light",
-                    ens_name:"",
+                    ens_name: "",
                     witness_contract_address: '0x45f59310ADD88E6d23ca58A0Fa7A55BEE6d2a611',
                 })
                 setFiles([])
                 setSession(null)
                 setMetamaskAddress(null)
                 setAvatar(undefined)
-                
+
                 // Remove cookie
                 document.cookie = "pkc_nonce=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;"
-                
+
                 toaster.create({
                     description: "User data cleared successfully. You have been logged out.",
                     type: "success"
@@ -201,6 +202,9 @@ const DeleteUserData = () => {
 }
 
 const Settings = () => {
+
+
+    let navigate = useNavigate();
 
     return (
         <div>
@@ -233,6 +237,13 @@ const Settings = () => {
                             <VStack alignItems={'flex-start'} gap={2}>
                                 <DeleteUserData />
                             </VStack>
+                            {/* <DialogActionTrigger asChild>
+
+                                <Button loading={false} colorPalette={'blue'} borderRadius={'md'} variant={'outline'} onClick={() => {
+                                    navigate("/attestation_addresses");
+                                }}>Attestation Addresses</Button>
+
+                            </DialogActionTrigger> */}
                             <HStack>
                                 <DialogActionTrigger asChild>
                                     <Button variant="outline">Cancel</Button>

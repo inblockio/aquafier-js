@@ -60,7 +60,9 @@ const start = async () => {
         'http://localhost:3600', 
         'http://127.0.0.1:3600',
         'https://aquafier.inblock.io',
-        'http://aquafier.inblock.io'
+        'http://aquafier.inblock.io',
+        'https://dev.inblock.io',
+        'http://dev.inblock.io',
       ], // Allow your React app origins
       methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
       credentials: true, // Allow cookies if needed

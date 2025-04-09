@@ -26,7 +26,7 @@ model UserAttestationAddresses {
   trust_level Int  
   User        Users  @relation(fields: [owner], references: [address])
 
-  @@map("user_address")
+  @@map("user_attestation_addresses")
 }
 
 model SiweSession {

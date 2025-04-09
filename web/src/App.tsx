@@ -10,6 +10,8 @@ import { BrowserRouter, Route, Routes } from 'react-router-dom'
 import SharePage from './pages/SharePage';
 import Loading from './pages/Loading';
 import AquaForms from './pages/AquaForms';
+import FormGenerator from './pages/FormGenerator';
+import AttestationAddresses from './pages/AttestationAddresses';
 // import Aquafier from 'aqua-js-sdk';
 declare global {
   interface Window {
@@ -52,9 +54,12 @@ function App() {
       <MainLayout>
         <Routes>
           <Route path="" element={<Home />} />
+          
           <Route path="/loading" element={<Loading />} />
           <Route path="/share/:identifier" element={<SharePage />} />
           <Route path="/aqua-forms" element={<AquaForms /> } />
+          <Route path="/form-generator" element={<FormGenerator />} />
+          <Route path="/attestation_addresses" element={<AttestationAddresses /> } />
         </Routes>
       </MainLayout>
     </BrowserRouter>

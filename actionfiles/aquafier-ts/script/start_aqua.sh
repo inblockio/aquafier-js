@@ -1,9 +1,5 @@
 #!/bin/bash
 
-
-
-
-
 # Set default values if not provided
 DB_USER=${DB_USER:-aquafier}
 DB_PASSWORD=${DB_PASSWORD:-changeme}
@@ -62,6 +58,23 @@ node dist/index.js &
 
 # Serve frontend
 cd /app/frontend
+# Create a serve.json file with proper MIME type configuration
+cat > serve.json << EOF
+{
+  "headers": [
+    {
+      "source": "**/*.js",
+      "headers": [{ "key": "Content-Type", "value": "application/javascript" }]
+    },
+    {
+      "source": "**/*.mjs",
+      "headers": [{ "key": "Content-Type", "value": "application/javascript" }]
+    }
+  ]
+}
+EOF
+
+# Start serve with the configuration
 serve -s . -l 3600 &
 
 # Wait for any process to exit

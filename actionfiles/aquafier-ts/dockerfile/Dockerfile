@@ -44,6 +44,7 @@ RUN prisma generate
 # Install serve for frontend
 RUN npm install -g serve
 
+
 # Copy frontend and backend build artifacts
 COPY --from=builder_npm_web /build/web/dist /app/frontend
 COPY --from=builder_npm_api /build/api/dist /app/backend/dist

@@ -16,16 +16,19 @@ interface INavlinkItem {
 }
 
 const navlinks: INavlinkItem[] = [
-    {
-        label: "Forms",
-        to: "/aqua-forms"
-    }
+    // {
+    //     label: "Forms",
+    //     to: "/aqua-forms"
+    // },
+    // {
+    //     label: "Form Generator",
+    //     to: "/form-generator"
+    // }
 ]
 
+const CustomNavlinkItem = ({ label, to }: INavlinkItem) => {
 
-const CustomNavlinkItem = ({ label, to, icon }: INavlinkItem) => {
-
-    console.log(`Icon ${icon}`)
+    
     return (
         <Link to={to}>
             <LinkBox>

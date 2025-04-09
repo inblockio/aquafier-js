@@ -6,7 +6,6 @@ The api project structure is inspired by laravel project layout.<br/> The projec
 
 The web project is a react(typescript) project using chackra ui
 
-
 ## Running 
 To run the api, navigate to api directory.
 1. `create .env from .env.sample`, edit the db credentials.
