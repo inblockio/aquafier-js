@@ -52,7 +52,7 @@ const start = async () => {
     // Register the CORS plugin
     await fastify.register(cors, {
       // Configure CORS options
-      origin: [
+      origin: process.env.ALLOWED_CORS ? process.env.ALLOWED_CORS.split(',').map(origin => origin.trim()) : [
         'http://localhost:5173', 
         'http://127.0.0.1:5173', 
         'http://localhost:3000', 
