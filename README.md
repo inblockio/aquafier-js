@@ -15,7 +15,7 @@ To run the api, navigate to api directory.
 
 ## Database creation
 
-To create a database use the `create_db.sh`
+To create a database use the `create_db.sh`. Update the file with the config to use.
 
 ```bash
 chmod +x ./create_db.sh
