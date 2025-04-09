@@ -8,6 +8,7 @@ on:
   push:
     branches:
       - main
+      - dev
 
 jobs:
   build:
@@ -38,9 +39,18 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
           file: actionfiles/aquafier-ts/dockerfile/Dockerfile
 
-  deploy:
+  deploy_dev:
+    if: github.ref == 'refs/heads/dev'
     needs: build
     uses: ./.github/workflows/deploy-dev.yml
+    secrets:
+      RUNNER_PRIVATE_KEY: ${{ secrets.DEV_RUNNER_PRIVATE_KEY }}
+      PRIVATE_KEY_PASSWORD: ${{ secrets.DEV_PRIVATE_KEY_PASSWORD }}
+
+  deploy_main:
+    if: github.ref == 'refs/heads/main'
+    needs: build
+    uses: ./.github/workflows/deploy-main.yml
     secrets:
       RUNNER_PRIVATE_KEY: ${{ secrets.RUNNER_PRIVATE_KEY }}
       PRIVATE_KEY_PASSWORD: ${{ secrets.PRIVATE_KEY_PASSWORD }}
