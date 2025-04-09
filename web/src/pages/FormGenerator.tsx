@@ -14,7 +14,7 @@ import {
 } from '@chakra-ui/react';
 import { Field } from '../components/ui/field';
 import { FormTemplate, getFormTemplates, getFormTemplateById } from '../components/aqua_forms';
-import { NumberInputField, NumberInputLabel, NumberInputRoot } from '../components/ui/number-input';
+import { NumberInputField, NumberInputRoot } from '../components/ui/number-input';
 
 // Template Select Component
 interface TemplateSelectProps {
