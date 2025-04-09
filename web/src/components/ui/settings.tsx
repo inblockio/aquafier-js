@@ -10,7 +10,7 @@ import { useStore } from "zustand"
 import appStore from "../../store"
 import { toaster } from "./toaster"
 import { Button } from "./button"
-import { useNavigate } from "react-router-dom"
+// import { useNavigate } from "react-router-dom"
 
 const networks = createListCollection({
     items: [
@@ -204,7 +204,7 @@ const DeleteUserData = () => {
 const Settings = () => {
 
 
-    let navigate = useNavigate();
+    // let navigate = useNavigate();
 
     return (
         <div>
