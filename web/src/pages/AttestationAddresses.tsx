@@ -91,6 +91,10 @@ const AttestationAddresses = () => {
                     </Box>
 
                     <Box mt={6}>
+                        {isLoading ?  <>
+                        Loading data
+                        </> : 
+                        
                         <Table.ScrollArea borderWidth="1px" rounded="md" height="160px">
                             <Table.Root size="sm" stickyHeader>
                                 <Table.Header>
@@ -114,6 +118,7 @@ const AttestationAddresses = () => {
                                 </Table.Body>
                             </Table.Root>
                         </Table.ScrollArea>
+                        }
                     </Box>
                 </Box>
             </Container>
