@@ -19,7 +19,7 @@ const SharePage = () => {
     // const [fetchFromUrl, setFetchFromUrl] = useState(false)
     const [loading, setLoading] = useState(false)
     const [hasError, setHasError] = useState<string | null>(null);
-    const [isVerificationSuccesful, setIsVerificationSuccessful] = useState(false)
+    const [isVerificationSuccesful, setIsVerificationSuccessful] = useState<boolean | null >(null)
     const [showMoreDetails, setShowMoreDetails] = useState(false)
 
     const params = useParams()
@@ -150,7 +150,7 @@ const SharePage = () => {
                                             // <ConnectWallet />
                                             <Box />
                                         ) : (
-                                            <ImportAquaChainFromChain fileInfo={fileInfo} isVerificationSuccessful={isVerificationSuccesful} />
+                                            <ImportAquaChainFromChain  fileInfo={fileInfo} isVerificationSuccessful={isVerificationSuccesful} />
                                         )
                                     }
                                 </Group>
@@ -170,7 +170,7 @@ const SharePage = () => {
                                                     <VStack gap={'4'}>
                                                         {/* <Alert status={displayColorBasedOnVerificationAlert()} title={displayBasedOnVerificationStatusText()} /> */}
 
-                                                        <RevisionDetailsSummary fileInfo={fileInfo} />
+                                                        <RevisionDetailsSummary isVerificationSuccess={isVerificationSuccesful}  fileInfo={fileInfo} />
                                                         <Box w={'100%'}>
                                                             <Collapsible.Root open={showMoreDetails}>
                                                                 <Collapsible.Trigger w="100%" py={'md'} onClick={() => setShowMoreDetails(open => !open)} cursor={'pointer'}>

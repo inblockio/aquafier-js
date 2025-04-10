@@ -24,7 +24,7 @@ import { ApiFileInfo } from "../../../models/FileInfo"
 import FilePreview from "../../FilePreview"
 import { useStore } from "zustand"
 import appStore from "../../../store"
-import {WalletEnsView} from "../wallet_ens"
+import { WalletEnsView } from "../wallet_ens"
 import { AquaTreeDetails } from "../../../models/AquaTreeDetails"
 import ShareButtonAction from "../../actions/ShareButtonAction"
 
@@ -286,17 +286,17 @@ const RevisionDisplay = ({ aquaTree, revision, revisionHash, fileObjects, callBa
                                                             displayValue={revision.signature_type!}
                                                             value={revision.signature_type!} showCopyIcon={true}
                                                         />
-                                                        <WalletEnsView walletAddress={revision.signature_wallet_address!}/>
-                                                            
-                                                            {/* <ItemDetail label="Wallet Address:"
+                                                        <WalletEnsView walletAddress={revision.signature_wallet_address!} />
+
+                                                        {/* <ItemDetail label="Wallet Address:"
                                                             // displayValue={formatCryptoAddress(revision.signature.signature_wallet_address, 4, 6)}
                                                             displayValue={revision.signature_wallet_address!}
                                                             value={revision.signature_wallet_address!} showCopyIcon={true}
                                                         /> */}
-                                                            <ItemDetail label="Public Key:"
-                                                                displayValue={formatCryptoAddress(revision.signature_public_key, 4, 6)}
-                                                                value={revision.signature_public_key!} showCopyIcon={true}
-                                                            />
+                                                        <ItemDetail label="Public Key:"
+                                                            displayValue={formatCryptoAddress(revision.signature_public_key, 4, 6)}
+                                                            value={revision.signature_public_key!} showCopyIcon={true}
+                                                        />
                                                     </TimelineContent>
                                                 </TimelineItem>
                                             ) : null
@@ -375,10 +375,11 @@ const RevisionDisplay = ({ aquaTree, revision, revisionHash, fileObjects, callBa
 
 interface IRevisionDetailsSummary {
     fileInfo: ApiFileInfo,
+    isVerificationSuccess: boolean | null,
     callBack?: (res: boolean) => void
 }
 
-export const RevisionDetailsSummary = ({ fileInfo }: IRevisionDetailsSummary) => {
+export const RevisionDetailsSummary = ({ fileInfo, isVerificationSuccess }: IRevisionDetailsSummary) => {
 
 
     // const pageData: PageData = JSON.parse(fileInfo.page_data);
@@ -402,8 +403,25 @@ export const RevisionDetailsSummary = ({ fileInfo }: IRevisionDetailsSummary) =>
         }
     }
 
+    const displayBasedOnVerificationStatusText = () => {
+        if (isVerificationSuccess == null) {
+            return "Verifying Aqua tree"
+        }
+        return isVerificationSuccess ? "This aqua tree  is valid" : "This aqua tree is invalid"
+    }
+    const displayColorBasedOnVerificationAlert = () => {
+        if (isVerificationSuccess == null) {
+            return "info"
+        }
+
+        return isVerificationSuccess ? 'success' : 'error'
+    }
 
     return (<VStack textAlign="start">
+
+        <Alert status={displayColorBasedOnVerificationAlert()} title={displayBasedOnVerificationStatusText()} />
+
+
         <Text>Revisions count : {revisionHashes.length}</Text>
 
         <Box w={'100%'} bg={'gray.100'} _dark={{
@@ -648,7 +666,7 @@ export const ChainDetailsBtn = ({ fileInfo, session }: AquaTreeDetails) => {
                                                     <VStack gap={'4'}>
                                                         <Alert status={displayColorBasedOnVerificationAlert()} title={displayBasedOnVerificationStatusText()} />
 
-                                                        <RevisionDetailsSummary fileInfo={fileInfo} />
+                                                        <RevisionDetailsSummary isVerificationSuccess={isVerificationSuccessful}  fileInfo={fileInfo} />
                                                         <Box w={'100%'}>
                                                             <Collapsible.Root open={showMoreDetails}>
                                                                 <Collapsible.Trigger w="100%" py={'md'} onClick={() => setShowMoreDetails(open => !open)} cursor={'pointer'}>
