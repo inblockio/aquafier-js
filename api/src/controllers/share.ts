@@ -52,7 +52,7 @@ export default async function shareController(fastify: FastifyInstance) {
 
             }
 
-            if (contractData?.receiver != "0xfabacc150f2a0000000000000000000000000000" && contractData?.receiver != session.address) {
+            if (contractData?.receiver?.toLowerCase() != "0xfabacc150f2a0000000000000000000000000000" && contractData?.receiver != session.address) {
                 return reply.code(401).send({ success: false, message: "The aqua tree is not shared with you" });
             }
 

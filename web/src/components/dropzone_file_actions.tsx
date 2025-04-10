@@ -921,7 +921,7 @@ export const ImportAquaChainFromFile = ({ file, uploadedIndexes, fileIndex, upda
     )
 }
 
-interface ImportChainFromChainProps { fileInfo: ApiFileInfo, isVerificationSuccessful: boolean }
+interface ImportChainFromChainProps { fileInfo: ApiFileInfo, isVerificationSuccessful: boolean  | null}
 
 interface BtnContent {
     text: string

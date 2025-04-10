@@ -56,7 +56,7 @@ const ImportPage = ({ incomingFileInfo }: IImportPage) => {
                                 </Card.Root>
                             </Box> */}
                             <Box w={'100%'}>
-                                <RevisionDetailsSummary fileInfo={fileInfo} />
+                                <RevisionDetailsSummary isVerificationSuccess={isVerificationSuccesful} fileInfo={fileInfo} />
                                 {/* <ChainDetails fileInfo={fileInfo} callBack={(res) => setIsVerificationSuccessful(res)} /> */}
                                 <Card.Root borderRadius={'lg'}>
                                     <Card.Body>
