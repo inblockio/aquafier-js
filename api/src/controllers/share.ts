@@ -76,8 +76,8 @@ export default async function shareController(fastify: FastifyInstance) {
             let anAquaTree: AquaTree
             let fileObject: FileObject[]
             let revision_pubkey_hash = `${contractData.sender}_${contractData.latest}`
-           //  console.log(`revision_pubkey_hash == > ${revision_pubkey_hash}`);
-            
+            //  console.log(`revision_pubkey_hash == > ${revision_pubkey_hash}`);
+
             if (contractData.option == "latest") {
                 [anAquaTree, fileObject] = await fetchAquaTreeWithForwardRevisions(revision_pubkey_hash, url)
             } else {
@@ -86,7 +86,7 @@ export default async function shareController(fastify: FastifyInstance) {
             }
             let sortedAquaTree = OrderRevisionInAquaTree(anAquaTree)
 
-           //  console.log(`Aqua tree ${JSON.stringify(sortedAquaTree)}`);
+            //  console.log(`Aqua tree ${JSON.stringify(sortedAquaTree)}`);
 
             displayData.push({
                 aquaTree: sortedAquaTree,
@@ -223,7 +223,10 @@ export default async function shareController(fastify: FastifyInstance) {
         const contracts = await prisma.contract.findMany({
             where: {
                 genesis_hash: genesis_hash,
-                sender : session?.address
+                sender: {
+                    equals: session?.address,
+                    mode: 'insensitive'
+                }
             }
         });
         return reply.code(200).send({ success: true, contracts });
@@ -308,9 +311,15 @@ export default async function shareController(fastify: FastifyInstance) {
 
         const contracts = await prisma.contract.findMany({
             where: {
-                sender,
-                receiver,
-                hash
+                sender: {
+                    equals: sender,
+                    mode: 'insensitive'
+                },
+                receiver: {
+                    equals: receiver,
+                    mode: 'insensitive'
+                },
+                hash: hash
             }
         });
         return reply.code(200).send({ success: true, contracts });

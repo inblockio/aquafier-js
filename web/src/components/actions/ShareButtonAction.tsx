@@ -13,6 +13,7 @@ import { DialogContent, DialogHeader, DialogRoot, DialogTitle, DialogBody, Dialo
 
 import { RadioCard } from "@chakra-ui/react"
 import { Switch } from "../ui/switch"
+import { ethers } from "ethers"
 
 interface ISharingOptions {
     value: string;
@@ -81,6 +82,8 @@ const CreateContractForm = ({ mutate, contract, updating, genesis_hash, latest_h
             if (!shareWithSpecificWallet) {
                 recipientWalletAddress = "0xfabacc150f2a0000000000000000000000000000"
             }
+            recipientWalletAddress = ethers.getAddress(recipientWalletAddress!!)
+
 
             setSharing(true)
             const unique_identifier = `${Date.now()}_${generateNonce()}`
@@ -289,21 +292,21 @@ const ShareButtonAction = ({ item, nonce }: IShareButtonAction) => {
     }
 
     const loadAllContracts = async () => {
-        try{
+        try {
             const genesis_hash = getGenesisRevision()
-        if (!genesis_hash) {
-            return
-        }
-        const url = `${backend_url}/contracts/${genesis_hash}`;
-        const response = await axios.get(url, {
-            headers: {
-                'nonce': nonce
+            if (!genesis_hash) {
+                return
             }
-        });
-        if (response.status === 200) {
-            setContracts(response.data?.contracts)
-        }
-        }catch(e){
+            const url = `${backend_url}/contracts/${genesis_hash}`;
+            const response = await axios.get(url, {
+                headers: {
+                    'nonce': nonce
+                }
+            });
+            if (response.status === 200) {
+                setContracts(response.data?.contracts)
+            }
+        } catch (e) {
             console.error(`Error fetching contracts for  ${JSON.stringify(item)}`)
         }
     }
