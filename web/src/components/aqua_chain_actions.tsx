@@ -199,6 +199,7 @@ export const SignAquaChain = ({ apiFileInfo, backendUrl, nonce }: RevionOperatio
                     revision: "",
                     fileObject: undefined
                 }
+
                 const result = await aquafier.signAquaTree(aquaTreeWrapper, "metamask", dummyCredential())
                 if (result.isErr()) {
                     toaster.create({
@@ -206,7 +207,6 @@ export const SignAquaChain = ({ apiFileInfo, backendUrl, nonce }: RevionOperatio
                         type: "error"
                     })
                 } else {
-
                     const revisionHashes = result.data.aquaTree?.revisions ? Object.keys(result.data.aquaTree.revisions) : [];
 
                     if (revisionHashes.length == 0) {
@@ -375,7 +375,7 @@ export const DownloadAquaChain = ({ file }: { file: ApiFileInfo }) => {
 
                     let actualUrlToFetch = ensureDomainUrlHasSSL(fileObj.fileContent)
 
-                    
+
 
                     // Fetch the file from the URL
                     const response = await fetch(actualUrlToFetch, {
@@ -465,9 +465,9 @@ export const DownloadAquaChain = ({ file }: { file: ApiFileInfo }) => {
             // Check if fileContent is a string (URL)
             if (typeof fileObj.fileContent === 'string' && fileObj.fileContent.startsWith('http')) {
                 try {
-                    let actualUrlToFetch =ensureDomainUrlHasSSL( fileObj.fileContent)
+                    let actualUrlToFetch = ensureDomainUrlHasSSL(fileObj.fileContent)
 
-                  
+
 
                     // Fetch the file from the URL
                     const response = await fetch(actualUrlToFetch, {
@@ -541,7 +541,7 @@ export const DownloadAquaChain = ({ file }: { file: ApiFileInfo }) => {
 
     }
 
- 
+
 
     return (
         <Button size={'xs'} colorPalette={'purple'} variant={'subtle'} w={'100px'} onClick={downloadAquaJson} loading={downloading}>
