@@ -30,8 +30,26 @@ export interface AquaTreeDetailsData {
     revisionHash: string
 
 }
+
+export interface IChainDetailsBtn {
+    callBack: () => void
+}
+
 export interface AquaTreeDetails {
     fileInfo: ApiFileInfo
     session: Session
     callBack: (res: Array<boolean>, revisionCount: number) => void
+}
+
+
+export interface ICompleteChainView {
+    fileInfo: ApiFileInfo
+    callBack: (_drawerStatus: IDrawerStatus) => void
+}
+
+export interface IDrawerStatus {
+    colorLight: string
+    colorDark: string
+    fileName: string
+    isVerificationSuccessful: boolean
 }

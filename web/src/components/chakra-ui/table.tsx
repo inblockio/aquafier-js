@@ -1,6 +1,6 @@
 "use client"
 
-import { Box, Card, CardBody, FormatByte, Group, Kbd, Table, Text, VStack } from "@chakra-ui/react"
+import { Box, Card, CardBody, Drawer, FormatByte, Group, Kbd, Portal, Table, Text, VStack } from "@chakra-ui/react"
 import {
     ActionBarContent,
     ActionBarRoot,
@@ -15,10 +15,13 @@ import appStore from "../../store"
 import { displayTime, getFileCategory, getFileExtension } from "../../utils/functions"
 
 import { DeleteAquaChain, LinkButton, DownloadAquaChain, SignAquaChain, WitnessAquaChain } from "../aqua_chain_actions"
-import { ChainDetailsBtn } from "../CustomDrawer"
+import { ChainDetailsBtn, CompleteChainView } from "../CustomDrawer"
 import { Alert } from "./alert"
 import { ApiFileInfo } from "../../models/FileInfo"
 import ShareButtonAction from "../actions/ShareButtonAction"
+import { DrawerActionTrigger, DrawerBackdrop, DrawerBody, DrawerContent, DrawerFooter, DrawerRoot, DrawerTitle } from "./drawer"
+import { LuX } from "react-icons/lu"
+import { IDrawerStatus } from "../../models/AquaTreeDetails"
 
 
 const FilesTable = () => {
@@ -26,9 +29,22 @@ const FilesTable = () => {
     const { files, backend_url, session } = useStore(appStore)
     const [selection, setSelection] = useState<string[]>([])
 
+    const [isOpen, setIsOpen] = useState(false)
+    const [fileInfo, setFileInfo] = useState<ApiFileInfo | null>(null)
+    const [drawerStatus, setDrawerStatus] = useState<IDrawerStatus | null>(null)
+
 
     const hasSelection = selection.length > 0
     const indeterminate = hasSelection && selection.length < files.length
+
+    const openChainDetailsView = (_fileInfo: ApiFileInfo) => {
+        setFileInfo(_fileInfo)
+        setIsOpen(true)
+    }
+
+    const updateDrawerStatus = (_drawerStatus: IDrawerStatus) => {
+        setDrawerStatus(_drawerStatus)
+    }
 
 
     const rows = files?.map((item: ApiFileInfo, index: number) => {
@@ -59,29 +75,27 @@ const FilesTable = () => {
 
             <Table.Cell minW={'140px'} maxW={'140px'} textWrap={'wrap'}>
                 {
-                 displayTime(Object.values(item.aquaTree!.revisions!)[0].local_timestamp)
+                    displayTime(Object.values(item.aquaTree!.revisions!)[0].local_timestamp)
                 }
             </Table.Cell>
             <Table.Cell minW={'100px'} maxW={'100px'} textWrap={'wrap'}>
                 <FormatByte value={
-                   item.fileObject[0].fileSize ?? 0 
+                    item.fileObject[0].fileSize ?? 0
                 } />
             </Table.Cell>
             <Table.Cell minW={'220px'} maxW={'220px'} textWrap={'wrap'}>
                 <Group alignItems={'space-between'} flexWrap={'wrap'} position={"relative"}>
-                   
-                <ChainDetailsBtn fileInfo={item} session={session!!} callBack={()=>{
-                      //  console.log("Details callback")
-                    }} />
+
+                    <ChainDetailsBtn callBack={() => openChainDetailsView(item)}  />
                     <SignAquaChain apiFileInfo={item} backendUrl={backend_url} nonce={session?.nonce ?? ""} revision="" />
                     <WitnessAquaChain apiFileInfo={item} backendUrl={backend_url} nonce={session?.nonce ?? ""} revision="" />
-                    <LinkButton item={item} nonce={session?.nonce ?? ""}   />
+                    <LinkButton item={item} nonce={session?.nonce ?? ""} />
 
                     {/* <ShareButton nonce={session?.nonce ?? ""} item={item} /> */}
                     <ShareButtonAction nonce={session?.nonce ?? ""} item={item} />
                     <DeleteAquaChain apiFileInfo={item} backendUrl={backend_url} nonce={session?.nonce ?? ""} revision="" />
                     <DownloadAquaChain file={item} />
-                   
+
                 </Group>
             </Table.Cell>
         </Table.Row>
@@ -94,10 +108,10 @@ const FilesTable = () => {
             <VStack textAlign={'start'}>
                 <Text textAlign={'start'} w={'100%'}>{item.fileObject[0].fileName}</Text>
                 <Group alignItems={'start'} flexWrap={'wrap'}>
-                    <ChainDetailsBtn fileInfo={item} session={session!} callBack={(_res, _revisionCount) => { }} />
+                <ChainDetailsBtn callBack={() => openChainDetailsView(item)}  />
                     <SignAquaChain apiFileInfo={item} backendUrl={backend_url} nonce={session?.nonce ?? ""} revision="" />
                     <WitnessAquaChain apiFileInfo={item} backendUrl={backend_url} nonce={session?.nonce ?? ""} revision="" />
-                    <LinkButton item={item} nonce={session?.nonce ?? ""}  />
+                    <LinkButton item={item} nonce={session?.nonce ?? ""} />
                     {/* <ShareButton nonce={session?.nonce ?? ""} item={item} /> */}
                     <ShareButtonAction item={item} nonce={session?.nonce ?? ""} />
                     <DeleteAquaChain apiFileInfo={item} backendUrl={backend_url} nonce={session?.nonce ?? ""} revision="" />
@@ -210,6 +224,58 @@ const FilesTable = () => {
                         </Button>
                     </ActionBarContent>
                 </ActionBarRoot>
+
+                <DrawerRoot open={isOpen} size={{ base: 'full', mdToXl: "xl" }} id="aqua-chain-details-modal"
+                    onOpenChange={(e) => setIsOpen(e.open)} closeOnEscape={true} >
+
+                    <Portal>
+                        <DrawerBackdrop />
+                        <Drawer.Positioner>
+                            <DrawerContent borderLeftRadius={'xl'} overflow={'hidden'}>
+                                <Drawer.Header bg={{ base: drawerStatus?.colorLight, _dark: drawerStatus?.colorDark }}>
+                                    <DrawerTitle flex="1">{drawerStatus?.fileName}</DrawerTitle>
+                                    <Button
+                                        position="absolute"
+                                        right="8px"
+                                        top="8px"
+                                        colorPalette="whitesmoke"
+                                        variant="solid"
+                                        size="md"
+                                        onClick={() => setIsOpen(false)}
+                                        aria-label="Close drawer"
+                                    >
+                                        <LuX />
+                                    </Button>
+                                </Drawer.Header>
+                                <DrawerBody py={'lg'} px={1}>
+                                    {
+                                        fileInfo ? (
+                                            <CompleteChainView fileInfo={fileInfo} callBack={updateDrawerStatus}  />
+                                        ) : null
+                                    }
+                                </DrawerBody>
+                                <DrawerFooter flexWrap={'wrap'}>
+                                    <DrawerActionTrigger asChild>
+                                        <Button variant="outline" size={'sm'}>Close</Button>
+                                    </DrawerActionTrigger>
+                                    {
+                                        fileInfo ? (
+                                            <>
+                                                <ShareButtonAction nonce={session?.nonce ?? ""} item={fileInfo} />
+                                                <WitnessAquaChain apiFileInfo={fileInfo} backendUrl={backend_url} nonce={session?.nonce ?? ""} revision="" />
+                                                <SignAquaChain apiFileInfo={fileInfo} backendUrl={backend_url} nonce={session?.nonce ?? ""} revision="" />
+                                                <DeleteAquaChain apiFileInfo={fileInfo} backendUrl={backend_url} nonce={session?.nonce ?? ""} revision="" />
+                                            </>
+                                        ) : null
+                                    }
+                                </DrawerFooter>
+
+                            </DrawerContent>
+                        </Drawer.Positioner>
+                    </Portal>
+
+                </DrawerRoot>
+
             </CardBody>
         </Card.Root>
     )

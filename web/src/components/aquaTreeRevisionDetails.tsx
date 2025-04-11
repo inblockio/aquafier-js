@@ -308,7 +308,7 @@ export const RevisionDisplay = ({ fileInfo, revision, revisionHash, isVerificati
 
 
 
-export const RevisionDetailsSummary = ({ fileInfo, isVerificationComplete, isVerificationSuccess }: RevisionDetailsSummaryData) => {
+export const RevisionDetailsSummary = ({ fileInfo }: RevisionDetailsSummaryData) => {
 
 
     // const pageData: PageData = JSON.parse(fileInfo.page_data);
