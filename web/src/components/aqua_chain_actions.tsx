@@ -199,6 +199,7 @@ export const SignAquaChain = ({ apiFileInfo, backendUrl, nonce }: RevionOperatio
                     revision: "",
                     fileObject: undefined
                 }
+
                 const result = await aquafier.signAquaTree(aquaTreeWrapper, "metamask", dummyCredential())
                 if (result.isErr()) {
                     toaster.create({
@@ -206,7 +207,6 @@ export const SignAquaChain = ({ apiFileInfo, backendUrl, nonce }: RevionOperatio
                         type: "error"
                     })
                 } else {
-
                     const revisionHashes = result.data.aquaTree?.revisions ? Object.keys(result.data.aquaTree.revisions) : [];
 
                     if (revisionHashes.length == 0) {
