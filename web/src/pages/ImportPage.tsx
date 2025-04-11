@@ -30,13 +30,16 @@ const ImportPage = ({ incomingFileInfo }: IImportPage) => {
             let revision = fileInfo.aquaTree!.revisions![revisionHash];
             let verificationResult = await aquafier.verifyAquaTreeRevision(fileInfo.aquaTree!, revision, revisionHash, [...fileInfo.fileObject, ...fileInfo.linkedFileObjects])
 
-            let data = verificationResults;
-            if (verificationResult.isOk()) {
-                data.set(revisionHash, true)
-            } else {
-                data.set(revisionHash, false)
-            }
-            setVerificationResults(data)
+            // Create a new Map reference for the state update
+            setVerificationResults(prevResults => {
+                const newResults = new Map(prevResults);
+                if (verificationResult.isOk()) {
+                    newResults.set(revisionHash, true);
+                } else {
+                    newResults.set(revisionHash, false);
+                }
+                return newResults;
+            });
         }
     }
 

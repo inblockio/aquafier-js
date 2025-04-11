@@ -527,19 +527,19 @@ export const checkIfFileExistInUserFiles = async (file: File, files: ApiFileInfo
     let fileContent = await readFileContent(file)
     let aquafier = new Aquafier()
     let fileHash = aquafier.getFileHash(fileContent)
-    console.log(`type of ${typeof (fileContent)} file hash generated  ${fileHash} `)
+//    console.log(`type of ${typeof (fileContent)} file hash generated  ${fileHash} `)
 
     // loop through all the files the user has 
     for (let fileItem of files) {
-        console.log(`looping ${JSON.stringify(fileItem.aquaTree)}`)
+     //   console.log(`looping ${JSON.stringify(fileItem.aquaTree)}`)
         let aquaTree: AquaTree = fileItem.aquaTree!!
         //loop through the revisions
         // check if revsion type is file then compare the file hash if found exit loop
         let revisionsData: Array<Revision> = Object.values(aquaTree.revisions)
         for (let revision of revisionsData) {
-            console.log(`--> looping ${JSON.stringify(revision)}`)
+      //      console.log(`--> looping ${JSON.stringify(revision)}`)
             if (revision.revision_type == "file") {
-                console.log(`$$$ FILE -->looping ${revision.file_hash}`)
+    //            console.log(`$$$ FILE -->looping ${revision.file_hash}`)
                 if (revision.file_hash === fileHash) {
                     fileExists = true
                     break
@@ -557,7 +557,7 @@ export const readFileContent = async (file: File): Promise<string | Uint8Array> 
         // If it's a text file, read as text
         return await readFileAsText(file);
     } else {
-        console.log("binary data....")
+     //   console.log("binary data....")
         // Otherwise for binary files, read as ArrayBuffer
         const res = await readFileAsArrayBuffer(file)
         return new Uint8Array(res);
@@ -1091,12 +1091,12 @@ export function generateAvatar(seed: string, size = 200) {
 
 export function ensureDomainUrlHasSSL(actualUrlToFetch: string): string {
     // check if the file hash exist 
-    console.log(`==URL Data before ${actualUrlToFetch}`)
+    // console.log(`==URL Data before ${actualUrlToFetch}`)
     if (actualUrlToFetch.includes("inblock.io")) {
         if (!actualUrlToFetch.includes("https")) {
             actualUrlToFetch = actualUrlToFetch.replace("http", "https")
         }
     }
-    console.log(`==URL Data after ${actualUrlToFetch}`)
+    // console.log(`==URL Data after ${actualUrlToFetch}`)
     return actualUrlToFetch
 }

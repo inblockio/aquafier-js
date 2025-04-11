@@ -120,13 +120,16 @@ const SharePage = () => {
             let revision = fileInfo.aquaTree!.revisions![revisionHash];
             let verificationResult = await aquafier.verifyAquaTreeRevision(fileInfo.aquaTree!, revision, revisionHash, [...fileInfo.fileObject, ...fileInfo.linkedFileObjects])
 
-            let data = verificationResults;
-            if (verificationResult.isOk()) {
-                data.set(revisionHash, true)
-            } else {
-                data.set(revisionHash, false)
-            }
-            setVerificationResults(data)
+            // Create a new Map reference for the state update
+            setVerificationResults(prevResults => {
+                const newResults = new Map(prevResults);
+                if (verificationResult.isOk()) {
+                    newResults.set(revisionHash, true);
+                } else {
+                    newResults.set(revisionHash, false);
+                }
+                return newResults;
+            });
         }
     }
 
@@ -194,8 +197,8 @@ const SharePage = () => {
                                                     <VStack gap={'4'}>
                                                         {/* <Alert status={displayColorBasedOnVerificationAlert()} title={displayBasedOnVerificationStatusText()} /> */}
 
-                                                         <RevisionDetailsSummary isVerificationComplete={isVerificationComplete(fileInfo)} isVerificationSuccess={isVerificationSuccessful()} fileInfo={fileInfo} />
-                                                                                                           
+                                                        <RevisionDetailsSummary isVerificationComplete={isVerificationComplete(fileInfo)} isVerificationSuccess={isVerificationSuccessful()} fileInfo={fileInfo} />
+
                                                         <Box w={'100%'}>
                                                             <Collapsible.Root open={showMoreDetails}>
                                                                 <Collapsible.Trigger w="100%" py={'md'} onClick={() => setShowMoreDetails(open => !open)} cursor={'pointer'}>
@@ -203,7 +206,7 @@ const SharePage = () => {
                                                                 </Collapsible.Trigger>
                                                                 <Collapsible.Content py={'4'}>
                                                                     {/* <ChainDetails session={session!!} fileInfo={fileInfo} /> */}
-                                                                    <ChainDetailsView  fileInfo={fileInfo} isVerificationComplete={isVerificationComplete(fileInfo)}  verificationResults={verificationResults} />
+                                                                    <ChainDetailsView fileInfo={fileInfo} isVerificationComplete={isVerificationComplete(fileInfo)} verificationResults={verificationResults} />
                                                                 </Collapsible.Content>
                                                             </Collapsible.Root>
                                                         </Box>

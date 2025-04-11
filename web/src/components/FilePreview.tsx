@@ -257,7 +257,7 @@ const FilePreview: React.FC<IFilePreview> = ({ fileInfo }) => {
             setIsLoading(true);
             try {
                 const fileContentUrl: string = fileInfo.fileContent as string
-                console.log("File content url: ", fileContentUrl)
+                // console.log("File content url: ", fileContentUrl)
 
                 let actualUrlToFetch = ensureDomainUrlHasSSL(fileContentUrl)
 
@@ -270,20 +270,20 @@ const FilePreview: React.FC<IFilePreview> = ({ fileInfo }) => {
 
                 // Get MIME type from headers
                 let contentType = response.headers.get("Content-Type") || "";
-                console.log("Original Content-Type from headers:", contentType);
+                //console.log("Original Content-Type from headers:", contentType);
 
                 // Clone the response for potential text extraction
                 const responseClone = response.clone();
 
                 // Get the raw data as ArrayBuffer first
                 const arrayBuffer = await response.arrayBuffer();
-                console.log("ArrayBuffer size:", arrayBuffer.byteLength);
+                // console.log("ArrayBuffer size:", arrayBuffer.byteLength);
 
                 // If content type is missing or generic, try to detect it
                 if (contentType === "application/octet-stream" || contentType === "") {
                     const uint8Array = new Uint8Array(arrayBuffer);
                     contentType = detectFileType(uint8Array);
-                    console.log("Detected file type:", contentType);
+                    //console.log("Detected file type:", contentType);
                 }
 
                 // Check for Word document by file extension
@@ -350,14 +350,14 @@ const FilePreview: React.FC<IFilePreview> = ({ fileInfo }) => {
 
                 // Create a proper blob with the correct content type
                 const blob = new Blob([arrayBuffer], { type: contentType });
-                console.log("Created blob with type:", contentType, "size:", blob.size);
+                // console.log("Created blob with type:", contentType, "size:", blob.size);
 
                 setFileType(contentType);
-                console.log("Final content type set to:", contentType);
+                // console.log("Final content type set to:", contentType);
 
                 // Create URL from the properly typed blob
                 const objectURL = URL.createObjectURL(blob);
-                console.log("Object URL created:", objectURL);
+                // console.log("Object URL created:", objectURL);
                 setFileURL(objectURL);
             } catch (error) {
                 console.error("Error fetching file:", error);
@@ -421,7 +421,7 @@ const FilePreview: React.FC<IFilePreview> = ({ fileInfo }) => {
                     };
 
                     await page.render(renderContext).promise;
-                    console.log("PDF first page rendered successfully");
+                    // console.log("PDF first page rendered successfully");
 
                 } catch (error) {
                     console.error("Error rendering PDF first page:", error);
@@ -458,44 +458,45 @@ const FilePreview: React.FC<IFilePreview> = ({ fileInfo }) => {
                     // Clear any previous content
                     if (wordContainerRef.current) {
                         wordContainerRef.current.innerHTML = '';
-                    }
 
-                    // For DOCX files
-                    if (fileType === "application/vnd.openxmlformats-officedocument.wordprocessingml.document") {
-                        // Create a new blob to ensure it's processed correctly
-                        const docxBlob = new Blob([await wordBlob.arrayBuffer()],
-                            { type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' });
 
-                        // Use docx-preview to render the document
-                        await window.docx.renderAsync(
-                            docxBlob,
-                            wordContainerRef.current,
-                            null,
-                            {
-                                className: 'docx-preview',
-                                inWrapper: true,
-                                ignoreWidth: false,
-                                ignoreHeight: false,
-                                defaultFont: {
-                                    family: 'Arial',
-                                    size: 12
+                        // For DOCX files
+                        if (fileType === "application/vnd.openxmlformats-officedocument.wordprocessingml.document") {
+                            // Create a new blob to ensure it's processed correctly
+                            const docxBlob = new Blob([await wordBlob.arrayBuffer()],
+                                { type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' });
+
+                            // Use docx-preview to render the document
+                            await window.docx.renderAsync(
+                                docxBlob,
+                                wordContainerRef.current,
+                                null,
+                                {
+                                    className: 'docx-preview',
+                                    inWrapper: true,
+                                    ignoreWidth: false,
+                                    ignoreHeight: false,
+                                    defaultFont: {
+                                        family: 'Arial',
+                                        size: 12
+                                    }
                                 }
-                            }
-                        );
-                    } else {
-                        // For DOC files, we can't use docx-preview directly
-                        // Show a message that DOC files can't be previewed
-                        if (wordContainerRef.current) {
-                            wordContainerRef.current.innerHTML = `
+                            );
+                        } else {
+                            // For DOC files, we can't use docx-preview directly
+                            // Show a message that DOC files can't be previewed
+                            if (wordContainerRef.current) {
+                                wordContainerRef.current.innerHTML = `
                             <div style="text-align: center; padding: 20px;">
                                 <p>Preview not available for .DOC files (only .DOCX is supported).</p>
                                 <p>Please download the file to view it.</p>
                             </div>
                         `;
+                            }
                         }
                     }
 
-                    console.log("Word document rendered successfully with docx-preview");
+                    // console.log("Word document rendered successfully with docx-preview");
                 } catch (error: any) {
                     console.error("Error rendering Word document with docx-preview:", error);
 
@@ -540,7 +541,7 @@ const FilePreview: React.FC<IFilePreview> = ({ fileInfo }) => {
                 docxScript.async = true;
 
                 docxScript.onload = () => {
-                    console.log("docx-preview loaded successfully");
+                    // console.log("docx-preview loaded successfully");
                     // Small delay to ensure script is fully initialized
                     setTimeout(() => resolve(), 100);
                 };
@@ -564,7 +565,7 @@ const FilePreview: React.FC<IFilePreview> = ({ fileInfo }) => {
 
     if (isLoading) return <p>Loading...</p>;
 
-    console.log("Rendering file with type:", fileType, "Mobile:", isMobile);
+    // console.log("Rendering file with type:", fileType, "Mobile:", isMobile);
 
     // Render based on file type
     if (fileType.startsWith("image/")) {
@@ -703,7 +704,7 @@ const FilePreview: React.FC<IFilePreview> = ({ fileInfo }) => {
         //         </object>
         //     );
         // }
-        const PdfControls = ({currentPage, isNextDisabled, isPrevDisabled, onNextPage, onPrevPage, totalPages}: PDFControlsProps) => {
+        const PdfControls = ({ currentPage, isNextDisabled, isPrevDisabled, onNextPage, onPrevPage, totalPages }: PDFControlsProps) => {
             return (
                 <Group mb={"4"}>
                     <IconButton disabled={isPrevDisabled} onClick={onPrevPage} size={"xs"} borderRadius={"full"}>

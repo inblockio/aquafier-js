@@ -1114,12 +1114,12 @@ export const ImportAquaChainFromChain = ({ fileInfo, isVerificationSuccessful }:
                 }
             })
 
-            console.log(comparisonResult)
+           // console.log(comparisonResult)
 
-            console.log("Revisions to Delete: ", revisionsToDelete)
+           // console.log("Revisions to Delete: ", revisionsToDelete)
             const revisionHashes = revisionsToDelete.join(",")
             const revisionDeleteUrl = `${backend_url}/tree`;
-            console.log("----- Revisions to delete: ", revisionsToDelete)
+           // console.log("----- Revisions to delete: ", revisionsToDelete)
             try {
                 let deletionResults = await axios.delete(revisionDeleteUrl, {
                     data: {
@@ -1132,7 +1132,7 @@ export const ImportAquaChainFromChain = ({ fileInfo, isVerificationSuccessful }:
                     }
                 })
 
-                console.log("Deletion results: ", deletionResults)
+             //   console.log("Deletion results: ", deletionResults)
             }
             catch (error: any) {
                 console.log("Deletion Error: ", error)
