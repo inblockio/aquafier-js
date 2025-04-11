@@ -1,5 +1,4 @@
 import { FastifyInstance, FastifyRequest } from 'fastify';
-import { SiweMessage } from 'siwe';
 import { prisma } from '../database/db';
 import { SessionQuery, SiweRequest } from '../models/request_models';
 import { verifySiweMessage } from '../utils/auth_utils';
@@ -87,7 +86,7 @@ export default async function authController(fastify: FastifyInstance) {
         });
       }
 
-   // Insert session into the database
+      // Insert session into the database
       const session = await prisma.siweSession.create({
         data: {
           address: siweData.address!!,

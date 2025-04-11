@@ -1259,5 +1259,5 @@ export default async function explorerController(fastify: FastifyInstance) {
         }
     });
 
-}
+} 
 
