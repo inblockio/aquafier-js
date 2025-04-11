@@ -14,7 +14,7 @@
     "@chakra-ui/modal": "^2.3.1",
     "@chakra-ui/react": "^3.0.0",
     "@emotion/react": "^11.13.3",
-    "aqua-js-sdk": "github:inblockio/aqua-js-sdk#b43a60656bf5c228001dde4c1ea744db9b671fef",
+    "aqua-js-sdk": "github:inblockio/aqua-js-sdk#77d2a38ea524c9c1583800e4f510efb55c19a9ad",
     "axios": "^1.7.7",
     "docx-preview": "^0.3.5",
     "ethers": "^6.13.4",

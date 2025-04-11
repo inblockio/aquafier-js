@@ -17,9 +17,9 @@ import {
   Input,
   Button,
 } from '@chakra-ui/react'
-import { Field } from '../ui/field';
+import { Field } from '../chakra-ui/field';
 import { useRef, useState } from 'react';
-import { Switch } from '../ui/switch';
+import { Switch } from '../chakra-ui/switch';
 
 
 const fieldTypes = createListCollection({

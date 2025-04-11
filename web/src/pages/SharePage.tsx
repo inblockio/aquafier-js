@@ -4,14 +4,15 @@ import { useStore } from 'zustand'
 import appStore from '../store'
 import axios from 'axios'
 import { ApiFileInfo } from '../models/FileInfo'
-import { toaster } from '../components/ui/toaster'
+import { toaster } from '../components/chakra-ui/toaster'
 import Loading from 'react-loading'
 import { Box, Card, Center, Collapsible, Container, GridItem, Group, SimpleGrid, VStack } from '@chakra-ui/react'
-import ChainDetails, { RevisionDetailsSummary } from '../components/ui/navigation/CustomDrawer'
+import { ChainDetailsView, RevisionDetailsSummary } from '../components/aquaTreeRevisionDetails'
 import FilePreview from '../components/FilePreview'
 import { ImportAquaChainFromChain } from '../components/dropzone_file_actions'
-import { Alert } from '../components/ui/alert'
+import { Alert } from '../components/chakra-ui/alert'
 import { LuChevronUp, LuChevronDown } from 'react-icons/lu'
+import Aquafier from "aqua-js-sdk"
 
 const SharePage = () => {
     const { backend_url, metamaskAddress, session } = useStore(appStore)
@@ -19,7 +20,9 @@ const SharePage = () => {
     // const [fetchFromUrl, setFetchFromUrl] = useState(false)
     const [loading, setLoading] = useState(false)
     const [hasError, setHasError] = useState<string | null>(null);
-    const [isVerificationSuccesful, setIsVerificationSuccessful] = useState<boolean | null >(null)
+    // const [isVerificationSuccesful, setIsVerificationSuccessful] = useState<boolean | null >(null)
+    const [verificationResults, setVerificationResults] = useState<Map<string, boolean>>(new Map())
+
     const [showMoreDetails, setShowMoreDetails] = useState(false)
 
     const params = useParams()
@@ -80,9 +83,17 @@ const SharePage = () => {
         // }
     }, [params, session])
 
-    // useEffect(() => {
-    //     loadPageData()
-    // }, [])
+    const isVerificationComplete = (fileInfo: ApiFileInfo): boolean => verificationResults.size < Object.keys(fileInfo.aquaTree!.revisions!).length
+
+
+    function isVerificationSuccessful(): boolean {
+        for (const value of verificationResults.values()) {
+            if (!value) { // Equivalent to value === false
+                return true;
+            }
+        }
+        return false;
+    }
 
     const showProperWidget = () => {
         if (hasError) {
@@ -100,18 +111,25 @@ const SharePage = () => {
         return <div />
     }
 
-    const updateVerificationStatus = (revisionResults: Array<boolean>, revisionCount: number) => {
-        //  console.log(`revisionResults   ${revisionResults}   revisionCount ${revisionCount}`)
-        if (revisionResults.length >= revisionCount) {
-            const containsFailure = revisionResults.filter((e) => e == false);
-            if (containsFailure.length > 0) {
-                setIsVerificationSuccessful(false)
-            } else {
-                setIsVerificationSuccessful(true)
-            }
-        }
+    const verifyAquaTreeRevisions = async (fileInfo: ApiFileInfo) => {
 
+        // verify all revision
+        let aquafier = new Aquafier();
+        let revisionHashes = Object.keys(fileInfo.aquaTree!.revisions!);
+        for (let revisionHash of revisionHashes) {
+            let revision = fileInfo.aquaTree!.revisions![revisionHash];
+            let verificationResult = await aquafier.verifyAquaTreeRevision(fileInfo.aquaTree!, revision, revisionHash, [...fileInfo.fileObject, ...fileInfo.linkedFileObjects])
+
+            let data = verificationResults;
+            if (verificationResult.isOk()) {
+                data.set(revisionHash, true)
+            } else {
+                data.set(revisionHash, false)
+            }
+            setVerificationResults(data)
+        }
     }
+
 
     useEffect(() => {
         if (fileInfo) {
@@ -122,6 +140,8 @@ const SharePage = () => {
                 },
             });
             window.dispatchEvent(customEvent);
+
+            verifyAquaTreeRevisions(fileInfo)
         }
     }, [fileInfo])
 
@@ -147,10 +167,14 @@ const SharePage = () => {
                                 <Group justifyContent={'center'} w={'100%'}>
                                     {
                                         !metamaskAddress ? (
-                                            // <ConnectWallet />
+
                                             <Box />
                                         ) : (
-                                            <ImportAquaChainFromChain  fileInfo={fileInfo} isVerificationSuccessful={isVerificationSuccesful} />
+                                            isVerificationComplete(fileInfo) ?
+                                                <ImportAquaChainFromChain fileInfo={fileInfo} isVerificationSuccessful={isVerificationSuccessful()} />
+                                                : <Box>
+                                                    <Alert status="info" content="Waiting for Aqua tree verification to complete"></Alert>
+                                                </Box>
                                         )
                                     }
                                 </Group>
@@ -170,14 +194,16 @@ const SharePage = () => {
                                                     <VStack gap={'4'}>
                                                         {/* <Alert status={displayColorBasedOnVerificationAlert()} title={displayBasedOnVerificationStatusText()} /> */}
 
-                                                        <RevisionDetailsSummary isVerificationSuccess={isVerificationSuccesful}  fileInfo={fileInfo} />
+                                                         <RevisionDetailsSummary isVerificationComplete={isVerificationComplete(fileInfo)} isVerificationSuccess={isVerificationSuccessful()} fileInfo={fileInfo} />
+                                                                                                           
                                                         <Box w={'100%'}>
                                                             <Collapsible.Root open={showMoreDetails}>
                                                                 <Collapsible.Trigger w="100%" py={'md'} onClick={() => setShowMoreDetails(open => !open)} cursor={'pointer'}>
                                                                     <Alert w={'100%'} status={"info"} textAlign={'start'} title={showMoreDetails ? `Show less Details` : `Show more Details`} icon={showMoreDetails ? <LuChevronUp /> : <LuChevronDown />} />
                                                                 </Collapsible.Trigger>
                                                                 <Collapsible.Content py={'4'}>
-                                                                    <ChainDetails session={session!!} fileInfo={fileInfo} callBack={updateVerificationStatus} />
+                                                                    {/* <ChainDetails session={session!!} fileInfo={fileInfo} /> */}
+                                                                    <ChainDetailsView  fileInfo={fileInfo} isVerificationComplete={isVerificationComplete(fileInfo)}  verificationResults={verificationResults} />
                                                                 </Collapsible.Content>
                                                             </Collapsible.Root>
                                                         </Box>

@@ -1,6 +1,35 @@
+import { Revision } from "aqua-js-sdk"
 import { Session } from "../types"
 import { ApiFileInfo } from "./FileInfo"
 
+export interface IItemDetailData {
+    label: string
+    value: string
+    displayValue: string
+    showCopyIcon: boolean
+}
+
+
+export interface RevisionDetailsSummaryData {
+    fileInfo: ApiFileInfo,
+    isVerificationComplete: boolean,
+    isVerificationSuccess: boolean,
+    callBack?: (res: boolean) => void,
+}
+
+export interface AquaTreeDetailsViewData {
+    fileInfo: ApiFileInfo,
+    isVerificationComplete: boolean,
+    verificationResults: Map<string, boolean>,
+}
+export interface AquaTreeDetailsData {
+    fileInfo: ApiFileInfo,
+    isVerificationComplete: boolean,
+    verificationResults: Map<string, boolean>,
+    revision: Revision
+    revisionHash: string
+
+}
 export interface AquaTreeDetails {
     fileInfo: ApiFileInfo
     session: Session

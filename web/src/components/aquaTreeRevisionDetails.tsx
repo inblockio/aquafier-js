@@ -1,124 +1,48 @@
-import { useEffect, useState } from "react"
-import {
-    DrawerActionTrigger,
-    DrawerBackdrop,
-    DrawerBody,
-    DrawerContent,
-    DrawerFooter,
-    DrawerRoot,
-    DrawerTitle,
-
-} from "../drawer"
-import { Button } from "../button"
-import { LuCheck, LuChevronDown, LuChevronUp, LuExternalLink, LuEye, LuX } from "react-icons/lu"
-import { Box, Card, Collapsible, Drawer, For, GridItem, Group, Icon, IconButton, Link, Portal, SimpleGrid, Span, Text, VStack } from "@chakra-ui/react"
-import { TimelineConnector, TimelineContent, TimelineDescription, TimelineItem, TimelineRoot, TimelineTitle } from "../timeline"
-import { displayTime, formatCryptoAddress, fetchLinkedFileName } from "../../../utils/functions"
-import { Alert } from "../alert"
-import { ClipboardIconButton, ClipboardRoot } from "../clipboard"
-import Aquafier, { AquaOperationData, AquaTree, FileObject, LogData, LogTypeEmojis, Result, Revision } from "aqua-js-sdk";
+import { useState, useEffect } from "react";
+import { LuCheck, LuExternalLink,  LuX } from "react-icons/lu"
+import { Box, Card, Collapsible, For,  Group, Icon, IconButton, Link,   Span, Text, VStack } from "@chakra-ui/react"
+import { TimelineConnector, TimelineContent, TimelineDescription, TimelineItem, TimelineRoot, TimelineTitle } from "./chakra-ui/timeline"
+import { displayTime, formatCryptoAddress, fetchLinkedFileName } from "../utils/functions"
+import { Alert } from "./chakra-ui/alert"
+import Aquafier, { LogTypeEmojis,  Revision } from "aqua-js-sdk";
 import ReactLoading from "react-loading"
-import { WITNESS_NETWORK_MAP } from "../../../utils/constants"
-import { WitnessAquaChain, SignAquaChain, DeleteAquaChain } from "../../aqua_chain_actions"
-import { ApiFileInfo } from "../../../models/FileInfo"
-import FilePreview from "../../FilePreview"
-import { useStore } from "zustand"
-import appStore from "../../../store"
-import { WalletEnsView } from "../wallet_ens"
-import { AquaTreeDetails } from "../../../models/AquaTreeDetails"
-import ShareButtonAction from "../../actions/ShareButtonAction"
+import { WITNESS_NETWORK_MAP } from "../utils/constants"
+import { WalletEnsView } from "./chakra-ui/wallet_ens"
+import { AquaTreeDetails, AquaTreeDetailsData, AquaTreeDetailsViewData, RevisionDetailsSummaryData } from "../models/AquaTreeDetails"
+
+import { ItemDetail } from "./ItemDetails";
 
 
-interface IItemDetail {
-    label: string
-    value: string
-    displayValue: string
-    showCopyIcon: boolean
-}
-
-const ItemDetail = ({ label, value, displayValue, showCopyIcon }: IItemDetail) => {
-
-    return (
-        <Group textAlign={'start'} w={'100%'}>
-            <Text>{label}</Text>
-            <Group>
-                <Text fontFamily={"monospace"} textWrap={'wrap'} wordBreak={'break-word'}>{displayValue}</Text>
-                <ClipboardRoot value={value} hidden={!showCopyIcon}>
-                    <ClipboardIconButton size={'2xs'} />
-                </ClipboardRoot>
-            </Group>
-        </Group>
-    )
-}
-
-interface IRevisionDisplay {
-    fileObjects: FileObject[]
-    aquaTree: AquaTree
-    revision: Revision
-    revisionHash: string
-    callBack: (res: boolean) => void
-    // failedVerifications: string[]
-    // verificationResult: AquaOperationData[]
-}
-
-const RevisionDisplay = ({ aquaTree, revision, revisionHash, fileObjects, callBack }: IRevisionDisplay) => {
+export const RevisionDisplay = ({ fileInfo, revision, revisionHash, isVerificationComplete, verificationResults }: AquaTreeDetailsData) => {
 
     const [showRevisionDetails, setShowRevisionDetails] = useState(false)
 
-    const [verificationResult, setVerificationResult] = useState<Result<AquaOperationData, LogData[]> | null>(null)
-
-    const verifyAquaChain = async () => {
-
-        const verifier = new Aquafier();
-        if (aquaTree) {
-            try {
-
-                const res = await verifier.verifyAquaTreeRevision(aquaTree, revision, revisionHash, fileObjects);
-                setVerificationResult(res)
-                let isSuccess = true;
-                if (res.isErr()) {
-                    isSuccess = false
-                }
-                callBack(isSuccess)
-
-            } catch (error: any) {
-                console.error("Failed to verify aqua chain: ", error)
-            }
-
-        }
-    }
-
-
-
-    useEffect(() => {
-        if (aquaTree) {
-            verifyAquaChain()
-        }
-    }, [])
 
     const loaderSize = '40px'
 
     const returnBgColor = (): string => {
-        if (verificationResult == null) {
+        if (isVerificationComplete || !verificationResults.has(revisionHash)) {
             return "gray.400"
-        } else if (verificationResult.isErr()) {
-            return "red"
-        } else {
+        }
+        if (verificationResults.get(revisionHash)) {
             return "green"
+        } else {
+            return "red"
 
         }
     }
+
     const isVerificationSuccessful = (): boolean | null => {
 
-        if (verificationResult == null) {
+        if (isVerificationComplete || !verificationResults.has(revisionHash)) {
             return null
         }
 
 
-        if (verificationResult.isErr()) {
-            return false
+        if (verificationResults.get(revisionHash)) {
+            return true
         }
-        return true
+        return false
 
     }
 
@@ -230,7 +154,7 @@ const RevisionDisplay = ({ aquaTree, revision, revisionHash, fileObjects, callBa
                                                                 <Span>
                                                                     Revision  is &nbsp;
                                                                     {
-                                                                        revision.previous_verification_hash.length == 0 ? "Genesis Revision" : revision.revision_type == "link" ? <>{`linked to ${fetchLinkedFileName(aquaTree, revision)}`}</> : revision.revision_type
+                                                                        revision.previous_verification_hash.length == 0 ? "Genesis Revision" : revision.revision_type == "link" ? <>{`linked to ${fetchLinkedFileName(fileInfo.aquaTree!!, revision)}`}</> : revision.revision_type
                                                                     }
                                                                 </Span>
                                                             </TimelineTitle>
@@ -373,13 +297,9 @@ const RevisionDisplay = ({ aquaTree, revision, revisionHash, fileObjects, callBa
     )
 }
 
-interface IRevisionDetailsSummary {
-    fileInfo: ApiFileInfo,
-    isVerificationSuccess: boolean | null,
-    callBack?: (res: boolean) => void
-}
 
-export const RevisionDetailsSummary = ({ fileInfo, isVerificationSuccess }: IRevisionDetailsSummary) => {
+
+export const RevisionDetailsSummary = ({ fileInfo, isVerificationComplete, isVerificationSuccess }: RevisionDetailsSummaryData) => {
 
 
     // const pageData: PageData = JSON.parse(fileInfo.page_data);
@@ -404,13 +324,13 @@ export const RevisionDetailsSummary = ({ fileInfo, isVerificationSuccess }: IRev
     }
 
     const displayBasedOnVerificationStatusText = () => {
-        if (isVerificationSuccess == null) {
+        if (isVerificationComplete) {
             return "Verifying Aqua tree"
         }
         return isVerificationSuccess ? "This aqua tree  is valid" : "This aqua tree is invalid"
     }
     const displayColorBasedOnVerificationAlert = () => {
-        if (isVerificationSuccess == null) {
+        if (isVerificationComplete) {
             return "info"
         }
 
@@ -507,34 +427,57 @@ export const RevisionDetailsSummary = ({ fileInfo, isVerificationSuccess }: IRev
 }
 
 
+export const ChainDetails = ({ fileInfo }: AquaTreeDetails) => {
 
-const ChainDetails = ({ fileInfo, callBack }: AquaTreeDetails) => {
+    // const [aquaTree, setAquaTreeData] = useState<AquaTree | null>()
 
-    const [aquaTree, setAquaTreeData] = useState<AquaTree | null>()
+    const [verificationResults, setVerificationResults] = useState<Map<string, boolean>>(new Map())
 
-    let revisionValidationSuccess: Array<boolean> = [];
+    const isVerificationComplete = (): boolean => verificationResults.size < Object.keys(fileInfo.aquaTree!.revisions!).length
+
 
 
 
     useEffect(() => {
-        // const _pageData: AquaTree = JSON.parse(fileInfo.aquaTree)
-        setAquaTreeData(fileInfo.aquaTree)
+        const verifyAquaTreeRevisions = async () => {
+
+            // verify revision
+            let aquafier = new Aquafier();
+            let revisionHashes = Object.keys(fileInfo.aquaTree!.revisions!);
+            for (let revisionHash of revisionHashes) {
+                let revision = fileInfo.aquaTree!.revisions![revisionHash];
+                let verificationResult = await aquafier.verifyAquaTreeRevision(fileInfo.aquaTree!, revision, revisionHash, [...fileInfo.fileObject, ...fileInfo.linkedFileObjects])
+
+                let data = verificationResults;
+                if (verificationResult.isOk()) {
+                    data.set(revisionHash, true)
+                } else {
+                    data.set(revisionHash, false)
+                }
+                setVerificationResults(data)
+            }
+        }
+
+        verifyAquaTreeRevisions()
     }, [fileInfo])
 
     return (
         <>
             {
-                aquaTree ? (
+                fileInfo.aquaTree ? (
                     <TimelineRoot size="lg" variant="subtle" maxW="xl">
                         <For
-                            each={Object.keys(aquaTree.revisions)}
+                            each={Object.keys(fileInfo.aquaTree.revisions)}
                         >
                             {(revisionHash, index) => (
-                                <RevisionDisplay key={`revision_${index}`} revision={aquaTree.revisions[revisionHash]} revisionHash={revisionHash} aquaTree={aquaTree} fileObjects={[...fileInfo.fileObject]} callBack={(res) => {
-                                    const newData = [...revisionValidationSuccess, res]
-                                    revisionValidationSuccess = newData
-                                    callBack(newData, Object.keys(aquaTree!.revisions).length)
-                                }} />
+                                <RevisionDisplay key={`revision_${index}`}
+                                    fileInfo={fileInfo}
+                                    revision={fileInfo.aquaTree!.revisions[revisionHash]}
+                                    revisionHash={revisionHash}
+                                    isVerificationComplete={isVerificationComplete()}
+                                    verificationResults={verificationResults}
+
+                                />
 
                             )}
                         </For>
@@ -545,165 +488,32 @@ const ChainDetails = ({ fileInfo, callBack }: AquaTreeDetails) => {
     )
 }
 
-export const ChainDetailsBtn = ({ fileInfo, session }: AquaTreeDetails) => {
 
+export const ChainDetailsView = ({ fileInfo, isVerificationComplete, verificationResults }: AquaTreeDetailsViewData) => {
 
-    const [showMoreDetails, setShowMoreDetails] = useState(false)
-
-    const { backend_url } = useStore(appStore)
-    const [isOpen, setIsOpen] = useState(false)
-    // const pageData: PageData = JSON.parse(fileInfo.page_data)
-    const [isVerificationSuccessful, setIsVerificationSuccessful] = useState<boolean | null>(null)
-    // const [lastVerificationHash, setLastVerificationHash] = useState<string | null>(null)
-    const [fileName, setFileName] = useState<string>("")
-
-
-    const updateVerificationStatus = (revisionResults: Array<boolean>, revisionCount: number) => {
-        //  console.log(`revisionResults   ${revisionResults}   revisionCount ${revisionCount}`)
-        if (revisionResults.length >= revisionCount) {
-            const containsFailure = revisionResults.filter((e) => e == false);
-            if (containsFailure.length > 0) {
-                setIsVerificationSuccessful(false)
-            } else {
-                setIsVerificationSuccessful(true)
-            }
-        }
-
-    }
-
-
-
-    useEffect(() => {
-        const revisonHashes = Object.keys(fileInfo?.aquaTree!.revisions)
-        // const hash = revisonHashes[revisonHashes.length - 1]
-        // setLastVerificationHash(hash)
-        const name = fileInfo?.aquaTree?.file_index[revisonHashes[0]]
-        setFileName(`${name}`)
-    }, [fileInfo])
-
-    useEffect(() => {
-        if (isOpen) {
-            const modalElement = document.getElementById('aqua-chain-details-modal');
-            const customEvent = new CustomEvent('REPLACE_ADDRESSES', {
-                detail: {
-                    element: modalElement,
-                },
-            });
-            window.dispatchEvent(customEvent);
-        }
-    }, [isOpen])
-
-    const displayColorBasedOnVerificationStatusLight = () => {
-        if (isVerificationSuccessful == null) {
-            return "grey"
-        }
-
-        return isVerificationSuccessful ? 'green.100' : 'red.100'
-    }
-    const displayColorBasedOnVerificationStatusDark = () => {
-        if (isVerificationSuccessful == null) {
-            return "whitesmoke"
-        }
-
-        return isVerificationSuccessful ? 'green.900' : 'red.900'
-    }
-    const displayBasedOnVerificationStatusText = () => {
-        if (isVerificationSuccessful == null) {
-            return "Verifying Aqua tree"
-        }
-        return isVerificationSuccessful ? "This aqua tree  is valid" : "This aqua tree is invalid"
-    }
-    const displayColorBasedOnVerificationAlert = () => {
-        if (isVerificationSuccessful == null) {
-            return "info"
-        }
-
-        return isVerificationSuccessful ? 'success' : 'error'
-    }
     return (
         <>
-            <Button size={'xs'} colorPalette={'green'} variant={'subtle'} w={'100px'} onClick={() => setIsOpen(true)}>
-                <LuEye />
-                Details
-            </Button>
+            {
+                fileInfo.aquaTree ? (
+                    <TimelineRoot size="lg" variant="subtle" maxW="xl">
+                        <For
+                            each={Object.keys(fileInfo.aquaTree.revisions)}
+                        >
+                            {(revisionHash, index) => (
+                                <RevisionDisplay key={`revision_${index}`}
+                                    fileInfo={fileInfo}
+                                    revision={fileInfo!.aquaTree!.revisions[revisionHash]}
+                                    revisionHash={revisionHash}
+                                    isVerificationComplete={isVerificationComplete}
+                                    verificationResults={verificationResults}
 
-            <DrawerRoot open={isOpen} size={{ base: 'full', mdToXl: "xl" }} id="aqua-chain-details-modal"
-                onOpenChange={(e) => setIsOpen(e.open)} closeOnEscape={true} >
+                                />
 
-
-                <Portal>
-                    <DrawerBackdrop />
-                    <Drawer.Positioner>
-                        <DrawerContent borderLeftRadius={'xl'} overflow={'hidden'}>
-                            <Drawer.Header bg={{ base: displayColorBasedOnVerificationStatusLight(), _dark: displayColorBasedOnVerificationStatusDark() }}>
-                                <DrawerTitle flex="1">{fileName}</DrawerTitle>
-                                <Button
-                                    position="absolute"
-                                    right="8px"
-                                    top="8px"
-                                    colorPalette="whitesmoke"
-                                    variant="solid"
-                                    size="md"
-                                    onClick={() => setIsOpen(false)}
-                                    aria-label="Close drawer"
-                                >
-                                    <LuX />
-                                </Button>
-                            </Drawer.Header>
-                            <DrawerBody py={'lg'} px={1}>
-                                <Box>
-                                    <SimpleGrid columns={{ base: 1, md: 5 }}>
-                                        <GridItem colSpan={{ base: 1, md: 3 }}>
-                                            <Card.Root border={'none'} shadow={'none'} borderRadius={'xl'}>
-                                                <Card.Body>
-                                                    <FilePreview fileInfo={fileInfo.fileObject[0]} />
-                                                </Card.Body>
-                                            </Card.Root>
-                                        </GridItem>
-                                        <GridItem colSpan={{ base: 1, md: 2 }}>
-                                            <Card.Root borderRadius={'lg'} shadow={"none"}>
-                                                <Card.Body>
-                                                    <VStack gap={'4'}>
-                                                        <Alert status={displayColorBasedOnVerificationAlert()} title={displayBasedOnVerificationStatusText()} />
-
-                                                        <RevisionDetailsSummary isVerificationSuccess={isVerificationSuccessful}  fileInfo={fileInfo} />
-                                                        <Box w={'100%'}>
-                                                            <Collapsible.Root open={showMoreDetails}>
-                                                                <Collapsible.Trigger w="100%" py={'md'} onClick={() => setShowMoreDetails(open => !open)} cursor={'pointer'}>
-                                                                    <Alert w={'100%'} status={"info"} textAlign={'start'} title={showMoreDetails ? `Show less Details` : `Show more Details`} icon={showMoreDetails ? <LuChevronUp /> : <LuChevronDown />} />
-                                                                </Collapsible.Trigger>
-                                                                <Collapsible.Content py={'4'}>
-                                                                    <ChainDetails session={session} fileInfo={fileInfo} callBack={updateVerificationStatus} />
-                                                                </Collapsible.Content>
-                                                            </Collapsible.Root>
-                                                        </Box>
-                                                        {/* <Box minH={'400px'} /> */}
-                                                    </VStack>
-                                                </Card.Body>
-                                            </Card.Root>
-                                        </GridItem>
-                                    </SimpleGrid>
-                                </Box>
-
-                            </DrawerBody>
-                            <DrawerFooter flexWrap={'wrap'}>
-                                <DrawerActionTrigger asChild>
-                                    <Button variant="outline" size={'sm'}>Close</Button>
-                                </DrawerActionTrigger>
-                                <ShareButtonAction nonce={session?.nonce ?? ""} item={fileInfo} />
-                                <WitnessAquaChain apiFileInfo={fileInfo} backendUrl={backend_url} nonce={session?.nonce ?? ""} revision="" />
-                                <SignAquaChain apiFileInfo={fileInfo} backendUrl={backend_url} nonce={session?.nonce ?? ""} revision="" />
-                                <DeleteAquaChain apiFileInfo={fileInfo} backendUrl={backend_url} nonce={session?.nonce ?? ""} revision="" />
-                            </DrawerFooter>
-
-                        </DrawerContent>
-                    </Drawer.Positioner>
-                </Portal>
-
-            </DrawerRoot>
-
+                            )}
+                        </For>
+                    </TimelineRoot>
+                ) : null
+            }
         </>
     )
 }
-
-export default ChainDetails

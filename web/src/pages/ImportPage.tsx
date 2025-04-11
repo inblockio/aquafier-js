@@ -3,10 +3,11 @@ import { useStore } from 'zustand'
 import appStore from '../store'
 import { ApiFileInfo } from '../models/FileInfo'
 import { Box, Card, Collapsible, Container, Group, VStack } from '@chakra-ui/react'
-import ChainDetails, { RevisionDetailsSummary } from '../components/ui/navigation/CustomDrawer'
+import { ChainDetailsView, RevisionDetailsSummary } from '../components/aquaTreeRevisionDetails'
 import { ImportAquaChainFromChain } from '../components/dropzone_file_actions'
-import { Alert } from '../components/ui/alert'
+import { Alert } from '../components/chakra-ui/alert'
 import { LuChevronUp, LuChevronDown } from 'react-icons/lu'
+import Aquafier from 'aqua-js-sdk'
 
 interface IImportPage {
     // existingFileInfo: ApiFileInfo
@@ -14,11 +15,42 @@ interface IImportPage {
 }
 
 const ImportPage = ({ incomingFileInfo }: IImportPage) => {
-    const { metamaskAddress, session } = useStore(appStore)
-    const [isVerificationSuccesful, setIsVerificationSuccessful] = useState(false)
+    const { metamaskAddress } = useStore(appStore)
+    // const [isVerificationSuccesful, setIsVerificationSuccessful] = useState(false)
+    const [verificationResults, setVerificationResults] = useState<Map<string, boolean>>(new Map())
     const [showMoreDetails, setShowMoreDetails] = useState(false)
     const fileInfo = incomingFileInfo
 
+    const verifyAquaTreeRevisions = async (fileInfo: ApiFileInfo) => {
+
+        // verify all revision
+        let aquafier = new Aquafier();
+        let revisionHashes = Object.keys(fileInfo.aquaTree!.revisions!);
+        for (let revisionHash of revisionHashes) {
+            let revision = fileInfo.aquaTree!.revisions![revisionHash];
+            let verificationResult = await aquafier.verifyAquaTreeRevision(fileInfo.aquaTree!, revision, revisionHash, [...fileInfo.fileObject, ...fileInfo.linkedFileObjects])
+
+            let data = verificationResults;
+            if (verificationResult.isOk()) {
+                data.set(revisionHash, true)
+            } else {
+                data.set(revisionHash, false)
+            }
+            setVerificationResults(data)
+        }
+    }
+
+    const isVerificationComplete = (fileInfo: ApiFileInfo): boolean => verificationResults.size < Object.keys(fileInfo.aquaTree!.revisions!).length
+
+
+    function isVerificationSuccessful(): boolean {
+        for (const value of verificationResults.values()) {
+            if (!value) { // Equivalent to value === false
+                return true;
+            }
+        }
+        return false;
+    }
 
     useEffect(() => {
         if (fileInfo) {
@@ -29,6 +61,8 @@ const ImportPage = ({ incomingFileInfo }: IImportPage) => {
                 },
             });
             window.dispatchEvent(customEvent);
+
+            verifyAquaTreeRevisions(fileInfo);
         }
     }, [fileInfo])
 
@@ -44,7 +78,11 @@ const ImportPage = ({ incomingFileInfo }: IImportPage) => {
                                         // <ConnectWallet />
                                         <Box />
                                     ) : (
-                                        <ImportAquaChainFromChain fileInfo={fileInfo} isVerificationSuccessful={isVerificationSuccesful} />
+                                        isVerificationComplete(fileInfo) ?
+                                            <ImportAquaChainFromChain fileInfo={fileInfo} isVerificationSuccessful={isVerificationSuccessful()} />
+                                            : <Box>
+                                                <Alert status="info" content="Waiting for Aqua tree verification to complete"></Alert>
+                                            </Box>
                                     )
                                 }
                             </Group>
@@ -56,23 +94,24 @@ const ImportPage = ({ incomingFileInfo }: IImportPage) => {
                                 </Card.Root>
                             </Box> */}
                             <Box w={'100%'}>
-                                <RevisionDetailsSummary isVerificationSuccess={isVerificationSuccesful} fileInfo={fileInfo} />
-                                {/* <ChainDetails fileInfo={fileInfo} callBack={(res) => setIsVerificationSuccessful(res)} /> */}
+                                {/* <RevisionDetailsSummary isVerificationComplete={ } isVerificationSuccess={isVerificationSuccesful} fileInfo={fileInfo} /> */}
+                                <RevisionDetailsSummary isVerificationComplete={isVerificationComplete(fileInfo)} isVerificationSuccess={isVerificationSuccessful()} fileInfo={fileInfo} />
+
                                 <Card.Root borderRadius={'lg'}>
                                     <Card.Body>
                                         <VStack gap={'4'}>
-                                            <Alert status={isVerificationSuccesful ? 'success' : 'error'} title={isVerificationSuccesful ? "This chain is valid" : "This chain is invalid"} />
+                                            {
+                                                isVerificationComplete(fileInfo) ?
+                                                    <Alert status={isVerificationSuccessful() ? 'success' : 'error'} title={isVerificationSuccessful() ? "This chain is valid" : "This chain is invalid"} />
+                                                    : <></>
+                                            }
                                             <Box w={'100%'}>
                                                 <Collapsible.Root open={showMoreDetails}>
                                                     <Collapsible.Trigger w="100%" py={'md'} onClick={() => setShowMoreDetails(open => !open)} cursor={'pointer'}>
                                                         <Alert w={'100%'} status={"info"} textAlign={'start'} title={`Show more Details`} icon={showMoreDetails ? <LuChevronUp /> : <LuChevronDown />} />
                                                     </Collapsible.Trigger>
                                                     <Collapsible.Content py={'4'}>
-                                                        <ChainDetails session={session!} fileInfo={fileInfo} callBack={(res) => {
-                                                            console.log(`============ Verification is success=========  ${res}`)
-                                                            console.log(`FIX ME......................`)
-                                                            setIsVerificationSuccessful(res[0])
-                                                        }} />
+                                                        <ChainDetailsView fileInfo={fileInfo} isVerificationComplete={isVerificationComplete(fileInfo)} verificationResults={verificationResults} />
                                                     </Collapsible.Content>
                                                 </Collapsible.Root>
                                             </Box>

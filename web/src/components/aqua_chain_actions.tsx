@@ -1,25 +1,24 @@
-import { LuCross, LuDelete, LuDownload, LuGlasses, LuLink2, LuShare2, LuSignature, LuX } from "react-icons/lu"
-import { Button } from "./ui/button"
+import {  LuDelete, LuDownload, LuGlasses, LuLink2, LuShare2, LuSignature, LuX } from "react-icons/lu"
+import { Button } from "./chakra-ui/button"
 import { areArraysEqual, dummyCredential, ensureDomainUrlHasSSL, estimateStringFileSize, extractFileHash, fetchFiles, getFileName, getGenesisHash } from "../utils/functions"
 import { useStore } from "zustand"
 import appStore from "../store"
 import axios from "axios"
 import { ApiFileInfo } from "../models/FileInfo"
-import { toaster } from "./ui/toaster"
+import { toaster } from "./chakra-ui/toaster"
 import { useEffect, useState } from "react"
-import { Alert } from "./ui/alert"
-import { DialogActionTrigger, DialogBody, DialogCloseTrigger, DialogContent, DialogFooter, DialogHeader, DialogRoot, DialogTitle } from "./ui/dialog"
+import { Alert } from "./chakra-ui/alert"
+import { DialogActionTrigger, DialogBody, DialogCloseTrigger, DialogContent, DialogFooter, DialogHeader, DialogRoot, DialogTitle } from "./chakra-ui/dialog"
 import { generateNonce } from "siwe"
 import Loading from "react-loading"
-import { Checkbox } from "../components/ui/checkbox"
+import { Checkbox } from "./chakra-ui/checkbox"
 import { Box, Center, Input, HStack, Text, VStack, Portal, Dialog, List } from "@chakra-ui/react"
-import { ClipboardButton, ClipboardIconButton, ClipboardInput, ClipboardLabel, ClipboardRoot } from "./ui/clipboard"
-import { InputGroup } from "./ui/input-group"
+import { ClipboardButton, ClipboardIconButton, ClipboardInput, ClipboardLabel, ClipboardRoot } from "./chakra-ui/clipboard"
+import { InputGroup } from "./chakra-ui/input-group"
 import Aquafier, { AquaTree, AquaTreeWrapper, Revision } from "aqua-js-sdk"
 import { RevionOperation } from "../models/RevisionOperation"
 import JSZip from "jszip";
 import { AquaJsonInZip, AquaNameWithHash } from "../models/Aqua"
-import { CloseButton } from "./ui/close-button"
 
 // async function storeWitnessTx(file_id: number, filename: string, txhash: string, ownerAddress: string, network: string, files: ApiFileInfo[], setFiles: any, backend_url: string) {
 
@@ -391,7 +390,7 @@ export const DeleteAquaChain = ({ apiFileInfo, backendUrl, nonce }: RevionOperat
 
     return (
         <>
-            <Button size={'xs'} colorPalette={'red'} variant={'subtle'} w={'100px'} onClick={(e) => {
+            <Button size={'xs'} colorPalette={'red'} variant={'subtle'} w={'100px'} onClick={() => {
                 deleteFileAction()
             }} loading={deleting}>
                 <LuDelete />

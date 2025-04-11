@@ -6,13 +6,13 @@ import { generateNonce } from "siwe"
 import { useStore } from "zustand"
 import { ApiFileInfo } from "../../models/FileInfo"
 import appStore from "../../store"
-import { ClipboardIconButton, ClipboardRoot, ClipboardLabel, ClipboardInput, ClipboardLink } from "../ui/clipboard"
-import { InputGroup } from "../ui/input-group"
-import { toaster } from "../ui/toaster"
-import { DialogContent, DialogHeader, DialogRoot, DialogTitle, DialogBody, DialogFooter, DialogActionTrigger, DialogCloseTrigger } from "../ui/dialog"
+import { ClipboardIconButton, ClipboardRoot, ClipboardLabel, ClipboardInput, ClipboardLink } from "../chakra-ui/clipboard"
+import { InputGroup } from "../chakra-ui/input-group"
+import { toaster } from "../chakra-ui/toaster"
+import { DialogContent, DialogHeader, DialogRoot, DialogTitle, DialogBody, DialogFooter, DialogActionTrigger, DialogCloseTrigger } from "../chakra-ui/dialog"
 
 import { RadioCard } from "@chakra-ui/react"
-import { Switch } from "../ui/switch"
+import { Switch } from "../chakra-ui/switch"
 import { ethers } from "ethers"
 
 interface ISharingOptions {

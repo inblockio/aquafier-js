@@ -1,6 +1,6 @@
 import { Button , Text} from '@chakra-ui/react'
 // import React, { useEffect } from 'react'
-import { DialogBody, DialogCloseTrigger, DialogContent, DialogHeader, DialogRoot, DialogTitle, DialogTrigger } from './ui/dialog'
+import { DialogBody, DialogCloseTrigger, DialogContent, DialogHeader, DialogRoot, DialogTitle, DialogTrigger } from './chakra-ui/dialog'
 // import ImportPage from '../pages/ImportPage'
 // import { ApiFileInfo } from '../models/FileInfo'
 // import { readJsonFile } from '../utils/functions'

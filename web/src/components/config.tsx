@@ -3,7 +3,7 @@ import { useEffect } from "react";
 import { fetchFiles, generateAvatar, getCookie } from "../utils/functions";
 import { useStore } from "zustand";
 import appStore from "../store";
-import { toaster } from "./ui/toaster";
+import { toaster } from "./chakra-ui/toaster";
 import { ethers } from "ethers";
 
 

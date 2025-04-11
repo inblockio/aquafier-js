@@ -12,9 +12,9 @@ import {
   Portal,
   Select
 } from '@chakra-ui/react';
-import { Field } from '../components/ui/field';
+import { Field } from '../components/chakra-ui/field';
 import { FormTemplate, getFormTemplates, getFormTemplateById } from '../components/aqua_forms';
-import { NumberInputField, NumberInputRoot } from '../components/ui/number-input';
+import { NumberInputField, NumberInputRoot } from '../components/chakra-ui/number-input';
 
 // Template Select Component
 interface TemplateSelectProps {

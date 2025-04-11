@@ -1,5 +1,5 @@
 import { ReactNode } from "react"
-import Navbar from "../components/ui/navigation/Navbar"
+import Navbar from "../components/Navbar"
 
 
 interface IMainLayout {

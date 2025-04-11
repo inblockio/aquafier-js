@@ -11,8 +11,8 @@ import {
 } from '@chakra-ui/react';
 import { FormTemplate } from './types';
 import { getFormTemplates, deleteFormTemplate } from './formService';
-import { toaster } from '../ui/toaster';
-import { DialogBackdrop, DialogBody, DialogContent, DialogFooter, DialogHeader, DialogRoot } from '../ui/dialog';
+import { toaster } from '../chakra-ui/toaster';
+import { DialogBackdrop, DialogBody, DialogContent, DialogFooter, DialogHeader, DialogRoot } from '../chakra-ui/dialog';
 import { LuDelete, LuEye, LuPen } from 'react-icons/lu';
 
 interface FormTemplateListProps {

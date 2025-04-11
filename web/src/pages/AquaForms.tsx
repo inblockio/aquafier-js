@@ -14,7 +14,7 @@ import {
 import FormTemplateEditor from '../components/aqua_forms/FormTemplateEditor';
 import { FormTemplate, getFormTemplates } from '../components/aqua_forms';
 import FormTemplateList from '../components/aqua_forms/FormTemplateList';
-import { DialogCloseTrigger, DialogContent, DialogRoot } from '../components/ui/dialog';
+import { DialogCloseTrigger, DialogContent, DialogRoot } from '../components/chakra-ui/dialog';
 import FormTemplateViewer from '../components/aqua_forms/FormTemplateViewer';
 
 const AquaForms = () => {

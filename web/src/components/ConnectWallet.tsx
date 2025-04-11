@@ -1,18 +1,18 @@
 import { useState } from "react";
-import { Button } from "../button";
-import { DialogBody, DialogCloseTrigger, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "../dialog";
+import { Button } from "./chakra-ui/button";
+import { DialogBody, DialogCloseTrigger, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "./chakra-ui/dialog";
 import { Center, Dialog, Text, VStack } from "@chakra-ui/react";
 import { LuCircleCheck, LuCircleX, LuLogOut, LuWallet } from "react-icons/lu";
 import ReactLoading from "react-loading";
-import { fetchFiles, formatCryptoAddress, generateAvatar, getCookie, setCookie } from "../../../utils/functions";
+import { fetchFiles, formatCryptoAddress, generateAvatar, getCookie, setCookie } from "../utils/functions";
 import { SiweMessage, generateNonce } from "siwe";
-import { SESSION_COOKIE_NAME } from "../../../utils/constants";
+import { SESSION_COOKIE_NAME } from "../utils/constants";
 import axios from "axios";
 import { useStore } from "zustand";
-import appStore from "../../../store";
+import appStore from "../store";
 import { BrowserProvider, ethers } from "ethers";
-import { Avatar } from "../avatar";
-import { toaster } from "../toaster";
+import { Avatar } from "./chakra-ui/avatar";
+import { toaster } from "./chakra-ui/toaster";
 
 export default function ConnectWallet() {
   const { setMetamaskAddress, session, setFiles, avatar, setAvatar, setUserProfile, backend_url, setSession } = useStore(appStore);

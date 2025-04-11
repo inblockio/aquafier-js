@@ -15,7 +15,7 @@ import appStore from "../../store"
 import { displayTime, getFileCategory, getFileExtension } from "../../utils/functions"
 
 import { DeleteAquaChain, LinkButton, DownloadAquaChain, SignAquaChain, WitnessAquaChain } from "../aqua_chain_actions"
-import { ChainDetailsBtn } from "./navigation/CustomDrawer"
+import { ChainDetailsBtn } from "../CustomDrawer"
 import { Alert } from "./alert"
 import { ApiFileInfo } from "../../models/FileInfo"
 import ShareButtonAction from "../actions/ShareButtonAction"

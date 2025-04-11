@@ -1,11 +1,11 @@
 import { LuCheck, LuChevronRight, LuDock, LuImport, LuMinus, LuScan, LuUpload, LuX } from "react-icons/lu";
-import { Button } from "./ui/button";
+import { Button } from "./chakra-ui/button";
 import axios from "axios";
 import { useStore } from "zustand";
 import appStore from "../store";
 import { useEffect, useRef, useState } from "react";
 import { ApiFileInfo } from "../models/FileInfo";
-import { toaster } from "./ui/toaster";
+import { toaster } from "./chakra-ui/toaster";
 import { formatCryptoAddress, readFileAsText, validateAquaTree, getFileName,   readFileContent, checkIfFileExistInUserFiles, getGenesisHash, ensureDomainUrlHasSSL } from "../utils/functions";
 import { Box, Container, DialogCloseTrigger, Group, Input, List, Text, VStack } from "@chakra-ui/react";
 import {
@@ -18,11 +18,11 @@ import {
     ModalOverlay,
 } from '@chakra-ui/modal'
 
-import { Alert } from "./ui/alert";
+import { Alert } from "./chakra-ui/alert";
 import { useNavigate } from "react-router-dom";
 import { analyzeAndMergeRevisions } from "../utils/aqua_funcs";
-import { DialogActionTrigger, DialogBody, DialogContent, DialogFooter, DialogHeader, DialogRoot, DialogTitle } from "./ui/dialog";
-import { TimelineConnector, TimelineContent, TimelineDescription, TimelineItem, TimelineRoot, TimelineTitle } from "./ui/timeline";
+import { DialogActionTrigger, DialogBody, DialogContent, DialogFooter, DialogHeader, DialogRoot, DialogTitle } from "./chakra-ui/dialog";
+import { TimelineConnector, TimelineContent, TimelineDescription, TimelineItem, TimelineRoot, TimelineTitle } from "./chakra-ui/timeline";
 import { RevisionsComparisonResult } from "../models/revision_merge";
 import Aquafier, { AquaTree, FileObject, Revision } from "aqua-js-sdk";
 import JSZip from "jszip";

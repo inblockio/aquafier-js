@@ -1,9 +1,9 @@
 import { Box, Center, Container, Stack, Text, VStack } from "@chakra-ui/react"
-import { FileUploadDropzone, FileUploadList, FileUploadRoot } from "../components/ui/file-button"
-import FilesTable from "../components/ui/table"
+import { FileUploadDropzone, FileUploadList, FileUploadRoot } from "../components/chakra-ui/file-button"
+import FilesTable from "../components/chakra-ui/table"
 import { useStore } from "zustand"
 import appStore from "../store"
-import ConnectWallet from "../components/ui/navigation/ConnectWallet"
+import ConnectWallet from "../components/ConnectWallet"
 
 const Home = () => {
     const { session } = useStore(appStore)
