@@ -78,25 +78,6 @@ export const initializeBackendUrl = async (): Promise<string> => {
 };
 
 
-// const BACKEND_URL = "0.0.0.0.0";
-// Generate endpoints function
-// export const ENDPOINTS = () => ({
-// SIWE_SIGN_IN: `${BACKEND_URL}/siwe`,
-// FETCH_ADDRESS_BY_NONCE: `${BACKEND_URL}/session`,
-// SIWE_SIGN_OUT: `${BACKEND_URL}/siwe_logout`,
-
-// FETCH_USER_PROFILE: `${BACKEND_URL}/explorer_fetch_user_settings`,
-// UPDATE_USER_PROFILE: `${BACKEND_URL}/explorer_update_user_settings`,
-
-// EXPOLORER_FETCH_FILES: `${BACKEND_URL}/explorer_files`,
-// SIGN_FILE: `${BACKEND_URL}/explorer_sign_revision`,
-// WITNESS_FILE: `${BACKEND_URL}/explorer_witness_file`,
-// DELETE_FILE: `${BACKEND_URL}/explorer_delete_file`,
-// UPLOAD_FILE: `${BACKEND_URL}/explorer_file_upload`,
-// IMPORT_AQUA_CHAIN: `${BACKEND_URL}/explorer_aqua_file_upload`,
-// DELETE_ALL_FILES: `${BACKEND_URL}/explorer_delete_all_files`,
-// });
-
 
 export const testWitness = {
   "previous_verification_hash": "0x8fe3842787eb5d37c2fb170906a3d4c73c32b9dab7aab4525a06199fe9b9c823",

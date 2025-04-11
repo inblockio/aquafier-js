@@ -1,7 +1,7 @@
 import { AquaTree, FileObject, Revision as AquaRevision, OrderRevisionInAquaTree } from 'aqua-js-sdk';
 import { prisma } from '../database/db';
 // For specific model types
-import {  Latest, Signature, Revision, Witness, AquaForms, WitnessEvent, FileIndex, Link } from '@prisma/client';
+import { Latest, Signature, Revision, Witness, AquaForms, WitnessEvent, FileIndex, Link } from '@prisma/client';
 import * as fs from "fs"
 import path from 'path';
 
@@ -219,7 +219,7 @@ export async function saveAquaTree(aquaTree: AquaTree, userAddress: string,) {
             })
 
             if (fileResult == null) {
-               console.log(`-- > file data should be in database but is not found.hash  ${revisinHash}`);
+                console.log(`-- > file data should be in database but is not found.hash  ${revisinHash}`);
                 throw Error(`file data should be in database but is not found.`);
             }
 
@@ -346,7 +346,7 @@ export async function fetchAquaTreeWithForwardRevisions(latestRevisionHash: stri
     if (revisionData.length > 0) {
         //find latest hash 
         createAquaTreeFrom = revisionData[revisionData.length - 1].pubkey_hash
-    }else{
+    } else {
         console.log(`The aqua tree has no new revision  from ${latestRevisionHash} `)
     }
 
@@ -602,25 +602,27 @@ export async function createAquaTreeFromRevisions(latestRevisionHash: string, ur
                 })
 
                 if (filesData == null) {
-                    throw Error(`File index with hash ${hashSearchText} not found `)
+                    console.log(` 💣💣💣💣  File index with hash ${hashSearchText} not found `)
+                } else {
+                    anAquaTree.file_index[hashSearchText] = filesData?.uri ?? "--error--."
+
+
+                    let [aquaTreeLinked, fileObjectLinked] = await createAquaTreeFromRevisions(filesData.id, url);
+
+                    let name = Object.values(aquaTreeLinked.file_index)[0] ?? "--error--"
+                    fileObject.push({
+                        fileContent: aquaTreeLinked,
+                        fileName: `${name}.aqua.json`,
+                        path: "",
+                        fileSize: estimateStringFileSize(JSON.stringify(aquaTreeLinked, null, 4))
+                    })
+
+
+                    fileObject.push(...fileObjectLinked)
                 }
-                anAquaTree.file_index[hashSearchText] = filesData?.uri ?? "--error--."
 
-
-                let [aquaTreeLinked, fileObjectLinked] = await createAquaTreeFromRevisions(filesData.id, url);
-
-                let name = Object.values(aquaTreeLinked.file_index)[0] ?? "--error--"
-                fileObject.push({
-                    fileContent: aquaTreeLinked,
-                    fileName: `${name}.aqua.json`,
-                    path: "",
-                    fileSize: estimateStringFileSize(JSON.stringify(aquaTreeLinked, null, 4))
-                })
-
-
-                fileObject.push(...fileObjectLinked)
             } else {
-                throw Error(`Revision of type ${revisionItem.revision_type} is unknown`)
+                console.log(`💣💣💣💣 Revision of type ${revisionItem.revision_type} is unknown`)
             }
         }
 
@@ -800,7 +802,7 @@ export const isTextFile = (file: File): boolean => {
 };
 
 
-export function getGenesisHash(aquaTree: AquaTree) :  string | null{
+export function getGenesisHash(aquaTree: AquaTree): string | null {
     let aquaTreeGenesisHash: string | null = null;
     let allAquuaTreeHashes = Object.keys(aquaTree!.revisions);
 

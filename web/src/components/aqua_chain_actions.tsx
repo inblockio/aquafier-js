@@ -1,6 +1,6 @@
-import { LuDelete, LuDownload, LuGlasses, LuLink2, LuShare2, LuSignature } from "react-icons/lu"
+import { LuCross, LuDelete, LuDownload, LuGlasses, LuLink2, LuShare2, LuSignature, LuX } from "react-icons/lu"
 import { Button } from "./ui/button"
-import { areArraysEqual, dummyCredential, ensureDomainUrlHasSSL, estimateStringFileSize, extractFileHash, getFileName } from "../utils/functions"
+import { areArraysEqual, dummyCredential, ensureDomainUrlHasSSL, estimateStringFileSize, extractFileHash, fetchFiles, getFileName, getGenesisHash } from "../utils/functions"
 import { useStore } from "zustand"
 import appStore from "../store"
 import axios from "axios"
@@ -12,13 +12,14 @@ import { DialogActionTrigger, DialogBody, DialogCloseTrigger, DialogContent, Dia
 import { generateNonce } from "siwe"
 import Loading from "react-loading"
 import { Checkbox } from "../components/ui/checkbox"
-import { Box, Center, Input, HStack, Text, VStack } from "@chakra-ui/react"
+import { Box, Center, Input, HStack, Text, VStack, Portal, Dialog, List } from "@chakra-ui/react"
 import { ClipboardButton, ClipboardIconButton, ClipboardInput, ClipboardLabel, ClipboardRoot } from "./ui/clipboard"
 import { InputGroup } from "./ui/input-group"
 import Aquafier, { AquaTree, AquaTreeWrapper, Revision } from "aqua-js-sdk"
 import { RevionOperation } from "../models/RevisionOperation"
 import JSZip from "jszip";
 import { AquaJsonInZip, AquaNameWithHash } from "../models/Aqua"
+import { CloseButton } from "./ui/close-button"
 
 // async function storeWitnessTx(file_id: number, filename: string, txhash: string, ownerAddress: string, network: string, files: ApiFileInfo[], setFiles: any, backend_url: string) {
 
@@ -287,12 +288,12 @@ export const SignAquaChain = ({ apiFileInfo, backendUrl, nonce }: RevionOperatio
 
 
 export const DeleteAquaChain = ({ apiFileInfo, backendUrl, nonce }: RevionOperation) => {
-    const { files, setFiles } = useStore(appStore)
+    const { files, setFiles, session, backend_url } = useStore(appStore)
     const [deleting, setDeleting] = useState(false)
+    const [open, setOpen] = useState(false)
+    const [aquaTreesAffected, setAquaTreesAffected] = useState<ApiFileInfo[]>([])
 
-    const deleteFile = async () => {
-        setDeleting(true)
-
+    const deleteFileApi = async () => {
         try {
             const allRevisionHashes = Object.keys(apiFileInfo.aquaTree!.revisions!);
             const lastRevisionHash = allRevisionHashes[allRevisionHashes.length - 1]
@@ -306,23 +307,24 @@ export const DeleteAquaChain = ({ apiFileInfo, backendUrl, nonce }: RevionOperat
             });
 
             if (response.status === 200) {
-                //  console.log("update state ...")
-                const newFiles: ApiFileInfo[] = [];
-                const keysPar = Object.keys(apiFileInfo.aquaTree!.revisions!)
-                files.forEach((item) => {
-                    const keys = Object.keys(item.aquaTree!.revisions!)
-                    if (areArraysEqual(keys, keysPar)) {
-                        //  console.log("ignore revision files ...")
-                    } else {
-                        newFiles.push(item)
-                    }
-                })
+                // //  console.log("update state ...")
+                // const newFiles: ApiFileInfo[] = [];
+                // const keysPar = Object.keys(apiFileInfo.aquaTree!.revisions!)
+                // files.forEach((item) => {
+                //     const keys = Object.keys(item.aquaTree!.revisions!)
+                //     if (areArraysEqual(keys, keysPar)) {
+                //         //  console.log("ignore revision files ...")
+                //     } else {
+                //         newFiles.push(item)
+                //     }
+                // })
 
-                setFiles(newFiles)
+                // setFiles(newFiles)
                 toaster.create({
                     description: "File deleted successfully",
                     type: "success"
                 })
+                await refetchAllUserFiles()
             }
         } catch (e) {
             //  console.log(`Error ${e}`)
@@ -331,16 +333,115 @@ export const DeleteAquaChain = ({ apiFileInfo, backendUrl, nonce }: RevionOperat
                 type: "error"
             })
         }
+
+        setDeleting(false)
+
+    }
+
+    const refetchAllUserFiles = async () => {
+
+        // refetch all the files to enure the front end  state is the same as the backend 
+        try {
+            const files = await fetchFiles(session!.address!, `${backend_url}/explorer_files`, session!.nonce);
+            setFiles(files);
+        } catch (e) {
+            //  console.log(`Error ${e}`)
+            toaster.create({
+                description: "Error updating files",
+                type: "error"
+            })
+            document.location.reload()
+        }
+    }
+    const deleteFileAction = async () => {
+        setDeleting(true)
+
+        let allFilesAffected: ApiFileInfo[] = []
+        let genesisOfFileBeingDeleted = getGenesisHash(apiFileInfo.aquaTree!)
+        let fileNameBeingDeleted = getFileName(apiFileInfo.aquaTree!)
+        //check if the fileis linked to any aqua chain by using the file index of an aqua tree
+        for (let anAquaTree of files) {
+            // skip the current file beind delete
+            let genesisHash = getGenesisHash(anAquaTree.aquaTree!)
+            if (genesisHash == genesisOfFileBeingDeleted) {
+                console.log(`skipping  ${fileNameBeingDeleted} the file is being deleted`)
+            } else {
+                let indexValues = Object.values(anAquaTree.aquaTree!.file_index)
+                for (let fileName of indexValues) {
+                    if (fileNameBeingDeleted == fileName) {
+                        allFilesAffected.push(anAquaTree)
+                    }
+                }
+            }
+        }
+        setAquaTreesAffected(allFilesAffected)
+
+        if (allFilesAffected.length == 0) {
+            await deleteFileApi()
+        }
+
+        setOpen(true)
+
+
+
         setDeleting(false)
     }
 
 
 
     return (
-        <Button size={'xs'} colorPalette={'red'} variant={'subtle'} w={'100px'} onClick={deleteFile} loading={deleting}>
-            <LuDelete />
-            Delete
-        </Button>
+        <>
+            <Button size={'xs'} colorPalette={'red'} variant={'subtle'} w={'100px'} onClick={(e) => {
+                deleteFileAction()
+            }} loading={deleting}>
+                <LuDelete />
+                Delete
+            </Button>
+
+            <Dialog.Root lazyMount open={open} onOpenChange={(e) => setOpen(e.open)}>
+                {/* <Dialog.Trigger asChild>
+        <Button variant="outline">Open</Button>
+      </Dialog.Trigger> */}
+                <Portal>
+                    <Dialog.Backdrop />
+                    <Dialog.Positioner>
+                        <Dialog.Content>
+                            <Dialog.Header>
+                                <Dialog.Title> This action will corrupt your some file(s)</Dialog.Title>
+                            </Dialog.Header>
+                            <Dialog.Body>
+                                <Text>The following aqua trees will become corrupt, as they reference the file you are about to delete</Text>
+                                <List.Root as="ol">
+
+                                    {aquaTreesAffected.map((apiFileInfoItem) => {
+                                        return <List.Item>
+                                            {getFileName(apiFileInfoItem.aquaTree!) ?? "--error--"}
+                                        </List.Item>
+                                    })}
+                                </List.Root>
+
+                            </Dialog.Body>
+                            {/* 
+                                <Dialog.ActionTrigger asChild>
+                                    <Button variant="outline">Cancel</Button>
+                                </Dialog.ActionTrigger>
+                                <Button>Save</Button>
+                            </Dialog.Footer> */}
+                            <Dialog.Footer>
+
+                                <Dialog.CloseTrigger asChild>
+                                    <Button onClick={() => {
+                                        deleteFileApi()
+                                    }} size="sm" colorPalette={'red'} >
+                                        Proceed to delete &nbsp;<LuX />
+                                    </Button>
+                                </Dialog.CloseTrigger>
+                            </Dialog.Footer>
+                        </Dialog.Content>
+                    </Dialog.Positioner>
+                </Portal>
+            </Dialog.Root>
+        </>
     )
 }
 
@@ -375,7 +476,7 @@ export const DownloadAquaChain = ({ file }: { file: ApiFileInfo }) => {
 
                     let actualUrlToFetch = ensureDomainUrlHasSSL(fileObj.fileContent)
 
-                    
+
 
                     // Fetch the file from the URL
                     const response = await fetch(actualUrlToFetch, {
@@ -465,9 +566,9 @@ export const DownloadAquaChain = ({ file }: { file: ApiFileInfo }) => {
             // Check if fileContent is a string (URL)
             if (typeof fileObj.fileContent === 'string' && fileObj.fileContent.startsWith('http')) {
                 try {
-                    let actualUrlToFetch =ensureDomainUrlHasSSL( fileObj.fileContent)
+                    let actualUrlToFetch = ensureDomainUrlHasSSL(fileObj.fileContent)
 
-                  
+
 
                     // Fetch the file from the URL
                     const response = await fetch(actualUrlToFetch, {
@@ -541,7 +642,7 @@ export const DownloadAquaChain = ({ file }: { file: ApiFileInfo }) => {
 
     }
 
- 
+
 
     return (
         <Button size={'xs'} colorPalette={'purple'} variant={'subtle'} w={'100px'} onClick={downloadAquaJson} loading={downloading}>
