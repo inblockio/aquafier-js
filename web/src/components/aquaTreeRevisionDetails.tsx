@@ -1,10 +1,10 @@
 import { useState, useEffect } from "react";
-import { LuCheck, LuExternalLink,  LuX } from "react-icons/lu"
-import { Box, Card, Collapsible, For,  Group, Icon, IconButton, Link,   Span, Text, VStack } from "@chakra-ui/react"
+import { LuCheck, LuExternalLink, LuX } from "react-icons/lu"
+import { Box, Card, Collapsible, For, Group, Icon, IconButton, Link, Span, Text, VStack } from "@chakra-ui/react"
 import { TimelineConnector, TimelineContent, TimelineDescription, TimelineItem, TimelineRoot, TimelineTitle } from "./chakra-ui/timeline"
 import { displayTime, formatCryptoAddress, fetchLinkedFileName } from "../utils/functions"
 import { Alert } from "./chakra-ui/alert"
-import Aquafier, { LogTypeEmojis,  Revision } from "aqua-js-sdk";
+import Aquafier, { LogTypeEmojis, Revision } from "aqua-js-sdk";
 import ReactLoading from "react-loading"
 import { WITNESS_NETWORK_MAP } from "../utils/constants"
 import { WalletEnsView } from "./chakra-ui/wallet_ens"
@@ -21,8 +21,11 @@ export const RevisionDisplay = ({ fileInfo, revision, revisionHash, isVerificati
     const loaderSize = '40px'
 
     const returnBgColor = (): string => {
-        if (isVerificationComplete || !verificationResults.has(revisionHash)) {
+        if (!isVerificationComplete) {
             return "gray.400"
+        }
+        if (!verificationResults.has(revisionHash)) {
+            return "yellow"
         }
         if (verificationResults.get(revisionHash)) {
             return "green"
@@ -34,10 +37,16 @@ export const RevisionDisplay = ({ fileInfo, revision, revisionHash, isVerificati
 
     const isVerificationSuccessful = (): boolean | null => {
 
-        if (isVerificationComplete || !verificationResults.has(revisionHash)) {
+        console.log(`isVerificationComplete ${isVerificationComplete} mapcontains ${verificationResults.has(revisionHash)}  verificationResults size  --- ${verificationResults.size}  `)
+        console.table(verificationResults)
+        if (!isVerificationComplete) {
             return null
         }
 
+        if (!verificationResults.has(revisionHash)) {
+            console.log(`💣💣 Hash not found ${revisionHash}`)
+            return null
+        }
 
         if (verificationResults.get(revisionHash)) {
             return true
@@ -323,23 +332,8 @@ export const RevisionDetailsSummary = ({ fileInfo, isVerificationComplete, isVer
         }
     }
 
-    const displayBasedOnVerificationStatusText = () => {
-        if (isVerificationComplete) {
-            return "Verifying Aqua tree"
-        }
-        return isVerificationSuccess ? "This aqua tree  is valid" : "This aqua tree is invalid"
-    }
-    const displayColorBasedOnVerificationAlert = () => {
-        if (isVerificationComplete) {
-            return "info"
-        }
-
-        return isVerificationSuccess ? 'success' : 'error'
-    }
 
     return (<VStack textAlign="start">
-
-        <Alert status={displayColorBasedOnVerificationAlert()} title={displayBasedOnVerificationStatusText()} />
 
 
         <Text>Revisions count : {revisionHashes.length}</Text>
@@ -448,13 +442,16 @@ export const ChainDetails = ({ fileInfo }: AquaTreeDetails) => {
                 let revision = fileInfo.aquaTree!.revisions![revisionHash];
                 let verificationResult = await aquafier.verifyAquaTreeRevision(fileInfo.aquaTree!, revision, revisionHash, [...fileInfo.fileObject, ...fileInfo.linkedFileObjects])
 
-                let data = verificationResults;
-                if (verificationResult.isOk()) {
-                    data.set(revisionHash, true)
-                } else {
-                    data.set(revisionHash, false)
-                }
-                setVerificationResults(data)
+                // Create a new Map reference for the state update
+                setVerificationResults(prevResults => {
+                    const newResults = new Map(prevResults);
+                    if (verificationResult.isOk()) {
+                        newResults.set(revisionHash, true);
+                    } else {
+                        newResults.set(revisionHash, false);
+                    }
+                    return newResults;
+                });
             }
         }
 

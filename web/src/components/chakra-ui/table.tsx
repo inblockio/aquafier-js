@@ -71,7 +71,7 @@ const FilesTable = () => {
                 <Group alignItems={'space-between'} flexWrap={'wrap'} position={"relative"}>
                    
                 <ChainDetailsBtn fileInfo={item} session={session!!} callBack={()=>{
-                        console.log("Details callback")
+                      //  console.log("Details callback")
                     }} />
                     <SignAquaChain apiFileInfo={item} backendUrl={backend_url} nonce={session?.nonce ?? ""} revision="" />
                     <WitnessAquaChain apiFileInfo={item} backendUrl={backend_url} nonce={session?.nonce ?? ""} revision="" />

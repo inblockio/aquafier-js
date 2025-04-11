@@ -11,18 +11,18 @@ import {
 } from "./chakra-ui/drawer"
 import { Button } from "./chakra-ui/button"
 import { LuChevronDown, LuChevronUp, LuEye, LuX } from "react-icons/lu"
-import { Box, Card, Collapsible, Drawer, For, GridItem, Portal, SimpleGrid,  VStack } from "@chakra-ui/react"
+import { Box, Card, Collapsible, Drawer, For, GridItem, Portal, SimpleGrid, VStack } from "@chakra-ui/react"
 import { TimelineRoot } from "./chakra-ui/timeline"
-import { getFileName } from "../utils/functions"
+import { ensureDomainUrlHasSSL, getFileName } from "../utils/functions"
 import { Alert } from "./chakra-ui/alert"
-import Aquafier from "aqua-js-sdk"
+import Aquafier, { FileObject } from "aqua-js-sdk"
 import { WitnessAquaChain, SignAquaChain, DeleteAquaChain } from "./aqua_chain_actions"
 import FilePreview from "./FilePreview"
 import { useStore } from "zustand"
 import appStore from "../store"
 import { AquaTreeDetails, } from "../models/AquaTreeDetails"
 import ShareButtonAction from "./actions/ShareButtonAction"
-import { RevisionDetailsSummary , RevisionDisplay } from "./aquaTreeRevisionDetails"
+import { RevisionDetailsSummary, RevisionDisplay } from "./aquaTreeRevisionDetails"
 
 
 
@@ -37,23 +37,95 @@ export const ChainDetailsBtn = ({ fileInfo, session }: AquaTreeDetails) => {
 
     const [verificationResults, setVerificationResults] = useState<Map<string, boolean>>(new Map())
 
+    const fetchFileData = async (url: string): Promise<string | Uint8Array<ArrayBufferLike> | null> => {
+        try {
+            // const fileContentUrl: string = fileInfo.fileContent as string
+            console.log("File content url: ", url)
+
+            let actualUrlToFetch = ensureDomainUrlHasSSL(url)
+
+            const response = await fetch(actualUrlToFetch, {
+                headers: {
+                    nonce: `${session?.nonce}`
+                }
+            });
+            if (!response.ok) throw new Error("Failed to fetch file");
+
+            // Get MIME type from headers
+            let contentType = response.headers.get("Content-Type") || "";
+            //console.log("Original Content-Type from headers:", contentType);
+
+            // Clone the response for potential text extraction
+            const responseClone = response.clone();
+
+
+
+            if (contentType.startsWith("text/") ||
+                contentType === "application/json" ||
+                contentType === "application/xml" ||
+                contentType === "application/javascript") {
+
+                return await responseClone.text();
+            } else {
+
+
+                // Get the raw data as ArrayBuffer and convert to Uint8Array
+                const arrayBuffer = await response.arrayBuffer();
+                return new Uint8Array(arrayBuffer);
+
+            }
+        } catch (e) {
+            console.log(`error occured fetch file ${e}`)
+            return null
+        }
+    }
     const verifyAquaTreeRevisions = async () => {
+
+        let aquafier = new Aquafier();
+
+
+
         let fileName = getFileName(fileInfo?.aquaTree!);
         setFileName(fileName)
         // verify revision
-        let aquafier = new Aquafier();
         let revisionHashes = Object.keys(fileInfo.aquaTree!.revisions!);
         for (let revisionHash of revisionHashes) {
             let revision = fileInfo.aquaTree!.revisions![revisionHash];
-            let verificationResult = await aquafier.verifyAquaTreeRevision(fileInfo.aquaTree!, revision, revisionHash, [...fileInfo.fileObject])
 
-            let data = verificationResults;
-            if (verificationResult.isOk()) {
-                data.set(revisionHash, true)
-            } else {
-                data.set(revisionHash, false)
+            let fileObject: FileObject[] = [];
+
+            for (let file of fileInfo.fileObject) {
+
+                if (typeof file.fileContent == 'string') {
+                    let fileData = await fetchFileData(file.fileContent);
+
+                    if (fileData == null) {
+                        console.error(`💣💣💣Unable to fetch file  from  ${file.fileContent}`)
+                    } else {
+                        let fileItem = file
+                        fileItem.fileContent = fileData
+                        fileObject.push(fileItem)
+                    }
+                } else {
+                    fileObject.push(file)
+                }
+
             }
-            setVerificationResults(data)
+
+
+            let verificationResult = await aquafier.verifyAquaTreeRevision(fileInfo.aquaTree!, revision, revisionHash, fileObject)
+
+            console.log(`hash ${revisionHash} \n revision  ${JSON.stringify(revision, null, 4)} SDK DATA ${JSON.stringify(verificationResult, null, 4)}  \n is oky-> ${verificationResult.isOk()}`)
+            // Create a new Map reference for the state update
+            setVerificationResults(prevResults => {
+                const newResults = new Map(prevResults);
+                if (verificationResult.isOk()) {
+                    newResults.set(revisionHash, true);
+                } else {
+                    newResults.set(revisionHash, false);
+                }
+                return newResults;
+            });
         }
     }
 
@@ -73,41 +145,46 @@ export const ChainDetailsBtn = ({ fileInfo, session }: AquaTreeDetails) => {
         }
     }, [isOpen])
 
-    const isVerificationComplete = (): boolean => verificationResults.size < Object.keys(fileInfo.aquaTree!.revisions!).length
+    const isVerificationComplete = (): boolean => {
 
+        // console.log(`result ${verificationResults.size}  vs aquq tree ${Object.keys(fileInfo.aquaTree!.revisions!).length}`)
+        return verificationResults.size == Object.keys(fileInfo.aquaTree!.revisions!).length
 
-    function isVerificationSuccessful(): boolean {
+    }
+
+    const isVerificationSuccessful = (): boolean => {
         for (const value of verificationResults.values()) {
-            if (!value) { // Equivalent to value === false
-                return true;
+            // console.log(`Values ${value}`)
+            if (!value) {
+                return false
             }
         }
-        return false;
+        return true;
     }
 
 
     const displayColorBasedOnVerificationStatusLight = () => {
-        if (isVerificationComplete()) {
+        if (!isVerificationComplete()) {
             return "grey"
         }
 
         return isVerificationSuccessful() ? 'green.100' : 'red.100'
     }
     const displayColorBasedOnVerificationStatusDark = () => {
-        if (isVerificationComplete()) {
+        if (!isVerificationComplete()) {
             return "whitesmoke"
         }
 
         return isVerificationSuccessful() ? 'green.900' : 'red.900'
     }
     const displayBasedOnVerificationStatusText = () => {
-        if (isVerificationComplete()) {
+        if (!isVerificationComplete()) {
             return "Verifying Aqua tree"
         }
         return isVerificationSuccessful() ? "This aqua tree  is valid" : "This aqua tree is invalid"
     }
     const displayColorBasedOnVerificationAlert = () => {
-        if (isVerificationComplete()) {
+        if (!isVerificationComplete()) {
             return "info"
         }
 
