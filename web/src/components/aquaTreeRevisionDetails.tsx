@@ -107,6 +107,9 @@ export const RevisionDisplay = ({ fileInfo, revision, revisionHash, isVerificati
 
     const revisionTypeEmoji = LogTypeEmojis[revision.revision_type]
 
+    useEffect(()=>{
+
+    },[isVerificationComplete,verificationResults])
     return (
         <div>
             <TimelineItem>
@@ -280,7 +283,9 @@ export const RevisionDisplay = ({ fileInfo, revision, revisionHash, isVerificati
                                                             />
                                                             <Link outline={'none'} href={`${WITNESS_NETWORK_MAP[revision.witness_network!!]}/${revision.witness_transaction_hash}`} target="_blank">
                                                                 <Icon size={'lg'} color={'blue.500'}>
-                                                                    <LuExternalLink />
+                                                                    <Box>
+                                                                        <LuExternalLink />
+                                                                    </Box>
                                                                 </Icon>
                                                             </Link>
                                                         </Group>
@@ -409,7 +414,9 @@ export const RevisionDetailsSummary = ({ fileInfo }: RevisionDetailsSummaryData)
                                 />
                                 <Link outline={'none'} href={`${WITNESS_NETWORK_MAP[revision.witness_network ?? ""]}/${revision.witness_transaction_hash}`} target="_blank">
                                     <Icon size={'sm'} color={'blue.500'}>
-                                        <LuExternalLink />
+                                        <Box>
+                                            <LuExternalLink />
+                                        </Box>
                                     </Icon>
                                 </Link>
                             </Group>

@@ -92,6 +92,7 @@ export const CompleteChainView = ({ fileInfo, callBack }: ICompleteChainView) =>
 
         return isVerificationSuccessful(_verificationResults) ? 'green.100' : 'red.100'
     }
+
     const displayColorBasedOnVerificationStatusDark = (_verificationResults: Map<string, boolean>) => {
         if (!isVerificationComplete()) {
             return "whitesmoke"
@@ -205,16 +206,7 @@ export const CompleteChainView = ({ fileInfo, callBack }: ICompleteChainView) =>
         verifyAquaTreeRevisions()
     }, [fileInfo])
 
-    // useEffect(() => {
-    //     const modalElement = document.getElementById('aqua-chain-details-modal');
-    //     const customEvent = new CustomEvent('REPLACE_ADDRESSES', {
-    //         detail: {
-    //             element: modalElement,
-    //         },
-    //     });
-    //     window.dispatchEvent(customEvent);
-    // }, [])
-
+   
 
     return (
         <>
