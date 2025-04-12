@@ -24,11 +24,10 @@ export const ChainDetailsBtn = ({ callBack }: IChainDetailsBtn) => {
     )
 }
 
-export const CompleteChainView = ({ callBack }: ICompleteChainView) => {
-
+export const CompleteChainView = ({ callBack, selectedFileInfo }: ICompleteChainView) => {
 
     const [showMoreDetails, setShowMoreDetails] = useState(false)
-    const { session, selectedFileInfo } = useStore(appStore)
+    const { session } = useStore(appStore)
     // const [selectedFileInfo, setFileInfo] = useState(selectedFileInfo)
 
     const [verificationResults, setVerificationResults] = useState<VerificationHashAndResult[]>([])
@@ -36,7 +35,6 @@ export const CompleteChainView = ({ callBack }: ICompleteChainView) => {
     const fetchFileData = async (url: string): Promise<string | ArrayBuffer | null> => {
         try {
             // const fileContentUrl: string = selectedFileInfo.fileContent as string
-            // console.log("File content url: ", url)
 
             let actualUrlToFetch = ensureDomainUrlHasSSL(url)
 
@@ -49,7 +47,6 @@ export const CompleteChainView = ({ callBack }: ICompleteChainView) => {
 
             // Get MIME type from headers
             let contentType = response.headers.get("Content-Type") || "";
-            //// console.log("Original Content-Type from headers:", contentType);
 
             // Clone the response for potential text extraction
             const responseClone = response.clone();
@@ -72,7 +69,6 @@ export const CompleteChainView = ({ callBack }: ICompleteChainView) => {
 
             }
         } catch (e) {
-            // console.log(`error occured fetch file ${e}`)
             return null
         }
     }
@@ -104,7 +100,6 @@ export const CompleteChainView = ({ callBack }: ICompleteChainView) => {
     }
 
     const verifyAquaTreeRevisions = async (fileInfo: ApiFileInfo) => {
-        console.log("Starting verification: ")
         let aquafier = new Aquafier();
         let _drawerStatus: IDrawerStatus = {
             colorLight: "",
@@ -127,10 +122,8 @@ export const CompleteChainView = ({ callBack }: ICompleteChainView) => {
 
         for (let file of fileInfo?.fileObject!!) {
 
-            // console.log(`File loop name ${file.fileName} url  ${file.fileContent} type ${typeof file.fileContent}  `)
             if (typeof file.fileContent == 'string' && (file.fileContent.startsWith("http://") || file.fileContent.startsWith("https://"))) {
                 let fileData = await fetchFileData(file.fileContent);
-                // console.log(`console log type of string == >${fileData} `)
 
                 if (fileData == null) {
                     console.error(`💣💣💣Unable to fetch file  from  ${file.fileContent}`)
@@ -165,16 +158,14 @@ export const CompleteChainView = ({ callBack }: ICompleteChainView) => {
             let revision = fileInfo?.aquaTree!.revisions![revisionHash];
 
             let verificationResult = await aquafier.verifyAquaTreeRevision(fileInfo?.aquaTree!, revision!!, revisionHash, fileObjectVerifier)
-
-            // console.log(`hash ${revisionHash} \n revision  ${JSON.stringify(revision, null, 4)} SDK DATA ${JSON.stringify(verificationResult, null, 4)}  \n is oky-> ${verificationResult.isOk()} \n file object ${JSON.stringify(fileObjectVerifier, null, 4)}`)
-
+            console.log(`111. Revision: ${revisionHash}`, verificationResult)
             if (verificationResult.isOk()) {
                 allRevisionsVerificationsStatus.push({ hash: revisionHash, isSuccessful: true });
             } else {
                 allRevisionsVerificationsStatus.push({ hash: revisionHash, isSuccessful: false });
             }
         }
-        console.log("We are done with verification: ", allRevisionsVerificationsStatus)
+
         setVerificationResults(allRevisionsVerificationsStatus)
         let _isVerificationSuccesful = isVerificationSuccessful(allRevisionsVerificationsStatus)
         _drawerStatus.isVerificationSuccessful = _isVerificationSuccesful
@@ -206,11 +197,10 @@ export const CompleteChainView = ({ callBack }: ICompleteChainView) => {
 
     useEffect(() => {
         if(selectedFileInfo){
-            console.log("Here we go")
             verifyAquaTreeRevisions(selectedFileInfo)
         }
     }, [Object.keys(selectedFileInfo?.aquaTree?.revisions ?? {}).length])
-
+    console.log("Verification results: ", verificationResults)
 
     return (
         <>

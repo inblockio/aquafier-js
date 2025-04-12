@@ -247,9 +247,9 @@ const FilesTable = () => {
                                         <LuX />
                                     </Button>
                                 </Drawer.Header>
-                                <DrawerBody py={'lg'} px={1}>
+                                <DrawerBody py={'lg'} px={1}> 
 
-                                    <CompleteChainView callBack={updateDrawerStatus} />
+                                    <CompleteChainView callBack={updateDrawerStatus} selectedFileInfo={selectedFileInfo} />
 
                                 </DrawerBody>
                                 <DrawerFooter flexWrap={'wrap'}>

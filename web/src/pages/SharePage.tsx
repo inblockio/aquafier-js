@@ -6,25 +6,18 @@ import axios from 'axios'
 import { ApiFileInfo } from '../models/FileInfo'
 import { toaster } from '../components/chakra-ui/toaster'
 import Loading from 'react-loading'
-import { Box, Card, Center, Collapsible, Container, GridItem, Group, SimpleGrid, VStack } from '@chakra-ui/react'
-import { ChainDetailsView, RevisionDetailsSummary } from '../components/aquaTreeRevisionDetails'
-import FilePreview from '../components/FilePreview'
+import { Box, Center, Container, Group, VStack } from '@chakra-ui/react'
 import { ImportAquaChainFromChain } from '../components/dropzone_file_actions'
 import { Alert } from '../components/chakra-ui/alert'
-import { LuChevronUp, LuChevronDown } from 'react-icons/lu'
-import Aquafier from "aqua-js-sdk"
-import { VerificationHashAndResult } from '../models/AquaTreeDetails'
+import { IDrawerStatus } from '../models/AquaTreeDetails'
+import { CompleteChainView } from '../components/CustomDrawer'
 
 const SharePage = () => {
     const { backend_url, metamaskAddress, session } = useStore(appStore)
     const [fileInfo, setFileInfo] = useState<ApiFileInfo | null>(null)
-    // const [fetchFromUrl, setFetchFromUrl] = useState(false)
     const [loading, setLoading] = useState(false)
     const [hasError, setHasError] = useState<string | null>(null);
-    // const [isVerificationSuccesful, setIsVerificationSuccessful] = useState<boolean | null >(null)
-    const [verificationResults, setVerificationResults] = useState<VerificationHashAndResult[]>([])
-
-    const [showMoreDetails, setShowMoreDetails] = useState(false)
+    const [drawerStatus, setDrawerStatus] = useState<IDrawerStatus | null>(null)
 
     const params = useParams()
 
@@ -74,34 +67,11 @@ const SharePage = () => {
     }
 
     useEffect(() => {
-        // if (fetchFromUrl == false) {
-        //    //  console.log("Trigered ...")
         if (params.identifier) {
             loadPageData()
         }
-        //     setFetchFromUrl(true);
-        // }else{
-        //    //  console.log("No.........Trigered ...") 
-        // }
         setHasError(null)
     }, [params, session])
-
-    const isVerificationComplete = (fileInfo: ApiFileInfo): boolean => verificationResults.length < Object.keys(fileInfo.aquaTree!.revisions!).length
-
-
-    function isVerificationSuccessful(): boolean {
-        // for (const value of verificationResults.values()) {
-        //     if (!value) { // Equivalent to value === false
-        //         return true;
-        //     }
-        // }
-        // return false;
-        // let falseExist = verificationResults.find((e) => e.isSuccessful == false);
-        // if (falseExist) {
-        //     return !falseExist
-        // }
-        return true
-    }
 
     const showProperWidget = () => {
         if (hasError) {
@@ -119,47 +89,10 @@ const SharePage = () => {
         return <div />
     }
 
-    const verifyAquaTreeRevisions = async (fileInfo: ApiFileInfo) => {
 
-        // verify all revision
-        let aquafier = new Aquafier();
-        let revisionHashes = Object.keys(fileInfo.aquaTree!.revisions!);
-        for (let revisionHash of revisionHashes) {
-            let revision = fileInfo.aquaTree!.revisions![revisionHash];
-            let verificationResult = await aquafier.verifyAquaTreeRevision(fileInfo.aquaTree!, revision, revisionHash, [...fileInfo.fileObject, ...fileInfo.linkedFileObjects])
-
-            // Create a new Map reference for the state update
-            setVerificationResults(prevResults => {
-                const newResults = [...prevResults];
-                let existingItem = prevResults.find(item => item.hash === revisionHash)
-                if (!existingItem) {
-                    if (verificationResult.isOk()) {
-                        newResults.push({ hash: revisionHash, isSuccessful: true });
-                    } else {
-                        newResults.push({ hash: revisionHash, isSuccessful: false });
-                    }
-                }
-                return newResults;
-            });
-
-
-        }
+    const updateDrawerStatus = (_drawerStatus: IDrawerStatus) => {
+        setDrawerStatus(_drawerStatus)
     }
-
-
-    useEffect(() => {
-        if (fileInfo) {
-            // const elementToReplace = document.getElementById('replace-here');
-            // const customEvent = new CustomEvent('REPLACE_ADDRESSES', {
-            //     detail: {
-            //         element: elementToReplace,
-            //     },
-            // });
-            // window.dispatchEvent(customEvent);
-
-            verifyAquaTreeRevisions(fileInfo)
-        }
-    }, [fileInfo])
 
     return (
         <div id='replace-here'>
@@ -186,50 +119,17 @@ const SharePage = () => {
 
                                             <Box />
                                         ) : (
-                                            isVerificationComplete(fileInfo) ?
-                                                <ImportAquaChainFromChain fileInfo={fileInfo} isVerificationSuccessful={isVerificationSuccessful()} />
+                                            drawerStatus ?
+                                                <ImportAquaChainFromChain fileInfo={fileInfo} isVerificationSuccessful={drawerStatus ? drawerStatus?.isVerificationSuccessful : false} />
                                                 : <Box>
-                                                    <Alert status="info" content="Waiting for Aqua tree verification to complete"></Alert>
+                                                    <Alert status="info">Waiting for Aqua tree verification to complete</Alert>
                                                 </Box>
                                         )
                                     }
                                 </Group>
-
-                                <Box>
-                                    <SimpleGrid columns={{ base: 1, md: 5 }}>
-                                        <GridItem colSpan={{ base: 1, md: 3 }}>
-                                            <Card.Root border={'none'} shadow={'none'} borderRadius={'xl'}>
-                                                <Card.Body>
-                                                    <FilePreview fileInfo={fileInfo.fileObject[0]} />
-                                                </Card.Body>
-                                            </Card.Root>
-                                        </GridItem>
-                                        <GridItem colSpan={{ base: 1, md: 2 }}>
-                                            <Card.Root borderRadius={'lg'} shadow={"none"}>
-                                                <Card.Body>
-                                                    <VStack gap={'4'}>
-                                                        {/* <Alert status={displayColorBasedOnVerificationAlert()} title={displayBasedOnVerificationStatusText()} /> */}
-
-                                                        <RevisionDetailsSummary isVerificationComplete={isVerificationComplete(fileInfo)} isVerificationSuccess={isVerificationSuccessful()} fileInfo={fileInfo} />
-
-                                                        <Box w={'100%'}>
-                                                            <Collapsible.Root open={showMoreDetails}>
-                                                                <Collapsible.Trigger w="100%" py={'md'} onClick={() => setShowMoreDetails(open => !open)} cursor={'pointer'}>
-                                                                    <Alert w={'100%'} status={"info"} textAlign={'start'} title={showMoreDetails ? `Show less Details` : `Show more Details`} icon={showMoreDetails ? <LuChevronUp /> : <LuChevronDown />} />
-                                                                </Collapsible.Trigger>
-                                                                <Collapsible.Content py={'4'}>
-                                                                    {/* <ChainDetails session={session!!} fileInfo={fileInfo} /> */}
-                                                                    <ChainDetailsView fileInfo={fileInfo} isVerificationComplete={isVerificationComplete(fileInfo)} verificationResults={verificationResults} />
-                                                                </Collapsible.Content>
-                                                            </Collapsible.Root>
-                                                        </Box>
-                                                    </VStack>
-                                                </Card.Body>
-                                            </Card.Root>
-                                        </GridItem>
-                                    </SimpleGrid>
+                                <Box w={"100%"}>
+                                    <CompleteChainView callBack={updateDrawerStatus} selectedFileInfo={fileInfo} />
                                 </Box>
-
                             </VStack>
                         </Container>
                     ) : null

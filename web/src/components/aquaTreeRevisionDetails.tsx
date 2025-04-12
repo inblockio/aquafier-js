@@ -40,12 +40,12 @@ export const RevisionDisplay = ({ fileInfo, revision, revisionHash, isVerificati
     const isVerificationSuccessful = (): boolean | null => {
         let currentRevisionResult = verificationResults.find(item => item.hash === revisionHash);
 
-        console.log(`isVerificationComplete ${isVerificationComplete} mapcontains ${currentRevisionResult ? "true" : "false"}  verificationResults size  --- ${verificationResults.length}   `)
+        // console.log(`isVerificationComplete ${isVerificationComplete} mapcontains ${currentRevisionResult ? "true" : "false"}  verificationResults size  --- ${verificationResults.length}   `)
 
         let verificationStatus: boolean | null = null
-        verificationResults.forEach((hash, value) => {
-            console.log(`hash ${hash} -- value ${value}`);
-        });
+        // verificationResults.forEach((hash, value) => {
+        //     console.log(`hash ${hash} -- value ${value}`);
+        // });
         if (!isVerificationComplete) {
             verificationStatus = null
         }
@@ -123,9 +123,10 @@ export const RevisionDisplay = ({ fileInfo, revision, revisionHash, isVerificati
     const revisionTypeEmoji = LogTypeEmojis[revision.revision_type]
 
     useEffect(() => {
-        isVerificationSuccessful()
-    }, [isVerificationComplete, verificationResults])
-    console.log("Verification results: ", new Array(verificationResults.keys()))
+        if(verificationResults){
+            isVerificationSuccessful()
+        }
+    }, [verificationResults])
 
     return (
         <div>

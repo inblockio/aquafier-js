@@ -4,7 +4,7 @@ import { prisma } from '../database/db';
 import { Settings } from '@prisma/client';
 import { SessionQuery, ShareRequest, SiweRequest } from '../models/request_models';
 // import { verifySiweMessage } from '../utils/auth_utils';
-import { AquaTree, FileObject, OrderRevisionInAquaTree } from 'aqua-js-sdk';
+import { AquaTree, FileObject, OrderRevisionInAquaTree, reorderAquaTreeRevisionsProperties } from 'aqua-js-sdk';
 import { getHost, getPort } from '../utils/api_utils';
 import { createAquaTreeFromRevisions, fetchAquaTreeWithForwardRevisions, saveAquaTree } from '../utils/revisions_utils';
 
@@ -79,17 +79,29 @@ export default async function shareController(fastify: FastifyInstance) {
             //  console.log(`revision_pubkey_hash == > ${revision_pubkey_hash}`);
 
             if (contractData.option == "latest") {
-                [anAquaTree, fileObject] = await fetchAquaTreeWithForwardRevisions(revision_pubkey_hash, url)
+                let [_anAquaTree, _fileObject] = await fetchAquaTreeWithForwardRevisions(revision_pubkey_hash, url)
+                
+                let orderRevisionPrpoerties = reorderAquaTreeRevisionsProperties(_anAquaTree)
+                let sortedAquaTree = OrderRevisionInAquaTree(orderRevisionPrpoerties)
+                
+                anAquaTree = sortedAquaTree
+                fileObject = _fileObject
+
             } else {
-                [anAquaTree, fileObject] = await createAquaTreeFromRevisions(revision_pubkey_hash, url)
+                let [_anAquaTree, _fileObject] = await createAquaTreeFromRevisions(revision_pubkey_hash, url)
+                let orderRevisionPrpoerties = reorderAquaTreeRevisionsProperties(_anAquaTree)
+                let sortedAquaTree = OrderRevisionInAquaTree(orderRevisionPrpoerties)
+
+                anAquaTree = sortedAquaTree
+                fileObject = _fileObject
 
             }
-            let sortedAquaTree = OrderRevisionInAquaTree(anAquaTree)
+            // let sortedAquaTree = OrderRevisionInAquaTree(anAquaTree)
 
             //  console.log(`Aqua tree ${JSON.stringify(sortedAquaTree)}`);
 
             displayData.push({
-                aquaTree: sortedAquaTree,
+                aquaTree: anAquaTree,
                 fileObject: fileObject
             })
 
