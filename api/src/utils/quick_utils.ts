@@ -440,7 +440,13 @@ export async function fetchCompleteRevisionChain(
                                             if (Object.keys(completeLinkedTree.revisions).length > 0) {
                                                 console.log(`${indent}[Depth:${_depth}] Adding linked tree to linkedChains with ${Object.keys(completeLinkedTree.revisions).length} revisions`);
                                                 // Store the complete tree in the linkedChains object
-                                                anAquaTree.linkedChains[linkedHash] = completeLinkedTree;
+                                                // Extract hashOnly from revisionItem.pubkey_hash
+                                                const parentHashOnly = revisionItem.pubkey_hash.split('_')[1] || '';
+                                                // Create compound key with parent hash and linked hash
+                                                const compoundKey = `${parentHashOnly}_${linkedHash}`;
+                                                // Store with the compound key instead of just linkedHash
+                                                anAquaTree.linkedChains[compoundKey] = completeLinkedTree;
+                                                console.log(`${indent}[Depth:${_depth}] Using compound key: ${compoundKey} for linkedChains`);
                                             } else {
                                                 console.warn(`${indent}[Depth:${_depth}] Linked tree for linkedChains is empty: ${linkedHash}`);
                                             }

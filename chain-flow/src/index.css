@@ -1,0 +1,36 @@
+body {
+  margin: 0;
+  padding: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+}
+
+.revision-node {
+  transition: all 0.2s ease;
+}
+
+.revision-node:hover {
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  transform: translateY(-2px);
+}
+
+/* Style for different revision types */
+.revision-node[data-type="file"] {
+  background-color: #e6f7ff !important;
+  border-color: #91d5ff !important;
+}
+
+.revision-node[data-type="signature"] {
+  background-color: #f6ffed !important;
+  border-color: #b7eb8f !important;
+}
+
+.revision-node[data-type="link"] {
+  background-color: #fff7e6 !important;
+  border-color: #ffd591 !important;
+}
+
+/* App layout */
+#root {
+  width: 100%;
+  height: 100vh;
+}
