@@ -1,4 +1,4 @@
-import {  LuDelete, LuDownload, LuGlasses, LuLink2, LuShare2, LuSignature, LuX } from "react-icons/lu"
+import { LuDelete, LuDownload, LuGlasses, LuLink2, LuShare2, LuSignature, LuX } from "react-icons/lu"
 import { Button } from "./chakra-ui/button"
 import { areArraysEqual, dummyCredential, ensureDomainUrlHasSSL, estimateStringFileSize, extractFileHash, fetchFiles, getFileName, getGenesisHash } from "../utils/functions"
 import { useStore } from "zustand"
@@ -69,7 +69,7 @@ import { AquaJsonInZip, AquaNameWithHash } from "../models/Aqua"
 
 
 export const WitnessAquaChain = ({ apiFileInfo, backendUrl, nonce }: RevionOperation) => {
-    const { files, setFiles, metamaskAddress } = useStore(appStore)
+    const { files, setFiles, metamaskAddress, selectedFileInfo, setSelectedFileInfo } = useStore(appStore)
     const [witnessing, setWitnessing] = useState(false)
 
 
@@ -142,7 +142,9 @@ export const WitnessAquaChain = ({ apiFileInfo, backendUrl, nonce }: RevionOpera
                                 newFiles.push(item)
                             }
                         })
-
+                        let _selectFileInfo = selectedFileInfo!!
+                        _selectFileInfo.aquaTree = result.data.aquaTree!
+                        setSelectedFileInfo(_selectFileInfo)
                         setFiles(newFiles)
                     }
 
@@ -184,7 +186,7 @@ export const WitnessAquaChain = ({ apiFileInfo, backendUrl, nonce }: RevionOpera
 }
 
 export const SignAquaChain = ({ apiFileInfo, backendUrl, nonce }: RevionOperation) => {
-    const { files, setFiles } = useStore(appStore)
+    const { files, setFiles, setSelectedFileInfo, selectedFileInfo } = useStore(appStore)
     const [signing, setSigning] = useState(false)
 
     const signFileHandler = async () => {
@@ -247,7 +249,9 @@ export const SignAquaChain = ({ apiFileInfo, backendUrl, nonce }: RevionOperatio
                                     newFiles.push(item)
                                 }
                             })
-
+                            let _selectFileInfo = selectedFileInfo!!
+                            _selectFileInfo.aquaTree = result.data.aquaTree!
+                            setSelectedFileInfo(_selectFileInfo)
                             setFiles(newFiles)
                         }
                     }
@@ -397,8 +401,8 @@ export const DeleteAquaChain = ({ apiFileInfo, backendUrl, nonce }: RevionOperat
                 Delete
             </Button>
 
-            <Dialog.Root lazyMount open={open} onOpenChange={(e) =>{ 
-                 setOpen(e.open)
+            <Dialog.Root lazyMount open={open} onOpenChange={(e) => {
+                setOpen(e.open)
             }}>
                 {/* <Dialog.Trigger asChild>
         <Button variant="outline">Open</Button>

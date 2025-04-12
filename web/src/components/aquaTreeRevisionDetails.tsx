@@ -8,7 +8,7 @@ import Aquafier, { LogTypeEmojis, Revision } from "aqua-js-sdk";
 import ReactLoading from "react-loading"
 import { WITNESS_NETWORK_MAP } from "../utils/constants"
 import { WalletEnsView } from "./chakra-ui/wallet_ens"
-import { AquaTreeDetails, AquaTreeDetailsData, AquaTreeDetailsViewData, RevisionDetailsSummaryData } from "../models/AquaTreeDetails"
+import { AquaTreeDetails, AquaTreeDetailsData, AquaTreeDetailsViewData, RevisionDetailsSummaryData, VerificationHashAndResult } from "../models/AquaTreeDetails"
 
 import { ItemDetail } from "./ItemDetails";
 
@@ -16,6 +16,7 @@ import { ItemDetail } from "./ItemDetails";
 export const RevisionDisplay = ({ fileInfo, revision, revisionHash, isVerificationComplete, verificationResults }: AquaTreeDetailsData) => {
 
     const [showRevisionDetails, setShowRevisionDetails] = useState(false)
+    const [isRevisionVerificationSuccessful, setIsRevisionVerificationSuccessful] = useState<boolean | null>(null)
 
 
     const loaderSize = '40px'
@@ -24,10 +25,11 @@ export const RevisionDisplay = ({ fileInfo, revision, revisionHash, isVerificati
         if (!isVerificationComplete) {
             return "gray.400"
         }
-        if (!verificationResults.has(revisionHash)) {
+        let revisionVerificationResult = verificationResults.find(item => item.hash === revisionHash)
+        if (revisionVerificationResult === undefined) {
             return "yellow"
         }
-        if (verificationResults.get(revisionHash)) {
+        if (revisionVerificationResult.isSuccessful) {
             return "green"
         } else {
             return "red"
@@ -36,29 +38,38 @@ export const RevisionDisplay = ({ fileInfo, revision, revisionHash, isVerificati
     }
 
     const isVerificationSuccessful = (): boolean | null => {
+        let currentRevisionResult = verificationResults.find(item => item.hash === revisionHash);
 
-        console.log(`isVerificationComplete ${isVerificationComplete} mapcontains ${verificationResults.has(revisionHash)}  verificationResults size  --- ${verificationResults.size}   `)
+        console.log(`isVerificationComplete ${isVerificationComplete} mapcontains ${currentRevisionResult ? "true" : "false"}  verificationResults size  --- ${verificationResults.length}   `)
+
+        let verificationStatus: boolean | null = null
         verificationResults.forEach((hash, value) => {
             console.log(`hash ${hash} -- value ${value}`);
         });
         if (!isVerificationComplete) {
-            return null
+            verificationStatus = null
         }
 
-        if (!verificationResults.has(revisionHash)) {
+        if (currentRevisionResult === undefined) {
             console.log(`💣💣 Hash not found ${revisionHash}`)
-            return null
+            verificationStatus = null
         }
 
-        if (verificationResults.get(revisionHash)) {
-            return true
+        if (currentRevisionResult?.isSuccessful) {
+            verificationStatus = true
         }
-        return false
+        else {
+            verificationStatus = false
+        }
+
+        setIsRevisionVerificationSuccessful(verificationStatus)
+        return verificationStatus
 
     }
 
     const verificationStatusText = (): string => {
-        const res = isVerificationSuccessful();
+        // const res = isVerificationSuccessful();
+        const res = isRevisionVerificationSuccessful
 
         if (res == null) {
 
@@ -72,9 +83,11 @@ export const RevisionDisplay = ({ fileInfo, revision, revisionHash, isVerificati
         }
 
     }
+
     const displayAlert = (): JSX.Element => {
 
-        const res = isVerificationSuccessful();
+        // const res = isVerificationSuccessful();
+        const res = isRevisionVerificationSuccessful
         let status: "info" | "warning" | "success" | "error" | "neutral" = "info";
         let title = "This revision is being verified";
         if (res != null) {
@@ -89,8 +102,10 @@ export const RevisionDisplay = ({ fileInfo, revision, revisionHash, isVerificati
         return <Alert status={status} title={title} />
 
     }
+
     const verificationStatusIcon = (): JSX.Element => {
-        const res = isVerificationSuccessful();
+        // const res = isVerificationSuccessful();
+        const res = isRevisionVerificationSuccessful
 
         if (res == null) {
 
@@ -107,9 +122,11 @@ export const RevisionDisplay = ({ fileInfo, revision, revisionHash, isVerificati
 
     const revisionTypeEmoji = LogTypeEmojis[revision.revision_type]
 
-    useEffect(()=>{
+    useEffect(() => {
+        isVerificationSuccessful()
+    }, [isVerificationComplete, verificationResults])
+    console.log("Verification results: ", new Array(verificationResults.keys()))
 
-    },[isVerificationComplete,verificationResults])
     return (
         <div>
             <TimelineItem>
@@ -434,9 +451,9 @@ export const ChainDetails = ({ fileInfo }: AquaTreeDetails) => {
 
     // const [aquaTree, setAquaTreeData] = useState<AquaTree | null>()
 
-    const [verificationResults, setVerificationResults] = useState<Map<string, boolean>>(new Map())
+    const [verificationResults, setVerificationResults] = useState<VerificationHashAndResult[]>([])
 
-    const isVerificationComplete = (): boolean => verificationResults.size < Object.keys(fileInfo.aquaTree!.revisions!).length
+    const isVerificationComplete = (): boolean => verificationResults.length < Object.keys(fileInfo.aquaTree!.revisions!).length
 
 
 
@@ -453,14 +470,18 @@ export const ChainDetails = ({ fileInfo }: AquaTreeDetails) => {
 
                 // Create a new Map reference for the state update
                 setVerificationResults(prevResults => {
-                    const newResults = new Map(prevResults);
-                    if (verificationResult.isOk()) {
-                        newResults.set(revisionHash, true);
-                    } else {
-                        newResults.set(revisionHash, false);
+                    const newResults = [...prevResults];
+                    let existingItem = prevResults.find(item => item.hash === revisionHash)
+                    if (!existingItem) {
+                        if (verificationResult.isOk()) {
+                            newResults.push({ hash: revisionHash, isSuccessful: true });
+                        } else {
+                            newResults.push({ hash: revisionHash, isSuccessful: false });
+                        }
                     }
                     return newResults;
                 });
+
             }
         }
 

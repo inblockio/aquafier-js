@@ -17,6 +17,7 @@ type AppStoreState = {
     },
     session: Session | null,
     files: ApiFileInfo[],
+    selectedFileInfo: ApiFileInfo | null,
     metamaskAddress: string | null
     avatar: string | undefined
     backend_url: string
@@ -37,6 +38,9 @@ type AppStoreActions = {
     ) => void,
     setFiles: (
         files: AppStoreState['files'],
+    ) => void,
+    setSelectedFileInfo: (
+        file: ApiFileInfo,
     ) => void,
     addFile: (
         file: ApiFileInfo,
@@ -88,6 +92,7 @@ const appStore = createStore<TAppStore>()(
             },
             session: null,
             files: [],
+            selectedFileInfo: null,
             metamaskAddress: '',
             avatar: "",
             backend_url: "http://0.0.0.0:0",
@@ -103,6 +108,9 @@ const appStore = createStore<TAppStore>()(
             setFiles: (
                 files: AppStoreState['files'],
             ) => set({ files: files }),
+            setSelectedFileInfo: (
+                file: ApiFileInfo
+            ) => set({ selectedFileInfo: file }),
             addFile: (
                 file: ApiFileInfo,
             ) => {

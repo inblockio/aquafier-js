@@ -20,12 +20,12 @@ export interface RevisionDetailsSummaryData {
 export interface AquaTreeDetailsViewData {
     fileInfo: ApiFileInfo,
     isVerificationComplete: boolean,
-    verificationResults: Map<string, boolean>,
+    verificationResults: VerificationHashAndResult[],
 }
 export interface AquaTreeDetailsData {
     fileInfo: ApiFileInfo,
     isVerificationComplete: boolean,
-    verificationResults: Map<string, boolean>,
+    verificationResults: VerificationHashAndResult[],
     revision: Revision
     revisionHash: string
 
@@ -43,7 +43,6 @@ export interface AquaTreeDetails {
 
 
 export interface ICompleteChainView {
-    fileInfo: ApiFileInfo
     callBack: (_drawerStatus: IDrawerStatus) => void
 }
 
@@ -52,4 +51,10 @@ export interface IDrawerStatus {
     colorDark: string
     fileName: string
     isVerificationSuccessful: boolean
+}
+
+
+export interface VerificationHashAndResult {
+    hash: string,
+    isSuccessful: boolean | null
 }

@@ -3,14 +3,15 @@ import { Button } from "./chakra-ui/button"
 import { LuChevronDown, LuChevronUp, LuEye } from "react-icons/lu"
 import { Box, Card, Collapsible, For, GridItem, SimpleGrid, VStack } from "@chakra-ui/react"
 import { TimelineRoot } from "./chakra-ui/timeline"
-import { ensureDomainUrlHasSSL, getFileName, isArrayBufferText } from "../utils/functions"
+import { ensureDomainUrlHasSSL, getAquaTreeFileObject, getFileName, isArrayBufferText } from "../utils/functions"
 import { Alert } from "./chakra-ui/alert"
 import Aquafier, { FileObject } from "aqua-js-sdk"
 import FilePreview from "./FilePreview"
-import { IChainDetailsBtn, ICompleteChainView, IDrawerStatus, } from "../models/AquaTreeDetails"
+import { IChainDetailsBtn, ICompleteChainView, IDrawerStatus, VerificationHashAndResult, } from "../models/AquaTreeDetails"
 import { RevisionDetailsSummary, RevisionDisplay } from "./aquaTreeRevisionDetails"
 import { useStore } from "zustand"
 import appStore from "../store"
+import { ApiFileInfo } from "../models/FileInfo"
 
 
 export const ChainDetailsBtn = ({ callBack }: IChainDetailsBtn) => {
@@ -23,17 +24,18 @@ export const ChainDetailsBtn = ({ callBack }: IChainDetailsBtn) => {
     )
 }
 
-export const CompleteChainView = ({ fileInfo, callBack }: ICompleteChainView) => {
+export const CompleteChainView = ({ callBack }: ICompleteChainView) => {
 
 
     const [showMoreDetails, setShowMoreDetails] = useState(false)
-    const { session } = useStore(appStore)
+    const { session, selectedFileInfo } = useStore(appStore)
+    // const [selectedFileInfo, setFileInfo] = useState(selectedFileInfo)
 
-    const [verificationResults, setVerificationResults] = useState<Map<string, boolean>>(new Map())
+    const [verificationResults, setVerificationResults] = useState<VerificationHashAndResult[]>([])
 
     const fetchFileData = async (url: string): Promise<string | ArrayBuffer | null> => {
         try {
-            // const fileContentUrl: string = fileInfo.fileContent as string
+            // const fileContentUrl: string = selectedFileInfo.fileContent as string
             // console.log("File content url: ", url)
 
             let actualUrlToFetch = ensureDomainUrlHasSSL(url)
@@ -75,34 +77,34 @@ export const CompleteChainView = ({ fileInfo, callBack }: ICompleteChainView) =>
         }
     }
 
-    const isVerificationSuccessful = (_verificationResults: Map<string, boolean>): boolean => {
-        for (const value of _verificationResults.values()) {
+    const isVerificationSuccessful = (_verificationResults: VerificationHashAndResult[]): boolean => {
+        for (const item of _verificationResults.values()) {
             // // console.log(`Values ${value}`)
-            if (!value) {
+            if (!item.isSuccessful) {
                 return false
             }
         }
         return true;
     }
 
-    const displayColorBasedOnVerificationStatusLight = (_verificationResults: Map<string, boolean>) => {
-        if (!isVerificationComplete()) {
+    const displayColorBasedOnVerificationStatusLight = (_verificationResults: VerificationHashAndResult[]) => {
+        if (!isVerificationComplete(_verificationResults)) {
             return "grey"
         }
 
         return isVerificationSuccessful(_verificationResults) ? 'green.100' : 'red.100'
     }
 
-    const displayColorBasedOnVerificationStatusDark = (_verificationResults: Map<string, boolean>) => {
-        if (!isVerificationComplete()) {
+    const displayColorBasedOnVerificationStatusDark = (_verificationResults: VerificationHashAndResult[]) => {
+        if (!isVerificationComplete(_verificationResults)) {
             return "whitesmoke"
         }
 
         return isVerificationSuccessful(_verificationResults) ? 'green.900' : 'red.900'
     }
 
-    const verifyAquaTreeRevisions = async () => {
-
+    const verifyAquaTreeRevisions = async (fileInfo: ApiFileInfo) => {
+        console.log("Starting verification: ")
         let aquafier = new Aquafier();
         let _drawerStatus: IDrawerStatus = {
             colorLight: "",
@@ -117,13 +119,13 @@ export const CompleteChainView = ({ fileInfo, callBack }: ICompleteChainView) =>
         // setFileName(fileName)
         _drawerStatus.fileName = fileName
         // verify revision
-        let revisionHashes = Object.keys(fileInfo.aquaTree!.revisions!);
+        let revisionHashes = Object.keys(fileInfo?.aquaTree!.revisions!);
 
 
 
         let fileObjectVerifier: FileObject[] = [];
 
-        for (let file of fileInfo.fileObject) {
+        for (let file of fileInfo?.fileObject!!) {
 
             // console.log(`File loop name ${file.fileName} url  ${file.fileContent} type ${typeof file.fileContent}  `)
             if (typeof file.fileContent == 'string' && (file.fileContent.startsWith("http://") || file.fileContent.startsWith("https://"))) {
@@ -157,22 +159,22 @@ export const CompleteChainView = ({ fileInfo, callBack }: ICompleteChainView) =>
 
         }
 
-        let allRevisionsVerificationsStatus: Map<string, boolean> = new Map()
+        let allRevisionsVerificationsStatus: VerificationHashAndResult[] = []
 
         for (let revisionHash of revisionHashes) {
-            let revision = fileInfo.aquaTree!.revisions![revisionHash];
+            let revision = fileInfo?.aquaTree!.revisions![revisionHash];
 
-            let verificationResult = await aquafier.verifyAquaTreeRevision(fileInfo.aquaTree!, revision, revisionHash, fileObjectVerifier)
+            let verificationResult = await aquafier.verifyAquaTreeRevision(fileInfo?.aquaTree!, revision!!, revisionHash, fileObjectVerifier)
 
             // console.log(`hash ${revisionHash} \n revision  ${JSON.stringify(revision, null, 4)} SDK DATA ${JSON.stringify(verificationResult, null, 4)}  \n is oky-> ${verificationResult.isOk()} \n file object ${JSON.stringify(fileObjectVerifier, null, 4)}`)
 
             if (verificationResult.isOk()) {
-                allRevisionsVerificationsStatus.set(revisionHash, true);
+                allRevisionsVerificationsStatus.push({ hash: revisionHash, isSuccessful: true });
             } else {
-                allRevisionsVerificationsStatus.set(revisionHash, false);
+                allRevisionsVerificationsStatus.push({ hash: revisionHash, isSuccessful: false });
             }
         }
-
+        console.log("We are done with verification: ", allRevisionsVerificationsStatus)
         setVerificationResults(allRevisionsVerificationsStatus)
         let _isVerificationSuccesful = isVerificationSuccessful(allRevisionsVerificationsStatus)
         _drawerStatus.isVerificationSuccessful = _isVerificationSuccesful
@@ -181,21 +183,21 @@ export const CompleteChainView = ({ fileInfo, callBack }: ICompleteChainView) =>
         callBack(_drawerStatus)
     }
 
-    const isVerificationComplete = (): boolean => {
+    const isVerificationComplete = (_verificationResults: VerificationHashAndResult[]): boolean => {
 
-        // // console.log(`result ${verificationResults.size}  vs aquq tree ${Object.keys(fileInfo.aquaTree!.revisions!).length}`)
-        return verificationResults.size == Object.keys(fileInfo.aquaTree!.revisions!).length
+        // // console.log(`result ${verificationResults.size}  vs aquq tree ${Object.keys(selectedFileInfo.aquaTree!.revisions!).length}`)
+        return _verificationResults.length === Object.keys(selectedFileInfo?.aquaTree!.revisions!).length
 
     }
 
-    const displayBasedOnVerificationStatusText = () => {
-        if (!isVerificationComplete()) {
+    const displayBasedOnVerificationStatusText = (_verificationResults: VerificationHashAndResult[]) => {
+        if (!isVerificationComplete(_verificationResults)) {
             return "Verifying Aqua tree"
         }
         return isVerificationSuccessful(verificationResults) ? "This aqua tree  is valid" : "This aqua tree is invalid"
     }
-    const displayColorBasedOnVerificationAlert = () => {
-        if (!isVerificationComplete()) {
+    const displayColorBasedOnVerificationAlert = (_verificationResults: VerificationHashAndResult[]) => {
+        if (!isVerificationComplete(_verificationResults)) {
             return "info"
         }
 
@@ -203,10 +205,12 @@ export const CompleteChainView = ({ fileInfo, callBack }: ICompleteChainView) =>
     }
 
     useEffect(() => {
-        verifyAquaTreeRevisions()
-    }, [fileInfo])
+        if(selectedFileInfo){
+            console.log("Here we go")
+            verifyAquaTreeRevisions(selectedFileInfo)
+        }
+    }, [Object.keys(selectedFileInfo?.aquaTree?.revisions ?? {}).length])
 
-   
 
     return (
         <>
@@ -215,7 +219,7 @@ export const CompleteChainView = ({ fileInfo, callBack }: ICompleteChainView) =>
                     <GridItem colSpan={{ base: 1, md: 3 }}>
                         <Card.Root border={'none'} shadow={'none'} borderRadius={'xl'}>
                             <Card.Body>
-                                <FilePreview fileInfo={fileInfo.fileObject[0]} />
+                                <FilePreview fileInfo={getAquaTreeFileObject(selectedFileInfo!!)!!} />
                             </Card.Body>
                         </Card.Root>
                     </GridItem>
@@ -223,9 +227,9 @@ export const CompleteChainView = ({ fileInfo, callBack }: ICompleteChainView) =>
                         <Card.Root borderRadius={'lg'} shadow={"none"}>
                             <Card.Body>
                                 <VStack gap={'4'}>
-                                    <Alert status={displayColorBasedOnVerificationAlert()} title={displayBasedOnVerificationStatusText()} />
+                                    <Alert status={displayColorBasedOnVerificationAlert(verificationResults)} title={displayBasedOnVerificationStatusText(verificationResults)} />
 
-                                    <RevisionDetailsSummary isVerificationComplete={isVerificationComplete()} isVerificationSuccess={isVerificationSuccessful(verificationResults)} fileInfo={fileInfo} />
+                                    <RevisionDetailsSummary isVerificationComplete={isVerificationComplete(verificationResults)} isVerificationSuccess={isVerificationSuccessful(verificationResults)} fileInfo={selectedFileInfo!!} />
 
                                     <Box w={'100%'}>
                                         <Collapsible.Root open={showMoreDetails}>
@@ -235,19 +239,18 @@ export const CompleteChainView = ({ fileInfo, callBack }: ICompleteChainView) =>
                                             <Collapsible.Content py={'4'}>
 
                                                 {
-                                                    fileInfo.aquaTree ?
+                                                    selectedFileInfo?.aquaTree ?
                                                         <TimelineRoot size="lg" variant="subtle" maxW="xl">
                                                             <For
-                                                                each={Object.keys(fileInfo.aquaTree!.revisions)}
+                                                                each={Object.keys(selectedFileInfo?.aquaTree!.revisions!!)}
                                                             >
                                                                 {(revisionHash, index) => (
                                                                     <RevisionDisplay key={`revision_${index}`}
-                                                                        fileInfo={fileInfo}
-                                                                        revision={fileInfo.aquaTree!.revisions[revisionHash]}
+                                                                        fileInfo={selectedFileInfo!!}
+                                                                        revision={selectedFileInfo?.aquaTree!.revisions[revisionHash]!!}
                                                                         revisionHash={revisionHash}
-                                                                        isVerificationComplete={isVerificationComplete()}
+                                                                        isVerificationComplete={isVerificationComplete(verificationResults)}
                                                                         verificationResults={verificationResults}
-
                                                                     />
 
                                                                 )}

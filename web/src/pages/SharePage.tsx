@@ -13,6 +13,7 @@ import { ImportAquaChainFromChain } from '../components/dropzone_file_actions'
 import { Alert } from '../components/chakra-ui/alert'
 import { LuChevronUp, LuChevronDown } from 'react-icons/lu'
 import Aquafier from "aqua-js-sdk"
+import { VerificationHashAndResult } from '../models/AquaTreeDetails'
 
 const SharePage = () => {
     const { backend_url, metamaskAddress, session } = useStore(appStore)
@@ -21,7 +22,7 @@ const SharePage = () => {
     const [loading, setLoading] = useState(false)
     const [hasError, setHasError] = useState<string | null>(null);
     // const [isVerificationSuccesful, setIsVerificationSuccessful] = useState<boolean | null >(null)
-    const [verificationResults, setVerificationResults] = useState<Map<string, boolean>>(new Map())
+    const [verificationResults, setVerificationResults] = useState<VerificationHashAndResult[]>([])
 
     const [showMoreDetails, setShowMoreDetails] = useState(false)
 
@@ -83,7 +84,7 @@ const SharePage = () => {
         // }
     }, [params, session])
 
-    const isVerificationComplete = (fileInfo: ApiFileInfo): boolean => verificationResults.size < Object.keys(fileInfo.aquaTree!.revisions!).length
+    const isVerificationComplete = (fileInfo: ApiFileInfo): boolean => verificationResults.length < Object.keys(fileInfo.aquaTree!.revisions!).length
 
 
     function isVerificationSuccessful(): boolean {
@@ -122,14 +123,19 @@ const SharePage = () => {
 
             // Create a new Map reference for the state update
             setVerificationResults(prevResults => {
-                const newResults = new Map(prevResults);
-                if (verificationResult.isOk()) {
-                    newResults.set(revisionHash, true);
-                } else {
-                    newResults.set(revisionHash, false);
+                const newResults = [...prevResults];
+                let existingItem = prevResults.find(item => item.hash === revisionHash)
+                if (!existingItem) {
+                    if (verificationResult.isOk()) {
+                        newResults.push({ hash: revisionHash, isSuccessful: true });
+                    } else {
+                        newResults.push({ hash: revisionHash, isSuccessful: false });
+                    }
                 }
                 return newResults;
             });
+
+
         }
     }
 

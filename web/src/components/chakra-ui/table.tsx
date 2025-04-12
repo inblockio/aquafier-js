@@ -26,11 +26,11 @@ import { IDrawerStatus } from "../../models/AquaTreeDetails"
 
 const FilesTable = () => {
     const [filesToDisplay, setFilesToDisplay] = useState<ApiFileInfo[]>([])
-    const { files, backend_url, session } = useStore(appStore)
+    const { files, backend_url, session, setSelectedFileInfo, selectedFileInfo } = useStore(appStore)
     const [selection, setSelection] = useState<string[]>([])
 
     const [isOpen, setIsOpen] = useState(false)
-    const [fileInfo, setFileInfo] = useState<ApiFileInfo | null>(null)
+    // const [fileInfo, setFileInfo] = useState<ApiFileInfo | null>(null)
     const [drawerStatus, setDrawerStatus] = useState<IDrawerStatus | null>(null)
 
 
@@ -38,7 +38,7 @@ const FilesTable = () => {
     const indeterminate = hasSelection && selection.length < files.length
 
     const openChainDetailsView = (_fileInfo: ApiFileInfo) => {
-        setFileInfo(_fileInfo)
+        setSelectedFileInfo(_fileInfo)
         setIsOpen(true)
     }
 
@@ -46,7 +46,7 @@ const FilesTable = () => {
         setDrawerStatus(_drawerStatus)
     }
 
-
+    console.log("Drawer status: ", drawerStatus)
     const rows = files?.map((item: ApiFileInfo, index: number) => {
 
 
@@ -86,7 +86,7 @@ const FilesTable = () => {
             <Table.Cell minW={'220px'} maxW={'220px'} textWrap={'wrap'}>
                 <Group alignItems={'space-between'} flexWrap={'wrap'} position={"relative"}>
 
-                    <ChainDetailsBtn callBack={() => openChainDetailsView(item)}  />
+                    <ChainDetailsBtn callBack={() => openChainDetailsView(item)} />
                     <SignAquaChain apiFileInfo={item} backendUrl={backend_url} nonce={session?.nonce ?? ""} revision="" />
                     <WitnessAquaChain apiFileInfo={item} backendUrl={backend_url} nonce={session?.nonce ?? ""} revision="" />
                     <LinkButton item={item} nonce={session?.nonce ?? ""} />
@@ -108,7 +108,7 @@ const FilesTable = () => {
             <VStack textAlign={'start'}>
                 <Text textAlign={'start'} w={'100%'}>{item.fileObject[0].fileName}</Text>
                 <Group alignItems={'start'} flexWrap={'wrap'}>
-                <ChainDetailsBtn callBack={() => openChainDetailsView(item)}  />
+                    <ChainDetailsBtn callBack={() => openChainDetailsView(item)} />
                     <SignAquaChain apiFileInfo={item} backendUrl={backend_url} nonce={session?.nonce ?? ""} revision="" />
                     <WitnessAquaChain apiFileInfo={item} backendUrl={backend_url} nonce={session?.nonce ?? ""} revision="" />
                     <LinkButton item={item} nonce={session?.nonce ?? ""} />
@@ -248,23 +248,21 @@ const FilesTable = () => {
                                     </Button>
                                 </Drawer.Header>
                                 <DrawerBody py={'lg'} px={1}>
-                                    {
-                                        fileInfo ? (
-                                            <CompleteChainView fileInfo={fileInfo} callBack={updateDrawerStatus}  />
-                                        ) : null
-                                    }
+
+                                    <CompleteChainView callBack={updateDrawerStatus} />
+
                                 </DrawerBody>
                                 <DrawerFooter flexWrap={'wrap'}>
                                     <DrawerActionTrigger asChild>
                                         <Button variant="outline" size={'sm'}>Close</Button>
                                     </DrawerActionTrigger>
                                     {
-                                        fileInfo ? (
+                                        selectedFileInfo ? (
                                             <>
-                                                <ShareButtonAction nonce={session?.nonce ?? ""} item={fileInfo} />
-                                                <WitnessAquaChain apiFileInfo={fileInfo} backendUrl={backend_url} nonce={session?.nonce ?? ""} revision="" />
-                                                <SignAquaChain apiFileInfo={fileInfo} backendUrl={backend_url} nonce={session?.nonce ?? ""} revision="" />
-                                                <DeleteAquaChain apiFileInfo={fileInfo} backendUrl={backend_url} nonce={session?.nonce ?? ""} revision="" />
+                                                <ShareButtonAction nonce={session?.nonce ?? ""} item={selectedFileInfo} />
+                                                <WitnessAquaChain apiFileInfo={selectedFileInfo} backendUrl={backend_url} nonce={session?.nonce ?? ""} revision="" />
+                                                <SignAquaChain apiFileInfo={selectedFileInfo} backendUrl={backend_url} nonce={session?.nonce ?? ""} revision="" />
+                                                <DeleteAquaChain apiFileInfo={selectedFileInfo} backendUrl={backend_url} nonce={session?.nonce ?? ""} revision="" />
                                             </>
                                         ) : null
                                     }
