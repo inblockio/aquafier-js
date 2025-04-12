@@ -69,7 +69,7 @@ export async function checkAndUseExtension() {
                 }
             });
 
-           // console.log('Function call result:', result);
+           console.log('Function call result:', result);
         } else {
             console.log('Extension is not installed.');
         }

@@ -136,13 +136,13 @@ const SharePage = () => {
 
     useEffect(() => {
         if (fileInfo) {
-            const elementToReplace = document.getElementById('replace-here');
-            const customEvent = new CustomEvent('REPLACE_ADDRESSES', {
-                detail: {
-                    element: elementToReplace,
-                },
-            });
-            window.dispatchEvent(customEvent);
+            // const elementToReplace = document.getElementById('replace-here');
+            // const customEvent = new CustomEvent('REPLACE_ADDRESSES', {
+            //     detail: {
+            //         element: elementToReplace,
+            //     },
+            // });
+            // window.dispatchEvent(customEvent);
 
             verifyAquaTreeRevisions(fileInfo)
         }

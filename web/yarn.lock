@@ -2123,10 +2123,10 @@ apg-js@^4.3.0:
   resolved "https://registry.npmjs.org/apg-js/-/apg-js-4.4.0.tgz"
   integrity sha512-fefmXFknJmtgtNEXfPwZKYkMFX4Fyeyz+fNF6JWp87biGOPslJbCBVU158zvKRZfHBKnJDy8CMM40oLFGkXT8Q==
 
-"aqua-js-sdk@github:inblockio/aqua-js-sdk#5b43614923b3750db3488314112bf3c608f8b59a":
+"aqua-js-sdk@github:inblockio/aqua-js-sdk#d7a2b8d1fad879f2dbcd759d05253b7b52c3aee0":
   version "1.3.2-1"
-  resolved "git+ssh://git@github.com/inblockio/aqua-js-sdk.git#5b43614923b3750db3488314112bf3c608f8b59a"
-  integrity sha512-akDQwaws3hq4iiVDbi+OfOqPk6gn9RZAHXJqbiySGu2P6ygFjhqJM1M759mLyREw5usKkKXa1EGiNFBVW6Q/ag==
+  resolved "git+ssh://git@github.com/inblockio/aqua-js-sdk.git#d7a2b8d1fad879f2dbcd759d05253b7b52c3aee0"
+  integrity sha512-vQjV6DQgIs3WiWFhvGk98dP56YkvaaFZNuqoBHyOYZ243QFkUdimtNsh4hwapfUicCajq/jQPxdB7QmDyuU0Zg==
   dependencies:
     asn1js "^3.0.5"
     buffer "^6.0.3"

@@ -397,7 +397,9 @@ export const DeleteAquaChain = ({ apiFileInfo, backendUrl, nonce }: RevionOperat
                 Delete
             </Button>
 
-            <Dialog.Root lazyMount open={open} onOpenChange={(e) => setOpen(e.open)}>
+            <Dialog.Root lazyMount open={open} onOpenChange={(e) =>{ 
+                 setOpen(e.open)
+            }}>
                 {/* <Dialog.Trigger asChild>
         <Button variant="outline">Open</Button>
       </Dialog.Trigger> */}

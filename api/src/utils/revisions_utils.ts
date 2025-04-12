@@ -1,4 +1,4 @@
-import { AquaTree, FileObject, Revision as AquaRevision, OrderRevisionInAquaTree } from 'aqua-js-sdk';
+import { AquaTree, FileObject, Revision as AquaRevision, OrderRevisionInAquaTree , reorderAquaTreeRevisionsProperties } from 'aqua-js-sdk';
 import { prisma } from '../database/db';
 // For specific model types
 import { Latest, Signature, Revision, Witness, AquaForms, WitnessEvent, FileIndex, Link } from '@prisma/client';
@@ -28,7 +28,9 @@ export async function fetchAquatreeFoUser(url: string, latest: Array<{
         let [anAquaTree, fileObject] = await createAquaTreeFromRevisions(revisonLatetsItem.hash, url)
 
         //  console.log(`----> ${JSON.stringify(anAquaTree, null, 4)}`)
-        let sortedAquaTree = OrderRevisionInAquaTree(anAquaTree)
+        let orderRevisionPrpoerties = reorderAquaTreeRevisionsProperties(anAquaTree)
+        let sortedAquaTree = OrderRevisionInAquaTree(orderRevisionPrpoerties)
+
         displayData.push({
 
             aquaTree: sortedAquaTree,

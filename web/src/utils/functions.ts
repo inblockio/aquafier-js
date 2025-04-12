@@ -479,6 +479,42 @@ export async function fileToBase64(file: File): Promise<string> {
     })
 }
 
+export const isArrayBufferText = (buffer: ArrayBuffer): boolean => {
+    // Convert the ArrayBuffer to a Uint8Array
+    const uint8Array = new Uint8Array(buffer);
+    
+    // Check if the byte sequence looks like text
+    // 1. Check for null bytes (usually not in text files)
+    // 2. Check for high ratio of printable ASCII characters
+    
+    // Check first 1000 bytes or the whole buffer, whichever is smaller
+    const bytesToCheck = Math.min(1000, uint8Array.length);
+    let textCharCount = 0;
+    let nullByteCount = 0;
+    
+    for (let i = 0; i < bytesToCheck; i++) {
+      const byte = uint8Array[i];
+      
+      // Count null bytes
+      if (byte === 0) {
+        nullByteCount++;
+      }
+      
+      // Count printable ASCII characters (32-126) plus common whitespace (9-13)
+      if ((byte >= 32 && byte <= 126) || (byte >= 9 && byte <= 13)) {
+        textCharCount++;
+      }
+    }
+    
+    // If more than 5% are null bytes, probably not text
+    if (nullByteCount > bytesToCheck * 0.05) {
+      return false;
+    }
+    
+    // If more than 90% are printable characters, probably text
+    return textCharCount > bytesToCheck * 0.9;
+  }
+
 // More comprehensive function to check if a file is text-based
 export const isTextFile = (file: File): boolean => {
     // Check by MIME type first (most reliable when available)

@@ -3,7 +3,7 @@ import { Button } from "./chakra-ui/button"
 import { LuChevronDown, LuChevronUp, LuEye } from "react-icons/lu"
 import { Box, Card, Collapsible, For, GridItem, SimpleGrid, VStack } from "@chakra-ui/react"
 import { TimelineRoot } from "./chakra-ui/timeline"
-import { ensureDomainUrlHasSSL, getFileName } from "../utils/functions"
+import { ensureDomainUrlHasSSL, getFileName, isArrayBufferText } from "../utils/functions"
 import { Alert } from "./chakra-ui/alert"
 import Aquafier, { FileObject } from "aqua-js-sdk"
 import FilePreview from "./FilePreview"
@@ -27,7 +27,7 @@ export const CompleteChainView = ({ fileInfo, callBack }: ICompleteChainView) =>
 
 
     const [showMoreDetails, setShowMoreDetails] = useState(false)
-    const {session} = useStore(appStore)
+    const { session } = useStore(appStore)
 
     const [verificationResults, setVerificationResults] = useState<Map<string, boolean>>(new Map())
 
@@ -65,7 +65,8 @@ export const CompleteChainView = ({ fileInfo, callBack }: ICompleteChainView) =>
 
                 // Get the raw data as ArrayBuffer and convert to Uint8Array
                 const arrayBuffer = await response.arrayBuffer();
-                return new Uint8Array(arrayBuffer);
+
+                return arrayBuffer;
 
             }
         } catch (e) {
@@ -117,35 +118,52 @@ export const CompleteChainView = ({ fileInfo, callBack }: ICompleteChainView) =>
         // verify revision
         let revisionHashes = Object.keys(fileInfo.aquaTree!.revisions!);
 
+
+
+        let fileObjectVerifier: FileObject[] = [];
+
+        for (let file of fileInfo.fileObject) {
+
+            console.log(`File loop name ${file.fileName} url  ${file.fileContent} type ${typeof file.fileContent}  `)
+            if (typeof file.fileContent == 'string') {
+                let fileData = await fetchFileData(file.fileContent);
+                console.log(`console log type of string == >${fileData} `)
+
+                if (fileData == null) {
+                    console.error(`💣💣💣Unable to fetch file  from  ${file.fileContent}`)
+                } else {
+                    let fileItem = file
+                    // Then in your loop:
+                    if (fileData instanceof ArrayBuffer) {
+                        if (isArrayBufferText(fileData)) {
+                            // Convert to string
+                            const decoder = new TextDecoder();
+                            fileItem.fileContent = decoder.decode(fileData);
+                        } else {
+                            // Keep as binary
+                            fileItem.fileContent = new Uint8Array(fileData);
+                        }
+                    } else if (typeof fileData === 'string') {
+                        fileItem.fileContent = fileData;
+                    } else {
+                        console.error('Unexpected fileData type:', fileData);
+                    }
+                    fileObjectVerifier.push(fileItem)
+                }
+            } else {
+                fileObjectVerifier.push(file)
+            }
+
+        }
+
         let allRevisionsVerificationsStatus: Map<string, boolean> = new Map()
 
         for (let revisionHash of revisionHashes) {
             let revision = fileInfo.aquaTree!.revisions![revisionHash];
 
-            let fileObject: FileObject[] = [];
+            let verificationResult = await aquafier.verifyAquaTreeRevision(fileInfo.aquaTree!, revision, revisionHash, fileObjectVerifier)
 
-            for (let file of fileInfo.fileObject) {
-
-                if (typeof file.fileContent == 'string') {
-                    let fileData = await fetchFileData(file.fileContent);
-
-                    if (fileData == null) {
-                        console.error(`💣💣💣Unable to fetch file  from  ${file.fileContent}`)
-                    } else {
-                        let fileItem = file
-                        fileItem.fileContent = fileData
-                        fileObject.push(fileItem)
-                    }
-                } else {
-                    fileObject.push(file)
-                }
-
-            }
-
-
-            let verificationResult = await aquafier.verifyAquaTreeRevision(fileInfo.aquaTree!, revision, revisionHash, fileObject)
-
-            console.log(`hash ${revisionHash} \n revision  ${JSON.stringify(revision, null, 4)} SDK DATA ${JSON.stringify(verificationResult, null, 4)}  \n is oky-> ${verificationResult.isOk()}`)
+            console.log(`hash ${revisionHash} \n revision  ${JSON.stringify(revision, null, 4)} SDK DATA ${JSON.stringify(verificationResult, null, 4)}  \n is oky-> ${verificationResult.isOk()} \n file object ${JSON.stringify(fileObjectVerifier, null, 4)}`)
 
             if (verificationResult.isOk()) {
                 allRevisionsVerificationsStatus.set(revisionHash, true);
@@ -187,15 +205,15 @@ export const CompleteChainView = ({ fileInfo, callBack }: ICompleteChainView) =>
         verifyAquaTreeRevisions()
     }, [fileInfo])
 
-    useEffect(() => {
-        const modalElement = document.getElementById('aqua-chain-details-modal');
-        const customEvent = new CustomEvent('REPLACE_ADDRESSES', {
-            detail: {
-                element: modalElement,
-            },
-        });
-        window.dispatchEvent(customEvent);
-    }, [])
+    // useEffect(() => {
+    //     const modalElement = document.getElementById('aqua-chain-details-modal');
+    //     const customEvent = new CustomEvent('REPLACE_ADDRESSES', {
+    //         detail: {
+    //             element: modalElement,
+    //         },
+    //     });
+    //     window.dispatchEvent(customEvent);
+    // }, [])
 
 
     return (
@@ -216,7 +234,7 @@ export const CompleteChainView = ({ fileInfo, callBack }: ICompleteChainView) =>
                                     <Alert status={displayColorBasedOnVerificationAlert()} title={displayBasedOnVerificationStatusText()} />
 
                                     <RevisionDetailsSummary isVerificationComplete={isVerificationComplete()} isVerificationSuccess={isVerificationSuccessful(verificationResults)} fileInfo={fileInfo} />
-                                    
+
                                     <Box w={'100%'}>
                                         <Collapsible.Root open={showMoreDetails}>
                                             <Collapsible.Trigger w="100%" py={'md'} onClick={() => setShowMoreDetails(open => !open)} cursor={'pointer'}>

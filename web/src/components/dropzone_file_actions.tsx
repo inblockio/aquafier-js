@@ -1132,7 +1132,7 @@ export const ImportAquaChainFromChain = ({ fileInfo, isVerificationSuccessful }:
                     }
                 })
 
-             //   console.log("Deletion results: ", deletionResults)
+               console.log("Deletion results: ", deletionResults)
             }
             catch (error: any) {
                 console.log("Deletion Error: ", error)

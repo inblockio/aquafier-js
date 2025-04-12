@@ -254,10 +254,11 @@ const FilePreview: React.FC<IFilePreview> = ({ fileInfo }) => {
 
     useEffect(() => {
         const fetchFile = async () => {
+
             setIsLoading(true);
             try {
-                const fileContentUrl: string = fileInfo.fileContent as string
-                // console.log("File content url: ", fileContentUrl)
+                const fileContentUrl = fileInfo.fileContent as string
+                console.log("File content url: ", fileContentUrl)
 
                 let actualUrlToFetch = ensureDomainUrlHasSSL(fileContentUrl)
 
@@ -350,14 +351,14 @@ const FilePreview: React.FC<IFilePreview> = ({ fileInfo }) => {
 
                 // Create a proper blob with the correct content type
                 const blob = new Blob([arrayBuffer], { type: contentType });
-                // console.log("Created blob with type:", contentType, "size:", blob.size);
+                console.log("Created blob with type:", contentType, "size:", blob.size);
 
                 setFileType(contentType);
-                // console.log("Final content type set to:", contentType);
+                console.log("Final content type set to:", contentType);
 
                 // Create URL from the properly typed blob
                 const objectURL = URL.createObjectURL(blob);
-                // console.log("Object URL created:", objectURL);
+                console.log("Object URL created:", objectURL);
                 setFileURL(objectURL);
             } catch (error) {
                 console.error("Error fetching file:", error);
@@ -366,11 +367,21 @@ const FilePreview: React.FC<IFilePreview> = ({ fileInfo }) => {
             }
         };
 
-        fetchFile();
+        if (typeof fileInfo.fileContent != 'string') {
+            console.log(`Exiting preview for ${fileInfo.fileContent}`)
+            return
+        } else {
 
-        return () => {
-            if (fileURL) URL.revokeObjectURL(fileURL);
-        };
+            if (!fileInfo.fileContent.includes("http")) {
+                console.log("file content not valid http");
+                
+            } else {
+                fetchFile();
+            }
+        }
+        // return () => {
+        //     if (fileURL) URL.revokeObjectURL(fileURL);
+        // };
     }, [fileInfo.fileContent, session?.nonce]);
 
     // Effect to render first page of PDF for mobile

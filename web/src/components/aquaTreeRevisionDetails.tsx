@@ -38,7 +38,6 @@ export const RevisionDisplay = ({ fileInfo, revision, revisionHash, isVerificati
     const isVerificationSuccessful = (): boolean | null => {
 
         console.log(`isVerificationComplete ${isVerificationComplete} mapcontains ${verificationResults.has(revisionHash)}  verificationResults size  --- ${verificationResults.size}  `)
-        console.table(verificationResults)
         if (!isVerificationComplete) {
             return null
         }
@@ -96,9 +95,9 @@ export const RevisionDisplay = ({ fileInfo, revision, revisionHash, isVerificati
         }
 
         if (res) {
-            return <LuCheck />
+            return <Box><LuCheck /></Box>
         } else {
-            return <LuX />
+            return <Box><LuX /></Box>
         }
 
     }
