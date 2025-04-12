@@ -1,6 +1,5 @@
-
 import { prisma } from "../database/db";
-import { fetchCompleteRevisionChain } from "../utils/quick_utils";
+import { fetchCompleteRevisionChain, diagnoseLinks } from "../utils/quick_utils";
 import { FastifyInstance, FastifyRequest, FastifyReply } from "fastify";
 
 export default async function testRoutes(fastify: FastifyInstance) {
@@ -47,5 +46,18 @@ export default async function testRoutes(fastify: FastifyInstance) {
         }
     });
 
-    // ... other routes ...
+    // Add diagnostic route for link table issues
+    fastify.get('/test/diagnose-links', async (request: FastifyRequest, reply: FastifyReply) => {
+        try {
+            console.log('Running link table diagnostic');
+            await diagnoseLinks();
+            return { message: 'Link table diagnostic completed - check server logs for results' };
+        } catch (error: any) {
+            console.error('Error in diagnose-links route:', error);
+            return reply.code(500).send({ 
+                error: 'Error running link diagnostics', 
+                details: error.message || String(error) 
+            });
+        }
+    });
 }

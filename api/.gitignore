@@ -7,3 +7,4 @@ prisma/migrations
 api/media
 api/src/media
 **/media/**
+.tap
