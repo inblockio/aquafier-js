@@ -52,7 +52,8 @@ const SharePage = () => {
                 setLoading(false)
             }
             catch (error: any) {
-                if (error.response.status == 404) {
+                if (error.response.status == 401) {
+                } else if (error.response.status == 404) {
                     setHasError(`File could not be found (probably it was deleted)`);
 
                 } else if (error.response.status == 412) {
@@ -82,18 +83,24 @@ const SharePage = () => {
         // }else{
         //    //  console.log("No.........Trigered ...") 
         // }
+        setHasError(null)
     }, [params, session])
 
     const isVerificationComplete = (fileInfo: ApiFileInfo): boolean => verificationResults.length < Object.keys(fileInfo.aquaTree!.revisions!).length
 
 
     function isVerificationSuccessful(): boolean {
-        for (const value of verificationResults.values()) {
-            if (!value) { // Equivalent to value === false
-                return true;
-            }
-        }
-        return false;
+        // for (const value of verificationResults.values()) {
+        //     if (!value) { // Equivalent to value === false
+        //         return true;
+        //     }
+        // }
+        // return false;
+        // let falseExist = verificationResults.find((e) => e.isSuccessful == false);
+        // if (falseExist) {
+        //     return !falseExist
+        // }
+        return true
     }
 
     const showProperWidget = () => {

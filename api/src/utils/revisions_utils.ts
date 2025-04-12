@@ -563,7 +563,7 @@ export async function createAquaTreeFromRevisions(latestRevisionHash: string, ur
                 revisionWithData.witness_smart_contract_address = witnessData.Witness_smart_contract_address!;
                 revisionWithData.witness_transaction_hash = witnessData.Witness_transaction_hash!;
                 revisionWithData.witness_sender_account_address = witnessData.Witness_sender_account_address!;
-                revisionWithData.witness_merkle_proof = [];// todo fix me from db 
+                revisionWithData.witness_merkle_proof = [witnessData.Witness_merkle_root];// todo fix me from db 
 
 
             } else if (revisionItem.revision_type == "signature") {

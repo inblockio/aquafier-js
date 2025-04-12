@@ -8,7 +8,9 @@
     "build": "tsc && node fix-imports.mjs",
     "dev": "tsx watch src/index.ts",
     "start": "node dist/index.js",
-    "test": "npx tap"
+    "test": "npx tap",
+    "migrate-reset":"npx prisma migrate reset",
+    "migrate-dev":"npx prisma migrate dev"
   },
   "keywords": [],
   "author": "",
