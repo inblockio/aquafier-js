@@ -227,7 +227,7 @@ const detectFileType = (uint8Array: Uint8Array): string => {
 
 const FilePreview: React.FC<IFilePreview> = ({ fileInfo }) => {
 
-    const { session, selectedFileInfo } = useStore(appStore);
+    const { session } = useStore(appStore);
     const [fileType, setFileType] = useState<string>("");
     const [fileURL, setFileURL] = useState<string>("");
     const [textContent, setTextContent] = useState<string>("");
