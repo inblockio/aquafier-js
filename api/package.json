@@ -19,7 +19,7 @@
     "@fastify/multipart": "^9.0.3",
     "@fastify/static": "^8.1.1",
     "@prisma/client": "^6.4.1",
-    "aqua-js-sdk": "github:inblockio/aqua-js-sdk#d7a2b8d1fad879f2dbcd759d05253b7b52c3aee0",
+    "aqua-js-sdk": "github:inblockio/aqua-js-sdk#0aaf3f174a4ce2805565884cf80e7f086a68d300",
     "dotenv": "^16.4.7",
     "ethers": "^5.7.2",
     "fastify": "^5.2.1",

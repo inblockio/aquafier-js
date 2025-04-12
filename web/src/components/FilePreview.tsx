@@ -1,6 +1,6 @@
 // import { Image } from "@chakra-ui/react";
 // import { fileType } from "../utils/functions";
-import { FileObject } from "aqua-js-sdk";
+import { FileObject, AquaTree } from "aqua-js-sdk";
 import { useEffect, useRef, useState } from "react";
 import { useStore } from "zustand";
 import appStore from "../store";
@@ -100,7 +100,7 @@ interface IFilePreview {
 //             // Decode base64 to string
 //             const decodedContent = atob(fileContent);
 
-//            //  console.log("decodedContent ==>", decodedContent)
+//            //  console.log(" 🤌🏾decodedContent ==>", decodedContent)
 
 //             // Determine syntax highlighting and formatting based on file type
 //             let formattedContent = decodedContent;
@@ -115,7 +115,7 @@ interface IFilePreview {
 //                 }
 //             }
 
-//            //  console.log("formattedContent ==> ", formattedContent)
+//            //  console.log(" 🤌🏾formattedContent ==> ", formattedContent)
 
 //             return (
 //                 <div
@@ -135,7 +135,7 @@ interface IFilePreview {
 //                 </div>
 //             );
 //         } else {
-//            //  console.log("document not captured ", fileTypeInfo)
+//            //  console.log(" 🤌🏾document not captured ", fileTypeInfo)
 //         }
 //         // }
 //     }
@@ -252,137 +252,369 @@ const FilePreview: React.FC<IFilePreview> = ({ fileInfo }) => {
         return () => window.removeEventListener('resize', checkIfMobile);
     }, []);
 
-    useEffect(() => {
-        const fetchFile = async () => {
+    // useEffect(() => {
+    //     const fetchFile = async () => {
 
-            setIsLoading(true);
-            try {
-                const fileContentUrl = fileInfo.fileContent as string
-                console.log("File content url: ", fileContentUrl)
+    //         setIsLoading(true);
+    //         try {
+    //             const fileContentUrl = fileInfo.fileContent as string
+    //             console.log(" 🤌🏾File content url: ", fileContentUrl)
 
-                let actualUrlToFetch = ensureDomainUrlHasSSL(fileContentUrl)
+    //             let actualUrlToFetch = ensureDomainUrlHasSSL(fileContentUrl)
 
-                const response = await fetch(actualUrlToFetch, {
-                    headers: {
-                        nonce: `${session?.nonce}`
-                    }
-                });
-                if (!response.ok) throw new Error("Failed to fetch file");
+    //             const response = await fetch(actualUrlToFetch, {
+    //                 headers: {
+    //                     nonce: `${session?.nonce}`
+    //                 }
+    //             });
+    //             if (!response.ok) throw new Error("Failed to fetch file");
 
-                // Get MIME type from headers
-                let contentType = response.headers.get("Content-Type") || "";
-                //console.log("Original Content-Type from headers:", contentType);
+    //             // Get MIME type from headers
+    //             let contentType = response.headers.get("Content-Type") || "";
+    //             //console.log(" 🤌🏾Original Content-Type from headers:", contentType);
 
-                // Clone the response for potential text extraction
-                const responseClone = response.clone();
+    //             // Clone the response for potential text extraction
+    //             const responseClone = response.clone();
 
-                // Get the raw data as ArrayBuffer first
-                const arrayBuffer = await response.arrayBuffer();
-                // console.log("ArrayBuffer size:", arrayBuffer.byteLength);
+    //             // Get the raw data as ArrayBuffer first
+    //             const arrayBuffer = await response.arrayBuffer();
+    //             // console.log(" 🤌🏾ArrayBuffer size:", arrayBuffer.byteLength);
 
-                // If content type is missing or generic, try to detect it
-                if (contentType === "application/octet-stream" || contentType === "") {
-                    const uint8Array = new Uint8Array(arrayBuffer);
-                    contentType = detectFileType(uint8Array);
-                    //console.log("Detected file type:", contentType);
+    //             // If content type is missing or generic, try to detect it
+    //             if (contentType === "application/octet-stream" || contentType === "") {
+    //                 const uint8Array = new Uint8Array(arrayBuffer);
+    //                 contentType = detectFileType(uint8Array);
+    //                 console.log(" 🤌🏾Detected file type:", contentType);
+    //             }
+
+    //             // Check for Word document by file extension
+    //             if (fileInfo.fileName && (/\.(docx?|doc)$/i).test(fileInfo.fileName)) {
+    //                 if (fileInfo.fileName.toLowerCase().endsWith('.docx')) {
+    //                     contentType = "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
+    //                 } else if (fileInfo.fileName.toLowerCase().endsWith('.doc')) {
+    //                     contentType = "application/msword";
+    //                 }
+
+    //                 // Store Word blob for docx-preview rendering
+    //                 const wordBlob = new Blob([arrayBuffer], { type: contentType });
+    //                 setWordBlob(wordBlob);
+    //             }
+
+    //             // For PDF files, ensure proper content type
+    //             if (contentType === "application/pdf" ||
+    //                 (fileInfo.fileName && fileInfo.fileName.toLowerCase().endsWith(".pdf"))) {
+    //                 contentType = "application/pdf";
+
+    //                 // Store PDF blob for direct rendering if needed
+    //                 const pdfBlob = new Blob([arrayBuffer], { type: "application/pdf" });
+    //                 setPdfBlob(pdfBlob);
+    //             }
+
+    //             // Handle audio files
+    //             if (contentType.startsWith("audio/") ||
+    //                 (fileInfo.fileName && (/\.(mp3|wav|ogg|aac|flac|m4a)$/i).test(fileInfo.fileName))) {
+    //                 if (!contentType.startsWith("audio/")) {
+    //                     // Set a default audio MIME type if needed
+    //                     contentType = "audio/mpeg";
+    //                 }
+    //             }
+
+    //             // Handle video files
+    //             if (contentType.startsWith("video/") ||
+    //                 (fileInfo.fileName && (/\.(mp4|webm|ogg|mov|avi|wmv|flv|mkv)$/i).test(fileInfo.fileName))) {
+    //                 if (!contentType.startsWith("video/")) {
+    //                     // Set a default video MIME type if needed
+    //                     contentType = "video/mp4";
+    //                 }
+    //             }
+
+    //             // Handle text-based content types
+    //             if (contentType.startsWith("text/") ||
+    //                 contentType === "application/json" ||
+    //                 contentType === "application/xml" ||
+    //                 contentType === "application/javascript") {
+    //                 try {
+    //                     const text = await responseClone.text();
+    //                     setTextContent(text);
+    //                 } catch (error) {
+    //                     console.error("Error reading text content:", error);
+    //                     // Try decoding the array buffer as UTF-8 text as fallback
+    //                     try {
+    //                         const decoder = new TextDecoder("utf-8");
+    //                         const text = decoder.decode(arrayBuffer);
+    //                         setTextContent(text);
+    //                     } catch (decodeError) {
+    //                         console.error("Error decoding text content:", decodeError);
+    //                     }
+    //                 }
+    //             }
+
+    //             // Create a proper blob with the correct content type
+    //             const blob = new Blob([arrayBuffer], { type: contentType });
+    //             console.log(" 🤌🏾Created blob with type:", contentType, "size:", blob.size);
+
+    //             setFileType(contentType);
+    //             console.log(" 🤌🏾Final content type set to:", contentType);
+
+    //             // Create URL from the properly typed blob
+    //             const objectURL = URL.createObjectURL(blob);
+    //             console.log(" 🤌🏾Object URL created:", objectURL);
+    //             setFileURL(objectURL);
+    //         } catch (error) {
+    //             console.error("Error fetching file:", error);
+    //         } finally {
+    //             setIsLoading(false);
+    //         }
+    //     };
+
+    //     if (typeof fileInfo.fileContent != 'string') {
+    //         if (fileInfo.fileContent instanceof AquaTree) {
+
+    //         } else {
+    //             console.log(`Exiting preview for ${fileInfo.fileContent}`)
+    //             // Create a proper blob with the correct content type
+    //             const blob = new Blob([fileInfo.fileContent as Uint8Array<ArrayBufferLike>], { type: contentType });
+    //             console.log(" 🤌🏾Created blob with type:", contentType, "size:", blob.size);
+
+    //             setFileType(contentType);
+    //             console.log(" 🤌🏾Final content type set to:", contentType);
+
+    //             // Create URL from the properly typed blob
+    //             const objectURL = URL.createObjectURL(blob);
+    //             console.log(" 🤌🏾Object URL created:", objectURL);
+    //             setFileURL(objectURL);
+    //         }
+    //         return
+    //     } else {
+
+    //         if (!fileInfo.fileContent.includes("http")) {
+    //             console.log(" 🤌🏾file content not valid http");
+    //             setTextContent(fileInfo.fileContent)
+    //         } else {
+    //             fetchFile();
+    //         }
+    //     }
+    //     // return () => {
+    //     //     if (fileURL) URL.revokeObjectURL(fileURL);
+    //     // };
+    // }, [fileInfo.fileContent, session?.nonce]);
+
+
+// Add this type guard function outside of your component
+function isAquaTree(obj: any): obj is AquaTree {
+    return obj !== null && 
+           typeof obj === 'object' && 
+           'revisions' in obj && 
+           'file_index' in obj;
+}
+
+useEffect(() => {
+    const fetchFile = async () => {
+        setIsLoading(true);
+        try {
+            const fileContentUrl = fileInfo.fileContent as string
+            console.log(" 🤌🏾File content url: ", fileContentUrl)
+
+            let actualUrlToFetch = ensureDomainUrlHasSSL(fileContentUrl)
+
+            const response = await fetch(actualUrlToFetch, {
+                headers: {
+                    nonce: `${session?.nonce}`
+                }
+            });
+            if (!response.ok) throw new Error("Failed to fetch file");
+
+            // Get MIME type from headers
+            let contentType = response.headers.get("Content-Type") || "";
+            //console.log(" 🤌🏾Original Content-Type from headers:", contentType);
+
+            // Clone the response for potential text extraction
+            const responseClone = response.clone();
+
+            // Get the raw data as ArrayBuffer first
+            const arrayBuffer = await response.arrayBuffer();
+            // console.log(" 🤌🏾ArrayBuffer size:", arrayBuffer.byteLength);
+
+            // If content type is missing or generic, try to detect it
+            if (contentType === "application/octet-stream" || contentType === "") {
+                const uint8Array = new Uint8Array(arrayBuffer);
+                contentType = detectFileType(uint8Array);
+                console.log(" 🤌🏾Detected file type:", contentType);
+            }
+
+            // Check for Word document by file extension
+            if (fileInfo.fileName && (/\.(docx?|doc)$/i).test(fileInfo.fileName)) {
+                if (fileInfo.fileName.toLowerCase().endsWith('.docx')) {
+                    contentType = "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
+                } else if (fileInfo.fileName.toLowerCase().endsWith('.doc')) {
+                    contentType = "application/msword";
                 }
 
-                // Check for Word document by file extension
-                if (fileInfo.fileName && (/\.(docx?|doc)$/i).test(fileInfo.fileName)) {
-                    if (fileInfo.fileName.toLowerCase().endsWith('.docx')) {
-                        contentType = "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
-                    } else if (fileInfo.fileName.toLowerCase().endsWith('.doc')) {
-                        contentType = "application/msword";
-                    }
+                // Store Word blob for docx-preview rendering
+                const wordBlob = new Blob([arrayBuffer], { type: contentType });
+                setWordBlob(wordBlob);
+            }
 
-                    // Store Word blob for docx-preview rendering
-                    const wordBlob = new Blob([arrayBuffer], { type: contentType });
-                    setWordBlob(wordBlob);
+            // For PDF files, ensure proper content type
+            if (contentType === "application/pdf" ||
+                (fileInfo.fileName && fileInfo.fileName.toLowerCase().endsWith(".pdf"))) {
+                contentType = "application/pdf";
+
+                // Store PDF blob for direct rendering if needed
+                const pdfBlob = new Blob([arrayBuffer], { type: "application/pdf" });
+                setPdfBlob(pdfBlob);
+            }
+
+            // Handle audio files
+            if (contentType.startsWith("audio/") ||
+                (fileInfo.fileName && (/\.(mp3|wav|ogg|aac|flac|m4a)$/i).test(fileInfo.fileName))) {
+                if (!contentType.startsWith("audio/")) {
+                    // Set a default audio MIME type if needed
+                    contentType = "audio/mpeg";
                 }
+            }
 
-                // For PDF files, ensure proper content type
-                if (contentType === "application/pdf" ||
-                    (fileInfo.fileName && fileInfo.fileName.toLowerCase().endsWith(".pdf"))) {
-                    contentType = "application/pdf";
-
-                    // Store PDF blob for direct rendering if needed
-                    const pdfBlob = new Blob([arrayBuffer], { type: "application/pdf" });
-                    setPdfBlob(pdfBlob);
+            // Handle video files
+            if (contentType.startsWith("video/") ||
+                (fileInfo.fileName && (/\.(mp4|webm|ogg|mov|avi|wmv|flv|mkv)$/i).test(fileInfo.fileName))) {
+                if (!contentType.startsWith("video/")) {
+                    // Set a default video MIME type if needed
+                    contentType = "video/mp4";
                 }
+            }
 
-                // Handle audio files
-                if (contentType.startsWith("audio/") ||
-                    (fileInfo.fileName && (/\.(mp3|wav|ogg|aac|flac|m4a)$/i).test(fileInfo.fileName))) {
-                    if (!contentType.startsWith("audio/")) {
-                        // Set a default audio MIME type if needed
-                        contentType = "audio/mpeg";
-                    }
-                }
-
-                // Handle video files
-                if (contentType.startsWith("video/") ||
-                    (fileInfo.fileName && (/\.(mp4|webm|ogg|mov|avi|wmv|flv|mkv)$/i).test(fileInfo.fileName))) {
-                    if (!contentType.startsWith("video/")) {
-                        // Set a default video MIME type if needed
-                        contentType = "video/mp4";
-                    }
-                }
-
-                // Handle text-based content types
-                if (contentType.startsWith("text/") ||
-                    contentType === "application/json" ||
-                    contentType === "application/xml" ||
-                    contentType === "application/javascript") {
+            // Handle text-based content types
+            if (contentType.startsWith("text/") ||
+                contentType === "application/json" ||
+                contentType === "application/xml" ||
+                contentType === "application/javascript") {
+                try {
+                    const text = await responseClone.text();
+                    setTextContent(text);
+                } catch (error) {
+                    console.error("Error reading text content:", error);
+                    // Try decoding the array buffer as UTF-8 text as fallback
                     try {
-                        const text = await responseClone.text();
+                        const decoder = new TextDecoder("utf-8");
+                        const text = decoder.decode(arrayBuffer);
                         setTextContent(text);
-                    } catch (error) {
-                        console.error("Error reading text content:", error);
-                        // Try decoding the array buffer as UTF-8 text as fallback
-                        try {
-                            const decoder = new TextDecoder("utf-8");
-                            const text = decoder.decode(arrayBuffer);
-                            setTextContent(text);
-                        } catch (decodeError) {
-                            console.error("Error decoding text content:", decodeError);
-                        }
+                    } catch (decodeError) {
+                        console.error("Error decoding text content:", decodeError);
                     }
                 }
-
-                // Create a proper blob with the correct content type
-                const blob = new Blob([arrayBuffer], { type: contentType });
-                console.log("Created blob with type:", contentType, "size:", blob.size);
-
-                setFileType(contentType);
-                console.log("Final content type set to:", contentType);
-
-                // Create URL from the properly typed blob
-                const objectURL = URL.createObjectURL(blob);
-                console.log("Object URL created:", objectURL);
-                setFileURL(objectURL);
-            } catch (error) {
-                console.error("Error fetching file:", error);
-            } finally {
-                setIsLoading(false);
             }
-        };
 
-        if (typeof fileInfo.fileContent != 'string') {
-            console.log(`Exiting preview for ${fileInfo.fileContent}`)
-            return
-        } else {
+            // Create a proper blob with the correct content type
+            const blob = new Blob([arrayBuffer], { type: contentType });
+            console.log(" 🤌🏾Created blob with type:", contentType, "size:", blob.size);
 
-            if (!fileInfo.fileContent.includes("http")) {
-                console.log("file content not valid http");
-                
-            } else {
-                fetchFile();
-            }
+            setFileType(contentType);
+            console.log(" 🤌🏾Final content type set to:", contentType);
+
+            // Create URL from the properly typed blob
+            const objectURL = URL.createObjectURL(blob);
+            console.log(" 🤌🏾Object URL created:", objectURL);
+            setFileURL(objectURL);
+        } catch (error) {
+            console.error("Error fetching file:", error);
+        } finally {
+            setIsLoading(false);
         }
-        // return () => {
-        //     if (fileURL) URL.revokeObjectURL(fileURL);
-        // };
-    }, [fileInfo.fileContent, session?.nonce]);
+    };
+
+    if (typeof fileInfo.fileContent != 'string') {
+        // Check if fileContent is of type AquaTree using type guard
+        if (isAquaTree(fileInfo.fileContent)) {
+            console.log(" 🤌🏾Handling AquaTree content");
+            // Add your AquaTree handling logic here
+            // For example:
+            // - Extract file info from the revision tree
+            // - Process files from file_index
+            // - Render tree structure 
+            setIsLoading(false);
+            // Example: Set content type to JSON for tree display
+            setFileType("application/json");
+            setTextContent(JSON.stringify(fileInfo.fileContent, null, 2));
+        } else {
+            console.log(`Handling binary content: ${fileInfo.fileContent}`);
+            
+            // Determine contentType based on fileName or default to octet-stream
+            let contentType = "application/octet-stream";
+            
+            if (fileInfo.fileName) {
+                // Check for common file types by extension
+                if (/\.pdf$/i.test(fileInfo.fileName)) {
+                    contentType = "application/pdf";
+                } else if (/\.(docx)$/i.test(fileInfo.fileName)) {
+                    contentType = "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
+                } else if (/\.(doc)$/i.test(fileInfo.fileName)) {
+                    contentType = "application/msword";
+                } else if (/\.(jpe?g)$/i.test(fileInfo.fileName)) {
+                    contentType = "image/jpeg";
+                } else if (/\.(png)$/i.test(fileInfo.fileName)) {
+                    contentType = "image/png";
+                } else if (/\.(gif)$/i.test(fileInfo.fileName)) {
+                    contentType = "image/gif";
+                } else if (/\.(mp3)$/i.test(fileInfo.fileName)) {
+                    contentType = "audio/mpeg";
+                } else if (/\.(mp4)$/i.test(fileInfo.fileName)) {
+                    contentType = "video/mp4";
+                } else if (/\.(txt|log)$/i.test(fileInfo.fileName)) {
+                    contentType = "text/plain";
+                } else if (/\.(json)$/i.test(fileInfo.fileName)) {
+                    contentType = "application/json";
+                }
+            }
+            
+            // Try to detect content type if we have detectFileType function available
+            try {
+                if (typeof detectFileType === 'function') {
+                    const detectedType = detectFileType(fileInfo.fileContent);
+                    if (detectedType) {
+                        contentType = detectedType;
+                        console.log(" 🤌🏾Detected content type:", contentType);
+                    }
+                }
+            } catch (error) {
+                console.error("Error detecting content type:", error);
+            }
+            
+            // Create a proper blob with the determined content type
+            const blob = new Blob([fileInfo.fileContent], { type: contentType });
+            console.log(" 🤌🏾Created blob with type:", contentType, "size:", blob.size);
+
+            setFileType(contentType);
+            
+            // Handle special content types
+            if (contentType === "application/pdf") {
+                setPdfBlob(blob);
+            } else if (contentType.includes("wordprocessing") || contentType === "application/msword") {
+                setWordBlob(blob);
+            }
+
+            // Create URL from the properly typed blob
+            const objectURL = URL.createObjectURL(blob);
+            console.log(" 🤌🏾Object URL created:", objectURL);
+            setFileURL(objectURL);
+            setIsLoading(false);
+        }
+    } else {
+        if (!fileInfo.fileContent.startsWith("http")) {
+            console.log(" 🤌🏾file content not valid http  -"+ fileInfo.fileContent);
+            setTextContent(fileInfo.fileContent);
+            setFileType("text/plain");
+            setIsLoading(false);
+        } else {
+            fetchFile();
+        }
+    }
+    
+    return () => {
+        if (fileURL) URL.revokeObjectURL(fileURL);
+    };
+}, [fileInfo.fileContent, session?.nonce]);
+
+
 
     // Effect to render first page of PDF for mobile
     useEffect(() => {
@@ -432,7 +664,7 @@ const FilePreview: React.FC<IFilePreview> = ({ fileInfo }) => {
                     };
 
                     await page.render(renderContext).promise;
-                    // console.log("PDF first page rendered successfully");
+                    // console.log(" 🤌🏾PDF first page rendered successfully");
 
                 } catch (error) {
                     console.error("Error rendering PDF first page:", error);
@@ -507,7 +739,7 @@ const FilePreview: React.FC<IFilePreview> = ({ fileInfo }) => {
                         }
                     }
 
-                    // console.log("Word document rendered successfully with docx-preview");
+                    // console.log(" 🤌🏾Word document rendered successfully with docx-preview");
                 } catch (error: any) {
                     console.error("Error rendering Word document with docx-preview:", error);
 
@@ -552,7 +784,7 @@ const FilePreview: React.FC<IFilePreview> = ({ fileInfo }) => {
                 docxScript.async = true;
 
                 docxScript.onload = () => {
-                    // console.log("docx-preview loaded successfully");
+                    // console.log(" 🤌🏾docx-preview loaded successfully");
                     // Small delay to ensure script is fully initialized
                     setTimeout(() => resolve(), 100);
                 };
@@ -576,7 +808,7 @@ const FilePreview: React.FC<IFilePreview> = ({ fileInfo }) => {
 
     if (isLoading) return <p>Loading...</p>;
 
-    // console.log("Rendering file with type:", fileType, "Mobile:", isMobile);
+    // console.log(" 🤌🏾Rendering file with type:", fileType, "Mobile:", isMobile);
 
     // Render based on file type
     if (fileType.startsWith("image/")) {

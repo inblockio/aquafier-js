@@ -37,7 +37,10 @@ export const RevisionDisplay = ({ fileInfo, revision, revisionHash, isVerificati
 
     const isVerificationSuccessful = (): boolean | null => {
 
-        console.log(`isVerificationComplete ${isVerificationComplete} mapcontains ${verificationResults.has(revisionHash)}  verificationResults size  --- ${verificationResults.size}  `)
+        console.log(`isVerificationComplete ${isVerificationComplete} mapcontains ${verificationResults.has(revisionHash)}  verificationResults size  --- ${verificationResults.size}   `)
+        verificationResults.forEach((hash, value) => {
+            console.log(`hash ${hash} -- value ${value}`);
+        });
         if (!isVerificationComplete) {
             return null
         }

@@ -34,7 +34,7 @@ export const CompleteChainView = ({ fileInfo, callBack }: ICompleteChainView) =>
     const fetchFileData = async (url: string): Promise<string | ArrayBuffer | null> => {
         try {
             // const fileContentUrl: string = fileInfo.fileContent as string
-            console.log("File content url: ", url)
+            // console.log("File content url: ", url)
 
             let actualUrlToFetch = ensureDomainUrlHasSSL(url)
 
@@ -47,7 +47,7 @@ export const CompleteChainView = ({ fileInfo, callBack }: ICompleteChainView) =>
 
             // Get MIME type from headers
             let contentType = response.headers.get("Content-Type") || "";
-            //console.log("Original Content-Type from headers:", contentType);
+            //// console.log("Original Content-Type from headers:", contentType);
 
             // Clone the response for potential text extraction
             const responseClone = response.clone();
@@ -70,14 +70,14 @@ export const CompleteChainView = ({ fileInfo, callBack }: ICompleteChainView) =>
 
             }
         } catch (e) {
-            console.log(`error occured fetch file ${e}`)
+            // console.log(`error occured fetch file ${e}`)
             return null
         }
     }
 
     const isVerificationSuccessful = (_verificationResults: Map<string, boolean>): boolean => {
         for (const value of _verificationResults.values()) {
-            // console.log(`Values ${value}`)
+            // // console.log(`Values ${value}`)
             if (!value) {
                 return false
             }
@@ -124,10 +124,10 @@ export const CompleteChainView = ({ fileInfo, callBack }: ICompleteChainView) =>
 
         for (let file of fileInfo.fileObject) {
 
-            console.log(`File loop name ${file.fileName} url  ${file.fileContent} type ${typeof file.fileContent}  `)
-            if (typeof file.fileContent == 'string') {
+            // console.log(`File loop name ${file.fileName} url  ${file.fileContent} type ${typeof file.fileContent}  `)
+            if (typeof file.fileContent == 'string' && (file.fileContent.startsWith("http://") || file.fileContent.startsWith("https://"))) {
                 let fileData = await fetchFileData(file.fileContent);
-                console.log(`console log type of string == >${fileData} `)
+                // console.log(`console log type of string == >${fileData} `)
 
                 if (fileData == null) {
                     console.error(`💣💣💣Unable to fetch file  from  ${file.fileContent}`)
@@ -163,7 +163,7 @@ export const CompleteChainView = ({ fileInfo, callBack }: ICompleteChainView) =>
 
             let verificationResult = await aquafier.verifyAquaTreeRevision(fileInfo.aquaTree!, revision, revisionHash, fileObjectVerifier)
 
-            console.log(`hash ${revisionHash} \n revision  ${JSON.stringify(revision, null, 4)} SDK DATA ${JSON.stringify(verificationResult, null, 4)}  \n is oky-> ${verificationResult.isOk()} \n file object ${JSON.stringify(fileObjectVerifier, null, 4)}`)
+            // console.log(`hash ${revisionHash} \n revision  ${JSON.stringify(revision, null, 4)} SDK DATA ${JSON.stringify(verificationResult, null, 4)}  \n is oky-> ${verificationResult.isOk()} \n file object ${JSON.stringify(fileObjectVerifier, null, 4)}`)
 
             if (verificationResult.isOk()) {
                 allRevisionsVerificationsStatus.set(revisionHash, true);
@@ -182,7 +182,7 @@ export const CompleteChainView = ({ fileInfo, callBack }: ICompleteChainView) =>
 
     const isVerificationComplete = (): boolean => {
 
-        // console.log(`result ${verificationResults.size}  vs aquq tree ${Object.keys(fileInfo.aquaTree!.revisions!).length}`)
+        // // console.log(`result ${verificationResults.size}  vs aquq tree ${Object.keys(fileInfo.aquaTree!.revisions!).length}`)
         return verificationResults.size == Object.keys(fileInfo.aquaTree!.revisions!).length
 
     }
