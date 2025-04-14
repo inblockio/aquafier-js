@@ -1,770 +1,80 @@
-// import { Image } from "@chakra-ui/react";
-// import { fileType } from "../utils/functions";
-import { FileObject, AquaTree } from "aqua-js-sdk";
+import { FileObject } from "aqua-js-sdk";
 import { useEffect, useRef, useState } from "react";
 import { useStore } from "zustand";
 import appStore from "../store";
 import { ensureDomainUrlHasSSL } from "../utils/functions";
-import { PDFJSViewer, PDFControlsProps } from "pdfjs-react-viewer"
+import { PDFJSViewer, PDFControlsProps } from "pdfjs-react-viewer";
 import { Group, IconButton, Text } from "@chakra-ui/react";
 import { LuChevronLeft, LuChevronRight } from "react-icons/lu";
 
-// Add type declaration for PDF.js
-declare global {
-    interface Window {
-        mammoth: {
-            convertToHtml: (options: { arrayBuffer: ArrayBuffer }) => Promise<{ value: string }>;
-        };
-        'pdfjs-dist/build/pdf': any;
-    }
-}
-
-interface IFilePreview {
-    fileInfo: FileObject
-}
-
-// const FilePreviewOld = ({ fileInfo }: IFilePreview) => {
-
-//     if (fileInfo == undefined) {
-//         return (<div>
-
-//         </div>)
-//     }
-
-//     const fileTypeInfo = fileType(fileInfo.fileName);
-
-//     // const pageData: PageData = JSON.parse(fileInfo.page_data)
-
-//     // if (pageData && pageData?.pages != null && pageData?.pages.length!! > 0) {
-//     // const firstPage = pageData!.pages[0]; // Get the first page
-//     // const firstRevisionKey = Object.keys(firstPage.revisions)[0]; // Get the first revision key
-//     // const firstRevision = firstPage.revisions[firstRevisionKey]; // Get the first revision
-//     // const fileContent = firstRevision.content.file; // Get file content
-//     const fileContent = fileInfo.fileContent
-
-
-
-//     if (fileContent && fileTypeInfo === "Image") {
-//         const base64String = `data:image/png;base64,${fileContent}`;
-//         return <Image src={base64String} borderRadius={'xl'} fit={'contain'} />
-//     }
-//     else if (fileContent && fileTypeInfo === "Video") {
-//         const base64String = `data:video/mp4;base64,${fileContent}`;
-//         return (
-//             <video
-//                 controls
-//                 width="100%"
-//                 style={{ borderRadius: '12px' }}
-//             >
-//                 <source src={base64String} type="video/mp4" />
-//                 Your browser does not support the video tag.
-//             </video>
-//         );
-//     }
-//     else if (fileContent && fileTypeInfo === "Music") {
-//         const base64String = `data:audio/mp3;base64,${fileContent}`;
-//         return (
-//             <audio
-//                 controls
-//                 style={{ borderRadius: '12px', width: '100%' }}
-//             >
-//                 <source src={base64String} type="audio/mp3" />
-//                 Your browser does not support the audio tag.
-//             </audio>
-//         );
-//     } else if (fileContent && fileTypeInfo === "Document") {
-
-
-//         if (fileTypeInfo.replace(/\s+/g, '') == "application/pdf") {
-
-//             const base64String = `data:application/pdf;base64,${fileContent}`;
-//             return (
-//                 <object
-//                     data={base64String}
-//                     type="application/pdf"
-//                     width="100%"
-//                     height="800px"
-//                     className="rounded-xl"
-//                     style={{
-//                         borderRadius: '12px',
-//                         width: '100%',
-//                         border: 'none',
-//                         height: '800px'
-//                     }}
-//                 >
-//                     <param name="view" value="FitH" />
-//                     <param name="pagemode" value="none" />
-//                 </object>
-//             );
-//         } else if (["text/plain", "text/csv", "text/json"].includes(fileTypeInfo.replace(/\s+/g, ''))) {
-//             // Decode base64 to string
-//             const decodedContent = atob(fileContent);
-
-//            //  console.log(" 🤌🏾decodedContent ==>", decodedContent)
-
-//             // Determine syntax highlighting and formatting based on file type
-//             let formattedContent = decodedContent;
-//             if (fileTypeInfo.replace(/\s+/g, '') === "text/json") {
-//                 try {
-//                     // Pretty print JSON with indentation
-//                     formattedContent = JSON.stringify(JSON.parse(decodedContent), null, 2);
-//                 } catch (error) {
-//                     console.error("Error parsing json for preview ", error)
-//                     // If JSON parsing fails, show original content
-//                     formattedContent = decodedContent;
-//                 }
-//             }
-
-//            //  console.log(" 🤌🏾formattedContent ==> ", formattedContent)
-
-//             return (
-//                 <div
-//                     style={{
-//                         backgroundColor: '#f4f4f4',
-//                         color: "black",
-//                         borderRadius: '12px',
-//                         padding: '15px',
-//                         maxHeight: '600px',
-//                         overflowY: 'auto',
-//                         fontFamily: 'monospace',
-//                         whiteSpace: 'pre-wrap',
-//                         wordBreak: 'break-word'
-//                     }}
-//                 >
-//                     {formattedContent}
-//                 </div>
-//             );
-//         } else {
-//            //  console.log(" 🤌🏾document not captured ", fileTypeInfo)
-//         }
-//         // }
-//     }
-//     return <div >
-//         <Image id="base64Image" alt="Base64 Image" src="/images/preview.jpg" />
-//     </div>
-// }
-
-// File type signature definitions
-interface FileSignature {
-    signature: number[];
-    offset?: number;
-    type: string;
-    extension: string;
-}
-
-const fileSignatures: FileSignature[] = [
+// Define file extensions to content type mappings
+const fileExtensionMap: { [key: string]: string } = {
     // Images
-    { signature: [0x89, 0x50, 0x4E, 0x47], type: 'image/png', extension: 'png' },
-    { signature: [0xFF, 0xD8, 0xFF], type: 'image/jpeg', extension: 'jpg' },
-    { signature: [0x47, 0x49, 0x46, 0x38], type: 'image/gif', extension: 'gif' },
-    { signature: [0x42, 0x4D], type: 'image/bmp', extension: 'bmp' },
-    { signature: [0x52, 0x49, 0x46, 0x46], type: 'image/webp', extension: 'webp' }, // RIFF....WEBP
-
-    // PDFs
-    { signature: [0x25, 0x50, 0x44, 0x46], type: 'application/pdf', extension: 'pdf' }, // %PDF
-
-    // Text files - UTF-8 BOM
-    { signature: [0xEF, 0xBB, 0xBF], type: 'text/plain', extension: 'txt' },
-
-    // Audio
-    { signature: [0x49, 0x44, 0x33], type: 'audio/mp3', extension: 'mp3' }, // ID3 tag for MP3
-    { signature: [0xFF, 0xFB], type: 'audio/mp3', extension: 'mp3' }, // MP3 without ID3
-    { signature: [0x4F, 0x67, 0x67, 0x53], type: 'audio/ogg', extension: 'ogg' }, // OggS
-    { signature: [0x52, 0x49, 0x46, 0x46], type: 'audio/wav', extension: 'wav' }, // RIFF....WAVE
-
-    // Video
-    { signature: [0x00, 0x00, 0x00, 0x18, 0x66, 0x74, 0x79, 0x70], offset: 4, type: 'video/mp4', extension: 'mp4' }, // ftyp
-    { signature: [0x1A, 0x45, 0xDF, 0xA3], type: 'video/webm', extension: 'webm' }, // EBML
-    { signature: [0x00, 0x00, 0x00, 0x14, 0x66, 0x74, 0x79, 0x70], offset: 4, type: 'video/quicktime', extension: 'mov' }, // ftyp
-
+    'jpg': 'image/jpeg',
+    'jpeg': 'image/jpeg',
+    'png': 'image/png',
+    'gif': 'image/gif',
+    'webp': 'image/webp',
+    'bmp': 'image/bmp',
     // Documents
-    { signature: [0x50, 0x4B, 0x03, 0x04], type: 'application/zip', extension: 'zip' }, // PK..
-    { signature: [0x50, 0x4B, 0x03, 0x04], type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', extension: 'docx' }, // DOCX (also PK..)
-    { signature: [0xD0, 0xCF, 0x11, 0xE0], type: 'application/msword', extension: 'doc' }, // DOC
-    { signature: [0x7B, 0x5C, 0x72, 0x74], type: 'application/rtf', extension: 'rtf' }, // {\rt
-];
-
-const detectFileType = (uint8Array: Uint8Array): string => {
-    // Check for ASCII text files (simple heuristic)
-    let isAsciiText = true;
-    const sampleSize = Math.min(uint8Array.length, 500); // Check first 500 bytes
-    for (let i = 0; i < sampleSize; i++) {
-        // Outside printable ASCII range and not a common control character
-        if ((uint8Array[i] < 32 || uint8Array[i] > 126) &&
-            ![9, 10, 13].includes(uint8Array[i])) {
-            isAsciiText = false;
-            break;
-        }
-    }
-
-    if (isAsciiText) {
-        return 'text/plain';
-    }
-
-    // Check for binary signatures
-    for (const fileType of fileSignatures) {
-        const offset = fileType.offset || 0;
-        if (uint8Array.length < offset + fileType.signature.length) {
-            continue;
-        }
-
-        let match = true;
-        for (let i = 0; i < fileType.signature.length; i++) {
-            if (uint8Array[offset + i] !== fileType.signature[i]) {
-                match = false;
-                break;
-            }
-        }
-
-        if (match) {
-            return fileType.type;
-        }
-    }
-
-    // Default to octet-stream if no match
-    return 'application/octet-stream';
+    'pdf': 'application/pdf',
+    'docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    'doc': 'application/msword',
+    'txt': 'text/plain',
+    'json': 'application/json',
+    'xml': 'application/xml',
+    'csv': 'text/csv',
+    // Video
+    'mp4': 'video/mp4',
+    'webm': 'video/webm',
+    'mov': 'video/quicktime',
+    'avi': 'video/x-msvideo',
+    'mkv': 'video/x-matroska',
+    // Audio
+    'mp3': 'audio/mpeg',
+    'wav': 'audio/wav',
+    'ogg': 'audio/ogg',
+    'flac': 'audio/flac',
+    'm4a': 'audio/mp4',
 };
 
-const FilePreview: React.FC<IFilePreview> = ({ fileInfo }) => {
+interface IFilePreview {
+    fileInfo: FileObject;
+}
 
+// Add declaration for docx-preview global type
+declare global {
+    interface Window {
+        docx: {
+            renderAsync: (
+                blob: Blob,
+                container: HTMLElement,
+                viewerOptions: any,
+                renderOptions: any
+            ) => Promise<void>;
+        };
+    }
+}
+
+const FilePreview: React.FC<IFilePreview> = ({ fileInfo }) => {
     const { session } = useStore(appStore);
     const [fileType, setFileType] = useState<string>("");
     const [fileURL, setFileURL] = useState<string>("");
     const [textContent, setTextContent] = useState<string>("");
     const [isLoading, setIsLoading] = useState<boolean>(true);
-    const [isMobile, setIsMobile] = useState<boolean>(false);
     const [pdfBlob, setPdfBlob] = useState<Blob | null>(null);
     const [wordBlob, setWordBlob] = useState<Blob | null>(null);
-    const pdfCanvasRef = useRef<HTMLCanvasElement>(null);
+
     const wordContainerRef = useRef<HTMLDivElement>(null);
 
-    // Detect mobile devices on component mount
-    useEffect(() => {
-        const checkIfMobile = () => {
-            const userAgent = navigator.userAgent || navigator.vendor || (window as any).opera;
-            const mobileRegex = /android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini/i;
-            setIsMobile(mobileRegex.test(userAgent.toLowerCase()));
-        };
+    // Helper function to get content type from file extension
+    const getContentTypeFromFileName = (fileName: string): string => {
+        if (!fileName) return "application/octet-stream";
 
-        checkIfMobile();
-
-        // Also check on resize in case of orientation change
-        window.addEventListener('resize', checkIfMobile);
-        return () => window.removeEventListener('resize', checkIfMobile);
-    }, []);
-
-    // useEffect(() => {
-    //     const fetchFile = async () => {
-
-    //         setIsLoading(true);
-    //         try {
-    //             const fileContentUrl = fileInfo.fileContent as string
-    //             console.log(" 🤌🏾File content url: ", fileContentUrl)
-
-    //             let actualUrlToFetch = ensureDomainUrlHasSSL(fileContentUrl)
-
-    //             const response = await fetch(actualUrlToFetch, {
-    //                 headers: {
-    //                     nonce: `${session?.nonce}`
-    //                 }
-    //             });
-    //             if (!response.ok) throw new Error("Failed to fetch file");
-
-    //             // Get MIME type from headers
-    //             let contentType = response.headers.get("Content-Type") || "";
-    //             //console.log(" 🤌🏾Original Content-Type from headers:", contentType);
-
-    //             // Clone the response for potential text extraction
-    //             const responseClone = response.clone();
-
-    //             // Get the raw data as ArrayBuffer first
-    //             const arrayBuffer = await response.arrayBuffer();
-    //             // console.log(" 🤌🏾ArrayBuffer size:", arrayBuffer.byteLength);
-
-    //             // If content type is missing or generic, try to detect it
-    //             if (contentType === "application/octet-stream" || contentType === "") {
-    //                 const uint8Array = new Uint8Array(arrayBuffer);
-    //                 contentType = detectFileType(uint8Array);
-    //                 console.log(" 🤌🏾Detected file type:", contentType);
-    //             }
-
-    //             // Check for Word document by file extension
-    //             if (fileInfo.fileName && (/\.(docx?|doc)$/i).test(fileInfo.fileName)) {
-    //                 if (fileInfo.fileName.toLowerCase().endsWith('.docx')) {
-    //                     contentType = "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
-    //                 } else if (fileInfo.fileName.toLowerCase().endsWith('.doc')) {
-    //                     contentType = "application/msword";
-    //                 }
-
-    //                 // Store Word blob for docx-preview rendering
-    //                 const wordBlob = new Blob([arrayBuffer], { type: contentType });
-    //                 setWordBlob(wordBlob);
-    //             }
-
-    //             // For PDF files, ensure proper content type
-    //             if (contentType === "application/pdf" ||
-    //                 (fileInfo.fileName && fileInfo.fileName.toLowerCase().endsWith(".pdf"))) {
-    //                 contentType = "application/pdf";
-
-    //                 // Store PDF blob for direct rendering if needed
-    //                 const pdfBlob = new Blob([arrayBuffer], { type: "application/pdf" });
-    //                 setPdfBlob(pdfBlob);
-    //             }
-
-    //             // Handle audio files
-    //             if (contentType.startsWith("audio/") ||
-    //                 (fileInfo.fileName && (/\.(mp3|wav|ogg|aac|flac|m4a)$/i).test(fileInfo.fileName))) {
-    //                 if (!contentType.startsWith("audio/")) {
-    //                     // Set a default audio MIME type if needed
-    //                     contentType = "audio/mpeg";
-    //                 }
-    //             }
-
-    //             // Handle video files
-    //             if (contentType.startsWith("video/") ||
-    //                 (fileInfo.fileName && (/\.(mp4|webm|ogg|mov|avi|wmv|flv|mkv)$/i).test(fileInfo.fileName))) {
-    //                 if (!contentType.startsWith("video/")) {
-    //                     // Set a default video MIME type if needed
-    //                     contentType = "video/mp4";
-    //                 }
-    //             }
-
-    //             // Handle text-based content types
-    //             if (contentType.startsWith("text/") ||
-    //                 contentType === "application/json" ||
-    //                 contentType === "application/xml" ||
-    //                 contentType === "application/javascript") {
-    //                 try {
-    //                     const text = await responseClone.text();
-    //                     setTextContent(text);
-    //                 } catch (error) {
-    //                     console.error("Error reading text content:", error);
-    //                     // Try decoding the array buffer as UTF-8 text as fallback
-    //                     try {
-    //                         const decoder = new TextDecoder("utf-8");
-    //                         const text = decoder.decode(arrayBuffer);
-    //                         setTextContent(text);
-    //                     } catch (decodeError) {
-    //                         console.error("Error decoding text content:", decodeError);
-    //                     }
-    //                 }
-    //             }
-
-    //             // Create a proper blob with the correct content type
-    //             const blob = new Blob([arrayBuffer], { type: contentType });
-    //             console.log(" 🤌🏾Created blob with type:", contentType, "size:", blob.size);
-
-    //             setFileType(contentType);
-    //             console.log(" 🤌🏾Final content type set to:", contentType);
-
-    //             // Create URL from the properly typed blob
-    //             const objectURL = URL.createObjectURL(blob);
-    //             console.log(" 🤌🏾Object URL created:", objectURL);
-    //             setFileURL(objectURL);
-    //         } catch (error) {
-    //             console.error("Error fetching file:", error);
-    //         } finally {
-    //             setIsLoading(false);
-    //         }
-    //     };
-
-    //     if (typeof fileInfo.fileContent != 'string') {
-    //         if (fileInfo.fileContent instanceof AquaTree) {
-
-    //         } else {
-    //             console.log(`Exiting preview for ${fileInfo.fileContent}`)
-    //             // Create a proper blob with the correct content type
-    //             const blob = new Blob([fileInfo.fileContent as Uint8Array<ArrayBufferLike>], { type: contentType });
-    //             console.log(" 🤌🏾Created blob with type:", contentType, "size:", blob.size);
-
-    //             setFileType(contentType);
-    //             console.log(" 🤌🏾Final content type set to:", contentType);
-
-    //             // Create URL from the properly typed blob
-    //             const objectURL = URL.createObjectURL(blob);
-    //             console.log(" 🤌🏾Object URL created:", objectURL);
-    //             setFileURL(objectURL);
-    //         }
-    //         return
-    //     } else {
-
-    //         if (!fileInfo.fileContent.includes("http")) {
-    //             console.log(" 🤌🏾file content not valid http");
-    //             setTextContent(fileInfo.fileContent)
-    //         } else {
-    //             fetchFile();
-    //         }
-    //     }
-    //     // return () => {
-    //     //     if (fileURL) URL.revokeObjectURL(fileURL);
-    //     // };
-    // }, [fileInfo.fileContent, session?.nonce]);
-
-
-// Add this type guard function outside of your component
-function isAquaTree(obj: any): obj is AquaTree {
-    return obj !== null && 
-           typeof obj === 'object' && 
-           'revisions' in obj && 
-           'file_index' in obj;
-}
-
-useEffect(() => {
-    const fetchFile = async () => {
-        setIsLoading(true);
-        try {
-            const fileContentUrl = fileInfo.fileContent as string
-            console.log(" 🤌🏾File content url: ", fileContentUrl)
-
-            let actualUrlToFetch = ensureDomainUrlHasSSL(fileContentUrl)
-
-            const response = await fetch(actualUrlToFetch, {
-                headers: {
-                    nonce: `${session?.nonce}`
-                }
-            });
-            if (!response.ok) throw new Error("Failed to fetch file");
-
-            // Get MIME type from headers
-            let contentType = response.headers.get("Content-Type") || "";
-            //console.log(" 🤌🏾Original Content-Type from headers:", contentType);
-
-            // Clone the response for potential text extraction
-            const responseClone = response.clone();
-
-            // Get the raw data as ArrayBuffer first
-            const arrayBuffer = await response.arrayBuffer();
-            // console.log(" 🤌🏾ArrayBuffer size:", arrayBuffer.byteLength);
-
-            // If content type is missing or generic, try to detect it
-            if (contentType === "application/octet-stream" || contentType === "") {
-                const uint8Array = new Uint8Array(arrayBuffer);
-                contentType = detectFileType(uint8Array);
-                console.log(" 🤌🏾Detected file type:", contentType);
-            }
-
-            // Check for Word document by file extension
-            if (fileInfo.fileName && (/\.(docx?|doc)$/i).test(fileInfo.fileName)) {
-                if (fileInfo.fileName.toLowerCase().endsWith('.docx')) {
-                    contentType = "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
-                } else if (fileInfo.fileName.toLowerCase().endsWith('.doc')) {
-                    contentType = "application/msword";
-                }
-
-                // Store Word blob for docx-preview rendering
-                const wordBlob = new Blob([arrayBuffer], { type: contentType });
-                setWordBlob(wordBlob);
-            }
-
-            // For PDF files, ensure proper content type
-            if (contentType === "application/pdf" ||
-                (fileInfo.fileName && fileInfo.fileName.toLowerCase().endsWith(".pdf"))) {
-                contentType = "application/pdf";
-
-                // Store PDF blob for direct rendering if needed
-                const pdfBlob = new Blob([arrayBuffer], { type: "application/pdf" });
-                setPdfBlob(pdfBlob);
-            }
-
-            // Handle audio files
-            if (contentType.startsWith("audio/") ||
-                (fileInfo.fileName && (/\.(mp3|wav|ogg|aac|flac|m4a)$/i).test(fileInfo.fileName))) {
-                if (!contentType.startsWith("audio/")) {
-                    // Set a default audio MIME type if needed
-                    contentType = "audio/mpeg";
-                }
-            }
-
-            // Handle video files
-            if (contentType.startsWith("video/") ||
-                (fileInfo.fileName && (/\.(mp4|webm|ogg|mov|avi|wmv|flv|mkv)$/i).test(fileInfo.fileName))) {
-                if (!contentType.startsWith("video/")) {
-                    // Set a default video MIME type if needed
-                    contentType = "video/mp4";
-                }
-            }
-
-            // Handle text-based content types
-            if (contentType.startsWith("text/") ||
-                contentType === "application/json" ||
-                contentType === "application/xml" ||
-                contentType === "application/javascript") {
-                try {
-                    const text = await responseClone.text();
-                    setTextContent(text);
-                } catch (error) {
-                    console.error("Error reading text content:", error);
-                    // Try decoding the array buffer as UTF-8 text as fallback
-                    try {
-                        const decoder = new TextDecoder("utf-8");
-                        const text = decoder.decode(arrayBuffer);
-                        setTextContent(text);
-                    } catch (decodeError) {
-                        console.error("Error decoding text content:", decodeError);
-                    }
-                }
-            }
-
-            // Create a proper blob with the correct content type
-            const blob = new Blob([arrayBuffer], { type: contentType });
-            console.log(" 🤌🏾Created blob with type:", contentType, "size:", blob.size);
-
-            setFileType(contentType);
-            console.log(" 🤌🏾Final content type set to:", contentType);
-
-            // Create URL from the properly typed blob
-            const objectURL = URL.createObjectURL(blob);
-            console.log(" 🤌🏾Object URL created:", objectURL);
-            setFileURL(objectURL);
-        } catch (error) {
-            console.error("Error fetching file:", error);
-        } finally {
-            setIsLoading(false);
-        }
+        const extension = fileName.split('.').pop()?.toLowerCase() || "";
+        return fileExtensionMap[extension] || "application/octet-stream";
     };
 
-    if (typeof fileInfo.fileContent != 'string') {
-        // Check if fileContent is of type AquaTree using type guard
-        if (isAquaTree(fileInfo.fileContent)) {
-            console.log(" 🤌🏾Handling AquaTree content");
-            // Add your AquaTree handling logic here
-            // For example:
-            // - Extract file info from the revision tree
-            // - Process files from file_index
-            // - Render tree structure 
-            setIsLoading(false);
-            // Example: Set content type to JSON for tree display
-            setFileType("application/json");
-            setTextContent(JSON.stringify(fileInfo.fileContent, null, 2));
-        } else {
-            console.log(`Handling binary content: ${fileInfo.fileContent}`);
-            
-            // Determine contentType based on fileName or default to octet-stream
-            let contentType = "application/octet-stream";
-            
-            if (fileInfo.fileName) {
-                // Check for common file types by extension
-                if (/\.pdf$/i.test(fileInfo.fileName)) {
-                    contentType = "application/pdf";
-                } else if (/\.(docx)$/i.test(fileInfo.fileName)) {
-                    contentType = "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
-                } else if (/\.(doc)$/i.test(fileInfo.fileName)) {
-                    contentType = "application/msword";
-                } else if (/\.(jpe?g)$/i.test(fileInfo.fileName)) {
-                    contentType = "image/jpeg";
-                } else if (/\.(png)$/i.test(fileInfo.fileName)) {
-                    contentType = "image/png";
-                } else if (/\.(gif)$/i.test(fileInfo.fileName)) {
-                    contentType = "image/gif";
-                } else if (/\.(mp3)$/i.test(fileInfo.fileName)) {
-                    contentType = "audio/mpeg";
-                } else if (/\.(mp4)$/i.test(fileInfo.fileName)) {
-                    contentType = "video/mp4";
-                } else if (/\.(txt|log)$/i.test(fileInfo.fileName)) {
-                    contentType = "text/plain";
-                } else if (/\.(json)$/i.test(fileInfo.fileName)) {
-                    contentType = "application/json";
-                }
-            }
-            
-            // Try to detect content type if we have detectFileType function available
-            try {
-                if (typeof detectFileType === 'function') {
-                    const detectedType = detectFileType(fileInfo.fileContent);
-                    if (detectedType) {
-                        contentType = detectedType;
-                        console.log(" 🤌🏾Detected content type:", contentType);
-                    }
-                }
-            } catch (error) {
-                console.error("Error detecting content type:", error);
-            }
-            
-            // Create a proper blob with the determined content type
-            const blob = new Blob([fileInfo.fileContent], { type: contentType });
-            console.log(" 🤌🏾Created blob with type:", contentType, "size:", blob.size);
-
-            setFileType(contentType);
-            
-            // Handle special content types
-            if (contentType === "application/pdf") {
-                setPdfBlob(blob);
-            } else if (contentType.includes("wordprocessing") || contentType === "application/msword") {
-                setWordBlob(blob);
-            }
-
-            // Create URL from the properly typed blob
-            const objectURL = URL.createObjectURL(blob);
-            console.log(" 🤌🏾Object URL created:", objectURL);
-            setFileURL(objectURL);
-            setIsLoading(false);
-        }
-    } else {
-        if (!fileInfo.fileContent.startsWith("http")) {
-            console.log(" 🤌🏾file content not valid http  -"+ fileInfo.fileContent);
-            setTextContent(fileInfo.fileContent);
-            setFileType("text/plain");
-            setIsLoading(false);
-        } else {
-            fetchFile();
-        }
-    }
-    
-    return () => {
-        if (fileURL) URL.revokeObjectURL(fileURL);
-    };
-}, [fileInfo.fileContent, session?.nonce]);
-
-
-
-    // Effect to render first page of PDF for mobile
-    useEffect(() => {
-        const renderPdfFirstPage = async () => {
-            if (fileType === "application/pdf" && isMobile && pdfBlob && pdfCanvasRef.current) {
-                try {
-                    // Load the PDF.js library dynamically
-                    // This assumes you've added PDF.js to your project or are loading it from CDN
-                    // You'll need to add this script to your HTML or bundle:
-                    // <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js"></script>
-                    const pdfjsLib = window['pdfjs-dist/build/pdf'];
-
-                    if (!pdfjsLib) {
-                        console.error("PDF.js library not found");
-                        return;
-                    }
-
-                    // Load the PDF document
-                    const loadingTask = pdfjsLib.getDocument(fileURL);
-                    const pdf = await loadingTask.promise;
-
-                    // Get the first page
-                    const page = await pdf.getPage(1);
-
-                    // Set up canvas for rendering
-                    const canvas = pdfCanvasRef.current;
-                    const context = canvas.getContext('2d');
-
-                    // Calculate scale to fit width
-                    const viewport = page.getViewport({ scale: 1 });
-                    const containerWidth = canvas.parentElement?.clientWidth || window.innerWidth;
-                    const scale = containerWidth / viewport.width;
-                    const scaledViewport = page.getViewport({ scale });
-
-                    // Set canvas dimensions
-                    canvas.height = scaledViewport.height;
-                    canvas.width = scaledViewport.width;
-
-                    // Clear any previous content with transparent background
-                    context?.clearRect(0, 0, canvas.width, canvas.height);
-
-                    // Render the page
-                    const renderContext = {
-                        canvasContext: context,
-                        viewport: scaledViewport,
-                        background: 'transparent'
-                    };
-
-                    await page.render(renderContext).promise;
-                    // console.log(" 🤌🏾PDF first page rendered successfully");
-
-                } catch (error) {
-                    console.error("Error rendering PDF first page:", error);
-                }
-            }
-        };
-
-        if (isLoading === false) {
-            renderPdfFirstPage();
-        }
-    }, [fileType, isMobile, pdfBlob, isLoading, fileURL]);
-
-    // New effect to render Word documents using docx-preview
-    // New effect to render Word documents using docx-preview
-    useEffect(() => {
-        const renderWordDocument = async () => {
-            if ((fileType === "application/msword" ||
-                fileType === "application/vnd.openxmlformats-officedocument.wordprocessingml.document") &&
-                wordBlob &&
-                wordContainerRef.current) {
-
-                try {
-                    // Load the libraries
-                    await loadDocxPreviewScript();
-
-                    // Wait a bit to ensure everything is loaded
-                    await new Promise(resolve => setTimeout(resolve, 200));
-
-                    // Verify window.docx exists
-                    if (!window.docx) {
-                        throw new Error("docx-preview library not available");
-                    }
-
-                    // Clear any previous content
-                    if (wordContainerRef.current) {
-                        wordContainerRef.current.innerHTML = '';
-
-
-                        // For DOCX files
-                        if (fileType === "application/vnd.openxmlformats-officedocument.wordprocessingml.document") {
-                            // Create a new blob to ensure it's processed correctly
-                            const docxBlob = new Blob([await wordBlob.arrayBuffer()],
-                                { type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' });
-
-                            // Use docx-preview to render the document
-                            await window.docx.renderAsync(
-                                docxBlob,
-                                wordContainerRef.current,
-                                null,
-                                {
-                                    className: 'docx-preview',
-                                    inWrapper: true,
-                                    ignoreWidth: false,
-                                    ignoreHeight: false,
-                                    defaultFont: {
-                                        family: 'Arial',
-                                        size: 12
-                                    }
-                                }
-                            );
-                        } else {
-                            // For DOC files, we can't use docx-preview directly
-                            // Show a message that DOC files can't be previewed
-                            if (wordContainerRef.current) {
-                                wordContainerRef.current.innerHTML = `
-                            <div style="text-align: center; padding: 20px;">
-                                <p>Preview not available for .DOC files (only .DOCX is supported).</p>
-                                <p>Please download the file to view it.</p>
-                            </div>
-                        `;
-                            }
-                        }
-                    }
-
-                    // console.log(" 🤌🏾Word document rendered successfully with docx-preview");
-                } catch (error: any) {
-                    console.error("Error rendering Word document with docx-preview:", error);
-
-                    // Display error message in the container
-                    if (wordContainerRef.current) {
-                        wordContainerRef.current.innerHTML = `
-                        <div style="text-align: center; padding: 20px;">
-                            <p>Unable to preview this document.</p>
-                            <p>Error: ${error.message || 'Unknown error'}</p>
-                            <p>Please download the file to view it.</p>
-                        </div>
-                    `;
-                    }
-                }
-            }
-        };
-
-        if (isLoading === false) {
-            renderWordDocument();
-        }
-    }, [fileType, wordBlob, isLoading]);
-
-
-    // Function to load docx-preview script
     // Function to load docx-preview script
     const loadDocxPreviewScript = () => {
         return new Promise<void>((resolve, reject) => {
@@ -785,7 +95,6 @@ useEffect(() => {
                 docxScript.async = true;
 
                 docxScript.onload = () => {
-                    // console.log(" 🤌🏾docx-preview loaded successfully");
                     // Small delay to ensure script is fully initialized
                     setTimeout(() => resolve(), 100);
                 };
@@ -807,147 +116,189 @@ useEffect(() => {
         });
     };
 
-    if (isLoading) return <p>Loading...</p>;
+    const renderWordDocument = async () => {
+        if ((fileType === "application/msword" ||
+            fileType === "application/vnd.openxmlformats-officedocument.wordprocessingml.document") &&
+            wordBlob &&
+            wordContainerRef.current) {
 
-    // console.log(" 🤌🏾Rendering file with type:", fileType, "Mobile:", isMobile);
+            try {
+                // Load the libraries
+                await loadDocxPreviewScript();
 
-    // Render based on file type
-    if (fileType.startsWith("image/")) {
-        return <img src={fileURL} alt="Fetched file" style={{ maxWidth: "100%", height: "auto" }} />;
-    }
+                // Wait a bit to ensure everything is loaded
+                await new Promise(resolve => setTimeout(resolve, 200));
 
-    // Render Word documents with docx-preview
-    if (fileType === "application/msword" ||
-        fileType === "application/vnd.openxmlformats-officedocument.wordprocessingml.document") {
+                // Verify window.docx exists
+                if (!window.docx) {
+                    throw new Error("docx-preview library not available");
+                }
 
-        // For DOC files, we can't use docx-preview directly
-        if (fileType === "application/msword") {
-            // Show a more visible message that DOC files can't be previewed
-            if (wordContainerRef.current) {
-                let data = `
-                <div style="text-align: center; padding: 40px; color: #333; font-family: sans-serif;">
-                    <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="#666" stroke-width="2" style="margin-bottom: 16px">
-                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                        <polyline points="14 2 14 8 20 8"></polyline>
-                        <path d="M9 15h6"></path>
-                        <path d="M9 11h6"></path>
-                    </svg>
-                    <h3 style="margin-bottom: 8px; font-size: 18px;">DOC File Format Not Supported</h3>
-                    <p style="margin-bottom: 16px; color: #666;">The preview feature only supports .DOCX files. This file is in the older .DOC format.</p>
-                    <p style="color: #444; font-weight: bold;">Please download the file to view it.</p>
+                // Clear any previous content
+                if (wordContainerRef.current) {
+                    wordContainerRef.current.innerHTML = '';
+
+                    // For DOCX files
+                    if (fileType === "application/vnd.openxmlformats-officedocument.wordprocessingml.document") {
+                        // Create a new blob to ensure it's processed correctly
+                        const docxBlob = new Blob([await wordBlob.arrayBuffer()],
+                            { type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' });
+
+                        // Use docx-preview to render the document
+                        await window.docx.renderAsync(
+                            docxBlob,
+                            wordContainerRef.current,
+                            null,
+                            {
+                                className: 'docx-preview',
+                                inWrapper: true,
+                                ignoreWidth: false,
+                                ignoreHeight: false,
+                                defaultFont: {
+                                    family: 'Arial',
+                                    size: 12
+                                }
+                            }
+                        );
+                    } else {
+                        // For DOC files, we can't use docx-preview directly
+                        // Show a message that DOC files can't be previewed
+                        if (wordContainerRef.current) {
+                            wordContainerRef.current.innerHTML = `
+                    <div style="text-align: center; padding: 20px;">
+                        <p>Preview not available for .DOC files (only .DOCX is supported).</p>
+                        <p>Please download the file to view it.</p>
+                    </div>
+                `;
+                        }
+                    }
+                }
+            } catch (error: any) {
+                console.error("Error rendering Word document with docx-preview:", error);
+
+                // Display error message in the container
+                if (wordContainerRef.current) {
+                    wordContainerRef.current.innerHTML = `
+                <div style="text-align: center; padding: 20px;">
+                    <p>Unable to preview this document.</p>
+                    <p>Error: ${error.message || 'Unknown error'}</p>
+                    <p>Please download the file to view it.</p>
                 </div>
             `;
-                wordContainerRef.current.innerHTML = data
+                }
             }
         }
-        return (
-            <div>
-                <div
-                    ref={wordContainerRef}
-                    className="word-preview-container"
-                    style={{
-                        padding: "20px",
-                        border: "1px solid #ddd",
-                        borderRadius: "4px",
-                        // backgroundColor: "#fff",
-                        // maxHeight: "600px",
-                        overflow: "auto",
-                        // minHeight: "400px"
-                    }}
-                >
-                    {/* docx-preview will render content here */}
-                </div>
-                <div style={{ marginTop: "15px", textAlign: "center" }}>
-                    <a
-                        href={fileURL}
-                        download={fileInfo.fileName || "document.docx"}
-                        style={{
-                            color: "#fff",
-                            backgroundColor: "#4285f4",
-                            padding: "10px 15px",
-                            borderRadius: "4px",
-                            textDecoration: "none",
-                            display: "inline-block"
-                        }}
-                    >
-                        Download Word Document
-                    </a>
-                </div>
-            </div>
-        );
+    };
+    
+    useEffect(() => {
+        const fetchFile = async () => {
+            setIsLoading(true);
+            try {
+                // Handle if fileContent is a URL
+                if (typeof fileInfo.fileContent === 'string' && fileInfo.fileContent.startsWith('http')) {
+                    const fileContentUrl = fileInfo.fileContent;
+                    const actualUrlToFetch = ensureDomainUrlHasSSL(fileContentUrl);
+
+                    const response = await fetch(actualUrlToFetch, {
+                        headers: {
+                            nonce: `${session?.nonce}`
+                        }
+                    });
+
+                    if (!response.ok) throw new Error("Failed to fetch file");
+
+                    // Get content type from headers or from file extension
+                    let contentType = response.headers.get("Content-Type") || "";
+
+                    // If content type is missing or generic, try to detect from filename
+                    if (contentType === "application/octet-stream" || contentType === "") {
+                        contentType = getContentTypeFromFileName(fileInfo.fileName || "");
+                        console.log("Determined content type from filename:", contentType);
+                    }
+
+                    // Clone response and get data
+                    const arrayBuffer = await response.arrayBuffer();
+
+                    // For text-based content types
+                    if (contentType.startsWith("text/") ||
+                        contentType === "application/json" ||
+                        contentType === "application/xml") {
+                        try {
+                            const decoder = new TextDecoder("utf-8");
+                            const text = decoder.decode(arrayBuffer);
+                            setTextContent(text);
+                        } catch (error) {
+                            console.error("Error decoding text content:", error);
+                        }
+                    }
+
+                    // Create blob with correct content type
+                    const blob = new Blob([arrayBuffer], { type: contentType });
+                    console.log("Created blob with type:", contentType, "size:", blob.size);
+
+                    setFileType(contentType);
+
+                    // Store PDF blob for direct rendering if needed
+                    if (contentType === "application/pdf") {
+                        setPdfBlob(blob);
+                    } else if (contentType.includes("wordprocessing") || contentType === "application/msword") {
+                        setWordBlob(blob);
+                    }
+
+                    // Create URL from blob
+                    const objectURL = URL.createObjectURL(blob);
+                    setFileURL(objectURL);
+                }
+                // Handle if fileContent is binary data (Uint8Array or similar)
+                else if (fileInfo.fileContent && typeof fileInfo.fileContent !== 'string') {
+                    // Determine content type from filename
+                    let contentType = getContentTypeFromFileName(fileInfo.fileName || "");
+                    console.log("Determined content type for binary data:", contentType);
+
+                    // Create blob with detected content type
+                    const blob = new Blob([fileInfo.fileContent as Uint8Array<ArrayBufferLike>], { type: contentType });
+
+                    setFileType(contentType);
+
+                    if (contentType === "application/pdf") {
+                        setPdfBlob(blob);
+                    } else if (contentType.includes("wordprocessing") || contentType === "application/msword") {
+                        setWordBlob(blob);
+                    }
+
+                    const objectURL = URL.createObjectURL(blob);
+                    setFileURL(objectURL);
+                }
+                // Handle if fileContent is plain text
+                else if (typeof fileInfo.fileContent === 'string') {
+                    setTextContent(fileInfo.fileContent);
+                    setFileType("text/plain");
+                }
+            } catch (error) {
+                console.error("Error processing file:", error);
+            } finally {
+                setIsLoading(false);
+            }
+        };
+
+        fetchFile();
+
+        // Cleanup function to revoke object URL
+        return () => {
+            if (fileURL) URL.revokeObjectURL(fileURL);
+        };
+    }, [fileInfo, session?.nonce]);
+
+    if (isLoading) return <p>Loading...</p>;
+
+    // Render based on file type
+    // Image files
+    if (fileType.startsWith("image/")) {
+        return <img src={fileURL} alt="File preview" style={{ maxWidth: "100%", height: "auto" }} />;
     }
 
+    // PDF files
     if (fileType === "application/pdf") {
-        // Mobile-friendly approach for PDF viewing with thumbnail fallback
-        // if (isMobile) {
-        //     return (
-        //         <div style={{ width: "100%", backgroundColor: "transparent" }}>
-        //             {/* Canvas for rendering the first page preview */}
-        //             <div style={{
-        //                 width: "100%",
-        //                 marginBottom: "10px",
-        //                 textAlign: "center",
-        //                 backgroundColor: "transparent"
-        //             }}>
-        //                 <canvas
-        //                     ref={pdfCanvasRef}
-        //                     style={{
-        //                         width: "100%",
-        //                         maxWidth: "100%",
-        //                         height: "auto",
-        //                         backgroundColor: "transparent",
-        //                         display: "block", // Removes any potential spacing
-        //                         margin: "0 auto" // Centers the canvas
-        //                     }}
-        //                 />
-        //             </div>
-
-        //             {/* Fallback iframe (might work on some mobile browsers) */}
-        //             <div style={{ width: "100%", height: "400px", backgroundColor: "transparent" }}>
-        //                 <iframe
-        //                     src={fileURL}
-        //                     title="PDF Viewer"
-        //                     width="100%"
-        //                     height="100%"
-        //                     style={{ border: "none" }}
-        //                 >
-        //                     <p>Unable to display PDF file.</p>
-        //                 </iframe>
-        //             </div>
-
-        //             {/* Download link as another fallback option */}
-        //             <div style={{ marginTop: "15px", textAlign: "center" }}>
-        //                 <a
-        //                     href={fileURL}
-        //                     download={fileInfo.fileName || "document.pdf"}
-        //                     style={{
-        //                         color: "#fff",
-        //                         backgroundColor: "#4285f4",
-        //                         padding: "10px 15px",
-        //                         borderRadius: "4px",
-        //                         textDecoration: "none",
-        //                         display: "inline-block"
-        //                     }}
-        //                 >
-        //                     Download PDF
-        //                 </a>
-        //             </div>
-        //         </div>
-        //     );
-        // } else {
-        //     // Original desktop approach
-        //     return (
-        //         <object
-        //             data={fileURL}
-        //             type="application/pdf"
-        //             width="100%"
-        //             height="600px"
-        //             style={{ border: "none" }}
-        //         >
-        //             <p>Unable to display PDF file. <a href={fileURL} target="_blank" rel="noopener noreferrer">Download</a> instead.</p>
-        //         </object>
-        //     );
-        // }
         const PdfControls = ({ currentPage, isNextDisabled, isPrevDisabled, onNextPage, onPrevPage, totalPages }: PDFControlsProps) => {
             return (
                 <Group mb={"4"}>
@@ -963,21 +314,17 @@ useEffect(() => {
                 </Group>
             )
         }
-        return (
-            <>
-                <PDFJSViewer pdfUrl={fileURL} renderControls={PdfControls} />
-            </>
-        )
+        return <PDFJSViewer pdfUrl={fileURL} renderControls={PdfControls} />;
     }
 
+    // Text files
     if (fileType.startsWith("text/") ||
         fileType === "application/json" ||
-        fileType === "application/xml" ||
-        fileType === "application/javascript") {
+        fileType === "application/xml") {
         return (
             <div style={{
-                whiteSpace: "pre-wrap",  // Preserves spaces and line breaks
-                wordBreak: "break-word",  // Prevents overflow on long words
+                whiteSpace: "pre-wrap",
+                wordBreak: "break-word",
                 fontFamily: "monospace",
                 padding: "10px",
                 border: "1px solid #ccc",
@@ -990,6 +337,7 @@ useEffect(() => {
         );
     }
 
+    // Audio files
     if (fileType.startsWith("audio/")) {
         return (
             <div>
@@ -1006,11 +354,24 @@ useEffect(() => {
         );
     }
 
-    if (fileType.startsWith("video/")) {
+    // Video files - improved handling
+    if (fileType.startsWith("video/") ||
+        (fileInfo.fileName && /\.(mp4|webm|mov|avi|mkv)$/i.test(fileInfo.fileName))) {
+        // Force content type for video if filename matches but type doesn't
+        const videoType = fileType.startsWith("video/") ? fileType : "video/mp4";
+
         return (
             <div>
-                <video controls style={{ maxWidth: "100%", height: "auto", backgroundColor: "#000" }}>
-                    <source src={fileURL} type={fileType} />
+                <video
+                    controls
+                    style={{
+                        maxWidth: "100%",
+                        height: "auto",
+                        backgroundColor: "#000",
+                        borderRadius: "4px"
+                    }}
+                >
+                    <source src={fileURL} type={videoType} />
                     Your browser does not support the video element.
                 </video>
                 <div style={{ marginTop: "10px" }}>
@@ -1022,35 +383,86 @@ useEffect(() => {
         );
     }
 
+    // Word documents
+    if (fileType === "application/msword" ||
+        fileType === "application/vnd.openxmlformats-officedocument.wordprocessingml.document") {
+        
+        // Create a component for word documents
+        const WordDocumentComponent = () => {
+            // Use effect to render the document after component mounts
+            useEffect(() => {
+                renderWordDocument();
+            }, []);
+
+            return (
+                <div>
+                    <div
+                        ref={wordContainerRef}
+                        className="word-preview-container"
+                        style={{
+                            padding: "20px",
+                            border: "1px solid #ddd",
+                            borderRadius: "4px",
+                            overflow: "auto",
+                        }}
+                    >
+                        {/* docx-preview will render content here */}
+                    </div>
+                    <div style={{ marginTop: "15px", textAlign: "center" }}>
+                        <a
+                            href={fileURL}
+                            download={fileInfo.fileName || "document.docx"}
+                            style={{
+                                color: "#fff",
+                                backgroundColor: "#4285f4",
+                                padding: "10px 15px",
+                                borderRadius: "4px",
+                                textDecoration: "none",
+                                display: "inline-block"
+                            }}
+                        >
+                            Download Word Document
+                        </a>
+                    </div>
+                </div>
+            );
+        };
+
+        return <WordDocumentComponent />;
+    }
+
     // Default download option for other file types
     return (
-        <a href={fileURL} download className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600">
-            Download File
-        </a>
+        <div style={{
+            padding: "20px",
+            border: "1px solid #ddd",
+            borderRadius: "4px",
+            textAlign: "center"
+        }}>
+            <div style={{ marginBottom: "20px" }}>
+                <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="#666" strokeWidth="2">
+                    <path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"></path>
+                    <polyline points="13 2 13 9 20 9"></polyline>
+                </svg>
+                <h3 style={{ margin: "10px 0", fontSize: "18px" }}>File: {fileInfo.fileName || "Unknown"}</h3>
+                <p>Type: {fileType}</p>
+            </div>
+            <a
+                href={fileURL}
+                download={fileInfo.fileName || "file"}
+                style={{
+                    color: "#fff",
+                    backgroundColor: "#4285f4",
+                    padding: "10px 15px",
+                    borderRadius: "4px",
+                    textDecoration: "none",
+                    display: "inline-block"
+                }}
+            >
+                Download File
+            </a>
+        </div>
     );
 };
-
-// TypeScript declaration for docx-preview library
-declare global {
-    interface Window {
-        docx: {
-            renderAsync: (
-                file: Blob | ArrayBuffer,
-                container: HTMLElement,
-                viewerPlugins?: any,
-                options?: {
-                    className?: string;
-                    inWrapper?: boolean;
-                    ignoreWidth?: boolean;
-                    ignoreHeight?: boolean;
-                    defaultFont?: {
-                        family: string;
-                        size: number;
-                    };
-                }
-            ) => Promise<void>;
-        };
-    }
-}
 
 export default FilePreview;
