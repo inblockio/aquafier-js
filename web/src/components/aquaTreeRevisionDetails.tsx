@@ -1,8 +1,8 @@
 import { useState, useEffect } from "react";
-import { LuCheck, LuExternalLink, LuX } from "react-icons/lu"
+import { LuCheck, LuExternalLink, LuTrash, LuX } from "react-icons/lu"
 import { Box, Card, Collapsible, For, Group, Icon, IconButton, Link, Span, Text, VStack } from "@chakra-ui/react"
 import { TimelineConnector, TimelineContent, TimelineDescription, TimelineItem, TimelineRoot, TimelineTitle } from "./chakra-ui/timeline"
-import { displayTime, formatCryptoAddress, fetchLinkedFileName } from "../utils/functions"
+import { displayTime, formatCryptoAddress, fetchLinkedFileName, fetchFiles } from "../utils/functions"
 import { Alert } from "./chakra-ui/alert"
 import Aquafier, { LogTypeEmojis, Revision } from "aqua-js-sdk";
 import ReactLoading from "react-loading"
@@ -11,12 +11,17 @@ import { WalletEnsView } from "./chakra-ui/wallet_ens"
 import { AquaTreeDetails, AquaTreeDetailsData, AquaTreeDetailsViewData, RevisionDetailsSummaryData, VerificationHashAndResult } from "../models/AquaTreeDetails"
 
 import { ItemDetail } from "./ItemDetails";
+import appStore from "../store"
+import { useStore } from "zustand"
+import axios from "axios"
+import { toaster } from "./chakra-ui/toaster";
 
+export const RevisionDisplay = ({ fileInfo, revision, revisionHash, isVerificationComplete, verificationResults, isDeletable, deleteRevision, index }: AquaTreeDetailsData) => {
 
-export const RevisionDisplay = ({ fileInfo, revision, revisionHash, isVerificationComplete, verificationResults }: AquaTreeDetailsData) => {
-
+    const { session, backend_url, setFiles } = useStore(appStore)
     const [showRevisionDetails, setShowRevisionDetails] = useState(false)
     const [isRevisionVerificationSuccessful, setIsRevisionVerificationSuccessful] = useState<boolean | null>(null)
+    const [isDeleting, setIsDeleting] = useState(false)
 
 
     const loaderSize = '40px'
@@ -120,10 +125,75 @@ export const RevisionDisplay = ({ fileInfo, revision, revisionHash, isVerificati
 
     }
 
+    const handleDelete = async () => {
+        console.log("Deleting revision: ", revisionHash, index)
+        setIsDeleting(true)
+        try {
+            const url = `${backend_url}/tree/revisions/${revisionHash}`;
+            //  console.log("url is ", url);
+
+            const response = await axios.delete(url, {
+                headers: {
+                    'metamask_address': session?.address,
+                    'nonce': session?.nonce
+                }
+            });
+
+            if (response.status === 200) {
+                toaster.create({
+                    title: "Revision deleted",
+                    description: "The revision has been deleted",
+                    type: "success",
+                    duration: 3000,
+                    placement: "bottom-end"
+                })
+                // Reload files for the current user
+                if(index === 0){
+                    window.location.reload()
+                }else{
+                    const url2 = `${backend_url}/explorer_files`;
+                    const files = await fetchFiles(`${session?.address}`, url2, `${session?.nonce}`);
+                    setFiles(files)
+                    // Remove the revision from the list of revisions
+                    deleteRevision(revisionHash)
+                }
+            } else {
+                toaster.create({
+                    title: "Revision not deleted",
+                    description: "The revision has not been deleted",
+                    type: "error",
+                    duration: 3000,
+                    placement: "bottom-end"
+                })
+            }
+            setIsDeleting(false)
+        } catch (error) {
+            setIsDeleting(false)
+            toaster.create({
+                title: "Revision not deleted",
+                description: "The revision has not been deleted",
+                type: "error",
+                duration: 3000,
+                placement: "bottom-end"
+            })
+        }
+    }
+
+    const displayDeleteButton = (): JSX.Element => {
+        if (isDeletable) {
+            return (
+                <IconButton size={'xs'}  borderRadius={"full"} onClick={handleDelete} disabled={isDeleting} colorPalette={"red"}>
+                    <LuTrash />
+                </IconButton>
+            )
+        }
+        return <></>
+    }
+
     const revisionTypeEmoji = LogTypeEmojis[revision.revision_type]
 
     useEffect(() => {
-        if(verificationResults){
+        if (verificationResults) {
             isVerificationSuccessful()
         }
     }, [verificationResults])
@@ -134,34 +204,32 @@ export const RevisionDisplay = ({ fileInfo, revision, revisionHash, isVerificati
                 <TimelineConnector
                     bg={returnBgColor()}
                     color={"white"}
+
                 >
-
-
                     <Icon fontSize="xs" color={'white'} border={'none'}>
                         {
                             verificationStatusIcon()
-                            /* {
-                                !verificationResult ? (
-                                    <ReactLoading type={'spin'} color={'blue'} height={loaderSize} width={loaderSize} />
-                                ) : (
-                                    verificationResult.successful ? <LuCheck /> : <LuX />
-                                )
-                            } */
                         }
                     </Icon>
                 </TimelineConnector>
                 <TimelineContent gap="4">
 
                     <TimelineTitle onClick={() => setShowRevisionDetails(prev => !prev)} cursor={"pointer"}>
-                        <Span textTransform={"capitalize"}>{`${revisionTypeEmoji ? revisionTypeEmoji : ''} ${revision?.revision_type} Revision`}</Span>
-                        <Span color="fg.muted" fontFamily={'monospace'}>{revisionHash}</Span>
+                        <Group justifyContent={"space-between"} wrap={"nowrap"}>
+                            <Group>
+                                <Span textTransform={"capitalize"} w={"200px"}>{`${revisionTypeEmoji ? revisionTypeEmoji : ''} ${revision?.revision_type} Revision`}</Span>
+                                <Span color="fg.muted" fontFamily={'monospace'} wordBreak={"break-all"}>{revisionHash}</Span>
+                            </Group>
+                            <Group>
+                                {displayDeleteButton()}
+                            </Group>
+                        </Group>
                     </TimelineTitle>
                     <Collapsible.Root open={showRevisionDetails}>
                         <Collapsible.Content>
                             <Card.Root size="sm">
                                 <Card.Body textStyle="sm" lineHeight="tall">
                                     <TimelineRoot size="lg" variant="subtle" maxW="md">
-
                                         {
                                             revision.revision_type == "file" || revision.revision_type == "form" || revision.revision_type == "link" ?
                                                 <>
@@ -448,100 +516,100 @@ export const RevisionDetailsSummary = ({ fileInfo }: RevisionDetailsSummaryData)
 }
 
 
-export const ChainDetails = ({ fileInfo }: AquaTreeDetails) => {
+// export const ChainDetails = ({ fileInfo }: AquaTreeDetails) => {
 
-    // const [aquaTree, setAquaTreeData] = useState<AquaTree | null>()
+//     // const [aquaTree, setAquaTreeData] = useState<AquaTree | null>()
 
-    const [verificationResults, setVerificationResults] = useState<VerificationHashAndResult[]>([])
+//     const [verificationResults, setVerificationResults] = useState<VerificationHashAndResult[]>([])
 
-    const isVerificationComplete = (): boolean => verificationResults.length < Object.keys(fileInfo.aquaTree!.revisions!).length
-
-
+//     const isVerificationComplete = (): boolean => verificationResults.length < Object.keys(fileInfo.aquaTree!.revisions!).length
 
 
-    useEffect(() => {
-        const verifyAquaTreeRevisions = async () => {
-
-            // verify revision
-            let aquafier = new Aquafier();
-            let revisionHashes = Object.keys(fileInfo.aquaTree!.revisions!);
-            for (let revisionHash of revisionHashes) {
-                let revision = fileInfo.aquaTree!.revisions![revisionHash];
-                let verificationResult = await aquafier.verifyAquaTreeRevision(fileInfo.aquaTree!, revision, revisionHash, [...fileInfo.fileObject, ...fileInfo.linkedFileObjects])
-
-                // Create a new Map reference for the state update
-                setVerificationResults(prevResults => {
-                    const newResults = [...prevResults];
-                    let existingItem = prevResults.find(item => item.hash === revisionHash)
-                    if (!existingItem) {
-                        if (verificationResult.isOk()) {
-                            newResults.push({ hash: revisionHash, isSuccessful: true });
-                        } else {
-                            newResults.push({ hash: revisionHash, isSuccessful: false });
-                        }
-                    }
-                    return newResults;
-                });
-
-            }
-        }
-
-        verifyAquaTreeRevisions()
-    }, [fileInfo])
-
-    return (
-        <>
-            {
-                fileInfo.aquaTree ? (
-                    <TimelineRoot size="lg" variant="subtle" maxW="xl">
-                        <For
-                            each={Object.keys(fileInfo.aquaTree.revisions)}
-                        >
-                            {(revisionHash, index) => (
-                                <RevisionDisplay key={`revision_${index}`}
-                                    fileInfo={fileInfo}
-                                    revision={fileInfo.aquaTree!.revisions[revisionHash]}
-                                    revisionHash={revisionHash}
-                                    isVerificationComplete={isVerificationComplete()}
-                                    verificationResults={verificationResults}
-
-                                />
-
-                            )}
-                        </For>
-                    </TimelineRoot>
-                ) : null
-            }
-        </>
-    )
-}
 
 
-export const ChainDetailsView = ({ fileInfo, isVerificationComplete, verificationResults }: AquaTreeDetailsViewData) => {
+//     useEffect(() => {
+//         const verifyAquaTreeRevisions = async () => {
 
-    return (
-        <>
-            {
-                fileInfo.aquaTree ? (
-                    <TimelineRoot size="lg" variant="subtle" maxW="xl">
-                        <For
-                            each={Object.keys(fileInfo.aquaTree.revisions)}
-                        >
-                            {(revisionHash, index) => (
-                                <RevisionDisplay key={`revision_${index}`}
-                                    fileInfo={fileInfo}
-                                    revision={fileInfo!.aquaTree!.revisions[revisionHash]}
-                                    revisionHash={revisionHash}
-                                    isVerificationComplete={isVerificationComplete}
-                                    verificationResults={verificationResults}
+//             // verify revision
+//             let aquafier = new Aquafier();
+//             let revisionHashes = Object.keys(fileInfo.aquaTree!.revisions!);
+//             for (let revisionHash of revisionHashes) {
+//                 let revision = fileInfo.aquaTree!.revisions![revisionHash];
+//                 let verificationResult = await aquafier.verifyAquaTreeRevision(fileInfo.aquaTree!, revision, revisionHash, [...fileInfo.fileObject, ...fileInfo.linkedFileObjects])
 
-                                />
+//                 // Create a new Map reference for the state update
+//                 setVerificationResults(prevResults => {
+//                     const newResults = [...prevResults];
+//                     let existingItem = prevResults.find(item => item.hash === revisionHash)
+//                     if (!existingItem) {
+//                         if (verificationResult.isOk()) {
+//                             newResults.push({ hash: revisionHash, isSuccessful: true });
+//                         } else {
+//                             newResults.push({ hash: revisionHash, isSuccessful: false });
+//                         }
+//                     }
+//                     return newResults;
+//                 });
 
-                            )}
-                        </For>
-                    </TimelineRoot>
-                ) : null
-            }
-        </>
-    )
-}
+//             }
+//         }
+
+//         verifyAquaTreeRevisions()
+//     }, [fileInfo])
+
+//     return (
+//         <>
+//             {
+//                 fileInfo.aquaTree ? (
+//                     <TimelineRoot size="lg" variant="subtle" maxW="xl">
+//                         <For
+//                             each={Object.keys(fileInfo.aquaTree.revisions)}
+//                         >
+//                             {(revisionHash, index) => (
+//                                 <RevisionDisplay key={`revision_${index}`}
+//                                     fileInfo={fileInfo}
+//                                     revision={fileInfo.aquaTree!.revisions[revisionHash]}
+//                                     revisionHash={revisionHash}
+//                                     isVerificationComplete={isVerificationComplete()}
+//                                     verificationResults={verificationResults}
+//                                     isDeletable={index === Object.keys(fileInfo.aquaTree!.revisions!).length - 1}
+//                                 />
+
+//                             )}
+//                         </For>
+//                     </TimelineRoot>
+//                 ) : null
+//             }
+//         </>
+//     )
+// }
+
+
+// export const ChainDetailsView = ({ fileInfo, isVerificationComplete, verificationResults }: AquaTreeDetailsViewData) => {
+
+//     return (
+//         <>
+//             {
+//                 fileInfo.aquaTree ? (
+//                     <TimelineRoot size="lg" variant="subtle" maxW="xl">
+//                         <For
+//                             each={Object.keys(fileInfo.aquaTree.revisions)}
+//                         >
+//                             {(revisionHash, index) => (
+//                                 <RevisionDisplay key={`revision_${index}`}
+//                                     fileInfo={fileInfo}
+//                                     revision={fileInfo!.aquaTree!.revisions[revisionHash]}
+//                                     revisionHash={revisionHash}
+//                                     isVerificationComplete={isVerificationComplete}
+//                                     verificationResults={verificationResults}
+//                                     isDeletable={index === Object.keys(fileInfo.aquaTree!.revisions!).length - 1}
+//                                 />
+
+//                             )}
+//                         </For>
+//                     </TimelineRoot>
+//                 ) : null
+//             }
+//         </>
+//     )
+// }

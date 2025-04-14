@@ -28,7 +28,7 @@ export const CompleteChainView = ({ callBack, selectedFileInfo }: ICompleteChain
 
     const [showMoreDetails, setShowMoreDetails] = useState(false)
     const { session } = useStore(appStore)
-    // const [selectedFileInfo, setFileInfo] = useState(selectedFileInfo)
+    const [deletedRevisions, setDeletedRevisions] = useState<string[]>([])
 
     const [verificationResults, setVerificationResults] = useState<VerificationHashAndResult[]>([])
 
@@ -199,8 +199,11 @@ export const CompleteChainView = ({ callBack, selectedFileInfo }: ICompleteChain
         if(selectedFileInfo){
             verifyAquaTreeRevisions(selectedFileInfo)
         }
-    }, [Object.keys(selectedFileInfo?.aquaTree?.revisions ?? {}).length])
-    console.log("Verification results: ", verificationResults)
+    }, [Object.keys(selectedFileInfo?.aquaTree?.revisions ?? {}).length, deletedRevisions])
+   
+    const deleteRevision = (revisionHash: string) => {
+        setDeletedRevisions(prev => [...prev, revisionHash])
+    }
 
     return (
         <>
@@ -230,9 +233,9 @@ export const CompleteChainView = ({ callBack, selectedFileInfo }: ICompleteChain
 
                                                 {
                                                     selectedFileInfo?.aquaTree ?
-                                                        <TimelineRoot size="lg" variant="subtle" maxW="xl">
+                                                        <TimelineRoot size="lg" variant="subtle">
                                                             <For
-                                                                each={Object.keys(selectedFileInfo?.aquaTree!.revisions!!)}
+                                                                each={Object.keys(selectedFileInfo?.aquaTree!.revisions!!).filter(revisionHash => !deletedRevisions.includes(revisionHash))}
                                                             >
                                                                 {(revisionHash, index) => (
                                                                     <RevisionDisplay key={`revision_${index}`}
@@ -241,6 +244,9 @@ export const CompleteChainView = ({ callBack, selectedFileInfo }: ICompleteChain
                                                                         revisionHash={revisionHash}
                                                                         isVerificationComplete={isVerificationComplete(verificationResults)}
                                                                         verificationResults={verificationResults}
+                                                                        isDeletable={index === Object.keys(selectedFileInfo?.aquaTree!.revisions!!).length - 1}
+                                                                        deleteRevision={deleteRevision}
+                                                                        index={index}
                                                                     />
 
                                                                 )}

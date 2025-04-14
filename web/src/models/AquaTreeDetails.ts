@@ -28,7 +28,9 @@ export interface AquaTreeDetailsData {
     verificationResults: VerificationHashAndResult[],
     revision: Revision
     revisionHash: string
-
+    isDeletable: boolean
+    deleteRevision: (revisionHash: string) => void
+    index: number
 }
 
 export interface IChainDetailsBtn {

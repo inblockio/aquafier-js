@@ -1,3 +1,4 @@
+import { canDeleteRevision, deleteRevisionAndChildren } from '../utils/quick_revision_utils';
 import { prisma } from '../database/db';
 import { DeleteRevision, FetchAquaTreeRequest, SaveRevision } from '../models/request_models';
 import { getHost, getPort } from '../utils/api_utils';
@@ -354,10 +355,6 @@ export default async function revisionsController(fastify: FastifyInstance) {
             let pubkeyhash = `${session.address}_${currentHash}`;
             console.log(`Public_key_hash_to_delete: ${pubkeyhash}`)
 
-
-
-
-
             // fetch specific revision 
             let latestRevionData = await prisma.revision.findFirst({
                 where: {
@@ -569,4 +566,61 @@ export default async function revisionsController(fastify: FastifyInstance) {
 
     });
 
+    fastify.delete('/tree/revisions/:hash', async (request, reply) => {
+        try {
+            const nonce = request.headers['nonce']; // Headers are case-insensitive
+            const { hash } = request.params as { hash: string };
+
+            // Check if `nonce` is missing or empty
+            if (!nonce || typeof nonce !== 'string' || nonce.trim() === '') {
+                return reply.code(401).send({ error: 'Unauthorized: Missing or empty nonce header' });
+            }
+
+            // Retrieve session from nonce
+            const session = await prisma.siweSession.findUnique({
+                where: { nonce }
+            });
+            
+            if (!session) {
+                return reply.code(401).send({ error: 'Unauthorized: Invalid session' });
+            }
+            
+            
+            // Check if the user is allowed to delete this revision
+            const canDelete = await canDeleteRevision(hash, session.address);
+            if (!canDelete) {
+                return reply.code(403).send({ 
+                    success: false, 
+                    message: 'Forbidden: You do not have permission to delete this revision' 
+                });
+            }
+            
+            // Perform the deletion
+            const result = await deleteRevisionAndChildren(hash, session.address);
+            
+            if (result.success) {
+                return reply.code(200).send({
+                    success: true,
+                    message: `Successfully deleted revision and its dependencies`,
+                    deleted: result.deleted,
+                    details: result.details
+                });
+            } else {
+                return reply.code(500).send({
+                    success: false,
+                    message: 'Error occurred during deletion',
+                    deleted: result.deleted,
+                    details: result.details
+                });
+            }
+
+        } catch (error: any) {
+            console.error("Error in delete operation:", error);
+            return reply.code(500).send({
+                success: false,
+                message: `Error deleting revision: ${error.message}`,
+                details: error
+            });
+        }
+    });
 }
