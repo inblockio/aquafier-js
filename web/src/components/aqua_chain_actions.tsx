@@ -1,6 +1,6 @@
 import { LuDelete, LuDownload, LuGlasses, LuLink2, LuShare2, LuSignature, LuX } from "react-icons/lu"
 import { Button } from "./chakra-ui/button"
-import { areArraysEqual, dummyCredential, ensureDomainUrlHasSSL, estimateStringFileSize, extractFileHash, fetchFiles, getFileName, getGenesisHash } from "../utils/functions"
+import { areArraysEqual, dummyCredential, ensureDomainUrlHasSSL,  extractFileHash, fetchFiles, getFileName, getGenesisHash } from "../utils/functions"
 import { useStore } from "zustand"
 import appStore from "../store"
 import axios from "axios"
@@ -863,7 +863,7 @@ export const ShareButton = ({ item, nonce }: IShareButton) => {
 
 
 export const LinkButton = ({ item, nonce }: IShareButton) => {
-    const { backend_url, setFiles, files } = useStore(appStore)
+    const { backend_url, setFiles, files, session } = useStore(appStore)
     const [isOpen, setIsOpen] = useState(false)
     const [linking, setLinking] = useState(false)
     const [linkItem, setLinkItem] = useState<ApiFileInfo | null>(null)
@@ -922,36 +922,38 @@ export const LinkButton = ({ item, nonce }: IShareButton) => {
 
             if (response.status === 200 || response.status === 201) {
                 //  console.log("update state ...")
-                const newFiles: ApiFileInfo[] = [];
-                const keysPar = Object.keys(item.aquaTree!.revisions!)
-                files.forEach((itemFile) => {
-                    const keys = Object.keys(itemFile.aquaTree!.revisions!)
-                    if (areArraysEqual(keys, keysPar)) {
-                        let newData = {
-                            ...itemFile,
-                            aquaTree: result.data.aquaTree!,
-                        }
+                // const newFiles: ApiFileInfo[] = [];
+                // const keysPar = Object.keys(item.aquaTree!.revisions!)
+                // files.forEach((itemFile) => {
+                //     const keys = Object.keys(itemFile.aquaTree!.revisions!)
+                //     if (areArraysEqual(keys, keysPar)) {
+                //         let newData = {
+                //             ...itemFile,
+                //             aquaTree: result.data.aquaTree!,
+                //         }
 
-                        let name = getFileName(result.data.aquaTree!)
+                //         let name = getFileName(result.data.aquaTree!)
 
-                        newData.fileObject.push({
-                            fileContent: linkItem!.aquaTree!,
-                            path: "",
-                            fileName: `${name}.aqua.json`,
-                            fileSize: estimateStringFileSize(JSON.stringify(linkItem!.aquaTree!, null, 4))
-                        })
+                //         newData.fileObject.push({
+                //             fileContent: linkItem!.aquaTree!,
+                //             path: "",
+                //             fileName: `${name}.aqua.json`,
+                //             fileSize: estimateStringFileSize(JSON.stringify(linkItem!.aquaTree!, null, 4))
+                //         })
 
-                        newData.fileObject.push(...linkItem.fileObject)
+                //         newData.fileObject.push(...linkItem.fileObject)
 
-                        newFiles.push(newData)
+                //         newFiles.push(newData)
 
-                    } else {
-                        newFiles.push(itemFile)
-                    }
-                })
+                //     } else {
+                //         newFiles.push(itemFile)
+                //     }
+                // })
 
-                //  console.log(`new file ${JSON.stringify(newFiles, null, 4)}`)
-                setFiles(newFiles)
+                // //  console.log(`new file ${JSON.stringify(newFiles, null, 4)}`)
+                // setFiles(newFiles)
+
+                await refetchAllUserFiles();
 
             }
 
@@ -969,6 +971,23 @@ export const LinkButton = ({ item, nonce }: IShareButton) => {
             });
         }
         setLinking(false)
+    }
+
+
+    const refetchAllUserFiles = async () => {
+
+        // refetch all the files to enure the front end  state is the same as the backend 
+        try {
+            const files = await fetchFiles(session!.address!, `${backend_url}/explorer_files`, session!.nonce);
+            setFiles(files);
+        } catch (e) {
+            //  console.log(`Error ${e}`)
+            toaster.create({
+                description: "Error updating files",
+                type: "error"
+            })
+            document.location.reload()
+        }
     }
     return (
         <>

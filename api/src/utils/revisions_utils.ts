@@ -1,4 +1,4 @@
-import { AquaTree, FileObject, Revision as AquaRevision, OrderRevisionInAquaTree , reorderAquaTreeRevisionsProperties } from 'aqua-js-sdk';
+import Aquafier, { AquaTree, FileObject, Revision as AquaRevision, OrderRevisionInAquaTree , reorderAquaTreeRevisionsProperties, reorderRevisionsProperties } from 'aqua-js-sdk';
 import { prisma } from '../database/db';
 // For specific model types
 import { Latest, Signature, Revision, Witness, AquaForms, WitnessEvent, FileIndex, Link } from '@prisma/client';
@@ -506,6 +506,7 @@ export async function createAquaTreeFromRevisions(latestRevisionHash: string, ur
 
     //  console.log(`File indexes for hash: ${lastRevisionHash}\n${JSON.stringify(fileIndexes, null, 4)}`)
 
+    let aquafier = new Aquafier();
 
     for (let revisionItem of revisionData) {
         let hashOnly = revisionItem.pubkey_hash.split("_")[1]
@@ -536,10 +537,11 @@ export async function createAquaTreeFromRevisions(latestRevisionHash: string, ur
 
             })
             if (fileResult == null) {
-                throw Error("Revision file data  not found")
-            }
+                // throw Error("Revision file data  not found")
+                console.error(`💣💣💣💣 hash not found in file hash => ${hashOnly}`)
+            }else
             revisionWithData["file_nonce"] = revisionItem.nonce ?? "--error--"
-            revisionWithData["file_hash"] = fileResult.file_hash ?? "--error--"
+            revisionWithData["file_hash"] = fileResult?.file_hash ?? "--error--"
         } else {
             let revisionInfoData = await FetchRevisionInfo(revisionItem.pubkey_hash, revisionItem)
 
@@ -649,7 +651,8 @@ export async function createAquaTreeFromRevisions(latestRevisionHash: string, ur
             revisionWithData["file_hash"] = name?.file_hash ?? "--error--"
 
         }
-        anAquaTree.revisions[hashOnly] = revisionWithData;
+        let sortedAquaTree = reorderRevisionsProperties(revisionWithData)
+        anAquaTree.revisions[hashOnly] = sortedAquaTree;
     }
 
 
