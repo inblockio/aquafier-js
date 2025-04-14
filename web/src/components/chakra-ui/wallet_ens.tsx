@@ -64,7 +64,7 @@ export const WalletEnsView = ({ walletAddress }: WalletEnsViewData) => {
             controller.abort(); // This will cancel the fetch request
             setIsLoading(false);
             setEnsName(walletAddress);
-        }, 5000);
+        }, 9000);
 
         // Clean up function
         return () => {

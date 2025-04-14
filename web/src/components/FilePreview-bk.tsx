@@ -883,26 +883,26 @@ const FilePreview: React.FC<IFilePreview> = ({ fileInfo }) => {
 };
 
 // TypeScript declaration for docx-preview library
-declare global {
-    interface Window {
-        docx: {
-            renderAsync: (
-                file: Blob | ArrayBuffer,
-                container: HTMLElement,
-                viewerPlugins?: any,
-                options?: {
-                    className?: string;
-                    inWrapper?: boolean;
-                    ignoreWidth?: boolean;
-                    ignoreHeight?: boolean;
-                    defaultFont?: {
-                        family: string;
-                        size: number;
-                    };
-                }
-            ) => Promise<void>;
-        };
-    }
-}
+// declare global {
+//     interface Window {
+//         docx: {
+//             renderAsync: (
+//                 file: Blob | ArrayBuffer,
+//                 container: HTMLElement,
+//                 viewerPlugins?: any,
+//                 options?: {
+//                     className?: string;
+//                     inWrapper?: boolean;
+//                     ignoreWidth?: boolean;
+//                     ignoreHeight?: boolean;
+//                     defaultFont?: {
+//                         family: string;
+//                         size: number;
+//                     };
+//                 }
+//             ) => Promise<void>;
+//         };
+//     }
+// }
 
 export default FilePreview;

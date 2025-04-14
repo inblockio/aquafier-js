@@ -62,7 +62,7 @@ const FilePreview: React.FC<IFilePreview> = ({ fileInfo }) => {
     const [fileURL, setFileURL] = useState<string>("");
     const [textContent, setTextContent] = useState<string>("");
     const [isLoading, setIsLoading] = useState<boolean>(true);
-    const [pdfBlob, setPdfBlob] = useState<Blob | null>(null);
+    const [_pdfBlob, setPdfBlob] = useState<Blob | null>(null);
     const [wordBlob, setWordBlob] = useState<Blob | null>(null);
 
     const wordContainerRef = useRef<HTMLDivElement>(null);
@@ -256,7 +256,7 @@ const FilePreview: React.FC<IFilePreview> = ({ fileInfo }) => {
                     console.log("Determined content type for binary data:", contentType);
 
                     // Create blob with detected content type
-                    const blob = new Blob([fileInfo.fileContent as Uint8Array<ArrayBufferLike>], { type: contentType });
+                    const blob = new Blob([fileInfo.fileContent as Uint8Array], { type: contentType });
 
                     setFileType(contentType);
 

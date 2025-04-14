@@ -4,11 +4,11 @@ import { Box, Card, Collapsible, For, Group, Icon, IconButton, Link, Span, Text,
 import { TimelineConnector, TimelineContent, TimelineDescription, TimelineItem, TimelineRoot, TimelineTitle } from "./chakra-ui/timeline"
 import { displayTime, formatCryptoAddress, fetchLinkedFileName, fetchFiles } from "../utils/functions"
 import { Alert } from "./chakra-ui/alert"
-import Aquafier, { LogTypeEmojis, Revision } from "aqua-js-sdk";
+import { LogTypeEmojis, Revision } from "aqua-js-sdk";
 import ReactLoading from "react-loading"
 import { WITNESS_NETWORK_MAP } from "../utils/constants"
 import { WalletEnsView } from "./chakra-ui/wallet_ens"
-import { AquaTreeDetails, AquaTreeDetailsData, AquaTreeDetailsViewData, RevisionDetailsSummaryData, VerificationHashAndResult } from "../models/AquaTreeDetails"
+import { AquaTreeDetailsData, RevisionDetailsSummaryData } from "../models/AquaTreeDetails"
 
 import { ItemDetail } from "./ItemDetails";
 import appStore from "../store"
@@ -148,9 +148,9 @@ export const RevisionDisplay = ({ fileInfo, revision, revisionHash, isVerificati
                     placement: "bottom-end"
                 })
                 // Reload files for the current user
-                if(index === 0){
+                if (index === 0) {
                     window.location.reload()
-                }else{
+                } else {
                     const url2 = `${backend_url}/explorer_files`;
                     const files = await fetchFiles(`${session?.address}`, url2, `${session?.nonce}`);
                     setFiles(files)
@@ -182,7 +182,7 @@ export const RevisionDisplay = ({ fileInfo, revision, revisionHash, isVerificati
     const displayDeleteButton = (): JSX.Element => {
         if (isDeletable) {
             return (
-                <IconButton size={'xs'}  borderRadius={"full"} onClick={handleDelete} disabled={isDeleting} colorPalette={"red"}>
+                <IconButton size={'xs'} borderRadius={"full"} onClick={handleDelete} disabled={isDeleting} colorPalette={"red"}>
                     <LuTrash />
                 </IconButton>
             )
