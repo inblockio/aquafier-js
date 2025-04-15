@@ -24,8 +24,8 @@ import { analyzeAndMergeRevisions } from "../utils/aqua_funcs";
 import { DialogActionTrigger, DialogBody, DialogContent, DialogFooter, DialogHeader, DialogRoot, DialogTitle } from "./chakra-ui/dialog";
 import { TimelineConnector, TimelineContent, TimelineDescription, TimelineItem, TimelineRoot, TimelineTitle } from "./chakra-ui/timeline";
 import { RevisionsComparisonResult } from "../models/revision_merge";
-import Aquafier, { AquaTree, FileObject, OrderRevisionInAquaTree, reorderAquaTreeRevisionsProperties, Revision } from "aqua-js-sdk";
-import JSZip, { file } from "jszip";
+import Aquafier, { AquaTree, FileObject, OrderRevisionInAquaTree, Revision } from "aqua-js-sdk";
+import JSZip from "jszip";
 import { useDisclosure } from '@chakra-ui/hooks'
 import { maxFileSizeForUpload } from "../utils/constants";
 
@@ -947,7 +947,7 @@ export const ImportAquaChainFromChain = ({ fileInfo, isVerificationSuccessful, c
 
     //  console.log(revisionsToImport)
 
-    const { metamaskAddress, setFiles, files, backend_url, session } = useStore(appStore)
+    const { files, backend_url, session } = useStore(appStore)
 
     let navigate = useNavigate();
 

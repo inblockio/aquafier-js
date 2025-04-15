@@ -217,7 +217,6 @@ export async function fetchCompleteRevisionChain(
             previous_verification_hash: rev.previous
         };
     }
-    console.log(JSON.stringify(revisionsObjects, null, 4))
 
     // Determine the hash of the earliest revision in this chain (potential genesis)
     const orderedRevisionData = OrderRevisionInAquaTree({
@@ -339,7 +338,7 @@ export async function fetchCompleteRevisionChain(
             // For non-file types, fetch additional info
             const revisionInfoData = await _FetchRevisionInfo(revisionItem.pubkey_hash, revisionItem as any);
 
-            if (!revisionInfoData && revisionItem.revision_type !== 'file') { // file type handled above
+            if (!revisionInfoData && revisionItem?.revision_type !== 'file' as any) { // file type handled above
                 // Log warning if info is expected but not found
                 console.warn(`${indent}[Depth:${_depth}] Revision info not found for ${revisionItem.revision_type} revision: ${revisionItem.pubkey_hash}`);
                 // Continue processing the revision with available data
