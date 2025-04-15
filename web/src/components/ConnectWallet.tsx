@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Button } from "./chakra-ui/button";
 import { DialogBody, DialogCloseTrigger, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "./chakra-ui/dialog";
 import { Center, Dialog, Text, VStack } from "@chakra-ui/react";
-import { LuCircleCheck, LuCircleX, LuLogOut, LuWallet } from "react-icons/lu";
+import { LuCircleCheck, LuCircleX, LuCopy, LuLogOut, LuWallet } from "react-icons/lu";
 import ReactLoading from "react-loading";
 import { fetchFiles, formatCryptoAddress, generateAvatar, getCookie, setCookie } from "../utils/functions";
 import { SiweMessage, generateNonce } from "siwe";
@@ -13,6 +13,18 @@ import appStore from "../store";
 import { BrowserProvider, ethers } from "ethers";
 import { Avatar } from "./chakra-ui/avatar";
 import { toaster } from "./chakra-ui/toaster";
+
+import { useClipboard } from "@chakra-ui/react"
+
+const CustomCopyButton = ({ value }: { value: string }) => {
+  const clipboard = useClipboard({ value: value })
+  return (
+    <Button variant="surface" size="sm" onClick={clipboard.copy} borderRadius={"md"}>
+      {clipboard.copied ? "Copied" : "Copy Address"}
+      <LuCopy />
+    </Button>
+  )
+}
 
 export default function ConnectWallet() {
   const { setMetamaskAddress, session, setFiles, avatar, setAvatar, setUserProfile, backend_url, setSession } = useStore(appStore);
@@ -242,6 +254,7 @@ export default function ConnectWallet() {
                 <Avatar src={avatar} size={"2xl"} loading="eager" />
               </Center>
               <Text fontFamily={"monospace"}>{formatCryptoAddress(session?.address, 10, 10)}</Text>
+              <CustomCopyButton value={`${session?.address}`} />
               <Button borderRadius={"md"} loading={loading} onClick={signOutFromSiweSession}>
                 Sign Out
                 <LuLogOut />
