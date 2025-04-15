@@ -5,6 +5,13 @@ import { documentTypes, imageTypes, musicTypes, videoTypes } from "./constants";
 import Aquafier, { AquaTree, CredentialsData, FileObject, Revision } from "aqua-js-sdk";
 import jdenticon from "jdenticon/standalone";
 
+export function isAquaTree(content: any): boolean {
+    // Check if content has the properties of an AquaTree
+    return content && 
+           typeof content === 'object' && 
+           'revisions' in content && 
+           'file_index' in content;
+}
 export function formatCryptoAddress(address?: string, start: number = 10, end: number = 4, message?: string): string {
     if (!address) return message ?? "NO ADDRESS"
     if (address?.length < (start + end)) {
