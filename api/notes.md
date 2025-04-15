@@ -112,7 +112,6 @@
             
             RAISE NOTICE 'All tables have been emptied.';
         END $$;
-
     ```
 
 

@@ -12,43 +12,50 @@ export async function fetchAquatreeFoUser(url: string, latest: Array<{
     aquaTree: AquaTree,
     fileObject: FileObject[]
 }>> {
-    // traverse from the latest to the genesis of each 
-    //  console.log(`data ${JSON.stringify(latest, null, 4)}`)
-
+    // This function fetches and processes aqua trees for a user
+    // based on their latest revision hashes
 
     let displayData: Array<{
         aquaTree: AquaTree,
         fileObject: FileObject[]
-    }> = []
+    }> = [];
 
+    // Process each latest revision entry
+    for (let revisionLatestItem of latest) {
+        // Retrieve the tree starting from the latest hash
+        let [anAquaTree, fileObject] = await createAquaTreeFromRevisions(revisionLatestItem.hash, url);
+        
+        // Ensure the tree is properly ordered
+        let orderedRevisionProperties = reorderAquaTreeRevisionsProperties(anAquaTree);
+        let sortedAquaTree = OrderRevisionInAquaTree(orderedRevisionProperties);
 
-
-    for (let revisonLatetsItem of latest) {
-
-        let [anAquaTree, fileObject] = await createAquaTreeFromRevisions(revisonLatetsItem.hash, url)
-
-        //  console.log(`----> ${JSON.stringify(anAquaTree, null, 4)}`)
-        let orderRevisionPrpoerties = reorderAquaTreeRevisionsProperties(anAquaTree)
-        let sortedAquaTree = OrderRevisionInAquaTree(orderRevisionPrpoerties)
-
+        // Each latest hash represents a complete chain
         displayData.push({
-
             aquaTree: sortedAquaTree,
             fileObject: fileObject
-        })
-
-
+        });
     }
 
-    return displayData
-
+    return displayData;
 }
+
 export async function saveAquaTree(aquaTree: AquaTree, userAddress: string,) {
+    // Reorder revisions to ensure proper order
+    let orderedAquaTree = reorderAquaTreeRevisionsProperties(aquaTree);
+    let sortedAquaTree = OrderRevisionInAquaTree(orderedAquaTree);
+    
+    // Get all revision hashes in the chain
+    let allHash = Object.keys(sortedAquaTree.revisions);
+    
+    // The last hash in the sorted array is the latest
+    if (allHash.length === 0) {
+        throw Error("No revisions found in the aqua tree");
+    }
+    
+    let latestHash = allHash[allHash.length - 1];
+    let lastPubKeyHash = `${userAddress}_${latestHash}`;
 
-    let allHash = Object.keys(aquaTree.revisions)
-    let latestHash = allHash[allHash.length - 1]
-    let lastPubKeyHash = `${userAddress}_${latestHash}`
-
+    // Only register the latest hash for the user
     await prisma.latest.upsert({
         where: {
             hash: lastPubKeyHash
@@ -65,14 +72,13 @@ export async function saveAquaTree(aquaTree: AquaTree, userAddress: string,) {
 
     // insert the revisions
     for (const revisinHash of allHash) {
-        let revisionData = aquaTree.revisions[revisinHash];
+        let revisionData = sortedAquaTree.revisions[revisinHash];
         let pubKeyHash = `${userAddress}_${revisinHash}`
         let pubKeyPrevious = ""
         if (revisionData.previous_verification_hash.length > 0) {
             pubKeyPrevious = `${userAddress}_${revisionData.previous_verification_hash}`
         }
-        // console.log("%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%")
-        // console.log(`revisinHash ${revisinHash} \n pubKeyPrevious ${pubKeyPrevious} --- \n Revision item ${JSON.stringify(revisionData)} `)
+        
         // Insert new revision into the database
         await prisma.revision.upsert({
             where: {
@@ -80,25 +86,21 @@ export async function saveAquaTree(aquaTree: AquaTree, userAddress: string,) {
             },
             create: {
                 pubkey_hash: pubKeyHash,
-                // user: session.address, // Replace with actual user identifier (e.g., request.user.id)
                 nonce: revisionData.file_nonce ?? "",
                 shared: [],
                 previous: pubKeyPrevious,
                 local_timestamp: revisionData.local_timestamp,
                 revision_type: revisionData.revision_type,
                 verification_leaves: revisionData.leaves ?? [],
-
             },
             update: {
                 pubkey_hash: pubKeyHash,
-                // user: session.address, // Replace with actual user identifier (e.g., request.user.id)
                 nonce: revisionData.file_nonce ?? "",
                 shared: [],
                 previous: pubKeyPrevious,
                 local_timestamp: revisionData.local_timestamp,
                 revision_type: revisionData.revision_type,
                 verification_leaves: revisionData.leaves ?? [],
-
             },
         });
 
@@ -262,8 +264,6 @@ export async function saveAquaTree(aquaTree: AquaTree, userAddress: string,) {
         }
 
         if (revisionData.revision_type == "link") {
-
-            //  console.log(`Revsion data ${JSON.stringify()}`)
             await prisma.link.upsert({
                 where: {
                     hash: pubKeyHash,
@@ -284,7 +284,28 @@ export async function saveAquaTree(aquaTree: AquaTree, userAddress: string,) {
                     link_file_hashes: revisionData.link_file_hashes,
                     reference_count: 0
                 }
-            })
+            });
+            
+            // For link revisions, recursively process linked chains
+            if (revisionData.link_verification_hashes && revisionData.link_verification_hashes.length > 0) {
+                for (const linkedHash of revisionData.link_verification_hashes) {
+                    const linkedRevision = await prisma.revision.findFirst({
+                        where: { 
+                            pubkey_hash: {
+                                contains: linkedHash,
+                                mode: 'insensitive'
+                            }
+                        }
+                    });
+                    
+                    if (linkedRevision) {
+                        // Instead of creating new chains for linked revisions, 
+                        // we just process them independently
+                        // They'll form their own chains with their own latest hash
+                        console.log(`Found linked revision chain with hash ${linkedHash}`);
+                    }
+                }
+            }
         }
 
 
@@ -324,38 +345,50 @@ export async function saveAquaTree(aquaTree: AquaTree, userAddress: string,) {
 }
 
 export async function fetchAquaTreeWithForwardRevisions(latestRevisionHash: string, url: string): Promise<[AquaTree, FileObject[]]> {
-
-    // now fetch forwad revision
+    // Fetch the revision chain starting from the latest hash
+    const [anAquaTree, fileObject] = await createAquaTreeFromRevisions(latestRevisionHash, url);
+    
+    // Reorder the revisions to ensure proper sequence
+    let orderRevisionPrpoerties = reorderAquaTreeRevisionsProperties(anAquaTree);
+    let sortedAquaTree = OrderRevisionInAquaTree(orderRevisionPrpoerties);
+    
+    // Now check if there are any forward revisions (newer revisions that point to our current latest)
     let revisionData = [];
-    let queryHash = latestRevisionHash
+    let queryHash = latestRevisionHash;
+    
     while (true) {
-        // fetch latest revision 
-        let latestRevionData = await prisma.revision.findFirst({
+        // Fetch revision that points to our current latest as its previous
+        let forwardRevision = await prisma.revision.findFirst({
             where: {
                 previous: queryHash,
             }
         });
 
-        if (latestRevionData == null) {
-            break
+        if (forwardRevision == null) {
+            break;
         }
 
-        revisionData.push(latestRevionData)
-        queryHash = latestRevionData.pubkey_hash
+        revisionData.push(forwardRevision);
+        queryHash = forwardRevision.pubkey_hash;
     }
 
-    let createAquaTreeFrom = latestRevisionHash;
+    // If we found forward revisions, we need to reconstruct the tree with the new latest
     if (revisionData.length > 0) {
-        //find latest hash 
-        createAquaTreeFrom = revisionData[revisionData.length - 1].pubkey_hash
-    } else {
-        console.log(`The aqua tree has no new revision  from ${latestRevisionHash} `)
+        // The last item in revisionData is the newest revision
+        const newLatestHash = revisionData[revisionData.length - 1].pubkey_hash;
+        console.log(`Found newer revisions. New latest hash: ${newLatestHash}`);
+        
+        // Reconstruct the tree from the new latest hash
+        const [updatedAquaTree, updatedFileObject] = await createAquaTreeFromRevisions(newLatestHash, url);
+        
+        // Reorder the updated tree
+        let updatedOrderedTree = reorderAquaTreeRevisionsProperties(updatedAquaTree);
+        let updatedSortedTree = OrderRevisionInAquaTree(updatedOrderedTree);
+        
+        return [updatedSortedTree, updatedFileObject];
     }
 
-    const [anAquaTree, fileObject] = await createAquaTreeFromRevisions(createAquaTreeFrom, url)
-
-    return [anAquaTree, fileObject];
-
+    return [sortedAquaTree, fileObject];
 }
 
 /**
@@ -715,7 +748,7 @@ export async function FetchRevisionInfo(hash: string, revision: Revision): Promi
                 hash: hash
             }
         });
-
+        console.log("Witness: ", res)
         if (res == null) {
             throw new Error(`witness is null ${revision.revision_type}`);
         }
