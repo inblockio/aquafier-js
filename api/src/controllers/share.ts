@@ -106,8 +106,11 @@ export default async function shareController(fastify: FastifyInstance) {
             })
 
             // return aqua tree
-            return displayData
-
+            // return displayData
+            return reply.code(200).send({ success: true, data: {
+                displayData: displayData,
+                contractData: contractData
+            } });
 
         } catch (error) {
             console.error("Error fetching session:", error);
@@ -299,7 +302,6 @@ export default async function shareController(fastify: FastifyInstance) {
     });
 
     // Create an endpoint for filtering contracts, ie filter by sender, receiver, hash, etc
-
     fastify.get('/contracts', async (request, reply) => {
         const { sender, receiver, hash } = request.query as { sender?: string, receiver?: string, hash?: string };
 

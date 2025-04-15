@@ -1,5 +1,5 @@
 import { prisma } from '../database/db';
-import { AquaTree, FileObject, Revision as AquaRevision } from 'aqua-js-sdk';
+import { AquaTree, FileObject, Revision as AquaRevision, OrderRevisionInAquaTree } from 'aqua-js-sdk';
 import { Revision, Link, Signature, WitnessEvent, AquaForms, FileIndex } from '@prisma/client';
 
 // Extend AquaTree interface to include linkedChains
@@ -32,7 +32,7 @@ async function _findAquaTreeRevision(revisionHash: string): Promise<Array<Revisi
 
     console.log(`Found revision: ${latestRevionData.pubkey_hash}, type: ${latestRevionData.revision_type}`);
     revisions.push(latestRevionData);
-    
+
 
     // Recursively fetch previous revisions if a previous hash exists
     if (latestRevionData?.previous) {
@@ -70,7 +70,7 @@ async function _findAquaTreeRevision(revisionHash: string): Promise<Array<Revisi
  */
 async function _FetchRevisionInfo(hash: string, revision: Revision): Promise<Signature | WitnessEvent | AquaForms[] | Link | null> {
     console.log(`Fetching revision info for type: ${revision.revision_type}, hash: ${hash}`);
-    
+
     switch (revision.revision_type) {
         case "signature":
             return await prisma.signature.findFirst({ where: { hash: hash } });
@@ -86,14 +86,14 @@ async function _FetchRevisionInfo(hash: string, revision: Revision): Promise<Sig
         case "link":
             // Simplify link fetching based on the working implementation
             console.log(`Querying link table for hash: ${hash}`);
-            const linkData = await prisma.link.findFirst({ 
-                where: { hash: hash } 
+            const linkData = await prisma.link.findFirst({
+                where: { hash: hash }
             });
-            
+
             console.log(`Link data found:`, linkData);
             return linkData;
         case "file": // File revisions don't fetch extra info here
-             return null;
+            return null;
         default:
             console.warn(`Unknown revision type encountered: ${revision.revision_type} for hash ${hash}`);
             return null;
@@ -135,77 +135,98 @@ export async function fetchCompleteRevisionChain(
 ): Promise<ExtendedAquaTree> {
     const fullLatestHash = `${userAddress}_${latestHash}`;
     const indent = "  ".repeat(_depth); // For prettier logging
-    
+
     console.log(`${indent}[Depth:${_depth}] Fetching chain for ${fullLatestHash}`);
 
-    // We only check for cycles within a single tree traversal, not across linked chains
-    // This allows the linkedChains feature to work correctly
-    if (_processedHashes.has(fullLatestHash) && _depth > 0) {
-        console.warn(`${indent}[Depth:${_depth}] Circular link detected within current tree branch: ${fullLatestHash}. Stopping recursion for this branch.`);
-        return { revisions: {}, file_index: {} }; // Return empty tree for this branch
+    // Check if we've already processed this hash
+    if (_processedHashes.has(fullLatestHash)) {
+        console.warn(`${indent}[Depth:${_depth}] Already processed hash: ${fullLatestHash}. Stopping recursion.`);
+        return { revisions: {}, file_index: {} }; // Return empty tree to prevent infinite recursion
     }
+
+    // Mark this hash as processed IMMEDIATELY to prevent recursive calls
+    _processedHashes.add(fullLatestHash);
 
     const anAquaTree: ExtendedAquaTree = {
         revisions: {},
         file_index: {},
         linkedChains: _includeLinkedChains ? {} : undefined
     };
-    let fileObjects: FileObject[] = []; // Keep track of associated files
+    // let fileObjects: FileObject[] = []; // Keep track of associated files
 
     let allRevisionData: Revision[] = [];
     try {
         console.log(`${indent}[Depth:${_depth}] Fetching chain for ${fullLatestHash}`);
         // Fetch the main chain starting from the latest hash
         allRevisionData = await _findAquaTreeRevision(fullLatestHash);
+
         if (allRevisionData.length === 0) {
             console.warn(`${indent}[Depth:${_depth}] No revisions found for initial hash: ${fullLatestHash}`);
             return anAquaTree; // Return empty tree if no revisions found
         }
-        
+
         // Also check for "forward" revisions (revisions that reference this one as their previous)
         // This ensures we get the complete chain including newer revisions
-        let forwardRevisions: Revision[] = [];
-        let queryHash = fullLatestHash;
-        
-        while (true) {
-            console.log(`${indent}[Depth:${_depth}] Checking for forward revisions from ${queryHash}`);
-            const nextRevision = await prisma.revision.findFirst({
-                where: {
-                    previous: queryHash
-                }
-            });
-            
-            if (!nextRevision) {
-                console.log(`${indent}[Depth:${_depth}] No more forward revisions from ${queryHash}`);
-                break;
-            }
-            
-            console.log(`${indent}[Depth:${_depth}] Found forward revision: ${nextRevision.pubkey_hash}, type: ${nextRevision.revision_type}`);
-            forwardRevisions.push(nextRevision);
-            queryHash = nextRevision.pubkey_hash;
-        }
-        
-        // If we found forward revisions, add them to the beginning of our list
-        // so they're processed first (in chronological order)
-        if (forwardRevisions.length > 0) {
-            console.log(`${indent}[Depth:${_depth}] Found ${forwardRevisions.length} forward revisions`);
-            allRevisionData = [...forwardRevisions, ...allRevisionData];
-        }
-        
-        console.log(`${indent}[Depth:${_depth}] Total ${allRevisionData.length} revisions in full chain for ${fullLatestHash}`);
-        allRevisionData.forEach(rev => {
-            console.log(`${indent}[Depth:${_depth}] Chain item: ${rev.pubkey_hash}, type: ${rev.revision_type}`);
-        });
-        
-        // NOW mark this hash as processed after finding its chain
-        _processedHashes.add(fullLatestHash);
+        // let forwardRevisions: Revision[] = [];
+        // let queryHash = fullLatestHash;
+
+        // while (true) {
+        //     console.log(`${indent}[Depth:${_depth}] Checking for forward revisions from ${queryHash}`);
+        //     const nextRevision = await prisma.revision.findFirst({
+        //         where: {
+        //             previous: queryHash
+        //         }
+        //     });
+
+        //     if (!nextRevision) {
+        //         console.log(`${indent}[Depth:${_depth}] No more forward revisions from ${queryHash}`);
+        //         break;
+        //     }
+
+        //     console.log(`${indent}[Depth:${_depth}] Found forward revision: ${nextRevision.pubkey_hash}, type: ${nextRevision.revision_type}`);
+        //     forwardRevisions.push(nextRevision);
+        //     queryHash = nextRevision.pubkey_hash;
+        // }
+
+        // // If we found forward revisions, add them to the beginning of our list
+        // // so they're processed first (in chronological order)
+        // if (forwardRevisions.length > 0) {
+        //     console.log(`${indent}[Depth:${_depth}] Found ${forwardRevisions.length} forward revisions`);
+        //     allRevisionData = [...forwardRevisions, ...allRevisionData];
+        // }
+
+        // console.log(`${indent}[Depth:${_depth}] Total ${allRevisionData.length} revisions in full chain for ${fullLatestHash}`);
+        // allRevisionData.forEach(rev => {
+        //     console.log(`${indent}[Depth:${_depth}] Chain item: ${rev.pubkey_hash}, type: ${rev.revision_type}`);
+        // });
     } catch (error) {
         console.error(`${indent}[Depth:${_depth}] Error fetching initial revision chain for ${fullLatestHash}:`, error);
         throw error; // Re-throw error if initial fetch fails
     }
 
+    // const result = allRevisionData.reduce((acc: any, item) => {
+    //     acc[item.pubkey_hash] = item;
+    //     return acc;
+    //   }, {});
+
+    const revisionsObjects: Record<string, any> = {};
+
+    for (const rev of allRevisionData) {
+        revisionsObjects[rev.pubkey_hash] = {
+            ...rev,
+            previous_verification_hash: rev.previous
+        };
+    }
+    console.log(JSON.stringify(revisionsObjects, null, 4))
+
     // Determine the hash of the earliest revision in this chain (potential genesis)
-    const genesisRevisionInChain = allRevisionData[allRevisionData.length - 1];
+    const orderedRevisionData = OrderRevisionInAquaTree({
+        revisions: revisionsObjects,
+        file_index: {}
+    })
+    
+    const orderedRevisionsData = Object.values(orderedRevisionData.revisions)
+    const genesisRevisionInChain = orderedRevisionsData[0];
     const genesisHashInChain = genesisRevisionInChain.pubkey_hash.split('_')[1];
 
     // Find associated file indexes based on the genesis hash of this chain
@@ -213,17 +234,17 @@ export async function fetchCompleteRevisionChain(
     if (genesisHashInChain) {
         try {
             console.log(`${indent}[Depth:${_depth}] Finding FileIndexes for chain with genesis hash: ${genesisHashInChain}`);
-            
+
             // Find FileIndex entries where the genesis hash (prefixed) is present in the `hash` array
             // Note: This logic assumes FileIndex.hash stores prefixed hashes.
             fileIndexes = await prisma.fileIndex.findMany({
-                 where: {
-                     hash: {
-                         has: genesisRevisionInChain.pubkey_hash // Check if the prefixed hash exists in the array
-                     }
-                 }
+                where: {
+                    hash: {
+                        has: genesisRevisionInChain.pubkey_hash // Check if the prefixed hash exists in the array
+                    }
+                }
             });
-            
+
             if (fileIndexes.length > 0) {
                 console.log(`${indent}[Depth:${_depth}] Found ${fileIndexes.length} FileIndexes for genesis hash ${genesisHashInChain}`);
                 for (const fi of fileIndexes) {
@@ -231,7 +252,7 @@ export async function fetchCompleteRevisionChain(
                 }
             } else {
                 console.log(`${indent}[Depth:${_depth}] No FileIndexes found for genesis hash, trying non-prefixed hash`);
-                
+
                 // Try with non-prefixed hash as fallback
                 fileIndexes = await prisma.fileIndex.findMany({
                     where: {
@@ -240,16 +261,16 @@ export async function fetchCompleteRevisionChain(
                         }
                     }
                 });
-                
+
                 if (fileIndexes.length > 0) {
                     console.log(`${indent}[Depth:${_depth}] Found ${fileIndexes.length} FileIndexes for non-prefixed genesis hash`);
                 }
             }
-            
+
             // If still no fileIndexes found, try a more general approach for any revision hash
             if (fileIndexes.length === 0) {
                 console.log(`${indent}[Depth:${_depth}] No FileIndexes found via genesis hash, checking all revisions`);
-                
+
                 // Try looking for FileIndex for any revision in this chain
                 for (const rev of allRevisionData) {
                     const foundIndexes = await prisma.fileIndex.findMany({
@@ -259,7 +280,7 @@ export async function fetchCompleteRevisionChain(
                             }
                         }
                     });
-                    
+
                     if (foundIndexes.length > 0) {
                         console.log(`${indent}[Depth:${_depth}] Found ${foundIndexes.length} FileIndexes for revision: ${rev.pubkey_hash}`);
                         fileIndexes.push(...foundIndexes);
@@ -276,7 +297,7 @@ export async function fetchCompleteRevisionChain(
 
 
     // Process each revision in the fetched chain
-    for (const revisionItem of allRevisionData) {
+    for (const revisionItem of orderedRevisionsData) {
         console.log(`${indent}[Depth:${_depth}] Revision item: `, revisionItem)
         const hashOnly = revisionItem.pubkey_hash.split('_')[1];
         if (!hashOnly) {
@@ -302,28 +323,28 @@ export async function fetchCompleteRevisionChain(
         if (revisionItem.revision_type === "file") {
             // For file revisions, add file_hash and file_nonce
             revisionWithData.file_nonce = revisionItem.nonce ?? "--error--"; // Use nonce from revision
-             // Find the associated FileIndex to get the definitive file_hash and uri
-             const fileIndexForFileRev = fileIndexes.find(fi => fi.hash.includes(revisionItem.pubkey_hash));
-             if (fileIndexForFileRev) {
-                 revisionWithData.file_hash = fileIndexForFileRev.file_hash ?? "--error--";
-                 // Optionally add the file index URI to the main tree's index
-                 if (!anAquaTree.file_index[hashOnly]) { // Add only if not already present (genesis might add it later)
-                     anAquaTree.file_index[hashOnly] = fileIndexForFileRev.uri ?? "--error_uri--";
-                 }
-             } else {
-                 console.warn(`${indent}[Depth:${_depth}] FileIndex not found for file revision: ${revisionItem.pubkey_hash}. File hash might be missing.`);
-                 revisionWithData.file_hash = "--error_no_index--";
-             }
+            // Find the associated FileIndex to get the definitive file_hash and uri
+            const fileIndexForFileRev = fileIndexes.find(fi => fi.hash.includes(revisionItem.pubkey_hash));
+            if (fileIndexForFileRev) {
+                revisionWithData.file_hash = fileIndexForFileRev.file_hash ?? "--error--";
+                // Optionally add the file index URI to the main tree's index
+                if (!anAquaTree.file_index[hashOnly]) { // Add only if not already present (genesis might add it later)
+                    anAquaTree.file_index[hashOnly] = fileIndexForFileRev.uri ?? "--error_uri--";
+                }
+            } else {
+                console.warn(`${indent}[Depth:${_depth}] FileIndex not found for file revision: ${revisionItem.pubkey_hash}. File hash might be missing.`);
+                revisionWithData.file_hash = "--error_no_index--";
+            }
         } else {
             // For non-file types, fetch additional info
-            const revisionInfoData = await _FetchRevisionInfo(revisionItem.pubkey_hash, revisionItem);
+            const revisionInfoData = await _FetchRevisionInfo(revisionItem.pubkey_hash, revisionItem as any);
 
             if (!revisionInfoData && revisionItem.revision_type !== 'file') { // file type handled above
                 // Log warning if info is expected but not found
-                 console.warn(`${indent}[Depth:${_depth}] Revision info not found for ${revisionItem.revision_type} revision: ${revisionItem.pubkey_hash}`);
-                 // Continue processing the revision with available data
+                console.warn(`${indent}[Depth:${_depth}] Revision info not found for ${revisionItem.revision_type} revision: ${revisionItem.pubkey_hash}`);
+                // Continue processing the revision with available data
             } else if (revisionInfoData) {
-            
+
                 switch (revisionItem.revision_type) {
                     case "form":
                         const formItems = revisionInfoData as AquaForms[];
@@ -371,16 +392,16 @@ export async function fetchCompleteRevisionChain(
                             for (const linkedHash of linkData.link_verification_hashes) {
                                 if (typeof linkedHash === 'string' && linkedHash.length > 0) {
                                     console.log(`${indent}[Depth:${_depth}] Processing linked hash: ${linkedHash}`);
-                                    
+
                                     // Use the original user address for all processing
                                     // The linked hash doesn't include the user address - it's just the hash part
-                                    
+
                                     // Find FileIndex for the linked hash
                                     const fullLinkedHash = `${userAddress}_${linkedHash}`;
-                                    let linkedFileIndex = await prisma.fileIndex.findFirst({ 
-                                        where: { id: fullLinkedHash } 
+                                    let linkedFileIndex = await prisma.fileIndex.findFirst({
+                                        where: { id: fullLinkedHash }
                                     });
-                                    
+
                                     if (!linkedFileIndex) {
                                         // Try contains approach
                                         linkedFileIndex = await prisma.fileIndex.findFirst({
@@ -391,19 +412,25 @@ export async function fetchCompleteRevisionChain(
                                             }
                                         });
                                     }
-                                    
+
                                     if (linkedFileIndex) {
                                         console.log(`${indent}[Depth:${_depth}] Found FileIndex with URI: ${linkedFileIndex.uri}`);
                                         anAquaTree.file_index[linkedHash] = linkedFileIndex.uri ?? "--missing-uri--";
                                     } else {
                                         console.warn(`${indent}[Depth:${_depth}] FileIndex not found for linked hash: ${linkedHash}`);
                                     }
-                                    
+
                                     // For linkedChains feature, we need to recursively fetch each linked chain as a complete tree
                                     if (_includeLinkedChains && anAquaTree.linkedChains) {
                                         try {
+                                            // Skip if already processed to prevent infinite recursion
+                                            if (_processedHashes.has(fullLinkedHash)) {
+                                                console.log(`${indent}[Depth:${_depth}] Skipping already processed linked chain: ${fullLinkedHash}`);
+                                                continue;
+                                            }
+
                                             console.log(`${indent}[Depth:${_depth}] Building complete linked chain for ${linkedHash} to add to linkedChains`);
-                                            
+
                                             // First try to find the file index for this linked hash
                                             // We need this for the genesis revision in the linked chain
                                             try {
@@ -416,17 +443,19 @@ export async function fetchCompleteRevisionChain(
                                                         }
                                                     }
                                                 });
-                                                
+
                                                 if (linkedFileIndex) {
                                                     console.log(`${indent}[Depth:${_depth}] Found FileIndex for linked chain's genesis: ${linkedFileIndex.uri}`);
                                                 }
                                             } catch (indexError) {
                                                 console.warn(`${indent}[Depth:${_depth}] Error pre-fetching FileIndex for linked chain: ${indexError}`);
                                             }
-                                            
+
                                             // Create a new set of processed hashes for this chain to avoid conflicts
-                                            const linkedProcessedHashes = new Set<string>();
-                                            
+                                            // We use a new Set that INCLUDES all the currently processed hashes
+                                            // to avoid revisiting any already processed revision
+                                            const linkedProcessedHashes = new Set<string>(_processedHashes);
+
                                             // Fetch the complete chain for this link as a separate tree
                                             const completeLinkedTree = await fetchCompleteRevisionChain(
                                                 linkedHash,
@@ -436,7 +465,7 @@ export async function fetchCompleteRevisionChain(
                                                 true, // Include nested chains
                                                 _depth + 1
                                             );
-                                            
+
                                             if (Object.keys(completeLinkedTree.revisions).length > 0) {
                                                 console.log(`${indent}[Depth:${_depth}] Adding linked tree to linkedChains with ${Object.keys(completeLinkedTree.revisions).length} revisions`);
                                                 // Store the complete tree in the linkedChains object
@@ -454,38 +483,6 @@ export async function fetchCompleteRevisionChain(
                                             console.error(`${indent}[Depth:${_depth}] Error building linked chain for linkedChains: ${linkedHash}`, linkError);
                                         }
                                     }
-                                    
-                                    // Now process the normal flattened tree merging (this is separate from the linkedChains feature)
-                                    // Only process if not already processed
-                                    if (!_processedHashes.has(fullLinkedHash)) {
-                                        try {
-                                            console.log(`${indent}[Depth:${_depth}] Recursively fetching linked chain for ${linkedHash}`);
-                                            
-                                            // Mark this hash as processed for the flattened tree to avoid cycles
-                                            _processedHashes.add(fullLinkedHash);
-                                            
-                                            const linkedTree = await fetchCompleteRevisionChain(
-                                                linkedHash,
-                                                userAddress,  // Use the original user address
-                                                url,
-                                                _processedHashes,
-                                                false, // Don't include nested chains for flattened merge
-                                                _depth + 1
-                                            );
-                                            
-                                            if (Object.keys(linkedTree.revisions).length > 0) {
-                                                console.log(`${indent}[Depth:${_depth}] Merging linked tree with ${Object.keys(linkedTree.revisions).length} revisions`);
-                                                Object.assign(anAquaTree.revisions, linkedTree.revisions);
-                                                Object.assign(anAquaTree.file_index, linkedTree.file_index);
-                                            } else {
-                                                console.warn(`${indent}[Depth:${_depth}] Linked tree for ${linkedHash} is empty`);
-                                            }
-                                        } catch(linkError) {
-                                            console.error(`${indent}[Depth:${_depth}] Error fetching linked chain for ${linkedHash}:`, linkError);
-                                        }
-                                    } else {
-                                        console.log(`${indent}[Depth:${_depth}] Linked hash ${fullLinkedHash} already processed, skipping`);
-                                    }
                                 }
                             }
                         }
@@ -499,21 +496,21 @@ export async function fetchCompleteRevisionChain(
         // Add file index for the genesis revision of the current chain segment
         if (!previousHashOnly) { // Check if it's a genesis revision (no previous)
             console.log(`${indent}[Depth:${_depth}] Found genesis revision: ${revisionItem.pubkey_hash}, hash: ${hashOnly}`);
-            
+
             // Try to find the file index for this genesis hash
             const genesisFileIndex = fileIndexes.find(item => item.hash.includes(revisionItem.pubkey_hash));
-            
+
             if (genesisFileIndex) {
                 console.log(`${indent}[Depth:${_depth}] Found FileIndex for genesis with URI: ${genesisFileIndex.uri}`);
                 anAquaTree.file_index[hashOnly] = genesisFileIndex.uri ?? "--error_uri--";
                 // Add file_hash to the genesis revision itself if it's a file type (might be redundant but ensures presence)
-                 if (revisionWithData.revision_type === 'file') {
-                     revisionWithData.file_hash = genesisFileIndex.file_hash ?? "--error_hash--";
-                 }
+                if (revisionWithData.revision_type === 'file') {
+                    revisionWithData.file_hash = genesisFileIndex.file_hash ?? "--error_hash--";
+                }
             } else {
                 // If we didn't find the file index in our initial lookup, try a direct query
                 console.log(`${indent}[Depth:${_depth}] FileIndex not found in pre-fetched indexes, trying direct query for genesis revision: ${revisionItem.pubkey_hash}`);
-                
+
                 // Try to find by exact pubkey_hash first
                 try {
                     const directFileIndex = await prisma.fileIndex.findFirst({
@@ -523,7 +520,7 @@ export async function fetchCompleteRevisionChain(
                             }
                         }
                     });
-                    
+
                     if (directFileIndex) {
                         console.log(`${indent}[Depth:${_depth}] Found FileIndex for genesis with direct query: ${directFileIndex.uri}`);
                         anAquaTree.file_index[hashOnly] = directFileIndex.uri ?? "--error_uri--";
@@ -539,7 +536,7 @@ export async function fetchCompleteRevisionChain(
                                 }
                             }
                         });
-                        
+
                         if (fuzzyFileIndex) {
                             console.log(`${indent}[Depth:${_depth}] Found FileIndex for genesis with fuzzy query: ${fuzzyFileIndex.uri}`);
                             anAquaTree.file_index[hashOnly] = fuzzyFileIndex.uri ?? "--error_uri--";
@@ -567,7 +564,7 @@ export async function fetchCompleteRevisionChain(
 
         // Add the processed revision to the tree, avoiding duplicates from linked chains
         if (!anAquaTree.revisions[hashOnly]) {
-             anAquaTree.revisions[hashOnly] = revisionWithData;
+            anAquaTree.revisions[hashOnly] = revisionWithData;
         } else {
             // If already present (likely from a link), maybe log or decide if merge logic is needed
             // console.log(`Revision ${hashOnly} already exists in tree, likely from a link. Skipping add.`);
@@ -626,58 +623,58 @@ async function example() {
  */
 export async function diagnoseLinks(): Promise<void> {
     console.log('===== LINK TABLE DIAGNOSTIC =====');
-    
+
     try {
         // 1. First check if any link-type revisions exist
         const linkRevisions = await prisma.revision.findMany({
             where: { revision_type: 'link' },
             take: 10 // Increased to 10 for more diagnostic data
         });
-        
+
         console.log(`Found ${linkRevisions.length} link revisions`);
-        
+
         if (linkRevisions.length === 0) {
             console.log('No link revisions found in database');
             return;
         }
-        
+
         // 2. For each link revision, check both implementations
         for (const linkRev of linkRevisions) {
             console.log(`\n=== Analyzing link revision: ${linkRev.pubkey_hash} ===`);
-            
+
             // 2.1 Test using revisions_utils approach
             console.log('Testing with revisions_utils approach:');
             try {
                 const linkData = await prisma.link.findFirst({
                     where: { hash: linkRev.pubkey_hash }
                 });
-                
+
                 if (linkData) {
                     console.log('✅ Found link using revisions_utils approach');
                     console.log('Link data structure:', Object.keys(linkData));
                     console.log('Link type:', linkData.link_type);
                     console.log('Link verification hashes:', linkData.link_verification_hashes);
                     console.log('Link file hashes:', linkData.link_file_hashes);
-                    
+
                     // Test recursive lookup
                     if (linkData.link_verification_hashes && linkData.link_verification_hashes.length > 0) {
                         const linkedHash = linkData.link_verification_hashes[0];
                         console.log(`Testing linked hash: ${linkedHash}`);
-                        
+
                         // Try to fetch the linked revision
                         const linkedRev = await prisma.revision.findFirst({
                             where: { pubkey_hash: linkedHash }
                         });
-                        
+
                         console.log(`Linked revision exists: ${!!linkedRev}`);
                         if (linkedRev) {
                             console.log('Linked revision type:', linkedRev.revision_type);
-                            
+
                             // Check if FileIndex exists for this link
-                            const linkedFileIndex = await prisma.fileIndex.findFirst({ 
-                                where: { id: linkedHash } 
+                            const linkedFileIndex = await prisma.fileIndex.findFirst({
+                                where: { id: linkedHash }
                             });
-                            
+
                             console.log(`FileIndex exists for linked hash: ${!!linkedFileIndex}`);
                             if (linkedFileIndex) {
                                 console.log('FileIndex URI:', linkedFileIndex.uri);
@@ -694,7 +691,7 @@ export async function diagnoseLinks(): Promise<void> {
                                             }
                                         }
                                     });
-                                    
+
                                     console.log(`FileIndex exists via fuzzy match: ${!!fuzzyFileIndex}`);
                                     if (fuzzyFileIndex) {
                                         console.log('FileIndex URI (fuzzy match):', fuzzyFileIndex.uri);
@@ -711,10 +708,10 @@ export async function diagnoseLinks(): Promise<void> {
             } catch (err) {
                 console.error(`Error in revisions_utils approach:`, err);
             }
-            
+
             console.log('\n');
         }
-        
+
         // 3. Check Link table structure
         try {
             const tableInfo = await prisma.$queryRaw`
@@ -722,17 +719,17 @@ export async function diagnoseLinks(): Promise<void> {
                 FROM information_schema.columns 
                 WHERE table_name = 'Link'
             `;
-            
+
             console.log('\nLink table structure:');
             console.log(tableInfo);
         } catch (err) {
             console.error('Could not retrieve Link table structure:', err);
         }
-        
+
     } catch (error) {
         console.error('Error in diagnoseLinks:', error);
     }
-    
+
     console.log('===== END DIAGNOSTIC =====');
 }
 

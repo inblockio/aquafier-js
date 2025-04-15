@@ -4,11 +4,11 @@ import { Box, Card, Collapsible, For, Group, Icon, IconButton, Link, Span, Text,
 import { TimelineConnector, TimelineContent, TimelineDescription, TimelineItem, TimelineRoot, TimelineTitle } from "./chakra-ui/timeline"
 import { displayTime, formatCryptoAddress, fetchLinkedFileName, fetchFiles } from "../utils/functions"
 import { Alert } from "./chakra-ui/alert"
-import Aquafier, { LogTypeEmojis, Revision } from "aqua-js-sdk";
+import { LogTypeEmojis, Revision } from "aqua-js-sdk";
 import ReactLoading from "react-loading"
 import { WITNESS_NETWORK_MAP } from "../utils/constants"
 import { WalletEnsView } from "./chakra-ui/wallet_ens"
-import { AquaTreeDetails, AquaTreeDetailsData, AquaTreeDetailsViewData, RevisionDetailsSummaryData, VerificationHashAndResult } from "../models/AquaTreeDetails"
+import { AquaTreeDetailsData, RevisionDetailsSummaryData } from "../models/AquaTreeDetails"
 
 import { ItemDetail } from "./ItemDetails";
 import appStore from "../store"

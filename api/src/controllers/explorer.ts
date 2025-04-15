@@ -15,6 +15,8 @@ import { fileURLToPath } from 'url';
 import { AquaForms, FileIndex, Signature, Witness, WitnessEvent } from '@prisma/client';
 import { getHost, getPort } from '../utils/api_utils';
 import { AquaJsonInZip, DeleteRevision, SaveAquaTree } from '../models/request_models';
+import { fetchCompleteRevisionChain } from '@/utils/quick_utils';
+import { transferRevisionChain, mergeRevisionChain } from '@/utils/quick_revision_utils';
 // import getStream from 'get-stream';
 // Promisify pipeline
 const pump = util.promisify(pipeline);
@@ -855,7 +857,6 @@ export default async function explorerController(fastify: FastifyInstance) {
 
     });
 
-
     fastify.post('/explorer_delete_file', async (request, reply) => {
         // Read `nonce` from headers
         const nonce = request.headers['nonce']; // Headers are case-insensitive
@@ -1259,5 +1260,147 @@ export default async function explorerController(fastify: FastifyInstance) {
         }
     });
 
-} 
+    fastify.post('/transfer_chain', async (request, reply) => {
+
+        try {
+            const { latestRevisionHash, userAddress } = request.body as { latestRevisionHash: string, userAddress: string };
+
+            // Read `nonce` from headers
+            const nonce = request.headers['nonce']; // Headers are case-insensitive
+
+            // Check if `nonce` is missing or empty
+            if (!nonce || typeof nonce !== 'string' || nonce.trim() === '') {
+                return reply.code(401).send({ error: 'Unauthorized: Missing or empty nonce header' });
+            }
+
+            const session = await prisma.siweSession.findUnique({
+                where: { nonce }
+            });
+
+            if (!session) {
+                return reply.code(403).send({ success: false, message: "Nounce  is invalid" });
+            }
+
+            const host = request.headers.host || 'localhost:3000'; // Provide a default host
+            const protocol = request.protocol || 'http';
+            const url = `${protocol}://${host}`;
+
+            // Fetch the entire chain from the source user
+            const entireChain = await fetchCompleteRevisionChain(latestRevisionHash, userAddress, url);
+            
+            // Check if the user exists (create if not)
+            const targetUser = await prisma.users.findUnique({
+                where: { address: session.address }
+            });
+            
+            if (!targetUser) {
+                await prisma.users.create({
+                    data: { address: session.address }
+                });
+            }
+            
+            // Transfer the chain to the target user (session.address)
+            const transferResult = await transferRevisionChain(
+                entireChain,
+                session.address,
+                userAddress
+            );
+            
+            if (!transferResult.success) {
+                return reply.code(500).send({
+                    success: false,
+                    message: transferResult.message
+                });
+            }
+            
+            return reply.code(200).send({
+                success: true,
+                message: `Chain transferred successfully: ${transferResult.transferredRevisions} revisions and ${transferResult.linkedChainsTransferred} linked chains`,
+                latestHashes: transferResult.latestHashes
+            });
+        } catch (error: any) {
+            console.error("Error in transfer_chain operation:", error);
+            return reply.code(500).send({
+                success: false,
+                message: `Error transferring chain: ${error.message}`,
+                details: error
+            });
+        }
+    })
+
+    fastify.post('/merge_chain', async (request, reply) => {
+        try {
+            const { latestRevisionHash, userAddress, mergeStrategy } = request.body as { 
+                latestRevisionHash: string, 
+                userAddress: string,
+                mergeStrategy?: "replace" | "fork"  // Optional merge strategy
+            };
+
+            // Read `nonce` from headers
+            const nonce = request.headers['nonce']; // Headers are case-insensitive
+
+            // Check if `nonce` is missing or empty
+            if (!nonce || typeof nonce !== 'string' || nonce.trim() === '') {
+                return reply.code(401).send({ error: 'Unauthorized: Missing or empty nonce header' });
+            }
+
+            const session = await prisma.siweSession.findUnique({
+                where: { nonce }
+            });
+
+            if (!session) {
+                return reply.code(403).send({ success: false, message: "Nonce is invalid" });
+            }
+
+            const host = request.headers.host || 'localhost:3000'; // Provide a default host
+            const protocol = request.protocol || 'http';
+            const url = `${protocol}://${host}`;
+
+            // Fetch the entire chain from the source user
+            const entireChain = await fetchCompleteRevisionChain(latestRevisionHash, userAddress, url);
+            
+            // Check if the user exists (create if not)
+            const targetUser = await prisma.users.findUnique({
+                where: { address: session.address }
+            });
+            
+            if (!targetUser) {
+                await prisma.users.create({
+                    data: { address: session.address }
+                });
+            }
+            
+            // Merge the chain to the target user (session.address)
+            const mergeResult = await mergeRevisionChain(
+                entireChain,
+                session.address,
+                userAddress,
+                mergeStrategy || "fork" // Use the provided strategy or default to "fork"
+            );
+            
+            if (!mergeResult.success) {
+                return reply.code(500).send({
+                    success: false,
+                    message: mergeResult.message
+                });
+            }
+            
+            return reply.code(200).send({
+                success: true,
+                message: `Chain merged successfully using "${mergeResult.strategy}" strategy: ${mergeResult.transferredRevisions} revisions and ${mergeResult.linkedChainsTransferred} linked chains`,
+                latestHashes: mergeResult.latestHashes,
+                mergePoint: mergeResult.mergePoint,
+                strategy: mergeResult.strategy
+            });
+        } catch (error: any) {
+            console.error("Error in merge_chain operation:", error);
+            return reply.code(500).send({
+                success: false,
+                message: `Error merging chain: ${error.message}`,
+                details: error
+            });
+        }
+    })
+
+}
 

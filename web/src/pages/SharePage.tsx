@@ -15,6 +15,7 @@ import { CompleteChainView } from '../components/CustomDrawer'
 const SharePage = () => {
     const { backend_url, metamaskAddress, session } = useStore(appStore)
     const [fileInfo, setFileInfo] = useState<ApiFileInfo | null>(null)
+    const [contractData, setContractData] = useState<any | null>(null)
     const [loading, setLoading] = useState(false)
     const [hasError, setHasError] = useState<string | null>(null);
     const [drawerStatus, setDrawerStatus] = useState<IDrawerStatus | null>(null)
@@ -40,11 +41,14 @@ const SharePage = () => {
                 //  console.log(response)
 
                 if (response.status === 200) {
-                    setFileInfo(response.data[0])
+                    // console.log("Response: ", response.data)
+                    setFileInfo(response.data.data.displayData[0])
+                    setContractData(response.data.data.contractData)
                 }
                 setLoading(false)
             }
             catch (error: any) {
+                console.log("Error: ", error)
                 if (error.response.status == 401) {
                 } else if (error.response.status == 404) {
                     setHasError(`File could not be found (probably it was deleted)`);
@@ -120,7 +124,7 @@ const SharePage = () => {
                                             <Box />
                                         ) : (
                                             drawerStatus ?
-                                                <ImportAquaChainFromChain fileInfo={fileInfo} isVerificationSuccessful={drawerStatus ? drawerStatus?.isVerificationSuccessful : false} />
+                                                <ImportAquaChainFromChain fileInfo={fileInfo} contractData={contractData} isVerificationSuccessful={drawerStatus ? drawerStatus?.isVerificationSuccessful : false} />
                                                 : <Box>
                                                     <Alert status="info">Waiting for Aqua tree verification to complete</Alert>
                                                 </Box>

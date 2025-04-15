@@ -677,11 +677,14 @@ export function fetchLinkedFileName(aquaTree: AquaTree, revision: Revision): str
         return "--error--."
     }
     let lonkedHash = revision.link_verification_hashes![0];
+    console.log(`fetchLinkedFileName ${lonkedHash}`)
     if (lonkedHash == undefined) {
+        console.log(`fetchLinkedFileName ${lonkedHash} not found in link_verification_hashes`)
         return "--error--.."
     }
     let name = aquaTree.file_index[lonkedHash];
     if (name == undefined) {
+        console.log(`fetchLinkedFileName ${lonkedHash} not found in file_index`)
         return "--error--..."
     }
     return name
