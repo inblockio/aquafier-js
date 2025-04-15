@@ -1,6 +1,6 @@
 import { LuDelete, LuDownload, LuGlasses, LuLink2, LuShare2, LuSignature, LuX } from "react-icons/lu"
 import { Button } from "./chakra-ui/button"
-import { areArraysEqual, dummyCredential, ensureDomainUrlHasSSL,  extractFileHash, fetchFiles, getFileName, getGenesisHash } from "../utils/functions"
+import { areArraysEqual, dummyCredential, ensureDomainUrlHasSSL, extractFileHash, fetchFiles, getFileName, getGenesisHash } from "../utils/functions"
 import { useStore } from "zustand"
 import appStore from "../store"
 import axios from "axios"
@@ -685,6 +685,8 @@ export const ShareButton = ({ item, nonce }: IShareButton) => {
         }
     })
 
+   
+
     const handleShare = async () => {
 
         if (recipientType == "specific" && (walletAddress == "")) {
@@ -768,7 +770,7 @@ export const ShareButton = ({ item, nonce }: IShareButton) => {
                             <p>
                                 {`You are about to share ${fileName}. Once a file is shared, don't delete it otherwise it will be broken if one tries to import it.`}
                             </p>
-
+                           
 
                             {/* Recipient Toggle */}
                             <Box width="100%">
@@ -817,6 +819,7 @@ export const ShareButton = ({ item, nonce }: IShareButton) => {
                                 </HStack>
                             </Box>
 
+                           
 
                             {
                                 sharing ?

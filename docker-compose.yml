@@ -36,6 +36,7 @@ services:
       DATABASE_URL: postgresql://${DB_USER:-aquafier}:${DB_PASSWORD:-changeme}@postgres:5432/aquafier
       BACKEND_URL: ${BACKEND_URL:-localhost:3000}
       FRONTEND_URL: ${FRONTEND_URL:-localhost:3600}
+      VITE_INFURA_PROJECT_ID: ${VITE_INFURA_PROJECT_ID}
       VIRTUAL_HOST_MULTIPORTS: |-
         ${FRONTEND_URL}:
           "/":

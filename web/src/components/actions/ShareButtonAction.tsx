@@ -1,7 +1,7 @@
-import { Button, VStack, Box, HStack, Input, Text, IconButton, Stack, Heading, Collapsible } from "@chakra-ui/react"
+import { Button, VStack, Box, HStack, Input, Text, IconButton, Stack, Heading, Collapsible, List } from "@chakra-ui/react"
 import axios from "axios"
 import { useState, useEffect } from "react"
-import { LuLoader, LuShare2, LuTrash2 } from "react-icons/lu"
+import {  LuImport, LuLoader, LuShare2, LuTrash2 } from "react-icons/lu"
 import { generateNonce } from "siwe"
 import { useStore } from "zustand"
 import { ApiFileInfo } from "../../models/FileInfo"
@@ -14,6 +14,7 @@ import { DialogContent, DialogHeader, DialogRoot, DialogTitle, DialogBody, Dialo
 import { RadioCard } from "@chakra-ui/react"
 import { Switch } from "../chakra-ui/switch"
 import { ethers } from "ethers"
+import { Alert } from "../chakra-ui/alert"
 
 interface ISharingOptions {
     value: string;
@@ -311,6 +312,41 @@ const ShareButtonAction = ({ item, nonce }: IShareButtonAction) => {
         }
     }
 
+    const checkIfFileContainsLinkAndShowWarning = () => {
+        let linkHahses: string[] = [];
+        let revisionHashes = Object.keys(item.aquaTree!.revisions!!)
+        for (let rev of revisionHashes) {
+            const revision = item.aquaTree?.revisions[rev]
+            if (revision?.revision_type == "link") {
+                let data = revision.link_verification_hashes![0]
+                linkHahses.push(data)
+            }
+        }
+
+        if (linkHahses.length != 0) {
+
+            return <Alert status={'warning'} title="Import Aqua Chain" icon={<LuImport />}>
+                <Stack gap={"100"}>
+                    <Text>
+                        The following files are linked and will also be shared.
+                    </Text>
+                    <List.Root justifySelf={'start'}>
+                        {linkHahses.map((itemLoop, index) => {
+                            return <List.Item> <List.Indicator>
+                                {index + 1}.
+                            </List.Indicator>
+                                {item.aquaTree!.file_index[itemLoop]}</List.Item>
+                        })}
+                    </List.Root>
+                </Stack>
+            </Alert>
+
+
+        } else {
+            return <Text>hi</Text>
+        }
+    }
+
     useEffect(() => {
         loadAllContracts()
 
@@ -341,6 +377,8 @@ const ShareButtonAction = ({ item, nonce }: IShareButtonAction) => {
                             <Text>
                                 {`You are about to share ${fileName}. Once a file is shared, don't delete it otherwise it will be broken if one tries to import it.`}
                             </Text>
+
+                            {checkIfFileContainsLinkAndShowWarning()}
 
                             <CreateContractForm mutate={loadAllContracts} updating={false} genesis_hash={getGenesisRevision() ?? ""} latest_hash={getLatestRevision() ?? ""} />
 

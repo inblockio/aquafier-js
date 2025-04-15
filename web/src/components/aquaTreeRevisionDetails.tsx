@@ -148,9 +148,9 @@ export const RevisionDisplay = ({ fileInfo, revision, revisionHash, isVerificati
                     placement: "bottom-end"
                 })
                 // Reload files for the current user
-                if(index === 0){
+                if (index === 0) {
                     window.location.reload()
-                }else{
+                } else {
                     const url2 = `${backend_url}/explorer_files`;
                     const files = await fetchFiles(`${session?.address}`, url2, `${session?.nonce}`);
                     setFiles(files)
@@ -182,7 +182,7 @@ export const RevisionDisplay = ({ fileInfo, revision, revisionHash, isVerificati
     const displayDeleteButton = (): JSX.Element => {
         if (isDeletable) {
             return (
-                <IconButton size={'xs'}  borderRadius={"full"} onClick={handleDelete} disabled={isDeleting} colorPalette={"red"}>
+                <IconButton size={'xs'} borderRadius={"full"} onClick={handleDelete} disabled={isDeleting} colorPalette={"red"}>
                     <LuTrash />
                 </IconButton>
             )

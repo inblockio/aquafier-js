@@ -87,12 +87,17 @@ export default async function userController(fastify: FastifyInstance) {
             ensName = await fetchEnsName(address, infuraProjectId)
         }
         if (ensName) {
-            await prisma.users.update({
+            await prisma.users.upsert({
                 where: {
                     address: address,
                 },
-                data: {
-                    ens_name: ensName
+                update:{
+
+                },
+                create: {
+                    ens_name: ensName,
+                    address:address,
+                    email:''
                 }
             });
 
