@@ -14,7 +14,7 @@
     "@chakra-ui/modal": "^2.3.1",
     "@chakra-ui/react": "^3.0.0",
     "@emotion/react": "^11.13.3",
-    "aqua-js-sdk": "file:../../aqua-js-sdk/aqua-js-sdk-3.2.1-9.tgz",
+    "aqua-js-sdk": "file:../../aqua-js-sdk/aqua-js-sdk-3.2.1-10.tgz",
     "axios": "^1.7.7",
     "docx-preview": "^0.3.5",
     "ethers": "^6.13.4",

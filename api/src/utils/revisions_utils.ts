@@ -643,55 +643,59 @@ export async function createAquaTreeFromRevisions(latestRevisionHash: string, ur
                     }
                 })
                 if (revisionData == null) {
-                    throw Error(`Revision data not found for hash ${linkData.link_verification_hashes[0]}`)
-                }
-                if (revisionData.revision_type != "file") {
-                    let linkedAquaTree = await createAquaTreeFromRevisions(linkData.link_verification_hashes[0], url)
-                    console.log("Linked Aqua Tree: ", JSON.stringify(linkedAquaTree, null, 4))
-                    console.log("Linked Aqua Tree: ", linkedAquaTree)
-                    fileObject.push(...linkedAquaTree[1])
-                    fileObject.push({
-                        fileContent: linkedAquaTree[0],
-                        fileName: `${Object.values(linkedAquaTree[0].file_index)[0]}.aqua.json`,
-                        path: "",
-                        fileSize: estimateStringFileSize(JSON.stringify(linkedAquaTree[0], null, 4))
-                    })
-                    // throw Error("Revision data not found for hash ${linkData.link_verification_hashes[0]}")
+                    console.log(`💣💣💣💣 Revision data not found for hash ${linkData.link_verification_hashes[0]}`)
                 } else {
-
-                    // throw Error("Revision data not found for hash ..............." + revisionData.revision_type)
-                    let hashSearchText = linkData.link_verification_hashes[0]
-                    //  console.log(`link ....search for ${hashSearchText} --> `)
-                    let filesData = await prisma.fileIndex.findFirst({
-                        where: {
-                            id: {
-                                contains: hashSearchText,
-                                mode: 'insensitive' // Case-insensitive matching
-                            }
-                        }
-                    })
-
-                    if (filesData == null) {
-                        console.log(` 💣💣💣💣  File index with hash ${hashSearchText} not found `)
-                    } else {
-                        anAquaTree.file_index[hashSearchText] = filesData?.uri ?? "--error--."
-
-
-                        let [aquaTreeLinked, fileObjectLinked] = await createAquaTreeFromRevisions(filesData.id, url);
-
-                        let name = Object.values(aquaTreeLinked.file_index)[0] ?? "--error--"
+                    if (revisionData.revision_type != "file") {
+                        let linkedAquaTree = await createAquaTreeFromRevisions(linkData.link_verification_hashes[0], url)
+                        console.log("Linked Aqua Tree: ", JSON.stringify(linkedAquaTree, null, 4))
+                        console.log("Linked Aqua Tree: ", linkedAquaTree)
+                        fileObject.push(...linkedAquaTree[1])
+                        let genesisHash = getGenesisHash(linkedAquaTree[0]) ?? ""
                         fileObject.push({
-                            fileContent: aquaTreeLinked,
-                            fileName: `${name}.aqua.json`,
+                            fileContent: linkedAquaTree[0],
+                            fileName: `${linkedAquaTree[0].file_index[genesisHash]}.aqua.json`,
                             path: "",
-                            fileSize: estimateStringFileSize(JSON.stringify(aquaTreeLinked, null, 4))
+                            fileSize: estimateStringFileSize(JSON.stringify(linkedAquaTree[0], null, 4))
+                        })
+                        // throw Error("Revision data not found for hash ${linkData.link_verification_hashes[0]}")
+                    } else {
+
+                        // throw Error("Revision data not found for hash ..............." + revisionData.revision_type)
+                        let hashSearchText = linkData.link_verification_hashes[0]
+                        //  console.log(`link ....search for ${hashSearchText} --> `)
+                        let filesData = await prisma.fileIndex.findFirst({
+                            where: {
+                                id: {
+                                    contains: hashSearchText,
+                                    mode: 'insensitive' // Case-insensitive matching
+                                }
+                            }
                         })
 
+                        if (filesData == null) {
+                            console.log(` 💣💣💣💣  File index with hash ${hashSearchText} not found `)
+                        } else {
+                            anAquaTree.file_index[hashSearchText] = filesData?.uri ?? "--error--."
 
-                        fileObject.push(...fileObjectLinked)
+
+                            let [aquaTreeLinked, fileObjectLinked] = await createAquaTreeFromRevisions(filesData.id, url);
+
+                            // let name = Object.values(aquaTreeLinked.file_index)[0] ?? "--error--"
+                            let genesisHash = getGenesisHash(aquaTreeLinked) ?? ""
+                            let name = aquaTreeLinked.file_index[genesisHash]
+                            fileObject.push({
+                                fileContent: aquaTreeLinked,
+                                fileName: `${name}.aqua.json`,
+                                path: "",
+                                fileSize: estimateStringFileSize(JSON.stringify(aquaTreeLinked, null, 4))
+                            })
+
+
+                            fileObject.push(...fileObjectLinked)
+                        }
                     }
-                }
 
+                }
             } else {
                 console.log(`💣💣💣💣 Revision of type ${revisionItem.revision_type} is unknown`)
             }
@@ -727,6 +731,9 @@ export async function createAquaTreeFromRevisions(latestRevisionHash: string, ur
 
     return [anAquaTree, fileObject]
 }
+
+
+
 
 export async function findAquaTreeRevision(revisionHash: string): Promise<Array<Revision>> {
     let revisions: Array<Revision> = [];
