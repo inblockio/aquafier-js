@@ -1,4 +1,4 @@
-import Aquafier, { AquaTree, FileObject, Revision as AquaRevision, OrderRevisionInAquaTree , reorderAquaTreeRevisionsProperties, reorderRevisionsProperties } from 'aqua-js-sdk';
+import Aquafier, { AquaTree, FileObject, Revision as AquaRevision, OrderRevisionInAquaTree, reorderAquaTreeRevisionsProperties, reorderRevisionsProperties } from 'aqua-js-sdk';
 import { prisma } from '../database/db';
 // For specific model types
 import { Latest, Signature, Revision, Witness, AquaForms, WitnessEvent, FileIndex, Link } from '@prisma/client';
@@ -24,7 +24,7 @@ export async function fetchAquatreeFoUser(url: string, latest: Array<{
     for (let revisionLatestItem of latest) {
         // Retrieve the tree starting from the latest hash
         let [anAquaTree, fileObject] = await createAquaTreeFromRevisions(revisionLatestItem.hash, url);
-        
+
         // Ensure the tree is properly ordered
         let orderedRevisionProperties = reorderAquaTreeRevisionsProperties(anAquaTree);
         let sortedAquaTree = OrderRevisionInAquaTree(orderedRevisionProperties);
@@ -43,15 +43,15 @@ export async function saveAquaTree(aquaTree: AquaTree, userAddress: string,) {
     // Reorder revisions to ensure proper order
     let orderedAquaTree = reorderAquaTreeRevisionsProperties(aquaTree);
     let sortedAquaTree = OrderRevisionInAquaTree(orderedAquaTree);
-    
+
     // Get all revision hashes in the chain
     let allHash = Object.keys(sortedAquaTree.revisions);
-    
+
     // The last hash in the sorted array is the latest
     if (allHash.length === 0) {
         throw Error("No revisions found in the aqua tree");
     }
-    
+
     let latestHash = allHash[allHash.length - 1];
     let lastPubKeyHash = `${userAddress}_${latestHash}`;
 
@@ -78,7 +78,7 @@ export async function saveAquaTree(aquaTree: AquaTree, userAddress: string,) {
         if (revisionData.previous_verification_hash.length > 0) {
             pubKeyPrevious = `${userAddress}_${revisionData.previous_verification_hash}`
         }
-        
+
         // Insert new revision into the database
         await prisma.revision.upsert({
             where: {
@@ -285,19 +285,19 @@ export async function saveAquaTree(aquaTree: AquaTree, userAddress: string,) {
                     reference_count: 0
                 }
             });
-            
+
             // For link revisions, recursively process linked chains
             if (revisionData.link_verification_hashes && revisionData.link_verification_hashes.length > 0) {
                 for (const linkedHash of revisionData.link_verification_hashes) {
                     const linkedRevision = await prisma.revision.findFirst({
-                        where: { 
+                        where: {
                             pubkey_hash: {
                                 contains: linkedHash,
                                 mode: 'insensitive'
                             }
                         }
                     });
-                    
+
                     if (linkedRevision) {
                         // Instead of creating new chains for linked revisions, 
                         // we just process them independently
@@ -347,15 +347,15 @@ export async function saveAquaTree(aquaTree: AquaTree, userAddress: string,) {
 export async function fetchAquaTreeWithForwardRevisions(latestRevisionHash: string, url: string): Promise<[AquaTree, FileObject[]]> {
     // Fetch the revision chain starting from the latest hash
     const [anAquaTree, fileObject] = await createAquaTreeFromRevisions(latestRevisionHash, url);
-    
+
     // Reorder the revisions to ensure proper sequence
     let orderRevisionPrpoerties = reorderAquaTreeRevisionsProperties(anAquaTree);
     let sortedAquaTree = OrderRevisionInAquaTree(orderRevisionPrpoerties);
-    
+
     // Now check if there are any forward revisions (newer revisions that point to our current latest)
     let revisionData = [];
     let queryHash = latestRevisionHash;
-    
+
     while (true) {
         // Fetch revision that points to our current latest as its previous
         let forwardRevision = await prisma.revision.findFirst({
@@ -377,14 +377,14 @@ export async function fetchAquaTreeWithForwardRevisions(latestRevisionHash: stri
         // The last item in revisionData is the newest revision
         const newLatestHash = revisionData[revisionData.length - 1].pubkey_hash;
         console.log(`Found newer revisions. New latest hash: ${newLatestHash}`);
-        
+
         // Reconstruct the tree from the new latest hash
         const [updatedAquaTree, updatedFileObject] = await createAquaTreeFromRevisions(newLatestHash, url);
-        
+
         // Reorder the updated tree
         let updatedOrderedTree = reorderAquaTreeRevisionsProperties(updatedAquaTree);
         let updatedSortedTree = OrderRevisionInAquaTree(updatedOrderedTree);
-        
+
         return [updatedSortedTree, updatedFileObject];
     }
 
@@ -429,13 +429,16 @@ export async function createAquaTreeFromRevisions(latestRevisionHash: string, ur
     // fetch latest revision 
     let latestRevionData = await prisma.revision.findFirst({
         where: {
-            pubkey_hash: latestRevisionHash, //`${session.address}_${}`
+            pubkey_hash: {
+                contains: latestRevisionHash,
+                mode: 'insensitive' // Case-insensitive matching
+            }, //`${session.address}_${}`
         }
     });
 
     if (latestRevionData == null) {
         // return reply.code(500).send({ success: false, message: `` });
-        throw Error(`revision with hash ${latestRevionData} not found in system`);
+        throw Error(`revision with hash ${latestRevisionHash} not found in system`);
     }
     revisionData.push(latestRevionData);
 
@@ -572,8 +575,8 @@ export async function createAquaTreeFromRevisions(latestRevisionHash: string, ur
             if (fileResult == null) {
                 // throw Error("Revision file data  not found")
                 console.error(`💣💣💣💣 hash not found in file hash => ${hashOnly}`)
-            }else
-            revisionWithData["file_nonce"] = revisionItem.nonce ?? "--error--"
+            } else
+                revisionWithData["file_nonce"] = revisionItem.nonce ?? "--error--"
             revisionWithData["file_hash"] = fileResult?.file_hash ?? "--error--"
         } else {
             let revisionInfoData = await FetchRevisionInfo(revisionItem.pubkey_hash, revisionItem)
@@ -627,35 +630,66 @@ export async function createAquaTreeFromRevisions(latestRevisionHash: string, ur
                 revisionWithData.link_file_hashes = linkData.link_file_hashes
 
 
-                let hashSearchText = linkData.link_verification_hashes[0]
-                //  console.log(`link ....search for ${hashSearchText} --> `)
-                let filesData = await prisma.fileIndex.findFirst({
+
+                // let linkedAquaTree = await createAquaTreeFromRevisions(linkData.link_verification_hashes[0], url)
+                // console.log("Linked Aqua Tree: ", JSON.stringify(linkedAquaTree, null, 4))
+                // Check the revision type from revisions
+                let revisionData = await prisma.revision.findFirst({
                     where: {
-                        id: {
-                            contains: hashSearchText,
+                        pubkey_hash: {
+                            contains: linkData.link_verification_hashes[0],
                             mode: 'insensitive' // Case-insensitive matching
                         }
                     }
                 })
-
-                if (filesData == null) {
-                    console.log(` 💣💣💣💣  File index with hash ${hashSearchText} not found `)
-                } else {
-                    anAquaTree.file_index[hashSearchText] = filesData?.uri ?? "--error--."
-
-
-                    let [aquaTreeLinked, fileObjectLinked] = await createAquaTreeFromRevisions(filesData.id, url);
-
-                    let name = Object.values(aquaTreeLinked.file_index)[0] ?? "--error--"
+                if (revisionData == null) {
+                    throw Error(`Revision data not found for hash ${linkData.link_verification_hashes[0]}`)
+                }
+                if (revisionData.revision_type != "file") {
+                    let linkedAquaTree = await createAquaTreeFromRevisions(linkData.link_verification_hashes[0], url)
+                    console.log("Linked Aqua Tree: ", JSON.stringify(linkedAquaTree, null, 4))
+                    console.log("Linked Aqua Tree: ", linkedAquaTree)
+                    fileObject.push(...linkedAquaTree[1])
                     fileObject.push({
-                        fileContent: aquaTreeLinked,
-                        fileName: `${name}.aqua.json`,
+                        fileContent: linkedAquaTree[0],
+                        fileName: `${Object.values(linkedAquaTree[0].file_index)[0]}.aqua.json`,
                         path: "",
-                        fileSize: estimateStringFileSize(JSON.stringify(aquaTreeLinked, null, 4))
+                        fileSize: estimateStringFileSize(JSON.stringify(linkedAquaTree[0], null, 4))
+                    })
+                    // throw Error("Revision data not found for hash ${linkData.link_verification_hashes[0]}")
+                } else {
+
+                    // throw Error("Revision data not found for hash ..............." + revisionData.revision_type)
+                    let hashSearchText = linkData.link_verification_hashes[0]
+                    //  console.log(`link ....search for ${hashSearchText} --> `)
+                    let filesData = await prisma.fileIndex.findFirst({
+                        where: {
+                            id: {
+                                contains: hashSearchText,
+                                mode: 'insensitive' // Case-insensitive matching
+                            }
+                        }
                     })
 
+                    if (filesData == null) {
+                        console.log(` 💣💣💣💣  File index with hash ${hashSearchText} not found `)
+                    } else {
+                        anAquaTree.file_index[hashSearchText] = filesData?.uri ?? "--error--."
 
-                    fileObject.push(...fileObjectLinked)
+
+                        let [aquaTreeLinked, fileObjectLinked] = await createAquaTreeFromRevisions(filesData.id, url);
+
+                        let name = Object.values(aquaTreeLinked.file_index)[0] ?? "--error--"
+                        fileObject.push({
+                            fileContent: aquaTreeLinked,
+                            fileName: `${name}.aqua.json`,
+                            path: "",
+                            fileSize: estimateStringFileSize(JSON.stringify(aquaTreeLinked, null, 4))
+                        })
+
+
+                        fileObject.push(...fileObjectLinked)
+                    }
                 }
 
             } else {
