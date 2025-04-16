@@ -10,7 +10,7 @@ export default async function filesController(fastify: FastifyInstance) {
     // get file using file hash
     fastify.get('/files/:fileHash', async (request, reply) => {
         const { fileHash } = request.params as { fileHash: string };
-       //  console.log(`Received fileHash: ${fileHash}`);
+        //  console.log(`Received fileHash: ${fileHash}`);
         // file content from db
         // return as a blob
         if (!fileHash || fileHash.trim() === '') {
@@ -79,8 +79,19 @@ export default async function filesController(fastify: FastifyInstance) {
 
             // Set appropriate headers
             reply.header('Content-Type', 'application/octet-stream');
-            reply.header('Content-Disposition', `attachment; filename="${fileIndex.uri}"`);
+            // reply.header('Content-Disposition', `attachment; filename="${fileIndex.uri}"`);
 
+            // Encode the filename for Content-Disposition header
+            const encodedFilename = encodeURIComponent(fileIndex.uri ?? "")
+                .replace(/['()]/g, escape) // handle special cases
+                .replace(/\*/g, '%2A');
+
+            // Set the Content-Disposition header with both encoded and UTF-8 filenames
+            reply.header(
+                'Content-Disposition',
+                `attachment; filename="${encodedFilename}"; filename*=UTF-8''${encodedFilename}`
+            );
+            
             // Send the file content as a response
             return reply.send(fileContent);
         } catch (error) {
@@ -96,7 +107,7 @@ export default async function filesController(fastify: FastifyInstance) {
             const data: any = request.body
 
 
-           //  console.log(`--- data ${JSON.stringify(data, null, 4)}`)
+            //  console.log(`--- data ${JSON.stringify(data, null, 4)}`)
             // Type assertion and validation
             const fileObject = data.fileObject as FileObject;
 
@@ -161,8 +172,8 @@ export default async function filesController(fastify: FastifyInstance) {
 
     fastify.post('/file/upload', async (request, reply) => {
 
-       //  console.log("Request body", request.body);
-       //  console.log("Request files", request.files);
+        //  console.log("Request body", request.body);
+        //  console.log("Request files", request.files);
 
         let aquafier = new Aquafier();
 
@@ -192,7 +203,7 @@ export default async function filesController(fastify: FastifyInstance) {
             let enableContent = false;
             let enableScalar = false;
 
-           //  console.log("Data fields", data.fields);
+            //  console.log("Data fields", data.fields);
             if (data.fields.isForm) {
                 // Handle form fields correctly based on the actual API
                 const isFormField: any = data.fields.isForm;
@@ -216,7 +227,7 @@ export default async function filesController(fastify: FastifyInstance) {
                 enableScalar = enableScalarField.value === 'true';
             }
 
-           //  console.log("All data: ", data)
+            //  console.log("All data: ", data)
 
             // Convert file stream to base64 string
             const fileBuffer = await streamToBuffer(data.file);
@@ -225,8 +236,8 @@ export default async function filesController(fastify: FastifyInstance) {
 
             let fileContent = fileBuffer.toString('utf-8');
 
-           //  console.log(`utf8Content ${fileContent}`)
-           //  console.log(`data.filename ${data.filename}`)
+            //  console.log(`utf8Content ${fileContent}`)
+            //  console.log(`data.filename ${data.filename}`)
             let fileObject: FileObject = {
                 fileContent: fileContent,
                 fileName: data.filename,
