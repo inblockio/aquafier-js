@@ -813,11 +813,6 @@
   resolved "https://registry.npmjs.org/@napi-rs/canvas-linux-x64-gnu/-/canvas-linux-x64-gnu-0.1.68.tgz"
   integrity sha512-Pa/I36VE3j57I3Obhrr+J48KGFfkZk2cJN/2NmW/vCgmoF7kCP6aTVq5n+cGdGWLd/cN9CJ9JvNwEoMRDghu0g==
 
-"@napi-rs/canvas-linux-x64-musl@0.1.68":
-  version "0.1.68"
-  resolved "https://registry.npmjs.org/@napi-rs/canvas-linux-x64-musl/-/canvas-linux-x64-musl-0.1.68.tgz"
-  integrity sha512-9c6rkc5195wNxuUHJdf4/mmnq433OQey9TNvQ9LspJazvHbfSkTij8wtKjASVQsJyPDva4fkWOeV/OQ7cLw0GQ==
-
 "@napi-rs/canvas@^0.1.67":
   version "0.1.68"
   resolved "https://registry.npmjs.org/@napi-rs/canvas/-/canvas-0.1.68.tgz"
@@ -963,11 +958,6 @@
   version "4.25.0"
   resolved "https://registry.npmjs.org/@rollup/rollup-linux-x64-gnu/-/rollup-linux-x64-gnu-4.25.0.tgz"
   integrity sha512-ThcnU0EcMDn+J4B9LD++OgBYxZusuA7iemIIiz5yzEcFg04VZFzdFjuwPdlURmYPZw+fgVrFzj4CA64jSTG4Ig==
-
-"@rollup/rollup-linux-x64-musl@4.25.0":
-  version "4.25.0"
-  resolved "https://registry.npmjs.org/@rollup/rollup-linux-x64-musl/-/rollup-linux-x64-musl-4.25.0.tgz"
-  integrity sha512-zx71aY2oQxGxAT1JShfhNG79PnjYhMC6voAjzpu/xmMjDnKNf6Nl/xv7YaB/9SIa9jDYf8RBPWEnjcdlhlv1rQ==
 
 "@scure/base@^1.1.3":
   version "1.2.4"
@@ -2123,7 +2113,7 @@ apg-js@^4.3.0:
   resolved "https://registry.npmjs.org/apg-js/-/apg-js-4.4.0.tgz"
   integrity sha512-fefmXFknJmtgtNEXfPwZKYkMFX4Fyeyz+fNF6JWp87biGOPslJbCBVU158zvKRZfHBKnJDy8CMM40oLFGkXT8Q==
 
-"aqua-js-sdk@file:../../aqua-js-sdk/aqua-js-sdk-3.2.1-10.tgz":
+aqua-js-sdk@^3.2.1-7:
   version "3.2.1-10"
   resolved "file:../../aqua-js-sdk/aqua-js-sdk-3.2.1-10.tgz"
   integrity sha512-lKYgH1Ln935/mt6EGswxki2VpdGMoyIjafrYFC2/bU0R6V6JNa9jrZ1RwAqYH34wIYIYz4hL2fIbW7UcJVKXAw==
