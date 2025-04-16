@@ -1,11 +1,16 @@
+import { authenticate } from "@/middleware/auth_middleware";
 import { prisma } from "../database/db";
 import { fetchCompleteRevisionChain, diagnoseLinks } from "../utils/quick_utils";
 import { FastifyInstance, FastifyRequest, FastifyReply } from "fastify";
 
-export default async function testRoutes(fastify: FastifyInstance) {
-
+export default async function fetchChainController(fastify: FastifyInstance) {
     // Test route for fetchCompleteRevisionChain
-    fastify.get('/test/chain/:userAddress/:latestHash', async (request: FastifyRequest<{ Params: { userAddress: string; latestHash: string } }>, reply: FastifyReply) => {
+    fastify.get<{
+        Params: {
+            userAddress: string;
+            latestHash: string;
+        }
+    }>('/fetch-chain/:userAddress/:latestHash', { preHandler: authenticate }, async (request, reply) => {
         const { userAddress, latestHash } = request.params;
 
         if (!userAddress || !latestHash) {
@@ -21,20 +26,20 @@ export default async function testRoutes(fastify: FastifyInstance) {
             console.log(`Testing fetchCompleteRevisionChain with: userAddress=${userAddress}, latestHash=${latestHash}, url=${url}`);
 
             // Call the function
-            const completeTree = await fetchCompleteRevisionChain(latestHash, userAddress, url);
+            const completeTree = await fetchCompleteRevisionChain(latestHash, userAddress, url, new Set(), true, 0, true);
 
             // Check if the tree is empty (which might indicate the hash wasn't found initially)
             if (Object.keys(completeTree.revisions).length === 0 && Object.keys(completeTree.file_index).length === 0) {
-                 // You might want to check if the initial hash actually exists in the DB for a more specific message
-                 const initialRevisionExists = await prisma.revision.count({
-                     where: { pubkey_hash: `${userAddress}_${latestHash}` }
-                 });
-                 if (initialRevisionExists === 0) {
+                // You might want to check if the initial hash actually exists in the DB for a more specific message
+                const initialRevisionExists = await prisma.revision.count({
+                    where: { pubkey_hash: `${userAddress}_${latestHash}` }
+                });
+                if (initialRevisionExists === 0) {
                     return reply.code(404).send({ message: `Initial revision hash ${latestHash} not found for user ${userAddress}.`, tree: completeTree });
-                 } else {
+                } else {
                     // Hash exists, but chain building resulted in empty tree (e.g., maybe only links leading to processed hashes?)
-                     return reply.code(200).send({ message: "Chain processed, resulting tree is empty (check logs for potential warnings like circular links).", tree: completeTree });
-                 }
+                    return reply.code(200).send({ message: "Chain processed, resulting tree is empty (check logs for potential warnings like circular links).", tree: completeTree });
+                }
             }
 
             // Send the successful response
@@ -46,18 +51,4 @@ export default async function testRoutes(fastify: FastifyInstance) {
         }
     });
 
-    // Add diagnostic route for link table issues
-    fastify.get('/test/diagnose-links', async (request: FastifyRequest, reply: FastifyReply) => {
-        try {
-            console.log('Running link table diagnostic');
-            await diagnoseLinks();
-            return { message: 'Link table diagnostic completed - check server logs for results' };
-        } catch (error: any) {
-            console.error('Error in diagnose-links route:', error);
-            return reply.code(500).send({ 
-                error: 'Error running link diagnostics', 
-                details: error.message || String(error) 
-            });
-        }
-    });
 }

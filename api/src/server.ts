@@ -19,7 +19,7 @@ import verifyController from './controllers/verify.js';
 import { getFileUploadDirectory } from './utils/file_utils';
 import revisionsController from './controllers/revisions';
 import shareController from './controllers/share';
-import testRoutes from './test_routes/fetch-chain';
+import fetchChainController from './controllers/fetch-chain';
 
 
 function buildServer() {
@@ -90,7 +90,7 @@ function buildServer() {
     fastify.register(verifyController);
     fastify.register(revisionsController);
     fastify.register(shareController);
-    fastify.register(testRoutes);
+    fastify.register(fetchChainController);
 
     return fastify
 

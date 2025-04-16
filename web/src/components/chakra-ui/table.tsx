@@ -46,11 +46,9 @@ const FilesTable = () => {
         setDrawerStatus(_drawerStatus)
     }
 
-    console.log("Drawer status: ", drawerStatus)
+    console.log("Files: ", files)
     const rows = files?.map((item: ApiFileInfo, index: number) => {
-
-
-
+        // console.log("Item: ", item.aquaTree)
         // return <Text>{JSON.stringify(item, null, 4)}</Text>
         return <Table.Row
             key={index}
@@ -75,7 +73,7 @@ const FilesTable = () => {
 
             <Table.Cell minW={'140px'} maxW={'140px'} textWrap={'wrap'}>
                 {
-                    displayTime(Object.values(item.aquaTree!.revisions!)[0].local_timestamp)
+                    displayTime(Object.values(item.aquaTree?.revisions! ?? {})[0].local_timestamp)
                 }
             </Table.Cell>
             <Table.Cell minW={'100px'} maxW={'100px'} textWrap={'wrap'}>
@@ -102,7 +100,7 @@ const FilesTable = () => {
     })
 
     const smallScreenView = files?.map((item: ApiFileInfo) => (
-        <Box key={`sm_${Object.keys(item.aquaTree!.revisions!)[0]}`} bg={'gray.100'} _dark={{
+        <Box key={`sm_${Object.keys(item.aquaTree?.revisions! ?? {})[0]}`} bg={'gray.100'} _dark={{
             bg: 'blackAlpha.950'
         }} p={2} borderRadius={'10px'}>
             <VStack textAlign={'start'}>

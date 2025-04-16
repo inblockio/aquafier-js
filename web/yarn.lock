@@ -2123,6 +2123,30 @@ apg-js@^4.3.0:
   resolved "https://registry.npmjs.org/apg-js/-/apg-js-4.4.0.tgz"
   integrity sha512-fefmXFknJmtgtNEXfPwZKYkMFX4Fyeyz+fNF6JWp87biGOPslJbCBVU158zvKRZfHBKnJDy8CMM40oLFGkXT8Q==
 
+"aqua-js-sdk@file:../../aqua-js-sdk/aqua-js-sdk-3.2.1-9.tgz":
+  version "3.2.1-9"
+  resolved "file:../../aqua-js-sdk/aqua-js-sdk-3.2.1-9.tgz"
+  integrity sha512-XKAJ5GKg3+5oatc2aVVoDfvzOyM+rdUOxGIVGX/pqm64XN3Ps38T88KMrD3FuXKXl3/P5t/rXi9xsIz/GjpzuA==
+  dependencies:
+    asn1js "^3.0.5"
+    buffer "^6.0.3"
+    crypto-browserify "^3.12.1"
+    did-resolver "^4.1.0"
+    dids "^5.0.3"
+    ethers "^6.13.5"
+    http-status-codes "^2.2.0"
+    js-sha3 "^0.9.3"
+    key-did-provider-ed25519 "^4.0.2"
+    key-did-resolver "^4.0.0"
+    merkletreejs "^0.4.0"
+    nostr-tools "^2.10.4"
+    open "^10.1.0"
+    openid-client "^5.7.0"
+    pkijs "^3.2.4"
+    sha.js "^2.4.11"
+    sigstore "^3.0.0"
+    ws "^8.18.0"
+
 argparse@^2.0.1:
   version "2.0.1"
   resolved "https://registry.npmjs.org/argparse/-/argparse-2.0.1.tgz"

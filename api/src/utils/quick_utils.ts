@@ -1,6 +1,7 @@
 import { prisma } from '../database/db';
 import { AquaTree, FileObject, Revision as AquaRevision, OrderRevisionInAquaTree } from 'aqua-js-sdk';
 import { Revision, Link, Signature, WitnessEvent, AquaForms, FileIndex } from '@prisma/client';
+import * as fs from "fs"
 
 // Extend AquaTree interface to include linkedChains
 interface ExtendedAquaTree extends AquaTree {
@@ -123,7 +124,8 @@ function _estimateStringFileSize(str: string): number {
  * @param _processedHashes Internal set to prevent infinite loops in case of circular links.
  * @param _includeLinkedChains Whether to include full linked chains in the response (default: true).
  * @param _depth Current recursion depth for debugging (default: 0).
- * @returns A Promise resolving to the ExtendedAquaTree containing the complete revision chain.
+ * @param includeFileObjects Whether to include fileObjects in the response (default: false).
+ * @returns A Promise resolving to the ExtendedAquaTree containing the complete revision chain and optionally fileObjects.
  */
 export async function fetchCompleteRevisionChain(
     latestHash: string,
@@ -131,8 +133,9 @@ export async function fetchCompleteRevisionChain(
     url: string, // Keep url param for potential future file link generation
     _processedHashes: Set<string> = new Set(), // Add cycle detection
     _includeLinkedChains: boolean = true,
-    _depth: number = 0
-): Promise<ExtendedAquaTree> {
+    _depth: number = 0,
+    includeFileObjects: boolean = false
+): Promise<ExtendedAquaTree & { fileObjects?: FileObject[] }> {
     const fullLatestHash = `${userAddress}_${latestHash}`;
     const indent = "  ".repeat(_depth); // For prettier logging
 
@@ -147,12 +150,12 @@ export async function fetchCompleteRevisionChain(
     // Mark this hash as processed IMMEDIATELY to prevent recursive calls
     _processedHashes.add(fullLatestHash);
 
-    const anAquaTree: ExtendedAquaTree = {
+    const anAquaTree: ExtendedAquaTree & { fileObjects?: FileObject[] } = {
         revisions: {},
         file_index: {},
         linkedChains: _includeLinkedChains ? {} : undefined
     };
-    // let fileObjects: FileObject[] = []; // Keep track of associated files
+    let fileObjects: FileObject[] = []; // Keep track of associated files
 
     let allRevisionData: Revision[] = [];
     try {
@@ -330,6 +333,28 @@ export async function fetchCompleteRevisionChain(
                 if (!anAquaTree.file_index[hashOnly]) { // Add only if not already present (genesis might add it later)
                     anAquaTree.file_index[hashOnly] = fileIndexForFileRev.uri ?? "--error_uri--";
                 }
+                
+                // If we're including fileObjects, create and add a FileObject for this file revision
+                if (includeFileObjects) {
+                    // Create a FileObject based on the file revision information
+                    const fileItem = await prisma.file.findFirst({
+                        where: {
+                            file_hash: fileIndexForFileRev.file_hash,
+                        }
+                    });
+                    const stats = fs.statSync(fileItem!!.content!!);
+                    const fileSizeInBytes = stats.size;
+                    const fileObject: FileObject = {
+                        fileName: fileIndexForFileRev.uri ?? "--error_uri--",
+                        fileContent: fileIndexForFileRev.file_hash ?? "--error--", // Using file_hash as content reference
+                        path: "./",
+                        // fileSize: fileIndexForFileRev.reference_count ? Number(fileIndexForFileRev.reference_count) : 0 // Using reference_count as a fallback for size
+                        fileSize: fileSizeInBytes
+                    };
+                    
+                    // Add to our fileObjects array
+                    fileObjects.push(fileObject);
+                }
             } else {
                 console.warn(`${indent}[Depth:${_depth}] FileIndex not found for file revision: ${revisionItem.pubkey_hash}. File hash might be missing.`);
                 revisionWithData.file_hash = "--error_no_index--";
@@ -462,7 +487,8 @@ export async function fetchCompleteRevisionChain(
                                                 url,
                                                 linkedProcessedHashes,
                                                 true, // Include nested chains
-                                                _depth + 1
+                                                _depth + 1,
+                                                includeFileObjects // Pass down the includeFileObjects parameter
                                             );
 
                                             if (Object.keys(completeLinkedTree.revisions).length > 0) {
@@ -475,6 +501,11 @@ export async function fetchCompleteRevisionChain(
                                                 // Store with the compound key instead of just linkedHash
                                                 anAquaTree.linkedChains[compoundKey] = completeLinkedTree;
                                                 console.log(`${indent}[Depth:${_depth}] Using compound key: ${compoundKey} for linkedChains`);
+                                                
+                                                // Merge fileObjects from linked chains if they exist
+                                                if (includeFileObjects && completeLinkedTree.fileObjects && completeLinkedTree.fileObjects.length > 0) {
+                                                    fileObjects.push(...completeLinkedTree.fileObjects);
+                                                }
                                             } else {
                                                 console.warn(`${indent}[Depth:${_depth}] Linked tree for linkedChains is empty: ${linkedHash}`);
                                             }
@@ -569,6 +600,11 @@ export async function fetchCompleteRevisionChain(
             // console.log(`Revision ${hashOnly} already exists in tree, likely from a link. Skipping add.`);
         }
     } // end for loop over allRevisionData
+
+    // Add fileObjects to the result if requested
+    if (includeFileObjects) {
+        anAquaTree.fileObjects = fileObjects;
+    }
 
     // Return the populated AquaTree
     return anAquaTree;

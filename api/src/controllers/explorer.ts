@@ -552,6 +552,18 @@ export default async function explorerController(fastify: FastifyInstance) {
         const url = `${protocol}://${host}`;
 
         let displayData = await fetchAquatreeFoUser(url, latest)
+        // let displayData: any[] = []
+        // for (let item of latest) {
+        //     console.log(`Fetching complete revision chain for ${item.hash}`)
+        //     let displayDataItem = await fetchCompleteRevisionChain(item.hash.split("_")[1], session.address, url, new Set(), true, 0, true);
+        //     displayData.push({
+        //         aquaTree: {
+        //             revisions: displayDataItem.revisions,
+        //             file_index: displayDataItem.file_index
+        //         },
+        //         fileObject: displayDataItem.fileObjects
+        //     })
+        // }
 
 
         return reply.code(200).send({ data: displayData })
