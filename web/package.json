@@ -33,7 +33,7 @@
     "react-icons": "^5.4.0",
     "react-loading": "^2.0.3",
     "react-router-dom": "^7.0.2",
-    "siwe": "^2.3.2",
+    "siwe": "^3.0.0",
     "uuid": "^11.1.0",
     "zustand": "^5.0.1"
   },
