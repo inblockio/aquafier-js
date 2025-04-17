@@ -646,16 +646,17 @@ export async function createAquaTreeFromRevisions(latestRevisionHash: string, ur
                     console.log(`💣💣💣💣 Revision data not found for hash ${linkData.link_verification_hashes[0]}`)
                 } else {
                     if (revisionData.revision_type != "file") {
-                        let linkedAquaTree = await createAquaTreeFromRevisions(linkData.link_verification_hashes[0], url)
-                        console.log("Linked Aqua Tree: ", JSON.stringify(linkedAquaTree, null, 4))
-                        console.log("Linked Aqua Tree: ", linkedAquaTree)
-                        fileObject.push(...linkedAquaTree[1])
-                        let genesisHash = getGenesisHash(linkedAquaTree[0]) ?? ""
+                        // let linkedAquaTree = await createAquaTreeFromRevisions(linkData.link_verification_hashes[0], url)
+                        let [aquaTreeLinked, fileObjectLinked] = await createAquaTreeFromRevisions(linkData.link_verification_hashes[0], url)
+                        // console.log("Linked Aqua Tree: ", JSON.stringify(aquaTreeLinked, null, 4))
+                        // console.log("Linked Aqua Tree: ", linkedAquaTree)
+                        fileObject.push(...fileObjectLinked)
+                        let genesisHash = getGenesisHash(aquaTreeLinked) ?? ""
                         fileObject.push({
-                            fileContent: linkedAquaTree[0],
-                            fileName: `${linkedAquaTree[0].file_index[genesisHash]}.aqua.json`,
+                            fileContent: aquaTreeLinked,
+                            fileName: `${aquaTreeLinked.file_index[genesisHash]}.aqua.json`,
                             path: "",
-                            fileSize: estimateStringFileSize(JSON.stringify(linkedAquaTree[0], null, 4))
+                            fileSize: estimateStringFileSize(JSON.stringify(aquaTreeLinked, null, 4))
                         })
                         // throw Error("Revision data not found for hash ${linkData.link_verification_hashes[0]}")
                     } else {

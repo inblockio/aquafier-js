@@ -1,6 +1,6 @@
 import { LuDelete, LuDownload, LuGlasses, LuLink2, LuShare2, LuSignature, LuX } from "react-icons/lu"
 import { Button } from "./chakra-ui/button"
-import { areArraysEqual, dummyCredential, ensureDomainUrlHasSSL, extractFileHash, fetchFiles, getFileName, getGenesisHash, isAquaTree } from "../utils/functions"
+import { areArraysEqual, dummyCredential, ensureDomainUrlHasSSL, extractFileHash, fetchFiles, getAquaTreeFileObject, getFileName, getGenesisHash, isAquaTree } from "../utils/functions"
 import { useStore } from "zustand"
 import appStore from "../store"
 import axios from "axios"
@@ -454,7 +454,7 @@ export const DownloadAquaChain = ({ file }: { file: ApiFileInfo }) => {
     const { session } = useStore(appStore)
     const [downloading, setDownloading] = useState(false)
 
-  
+
     const downloadLinkAquaJson = async () => {
         const zip = new JSZip();
         let aquafier = new Aquafier();
@@ -470,15 +470,15 @@ export const DownloadAquaChain = ({ file }: { file: ApiFileInfo }) => {
             }
         }
         mainAquaFileName = file.aquaTree!.file_index[mainAquaHash];
-    
+
         zip.file(`${mainAquaFileName}.aqua.json`, JSON.stringify(file.aquaTree));
-    
+
         let nameWithHashes: Array<AquaNameWithHash> = []
         for (let fileObj of file.fileObject) {
             if (typeof fileObj.fileContent === 'string' && fileObj.fileContent.startsWith('http')) {
                 try {
                     let actualUrlToFetch = ensureDomainUrlHasSSL(fileObj.fileContent)
-    
+
                     // Fetch the file from the URL
                     const response = await fetch(actualUrlToFetch, {
                         method: 'GET',
@@ -487,17 +487,17 @@ export const DownloadAquaChain = ({ file }: { file: ApiFileInfo }) => {
                         }
                     });
                     const blob = await response.blob();
-    
+
                     let hashData = extractFileHash(fileObj.fileContent)
                     if (hashData == undefined) {
                         hashData = aquafier.getFileHash(blob.toString())
                     }
-    
+
                     nameWithHashes.push({
                         name: fileObj.fileName,
                         hash: hashData
                     })
-    
+
                     zip.file(fileObj.fileName, blob, { binary: true })
                 } catch (error) {
                     console.error(`Error downloading ${fileObj.fileName}:`, error);
@@ -520,14 +520,14 @@ export const DownloadAquaChain = ({ file }: { file: ApiFileInfo }) => {
                 }
             }
         }
-    
+
         //create aqua.json
         let aquaObject: AquaJsonInZip = {
             'genesis': mainAquaFileName,
             'name_with_hash': nameWithHashes
         };
         zip.file('aqua.json', JSON.stringify(aquaObject))
-    
+
         // Generate the zip file
         zip.generateAsync({ type: "blob" }).then((blob) => {
             // Create a download link
@@ -539,7 +539,7 @@ export const DownloadAquaChain = ({ file }: { file: ApiFileInfo }) => {
             document.body.removeChild(link);
         });
     }
-    
+
     const downloadSimpleAquaJson = async () => {
 
         // Convert the PageData object to a formatted JSON string
@@ -687,7 +687,7 @@ export const ShareButton = ({ item, nonce }: IShareButton) => {
         }
     })
 
-   
+
 
     const handleShare = async () => {
 
@@ -772,7 +772,7 @@ export const ShareButton = ({ item, nonce }: IShareButton) => {
                             <p>
                                 {`You are about to share ${fileName}. Once a file is shared, don't delete it otherwise it will be broken if one tries to import it.`}
                             </p>
-                           
+
 
                             {/* Recipient Toggle */}
                             <Box width="100%">
@@ -821,7 +821,7 @@ export const ShareButton = ({ item, nonce }: IShareButton) => {
                                 </HStack>
                             </Box>
 
-                           
+
 
                             {
                                 sharing ?
@@ -1041,23 +1041,31 @@ export const LinkButton = ({ item, nonce }: IShareButton) => {
                                         if (res) {
                                             return <div key={index}> </div>
                                         }
-                                        return <Checkbox
-                                            key={index}
-                                            aria-label="Select File"
-                                            checked={linkItem == null ? false :
-                                                Object.keys(linkItem?.aquaTree?.revisions!)[0] === Object.keys(itemLoop.aquaTree?.revisions!)[0]}
-                                            onCheckedChange={(changes) => {
-                                                if (changes.checked) {
-                                                    setLinkItem(itemLoop)
-                                                } else {
-                                                    setLinkItem(null)
-                                                }
 
-                                            }}
-                                            value={index.toString()}
-                                        >
-                                            {itemLoop.fileObject[0].fileName}
-                                        </Checkbox>
+                                        let fileObject = getAquaTreeFileObject(itemLoop)
+
+                                        if (fileObject) {
+
+                                            return <Checkbox
+                                                key={index}
+                                                aria-label="Select File"
+                                                checked={linkItem == null ? false :
+                                                    Object.keys(linkItem?.aquaTree?.revisions!)[0] === Object.keys(itemLoop.aquaTree?.revisions!)[0]}
+                                                onCheckedChange={(changes) => {
+                                                    if (changes.checked) {
+                                                        setLinkItem(itemLoop)
+                                                    } else {
+                                                        setLinkItem(null)
+                                                    }
+
+                                                }}
+                                                value={index.toString()}
+                                            >
+                                                {itemLoop.fileObject[0].fileName}
+                                            </Checkbox>
+                                        } else {
+                                            return <Text>Error</Text>
+                                        }
                                     })
                                 }
 
