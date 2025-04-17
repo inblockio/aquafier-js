@@ -15,8 +15,8 @@ import { fileURLToPath } from 'url';
 import { AquaForms, FileIndex, Signature, Witness, WitnessEvent } from '@prisma/client';
 import { getHost, getPort } from '../utils/api_utils';
 import { AquaJsonInZip, DeleteRevision, SaveAquaTree } from '../models/request_models';
-import { fetchCompleteRevisionChain } from '@/utils/quick_utils';
-import { transferRevisionChain, mergeRevisionChain } from '@/utils/quick_revision_utils';
+import { fetchCompleteRevisionChain } from '../utils/quick_utils';
+import { transferRevisionChain, mergeRevisionChain } from '../utils/quick_revision_utils';
 // import getStream from 'get-stream';
 // Promisify pipeline
 const pump = util.promisify(pipeline);
