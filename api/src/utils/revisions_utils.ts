@@ -678,6 +678,7 @@ export async function createAquaTreeFromRevisions(latestRevisionHash: string, ur
                             anAquaTree.file_index[hashSearchText] = filesData?.uri ?? "--error--."
 
 
+                            
                             let [aquaTreeLinked, fileObjectLinked] = await createAquaTreeFromRevisions(filesData.id, url);
 
                             // let name = Object.values(aquaTreeLinked.file_index)[0] ?? "--error--"
