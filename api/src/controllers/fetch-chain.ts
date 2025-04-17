@@ -1,4 +1,4 @@
-import { authenticate } from "@/middleware/auth_middleware";
+import { authenticate } from "../middleware/auth_middleware";
 import { prisma } from "../database/db";
 import { fetchCompleteRevisionChain, diagnoseLinks } from "../utils/quick_utils";
 import { FastifyInstance, FastifyRequest, FastifyReply } from "fastify";
