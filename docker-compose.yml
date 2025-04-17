@@ -24,7 +24,7 @@ services:
 #    build:
 #      context: .
 #      dockerfile: actionfiles/aquafier-ts/dockerfile/Dockerfile
-    image: ghcr.io/inblockio/aquafier-js:main
+    image: ghcr.io/inblockio/aquafier-js:dev
 #    only for dev
     ports:
      - 3000:3000
