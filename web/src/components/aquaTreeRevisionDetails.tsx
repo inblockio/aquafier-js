@@ -254,7 +254,8 @@ export const RevisionDisplay = ({ fileInfo, revision, revisionHash, isVerificati
                                                                 <Span>
                                                                     Revision  is &nbsp;
                                                                     {
-                                                                        revision.previous_verification_hash.length == 0 ? "Genesis Revision" : revision.revision_type == "link" ? <>{`linked to ${fetchLinkedFileName(fileInfo.aquaTree!!, revision)}`}</> : revision.revision_type
+                                                                        revision.previous_verification_hash.length == 0 ? "Genesis Revision" : revision.revision_type == "link" ? <>
+                                                                        {`linked to ${fetchLinkedFileName(fileInfo.aquaTree!!, revision)}`}</> : revision.revision_type
                                                                     }
                                                                 </Span>
                                                             </TimelineTitle>
@@ -288,7 +289,7 @@ export const RevisionDisplay = ({ fileInfo, revision, revisionHash, isVerificati
                                                                                 }
                                                                             } else {
                                                                                 toaster.create({
-                                                                                    title: "Link file not found , pssibly a deep link",
+                                                                                    title: "Link file not found , possibly a deep link ?",
                                                                                     type: 'info'
                                                                                 })
                                                                             }

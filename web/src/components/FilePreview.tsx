@@ -287,8 +287,9 @@ const FilePreview: React.FC<IFilePreview> = ({ fileInfo }) => {
         return () => {
             if (fileURL) URL.revokeObjectURL(fileURL);
         };
-    }, [fileInfo, session?.nonce]);
+    }, [JSON.stringify(fileInfo), session?.nonce]);
 
+    
     if (isLoading) return <p>Loading...</p>;
 
     // Render based on file type
