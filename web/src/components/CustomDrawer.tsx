@@ -159,6 +159,8 @@ export const CompleteChainView = ({ callBack, selectedFileInfo }: ICompleteChain
         for (let revisionHash of revisionHashes) {
             let revision = fileInfo?.aquaTree!.revisions![revisionHash];
 
+
+            console.log(`110. ${JSON.stringify(fileInfo?.aquaTree!, null, 4)}  \n fileObjectVerifier: ${JSON.stringify(fileObjectVerifier, null, 4)}` )
             let verificationResult = await aquafier.verifyAquaTreeRevision(fileInfo?.aquaTree!, revision!!, revisionHash, fileObjectVerifier)
             console.log(`111. Revision: ${revisionHash}`, verificationResult)
             if (verificationResult.isOk()) {
