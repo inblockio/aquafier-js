@@ -1,6 +1,6 @@
 // import { ethers } from "ethers";
 import { ApiFileInfo } from "../models/FileInfo";
-import { documentTypes, imageTypes, musicTypes, videoTypes } from "./constants";
+import { documentTypes, ERROR_TEXT, imageTypes, musicTypes, videoTypes } from "./constants";
 // import { AvatarGenerator } from 'random-avatar-generator';
 import Aquafier, { AquaTree, CredentialsData, FileObject, Revision } from "aqua-js-sdk";
 import jdenticon from "jdenticon/standalone";
@@ -681,18 +681,18 @@ export function areArraysEqual(array1: Array<string>, array2: Array<string>) {
 
 export function fetchLinkedFileName(aquaTree: AquaTree, revision: Revision): string {
     if (revision.link_verification_hashes == undefined) {
-        return "--error--."
+        return ERROR_TEXT
     }
     let lonkedHash = revision.link_verification_hashes![0];
     console.log(`fetchLinkedFileName ${lonkedHash}`)
     if (lonkedHash == undefined) {
         console.log(`fetchLinkedFileName ${lonkedHash} not found in link_verification_hashes`)
-        return "--error--.."
+        return ERROR_TEXT
     }
     let name = aquaTree.file_index[lonkedHash];
     if (name == undefined) {
         console.log(`fetchLinkedFileName ${lonkedHash} not found in file_index`)
-        return "--error--..."
+        return ERROR_TEXT
     }
     return name
 }

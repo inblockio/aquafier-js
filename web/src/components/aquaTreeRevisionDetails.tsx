@@ -1,12 +1,12 @@
 import { useState, useEffect } from "react";
 import { LuCheck, LuExternalLink, LuTrash, LuX } from "react-icons/lu"
-import { Box, Card, Collapsible, For, Group, Icon, IconButton, Link, Span, Text, VStack } from "@chakra-ui/react"
+import { Box, Button, Card, Collapsible, For, Group, Icon, IconButton, Link, Span, Text, VStack } from "@chakra-ui/react"
 import { TimelineConnector, TimelineContent, TimelineDescription, TimelineItem, TimelineRoot, TimelineTitle } from "./chakra-ui/timeline"
-import { displayTime, formatCryptoAddress, fetchLinkedFileName, fetchFiles } from "../utils/functions"
+import { displayTime, formatCryptoAddress, fetchLinkedFileName, fetchFiles, getAquaTreeFileObject } from "../utils/functions"
 import { Alert } from "./chakra-ui/alert"
 import { LogTypeEmojis, Revision } from "aqua-js-sdk";
 import ReactLoading from "react-loading"
-import { WITNESS_NETWORK_MAP } from "../utils/constants"
+import { ERROR_TEXT, WITNESS_NETWORK_MAP } from "../utils/constants"
 import { WalletEnsView } from "./chakra-ui/wallet_ens"
 import { AquaTreeDetailsData, RevisionDetailsSummaryData } from "../models/AquaTreeDetails"
 
@@ -18,7 +18,7 @@ import { toaster } from "./chakra-ui/toaster";
 
 export const RevisionDisplay = ({ fileInfo, revision, revisionHash, isVerificationComplete, verificationResults, isDeletable, deleteRevision, index }: AquaTreeDetailsData) => {
 
-    const { session, backend_url, setFiles } = useStore(appStore)
+    const { session, backend_url, files, setFiles, setSelectedFileInfo } = useStore(appStore)
     const [showRevisionDetails, setShowRevisionDetails] = useState(false)
     const [isRevisionVerificationSuccessful, setIsRevisionVerificationSuccessful] = useState<boolean | null>(null)
     const [isDeleting, setIsDeleting] = useState(false)
@@ -267,6 +267,35 @@ export const RevisionDisplay = ({ fileInfo, revision, revisionHash, isVerificati
                                                                         value={revision.file_hash!} showCopyIcon={true}
                                                                     />
                                                                 ) : null
+                                                            }
+                                                            {
+                                                                revision.revision_type == "link" ? <>
+
+                                                                    <Button onClick={
+                                                                        () => {
+                                                                            let linkedFileName = fetchLinkedFileName(fileInfo.aquaTree!!, revision)
+
+                                                                            if (linkedFileName != ERROR_TEXT) {
+                                                                                for (let fileInfo of files) {
+                                                                                    let fileObject = getAquaTreeFileObject(fileInfo);
+                                                                                    if (fileObject) {
+                                                                                        if (linkedFileName == fileObject.fileName) {
+
+                                                                                            setSelectedFileInfo(fileInfo)
+                                                                                            break
+                                                                                        }
+                                                                                    }
+                                                                                }
+                                                                            } else {
+                                                                                toaster.create({
+                                                                                    title: "Link file not found , pssibly a deep link",
+                                                                                    type: 'info'
+                                                                                })
+                                                                            }
+                                                                        }
+                                                                    }>View File </Button>
+
+                                                                </> : <></>
                                                             }
 
                                                         </TimelineContent>
