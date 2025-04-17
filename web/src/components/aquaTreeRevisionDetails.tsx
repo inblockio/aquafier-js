@@ -2,9 +2,9 @@ import { useState, useEffect } from "react";
 import { LuCheck, LuExternalLink, LuTrash, LuX } from "react-icons/lu"
 import { Box, Button, Card, Collapsible, For, Group, Icon, IconButton, Link, Span, Text, VStack } from "@chakra-ui/react"
 import { TimelineConnector, TimelineContent, TimelineDescription, TimelineItem, TimelineRoot, TimelineTitle } from "./chakra-ui/timeline"
-import { displayTime, formatCryptoAddress, fetchLinkedFileName, fetchFiles, getAquaTreeFileObject } from "../utils/functions"
+import { displayTime, formatCryptoAddress, fetchLinkedFileName, fetchFiles, getAquaTreeFileObject, isDeepLinkRevision } from "../utils/functions"
 import { Alert } from "./chakra-ui/alert"
-import { LogTypeEmojis, Revision } from "aqua-js-sdk";
+import { AquaTree, LogTypeEmojis, Revision } from "aqua-js-sdk";
 import ReactLoading from "react-loading"
 import { ERROR_TEXT, WITNESS_NETWORK_MAP } from "../utils/constants"
 import { WalletEnsView } from "./chakra-ui/wallet_ens"
@@ -179,6 +179,34 @@ export const RevisionDisplay = ({ fileInfo, revision, revisionHash, isVerificati
         }
     }
 
+    const revisionDataHeader = (aquaTree: AquaTree, revisionHash: string): JSX.Element => {
+
+        if (revision.previous_verification_hash.length == 0) {
+
+            <Span>
+                Genesis Revision
+            </Span>
+        }
+        if (revision.revision_type == "link") {
+            let isDeepLink = isDeepLinkRevision(aquaTree, revisionHash)
+            if (isDeepLink == null) {
+                return <Span>ERROR_TEXT</Span>
+            }
+            if (isDeepLink) {
+                return <Span>
+                    Deep Link
+                </Span>
+            } else {
+                return <Span>
+                    linked to {fetchLinkedFileName(fileInfo.aquaTree!!, revision)}
+                </Span>
+            }
+        }
+
+        return <Span>
+            {revision.revision_type}
+        </Span >
+    }
     const displayDeleteButton = (): JSX.Element => {
         if (isDeletable) {
             return (
@@ -189,6 +217,45 @@ export const RevisionDisplay = ({ fileInfo, revision, revisionHash, isVerificati
         }
         return <></>
     }
+    const viewLinkedFile = (aquaTree: AquaTree, revisionHash: string): JSX.Element => {
+
+        if (revision.revision_type == "link") {
+
+            if (isDeepLinkRevision(aquaTree, revisionHash)) {
+                return <></>
+            }
+
+            return <Button onClick={
+                () => {
+                    let linkedFileName = fetchLinkedFileName(fileInfo.aquaTree!!, revision)
+
+                    if (linkedFileName != ERROR_TEXT) {
+                        for (let fileInfo of files) {
+                            let fileObject = getAquaTreeFileObject(fileInfo);
+                            if (fileObject) {
+                                if (linkedFileName == fileObject.fileName) {
+
+                                    setSelectedFileInfo(fileInfo)
+                                    break
+                                }
+                            }
+                        }
+                    } else {
+                        toaster.create({
+                            title: "Link file not found , possibly a deep link ?",
+                            type: 'info'
+                        })
+                    }
+                }
+            }>View File </Button>
+
+        } else {
+            return <></>
+        }
+
+
+    }
+
 
     const revisionTypeEmoji = LogTypeEmojis[revision.revision_type]
 
@@ -237,27 +304,20 @@ export const RevisionDisplay = ({ fileInfo, revision, revisionHash, isVerificati
                                                         <TimelineConnector
                                                             bg={
                                                                 returnBgColor()
-                                                                // verificationResult?.metadata_verification.successful ? "green" : "red"
                                                             }
                                                         >
                                                             <Icon fontSize="xs" color={'white'}>
                                                                 {
                                                                     verificationStatusIcon()
-                                                                    // verificationResult?.metadata_verification.successful ? <LuCheck /> :
-                                                                    //     <LuX />
+                                                                 
                                                                 }
                                                             </Icon>
                                                         </TimelineConnector>
 
                                                         <TimelineContent gap="2">
                                                             <TimelineTitle>
-                                                                <Span>
-                                                                    Revision  is &nbsp;
-                                                                    {
-                                                                        revision.previous_verification_hash.length == 0 ? "Genesis Revision" : revision.revision_type == "link" ? <>
-                                                                        {`linked to ${fetchLinkedFileName(fileInfo.aquaTree!!, revision)}`}</> : revision.revision_type
-                                                                    }
-                                                                </Span>
+                                                                {revisionDataHeader(fileInfo!.aquaTree!, revisionHash)}
+
                                                             </TimelineTitle>
                                                             <TimelineDescription>{displayTime(revision.local_timestamp)}&nbsp;(UTC)</TimelineDescription>
                                                             {
@@ -269,36 +329,7 @@ export const RevisionDisplay = ({ fileInfo, revision, revisionHash, isVerificati
                                                                     />
                                                                 ) : null
                                                             }
-                                                            {
-                                                                revision.revision_type == "link" ? <>
-
-                                                                    <Button onClick={
-                                                                        () => {
-                                                                            let linkedFileName = fetchLinkedFileName(fileInfo.aquaTree!!, revision)
-
-                                                                            if (linkedFileName != ERROR_TEXT) {
-                                                                                for (let fileInfo of files) {
-                                                                                    let fileObject = getAquaTreeFileObject(fileInfo);
-                                                                                    if (fileObject) {
-                                                                                        if (linkedFileName == fileObject.fileName) {
-
-                                                                                            setSelectedFileInfo(fileInfo)
-                                                                                            break
-                                                                                        }
-                                                                                    }
-                                                                                }
-                                                                            } else {
-                                                                                toaster.create({
-                                                                                    title: "Link file not found , possibly a deep link ?",
-                                                                                    type: 'info'
-                                                                                })
-                                                                            }
-                                                                        }
-                                                                    }>View File </Button>
-
-                                                                </> : <></>
-                                                            }
-
+                                                            {viewLinkedFile(fileInfo!.aquaTree!, revisionHash)}
                                                         </TimelineContent>
 
                                                     </TimelineItem>

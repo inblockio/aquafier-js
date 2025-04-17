@@ -7,10 +7,10 @@ import jdenticon from "jdenticon/standalone";
 
 export function isAquaTree(content: any): boolean {
     // Check if content has the properties of an AquaTree
-    return content && 
-           typeof content === 'object' && 
-           'revisions' in content && 
-           'file_index' in content;
+    return content &&
+        typeof content === 'object' &&
+        'revisions' in content &&
+        'file_index' in content;
 }
 export function formatCryptoAddress(address?: string, start: number = 10, end: number = 4, message?: string): string {
     if (!address) return message ?? "NO ADDRESS"
@@ -489,38 +489,48 @@ export async function fileToBase64(file: File): Promise<string> {
 export const isArrayBufferText = (buffer: ArrayBuffer): boolean => {
     // Convert the ArrayBuffer to a Uint8Array
     const uint8Array = new Uint8Array(buffer);
+
+      // Check for PDF signature
+      if (uint8Array.length >= 5) {
+        // Check for %PDF- signature
+        if (uint8Array[0] === 37 && uint8Array[1] === 80 && 
+            uint8Array[2] === 68 && uint8Array[3] === 70 && 
+            uint8Array[4] === 45) {
+            return false; // This is a PDF file
+        }
+    }
     
     // Check if the byte sequence looks like text
     // 1. Check for null bytes (usually not in text files)
     // 2. Check for high ratio of printable ASCII characters
-    
+
     // Check first 1000 bytes or the whole buffer, whichever is smaller
     const bytesToCheck = Math.min(1000, uint8Array.length);
     let textCharCount = 0;
     let nullByteCount = 0;
-    
+
     for (let i = 0; i < bytesToCheck; i++) {
-      const byte = uint8Array[i];
-      
-      // Count null bytes
-      if (byte === 0) {
-        nullByteCount++;
-      }
-      
-      // Count printable ASCII characters (32-126) plus common whitespace (9-13)
-      if ((byte >= 32 && byte <= 126) || (byte >= 9 && byte <= 13)) {
-        textCharCount++;
-      }
+        const byte = uint8Array[i];
+
+        // Count null bytes
+        if (byte === 0) {
+            nullByteCount++;
+        }
+
+        // Count printable ASCII characters (32-126) plus common whitespace (9-13)
+        if ((byte >= 32 && byte <= 126) || (byte >= 9 && byte <= 13)) {
+            textCharCount++;
+        }
     }
-    
+
     // If more than 5% are null bytes, probably not text
     if (nullByteCount > bytesToCheck * 0.05) {
-      return false;
+        return false;
     }
-    
+
     // If more than 90% are printable characters, probably text
     return textCharCount > bytesToCheck * 0.9;
-  }
+}
 
 // More comprehensive function to check if a file is text-based
 export const isTextFile = (file: File): boolean => {
@@ -570,19 +580,19 @@ export const checkIfFileExistInUserFiles = async (file: File, files: ApiFileInfo
     let fileContent = await readFileContent(file)
     let aquafier = new Aquafier()
     let fileHash = aquafier.getFileHash(fileContent)
-//    console.log(`type of ${typeof (fileContent)} file hash generated  ${fileHash} `)
+    //    console.log(`type of ${typeof (fileContent)} file hash generated  ${fileHash} `)
 
     // loop through all the files the user has 
     for (let fileItem of files) {
-     //   console.log(`looping ${JSON.stringify(fileItem.aquaTree)}`)
+        //   console.log(`looping ${JSON.stringify(fileItem.aquaTree)}`)
         let aquaTree: AquaTree = fileItem.aquaTree!!
         //loop through the revisions
         // check if revsion type is file then compare the file hash if found exit loop
         let revisionsData: Array<Revision> = Object.values(aquaTree.revisions)
         for (let revision of revisionsData) {
-      //      console.log(`--> looping ${JSON.stringify(revision)}`)
+            //      console.log(`--> looping ${JSON.stringify(revision)}`)
             if (revision.revision_type == "file") {
-    //            console.log(`$$$ FILE -->looping ${revision.file_hash}`)
+                //            console.log(`$$$ FILE -->looping ${revision.file_hash}`)
                 if (revision.file_hash === fileHash) {
                     fileExists = true
                     break
@@ -600,7 +610,7 @@ export const readFileContent = async (file: File): Promise<string | Uint8Array> 
         // If it's a text file, read as text
         return await readFileAsText(file);
     } else {
-     //   console.log("binary data....")
+        //   console.log("binary data....")
         // Otherwise for binary files, read as ArrayBuffer
         const res = await readFileAsArrayBuffer(file)
         return new Uint8Array(res);
@@ -678,6 +688,22 @@ export function areArraysEqual(array1: Array<string>, array2: Array<string>) {
     return array2Copy.length === 0;
 }
 
+export function isDeepLinkRevision(aquaTree: AquaTree, revisionHash: string): boolean | null {
+
+    let revisionData = aquaTree.revisions[revisionHash]
+
+    if (revisionData) {
+
+        let indexData = aquaTree.file_index[revisionData.link_verification_hashes![0]]
+        if (indexData) {
+            return false
+        }
+        return true
+    }
+    return null
+
+
+}
 
 export function fetchLinkedFileName(aquaTree: AquaTree, revision: Revision): string {
     if (revision.link_verification_hashes == undefined) {

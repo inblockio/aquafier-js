@@ -511,32 +511,33 @@ export async function createAquaTreeFromRevisions(latestRevisionHash: string, ur
 
 
             if (fileIndex == null) {
-                throw Error(`Error file  ${originalFilename} not found in index`)
+                console.log(`💣💣💣💣 Error file  ${originalFilename} not found in index`)
+            } else {
+
+
+                fileIndexes.push(fileIndex)
+
+
+                if (!fs.existsSync(fileItem.content!!)) {
+                    // return reply.code(500).send({ success: false, message: `Error file  ${originalFilename} not found` });
+                    console.log(`💣💣💣💣 error file not found {originalFilename} `)
+                } else {
+
+
+
+                    // Path you want to add
+                    const urlPath = `/files/${fileItem.file_hash}`;
+
+                    // Construct the full URL
+                    const fullUrl = `${url}${urlPath}`;
+                    fileObject.push({
+                        fileContent: fullUrl,//fileContent.toString(),
+                        fileName: fileIndex.uri!!,
+                        path: "",
+                        fileSize: fileSizeInBytes
+                    })
+                }
             }
-
-
-            fileIndexes.push(fileIndex)
-
-
-            if (!fs.existsSync(fileItem.content!!)) {
-                // return reply.code(500).send({ success: false, message: `Error file  ${originalFilename} not found` });
-
-            }
-
-
-
-            // Path you want to add
-            const urlPath = `/files/${fileItem.file_hash}`;
-
-            // Construct the full URL
-            const fullUrl = `${url}${urlPath}`;
-            fileObject.push({
-                fileContent: fullUrl,//fileContent.toString(),
-                fileName: fileIndex.uri!!,
-                path: "",
-                fileSize: fileSizeInBytes
-            })
-
         }
     }
 
@@ -679,7 +680,7 @@ export async function createAquaTreeFromRevisions(latestRevisionHash: string, ur
                             anAquaTree.file_index[hashSearchText] = filesData?.uri ?? "--error--."
 
 
-                            
+
                             let [aquaTreeLinked, fileObjectLinked] = await createAquaTreeFromRevisions(filesData.id, url);
 
                             // let name = Object.values(aquaTreeLinked.file_index)[0] ?? "--error--"

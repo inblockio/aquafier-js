@@ -125,10 +125,12 @@ export const CompleteChainView = ({ callBack, selectedFileInfo }: ICompleteChain
             if (typeof file.fileContent == 'string' && (file.fileContent.startsWith("http://") || file.fileContent.startsWith("https://"))) {
                 let fileData = await fetchFileData(file.fileContent);
 
+                
                 if (fileData == null) {
                     console.error(`💣💣💣Unable to fetch file  from  ${file.fileContent}`)
                 } else {
                     let fileItem = file
+                    console.log(`🤪🤪 type of ${typeof fileData} or ${fileData instanceof ArrayBuffer}  is arraybuffer text ${isArrayBufferText(fileData as ArrayBuffer)}`)
                     // Then in your loop:
                     if (fileData instanceof ArrayBuffer) {
                         if (isArrayBufferText(fileData)) {

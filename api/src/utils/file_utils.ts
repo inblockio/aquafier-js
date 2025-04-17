@@ -52,7 +52,10 @@ const extensions= (): string[] =>{
         '.sql', '.graphql', '.gql', '.proto',
 
         // Misc
-        '.diff', '.patch'
+        '.diff', '.patch',
+
+        // Non-text file extensions
+        '.pdf', '.jpg', '.jpeg', '.png', '.gif', '.bmp', '.zip', '.rar', '.exe', '.dll', '.so', '.dylib'
     ];
 }
 // Determine if the file is a text file based on filename extension
@@ -67,30 +70,36 @@ const isTextFileProbability = async (buffer: Buffer, filename: string): Promise<
     const textExtensions = extensions();
     const ext = path.extname(filename).toLowerCase();
     
+    // Known binary extensions that should never be treated as text
+    const binaryExtensions = ['.pdf', '.jpg', '.jpeg', '.png', '.gif', '.bmp', '.zip', '.rar', '.exe', '.dll', '.so', '.dylib'];
+    if (binaryExtensions.includes(ext)) {
+        return false;
+    }
+    
     // Known text extension
     if (textExtensions.includes(ext)) {
-      return true;
+        return true;
     }
     
     // For unknown extensions, try to detect if it's text by examining the buffer
     // Check if buffer contains any null bytes (common in binary files)
     for (let i = 0; i < Math.min(buffer.length, 1024); i++) {
-      if (buffer[i] === 0) {
-        return false; // Contains null byte, likely binary
-      }
+        if (buffer[i] === 0) {
+            return false; // Contains null byte, likely binary
+        }
     }
     
     // Additional check: high ratio of printable ASCII characters suggests text
     let printableChars = 0;
     const sampleSize = Math.min(buffer.length, 1024);
     for (let i = 0; i < sampleSize; i++) {
-      const byte = buffer[i];
-      if ((byte >= 32 && byte <= 126) || byte === 9 || byte === 10 || byte === 13) {
-        printableChars++;
-      }
+        const byte = buffer[i];
+        if ((byte >= 32 && byte <= 126) || byte === 9 || byte === 10 || byte === 13) {
+            printableChars++;
+        }
     }
     
     const textRatio = printableChars / sampleSize;
     return textRatio > 0.9; // If more than 90% is printable ASCII, consider it text
-  };
+};
 export { streamToBuffer, isTextFile, isTextFileProbability , getFileUploadDirectory};

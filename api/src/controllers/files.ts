@@ -77,9 +77,13 @@ export default async function filesController(fastify: FastifyInstance) {
             // Read the file
             let fileContent = fs.readFileSync(file.content!!);
 
-            // Set appropriate headers
-            reply.header('Content-Type', 'application/octet-stream');
-            // reply.header('Content-Disposition', `attachment; filename="${fileIndex.uri}"`);
+            // Set appropriate headers based on file type
+            const fileExt = path.extname(fileIndex.uri ?? "").toLowerCase();
+            if (fileExt === '.pdf') {
+                reply.header('Content-Type', 'application/pdf');
+            } else {
+                reply.header('Content-Type', 'application/octet-stream');
+            }
 
             // Encode the filename for Content-Disposition header
             const encodedFilename = encodeURIComponent(fileIndex.uri ?? "")
