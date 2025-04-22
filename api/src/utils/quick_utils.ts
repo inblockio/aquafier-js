@@ -346,7 +346,7 @@ export async function fetchCompleteRevisionChain(
                     const fileSizeInBytes = stats.size;
                     const fileObject: FileObject = {
                         fileName: fileIndexForFileRev.uri ?? "--error_uri--",
-                        fileContent: fileIndexForFileRev.file_hash ?? "--error--", // Using file_hash as content reference
+                        fileContent: `${url}/files/${fileIndexForFileRev.file_hash}`, // Using file_hash as content reference
                         path: "./",
                         // fileSize: fileIndexForFileRev.reference_count ? Number(fileIndexForFileRev.reference_count) : 0 // Using reference_count as a fallback for size
                         fileSize: fileSizeInBytes
