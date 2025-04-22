@@ -56,7 +56,7 @@ export const RevisionDisplay = ({ fileInfo, revision, revisionHash, isVerificati
         }
 
         if (currentRevisionResult === undefined) {
-            console.log(`💣💣 Hash not found ${revisionHash}`)
+            // console.log(`💣💣 Hash not found ${revisionHash}`)
             verificationStatus = null
         }
 

@@ -705,19 +705,21 @@ export function isDeepLinkRevision(aquaTree: AquaTree, revisionHash: string): bo
 
 }
 
+
+  
 export function fetchLinkedFileName(aquaTree: AquaTree, revision: Revision): string {
     if (revision.link_verification_hashes == undefined) {
         return ERROR_TEXT
     }
     let lonkedHash = revision.link_verification_hashes![0];
-    console.log(`fetchLinkedFileName ${lonkedHash}`)
+    // console.log(`fetchLinkedFileName ${lonkedHash}`)
     if (lonkedHash == undefined) {
-        console.log(`fetchLinkedFileName ${lonkedHash} not found in link_verification_hashes`)
+        // console.log(`fetchLinkedFileName ${lonkedHash} not found in link_verification_hashes`)
         return ERROR_TEXT
     }
     let name = aquaTree.file_index[lonkedHash];
     if (name == undefined) {
-        console.log(`fetchLinkedFileName ${lonkedHash} not found in file_index`)
+        // console.log(`fetchLinkedFileName ${lonkedHash} not found in file_index`)
         return ERROR_TEXT
     }
     return name
@@ -769,6 +771,12 @@ export function displayTime(input: number | string): string {
     return "Invalid input";
 }
 
+
+// export function getFileHashFromUrl(url: string): string {
+//     // Split the URL by '/' and get the last non-empty element
+//     const parts = url.split('/').filter(part => part.length > 0);
+//     return parts[parts.length - 1];
+//   }
 export const getFileHashFromUrl = (url: string) => {
     // Using a regular expression to match the file ID
     const regex = /\/files\/([a-f0-9]+)/;
