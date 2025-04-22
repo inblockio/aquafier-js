@@ -124,7 +124,6 @@ const FormTemplateEditor = ({ initialTemplate, onSave }: FormTemplateEditorProps
     try {
       const formValues = getValues()
       formValues.fields = formFields
-      console.log("Form values: ", formValues)
       saveFormTemplate(formValues);
       // showToast('Form template saved', 'success');
       onSave();

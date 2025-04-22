@@ -152,7 +152,7 @@ const FormGenerator = () => {
 
     if (validateForm()) {
       // In a real application, you would submit this data to your backend
-      console.log('Form submitted with values:', formValues);
+      // console.log('Form submitted with values:', formValues);
 
       setIsSubmitted(true);
 

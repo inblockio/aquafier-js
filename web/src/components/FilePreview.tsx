@@ -213,7 +213,7 @@ const FilePreview: React.FC<IFilePreview> = ({ fileInfo }) => {
                     // If content type is missing or generic, try to detect from filename
                     if (contentType === "application/octet-stream" || contentType === "") {
                         contentType = getContentTypeFromFileName(fileInfo.fileName || "");
-                        console.log("Determined content type from filename:", contentType);
+                      //  console.log("Determined content type from filename:", contentType);
                     }
 
                     // Clone response and get data
@@ -234,7 +234,7 @@ const FilePreview: React.FC<IFilePreview> = ({ fileInfo }) => {
 
                     // Create blob with correct content type
                     const blob = new Blob([arrayBuffer], { type: contentType });
-                    console.log("Created blob with type:", contentType, "size:", blob.size);
+                  //  console.log("Created blob with type:", contentType, "size:", blob.size);
 
                     setFileType(contentType);
 
@@ -253,7 +253,7 @@ const FilePreview: React.FC<IFilePreview> = ({ fileInfo }) => {
                 else if (fileInfo.fileContent && typeof fileInfo.fileContent !== 'string') {
                     // Determine content type from filename
                     let contentType = getContentTypeFromFileName(fileInfo.fileName || "");
-                    console.log("Determined content type for binary data:", contentType);
+                  //  console.log("Determined content type for binary data:", contentType);
 
                     // Create blob with detected content type
                     const blob = new Blob([fileInfo.fileContent as Uint8Array], { type: contentType });

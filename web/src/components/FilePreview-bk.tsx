@@ -292,7 +292,7 @@ const FilePreview: React.FC<IFilePreview> = ({ fileInfo }) => {
                 if (contentType === "application/octet-stream" || contentType === "") {
                     const uint8Array = new Uint8Array(arrayBuffer);
                     contentType = detectFileType(uint8Array);
-                    console.log(" 🤌🏾Detected file type:", contentType);
+                    // console.log(" 🤌🏾Detected file type:", contentType);
                 }
 
                 // Check for Word document by file extension
@@ -359,14 +359,14 @@ const FilePreview: React.FC<IFilePreview> = ({ fileInfo }) => {
 
                 // Create a proper blob with the correct content type
                 const blob = new Blob([arrayBuffer], { type: contentType });
-                console.log(" 🤌🏾Created blob with type:", contentType, "size:", blob.size);
+               // console.log(" 🤌🏾Created blob with type:", contentType, "size:", blob.size);
 
                 setFileType(contentType);
-                console.log(" 🤌🏾Final content type set to:", contentType);
+               // console.log(" 🤌🏾Final content type set to:", contentType);
 
                 // Create URL from the properly typed blob
                 const objectURL = URL.createObjectURL(blob);
-                console.log(" 🤌🏾Object URL created:", objectURL);
+                //console.log(" 🤌🏾Object URL created:", objectURL);
                 setFileURL(objectURL);
             } catch (error) {
                 console.error("Error fetching file:", error);
@@ -378,7 +378,7 @@ const FilePreview: React.FC<IFilePreview> = ({ fileInfo }) => {
         if (typeof fileInfo.fileContent != 'string') {
             // Check if fileContent is of type AquaTree using type guard
             if (isAquaTree(fileInfo.fileContent)) {
-                console.log(" 🤌🏾Handling AquaTree content");
+               // console.log(" 🤌🏾Handling AquaTree content");
                 // Add your AquaTree handling logic here
                 // For example:
                 // - Extract file info from the revision tree
@@ -389,7 +389,7 @@ const FilePreview: React.FC<IFilePreview> = ({ fileInfo }) => {
                 setFileType("application/json");
                 setTextContent(JSON.stringify(fileInfo.fileContent, null, 2));
             } else {
-                console.log(`Handling binary content: ${fileInfo.fileContent}`);
+              //  console.log(`Handling binary content: ${fileInfo.fileContent}`);
 
                 // Determine contentType based on fileName or default to octet-stream
                 let contentType = "application/octet-stream";
@@ -434,7 +434,7 @@ const FilePreview: React.FC<IFilePreview> = ({ fileInfo }) => {
 
                 // Create a proper blob with the determined content type
                 const blob = new Blob([fileInfo.fileContent], { type: contentType });
-                console.log(" 🤌🏾Created blob with type:", contentType, "size:", blob.size);
+               // console.log(" 🤌🏾Created blob with type:", contentType, "size:", blob.size);
 
                 setFileType(contentType);
 
@@ -447,13 +447,13 @@ const FilePreview: React.FC<IFilePreview> = ({ fileInfo }) => {
 
                 // Create URL from the properly typed blob
                 const objectURL = URL.createObjectURL(blob);
-                console.log(" 🤌🏾Object URL created:", objectURL);
+             //   console.log(" 🤌🏾Object URL created:", objectURL);
                 setFileURL(objectURL);
                 setIsLoading(false);
             }
         } else {
             if (!fileInfo.fileContent.startsWith("http")) {
-                console.log(" 🤌🏾file content not valid http  -" + fileInfo.fileContent);
+            //    console.log(" 🤌🏾file content not valid http  -" + fileInfo.fileContent);
                 setTextContent(fileInfo.fileContent);
                 setFileType("text/plain");
                 setIsLoading(false);

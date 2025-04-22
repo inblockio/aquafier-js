@@ -65,7 +65,7 @@ export default function ConnectWallet() {
   }
 
   const signAndConnect = async () => {
-    console.log("Connecting");
+    console.log("Connecting to wallet");
 
     const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
 

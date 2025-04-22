@@ -11,6 +11,7 @@ import { IChainDetailsBtn, ICompleteChainView, IDrawerStatus, VerificationHashAn
 import { RevisionDetailsSummary, RevisionDisplay } from "./aquaTreeRevisionDetails"
 import { useStore } from "zustand"
 import appStore from "../store"
+import { getFileHashFromUrl } from "../utils/functions";
 import { ApiFileInfo } from "../models/FileInfo"
 
 
@@ -27,7 +28,7 @@ export const ChainDetailsBtn = ({ callBack }: IChainDetailsBtn) => {
 export const CompleteChainView = ({ callBack, selectedFileInfo }: ICompleteChainView) => {
 
     const [showMoreDetails, setShowMoreDetails] = useState(false)
-    const { session } = useStore(appStore)
+    const { session, setApiFileData, apiFileData } = useStore(appStore)
     const [deletedRevisions, setDeletedRevisions] = useState<string[]>([])
 
     const [verificationResults, setVerificationResults] = useState<VerificationHashAndResult[]>([])
@@ -123,14 +124,39 @@ export const CompleteChainView = ({ callBack, selectedFileInfo }: ICompleteChain
         for (let file of fileInfo?.fileObject!!) {
 
             if (typeof file.fileContent == 'string' && (file.fileContent.startsWith("http://") || file.fileContent.startsWith("https://"))) {
-                let fileData = await fetchFileData(file.fileContent);
+                console.log(`cache length ${apiFileData?.length ?? 0}`)
+                //attempt to ue cache
+                let fileData: string | ArrayBuffer | null = null
+                let fileHash = getFileHashFromUrl(file.fileContent);
+                if (fileHash.length > 0 && Array.isArray(apiFileData)) {
+                    try {
+                        let data = apiFileData.find((e) => e.fileHash == fileHash)
+                        if (data != null) {
+                            fileData = data.fileData
+                        }
+                    } catch (e) {
+                        console.log(`error using cache ${e}`)
+                    }
+                }
 
-                
+                //cache is not available 
+                // fetch from api
+                if (fileData == null) {
+                    fileData = await fetchFileData(file.fileContent);
+                    if (fileData != null) {
+                        let dd = Array.isArray(apiFileData) ? [...apiFileData] :[];
+                        dd.push({ fileHash, fileData })
+                        setApiFileData(dd)
+                    }
+                }
+
+                //if cache an
+
                 if (fileData == null) {
                     console.error(`💣💣💣Unable to fetch file  from  ${file.fileContent}`)
                 } else {
                     let fileItem = file
-                    console.log(`🤪🤪 type of ${typeof fileData} or ${fileData instanceof ArrayBuffer}  is arraybuffer text ${isArrayBufferText(fileData as ArrayBuffer)}`)
+                    // console.log(`🤪🤪 type of ${typeof fileData} or ${fileData instanceof ArrayBuffer}  is arraybuffer text ${isArrayBufferText(fileData as ArrayBuffer)}`)
                     // Then in your loop:
                     if (fileData instanceof ArrayBuffer) {
                         if (isArrayBufferText(fileData)) {
@@ -160,9 +186,9 @@ export const CompleteChainView = ({ callBack, selectedFileInfo }: ICompleteChain
             let revision = fileInfo?.aquaTree!.revisions![revisionHash];
 
 
-            console.log(`110. ${JSON.stringify(fileInfo?.aquaTree!, null, 4)}  \n fileObjectVerifier: ${JSON.stringify(fileObjectVerifier, null, 4)}` )
+            // console.log(`110. ${JSON.stringify(fileInfo?.aquaTree!, null, 4)}  \n fileObjectVerifier: ${JSON.stringify(fileObjectVerifier, null, 4)}` )
             let verificationResult = await aquafier.verifyAquaTreeRevision(fileInfo?.aquaTree!, revision!!, revisionHash, fileObjectVerifier)
-            console.log(`111. Revision: ${revisionHash}`, verificationResult)
+            // console.log(`111. Revision: ${revisionHash}`, verificationResult)
             if (verificationResult.isOk()) {
                 allRevisionsVerificationsStatus.push({ hash: revisionHash, isSuccessful: true });
             } else {
@@ -200,11 +226,11 @@ export const CompleteChainView = ({ callBack, selectedFileInfo }: ICompleteChain
     }
 
     useEffect(() => {
-        if(selectedFileInfo){
+        if (selectedFileInfo) {
             verifyAquaTreeRevisions(selectedFileInfo)
         }
     }, [Object.keys(selectedFileInfo?.aquaTree?.revisions ?? {}).length, deletedRevisions])
-   
+
     const deleteRevision = (revisionHash: string) => {
         setDeletedRevisions(prev => [...prev, revisionHash])
     }

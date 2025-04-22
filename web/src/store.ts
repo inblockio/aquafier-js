@@ -3,7 +3,7 @@ import { openDB } from 'idb';
 import { createStore } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
 import { ApiFileInfo } from './models/FileInfo';
-import { Session } from './types';
+import { ApiFileData, Session } from './types';
 
 type AppStoreState = {
     user_profile: {
@@ -17,6 +17,7 @@ type AppStoreState = {
     },
     session: Session | null,
     files: ApiFileInfo[],
+    apiFileData : ApiFileData[],
     selectedFileInfo: ApiFileInfo | null,
     metamaskAddress: string | null
     avatar: string | undefined
@@ -44,6 +45,9 @@ type AppStoreActions = {
     ) => void,
     addFile: (
         file: ApiFileInfo,
+    ) => void,
+    setApiFileData: (
+        apiFileData : ApiFileData[],
     ) => void,
     setBackEndUrl: (
         backend_url: AppStoreState['backend_url'],
@@ -95,6 +99,7 @@ const appStore = createStore<TAppStore>()(
             selectedFileInfo: null,
             metamaskAddress: '',
             avatar: "",
+            apiFileData: [],
             backend_url: "http://0.0.0.0:0",
             // Actions
             setUserProfile: (config) => set({ user_profile: config }),
@@ -111,6 +116,9 @@ const appStore = createStore<TAppStore>()(
             setSelectedFileInfo: (
                 file: ApiFileInfo
             ) => set({ selectedFileInfo: file }),
+            setApiFileData:(
+                apiFileData: ApiFileData[]
+            )=>set({apiFileData : apiFileData}),
             addFile: (
                 file: ApiFileInfo,
             ) => {
@@ -123,7 +131,18 @@ const appStore = createStore<TAppStore>()(
         }),
         {
             name: 'app-store', // Unique name for storage key
-            storage: createJSONStorage(() => indexedDBStorage)
+            storage: createJSONStorage(() => indexedDBStorage),
+            partialize: (state) => ({
+                // List all state properties you want to persist EXCEPT selectedFileInfo
+                user_profile: state.user_profile,
+                session: state.session,
+                files: state.files,
+                apiFileData: state.apiFileData,
+                metamaskAddress: state.metamaskAddress,
+                avatar: state.avatar,
+                backend_url: state.backend_url
+                // selectedFileInfo & setApiFileData is intentionally omitted
+            }),
         }
     )
 );

@@ -121,7 +121,7 @@ const FileUploadItem = (props: FileUploadItemProps) => {
 
     totoalSize = totoalSize +  file.size
 
-    console.log(`totoalSize ${totoalSize} -- maxUserFileSizeForUpload ${maxUserFileSizeForUpload}`)
+    // console.log(`totoalSize ${totoalSize} -- maxUserFileSizeForUpload ${maxUserFileSizeForUpload}`)
     if (totoalSize >= maxUserFileSizeForUpload) {
       toaster.create({
         description: `Please obtain a licence to upload more file`,

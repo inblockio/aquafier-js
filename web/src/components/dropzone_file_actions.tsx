@@ -1171,7 +1171,7 @@ export const ImportAquaChainFromChain = ({ fileInfo, isVerificationSuccessful, c
             const revisions = reorderedRevisions.revisions
             const revisionHashes = Object.keys(revisions)
             const latestRevisionHash = revisionHashes[revisionHashes.length - 1]
-            console.log("Latest revision hash: ", latestRevisionHash)
+            // console.log("Latest revision hash: ", latestRevisionHash)
 
             const res = await axios.post(url, {
                 latestRevisionHash: latestRevisionHash,
@@ -1183,7 +1183,7 @@ export const ImportAquaChainFromChain = ({ fileInfo, isVerificationSuccessful, c
                 }
             })
 
-            console.log("Transfer chain res: ", res)
+            // console.log("Transfer chain res: ", res)
             if (res.status === 200) {
                 toaster.create({
                     description: "Aqua Chain imported successfully",
