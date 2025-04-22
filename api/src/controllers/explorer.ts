@@ -10,7 +10,7 @@ import util from 'util';
 import { pipeline } from 'stream';
 import * as fs from "fs"
 import { error } from 'console';
-import { createAquaTreeFromRevisions, fetchAquatreeFoUser, FetchRevisionInfo, findAquaTreeRevision, getGenesisHash, saveAquaTree, validateAquaTree } from '../utils/revisions_utils';
+import { createAquaTreeFromRevisions, fetchAquatreeFoUser, FetchRevisionInfo, findAquaTreeRevision, getGenesisHash, removeFilePathFromFileIndex, saveAquaTree, validateAquaTree } from '../utils/revisions_utils';
 import { fileURLToPath } from 'url';
 import { AquaForms, FileIndex, Signature, Witness, WitnessEvent } from '@prisma/client';
 import { getHost, getPort } from '../utils/api_utils';
@@ -376,9 +376,10 @@ export default async function explorerController(fastify: FastifyInstance) {
                 }
 
                 let fileContent = fileBuffer.toString('utf-8');
-                let aquaTree: AquaTree = JSON.parse(fileContent);
+                let aquaTreeFromFile: AquaTree = JSON.parse(fileContent);
 
-
+                let aquaTree = removeFilePathFromFileIndex(aquaTreeFromFile);
+                
                 let [isValidAquaTree, failureReason] = validateAquaTree(aquaTree)
                 console.log(`is aqua tree valid ${isValidAquaTree} `);
                 if (!isValidAquaTree) {

@@ -5,6 +5,31 @@ import { Latest, Signature, Revision, Witness, AquaForms, WitnessEvent, FileInde
 import * as fs from "fs"
 import path from 'path';
 
+export function removeFilePathFromFileIndex(aquaTree: AquaTree): AquaTree {
+
+
+    // Create a new file_index object
+    const processedFileIndex: FileIndex |  any = {};
+
+    // Loop through each entry in the file_index
+    for (const [hash, value] of Object.entries(aquaTree.file_index)) {
+        // Check if the value looks like a path (contains / or \)
+        if (typeof value === 'string' && (value.includes('/') || value.includes('\\'))) {
+            // Extract just the base filename without path
+            const baseName = value.split(/[\/\\]/).pop() || value;
+            processedFileIndex[hash] = baseName;
+        } else {
+            // Keep the original value if it's not a path
+            processedFileIndex[hash] = value;
+        }
+    }
+
+    // Return a new AquaTree with the processed file_index
+    return {
+        ...aquaTree,
+        file_index: processedFileIndex
+    };
+}
 export async function fetchAquatreeFoUser(url: string, latest: Array<{
     hash: string;
     user: string;
@@ -426,7 +451,7 @@ export async function createAquaTreeFromRevisions(latestRevisionHash: string, ur
     ////  console.log(`Find ${JSON.stringify(revisonLatetsItem, null, 4)}.`)
     let revisionData = [];
     let fileObject: FileObject[] = [];
-    
+
     // fetch latest revision 
     let latestRevionData = await prisma.revision.findFirst({
         where: {
@@ -441,7 +466,7 @@ export async function createAquaTreeFromRevisions(latestRevisionHash: string, ur
         // return reply.code(500).send({ success: false, message: `` });
         console.error(`.revision with hash ${latestRevisionHash} not found in system`);
 
-    }else {
+    } else {
         revisionData.push(latestRevionData);
 
         try {
@@ -482,7 +507,7 @@ export async function createAquaTreeFromRevisions(latestRevisionHash: string, ur
 
         })
 
-    
+
         let fileIndexes: FileIndex[] = [];
         if (files != null) {
             //  console.log("#### file is not null ")
