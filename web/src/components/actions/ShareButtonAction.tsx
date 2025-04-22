@@ -98,7 +98,7 @@ const CreateContractForm = ({ mutate, contract, updating, genesis_hash, latest_h
                 "recipient": recipientWalletAddress,
                 "option": option
             }
-            console.log(data)
+            
             if (updating) {
                 url = `${backend_url}/contracts/${contract?.hash}`
                 method = "PUT"

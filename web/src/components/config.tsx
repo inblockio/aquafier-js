@@ -82,7 +82,7 @@ const LoadConfiguration = () => {
 
     useEffect(() => {
         if (!backend_url.includes("0.0.0.0")) {
-            console.log("here 1")
+            
             const nonce = getCookie("pkc_nonce");
             if (nonce) {
 
@@ -108,7 +108,7 @@ const LoadConfiguration = () => {
                 })
             }
         }else{
-            console.log("here 2")
+            console.log(`backend url is ${backend_url}`)
         }
     }, [backend_url]);
 

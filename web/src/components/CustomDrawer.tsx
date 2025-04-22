@@ -130,7 +130,7 @@ export const CompleteChainView = ({ callBack, selectedFileInfo }: ICompleteChain
                     console.error(`💣💣💣Unable to fetch file  from  ${file.fileContent}`)
                 } else {
                     let fileItem = file
-                    console.log(`🤪🤪 type of ${typeof fileData} or ${fileData instanceof ArrayBuffer}  is arraybuffer text ${isArrayBufferText(fileData as ArrayBuffer)}`)
+                    // console.log(`🤪🤪 type of ${typeof fileData} or ${fileData instanceof ArrayBuffer}  is arraybuffer text ${isArrayBufferText(fileData as ArrayBuffer)}`)
                     // Then in your loop:
                     if (fileData instanceof ArrayBuffer) {
                         if (isArrayBufferText(fileData)) {
@@ -160,9 +160,9 @@ export const CompleteChainView = ({ callBack, selectedFileInfo }: ICompleteChain
             let revision = fileInfo?.aquaTree!.revisions![revisionHash];
 
 
-            console.log(`110. ${JSON.stringify(fileInfo?.aquaTree!, null, 4)}  \n fileObjectVerifier: ${JSON.stringify(fileObjectVerifier, null, 4)}` )
+            // console.log(`110. ${JSON.stringify(fileInfo?.aquaTree!, null, 4)}  \n fileObjectVerifier: ${JSON.stringify(fileObjectVerifier, null, 4)}` )
             let verificationResult = await aquafier.verifyAquaTreeRevision(fileInfo?.aquaTree!, revision!!, revisionHash, fileObjectVerifier)
-            console.log(`111. Revision: ${revisionHash}`, verificationResult)
+            // console.log(`111. Revision: ${revisionHash}`, verificationResult)
             if (verificationResult.isOk()) {
                 allRevisionsVerificationsStatus.push({ hash: revisionHash, isSuccessful: true });
             } else {

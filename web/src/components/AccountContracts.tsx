@@ -27,7 +27,7 @@ export default function AccountContracts() {
         }
     }
 
-    console.log(contracts)
+    // console.log(contracts)
 
     useEffect(() => {
         loadAccountSharedContracts()

@@ -47,7 +47,6 @@ const FilesTable = () => {
         setDrawerStatus(_drawerStatus)
     }
 
-    console.log("Files: ", files)
 
     const tableItem = (fileObject: FileObject, item: ApiFileInfo, index: number) => {
         return <Table.Row

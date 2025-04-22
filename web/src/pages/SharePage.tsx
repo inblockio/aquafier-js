@@ -48,7 +48,7 @@ const SharePage = () => {
                 setLoading(false)
             }
             catch (error: any) {
-                console.log("Error: ", error)
+                // console.log("Error: ", error)
                 if (error.response.status == 401) {
                 } else if (error.response.status == 404) {
                     setHasError(`File could not be found (probably it was deleted)`);
