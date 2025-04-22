@@ -131,7 +131,18 @@ const appStore = createStore<TAppStore>()(
         }),
         {
             name: 'app-store', // Unique name for storage key
-            storage: createJSONStorage(() => indexedDBStorage)
+            storage: createJSONStorage(() => indexedDBStorage),
+            partialize: (state) => ({
+                // List all state properties you want to persist EXCEPT selectedFileInfo
+                user_profile: state.user_profile,
+                session: state.session,
+                files: state.files,
+                apiFileData: state.apiFileData,
+                metamaskAddress: state.metamaskAddress,
+                avatar: state.avatar,
+                backend_url: state.backend_url
+                // selectedFileInfo & setApiFileData is intentionally omitted
+            }),
         }
     )
 );
