@@ -533,7 +533,7 @@ export const DownloadAquaChain = ({ file }: { file: ApiFileInfo }) => {
             // Create a download link
             const link = document.createElement("a");
             link.href = URL.createObjectURL(blob);
-            link.download = "aqua_chain.zip";
+            link.download = "aqua_tree.zip";
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);

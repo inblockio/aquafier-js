@@ -12,6 +12,26 @@ export interface VerifyRequestBody {
 }
 
 
+
+// Define the field type for the "fields" array
+export interface AquaFormFieldRequest {
+  id: string;
+  title: string;
+  name: string;
+  type: string;
+  required: boolean;
+}
+
+// Define the main data model
+export interface AquaFormRequest {
+  id: string;
+  name: string;
+  title: string;
+  public : boolean;
+  fields: AquaFormFieldRequest[];
+}
+
+
 export interface FetchAquaTreeRequest {
   latestRevisionHash: string
 

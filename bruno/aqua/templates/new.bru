@@ -1,0 +1,35 @@
+meta {
+  name: new
+  type: http
+  seq: 1
+}
+
+post {
+  url: http://127.0.0.1:3000/templates
+  body: json
+  auth: inherit
+}
+
+body:json {
+  {
+          "id": "87860b8f-7406-4559-bcb9-0639c577b1db",
+          "name": "data",
+          "title": "sample",
+          "fields": [
+              {
+                  "id": "86050cdc-149f-4297-992a-63b678342a1a",
+                  "label": "one",
+                  "name": "one",
+                  "type": "text",
+                  "required": false
+              },
+              {
+                  "id": "686e5953-2a93-41c8-afc4-7f920596bab3",
+                  "label": "two",
+                  "name": "two",
+                  "type": "text",
+                  "required": false
+              }
+          ]
+      }
+}

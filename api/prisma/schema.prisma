@@ -9,7 +9,7 @@ generator client {
 }
 
 model Users {
-  address       String          @id
+  address       String                     @id
   ens_name      String?
   email         String?
   Latest        Latest[]
@@ -19,11 +19,47 @@ model Users {
   @@map("users")
 }
 
-model UserAttestationAddresses { 
-  id              String   @id @default(uuid())
-  owner     String  
-  address     String  
-  trust_level Int  
+// model AquaForms {
+//   hash            String   @id
+//   key             String?
+//   value           Json?
+//   type            String?
+//   reference_count Int?
+//   Revision        Revision @relation(fields: [hash], references: [pubkey_hash])
+//   @@map("aqua_forms")
+// }
+
+model AquaForms {
+  id                  String           @id
+  owner               String
+  title               String
+  name                String
+  created_at          String
+  public    Boolean
+  form_fields         AquaFormFields[]
+ 
+  @@map("aqua_forms")
+}
+
+model AquaFormFields {
+  id        String  @id
+  aqua_form_id     String
+  name      String
+  title     String
+  type      String
+  mandatory Boolean
+  
+
+  AquaForm AquaForms @relation(fields: [aqua_form_id], references: [id])
+
+  @@map("aqua_form_fields")
+}
+
+model UserAttestationAddresses {
+  id          String @id @default(uuid())
+  owner       String
+  address     String
+  trust_level Int
   User        Users  @relation(fields: [owner], references: [address])
 
   @@map("user_attestation_addresses")
@@ -80,7 +116,7 @@ model Revision {
   Link                Link[]
   // Contract         Contract?
   // FileIndex        FileIndex[]
-  AquaForms           AquaForms[]
+  // AquaForms           AquaForms[]
 
   @@map("revision")
 }
@@ -174,17 +210,6 @@ model MerkleNodes {
   // RightChildNode       MerkleNodes?  @relation("MerkleNodesRightChildRelation", fields: [right_child_hash], references: [node_hash])
 
   @@map("merkle_nodes")
-}
-
-model AquaForms {
-  hash            String   @id
-  key             String?
-  value           Json?
-  type            String?
-  reference_count Int?
-  Revision        Revision @relation(fields: [hash], references: [pubkey_hash])
-
-  @@map("aqua_forms")
 }
 
 model Settings {

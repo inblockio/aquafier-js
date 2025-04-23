@@ -62,7 +62,7 @@ const AquaForms = () => {
     loadTemplates();
   }, []);
 
-  // console.log("Templates: ", JSON.stringify(templates, null, 4))
+  console.log("Templates: ", JSON.stringify(_templates, null, 4))
 
   return (
     <>
