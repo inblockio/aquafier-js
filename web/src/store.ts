@@ -59,7 +59,7 @@ type TAppStore = AppStoreState & AppStoreActions
 
 
 // Open an IndexedDB instance
-const dbPromise = openDB('aquafier-db', 1, {
+const dbPromise = openDB('aquafier-db', 2, {
     upgrade(db) {
         db.createObjectStore('store');
     },
