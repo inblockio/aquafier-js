@@ -88,8 +88,8 @@ const SettingsForm = () => {
                     </Group>
                 </Card.Body>
             </Card.Root>
-            <Field invalid={false} label="ENS Name" errorText="This field is required" >
-                <Input placeholder="ENS Name" value={ensName} onChange={e => setEnsName(e.currentTarget.value)} />
+            <Field invalid={false} label="Alias Name" errorText="This field is required" >
+                <Input placeholder="Alias" value={ensName} onChange={e => setEnsName(e.currentTarget.value)} />
             </Field>
             <Field invalid={false} label="Public address" helperText="self-issued identity claim used for generating/verifying aqua chain" errorText="This field is required">
                 <Input placeholder="User Public address" disabled={true} value={user_profile.user_pub_key} autoComplete="off" />

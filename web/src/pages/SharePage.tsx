@@ -4,23 +4,21 @@ import { useStore } from 'zustand'
 import appStore from '../store'
 import axios from 'axios'
 import { ApiFileInfo } from '../models/FileInfo'
-import { toaster } from '../components/ui/toaster'
+import { toaster } from '../components/chakra-ui/toaster'
 import Loading from 'react-loading'
-import { Box, Card, Center, Collapsible, Container, GridItem, Group, SimpleGrid, VStack } from '@chakra-ui/react'
-import ChainDetails, { RevisionDetailsSummary } from '../components/ui/navigation/CustomDrawer'
-import FilePreview from '../components/FilePreview'
+import { Box, Center, Container, Group, VStack } from '@chakra-ui/react'
 import { ImportAquaChainFromChain } from '../components/dropzone_file_actions'
-import { Alert } from '../components/ui/alert'
-import { LuChevronUp, LuChevronDown } from 'react-icons/lu'
+import { Alert } from '../components/chakra-ui/alert'
+import { IDrawerStatus } from '../models/AquaTreeDetails'
+import { CompleteChainView } from '../components/CustomDrawer'
 
 const SharePage = () => {
     const { backend_url, metamaskAddress, session } = useStore(appStore)
     const [fileInfo, setFileInfo] = useState<ApiFileInfo | null>(null)
-    // const [fetchFromUrl, setFetchFromUrl] = useState(false)
+    const [contractData, setContractData] = useState<any | null>(null)
     const [loading, setLoading] = useState(false)
     const [hasError, setHasError] = useState<string | null>(null);
-    const [isVerificationSuccesful, setIsVerificationSuccessful] = useState(false)
-    const [showMoreDetails, setShowMoreDetails] = useState(false)
+    const [drawerStatus, setDrawerStatus] = useState<IDrawerStatus | null>(null)
 
     const params = useParams()
 
@@ -43,12 +41,16 @@ const SharePage = () => {
                 //  console.log(response)
 
                 if (response.status === 200) {
-                    setFileInfo(response.data[0])
+                    // console.log("Response: ", response.data)
+                    setFileInfo(response.data.data.displayData[0])
+                    setContractData(response.data.data.contractData)
                 }
                 setLoading(false)
             }
             catch (error: any) {
-                if (error.response.status == 404) {
+                // console.log("Error: ", error)
+                if (error.response.status == 401) {
+                } else if (error.response.status == 404) {
                     setHasError(`File could not be found (probably it was deleted)`);
 
                 } else if (error.response.status == 412) {
@@ -69,20 +71,11 @@ const SharePage = () => {
     }
 
     useEffect(() => {
-        // if (fetchFromUrl == false) {
-        //    //  console.log("Trigered ...")
         if (params.identifier) {
             loadPageData()
         }
-        //     setFetchFromUrl(true);
-        // }else{
-        //    //  console.log("No.........Trigered ...") 
-        // }
+        setHasError(null)
     }, [params, session])
-
-    // useEffect(() => {
-    //     loadPageData()
-    // }, [])
 
     const showProperWidget = () => {
         if (hasError) {
@@ -100,30 +93,10 @@ const SharePage = () => {
         return <div />
     }
 
-    const updateVerificationStatus = (revisionResults: Array<boolean>, revisionCount: number) => {
-        //  console.log(`revisionResults   ${revisionResults}   revisionCount ${revisionCount}`)
-        if (revisionResults.length >= revisionCount) {
-            const containsFailure = revisionResults.filter((e) => e == false);
-            if (containsFailure.length > 0) {
-                setIsVerificationSuccessful(false)
-            } else {
-                setIsVerificationSuccessful(true)
-            }
-        }
 
+    const updateDrawerStatus = (_drawerStatus: IDrawerStatus) => {
+        setDrawerStatus(_drawerStatus)
     }
-
-    useEffect(() => {
-        if (fileInfo) {
-            const elementToReplace = document.getElementById('replace-here');
-            const customEvent = new CustomEvent('REPLACE_ADDRESSES', {
-                detail: {
-                    element: elementToReplace,
-                },
-            });
-            window.dispatchEvent(customEvent);
-        }
-    }, [fileInfo])
 
     return (
         <div id='replace-here'>
@@ -147,47 +120,20 @@ const SharePage = () => {
                                 <Group justifyContent={'center'} w={'100%'}>
                                     {
                                         !metamaskAddress ? (
-                                            // <ConnectWallet />
+
                                             <Box />
                                         ) : (
-                                            <ImportAquaChainFromChain fileInfo={fileInfo} isVerificationSuccessful={isVerificationSuccesful} />
+                                            drawerStatus ?
+                                                <ImportAquaChainFromChain fileInfo={fileInfo} contractData={contractData} isVerificationSuccessful={drawerStatus ? drawerStatus?.isVerificationSuccessful : false} />
+                                                : <Box>
+                                                    <Alert status="info">Waiting for Aqua tree verification to complete</Alert>
+                                                </Box>
                                         )
                                     }
                                 </Group>
-
-                                <Box>
-                                    <SimpleGrid columns={{ base: 1, md: 5 }}>
-                                        <GridItem colSpan={{ base: 1, md: 3 }}>
-                                            <Card.Root border={'none'} shadow={'none'} borderRadius={'xl'}>
-                                                <Card.Body>
-                                                    <FilePreview fileInfo={fileInfo.fileObject[0]} />
-                                                </Card.Body>
-                                            </Card.Root>
-                                        </GridItem>
-                                        <GridItem colSpan={{ base: 1, md: 2 }}>
-                                            <Card.Root borderRadius={'lg'} shadow={"none"}>
-                                                <Card.Body>
-                                                    <VStack gap={'4'}>
-                                                        {/* <Alert status={displayColorBasedOnVerificationAlert()} title={displayBasedOnVerificationStatusText()} /> */}
-
-                                                        <RevisionDetailsSummary fileInfo={fileInfo} />
-                                                        <Box w={'100%'}>
-                                                            <Collapsible.Root open={showMoreDetails}>
-                                                                <Collapsible.Trigger w="100%" py={'md'} onClick={() => setShowMoreDetails(open => !open)} cursor={'pointer'}>
-                                                                    <Alert w={'100%'} status={"info"} textAlign={'start'} title={showMoreDetails ? `Show less Details` : `Show more Details`} icon={showMoreDetails ? <LuChevronUp /> : <LuChevronDown />} />
-                                                                </Collapsible.Trigger>
-                                                                <Collapsible.Content py={'4'}>
-                                                                    <ChainDetails session={session!!} fileInfo={fileInfo} callBack={updateVerificationStatus} />
-                                                                </Collapsible.Content>
-                                                            </Collapsible.Root>
-                                                        </Box>
-                                                    </VStack>
-                                                </Card.Body>
-                                            </Card.Root>
-                                        </GridItem>
-                                    </SimpleGrid>
+                                <Box w={"100%"}>
+                                    <CompleteChainView callBack={updateDrawerStatus} selectedFileInfo={fileInfo} />
                                 </Box>
-
                             </VStack>
                         </Container>
                     ) : null

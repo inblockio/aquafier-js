@@ -12,11 +12,11 @@ import {
     Table
 } from '@chakra-ui/react';
 
-import { toaster } from "../components/ui/toaster"
+import { toaster } from "../components/chakra-ui/toaster"
 import { ensureDomainUrlHasSSL } from "../utils/functions"
 import appStore from "../store"
 import { useStore } from "zustand"
-import { DialogCloseTrigger, DialogContent, DialogRoot } from '../components/ui/dialog';
+import { DialogCloseTrigger, DialogContent, DialogRoot } from '../components/chakra-ui/dialog';
 import { AttestationAddressData } from '../models/Attestation';
 
 const AttestationAddresses = () => {

@@ -1,12 +1,12 @@
 import { LuCheck, LuChevronRight, LuDock, LuImport, LuMinus, LuScan, LuUpload, LuX } from "react-icons/lu";
-import { Button } from "./ui/button";
+import { Button } from "./chakra-ui/button";
 import axios from "axios";
 import { useStore } from "zustand";
 import appStore from "../store";
 import { useEffect, useRef, useState } from "react";
 import { ApiFileInfo } from "../models/FileInfo";
-import { toaster } from "./ui/toaster";
-import { formatCryptoAddress, readFileAsText, validateAquaTree, getFileName,   readFileContent, checkIfFileExistInUserFiles, getGenesisHash, ensureDomainUrlHasSSL } from "../utils/functions";
+import { toaster } from "./chakra-ui/toaster";
+import { formatCryptoAddress, readFileAsText, validateAquaTree, getFileName, readFileContent, checkIfFileExistInUserFiles, getGenesisHash, ensureDomainUrlHasSSL } from "../utils/functions";
 import { Box, Container, DialogCloseTrigger, Group, Input, List, Text, VStack } from "@chakra-ui/react";
 import {
     Modal,
@@ -18,13 +18,13 @@ import {
     ModalOverlay,
 } from '@chakra-ui/modal'
 
-import { Alert } from "./ui/alert";
+import { Alert } from "./chakra-ui/alert";
 import { useNavigate } from "react-router-dom";
 import { analyzeAndMergeRevisions } from "../utils/aqua_funcs";
-import { DialogActionTrigger, DialogBody, DialogContent, DialogFooter, DialogHeader, DialogRoot, DialogTitle } from "./ui/dialog";
-import { TimelineConnector, TimelineContent, TimelineDescription, TimelineItem, TimelineRoot, TimelineTitle } from "./ui/timeline";
+import { DialogActionTrigger, DialogBody, DialogContent, DialogFooter, DialogHeader, DialogRoot, DialogTitle } from "./chakra-ui/dialog";
+import { TimelineConnector, TimelineContent, TimelineDescription, TimelineItem, TimelineRoot, TimelineTitle } from "./chakra-ui/timeline";
 import { RevisionsComparisonResult } from "../models/revision_merge";
-import Aquafier, { AquaTree, FileObject, Revision } from "aqua-js-sdk";
+import Aquafier, { AquaTree, FileObject, OrderRevisionInAquaTree, Revision } from "aqua-js-sdk";
 import JSZip from "jszip";
 import { useDisclosure } from '@chakra-ui/hooks'
 import { maxFileSizeForUpload } from "../utils/constants";
@@ -294,8 +294,8 @@ export const ImportAquaTree = ({ file, uploadedIndexes, fileIndex, updateUploade
 
     const { files, metamaskAddress, setFiles, backend_url, session } = useStore(appStore)
 
-  
-    const uploadFileData = async (selectedFile : File | null ) => {
+
+    const uploadFileData = async (selectedFile: File | null) => {
         const formData = new FormData();
         formData.append('file', file);
         formData.append('has_asset', `${selectedFile != null}`);
@@ -368,7 +368,7 @@ export const ImportAquaTree = ({ file, uploadedIndexes, fileIndex, updateUploade
             }
 
             let actualUrlToFetch = ensureDomainUrlHasSSL(backend_url)
-          
+
 
             // Fetch the file from the URL
             const response = await fetch(`${actualUrlToFetch}/files/${fileHash}`, {
@@ -483,7 +483,7 @@ export const ImportAquaTree = ({ file, uploadedIndexes, fileIndex, updateUploade
     }
 
     const modalSelectedFile = async (file: File) => {
-        
+
 
         // Verify file hash matches required hash
         if (requiredFileHash) {
@@ -613,8 +613,8 @@ export const ImportAquaTree = ({ file, uploadedIndexes, fileIndex, updateUploade
                                 onDragOver={handleDragOver}
                                 bg="gray.50"
                             >
-                                <Text mb={2}  color={'black'} fontSize="14px">Drag and drop file here</Text>
-                                <Text fontSize="14px"  color={'black'} >or</Text>
+                                <Text mb={2} color={'black'} fontSize="14px">Drag and drop file here</Text>
+                                <Text fontSize="14px" color={'black'} >or</Text>
                                 <Button
                                     mt={2}
                                     onClick={() => fileInputRef.current?.click()}
@@ -634,9 +634,9 @@ export const ImportAquaTree = ({ file, uploadedIndexes, fileIndex, updateUploade
                                 />
                             </Box>
 
-                            {selectedFileName.length > 0  ? 
+                            {selectedFileName.length > 0 ?
                                 <Text fontSize="14px">Selected: {selectedFileName}</Text>
-                            : <></>}
+                                : <></>}
                         </VStack>
                     </ModalBody>
 
@@ -921,14 +921,14 @@ export const ImportAquaChainFromFile = ({ file, uploadedIndexes, fileIndex, upda
     )
 }
 
-interface ImportChainFromChainProps { fileInfo: ApiFileInfo, isVerificationSuccessful: boolean }
+interface ImportChainFromChainProps { fileInfo: ApiFileInfo, isVerificationSuccessful: boolean | null, contractData?: any }
 
 interface BtnContent {
     text: string
     color: string
 }
 
-export const ImportAquaChainFromChain = ({ fileInfo, isVerificationSuccessful }: ImportChainFromChainProps) => {
+export const ImportAquaChainFromChain = ({ fileInfo, isVerificationSuccessful, contractData }: ImportChainFromChainProps) => {
 
     const [uploading, setUploading] = useState(false)
     const [_uploaded, setUploaded] = useState(false)
@@ -947,7 +947,7 @@ export const ImportAquaChainFromChain = ({ fileInfo, isVerificationSuccessful }:
 
     //  console.log(revisionsToImport)
 
-    const { metamaskAddress, setFiles, files, backend_url, session } = useStore(appStore)
+    const { files, backend_url, session } = useStore(appStore)
 
     let navigate = useNavigate();
 
@@ -955,6 +955,8 @@ export const ImportAquaChainFromChain = ({ fileInfo, isVerificationSuccessful }:
     //  console.log("My db files: ", dbFiles)
 
     const importAquaChain = async () => {
+        // Early check to prevent recursion if already processing
+        if (uploading) return;
 
         const existingChainFile = dbFiles.find(file => Object.keys(file?.aquaTree?.revisions ?? {})[0] === Object.keys(fileInfo?.aquaTree?.revisions ?? {})[0])
 
@@ -963,7 +965,6 @@ export const ImportAquaChainFromChain = ({ fileInfo, isVerificationSuccessful }:
         // 3. if the  importing chain has  same length or bigger/smmal but divergent revision
 
         if (existingChainFile) {
-
             const existingFileRevisions = Object.keys(existingChainFile?.aquaTree?.revisions ?? {})
             const fileToImportRevisions = Object.keys(fileInfo?.aquaTree?.revisions ?? {})
 
@@ -1004,83 +1005,52 @@ export const ImportAquaChainFromChain = ({ fileInfo, isVerificationSuccessful }:
                 }
             }
 
-            ////  console.log(mergeResult)
             setComparisonResult(mergeResult)
             setLastIdenticalRevisionHash(mergeResult.lastIdenticalRevisionHash)
             setRevisionsToImport(_revisionsToImport)
             setModalOpen(true)
-
-            // TODO: FIX ME
-            // setExistingFileId(existingChainFile.id)
-
-
-            // toaster.create({
-            //     description: `You already have the file called "${fileInfo.name}". Delete before importing this `,
-            //     type: "error"
-            // })
             return
         }
-
-        // Create a JSON file from the page_data object
-        const fileData = JSON.stringify(fileInfo?.aquaTree, null, 4) // JSON.stringify(fileInfo.page_data, null, 2); // Convert to JSON string
-        let fileName = fileInfo.fileObject[0].fileName
-
-        // Object.keys(e)
-
-        const file = new File([fileData], fileName, {
-            type: "application/json",
-        });
-
-        if (!file) {
-            toaster.create({
-                description: "No file selected!",
-                type: "error"
-            })
-            return;
-        }
-
-        const formData = new FormData();
-        formData.append('file', file);
-        formData.append('account', `${metamaskAddress}`);
 
         setUploading(true)
 
         try {
-            const url = `${backend_url}/explorer_aqua_file_upload`
-            //  console.log("importAquaChain url ", url)
-            const response = await axios.post(url, formData, {
+            const url = `${backend_url}/transfer_chain`
+            const reorderedRevisions = OrderRevisionInAquaTree(fileInfo.aquaTree!!)
+            const revisions = reorderedRevisions.revisions
+            const revisionHashes = Object.keys(revisions)
+            const latestRevisionHash = revisionHashes[revisionHashes.length - 1]
+            console.log("Latest revision hash: ", latestRevisionHash)
+
+            const res = await axios.post(url, {
+                latestRevisionHash: latestRevisionHash,
+                userAddress: contractData.sender
+            }, {
                 headers: {
-                    'Content-Type': 'multipart/form-data',
-                    "metamask_address": metamaskAddress,
                     "nonce": session?.nonce
-                },
-            });
-
-            const res = response.data
-
-            // let logs: Array<string> = res.logs
-            // logs.forEach((item) => {
-            //    //  console.log("**>" + item + "\n.")
-            // })
-
-            console.log(`=> Upload res:  ${res} \n `)
-
-            // Assuming the API returns an array of FileInfo objects
-            const file: ApiFileInfo = fileInfo;
-            setFiles([...files, file])
-            // setUploadedFilesIndexes(value => [...value, fileIndex])
-            toaster.create({
-                description: "Aqua Chain imported successfully",
-                type: "success"
+                }
             })
+
+            console.log("Transfer chain res: ", res)
+            if (res.status === 200) {
+                toaster.create({
+                    description: "Aqua Chain imported successfully",
+                    type: "success"
+                })
+
+                // Use setTimeout to ensure state is updated before navigation
+                setTimeout(() => {
+                    navigate("/loading?reload=true");
+                }, 500);
+            } else {
+                toaster.create({
+                    description: "Failed to import chain",
+                    type: "error"
+                })
+            }
+
             setUploading(false)
             setUploaded(true)
-
-            
-            // This navigate doesn't go to fsa page why?
-            // navigate("/loading?reload=true");
-
-            // window.location.reload()
             return;
         } catch (error) {
             setUploading(false)
@@ -1092,115 +1062,166 @@ export const ImportAquaChainFromChain = ({ fileInfo, isVerificationSuccessful }:
     };
 
     const handleMergeRevisions = async () => {
+        // try {
+        //     setUploading(true)
+        //     const revisionsToImport: Array<[string, Revision]> = []
+        //     const revisionsToDelete: Array<string> = []
+        //     const existingChainFile = dbFiles.find(file => Object.keys(file?.aquaTree?.revisions ?? {})[0] === Object.keys(fileInfo?.aquaTree?.revisions ?? {})[0])
+
+        //     comparisonResult?.divergences?.forEach((divergence) => {
+        //         const upcomingRevisionHash = divergence.upcomingRevisionHash
+        //         const outgoingRevisionHash = divergence.existingRevisionHash
+        //         if (outgoingRevisionHash) {
+        //             revisionsToDelete.push(outgoingRevisionHash)
+        //         }
+        //         if (!upcomingRevisionHash) return
+
+        //         if (existingChainFile) {
+        //             const fileToImportRevisions = fileInfo?.aquaTree?.revisions
+        //             let revisionToImport = fileToImportRevisions?.[upcomingRevisionHash]
+        //             if (!revisionToImport) return
+        //             revisionsToImport.push([upcomingRevisionHash, revisionToImport])
+        //         }
+        //     })
+
+        //     // Process deletions first if needed
+        //     if (revisionsToDelete.length > 0) {
+        //         const revisionHashes = revisionsToDelete.join(",")
+        //         const revisionDeleteUrl = `${backend_url}/tree`;
+        //         try {
+        //             let deletionResults = await axios.delete(revisionDeleteUrl, {
+        //                 data: {
+        //                     revisionHash: revisionHashes
+        //                 },
+        //                 params: {
+        //                 },
+        //                 headers: {
+        //                     "nonce": session?.nonce
+        //                 }
+        //             })
+
+        //             console.log("Deletion results: ", deletionResults)
+        //         } catch (error: any) {
+        //             console.log("Deletion Error: ", error)
+        //             toaster.create({
+        //                 title: "Revision Deletion Error",
+        //                 description: `An error occurred deleting some revisions: ${error}`,
+        //                 type: "error"
+        //             })
+        //         }
+        //     }
+
+        //     // Then handle imports
+        //     let importSuccessful = true;
+        //     if (revisionsToImport.length > 0) {
+        //         const url = `${backend_url}/tree`;
+        //         for (const revision of revisionsToImport) {
+        //             try {
+        //                 let res = await axios.post(url, {
+        //                     "revision": revision[1],
+        //                     "revisionHash": revision[0],
+        //                 }, {
+        //                     headers: {
+        //                         "nonce": session?.nonce
+        //                     }
+        //                 })
+        //                 if (res.status !== 200) {
+        //                     importSuccessful = false;
+        //                     break;
+        //                 }
+        //             } catch (e) {
+        //                 importSuccessful = false;
+        //                 break;
+        //             }
+        //         }
+        //     }
+
+        //     // Only show one success/error message after all operations
+        //     if (importSuccessful) {
+        //         toaster.create({
+        //             title: "Aqua chain import",
+        //             description: "Chain merged successfully",
+        //             type: "success"
+        //         })
+        //         // Navigate only once after all operations are complete
+        //         setTimeout(() => navigate("/loading?reload=true"), 500);
+        //     } else {
+        //         toaster.create({
+        //             title: "Aqua chain import failed",
+        //             description: "Chain merge failed",
+        //             type: "error"
+        //         })
+        //     }
+
+        //     setUploading(false)
+        // } catch (e: any) {
+        //     setUploading(false)
+        //     if (e.message) {
+        //         toaster.create({
+        //             title: "Error occurred",
+        //             description: e.message,
+        //             type: "error"
+        //         })
+        //     }
+        // }
+
         try {
-            setUploading(true)
-            const revisionsToImport: Array<[string, Revision]> = []
-            const revisionsToDelete: Array<string> = []
-            const existingChainFile = dbFiles.find(file => Object.keys(file?.aquaTree?.revisions ?? {})[0] === Object.keys(fileInfo?.aquaTree?.revisions ?? {})[0])
+            const url = `${backend_url}/merge_chain`
+            const reorderedRevisions = OrderRevisionInAquaTree(fileInfo.aquaTree!!)
+            const revisions = reorderedRevisions.revisions
+            const revisionHashes = Object.keys(revisions)
+            const latestRevisionHash = revisionHashes[revisionHashes.length - 1]
+            // console.log("Latest revision hash: ", latestRevisionHash)
 
-            comparisonResult?.divergences?.forEach((divergence) => {
-                const upcomingRevisionHash = divergence.upcomingRevisionHash
-                const outgoingRevisionHash = divergence.existingRevisionHash
-                if (outgoingRevisionHash) {
-                    revisionsToDelete.push(outgoingRevisionHash)
-                }
-                if (!upcomingRevisionHash) return
-
-                if (existingChainFile) {
-                    const fileToImportRevisions = fileInfo?.aquaTree?.revisions
-                    let revisionToImport = fileToImportRevisions?.[upcomingRevisionHash]
-                    if (!revisionToImport) return
-                    revisionsToImport.push([upcomingRevisionHash, revisionToImport])
+            const res = await axios.post(url, {
+                latestRevisionHash: latestRevisionHash,
+                userAddress: contractData.sender,
+                mergeStrategy: "fork"
+            }, {
+                headers: {
+                    "nonce": session?.nonce
                 }
             })
 
-            console.log(comparisonResult)
-
-            console.log("Revisions to Delete: ", revisionsToDelete)
-            const revisionHashes = revisionsToDelete.join(",")
-            const revisionDeleteUrl = `${backend_url}/tree`;
-            console.log("----- Revisions to delete: ", revisionsToDelete)
-            try {
-                let deletionResults = await axios.delete(revisionDeleteUrl, {
-                    data: {
-                        revisionHash: revisionHashes
-                    },
-                    params: {
-                    },
-                    headers: {
-                        "nonce": session?.nonce
-                    }
+            // console.log("Transfer chain res: ", res)
+            if (res.status === 200) {
+                toaster.create({
+                    description: "Aqua Chain imported successfully",
+                    type: "success"
                 })
 
-                console.log("Deletion results: ", deletionResults)
-            }
-            catch (error: any) {
-                console.log("Deletion Error: ", error)
+                // Use setTimeout to ensure state is updated before navigation
+                setTimeout(() => {
+                    navigate("/loading?reload=true");
+                }, 500);
+            } else {
                 toaster.create({
-                    title: "Revision Deletion Error",
-                    description: `An error occured deleting some revisions: ${error}`,
+                    description: "Failed to import chain",
                     type: "error"
                 })
             }
 
-            // Delete the existing revisions
-            // setUploading(false)
-
-            const url = `${backend_url}/tree`;
-            // // make this work sequentially, one after the other
-            for (const revision of revisionsToImport) {
-
-                try {
-                    let res = await axios.post(url, {
-                        "revision": revision[1],
-                        "revisionHash": revision[0],
-                    }, {
-                        headers: {
-                            "nonce": session?.nonce
-                        }
-                    })
-                    if (res.status == 200) {
-
-                        toaster.create({
-                            title: "Aqua chain import",
-                            description: "Chain merged successfully",
-                            type: "success"
-                        })
-                    } else {
-                        toaster.create({
-                            title: "Aqua chain import failed..",
-                            description: "Chain merged failed...",
-                            type: "error"
-                        })
-                    }
-                } catch (e) {
-                    toaster.create({
-                        title: "Aqua chain import failed",
-                        description: "Chain merged failed",
-                        type: "error"
-                    })
-                    break
-                }
-            }
-            navigate("/loading?reload=true");
             setUploading(false)
-        } catch (e: any) {
+            setUploaded(true)
+            return;
+        } catch (error) {
             setUploading(false)
-            if (e.message) {
-                toaster.create({
-                    title: "Error occured",
-                    description: e.message,
-                    type: "error"
-                })
-            }
+            toaster.create({
+                description: `Failed to import chain: ${error}`,
+                type: "error"
+            })
         }
     }
 
     //  console.log(comparisonResult)
 
     useEffect(() => {
-        setDbFiles(files)
-    }, [files])
+        // Only update dbFiles if files have actually changed
+        // This prevents unnecessary re-renders and potential recursion
+        if (JSON.stringify(files) !== JSON.stringify(dbFiles)) {
+            setDbFiles(files);
+        }
+    }, [files]);
 
     return (
         <Container maxW={'xl'}>
@@ -1209,7 +1230,9 @@ export const ImportAquaChainFromChain = ({ fileInfo, isVerificationSuccessful }:
                     <Text>
                         Do you want to import this Aqua Chain?
                     </Text>
-                    <Button size={'lg'} colorPalette={'blue'} variant={'solid'} onClick={importAquaChain} disabled={!isVerificationSuccessful} loading={uploading}>
+                    <Button size={'lg'} colorPalette={'blue'} variant={'solid'} onClick={importAquaChain}
+                    // disabled={!isVerificationSuccessful} loading={uploading}
+                    >
                         <LuImport />
                         Import
                     </Button>

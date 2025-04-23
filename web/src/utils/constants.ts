@@ -7,10 +7,11 @@ export const SEPOLIA_SMART_CONTRACT_ADDRESS = "0x45f59310ADD88E6d23ca58A0Fa7A55B
 // export const await API_ENDPOINT() = `http://${import.meta.env.VITE_REMOTE || '127.0.0.1'}:${ import.meta.env.VITE_REMOTE_PORT || 3600}`;
 
 
+export const maxUserFileSizeForUpload = 1024 * 1024 * 1000; // 1 GB in bytes
 export const maxFileSizeForUpload = 200 * 1024 * 1024; // 200MB in bytes
 
 export const SESSION_COOKIE_NAME = "pkc_nonce"
-
+export const ERROR_TEXT="--error--"
 export const ETH_CHAINID_MAP: Record<string, string> = {
   'mainnet': '0x1',
   'sepolia': '0xaa36a7',
@@ -76,25 +77,6 @@ export const initializeBackendUrl = async (): Promise<string> => {
   return BACKEND_URL;
 };
 
-
-// const BACKEND_URL = "0.0.0.0.0";
-// Generate endpoints function
-// export const ENDPOINTS = () => ({
-// SIWE_SIGN_IN: `${BACKEND_URL}/siwe`,
-// FETCH_ADDRESS_BY_NONCE: `${BACKEND_URL}/session`,
-// SIWE_SIGN_OUT: `${BACKEND_URL}/siwe_logout`,
-
-// FETCH_USER_PROFILE: `${BACKEND_URL}/explorer_fetch_user_settings`,
-// UPDATE_USER_PROFILE: `${BACKEND_URL}/explorer_update_user_settings`,
-
-// EXPOLORER_FETCH_FILES: `${BACKEND_URL}/explorer_files`,
-// SIGN_FILE: `${BACKEND_URL}/explorer_sign_revision`,
-// WITNESS_FILE: `${BACKEND_URL}/explorer_witness_file`,
-// DELETE_FILE: `${BACKEND_URL}/explorer_delete_file`,
-// UPLOAD_FILE: `${BACKEND_URL}/explorer_file_upload`,
-// IMPORT_AQUA_CHAIN: `${BACKEND_URL}/explorer_aqua_file_upload`,
-// DELETE_ALL_FILES: `${BACKEND_URL}/explorer_delete_all_files`,
-// });
 
 
 export const testWitness = {

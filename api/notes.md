@@ -112,7 +112,6 @@
             
             RAISE NOTICE 'All tables have been emptied.';
         END $$;
-
     ```
 
 
@@ -131,3 +130,7 @@ select pubkey_hash from revision;
 select file_hash, reference_count from file;
 select file_hash, reference_count from file_index;
 ```
+
+## Testing
+
+https://www.youtube.com/watch?v=gq8ZQrBJb2M&t=640s&ab_channel=TomDoesTech

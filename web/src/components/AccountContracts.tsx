@@ -1,9 +1,9 @@
 import { useEffect, useState } from "react";
-import { DialogBody, DialogCloseTrigger, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "../dialog";
+import { DialogBody, DialogCloseTrigger, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "./chakra-ui/dialog";
 import { Circle, Dialog, Float, HStack, IconButton, Stack, Text } from "@chakra-ui/react";
 import { LuLink2, LuShare2 } from "react-icons/lu";
 import { useStore } from 'zustand'
-import appStore from '../../../store'
+import appStore from '../store'
 import axios from "axios";
 import { Link } from "react-router-dom";
 
@@ -27,7 +27,7 @@ export default function AccountContracts() {
         }
     }
 
-    console.log(contracts)
+    // console.log(contracts)
 
     useEffect(() => {
         loadAccountSharedContracts()

@@ -15,8 +15,12 @@ import {
 import { forwardRef, useEffect, useState } from "react"
 import { LuFile, LuUpload, LuX } from "react-icons/lu"
 import { FormRevisionFile, ImportAquaTree, ImportAquaTreeZip, UploadFile } from "../dropzone_file_actions"
-import { determineFileType, isJSONFile, isJSONKeyValueStringContent, isZipFile, readFileContent } from "../../utils/functions"
+import { determineFileType, getFileName, isJSONFile, isJSONKeyValueStringContent, isZipFile, readFileContent } from "../../utils/functions"
 import React from "react"
+import appStore from "../../store"
+import { useStore } from "zustand"
+import { toaster } from "./toaster"
+import { maxUserFileSizeForUpload } from "../../utils/constants"
 // import ImportByModal from "../ImportByModal"
 
 export interface FileUploadRootProps extends ChakraFileUpload.RootProps {
@@ -80,7 +84,7 @@ const FileUploadItem = (props: FileUploadItemProps) => {
 
   const isZIp = isZipFile(file.name)
   const [isJsonForm, setIsJsonForm] = useState<boolean>(false)
-
+  const { files } = useStore(appStore);
   useEffect(() => {
     const checkFileContent = async () => {
       if (isJson) {
@@ -105,6 +109,26 @@ const FileUploadItem = (props: FileUploadItemProps) => {
   }
 
   const showUploadIcon = () => {
+
+    let totoalSize = 0;
+    for (let fileItem of files) {
+      let fileName = getFileName(fileItem.aquaTree!!)
+      let size = fileItem.fileObject.find((e) => e.fileName == fileName);
+      if (size) {
+        totoalSize = size.fileSize ?? 0 + totoalSize
+      }
+    }
+
+    totoalSize = totoalSize +  file.size
+
+    // console.log(`totoalSize ${totoalSize} -- maxUserFileSizeForUpload ${maxUserFileSizeForUpload}`)
+    if (totoalSize >= maxUserFileSizeForUpload) {
+      toaster.create({
+        description: `Please obtain a licence to upload more file`,
+        type: "info"
+      })
+      return;
+    }
 
     if (isJson) {
       return <>

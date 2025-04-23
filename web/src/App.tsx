@@ -23,14 +23,6 @@ function App() {
   const {  setBackEndUrl } = useStore(appStore)
 
 
-  const verifyAquaChain = async() => {
-
-    // const aquaProtocol = new Aquafier()
-
-    // let result = await aquaProtocol.verifyWitness(testWitness as any, false)
-    ////  console.log("Result:", result)
-  }
-
   useEffect(() => {
    //  console.log("backedn url is", backend_url);
     // Properly handle async initialization
@@ -41,12 +33,6 @@ function App() {
 
     initBackend();
   }, []); // Empty dependency array means this runs once on mount
-
-
-
-  useEffect(() => {
-    verifyAquaChain()
-  }, [])
 
   return (
     <BrowserRouter>

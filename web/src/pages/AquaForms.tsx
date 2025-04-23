@@ -14,11 +14,11 @@ import {
 import FormTemplateEditor from '../components/aqua_forms/FormTemplateEditor';
 import { FormTemplate, getFormTemplates } from '../components/aqua_forms';
 import FormTemplateList from '../components/aqua_forms/FormTemplateList';
-import { DialogCloseTrigger, DialogContent, DialogRoot } from '../components/ui/dialog';
+import { DialogCloseTrigger, DialogContent, DialogRoot } from '../components/chakra-ui/dialog';
 import FormTemplateViewer from '../components/aqua_forms/FormTemplateViewer';
 
 const AquaForms = () => {
-  const [templates, setTemplates] = useState<FormTemplate[]>([]);
+  const [_templates, setTemplates] = useState<FormTemplate[]>([]);
   const [selectedTemplate, setSelectedTemplate] = useState<FormTemplate | null>(null);
 
   const {
@@ -62,7 +62,7 @@ const AquaForms = () => {
     loadTemplates();
   }, []);
 
-  console.log("Templates: ", JSON.stringify(templates, null, 4))
+  // console.log("Templates: ", JSON.stringify(templates, null, 4))
 
   return (
     <>

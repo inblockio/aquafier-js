@@ -1,8 +1,8 @@
 import { Box, Group, HStack, Image, LinkBox, Text } from "@chakra-ui/react"
-import Settings from "../settings"
+import Settings from "./chakra-ui/settings"
 import ConnectWallet from "./ConnectWallet"
-import { useColorMode } from "../color-mode"
-import appStore from "../../../store"
+import { useColorMode } from "./chakra-ui/color-mode"
+import appStore from "../store"
 import { useStore } from "zustand"
 import VersionAndDisclaimer from "./VersionAndDisclaimer"
 import { Link } from "react-router-dom"
@@ -28,7 +28,7 @@ const navlinks: INavlinkItem[] = [
 
 const CustomNavlinkItem = ({ label, to }: INavlinkItem) => {
 
-    
+
     return (
         <Link to={to}>
             <LinkBox>
@@ -50,14 +50,14 @@ const Navbar = () => {
                     <Link to={'/'} style={{ height: "100%", display: "flex", alignItems: "center" }}>
                         <Image src={colorMode === 'light' ? "/images/logo.png" : "/images/logo-dark.png"} maxH={'60%'} />
                     </Link>
-                    <Group>
-                        {
-                            navlinks.map((item, i: number) => (
-                                <CustomNavlinkItem key={`navitem_${i}`} {...item} />
-                            ))
-                        }
-                    </Group>
-                    <HStack h={'100%'} justifyContent={'space-between'}>
+                    <HStack h={'100%'} gap={"4"} justifyContent={'space-between'}>
+                        <Group gap={4}>
+                            {
+                                navlinks.map((item, i: number) => (
+                                    <CustomNavlinkItem key={`navitem_${i}`} {...item} />
+                                ))
+                            }
+                        </Group>
                         <VersionAndDisclaimer />
                         <ConnectWallet />
                         {

@@ -87,12 +87,17 @@ export default async function userController(fastify: FastifyInstance) {
             ensName = await fetchEnsName(address, infuraProjectId)
         }
         if (ensName) {
-            await prisma.users.update({
+            await prisma.users.upsert({
                 where: {
                     address: address,
                 },
-                data: {
-                    ens_name: ensName
+                update:{
+
+                },
+                create: {
+                    ens_name: ensName,
+                    address:address,
+                    email:''
                 }
             });
 
@@ -133,7 +138,7 @@ export default async function userController(fastify: FastifyInstance) {
         }
 
 
-    })    
+    })
 
     fastify.post('/attestation_address', async (request, reply) => {
         // Authenticate the user
@@ -431,6 +436,27 @@ export default async function userController(fastify: FastifyInstance) {
                 // 1c. Delete Witness records (depends on Revision)
                 // We need to handle this first because Witness has a foreign key to Revision
                 if (revisionHashes.length > 0) {
+
+                    let res = await tx.witness.findMany({
+                        where: {
+                            hash: {
+                                in: revisionHashes
+                            }
+                        }
+                    })
+                    if (res) {
+                        
+                        let roots = res.map((e) => e.Witness_merkle_root ?? "")
+                        await tx.witnessEvent.deleteMany({
+                            where: {
+                                Witness_merkle_root: {
+                                    in: roots,
+                                    mode: 'insensitive'
+                                }
+                            }
+                        });
+
+                    }
                     await tx.witness.deleteMany({
                         where: {
                             hash: {

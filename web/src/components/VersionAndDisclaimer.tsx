@@ -1,14 +1,14 @@
 import { useEffect, useState } from "react";
-import { Button } from "../button";
-import { DialogBody, DialogCloseTrigger, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "../dialog";
+import { Button } from "./chakra-ui/button";
+import { DialogBody, DialogCloseTrigger, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "./chakra-ui/dialog";
 import { Center, Dialog, Link, Spacer, Text, VStack } from "@chakra-ui/react";
 import { LuMessageCircleWarning } from "react-icons/lu";
 import { useStore } from 'zustand'
-import appStore from '../../../store'
-import { Alert } from "../alert";
+import appStore from '../store'
+import { Alert } from "./chakra-ui/alert";
 import axios from "axios";
-import { toaster } from "../toaster";
-import VersionDetails from "../../../models/VersionDetails";
+import { toaster } from "./chakra-ui/toaster";
+import VersionDetails from "../models/VersionDetails";
 
 export default function VersionAndDisclaimer() {
     //   const {  es, avatar, setAvatar, setUserProfile, backend_url } = useStore(appStore);

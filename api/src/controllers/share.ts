@@ -4,7 +4,7 @@ import { prisma } from '../database/db';
 import { Settings } from '@prisma/client';
 import { SessionQuery, ShareRequest, SiweRequest } from '../models/request_models';
 // import { verifySiweMessage } from '../utils/auth_utils';
-import { AquaTree, FileObject, OrderRevisionInAquaTree } from 'aqua-js-sdk';
+import { AquaTree, FileObject, OrderRevisionInAquaTree, reorderAquaTreeRevisionsProperties } from 'aqua-js-sdk';
 import { getHost, getPort } from '../utils/api_utils';
 import { createAquaTreeFromRevisions, fetchAquaTreeWithForwardRevisions, saveAquaTree } from '../utils/revisions_utils';
 
@@ -52,7 +52,7 @@ export default async function shareController(fastify: FastifyInstance) {
 
             }
 
-            if (contractData?.receiver != "0xfabacc150f2a0000000000000000000000000000" && contractData?.receiver != session.address) {
+            if (contractData?.receiver?.toLowerCase() != "0xfabacc150f2a0000000000000000000000000000" && contractData?.receiver != session.address) {
                 return reply.code(401).send({ success: false, message: "The aqua tree is not shared with you" });
             }
 
@@ -76,26 +76,41 @@ export default async function shareController(fastify: FastifyInstance) {
             let anAquaTree: AquaTree
             let fileObject: FileObject[]
             let revision_pubkey_hash = `${contractData.sender}_${contractData.latest}`
-           //  console.log(`revision_pubkey_hash == > ${revision_pubkey_hash}`);
-            
+            //  console.log(`revision_pubkey_hash == > ${revision_pubkey_hash}`);
+
             if (contractData.option == "latest") {
-                [anAquaTree, fileObject] = await fetchAquaTreeWithForwardRevisions(revision_pubkey_hash, url)
+                let [_anAquaTree, _fileObject] = await fetchAquaTreeWithForwardRevisions(revision_pubkey_hash, url)
+                
+                let orderRevisionPrpoerties = reorderAquaTreeRevisionsProperties(_anAquaTree)
+                let sortedAquaTree = OrderRevisionInAquaTree(orderRevisionPrpoerties)
+                
+                anAquaTree = sortedAquaTree
+                fileObject = _fileObject
+
             } else {
-                [anAquaTree, fileObject] = await createAquaTreeFromRevisions(revision_pubkey_hash, url)
+                let [_anAquaTree, _fileObject] = await createAquaTreeFromRevisions(revision_pubkey_hash, url)
+                let orderRevisionPrpoerties = reorderAquaTreeRevisionsProperties(_anAquaTree)
+                let sortedAquaTree = OrderRevisionInAquaTree(orderRevisionPrpoerties)
+
+                anAquaTree = sortedAquaTree
+                fileObject = _fileObject
 
             }
-            let sortedAquaTree = OrderRevisionInAquaTree(anAquaTree)
+            // let sortedAquaTree = OrderRevisionInAquaTree(anAquaTree)
 
-           //  console.log(`Aqua tree ${JSON.stringify(sortedAquaTree)}`);
+            //  console.log(`Aqua tree ${JSON.stringify(sortedAquaTree)}`);
 
             displayData.push({
-                aquaTree: sortedAquaTree,
+                aquaTree: anAquaTree,
                 fileObject: fileObject
             })
 
             // return aqua tree
-            return displayData
-
+            // return displayData
+            return reply.code(200).send({ success: true, data: {
+                displayData: displayData,
+                contractData: contractData
+            } });
 
         } catch (error) {
             console.error("Error fetching session:", error);
@@ -223,7 +238,10 @@ export default async function shareController(fastify: FastifyInstance) {
         const contracts = await prisma.contract.findMany({
             where: {
                 genesis_hash: genesis_hash,
-                sender : session?.address
+                sender: {
+                    equals: session?.address,
+                    mode: 'insensitive'
+                }
             }
         });
         return reply.code(200).send({ success: true, contracts });
@@ -284,7 +302,6 @@ export default async function shareController(fastify: FastifyInstance) {
     });
 
     // Create an endpoint for filtering contracts, ie filter by sender, receiver, hash, etc
-
     fastify.get('/contracts', async (request, reply) => {
         const { sender, receiver, hash } = request.query as { sender?: string, receiver?: string, hash?: string };
 
@@ -308,9 +325,15 @@ export default async function shareController(fastify: FastifyInstance) {
 
         const contracts = await prisma.contract.findMany({
             where: {
-                sender,
-                receiver,
-                hash
+                sender: {
+                    equals: sender,
+                    mode: 'insensitive'
+                },
+                receiver: {
+                    equals: receiver,
+                    mode: 'insensitive'
+                },
+                hash: hash
             }
         });
         return reply.code(200).send({ success: true, contracts });

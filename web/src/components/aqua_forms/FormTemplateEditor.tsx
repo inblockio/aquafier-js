@@ -17,9 +17,9 @@ import {
   Input,
   Button,
 } from '@chakra-ui/react'
-import { Field } from '../ui/field';
+import { Field } from '../chakra-ui/field';
 import { useRef, useState } from 'react';
-import { Switch } from '../ui/switch';
+import { Switch } from '../chakra-ui/switch';
 
 
 const fieldTypes = createListCollection({
@@ -124,7 +124,6 @@ const FormTemplateEditor = ({ initialTemplate, onSave }: FormTemplateEditorProps
     try {
       const formValues = getValues()
       formValues.fields = formFields
-      console.log("Form values: ", formValues)
       saveFormTemplate(formValues);
       // showToast('Form template saved', 'success');
       onSave();

@@ -55,7 +55,7 @@ export async function checkAndUseExtension() {
         const isInstalled = await isExtensionInstalled(EXTENSION_ID);
 
         if (isInstalled) {
-            console.log('Extension is installed!');
+          //  console.log('Extension is installed!');
 
             // Example: Call a specific function in the extension
             const result = await sendMessageToExtension(EXTENSION_ID, {
@@ -69,7 +69,7 @@ export async function checkAndUseExtension() {
                 }
             });
 
-            console.log('Function call result:', result);
+           console.log('Function call result:', result);
         } else {
             console.log('Extension is not installed.');
         }

@@ -1,5 +1,5 @@
 import { Box, GridItem, Group, Image, SimpleGrid, StatRoot, Text, VStack } from "@chakra-ui/react";
-import { StatHelpText, StatLabel } from "./ui/stat";
+import { StatHelpText, StatLabel } from "./chakra-ui/stat";
 import { LuDot } from "react-icons/lu";
 import { UiFileTypes } from "../models/UiFileTypes";
 import { ApiFileInfo } from "../models/FileInfo";
