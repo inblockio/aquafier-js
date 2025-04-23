@@ -9,7 +9,7 @@ interface ExtendedAquaTree extends AquaTree {
 }
 
 // --- Internal Helper Functions --- //
-
+ 
 /**
  * Recursively fetches all ancestor revisions starting from a given hash.
  * @param revisionHash The starting revision hash (including user address prefix).

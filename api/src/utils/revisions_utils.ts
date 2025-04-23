@@ -7,7 +7,7 @@ import path from 'path';
 
 export function removeFilePathFromFileIndex(aquaTree: AquaTree): AquaTree {
 
-
+ 
     // Create a new file_index object
     const processedFileIndex: FileIndex |  any = {};
 
@@ -589,6 +589,7 @@ export async function createAquaTreeFromRevisions(latestRevisionHash: string, ur
             }
 
             if (revisionItem.revision_type == "file") {
+                console.log("Hash only: ", hashOnly)
                 let fileResult = await prisma.file.findFirst({
                     where: {
                         hash: {
@@ -596,14 +597,18 @@ export async function createAquaTreeFromRevisions(latestRevisionHash: string, ur
                             mode: 'insensitive' // Case-insensitive matching
                         }
                     }
-
+                    
                 })
+                console.log("File result: ", fileResult)
                 if (fileResult == null) {
                     // throw Error("Revision file data  not found")
+                    console.log("We fail here")
                     console.error(`💣💣💣💣 hash not found in file hash => ${hashOnly}`)
-                } else
+                } else{
+
                     revisionWithData["file_nonce"] = revisionItem.nonce ?? "--error--"
-                revisionWithData["file_hash"] = fileResult?.file_hash ?? "--error--"
+                    revisionWithData["file_hash"] = fileResult?.file_hash ?? "--error--"
+                }
             } else {
                 let revisionInfoData = await FetchRevisionInfo(revisionItem.pubkey_hash, revisionItem)
 

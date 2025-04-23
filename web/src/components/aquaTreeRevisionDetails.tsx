@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { LuCheck, LuExternalLink, LuTrash, LuX } from "react-icons/lu"
-import { Box, Button, Card, Collapsible, For, Group, Icon, IconButton, Link, Span, Text, VStack } from "@chakra-ui/react"
+import { Box, Button, Card, Collapsible, For, Group, Icon, IconButton, Link, Span, Stack, Text } from "@chakra-ui/react"
 import { TimelineConnector, TimelineContent, TimelineDescription, TimelineItem, TimelineRoot, TimelineTitle } from "./chakra-ui/timeline"
 import { displayTime, formatCryptoAddress, fetchLinkedFileName, fetchFiles, getAquaTreeFileObject, isDeepLinkRevision } from "../utils/functions"
 import { Alert } from "./chakra-ui/alert"
@@ -15,6 +15,76 @@ import appStore from "../store"
 import { useStore } from "zustand"
 import axios from "axios"
 import { toaster } from "./chakra-ui/toaster";
+import { ApiFileInfo } from "../models/FileInfo";
+
+const viewLinkedFile = (aquaTree: AquaTree, revisionHash: string, revision: Revision, apiFileInfo: ApiFileInfo[], updateSelectedFile: (fileInfo: ApiFileInfo) => void): JSX.Element => {
+
+    if (revision.revision_type == "link") {
+
+        if (isDeepLinkRevision(aquaTree, revisionHash)) {
+            return <></>
+        }
+
+        return <Button onClick={
+            () => {
+                let linkedFileName = fetchLinkedFileName(aquaTree!!, revision)
+
+                if (linkedFileName != ERROR_TEXT) {
+                    for (let fileInfo of apiFileInfo) {
+                        let fileObject = getAquaTreeFileObject(fileInfo);
+                        if (fileObject) {
+                            if (linkedFileName == fileObject.fileName) {
+
+                                updateSelectedFile(fileInfo)
+                                break
+                            }
+                        }
+                    }
+                } else {
+                    toaster.create({
+                        title: "Link file not found , possibly a deep link ?",
+                        type: 'info'
+                    })
+                }
+            }
+        }>View File </Button>
+
+    } else {
+        return <></>
+    }
+}
+
+
+const revisionDataHeader = (aquaTree: AquaTree, revisionHash: string): JSX.Element => {
+
+    const revision = aquaTree.revisions[revisionHash]
+
+    if (revision.previous_verification_hash.length == 0) {
+
+        <Span >
+            Genesis Revision
+        </Span>
+    }
+    if (revision.revision_type == "link") {
+        let isDeepLink = isDeepLinkRevision(aquaTree, revisionHash)
+        if (isDeepLink == null) {
+            return <Span>{ERROR_TEXT}</Span>
+        }
+        if (isDeepLink) {
+            return <Span>
+                Deep Link
+            </Span>
+        } else {
+            return <Span fontSize={"md"}>
+                linked to {fetchLinkedFileName(aquaTree, revision)}
+            </Span>
+        }
+    }
+
+    return <Span>
+        {revision.revision_type}
+    </Span >
+}
 
 export const RevisionDisplay = ({ fileInfo, revision, revisionHash, isVerificationComplete, verificationResults, isDeletable, deleteRevision, index }: AquaTreeDetailsData) => {
 
@@ -46,9 +116,9 @@ export const RevisionDisplay = ({ fileInfo, revision, revisionHash, isVerificati
     // Memoize verification status calculation and update state only when needed
     const isVerificationSuccessful = useCallback((): boolean | null => {
         const currentRevisionResult = verificationResults.find(item => item.hash === revisionHash);
-        
+
         let verificationStatus: boolean | null = null;
-        
+
         if (!isVerificationComplete) {
             verificationStatus = null;
         } else if (currentRevisionResult === undefined) {
@@ -56,12 +126,12 @@ export const RevisionDisplay = ({ fileInfo, revision, revisionHash, isVerificati
         } else {
             verificationStatus = currentRevisionResult.isSuccessful ? true : false;
         }
-        
+
         // Only update state if it's different to avoid unnecessary re-renders
         if (verificationStatus !== isRevisionVerificationSuccessful) {
             setIsRevisionVerificationSuccessful(verificationStatus);
         }
-        
+
         return verificationStatus;
     }, [verificationResults, revisionHash, isVerificationComplete, isRevisionVerificationSuccessful])
 
@@ -77,7 +147,7 @@ export const RevisionDisplay = ({ fileInfo, revision, revisionHash, isVerificati
     const displayAlert = useMemo((): JSX.Element => {
         let status: "info" | "warning" | "success" | "error" | "neutral" = "info";
         let title = "This revision is being verified";
-        
+
         if (isRevisionVerificationSuccessful !== null) {
             if (isRevisionVerificationSuccessful) {
                 status = "success";
@@ -87,7 +157,7 @@ export const RevisionDisplay = ({ fileInfo, revision, revisionHash, isVerificati
                 title = "This revision is invalid";
             }
         }
-        
+
         return <Alert status={status} title={title} />;
     }, [isRevisionVerificationSuccessful]);
 
@@ -96,22 +166,22 @@ export const RevisionDisplay = ({ fileInfo, revision, revisionHash, isVerificati
         if (isRevisionVerificationSuccessful === null) {
             return <ReactLoading type={'spin'} color={'blue'} height={loaderSize} width={loaderSize} />;
         }
-        
-        return isRevisionVerificationSuccessful ? 
-            <Box><LuCheck /></Box> : 
+
+        return isRevisionVerificationSuccessful ?
+            <Box><LuCheck /></Box> :
             <Box><LuX /></Box>;
     }, [isRevisionVerificationSuccessful, loaderSize]);
 
     // Memoize delete handler to prevent recreation on each render
     const handleDelete = useCallback(async () => {
         if (isDeleting) return; // Prevent multiple clicks
-        
+
         console.log("Deleting revision: ", revisionHash, index);
         setIsDeleting(true);
-        
+
         try {
             const url = `${backend_url}/tree/revisions/${revisionHash}`;
-            
+
             const response = await axios.delete(url, {
                 headers: {
                     'metamask_address': session?.address,
@@ -127,7 +197,7 @@ export const RevisionDisplay = ({ fileInfo, revision, revisionHash, isVerificati
                     duration: 3000,
                     placement: "bottom-end"
                 });
-                
+
                 // Reload files for the current user
                 if (index === 0) {
                     window.location.reload();
@@ -160,34 +230,6 @@ export const RevisionDisplay = ({ fileInfo, revision, revisionHash, isVerificati
         }
     }, [backend_url, revisionHash, session?.address, session?.nonce, index, deleteRevision, isDeleting, setFiles]);
 
-    const revisionDataHeader = (aquaTree: AquaTree, revisionHash: string): JSX.Element => {
-
-        if (revision.previous_verification_hash.length == 0) {
-
-            <Span>
-                Genesis Revision
-            </Span>
-        }
-        if (revision.revision_type == "link") {
-            let isDeepLink = isDeepLinkRevision(aquaTree, revisionHash)
-            if (isDeepLink == null) {
-                return <Span>ERROR_TEXT</Span>
-            }
-            if (isDeepLink) {
-                return <Span>
-                    Deep Link
-                </Span>
-            } else {
-                return <Span>
-                    linked to {fetchLinkedFileName(fileInfo.aquaTree!!, revision)}
-                </Span>
-            }
-        }
-
-        return <Span>
-            {revision.revision_type}
-        </Span >
-    }
     const displayDeleteButton = (): JSX.Element => {
         if (isDeletable) {
             return (
@@ -198,44 +240,7 @@ export const RevisionDisplay = ({ fileInfo, revision, revisionHash, isVerificati
         }
         return <></>
     }
-    const viewLinkedFile = (aquaTree: AquaTree, revisionHash: string): JSX.Element => {
 
-        if (revision.revision_type == "link") {
-
-            if (isDeepLinkRevision(aquaTree, revisionHash)) {
-                return <></>
-            }
-
-            return <Button onClick={
-                () => {
-                    let linkedFileName = fetchLinkedFileName(fileInfo.aquaTree!!, revision)
-
-                    if (linkedFileName != ERROR_TEXT) {
-                        for (let fileInfo of files) {
-                            let fileObject = getAquaTreeFileObject(fileInfo);
-                            if (fileObject) {
-                                if (linkedFileName == fileObject.fileName) {
-
-                                    setSelectedFileInfo(fileInfo)
-                                    break
-                                }
-                            }
-                        }
-                    } else {
-                        toaster.create({
-                            title: "Link file not found , possibly a deep link ?",
-                            type: 'info'
-                        })
-                    }
-                }
-            }>View File </Button>
-
-        } else {
-            return <></>
-        }
-
-
-    }
 
     // Keep the original function
     const revisionTypeEmoji = LogTypeEmojis[revision.revision_type]
@@ -284,7 +289,7 @@ export const RevisionDisplay = ({ fileInfo, revision, revisionHash, isVerificati
                                                             <Icon fontSize="xs" color={'white'}>
                                                                 {
                                                                     verificationStatusIcon
-                                                                 
+
                                                                 }
                                                             </Icon>
                                                         </TimelineConnector>
@@ -304,7 +309,7 @@ export const RevisionDisplay = ({ fileInfo, revision, revisionHash, isVerificati
                                                                     />
                                                                 ) : null
                                                             }
-                                                            {viewLinkedFile(fileInfo!.aquaTree!, revisionHash)}
+                                                            {viewLinkedFile(fileInfo!.aquaTree!, revisionHash, revision, files, setSelectedFileInfo)}
                                                         </TimelineContent>
 
                                                     </TimelineItem>
@@ -437,7 +442,7 @@ export const RevisionDisplay = ({ fileInfo, revision, revisionHash, isVerificati
 
 export const RevisionDetailsSummary = ({ fileInfo }: RevisionDetailsSummaryData) => {
 
-
+    const { files, setSelectedFileInfo } = useStore(appStore)
     // const pageData: PageData = JSON.parse(fileInfo.page_data);
     // const revisionHashes = Object.keys(pageData.pages[0].revisions)
     const revisionHashes = Object.keys(fileInfo!.aquaTree!.revisions)
@@ -445,6 +450,7 @@ export const RevisionDetailsSummary = ({ fileInfo }: RevisionDetailsSummaryData)
     //  
     const revisionsWithSignatures: Array<Revision> = [];
     const revisionsWithWitness: Array<Revision> = [];
+    const revisionHashesWithLinks: Array<string> = [];
 
     for (let i = 0; i < revisionHashes.length; i++) {
         const currentRevision: string = revisionHashes[i];
@@ -457,10 +463,13 @@ export const RevisionDetailsSummary = ({ fileInfo }: RevisionDetailsSummaryData)
         if (revision.revision_type == "witness") {
             revisionsWithWitness.push(revision)
         }
+        if (revision.revision_type == "link") {
+            revisionHashesWithLinks.push(currentRevision)
+        }
     }
 
 
-    return (<VStack textAlign="start">
+    return (<Stack textAlign="start" w={"100%"}>
 
 
         <Text>Revisions count : {revisionHashes.length}</Text>
@@ -545,7 +554,60 @@ export const RevisionDetailsSummary = ({ fileInfo }: RevisionDetailsSummaryData)
                 )}
             </For>
         </Box>
-    </VStack>
+
+        <Box w={'100%'} bg={'gray.100'} _dark={{
+            bg: "blackAlpha.900"
+        }} borderRadius={'lg'} p={{ base: '4', md: 'lg' }}>
+            <Text mb={'2'} fontWeight={600} fontSize={'lg'}>Links ({revisionHashesWithLinks.length})</Text>
+            <For
+                each={revisionHashesWithLinks}
+            >
+                {(revisionHash, index) => {
+                    const revision = fileInfo!.aquaTree?.revisions[revisionHash]
+                    return (
+                        <Group key={`witness_${index}`} pb={'2'} mb={'4'} borderBottom={'1px solid'} borderColor={'gray.200'} _dark={{
+                            borderColor: "gray.50"
+                        }} w={'100%'}>
+                            <IconButton size={'xs'}>
+                                {index + 1}
+                            </IconButton>
+                            {/* <Text>{index}. {revision.signature?.signature} </Text> */}
+                            <Stack flex={1}>
+                                {/* <ItemDetail label="F:"
+                                displayValue={formatCryptoAddress(revision.witness_network ?? "", 4, 6)}
+                                value={revision.witness_network ?? " "} showCopyIcon={false}
+                            /> */}
+                                {revisionDataHeader(fileInfo!.aquaTree!, revisionHash)}
+                                <Box />
+                                {viewLinkedFile(fileInfo!.aquaTree!, revisionHash, revision!!, files, setSelectedFileInfo)}
+                                {/* <br />
+                            <ItemDetail label="Timestamp (UTC) : "
+                                displayValue={displayTime(revision.witness_timestamp?.toString() ?? "")}
+                                value={revision.witness_timestamp?.toString() ?? ""} showCopyIcon={false}
+                            />
+                            <br />
+
+                            <Group>
+                                <ItemDetail label="Transaction Hash:"
+                                    displayValue={formatCryptoAddress(revision.witness_transaction_hash?.startsWith('0x') ? revision.witness_transaction_hash ?? "" : `0x${revision.witness_transaction_hash ?? ""}`, 4, 6)}
+                                    value={`0x${revision.witness_transaction_hash ?? ""}`} showCopyIcon={true}
+                                />
+                                <Link outline={'none'} href={`${WITNESS_NETWORK_MAP[revision.witness_network ?? ""]}/${revision.witness_transaction_hash}`} target="_blank">
+                                    <Icon size={'sm'} color={'blue.500'}>
+                                        <Box>
+                                            <LuExternalLink />
+                                        </Box>
+                                    </Icon>
+                                </Link>
+                            </Group> */}
+                            </Stack>
+                        </Group>
+                    )
+                }}
+            </For>
+        </Box>
+
+    </Stack>
     )
 }
 

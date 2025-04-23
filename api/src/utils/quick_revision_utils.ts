@@ -12,7 +12,7 @@ import * as fs from 'fs';
 export async function deleteRevisionAndChildren(
     revisionHash: string,
     userAddress?: string
-): Promise<{ 
+): Promise<{  
     success: boolean; 
     deleted: number; 
     details: { revisions: string[]; related: { signatures: number; links: number; witnesses: number; forms: number; files: number; fileIndexes: number } }
