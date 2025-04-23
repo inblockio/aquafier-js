@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react"
+import { useEffect, useState, useCallback } from "react"
 import { Button } from "./chakra-ui/button"
 import { LuChevronDown, LuChevronUp, LuEye } from "react-icons/lu"
 import { Box, Card, Collapsible, For, GridItem, SimpleGrid, VStack } from "@chakra-ui/react"
@@ -30,14 +30,13 @@ export const CompleteChainView = ({ callBack, selectedFileInfo }: ICompleteChain
     const [showMoreDetails, setShowMoreDetails] = useState(false)
     const { session, setApiFileData, apiFileData } = useStore(appStore)
     const [deletedRevisions, setDeletedRevisions] = useState<string[]>([])
-
     const [verificationResults, setVerificationResults] = useState<VerificationHashAndResult[]>([])
+    const [isProcessing, setIsProcessing] = useState(false)
 
+    // Memoized fetch function to prevent recreation on each render
     const fetchFileData = async (url: string): Promise<string | ArrayBuffer | null> => {
         try {
-            // const fileContentUrl: string = selectedFileInfo.fileContent as string
-
-            let actualUrlToFetch = ensureDomainUrlHasSSL(url)
+            const actualUrlToFetch = ensureDomainUrlHasSSL(url);
 
             const response = await fetch(actualUrlToFetch, {
                 headers: {
@@ -47,193 +46,228 @@ export const CompleteChainView = ({ callBack, selectedFileInfo }: ICompleteChain
             if (!response.ok) throw new Error("Failed to fetch file");
 
             // Get MIME type from headers
-            let contentType = response.headers.get("Content-Type") || "";
+            const contentType = response.headers.get("Content-Type") || "";
 
-            // Clone the response for potential text extraction
-            const responseClone = response.clone();
-
-
-
+            // Process based on content type
             if (contentType.startsWith("text/") ||
                 contentType === "application/json" ||
                 contentType === "application/xml" ||
                 contentType === "application/javascript") {
-
-                return await responseClone.text();
+                return await response.text();
             } else {
-
-
-                // Get the raw data as ArrayBuffer and convert to Uint8Array
-                const arrayBuffer = await response.arrayBuffer();
-
-                return arrayBuffer;
-
+                return await response.arrayBuffer();
             }
         } catch (e) {
-            return null
+            console.error("Error fetching file:", e);
+            return null;
         }
     }
 
-    const isVerificationSuccessful = (_verificationResults: VerificationHashAndResult[]): boolean => {
+    // Memoized verification status check to prevent recalculation
+    const isVerificationSuccessful = useCallback((_verificationResults: VerificationHashAndResult[]): boolean => {
         for (const item of _verificationResults.values()) {
-            // // console.log(`Values ${value}`)
             if (!item.isSuccessful) {
-                return false
+                return false;
             }
         }
         return true;
-    }
+    }, []);
 
-    const displayColorBasedOnVerificationStatusLight = (_verificationResults: VerificationHashAndResult[]) => {
+    // Memoized color functions to prevent recalculation
+    const displayColorBasedOnVerificationStatusLight = useCallback((_verificationResults: VerificationHashAndResult[]) => {
         if (!isVerificationComplete(_verificationResults)) {
-            return "grey"
+            return "grey";
         }
+        return isVerificationSuccessful(_verificationResults) ? 'green.100' : 'red.100';
+    }, []);
 
-        return isVerificationSuccessful(_verificationResults) ? 'green.100' : 'red.100'
-    }
-
-    const displayColorBasedOnVerificationStatusDark = (_verificationResults: VerificationHashAndResult[]) => {
+    const displayColorBasedOnVerificationStatusDark = useCallback((_verificationResults: VerificationHashAndResult[]) => {
         if (!isVerificationComplete(_verificationResults)) {
-            return "whitesmoke"
+            return "whitesmoke";
         }
+        return isVerificationSuccessful(_verificationResults) ? 'green.900' : 'red.900';
+    }, []);
 
-        return isVerificationSuccessful(_verificationResults) ? 'green.900' : 'red.900'
-    }
-
+    // Optimized verification function with parallel processing
     const verifyAquaTreeRevisions = async (fileInfo: ApiFileInfo) => {
-        let aquafier = new Aquafier();
-        let _drawerStatus: IDrawerStatus = {
-            colorLight: "",
-            colorDark: "",
-            fileName: "",
-            isVerificationSuccessful: false
-        }
+        if (!fileInfo?.aquaTree || !fileInfo?.fileObject || isProcessing) return;
 
+        setIsProcessing(true);
 
+        try {
+            const aquafier = new Aquafier();
+            const _drawerStatus: IDrawerStatus = {
+                colorLight: "",
+                colorDark: "",
+                fileName: "",
+                isVerificationSuccessful: false
+            };
 
-        let fileName = getFileName(fileInfo?.aquaTree!);
-        // setFileName(fileName)
-        _drawerStatus.fileName = fileName
-        // verify revision
-        let revisionHashes = Object.keys(fileInfo?.aquaTree!.revisions!);
+            // Set file name
+            const fileName = getFileName(fileInfo.aquaTree);
+            _drawerStatus.fileName = fileName;
 
+            // Get revision hashes
+            const revisionHashes = Object.keys(fileInfo.aquaTree.revisions || {});
 
-
-        let fileObjectVerifier: FileObject[] = [];
-
-        for (let file of fileInfo?.fileObject!!) {
-
-            if (typeof file.fileContent == 'string' && (file.fileContent.startsWith("http://") || file.fileContent.startsWith("https://"))) {
-                console.log(`cache length ${apiFileData?.length ?? 0}`)
-                //attempt to ue cache
-                let fileData: string | ArrayBuffer | null = null
-                let fileHash = getFileHashFromUrl(file.fileContent);
-                if (fileHash.length > 0 && Array.isArray(apiFileData)) {
-                    try {
-                        let data = apiFileData.find((e) => e.fileHash == fileHash)
-                        if (data != null) {
-                            fileData = data.fileData
-                        }
-                    } catch (e) {
-                        console.log(`error using cache ${e}`)
+            // Create a map for quick cache lookup
+            const cacheMap = new Map();
+            if (Array.isArray(apiFileData)) {
+                apiFileData.forEach(item => {
+                    if (item && item.fileHash) {
+                        cacheMap.set(item.fileHash, item.fileData);
                     }
-                }
+                });
+            }
 
-                //cache is not available 
-                // fetch from api
-                if (fileData == null) {
-                    fileData = await fetchFileData(file.fileContent);
-                    if (fileData != null) {
-                        let dd = Array.isArray(apiFileData) ? [...apiFileData] :[];
-                        dd.push({ fileHash, fileData })
-                        setApiFileData(dd)
-                    }
-                }
+            // Process files in parallel
+            const filePromises = [];
+            const fileObjectVerifier: FileObject[] = [];
 
-                //if cache an
+            for (const file of fileInfo.fileObject) {
+                if (typeof file.fileContent === 'string' &&
+                    (file.fileContent.startsWith("http://") || file.fileContent.startsWith("https://"))) {
 
-                if (fileData == null) {
-                    console.error(`💣💣💣Unable to fetch file  from  ${file.fileContent}`)
-                } else {
-                    let fileItem = file
-                    // console.log(`🤪🤪 type of ${typeof fileData} or ${fileData instanceof ArrayBuffer}  is arraybuffer text ${isArrayBufferText(fileData as ArrayBuffer)}`)
-                    // Then in your loop:
-                    if (fileData instanceof ArrayBuffer) {
-                        if (isArrayBufferText(fileData)) {
-                            // Convert to string
-                            const decoder = new TextDecoder();
-                            fileItem.fileContent = decoder.decode(fileData);
-                        } else {
-                            // Keep as binary
-                            fileItem.fileContent = new Uint8Array(fileData);
-                        }
-                    } else if (typeof fileData === 'string') {
-                        fileItem.fileContent = fileData;
+                    const fileContentUrl = file.fileContent;
+                    const fileHash = getFileHashFromUrl(fileContentUrl);
+
+                    // Check cache first
+                    let fileData = fileHash.length > 0 ? cacheMap.get(fileHash) : null;
+
+                    if (!fileData) {
+                        // If not in cache, create a promise to fetch it
+                        const fetchPromise = fetchFileData(fileContentUrl).then(data => {
+                            if (data && fileHash.length > 0) {
+                                // Update cache
+                                // setApiFileData((prev: any) => {
+                                //     const prevArray = Array.isArray(prev) ? prev : [];
+                                //     return [...prevArray, { fileHash, fileData: data }];
+                                // });
+                                let dd = Array.isArray(apiFileData) ? [...apiFileData] : [];
+                                dd.push({ fileHash, fileData })
+                                setApiFileData(dd)
+                                return { file, data };
+                            }
+                            return null;
+                        });
+                        filePromises.push(fetchPromise);
                     } else {
-                        console.error('Unexpected fileData type:', fileData);
+                        // If in cache, process immediately
+                        const fileItem = { ...file };
+                        if (fileData instanceof ArrayBuffer) {
+                            if (isArrayBufferText(fileData)) {
+                                fileItem.fileContent = new TextDecoder().decode(fileData);
+                            } else {
+                                fileItem.fileContent = new Uint8Array(fileData);
+                            }
+                        } else if (typeof fileData === 'string') {
+                            fileItem.fileContent = fileData;
+                        }
+                        fileObjectVerifier.push(fileItem);
                     }
-                    fileObjectVerifier.push(fileItem)
+                } else {
+                    // Non-URL files can be added directly
+                    fileObjectVerifier.push(file);
                 }
-            } else {
-                fileObjectVerifier.push(file)
             }
 
-        }
+            // Wait for all file fetches to complete
+            if (filePromises.length > 0) {
+                const fetchedFiles = await Promise.all(filePromises);
 
-        let allRevisionsVerificationsStatus: VerificationHashAndResult[] = []
+                // Process fetched files
+                for (const result of fetchedFiles) {
+                    if (result) {
+                        const { file, data } = result;
+                        const fileItem = { ...file };
 
-        for (let revisionHash of revisionHashes) {
-            let revision = fileInfo?.aquaTree!.revisions![revisionHash];
+                        if (data instanceof ArrayBuffer) {
+                            if (isArrayBufferText(data)) {
+                                fileItem.fileContent = new TextDecoder().decode(data);
+                            } else {
+                                fileItem.fileContent = new Uint8Array(data);
+                            }
+                        } else if (typeof data === 'string') {
+                            fileItem.fileContent = data;
+                        }
 
-
-            // console.log(`110. ${JSON.stringify(fileInfo?.aquaTree!, null, 4)}  \n fileObjectVerifier: ${JSON.stringify(fileObjectVerifier, null, 4)}` )
-            let verificationResult = await aquafier.verifyAquaTreeRevision(fileInfo?.aquaTree!, revision!!, revisionHash, fileObjectVerifier)
-            // console.log(`111. Revision: ${revisionHash}`, verificationResult)
-            if (verificationResult.isOk()) {
-                allRevisionsVerificationsStatus.push({ hash: revisionHash, isSuccessful: true });
-            } else {
-                allRevisionsVerificationsStatus.push({ hash: revisionHash, isSuccessful: false });
+                        fileObjectVerifier.push(fileItem);
+                    }
+                }
             }
+
+            // Process revisions in parallel where possible
+            const verificationPromises = revisionHashes.map(async revisionHash => {
+                const revision = fileInfo.aquaTree!.revisions[revisionHash];
+                const result = await aquafier.verifyAquaTreeRevision(
+                    fileInfo.aquaTree!,
+                    revision,
+                    revisionHash,
+                    fileObjectVerifier
+                )
+                console.log("Hash: ", revisionHash, "\nResult", result)
+                return ({
+                    hash: revisionHash,
+                    isSuccessful: result.isOk()
+                })
+            });
+
+            // Wait for all verifications to complete
+            const allRevisionsVerificationsStatus = await Promise.all(verificationPromises);
+            console.log("allRevisionsVerificationsStatus", allRevisionsVerificationsStatus)
+
+            // Update state and callback
+            setVerificationResults(allRevisionsVerificationsStatus);
+            const _isVerificationSuccessful = isVerificationSuccessful(allRevisionsVerificationsStatus);
+            _drawerStatus.isVerificationSuccessful = _isVerificationSuccessful;
+            _drawerStatus.colorDark = displayColorBasedOnVerificationStatusDark(allRevisionsVerificationsStatus);
+            _drawerStatus.colorLight = displayColorBasedOnVerificationStatusLight(allRevisionsVerificationsStatus);
+            callBack(_drawerStatus);
+        } catch (error) {
+            console.error("Error verifying AquaTree revisions:", error);
+        } finally {
+            setIsProcessing(false);
         }
-
-        setVerificationResults(allRevisionsVerificationsStatus)
-        let _isVerificationSuccesful = isVerificationSuccessful(allRevisionsVerificationsStatus)
-        _drawerStatus.isVerificationSuccessful = _isVerificationSuccesful
-        _drawerStatus.colorDark = displayColorBasedOnVerificationStatusDark(allRevisionsVerificationsStatus)
-        _drawerStatus.colorLight = displayColorBasedOnVerificationStatusLight(allRevisionsVerificationsStatus)
-        callBack(_drawerStatus)
     }
 
-    const isVerificationComplete = (_verificationResults: VerificationHashAndResult[]): boolean => {
+    // Memoized verification completion check
+    const isVerificationComplete = useCallback((_verificationResults: VerificationHashAndResult[]): boolean => {
+        return selectedFileInfo?.aquaTree?.revisions ?
+            _verificationResults.length === Object.keys(selectedFileInfo.aquaTree.revisions).length : false;
+    }, [selectedFileInfo?.aquaTree?.revisions]);
 
-        // // console.log(`result ${verificationResults.size}  vs aquq tree ${Object.keys(selectedFileInfo.aquaTree!.revisions!).length}`)
-        return _verificationResults.length === Object.keys(selectedFileInfo?.aquaTree!.revisions!).length
-
-    }
-
-    const displayBasedOnVerificationStatusText = (_verificationResults: VerificationHashAndResult[]) => {
-        if (!isVerificationComplete(_verificationResults)) {
-            return "Verifying Aqua tree"
+    // Memoized display text function
+    const displayBasedOnVerificationStatusText = (verificationResults: any) => {
+        if (!isVerificationComplete(verificationResults)) {
+            return "Verifying Aqua tree";
         }
-        return isVerificationSuccessful(verificationResults) ? "This aqua tree  is valid" : "This aqua tree is invalid"
+        return isVerificationSuccessful(verificationResults) ? "This aqua tree is valid" : "This aqua tree is invalid";
     }
-    const displayColorBasedOnVerificationAlert = (_verificationResults: VerificationHashAndResult[]) => {
-        if (!isVerificationComplete(_verificationResults)) {
-            return "info"
+
+    // Memoized alert color function
+    const displayColorBasedOnVerificationAlert = (verificationResults: any): "info" | "success" | "error" => {
+        if (!isVerificationComplete(verificationResults)) {
+            return "info";
         }
-
-        return isVerificationSuccessful(verificationResults) ? 'success' : 'error'
+        return isVerificationSuccessful(verificationResults) ? 'success' : 'error';
     }
 
+    // Optimized useEffect with proper dependencies
     useEffect(() => {
         if (selectedFileInfo) {
-            verifyAquaTreeRevisions(selectedFileInfo)
+            verifyAquaTreeRevisions(selectedFileInfo);
         }
-    }, [Object.keys(selectedFileInfo?.aquaTree?.revisions ?? {}).length, deletedRevisions])
+    }, [
+        // Only re-run when the number of revisions changes or when deletions happen
+        selectedFileInfo,
+        Object.keys(selectedFileInfo?.aquaTree?.revisions ?? {}).length,
+        deletedRevisions.length
+    ]);
 
-    const deleteRevision = (revisionHash: string) => {
-        setDeletedRevisions(prev => [...prev, revisionHash])
-    }
+    // Memoized delete revision function
+    const deleteRevision = useCallback((revisionHash: string) => {
+        setDeletedRevisions(prev => [...prev, revisionHash]);
+    }, []);
 
     return (
         <>

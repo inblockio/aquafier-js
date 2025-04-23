@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { LuCheck, LuExternalLink, LuTrash, LuX } from "react-icons/lu"
 import { Box, Button, Card, Collapsible, For, Group, Icon, IconButton, Link, Span, Text, VStack } from "@chakra-ui/react"
 import { TimelineConnector, TimelineContent, TimelineDescription, TimelineItem, TimelineRoot, TimelineTitle } from "./chakra-ui/timeline"
@@ -23,115 +23,95 @@ export const RevisionDisplay = ({ fileInfo, revision, revisionHash, isVerificati
     const [isRevisionVerificationSuccessful, setIsRevisionVerificationSuccessful] = useState<boolean | null>(null)
     const [isDeleting, setIsDeleting] = useState(false)
 
-
     const loaderSize = '40px'
 
-    const returnBgColor = (): string => {
+    // Memoize background color calculation
+    const returnBgColor = useMemo((): string => {
         if (!isVerificationComplete) {
             return "gray.400"
         }
-        let revisionVerificationResult = verificationResults.find(item => item.hash === revisionHash)
+        const revisionVerificationResult = verificationResults.find(item => item.hash === revisionHash)
         if (revisionVerificationResult === undefined) {
             return "yellow"
         }
-        if (revisionVerificationResult.isSuccessful) {
-            return "green"
-        } else {
-            return "red"
+        return revisionVerificationResult.isSuccessful ? "green" : "red"
+    }, [isVerificationComplete, verificationResults, revisionHash])
 
-        }
-    }
+    // Run verification check when necessary
+    useEffect(() => {
+        const checkVerification = () => isVerificationSuccessful();
+        checkVerification();
+    }, [isVerificationComplete, verificationResults]);
 
-    const isVerificationSuccessful = (): boolean | null => {
-        let currentRevisionResult = verificationResults.find(item => item.hash === revisionHash);
-
-        // console.log(`isVerificationComplete ${isVerificationComplete} mapcontains ${currentRevisionResult ? "true" : "false"}  verificationResults size  --- ${verificationResults.length}   `)
-
-        let verificationStatus: boolean | null = null
-        // verificationResults.forEach((hash, value) => {
-        //     console.log(`hash ${hash} -- value ${value}`);
-        // });
+    // Memoize verification status calculation and update state only when needed
+    const isVerificationSuccessful = useCallback((): boolean | null => {
+        const currentRevisionResult = verificationResults.find(item => item.hash === revisionHash);
+        
+        let verificationStatus: boolean | null = null;
+        
         if (!isVerificationComplete) {
-            verificationStatus = null
-        }
-
-        if (currentRevisionResult === undefined) {
-            // console.log(`💣💣 Hash not found ${revisionHash}`)
-            verificationStatus = null
-        }
-
-        if (currentRevisionResult?.isSuccessful) {
-            verificationStatus = true
-        }
-        else {
-            verificationStatus = false
-        }
-
-        setIsRevisionVerificationSuccessful(verificationStatus)
-        return verificationStatus
-
-    }
-
-    const verificationStatusText = (): string => {
-        // const res = isVerificationSuccessful();
-        const res = isRevisionVerificationSuccessful
-
-        if (res == null) {
-
-            return "loading"
-        }
-
-        if (res) {
-            return "Valid"
+            verificationStatus = null;
+        } else if (currentRevisionResult === undefined) {
+            verificationStatus = null;
         } else {
-            return "Invalid"
+            verificationStatus = currentRevisionResult.isSuccessful ? true : false;
         }
+        
+        // Only update state if it's different to avoid unnecessary re-renders
+        if (verificationStatus !== isRevisionVerificationSuccessful) {
+            setIsRevisionVerificationSuccessful(verificationStatus);
+        }
+        
+        return verificationStatus;
+    }, [verificationResults, revisionHash, isVerificationComplete, isRevisionVerificationSuccessful])
 
-    }
+    // Memoize status text to prevent recalculation
+    const verificationStatusText = useMemo((): string => {
+        if (isRevisionVerificationSuccessful === null) {
+            return "loading";
+        }
+        return isRevisionVerificationSuccessful ? "Valid" : "Invalid";
+    }, [isRevisionVerificationSuccessful]);
 
-    const displayAlert = (): JSX.Element => {
-
-        // const res = isVerificationSuccessful();
-        const res = isRevisionVerificationSuccessful
+    // Memoize alert component to prevent recreation
+    const displayAlert = useMemo((): JSX.Element => {
         let status: "info" | "warning" | "success" | "error" | "neutral" = "info";
         let title = "This revision is being verified";
-        if (res != null) {
-            if (res) {
-                status = "success"
-                title = "This revision is valid"
+        
+        if (isRevisionVerificationSuccessful !== null) {
+            if (isRevisionVerificationSuccessful) {
+                status = "success";
+                title = "This revision is valid";
             } else {
-                status = "error"
-                title = "This revision is invalid"
+                status = "error";
+                title = "This revision is invalid";
             }
         }
-        return <Alert status={status} title={title} />
+        
+        return <Alert status={status} title={title} />;
+    }, [isRevisionVerificationSuccessful]);
 
-    }
-
-    const verificationStatusIcon = (): JSX.Element => {
-        // const res = isVerificationSuccessful();
-        const res = isRevisionVerificationSuccessful
-
-        if (res == null) {
-
-            return <ReactLoading type={'spin'} color={'blue'} height={loaderSize} width={loaderSize} />
+    // Memoize verification icon to prevent recreation
+    const verificationStatusIcon = useMemo((): JSX.Element => {
+        if (isRevisionVerificationSuccessful === null) {
+            return <ReactLoading type={'spin'} color={'blue'} height={loaderSize} width={loaderSize} />;
         }
+        
+        return isRevisionVerificationSuccessful ? 
+            <Box><LuCheck /></Box> : 
+            <Box><LuX /></Box>;
+    }, [isRevisionVerificationSuccessful, loaderSize]);
 
-        if (res) {
-            return <Box><LuCheck /></Box>
-        } else {
-            return <Box><LuX /></Box>
-        }
-
-    }
-
-    const handleDelete = async () => {
-        console.log("Deleting revision: ", revisionHash, index)
-        setIsDeleting(true)
+    // Memoize delete handler to prevent recreation on each render
+    const handleDelete = useCallback(async () => {
+        if (isDeleting) return; // Prevent multiple clicks
+        
+        console.log("Deleting revision: ", revisionHash, index);
+        setIsDeleting(true);
+        
         try {
             const url = `${backend_url}/tree/revisions/${revisionHash}`;
-            //  console.log("url is ", url);
-
+            
             const response = await axios.delete(url, {
                 headers: {
                     'metamask_address': session?.address,
@@ -146,16 +126,17 @@ export const RevisionDisplay = ({ fileInfo, revision, revisionHash, isVerificati
                     type: "success",
                     duration: 3000,
                     placement: "bottom-end"
-                })
+                });
+                
                 // Reload files for the current user
                 if (index === 0) {
-                    window.location.reload()
+                    window.location.reload();
                 } else {
                     const url2 = `${backend_url}/explorer_files`;
                     const files = await fetchFiles(`${session?.address}`, url2, `${session?.nonce}`);
-                    setFiles(files)
+                    setFiles(files);
                     // Remove the revision from the list of revisions
-                    deleteRevision(revisionHash)
+                    deleteRevision(revisionHash);
                 }
             } else {
                 toaster.create({
@@ -164,20 +145,20 @@ export const RevisionDisplay = ({ fileInfo, revision, revisionHash, isVerificati
                     type: "error",
                     duration: 3000,
                     placement: "bottom-end"
-                })
+                });
             }
-            setIsDeleting(false)
         } catch (error) {
-            setIsDeleting(false)
             toaster.create({
                 title: "Revision not deleted",
                 description: "The revision has not been deleted",
                 type: "error",
                 duration: 3000,
                 placement: "bottom-end"
-            })
+            });
+        } finally {
+            setIsDeleting(false);
         }
-    }
+    }, [backend_url, revisionHash, session?.address, session?.nonce, index, deleteRevision, isDeleting, setFiles]);
 
     const revisionDataHeader = (aquaTree: AquaTree, revisionHash: string): JSX.Element => {
 
@@ -256,26 +237,20 @@ export const RevisionDisplay = ({ fileInfo, revision, revisionHash, isVerificati
 
     }
 
-
+    // Keep the original function
     const revisionTypeEmoji = LogTypeEmojis[revision.revision_type]
-
-    useEffect(() => {
-        if (verificationResults) {
-            isVerificationSuccessful()
-        }
-    }, [verificationResults])
 
     return (
         <div>
             <TimelineItem>
                 <TimelineConnector
-                    bg={returnBgColor()}
+                    bg={returnBgColor}
                     color={"white"}
 
                 >
                     <Icon fontSize="xs" color={'white'} border={'none'}>
                         {
-                            verificationStatusIcon()
+                            verificationStatusIcon
                         }
                     </Icon>
                 </TimelineConnector>
@@ -303,12 +278,12 @@ export const RevisionDisplay = ({ fileInfo, revision, revisionHash, isVerificati
                                                     <TimelineItem>
                                                         <TimelineConnector
                                                             bg={
-                                                                returnBgColor()
+                                                                returnBgColor
                                                             }
                                                         >
                                                             <Icon fontSize="xs" color={'white'}>
                                                                 {
-                                                                    verificationStatusIcon()
+                                                                    verificationStatusIcon
                                                                  
                                                                 }
                                                             </Icon>
@@ -341,13 +316,13 @@ export const RevisionDisplay = ({ fileInfo, revision, revisionHash, isVerificati
                                                 <TimelineItem>
                                                     <TimelineConnector
                                                         bg={
-                                                            returnBgColor()
+                                                            returnBgColor
                                                             // verificationResult?.signature_verification.successful ? "green" : "red"
                                                         }
                                                     >
                                                         <Icon fontSize="xs" color={'white'}>
                                                             {
-                                                                verificationStatusIcon()
+                                                                verificationStatusIcon
                                                                 // verificationResult?.signature_verification.successful ? <LuCheck /> :
                                                                 //     <LuX />
                                                             }
@@ -359,7 +334,7 @@ export const RevisionDisplay = ({ fileInfo, revision, revisionHash, isVerificati
                                                                 Revision signature is
                                                                 {
                                                                     // verificationResult?.signature_verification.successful ? ' valid' : ' invalid'
-                                                                    verificationStatusText()
+                                                                    verificationStatusText
                                                                 }
                                                             </Span>
                                                         </TimelineTitle>
@@ -392,13 +367,13 @@ export const RevisionDisplay = ({ fileInfo, revision, revisionHash, isVerificati
                                                 <TimelineItem>
                                                     <TimelineConnector
                                                         bg={
-                                                            returnBgColor()
+                                                            returnBgColor
                                                             // verificationResult?.witness_verification.successful ? "green" : "red"
                                                         }
                                                     >
                                                         <Icon fontSize="xs" color={'white'}>
                                                             {
-                                                                verificationStatusIcon()
+                                                                verificationStatusIcon
                                                                 // verificationResult?.witness_verification.successful ? <LuCheck /> :
                                                                 //     <LuX />
                                                             }
@@ -409,7 +384,7 @@ export const RevisionDisplay = ({ fileInfo, revision, revisionHash, isVerificati
                                                             <Span>
                                                                 Revision witness is &nbsp;
                                                                 {
-                                                                    verificationStatusText()
+                                                                    verificationStatusText
                                                                     // verificationResult?.witness_verification.successful ? ' valid' : ' invalid'
                                                                 }
                                                             </Span>
@@ -444,12 +419,10 @@ export const RevisionDisplay = ({ fileInfo, revision, revisionHash, isVerificati
                                                 </TimelineItem>
                                             ) : null
                                         }
-
                                     </TimelineRoot>
-
                                 </Card.Body>
                                 <Card.Footer>
-                                    {displayAlert()}
+                                    {displayAlert}
                                 </Card.Footer>
                             </Card.Root>
                         </Collapsible.Content>
