@@ -78,18 +78,16 @@ const Home = () => {
         e.preventDefault();
         let aquafier = new Aquafier();
         let estimateize = estimateFileSize(JSON.stringify(formData));
+
+        const jsonString = JSON.stringify(formData, null, 4);
+
         let fileObject: FileObject = {
-            fileContent: JSON.stringify(formData),
+            fileContent: jsonString,
             fileName: `${selectedTemplate?.name ?? "template"}.json`,
-            path: '',
+            path: './',
             fileSize: estimateize
         }
         let res = await aquafier.createGenesisRevision(fileObject, true, false, false)
-        // if (res.isOk()) {
-        //     console.log(res.data)
-        // } else {
-        //     console.log(res.data)
-        // }
 
         if (res.isOk()) {
 
@@ -99,8 +97,7 @@ const Home = () => {
                 fileObject: fileObject
             }
 
-            // sign the aqua chain 
-            console.log("aqua tree before", res.data.aquaTree)
+            // sign the aqua chain
             let signRes = await aquafier.signAquaTree(aquaTreeWrapper, "metamask", dummyCredential())
             console.log("aqua tree after", res.data.aquaTree)
             if (signRes.isErr()) {
@@ -110,10 +107,12 @@ const Home = () => {
                 })
             } else {
                 console.log("signRes.data", signRes.data)
+                fileObject.fileContent = formData
                 await saveAquaTree(signRes.data.aquaTree!!, fileObject)
 
             }
         } else {
+            console.log(res.data)
             toaster.create({
                 title: 'Error creating Aqua tree from template',
                 description: 'Error creating Aqua tree from template',

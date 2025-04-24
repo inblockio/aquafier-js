@@ -569,13 +569,13 @@ export async function createAquaTreeFromRevisions(latestRevisionHash: string, ur
         for (let revisionItem of revisionData) {
             let hashOnly = revisionItem.pubkey_hash.split("_")[1]
             let previousHashOnly = revisionItem.previous == null || revisionItem.previous == undefined || revisionItem.previous == "" ? "" : revisionItem.previous.split("_")[1]
-
             //  console.log(`previousHashOnly == > ${previousHashOnly} RAW ${revisionItem.previous}`)
             let revisionWithData: AquaRevision = {
                 revision_type: revisionItem.revision_type!! as "link" | "file" | "witness" | "signature" | "form",
                 previous_verification_hash: previousHashOnly,
                 local_timestamp: revisionItem.local_timestamp?.toString() ?? "",
                 leaves: revisionItem.verification_leaves,
+                file_nonce: revisionItem.nonce as string,
                 "version": "https://aqua-protocol.org/docs/v3/schema_2 | SHA256 | Method: scalar",
             }
 
@@ -594,7 +594,6 @@ export async function createAquaTreeFromRevisions(latestRevisionHash: string, ur
                             mode: 'insensitive' // Case-insensitive matching
                         }
                     }
-                    
                 })
                 console.log("File result: ", fileResult)
                 if (fileResult == null) {
