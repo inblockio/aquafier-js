@@ -19,29 +19,21 @@ model Users {
   @@map("users")
 }
 
-// model AquaForms {
-//   hash            String   @id
-//   key             String?
-//   value           Json?
-//   type            String?
-//   reference_count Int?
-//   Revision        Revision @relation(fields: [hash], references: [pubkey_hash])
-//   @@map("aqua_forms")
-// }
 
-model AquaForms {
+
+model AquaTemplate {
   id                  String           @id
   owner               String
   title               String
   name                String
   created_at          String
   public    Boolean
-  form_fields         AquaFormFields[]
+  form_fields         AquaTemplateFields[]
  
-  @@map("aqua_forms")
+  @@map("aqua_templates")
 }
 
-model AquaFormFields {
+model AquaTemplateFields {
   id        String  @id
   aqua_form_id     String
   name      String
@@ -50,9 +42,9 @@ model AquaFormFields {
   mandatory Boolean
   
 
-  AquaForm AquaForms @relation(fields: [aqua_form_id], references: [id])
+  AquaForm AquaTemplate @relation(fields: [aqua_form_id], references: [id])
 
-  @@map("aqua_form_fields")
+  @@map("aqua_templates_fields")
 }
 
 model UserAttestationAddresses {
@@ -116,7 +108,7 @@ model Revision {
   Link                Link[]
   // Contract         Contract?
   // FileIndex        FileIndex[]
-  // AquaForms           AquaForms[]
+  AquaForms           AquaForms[]
 
   @@map("revision")
 }
@@ -194,6 +186,16 @@ model WitnessEvent {
   // MerkleNodes                        MerkleNodes[]
 
   @@map("witness_event")
+}
+
+model AquaForms {
+  hash            String   @id
+  key             String?
+  value           Json?
+  type            String?
+  reference_count Int?
+  Revision        Revision @relation(fields: [hash], references: [pubkey_hash])
+  @@map("aqua_forms")
 }
 
 model MerkleNodes {

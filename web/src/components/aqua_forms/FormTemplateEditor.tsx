@@ -10,7 +10,7 @@ import {
   Stack
 } from '@chakra-ui/react';
 import { FormField, FormTemplate } from './types';
-import { saveFormTemplate } from './formService';
+// import { saveFormTemplate } from './formService';
 import { useForm } from 'react-hook-form'
 
 import {
@@ -20,7 +20,13 @@ import {
 import { Field } from '../chakra-ui/field';
 import { useRef, useState } from 'react';
 import { Switch } from '../chakra-ui/switch';
-
+import { Alert } from "../chakra-ui/alert";
+import axios from "axios";
+import { useStore } from "zustand";
+import appStore from "../../store";
+import { toaster } from "../chakra-ui/toaster";
+import { LuCross } from 'react-icons/lu';
+import { Text } from "@chakra-ui/react"
 
 const fieldTypes = createListCollection({
   items: [
@@ -97,8 +103,11 @@ const templateFormFields = [
 const FormTemplateEditor = ({ initialTemplate, onSave }: FormTemplateEditorProps) => {
   // Using alert instead of toast since useToast is not available in this version
 
+  const { session, backend_url } = useStore(appStore);
+
   const [formFields, setFormFields] = useState<FormField[]>(initialTemplate?.fields || []);
- 
+  const [apiError, setApiError] = useState<string | null>(null);
+
   const defaultTemplate: FormTemplate = {
     id: '',
     name: '',
@@ -120,15 +129,54 @@ const FormTemplateEditor = ({ initialTemplate, onSave }: FormTemplateEditorProps
     defaultValues: initialValues
   })
 
-  const handleFormSubmit = () => {
+  const handleFormSubmit = async () => {
     try {
       const formValues = getValues()
       formValues.fields = formFields
-      saveFormTemplate(formValues);
+      // saveFormTemplate(formValues);
       // showToast('Form template saved', 'success');
-      onSave();
-    } catch (error) {
-      // showToast('Error saving form template', 'error');
+
+      // send to server
+      const url = `${backend_url}/templates`;
+
+      const response = await axios.post(url, formValues, {
+        headers: {
+          "nonce": session?.nonce
+        }
+      });
+
+      if (response.status === 200 || response.status === 201) {
+        //  console.log("update state ...")
+
+
+        toaster.create({
+          description: `Form created successfully`,
+          type: "success"
+        })
+
+        onSave();
+      }
+
+
+
+
+
+    } catch (error: any) {
+
+      // Check if error is from axios with response data
+      if (error.response && error.response.data) {
+        // Check if there's a message property in the response data
+        if (error.response.data.message) {
+          let errorMessage = error.response.data.message;
+          setApiError(errorMessage)
+        }
+      }
+
+
+      toaster.create({
+        description: `Form creation failure`,
+        type: "error"
+      })
     }
   };
 
@@ -159,12 +207,22 @@ const FormTemplateEditor = ({ initialTemplate, onSave }: FormTemplateEditorProps
     // Update the state with the new array
     setFormFields(updatedFields);
   };
- 
+
   return (
     <Box borderRadius="lg">
       <Heading size="md" mb={4}>
         {initialTemplate ? 'Edit Form Template' : 'Create Form Template'}
       </Heading>
+      {
+        apiError ?
+          <Alert title="An error occured" icon={<LuCross />}>
+            <Group gap={"10"}>
+              <Text>
+                {apiError}
+              </Text>
+            </Group>
+          </Alert> : <></>
+      }
       <form onSubmit={handleSubmit(handleFormSubmit)}>
         <Stack>
           {templateFormFields.map((field) => (
@@ -217,6 +275,7 @@ const FormTemplateEditor = ({ initialTemplate, onSave }: FormTemplateEditorProps
                       onCheckedChange={(e) => updateFields(index, 'required', e.checked)}
                     />
                   </Field>
+                  
                 </SimpleGrid>
               </Box>
             ))}
@@ -231,7 +290,7 @@ const FormTemplateEditor = ({ initialTemplate, onSave }: FormTemplateEditorProps
             </Button>
             <Button
               type="submit"
-              colorScheme="blue"
+              colorPalette="green"
             >
               Save
             </Button>

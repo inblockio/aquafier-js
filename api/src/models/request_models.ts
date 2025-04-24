@@ -16,7 +16,7 @@ export interface VerifyRequestBody {
 // Define the field type for the "fields" array
 export interface AquaFormFieldRequest {
   id: string;
-  title: string;
+  label: string;
   name: string;
   type: string;
   required: boolean;

@@ -8,6 +8,7 @@ import VersionAndDisclaimer from "./VersionAndDisclaimer"
 import { Link } from "react-router-dom"
 import AccountContracts from "./AccountContracts"
 import { ReactNode } from "react"
+import { LuSquareChartGantt } from "react-icons/lu"
 
 interface INavlinkItem {
     label: string
@@ -20,10 +21,10 @@ const navlinks: INavlinkItem[] = [
         label: "Forms",
         to: "/aqua-forms"
     },
-    {
-        label: "Form Generator",
-        to: "/form-generator"
-    }
+    // {
+    //     label: "Form Generator",
+    //     to: "/form-generator"
+    // }
 ]
 
 const CustomNavlinkItem = ({ label, to }: INavlinkItem) => {
@@ -31,8 +32,11 @@ const CustomNavlinkItem = ({ label, to }: INavlinkItem) => {
 
     return (
         <Link to={to}>
-            <LinkBox>
-                <Text>{label}</Text>
+            <LinkBox bg="blue.500" p={2} borderRadius="md">
+                <Group>
+                    <Text>{label}</Text>
+                    <LuSquareChartGantt />
+                </Group>
             </LinkBox>
         </Link>
     )
@@ -51,13 +55,18 @@ const Navbar = () => {
                         <Image src={colorMode === 'light' ? "/images/logo.png" : "/images/logo-dark.png"} maxH={'60%'} />
                     </Link>
                     <HStack h={'100%'} gap={"4"} justifyContent={'space-between'}>
-                        <Group gap={4}>
-                            {
-                                navlinks.map((item, i: number) => (
-                                    <CustomNavlinkItem key={`navitem_${i}`} {...item} />
-                                ))
-                            }
-                        </Group>
+                        {
+                            session ? (<>
+                                <Group gap={4}>
+                                    {
+                                        navlinks.map((item, i: number) => (
+                                            <CustomNavlinkItem key={`navitem_${i}`} {...item} />
+                                        ))
+                                    }
+                                </Group>
+                            </>
+                            ) : null
+                        }
                         <VersionAndDisclaimer />
                         <ConnectWallet />
                         {

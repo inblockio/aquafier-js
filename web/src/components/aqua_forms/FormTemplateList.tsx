@@ -11,9 +11,14 @@ import {
 } from '@chakra-ui/react';
 import { FormTemplate } from './types';
 import { getFormTemplates, deleteFormTemplate } from './formService';
+
+import { Alert } from "../chakra-ui/alert";
+import axios from "axios";
+import { useStore } from "zustand";
+import appStore from "../../store";
 import { toaster } from '../chakra-ui/toaster';
 import { DialogBackdrop, DialogBody, DialogContent, DialogFooter, DialogHeader, DialogRoot } from '../chakra-ui/dialog';
-import { LuDelete, LuEye, LuPen } from 'react-icons/lu';
+import { LuDelete, LuEye, LuPen, LuTrash } from 'react-icons/lu';
 
 interface FormTemplateListProps {
   onEdit: (template: FormTemplate) => void;
@@ -22,19 +27,43 @@ interface FormTemplateListProps {
 }
 
 const FormTemplateList = ({ onEdit, onView, onRefresh }: FormTemplateListProps) => {
-  const [templates, setTemplates] = useState<FormTemplate[]>([]);
+
+  const { session, backend_url, formTemplates, setFormTemplate } = useStore(appStore);
+
+
   const [templateToDelete, setTemplateToDelete] = useState<FormTemplate | null>(null);
   const { open, onOpen, onClose } = useDisclosure();
   const cancelRef = React.useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
-    loadTemplates();
-  }, []);
+    if(session!=null && session.nonce != undefined && backend_url != "http://0.0.0.0:0"){
 
-  const loadTemplates = () => {
+      loadTemplates();
+    }
+  }, [backend_url, session]);
+
+  const loadTemplates = async () => {
     try {
-      const loadedTemplates = getFormTemplates();
-      setTemplates(loadedTemplates);
+      // const loadedTemplates = getFormTemplates();
+      //
+      const url = `${backend_url}/templates`;
+
+      const response = await axios.get(url, {
+        headers: {
+          "nonce": session?.nonce
+        }
+      });
+
+      if (response.status === 200 || response.status === 201) {
+        //  console.log("update state ...")
+        let loadedTemplates: FormTemplate[] = response.data.data;
+        setFormTemplate(loadedTemplates);
+        toaster.create({
+          description: `Form created successfully`,
+          type: "success"
+        })
+      }
+
     } catch (error) {
       toaster.create({
         title: 'Error loading templates',
@@ -77,7 +106,7 @@ const FormTemplateList = ({ onEdit, onView, onRefresh }: FormTemplateListProps) 
     <Box>
       <Heading size="md" mb={4}>Form Templates</Heading>
 
-      {templates.length === 0 ? (
+      {formTemplates.length === 0 ? (
         <Box p={4} textAlign="center">
           No form templates found. Create your first template!
         </Box>
@@ -92,7 +121,7 @@ const FormTemplateList = ({ onEdit, onView, onRefresh }: FormTemplateListProps) 
             </Table.Row>
           </Table.Header>
           <Table.Body>
-            {templates.map((template) => (
+            {formTemplates.map((template) => (
               <Table.Row key={template.id}>
                 <Table.Cell>{template.name}</Table.Cell>
                 <Table.Cell>{template.title}</Table.Cell>
@@ -118,7 +147,7 @@ const FormTemplateList = ({ onEdit, onView, onRefresh }: FormTemplateListProps) 
                       size="sm"
                       onClick={() => handleDeleteClick(template)}
                     >
-                      <LuDelete />
+                      <LuTrash />
                     </IconButton>
                   </HStack>
                 </Table.Cell>
@@ -148,7 +177,7 @@ const FormTemplateList = ({ onEdit, onView, onRefresh }: FormTemplateListProps) 
               <Button ref={cancelRef} onClick={onClose}>
                 Cancel
               </Button>
-              <Button colorScheme="red" onClick={confirmDelete} ml={3}>
+              <Button  variant={'solid'} colorPalette="red" onClick={confirmDelete} ml={3}>
                 Delete
               </Button>
             </DialogFooter>

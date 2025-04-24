@@ -59,6 +59,7 @@ export default function VersionAndDisclaimer() {
         <Dialog.Root placement={"center"} size={"sm"} open={isOpen} onOpenChange={(details) => setIsOpen(details.open)}>
             <DialogTrigger asChild>
                 <Button
+                colorPalette={'yellow'}
                     size={"sm"}
                     borderRadius={"md"}
                     onClick={() => {

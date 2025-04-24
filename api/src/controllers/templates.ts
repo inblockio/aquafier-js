@@ -3,22 +3,22 @@ import { prisma } from '../database/db';
 import { AquaFormRequest, AquaFormFieldRequest, SettingsRequest, UserAttestationAddressesRequest } from '../models/request_models';
 import { fetchEnsName } from '../utils/api_utils';
 import { authenticate, AuthenticatedRequest } from '../middleware/auth_middleware';
-import { AquaFormFields, AquaForms, UserAttestationAddresses } from '@prisma/client';
+import { AquaTemplateFields, AquaTemplate, UserAttestationAddresses } from '@prisma/client';
 
 export default async function templatesController(fastify: FastifyInstance) {
 
     fastify.get<{
         Params: {
-            templateId: string;
+            templateId?: string;
         }
-    }>('/templates/:templateId', { preHandler: authenticate }, async (request, reply) => {
+    }>('/templates/:templateId?', { preHandler: authenticate }, async (request, reply) => {
 
         const { templateId } = request.params;
         let data: any = null;
         
         if (templateId) {
             // Get a specific template
-            const template = await prisma.aquaForms.findFirst({
+            const template = await prisma.aquaTemplate.findFirst({
                 where: {
                     id: {
                         equals: templateId,
@@ -29,7 +29,7 @@ export default async function templatesController(fastify: FastifyInstance) {
             
             if (template) {
                 // Get fields for this template
-                const fields = await prisma.aquaFormFields.findMany({
+                const fields = await prisma.aquaTemplateFields.findMany({
                     where: {
                         aqua_form_id: {
                             equals: template.id,
@@ -41,17 +41,17 @@ export default async function templatesController(fastify: FastifyInstance) {
                 // Combine template with its fields
                 data = {
                     ...template,
-                    form_fields: fields
+                    fields: fields
                 };
             }
         } else {
             // Get all templates
-            const templates = await prisma.aquaForms.findMany();
+            const templates = await prisma.aquaTemplate.findMany();
             data = [];
             
             // For each template, get its fields
             for (let template of templates) {
-                const fields = await prisma.aquaFormFields.findMany({
+                const fields = await prisma.aquaTemplateFields.findMany({
                     where: {
                         aqua_form_id: {
                             equals: template.id,
@@ -62,7 +62,7 @@ export default async function templatesController(fastify: FastifyInstance) {
                 
                 data.push({
                     ...template,
-                    form_fields: fields
+                    fields: fields
                 });
             }
         }
@@ -84,14 +84,14 @@ export default async function templatesController(fastify: FastifyInstance) {
 
         try {
             // Delete associated form fields first
-            await prisma.aquaFormFields.deleteMany({
+            await prisma.aquaTemplateFields.deleteMany({
                 where: {
                     aqua_form_id: templateId
                 }
             });
             
             // Then delete the form itself
-            await prisma.aquaForms.delete({
+            await prisma.aquaTemplate.delete({
                 where: {
                     id: templateId
                 }
@@ -137,7 +137,7 @@ export default async function templatesController(fastify: FastifyInstance) {
                 return [false, reason];
             }
 
-            if (!field.title) {
+            if (!field.label) {
                 reason = `Field at index ${i} is missing required property: label`;
                 return [false, reason];
             }
@@ -173,7 +173,7 @@ export default async function templatesController(fastify: FastifyInstance) {
 
         try {
             // Create the main form
-            await prisma.aquaForms.create({
+            await prisma.aquaTemplate.create({
                 data: {
                     id: aquaFormdata.id,
                     name: aquaFormdata.name,
@@ -186,12 +186,12 @@ export default async function templatesController(fastify: FastifyInstance) {
 
             // Create each form field
             for (const field of aquaFormdata.fields) {
-                await prisma.aquaFormFields.create({
+                await prisma.aquaTemplateFields.create({
                     data: {
                         id: field.id,
                         aqua_form_id: aquaFormdata.id,
                         name: field.name,
-                        title: field.title,
+                        title: field.label,
                         type: field.type,
                         mandatory: field.required ?? true
                     }
