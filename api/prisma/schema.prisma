@@ -27,19 +27,19 @@ model AquaTemplate {
   title               String
   name                String
   created_at          String
-  public    Boolean
+  public              Boolean
   form_fields         AquaTemplateFields[]
  
   @@map("aqua_templates")
 }
 
 model AquaTemplateFields {
-  id        String  @id
+  id        String  @id @default(uuid())
   aqua_form_id     String
   name      String
-  title     String
+  label     String
   type      String
-  mandatory Boolean
+  required Boolean
   
 
   AquaForm AquaTemplate @relation(fields: [aqua_form_id], references: [id])
@@ -189,7 +189,8 @@ model WitnessEvent {
 }
 
 model AquaForms {
-  hash            String   @id
+  id              String   @id @default(uuid())
+  hash            String  
   key             String?
   value           Json?
   type            String?

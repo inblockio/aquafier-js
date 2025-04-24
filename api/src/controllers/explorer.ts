@@ -452,7 +452,7 @@ export default async function explorerController(fastify: FastifyInstance) {
                     console.log('FileIndex record created');
 
                 }
-
+                console.log("Aquatree to save: ", aquaTree)
                 // Save the aqua tree
                 await saveAquaTree(aquaTree, session.address);
 
@@ -489,7 +489,6 @@ export default async function explorerController(fastify: FastifyInstance) {
                     success: true,
                     message: 'Aqua tree saved successfully',
                     files: displayData
-
                 });
             } catch (error) {
                 console.error('\n\n Specific error in file/fileIndex creation:', error);

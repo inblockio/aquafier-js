@@ -11,9 +11,9 @@ export default async function templatesController(fastify: FastifyInstance) {
         Params: {
             templateId?: string;
         }
-    }>('/templates/:templateId?', { preHandler: authenticate }, async (request, reply) => {
+    }>('/templates/:templateId?', { preHandler: authenticate }, async (request: FastifyRequest & AuthenticatedRequest, reply) => {
 
-        const { templateId } = request.params;
+        const { templateId } = request.params as { templateId?: string };
         let data: any = null;
         
         if (templateId) {
@@ -28,6 +28,11 @@ export default async function templatesController(fastify: FastifyInstance) {
             });
             
             if (template) {
+
+                if(!template.public && request.user?.address !== template.owner) {
+                    return reply.code(403).send({ success: false, message: "Unauthorized" });
+                }
+
                 // Get fields for this template
                 const fields = await prisma.aquaTemplateFields.findMany({
                     where: {
@@ -46,7 +51,18 @@ export default async function templatesController(fastify: FastifyInstance) {
             }
         } else {
             // Get all templates
-            const templates = await prisma.aquaTemplate.findMany();
+            const templates = await prisma.aquaTemplate.findMany({
+                where: {
+                    OR: [
+                        {
+                            owner: request.user?.address
+                        },
+                        {
+                            public: true
+                        }
+                    ]
+                }
+            });
             data = [];
             
             // For each template, get its fields
@@ -162,7 +178,7 @@ export default async function templatesController(fastify: FastifyInstance) {
         return [true, ""];
     }
 
-    fastify.post('/templates', { preHandler: authenticate }, async (request, reply) => {
+    fastify.post('/templates', { preHandler: authenticate }, async (request: AuthenticatedRequest, reply) => {
         const aquaFormdata = request.body as AquaFormRequest;
 
         let [isValid, reason] = validateAquaModel(aquaFormdata);
@@ -177,10 +193,10 @@ export default async function templatesController(fastify: FastifyInstance) {
                 data: {
                     id: aquaFormdata.id,
                     name: aquaFormdata.name,
-                    owner: request!.user!.address!,
+                    owner: request.user?.address || '',
                     title: aquaFormdata.title,
                     created_at: new Date().toISOString(),
-                    public: aquaFormdata.public ?? false
+                    public: false
                 }
             });
 
@@ -188,12 +204,11 @@ export default async function templatesController(fastify: FastifyInstance) {
             for (const field of aquaFormdata.fields) {
                 await prisma.aquaTemplateFields.create({
                     data: {
-                        id: field.id,
                         aqua_form_id: aquaFormdata.id,
                         name: field.name,
-                        title: field.label,
+                        label: field.label,
                         type: field.type,
-                        mandatory: field.required ?? true
+                        required: field.required ?? true
                     }
                 });
             }
@@ -204,4 +219,62 @@ export default async function templatesController(fastify: FastifyInstance) {
             return reply.code(500).send({ success: false, message: "Failed to create template" });
         }
     });
+
+    fastify.put('/templates/:templateId', { preHandler: authenticate }, async (request: AuthenticatedRequest, reply) => {
+        const aquaFormdata = request.body as AquaFormRequest;
+
+        let [isValid, reason] = validateAquaModel(aquaFormdata);
+
+        if (!isValid) {
+            return reply.code(400).send({ success: false, message: reason });
+        }
+
+        const { templateId } = request.params as { templateId: string };
+
+        if (!templateId) {
+            return reply.code(400).send({ success: false, message: "Missing template ID" });
+        }
+
+        try {
+            // Create the main form
+            await prisma.aquaTemplate.update({
+                where: {
+                    id: templateId
+                },
+                data: {
+                    name: aquaFormdata.name,
+                    owner: request.user?.address || '',
+                    title: aquaFormdata.title,
+                    created_at: new Date().toISOString(),
+                    public: false
+                }
+            });
+
+            // What is the logic to delete any deleted fields from the frontend, so you should delete them here
+            await prisma.aquaTemplateFields.deleteMany({
+                where: {
+                    aqua_form_id: aquaFormdata.id
+                }
+            });
+
+            // Create each form field
+            for (const field of aquaFormdata.fields) {
+                await prisma.aquaTemplateFields.create({
+                    data: {
+                        aqua_form_id: aquaFormdata.id,
+                        name: field.name,
+                        label: field.label,
+                        type: field.type,
+                        required: field.required ?? true
+                    }
+                });
+            }
+
+            return reply.code(200).send({ success: true });
+        } catch (error) {
+            console.error("Error creating template:", error);
+            return reply.code(500).send({ success: false, message: "Failed to create template" });
+        }
+    });
+
 }
