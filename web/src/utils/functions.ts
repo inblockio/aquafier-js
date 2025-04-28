@@ -48,6 +48,23 @@ export function setCookie(name: string, value: string, expirationTime: Date) {
     document.cookie = `${name}=${value}; expires=${expirationDate}; path=/; Secure; SameSite=Strict`;
 }
 
+export function getAquaTreeFileName(aquaTree: AquaTree): string {
+
+    let mainAquaHash = "";
+    // fetch the genesis 
+    let revisionHashes = Object.keys(aquaTree!.revisions!)
+    for (let revisionHash of revisionHashes) {
+        let revisionData = aquaTree!.revisions![revisionHash];
+        if (revisionData.previous_verification_hash == null || revisionData.previous_verification_hash == "") {
+            mainAquaHash = revisionHash;
+            break;
+        }
+    }
+
+    
+   return aquaTree!.file_index[mainAquaHash] ?? "";
+
+}
 export function getAquaTreeFileObject(fileInfo: ApiFileInfo): FileObject | undefined {
 
     let mainAquaFileName = "";

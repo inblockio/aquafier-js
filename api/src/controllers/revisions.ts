@@ -2,7 +2,7 @@ import { canDeleteRevision, deleteRevisionAndChildren } from '../utils/quick_rev
 import { prisma } from '../database/db';
 import { DeleteRevision, FetchAquaTreeRequest, SaveRevision } from '../models/request_models';
 import { getHost, getPort } from '../utils/api_utils';
-import { createAquaTreeFromRevisions, FetchRevisionInfo, findAquaTreeRevision } from '../utils/revisions_utils';
+import { createAquaTreeFromRevisions, fetchAquatreeFoUser, FetchRevisionInfo, findAquaTreeRevision } from '../utils/revisions_utils';
 // import { formatTimestamp } from '../utils/time_utils';
 // import { AquaForms, FileIndex, Signature, WitnessEvent, Revision as RevisonDB } from 'prisma/client';
 import { AquaTree, FileObject, OrderRevisionInAquaTree, Revision } from 'aqua-js-sdk';
@@ -304,9 +304,34 @@ export default async function revisionsController(fastify: FastifyInstance) {
                 });
             }
 
+            // fetch all from latetst
+
+            let latest = await prisma.latest.findMany({
+                where: {
+                    user: session.address
+                }
+            });
+
+            if (latest.length == 0) {
+                return reply.code(200).send({ data: [] });
+            }
+
+
+            // Get the host from the request headers
+            const host = request.headers.host || `${getHost()}:${getPort()}`;
+
+            // Get the protocol (http or https)
+            const protocol = request.protocol || 'https'
+
+            // Construct the full URL
+            const url = `${protocol}://${host}`;
+
+            let displayData = await fetchAquatreeFoUser(url, latest)
+
             return reply.code(200).send({
                 success: true,
                 message: "Revisions stored successfully",
+                data: displayData
 
             });
 
@@ -580,24 +605,24 @@ export default async function revisionsController(fastify: FastifyInstance) {
             const session = await prisma.siweSession.findUnique({
                 where: { nonce }
             });
-            
+
             if (!session) {
                 return reply.code(401).send({ error: 'Unauthorized: Invalid session' });
             }
-            
-            
+
+
             // Check if the user is allowed to delete this revision
             const canDelete = await canDeleteRevision(hash, session.address);
             if (!canDelete) {
-                return reply.code(403).send({ 
-                    success: false, 
-                    message: 'Forbidden: You do not have permission to delete this revision' 
+                return reply.code(403).send({
+                    success: false,
+                    message: 'Forbidden: You do not have permission to delete this revision'
                 });
             }
-            
+
             // Perform the deletion
             const result = await deleteRevisionAndChildren(hash, session.address);
-            
+
             if (result.success) {
                 return reply.code(200).send({
                     success: true,

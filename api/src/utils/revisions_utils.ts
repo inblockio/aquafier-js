@@ -52,14 +52,27 @@ export async function fetchAquatreeFoUser(url: string, latest: Array<{
 
         // Ensure the tree is properly ordered
         let orderedRevisionProperties = reorderAquaTreeRevisionsProperties(anAquaTree);
-        let sortedAquaTree = OrderRevisionInAquaTree(orderedRevisionProperties);
+        let aquaTreeWithOrderdRevision = OrderRevisionInAquaTree(orderedRevisionProperties);
 
         // Each latest hash represents a complete chain
         displayData.push({
-            aquaTree: sortedAquaTree,
+            aquaTree: aquaTreeWithOrderdRevision,
             fileObject: fileObject
         });
     }
+
+    //rearrange displayData based on filaname in aqua tree 
+     // Sort displayData based on filenames in the aqua tree
+     displayData.sort((a, b) => {
+        const filenameA = getAquaTreeFileName(a.aquaTree);
+        const filenameB = getAquaTreeFileName(b.aquaTree);
+        return filenameA.localeCompare(filenameB);
+    });
+
+    // for(let userAquaTree of displayData){
+    //     let filaname = getAquaTreeFileName(userAquaTree.aquaTree)
+    //     //todod
+    // }
 
     return displayData;
 }
@@ -67,10 +80,10 @@ export async function fetchAquatreeFoUser(url: string, latest: Array<{
 export async function saveAquaTree(aquaTree: AquaTree, userAddress: string,) {
     // Reorder revisions to ensure proper order
     let orderedAquaTree = reorderAquaTreeRevisionsProperties(aquaTree);
-    let sortedAquaTree = OrderRevisionInAquaTree(orderedAquaTree);
+    let aquaTreeWithOrderdRevision = OrderRevisionInAquaTree(orderedAquaTree);
 
     // Get all revision hashes in the chain
-    let allHash = Object.keys(sortedAquaTree.revisions);
+    let allHash = Object.keys(aquaTreeWithOrderdRevision.revisions);
 
     // The last hash in the sorted array is the latest
     if (allHash.length === 0) {
@@ -97,7 +110,7 @@ export async function saveAquaTree(aquaTree: AquaTree, userAddress: string,) {
 
     // insert the revisions
     for (const revisinHash of allHash) {
-        let revisionData = sortedAquaTree.revisions[revisinHash];
+        let revisionData = aquaTreeWithOrderdRevision.revisions[revisinHash];
         let pubKeyHash = `${userAddress}_${revisinHash}`
         let pubKeyPrevious = ""
         if (revisionData.previous_verification_hash.length > 0) {
@@ -375,7 +388,7 @@ export async function fetchAquaTreeWithForwardRevisions(latestRevisionHash: stri
 
     // Reorder the revisions to ensure proper sequence
     let orderRevisionPrpoerties = reorderAquaTreeRevisionsProperties(anAquaTree);
-    let sortedAquaTree = OrderRevisionInAquaTree(orderRevisionPrpoerties);
+    let aquaTreeWithOrderdRevision = OrderRevisionInAquaTree(orderRevisionPrpoerties);
 
     // Now check if there are any forward revisions (newer revisions that point to our current latest)
     let revisionData = [];
@@ -413,7 +426,7 @@ export async function fetchAquaTreeWithForwardRevisions(latestRevisionHash: stri
         return [updatedSortedTree, updatedFileObject];
     }
 
-    return [sortedAquaTree, fileObject];
+    return [aquaTreeWithOrderdRevision, fileObject];
 }
 
 /**
@@ -755,8 +768,8 @@ export async function createAquaTreeFromRevisions(latestRevisionHash: string, ur
                 revisionWithData["file_hash"] = name?.file_hash ?? "--error--"
 
             }
-            let sortedAquaTree = reorderRevisionsProperties(revisionWithData)
-            anAquaTree.revisions[hashOnly] = sortedAquaTree;
+            let aquaTreeWithOrderdRevisionProperties = reorderRevisionsProperties(revisionWithData)
+            anAquaTree.revisions[hashOnly] = aquaTreeWithOrderdRevisionProperties;
         }
     }
 
@@ -1097,4 +1110,23 @@ export function readFileAsArrayBuffer(file: File): Promise<ArrayBuffer> {
 
         reader.readAsArrayBuffer(file);
     });
+}
+
+
+export function getAquaTreeFileName(aquaTree: AquaTree): string {
+
+    let mainAquaHash = "";
+    // fetch the genesis 
+    let revisionHashes = Object.keys(aquaTree!.revisions!)
+    for (let revisionHash of revisionHashes) {
+        let revisionData = aquaTree!.revisions![revisionHash];
+        if (revisionData.previous_verification_hash == null || revisionData.previous_verification_hash == "") {
+            mainAquaHash = revisionHash;
+            break;
+        }
+    }
+
+    
+   return aquaTree!.file_index[mainAquaHash] ?? "";
+
 }
