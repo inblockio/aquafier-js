@@ -172,7 +172,7 @@ const Home = () => {
                                 <Text>Create Aqua tree from template</Text>
                                 <Group>
                                     {formTemplates.map((template) =>
-                                        <Box background="tomato" width="fit-content" padding="4" color="white" onClick={() => {
+                                        <Box alignItems='center' width="fit-content" padding="4" color="white" bg="rgba(66, 153, 225, 0.6)"  borderRadius='lg' overflow='hidden' onClick={() => {
                                             setSelectedTemplate(template)
                                             onOpen()
                                         }}>

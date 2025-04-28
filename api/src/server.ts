@@ -21,6 +21,7 @@ import revisionsController from './controllers/revisions';
 import shareController from './controllers/share';
 import fetchChainController from './controllers/fetch-chain';
 import templatesController from './controllers/templates';
+import { setUpSystemTemplates } from './utils/api_utils';
 
 
 function buildServer() {
@@ -40,6 +41,9 @@ function buildServer() {
     // Create a Fastify instance
     const fastify = Fastify({ logger: true });
 
+
+
+    setUpSystemTemplates();
 
     // Register the CORS plugin
     fastify.register(cors, {
