@@ -1,5 +1,5 @@
-import { prisma } from "@/database/db"
-import { SYSTEM_WALLET_ADDRESS } from "@/models/constants"
+import { prisma } from "../database/db"
+import { SYSTEM_WALLET_ADDRESS } from "../models/constants"
 import { ethers } from "ethers"
 
 

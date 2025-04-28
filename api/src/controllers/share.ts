@@ -7,7 +7,7 @@ import { SessionQuery, ShareRequest, SiweRequest } from '../models/request_model
 import { AquaTree, FileObject, OrderRevisionInAquaTree, reorderAquaTreeRevisionsProperties } from 'aqua-js-sdk';
 import { getHost, getPort } from '../utils/api_utils';
 import { createAquaTreeFromRevisions, fetchAquaTreeWithForwardRevisions, saveAquaTree } from '../utils/revisions_utils';
-import { SYSTEM_WALLET_ADDRESS } from '@/models/constants';
+import { SYSTEM_WALLET_ADDRESS } from '../models/constants';
 
 export default async function shareController(fastify: FastifyInstance) {
     // get current session
