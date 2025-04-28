@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Box,
   Button,
@@ -10,15 +10,12 @@ import {
   DialogPositioner,
 } from '@chakra-ui/react';
 import { FormTemplate } from './types';
-import { getFormTemplates, deleteFormTemplate } from './formService';
-
-import { Alert } from "../chakra-ui/alert";
-import axios from "axios";
 import { useStore } from "zustand";
 import appStore from "../../store";
 import { toaster } from '../chakra-ui/toaster';
 import { DialogBackdrop, DialogBody, DialogContent, DialogFooter, DialogHeader, DialogRoot } from '../chakra-ui/dialog';
-import { LuDelete, LuEye, LuPen, LuTrash } from 'react-icons/lu';
+import { LuEye, LuPen, LuTrash } from 'react-icons/lu';
+import axios from 'axios';
 
 interface FormTemplateListProps {
   onEdit: (template: FormTemplate) => void;
@@ -26,70 +23,43 @@ interface FormTemplateListProps {
   onRefresh: () => void;
 }
 
-const FormTemplateList = ({ onEdit, onView, onRefresh }: FormTemplateListProps) => {
+const FormTemplateList = ({ onEdit, onView }: FormTemplateListProps) => {
 
-  const { session, backend_url, formTemplates, setFormTemplate } = useStore(appStore);
+  const { formTemplates, backend_url, setFormTemplate, session } = useStore(appStore);
 
 
   const [templateToDelete, setTemplateToDelete] = useState<FormTemplate | null>(null);
   const { open, onOpen, onClose } = useDisclosure();
   const cancelRef = React.useRef<HTMLButtonElement>(null);
 
-  useEffect(() => {
-    if(session!=null && session.nonce != undefined && backend_url != "http://0.0.0.0:0"){
-
-      loadTemplates();
-    }
-  }, [backend_url, session]);
-
-  const loadTemplates = async () => {
-    try {
-      // const loadedTemplates = getFormTemplates();
-      //
-      const url = `${backend_url}/templates`;
-
-      const response = await axios.get(url, {
-        headers: {
-          "nonce": session?.nonce
-        }
-      });
-
-      if (response.status === 200 || response.status === 201) {
-        //  console.log("update state ...")
-        let loadedTemplates: FormTemplate[] = response.data.data;
-        setFormTemplate(loadedTemplates);
-        toaster.create({
-          description: `Form created successfully`,
-          type: "success"
-        })
-      }
-
-    } catch (error) {
-      toaster.create({
-        title: 'Error loading templates',
-        description: error instanceof Error ? error.message : 'Unknown error',
-        type: 'error',
-        duration: 5000,
-      });
-    }
-  };
-
   const handleDeleteClick = (template: FormTemplate) => {
     setTemplateToDelete(template);
     onOpen();
   };
 
-  const confirmDelete = () => {
+  const confirmDelete = async () => {
     if (templateToDelete) {
-      try {
-        deleteFormTemplate(templateToDelete.id);
+
+      if (templateToDelete.public) {
         toaster.create({
-          title: 'Template deleted',
-          type: 'success',
+          title: 'Public Template, cannot be deleted',
+          type: 'info',
           duration: 3000,
         });
-        loadTemplates();
-        onRefresh();
+        return;
+      }
+
+      try {
+
+        let res = await axios.delete(`${backend_url}/templates/${templateToDelete.id}`);
+
+        if (res.status === 200 || res.status === 201) {
+          toaster.create({
+            title: 'Template deleted',
+            type: 'success',
+            duration: 3000,
+          });
+        }
       } catch (error) {
         toaster.create({
           title: 'Error deleting template',
@@ -101,6 +71,29 @@ const FormTemplateList = ({ onEdit, onView, onRefresh }: FormTemplateListProps) 
     }
     onClose();
   };
+
+  const loadTemplates = async () => {
+
+    const url = `${backend_url}/templates`;
+
+    const response = await axios.get(url, {
+      headers: {
+        "nonce": session?.nonce
+      }
+    });
+
+    if (response.status === 200 || response.status === 201) {
+      //  console.log("update state ...")
+      let loadedTemplates: FormTemplate[] = response.data.data;
+      setFormTemplate(loadedTemplates);
+    }
+
+  }
+
+  useEffect(() => {
+    loadTemplates()
+  }, []);
+
 
   return (
     <Box>
@@ -114,8 +107,8 @@ const FormTemplateList = ({ onEdit, onView, onRefresh }: FormTemplateListProps) 
         <Table.Root variant="line">
           <Table.Header>
             <Table.Row>
-              <Table.ColumnHeader>Name</Table.ColumnHeader>
               <Table.ColumnHeader>Title</Table.ColumnHeader>
+              <Table.ColumnHeader>Name</Table.ColumnHeader>
               <Table.ColumnHeader>Fields</Table.ColumnHeader>
               <Table.ColumnHeader>Actions</Table.ColumnHeader>
             </Table.Row>
@@ -123,8 +116,8 @@ const FormTemplateList = ({ onEdit, onView, onRefresh }: FormTemplateListProps) 
           <Table.Body>
             {formTemplates.map((template) => (
               <Table.Row key={template.id}>
-                <Table.Cell>{template.name}</Table.Cell>
                 <Table.Cell>{template.title}</Table.Cell>
+                <Table.Cell>{template.name}</Table.Cell>
                 <Table.Cell>{template.fields.length}</Table.Cell>
                 <Table.Cell>
                   <HStack gap={2}>
@@ -142,13 +135,17 @@ const FormTemplateList = ({ onEdit, onView, onRefresh }: FormTemplateListProps) 
                     >
                       <LuPen />
                     </IconButton>
-                    <IconButton
-                      aria-label="Delete template"
-                      size="sm"
-                      onClick={() => handleDeleteClick(template)}
-                    >
-                      <LuTrash />
-                    </IconButton>
+                    {
+                      !template.public ? (
+                        <IconButton
+                          aria-label="Delete template"
+                          size="sm"
+                          onClick={() => handleDeleteClick(template)}
+                        >
+                          <LuTrash />
+                        </IconButton>
+                      ) : null
+                    }
                   </HStack>
                 </Table.Cell>
               </Table.Row>
@@ -177,7 +174,7 @@ const FormTemplateList = ({ onEdit, onView, onRefresh }: FormTemplateListProps) 
               <Button ref={cancelRef} onClick={onClose}>
                 Cancel
               </Button>
-              <Button  variant={'solid'} colorPalette="red" onClick={confirmDelete} ml={3}>
+              <Button variant={'solid'} colorPalette="red" onClick={confirmDelete} ml={3}>
                 Delete
               </Button>
             </DialogFooter>

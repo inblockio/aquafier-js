@@ -145,28 +145,23 @@ export async function saveAquaTree(aquaTree: AquaTree, userAddress: string,) {
 
         if (revisionData.revision_type == "form") {
             let revisioValue = Object.keys(revisionData);
-            for (let formItem in revisioValue) {
-                if (formItem.startsWith("form_")) {
-                    await prisma.aquaForms.upsert({
-                        where: {
-                            hash: pubKeyHash
-                        },
-                        create: {
+            for (let formItem of revisioValue) {
+                if (formItem.startsWith("forms_")) {
+                    await prisma.aquaForms.create({
+                        data: {
                             hash: pubKeyHash,
                             key: formItem,
-                            value: revisioValue[formItem],
-                            type: typeof revisioValue[formItem]
-                        },
-                        update: {
-                            hash: pubKeyHash,
-                            key: formItem,
-                            value: revisioValue[formItem],
-                            type: typeof revisioValue[formItem]
+                            value: revisionData[formItem],
+                            type: typeof revisionData[formItem]
                         }
                     });
                 }
             }
         }
+
+        // if(revisionData.leaves && revisionData.leaves.length > 0) {
+            
+        // }
 
         if (revisionData.revision_type == "signature") {
             let signature = "";
@@ -492,6 +487,7 @@ export async function createAquaTreeFromRevisions(latestRevisionHash: string, ur
             //if previosu verification hash is not empty find the previous one
             if (latestRevionData?.previous !== null && latestRevionData?.previous?.length !== 0) {
                 let aquaTreerevision = await findAquaTreeRevision(previousWithPubKey);
+                console.log("Genesis revision: ", aquaTreerevision)
                 revisionData.push(...aquaTreerevision)
             }
         } catch (e: any) {
@@ -586,12 +582,13 @@ export async function createAquaTreeFromRevisions(latestRevisionHash: string, ur
         for (let revisionItem of revisionData) {
             let hashOnly = revisionItem.pubkey_hash.split("_")[1]
             let previousHashOnly = revisionItem.previous == null || revisionItem.previous == undefined || revisionItem.previous == "" ? "" : revisionItem.previous.split("_")[1]
-
             //  console.log(`previousHashOnly == > ${previousHashOnly} RAW ${revisionItem.previous}`)
             let revisionWithData: AquaRevision = {
                 revision_type: revisionItem.revision_type!! as "link" | "file" | "witness" | "signature" | "form",
                 previous_verification_hash: previousHashOnly,
                 local_timestamp: revisionItem.local_timestamp?.toString() ?? "",
+                leaves: revisionItem.verification_leaves,
+                file_nonce: revisionItem.nonce as string,
                 "version": "https://aqua-protocol.org/docs/v3/schema_2 | SHA256 | Method: scalar",
             }
 
@@ -610,7 +607,6 @@ export async function createAquaTreeFromRevisions(latestRevisionHash: string, ur
                             mode: 'insensitive' // Case-insensitive matching
                         }
                     }
-                    
                 })
                 console.log("File result: ", fileResult)
                 if (fileResult == null) {

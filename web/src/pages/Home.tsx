@@ -4,7 +4,7 @@ import FilesTable from "../components/chakra-ui/table"
 import { useStore } from "zustand"
 import appStore from "../store"
 import ConnectWallet from "../components/ConnectWallet"
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { estimateFileSize, dummyCredential } from "../utils/functions"
 import { DialogBackdrop, DialogBody, DialogContent, DialogFooter, DialogHeader, DialogRoot } from '../components/chakra-ui/dialog';
 import { FormTemplate } from "../components/aqua_forms"
@@ -15,7 +15,7 @@ import Aquafier, { AquaTree, AquaTreeWrapper, FileObject } from "aqua-js-sdk"
 import { toaster } from "../components/chakra-ui/toaster";
 import axios from "axios"
 const Home = () => {
-    const { session, formTemplates, backend_url } = useStore(appStore)
+    const { session, formTemplates, backend_url, setFormTemplate, setFiles } = useStore(appStore)
 
     const [selectedTemplate, setSelectedTemplate] = useState<FormTemplate | null>(null);
     const [formData, setFormData] = useState<Record<string, string>>({})
@@ -26,44 +26,45 @@ const Home = () => {
     const saveAquaTree = async (aquaTree: AquaTree, fileObject: FileObject) => {
         try {
             const url = `${backend_url}/explorer_aqua_file_upload`;
-            
+
             // Create a FormData object to send multipart data
             let formData = new FormData();
-            
+
             // Add the aquaTree as a JSON file
             const aquaTreeBlob = new Blob([JSON.stringify(aquaTree)], { type: 'application/json' });
             formData.append('file', aquaTreeBlob, fileObject.fileName);
-            
+
             // Add the account from the session
             formData.append('account', session?.address || '');
-            
+
             // Check if we have an actual file to upload as an asset
             if (fileObject.fileContent) {
                 // Set has_asset to true
                 formData.append('has_asset', 'true');
-                
+
                 // Create a blob from the file content and append it as the asset
                 const fileBlob = new Blob([JSON.stringify(fileObject.fileContent as string)], { type: 'application/octet-stream' });
                 formData.append('asset', fileBlob, fileObject.fileName);
             } else {
                 formData.append('has_asset', 'false');
             }
-            
+
             const response = await axios.post(url, formData, {
                 headers: {
                     "nonce": session?.nonce,
                     // Don't set Content-Type header - axios will set it automatically with the correct boundary
                 }
             });
-    
+
             if (response.status === 200 || response.status === 201) {
+                setFiles(response.data.files);
                 toaster.create({
                     description: `Aqua tree created successfully`,
                     type: "success"
                 });
                 onClose();
             }
-    
+
         } catch (error) {
             toaster.create({
                 title: 'Error uploading aqua tree',
@@ -73,16 +74,20 @@ const Home = () => {
             });
         }
     };
-    const createFormAndSign = async () => {
+    const createFormAndSign = async (e: React.FormEvent) => {
+        e.preventDefault();
         let aquafier = new Aquafier();
         let estimateize = estimateFileSize(JSON.stringify(formData));
+
+        const jsonString = JSON.stringify(formData, null, 4);
+
         let fileObject: FileObject = {
-            fileContent: JSON.stringify(formData),
-            fileName: `${selectedTemplate?.name}.json` ?? "template.json",
-            path: '',
+            fileContent: jsonString,
+            fileName: `${selectedTemplate?.name ?? "template"}.json`,
+            path: './',
             fileSize: estimateize
         }
-        let res = await aquafier.createGenesisRevision(fileObject, true, true, false)
+        let res = await aquafier.createGenesisRevision(fileObject, true, false, false)
 
         if (res.isOk()) {
 
@@ -92,19 +97,22 @@ const Home = () => {
                 fileObject: fileObject
             }
 
-            // sign the aqua chain 
+            // sign the aqua chain
             let signRes = await aquafier.signAquaTree(aquaTreeWrapper, "metamask", dummyCredential())
+            console.log("aqua tree after", res.data.aquaTree)
             if (signRes.isErr()) {
                 toaster.create({
                     description: `Error signing failed`,
                     type: "error"
                 })
             } else {
-
+                console.log("signRes.data", signRes.data)
+                fileObject.fileContent = formData
                 await saveAquaTree(signRes.data.aquaTree!!, fileObject)
 
             }
         } else {
+            console.log(res.data)
             toaster.create({
                 title: 'Error creating Aqua tree from template',
                 description: 'Error creating Aqua tree from template',
@@ -113,6 +121,46 @@ const Home = () => {
             });
         }
     }
+
+    const loadTemplates = async () => {
+        try {
+            // const loadedTemplates = getFormTemplates();
+            //
+            const url = `${backend_url}/templates`;
+
+            const response = await axios.get(url, {
+                headers: {
+                    "nonce": session?.nonce
+                }
+            });
+
+            if (response.status === 200 || response.status === 201) {
+                //  console.log("update state ...")
+                let loadedTemplates: FormTemplate[] = response.data.data;
+                setFormTemplate(loadedTemplates);
+                // toaster.create({
+                //   description: `Form created successfully`,
+                //   type: "success"
+                // })
+            }
+
+        } catch (error) {
+            toaster.create({
+                title: 'Error loading templates',
+                description: error instanceof Error ? error.message : 'Unknown error',
+                type: 'error',
+                duration: 5000,
+            });
+        }
+    };
+
+
+    useEffect(() => {
+        if (session != null && session.nonce != undefined && backend_url != "http://0.0.0.0:0") {
+            loadTemplates();
+        }
+    }, [backend_url, session]);
+
     return (
         <>
             {
@@ -185,28 +233,32 @@ const Home = () => {
                         </DialogHeader>
 
                         <DialogBody>
-                            <Stack>
-                                {selectedTemplate ? selectedTemplate.fields.map((field) => {
-                                    return <Field label={field.title ?? field.label} errorText={''}>
-                                        <Input
-                                            borderRadius={"sm"}
-                                            size={"xs"}
-                                            value={formData[field.name]}
-                                            onChange={(e) => {
-                                                setFormData({
-                                                    ...formData,
-                                                    [field.name]: e.target.value
-                                                })
-                                            }}
-                                        />
-                                    </Field>
-                                }) : null}
-                            </Stack>
+                            <form onSubmit={createFormAndSign} id="create-aqua-tree-form">
+                                <Stack>
+                                    {selectedTemplate ? selectedTemplate.fields.map((field) => {
+                                        return <Field label={field.label} errorText={''}>
+                                            <Input
+                                                borderRadius={"sm"}
+                                                size={"xs"}
+                                                value={formData[field.name]}
+                                                type={field.type}
+                                                onChange={(e) => {
+                                                    setFormData({
+                                                        ...formData,
+                                                        [field.name]: e.target.value
+                                                    })
+                                                }}
+                                                required={field.required}
+                                            />
+                                        </Field>
+                                    }) : null}
+                                </Stack>
+                            </form>
                         </DialogBody>
 
 
                         <DialogFooter>
-                            <Button colorPalette={'green'} ref={cancelRef} onClick={createFormAndSign}>
+                            <Button type="submit" colorPalette={'green'} ref={cancelRef} onClick={createFormAndSign} form="create-aqua-tree-form">
                                 Create
                             </Button>
                             <Button variant={'solid'} colorPalette="red" onClick={onClose} ml={3}>
