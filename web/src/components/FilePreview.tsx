@@ -2,10 +2,11 @@ import { FileObject } from "aqua-js-sdk";
 import { useEffect, useRef, useState } from "react";
 import { useStore } from "zustand";
 import appStore from "../store";
-import { ensureDomainUrlHasSSL } from "../utils/functions";
+import { ensureDomainUrlHasSSL, isJSONKeyValueStringContent } from "../utils/functions";
 import { PDFJSViewer, PDFControlsProps } from "pdfjs-react-viewer";
 import { Group, IconButton, Text } from "@chakra-ui/react";
 import { LuChevronLeft, LuChevronRight } from "react-icons/lu";
+import  {FilePreviewAquaTreeFromTemplate} from "./FilePreviewAquaTreeFromTemplate"
 
 // Define file extensions to content type mappings
 const fileExtensionMap: { [key: string]: string } = {
@@ -271,8 +272,11 @@ const FilePreview: React.FC<IFilePreview> = ({ fileInfo }) => {
                 }
                 // Handle if fileContent is plain text
                 else if (typeof fileInfo.fileContent === 'string') {
+
+
                     setTextContent(fileInfo.fileContent);
                     setFileType("text/plain");
+
                 }
             } catch (error) {
                 console.error("Error processing file:", error);
@@ -297,6 +301,8 @@ const FilePreview: React.FC<IFilePreview> = ({ fileInfo }) => {
     if (fileType.startsWith("image/")) {
         return <img src={fileURL} alt="File preview" style={{ maxWidth: "100%", height: "auto" }} />;
     }
+
+
 
     // PDF files
     if (fileType === "application/pdf") {
@@ -323,6 +329,14 @@ const FilePreview: React.FC<IFilePreview> = ({ fileInfo }) => {
         fileType === "application/json" ||
         fileType === "application/xml") {
         let newTxtContent = textContent;
+
+        if (fileType === "application/json") {
+            let isForm = isJSONKeyValueStringContent(newTxtContent)
+            console.log(`is this ${fileInfo.fileContent} is form ${isForm}`)
+            if (isForm) {
+                return <FilePreviewAquaTreeFromTemplate userData={JSON.parse(newTxtContent)} />
+            }
+        }
         return (
             <div style={{
                 whiteSpace: "pre-wrap",

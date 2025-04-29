@@ -194,6 +194,57 @@ const setUpSystemTemplates = async () => {
   })
 
   //end of cheque
+
+
+  //start  of  access contract
+  await prisma.aquaTemplate.upsert({
+    where: {
+      id: "4",
+    },
+    create: {
+      id: "4",
+      name: "access_contract",
+      owner: SYSTEM_WALLET_ADDRESS,
+      public: true,
+      title: "Access Contract",
+      created_at: today.toDateString()
+    },
+    update: {
+
+    },
+  })
+
+  let accessContract = {
+    "sender": "0x...",
+    "receiver": "0x...",
+    "resource": "John",
+    "option": "Doe",
+    "terms": "",
+
+  }
+
+
+  Object.keys(cheque).forEach(async (keyName, index) => {
+    await prisma.aquaTemplateFields.upsert({
+      where: {
+        id: `4${index}`,
+      },
+      create: {
+        id: `4${index}`,
+        aqua_form_id: "4",
+        name: keyName,
+        label: convertNameToLabel(keyName),
+        type: keyName == "terms"? "boolean": "string",
+        required: keyName == 'note' ? false : true
+      },
+      update: {
+
+      },
+    })
+  })
+
+  //end of cheque
+
 }
 
 

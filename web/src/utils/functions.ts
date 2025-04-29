@@ -65,6 +65,7 @@ export function getAquaTreeFileName(aquaTree: AquaTree): string {
    return aquaTree!.file_index[mainAquaHash] ?? "";
 
 }
+
 export function getAquaTreeFileObject(fileInfo: ApiFileInfo): FileObject | undefined {
 
     let mainAquaFileName = "";
@@ -190,7 +191,7 @@ export function validateAquaTree(tree: AquaTree): [boolean, string] {
     for (const hash in tree.revisions) {
         const revision = tree.revisions[hash];
 
-        console.log(`Revision --  ${JSON.stringify(revision)}`)
+        // console.log(`Revision --  ${JSON.stringify(revision)}`)
         // Check required fields for all revisions
         if (revision.previous_verification_hash === undefined || revision.previous_verification_hash === null) {
             return [false, "A revision must contain previous_verification_hash"];
