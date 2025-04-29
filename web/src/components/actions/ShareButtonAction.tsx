@@ -343,7 +343,7 @@ const ShareButtonAction = ({ item, nonce }: IShareButtonAction) => {
 
 
         } else {
-            return <Text>hi</Text>
+            return <></>
         }
     }
 

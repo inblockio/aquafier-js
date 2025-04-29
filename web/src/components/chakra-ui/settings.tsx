@@ -203,9 +203,6 @@ const DeleteUserData = () => {
 
 const Settings = () => {
 
-
-    // let navigate = useNavigate();
-
     return (
         <div>
             <DialogRoot size={{ md: 'md', smDown: 'full' }} placement={'top'}>

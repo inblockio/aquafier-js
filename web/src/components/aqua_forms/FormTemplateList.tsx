@@ -128,22 +128,26 @@ const FormTemplateList = ({ onEdit, onView }: FormTemplateListProps) => {
                     >
                       <LuEye />
                     </IconButton>
-                    <IconButton
-                      aria-label="Edit template"
-                      size="sm"
-                      onClick={() => onEdit(template)}
-                    >
-                      <LuPen />
-                    </IconButton>
+
+
                     {
                       !template.public ? (
-                        <IconButton
-                          aria-label="Delete template"
-                          size="sm"
-                          onClick={() => handleDeleteClick(template)}
-                        >
-                          <LuTrash />
-                        </IconButton>
+                        <>
+                          <IconButton
+                            aria-label="Edit template"
+                            size="sm"
+                            onClick={() => onEdit(template)}
+                          >
+                            <LuPen />
+                          </IconButton>
+                          <IconButton
+                            aria-label="Delete template"
+                            size="sm"
+                            onClick={() => handleDeleteClick(template)}
+                          >
+                            <LuTrash />
+                          </IconButton>
+                        </>
                       ) : null
                     }
                   </HStack>

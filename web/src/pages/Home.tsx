@@ -1,166 +1,17 @@
-import { Box, Center, Container, Group, Stack, Text, VStack, DialogPositioner, useDisclosure, Button, Input } from "@chakra-ui/react"
+import { Box, Center, Container, Stack, Text, VStack,   } from "@chakra-ui/react"
 import { FileUploadDropzone, FileUploadList, FileUploadRoot } from "../components/chakra-ui/file-button"
 import FilesTable from "../components/chakra-ui/table"
 import { useStore } from "zustand"
 import appStore from "../store"
 import ConnectWallet from "../components/ConnectWallet"
-import { useEffect, useState } from "react"
-import { estimateFileSize, dummyCredential } from "../utils/functions"
-import { DialogBackdrop, DialogBody, DialogContent, DialogFooter, DialogHeader, DialogRoot } from '../components/chakra-ui/dialog';
-import { FormTemplate } from "../components/aqua_forms"
-import { Field } from '../components/chakra-ui/field';
-import React from "react"
-import Aquafier, { AquaTree, AquaTreeWrapper, FileObject } from "aqua-js-sdk"
 
-import { toaster } from "../components/chakra-ui/toaster";
-import axios from "axios"
+
 const Home = () => {
-    const { session, formTemplates, backend_url, setFormTemplate, setFiles } = useStore(appStore)
+    const { session } = useStore(appStore)
 
-    const [selectedTemplate, setSelectedTemplate] = useState<FormTemplate | null>(null);
-    const [formData, setFormData] = useState<Record<string, string>>({})
-    const { open, onOpen, onClose } = useDisclosure();
+   
 
-    const cancelRef = React.useRef<HTMLButtonElement>(null);
-
-    const saveAquaTree = async (aquaTree: AquaTree, fileObject: FileObject) => {
-        try {
-            const url = `${backend_url}/explorer_aqua_file_upload`;
-
-            // Create a FormData object to send multipart data
-            let formData = new FormData();
-
-            // Add the aquaTree as a JSON file
-            const aquaTreeBlob = new Blob([JSON.stringify(aquaTree)], { type: 'application/json' });
-            formData.append('file', aquaTreeBlob, fileObject.fileName);
-
-            // Add the account from the session
-            formData.append('account', session?.address || '');
-
-            // Check if we have an actual file to upload as an asset
-            if (fileObject.fileContent) {
-                // Set has_asset to true
-                formData.append('has_asset', 'true');
-
-                // Create a blob from the file content and append it as the asset
-                const fileBlob = new Blob([JSON.stringify(fileObject.fileContent as string)], { type: 'application/octet-stream' });
-                formData.append('asset', fileBlob, fileObject.fileName);
-            } else {
-                formData.append('has_asset', 'false');
-            }
-
-            const response = await axios.post(url, formData, {
-                headers: {
-                    "nonce": session?.nonce,
-                    // Don't set Content-Type header - axios will set it automatically with the correct boundary
-                }
-            });
-
-            if (response.status === 200 || response.status === 201) {
-                setFiles(response.data.files);
-                toaster.create({
-                    description: `Aqua tree created successfully`,
-                    type: "success"
-                });
-                onClose();
-            }
-
-        } catch (error) {
-            toaster.create({
-                title: 'Error uploading aqua tree',
-                description: error instanceof Error ? error.message : 'Unknown error',
-                type: 'error',
-                duration: 5000,
-            });
-        }
-    };
-    const createFormAndSign = async (e: React.FormEvent) => {
-        e.preventDefault();
-        let aquafier = new Aquafier();
-        let estimateize = estimateFileSize(JSON.stringify(formData));
-
-        const jsonString = JSON.stringify(formData, null, 4);
-
-        let fileObject: FileObject = {
-            fileContent: jsonString,
-            fileName: `${selectedTemplate?.name ?? "template"}.json`,
-            path: './',
-            fileSize: estimateize
-        }
-        let res = await aquafier.createGenesisRevision(fileObject, true, false, false)
-
-        if (res.isOk()) {
-
-            const aquaTreeWrapper: AquaTreeWrapper = {
-                aquaTree: res.data.aquaTree!!,
-                revision: "",
-                fileObject: fileObject
-            }
-
-            // sign the aqua chain
-            let signRes = await aquafier.signAquaTree(aquaTreeWrapper, "metamask", dummyCredential())
-            console.log("aqua tree after", res.data.aquaTree)
-            if (signRes.isErr()) {
-                toaster.create({
-                    description: `Error signing failed`,
-                    type: "error"
-                })
-            } else {
-                console.log("signRes.data", signRes.data)
-                fileObject.fileContent = formData
-                await saveAquaTree(signRes.data.aquaTree!!, fileObject)
-
-            }
-        } else {
-            console.log(res.data)
-            toaster.create({
-                title: 'Error creating Aqua tree from template',
-                description: 'Error creating Aqua tree from template',
-                type: 'error',
-                duration: 5000,
-            });
-        }
-    }
-
-    const loadTemplates = async () => {
-        try {
-            // const loadedTemplates = getFormTemplates();
-            //
-            const url = `${backend_url}/templates`;
-
-            const response = await axios.get(url, {
-                headers: {
-                    "nonce": session?.nonce
-                }
-            });
-
-            if (response.status === 200 || response.status === 201) {
-                //  console.log("update state ...")
-                let loadedTemplates: FormTemplate[] = response.data.data;
-                setFormTemplate(loadedTemplates);
-                // toaster.create({
-                //   description: `Form created successfully`,
-                //   type: "success"
-                // })
-            }
-
-        } catch (error) {
-            toaster.create({
-                title: 'Error loading templates',
-                description: error instanceof Error ? error.message : 'Unknown error',
-                type: 'error',
-                duration: 5000,
-            });
-        }
-    };
-
-
-    useEffect(() => {
-        if (session != null && session.nonce != undefined && backend_url != "http://0.0.0.0:0") {
-            loadTemplates();
-        }
-    }, [backend_url, session]);
-
+ 
     return (
         <>
             {
@@ -168,20 +19,6 @@ const Home = () => {
                     <Container fluid maxWidth={{ base: 'vw', md: '10/12' }} py={'14'} px={{ base: 1, md: 10 }}>
                         <VStack alignItems={'start'} gap={'10'}>
 
-                            <Stack>
-                                <Text>Create Aqua tree from template</Text>
-                                <Group>
-                                    {formTemplates.map((template) =>
-                                        <Box alignItems='center' width="fit-content" padding="4" color="white" bg="rgba(66, 153, 225, 0.6)"  borderRadius='lg' overflow='hidden' onClick={() => {
-                                            setSelectedTemplate(template)
-                                            onOpen()
-                                        }}>
-                                            {template.name}
-                                        </Box>
-
-                                    )}
-                                </Group>
-                            </Stack>
                             <FileUploadRoot borderRadius={'2xl'} alignItems="stretch" maxFiles={10} cursor={'pointer'}>
                                 <FileUploadDropzone
                                     borderRadius={'2xl'}
@@ -221,7 +58,7 @@ const Home = () => {
                 )
             }
 
-            <DialogRoot
+            {/* <DialogRoot
                 open={open}
                 onOpenChange={onClose}
             >
@@ -267,7 +104,7 @@ const Home = () => {
                         </DialogFooter>
                     </DialogContent>
                 </DialogPositioner>
-            </DialogRoot>
+            </DialogRoot> */}
         </>
     )
 }

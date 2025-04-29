@@ -55,6 +55,11 @@ export interface SiweRequest {
   domain: string;
 }
 
+export interface ChequeRegisterRequest {
+  amount: number;
+  wallet_address: string;
+  aqua_tree_revision_hash: string;
+}
 
 
 export interface ShareRequest {

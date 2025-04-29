@@ -259,7 +259,7 @@ export const CompleteChainView = ({ callBack, selectedFileInfo }: ICompleteChain
         }
     }, [
         // Only re-run when the number of revisions changes or when deletions happen
-        selectedFileInfo,
+        JSON.stringify(selectedFileInfo),
         Object.keys(selectedFileInfo?.aquaTree?.revisions ?? {}).length,
         deletedRevisions.length
     ]);
