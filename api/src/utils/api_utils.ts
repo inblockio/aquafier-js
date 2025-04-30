@@ -64,7 +64,7 @@ const setUpSystemTemplates = async () => {
     "name": "John",
     "surname": "Doe",
     "email": "john.doe@example.com",
-    "date_of_birth": "1995-10-15",
+    // "date_of_birth": "1995-10-15",
     "wallet_address": "0x568a94a8f0f3dc0b245b853bef572075c1df5c50"
   }
 
@@ -115,7 +115,7 @@ const setUpSystemTemplates = async () => {
     "name": "John",
     "surname": "Doe",
     "email": "john.doe@example.com",
-    "date_of_birth": "1995-10-15",
+    // "date_of_birth": "1995-10-15",
     "context": "I verified the attributes against a government issued ID. I hereby attest that the above information is true and correct to the best of my knowledge.",
     "wallet_address": "0x6b2f22390c318107e95c58c90a66afaf7ef06853"
   }
