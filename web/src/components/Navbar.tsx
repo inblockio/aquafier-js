@@ -1,6 +1,4 @@
-import { Box, Group, HStack, Image, Text, Menu, Button, Portal, MenuOpenChangeDetails, Stack, Input, useDisclosure, Flex, Center } from "@chakra-ui/react"
-// import { Wrap, WrapItem } from "@chakra-ui/react"
-import { LuPlus } from 'react-icons/lu';
+import { Box, Group, HStack, Image, Text, Menu, Button, Portal, MenuOpenChangeDetails, Stack, Input, Flex, Center, SimpleGrid } from "@chakra-ui/react"
 import Settings from "./chakra-ui/settings"
 import ConnectWallet from "./ConnectWallet"
 import { useColorMode } from "./chakra-ui/color-mode"
@@ -11,74 +9,70 @@ import { Link, useNavigate } from "react-router-dom"
 import AccountContracts from "./AccountContracts"
 import { Alert } from "../components/chakra-ui/alert"
 import { LuChevronDown, LuChevronUp, LuSquareChartGantt } from "react-icons/lu"
-import {
-    Modal,
-    ModalBody,
-    ModalCloseButton,
-    ModalContent,
-    ModalFooter,
-    ModalHeader,
-    ModalOverlay,
-} from '@chakra-ui/modal'
+import { HiDocumentPlus } from "react-icons/hi2";
 import React, { useEffect, useState } from "react"
 import { estimateFileSize, dummyCredential } from "../utils/functions"
-// import { DialogBackdrop, DialogBody, DialogContent, DialogFooter, DialogHeader, DialogRoot } from '../components/chakra-ui/dialog';
 import { FormTemplate } from "../components/aqua_forms"
 import { Field } from '../components/chakra-ui/field';
 import Aquafier, { AquaTree, AquaTreeWrapper, FileObject } from "aqua-js-sdk"
 
 import { toaster } from "../components/chakra-ui/toaster";
 import axios from "axios"
-// interface INavlinkItem {
-//     label: string
-//     to: string
-//     icon?: ReactNode
-// }
-
-// const navlinks: INavlinkItem[] = [
-//     {
-//         label: "Forms",
-//         to: "/aqua-forms"
-//     },
-// {
-//     label: "Form Generator",
-//     to: "/form-generator"
-// }
-// ]
-/**
- *  {
-                                        navlinks.map((item, i: number) => (
-                                            <CustomNavlinkItem key={`navitem_${i}`} {...item} />
-                                        ))
-                                    }
+import { DialogBody, DialogCloseTrigger, DialogContent, DialogFooter, DialogHeader, DialogRoot } from "./chakra-ui/dialog";
+import SmallScreenSidebarDrawer from "./SmallScreenSidebarDrawer"
 
 
- */
+const FormTemplateCard = ({ template, selectTemplateCallBack }: { template: FormTemplate, selectTemplateCallBack: (template: FormTemplate) => void }) => {
 
-// const CustomNavlinkItem = ({ label, to }: INavlinkItem) => {
+    const { colorMode } = useColorMode()
 
-
-//     return (
-// <Link to={to}>
-//     <LinkBox bg="blue.500" p={2} borderRadius="md">
-//         <Group>
-//             <Text>{label}</Text>
-//             <LuSquareChartGantt />
-//         </Group>
-//     </LinkBox>
-// </Link>
-//     )
-// }
-
+    return (
+        <Box
+            borderWidth="2px"
+            borderStyle="dashed"
+            borderColor={colorMode === "light" ? "gray.300" : "gray.600"}
+            borderRadius="md"
+            cursor={"pointer"}
+            bg={colorMode === "light" ? "gray.50" : "blackAlpha.500"}
+            css={{
+                "&:hover": {
+                    bg: colorMode === "light" ? "gray.200" : "blackAlpha.700"
+                }
+            }}
+            h="120px"
+            p={4}
+            onClick={() => {
+                selectTemplateCallBack(template)
+            }}
+        >
+            <Flex direction="column" align="center" justify="center" h="100%">
+                <Text textAlign="center" mb={2} ml={2} mr={2} fontWeight="bold">
+                    {template.title}
+                </Text>
+                <Center
+                    mt={2}
+                    borderRadius="full"
+                >
+                    <HiDocumentPlus size={"32px"} />
+                </Center>
+            </Flex>
+        </Box>
+    )
+}
 
 
 
 const Navbar = () => {
     const { colorMode } = useColorMode()
 
+    const [contractsOpen, setContractsOpen] = useState(false)
+    const [settingsOpen, setSettingsOpen] = useState(false)
+    const [versionOpen, setVersionOpen] = useState(false)
+
     const [isDropDownOpen, setIsDropDownOpen] = useState(false);
     const [modalFormErorMessae, setModalFormErorMessae] = useState("");
-    const { open, onOpen, onClose } = useDisclosure();
+    // const { open, onOpen, onClose } = useDisclosure();
+    const [open, setOpen] = useState(false)
     const { session, formTemplates, backend_url, setFormTemplate, setFiles } = useStore(appStore)
     const [formData, setFormData] = useState<Record<string, string>>({})
     const [selectedTemplate, setSelectedTemplate] = useState<FormTemplate | null>(null);
@@ -126,7 +120,8 @@ const Navbar = () => {
                     description: `Aqua tree created successfully`,
                     type: "success"
                 });
-                onClose();
+                // onClose();
+                setOpen(false)
                 setModalFormErorMessae("")
             }
 
@@ -230,18 +225,27 @@ const Navbar = () => {
         }
     };
 
-    // Array of Chakra UI colors for random assignment
-    const colorOptions = [
-        "red.100", "green.100", "blue.100", "purple.100",
-        "yellow.100", "orange.100", "teal.100", "cyan.100",
-        "pink.100"
-    ];
+    const selectTemplateCallBack = (template: FormTemplate) => {
+        setSelectedTemplate(template)
+        template.fields.forEach((item) => {
+            if (item.name == "wallet_address") {
+                setFormData((formData) => {
+                    formData[item.name] = session!.address ?? "--"
+                    return formData
+                })
+            }
+        })
+    }
 
-    // Function to get a random color from the options
-    const getRandomColor = () => {
-        const randomIndex = Math.floor(Math.random() * colorOptions.length);
-        return colorOptions[randomIndex];
-    };
+    const closeDialog = () => {
+        if (selectedTemplate) {
+            setSelectedTemplate(null)
+            setModalFormErorMessae("")
+            setFormData({})
+        } else {
+            setOpen(false)
+        }
+    }
 
 
     useEffect(() => {
@@ -258,11 +262,14 @@ const Navbar = () => {
                     <Link to={'/'} style={{ height: "100%", display: "flex", alignItems: "center" }}>
                         <Image src={colorMode === 'light' ? "/images/logo.png" : "/images/logo-dark.png"} maxH={'60%'} />
                     </Link>
-                    <HStack h={'100%'} gap={"4"} justifyContent={'space-between'}>
+                    <HStack display={{ base: 'flex', md: 'none' }} gap={"2"}>
+                        <ConnectWallet />
+                        <SmallScreenSidebarDrawer openCreateForm={() => setOpen(true)} />
+                    </HStack>
+                    <HStack h={'100%'} gap={"4"} justifyContent={'space-between'} display={{ base: 'none', md: 'flex' }}>
                         {
                             session ? (<>
                                 <Group gap={4}>
-
                                     <Menu.Root onOpenChange={(open: MenuOpenChangeDetails) => setIsDropDownOpen(open.open)}  >
                                         <Menu.Trigger asChild >
 
@@ -272,9 +279,9 @@ const Navbar = () => {
                                                     <LuSquareChartGantt />
 
                                                     {isDropDownOpen ? (
-                                                        <LuChevronUp className="w-5 h-5" />
+                                                        <LuChevronUp />
                                                     ) : (
-                                                        <LuChevronDown className="w-5 h-5" />
+                                                        <LuChevronDown />
                                                     )}
                                                 </Group>
                                             </Button>
@@ -285,209 +292,111 @@ const Navbar = () => {
                                                 <Menu.Content>
                                                     <Menu.Item value="new-txt" onClick={() => {
                                                         navigate("/aqua-forms")
-                                                    }}>Manage templates</Menu.Item>
+                                                    }} cursor={"pointer"}>
+                                                        Manage templates
+                                                    </Menu.Item>
                                                     <Menu.Item value="new-file" onClick={() => {
-                                                        onOpen()
-                                                    }}>Create Aqua Tree from template</Menu.Item>
-
+                                                        setOpen(true)
+                                                    }} cursor={"pointer"}>
+                                                        Create Form from template
+                                                    </Menu.Item>
                                                 </Menu.Content>
                                             </Menu.Positioner>
                                         </Portal>
                                     </Menu.Root>
 
-                                    {/* {FormDropdown()} */}
-
                                 </Group>
                             </>
                             ) : null
                         }
-                        <VersionAndDisclaimer />
-                        <ConnectWallet />
+                        <VersionAndDisclaimer inline={false} open={versionOpen} updateOpenStatus={(open) => setVersionOpen(open)} />
                         {
                             session ? (<>
-                                <AccountContracts />
-                                <Settings />
+                                <AccountContracts inline={false} open={contractsOpen} updateOpenStatus={(open) => setContractsOpen(open)} />
+                                <Settings inline={false} open={settingsOpen} updateOpenStatus={(open) => {
+                                    console.log(open)
+                                    setSettingsOpen(open)
+                                }} />
                             </>
                             ) : null
                         }
+                        <ConnectWallet />
                     </HStack>
                 </HStack>
             </Box>
 
-
-            <Modal isOpen={open} onClose={() => {
-                // setUploading(false)
-                setSelectedTemplate(null)
-                setModalFormErorMessae("")
-                onClose()
-            }} isCentered>
-                <ModalOverlay
-                    backgroundColor="rgba(0, 0, 0, 0.5)"
-                    backdropFilter="blur(2px)"
-                />
-                <ModalContent
-                    maxW="650px"
-                    w="90%"
-                    mx="auto"
-                    mt="50px"
-                    borderRadius="16px"
-                    boxShadow="0 5px 15px rgba(0, 0, 0, 0.5)"
-                    bg="white"
-                    border="1px solid rgba(0, 0, 0, 0.2)"
-                    p={25}
-                    overflow="hidden"
-                >
-                    <ModalHeader
-                        borderBottom="1px solid #e9ecef"
-                        py={3}
-                        px={4}
-                        fontSize="16px"
-                        fontWeight="500"
-                    >
+            <DialogRoot size={{ md: 'lg', smDown: 'full' }} placement={'top'} open={open}
+            //  onOpenChange={e => {
+            //     if (!e.open) {
+            //         closeDialog()
+            //     } else {
+            //         setOpen(e.open)
+            //     }
+            // }}
+            >
+                <DialogContent borderRadius={{ base: 0, md: 'xl' }}>
+                    <DialogHeader py={"3"} px={"5"}>
                         {selectedTemplate ?
                             <Text>Create {selectedTemplate.title} Aqua Tree</Text> :
-                            <Text>Create Aqua tree from template</Text>}
-                    </ModalHeader>
-                    <ModalCloseButton
-                        position="absolute"
-                        right="10px"
-                        top="10px"
-                        size="sm"
-                        borderRadius="50%"
-                        bg="transparent"
-                        border="none"
-                        _hover={{ bg: "gray.100" }}
-                    />
-                    <ModalBody py={4} px={4} overflowY="auto" overflowX="hidden">
+                            <Text>Create Form from template</Text>}
+                    </DialogHeader>
+                    <DialogBody>
+                        {selectedTemplate == null ? (
+                            <SimpleGrid columns={{ base: 2, md: 3 }} gap={2}>
+                                {formTemplates.map((template, i: number) => (
+                                    <FormTemplateCard key={`template_${i}`} template={template} selectTemplateCallBack={selectTemplateCallBack} />
+                                ))}
+                            </SimpleGrid>)
+                            : (
+                                <form onSubmit={createFormAndSign} id="create-aqua-tree-form">
+                                    {modalFormErorMessae.length > 0 ?
+                                        <Alert title="No Data">
+                                            {modalFormErorMessae}
+                                        </Alert>
+                                        : <></>
+                                    }
+                                    <Stack marginBottom={10}>
+                                        {selectedTemplate ? selectedTemplate.fields.map((field) => {
 
-                        {selectedTemplate == null ?
-                            <Stack direction="row"
-                                flexWrap="wrap"
-                                height="100%"
-                                align="flex-start"
-                                justifyContent="flex-start"
-                                p={4}>
-
-
-                                {formTemplates.map((template) =>
-
-                                    <Box
-                                        borderWidth="1px"
-                                        borderStyle="dotted"
-                                        borderColor="gray.300"
-                                        borderRadius="md"
-                                        w="150px"
-                                        bg={getRandomColor()}
-                                        h="120px"
-                                        p={4}
-                                        onClick={() => {
-
-                                            setSelectedTemplate(template)
-                                            template.fields.forEach((item) => {
-                                                if (item.name == "wallet_address") {
-                                                    setFormData((formData) =>  {
-                                                        formData[item.name] = session!.address ?? "--"
-                                                        return formData
-                                                    })
-                                                }
-                                            })
-                                            onOpen()
-                                        }}
-                                    >
-                                        <Flex direction="column" align="center" justify="center" h="100%">
-                                            <Text textAlign="center" mb={2} ml={2} mr={2} fontWeight="medium">
-                                                {template.title}
-                                            </Text>
-                                            <Center
-                                                mt={2}
-                                                borderRadius="full"
-                                                bg="blue.100"
-                                                w="28px"
-                                                h="28px"
-                                            >
-                                                <LuPlus color="blue" size={16} />
-                                            </Center>
-                                        </Flex>
-                                    </Box>
-                                )}
-
-
-                            </Stack>
-                            :
-                            <form onSubmit={createFormAndSign} id="create-aqua-tree-form">
-                                {modalFormErorMessae.length > 0 ?
-                                    <Alert title="No Data">
-                                        {modalFormErorMessae}
-                                    </Alert>
-                                    : <></>
+                                            return <Field label={field.label} errorText={''}>
+                                                <Input
+                                                    borderRadius={"md"}
+                                                    size={"sm"}
+                                                    value={formData[field.name]}
+                                                    type={field.type}
+                                                    onChange={(e) => {
+                                                        setFormData({
+                                                            ...formData,
+                                                            [field.name]: e.target.value
+                                                        })
+                                                    }}
+                                                    required={field.required}
+                                                />
+                                            </Field>
+                                        }) : null}
+                                    </Stack>
+                                </form>
+                            )
+                        }
+                    </DialogBody>
+                    <DialogFooter>
+                        <HStack w={'100%'} justifyContent={'end'}>
+                            <HStack>
+                                {selectedTemplate ?
+                                    <Button type="submit" ml={3} mr={3} colorPalette={'green'} ref={cancelRef} onClick={createFormAndSign} form="create-aqua-tree-form">
+                                        Create
+                                    </Button>
+                                    : null
                                 }
-                                <Stack marginBottom={10}>
-                                    {selectedTemplate ? selectedTemplate.fields.map((field) => {
-
-                                        return <Field label={field.label} errorText={''}>
-                                            <Input
-                                                borderRadius={"sm"}
-                                                size={"xs"}
-                                                value={formData[field.name]}
-                                                type={field.type}
-                                                onChange={(e) => {
-                                                    setFormData({
-                                                        ...formData,
-                                                        [field.name]: e.target.value
-                                                    })
-                                                }}
-                                                required={field.required}
-                                            />
-                                        </Field>
-                                    }) : null}
-                                </Stack>
-                            </form>
-                        }
-                    </ModalBody>
-
-                    <ModalFooter
-                        borderTop="1px solid #e9ecef"
-                        py={3}
-                        px={4}
-                        justifyContent="flex-end"
-                    >
-
-                        {selectedTemplate ?
-                            <Button type="submit" ml={3} mr={3} colorPalette={'green'} ref={cancelRef} onClick={createFormAndSign} form="create-aqua-tree-form">
-                                Create
-                            </Button>
-                            : <></>
-                        }
-                        <Button
-                            bg="black"
-                            color="white"
-                            mr={3}
-                            onClick={() => {
-                                // setUploading(false)
-                                setSelectedTemplate(null)
-                                setModalFormErorMessae("")
-                                onClose()
-                            }}
-                            size="sm"
-                            borderRadius="sm"
-                            _hover={{ bg: "gray.800" }}
-                        >
-                            Cancel
-                        </Button>
-                        {/* <Button
-                                        bg="gray.500"
-                                        color="white"
-                                        onClick={handleContinue}
-                                        disabled={!selectedFile}
-                                        size="sm"
-                                        _hover={{ bg: "gray.600" }}
-                                        borderRadius="sm"
-                                    >
-                                        Continue
-                                    </Button> */}
-                    </ModalFooter>
-                </ModalContent>
-            </Modal>
+                                {/* <DialogActionTrigger asChild> */}
+                                <Button variant="outline" onClick={closeDialog}>Cancel</Button>
+                                {/* </DialogActionTrigger> */}
+                            </HStack>
+                        </HStack>
+                    </DialogFooter>
+                    <DialogCloseTrigger onClick={closeDialog} />
+                </DialogContent>
+            </DialogRoot>
         </div>
     )
 }

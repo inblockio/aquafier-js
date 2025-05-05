@@ -61,8 +61,8 @@ export function getAquaTreeFileName(aquaTree: AquaTree): string {
         }
     }
 
-    
-   return aquaTree!.file_index[mainAquaHash] ?? "";
+
+    return aquaTree!.file_index[mainAquaHash] ?? "";
 
 }
 
@@ -503,7 +503,6 @@ export async function fileToBase64(file: File): Promise<string> {
         reader.onerror = error => reject(error)
     })
 }
-
 export const isArrayBufferText = (buffer: ArrayBuffer): boolean => {
     // Convert the ArrayBuffer to a Uint8Array
     const uint8Array = new Uint8Array(buffer);
@@ -810,7 +809,7 @@ export function isDeepLinkRevision(aquaTree: AquaTree, revisionHash: string): bo
 }
 
 
-  
+
 export function fetchLinkedFileName(aquaTree: AquaTree, revision: Revision): string {
     if (revision.link_verification_hashes == undefined) {
         return ERROR_TEXT
@@ -1283,4 +1282,12 @@ export function ensureDomainUrlHasSSL(actualUrlToFetch: string): string {
     }
     // console.log(`==URL Data after ${actualUrlToFetch}`)
     return actualUrlToFetch
+}
+
+export function makeProperReadableWord(wordWithUnderScores: string) {
+    if (!wordWithUnderScores) {
+        return wordWithUnderScores;
+    }
+    let words = wordWithUnderScores.split("_");
+    return words.map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(" ");
 }
