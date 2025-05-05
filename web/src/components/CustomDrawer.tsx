@@ -137,6 +137,7 @@ export const CompleteChainView = ({ callBack, selectedFileInfo }: ICompleteChain
                     if (!fileData) {
                         // If not in cache, create a promise to fetch it
                         const fetchPromise = fetchFileData(fileContentUrl).then(data => {
+                            console.log(`------------------------ data ${data}`)
                             if (data && fileHash.length > 0) {
                                 // Update cache
                                 // setApiFileData((prev: any) => {
@@ -183,6 +184,7 @@ export const CompleteChainView = ({ callBack, selectedFileInfo }: ICompleteChain
 
                         if (data instanceof ArrayBuffer) {
                             if (isArrayBufferText(data)) {
+                                console.log("is array buffr text .....")
                                 fileItem.fileContent = new TextDecoder().decode(data);
                             } else {
                                 fileItem.fileContent = new Uint8Array(data);

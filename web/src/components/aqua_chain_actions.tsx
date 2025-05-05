@@ -237,10 +237,10 @@ export const SignAquaChain = ({ apiFileInfo, backendUrl, nonce }: RevionOperatio
                         if (response.data.data) {
 
                             let newFiles: ApiFileInfo[] = response.data.data
-                       
+
                             let data = {
-                               ...selectedFileInfo!! ,
-                               aquaTree : result.data.aquaTree!!
+                                ...selectedFileInfo!!,
+                                aquaTree: result.data.aquaTree!!
                             }
                             if (data) {
                                 setSelectedFileInfo(data)
@@ -390,14 +390,13 @@ export const DeleteAquaChain = ({ apiFileInfo, backendUrl, nonce }: RevionOperat
                 }
             }
         }
-        setAquaTreesAffected(allFilesAffected)
-
+        
         if (allFilesAffected.length == 0) {
             await deleteFileApi()
+        } else {
+            setAquaTreesAffected(allFilesAffected)
+            setOpen(true)
         }
-
-        setOpen(true)
-
 
 
         setDeleting(false)

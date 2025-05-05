@@ -17,7 +17,7 @@
     "axios": "^1.7.7",
     "docx-preview": "^0.3.5",
     "ethers": "^6.13.4",
-    "idb": "^8.0.0",
+    "idb": "^8.0.2",
     "jdenticon": "^3.3.0",
     "js-sha3": "^0.9.3",
     "jszip": "^3.10.1",
@@ -33,13 +33,13 @@
     "react-icons": "^5.4.0",
     "react-loading": "^2.0.3",
     "react-router-dom": "^7.0.2",
-    "siwe": "^2.3.2",
+    "siwe": "^3.0.0",
     "uuid": "^11.1.0",
     "zustand": "^5.0.1"
   },
   "devDependencies": {
     "@eslint/js": "^9.13.0",
-    "@types/chrome": "^0.0.287",
+    "@types/chrome": "^0.0.319",
     "@types/pdfjs-dist": "^2.10.377",
     "@types/react": "^18.3.12",
     "@types/react-dom": "^18.3.1",
@@ -51,7 +51,7 @@
     "globals": "^15.11.0",
     "typescript": "~5.6.2",
     "typescript-eslint": "^8.11.0",
-    "vite": "^5.4.10",
-    "vite-plugin-node-polyfills": "^0.22.0"
+    "vite": "^6.3.5",
+    "vite-plugin-node-polyfills": "^0.23.0"
   }
 }

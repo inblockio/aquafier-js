@@ -10,6 +10,7 @@ import { useStore } from "zustand"
 import appStore from "../../store"
 import { toaster } from "./toaster"
 import { Button } from "./button"
+import { IDialogSettings } from "../../types/index"
 // import { useNavigate } from "react-router-dom"
 
 const networks = createListCollection({
@@ -104,7 +105,7 @@ const SettingsForm = () => {
                 <Input placeholder="Contract Address" value={contract} onChange={e => setContract(e.currentTarget.value)} />
             </Field>
             <Field invalid={false} label={"Select Network " + activeNetwork} errorText="This field is required" >
-                <RadioCardRoot value={activeNetwork} onValueChange={e => setActiveNetwork(e.value)}>
+                <RadioCardRoot value={activeNetwork} onValueChange={e => setActiveNetwork(`${e.value}`)}>
                     <HStack align="stretch">
                         {networks.items.map((item) => (
                             <RadioCardItem
@@ -201,17 +202,20 @@ const DeleteUserData = () => {
     )
 }
 
-const Settings = () => {
+const Settings = ({ inline, open, updateOpenStatus }: IDialogSettings) => {
 
     return (
-        <div>
-            <DialogRoot size={{ md: 'md', smDown: 'full' }} placement={'top'}>
+        <>
+            <DialogRoot size={{ md: 'md', smDown: 'full' }} placement={'top'} open={open}
+            // onOpenChange={(e) => updateOpenStatus?.(e.open)}
+            >
                 <DialogTrigger asChild>
                     <IconButton
-                        onClick={() => { }}
+                        onClick={() => updateOpenStatus?.(true)}
                         variant="ghost"
                         aria-label="Toggle color mode"
                         size="sm"
+                        hidden={inline}
                         css={{
                             _icon: {
                                 width: "5",
@@ -223,7 +227,7 @@ const Settings = () => {
                     </IconButton>
                 </DialogTrigger>
                 <DialogContent borderRadius={{ base: 0, md: 'xl' }}>
-                    <DialogHeader>
+                    <DialogHeader py={"3"} px={"5"}>
                         <DialogTitle>Settings</DialogTitle>
                     </DialogHeader>
                     <DialogBody >
@@ -243,15 +247,15 @@ const Settings = () => {
                             </DialogActionTrigger> */}
                             <HStack>
                                 <DialogActionTrigger asChild>
-                                    <Button variant="outline">Cancel</Button>
+                                    <Button variant="outline" onClick={() => updateOpenStatus?.(false)}>Cancel</Button>
                                 </DialogActionTrigger>
                             </HStack>
                         </HStack>
                     </DialogFooter>
-                    <DialogCloseTrigger />
+                    <DialogCloseTrigger onClick={() => updateOpenStatus?.(false)} />
                 </DialogContent>
             </DialogRoot>
-        </div>
+        </>
     )
 }
 

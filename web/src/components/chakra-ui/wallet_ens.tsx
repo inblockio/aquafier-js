@@ -15,7 +15,9 @@ export const WalletEnsView = ({ walletAddress }: WalletEnsViewData) => {
     const [isLoading, setIsLoading] = useState(false)
     const { session, backend_url } = useStore(appStore)
     
-    useEffect(() => {
+
+
+    const fetchData = async () =>{
         const controller = new AbortController();
         const signal = controller.signal;
         
@@ -71,7 +73,15 @@ export const WalletEnsView = ({ walletAddress }: WalletEnsViewData) => {
             clearTimeout(timeoutId);
             controller.abort(); // Also cancel the request if component unmounts
         };
+    }
+    useEffect(() => {
+       
+        fetchData()
     }, [walletAddress, backend_url, session]); // Added missing dependencies
+
+    useEffect(() => {
+        fetchData()
+    }, []);
 
     return (
         <Group textAlign={'start'} w={'100%'}>

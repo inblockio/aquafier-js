@@ -334,7 +334,7 @@ const FilePreview: React.FC<IFilePreview> = ({ fileInfo }) => {
             let isForm = isJSONKeyValueStringContent(newTxtContent)
             console.log(`is this ${fileInfo.fileContent} is form ${isForm}`)
             if (isForm) {
-                return <FilePreviewAquaTreeFromTemplate userData={JSON.parse(newTxtContent)} />
+                return <FilePreviewAquaTreeFromTemplate formData={JSON.parse(newTxtContent)} />
             }
         }
         return (
