@@ -37,10 +37,24 @@ cd /app/backend
 
 # Initialize Prisma client first
 echo "Generating Prisma client..."
-npx prisma generate || {
-  echo "ERROR: Prisma generate failed"
+ERROR_LOG=$(mktemp)
+
+if ! npx prisma generate 2> >(tee "$ERROR_LOG" >&2); then
+  echo "ERROR: Prisma generate failed. Error details:"
+  cat "$ERROR_LOG"
+  cp "$ERROR_LOG" /app/prisma_generate_error.log
+  echo "Full error log saved to /app/prisma_generate_error.log"
   exit 1
-}
+fi
+rm -f "$ERROR_LOG"
+
+# Print Prisma version and other diagnostic info
+echo "Prisma version:"
+npx prisma --version
+
+# Show the Prisma schema file
+echo "Contents of prisma schema file:"
+cat prisma/schema.prisma 2>/dev/null || echo "Prisma schema file not found"
 
 # Check if the _prisma_migrations table exists
 MIGRATIONS_TABLE_EXISTS=$(PGPASSWORD=$DB_PASSWORD psql -h postgres -U "$DB_USER" -d "$POSTGRES_DB" -t -c "SELECT EXISTS (SELECT FROM information_schema.tables WHERE table_name = '_prisma_migrations');" | tr -d ' ')
@@ -49,33 +63,61 @@ if [ "$MIGRATIONS_TABLE_EXISTS" = "f" ]; then
   echo "_prisma_migrations table does not exist, creating database from scratch..."
   
   # Use db push first to create tables without migrations history
-  npx prisma db push --accept-data-loss || {
-    echo "ERROR: Prisma db push failed"
+  ERROR_LOG=$(mktemp)
+  
+  if ! npx prisma db push --accept-data-loss 2> >(tee "$ERROR_LOG" >&2); then
+    echo "ERROR: Prisma db push failed. Error details:"
+    cat "$ERROR_LOG"
+    cp "$ERROR_LOG" /app/db_push_error.log
+    echo "Full error log saved to /app/db_push_error.log"
     exit 1
-  }
+  fi
+  rm -f "$ERROR_LOG"
   
   # Create a migrations directory if it doesn't exist
   mkdir -p prisma/migrations
   
-  # Now create a baseline migration
+  # Now create a baseline migration with full error output
   echo "Creating baseline migration..."
-  npx prisma migrate dev --name baseline-migration --create-only || {
-    echo "ERROR: Creating baseline migration failed"
-    exit 1
-  }
+  # Create a temporary file to capture error output
+  ERROR_LOG=$(mktemp)
   
-  # Apply the migration
-  npx prisma migrate deploy || {
-    echo "ERROR: Applying baseline migration failed"
+  # Run the command and capture both stdout and stderr
+  if ! npx prisma migrate dev --name baseline-migration --create-only 2> >(tee "$ERROR_LOG" >&2); then
+    echo "ERROR: Creating baseline migration failed. Error details:"
+    cat "$ERROR_LOG"
+    # Keep the error log for debugging
+    cp "$ERROR_LOG" /app/migration_error.log
+    echo "Full error log saved to /app/migration_error.log"
     exit 1
-  }
+  fi
+  rm -f "$ERROR_LOG"
+  
+  # Apply the migration with detailed error logging
+  echo "Applying baseline migration..."
+  ERROR_LOG=$(mktemp)
+  
+  if ! npx prisma migrate deploy 2> >(tee "$ERROR_LOG" >&2); then
+    echo "ERROR: Applying baseline migration failed. Error details:"
+    cat "$ERROR_LOG"
+    cp "$ERROR_LOG" /app/migration_deploy_error.log
+    echo "Full error log saved to /app/migration_deploy_error.log"
+    exit 1
+  fi
+  rm -f "$ERROR_LOG"
 else
   echo "_prisma_migrations table exists, running standard migrations..."
-  # Just run the regular migrations
-  npx prisma migrate dev || {
-    echo "ERROR: Prisma migrations failed"
+  # Just run the regular migrations with detailed error logging
+  ERROR_LOG=$(mktemp)
+  
+  if ! npx prisma migrate dev 2> >(tee "$ERROR_LOG" >&2); then
+    echo "ERROR: Prisma migrations failed. Error details:"
+    cat "$ERROR_LOG"
+    cp "$ERROR_LOG" /app/migrate_dev_error.log
+    echo "Full error log saved to /app/migrate_dev_error.log"
     exit 1
-  }
+  fi
+  rm -f "$ERROR_LOG"
 fi
 
 # Set backend URL
