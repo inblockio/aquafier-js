@@ -105,7 +105,7 @@ const SettingsForm = () => {
                 <Input placeholder="Contract Address" value={contract} onChange={e => setContract(e.currentTarget.value)} />
             </Field>
             <Field invalid={false} label={"Select Network " + activeNetwork} errorText="This field is required" >
-                <RadioCardRoot value={activeNetwork} onValueChange={e => setActiveNetwork(e.value)}>
+                <RadioCardRoot value={activeNetwork} onValueChange={e => setActiveNetwork(`${e.value}`)}>
                     <HStack align="stretch">
                         {networks.items.map((item) => (
                             <RadioCardItem
