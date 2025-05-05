@@ -42,41 +42,21 @@ npx prisma generate || {
   exit 1
 }
 
-# Check if the _prisma_migrations table exists
-MIGRATIONS_TABLE_EXISTS=$(PGPASSWORD=$DB_PASSWORD psql -h postgres -U "$DB_USER" -d "$POSTGRES_DB" -t -c "SELECT EXISTS (SELECT FROM information_schema.tables WHERE table_name = '_prisma_migrations');" | tr -d ' ')
-
-if [ "$MIGRATIONS_TABLE_EXISTS" = "f" ]; then
-  echo "_prisma_migrations table does not exist, creating database from scratch..."
-  
-  # Use db push first to create tables without migrations history
-  npx prisma db push --accept-data-loss || {
-    echo "ERROR: Prisma db push failed"
+# Try creating the initial database schema if migrations fail
+echo "Running Prisma migrations..."
+npx prisma migrate dev --name init || {
+  echo "Migration failed, trying to push schema directly..."
+  npx prisma db push --force-reset || {
+    echo "ERROR: Both migration and schema push failed"
     exit 1
   }
   
-  # Create a migrations directory if it doesn't exist
-  mkdir -p prisma/migrations
-  
-  # Now create a baseline migration
-  echo "Creating baseline migration..."
-  npx prisma migrate dev --name baseline-migration --create-only || {
-    echo "ERROR: Creating baseline migration failed"
-    exit 1
+  # After successful db push, try migrations again
+  npx prisma migrate dev --name init || {
+    echo "WARN: Could not create migrations after schema push, but schema is ready"
+    # Continue execution despite this warning
   }
-  
-  # Apply the migration
-  npx prisma migrate deploy || {
-    echo "ERROR: Applying baseline migration failed"
-    exit 1
-  }
-else
-  echo "_prisma_migrations table exists, running standard migrations..."
-  # Just run the regular migrations
-  npx prisma migrate dev || {
-    echo "ERROR: Prisma migrations failed"
-    exit 1
-  }
-fi
+}
 
 # Set backend URL
 if [[ -z "${BACKEND_URL}" ]]; then
