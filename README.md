@@ -13,9 +13,9 @@ To run the api, navigate to api directory.
 3. run prisma db migration `npx prisma migrate dev` : Tip run `npx prisma generate` when you change `schema.prisma`
 4. `npm run dev` to start http server
 
+
 ## Database creation
 To create a database use the `create_db.sh`. Update the file with the config to use.
-
 ```bash
 chmod +x ./create_db.sh
 ```

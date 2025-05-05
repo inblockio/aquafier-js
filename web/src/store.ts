@@ -4,6 +4,7 @@ import { createStore } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
 import { ApiFileInfo } from './models/FileInfo';
 import { ApiFileData, Session } from './types';
+import { FormTemplate } from './components/aqua_forms';
 
 type AppStoreState = {
     user_profile: {
@@ -17,7 +18,8 @@ type AppStoreState = {
     },
     session: Session | null,
     files: ApiFileInfo[],
-    apiFileData : ApiFileData[],
+    apiFileData: ApiFileData[],
+    formTemplates: FormTemplate[],
     selectedFileInfo: ApiFileInfo | null,
     metamaskAddress: string | null
     avatar: string | undefined
@@ -47,7 +49,10 @@ type AppStoreActions = {
         file: ApiFileInfo,
     ) => void,
     setApiFileData: (
-        apiFileData : ApiFileData[],
+        apiFileData: ApiFileData[],
+    ) => void,
+    setFormTemplate: (
+        apiFileData: FormTemplate[],
     ) => void,
     setBackEndUrl: (
         backend_url: AppStoreState['backend_url'],
@@ -86,7 +91,7 @@ const appStore = createStore<TAppStore>()(
         (set) => ({
             // Initial state
             user_profile: {
-                ens_name:"",
+                ens_name: "",
                 user_pub_key: "",
                 cli_pub_key: "",
                 cli_priv_key: "",
@@ -100,6 +105,7 @@ const appStore = createStore<TAppStore>()(
             metamaskAddress: '',
             avatar: "",
             apiFileData: [],
+            formTemplates: [],
             backend_url: "http://0.0.0.0:0",
             // Actions
             setUserProfile: (config) => set({ user_profile: config }),
@@ -116,15 +122,19 @@ const appStore = createStore<TAppStore>()(
             setSelectedFileInfo: (
                 file: ApiFileInfo
             ) => set({ selectedFileInfo: file }),
-            setApiFileData:(
+            setApiFileData: (
                 apiFileData: ApiFileData[]
-            )=>set({apiFileData : apiFileData}),
+            ) => set({ apiFileData: apiFileData }),
+            setFormTemplate: (
+                apiFormTemplate: FormTemplate[]
+            ) => set({ formTemplates: apiFormTemplate }),
             addFile: (
                 file: ApiFileInfo,
             ) => {
                 const { files } = appStore.getState()
                 set({ files: [...files, file] })
             },
+
             setBackEndUrl: (
                 backend_url: AppStoreState['backend_url'],
             ) => set({ backend_url: backend_url }),

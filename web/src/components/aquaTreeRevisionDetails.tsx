@@ -195,7 +195,7 @@ export const RevisionDisplay = ({ fileInfo, revision, revisionHash, isVerificati
                     description: "The revision has been deleted",
                     type: "success",
                     duration: 3000,
-                    placement: "bottom-end"
+                    // placement: "bottom-end"
                 });
 
                 // Reload files for the current user
@@ -214,7 +214,7 @@ export const RevisionDisplay = ({ fileInfo, revision, revisionHash, isVerificati
                     description: "The revision has not been deleted",
                     type: "error",
                     duration: 3000,
-                    placement: "bottom-end"
+                    // placement: "bottom-end"
                 });
             }
         } catch (error) {
@@ -223,7 +223,7 @@ export const RevisionDisplay = ({ fileInfo, revision, revisionHash, isVerificati
                 description: "The revision has not been deleted",
                 type: "error",
                 duration: 3000,
-                placement: "bottom-end"
+                // placement: "bottom-end"
             });
         } finally {
             setIsDeleting(false);

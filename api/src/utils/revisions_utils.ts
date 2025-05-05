@@ -4,12 +4,13 @@ import { prisma } from '../database/db';
 import { Latest, Signature, Revision, Witness, AquaForms, WitnessEvent, FileIndex, Link } from '@prisma/client';
 import * as fs from "fs"
 import path from 'path';
+import { SaveRevision } from '@/models/request_models';
 
 export function removeFilePathFromFileIndex(aquaTree: AquaTree): AquaTree {
 
- 
+
     // Create a new file_index object
-    const processedFileIndex: FileIndex |  any = {};
+    const processedFileIndex: FileIndex | any = {};
 
     // Loop through each entry in the file_index
     for (const [hash, value] of Object.entries(aquaTree.file_index)) {
@@ -52,25 +53,243 @@ export async function fetchAquatreeFoUser(url: string, latest: Array<{
 
         // Ensure the tree is properly ordered
         let orderedRevisionProperties = reorderAquaTreeRevisionsProperties(anAquaTree);
-        let sortedAquaTree = OrderRevisionInAquaTree(orderedRevisionProperties);
+        let aquaTreeWithOrderdRevision = OrderRevisionInAquaTree(orderedRevisionProperties);
 
         // Each latest hash represents a complete chain
         displayData.push({
-            aquaTree: sortedAquaTree,
+            aquaTree: aquaTreeWithOrderdRevision,
             fileObject: fileObject
         });
     }
 
+    //rearrange displayData based on filaname in aqua tree 
+    // Sort displayData based on filenames in the aqua tree
+    displayData.sort((a, b) => {
+        const filenameA = getAquaTreeFileName(a.aquaTree);
+        const filenameB = getAquaTreeFileName(b.aquaTree);
+        return filenameA.localeCompare(filenameB);
+    });
+
+    // for(let userAquaTree of displayData){
+    //     let filaname = getAquaTreeFileName(userAquaTree.aquaTree)
+    //     //todod
+    // }
+
     return displayData;
 }
 
+export async function saveARevisionInAquaTree(revisionData: SaveRevision, userAddress :  string): Promise<[number, string]> {
+
+    if (!revisionData.revision) {
+        return [400, "revision Data is required"]//reply.code(400).send({ success: false, message: "revision Data is required" });
+    }
+    if (!revisionData.revisionHash) {
+        return [400, "revision hash is required"]  //reply.code(400).send({ success: false, message: "revision hash is required" });
+    }
+
+    if (!revisionData.revision.revision_type) {
+        return [400, "revision type is required"] // reply.code(400).send({ success: false, message: "revision type is required" });
+    }
+
+    if (!revisionData.revision.local_timestamp) {
+        return [400, "revision timestamp is required"] //reply.code(400).send({ success: false, message: "revision timestamp is required" });
+    }
+
+    if (!revisionData.revision.previous_verification_hash) {
+        return [400, "previous revision hash  is required"] // reply.code(400).send({ success: false, message: "previous revision hash  is required" });
+    }
+
+
+
+
+    let oldFilePubKeyHash = `${userAddress}_${revisionData.revision.previous_verification_hash}`
+
+
+    let existData = await prisma.latest.findFirst({
+        where: {
+            hash: oldFilePubKeyHash
+        }
+    });
+
+    if (existData == null) {
+        return [400, `previous  hash  not found ${oldFilePubKeyHash}`] ///reply.code(401).send({ success: false, message: `previous  hash  not found ${oldFilePubKeyHash}` });
+
+    }
+
+    let filePubKeyHash = `${userAddress}_${revisionData.revisionHash}`
+
+
+    await prisma.latest.updateMany({
+        where: {
+            OR: [
+                { hash: oldFilePubKeyHash },
+                {
+                    hash: {
+                        contains: oldFilePubKeyHash,
+                        mode: 'insensitive'
+                    }
+                }
+            ]
+        },
+        data: {
+            hash: filePubKeyHash
+        }
+    });
+
+    const existingRevision = await prisma.revision.findUnique({
+        where: {
+            pubkey_hash: filePubKeyHash
+        }
+    });
+
+    if (existingRevision) {
+        // Handle the case where the revision already exists
+        // Maybe return an error or update the existing record
+        return [409, "Revision with this hash already exists"]//reply.code(409).send({ success: false, message: "Revision with this hash already exists" });
+    }
+
+    // Insert new revision into the database
+    await prisma.revision.create({
+        data: {
+            pubkey_hash: filePubKeyHash,
+            nonce: revisionData.revision.file_nonce || "",
+            shared: [],
+            // contract: revisionData.witness_smart_contract_address
+            //     ? [{ address: revisionData.witness_smart_contract_address }]
+            //     : [],
+            previous: `${userAddress}_${revisionData.revision.previous_verification_hash}`,
+            // children: {},
+            local_timestamp: revisionData.revision.local_timestamp, // revisionData.revision.local_timestamp,
+            revision_type: revisionData.revision.revision_type,
+            verification_leaves: revisionData.revision.leaves || [],
+
+        },
+    });
+
+    if (revisionData.revision.revision_type == "form") {
+        let revisioValue = Object.keys(revisionData);
+        for (let formItem in revisioValue) {
+            if (formItem.startsWith("form_")) {
+                await prisma.aquaForms.create({
+                    data: {
+                        hash: filePubKeyHash,
+                        key: formItem,
+                        value: revisioValue[formItem],
+                        type: typeof revisioValue[formItem]
+                    }
+                });
+            }
+        }
+    }
+
+    if (revisionData.revision.revision_type == "signature") {
+        let signature = "";
+        if (typeof revisionData.revision.signature == "string") {
+            signature = revisionData.revision.signature
+        } else {
+            signature = JSON.stringify(revisionData.revision.signature)
+        }
+
+
+        console.log(`Data stringify  ${JSON.stringify(revisionData.revision, null, 4)}`)
+        // process.exit(1);
+        await prisma.signature.upsert({
+            where: {
+                hash: filePubKeyHash
+            },
+            update: {
+                reference_count: {
+                    increment: 1
+                }
+            },
+            create: {
+                hash: filePubKeyHash,
+                signature_digest: signature,
+                signature_wallet_address: revisionData.revision.signature_wallet_address,
+                signature_type: revisionData.revision.signature_type,
+                signature_public_key: revisionData.revision.signature_public_key,
+                reference_count: 1
+            }
+        });
+
+    }
+
+
+    if (revisionData.revision.revision_type == "witness") {
+
+        // const witnessTimestamp = new Date();
+        await prisma.witnessEvent.upsert({
+            where: {
+                Witness_merkle_root: revisionData.revision.witness_merkle_root!
+            },
+            update: {
+                Witness_merkle_root: revisionData.revision.witness_merkle_root!,
+                Witness_timestamp: revisionData.revision.witness_timestamp!.toString(),
+                Witness_network: revisionData.revision.witness_network,
+                Witness_smart_contract_address: revisionData.revision.witness_smart_contract_address,
+                Witness_transaction_hash: revisionData.revision.witness_transaction_hash,
+                Witness_sender_account_address: revisionData.revision.witness_sender_account_address
+            },
+            create: {
+                Witness_merkle_root: revisionData.revision.witness_merkle_root!,
+                Witness_timestamp: revisionData.revision.witness_timestamp!.toString(),
+                Witness_network: revisionData.revision.witness_network,
+                Witness_smart_contract_address: revisionData.revision.witness_smart_contract_address,
+                Witness_transaction_hash: revisionData.revision.witness_transaction_hash,
+                Witness_sender_account_address: revisionData.revision.witness_sender_account_address
+
+            }
+        });
+
+
+        await prisma.witness.upsert({
+            where: {
+                hash: filePubKeyHash
+            },
+            update: {
+                reference_count: {
+                    increment: 1
+                }
+            },
+            create: {
+                hash: filePubKeyHash,
+                Witness_merkle_root: revisionData.revision.witness_merkle_root,
+                reference_count: 1  // Starting with 1 since this is the first reference
+            }
+        });
+    }
+
+
+    if (revisionData.revision.revision_type == "link") {
+        await prisma.link.create({
+            data: {
+                hash: filePubKeyHash,
+                link_type: "aqua",
+                link_require_indepth_verification: false,
+                link_verification_hashes: revisionData.revision.link_verification_hashes,
+                link_file_hashes: revisionData.revision.link_file_hashes,
+                reference_count: 0
+            }
+        })
+    }
+
+    if (revisionData.revision.revision_type == "file") {
+
+        return [500, "not implemented"]
+        // return reply.code(500).send({
+        //     message: "not implemented",
+        // });
+    }
+
+    return [200, ""]
+}
 export async function saveAquaTree(aquaTree: AquaTree, userAddress: string,) {
     // Reorder revisions to ensure proper order
     let orderedAquaTree = reorderAquaTreeRevisionsProperties(aquaTree);
-    let sortedAquaTree = OrderRevisionInAquaTree(orderedAquaTree);
+    let aquaTreeWithOrderdRevision = OrderRevisionInAquaTree(orderedAquaTree);
 
     // Get all revision hashes in the chain
-    let allHash = Object.keys(sortedAquaTree.revisions);
+    let allHash = Object.keys(aquaTreeWithOrderdRevision.revisions);
 
     // The last hash in the sorted array is the latest
     if (allHash.length === 0) {
@@ -97,7 +316,7 @@ export async function saveAquaTree(aquaTree: AquaTree, userAddress: string,) {
 
     // insert the revisions
     for (const revisinHash of allHash) {
-        let revisionData = sortedAquaTree.revisions[revisinHash];
+        let revisionData = aquaTreeWithOrderdRevision.revisions[revisinHash];
         let pubKeyHash = `${userAddress}_${revisinHash}`
         let pubKeyPrevious = ""
         if (revisionData.previous_verification_hash.length > 0) {
@@ -132,28 +351,23 @@ export async function saveAquaTree(aquaTree: AquaTree, userAddress: string,) {
 
         if (revisionData.revision_type == "form") {
             let revisioValue = Object.keys(revisionData);
-            for (let formItem in revisioValue) {
-                if (formItem.startsWith("form_")) {
-                    await prisma.aquaForms.upsert({
-                        where: {
-                            hash: pubKeyHash
-                        },
-                        create: {
+            for (let formItem of revisioValue) {
+                if (formItem.startsWith("forms_")) {
+                    await prisma.aquaForms.create({
+                        data: {
                             hash: pubKeyHash,
                             key: formItem,
-                            value: revisioValue[formItem],
-                            type: typeof revisioValue[formItem]
-                        },
-                        update: {
-                            hash: pubKeyHash,
-                            key: formItem,
-                            value: revisioValue[formItem],
-                            type: typeof revisioValue[formItem]
+                            value: revisionData[formItem],
+                            type: typeof revisionData[formItem]
                         }
                     });
                 }
             }
         }
+
+        // if(revisionData.leaves && revisionData.leaves.length > 0) {
+
+        // }
 
         if (revisionData.revision_type == "signature") {
             let signature = "";
@@ -375,7 +589,7 @@ export async function fetchAquaTreeWithForwardRevisions(latestRevisionHash: stri
 
     // Reorder the revisions to ensure proper sequence
     let orderRevisionPrpoerties = reorderAquaTreeRevisionsProperties(anAquaTree);
-    let sortedAquaTree = OrderRevisionInAquaTree(orderRevisionPrpoerties);
+    let aquaTreeWithOrderdRevision = OrderRevisionInAquaTree(orderRevisionPrpoerties);
 
     // Now check if there are any forward revisions (newer revisions that point to our current latest)
     let revisionData = [];
@@ -413,7 +627,7 @@ export async function fetchAquaTreeWithForwardRevisions(latestRevisionHash: stri
         return [updatedSortedTree, updatedFileObject];
     }
 
-    return [sortedAquaTree, fileObject];
+    return [aquaTreeWithOrderdRevision, fileObject];
 }
 
 /**
@@ -479,6 +693,7 @@ export async function createAquaTreeFromRevisions(latestRevisionHash: string, ur
             //if previosu verification hash is not empty find the previous one
             if (latestRevionData?.previous !== null && latestRevionData?.previous?.length !== 0) {
                 let aquaTreerevision = await findAquaTreeRevision(previousWithPubKey);
+                console.log("Genesis revision: ", aquaTreerevision)
                 revisionData.push(...aquaTreerevision)
             }
         } catch (e: any) {
@@ -573,12 +788,13 @@ export async function createAquaTreeFromRevisions(latestRevisionHash: string, ur
         for (let revisionItem of revisionData) {
             let hashOnly = revisionItem.pubkey_hash.split("_")[1]
             let previousHashOnly = revisionItem.previous == null || revisionItem.previous == undefined || revisionItem.previous == "" ? "" : revisionItem.previous.split("_")[1]
-
             //  console.log(`previousHashOnly == > ${previousHashOnly} RAW ${revisionItem.previous}`)
             let revisionWithData: AquaRevision = {
                 revision_type: revisionItem.revision_type!! as "link" | "file" | "witness" | "signature" | "form",
                 previous_verification_hash: previousHashOnly,
                 local_timestamp: revisionItem.local_timestamp?.toString() ?? "",
+                leaves: revisionItem.verification_leaves,
+                file_nonce: revisionItem.nonce as string,
                 "version": "https://aqua-protocol.org/docs/v3/schema_2 | SHA256 | Method: scalar",
             }
 
@@ -597,14 +813,13 @@ export async function createAquaTreeFromRevisions(latestRevisionHash: string, ur
                             mode: 'insensitive' // Case-insensitive matching
                         }
                     }
-                    
                 })
                 console.log("File result: ", fileResult)
                 if (fileResult == null) {
                     // throw Error("Revision file data  not found")
                     console.log("We fail here")
                     console.error(`💣💣💣💣 hash not found in file hash => ${hashOnly}`)
-                } else{
+                } else {
 
                     revisionWithData["file_nonce"] = revisionItem.nonce ?? "--error--"
                     revisionWithData["file_hash"] = fileResult?.file_hash ?? "--error--"
@@ -755,8 +970,8 @@ export async function createAquaTreeFromRevisions(latestRevisionHash: string, ur
                 revisionWithData["file_hash"] = name?.file_hash ?? "--error--"
 
             }
-            let sortedAquaTree = reorderRevisionsProperties(revisionWithData)
-            anAquaTree.revisions[hashOnly] = sortedAquaTree;
+            let aquaTreeWithOrderdRevisionProperties = reorderRevisionsProperties(revisionWithData)
+            anAquaTree.revisions[hashOnly] = aquaTreeWithOrderdRevisionProperties;
         }
     }
 
@@ -1097,4 +1312,23 @@ export function readFileAsArrayBuffer(file: File): Promise<ArrayBuffer> {
 
         reader.readAsArrayBuffer(file);
     });
+}
+
+
+export function getAquaTreeFileName(aquaTree: AquaTree): string {
+
+    let mainAquaHash = "";
+    // fetch the genesis 
+    let revisionHashes = Object.keys(aquaTree!.revisions!)
+    for (let revisionHash of revisionHashes) {
+        let revisionData = aquaTree!.revisions![revisionHash];
+        if (revisionData.previous_verification_hash == null || revisionData.previous_verification_hash == "") {
+            mainAquaHash = revisionHash;
+            break;
+        }
+    }
+
+
+    return aquaTree!.file_index[mainAquaHash] ?? "";
+
 }

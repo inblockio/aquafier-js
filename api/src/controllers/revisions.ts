@@ -2,7 +2,7 @@ import { canDeleteRevision, deleteRevisionAndChildren } from '../utils/quick_rev
 import { prisma } from '../database/db';
 import { DeleteRevision, FetchAquaTreeRequest, SaveRevision } from '../models/request_models';
 import { getHost, getPort } from '../utils/api_utils';
-import { createAquaTreeFromRevisions, FetchRevisionInfo, findAquaTreeRevision } from '../utils/revisions_utils';
+import { createAquaTreeFromRevisions, fetchAquatreeFoUser, FetchRevisionInfo, findAquaTreeRevision, saveARevisionInAquaTree } from '../utils/revisions_utils';
 // import { formatTimestamp } from '../utils/time_utils';
 // import { AquaForms, FileIndex, Signature, WitnessEvent, Revision as RevisonDB } from 'prisma/client';
 import { AquaTree, FileObject, OrderRevisionInAquaTree, Revision } from 'aqua-js-sdk';
@@ -123,190 +123,41 @@ export default async function revisionsController(fastify: FastifyInstance) {
 
 
 
+            const [httpCode, message] = await saveARevisionInAquaTree(revisionData, session.address);
 
-            let oldFilePubKeyHash = `${session.address}_${revisionData.revision.previous_verification_hash}`
+            if (httpCode != 200) {
+                return reply.code(httpCode).send({ success: false, message: message });
+            }
 
 
-            let existData = await prisma.latest.findFirst({
+            // fetch all from latetst
+
+            let latest = await prisma.latest.findMany({
                 where: {
-                    hash: oldFilePubKeyHash
+                    user: session.address
                 }
             });
 
-            if (existData == null) {
-                return reply.code(401).send({ success: false, message: `previous  hash  not found ${oldFilePubKeyHash}` });
-
-            }
-
-            let filePubKeyHash = `${session.address}_${revisionData.revisionHash}`
-
-
-            await prisma.latest.updateMany({
-                where: {
-                    OR: [
-                        { hash: oldFilePubKeyHash },
-                        {
-                            hash: {
-                                contains: oldFilePubKeyHash,
-                                mode: 'insensitive'
-                            }
-                        }
-                    ]
-                },
-                data: {
-                    hash: filePubKeyHash
-                }
-            });
-
-            const existingRevision = await prisma.revision.findUnique({
-                where: {
-                    pubkey_hash: filePubKeyHash
-                }
-            });
-
-            if (existingRevision) {
-                // Handle the case where the revision already exists
-                // Maybe return an error or update the existing record
-                return reply.code(409).send({ success: false, message: "Revision with this hash already exists" });
-            }
-
-            // Insert new revision into the database
-            await prisma.revision.create({
-                data: {
-                    pubkey_hash: filePubKeyHash,
-                    nonce: revisionData.revision.file_nonce || "",
-                    shared: [],
-                    // contract: revisionData.witness_smart_contract_address
-                    //     ? [{ address: revisionData.witness_smart_contract_address }]
-                    //     : [],
-                    previous: `${session.address}_${revisionData.revision.previous_verification_hash}`,
-                    // children: {},
-                    local_timestamp: revisionData.revision.local_timestamp, // revisionData.revision.local_timestamp,
-                    revision_type: revisionData.revision.revision_type,
-                    verification_leaves: revisionData.revision.leaves || [],
-
-                },
-            });
-
-            if (revisionData.revision.revision_type == "form") {
-                let revisioValue = Object.keys(revisionData);
-                for (let formItem in revisioValue) {
-                    if (formItem.startsWith("form_")) {
-                        await prisma.aquaForms.create({
-                            data: {
-                                hash: filePubKeyHash,
-                                key: formItem,
-                                value: revisioValue[formItem],
-                                type: typeof revisioValue[formItem]
-                            }
-                        });
-                    }
-                }
-            }
-
-            if (revisionData.revision.revision_type == "signature") {
-                let signature = "";
-                if (typeof revisionData.revision.signature == "string") {
-                    signature = revisionData.revision.signature
-                } else {
-                    signature = JSON.stringify(revisionData.revision.signature)
-                }
-
-
-                console.log(`Data stringify  ${JSON.stringify(revisionData.revision, null, 4)}`)
-                // process.exit(1);
-                await prisma.signature.upsert({
-                    where: {
-                        hash: filePubKeyHash
-                    },
-                    update: {
-                        reference_count: {
-                            increment: 1
-                        }
-                    },
-                    create: {
-                        hash: filePubKeyHash,
-                        signature_digest: signature,
-                        signature_wallet_address: revisionData.revision.signature_wallet_address,
-                        signature_type: revisionData.revision.signature_type,
-                        signature_public_key: revisionData.revision.signature_public_key,
-                        reference_count: 1
-                    }
-                });
-
+            if (latest.length == 0) {
+                return reply.code(200).send({ data: [] });
             }
 
 
-            if (revisionData.revision.revision_type == "witness") {
+            // Get the host from the request headers
+            const host = request.headers.host || `${getHost()}:${getPort()}`;
 
+            // Get the protocol (http or https)
+            const protocol = request.protocol || 'https'
 
+            // Construct the full URL
+            const url = `${protocol}://${host}`;
 
-                // const witnessTimestamp = new Date();
-                await prisma.witnessEvent.upsert({
-                    where: {
-                        Witness_merkle_root: revisionData.revision.witness_merkle_root!
-                    },
-                    update: {
-                        Witness_merkle_root: revisionData.revision.witness_merkle_root!,
-                        Witness_timestamp: revisionData.revision.witness_timestamp!.toString(),
-                        Witness_network: revisionData.revision.witness_network,
-                        Witness_smart_contract_address: revisionData.revision.witness_smart_contract_address,
-                        Witness_transaction_hash: revisionData.revision.witness_transaction_hash,
-                        Witness_sender_account_address: revisionData.revision.witness_sender_account_address
-                    },
-                    create: {
-                        Witness_merkle_root: revisionData.revision.witness_merkle_root!,
-                        Witness_timestamp: revisionData.revision.witness_timestamp!.toString(),
-                        Witness_network: revisionData.revision.witness_network,
-                        Witness_smart_contract_address: revisionData.revision.witness_smart_contract_address,
-                        Witness_transaction_hash: revisionData.revision.witness_transaction_hash,
-                        Witness_sender_account_address: revisionData.revision.witness_sender_account_address
-
-                    }
-                });
-
-
-                await prisma.witness.upsert({
-                    where: {
-                        hash: filePubKeyHash
-                    },
-                    update: {
-                        reference_count: {
-                            increment: 1
-                        }
-                    },
-                    create: {
-                        hash: filePubKeyHash,
-                        Witness_merkle_root: revisionData.revision.witness_merkle_root,
-                        reference_count: 1  // Starting with 1 since this is the first reference
-                    }
-                });
-            }
-
-
-            if (revisionData.revision.revision_type == "link") {
-                await prisma.link.create({
-                    data: {
-                        hash: filePubKeyHash,
-                        link_type: "aqua",
-                        link_require_indepth_verification: false,
-                        link_verification_hashes: revisionData.revision.link_verification_hashes,
-                        link_file_hashes: revisionData.revision.link_file_hashes,
-                        reference_count: 0
-                    }
-                })
-            }
-
-            if (revisionData.revision.revision_type == "file") {
-
-                return reply.code(500).send({
-                    message: "not implemented",
-                });
-            }
+            let displayData = await fetchAquatreeFoUser(url, latest)
 
             return reply.code(200).send({
                 success: true,
                 message: "Revisions stored successfully",
+                data: displayData
 
             });
 
@@ -580,24 +431,24 @@ export default async function revisionsController(fastify: FastifyInstance) {
             const session = await prisma.siweSession.findUnique({
                 where: { nonce }
             });
-            
+
             if (!session) {
                 return reply.code(401).send({ error: 'Unauthorized: Invalid session' });
             }
-            
-            
+
+
             // Check if the user is allowed to delete this revision
             const canDelete = await canDeleteRevision(hash, session.address);
             if (!canDelete) {
-                return reply.code(403).send({ 
-                    success: false, 
-                    message: 'Forbidden: You do not have permission to delete this revision' 
+                return reply.code(403).send({
+                    success: false,
+                    message: 'Forbidden: You do not have permission to delete this revision'
                 });
             }
-            
+
             // Perform the deletion
             const result = await deleteRevisionAndChildren(hash, session.address);
-            
+
             if (result.success) {
                 return reply.code(200).send({
                     success: true,

@@ -9,6 +9,7 @@ import fastifyStatic from '@fastify/static';
 import * as fs from "fs"
 
 // Import controllers
+import chequeApiController from './controllers/chequeApi';
 import userController from './controllers/user';
 import authController from './controllers/auth';
 import indexController from './controllers/index';
@@ -21,6 +22,7 @@ import revisionsController from './controllers/revisions';
 import shareController from './controllers/share';
 import fetchChainController from './controllers/fetch-chain';
 import templatesController from './controllers/templates';
+import { setUpSystemTemplates } from './utils/api_utils';
 
 
 function buildServer() {
@@ -40,6 +42,9 @@ function buildServer() {
     // Create a Fastify instance
     const fastify = Fastify({ logger: true });
 
+
+    // reister system templates ie cheque, identity and attestation
+    setUpSystemTemplates();
 
     // Register the CORS plugin
     fastify.register(cors, {
@@ -93,6 +98,7 @@ function buildServer() {
     fastify.register(shareController);
     fastify.register(fetchChainController);
     fastify.register(templatesController);
+    fastify.register(chequeApiController);
 
     return fastify
 

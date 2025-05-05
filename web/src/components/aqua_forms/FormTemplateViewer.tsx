@@ -31,8 +31,8 @@ const FormTemplateViewer: React.FC<FormTemplateViewerProps> = ({ template }) => 
             <Table.Root variant="line">
               <Table.Header>
                 <Table.Row>
+                  <Table.ColumnHeader>Label</Table.ColumnHeader>
                   <Table.ColumnHeader>Name</Table.ColumnHeader>
-                  <Table.ColumnHeader>Title</Table.ColumnHeader>
                   <Table.ColumnHeader>Type</Table.ColumnHeader>
                   <Table.ColumnHeader>Required</Table.ColumnHeader>
                 </Table.Row>
@@ -40,8 +40,8 @@ const FormTemplateViewer: React.FC<FormTemplateViewerProps> = ({ template }) => 
               <Table.Body>
                 {template.fields.map((field) => (
                   <Table.Row key={field.id}>
-                    <Table.Cell>{field.name}</Table.Cell>
                     <Table.Cell>{field.label}</Table.Cell>
+                    <Table.Cell>{field.name}</Table.Cell>
                     <Table.Cell>
                       <Badge colorScheme={field.type === 'text' ? 'blue' : 'purple'}>
                         {field.type}

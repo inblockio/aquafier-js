@@ -81,7 +81,7 @@ export default async function authController(fastify: FastifyInstance) {
         logs.push("Invalid sign in message")
         logs.push(siweData.error)
         return reply.code(400).send({
-          success: true,
+          success: false,
           logs
         });
       }

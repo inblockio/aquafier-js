@@ -11,6 +11,7 @@ export interface FormTemplate {
   name: string;
   title: string;
   fields: FormField[];
+  public?: boolean;
 }
 
 
