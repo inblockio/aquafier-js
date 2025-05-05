@@ -1,7 +1,7 @@
 import { Button, VStack, Box, HStack, Input, Text, IconButton, Stack, Heading, Collapsible, List } from "@chakra-ui/react"
 import axios from "axios"
 import { useState, useEffect } from "react"
-import {  LuImport, LuLoader, LuShare2, LuTrash2 } from "react-icons/lu"
+import { LuImport, LuLoader, LuShare2, LuTrash2 } from "react-icons/lu"
 import { generateNonce } from "siwe"
 import { useStore } from "zustand"
 import { ApiFileInfo } from "../../models/FileInfo"
@@ -11,10 +11,10 @@ import { InputGroup } from "../chakra-ui/input-group"
 import { toaster } from "../chakra-ui/toaster"
 import { DialogContent, DialogHeader, DialogRoot, DialogTitle, DialogBody, DialogFooter, DialogActionTrigger, DialogCloseTrigger } from "../chakra-ui/dialog"
 
-import { RadioCard } from "@chakra-ui/react"
 import { Switch } from "../chakra-ui/switch"
 import { ethers } from "ethers"
 import { Alert } from "../chakra-ui/alert"
+import { RadioCardItem, RadioCardLabel, RadioCardRoot } from "../chakra-ui/radio-card"
 
 interface ISharingOptions {
     value: string;
@@ -23,31 +23,35 @@ interface ISharingOptions {
 
 const SharingOptions = ({ value, onChange }: ISharingOptions) => {
     return (
-        <RadioCard.Root defaultValue={value} onValueChange={e => onChange(e.value)}>
-            <RadioCard.Label>Sharing Option (Would the recipient to get the the  Aqua Tree as is Or receive the tree with any new revisions you will add?)</RadioCard.Label>
+        <RadioCardRoot defaultValue={value} onValueChange={e => onChange(`${e.value}`)}>
+            <RadioCardLabel>Sharing Option (Would the recipient to get the the  Aqua Tree as is Or receive the tree with any new revisions you will add?)</RadioCardLabel>
             <HStack align="stretch">
                 {items.map((item) => (
-                    <RadioCard.Item key={item.value} value={item.value} borderRadius={"lg"}>
-                        <RadioCard.ItemHiddenInput />
-                        <RadioCard.ItemControl>
+                    <RadioCardItem key={item.value}
+                        // value={item.value} 
+                        borderRadius={"lg"}
+                        {...item}
+                    >
+                        {/* <RadioCard.ItemHiddenInput /> */}
+                        {/* <RadioCard.ItemControl>
                             <RadioCard.ItemContent>
-                                <RadioCard.ItemText>{item.title}</RadioCard.ItemText>
+                                <RadioCard.ItemText>{item.label}</RadioCard.ItemText>
                                 <RadioCard.ItemDescription>
                                     {item.description}
                                 </RadioCard.ItemDescription>
                             </RadioCard.ItemContent>
                             <RadioCard.ItemIndicator />
-                        </RadioCard.ItemControl>
-                    </RadioCard.Item>
+                        </RadioCard.ItemControl> */}
+                    </RadioCardItem>
                 ))}
             </HStack>
-        </RadioCard.Root>
+        </RadioCardRoot>
     )
 }
 
 const items = [
-    { value: "latest", title: "Latest", description: "Share latest revision in tree" },
-    { value: "current", title: "Current", description: "Share current tree" },
+    { value: "latest", label: "Latest", description: "Share latest revision in tree" },
+    { value: "current", label: "Current", description: "Share current tree" },
 ]
 
 
@@ -98,7 +102,7 @@ const CreateContractForm = ({ mutate, contract, updating, genesis_hash, latest_h
                 "recipient": recipientWalletAddress,
                 "option": option
             }
-            
+
             if (updating) {
                 url = `${backend_url}/contracts/${contract?.hash}`
                 method = "PUT"
@@ -343,7 +347,7 @@ const ShareButtonAction = ({ item, nonce }: IShareButtonAction) => {
 
 
         } else {
-            return <Text>hi</Text>
+            return <></>
         }
     }
 

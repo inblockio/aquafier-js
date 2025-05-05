@@ -7,6 +7,7 @@ import { SessionQuery, ShareRequest, SiweRequest } from '../models/request_model
 import { AquaTree, FileObject, OrderRevisionInAquaTree, reorderAquaTreeRevisionsProperties } from 'aqua-js-sdk';
 import { getHost, getPort } from '../utils/api_utils';
 import { createAquaTreeFromRevisions, fetchAquaTreeWithForwardRevisions, saveAquaTree } from '../utils/revisions_utils';
+import { SYSTEM_WALLET_ADDRESS } from '../models/constants';
 
 export default async function shareController(fastify: FastifyInstance) {
     // get current session
@@ -52,7 +53,7 @@ export default async function shareController(fastify: FastifyInstance) {
 
             }
 
-            if (contractData?.receiver?.toLowerCase() != "0xfabacc150f2a0000000000000000000000000000" && contractData?.receiver != session.address) {
+            if (contractData?.receiver?.toLowerCase() != SYSTEM_WALLET_ADDRESS && contractData?.receiver != session.address) {
                 return reply.code(401).send({ success: false, message: "The aqua tree is not shared with you" });
             }
 

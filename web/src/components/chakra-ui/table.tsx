@@ -12,7 +12,7 @@ import { Checkbox } from "./checkbox"
 import { SetStateAction, useEffect, useState } from "react"
 import { useStore } from "zustand"
 import appStore from "../../store"
-import { displayTime, getAquaTreeFileObject, getFileCategory, getFileExtension } from "../../utils/functions"
+import { displayTime, getAquaTreeFileObject, getFileCategory, getFileExtension, getAquaTreeFileName } from "../../utils/functions"
 
 import { DeleteAquaChain, LinkButton, DownloadAquaChain, SignAquaChain, WitnessAquaChain } from "../aqua_chain_actions"
 import { ChainDetailsBtn, CompleteChainView } from "../CustomDrawer"
@@ -99,7 +99,11 @@ const FilesTable = () => {
     }
 
     const tableItems = () => {
-        return files?.map((item: ApiFileInfo, index: number) => {
+        return files?.sort((a, b) => {
+            const filenameA = getAquaTreeFileName(a.aquaTree!!);
+            const filenameB = getAquaTreeFileName(b.aquaTree!!);
+            return filenameA.localeCompare(filenameB);
+        }).map((item: ApiFileInfo, index: number) => {
             // console.log("Item: ", item.aquaTree)
             // return <Text>{JSON.stringify(item, null, 4)}</Text>
 
@@ -150,165 +154,165 @@ const FilesTable = () => {
             }
 
         })
-        
+
     }
 
-useEffect(() => {
-    if (files) {
-        setFilesToDisplay(files)
-    }
-}, [files])
+    useEffect(() => {
+        if (files) {
+            setFilesToDisplay(files)
+        }
+    }, [files])
 
-useEffect(() => {
-    if (files) {
-        const processFiles = (chunkSize = 1) => {
-            let currentIndex = 0;
-            const chunkedFiles: SetStateAction<ApiFileInfo[]> = [];
+    useEffect(() => {
+        if (files) {
+            const processFiles = (chunkSize = 1) => {
+                let currentIndex = 0;
+                const chunkedFiles: SetStateAction<ApiFileInfo[]> = [];
 
-            const processChunk = () => {
-                const chunk = files.slice(currentIndex, currentIndex + chunkSize);
-                chunkedFiles.push(...chunk);
-                currentIndex += chunkSize;
+                const processChunk = () => {
+                    const chunk = files.slice(currentIndex, currentIndex + chunkSize);
+                    chunkedFiles.push(...chunk);
+                    currentIndex += chunkSize;
 
-                if (currentIndex < files.length) {
-                    setTimeout(processChunk, 0); // Process the next chunk
-                } else {
-                    setFilesToDisplay(chunkedFiles); // Update state after all chunks are processed
-                }
+                    if (currentIndex < files.length) {
+                        setTimeout(processChunk, 0); // Process the next chunk
+                    } else {
+                        setFilesToDisplay(chunkedFiles); // Update state after all chunks are processed
+                    }
+                };
+
+                processChunk();
             };
 
-            processChunk();
-        };
-
-        processFiles();
-    }
-}, [files]);
+            processFiles();
+        }
+    }, [files]);
 
 
-return (
-    <Card.Root px={1} borderRadius={'2xl'}>
-        <Card.Header>
-            <Text fontWeight={500} fontSize={'2xl'}>Files</Text>
-        </Card.Header>
-        <CardBody px={0}>
-            <Box hideFrom={'md'}>
-                <VStack gap={4}>
-                    {smallTableItems()}
-                </VStack>
-            </Box>
-            <Table.ScrollArea hideBelow={'md'}>
-                <Table.Root borderRadius={'2xl'} borderCollapse={'collapse'} borderSpacing={'4'}>
-                    <Table.Header>
-                        <Table.Row>
-                            <Table.ColumnHeader w="6">
-                                <Checkbox
-                                    top="1"
-                                    aria-label="Select all rows"
-                                    checked={indeterminate ? "indeterminate" : selection.length > 0}
-                                    onCheckedChange={(_changes) => {
-                                        //todo fix me
-                                        // let genesis =  Object.values(files.)
-                                        // let fileHash =   getFileHashFromUrl()
-                                        // setSelection(
-                                        //     changes.checked ? files.map((item: ApiFileInfo) => item.id.toString()) : [],
-                                        // )
-                                    }}
-                                />
-                            </Table.ColumnHeader>
-                            <Table.ColumnHeader fontWeight={600} fontSize={{ base: 'sm', md: 'md' }}>File Name</Table.ColumnHeader>
-                            <Table.ColumnHeader fontWeight={600} fontSize={{ base: 'sm', md: 'md' }}>Type</Table.ColumnHeader>
-                            <Table.ColumnHeader fontWeight={600} fontSize={{ base: 'sm', md: 'md' }}>Uploaded At</Table.ColumnHeader>
-                            <Table.ColumnHeader fontWeight={600} fontSize={{ base: 'sm', md: 'md' }}>File Size</Table.ColumnHeader>
-                            <Table.ColumnHeader fontWeight={600} fontSize={{ base: 'sm', md: 'md' }}>Action</Table.ColumnHeader>
-                        </Table.Row>
-                    </Table.Header>
-                    <Table.Body>
-                        {tableItems()}
-                        {filesToDisplay.length === 0 ?
+    return (
+        <Card.Root px={1} borderRadius={'2xl'}>
+            <Card.Header>
+                <Text fontWeight={500} fontSize={'2xl'}>Files</Text>
+            </Card.Header>
+            <CardBody px={0}>
+                <Box hideFrom={'md'}>
+                    <VStack gap={4}>
+                        {smallTableItems()}
+                    </VStack>
+                </Box>
+                <Table.ScrollArea hideBelow={'md'}>
+                    <Table.Root borderRadius={'2xl'} borderCollapse={'collapse'} borderSpacing={'4'}>
+                        <Table.Header>
                             <Table.Row>
-                                <Table.Cell colSpan={6}>
-                                    <Alert title="No Data">
-                                        Please upload some files or import an Aqua Chain
-                                    </Alert>
-                                </Table.Cell>
+                                <Table.ColumnHeader w="6">
+                                    <Checkbox
+                                        top="1"
+                                        aria-label="Select all rows"
+                                        checked={indeterminate ? "indeterminate" : selection.length > 0}
+                                        onCheckedChange={(_changes) => {
+                                            //todo fix me
+                                            // let genesis =  Object.values(files.)
+                                            // let fileHash =   getFileHashFromUrl()
+                                            // setSelection(
+                                            //     changes.checked ? files.map((item: ApiFileInfo) => item.id.toString()) : [],
+                                            // )
+                                        }}
+                                    />
+                                </Table.ColumnHeader>
+                                <Table.ColumnHeader fontWeight={600} fontSize={{ base: 'sm', md: 'md' }}>File Name</Table.ColumnHeader>
+                                <Table.ColumnHeader fontWeight={600} fontSize={{ base: 'sm', md: 'md' }}>Type</Table.ColumnHeader>
+                                <Table.ColumnHeader fontWeight={600} fontSize={{ base: 'sm', md: 'md' }}>Uploaded At</Table.ColumnHeader>
+                                <Table.ColumnHeader fontWeight={600} fontSize={{ base: 'sm', md: 'md' }}>File Size</Table.ColumnHeader>
+                                <Table.ColumnHeader fontWeight={600} fontSize={{ base: 'sm', md: 'md' }}>Action</Table.ColumnHeader>
                             </Table.Row>
-                            :
-                            <>
+                        </Table.Header>
+                        <Table.Body>
+                            {tableItems()}
+                            {filesToDisplay.length === 0 ?
+                                <Table.Row>
+                                    <Table.Cell colSpan={6}>
+                                        <Alert title="No Data">
+                                            Please upload some files or import an Aqua Chain
+                                        </Alert>
+                                    </Table.Cell>
+                                </Table.Row>
+                                :
+                                <>
 
 
-                            </>
-                        }
-                    </Table.Body>
-                </Table.Root>
-            </Table.ScrollArea>
+                                </>
+                            }
+                        </Table.Body>
+                    </Table.Root>
+                </Table.ScrollArea>
 
-            <ActionBarRoot open={hasSelection}>
-                <ActionBarContent>
-                    <ActionBarSelectionTrigger>
-                        {selection.length} selected
-                    </ActionBarSelectionTrigger>
-                    <ActionBarSeparator />
-                    <Button variant="outline" size="sm">
-                        Delete <Kbd>⌫</Kbd>
-                    </Button>
-                    <Button variant="outline" size="sm">
-                        Share <Kbd>T</Kbd>
-                    </Button>
-                </ActionBarContent>
-            </ActionBarRoot>
+                <ActionBarRoot open={hasSelection}>
+                    <ActionBarContent>
+                        <ActionBarSelectionTrigger>
+                            {selection.length} selected
+                        </ActionBarSelectionTrigger>
+                        <ActionBarSeparator />
+                        <Button variant="outline" size="sm">
+                            Delete <Kbd>⌫</Kbd>
+                        </Button>
+                        <Button variant="outline" size="sm">
+                            Share <Kbd>T</Kbd>
+                        </Button>
+                    </ActionBarContent>
+                </ActionBarRoot>
 
-            <DrawerRoot open={isOpen} size={{ base: 'full', mdToXl: "xl" }} id="aqua-chain-details-modal"
-                onOpenChange={(e) => setIsOpen(e.open)} closeOnEscape={true} >
+                <DrawerRoot open={isOpen} size={{ base: 'full', mdToXl: "xl" }} id="aqua-chain-details-modal"
+                    onOpenChange={(e) => setIsOpen(e.open)} closeOnEscape={true} >
 
-                <Portal>
-                    <DrawerBackdrop />
-                    <Drawer.Positioner>
-                        <DrawerContent borderLeftRadius={'xl'} overflow={'hidden'}>
-                            <Drawer.Header bg={{ base: drawerStatus?.colorLight, _dark: drawerStatus?.colorDark }}>
-                                <DrawerTitle flex="1">{drawerStatus?.fileName}</DrawerTitle>
-                                <Button
-                                    position="absolute"
-                                    right="8px"
-                                    top="8px"
-                                    colorPalette="whitesmoke"
-                                    variant="solid"
-                                    size="md"
-                                    onClick={() => setIsOpen(false)}
-                                    aria-label="Close drawer"
-                                >
-                                    <LuX />
-                                </Button>
-                            </Drawer.Header>
-                            <DrawerBody py={'lg'} px={1}>
+                    <Portal>
+                        <DrawerBackdrop />
+                        <Drawer.Positioner>
+                            <DrawerContent borderLeftRadius={'xl'} overflow={'hidden'}>
+                                <Drawer.Header bg={{ base: drawerStatus?.colorLight, _dark: drawerStatus?.colorDark }}>
+                                    <DrawerTitle flex="1">{drawerStatus?.fileName}</DrawerTitle>
+                                    <Button
+                                        position="absolute"
+                                        right="8px"
+                                        top="8px"
+                                        colorPalette="whitesmoke"
+                                        variant="solid"
+                                        size="md"
+                                        onClick={() => setIsOpen(false)}
+                                        aria-label="Close drawer"
+                                    >
+                                        <LuX />
+                                    </Button>
+                                </Drawer.Header>
+                                <DrawerBody py={'lg'} px={1}>
 
-                                <CompleteChainView callBack={updateDrawerStatus} selectedFileInfo={selectedFileInfo} />
+                                    <CompleteChainView callBack={updateDrawerStatus} selectedFileInfo={selectedFileInfo} />
 
-                            </DrawerBody>
-                            <DrawerFooter flexWrap={'wrap'}>
-                                <DrawerActionTrigger asChild>
-                                    <Button variant="outline" size={'sm'}>Close</Button>
-                                </DrawerActionTrigger>
-                                {
-                                    selectedFileInfo ? (
-                                        <>
-                                            <ShareButtonAction nonce={session?.nonce ?? ""} item={selectedFileInfo} />
-                                            <WitnessAquaChain apiFileInfo={selectedFileInfo} backendUrl={backend_url} nonce={session?.nonce ?? ""} revision="" />
-                                            <SignAquaChain apiFileInfo={selectedFileInfo} backendUrl={backend_url} nonce={session?.nonce ?? ""} revision="" />
-                                            <DeleteAquaChain apiFileInfo={selectedFileInfo} backendUrl={backend_url} nonce={session?.nonce ?? ""} revision="" />
-                                        </>
-                                    ) : null
-                                }
-                            </DrawerFooter>
+                                </DrawerBody>
+                                <DrawerFooter flexWrap={'wrap'}>
+                                    <DrawerActionTrigger asChild>
+                                        <Button variant="outline" size={'sm'}>Close</Button>
+                                    </DrawerActionTrigger>
+                                    {
+                                        selectedFileInfo ? (
+                                            <>
+                                                <ShareButtonAction nonce={session?.nonce ?? ""} item={selectedFileInfo} />
+                                                <WitnessAquaChain apiFileInfo={selectedFileInfo} backendUrl={backend_url} nonce={session?.nonce ?? ""} revision="" />
+                                                <SignAquaChain apiFileInfo={selectedFileInfo} backendUrl={backend_url} nonce={session?.nonce ?? ""} revision="" />
+                                                <DeleteAquaChain apiFileInfo={selectedFileInfo} backendUrl={backend_url} nonce={session?.nonce ?? ""} revision="" />
+                                            </>
+                                        ) : null
+                                    }
+                                </DrawerFooter>
 
-                        </DrawerContent>
-                    </Drawer.Positioner>
-                </Portal>
+                            </DrawerContent>
+                        </Drawer.Positioner>
+                    </Portal>
 
-            </DrawerRoot>
+                </DrawerRoot>
 
-        </CardBody>
-    </Card.Root>
-)
+            </CardBody>
+        </Card.Root>
+    )
 }
 
 

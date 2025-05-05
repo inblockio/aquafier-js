@@ -1,19 +1,24 @@
-import { Box, Center, Container, Stack, Text, VStack } from "@chakra-ui/react"
+import { Box, Center, Container, Stack, Text, VStack,   } from "@chakra-ui/react"
 import { FileUploadDropzone, FileUploadList, FileUploadRoot } from "../components/chakra-ui/file-button"
 import FilesTable from "../components/chakra-ui/table"
 import { useStore } from "zustand"
 import appStore from "../store"
 import ConnectWallet from "../components/ConnectWallet"
 
+
 const Home = () => {
     const { session } = useStore(appStore)
 
+   
+
+ 
     return (
         <>
             {
                 session ? (
                     <Container fluid maxWidth={{ base: 'vw', md: '10/12' }} py={'14'} px={{ base: 1, md: 10 }}>
                         <VStack alignItems={'start'} gap={'10'}>
+
                             <FileUploadRoot borderRadius={'2xl'} alignItems="stretch" maxFiles={10} cursor={'pointer'}>
                                 <FileUploadDropzone
                                     borderRadius={'2xl'}
@@ -52,6 +57,54 @@ const Home = () => {
                     </Container>
                 )
             }
+
+            {/* <DialogRoot
+                open={open}
+                onOpenChange={onClose}
+            >
+                <DialogBackdrop />
+                <DialogPositioner>
+                    <DialogContent>
+                        <DialogHeader fontSize="lg" fontWeight="bold">
+                            Create Aqua tree from template
+                        </DialogHeader>
+
+                        <DialogBody>
+                            <form onSubmit={createFormAndSign} id="create-aqua-tree-form">
+                                <Stack>
+                                    {selectedTemplate ? selectedTemplate.fields.map((field) => {
+                                        return <Field label={field.label} errorText={''}>
+                                            <Input
+                                                borderRadius={"sm"}
+                                                size={"xs"}
+                                                value={formData[field.name]}
+                                                type={field.type}
+                                                onChange={(e) => {
+                                                    setFormData({
+                                                        ...formData,
+                                                        [field.name]: e.target.value
+                                                    })
+                                                }}
+                                                required={field.required}
+                                            />
+                                        </Field>
+                                    }) : null}
+                                </Stack>
+                            </form>
+                        </DialogBody>
+
+
+                        <DialogFooter>
+                            <Button type="submit" colorPalette={'green'} ref={cancelRef} onClick={createFormAndSign} form="create-aqua-tree-form">
+                                Create
+                            </Button>
+                            <Button variant={'solid'} colorPalette="red" onClick={onClose} ml={3}>
+                                close
+                            </Button>
+                        </DialogFooter>
+                    </DialogContent>
+                </DialogPositioner>
+            </DialogRoot> */}
         </>
     )
 }

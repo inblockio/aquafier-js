@@ -9,8 +9,10 @@ import { Alert } from "./chakra-ui/alert";
 import axios from "axios";
 import { toaster } from "./chakra-ui/toaster";
 import VersionDetails from "../models/VersionDetails";
+import { IVersionAndDisclaimer } from "../types/index";
 
-export default function VersionAndDisclaimer() {
+
+export default function VersionAndDisclaimer({ inline, open, updateOpenStatus }: IVersionAndDisclaimer) {
     //   const {  es, avatar, setAvatar, setUserProfile, backend_url } = useStore(appStore);
 
     const { backend_url } = useStore(appStore)
@@ -22,11 +24,6 @@ export default function VersionAndDisclaimer() {
         aquifier: "1.2.X",
         protocol: "1.2.X"
     });
-
-
-
-
-
 
     const fetchVersionDetails = async () => {
         try {
@@ -56,15 +53,17 @@ export default function VersionAndDisclaimer() {
     }, [backend_url])
 
     return (
-        <Dialog.Root placement={"center"} size={"sm"} open={isOpen} onOpenChange={(details) => setIsOpen(details.open)}>
+        <Dialog.Root placement={"center"} size={"sm"} open={inline ? open : isOpen} onOpenChange={(details) => setIsOpen(details.open)}>
             <DialogTrigger asChild>
                 <Button
+                colorPalette={'black'}
                     size={"sm"}
                     borderRadius={"md"}
                     onClick={() => {
-                        setIsOpen(true);
+                        inline ? updateOpenStatus?.(true) : setIsOpen(true);
                         // !metamaskAddress && signAndConnect();
                     }}
+                    hidden={inline}
                 >
                     <LuMessageCircleWarning />
                     Info
@@ -98,7 +97,7 @@ export default function VersionAndDisclaimer() {
 
                        </Text>
                         <Button borderRadius={"md"} onClick={() => {
-                            setIsOpen(!isOpen);
+                            inline ? updateOpenStatus?.(false) : setIsOpen(false);
                         }}>
                             close
                             {/* <LuClose /> */}
@@ -106,7 +105,9 @@ export default function VersionAndDisclaimer() {
                     </VStack>
 
                 </DialogBody>
-                <DialogCloseTrigger />
+                <DialogCloseTrigger onClick={() => {
+                    inline ? updateOpenStatus?.(false) : setIsOpen(false);
+                }} />
             </DialogContent>
         </Dialog.Root>
     );
