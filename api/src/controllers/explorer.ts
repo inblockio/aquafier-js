@@ -425,8 +425,6 @@ export default async function explorerController(fastify: FastifyInstance) {
                     // Save the file
                     // await pump(data.file, fs.createWriteStream(filePath))
                     await fs.promises.writeFile(filePath, assetBuffer);
-
-                    console.log('About to create file record in database');
                     let fileCreation = await prisma.file.create({
                         data: {
                             hash: filepubkeyhash,

@@ -58,53 +58,7 @@ const Home = () => {
                 )
             }
 
-            {/* <DialogRoot
-                open={open}
-                onOpenChange={onClose}
-            >
-                <DialogBackdrop />
-                <DialogPositioner>
-                    <DialogContent>
-                        <DialogHeader fontSize="lg" fontWeight="bold">
-                            Create Aqua tree from template
-                        </DialogHeader>
-
-                        <DialogBody>
-                            <form onSubmit={createFormAndSign} id="create-aqua-tree-form">
-                                <Stack>
-                                    {selectedTemplate ? selectedTemplate.fields.map((field) => {
-                                        return <Field label={field.label} errorText={''}>
-                                            <Input
-                                                borderRadius={"sm"}
-                                                size={"xs"}
-                                                value={formData[field.name]}
-                                                type={field.type}
-                                                onChange={(e) => {
-                                                    setFormData({
-                                                        ...formData,
-                                                        [field.name]: e.target.value
-                                                    })
-                                                }}
-                                                required={field.required}
-                                            />
-                                        </Field>
-                                    }) : null}
-                                </Stack>
-                            </form>
-                        </DialogBody>
-
-
-                        <DialogFooter>
-                            <Button type="submit" colorPalette={'green'} ref={cancelRef} onClick={createFormAndSign} form="create-aqua-tree-form">
-                                Create
-                            </Button>
-                            <Button variant={'solid'} colorPalette="red" onClick={onClose} ml={3}>
-                                close
-                            </Button>
-                        </DialogFooter>
-                    </DialogContent>
-                </DialogPositioner>
-            </DialogRoot> */}
+          
         </>
     )
 }

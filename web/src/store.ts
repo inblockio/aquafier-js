@@ -19,11 +19,12 @@ type AppStoreState = {
     session: Session | null,
     files: ApiFileInfo[],
     apiFileData: ApiFileData[],
+    systemFileInfo :  ApiFileInfo[],
     formTemplates: FormTemplate[],
     selectedFileInfo: ApiFileInfo | null,
-    metamaskAddress: string | null
-    avatar: string | undefined
-    backend_url: string
+    metamaskAddress: string | null,
+    avatar: string | undefined,
+    backend_url: string,
 }
 
 type AppStoreActions = {
@@ -50,6 +51,9 @@ type AppStoreActions = {
     ) => void,
     setApiFileData: (
         apiFileData: ApiFileData[],
+    ) => void,
+    setSystemFileInfo: (
+        systemFileInfo: ApiFileInfo[],
     ) => void,
     setFormTemplate: (
         apiFileData: FormTemplate[],
@@ -105,6 +109,7 @@ const appStore = createStore<TAppStore>()(
             metamaskAddress: '',
             avatar: "",
             apiFileData: [],
+            systemFileInfo:[],
             formTemplates: [],
             backend_url: "http://0.0.0.0:0",
             // Actions
@@ -125,6 +130,9 @@ const appStore = createStore<TAppStore>()(
             setApiFileData: (
                 apiFileData: ApiFileData[]
             ) => set({ apiFileData: apiFileData }),
+            setSystemFileInfo: (
+                systemFileInfo: ApiFileInfo[]
+            ) => set({ systemFileInfo: systemFileInfo }),
             setFormTemplate: (
                 apiFormTemplate: FormTemplate[]
             ) => set({ formTemplates: apiFormTemplate }),

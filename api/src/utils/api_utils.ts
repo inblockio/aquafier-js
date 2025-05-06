@@ -1,8 +1,12 @@
+import Aquafier, { AquaTree, FileObject } from "aqua-js-sdk"
 import { prisma } from "../database/db"
 import { SYSTEM_WALLET_ADDRESS } from "../models/constants"
 import { ethers } from "ethers"
-
-
+import { fetchAquatreeFoUser, saveAquaTree } from "./revisions_utils"
+import { getFileUploadDirectory } from "./file_utils"
+import { randomUUID } from 'crypto';
+import * as fs from "fs"
+import path from 'path';
 
 const getHost = (): string => {
   return process.env.HOST || '127.0.0.1'
@@ -36,16 +40,144 @@ const fetchEnsName = async (walletAddress: string, infuraKey: string): Promise<s
 }
 
 
+export function getAquaTreeFileName(aquaTree: AquaTree): string {
+
+  let mainAquaHash = "";
+  // fetch the genesis 
+  let revisionHashes = Object.keys(aquaTree!.revisions!)
+  for (let revisionHash of revisionHashes) {
+    let revisionData = aquaTree!.revisions![revisionHash];
+    if (revisionData.previous_verification_hash == null || revisionData.previous_verification_hash == "") {
+      mainAquaHash = revisionHash;
+      break;
+    }
+  }
+
+
+  return aquaTree!.file_index[mainAquaHash] ?? "";
+
+}
+
+export function getGenesisHash(aquaTree: AquaTree): string | null {
+  let aquaTreeGenesisHash: string | null = null;
+  let allAquuaTreeHashes = Object.keys(aquaTree!.revisions);
+
+  for (let hash of allAquuaTreeHashes) {
+    let revisionItem = aquaTree!.revisions[hash];
+    if (revisionItem.previous_verification_hash == "" || revisionItem.previous_verification_hash == null || revisionItem.previous_verification_hash == undefined) {
+
+      aquaTreeGenesisHash = hash //revisionItem.previous_verification_hash
+      break;
+
+    }
+  }
+
+  return aquaTreeGenesisHash
+}
+
+
+const saveSystemTemplateFile = async (aquaTree: AquaTree, fileData: string) => {
+
+  let genesisHashData = getGenesisHash(aquaTree);
+  if (!genesisHashData) {
+    throw Error(`Genesis hash not found in aqua tree ${JSON.stringify(aquaTree)}`)
+  }
+  let genesisHash: string = genesisHashData!!;
+
+
+  let aquafier = new Aquafier();
+  let fileHash = aquafier.getFileHash(fileData);
+
+  console.log(`\n ## fileHash ${fileHash} for data ${fileData}`)
+
+  let filepubkeyhash = `${SYSTEM_WALLET_ADDRESS}_${genesisHash}`
+
+  console.log(`\n ## filepubkeyhash ${filepubkeyhash}`)
+  const UPLOAD_DIR = getFileUploadDirectory();
+
+  // Create unique filename
+  let fileName = "";
+  let aquaTreeName = await aquafier.getFileByHash(aquaTree, genesisHash);
+  if (aquaTreeName.isOk()) {
+    fileName = aquaTreeName.data
+  }
+  const filename = `${randomUUID()}-${fileName}`;
+  const filePath = path.join(UPLOAD_DIR, filename);
+
+  // Save the file
+  // await pump(data.file, fs.createWriteStream(filePath))
+  await fs.promises.writeFile(filePath, fileData);
+  let fileCreation = await prisma.file.create({
+    data: {
+      hash: filepubkeyhash,
+      file_hash: fileHash,
+      content: filePath,
+      reference_count: 0, // we use 0 because  saveAquaTree increases file  by 1
+    }
+  })
+  console.log('File record created:', fileCreation);
+
+  console.log('About to create fileIndex record');
+
+  await prisma.fileIndex.create({
+    data: {
+      id: fileCreation.hash,
+      hash: [filepubkeyhash],
+      file_hash: fileHash,
+      uri: fileName,
+      reference_count: 0 // we use 0 because  saveAquaTree increases file  undex  by 1
+    }
+  })
+
+  console.log('FileIndex record created');
+
+}
+
 const setUpSystemTemplates = async () => {
-  //insert system templates 
+  //create user system 
+  await prisma.users.upsert({
+    where: {
+      address: SYSTEM_WALLET_ADDRESS
+    },
+    create: {
+      address: SYSTEM_WALLET_ADDRESS
+    },
+    update: {
+      address: SYSTEM_WALLET_ADDRESS
+    }
+  });
+
+
+  // end of create user system
 
   let today = new Date();
+  let aquafier = new Aquafier()
 
-  //start of identity_claim
-  
-  // create aqua tree for identity template
-  
+  let systemAquaTreesNames: Array<string> = []
+  let latest = await prisma.latest.findMany({
+    where: {
+      user: SYSTEM_WALLET_ADDRESS
+    }
+  });
+  // Get the host from the request headers
+  const host = `${getHost()}:${getPort()}`;
 
+  // Get the protocol (http or https)
+  const protocol = 'https'
+
+  // Construct the full URL
+  const url = `${protocol}://${host}`;
+
+  if (latest.length != 0) {
+    let systemAquaTrees = await fetchAquatreeFoUser(url, latest);
+    for (let item of systemAquaTrees) {
+      let aquaName = getAquaTreeFileName(item.aquaTree);
+      systemAquaTreesNames.push(aquaName)
+    }
+  }
+
+
+  //start of identity_claim  
   await prisma.aquaTemplate.upsert({
     where: {
       id: "1",
@@ -63,12 +195,12 @@ const setUpSystemTemplates = async () => {
     },
   })
 
+  // "type": "identity_claim",
+  // "date_of_birth": "1995-10-15",
   let identityObject = {
-    // "type": "identity_claim",
     "name": "John",
     "surname": "Doe",
     "email": "john.doe@example.com",
-    // "date_of_birth": "1995-10-15",
     "wallet_address": "0x568a94a8f0f3dc0b245b853bef572075c1df5c50"
   }
 
@@ -88,11 +220,30 @@ const setUpSystemTemplates = async () => {
       update: {
 
       },
-
     })
-
   })
 
+  let ideintiAquNameExist = systemAquaTreesNames.find((item) => item == "identity_claim.json")
+  if (ideintiAquNameExist == undefined) {
+    // create aqua tree for identity template
+    let identityFileObject: FileObject = {
+      fileContent: JSON.stringify(identityObject),
+      fileName: "identity_claim.json",
+      path: "./"
+    }
+
+    let resIdentityAquaTree = await aquafier.createGenesisRevision(identityFileObject, true)
+
+    if (resIdentityAquaTree.isOk()) {
+
+      // save the aqua tree 
+      await saveAquaTree(resIdentityAquaTree.data.aquaTree!!, SYSTEM_WALLET_ADDRESS)
+      //safe json file 
+      await saveSystemTemplateFile(resIdentityAquaTree.data.aquaTree!!, JSON.stringify(identityObject))
+    }
+
+
+  }
   //end of identity_claim
 
   //start of identity_attestation
@@ -143,6 +294,28 @@ const setUpSystemTemplates = async () => {
       },
     })
   })
+
+
+  let attestationAquNameExist = systemAquaTreesNames.find((item) => item == "identity_attestation.json")
+  if (attestationAquNameExist == undefined) {
+    // create aqua tree for identity template
+    let attestationFileObject: FileObject = {
+      fileContent: JSON.stringify(identityAttestations),
+      fileName: "identity_attestation.json",
+      path: "./"
+    }
+
+    let resAttestationAquaTree = await aquafier.createGenesisRevision(attestationFileObject, true)
+
+    if (resAttestationAquaTree.isOk()) {
+
+      // save the aqua tree 
+      await saveAquaTree(resAttestationAquaTree.data.aquaTree!!, SYSTEM_WALLET_ADDRESS);
+
+      await saveSystemTemplateFile(resAttestationAquaTree.data.aquaTree!!, JSON.stringify(identityAttestations))
+    }
+
+  }
 
   //end of identity_attestation
 
@@ -197,6 +370,26 @@ const setUpSystemTemplates = async () => {
     })
   })
 
+  let chequeAquNameExist = systemAquaTreesNames.find((item) => item == "cheque.json")
+  if (chequeAquNameExist == undefined) {
+    // create aqua tree for identity template
+    let chequeFileObject: FileObject = {
+      fileContent: JSON.stringify(cheque),
+      fileName: "cheque.json",
+      path: "./"
+    }
+
+    let reschequeAquaTree = await aquafier.createGenesisRevision(chequeFileObject, true)
+
+    if (reschequeAquaTree.isOk()) {
+
+      // save the aqua tree 
+      await saveAquaTree(reschequeAquaTree.data.aquaTree!!, SYSTEM_WALLET_ADDRESS);
+
+      await saveSystemTemplateFile(reschequeAquaTree.data.aquaTree!!, JSON.stringify(cheque))
+    }
+
+  }
   //end of cheque
 
 
@@ -238,7 +431,7 @@ const setUpSystemTemplates = async () => {
         aqua_form_id: "4",
         name: keyName,
         label: convertNameToLabel(keyName),
-        type: keyName == "terms"? "boolean": "string",
+        type: keyName == "terms" ? "boolean" : "string",
         required: keyName == 'note' ? false : true
       },
       update: {
@@ -247,7 +440,29 @@ const setUpSystemTemplates = async () => {
     })
   })
 
-  //end of cheque
+
+  let accessAquNameExist = systemAquaTreesNames.find((item) => item == "access_contract.json")
+  if (accessAquNameExist == undefined) {
+    // create aqua tree for identity template
+    let accessFileObject: FileObject = {
+      fileContent: JSON.stringify(accessContract),
+      fileName: "access_contract.json",
+      path: "./"
+    }
+
+    let resaccessAquaTree = await aquafier.createGenesisRevision(accessFileObject, true)
+
+    if (resaccessAquaTree.isOk()) {
+
+      // save the aqua tree 
+      await saveAquaTree(resaccessAquaTree.data.aquaTree!!, SYSTEM_WALLET_ADDRESS)
+
+
+      await saveSystemTemplateFile(resaccessAquaTree.data.aquaTree!!, JSON.stringify(accessContract))
+    }
+
+  }
+  //end of access
 
 }
 

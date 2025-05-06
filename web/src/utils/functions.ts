@@ -137,6 +137,27 @@ export async function switchNetwork(chainId: string) {
 }
 
 
+export async function fetchSystemFiles(url: string): Promise<Array<ApiFileInfo>> {
+    try {
+
+        const query = await fetch(url, {
+            method: 'GET',
+            
+        });
+        const response = await query.json()
+
+        if (!query.ok) {
+            throw new Error(`HTTP error! status: ${query.status}`);
+        }
+
+        return response.data;
+
+    } catch (error) {
+        console.error("Error fetching files:", error);
+        return [];
+    }
+}
+
 export async function fetchFiles(publicMetaMaskAddress: string, url: string, nonce: string): Promise<Array<ApiFileInfo>> {
     try {
 
@@ -452,8 +473,6 @@ function calculateBase64Size(base64String: string) {
     const padding = (base64String.endsWith("==") ? 2 : base64String.endsWith("=") ? 1 : 0);
     return (base64String.length * 3) / 4 - padding;
 }
-
-
 
 /**
  * Converts a Blob (typically from an HTTP response) to a base64 string

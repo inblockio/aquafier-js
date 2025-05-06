@@ -11,7 +11,7 @@ import { Alert } from "../components/chakra-ui/alert"
 import { LuChevronDown, LuChevronUp, LuSquareChartGantt } from "react-icons/lu"
 import { HiDocumentPlus } from "react-icons/hi2";
 import React, { useEffect, useState } from "react"
-import { estimateFileSize, dummyCredential } from "../utils/functions"
+import { estimateFileSize, dummyCredential, getAquaTreeFileName, getAquaTreeFileObject } from "../utils/functions"
 import { FormTemplate } from "../components/aqua_forms"
 import { Field } from '../components/chakra-ui/field';
 import Aquafier, { AquaTree, AquaTreeWrapper, FileObject } from "aqua-js-sdk"
@@ -73,7 +73,7 @@ const Navbar = () => {
     const [modalFormErorMessae, setModalFormErorMessae] = useState("");
     // const { open, onOpen, onClose } = useDisclosure();
     const [open, setOpen] = useState(false)
-    const { session, formTemplates, backend_url, setFormTemplate, setFiles } = useStore(appStore)
+    const { session, formTemplates, backend_url, systemFileInfo, setFormTemplate, setFiles } = useStore(appStore)
     const [formData, setFormData] = useState<Record<string, string>>({})
     const [selectedTemplate, setSelectedTemplate] = useState<FormTemplate | null>(null);
     let navigate = useNavigate();
@@ -138,6 +138,7 @@ const Navbar = () => {
         e.preventDefault();
 
 
+
         for (let fieldItem of selectedTemplate!.fields) {
             let valueInput = formData[fieldItem.name]
             console.log(`fieldItem ${JSON.stringify(fieldItem)} \n formData ${JSON.stringify(formData)} valueInput ${valueInput} `)
@@ -145,6 +146,30 @@ const Navbar = () => {
                 setModalFormErorMessae(`${fieldItem.name} is mandatory`)
                 return
             }
+        }
+
+
+        if (systemFileInfo.length == 0) {
+            toaster.create({
+                description: `Aqua tree for templates not found`,
+                type: "error"
+            })
+            return
+        }
+
+        
+        let templateApiFileInfo = systemFileInfo.find((e) => {
+            let nameExtract = getAquaTreeFileName(e!.aquaTree!);
+            let selectedName = `${selectedTemplate?.name}.json`
+            console.log(`nameExtract ${nameExtract} == selectedName ${selectedName}`)
+            return nameExtract == selectedName
+        })
+        if (!templateApiFileInfo) {
+            toaster.create({
+                description: `Aqua tree for ${selectedTemplate?.name} not found`,
+                type: "error"
+            })
+            return
         }
 
         let aquafier = new Aquafier();
@@ -158,24 +183,56 @@ const Navbar = () => {
             path: './',
             fileSize: estimateize
         }
-        let res = await aquafier.createGenesisRevision(fileObject, true, false, false)
+        let genesisAquaTree = await aquafier.createGenesisRevision(fileObject, true, false, false)
 
-        if (res.isOk()) {
+        if (genesisAquaTree.isOk()) {
+
+            // create a link revision with the systems aqua tree 
+            let mainAquaTreeWrapper: AquaTreeWrapper = {
+                aquaTree: genesisAquaTree.data.aquaTree!!,
+                revision: "",
+                fileObject: fileObject
+            }
+            let linkedAquaTreeFileObj = getAquaTreeFileObject(templateApiFileInfo);
+
+            if (!linkedAquaTreeFileObj) {
+                toaster.create({
+                    description: `system Aqua tee has error`,
+                    type: "error"
+                })
+                return
+            }
+            let linkedToAquaTreeWrapper: AquaTreeWrapper = {
+                aquaTree: templateApiFileInfo.aquaTree!!,
+                revision: "",
+                fileObject: linkedAquaTreeFileObj
+            }
+            let linkedAquaTreeResponse = await aquafier.linkAquaTree(mainAquaTreeWrapper, linkedToAquaTreeWrapper)
+
+            if (linkedAquaTreeResponse.isErr()) {
+                toaster.create({
+                    description: `Error linking aqua tree`,
+                    type: "error"
+                })
+                return
+            }
+
 
             const aquaTreeWrapper: AquaTreeWrapper = {
-                aquaTree: res.data.aquaTree!!,
+                aquaTree: linkedAquaTreeResponse.data.aquaTree!!,
                 revision: "",
                 fileObject: fileObject
             }
 
             // sign the aqua chain
             let signRes = await aquafier.signAquaTree(aquaTreeWrapper, "metamask", dummyCredential())
-            console.log("aqua tree after", res.data.aquaTree)
+
             if (signRes.isErr()) {
                 toaster.create({
                     description: `Error signing failed`,
                     type: "error"
                 })
+                return
             } else {
                 console.log("signRes.data", signRes.data)
                 fileObject.fileContent = formData
@@ -183,7 +240,7 @@ const Navbar = () => {
 
             }
         } else {
-            console.log(res.data)
+
             toaster.create({
                 title: 'Error creating Aqua tree from template',
                 description: 'Error creating Aqua tree from template',

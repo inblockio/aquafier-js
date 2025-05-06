@@ -23,6 +23,7 @@ import shareController from './controllers/share';
 import fetchChainController from './controllers/fetch-chain';
 import templatesController from './controllers/templates';
 import { setUpSystemTemplates } from './utils/api_utils';
+import systemController from './controllers/system';
 
 
 function buildServer() {
@@ -99,6 +100,7 @@ function buildServer() {
     fastify.register(fetchChainController);
     fastify.register(templatesController);
     fastify.register(chequeApiController);
+    fastify.register(systemController);
 
     return fastify
 
