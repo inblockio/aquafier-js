@@ -42,6 +42,10 @@ const setUpSystemTemplates = async () => {
   let today = new Date();
 
   //start of identity_claim
+  
+  // create aqua tree for identity template
+  
+
   await prisma.aquaTemplate.upsert({
     where: {
       id: "1",
@@ -224,7 +228,7 @@ const setUpSystemTemplates = async () => {
   }
 
 
-  Object.keys(cheque).forEach(async (keyName, index) => {
+  Object.keys(accessContract).forEach(async (keyName, index) => {
     await prisma.aquaTemplateFields.upsert({
       where: {
         id: `4${index}`,
