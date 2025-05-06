@@ -5,7 +5,7 @@ import { useColorMode } from "./chakra-ui/color-mode"
 import appStore from "../store"
 import { useStore } from "zustand"
 import VersionAndDisclaimer from "./VersionAndDisclaimer"
-import { Link, useNavigate } from "react-router-dom"
+import { Link, NavLink, useNavigate } from "react-router-dom"
 import AccountContracts from "./AccountContracts"
 import { Alert } from "../components/chakra-ui/alert"
 import { LuChevronDown, LuChevronUp, LuSquareChartGantt } from "react-icons/lu"
@@ -157,7 +157,7 @@ const Navbar = () => {
             return
         }
 
-        
+
         let templateApiFileInfo = systemFileInfo.find((e) => {
             let nameExtract = getAquaTreeFileName(e!.aquaTree!);
             let selectedName = `${selectedTemplate?.name}.json`
@@ -313,8 +313,8 @@ const Navbar = () => {
 
 
     return (
-        <div>
-            <Box bg={{ base: 'rgb(188 220 255 / 22%)', _dark: 'rgba(0, 0, 0, 0.3)' }} h={'70px'}>
+        <>
+            <Box bg={{ base: 'rgb(255, 255, 255)', _dark: 'rgba(0, 0, 0, 0.9)' }} h={'70px'} pos={'sticky'} top={0} left={0} right={0}  zIndex={1000} borderBottom={"1px solid "} borderColor={colorMode === "dark" ? "gray.900" : "gray.200"}>
                 <HStack h={'100%'} px={"4"} justifyContent={'space-between'}>
                     <Link to={'/'} style={{ height: "100%", display: "flex", alignItems: "center" }}>
                         <Image src={colorMode === 'light' ? "/images/logo.png" : "/images/logo-dark.png"} maxH={'60%'} />
@@ -323,6 +323,11 @@ const Navbar = () => {
                         <ConnectWallet />
                         <SmallScreenSidebarDrawer openCreateForm={() => setOpen(true)} />
                     </HStack>
+                    <NavLink to="/pdf-signer">
+                        <Button variant="solid" size="sm" bg="blue.500">
+                            PDF Signer
+                        </Button>
+                    </NavLink>
                     <HStack h={'100%'} gap={"4"} justifyContent={'space-between'} display={{ base: 'none', md: 'flex' }}>
                         {
                             session ? (<>
@@ -454,7 +459,7 @@ const Navbar = () => {
                     <DialogCloseTrigger onClick={closeDialog} />
                 </DialogContent>
             </DialogRoot>
-        </div>
+        </>
     )
 }
 

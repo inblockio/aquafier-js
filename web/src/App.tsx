@@ -12,6 +12,7 @@ import Loading from './pages/Loading';
 import AquaForms from './pages/AquaForms';
 import FormGenerator from './pages/FormGenerator';
 import AttestationAddresses from './pages/AttestationAddresses';
+import PdfSigner from './pages/PdfSigner';
 // import Aquafier from 'aqua-js-sdk';
 declare global {
   interface Window {
@@ -44,6 +45,7 @@ function App() {
           <Route path="/loading" element={<Loading />} />
           <Route path="/share/:identifier" element={<SharePage />} />
           <Route path="/aqua-forms" element={<AquaForms /> } />
+          <Route path="/pdf-signer" element={<PdfSigner /> } />
           <Route path="/form-generator" element={<FormGenerator />} />
           <Route path="/attestation_addresses" element={<AttestationAddresses /> } />
         </Routes>

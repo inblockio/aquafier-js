@@ -1,0 +1,681 @@
+
+import { useState, useRef, useEffect } from 'react';
+import {
+    Box,
+    Button,
+    Text,
+    Stack,
+    Input,
+    Heading,
+    HStack,
+    Slider,
+    IconButton,
+    FieldLabel,
+    Grid,
+    GridItem,
+    Center,
+    Container
+} from '@chakra-ui/react';
+import { useBoolean } from '@chakra-ui/hooks';
+import { PDFDocument, rgb, StandardFonts } from 'pdf-lib';
+import SignatureCanvas from 'react-signature-canvas';
+import { FaUndo, FaDownload, FaPlus } from 'react-icons/fa';
+import appStore from '../store';
+import { useStore } from "zustand";
+import { toaster } from '../components/chakra-ui/toaster';
+import { Field } from '../components/chakra-ui/field';
+import { DialogBody, DialogContent, DialogHeader, DialogRoot } from '../components/chakra-ui/dialog';
+import { PDFJSViewer } from 'pdfjs-react-viewer';
+import { useColorMode } from '../components/chakra-ui/color-mode';
+import { PdfControls } from '../components/FilePreview';
+
+// Interface for signature position
+interface SignaturePosition {
+    id: string;
+    pageIndex: number;
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+    isDragging?: boolean;
+}
+
+// Interface for signature data
+// interface SignatureData {
+//     dataUrl: string;
+//     walletAddress: string;
+//     name: string;
+//     positions: SignaturePosition[];
+// }
+
+const PdfSigner = () => {
+    // State for PDF document
+    const [pdfFile, setPdfFile] = useState<File | null>(null);
+    const [pdfUrl, setPdfUrl] = useState<string | null>(null);
+    const [pdfDoc, setPdfDoc] = useState<PDFDocument | null>(null);
+    // const [numPages, setNumPages] = useState<number>(0);
+    const [currentPage, setCurrentPage] = useState<number>(1);
+
+    // State for signature
+    const signatureRef = useRef<SignatureCanvas | null>(null);
+    const [signatureDataUrl, setSignatureDataUrl] = useState<string | null>(null);
+    const [signerName, setSignerName] = useState<string>('');
+    const [signaturePositions, setSignaturePositions] = useState<SignaturePosition[]>([]);
+    const [placingSignature, setPlacingSignature] = useState<boolean>(false);
+    const [signatureSize, setSignatureSize] = useState<number>(150);
+
+    // Modal state
+    const [isOpen, setIsOpen] = useState(false);
+    const { colorMode } = useColorMode();
+
+
+    // Get wallet address from store
+    const { session } = useStore(appStore);
+
+    // PDF viewer container ref
+    const pdfContainerRef = useRef<HTMLDivElement>(null);
+    const pdfMainContainerRef = useRef<HTMLDivElement>(null);
+
+
+    // Handle file upload
+    const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (file) {
+            try {
+                setPdfFile(file);
+
+                // Create object URL for display
+                const fileUrl = URL.createObjectURL(file);
+                setPdfUrl(fileUrl);
+
+                // Load PDF document using pdf-lib
+                const arrayBuffer = await file.arrayBuffer();
+                const pdfDoc = await PDFDocument.load(arrayBuffer);
+                setPdfDoc(pdfDoc);
+                // setNumPages(pdfDoc.getPageCount());
+                // setCurrentPage(1);
+
+                toaster.create({
+                    title: "PDF loaded successfully",
+                    type: "success",
+                    duration: 3000,
+                });
+            } catch (error) {
+                console.error("Error loading PDF:", error);
+                toaster.create({
+                    title: "Error loading PDF",
+                    description: "Please try another file",
+                    type: "error",
+                    duration: 3000,
+                });
+            }
+        }
+    };
+
+    // Clear signature canvas
+    const clearSignature = () => {
+        if (signatureRef.current) {
+            signatureRef.current.clear();
+            setSignatureDataUrl(null);
+        }
+    };
+
+    // Save signature from canvas
+    const saveSignature = () => {
+        if (signatureRef.current && !signatureRef.current.isEmpty()) {
+            const dataUrl = signatureRef.current.toDataURL('image/png');
+            setSignatureDataUrl(dataUrl);
+            setIsOpen(false);
+
+            // If user is in placing mode, allow them to place the signature
+            if (!placingSignature) {
+                setPlacingSignature(true);
+                toaster.create({
+                    title: "Click on the PDF to place your signature",
+                    type: "info",
+                    duration: 3000,
+                });
+            }
+        } else {
+            toaster.create({
+                title: "Please draw a signature first",
+                type: "warning",
+                duration: 3000,
+            });
+        }
+    };
+
+    // Handle click on PDF to place signature
+    const handlePdfClick = (e: React.MouseEvent<HTMLDivElement>) => {
+        if (!placingSignature || !pdfMainContainerRef.current || !signatureDataUrl) return;
+
+        // Get the PDF container dimensions
+        const rect = pdfMainContainerRef.current.getBoundingClientRect();
+
+        // Find the actual PDF element within the container
+        const pdfElement = pdfMainContainerRef.current.querySelector('.react-pdf__Page');
+        const pdfRect = pdfElement ? pdfElement.getBoundingClientRect() : rect;
+
+        // Calculate position relative to the PDF element, not the container
+        const x = e.clientX - pdfRect.left;
+        const y = e.clientY - pdfRect.top;
+
+        // Calculate relative position (0-1) for PDF coordinates
+        const relativeX = x / pdfRect.width;
+        const relativeY = 1 - (y / pdfRect.height); // Invert Y for PDF coordinates
+
+        // Calculate width and height relative to PDF
+        const relativeWidth = signatureSize / rect.width;
+        const relativeHeight = (signatureSize / 2) / rect.height;
+
+        const newPosition: SignaturePosition = {
+            id: crypto.randomUUID(), // Add unique ID for each signature
+            pageIndex: currentPage - 1,
+            x: relativeX,
+            y: relativeY,
+            width: relativeWidth,
+            height: relativeHeight
+        };
+
+        setSignaturePositions(prev => [...prev, newPosition]);
+        setPlacingSignature(false);
+
+        toaster.create({
+            title: "Signature placed",
+            description: "You can drag the signature to adjust its position",
+            type: "success",
+            duration: 3000,
+        });
+    };
+
+    // Generate signed PDF
+    const generateSignedPdf = async () => {
+        if (!pdfDoc || !signatureDataUrl || signaturePositions.length === 0) {
+            toaster.create({
+                title: "Missing information",
+                description: "Please upload a PDF, create a signature, and place it on the document",
+                type: "warning",
+                duration: 3000,
+            });
+            return;
+        }
+
+        try {
+            // Create a copy of the PDF
+            const pdfBytes = await pdfDoc.save();
+            const signedPdfDoc = await PDFDocument.load(pdfBytes);
+
+            // Embed the signature image
+            const signatureImage = await signedPdfDoc.embedPng(signatureDataUrl);
+
+            // Add signature to each position
+            for (const position of signaturePositions) {
+                const page = signedPdfDoc.getPage(position.pageIndex);
+                const { width, height } = page.getSize();
+
+                // Calculate position without manual adjustments
+                const signatureX = position.x * width - (position.width * width / 2);
+
+                // Draw signature image
+                page.drawImage(signatureImage, {
+                    x: signatureX,
+                    y: position.y * height - (position.height * height / 2),
+                    width: position.width * width,
+                    height: position.height * height,
+                });
+
+                // Add name and wallet address below signature
+                const font = await signedPdfDoc.embedFont(StandardFonts.Helvetica);
+                const fontSize = 10;
+                // const textWidth = font.widthOfTextAtSize(signerName, fontSize);
+
+                // Calculate the left edge of the signature image
+                const signatureLeftEdge = position.x * width - (position.width * width / 2);
+
+                // Draw name aligned with the left edge of the signature
+                page.drawText(signerName, {
+                    x: signatureLeftEdge,
+                    y: position.y * height - (position.height * height / 2) - 12,
+                    size: fontSize,
+                    font,
+                    color: rgb(0, 0, 0),
+                });
+
+                // Draw wallet address (shortened)
+                const shortenedAddress = session?.address ?
+                    // `${session?.address.substring(0, 6)}...${session?.address.substring(session?.address.length - 4)}` :
+                    `${session?.address}` :
+                    'No wallet connected';
+
+                // Draw wallet address aligned with the left edge of the signature
+                page.drawText(shortenedAddress, {
+                    x: signatureLeftEdge,
+                    y: position.y * height - (position.height * height / 2) - 24,
+                    size: fontSize,
+                    font,
+                    color: rgb(0, 0, 0),
+                });
+            }
+
+            // Save the signed PDF
+            const signedPdfBytes = await signedPdfDoc.save();
+
+            // Create a blob and download link
+            const blob = new Blob([signedPdfBytes], { type: 'application/pdf' });
+            const url = URL.createObjectURL(blob);
+
+            // Create download link and trigger download
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `signed_${pdfFile?.name || 'document.pdf'}`;
+            link.click();
+
+            // Clean up
+            URL.revokeObjectURL(url);
+
+            toaster.create({
+                title: "PDF signed successfully",
+                description: "Your signed document has been downloaded",
+                type: "success",
+                duration: 3000,
+            });
+        } catch (error) {
+            console.error("Error generating signed PDF:", error);
+            toaster.create({
+                title: "Error signing PDF",
+                description: "An error occurred while generating the signed PDF",
+                type: "error",
+                duration: 3000,
+            });
+        }
+    };
+
+    // Handle signature dragging
+    const [activeDragId, setActiveDragId] = useState<string | null>(null);
+    const [isDragging, setIsDragging] = useBoolean(false);
+
+    const handleDragStart = (e: React.MouseEvent | React.TouchEvent, id: string) => {
+        e.stopPropagation();
+        setActiveDragId(id);
+        setIsDragging.on();
+    };
+
+    // Helper function to get position from either mouse or touch event
+    const getEventPosition = (e: MouseEvent | TouchEvent) => {
+        // Touch event
+        if ('touches' in e && e.touches.length > 0) {
+            return {
+                clientX: e.touches[0].clientX,
+                clientY: e.touches[0].clientY
+            };
+        }
+        // Mouse event
+        return {
+            clientX: (e as MouseEvent).clientX,
+            clientY: (e as MouseEvent).clientY
+        };
+    };
+
+    const handleDragMove = (e: MouseEvent | TouchEvent) => {
+        if (!isDragging || !activeDragId || !pdfMainContainerRef.current) return;
+
+        e.preventDefault();
+
+        // Get the PDF container dimensions
+        const rect = pdfMainContainerRef.current.getBoundingClientRect();
+
+        // Find the actual PDF element within the container
+        const pdfElement = pdfMainContainerRef.current.querySelector('.react-pdf__Page');
+        const pdfRect = pdfElement ? pdfElement.getBoundingClientRect() : rect;
+
+        // Get position from either mouse or touch event
+        const { clientX, clientY } = getEventPosition(e);
+
+        // Calculate position relative to the PDF element, not the container
+        const x = clientX - pdfRect.left;
+        const y = clientY - pdfRect.top;
+
+        // Calculate relative position (0-1) for PDF coordinates
+        const relativeX = x / pdfRect.width;
+        const relativeY = 1 - (y / pdfRect.height); // Invert Y for PDF coordinates
+
+        setSignaturePositions(prev => prev.map(pos => {
+            if (pos.id === activeDragId) {
+                return {
+                    ...pos,
+                    x: relativeX,
+                    y: relativeY,
+                    isDragging: true
+                };
+            }
+            return pos;
+        }));
+    };
+
+    const handleDragEnd = () => {
+        if (!isDragging) return;
+
+        setSignaturePositions(prev => prev.map(pos => ({
+            ...pos,
+            isDragging: false
+        })));
+
+        setActiveDragId(null);
+        setIsDragging.off();
+
+        toaster.create({
+            title: "Signature position updated",
+            type: "success",
+            duration: 2000,
+        });
+    };
+
+    // Add event listeners for drag operations
+    useEffect(() => {
+        if (isDragging) {
+            // Mouse events
+            document.addEventListener('mousemove', handleDragMove as any);
+            document.addEventListener('mouseup', handleDragEnd);
+
+            // Touch events for mobile
+            document.addEventListener('touchmove', handleDragMove as any, { passive: false });
+            document.addEventListener('touchend', handleDragEnd);
+            document.addEventListener('touchcancel', handleDragEnd);
+        }
+
+        return () => {
+            // Clean up all event listeners
+            document.removeEventListener('mousemove', handleDragMove as any);
+            document.removeEventListener('mouseup', handleDragEnd);
+            document.removeEventListener('touchmove', handleDragMove as any);
+            document.removeEventListener('touchend', handleDragEnd);
+            document.removeEventListener('touchcancel', handleDragEnd);
+        };
+    }, [isDragging, activeDragId]);
+
+    // Component for signature display on PDF
+    const SignatureOverlay = ({ position }: { position: SignaturePosition }) => {
+        if (position.pageIndex !== currentPage - 1 || !signatureDataUrl) return null;
+
+        // Find the actual PDF element for proper positioning
+        const pdfElement = pdfMainContainerRef.current?.querySelector('.react-pdf__Page');
+        const pdfRect = pdfElement?.getBoundingClientRect();
+
+        // Only apply positioning if we have the PDF element and its bounding rect
+        const positionStyles = pdfElement && pdfRect ? {
+            left: `${pdfRect.left + (position.x * pdfRect.width)}px`,
+            top: `${pdfRect.top + ((1 - position.y) * pdfRect.height)}px`,
+            position: 'fixed' as const,
+            transform: 'translate(-50%, -50%)',
+        } : {
+            left: `${position.x * 100}%`,
+            top: `${(1 - position.y) * 100}%`,
+            position: 'absolute' as const,
+            transform: 'translate(-50%, -50%)',
+        };
+
+        return (
+            <Box
+                {...positionStyles}
+                backgroundSize="contain"
+                backgroundRepeat="no-repeat"
+                backgroundPosition="center"
+                pointerEvents="auto"
+                cursor={position.isDragging ? "grabbing" : "grab"}
+                zIndex={position.isDragging ? 20 : 10}
+                onMouseDown={(e) => handleDragStart(e, position.id)}
+                onTouchStart={(e) => handleDragStart(e, position.id)}
+                border={position.isDragging ? "2px dashed blue" : "none"}
+                transition="border 0.2s ease"
+                overflow={"hidden"}
+                _hover={{ boxShadow: "0 0 0 1px blue" }}
+            >
+                <Stack gap={1} justifyContent={"flex-start"}>
+                    <Box
+                        height="80px"
+                        backgroundImage={`url(${signatureDataUrl})`}
+                        backgroundSize="contain"
+                        backgroundRepeat="no-repeat"
+                        backgroundPosition="left"
+                    />
+                    <Text fontSize="xs" color="gray.600">{session?.address}</Text>
+                    <Text fontSize="xs" color="gray.600">{signerName}</Text>
+                </Stack>
+            </Box>
+        );
+    };
+
+    const handlePageChange = (pageNumber: number, _totalPages: number) => {
+        setCurrentPage(pageNumber);
+    };
+
+    // Effect to update signature positions when window is resized
+    useEffect(() => {
+        const handleResize = () => {
+            // Force re-render to update signature positions
+            setSignaturePositions(prev => [...prev]);
+        };
+
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+    }, []);
+
+    return (
+        <Container maxW="container.xl" py={"6"} h={"calc(100vh - 70px)"} overflow={{base: "scroll", md: "hidden"}}>
+            <Heading mb={5}>PDF Signer</Heading>
+
+            {/* File upload section */}
+            <Stack gap={4} align="stretch" mb={6} >
+                <Field>
+                    <FieldLabel>Upload PDF Document</FieldLabel>
+                    <Input
+                        type="file"
+                        onChange={handleFileUpload}
+                        p={1}
+                    />
+                </Field>
+
+                {pdfFile && (
+                    <Text>
+                        File: {pdfFile.name} ({Math.round(pdfFile.size / 1024)} KB)
+                    </Text>
+                )}
+            </Stack>
+
+            {/* PDF viewer and signature tools */}
+            {pdfUrl && (
+                <Grid templateColumns="repeat(4, 1fr)" gap="6"
+                h={{base: "fit-content", md: "calc(100vh - 120px - 130px)"}} overflow={{base: "scroll", md: "hidden"}}
+                >
+                    {/* PDF viewer */}
+                    <GridItem colSpan={{ base: 12, md: 3 }} h={"100%"} overflow={"scroll"} >
+                        <Box
+                            position="relative"
+                            border="1px solid"
+                            borderColor={colorMode === "dark" ? "gray.800" : "gray.100"}
+                            borderRadius="md"
+                            ref={pdfContainerRef}
+                            onClick={handlePdfClick}
+                            py={"4"}
+                            cursor={placingSignature ? "crosshair" : "default"}
+                        >
+                            <Center>
+                                <Box ref={pdfMainContainerRef} w={'fit-content'}>
+                                    <PDFJSViewer
+                                        pdfUrl={pdfUrl}
+                                        onPageChange={handlePageChange}
+                                        renderControls={PdfControls}
+                                    // onDocumentLoad={(totalPages) => setNumPages(totalPages)}
+                                    />
+                                </Box>
+                            </Center>
+
+                            {/* Signature overlays */}
+                            {signaturePositions.map((position, index) => (
+                                <SignatureOverlay key={index} position={position} />
+                            ))}
+                        </Box>
+                    </GridItem>
+                    <GridItem colSpan={{ base: 12, md: 1 }} h={{ base: "fit-content", md: "100%" }} overflow={{ base: "hidden", md: "auto" }}>
+                        {/* Signature tools */}
+                        <Stack
+                            gap={4}
+                            align="stretch"
+                            p={4}
+                            border="1px solid"
+                            borderColor={colorMode === "dark" ? "gray.800" : "gray.100"}
+                            borderRadius="md"
+                        >
+                            <Field>
+                                <FieldLabel>Signer Name</FieldLabel>
+                                <Input
+                                    value={signerName}
+                                    onChange={(e) => setSignerName(e.target.value)}
+                                    placeholder="Enter your name"
+                                    borderRadius={"lg"}
+                                />
+                            </Field>
+
+                            <Text>Wallet Address: {session?.address ?
+                                `${session?.address.substring(0, 6)}...${session?.address.substring(session?.address.length - 4)}` :
+                                'Not connected'
+                            }</Text>
+
+                            <Button
+                                colorScheme="blue"
+                                onClick={() => setIsOpen(true)}
+                            >
+                                <FaPlus />
+                                Create Signature
+                            </Button>
+
+                            {signatureDataUrl && (
+                                <>
+                                    <Text fontWeight="bold">Your Signature:</Text>
+                                    <Box
+                                        border="1px solid"
+                                        borderColor="gray.200"
+                                        p={2}
+                                        borderRadius="md"
+                                        height="80px"
+                                        backgroundImage={`url(${signatureDataUrl})`}
+                                        backgroundSize="contain"
+                                        backgroundRepeat="no-repeat"
+                                        backgroundPosition="center"
+                                    />
+
+                                    <Field>
+                                        <FieldLabel>Signature Size: {signatureSize}px</FieldLabel>
+                                        <Slider.Root
+                                            min={50}
+                                            max={300}
+                                            step={1}
+                                            value={[signatureSize]}
+                                            onValueChange={(value) => {
+                                                if (Array.isArray(value)) {
+                                                    setSignatureSize(value[0]);
+                                                }
+                                            }}
+                                        >
+                                            <Slider.Control>
+                                                <Slider.Track>
+                                                    <Slider.Range />
+                                                </Slider.Track>
+                                                <Slider.Thumb index={0} />
+                                            </Slider.Control>
+                                        </Slider.Root>
+                                    </Field>
+
+                                    <Button
+                                        colorScheme="teal"
+                                        disabled={!signatureDataUrl}
+                                        onClick={() => setPlacingSignature(true)}
+                                    >
+                                        Place Signature on Document
+                                    </Button>
+
+                                    {signaturePositions.length > 0 && (
+                                        <Text fontSize="sm" color="gray.600">
+                                            Tip: You can drag placed signatures to adjust their position
+                                        </Text>
+                                    )}
+
+                                    {placingSignature && (
+                                        <Text color="blue.500">
+                                            Click on the document to place your signature
+                                        </Text>
+                                    )}
+                                </>
+                            )}
+
+                            <Button
+                                colorScheme="green"
+                                disabled={!pdfDoc || !signatureDataUrl || signaturePositions.length === 0}
+                                onClick={generateSignedPdf}
+                            >
+                                <FaDownload />
+                                Download Signed PDF
+                            </Button>
+                        </Stack>
+                    </GridItem>
+                </Grid>
+            )}
+
+            {/* Signature drawing modal */}
+            <DialogRoot open={isOpen}
+                onOpenChange={e => setIsOpen(e.open)}
+                size="md">
+                <DialogContent borderRadius={{ base: 0, md: 'xl' }}>
+                    <DialogHeader py={"3"} px={"5"}>
+                        <Text>Draw Signature</Text>
+                    </DialogHeader>
+                    <DialogBody>
+                        <Stack gap={4}>
+                            <Box
+                                border="1px solid"
+                                borderColor="gray.200"
+                                width="100%"
+                                height="200px"
+                                bg="white"
+                            >
+                                <SignatureCanvas
+                                    ref={signatureRef}
+                                    canvasProps={{
+                                        style: {
+                                            maxWidth: "100%"
+                                        },
+                                        width: 500,
+                                        height: 200,
+                                        className: 'signature-canvas'
+                                    }}
+                                    backgroundColor="white"
+                                />
+                            </Box>
+
+                            <HStack>
+                                <IconButton
+                                    aria-label="Clear signature"
+                                    onClick={clearSignature}
+                                >
+                                    <FaUndo />
+                                </IconButton>
+                                <Button colorScheme="blue" onClick={saveSignature}>
+                                    Save Signature
+                                </Button>
+                            </HStack>
+                        </Stack>
+                    </DialogBody>
+                </DialogContent>
+            </DialogRoot>
+        </Container>
+    );
+};
+
+// Add PDF.js types to window object
+declare global {
+    interface Window {
+        pdfjsLib: any;
+    }
+}
+
+export default PdfSigner

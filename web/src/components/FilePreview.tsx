@@ -43,6 +43,22 @@ interface IFilePreview {
     fileInfo: FileObject;
 }
 
+export const PdfControls = ({ currentPage, isNextDisabled, isPrevDisabled, onNextPage, onPrevPage, totalPages }: PDFControlsProps) => {
+    return (
+        <Group mb={"4"}>
+            <IconButton disabled={isPrevDisabled} onClick={onPrevPage} size={"xs"} borderRadius={"full"}>
+                <LuChevronLeft />
+            </IconButton>
+            <Text>
+                {`Page ${currentPage} / ${totalPages}`}
+            </Text>
+            <IconButton disabled={isNextDisabled} onClick={onNextPage} size={"xs"} borderRadius={"full"}>
+                <LuChevronRight />
+            </IconButton>
+        </Group>
+    )
+}
+
 // Add declaration for docx-preview global type
 declare global {
     interface Window {
@@ -306,21 +322,7 @@ const FilePreview: React.FC<IFilePreview> = ({ fileInfo }) => {
 
     // PDF files
     if (fileType === "application/pdf") {
-        const PdfControls = ({ currentPage, isNextDisabled, isPrevDisabled, onNextPage, onPrevPage, totalPages }: PDFControlsProps) => {
-            return (
-                <Group mb={"4"}>
-                    <IconButton disabled={isPrevDisabled} onClick={onPrevPage} size={"xs"} borderRadius={"full"}>
-                        <LuChevronLeft />
-                    </IconButton>
-                    <Text>
-                        {`Page ${currentPage} / ${totalPages}`}
-                    </Text>
-                    <IconButton disabled={isNextDisabled} onClick={onNextPage} size={"xs"} borderRadius={"full"}>
-                        <LuChevronRight />
-                    </IconButton>
-                </Group>
-            )
-        }
+        
         return <PDFJSViewer pdfUrl={fileURL} renderControls={PdfControls} />;
     }
 
