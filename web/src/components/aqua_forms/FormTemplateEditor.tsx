@@ -33,6 +33,9 @@ const fieldTypes = createListCollection({
   items: [
     { label: "Text", value: "text" },
     { label: "Number", value: "number" },
+    { label: "File", value: "file" },
+    { label: "Date", value: "date" },
+    { label: "Wallet Address", value: "wallet_address" },
   ],
 })
 
@@ -61,9 +64,10 @@ const CustomSelect = ({ label, onChange, value }: ICustomSelect) => {
             <Select.Indicator />
           </Select.IndicatorGroup>
         </Select.Control>
-        <Portal container={contentRef}>
-          <Select.Positioner>
-            <Select.Content w={"100%"}>
+        <Portal   container={contentRef} >
+        {/* <Portal >  */}
+          <Select.Positioner  >
+            <Select.Content w={"100%"} >
               {fieldTypes.items.map((fieldType) => (
                 <Select.Item item={fieldType} key={fieldType.value}>
                   {fieldType.label}
@@ -282,7 +286,7 @@ const FormTemplateEditor = ({ initialTemplate, onSave, updating }: FormTemplateE
                         onChange={(e) => updateFields(index, 'label', e.target.value)}
                       />
                     </Field>
-                    <Field label={`Type`} errorText={errors.fields?.[index]?.message}>
+                    <Field label={`Type`} errorText={errors.fields?.[index]?.message} zIndex={100+(index*10)}>
                       <CustomSelect
                         label="Type"
                         value={field.type}

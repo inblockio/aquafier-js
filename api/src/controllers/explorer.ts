@@ -8,9 +8,9 @@ import JSZip from "jszip";
 import { randomUUID } from 'crypto';
 import util from 'util';
 import { pipeline } from 'stream';
-import * as fs from "fs" 
+import * as fs from "fs"
 import { error } from 'console';
-import { createAquaTreeFromRevisions, fetchAquatreeFoUser, FetchRevisionInfo, findAquaTreeRevision, getGenesisHash, removeFilePathFromFileIndex, saveAquaTree, validateAquaTree } from '../utils/revisions_utils';
+import { createAquaTreeFromRevisions, fetchAquatreeFoUser, FetchRevisionInfo, findAquaTreeRevision, getGenesisHash, getUserApiFileInfo, removeFilePathFromFileIndex, saveAquaTree, validateAquaTree } from '../utils/revisions_utils';
 import { fileURLToPath } from 'url';
 import { AquaForms, FileIndex, Signature, Witness, WitnessEvent } from '@prisma/client';
 import { getHost, getPort } from '../utils/api_utils';
@@ -247,16 +247,29 @@ export default async function explorerController(fastify: FastifyInstance) {
 
             // fetch all from latetst
 
-            let latest = await prisma.latest.findMany({
-                where: {
-                    user: session.address
-                }
-            });
+            // let latest = await prisma.latest.findMany({
+            //     where: {
+            //         user: session.address
+            //     }
+            // });
 
-            if (latest.length == 0) {
-                return reply.code(200).send({ data: [] });
-            }
+            // if (latest.length == 0) {
+            //     return reply.code(200).send({ data: [] });
+            // }
 
+
+            // // Get the host from the request headers
+            // const host = request.headers.host || `${getHost()}:${getPort()}`;
+
+            // // Get the protocol (http or https)
+            // const protocol = request.protocol || 'https'
+
+            // // Construct the full URL
+            // const url = `${protocol}://${host}`;
+
+            // let displayData = await fetchAquatreeFoUser(url, latest)
+
+            // return reply.code(200).send({ data: displayData });
 
             // Get the host from the request headers
             const host = request.headers.host || `${getHost()}:${getPort()}`;
@@ -267,9 +280,12 @@ export default async function explorerController(fastify: FastifyInstance) {
             // Construct the full URL
             const url = `${protocol}://${host}`;
 
-            let displayData = await fetchAquatreeFoUser(url, latest)
-
-            return reply.code(200).send({ data: displayData });
+            const displayData = await getUserApiFileInfo(url, session.address)
+            return reply.code(200).send({
+                success: true,
+                message: 'Aqua tree saved successfully',
+                files: displayData
+            });
         } catch (error) {
             request.log.error(error);
             return reply.code(500).send({ error: 'File upload failed' });
@@ -379,7 +395,7 @@ export default async function explorerController(fastify: FastifyInstance) {
                 let aquaTreeFromFile: AquaTree = JSON.parse(fileContent);
 
                 let aquaTree = removeFilePathFromFileIndex(aquaTreeFromFile);
-                
+
                 let [isValidAquaTree, failureReason] = validateAquaTree(aquaTree)
                 console.log(`is aqua tree valid ${isValidAquaTree} `);
                 if (!isValidAquaTree) {
@@ -454,23 +470,6 @@ export default async function explorerController(fastify: FastifyInstance) {
                 // Save the aqua tree
                 await saveAquaTree(aquaTree, session.address);
 
-                // Get all user files to return in response
-                // const userFiles = await getUserFiles(session.address);
-
-
-                // fetch all from latetst
-
-                let latest = await prisma.latest.findMany({
-                    where: {
-                        user: session.address
-                    }
-                });
-
-                if (latest.length == 0) {
-                    console.log("This should never happen , the uploaded aqua tree  &  file was not inserted succesfully ")
-                    return reply.code(200).send({ data: [] });
-                }
-
 
                 // Get the host from the request headers
                 const host = request.headers.host || `${getHost()}:${getPort()}`;
@@ -481,8 +480,7 @@ export default async function explorerController(fastify: FastifyInstance) {
                 // Construct the full URL
                 const url = `${protocol}://${host}`;
 
-                let displayData = await fetchAquatreeFoUser(url, latest)
-
+                const displayData = await getUserApiFileInfo(url, session.address)
                 return reply.code(200).send({
                     success: true,
                     message: 'Aqua tree saved successfully',
@@ -529,27 +527,27 @@ export default async function explorerController(fastify: FastifyInstance) {
 
         // fetch all from latetst
 
-        let latest = await prisma.latest.findMany({
-            where: {
-                user: session.address
-            }
-        });
+        // let latest = await prisma.latest.findMany({
+        //     where: {
+        //         user: session.address
+        //     }
+        // });
 
-        if (latest.length == 0) {
-            return reply.code(200).send({ data: [] });
-        }
+        // if (latest.length == 0) {
+        //     return reply.code(200).send({ data: [] });
+        // }
 
 
-        // Get the host from the request headers
-        const host = request.headers.host || `${getHost()}:${getPort()}`;
+        // // Get the host from the request headers
+        // const host = request.headers.host || `${getHost()}:${getPort()}`;
 
-        // Get the protocol (http or https)
-        const protocol = request.protocol || 'https'
+        // // Get the protocol (http or https)
+        // const protocol = request.protocol || 'https'
 
-        // Construct the full URL
-        const url = `${protocol}://${host}`;
+        // // Construct the full URL
+        // const url = `${protocol}://${host}`;
 
-        let displayData = await fetchAquatreeFoUser(url, latest)
+        // let displayData = await fetchAquatreeFoUser(url, latest)
         // let displayData: any[] = []
         // for (let item of latest) {
         //     console.log(`Fetching complete revision chain for ${item.hash}`)
@@ -563,8 +561,22 @@ export default async function explorerController(fastify: FastifyInstance) {
         //     })
         // }
 
+         // Get the host from the request headers
+         const host = request.headers.host || `${getHost()}:${getPort()}`;
 
-        return reply.code(200).send({ data: displayData })
+         // Get the protocol (http or https)
+         const protocol = request.protocol || 'https'
+
+         // Construct the full URL
+         const url = `${protocol}://${host}`;
+
+         const displayData = await getUserApiFileInfo(url, session.address)
+         return reply.code(200).send({
+             success: true,
+             message: 'Aqua tree saved successfully',
+             data: displayData
+         });
+
     });
 
 
@@ -1297,32 +1309,32 @@ export default async function explorerController(fastify: FastifyInstance) {
 
             // Fetch the entire chain from the source user
             const entireChain = await fetchCompleteRevisionChain(latestRevisionHash, userAddress, url);
-            
+
             // Check if the user exists (create if not)
             const targetUser = await prisma.users.findUnique({
                 where: { address: session.address }
             });
-            
+
             if (!targetUser) {
                 await prisma.users.create({
                     data: { address: session.address }
                 });
             }
-            
+
             // Transfer the chain to the target user (session.address)
             const transferResult = await transferRevisionChain(
                 entireChain,
                 session.address,
                 userAddress
             );
-            
+
             if (!transferResult.success) {
                 return reply.code(500).send({
                     success: false,
                     message: transferResult.message
                 });
             }
-            
+
             return reply.code(200).send({
                 success: true,
                 message: `Chain transferred successfully: ${transferResult.transferredRevisions} revisions and ${transferResult.linkedChainsTransferred} linked chains`,
@@ -1340,8 +1352,8 @@ export default async function explorerController(fastify: FastifyInstance) {
 
     fastify.post('/merge_chain', async (request, reply) => {
         try {
-            const { latestRevisionHash, userAddress, mergeStrategy } = request.body as { 
-                latestRevisionHash: string, 
+            const { latestRevisionHash, userAddress, mergeStrategy } = request.body as {
+                latestRevisionHash: string,
                 userAddress: string,
                 mergeStrategy?: "replace" | "fork"  // Optional merge strategy
             };
@@ -1368,18 +1380,18 @@ export default async function explorerController(fastify: FastifyInstance) {
 
             // Fetch the entire chain from the source user
             const entireChain = await fetchCompleteRevisionChain(latestRevisionHash, userAddress, url);
-            
+
             // Check if the user exists (create if not)
             const targetUser = await prisma.users.findUnique({
                 where: { address: session.address }
             });
-            
+
             if (!targetUser) {
                 await prisma.users.create({
                     data: { address: session.address }
                 });
             }
-            
+
             // Merge the chain to the target user (session.address)
             const mergeResult = await mergeRevisionChain(
                 entireChain,
@@ -1387,14 +1399,14 @@ export default async function explorerController(fastify: FastifyInstance) {
                 userAddress,
                 mergeStrategy || "fork" // Use the provided strategy or default to "fork"
             );
-            
+
             if (!mergeResult.success) {
                 return reply.code(500).send({
                     success: false,
                     message: mergeResult.message
                 });
             }
-            
+
             return reply.code(200).send({
                 success: true,
                 message: `Chain merged successfully using "${mergeResult.strategy}" strategy: ${mergeResult.transferredRevisions} revisions and ${mergeResult.linkedChainsTransferred} linked chains`,

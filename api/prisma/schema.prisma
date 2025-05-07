@@ -19,28 +19,25 @@ model Users {
   @@map("users")
 }
 
-
-
 model AquaTemplate {
-  id                  String           @id
-  owner               String
-  title               String
-  name                String
-  created_at          String
-  public              Boolean
-  form_fields         AquaTemplateFields[]
- 
+  id          String               @id
+  owner       String
+  title       String
+  name        String
+  created_at  String
+  public      Boolean
+  form_fields AquaTemplateFields[]
+
   @@map("aqua_templates")
 }
 
 model AquaTemplateFields {
-  id        String  @id @default(uuid())
-  aqua_form_id     String
-  name      String
-  label     String
-  type      String
-  required Boolean
-  
+  id           String  @id @default(uuid())
+  aqua_form_id String
+  name         String
+  label        String
+  type         String
+  required     Boolean
 
   AquaForm AquaTemplate @relation(fields: [aqua_form_id], references: [id])
 
@@ -82,24 +79,26 @@ model Contract {
 }
 
 model Latest {
-  hash String @id
-  user String
-  User Users  @relation(fields: [user], references: [address])
+  hash        String  @id
+  user        String
+  template_id String?
+  User        Users   @relation(fields: [user], references: [address])
   // Revision         Revision[]
 
   @@map("latest")
 }
 
 model Revision {
-  pubkey_hash         String      @id
-  nonce               String?
-  shared              String[]
-  contract            String[]
-  previous            String?
-  children            String?
-  local_timestamp     String?
-  revision_type       String?
-  has_content         Boolean     @default(false)
+  pubkey_hash     String   @id
+  nonce           String?
+  shared          String[]
+  contract        String[]
+  previous        String?
+  children        String?
+  local_timestamp String?
+  revision_type   String?
+  has_content     Boolean  @default(false)
+
   verification_leaves String[]
   // Latest           Latest        @relation(fields: [pubkey_hash], references: [hash])
   // File             File[]
@@ -190,12 +189,13 @@ model WitnessEvent {
 
 model AquaForms {
   id              String   @id @default(uuid())
-  hash            String  
+  hash            String
   key             String?
   value           Json?
   type            String?
   reference_count Int?
   Revision        Revision @relation(fields: [hash], references: [pubkey_hash])
+
   @@map("aqua_forms")
 }
 

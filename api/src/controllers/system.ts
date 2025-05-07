@@ -25,6 +25,14 @@ export default async function systemController(fastify: FastifyInstance) {
             }
         });
 
+        let latestTemplateTree  = await prisma.latest.findMany({
+            where: {
+                AND :{
+                    user: SYSTEM_WALLET_ADDRESS
+                }
+            }
+        });
+
         if (latest.length == 0) {
             return reply.code(200).send({ data: [] });
         }

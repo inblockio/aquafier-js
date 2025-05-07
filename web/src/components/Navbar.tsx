@@ -11,7 +11,7 @@ import { Alert } from "../components/chakra-ui/alert"
 import { LuChevronDown, LuChevronUp, LuSquareChartGantt } from "react-icons/lu"
 import { HiDocumentPlus } from "react-icons/hi2";
 import React, { useEffect, useState } from "react"
-import { estimateFileSize, dummyCredential, getAquaTreeFileName, getAquaTreeFileObject, getRandomNumber , fetchSystemFiles} from "../utils/functions"
+import { estimateFileSize, dummyCredential, getAquaTreeFileName, getAquaTreeFileObject, getRandomNumber, fetchSystemFiles } from "../utils/functions"
 import { FormTemplate } from "../components/aqua_forms"
 import { Field } from '../components/chakra-ui/field';
 import Aquafier, { AquaTree, AquaTreeWrapper, FileObject } from "aqua-js-sdk"
@@ -219,26 +219,30 @@ const Navbar = () => {
             }
 
 
-            const aquaTreeWrapper: AquaTreeWrapper = {
-                aquaTree: linkedAquaTreeResponse.data.aquaTree!!,
-                revision: "",
-                fileObject: fileObject
-            }
+            if (selectedTemplate?.name == "contract") {
 
-            // sign the aqua chain
-            let signRes = await aquafier.signAquaTree(aquaTreeWrapper, "metamask", dummyCredential())
-
-            if (signRes.isErr()) {
-                toaster.create({
-                    description: `Error signing failed`,
-                    type: "error"
-                })
-                return
             } else {
-                console.log("signRes.data", signRes.data)
-                fileObject.fileContent = formData
-                await saveAquaTree(signRes.data.aquaTree!!, fileObject)
+                const aquaTreeWrapper: AquaTreeWrapper = {
+                    aquaTree: linkedAquaTreeResponse.data.aquaTree!!,
+                    revision: "",
+                    fileObject: fileObject
+                }
 
+                // sign the aqua chain
+                let signRes = await aquafier.signAquaTree(aquaTreeWrapper, "metamask", dummyCredential())
+
+                if (signRes.isErr()) {
+                    toaster.create({
+                        description: `Error signing failed`,
+                        type: "error"
+                    })
+                    return
+                } else {
+                    console.log("signRes.data", signRes.data)
+                    fileObject.fileContent = formData
+                    await saveAquaTree(signRes.data.aquaTree!!, fileObject)
+
+                }
             }
         } else {
 
