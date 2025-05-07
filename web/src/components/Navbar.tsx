@@ -11,7 +11,7 @@ import { Alert } from "../components/chakra-ui/alert"
 import { LuChevronDown, LuChevronUp, LuSquareChartGantt } from "react-icons/lu"
 import { HiDocumentPlus } from "react-icons/hi2";
 import React, { useEffect, useState } from "react"
-import { estimateFileSize, dummyCredential, getAquaTreeFileName, getAquaTreeFileObject } from "../utils/functions"
+import { estimateFileSize, dummyCredential, getAquaTreeFileName, getAquaTreeFileObject, getRandomNumber , fetchSystemFiles} from "../utils/functions"
 import { FormTemplate } from "../components/aqua_forms"
 import { Field } from '../components/chakra-ui/field';
 import Aquafier, { AquaTree, AquaTreeWrapper, FileObject } from "aqua-js-sdk"
@@ -73,7 +73,7 @@ const Navbar = () => {
     const [modalFormErorMessae, setModalFormErorMessae] = useState("");
     // const { open, onOpen, onClose } = useDisclosure();
     const [open, setOpen] = useState(false)
-    const { session, formTemplates, backend_url, systemFileInfo, setFormTemplate, setFiles } = useStore(appStore)
+    const { session, formTemplates, backend_url, systemFileInfo, setFormTemplate, setFiles, setSystemFileInfo } = useStore(appStore)
     const [formData, setFormData] = useState<Record<string, string>>({})
     const [selectedTemplate, setSelectedTemplate] = useState<FormTemplate | null>(null);
     let navigate = useNavigate();
@@ -177,9 +177,10 @@ const Navbar = () => {
 
         const jsonString = JSON.stringify(formData, null, 4);
 
-        let fileObject: FileObject = {
+        const randomNumber = getRandomNumber(100, 1000);
+        const fileObject: FileObject = {
             fileContent: jsonString,
-            fileName: `${selectedTemplate?.name ?? "template"}.json`,
+            fileName: `${selectedTemplate?.name ?? "template"}-${randomNumber}.json`,
             path: './',
             fileSize: estimateize
         }
@@ -250,6 +251,11 @@ const Navbar = () => {
         }
     }
 
+    const loadTemplatesAquaTrees = async () => {
+        const url3 = `${backend_url}/system/aqua_tree`;
+        const systemFiles = await fetchSystemFiles(url3)
+        setSystemFileInfo(systemFiles)
+    }
     const loadTemplates = async () => {
         try {
             // const loadedTemplates = getFormTemplates();
@@ -308,13 +314,14 @@ const Navbar = () => {
     useEffect(() => {
         if (session != null && session.nonce != undefined && backend_url != "http://0.0.0.0:0") {
             loadTemplates();
+            loadTemplatesAquaTrees();
         }
     }, [backend_url, session]);
 
 
     return (
         <>
-            <Box bg={{ base: 'rgb(255, 255, 255)', _dark: 'rgba(0, 0, 0, 0.9)' }} h={'70px'} pos={'sticky'} top={0} left={0} right={0}  zIndex={1000} borderBottom={"1px solid "} borderColor={colorMode === "dark" ? "gray.900" : "gray.200"}>
+            <Box bg={{ base: 'rgb(255, 255, 255)', _dark: 'rgba(0, 0, 0, 0.9)' }} h={'70px'} pos={'sticky'} top={0} left={0} right={0} zIndex={1000} borderBottom={"1px solid "} borderColor={colorMode === "dark" ? "gray.900" : "gray.200"}>
                 <HStack h={'100%'} px={"4"} justifyContent={'space-between'}>
                     <Link to={'/'} style={{ height: "100%", display: "flex", alignItems: "center" }}>
                         <Image src={colorMode === 'light' ? "/images/logo.png" : "/images/logo-dark.png"} maxH={'60%'} />

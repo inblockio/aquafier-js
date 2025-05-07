@@ -142,7 +142,7 @@ export async function fetchSystemFiles(url: string): Promise<Array<ApiFileInfo>>
 
         const query = await fetch(url, {
             method: 'GET',
-            
+
         });
         const response = await query.json()
 
@@ -504,6 +504,26 @@ export function blobToBase64(blob: Blob): Promise<string> {
     });
 }
 
+// Basic random number function
+export function getRandomNumber(min: number, max: number): number | null {
+    // Ensure min and max are numbers
+    min = Number(min);
+    max = Number(max);
+
+    // Validate inputs
+    if (isNaN(min) || isNaN(max)) {
+        console.log("Please provide valid numbers");
+        return null
+    }
+
+    // Swap if min is greater than max
+    if (min > max) {
+        [min, max] = [max, min];
+    }
+
+    // Generate random number between min and max (inclusive)
+    return Math.floor(Math.random() * (max - min + 1)) + min;
+}
 
 // Function to convert file to base64
 export async function fileToBase64(file: File): Promise<string> {
@@ -525,7 +545,7 @@ export async function fileToBase64(file: File): Promise<string> {
 export const isArrayBufferText = (buffer: ArrayBuffer): boolean => {
     // Convert the ArrayBuffer to a Uint8Array
     const uint8Array = new Uint8Array(buffer);
-    
+
     // If buffer is too small, it's likely not a valid file
     if (uint8Array.length < 4) {
         // Default to text for very small buffers
@@ -533,82 +553,82 @@ export const isArrayBufferText = (buffer: ArrayBuffer): boolean => {
     }
 
     // Check for common binary file signatures (magic numbers)
-    
+
     // Check for PDF signature: %PDF-
-    if (uint8Array.length >= 5 && 
-        uint8Array[0] === 37 && uint8Array[1] === 80 && 
-        uint8Array[2] === 68 && uint8Array[3] === 70 && 
+    if (uint8Array.length >= 5 &&
+        uint8Array[0] === 37 && uint8Array[1] === 80 &&
+        uint8Array[2] === 68 && uint8Array[3] === 70 &&
         uint8Array[4] === 45) {
         return false;
     }
-    
+
     // Check for JPEG signature: FF D8 FF
-    if (uint8Array.length >= 3 && 
-        uint8Array[0] === 0xFF && uint8Array[1] === 0xD8 && 
+    if (uint8Array.length >= 3 &&
+        uint8Array[0] === 0xFF && uint8Array[1] === 0xD8 &&
         uint8Array[2] === 0xFF) {
         return false;
     }
-    
+
     // Check for PNG signature: 89 50 4E 47 0D 0A 1A 0A
-    if (uint8Array.length >= 8 && 
-        uint8Array[0] === 0x89 && uint8Array[1] === 0x50 && 
-        uint8Array[2] === 0x4E && uint8Array[3] === 0x47 && 
-        uint8Array[4] === 0x0D && uint8Array[5] === 0x0A && 
+    if (uint8Array.length >= 8 &&
+        uint8Array[0] === 0x89 && uint8Array[1] === 0x50 &&
+        uint8Array[2] === 0x4E && uint8Array[3] === 0x47 &&
+        uint8Array[4] === 0x0D && uint8Array[5] === 0x0A &&
         uint8Array[6] === 0x1A && uint8Array[7] === 0x0A) {
         return false;
     }
-    
+
     // Check for GIF signatures: GIF87a or GIF89a
-    if (uint8Array.length >= 6 && 
-        uint8Array[0] === 0x47 && uint8Array[1] === 0x49 && 
-        uint8Array[2] === 0x46 && uint8Array[3] === 0x38 && 
-        (uint8Array[4] === 0x37 || uint8Array[4] === 0x39) && 
+    if (uint8Array.length >= 6 &&
+        uint8Array[0] === 0x47 && uint8Array[1] === 0x49 &&
+        uint8Array[2] === 0x46 && uint8Array[3] === 0x38 &&
+        (uint8Array[4] === 0x37 || uint8Array[4] === 0x39) &&
         uint8Array[5] === 0x61) {
         return false;
     }
-    
+
     // Check for BMP signature: BM
-    if (uint8Array.length >= 2 && 
+    if (uint8Array.length >= 2 &&
         uint8Array[0] === 0x42 && uint8Array[1] === 0x4D) {
         return false;
     }
-    
+
     // Check for WEBP signature: RIFF....WEBP
-    if (uint8Array.length >= 12 && 
-        uint8Array[0] === 0x52 && uint8Array[1] === 0x49 && 
-        uint8Array[2] === 0x46 && uint8Array[3] === 0x46 && 
-        uint8Array[8] === 0x57 && uint8Array[9] === 0x45 && 
+    if (uint8Array.length >= 12 &&
+        uint8Array[0] === 0x52 && uint8Array[1] === 0x49 &&
+        uint8Array[2] === 0x46 && uint8Array[3] === 0x46 &&
+        uint8Array[8] === 0x57 && uint8Array[9] === 0x45 &&
         uint8Array[10] === 0x42 && uint8Array[11] === 0x50) {
         return false;
     }
-    
+
     // Check for SVG signature: typically starts with <?xml or <svg
     // SVG is actually text-based (XML), but we might want to treat it as a binary format
     // depending on your application's needs
     if (uint8Array.length >= 5) {
         // Check for <?xml
-        const possibleXml = (uint8Array[0] === 0x3C && uint8Array[1] === 0x3F && 
-                            uint8Array[2] === 0x78 && uint8Array[3] === 0x6D && 
-                            uint8Array[4] === 0x6C);
-        
+        const possibleXml = (uint8Array[0] === 0x3C && uint8Array[1] === 0x3F &&
+            uint8Array[2] === 0x78 && uint8Array[3] === 0x6D &&
+            uint8Array[4] === 0x6C);
+
         // Check for <svg
         const possibleSvg = (uint8Array.length >= 4 &&
-                            uint8Array[0] === 0x3C && uint8Array[1] === 0x73 && 
-                            uint8Array[2] === 0x76 && uint8Array[3] === 0x67);
-        
+            uint8Array[0] === 0x3C && uint8Array[1] === 0x73 &&
+            uint8Array[2] === 0x76 && uint8Array[3] === 0x67);
+
         // If SVG should be treated as binary, uncomment:
         if (possibleXml || possibleSvg) return false;
     }
-    
+
     // Check for TIFF signature: 49 49 2A 00 (little endian) or 4D 4D 00 2A (big endian)
-    if (uint8Array.length >= 4 && 
-        ((uint8Array[0] === 0x49 && uint8Array[1] === 0x49 && 
-          uint8Array[2] === 0x2A && uint8Array[3] === 0x00) || 
-         (uint8Array[0] === 0x4D && uint8Array[1] === 0x4D && 
-          uint8Array[2] === 0x00 && uint8Array[3] === 0x2A))) {
+    if (uint8Array.length >= 4 &&
+        ((uint8Array[0] === 0x49 && uint8Array[1] === 0x49 &&
+            uint8Array[2] === 0x2A && uint8Array[3] === 0x00) ||
+            (uint8Array[0] === 0x4D && uint8Array[1] === 0x4D &&
+                uint8Array[2] === 0x00 && uint8Array[3] === 0x2A))) {
         return false;
     }
-    
+
     // Check if the byte sequence looks like text
     // 1. Check for null bytes (usually not in text files)
     // 2. Check for high ratio of printable ASCII characters
@@ -619,7 +639,7 @@ export const isArrayBufferText = (buffer: ArrayBuffer): boolean => {
     let textCharCount = 0;
     let nullByteCount = 0;
     let controlCharCount = 0;
-    
+
     for (let i = 0; i < bytesToCheck; i++) {
         const byte = uint8Array[i];
 
@@ -627,7 +647,7 @@ export const isArrayBufferText = (buffer: ArrayBuffer): boolean => {
         if (byte === 0) {
             nullByteCount++;
         }
-        
+
         // Count control characters (0-8, 14-31, 127)
         // Exclude common whitespace (9-13: tab, LF, VT, FF, CR)
         if ((byte >= 0 && byte <= 8) || (byte >= 14 && byte <= 31) || byte === 127) {
@@ -644,7 +664,7 @@ export const isArrayBufferText = (buffer: ArrayBuffer): boolean => {
     if (nullByteCount > bytesToCheck * 0.03) {
         return false;
     }
-    
+
     // If more than 10% are control characters (excluding whitespace), probably not text
     if (controlCharCount > bytesToCheck * 0.1) {
         return false;

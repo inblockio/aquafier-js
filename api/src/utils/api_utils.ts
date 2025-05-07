@@ -379,9 +379,12 @@ const setUpSystemTemplates = async () => {
       path: "./"
     }
 
-    let reschequeAquaTree = await aquafier.createGenesisRevision(chequeFileObject, true)
+    let reschequeAquaTree = await aquafier.createGenesisRevision(chequeFileObject, true, false, false )
 
     if (reschequeAquaTree.isOk()) {
+
+      console.log(`@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@`)
+      console.log(`cheque aqua tree ${JSON.stringify(reschequeAquaTree.data.aquaTree, null, 4)}`)
 
       // save the aqua tree 
       await saveAquaTree(reschequeAquaTree.data.aquaTree!!, SYSTEM_WALLET_ADDRESS);
