@@ -229,7 +229,7 @@ export default async function templatesController(fastify: FastifyInstance) {
             if (resIdentityAquaTree.isOk()) {
 
                 // save the aqua tree 
-                await saveAquaTree(resIdentityAquaTree.data.aquaTree!!, request.user?.address!!, true)
+                await saveAquaTree(resIdentityAquaTree.data.aquaTree!!, request.user?.address!!, aquaFormdata.id)
                 //safe json file 
                 await saveTemplateFileData(resIdentityAquaTree.data.aquaTree!!, JSON.stringify(aquaFormdata.fields))
             }

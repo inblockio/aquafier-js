@@ -74,14 +74,14 @@ const Navbar = () => {
     // const { open, onOpen, onClose } = useDisclosure();
     const [open, setOpen] = useState(false)
     const { session, formTemplates, backend_url, systemFileInfo, setFormTemplate, setFiles, setSystemFileInfo } = useStore(appStore)
-    const [formData, setFormData] = useState<Record<string, string>>({})
+    const [formData, setFormData] = useState<Record<string, string | File | number>>({})
     const [selectedTemplate, setSelectedTemplate] = useState<FormTemplate | null>(null);
     let navigate = useNavigate();
 
 
     const cancelRef = React.useRef<HTMLButtonElement>(null);
 
-    const saveAquaTree = async (aquaTree: AquaTree, fileObject: FileObject) => {
+    const saveAquaTree = async (aquaTree: AquaTree, fileObject: FileObject, isFinal: boolean = false) => {
         try {
             const url = `${backend_url}/explorer_aqua_file_upload`;
 
@@ -115,14 +115,16 @@ const Navbar = () => {
             });
 
             if (response.status === 200 || response.status === 201) {
-                setFiles(response.data.files);
-                toaster.create({
-                    description: `Aqua tree created successfully`,
-                    type: "success"
-                });
-                // onClose();
-                setOpen(false)
-                setModalFormErorMessae("")
+                if (isFinal) {
+                    setFiles(response.data.files);
+                    toaster.create({
+                        description: `Aqua tree created successfully`,
+                        type: "success"
+                    });
+                    // onClose();
+                    setOpen(false)
+                    setModalFormErorMessae("")
+                }
             }
 
         } catch (error) {
@@ -173,6 +175,16 @@ const Navbar = () => {
         }
 
         let aquafier = new Aquafier();
+        const filteredData: Record<string, string | number> = {};
+
+        Object.entries(formData).forEach(([key, value]) => {
+            // Only include values that are not File objects
+            if (!(value instanceof File)) {
+                filteredData[key] = value;
+            }
+        });
+
+
         let estimateize = estimateFileSize(JSON.stringify(formData));
 
         const jsonString = JSON.stringify(formData, null, 4);
@@ -217,33 +229,138 @@ const Navbar = () => {
                 })
                 return
             }
+            
+            let aquaTreeData = linkedAquaTreeResponse.data.aquaTree!!
 
+            let containsFileData = selectedTemplate?.fields.filter((e) => e.type == "file")
+            if (containsFileData && containsFileData.length > 0) {
 
-            if (selectedTemplate?.name == "contract") {
+                // for (let index = 0; index < containsFileData.length; index++) {
+                //     const element = containsFileData[index];
+                //     const file: File = formData[element['name']] as File
 
-            } else {
-                const aquaTreeWrapper: AquaTreeWrapper = {
-                    aquaTree: linkedAquaTreeResponse.data.aquaTree!!,
-                    revision: "",
-                    fileObject: fileObject
-                }
+                // Create an array to store all file processing promises
+                const fileProcessingPromises = containsFileData.map(async (element) => {
+                    const file: File = formData[element.name] as File;
 
-                // sign the aqua chain
-                let signRes = await aquafier.signAquaTree(aquaTreeWrapper, "metamask", dummyCredential())
+                    // Check if file exists
+                    if (!file) {
+                        console.warn(`No file found for field: ${element.name}`);
+                        return null;
+                    }
 
-                if (signRes.isErr()) {
+                    try {
+                        // Convert File to Uint8Array
+                        const arrayBuffer = await file.arrayBuffer();
+                        const uint8Array = new Uint8Array(arrayBuffer);
+
+                        // Create the FileObject with properties from the File object
+                        const fileObjectPar: FileObject = {
+                            fileContent: uint8Array,
+                            fileName: file.name,
+                            path: "./",
+                            fileSize: file.size
+                        };
+
+                        return fileObjectPar;
+                        // After this you can use fileObjectPar with aquafier.createGenesisRevision() or other operations
+                    } catch (error) {
+                        console.error(`Error processing file ${file.name}:`, error);
+                        return null;
+                    }
+                });
+
+                // Wait for all file processing to complete
+                try {
+                    const fileObjects = await Promise.all(fileProcessingPromises);
+                    // Filter out null results (from errors)
+                    const validFileObjects = fileObjects.filter(obj => obj !== null) as FileObject[];
+
+                    // Now you can use validFileObjects
+                    console.log(`Processed ${validFileObjects.length} files successfully`);
+
+                    // Example usage with each file object:
+                    for (let item of validFileObjects) {
+                        let aquaTreeResponse = await aquafier.createGenesisRevision(item)
+
+                        if (aquaTreeResponse.isErr()) {
+                            console.error("Error linking aqua tree:", aquaTreeResponse.data.toString());
+
+                            toaster.create({
+                                title: 'Error  linking aqua',
+                                description: 'Error  linking aqua',
+                                type: 'error',
+                                duration: 5000,
+                            });
+                            return
+                        }
+                        // upload the single aqua tree 
+                        await saveAquaTree(aquaTreeResponse.data.aquaTree!!, fileObject, false)
+
+                        // linke it to main aqua tree
+                        const aquaTreeWrapper: AquaTreeWrapper = {
+                            aquaTree: aquaTreeData,
+                            revision: "",
+                            fileObject: fileObject
+                        }
+
+                        const aquaTreeWrapper2: AquaTreeWrapper = {
+                            aquaTree: aquaTreeResponse.data.aquaTree!!,
+                            revision: "",
+                            fileObject: item
+                        }
+                      
+                        let res = await aquafier.linkAquaTree(aquaTreeWrapper, aquaTreeWrapper2)
+                        if (res.isErr()) {
+                            console.error("Error linking aqua tree:", aquaTreeResponse.data.toString());
+
+                            toaster.create({
+                                title: 'Error  linking aqua',
+                                description: 'Error  linking aqua',
+                                type: 'error',
+                                duration: 5000,
+                            });
+                            return
+                        }
+                        aquaTreeData = res.data.aquaTree!!
+
+                    }
+
+                } catch (error) {
+                    console.error("Error processing files:", error);
+
                     toaster.create({
-                        description: `Error signing failed`,
-                        type: "error"
-                    })
+                        title: 'Error proceessing files',
+                        description: 'Error proceessing files',
+                        type: 'error',
+                        duration: 5000,
+                    });
                     return
-                } else {
-                    console.log("signRes.data", signRes.data)
-                    fileObject.fileContent = formData
-                    await saveAquaTree(signRes.data.aquaTree!!, fileObject)
-
                 }
+
             }
+            const aquaTreeWrapper: AquaTreeWrapper = {
+                aquaTree: aquaTreeData,
+                revision: "",
+                fileObject: fileObject
+            }
+
+            // sign the aqua chain
+            let signRes = await aquafier.signAquaTree(aquaTreeWrapper, "metamask", dummyCredential())
+
+            if (signRes.isErr()) {
+                toaster.create({
+                    description: `Error signing failed`,
+                    type: "error"
+                })
+                return
+            } else {
+                console.log("signRes.data", signRes.data)
+                fileObject.fileContent = formData
+                await saveAquaTree(signRes.data.aquaTree!!, fileObject, true)
+
+            }
+
         } else {
 
             toaster.create({
@@ -257,7 +374,7 @@ const Navbar = () => {
 
     const loadTemplatesAquaTrees = async () => {
         const url3 = `${backend_url}/system/aqua_tree`;
-        const systemFiles = await fetchSystemFiles(url3)
+        const systemFiles = await fetchSystemFiles(url3, session?.address ?? "")
         setSystemFileInfo(systemFiles)
     }
     const loadTemplates = async () => {
@@ -415,6 +532,7 @@ const Navbar = () => {
                     </DialogHeader>
                     <DialogBody>
                         {selectedTemplate == null ? (
+
                             <SimpleGrid columns={{ base: 2, md: 3 }} gap={2}>
                                 {formTemplates.map((template, i: number) => (
                                     <FormTemplateCard key={`template_${i}`} template={template} selectTemplateCallBack={selectTemplateCallBack} />
@@ -430,18 +548,30 @@ const Navbar = () => {
                                     }
                                     <Stack marginBottom={10}>
                                         {selectedTemplate ? selectedTemplate.fields.map((field) => {
-
+                                            // For file inputs, we don't want to set the value prop
+                                            const isFileInput = field.type === 'file';
                                             return <Field label={field.label} errorText={''}>
                                                 <Input
                                                     borderRadius={"md"}
                                                     size={"sm"}
-                                                    value={formData[field.name]}
+                                                    // value={formData[field.name]}
+                                                    // Only set value for non-file inputs
+                                                    {...(!isFileInput ? { value: formData[field.name] as string | number } : {})}
                                                     type={field.type}
                                                     onChange={(e) => {
+                                                        // setFormData({
+                                                        //     ...formData,
+                                                        //     [field.name]: e.target.value
+                                                        // })
+
+                                                        const value = isFileInput && e.target.files
+                                                            ? e.target.files[0] // Get the file object
+                                                            : e.target.value;   // Get the input value
+
                                                         setFormData({
                                                             ...formData,
-                                                            [field.name]: e.target.value
-                                                        })
+                                                            [field.name]: value
+                                                        });
                                                     }}
                                                     required={field.required}
                                                 />

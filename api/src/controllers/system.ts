@@ -19,21 +19,44 @@ export default async function systemController(fastify: FastifyInstance) {
 
         // fetch all from latetst
 
-        let latest = await prisma.latest.findMany({
+        let trees: {
+            hash: string;
+            user: string;
+            template_id: string | null;
+        }[] = await prisma.latest.findMany({
             where: {
                 user: SYSTEM_WALLET_ADDRESS
             }
         });
 
-        let latestTemplateTree  = await prisma.latest.findMany({
-            where: {
-                AND :{
-                    user: SYSTEM_WALLET_ADDRESS
-                }
-            }
-        });
+        const metamaskAddress = request.headers['metamask_address'];
+        if (!metamaskAddress || typeof metamaskAddress !== 'string' || metamaskAddress.trim() === '') {
 
-        if (latest.length == 0) {
+
+        } else {
+
+         
+
+            let data = await prisma.latest.findMany({
+                where: {
+                    AND: {
+                        user: {
+                            contains: metamaskAddress,
+                            mode: 'insensitive'
+                        },
+                        template_id: {
+                            not: null
+                        }
+                    }
+                }
+            });
+
+            if (data.length > 0) {
+                trees.push(...data)
+            }
+        }
+
+        if (trees.length == 0) {
             return reply.code(200).send({ data: [] });
         }
 
@@ -47,7 +70,7 @@ export default async function systemController(fastify: FastifyInstance) {
         // Construct the full URL
         const url = `${protocol}://${host}`;
 
-        let displayData = await fetchAquatreeFoUser(url, latest)
+        let displayData = await fetchAquatreeFoUser(url, trees)
 
 
 

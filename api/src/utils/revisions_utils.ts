@@ -308,7 +308,7 @@ export async function saveARevisionInAquaTree(revisionData: SaveRevision, userAd
 
     return [200, ""]
 }
-export async function saveAquaTree(aquaTree: AquaTree, userAddress: string, isTemplateAquaTree = false) {
+export async function saveAquaTree(aquaTree: AquaTree, userAddress: string, templateId  : string | null = null) {
     // Reorder revisions to ensure proper order
     let orderedAquaTree = reorderAquaTreeRevisionsProperties(aquaTree);
     let aquaTreeWithOrderdRevision = OrderRevisionInAquaTree(orderedAquaTree);
@@ -327,7 +327,8 @@ export async function saveAquaTree(aquaTree: AquaTree, userAddress: string, isTe
     // Only register the latest hash for the user
     await prisma.latest.upsert({
         where: {
-            hash: lastPubKeyHash
+            hash: lastPubKeyHash,
+            template_id: templateId
         },
         create: {
             hash: lastPubKeyHash,

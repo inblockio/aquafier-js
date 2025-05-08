@@ -137,12 +137,14 @@ export async function switchNetwork(chainId: string) {
 }
 
 
-export async function fetchSystemFiles(url: string): Promise<Array<ApiFileInfo>> {
+export async function fetchSystemFiles(url: string, metamaskAddress : string=""): Promise<Array<ApiFileInfo>> {
     try {
 
         const query = await fetch(url, {
             method: 'GET',
-
+            headers: {
+                'metamask_address': metamaskAddress,
+            },
         });
         const response = await query.json()
 
