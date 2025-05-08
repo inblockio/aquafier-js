@@ -215,7 +215,7 @@ export default async function templatesController(fastify: FastifyInstance) {
                 });
             }
 
-            let aquafier =  new Aquafier();
+            let aquafier = new Aquafier();
 
             // create aqua tree for identity template
             let identityFileObject: FileObject = {
@@ -224,7 +224,7 @@ export default async function templatesController(fastify: FastifyInstance) {
                 path: "./"
             }
 
-            let resIdentityAquaTree = await aquafier.createGenesisRevision(identityFileObject, true, false, false )
+            let resIdentityAquaTree = await aquafier.createGenesisRevision(identityFileObject, true, false, false)
 
             if (resIdentityAquaTree.isOk()) {
 
@@ -232,9 +232,19 @@ export default async function templatesController(fastify: FastifyInstance) {
                 await saveAquaTree(resIdentityAquaTree.data.aquaTree!!, request.user?.address!!, aquaFormdata.id)
                 //safe json file 
                 await saveTemplateFileData(resIdentityAquaTree.data.aquaTree!!, JSON.stringify(aquaFormdata.fields))
-            }
 
-            return reply.code(200).send({ success: true });
+                let apiFileInfo : {
+                    aquaTree: AquaTree,
+                    fileObject: FileObject[]
+                }= {
+                    aquaTree:resIdentityAquaTree.data.aquaTree!!,
+                    fileObject: [identityFileObject]
+
+                }
+                return reply.code(200).send({ success: true, data: apiFileInfo });
+            } else {
+                return reply.code(500).send({ success: true, logs: resIdentityAquaTree.data });
+            }
         } catch (error) {
             console.error("Error creating template:", error);
             return reply.code(500).send({ success: false, message: "Failed to create template" });
