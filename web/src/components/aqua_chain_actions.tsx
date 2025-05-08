@@ -15,7 +15,7 @@ import { Checkbox } from "./chakra-ui/checkbox"
 import { Box, Center, Input, HStack, Text, VStack, Portal, Dialog, List } from "@chakra-ui/react"
 import { ClipboardButton, ClipboardIconButton, ClipboardInput, ClipboardLabel, ClipboardRoot } from "./chakra-ui/clipboard"
 import { InputGroup } from "./chakra-ui/input-group"
-import Aquafier, { AquaTree, AquaTreeWrapper, Revision } from "aqua-js-sdk"
+import Aquafier, { AquaTree, AquaTreeWrapper, Revision, WitnessNetwork } from "aqua-js-sdk"
 import { RevionOperation } from "../models/RevisionOperation"
 import JSZip from "jszip";
 import { AquaJsonInZip, AquaNameWithHash } from "../models/Aqua"
@@ -69,7 +69,7 @@ import { AquaJsonInZip, AquaNameWithHash } from "../models/Aqua"
 
 
 export const WitnessAquaChain = ({ apiFileInfo, backendUrl, nonce }: RevionOperation) => {
-    const { files, setFiles, metamaskAddress, selectedFileInfo, setSelectedFileInfo } = useStore(appStore)
+    const { files, setFiles, metamaskAddress, selectedFileInfo, setSelectedFileInfo, user_profile } = useStore(appStore)
     const [witnessing, setWitnessing] = useState(false)
 
 
@@ -96,7 +96,9 @@ export const WitnessAquaChain = ({ apiFileInfo, backendUrl, nonce }: RevionOpera
                     revision: "",
                     fileObject: undefined
                 }
-                const result = await aquafier.witnessAquaTree(aquaTreeWrapper, "eth", "sepolia", "metamask", dummyCredential())
+                 let xCredentials = dummyCredential()
+                xCredentials.witness_eth_network = user_profile?.witness_network ?? "sepolia"
+                const result = await aquafier.witnessAquaTree(aquaTreeWrapper, "eth", xCredentials.witness_eth_network as WitnessNetwork, "metamask", xCredentials)
                 if (result.isErr()) {
                     toaster.create({
                         description: `Error witnessing failed`,
@@ -186,7 +188,7 @@ export const WitnessAquaChain = ({ apiFileInfo, backendUrl, nonce }: RevionOpera
 }
 
 export const SignAquaChain = ({ apiFileInfo, backendUrl, nonce }: RevionOperation) => {
-    const { files, setFiles, setSelectedFileInfo, selectedFileInfo } = useStore(appStore)
+    const { files, setFiles, setSelectedFileInfo, selectedFileInfo, user_profile } = useStore(appStore)
     const [signing, setSigning] = useState(false)
 
     const signFileHandler = async () => {
@@ -202,7 +204,11 @@ export const SignAquaChain = ({ apiFileInfo, backendUrl, nonce }: RevionOperatio
                     fileObject: undefined
                 }
 
-                const result = await aquafier.signAquaTree(aquaTreeWrapper, "metamask", dummyCredential())
+                let xCredentials = dummyCredential()
+                xCredentials.witness_eth_network = user_profile?.witness_network ?? "sepolia"
+                
+
+                const result = await aquafier.signAquaTree(aquaTreeWrapper, "metamask", xCredentials)
                 if (result.isErr()) {
                     toaster.create({
                         description: `Error signing failed`,
