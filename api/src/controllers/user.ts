@@ -91,13 +91,13 @@ export default async function userController(fastify: FastifyInstance) {
                 where: {
                     address: address,
                 },
-                update:{
+                update: {
 
                 },
                 create: {
                     ens_name: ensName,
-                    address:address,
-                    email:''
+                    address: address,
+                    email: ''
                 }
             });
 
@@ -445,7 +445,7 @@ export default async function userController(fastify: FastifyInstance) {
                         }
                     })
                     if (res) {
-                        
+
                         let roots = res.map((e) => e.Witness_merkle_root ?? "")
                         await tx.witnessEvent.deleteMany({
                             where: {
@@ -676,6 +676,26 @@ export default async function userController(fastify: FastifyInstance) {
                 console.log('User data deletion completed successfully');
             });
 
+
+            // get all user tmplates
+            let allTemplates = await prisma.aquaTemplate.findMany({
+                where: {
+                    owner: userAddress
+                }
+            })
+            for (let templateItem of allTemplates) {
+                await prisma.aquaTemplateFields.deleteMany({
+                    where: {
+                        aqua_form_id: templateItem.id
+                    }
+                })
+                await prisma.aquaTemplate.delete({
+                    where: {
+                        id: templateItem.id
+                    }
+                })
+
+            }
             // Delete the session as well (similar to logout)
             await prisma.siweSession.delete({
                 where: { nonce }

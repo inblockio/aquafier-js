@@ -28,6 +28,7 @@ import appStore from "../../store";
 import { toaster } from "../chakra-ui/toaster";
 import { LuCross, LuTrash } from 'react-icons/lu';
 import { Text } from "@chakra-ui/react"
+import { ApiFileInfo } from '../../models/FileInfo';
 
 const fieldTypes = createListCollection({
   items: [
@@ -64,8 +65,8 @@ const CustomSelect = ({ label, onChange, value }: ICustomSelect) => {
             <Select.Indicator />
           </Select.IndicatorGroup>
         </Select.Control>
-        <Portal   container={contentRef} >
-        {/* <Portal >  */}
+        <Portal container={contentRef} >
+          {/* <Portal >  */}
           <Select.Positioner  >
             <Select.Content w={"100%"} >
               {fieldTypes.items.map((fieldType) => (
@@ -109,7 +110,7 @@ const templateFormFields = [
 const FormTemplateEditor = ({ initialTemplate, onSave, updating }: FormTemplateEditorProps) => {
   // Using alert instead of toast since useToast is not available in this version
 
-  const { session, backend_url, setFormTemplate, formTemplates } = useStore(appStore);
+  const { session, backend_url, setFormTemplate, formTemplates, setSystemFileInfo, systemFileInfo } = useStore(appStore);
 
   const [formFields, setFormFields] = useState<FormField[]>(initialTemplate?.fields || []);
   const [apiError, setApiError] = useState<string | null>(null);
@@ -163,11 +164,18 @@ const FormTemplateEditor = ({ initialTemplate, onSave, updating }: FormTemplateE
 
       if (response.status === 200 || response.status === 201) {
         //  console.log("update state ...")
-        if(updating){
+        if (updating) {
           setFormTemplate(formTemplates.map(template => template.id === initialTemplate?.id ? formValues : template));
         }
-        else{
+        else {
           setFormTemplate([...formTemplates, formValues]);
+        }
+
+        console.log(`template create response body  ${JSON.stringify(response.data, null, 4)}`)
+
+        if (response.data.data) {
+          let templateTree: ApiFileInfo = response.data.data;
+          setSystemFileInfo([...systemFileInfo, templateTree])
         }
         toaster.create({
           description: `Form created successfully`,
@@ -274,7 +282,7 @@ const FormTemplateEditor = ({ initialTemplate, onSave, updating }: FormTemplateE
           <Stack>
             <Heading size="md">Form Fields</Heading>
             {formFields?.map((field, index) => (
-              <Box key={index} w={"100%"} zIndex={1000 - (index*2)}>
+              <Box key={index} w={"100%"} zIndex={1000 - (index * 2)}>
                 <Group wrap={"wrap"} w={"100%"}>
                   <SimpleGrid columns={{ base: 1, md: 3 }} gap={4} flex={"1"}>
                     <Field label={`Label`} errorText={errors.fields?.[index]?.message}>
@@ -286,7 +294,7 @@ const FormTemplateEditor = ({ initialTemplate, onSave, updating }: FormTemplateE
                         onChange={(e) => updateFields(index, 'label', e.target.value)}
                       />
                     </Field>
-                    <Field label={`Type`} errorText={errors.fields?.[index]?.message} zIndex={100+(index*10)}>
+                    <Field label={`Type`} errorText={errors.fields?.[index]?.message} zIndex={100 + (index * 10)}>
                       <CustomSelect
                         label="Type"
                         value={field.type}

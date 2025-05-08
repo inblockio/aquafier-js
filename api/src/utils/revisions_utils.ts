@@ -327,16 +327,17 @@ export async function saveAquaTree(aquaTree: AquaTree, userAddress: string, temp
     // Only register the latest hash for the user
     await prisma.latest.upsert({
         where: {
-            hash: lastPubKeyHash,
-            template_id: templateId
+            hash: lastPubKeyHash
         },
         create: {
             hash: lastPubKeyHash,
             user: userAddress,
+            template_id: templateId
         },
         update: {
             hash: lastPubKeyHash,
             user: userAddress,
+            template_id: templateId
         }
     });
 
@@ -710,12 +711,12 @@ export async function createAquaTreeFromRevisions(latestRevisionHash: string, ur
         revisionData.push(latestRevionData);
 
         try {
-            console.log(`%%%%%%%%%%%%%%%%%%%%%%%%%%% previous ${latestRevionData?.previous} \n ${JSON.stringify(latestRevionData, null, 4)}`)
+            // console.log(`%%%%%%%%%%%%%%%%%%%%%%%%%%% previous ${latestRevionData?.previous} \n ${JSON.stringify(latestRevionData, null, 4)}`)
             // let pubKey = latestRevisionHash.split("_")[0];
             let previousWithPubKey = latestRevionData?.previous!!;
 
 
-            console.log(`$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$  previous ${previousWithPubKey} `)
+            
             //if previosu verification hash is not empty find the previous one
             if (latestRevionData?.previous !== null && latestRevionData?.previous?.length !== 0) {
                 let aquaTreerevision = await findAquaTreeRevision(previousWithPubKey);

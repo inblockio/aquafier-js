@@ -31,12 +31,11 @@ export default async function systemController(fastify: FastifyInstance) {
 
         const metamaskAddress = request.headers['metamask_address'];
         if (!metamaskAddress || typeof metamaskAddress !== 'string' || metamaskAddress.trim() === '') {
-
+            return reply.code(500).send({ data: [] });
 
         } else {
 
-         
-
+            
             let data = await prisma.latest.findMany({
                 where: {
                     AND: {
@@ -44,9 +43,9 @@ export default async function systemController(fastify: FastifyInstance) {
                             contains: metamaskAddress,
                             mode: 'insensitive'
                         },
-                        template_id: {
-                            not: null
-                        }
+                        // template_id: {
+                        //     not: null
+                        // }
                     }
                 }
             });
