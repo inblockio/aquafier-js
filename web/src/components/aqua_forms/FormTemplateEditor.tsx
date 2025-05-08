@@ -281,7 +281,7 @@ const FormTemplateEditor = ({ initialTemplate, onSave, updating }: FormTemplateE
                       <Input
                         borderRadius={"sm"}
                         size={"xs"}
-                        placeholder={"First Name"}
+                        placeholder={"Document | Name | Email | Wallet Address | etc."}
                         value={field.label}
                         onChange={(e) => updateFields(index, 'label', e.target.value)}
                       />
