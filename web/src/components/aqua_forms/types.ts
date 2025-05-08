@@ -2,7 +2,7 @@ export interface FormField {
   id: string;
   label: string;
   name: string;
-  type: 'text' | 'number';
+  type: 'text' | 'number' | 'date' | 'file';
   required: boolean;
 }
 

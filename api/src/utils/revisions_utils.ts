@@ -4,8 +4,33 @@ import { prisma } from '../database/db';
 import { Latest, Signature, Revision, Witness, AquaForms, WitnessEvent, FileIndex, Link } from '@prisma/client';
 import * as fs from "fs"
 import path from 'path';
-import { SaveRevision } from '@/models/request_models';
+import { SaveRevision } from '../models/request_models';
 
+export async function getUserApiFileInfo(url: string, address: string): Promise<Array<{
+    aquaTree: AquaTree,
+    fileObject: FileObject[]
+}>> {
+
+
+
+    let latest = await prisma.latest.findMany({
+        where: {
+            AND: {
+                user: address,
+                template_id: null
+            }
+        }
+    });
+
+    if (latest.length == 0) {
+
+        return []
+    }
+
+
+
+    return await fetchAquatreeFoUser(url, latest)
+}
 export function removeFilePathFromFileIndex(aquaTree: AquaTree): AquaTree {
 
 
@@ -78,7 +103,7 @@ export async function fetchAquatreeFoUser(url: string, latest: Array<{
     return displayData;
 }
 
-export async function saveARevisionInAquaTree(revisionData: SaveRevision, userAddress :  string): Promise<[number, string]> {
+export async function saveARevisionInAquaTree(revisionData: SaveRevision, userAddress: string): Promise<[number, string]> {
 
     if (!revisionData.revision) {
         return [400, "revision Data is required"]//reply.code(400).send({ success: false, message: "revision Data is required" });
@@ -283,7 +308,7 @@ export async function saveARevisionInAquaTree(revisionData: SaveRevision, userAd
 
     return [200, ""]
 }
-export async function saveAquaTree(aquaTree: AquaTree, userAddress: string,) {
+export async function saveAquaTree(aquaTree: AquaTree, userAddress: string, templateId  : string | null = null) {
     // Reorder revisions to ensure proper order
     let orderedAquaTree = reorderAquaTreeRevisionsProperties(aquaTree);
     let aquaTreeWithOrderdRevision = OrderRevisionInAquaTree(orderedAquaTree);
@@ -302,7 +327,8 @@ export async function saveAquaTree(aquaTree: AquaTree, userAddress: string,) {
     // Only register the latest hash for the user
     await prisma.latest.upsert({
         where: {
-            hash: lastPubKeyHash
+            hash: lastPubKeyHash,
+            template_id: templateId
         },
         create: {
             hash: lastPubKeyHash,
@@ -794,9 +820,13 @@ export async function createAquaTreeFromRevisions(latestRevisionHash: string, ur
                 previous_verification_hash: previousHashOnly,
                 local_timestamp: revisionItem.local_timestamp?.toString() ?? "",
                 leaves: revisionItem.verification_leaves,
-                file_nonce: revisionItem.nonce as string,
+
                 "version": "https://aqua-protocol.org/docs/v3/schema_2 | SHA256 | Method: scalar",
             }
+
+            // if (revisionItem.revision_type == "file" || revisionItem.revision_type == "form") {
+            //     revisionWithData.file_nonce = revisionItem.nonce as string
+            // }
 
             if (revisionItem.has_content) {
                 let fileItem = files.find((e) => e.hash == revisionItem.pubkey_hash)
@@ -804,7 +834,7 @@ export async function createAquaTreeFromRevisions(latestRevisionHash: string, ur
                 revisionWithData["content"] = fileContent
             }
 
-            if (revisionItem.revision_type == "file") {
+            if (revisionItem.revision_type == "file" || revisionItem.revision_type == "form") {
                 console.log("Hash only: ", hashOnly)
                 let fileResult = await prisma.file.findFirst({
                     where: {
@@ -824,14 +854,13 @@ export async function createAquaTreeFromRevisions(latestRevisionHash: string, ur
                     revisionWithData["file_nonce"] = revisionItem.nonce ?? "--error--"
                     revisionWithData["file_hash"] = fileResult?.file_hash ?? "--error--"
                 }
+            }
+            let revisionInfoData = await FetchRevisionInfo(revisionItem.pubkey_hash, revisionItem)
+
+            if (revisionInfoData == null) {
+                console.log(`Revision data ${JSON.stringify(revisionItem, null, 4)} not found foir revision item`)
+                // throw Error("Revision info not found")
             } else {
-                let revisionInfoData = await FetchRevisionInfo(revisionItem.pubkey_hash, revisionItem)
-
-                if (revisionInfoData == null) {
-                    console.log(`Revision data ${JSON.stringify(revisionItem, null, 4)}`)
-                    throw Error("Revision info not found")
-                }
-
                 if (revisionItem.revision_type == "form") {
 
                     let fileFormData = revisionInfoData as AquaForms[];
@@ -891,21 +920,8 @@ export async function createAquaTreeFromRevisions(latestRevisionHash: string, ur
                     if (revisionData == null) {
                         console.log(`💣💣💣💣 Revision data not found for hash ${linkData.link_verification_hashes[0]}`)
                     } else {
-                        if (revisionData.revision_type != "file") {
-                            // let linkedAquaTree = await createAquaTreeFromRevisions(linkData.link_verification_hashes[0], url)
-                            let [aquaTreeLinked, fileObjectLinked] = await createAquaTreeFromRevisions(linkData.link_verification_hashes[0], url)
-                            // console.log("Linked Aqua Tree: ", JSON.stringify(aquaTreeLinked, null, 4))
-                            // console.log("Linked Aqua Tree: ", linkedAquaTree)
-                            fileObject.push(...fileObjectLinked)
-                            let genesisHash = getGenesisHash(aquaTreeLinked) ?? ""
-                            fileObject.push({
-                                fileContent: aquaTreeLinked,
-                                fileName: `${aquaTreeLinked.file_index[genesisHash]}.aqua.json`,
-                                path: "",
-                                fileSize: estimateStringFileSize(JSON.stringify(aquaTreeLinked, null, 4))
-                            })
-                            // throw Error("Revision data not found for hash ${linkData.link_verification_hashes[0]}")
-                        } else {
+                        if (revisionData.revision_type == "file" || revisionData.revision_type == "form") {
+
 
                             // throw Error("Revision data not found for hash ..............." + revisionData.revision_type)
                             let hashSearchText = linkData.link_verification_hashes[0]
@@ -941,6 +957,22 @@ export async function createAquaTreeFromRevisions(latestRevisionHash: string, ur
 
                                 fileObject.push(...fileObjectLinked)
                             }
+
+
+                        } else {
+                            // let linkedAquaTree = await createAquaTreeFromRevisions(linkData.link_verification_hashes[0], url)
+                            let [aquaTreeLinked, fileObjectLinked] = await createAquaTreeFromRevisions(linkData.link_verification_hashes[0], url)
+                            // console.log("Linked Aqua Tree: ", JSON.stringify(aquaTreeLinked, null, 4))
+                            // console.log("Linked Aqua Tree: ", linkedAquaTree)
+                            fileObject.push(...fileObjectLinked)
+                            let genesisHash = getGenesisHash(aquaTreeLinked) ?? ""
+                            fileObject.push({
+                                fileContent: aquaTreeLinked,
+                                fileName: `${aquaTreeLinked.file_index[genesisHash]}.aqua.json`,
+                                path: "",
+                                fileSize: estimateStringFileSize(JSON.stringify(aquaTreeLinked, null, 4))
+                            })
+                            // throw Error("Revision data not found for hash ${linkData.link_verification_hashes[0]}")
                         }
 
                     }
@@ -948,6 +980,9 @@ export async function createAquaTreeFromRevisions(latestRevisionHash: string, ur
                     console.log(`💣💣💣💣 Revision of type ${revisionItem.revision_type} is unknown`)
                 }
             }
+
+
+
 
 
             // update file index for genesis revision 
@@ -1067,7 +1102,7 @@ export async function FetchRevisionInfo(hash: string, revision: Revision): Promi
         })
     } else {
 
-        //  console.log(`type ${revision.revision_type} with hash ${hash}`)
+        console.log(`type ${revision.revision_type} with hash ${hash}`)
         return null
         // throw new Error(`implment for ${revision.revision_type}`);
 

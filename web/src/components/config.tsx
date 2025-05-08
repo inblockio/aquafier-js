@@ -35,7 +35,7 @@ const LoadConfiguration = () => {
                         fetchUserProfile(_address,nonce)
                         setSession(response.data?.session)
                         const url3 = `${backend_url}/system/aqua_tree`;
-                        const systemFiles = await  fetchSystemFiles(url3)
+                        const systemFiles = await  fetchSystemFiles(url3,address )
                         setSystemFileInfo(systemFiles)
 
                     }

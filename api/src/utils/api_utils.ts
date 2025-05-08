@@ -76,7 +76,7 @@ export function getGenesisHash(aquaTree: AquaTree): string | null {
 }
 
 
-const saveSystemTemplateFile = async (aquaTree: AquaTree, fileData: string) => {
+export const saveTemplateFileData = async (aquaTree: AquaTree, fileData: string) => {
 
   let genesisHashData = getGenesisHash(aquaTree);
   if (!genesisHashData) {
@@ -232,14 +232,14 @@ const setUpSystemTemplates = async () => {
       path: "./"
     }
 
-    let resIdentityAquaTree = await aquafier.createGenesisRevision(identityFileObject, true)
+    let resIdentityAquaTree = await aquafier.createGenesisRevision(identityFileObject, true, false, false )
 
     if (resIdentityAquaTree.isOk()) {
 
       // save the aqua tree 
       await saveAquaTree(resIdentityAquaTree.data.aquaTree!!, SYSTEM_WALLET_ADDRESS)
       //safe json file 
-      await saveSystemTemplateFile(resIdentityAquaTree.data.aquaTree!!, JSON.stringify(identityObject))
+      await saveTemplateFileData(resIdentityAquaTree.data.aquaTree!!, JSON.stringify(identityObject))
     }
 
 
@@ -305,14 +305,14 @@ const setUpSystemTemplates = async () => {
       path: "./"
     }
 
-    let resAttestationAquaTree = await aquafier.createGenesisRevision(attestationFileObject, true)
+    let resAttestationAquaTree = await aquafier.createGenesisRevision(attestationFileObject,true, false, false )
 
     if (resAttestationAquaTree.isOk()) {
 
       // save the aqua tree 
       await saveAquaTree(resAttestationAquaTree.data.aquaTree!!, SYSTEM_WALLET_ADDRESS);
 
-      await saveSystemTemplateFile(resAttestationAquaTree.data.aquaTree!!, JSON.stringify(identityAttestations))
+      await saveTemplateFileData(resAttestationAquaTree.data.aquaTree!!, JSON.stringify(identityAttestations))
     }
 
   }
@@ -379,14 +379,17 @@ const setUpSystemTemplates = async () => {
       path: "./"
     }
 
-    let reschequeAquaTree = await aquafier.createGenesisRevision(chequeFileObject, true)
+    let reschequeAquaTree = await aquafier.createGenesisRevision(chequeFileObject, true, false, false )
 
     if (reschequeAquaTree.isOk()) {
+
+      // console.log(`@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@`)
+      // console.log(`cheque aqua tree ${JSON.stringify(reschequeAquaTree.data.aquaTree, null, 4)}`)
 
       // save the aqua tree 
       await saveAquaTree(reschequeAquaTree.data.aquaTree!!, SYSTEM_WALLET_ADDRESS);
 
-      await saveSystemTemplateFile(reschequeAquaTree.data.aquaTree!!, JSON.stringify(cheque))
+      await saveTemplateFileData(reschequeAquaTree.data.aquaTree!!, JSON.stringify(cheque))
     }
 
   }
@@ -450,7 +453,7 @@ const setUpSystemTemplates = async () => {
       path: "./"
     }
 
-    let resaccessAquaTree = await aquafier.createGenesisRevision(accessFileObject, true)
+    let resaccessAquaTree = await aquafier.createGenesisRevision(accessFileObject, true, false, false )
 
     if (resaccessAquaTree.isOk()) {
 
@@ -458,7 +461,7 @@ const setUpSystemTemplates = async () => {
       await saveAquaTree(resaccessAquaTree.data.aquaTree!!, SYSTEM_WALLET_ADDRESS)
 
 
-      await saveSystemTemplateFile(resaccessAquaTree.data.aquaTree!!, JSON.stringify(accessContract))
+      await saveTemplateFileData(resaccessAquaTree.data.aquaTree!!, JSON.stringify(accessContract))
     }
 
   }

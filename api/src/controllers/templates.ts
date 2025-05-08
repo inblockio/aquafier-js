@@ -1,9 +1,11 @@
 import { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 import { prisma } from '../database/db';
 import { AquaFormRequest, AquaFormFieldRequest, SettingsRequest, UserAttestationAddressesRequest } from '../models/request_models';
-import { fetchEnsName } from '../utils/api_utils';
+import { fetchEnsName, saveTemplateFileData } from '../utils/api_utils';
 import { authenticate, AuthenticatedRequest } from '../middleware/auth_middleware';
 import { AquaTemplateFields, AquaTemplate, UserAttestationAddresses } from '@prisma/client';
+import Aquafier, { AquaTree, FileObject } from 'aqua-js-sdk';
+import { saveAquaTree } from '../utils/revisions_utils';
 
 export default async function templatesController(fastify: FastifyInstance) {
 
@@ -15,7 +17,7 @@ export default async function templatesController(fastify: FastifyInstance) {
 
         const { templateId } = request.params as { templateId?: string };
         let data: any = null;
-        
+
         if (templateId) {
             // Get a specific template
             const template = await prisma.aquaTemplate.findFirst({
@@ -26,10 +28,10 @@ export default async function templatesController(fastify: FastifyInstance) {
                     }
                 }
             });
-            
+
             if (template) {
 
-                if(!template.public && request.user?.address !== template.owner) {
+                if (!template.public && request.user?.address !== template.owner) {
                     return reply.code(403).send({ success: false, message: "Unauthorized" });
                 }
 
@@ -42,7 +44,7 @@ export default async function templatesController(fastify: FastifyInstance) {
                         }
                     }
                 });
-                
+
                 // Combine template with its fields
                 data = {
                     ...template,
@@ -64,7 +66,7 @@ export default async function templatesController(fastify: FastifyInstance) {
                 }
             });
             data = [];
-            
+
             // For each template, get its fields
             for (let template of templates) {
                 const fields = await prisma.aquaTemplateFields.findMany({
@@ -75,7 +77,7 @@ export default async function templatesController(fastify: FastifyInstance) {
                         }
                     }
                 });
-                
+
                 data.push({
                     ...template,
                     fields: fields
@@ -94,7 +96,7 @@ export default async function templatesController(fastify: FastifyInstance) {
 
         const { templateId } = request.params;
 
-        if(!templateId){
+        if (!templateId) {
             return reply.code(403).send({ success: false });
         }
 
@@ -105,14 +107,14 @@ export default async function templatesController(fastify: FastifyInstance) {
                     aqua_form_id: templateId
                 }
             });
-            
+
             // Then delete the form itself
             await prisma.aquaTemplate.delete({
                 where: {
                     id: templateId
                 }
             });
-            
+
             return reply.code(200).send({ success: true });
         } catch (error) {
             return reply.code(500).send({ success: false, error: "Failed to delete template" });
@@ -213,6 +215,25 @@ export default async function templatesController(fastify: FastifyInstance) {
                 });
             }
 
+            let aquafier =  new Aquafier();
+
+            // create aqua tree for identity template
+            let identityFileObject: FileObject = {
+                fileContent: JSON.stringify(aquaFormdata.fields),
+                fileName: `${aquaFormdata.name}.json`,
+                path: "./"
+            }
+
+            let resIdentityAquaTree = await aquafier.createGenesisRevision(identityFileObject, true, false, false )
+
+            if (resIdentityAquaTree.isOk()) {
+
+                // save the aqua tree 
+                await saveAquaTree(resIdentityAquaTree.data.aquaTree!!, request.user?.address!!, aquaFormdata.id)
+                //safe json file 
+                await saveTemplateFileData(resIdentityAquaTree.data.aquaTree!!, JSON.stringify(aquaFormdata.fields))
+            }
+
             return reply.code(200).send({ success: true });
         } catch (error) {
             console.error("Error creating template:", error);
@@ -278,3 +299,5 @@ export default async function templatesController(fastify: FastifyInstance) {
     });
 
 }
+
+
