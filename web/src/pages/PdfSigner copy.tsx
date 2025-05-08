@@ -12,7 +12,6 @@ import {
     FieldLabel,
     Grid,
     GridItem,
-    Center,
     Container
 } from '@chakra-ui/react';
 import { useBoolean } from '@chakra-ui/hooks';
@@ -25,7 +24,7 @@ import { toaster } from '../components/chakra-ui/toaster';
 import { Field } from '../components/chakra-ui/field';
 import { DialogBody, DialogContent, DialogHeader, DialogRoot } from '../components/chakra-ui/dialog';
 import { useColorMode } from '../components/chakra-ui/color-mode';
-import { PDFJSViewer } from 'pdfjs-react-viewer';
+// import { PDFJSViewer } from 'pdfjs-react-viewer';
 
 // Interface for signature position
 interface SignaturePosition {
@@ -43,7 +42,7 @@ const PdfSigner = () => {
     const [pdfFile, setPdfFile] = useState<File | null>(null);
     const [pdfUrl, setPdfUrl] = useState<string | null>(null);
     const [pdfDoc, setPdfDoc] = useState<PDFDocument | null>(null);
-    const [currentPage, setCurrentPage] = useState<number>(1);
+    const [currentPage, _setCurrentPage] = useState<number>(1);
     const [pdfDimensions, setPdfDimensions] = useState<{ width: number; height: number } | null>(null);
 
     // State for signature
