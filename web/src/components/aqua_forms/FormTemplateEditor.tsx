@@ -274,7 +274,7 @@ const FormTemplateEditor = ({ initialTemplate, onSave, updating }: FormTemplateE
           <Stack>
             <Heading size="md">Form Fields</Heading>
             {formFields?.map((field, index) => (
-              <Box key={index} w={"100%"}>
+              <Box key={index} w={"100%"} zIndex={1000 - (index*2)}>
                 <Group wrap={"wrap"} w={"100%"}>
                   <SimpleGrid columns={{ base: 1, md: 3 }} gap={4} flex={"1"}>
                     <Field label={`Label`} errorText={errors.fields?.[index]?.message}>
