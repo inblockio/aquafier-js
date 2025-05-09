@@ -2326,10 +2326,10 @@ apg-js@^4.4.0:
   resolved "https://registry.npmjs.org/apg-js/-/apg-js-4.4.0.tgz"
   integrity sha512-fefmXFknJmtgtNEXfPwZKYkMFX4Fyeyz+fNF6JWp87biGOPslJbCBVU158zvKRZfHBKnJDy8CMM40oLFGkXT8Q==
 
-aqua-js-sdk@^3.2.1-11:
-  version "3.2.1-11"
-  resolved "https://registry.npmjs.org/aqua-js-sdk/-/aqua-js-sdk-3.2.1-11.tgz"
-  integrity sha512-fYgrcDFmmLtQ4HWuOYLjnkSpckaHWwcZJyJIqClQRaOfGE3YiJhILQlNRnG++6PWu5OyW2fxQc+PGO6ZiHS0Pw==
+"aqua-js-sdk@file:../../aqua-js-sdk/aqua-js-sdk-3.2.1-14.tgz":
+  version "3.2.1-14"
+  resolved "file:../../aqua-js-sdk/aqua-js-sdk-3.2.1-14.tgz"
+  integrity sha512-WnGAfYI+RPqOrOB9o2+dvUnLFVx6BZElPYEzv9RkDSEgmRploAO7xYZ21YTZlL7Y0lHZPQZDwIIatKT4iMdDjg==
   dependencies:
     asn1js "^3.0.5"
     buffer "^6.0.3"
