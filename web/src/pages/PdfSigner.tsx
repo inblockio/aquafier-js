@@ -215,17 +215,11 @@ const PdfSigner = () => {
                 // Calculate position without manual adjustments
                 const signatureX = position.x * width;
                 const signatureY = position.y * height;
-                const actualY = signatureY + (position.height * height / 2) + 12 // + position.height * height;
-                const actualX = signatureX - 12
-
-                console.log("Signature position: ", position)
-                console.log("Signature X: ", signatureX)
-                console.log("Signature Y: ", signatureY)
 
                 // Draw signature image
                 page.drawImage(signatureImage, {
-                    x: actualX, // - (position.width * width / 2),
-                    y: actualY, // - (position.height * height / 2),
+                    x: signatureX - (position.width * width / 2),
+                    y: signatureY - (position.height * height / 2),
                     width: position.width * width,
                     height: position.height * height,
                 });
@@ -239,8 +233,8 @@ const PdfSigner = () => {
 
                 // Draw name aligned with the left edge of the signature
                 page.drawText(signerName, {
-                    x: actualX, // signatureLeftEdge,
-                    y: actualY - (position.height * height), // - (position.height * height / 2) - 12,
+                    x: signatureLeftEdge,
+                    y: signatureY - (position.height * height / 2) - 12,
                     size: fontSize,
                     font,
                     color: rgb(0, 0, 0),
@@ -251,8 +245,8 @@ const PdfSigner = () => {
 
                 // Draw wallet address aligned with the left edge of the signature
                 page.drawText(shortenedAddress, {
-                    x: actualX,
-                    y: actualY - (position.height * height + 12),
+                    x: signatureLeftEdge,
+                    y: signatureY - (position.height * height / 2) - 24,
                     size: fontSize,
                     font,
                     color: rgb(0, 0, 0),
@@ -465,7 +459,7 @@ const PdfSigner = () => {
     console.log("Signature positions", signaturePositions)
 
     return (
-        <Container maxW="container.xl" py={"6"} h={"calc(100vh - 70px)"} overflow={{ base: "scroll", md: "hidden" }}>
+        <Container maxW="container.xl" py={"6"} h={"calc(100vh - 70px)"} overflow={{base: "scroll", md: "hidden"}}>
             <Heading mb={5}>PDF Signer</Heading>
 
             {/* File upload section */}
@@ -489,7 +483,7 @@ const PdfSigner = () => {
             {/* PDF viewer and signature tools */}
             {pdfUrl && (
                 <Grid templateColumns="repeat(4, 1fr)" gap="6"
-                    h={{ base: "fit-content", md: "calc(100vh - 120px - 130px)" }} overflow={{ base: "scroll", md: "hidden" }}
+                h={{base: "fit-content", md: "calc(100vh - 120px - 130px)"}} overflow={{base: "scroll", md: "hidden"}}
                 >
                     {/* PDF viewer */}
                     <GridItem colSpan={{ base: 12, md: 3 }} h={"100%"} overflow={"scroll"} >
