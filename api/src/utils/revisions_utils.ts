@@ -6,6 +6,383 @@ import * as fs from "fs"
 import path from 'path';
 import { SaveRevision } from '../models/request_models';
 
+export async function deleteAquaTreeFromSystem(walletAddress : string,  hash: string): Promise<[number, string]>{
+
+    let filepubkeyhash = `${walletAddress}_${hash}`;
+
+    //fetch all the revisions 
+    let revisionData = [];
+    // fetch latest revision 
+    let latestRevionData = await prisma.revision.findFirst({
+        where: {
+            pubkey_hash: filepubkeyhash
+        }
+    });
+
+    if (latestRevionData == null) {
+        return [500, `revision with hash ${hash} not found in system`];
+    }
+    revisionData.push(latestRevionData);
+
+    try {
+        console.log(`Processing revision chain starting with: ${filepubkeyhash}`);
+        //if previous verification hash is not empty find the previous one
+        if (latestRevionData?.previous !== null && latestRevionData?.previous?.length !== 0) {
+            let aquaTreerevision = await findAquaTreeRevision(latestRevionData?.previous!!);
+            revisionData.push(...aquaTreerevision);
+        }
+        console.log(`Found ${revisionData.length} revisions in the chain`);
+    } catch (e: any) {
+        return  [500 , `Error fetching a revision ${JSON.stringify(e, null, 4)}`];
+    }
+
+    try {
+        // Use Prisma transaction to ensure all or nothing execution
+        await prisma.$transaction(async (tx) => {
+            console.log('Starting revision chain deletion transaction');
+            const revisionPubkeyHashes = revisionData.map(rev => rev.pubkey_hash);
+            console.log(`Revisions to delete: ${revisionPubkeyHashes.join(', ')}`);
+
+            // Step 1: First delete all entries in related tables that reference our revisions
+            // We need to delete child records before parent records to avoid foreign key constraints
+
+            // 1a. Delete AquaForms entries
+            const deletedAquaForms = await tx.aquaForms.deleteMany({
+                where: {
+                    hash: {
+                        in: revisionPubkeyHashes
+                    }
+                }
+            });
+            console.log(`Deleted ${deletedAquaForms.count} AquaForms entries`);
+
+            // 1b. Delete Witness entries (note: we need to handle WitnessEvent separately)
+            // We need to handle this first because Witness has a foreign key to Revision
+            const witnesses = await tx.witness.findMany({
+                where: {
+                    hash: {
+                        in: revisionPubkeyHashes
+                    }
+                }
+            });
+
+            const witnessRoots = witnesses.map(w => w.Witness_merkle_root).filter(Boolean) as string[];
+            console.log(`Found ${witnesses.length} Witness entries with ${witnessRoots.length} unique merkle roots`);
+
+            const deletedWitnesses = await tx.witness.deleteMany({
+                where: {
+                    hash: {
+                        in: revisionPubkeyHashes
+                    }
+                }
+            });
+            console.log(`Deleted ${deletedWitnesses.count} Witness entries`);
+
+            // Check if any WitnessEvents are no longer referenced
+            let deletedWitnessEvents = 0;
+            for (const root of witnessRoots) {
+                const remainingWitnesses = await tx.witness.count({
+                    where: {
+                        Witness_merkle_root: root
+                    }
+                });
+
+                if (remainingWitnesses === 0) {
+                    await tx.witnessEvent.delete({
+                        where: {
+                            Witness_merkle_root: root
+                        }
+                    });
+                    deletedWitnessEvents++;
+                }
+            }
+            console.log(`Deleted ${deletedWitnessEvents} WitnessEvent entries`);
+
+            // 1c. Delete Link entries
+            const deletedLinks = await tx.link.deleteMany({
+                where: {
+                    hash: {
+                        in: revisionPubkeyHashes
+                    }
+                }
+            });
+            console.log(`Deleted ${deletedLinks.count} Link entries`);
+
+            // 1d. Delete Signature entries
+            const deletedSignatures = await tx.signature.deleteMany({
+                where: {
+                    hash: {
+                        in: revisionPubkeyHashes
+                    }
+                }
+            });
+            console.log(`Deleted ${deletedSignatures.count} Signature entries`);
+
+            // Step 2: Handle File and FileIndex entries
+            // First, find all fileIndexes that reference our revisions
+            console.log('Finding FileIndex entries that reference the revisions to delete');
+
+            // Start with exact matches using hasSome
+            const fileIndexesToProcess = await tx.fileIndex.findMany({
+                where: {
+                    hash: {
+                        hasSome: revisionPubkeyHashes
+                    }
+                },
+                select: {
+                    id: true,
+                    file_hash: true,
+                    reference_count: true,
+                    hash: true
+                }
+            });
+
+            // If few or no matches, try a more flexible search with case-insensitive partial matching
+            if (fileIndexesToProcess.length < revisionPubkeyHashes.length) {
+                console.log(`Found only ${fileIndexesToProcess.length} exact matches, trying partial matching`);
+
+                // For each revision hash, try to find partial matches
+                for (const revHash of revisionPubkeyHashes) {
+                    // This is a complex query to find any FileIndex where any element in the hash array
+                    // contains the revision hash as a substring
+                    // Build the SQL query differently based on whether we have existing IDs
+                    let rawQuery;
+                    if (fileIndexesToProcess.length > 0) {
+                        // If we have existing IDs, exclude them from the query
+                        const existingIdsFormatted = fileIndexesToProcess.map(fi => `'${fi.id}'`).join(',');
+                        rawQuery = await tx.$queryRaw`
+                            SELECT id, file_hash, reference_count, hash 
+                            FROM file_index 
+                            WHERE EXISTS (
+                                SELECT 1 FROM unnest(hash) AS h 
+                                WHERE LOWER(h) LIKE LOWER('%' || ${revHash} || '%')
+                            )
+                            AND id NOT IN (${existingIdsFormatted})
+                        `;
+                    } else {
+                        // If no existing IDs, just run the query without the NOT IN clause
+                        rawQuery = await tx.$queryRaw`
+                            SELECT id, file_hash, reference_count, hash 
+                            FROM file_index 
+                            WHERE EXISTS (
+                                SELECT 1 FROM unnest(hash) AS h 
+                                WHERE LOWER(h) LIKE LOWER('%' || ${revHash} || '%')
+                            )
+                        `;
+                    }
+
+                    // Convert raw query results and add to our list
+                    const rawResults = rawQuery as { id: string, file_hash: string, reference_count: number | null, hash: string[] }[];
+                    if (rawResults.length > 0) {
+                        console.log(`Found ${rawResults.length} additional matches with partial matching for ${revHash}`);
+                        fileIndexesToProcess.push(...rawResults);
+                    }
+                }
+            }
+
+            console.log(`Found total of ${fileIndexesToProcess.length} FileIndex entries to process`);
+
+            // Track which file indexes to delete and which to update
+            const fileIndexesToDelete = [];
+            const fileIndexesToUpdate = [];
+            const fileHashesToUpdate = new Set<string>();
+            const fileHashesToDelete = new Set<string>();
+
+            // Process each file index based on its reference count
+            for (const fileIndex of fileIndexesToProcess) {
+                const refCount = fileIndex.reference_count;
+
+                if (refCount === null || refCount <= 1) {
+                    // If reference count is null or ≤ 1, mark for deletion
+                    fileIndexesToDelete.push(fileIndex.id);
+                    if (fileIndex.file_hash) {
+                        fileHashesToDelete.add(fileIndex.file_hash);
+                    }
+                } else if (refCount >= 2) {
+                    // If reference count is >= 2, mark for update
+                    fileIndexesToUpdate.push(fileIndex.id);
+                    if (fileIndex.file_hash) {
+                        fileHashesToUpdate.add(fileIndex.file_hash);
+                    }
+
+                    // If it's exactly 2, it will become 1 after decrementing, so mark for deletion too
+                    // if (refCount === 2) {
+                    //     fileIndexesToDelete.push(fileIndex.id);
+                    //     if (fileIndex.file_hash) {
+                    //         fileHashesToDelete.add(fileIndex.file_hash);
+                    //     }
+                    // }
+                }
+            }
+
+            console.log(`FileIndex operations planned: ${fileIndexesToUpdate.length} to update, ${fileIndexesToDelete.length} to delete`);
+            console.log(`File operations planned: ${fileHashesToUpdate.size} to update, ${fileHashesToDelete.size} to delete`);
+
+            // Step 2a: Update reference counts for file indexes that need updating
+            if (fileIndexesToUpdate.length > 0) {
+                // Decrement reference count for file indexes
+                const updatedFileIndexes = await tx.fileIndex.updateMany({
+                    where: {
+                        id: {
+                            in: fileIndexesToUpdate
+                        }
+                    },
+                    data: {
+                        reference_count: {
+                            decrement: 1
+                        }
+                    }
+                });
+                console.log(`Updated ${updatedFileIndexes.count} FileIndex entries`);
+
+                // Update files linked to these file indexes
+                if (fileHashesToUpdate.size > 0) {
+                    const updatedFiles = await tx.file.updateMany({
+                        where: {
+                            file_hash: {
+                                in: Array.from(fileHashesToUpdate) as string[]
+                            }
+                        },
+                        data: {
+                            reference_count: {
+                                decrement: 1
+                            }
+                        }
+                    });
+                    console.log(`Updated ${updatedFiles.count} File entries`);
+                }
+            }
+
+            // Step 2b: Delete file indexes with reference count <= 1
+            if (fileIndexesToDelete.length > 0) {
+                const deletedFileIndexes = await tx.fileIndex.deleteMany({
+                    where: {
+                        id: {
+                            in: fileIndexesToDelete
+                        }
+                    }
+                });
+                console.log(`Deleted ${deletedFileIndexes.count} FileIndex entries`);
+
+                // Delete the files if they exist
+                if (fileHashesToDelete.size > 0) {
+                    const uniqueFileHashes = Array.from(fileHashesToDelete).filter(Boolean) as string[];
+                    console.log(`File hashes to delete: ${uniqueFileHashes.length}`);
+
+                    // First get the files to delete so we can handle filesystem files
+                    const filesToDelete = await tx.file.findMany({
+                        where: {
+                            file_hash: {
+                                in: uniqueFileHashes
+                            }
+                        }
+                    });
+
+                    // Delete any filesystem files
+                    for (const file of filesToDelete) {
+                        if (file.content) {
+                            try {
+                                fs.unlinkSync(file.content);
+                                console.log(`Deleted file from filesystem: ${file.content}`);
+                            } catch (er) {
+                                console.log(`Error deleting file from filesystem: ${file.content}`, er);
+                                // Continue even if file deletion fails
+                            }
+                        }
+                    }
+
+                    // Delete the database records
+                    const deletedFiles = await tx.file.deleteMany({
+                        where: {
+                            file_hash: {
+                                in: uniqueFileHashes
+                            }
+                        }
+                    });
+                    console.log(`Deleted ${deletedFiles.count} File entries`);
+                }
+            }
+
+            // Step 3: Remove any references to our revisions from other revisions
+            const updatedRevisions = await tx.revision.updateMany({
+                where: {
+                    previous: {
+                        in: revisionPubkeyHashes
+                    }
+                },
+                data: {
+                    previous: null
+                }
+            });
+            console.log(`Updated ${updatedRevisions.count} revisions that referenced the deleted revisions`);
+
+            // Step 4: Delete the latest entry - we need to do this before deleting revisions
+            const deletedLatest = await tx.latest.deleteMany({
+                where: {
+                    hash: {
+                        in: revisionPubkeyHashes
+                    }
+                }
+            });
+            console.log(`Deleted ${deletedLatest.count} Latest entries`);
+
+            // Step 5: Finally, delete all revisions
+            let deletedRevisionCount = 0;
+            for (let item of revisionData) {
+                await tx.revision.delete({
+                    where: {
+                        pubkey_hash: item.pubkey_hash
+                    }
+                });
+                deletedRevisionCount++;
+            }
+            console.log(`Deleted ${deletedRevisionCount} Revision entries`);
+            console.log('Revision chain deletion completed successfully');
+
+            let hashOnly: string[] = []
+
+            revisionPubkeyHashes.forEach((data) => {
+                if (data.includes("_")) {
+                    let data2 = data.split("_")[1]
+                    hashOnly.push(data2)
+                } else {
+                    hashOnly.push(data)
+                }
+            })
+            console.log(`B4 revisionPubkeyHashes ${revisionPubkeyHashes} \n After hashOnly -- ${JSON.stringify(hashOnly)}`);
+
+            //delete contract
+            const deletedContract = await tx.contract.deleteMany({
+                where: {
+                    OR: [
+                        {
+                            latest: {
+                                in: hashOnly
+                            },
+                        },
+                        {
+                            genesis_hash: {
+                                in: hashOnly
+                            }
+                        }
+                    ],
+                    AND: [
+                        {
+                            sender: walletAddress
+                        }
+                    ]
+                }
+            });
+            console.log(`Deleted ${deletedContract.count} contract entries`);
+
+        });
+
+        return [200, "File and revisions deleted successfully" ];
+    } catch (error: any) {
+        console.error("Error in delete operation:", error);
+        return [500, `Error deleting file: ${error.message}`]
+    }
+}
 export async function getUserApiFileInfo(url: string, address: string): Promise<Array<{
     aquaTree: AquaTree,
     fileObject: FileObject[]
@@ -699,7 +1076,7 @@ export async function createAquaTreeFromRevisions(latestRevisionHash: string, ur
             pubkey_hash: {
                 contains: latestRevisionHash,
                 mode: 'insensitive' // Case-insensitive matching
-            }, //`${session.address}_${}`
+            }, 
         }
     });
 
