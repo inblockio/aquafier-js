@@ -100,6 +100,9 @@ export default async function templatesController(fastify: FastifyInstance) {
             return reply.code(403).send({ success: false });
         }
 
+        if(!request.user?.address){
+            return reply.code(401).send({ success: false , message : 'user address not found'});   
+        }
         try {
 
             // fetch the template
@@ -114,7 +117,7 @@ export default async function templatesController(fastify: FastifyInstance) {
             if (results != null) {
 
 
-                let response = await deleteAquaTreeFromSystem(request.user?.address, results.hash)
+                let response = await deleteAquaTreeFromSystem(request.user?.address ?? "-", results.hash)
 
                 if (response[0] != 200) {
                     return reply.code(response[0]).send({ success: response[0] == 200 ? true : false, message: response[1] });

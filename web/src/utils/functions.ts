@@ -1,4 +1,6 @@
 // import { ethers } from "ethers";
+import { isAddress, getAddress } from 'ethers';
+
 import { ApiFileInfo } from "../models/FileInfo";
 import { documentTypes, ERROR_TEXT, imageTypes, musicTypes, videoTypes } from "./constants";
 // import { AvatarGenerator } from 'random-avatar-generator';
@@ -137,7 +139,42 @@ export async function switchNetwork(chainId: string) {
 }
 
 
-export async function fetchSystemFiles(url: string, metamaskAddress : string=""): Promise<Array<ApiFileInfo>> {
+
+/**
+ * Validates if a string is a valid Ethereum address using ethers.js v6
+ * @param address The string to check
+ * @returns Boolean indicating if the address is valid
+ */
+export function isValidEthereumAddress(address: string): boolean {
+  try {
+    return isAddress(address);
+  } catch (error) {
+    console.error('Error validating Ethereum address:', error);
+    return false;
+  }
+}
+
+/**
+ * Validates an address and returns the checksummed version if valid
+ * @param address The address to check and format
+ * @returns The checksummed address if valid, or null if invalid
+ */
+export function getValidChecksumAddress(address: string): string | null {
+  try {
+    if (!isAddress(address)) {
+      return null;
+    }
+    
+    // Convert to checksum address (properly capitalized)
+    return getAddress(address);
+  } catch (error) {
+    console.error('Error processing Ethereum address:', error);
+    return null;
+  }
+}
+
+
+export async function fetchSystemFiles(url: string, metamaskAddress: string = ""): Promise<Array<ApiFileInfo>> {
     try {
 
         const query = await fetch(url, {

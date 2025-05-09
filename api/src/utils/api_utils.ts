@@ -1,4 +1,4 @@
-import Aquafier, { AquaTree, FileObject } from "aqua-js-sdk"
+import Aquafier, { AquaTree, Err, FileObject } from "aqua-js-sdk"
 import { prisma } from "../database/db"
 import { SYSTEM_WALLET_ADDRESS } from "../models/constants"
 import { ethers } from "ethers"
@@ -76,7 +76,7 @@ export function getGenesisHash(aquaTree: AquaTree): string | null {
 }
 
 
-export const saveTemplateFileData = async (aquaTree: AquaTree, fileData: string, walletAddress :  string= SYSTEM_WALLET_ADDRESS) => {
+export const saveTemplateFileData = async (aquaTree: AquaTree, fileData: string, walletAddress: string = SYSTEM_WALLET_ADDRESS) => {
 
   let genesisHashData = getGenesisHash(aquaTree);
   if (!genesisHashData) {
@@ -177,6 +177,7 @@ const setUpSystemTemplates = async () => {
   }
 
 
+
   //start of identity_claim  
   await prisma.aquaTemplate.upsert({
     where: {
@@ -232,7 +233,7 @@ const setUpSystemTemplates = async () => {
       path: "./"
     }
 
-    let resIdentityAquaTree = await aquafier.createGenesisRevision(identityFileObject, true, false, false )
+    let resIdentityAquaTree = await aquafier.createGenesisRevision(identityFileObject, true, false, false)
 
     if (resIdentityAquaTree.isOk()) {
 
@@ -305,7 +306,7 @@ const setUpSystemTemplates = async () => {
       path: "./"
     }
 
-    let resAttestationAquaTree = await aquafier.createGenesisRevision(attestationFileObject,true, false, false )
+    let resAttestationAquaTree = await aquafier.createGenesisRevision(attestationFileObject, true, false, false)
 
     if (resAttestationAquaTree.isOk()) {
 
@@ -379,7 +380,7 @@ const setUpSystemTemplates = async () => {
       path: "./"
     }
 
-    let reschequeAquaTree = await aquafier.createGenesisRevision(chequeFileObject, true, false, false )
+    let reschequeAquaTree = await aquafier.createGenesisRevision(chequeFileObject, true, false, false)
 
     if (reschequeAquaTree.isOk()) {
 
@@ -396,17 +397,17 @@ const setUpSystemTemplates = async () => {
   //end of cheque
 
 
-  //start  of  access contract
+  //start  of  access agreement
   await prisma.aquaTemplate.upsert({
     where: {
       id: "4",
     },
     create: {
       id: "4",
-      name: "access_contract",
+      name: "access_agreement",
       owner: SYSTEM_WALLET_ADDRESS,
       public: true,
-      title: "Access Contract",
+      title: "Access agreement",
       created_at: today.toDateString()
     },
     update: {
@@ -414,7 +415,7 @@ const setUpSystemTemplates = async () => {
     },
   })
 
-  let accessContract = {
+  let accessAgreement = {
     "sender": "0x...",
     "receiver": "0x...",
     "resource": "John",
@@ -424,7 +425,7 @@ const setUpSystemTemplates = async () => {
   }
 
 
-  Object.keys(accessContract).forEach(async (keyName, index) => {
+  Object.keys(accessAgreement).forEach(async (keyName, index) => {
     await prisma.aquaTemplateFields.upsert({
       where: {
         id: `4${index}`,
@@ -434,7 +435,7 @@ const setUpSystemTemplates = async () => {
         aqua_form_id: "4",
         name: keyName,
         label: convertNameToLabel(keyName),
-        type: keyName == "terms" ? "boolean" : "string",
+        type:  "string",
         required: keyName == 'note' ? false : true
       },
       update: {
@@ -444,16 +445,16 @@ const setUpSystemTemplates = async () => {
   })
 
 
-  let accessAquNameExist = systemAquaTreesNames.find((item) => item == "access_contract.json")
+  let accessAquNameExist = systemAquaTreesNames.find((item) => item == "access_agreement.json")
   if (accessAquNameExist == undefined) {
     // create aqua tree for identity template
     let accessFileObject: FileObject = {
-      fileContent: JSON.stringify(accessContract),
-      fileName: "access_contract.json",
+      fileContent: JSON.stringify(accessAgreement),
+      fileName: "access_agreement.json",
       path: "./"
     }
 
-    let resaccessAquaTree = await aquafier.createGenesisRevision(accessFileObject, true, false, false )
+    let resaccessAquaTree = await aquafier.createGenesisRevision(accessFileObject, true, false, false)
 
     if (resaccessAquaTree.isOk()) {
 
@@ -461,11 +462,107 @@ const setUpSystemTemplates = async () => {
       await saveAquaTree(resaccessAquaTree.data.aquaTree!!, SYSTEM_WALLET_ADDRESS)
 
 
-      await saveTemplateFileData(resaccessAquaTree.data.aquaTree!!, JSON.stringify(accessContract), SYSTEM_WALLET_ADDRESS)
+      await saveTemplateFileData(resaccessAquaTree.data.aquaTree!!, JSON.stringify(accessAgreement), SYSTEM_WALLET_ADDRESS)
     }
 
   }
-  //end of access
+  //end of access agreement
+
+
+
+
+
+  //start  of  document contract
+  await prisma.aquaTemplate.upsert({
+    where: {
+      id: "5",
+    },
+    create: {
+      id: "5",
+      name: "document_contract",
+      owner: SYSTEM_WALLET_ADDRESS,
+      public: true,
+      title: "Document contract",
+      created_at: today.toDateString()
+    },
+    update: {
+
+    },
+  })
+
+  let documentContract = {
+    "document": "",
+    "sender": "0x...",
+    "signers": "0x...",
+  
+  }
+
+  const documentContractFields = [
+    {
+      name: "document",
+      label: "Document",
+      type: "file",
+      required: true
+    },
+    {
+      name: "sender",
+      label: "Sender",
+      type: "wallet_address",
+      required: true,
+    },
+    {
+      name: "signers",
+      label: "Signers",
+      type: "wallet_address",
+      required: true,
+      multiple: true
+    }
+  ]
+
+  documentContractFields.forEach(async (fieldData, index) => {
+    await prisma.aquaTemplateFields.upsert({
+      where: {
+        id: `5${index}`,
+      },
+      create: {
+        id: `5${index}`,
+        aqua_form_id: "5",
+        name: fieldData.name,
+        label: fieldData.label,
+        type: fieldData.type,
+        required: fieldData.required
+      },
+      update: {
+
+      },
+    })
+  })
+
+
+  let documentContractFieldsData = systemAquaTreesNames.find((item) => item == "document_contract.json")
+  if (documentContractFieldsData == undefined) {
+    // create aqua tree for identity template
+    let documentContractObject: FileObject = {
+      fileContent: JSON.stringify(documentContract),
+      fileName: "document_contract.json",
+      path: "./"
+    }
+
+    let responseDocumentContractAquaTree = await aquafier.createGenesisRevision(documentContractObject, true, false, false)
+
+    if (responseDocumentContractAquaTree.isOk()) {
+
+      // save the aqua tree 
+      await saveAquaTree(responseDocumentContractAquaTree.data.aquaTree!!, SYSTEM_WALLET_ADDRESS)
+
+
+      await saveTemplateFileData(responseDocumentContractAquaTree.data.aquaTree!!, JSON.stringify(documentContractObject), SYSTEM_WALLET_ADDRESS)
+    }else{
+      throw Error("Failed to create document contract")
+    }
+
+  }
+  //end of document agreement
 
 }
 
