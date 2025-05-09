@@ -88,20 +88,28 @@ export default async function templatesController(fastify: FastifyInstance) {
         return reply.code(200).send({ success: true, data });
     });
 
+    interface TemplateParams {
+        templateId: string;
+    }
+
     fastify.delete<{
         Params: {
             templateId: string;
-        }
-    }>('/templates/:templateId', { preHandler: authenticate }, async (request, reply) => {
+        },
 
-        const { templateId } = request.params;
+    }>('/templates/:templateId', { preHandler: authenticate }, async (request: FastifyRequest & AuthenticatedRequest, reply) => {
+
+        // const { templateId } = request.params;
+
+        const req = request as FastifyRequest<{ Params: TemplateParams }> & AuthenticatedRequest;
+        const { templateId } = req.params;
 
         if (!templateId) {
             return reply.code(403).send({ success: false });
         }
 
-        if(!request.user?.address){
-            return reply.code(401).send({ success: false , message : 'user address not found'});   
+        if (!request.user?.address) {
+            return reply.code(401).send({ success: false, message: 'user address not found' });
         }
         try {
 
@@ -111,8 +119,7 @@ export default async function templatesController(fastify: FastifyInstance) {
                     template_id: templateId
                 }
             })
-            // if (results == null) {
-            // }
+
 
             if (results != null) {
 
