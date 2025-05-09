@@ -76,7 +76,7 @@ export function getGenesisHash(aquaTree: AquaTree): string | null {
 }
 
 
-export const saveTemplateFileData = async (aquaTree: AquaTree, fileData: string) => {
+export const saveTemplateFileData = async (aquaTree: AquaTree, fileData: string, walletAddress :  string= SYSTEM_WALLET_ADDRESS) => {
 
   let genesisHashData = getGenesisHash(aquaTree);
   if (!genesisHashData) {
@@ -90,7 +90,7 @@ export const saveTemplateFileData = async (aquaTree: AquaTree, fileData: string)
 
   console.log(`\n ## fileHash ${fileHash} for data ${fileData}`)
 
-  let filepubkeyhash = `${SYSTEM_WALLET_ADDRESS}_${genesisHash}`
+  let filepubkeyhash = `${walletAddress}_${genesisHash}`
 
   console.log(`\n ## filepubkeyhash ${filepubkeyhash}`)
   const UPLOAD_DIR = getFileUploadDirectory();
@@ -239,7 +239,7 @@ const setUpSystemTemplates = async () => {
       // save the aqua tree 
       await saveAquaTree(resIdentityAquaTree.data.aquaTree!!, SYSTEM_WALLET_ADDRESS)
       //safe json file 
-      await saveTemplateFileData(resIdentityAquaTree.data.aquaTree!!, JSON.stringify(identityObject))
+      await saveTemplateFileData(resIdentityAquaTree.data.aquaTree!!, JSON.stringify(identityObject), SYSTEM_WALLET_ADDRESS)
     }
 
 
@@ -312,7 +312,7 @@ const setUpSystemTemplates = async () => {
       // save the aqua tree 
       await saveAquaTree(resAttestationAquaTree.data.aquaTree!!, SYSTEM_WALLET_ADDRESS);
 
-      await saveTemplateFileData(resAttestationAquaTree.data.aquaTree!!, JSON.stringify(identityAttestations))
+      await saveTemplateFileData(resAttestationAquaTree.data.aquaTree!!, JSON.stringify(identityAttestations), SYSTEM_WALLET_ADDRESS)
     }
 
   }
@@ -389,7 +389,7 @@ const setUpSystemTemplates = async () => {
       // save the aqua tree 
       await saveAquaTree(reschequeAquaTree.data.aquaTree!!, SYSTEM_WALLET_ADDRESS);
 
-      await saveTemplateFileData(reschequeAquaTree.data.aquaTree!!, JSON.stringify(cheque))
+      await saveTemplateFileData(reschequeAquaTree.data.aquaTree!!, JSON.stringify(cheque), SYSTEM_WALLET_ADDRESS)
     }
 
   }
@@ -461,7 +461,7 @@ const setUpSystemTemplates = async () => {
       await saveAquaTree(resaccessAquaTree.data.aquaTree!!, SYSTEM_WALLET_ADDRESS)
 
 
-      await saveTemplateFileData(resaccessAquaTree.data.aquaTree!!, JSON.stringify(accessContract))
+      await saveTemplateFileData(resaccessAquaTree.data.aquaTree!!, JSON.stringify(accessContract), SYSTEM_WALLET_ADDRESS)
     }
 
   }

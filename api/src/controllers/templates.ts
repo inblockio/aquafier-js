@@ -5,7 +5,7 @@ import { fetchEnsName, saveTemplateFileData } from '../utils/api_utils';
 import { authenticate, AuthenticatedRequest } from '../middleware/auth_middleware';
 import { AquaTemplateFields, AquaTemplate, UserAttestationAddresses } from '@prisma/client';
 import Aquafier, { AquaTree, FileObject } from 'aqua-js-sdk';
-import { saveAquaTree } from '../utils/revisions_utils';
+import { deleteAquaTreeFromSystem, saveAquaTree } from '../utils/revisions_utils';
 
 export default async function templatesController(fastify: FastifyInstance) {
 
@@ -101,6 +101,28 @@ export default async function templatesController(fastify: FastifyInstance) {
         }
 
         try {
+
+            // fetch the template
+            let results = await prisma.latest.findFirst({
+                where: {
+                    template_id: templateId
+                }
+            })
+            // if (results == null) {
+            // }
+
+            if (results != null) {
+
+
+                let response = await deleteAquaTreeFromSystem(request.user?.address, results.hash)
+
+                if (response[0] != 200) {
+                    return reply.code(response[0]).send({ success: response[0] == 200 ? true : false, message: response[1] });
+
+                }
+            }
+
+
             // Delete associated form fields first
             await prisma.aquaTemplateFields.deleteMany({
                 where: {
@@ -231,13 +253,13 @@ export default async function templatesController(fastify: FastifyInstance) {
                 // save the aqua tree 
                 await saveAquaTree(resIdentityAquaTree.data.aquaTree!!, request.user?.address!!, aquaFormdata.id)
                 //safe json file 
-                await saveTemplateFileData(resIdentityAquaTree.data.aquaTree!!, JSON.stringify(aquaFormdata.fields))
+                await saveTemplateFileData(resIdentityAquaTree.data.aquaTree!!, JSON.stringify(aquaFormdata.fields), request.user?.address!!)
 
-                let apiFileInfo : {
+                let apiFileInfo: {
                     aquaTree: AquaTree,
                     fileObject: FileObject[]
-                }= {
-                    aquaTree:resIdentityAquaTree.data.aquaTree!!,
+                } = {
+                    aquaTree: resIdentityAquaTree.data.aquaTree!!,
                     fileObject: [identityFileObject]
 
                 }
