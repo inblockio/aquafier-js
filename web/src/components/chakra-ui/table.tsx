@@ -20,21 +20,24 @@ import { Alert } from "./alert"
 import { ApiFileInfo } from "../../models/FileInfo"
 import ShareButtonAction from "../actions/ShareButtonAction"
 import { DrawerActionTrigger, DrawerBackdrop, DrawerBody, DrawerContent, DrawerFooter, DrawerRoot, DrawerTitle } from "./drawer"
-import { LuX } from "react-icons/lu"
+import { LuPower, LuX } from "react-icons/lu"
 import { IDrawerStatus } from "../../models/AquaTreeDetails"
-import { FileObject } from "aqua-js-sdk"
+import Aquafier, { AquaTree, FileObject, OrderRevisionInAquaTree } from "aqua-js-sdk"
+import { useNavigate } from "react-router-dom"
 
 
 const FilesTable = () => {
     const [filesToDisplay, setFilesToDisplay] = useState<ApiFileInfo[]>([])
-    const { files, backend_url, session, setSelectedFileInfo, selectedFileInfo } = useStore(appStore)
+    const { files, backend_url, session, setSelectedFileInfo, selectedFileInfo, systemFileInfo } = useStore(appStore)
     const [selection, setSelection] = useState<string[]>([])
 
     const [isOpen, setIsOpen] = useState(false)
     // const [fileInfo, setFileInfo] = useState<ApiFileInfo | null>(null)
     const [drawerStatus, setDrawerStatus] = useState<IDrawerStatus | null>(null)
 
-
+    let navigate = useNavigate();
+    
+    const aquafier = new Aquafier();
     const hasSelection = selection.length > 0
     const indeterminate = hasSelection && selection.length < files.length
 
@@ -48,7 +51,112 @@ const FilesTable = () => {
     }
 
 
+
+    const showActionButtons = (isWorkFlow: boolean, workFlow: string, item: ApiFileInfo) => {
+
+        if (isWorkFlow) {
+            if (workFlow == "document_contract.json" || workFlow == "document_contract") {
+                return <Button size={'xs'} colorPalette={'cyan'} variant={'subtle'} w={'200px'} onClick={(e) => {
+                    e.preventDefault();
+
+                    navigate("/workflow")
+                    setSelectedFileInfo(item)
+                }} >
+                    <LuPower />
+                    Open Workflow
+                </Button>
+            }
+
+            return  <></>
+        }
+
+
+        return <>
+            <ChainDetailsBtn callBack={() => openChainDetailsView(item)} />
+            <SignAquaChain apiFileInfo={item} backendUrl={backend_url} nonce={session?.nonce ?? ""} revision="" />
+            <WitnessAquaChain apiFileInfo={item} backendUrl={backend_url} nonce={session?.nonce ?? ""} revision="" />
+            <LinkButton item={item} nonce={session?.nonce ?? ""} />
+
+            {/* <ShareButton nonce={session?.nonce ?? ""} item={item} /> */}
+            <ShareButtonAction nonce={session?.nonce ?? ""} item={item} />
+            <DeleteAquaChain apiFileInfo={item} backendUrl={backend_url} nonce={session?.nonce ?? ""} revision="" />
+            <DownloadAquaChain file={item} />
+        </>
+
+
+    }
+
+    const isWorkFlowData = (aquaTree: AquaTree, _systemAndUserWorkFlow: string[]): { isWorkFlow: boolean; workFlow: string } => {
+        let falseResponse = {
+            isWorkFlow: false,
+            workFlow: ""
+        }
+
+        //order revision in aqua tree 
+        let aquaTreeRevisionsOrderd = OrderRevisionInAquaTree(aquaTree)
+        let allHashes = Object.keys(aquaTreeRevisionsOrderd.revisions)
+        if (allHashes.length <= 1) {
+            console.log(`Aqua tree has one revision`)
+            return falseResponse
+        }
+        let secondRevision = aquaTreeRevisionsOrderd.revisions[allHashes[1]]
+        if (!secondRevision) {
+            console.log(`Aqua tree has second revision not found`)
+            return falseResponse
+        }
+        if (secondRevision.revision_type == 'link') {
+            // let allNames = fileObjects.map((e) => {
+            //     if (e != null) {
+
+            //         let res = isAquaTree(e.fileContent);
+            //         console.log(`is Aquatree ${res} --- ${JSON.stringify(e.fileContent, null, 4)}`)
+            //         if (res) {
+            //             return getAquaTreeFileName(e.fileContent as AquaTree)
+            //         }
+            //     }
+            //     return ""
+            // })
+            //get the  system aqua tree name 
+            let secondRevision = aquaTreeRevisionsOrderd.revisions[allHashes[1]]
+            // console.log(` second hash used ${allHashes[1]}  second revision ${JSON.stringify(secondRevision, null, 4)} tree ${JSON.stringify(aquaTreeRevisionsOrderd, null, 4)}`)
+
+            if (secondRevision.link_verification_hashes == undefined) {
+                console.log(`link verification hash is undefined`)
+                return falseResponse
+            }
+            let revisionHash = secondRevision.link_verification_hashes[0]
+            let name = aquaTreeRevisionsOrderd.file_index[revisionHash]
+            // console.log(`--  name ${name}  all hashes ${revisionHash}  second revision ${JSON.stringify(secondRevision, null, 4)} tree ${JSON.stringify(aquaTreeRevisionsOrderd, null, 4)}`)
+
+            // if (systemAndUserWorkFlow.map((e)=>e.replace(".json", "")).includes(name)) {
+            return {
+                isWorkFlow: true,
+                workFlow: name.replace(".json", "")
+            }
+            // }
+
+
+        }
+        console.log(`Aqua tree has second revision is of type ${secondRevision.revision_type}`)
+
+
+        return falseResponse
+    }
+
+
     const tableItem = (fileObject: FileObject, item: ApiFileInfo, index: number) => {
+        let { isWorkFlow, workFlow } = isWorkFlowData(item.aquaTree!!, systemFileInfo.map((e) => {
+            try {
+                return getAquaTreeFileName(e.aquaTree!!)
+            } catch (e) {
+                console.log("Error")
+                return ""
+            }
+        }));
+
+        // { isWorkFlow : false  , workFlow: ''}
+
+
         return <Table.Row
             key={index}
         // data-selected={selection.includes(item.fileObject[0].fileName)?? "--" ? "" : undefined}
@@ -83,15 +191,7 @@ const FilesTable = () => {
             <Table.Cell minW={'220px'} maxW={'220px'} textWrap={'wrap'}>
                 <Group alignItems={'space-between'} flexWrap={'wrap'} position={"relative"}>
 
-                    <ChainDetailsBtn callBack={() => openChainDetailsView(item)} />
-                    <SignAquaChain apiFileInfo={item} backendUrl={backend_url} nonce={session?.nonce ?? ""} revision="" />
-                    <WitnessAquaChain apiFileInfo={item} backendUrl={backend_url} nonce={session?.nonce ?? ""} revision="" />
-                    <LinkButton item={item} nonce={session?.nonce ?? ""} />
-
-                    {/* <ShareButton nonce={session?.nonce ?? ""} item={item} /> */}
-                    <ShareButtonAction nonce={session?.nonce ?? ""} item={item} />
-                    <DeleteAquaChain apiFileInfo={item} backendUrl={backend_url} nonce={session?.nonce ?? ""} revision="" />
-                    <DownloadAquaChain file={item} />
+                    {showActionButtons(isWorkFlow, workFlow, item)}
 
                 </Group>
             </Table.Cell>
@@ -108,7 +208,6 @@ const FilesTable = () => {
             // return <Text>{JSON.stringify(item, null, 4)}</Text>
 
             let fileObject = getAquaTreeFileObject(item)
-
             if (fileObject) {
                 return tableItem(fileObject, item, index)
             } else {
@@ -119,7 +218,7 @@ const FilesTable = () => {
     }
 
 
-    const smallTableItem = (fileObject: FileObject, item: ApiFileInfo, _index: number) => {
+    const smallTableItem = (fileObject: FileObject, item: ApiFileInfo, _index: number, isWorkFlow: boolean, workFlow: string) => {
 
         return <Box key={`sm_${Object.keys(item.aquaTree?.revisions! ?? {})[0]}`} bg={'gray.100'} _dark={{
             bg: 'blackAlpha.950'
@@ -127,14 +226,16 @@ const FilesTable = () => {
             <VStack textAlign={'start'}>
                 <Text textAlign={'start'} w={'100%'}>{fileObject.fileName}</Text>
                 <Group alignItems={'start'} flexWrap={'wrap'}>
-                    <ChainDetailsBtn callBack={() => openChainDetailsView(item)} />
+
+                    {showActionButtons(isWorkFlow, workFlow, item)}
+                    {/* <ChainDetailsBtn callBack={() => openChainDetailsView(item)} />
                     <SignAquaChain apiFileInfo={item} backendUrl={backend_url} nonce={session?.nonce ?? ""} revision="" />
                     <WitnessAquaChain apiFileInfo={item} backendUrl={backend_url} nonce={session?.nonce ?? ""} revision="" />
                     <LinkButton item={item} nonce={session?.nonce ?? ""} />
-                    {/* <ShareButton nonce={session?.nonce ?? ""} item={item} /> */}
+                  
                     <ShareButtonAction item={item} nonce={session?.nonce ?? ""} />
                     <DeleteAquaChain apiFileInfo={item} backendUrl={backend_url} nonce={session?.nonce ?? ""} revision="" />
-                    <DownloadAquaChain file={item} />
+                    <DownloadAquaChain file={item} /> */}
                 </Group>
             </VStack>
         </Box>
@@ -147,8 +248,19 @@ const FilesTable = () => {
 
             let fileObject = getAquaTreeFileObject(item)
 
+            console.log(`Daata ${JSON.stringify(item.aquaTree, null, 4)}`)
+            let { isWorkFlow, workFlow } = aquafier.isWorkFlow(item.aquaTree!!, systemFileInfo.map((e) => {
+                try {
+                    return getAquaTreeFileName(e.aquaTree!!)
+                } catch (e) {
+                    console.log("Error")
+                    return ""
+                }
+            }));
+
+
             if (fileObject) {
-                return smallTableItem(fileObject, item, index)
+                return smallTableItem(fileObject, item, index, isWorkFlow, workFlow)
             } else {
                 return <></>
             }

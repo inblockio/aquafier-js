@@ -82,6 +82,7 @@ model Latest {
   hash        String  @id
   user        String
   template_id String?
+  is_workflow Boolean @default(false) 
   User        Users   @relation(fields: [user], references: [address])
   // Revision         Revision[]
 

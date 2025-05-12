@@ -394,7 +394,8 @@ export async function getUserApiFileInfo(url: string, address: string): Promise<
         where: {
             AND: {
                 user: address,
-                template_id: null
+                template_id: null,
+                is_workflow: false
             }
         }
     });
@@ -685,7 +686,7 @@ export async function saveARevisionInAquaTree(revisionData: SaveRevision, userAd
 
     return [200, ""]
 }
-export async function saveAquaTree(aquaTree: AquaTree, userAddress: string, templateId  : string | null = null) {
+export async function saveAquaTree(aquaTree: AquaTree, userAddress: string, templateId  : string | null = null, isWorkFlow : boolean = false) {
     // Reorder revisions to ensure proper order
     let orderedAquaTree = reorderAquaTreeRevisionsProperties(aquaTree);
     let aquaTreeWithOrderdRevision = OrderRevisionInAquaTree(orderedAquaTree);
@@ -709,7 +710,8 @@ export async function saveAquaTree(aquaTree: AquaTree, userAddress: string, temp
         create: {
             hash: lastPubKeyHash,
             user: userAddress,
-            template_id: templateId
+            template_id: templateId,
+            is_workflow: isWorkFlow
         },
         update: {
             hash: lastPubKeyHash,

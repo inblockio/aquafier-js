@@ -564,6 +564,106 @@ const setUpSystemTemplates = async () => {
   }
   //end of document agreement
 
+
+
+
+
+
+
+
+
+  //start  of  document contract
+  await prisma.aquaTemplate.upsert({
+    where: {
+      id: "6",
+    },
+    create: {
+      id: "6",
+      name: "user_signature",
+      owner: SYSTEM_WALLET_ADDRESS,
+      public: true,
+      title: "User Signature",
+      created_at: today.toDateString()
+    },
+    update: {
+
+    },
+  })
+
+  // let userSinatureContract = {
+  //   "document": "",
+  //   "names": "0x...",
+  //   "wallet_address": "0x...",
+  
+  // }
+
+  const walletAddressContractFields = [
+    {
+      name: "image",
+      label: "Signature Image",
+      type: "image",
+      required: true
+    },
+    {
+      name: "name",
+      label: "Names",
+      type: "string",
+      required: true,
+    },
+    {
+      name: "wallet_address",
+      label: "Wallet Address",
+      type: "wallet_address",
+      required: true,
+      multiple: true
+    }
+  ]
+
+  walletAddressContractFields.forEach(async (fieldData, index) => {
+    await prisma.aquaTemplateFields.upsert({
+      where: {
+        id: `6${index}`,
+      },
+      create: {
+        id: `6${index}`,
+        aqua_form_id: "6",
+        name: fieldData.name,
+        label: fieldData.label,
+        type: fieldData.type,
+        required: fieldData.required
+      },
+      update: {
+
+      },
+    })
+  })
+
+
+  let walletAddressContractFieldsData = systemAquaTreesNames.find((item) => item == "user_signature.json")
+  if (walletAddressContractFieldsData == undefined) {
+    // create aqua tree for identity template
+    let documentContractObject: FileObject = {
+      fileContent: JSON.stringify(documentContract),
+      fileName: "user_signature.json",
+      path: "./"
+    }
+
+    let responseDocumentContractAquaTree = await aquafier.createGenesisRevision(documentContractObject, true, false, false)
+
+    if (responseDocumentContractAquaTree.isOk()) {
+
+      // save the aqua tree 
+      await saveAquaTree(responseDocumentContractAquaTree.data.aquaTree!!, SYSTEM_WALLET_ADDRESS)
+
+
+      await saveTemplateFileData(responseDocumentContractAquaTree.data.aquaTree!!, JSON.stringify(documentContractObject), SYSTEM_WALLET_ADDRESS)
+    }else{
+      throw Error("Failed to create document contract")
+    }
+
+  }
+  //end of document agreement
+
 }
 
 

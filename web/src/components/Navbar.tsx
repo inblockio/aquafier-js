@@ -5,7 +5,7 @@ import { useColorMode } from "./chakra-ui/color-mode"
 import appStore from "../store"
 import { useStore } from "zustand"
 import VersionAndDisclaimer from "./VersionAndDisclaimer"
-import { Link, NavLink, useNavigate } from "react-router-dom"
+import { Link,  useNavigate } from "react-router-dom"
 import AccountContracts from "./AccountContracts"
 import { Alert } from "../components/chakra-ui/alert"
 import { LuChevronDown, LuChevronUp, LuSquareChartGantt } from "react-icons/lu"
@@ -81,7 +81,7 @@ const Navbar = () => {
 
     const cancelRef = React.useRef<HTMLButtonElement>(null);
 
-    const saveAquaTree = async (aquaTree: AquaTree, fileObject: FileObject, isFinal: boolean = false) => {
+    const saveAquaTree = async (aquaTree: AquaTree, fileObject: FileObject, isFinal: boolean = false, isWorkflow: boolean = false) => {
         try {
             const url = `${backend_url}/explorer_aqua_file_upload`;
 
@@ -94,6 +94,7 @@ const Navbar = () => {
 
             // Add the account from the session
             formData.append('account', session?.address || '');
+            formData.append('is_workflow', `${isWorkflow}`);
 
             // Check if we have an actual file to upload as an asset
             if (fileObject.fileContent) {
@@ -124,6 +125,8 @@ const Navbar = () => {
                     // onClose();
                     setOpen(false)
                     setModalFormErorMessae("")
+                    setSelectedTemplate(null)
+                    setFormData({})
                 }
             }
 
@@ -139,7 +142,7 @@ const Navbar = () => {
 
 
 
-    const createFormAndSign = async (e: React.FormEvent) => {
+    const createWorkflowFromTemplate = async (e: React.FormEvent) => {
         e.preventDefault();
 
 
@@ -312,7 +315,7 @@ const Navbar = () => {
                             return
                         }
                         // upload the single aqua tree 
-                        await saveAquaTree(aquaTreeResponse.data.aquaTree!!, fileObject, false)
+                        await saveAquaTree(aquaTreeResponse.data.aquaTree!!, fileObject, false, true)
 
                         // linke it to main aqua tree
                         const aquaTreeWrapper: AquaTreeWrapper = {
@@ -468,11 +471,7 @@ const Navbar = () => {
                         <ConnectWallet />
                         <SmallScreenSidebarDrawer openCreateForm={() => setOpen(true)} />
                     </HStack>
-                    <NavLink to="/pdf-signer">
-                        <Button variant="solid" size="sm" bg="blue.500">
-                            PDF Signer
-                        </Button>
-                    </NavLink>
+
                     <HStack h={'100%'} gap={"4"} justifyContent={'space-between'} display={{ base: 'none', md: 'flex' }}>
                         {
                             session ? (<>
@@ -556,7 +555,7 @@ const Navbar = () => {
                                 ))}
                             </SimpleGrid>)
                             : (
-                                <form onSubmit={createFormAndSign} id="create-aqua-tree-form">
+                                <form onSubmit={createWorkflowFromTemplate} id="create-aqua-tree-form">
                                     {modalFormErorMessae.length > 0 ?
                                         <Alert title="No Data">
                                             {modalFormErorMessae}
@@ -566,7 +565,7 @@ const Navbar = () => {
                                     <Stack marginBottom={10}>
                                         {selectedTemplate ? selectedTemplate.fields.map((field) => {
                                             // For file inputs, we don't want to set the value prop
-                                            const isFileInput = field.type === 'file';
+                                            const isFileInput = field.type === 'file' || field.type === 'image';
                                             return <Field label={field.label} errorText={''}>
                                                 <Input
                                                     borderRadius={"md"}
@@ -574,13 +573,31 @@ const Navbar = () => {
                                                     // value={formData[field.name]}
                                                     // Only set value for non-file inputs
                                                     {...(!isFileInput ? { value: formData[field.name] as string | number } : {})}
-                                                    type={field.type}
+                                                    type={field.type == 'image' ? 'file' : field.type}
                                                     onChange={(e) => {
                                                         // setFormData({
                                                         //     ...formData,
                                                         //     [field.name]: e.target.value
                                                         // })
 
+                                                        if (field.type == 'image') {
+                                                            const files: File |  FileList | null = e?.target?.files;
+
+                                                            if (!files || files.length === 0) {
+                                                                return;
+                                                            }
+                                                        
+                                                            const file = files[0]
+                                                            if (file && file.type.startsWith('image/')) {
+                                                                // Valid image file
+                                                                console.log("Valid ")
+                                                            } else {
+                                                                // Invalid file type
+                                                                alert('Please select an image file');
+                                                                e.target.value = ''; // Clear the input
+                                                                return
+                                                            }
+                                                        }
                                                         const value = isFileInput && e.target.files
                                                             ? e.target.files[0] // Get the file object
                                                             : e.target.value;   // Get the input value
@@ -603,7 +620,7 @@ const Navbar = () => {
                         <HStack w={'100%'} justifyContent={'end'}>
                             <HStack>
                                 {selectedTemplate ?
-                                    <Button type="submit" ml={3} mr={3} colorPalette={'green'} ref={cancelRef} onClick={createFormAndSign} form="create-aqua-tree-form">
+                                    <Button type="submit" ml={3} mr={3} colorPalette={'green'} ref={cancelRef} onClick={createWorkflowFromTemplate} form="create-aqua-tree-form">
                                         Create
                                     </Button>
                                     : null

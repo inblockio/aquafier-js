@@ -20,50 +20,6 @@ import { RevionOperation } from "../models/RevisionOperation"
 import JSZip from "jszip";
 import { AquaJsonInZip, AquaNameWithHash } from "../models/Aqua"
 
-// async function storeWitnessTx(file_id: number, filename: string, txhash: string, ownerAddress: string, network: string, files: ApiFileInfo[], setFiles: any, backend_url: string) {
-
-//     const formData = new URLSearchParams();
-
-//     formData.append('file_id', file_id.toString());
-//     formData.append('filename', filename);
-//     formData.append('tx_hash', txhash);
-//     formData.append('wallet_address', ownerAddress);
-//     formData.append('network', network);
-
-//     const url = `${backend_url}/explorer_witness_file`
-
-//     const response = await axios.post(url, formData, {
-//         headers: {
-//             'Content-Type': 'application/x-www-form-urlencoded'
-//         }
-//     })
-
-//     const res = await response.data;
-//     // let logs: Array<string> = res.logs
-//     // // logs.forEach((item) => {
-//     // //    //  console.log("**>" + item + "\n.")
-//     // // })
-
-//     if (response.status === 200) {
-//        //  console.log(res)
-//         const resp: ApiFileInfo = res.file
-//         const array: ApiFileInfo[] = [];
-//         for (let index = 0; index < files.length; index++) {
-//             const element = files[index];
-//             if (element.id === file_id) {
-//                 array.push(resp)
-//             } else {
-//                 array.push(element)
-//             }
-//         }
-//         setFiles(array)
-//         toaster.create({
-//             description: "Witnessing successful",
-//             type: "success"
-//         })
-//     }
-
-// }
 
 
 
@@ -74,7 +30,6 @@ export const WitnessAquaChain = ({ apiFileInfo, backendUrl, nonce }: RevionOpera
 
 
     const witnessFileHandler = async () => {
-        // const witness_event_verification_hash = sha3.sha3_512("a69f73cca23a9ac5c8b567dc185a756e97c982164fe25859e0d1dcc1475c80a615b2123af1f5f94c11e3e9402c3ac558f500199d95b6d3e301758586281dcd26" + lastRevisionVerificationHash)
         if (window.ethereum) {
             setWitnessing(true)
             try {
@@ -96,7 +51,7 @@ export const WitnessAquaChain = ({ apiFileInfo, backendUrl, nonce }: RevionOpera
                     revision: "",
                     fileObject: undefined
                 }
-                 let xCredentials = dummyCredential()
+                let xCredentials = dummyCredential()
                 xCredentials.witness_eth_network = user_profile?.witness_network ?? "sepolia"
                 const result = await aquafier.witnessAquaTree(aquaTreeWrapper, "eth", xCredentials.witness_eth_network as WitnessNetwork, "metamask", xCredentials)
                 if (result.isErr()) {
@@ -187,6 +142,7 @@ export const WitnessAquaChain = ({ apiFileInfo, backendUrl, nonce }: RevionOpera
     )
 }
 
+
 export const SignAquaChain = ({ apiFileInfo, backendUrl, nonce }: RevionOperation) => {
     const { files, setFiles, setSelectedFileInfo, selectedFileInfo, user_profile } = useStore(appStore)
     const [signing, setSigning] = useState(false)
@@ -206,7 +162,7 @@ export const SignAquaChain = ({ apiFileInfo, backendUrl, nonce }: RevionOperatio
 
                 let xCredentials = dummyCredential()
                 xCredentials.witness_eth_network = user_profile?.witness_network ?? "sepolia"
-                
+
 
                 const result = await aquafier.signAquaTree(aquaTreeWrapper, "metamask", xCredentials)
                 if (result.isErr()) {
@@ -396,7 +352,7 @@ export const DeleteAquaChain = ({ apiFileInfo, backendUrl, nonce }: RevionOperat
                 }
             }
         }
-        
+
         if (allFilesAffected.length == 0) {
             await deleteFileApi()
         } else {
