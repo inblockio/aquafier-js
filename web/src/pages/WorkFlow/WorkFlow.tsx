@@ -121,18 +121,18 @@ export default function WorkFlowPage() {
 
     useEffect(() => {
 
-        let items : Array<WorkFlowTimeLine> =[]
+        let items: Array<WorkFlowTimeLine> = []
         // Get the first two elements
         const firstTwo = aquaTreeVerificationWithStatuses.slice(0, 2);
-        console.log("First two elements:", firstTwo); // [1, 2]
+        // console.log("First two elements:", firstTwo); // [1, 2]
 
         items.push({
             id: 1,
             completed: true,
-            content: contentData,
-            icon : iconData,
-            revisionHash : item.revisionHash,
-            title: titleData
+            content: genesisContent(),
+            icon: FaUser,
+            revisionHash: "",
+            title: "Contract Creation"
         })
 
 
@@ -154,14 +154,14 @@ export default function WorkFlowPage() {
         //         let contentData = getContentToDisplay(index, item.revisionHash)
         //     if (existingData) {
         //         items.filter((e)=>e.revisionHash != item.revisionHash)
-                // items.push({
-                //     id: index,
-                //     completed: true,
-                //     content: contentData,
-                //     icon : iconData,
-                //     revisionHash : item.revisionHash,
-                //     title: titleData
-                // })
+        // items.push({
+        //     id: index,
+        //     completed: true,
+        //     content: contentData,
+        //     icon : iconData,
+        //     revisionHash : item.revisionHash,
+        //     title: titleData
+        // })
         //     } else {
 
         //         items.push({
@@ -275,6 +275,12 @@ export default function WorkFlowPage() {
 
         return <>..</>
 
+    }
+
+    const genesisContent = () => {
+        return <>
+            <h6>Contract creation</h6>
+        </>
     }
 
     // Find the currently active content
