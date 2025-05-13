@@ -5,10 +5,11 @@ import { getHost, getPort } from '../utils/api_utils';
 import { createAquaTreeFromRevisions, fetchAquatreeFoUser, FetchRevisionInfo, findAquaTreeRevision, saveARevisionInAquaTree } from '../utils/revisions_utils';
 // import { formatTimestamp } from '../utils/time_utils';
 // import { AquaForms, FileIndex, Signature, WitnessEvent, Revision as RevisonDB } from 'prisma/client';
-import { AquaTree, FileObject, OrderRevisionInAquaTree, Revision } from 'aqua-js-sdk';
+import { AquaTree, FileObject, getAquaTreeFileName, OrderRevisionInAquaTree, Revision } from 'aqua-js-sdk';
 import { FastifyInstance } from 'fastify';
 import * as fs from "fs"
 import path from 'path';
+import { SYSTEM_WALLET_ADDRESS } from 'src/models/constants';
 
 export default async function revisionsController(fastify: FastifyInstance) {
     // fetch aqua tree from a revision hash
@@ -464,6 +465,91 @@ export default async function revisionsController(fastify: FastifyInstance) {
                     details: result.details
                 });
             }
+
+        } catch (error: any) {
+            console.error("Error in delete operation:", error);
+            return reply.code(500).send({
+                success: false,
+                message: `Error deleting revision: ${error.message}`,
+                details: error
+            });
+        }
+    });
+
+    fastify.get('/tree/user_signatures', async (request, reply) => {
+
+        try {
+
+            const nonce = request.headers['nonce']; // Headers are case-insensitive
+
+            // Check if `nonce` is missing or empty
+            if (!nonce || typeof nonce !== 'string' || nonce.trim() === '') {
+                return reply.code(401).send({ error: 'Unauthorized: Missing or empty nonce header' });
+            }
+
+            const session = await prisma.siweSession.findUnique({
+                where: { nonce }
+            });
+
+            if (!session) {
+                return reply.code(403).send({ success: false, message: "Nounce  is invalid" });
+            }
+
+            // Get the host from the request headers
+            const host = `${getHost()}:${getPort()}`;
+
+            // Get the protocol (http or https)
+            const protocol = 'https'
+
+            // Construct the full URL
+            const url = `${protocol}://${host}`;
+
+            let latest = await prisma.latest.findMany({
+                where: {
+                    user: session.address
+                }
+            });
+
+            let signatureAquaTrees: Array<{
+                aquaTree: AquaTree,
+                fileObject: FileObject[]
+            }> = []
+            if (latest.length != 0) {
+                let systemAquaTrees = await fetchAquatreeFoUser(url, latest);
+                for (let item of systemAquaTrees) {
+
+
+                    //get the second revision
+                    // check if it a link to signature
+                    let aquaTreeRevisionsOrderd = OrderRevisionInAquaTree(item.aquaTree)
+                    let allHashes = Object.keys(aquaTreeRevisionsOrderd.revisions)
+
+                    if (allHashes.length >= 1) {
+                        let secondRevision = aquaTreeRevisionsOrderd.revisions[allHashes[1]]
+
+                        if (secondRevision.revision_type == 'link') {
+                            let secondRevision = aquaTreeRevisionsOrderd.revisions[allHashes[1]]
+
+                            if (secondRevision.link_verification_hashes != undefined) {
+                                let revisionHash = secondRevision.link_verification_hashes[0]
+                                let name = aquaTreeRevisionsOrderd.file_index[revisionHash]
+
+                                if (name == "user_signature.json") {
+                                    signatureAquaTrees.push(item)
+                                }
+
+                            }
+                        }
+                    }
+
+
+                }
+            }
+
+            return reply.code(200).send({
+                success: true,
+                data: signatureAquaTrees
+            });
 
         } catch (error: any) {
             console.error("Error in delete operation:", error);
