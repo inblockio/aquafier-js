@@ -527,7 +527,7 @@ export default async function revisionsController(fastify: FastifyInstance) {
                     if (allHashes.length >= 1) {
                         let secondRevision = aquaTreeRevisionsOrderd.revisions[allHashes[1]]
 
-                        if (secondRevision.revision_type == 'link') {
+                        if ( secondRevision != undefined  && secondRevision.revision_type == 'link') {
                             let secondRevision = aquaTreeRevisionsOrderd.revisions[allHashes[1]]
 
                             if (secondRevision.link_verification_hashes != undefined) {

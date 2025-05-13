@@ -331,6 +331,7 @@ export default async function explorerController(fastify: FastifyInstance) {
             let hasAsset = false;
             let assetFilename = "";
             let isWorkFlow = false
+            let templateId = ""
 
             // Process each part of the multipart form
             for await (const part of parts) {
@@ -361,12 +362,14 @@ export default async function explorerController(fastify: FastifyInstance) {
                         }
                     } else if (part.fieldname === 'is_workflow') {
                         isWorkFlow = part.value === 'true';
+                    } else if (part.fieldname === 'template_id') {
+                        templateId = part.value as string;
                     }
                 }
             }
 
 
-            
+
             if (!fileBuffer) {
                 return reply.code(400).send({ error: 'No file uploaded' });
             }
@@ -448,7 +451,7 @@ export default async function explorerController(fastify: FastifyInstance) {
             }
             console.log("Aquatree to save: ", aquaTree)
             // Save the aqua tree
-            await saveAquaTree(aquaTree, session.address, null, isWorkFlow);
+            await saveAquaTree(aquaTree, session.address, templateId.length == 0 ? null : templateId, isWorkFlow);
 
 
             // Get the host from the request headers
