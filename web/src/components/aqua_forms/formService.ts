@@ -1,4 +1,4 @@
-// import { FormTemplate } from './types';
+// import { FormTemplate } from './types/types';
 
 // const STORAGE_KEY = 'aqua_form_templates';
 

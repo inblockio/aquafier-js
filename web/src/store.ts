@@ -3,8 +3,8 @@ import { openDB } from 'idb';
 import { createStore } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
 import { ApiFileInfo } from './models/FileInfo';
-import { ApiFileData, Session } from './types';
-import { FormTemplate } from './components/aqua_forms';
+import { ApiFileData, Session } from './types/types';
+import { FormTemplate } from './components/aqua_forms/types';
 
 type AppStoreState = {
     user_profile: {

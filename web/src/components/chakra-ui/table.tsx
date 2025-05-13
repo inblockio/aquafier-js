@@ -12,7 +12,7 @@ import { Checkbox } from "./checkbox"
 import { SetStateAction, useEffect, useState } from "react"
 import { useStore } from "zustand"
 import appStore from "../../store"
-import { displayTime, getAquaTreeFileObject, getFileCategory, getFileExtension, getAquaTreeFileName } from "../../utils/functions"
+import { displayTime, getAquaTreeFileObject, getFileCategory, getFileExtension, getAquaTreeFileName, isWorkFlowData } from "../../utils/functions"
 
 import { DeleteAquaChain, LinkButton, DownloadAquaChain, SignAquaChain, WitnessAquaChain } from "../aqua_chain_actions"
 import { ChainDetailsBtn, CompleteChainView } from "../CustomDrawer"
@@ -22,7 +22,7 @@ import ShareButtonAction from "../actions/ShareButtonAction"
 import { DrawerActionTrigger, DrawerBackdrop, DrawerBody, DrawerContent, DrawerFooter, DrawerRoot, DrawerTitle } from "./drawer"
 import { LuPower, LuX } from "react-icons/lu"
 import { IDrawerStatus } from "../../models/AquaTreeDetails"
-import Aquafier, { AquaTree, FileObject, OrderRevisionInAquaTree } from "aqua-js-sdk"
+import Aquafier, { FileObject } from "aqua-js-sdk"
 import { useNavigate } from "react-router-dom"
 
 
@@ -36,7 +36,7 @@ const FilesTable = () => {
     const [drawerStatus, setDrawerStatus] = useState<IDrawerStatus | null>(null)
 
     let navigate = useNavigate();
-    
+
     const aquafier = new Aquafier();
     const hasSelection = selection.length > 0
     const indeterminate = hasSelection && selection.length < files.length
@@ -59,15 +59,15 @@ const FilesTable = () => {
                 return <Button size={'xs'} colorPalette={'cyan'} variant={'subtle'} w={'200px'} onClick={(e) => {
                     e.preventDefault();
 
-                    navigate("/workflow")
                     setSelectedFileInfo(item)
+                    navigate("/workflow")
                 }} >
                     <LuPower />
                     Open Workflow
                 </Button>
             }
 
-            return  <></>
+            return <></>
         }
 
 
@@ -86,62 +86,6 @@ const FilesTable = () => {
 
     }
 
-    const isWorkFlowData = (aquaTree: AquaTree, _systemAndUserWorkFlow: string[]): { isWorkFlow: boolean; workFlow: string } => {
-        let falseResponse = {
-            isWorkFlow: false,
-            workFlow: ""
-        }
-
-        //order revision in aqua tree 
-        let aquaTreeRevisionsOrderd = OrderRevisionInAquaTree(aquaTree)
-        let allHashes = Object.keys(aquaTreeRevisionsOrderd.revisions)
-        if (allHashes.length <= 1) {
-            console.log(`Aqua tree has one revision`)
-            return falseResponse
-        }
-        let secondRevision = aquaTreeRevisionsOrderd.revisions[allHashes[1]]
-        if (!secondRevision) {
-            console.log(`Aqua tree has second revision not found`)
-            return falseResponse
-        }
-        if (secondRevision.revision_type == 'link') {
-            // let allNames = fileObjects.map((e) => {
-            //     if (e != null) {
-
-            //         let res = isAquaTree(e.fileContent);
-            //         console.log(`is Aquatree ${res} --- ${JSON.stringify(e.fileContent, null, 4)}`)
-            //         if (res) {
-            //             return getAquaTreeFileName(e.fileContent as AquaTree)
-            //         }
-            //     }
-            //     return ""
-            // })
-            //get the  system aqua tree name 
-            let secondRevision = aquaTreeRevisionsOrderd.revisions[allHashes[1]]
-            // console.log(` second hash used ${allHashes[1]}  second revision ${JSON.stringify(secondRevision, null, 4)} tree ${JSON.stringify(aquaTreeRevisionsOrderd, null, 4)}`)
-
-            if (secondRevision.link_verification_hashes == undefined) {
-                console.log(`link verification hash is undefined`)
-                return falseResponse
-            }
-            let revisionHash = secondRevision.link_verification_hashes[0]
-            let name = aquaTreeRevisionsOrderd.file_index[revisionHash]
-            // console.log(`--  name ${name}  all hashes ${revisionHash}  second revision ${JSON.stringify(secondRevision, null, 4)} tree ${JSON.stringify(aquaTreeRevisionsOrderd, null, 4)}`)
-
-            // if (systemAndUserWorkFlow.map((e)=>e.replace(".json", "")).includes(name)) {
-            return {
-                isWorkFlow: true,
-                workFlow: name.replace(".json", "")
-            }
-            // }
-
-
-        }
-        console.log(`Aqua tree has second revision is of type ${secondRevision.revision_type}`)
-
-
-        return falseResponse
-    }
 
 
     const tableItem = (fileObject: FileObject, item: ApiFileInfo, index: number) => {

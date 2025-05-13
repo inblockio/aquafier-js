@@ -4,8 +4,66 @@ import { isAddress, getAddress } from 'ethers';
 import { ApiFileInfo } from "../models/FileInfo";
 import { documentTypes, ERROR_TEXT, imageTypes, musicTypes, videoTypes } from "./constants";
 // import { AvatarGenerator } from 'random-avatar-generator';
-import Aquafier, { AquaTree, CredentialsData, FileObject, Revision } from "aqua-js-sdk";
+import Aquafier, { AquaTree, CredentialsData, FileObject, OrderRevisionInAquaTree, Revision } from "aqua-js-sdk";
 import jdenticon from "jdenticon/standalone";
+
+
+export const isWorkFlowData = (aquaTree: AquaTree, _systemAndUserWorkFlow: string[]): { isWorkFlow: boolean; workFlow: string } => {
+    let falseResponse = {
+        isWorkFlow: false,
+        workFlow: ""
+    }
+
+    //order revision in aqua tree 
+    let aquaTreeRevisionsOrderd = OrderRevisionInAquaTree(aquaTree)
+    let allHashes = Object.keys(aquaTreeRevisionsOrderd.revisions)
+    if (allHashes.length <= 1) {
+        console.log(`Aqua tree has one revision`)
+        return falseResponse
+    }
+    let secondRevision = aquaTreeRevisionsOrderd.revisions[allHashes[1]]
+    if (!secondRevision) {
+        console.log(`Aqua tree has second revision not found`)
+        return falseResponse
+    }
+    if (secondRevision.revision_type == 'link') {
+        // let allNames = fileObjects.map((e) => {
+        //     if (e != null) {
+
+        //         let res = isAquaTree(e.fileContent);
+        //         console.log(`is Aquatree ${res} --- ${JSON.stringify(e.fileContent, null, 4)}`)
+        //         if (res) {
+        //             return getAquaTreeFileName(e.fileContent as AquaTree)
+        //         }
+        //     }
+        //     return ""
+        // })
+        //get the  system aqua tree name 
+        let secondRevision = aquaTreeRevisionsOrderd.revisions[allHashes[1]]
+        // console.log(` second hash used ${allHashes[1]}  second revision ${JSON.stringify(secondRevision, null, 4)} tree ${JSON.stringify(aquaTreeRevisionsOrderd, null, 4)}`)
+
+        if (secondRevision.link_verification_hashes == undefined) {
+            console.log(`link verification hash is undefined`)
+            return falseResponse
+        }
+        let revisionHash = secondRevision.link_verification_hashes[0]
+        let name = aquaTreeRevisionsOrderd.file_index[revisionHash]
+        // console.log(`--  name ${name}  all hashes ${revisionHash}  second revision ${JSON.stringify(secondRevision, null, 4)} tree ${JSON.stringify(aquaTreeRevisionsOrderd, null, 4)}`)
+
+        // if (systemAndUserWorkFlow.map((e)=>e.replace(".json", "")).includes(name)) {
+        return {
+            isWorkFlow: true,
+            workFlow: name.replace(".json", "")
+        }
+        // }
+
+
+    }
+    console.log(`Aqua tree has second revision is of type ${secondRevision.revision_type}`)
+
+
+    return falseResponse
+}
 
 export function isAquaTree(content: any): boolean {
     // Check if content has the properties of an AquaTree
@@ -146,12 +204,12 @@ export async function switchNetwork(chainId: string) {
  * @returns Boolean indicating if the address is valid
  */
 export function isValidEthereumAddress(address: string): boolean {
-  try {
-    return isAddress(address);
-  } catch (error) {
-    console.error('Error validating Ethereum address:', error);
-    return false;
-  }
+    try {
+        return isAddress(address);
+    } catch (error) {
+        console.error('Error validating Ethereum address:', error);
+        return false;
+    }
 }
 
 /**
@@ -160,17 +218,17 @@ export function isValidEthereumAddress(address: string): boolean {
  * @returns The checksummed address if valid, or null if invalid
  */
 export function getValidChecksumAddress(address: string): string | null {
-  try {
-    if (!isAddress(address)) {
-      return null;
+    try {
+        if (!isAddress(address)) {
+            return null;
+        }
+
+        // Convert to checksum address (properly capitalized)
+        return getAddress(address);
+    } catch (error) {
+        console.error('Error processing Ethereum address:', error);
+        return null;
     }
-    
-    // Convert to checksum address (properly capitalized)
-    return getAddress(address);
-  } catch (error) {
-    console.error('Error processing Ethereum address:', error);
-    return null;
-  }
 }
 
 

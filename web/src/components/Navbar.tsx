@@ -12,7 +12,7 @@ import { LuChevronDown, LuChevronUp, LuSquareChartGantt } from "react-icons/lu"
 import { HiDocumentPlus } from "react-icons/hi2";
 import React, { useEffect, useState } from "react"
 import { estimateFileSize, dummyCredential, getAquaTreeFileName, getAquaTreeFileObject, getRandomNumber, fetchSystemFiles, isValidEthereumAddress } from "../utils/functions"
-import { FormTemplate } from "../components/aqua_forms"
+import { FormTemplate } from "../components/aqua_forms/types"
 import { Field } from '../components/chakra-ui/field';
 import Aquafier, { AquaTree, AquaTreeWrapper, FileObject } from "aqua-js-sdk"
 

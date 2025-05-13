@@ -1,3 +1,4 @@
+import { LogData, Revision } from "aqua-js-sdk";
 import { IconType } from "react-icons/lib";
 
 export interface Session {
@@ -21,7 +22,15 @@ export interface WorkFlowTimeLine {
   title: string,
   icon: IconType,
   completed: boolean,
-  content: JSX.Element
+  content: JSX.Element,
+  revisionHash : string,
 
+}
 
+export interface RevisionVerificationStatus{
+  revision : Revision,
+  revisionHash : string,
+  verficationStatus: boolean | null
+  isVerified : boolean,
+  logData : LogData[]
 }
