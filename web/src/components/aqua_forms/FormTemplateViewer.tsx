@@ -7,7 +7,7 @@ import {
   Badge,
   Table,
 } from '@chakra-ui/react';
-import { FormTemplate } from './types/types';
+import { FormTemplate } from './types';
 
 interface FormTemplateViewerProps {
   template: FormTemplate;

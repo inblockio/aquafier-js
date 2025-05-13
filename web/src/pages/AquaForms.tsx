@@ -12,7 +12,7 @@ import {
 } from '@chakra-ui/react';
 
 import FormTemplateEditor from '../components/aqua_forms/FormTemplateEditor';
-import { FormTemplate } from '../components/aqua_forms';
+import { FormTemplate } from '../components/aqua_forms/types';
 import FormTemplateList from '../components/aqua_forms/FormTemplateList';
 import { DialogCloseTrigger, DialogContent, DialogRoot } from '../components/chakra-ui/dialog';
 import FormTemplateViewer from '../components/aqua_forms/FormTemplateViewer';

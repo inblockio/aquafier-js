@@ -8,12 +8,11 @@ import {
     VStack,
     // HStack,
     Container,
-    Heading,
-    Card,
+    Heading
 } from '@chakra-ui/react';
 // import { Card } from '@chakra-ui/react';
 // import { FaCheck, FaQuestionCircle, FaBriefcase, FaBook, FaCoffee, FaAward, FaUser } from 'react-icons/fa';
-import { FaAward, FaBook, FaBriefcase, FaCheck, FaCoffee, FaQuestionCircle, FaUser } from 'react-icons/fa';
+import { FaAward, FaBook,  FaCheck,  FaQuestionCircle, FaUser, FaSignal, FaSignature, FaEraser } from 'react-icons/fa';
 import { Alert } from "../../components/chakra-ui/alert"
 import appStore from '../../store';
 import { useStore } from "zustand"
@@ -23,92 +22,92 @@ import Aquafier from 'aqua-js-sdk';
 import { isWorkFlowData } from '../../utils/functions';
 
 // Timeline data
-const timelineItems = [
-    {
-        id: 1,
-        title: 'Personal Info',
-        icon: FaUser,
-        completed: true,
-        revisionHash: '',
-        content: (
-            <Card.Root>
-                <Card.Body>
-                    <Heading size="md" mb={4}>Personal Information</Heading>
-                    <Text>This section contains all your personal details and profile information.</Text>
-                    <Text mt={4}>Make sure to keep your contact information up to date for important notifications.</Text>
-                </Card.Body>
-            </Card.Root>
-        )
-    },
-    {
-        id: 2,
-        title: 'Education',
-        icon: FaBook,
-        completed: true,
+// const timelineItems = [
+//     {
+//         id: 1,
+//         title: 'Personal Info',
+//         icon: FaUser,
+//         completed: true,
+//         revisionHash: '',
+//         content: (
+//             <Card.Root>
+//                 <Card.Body>
+//                     <Heading size="md" mb={4}>Personal Information</Heading>
+//                     <Text>This section contains all your personal details and profile information.</Text>
+//                     <Text mt={4}>Make sure to keep your contact information up to date for important notifications.</Text>
+//                 </Card.Body>
+//             </Card.Root>
+//         )
+//     },
+//     {
+//         id: 2,
+//         title: 'Education',
+//         icon: FaBook,
+//         completed: true,
 
-        revisionHash: '',
-        content: (
-            <Card.Root>
-                <Card.Body>
-                    <Heading size="md" mb={4}>Education History</Heading>
-                    <Text>Your education background and academic achievements.</Text>
-                    <Text mt={4}>You can add degrees, certifications, and relevant coursework.</Text>
-                </Card.Body>
-            </Card.Root>
-        )
-    },
-    {
-        id: 3,
-        title: 'Experience',
-        icon: FaBriefcase,
-        completed: true,
+//         revisionHash: '',
+//         content: (
+//             <Card.Root>
+//                 <Card.Body>
+//                     <Heading size="md" mb={4}>Education History</Heading>
+//                     <Text>Your education background and academic achievements.</Text>
+//                     <Text mt={4}>You can add degrees, certifications, and relevant coursework.</Text>
+//                 </Card.Body>
+//             </Card.Root>
+//         )
+//     },
+//     {
+//         id: 3,
+//         title: 'Experience',
+//         icon: FaBriefcase,
+//         completed: true,
 
-        revisionHash: '',
-        content: (
-            <Card.Root>
-                <Card.Body>
-                    <Heading size="md" mb={4}>Work Experience</Heading>
-                    <Text>Your professional history and career milestones.</Text>
-                    <Text mt={4}>Include relevant job positions, responsibilities, and accomplishments.</Text>
-                </Card.Body>
-            </Card.Root>
-        )
-    },
-    {
-        id: 4,
-        title: 'Skills',
-        icon: FaCoffee,
-        completed: false,
+//         revisionHash: '',
+//         content: (
+//             <Card.Root>
+//                 <Card.Body>
+//                     <Heading size="md" mb={4}>Work Experience</Heading>
+//                     <Text>Your professional history and career milestones.</Text>
+//                     <Text mt={4}>Include relevant job positions, responsibilities, and accomplishments.</Text>
+//                 </Card.Body>
+//             </Card.Root>
+//         )
+//     },
+//     {
+//         id: 4,
+//         title: 'Skills',
+//         icon: FaCoffee,
+//         completed: false,
 
-        revisionHash: '',
-        content: (
-            <Card.Root>
-                <Card.Body>
-                    <Heading size="md" mb={4}>Skills & Expertise</Heading>
-                    <Text>Highlight your technical and soft skills.</Text>
-                    <Text mt={4}>This section needs to be completed. Add your core competencies and expertise areas.</Text>
-                </Card.Body>
-            </Card.Root>
-        )
-    },
-    {
-        id: 5,
-        title: 'Achievements',
-        icon: FaAward,
-        completed: false,
+//         revisionHash: '',
+//         content: (
+//             <Card.Root>
+//                 <Card.Body>
+//                     <Heading size="md" mb={4}>Skills & Expertise</Heading>
+//                     <Text>Highlight your technical and soft skills.</Text>
+//                     <Text mt={4}>This section needs to be completed. Add your core competencies and expertise areas.</Text>
+//                 </Card.Body>
+//             </Card.Root>
+//         )
+//     },
+//     {
+//         id: 5,
+//         title: 'Achievements',
+//         icon: FaAward,
+//         completed: false,
 
-        revisionHash: '',
-        content: (
-            <Card.Root>
-                <Card.Body>
-                    <Heading size="md" mb={4}>Achievements & Awards</Heading>
-                    <Text>Your notable accomplishments and recognitions.</Text>
-                    <Text mt={4}>This section needs to be completed. Add your awards, certificates, and significant achievements.</Text>
-                </Card.Body>
-            </Card.Root>
-        )
-    }
-];
+//         revisionHash: '',
+//         content: (
+//             <Card.Root>
+//                 <Card.Body>
+//                     <Heading size="md" mb={4}>Achievements & Awards</Heading>
+//                     <Text>Your notable accomplishments and recognitions.</Text>
+//                     <Text mt={4}>This section needs to be completed. Add your awards, certificates, and significant achievements.</Text>
+//                 </Card.Body>
+//             </Card.Root>
+//         )
+//     }
+// ];
 
 export default function WorkFlowPage() {
     const [activeStep, setActiveStep] = useState(1);
@@ -123,7 +122,7 @@ export default function WorkFlowPage() {
 
         let items: Array<WorkFlowTimeLine> = []
         // Get the first two elements
-        const firstTwo = aquaTreeVerificationWithStatuses.slice(0, 2);
+        // const _firstTwo = aquaTreeVerificationWithStatuses.slice(0, 2);
         // console.log("First two elements:", firstTwo); // [1, 2]
 
         items.push({
@@ -140,45 +139,85 @@ export default function WorkFlowPage() {
         const rest = aquaTreeVerificationWithStatuses.slice(2);
 
 
-        // for (const [index, item] of aquaTreeVerificationWithStatuses.entries()) {
-        //     console.log(`Index: ${index}, Item:`, item);
+        for (const [indexItem, item] of rest.entries()) { // aquaTreeVerificationWithStatuses.entries()) {
+
+            let index = indexItem + 2;
+            console.log(`Index: ${index}, Item:`, item);
 
 
-        // Now you have both the numeric index and the actual item
-        // setTimeLineItems((items) => {
+            let titleData = getTitleToDisplay(index)
+            let iconData = getIconToDisplay(index)
+            let contentData = getContentToDisplay(index)
 
-        //     let existingData = items.find((e) => e.revisionHash == item.revisionHash)
+            items.push({
+                id: index,
+                completed: item.isVerified,
+                content: contentData,
+                icon: iconData,
+                revisionHash: item.revisionHash,
+                title: titleData
+            })
 
-        //      let titleData = getTitleToDisplay(index, item.revisionHash)
-        //         let iconData = getIconToDisplay(index, item.revisionHash)
-        //         let contentData = getContentToDisplay(index, item.revisionHash)
-        //     if (existingData) {
-        //         items.filter((e)=>e.revisionHash != item.revisionHash)
-        // items.push({
-        //     id: index,
-        //     completed: true,
-        //     content: contentData,
-        //     icon : iconData,
-        //     revisionHash : item.revisionHash,
-        //     title: titleData
-        // })
-        //     } else {
-
-        //         items.push({
-        //             id: index,
-        //             completed: true,
-        //             content: contentData,
-        //             icon : iconData,
-        //             revisionHash : item.revisionHash,
-        //             title: titleData
-        //         })
-        //     }
-
-        //     return items
-        // })
+            // Now you have both the numeric index and the actual item
+            // setTimeLineItems((items) => {
+            //     let existingData = items.find((e) => e.revisionHash == item.revisionHash)
+            //     if (existingData) {
+            //         items.filter((e) => e.revisionHash != item.revisionHash)
+            //         items.push({
+            //             id: index,
+            //             completed: true,
+            //             content: contentData,
+            //             icon: iconData,
+            //             revisionHash: item.revisionHash,
+            //             title: titleData
+            //         })
+            //     } else {
+            //     }
+            //     return items
+            // })
 
 
-        // }
+        }
+
+        console.log(`****************** index ${items.length} -- `)
+
+        if (items.length == 3) {
+
+            let index4 =4
+            let titleData4 = getTitleToDisplay(index4)
+            let iconData4 = getIconToDisplay(index4)
+            let contentData4 = getContentToDisplay(index4)
+
+            items.push({
+                id: 4,
+                completed: false,
+                content: contentData4,
+                icon: iconData4,
+                revisionHash: "",
+                title: titleData4
+            })
+
+
+
+            let titleData5 = getTitleToDisplay(5)
+            let iconData5 = getIconToDisplay(5)
+            let contentData5 = getContentToDisplay(5)
+
+            items.push({
+                id: 5,
+                completed: false,
+                content: contentData5,
+                icon: iconData5,
+                revisionHash: "",
+                title: titleData5
+            })
+        }
+
+        console.log(`###############################################`)
+        console.log(`items ${JSON.stringify(items, null, 4)}`)
+
+
+        setTimeLineItems(items)
 
 
 
@@ -201,25 +240,23 @@ export default function WorkFlowPage() {
             }
             setTimeLineTitle(workFlow.replace("_", " "))
 
+            let intialData: Array<RevisionVerificationStatus> = []
             for (const [hash, revision] of Object.entries(selectedFileInfo!.aquaTree!.revisions!!)) {
                 console.log(`Hash ${hash} Revision ${JSON.stringify(revision)}`)
-
-                setAquaTreeVerificationWithStatuses((oldState) => {
-                    oldState.push({
-                        isVerified: false,
-                        revision: revision,
-                        revisionHash: hash,
-                        verficationStatus: null,
-                        logData: []
-                    })
-                    return oldState
+                intialData.push({
+                    isVerified: false,
+                    revision: revision,
+                    revisionHash: hash,
+                    verficationStatus: null,
+                    logData: []
                 })
             }
 
+            setAquaTreeVerificationWithStatuses(intialData)
 
             let aquafier = new Aquafier();
 
-            // loop verifying each revision
+            // // loop verifying each revision
             for (const [hash, revision] of Object.entries(selectedFileInfo!.aquaTree!.revisions!!)) {
                 //self invoking function that is async
                 (async () => {
@@ -253,23 +290,59 @@ export default function WorkFlowPage() {
 
     }, [])
 
-    const getTitleToDisplay = (index: number, hash: string) => {
+    const getTitleToDisplay = (index: number) => {
 
-        if (index == 0) {
+        if (index == 0 || index == 1) {
+            return "Contract Creation"
+        }
 
+        if (index == 2) {
+            return "Contract Document"
+        }
+
+        if (index == 3) {
+            return "Creator Signature"
+        }
+
+        if (index == 4) {
+            return "Recepient Signature"
+        }
+
+        if (index == 5) {
+            return "Contract Summary"
         }
         return ""
     }
-    const getIconToDisplay = (index: number, hash: string) => {
+    const getIconToDisplay = (index: number) => {
 
-        return FaBook
+        if (index == 0 || index == 1) {
+            return FaUser
+        }
+
+        if (index == 2) {
+            return FaBook
+        }
+
+        if (index == 3) {
+            return FaSignal
+        }
+
+        if (index == 4) {
+            return FaSignature
+        }
+
+
+        if (index == 4) {
+            return FaAward
+        }
+
+
+        return FaEraser
     }
-    const getContentToDisplay = (index: number, hash: string) => {
+    const getContentToDisplay = (index: number) => {
 
-        if (index == 0) {
-            return <>
-                <h2>Form Template</h2>
-            </>
+        if (index == 0 || index == 1) {
+            return genesisContent()
         }
 
 

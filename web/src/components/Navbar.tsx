@@ -96,6 +96,12 @@ const Navbar = () => {
             formData.append('account', session?.address || '');
             formData.append('is_workflow', `${isWorkflow}`);
 
+
+            //workflow specifi
+            if(selectedTemplate?.name == 'user_signature'){
+                formData.append('template_id', `${selectedTemplate.id}`);
+            }
+
             // Check if we have an actual file to upload as an asset
             if (fileObject.fileContent) {
                 // Set has_asset to true
@@ -207,6 +213,8 @@ const Navbar = () => {
 
         let estimateize = estimateFileSize(JSON.stringify(formData));
 
+        
+
         const jsonString = JSON.stringify(formData, null, 4);
 
         const randomNumber = getRandomNumber(100, 1000);
@@ -252,7 +260,7 @@ const Navbar = () => {
 
             let aquaTreeData = linkedAquaTreeResponse.data.aquaTree!!
 
-            let containsFileData = selectedTemplate?.fields.filter((e) => e.type == "file")
+            let containsFileData = selectedTemplate?.fields.filter((e) => e.type == "file"|| e.type == "image")
             if (containsFileData && containsFileData.length > 0) {
 
                 // for (let index = 0; index < containsFileData.length; index++) {

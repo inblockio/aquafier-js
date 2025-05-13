@@ -8,6 +8,7 @@ import Aquafier, { AquaTree, CredentialsData, FileObject, OrderRevisionInAquaTre
 import jdenticon from "jdenticon/standalone";
 
 
+
 export const isWorkFlowData = (aquaTree: AquaTree, _systemAndUserWorkFlow: string[]): { isWorkFlow: boolean; workFlow: string } => {
     let falseResponse = {
         isWorkFlow: false,

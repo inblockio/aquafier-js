@@ -13,7 +13,7 @@ import {
   Select
 } from '@chakra-ui/react';
 import { Field } from '../components/chakra-ui/field';
-import { FormTemplate } from '../components/aqua_forms';
+import { FormTemplate } from '../components/aqua_forms/types';
 import { NumberInputField, NumberInputRoot } from '../components/chakra-ui/number-input';
 import { useStore } from 'zustand';
 import appStore from '../store';

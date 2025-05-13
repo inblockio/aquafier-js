@@ -581,7 +581,6 @@ export default async function explorerController(fastify: FastifyInstance) {
 
     });
 
-
     fastify.post('/explorer_files', async (request, reply) => {
 
         // Read `nonce` from headers
