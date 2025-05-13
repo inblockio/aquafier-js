@@ -1,3 +1,5 @@
+import { IconType } from "react-icons/lib";
+
 export interface Session {
     id: number;
     address: string;
@@ -11,3 +13,15 @@ export interface Session {
     fileHash : string,
     fileData :  string | ArrayBuffer
   }
+
+
+export interface WorkFlowTimeLine {
+
+  id: number,
+  title: string,
+  icon: IconType,
+  completed: boolean,
+  content: JSX.Element
+
+
+}
