@@ -9,11 +9,10 @@ import {
     // HStack,
     Container,
     Heading,
-    Card,
 } from '@chakra-ui/react';
 // import { Card } from '@chakra-ui/react';
 // import { FaCheck, FaQuestionCircle, FaBriefcase, FaBook, FaCoffee, FaAward, FaUser } from 'react-icons/fa';
-import { FaAward, FaBook, FaBriefcase, FaCheck, FaCoffee, FaQuestionCircle, FaUser } from 'react-icons/fa';
+import { FaCheck, FaQuestionCircle, FaUser } from 'react-icons/fa';
 import { Alert } from "../../components/chakra-ui/alert"
 import appStore from '../../store';
 import { useStore } from "zustand"
@@ -23,99 +22,99 @@ import Aquafier from 'aqua-js-sdk';
 import { isWorkFlowData } from '../../utils/functions';
 
 // Timeline data
-const timelineItems = [
-    {
-        id: 1,
-        title: 'Personal Info',
-        icon: FaUser,
-        completed: true,
-        revisionHash: '',
-        content: (
-            <Card.Root>
-                <Card.Body>
-                    <Heading size="md" mb={4}>Personal Information</Heading>
-                    <Text>This section contains all your personal details and profile information.</Text>
-                    <Text mt={4}>Make sure to keep your contact information up to date for important notifications.</Text>
-                </Card.Body>
-            </Card.Root>
-        )
-    },
-    {
-        id: 2,
-        title: 'Education',
-        icon: FaBook,
-        completed: true,
+// const timelineItems = [
+//     {
+//         id: 1,
+//         title: 'Personal Info',
+//         icon: FaUser,
+//         completed: true,
+//         revisionHash: '',
+//         content: (
+//             <Card.Root>
+//                 <Card.Body>
+//                     <Heading size="md" mb={4}>Personal Information</Heading>
+//                     <Text>This section contains all your personal details and profile information.</Text>
+//                     <Text mt={4}>Make sure to keep your contact information up to date for important notifications.</Text>
+//                 </Card.Body>
+//             </Card.Root>
+//         )
+//     },
+//     {
+//         id: 2,
+//         title: 'Education',
+//         icon: FaBook,
+//         completed: true,
 
-        revisionHash: '',
-        content: (
-            <Card.Root>
-                <Card.Body>
-                    <Heading size="md" mb={4}>Education History</Heading>
-                    <Text>Your education background and academic achievements.</Text>
-                    <Text mt={4}>You can add degrees, certifications, and relevant coursework.</Text>
-                </Card.Body>
-            </Card.Root>
-        )
-    },
-    {
-        id: 3,
-        title: 'Experience',
-        icon: FaBriefcase,
-        completed: true,
+//         revisionHash: '',
+//         content: (
+//             <Card.Root>
+//                 <Card.Body>
+//                     <Heading size="md" mb={4}>Education History</Heading>
+//                     <Text>Your education background and academic achievements.</Text>
+//                     <Text mt={4}>You can add degrees, certifications, and relevant coursework.</Text>
+//                 </Card.Body>
+//             </Card.Root>
+//         )
+//     },
+//     {
+//         id: 3,
+//         title: 'Experience',
+//         icon: FaBriefcase,
+//         completed: true,
 
-        revisionHash: '',
-        content: (
-            <Card.Root>
-                <Card.Body>
-                    <Heading size="md" mb={4}>Work Experience</Heading>
-                    <Text>Your professional history and career milestones.</Text>
-                    <Text mt={4}>Include relevant job positions, responsibilities, and accomplishments.</Text>
-                </Card.Body>
-            </Card.Root>
-        )
-    },
-    {
-        id: 4,
-        title: 'Skills',
-        icon: FaCoffee,
-        completed: false,
+//         revisionHash: '',
+//         content: (
+//             <Card.Root>
+//                 <Card.Body>
+//                     <Heading size="md" mb={4}>Work Experience</Heading>
+//                     <Text>Your professional history and career milestones.</Text>
+//                     <Text mt={4}>Include relevant job positions, responsibilities, and accomplishments.</Text>
+//                 </Card.Body>
+//             </Card.Root>
+//         )
+//     },
+//     {
+//         id: 4,
+//         title: 'Skills',
+//         icon: FaCoffee,
+//         completed: false,
 
-        revisionHash: '',
-        content: (
-            <Card.Root>
-                <Card.Body>
-                    <Heading size="md" mb={4}>Skills & Expertise</Heading>
-                    <Text>Highlight your technical and soft skills.</Text>
-                    <Text mt={4}>This section needs to be completed. Add your core competencies and expertise areas.</Text>
-                </Card.Body>
-            </Card.Root>
-        )
-    },
-    {
-        id: 5,
-        title: 'Achievements',
-        icon: FaAward,
-        completed: false,
+//         revisionHash: '',
+//         content: (
+//             <Card.Root>
+//                 <Card.Body>
+//                     <Heading size="md" mb={4}>Skills & Expertise</Heading>
+//                     <Text>Highlight your technical and soft skills.</Text>
+//                     <Text mt={4}>This section needs to be completed. Add your core competencies and expertise areas.</Text>
+//                 </Card.Body>
+//             </Card.Root>
+//         )
+//     },
+//     {
+//         id: 5,
+//         title: 'Achievements',
+//         icon: FaAward,
+//         completed: false,
 
-        revisionHash: '',
-        content: (
-            <Card.Root>
-                <Card.Body>
-                    <Heading size="md" mb={4}>Achievements & Awards</Heading>
-                    <Text>Your notable accomplishments and recognitions.</Text>
-                    <Text mt={4}>This section needs to be completed. Add your awards, certificates, and significant achievements.</Text>
-                </Card.Body>
-            </Card.Root>
-        )
-    }
-];
+//         revisionHash: '',
+//         content: (
+//             <Card.Root>
+//                 <Card.Body>
+//                     <Heading size="md" mb={4}>Achievements & Awards</Heading>
+//                     <Text>Your notable accomplishments and recognitions.</Text>
+//                     <Text mt={4}>This section needs to be completed. Add your awards, certificates, and significant achievements.</Text>
+//                 </Card.Body>
+//             </Card.Root>
+//         )
+//     }
+// ];
 
 export default function WorkFlowPage() {
     const [activeStep, setActiveStep] = useState(1);
     const [timeLineTitle, setTimeLineTitle] = useState("");
     const [error, setError] = useState("");
     const [aquaTreeVerificationWithStatuses, setAquaTreeVerificationWithStatuses] = useState<Array<RevisionVerificationStatus>>([]);
-    const [timeLineItems, setTimeLineItems] = useState<Array<WorkFlowTimeLine>>([]);
+    const [timeLineItems, _setTimeLineItems] = useState<Array<WorkFlowTimeLine>>([]);
     const { selectedFileInfo, formTemplates } = useStore(appStore);
 
 
@@ -123,7 +122,7 @@ export default function WorkFlowPage() {
 
         let items: Array<WorkFlowTimeLine> = []
         // Get the first two elements
-        const firstTwo = aquaTreeVerificationWithStatuses.slice(0, 2);
+        // const firstTwo = aquaTreeVerificationWithStatuses.slice(0, 2);
         // console.log("First two elements:", firstTwo); // [1, 2]
 
         items.push({
@@ -137,7 +136,7 @@ export default function WorkFlowPage() {
 
 
         // Get the rest of the elements (from index 2 onward)
-        const rest = aquaTreeVerificationWithStatuses.slice(2);
+        // const rest = aquaTreeVerificationWithStatuses.slice(2);
 
 
         // for (const [index, item] of aquaTreeVerificationWithStatuses.entries()) {
@@ -253,29 +252,30 @@ export default function WorkFlowPage() {
 
     }, [])
 
-    const getTitleToDisplay = (index: number, hash: string) => {
+    // TODO: Implement this
+    // const getTitleToDisplay = (index: number, hash: string) => {
 
-        if (index == 0) {
+    //     if (index == 0) {
 
-        }
-        return ""
-    }
-    const getIconToDisplay = (index: number, hash: string) => {
+    //     }
+    //     return ""
+    // }
+    // const getIconToDisplay = (index: number, hash: string) => {
 
-        return FaBook
-    }
-    const getContentToDisplay = (index: number, hash: string) => {
+    //     return FaBook
+    // }
+    // const getContentToDisplay = (index: number, hash: string) => {
 
-        if (index == 0) {
-            return <>
-                <h2>Form Template</h2>
-            </>
-        }
+    //     if (index == 0) {
+    //         return <>
+    //             <h2>Form Template</h2>
+    //         </>
+    //     }
 
 
-        return <>..</>
+    //     return <>..</>
 
-    }
+    // }
 
     const genesisContent = () => {
         return <>

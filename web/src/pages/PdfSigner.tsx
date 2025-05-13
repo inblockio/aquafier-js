@@ -27,6 +27,7 @@ import { DialogBody, DialogContent, DialogHeader, DialogRoot } from '../componen
 import { PDFJSViewer } from 'pdfjs-react-viewer';
 import { useColorMode } from '../components/chakra-ui/color-mode';
 import { PdfControls } from '../components/FilePreview';
+import axios from 'axios';
 
 // Interface for signature position
 interface SignaturePosition {
@@ -37,15 +38,17 @@ interface SignaturePosition {
     width: number;
     height: number;
     isDragging?: boolean;
+    signatureId?: string; // Reference to the signature that was placed
 }
 
 // Interface for signature data
-// interface SignatureData {
-//     dataUrl: string;
-//     walletAddress: string;
-//     name: string;
-//     positions: SignaturePosition[];
-// }
+interface SignatureData {
+    id: string;
+    dataUrl: string;
+    walletAddress: string;
+    name: string;
+    createdAt: Date;
+}
 
 const PdfSigner = () => {
     // State for PDF document
@@ -55,9 +58,10 @@ const PdfSigner = () => {
     // const [numPages, setNumPages] = useState<number>(0);
     const [currentPage, setCurrentPage] = useState<number>(1);
 
-    // State for signature
+    // State for signatures
     const signatureRef = useRef<SignatureCanvas | null>(null);
-    const [signatureDataUrl, setSignatureDataUrl] = useState<string | null>(null);
+    const [signatures, setSignatures] = useState<SignatureData[]>([]);
+    const [selectedSignatureId, setSelectedSignatureId] = useState<string | null>(null);
     const [signerName, setSignerName] = useState<string>('');
     const [signaturePositions, setSignaturePositions] = useState<SignaturePosition[]>([]);
     const [placingSignature, setPlacingSignature] = useState<boolean>(false);
@@ -69,7 +73,7 @@ const PdfSigner = () => {
 
 
     // Get wallet address from store
-    const { session } = useStore(appStore);
+    const { session, backend_url } = useStore(appStore);
 
     // PDF viewer container ref
     const pdfContainerRef = useRef<HTMLDivElement>(null);
@@ -115,7 +119,7 @@ const PdfSigner = () => {
     const clearSignature = () => {
         if (signatureRef.current) {
             signatureRef.current.clear();
-            setSignatureDataUrl(null);
+            // Don't clear all signatures, just reset the canvas
         }
     };
 
@@ -123,9 +127,41 @@ const PdfSigner = () => {
     const saveSignature = () => {
         if (signatureRef.current && !signatureRef.current.isEmpty()) {
             const dataUrl = signatureRef.current.toDataURL('image/png');
-            setSignatureDataUrl(dataUrl);
+            
+            // Create a new signature object with unique ID
+            const newId = crypto.randomUUID();
+            const newSignature: SignatureData = {
+                id: newId,
+                dataUrl,
+                walletAddress: session?.address || 'No wallet connected',
+                name: signerName || 'Unnamed Signature',
+                createdAt: new Date()
+            };
+            
+            // Add the new signature to the array
+            console.log('Adding new signature:', newSignature);
+            setSignatures(prevSignatures => {
+                const updatedSignatures = [...prevSignatures, newSignature];
+                console.log('Updated signatures array:', updatedSignatures);
+                return updatedSignatures;
+            });
+            
+            // Select the newly created signature
+            setSelectedSignatureId(newId);
             setIsOpen(false);
-
+            
+            // Clear the canvas for next signature
+            if (signatureRef.current) {
+                signatureRef.current.clear();
+            }
+            
+            toaster.create({
+                title: "Signature saved",
+                description: "You can now place it on the document",
+                type: "success",
+                duration: 3000,
+            });
+            
             // If user is in placing mode, allow them to place the signature
             if (!placingSignature) {
                 setPlacingSignature(true);
@@ -146,7 +182,10 @@ const PdfSigner = () => {
 
     // Handle click on PDF to place signature
     const handlePdfClick = (e: React.MouseEvent<HTMLDivElement>) => {
-        if (!placingSignature || !pdfMainContainerRef.current || !signatureDataUrl) return;
+        if (!placingSignature || !pdfMainContainerRef.current || !selectedSignatureId) return;
+        
+        const selectedSignature = signatures.find(sig => sig.id === selectedSignatureId);
+        if (!selectedSignature) return;
 
         // Get the PDF container dimensions
         const rect = pdfMainContainerRef.current.getBoundingClientRect();
@@ -173,7 +212,8 @@ const PdfSigner = () => {
             x: relativeX,
             y: relativeY,
             width: relativeWidth,
-            height: relativeHeight
+            height: relativeHeight,
+            signatureId: selectedSignatureId
         };
 
         setSignaturePositions(prev => [...prev, newPosition]);
@@ -189,7 +229,7 @@ const PdfSigner = () => {
 
     // Generate signed PDF
     const generateSignedPdf = async () => {
-        if (!pdfDoc || !signatureDataUrl || signaturePositions.length === 0) {
+        if (!pdfDoc || signatures.length === 0 || signaturePositions.length === 0) {
             toaster.create({
                 title: "Missing information",
                 description: "Please upload a PDF, create a signature, and place it on the document",
@@ -204,11 +244,27 @@ const PdfSigner = () => {
             const pdfBytes = await pdfDoc.save();
             const signedPdfDoc = await PDFDocument.load(pdfBytes);
 
-            // Embed the signature image
-            const signatureImage = await signedPdfDoc.embedPng(signatureDataUrl);
+            // Create a map of signature images for quick lookup
+            const signatureImagesMap = new Map();
+            
+            // Embed all signature images that are used in positions
+            for (const signature of signatures) {
+                if (signaturePositions.some(pos => pos.signatureId === signature.id)) {
+                    const signatureImage = await signedPdfDoc.embedPng(signature.dataUrl);
+                    signatureImagesMap.set(signature.id, signatureImage);
+                }
+            }
 
             // Add signature to each position
             for (const position of signaturePositions) {
+                if (!position.signatureId) continue;
+                
+                const signature = signatures.find(sig => sig.id === position.signatureId);
+                if (!signature) continue;
+                
+                const signatureImage = signatureImagesMap.get(position.signatureId);
+                if (!signatureImage) continue;
+                
                 const page = signedPdfDoc.getPage(position.pageIndex);
                 const { width, height } = page.getSize();
 
@@ -232,7 +288,7 @@ const PdfSigner = () => {
                 const signatureLeftEdge = signatureX - (position.width * width / 2);
 
                 // Draw name aligned with the left edge of the signature
-                page.drawText(signerName, {
+                page.drawText(signature.name, {
                     x: signatureLeftEdge,
                     y: signatureY - (position.height * height / 2) - 12,
                     size: fontSize,
@@ -241,7 +297,7 @@ const PdfSigner = () => {
                 });
 
                 // Draw wallet address
-                const shortenedAddress = session?.address || 'No wallet connected';
+                const shortenedAddress = signature.walletAddress;
 
                 // Draw wallet address aligned with the left edge of the signature
                 page.drawText(shortenedAddress, {
@@ -391,7 +447,10 @@ const PdfSigner = () => {
 
     // Component for signature display on PDF
     const SignatureOverlay = ({ position }: { position: SignaturePosition }) => {
-        if (position.pageIndex !== currentPage - 1 || !signatureDataUrl) return null;
+        if (position.pageIndex !== currentPage - 1 || !position.signatureId) return null;
+        
+        const signature = signatures.find(sig => sig.id === position.signatureId);
+        if (!signature) return null;
         console.log("Signature overlay", position)
         // Find the actual PDF element for proper positioning
         const pdfElement = pdfMainContainerRef.current?.querySelector('.react-pdf__Page');
@@ -428,14 +487,14 @@ const PdfSigner = () => {
                 <Stack gap={1} justifyContent={"flex-start"} height="100%">
                     <Box
                         flex="1"
-                        backgroundImage={`url(${signatureDataUrl})`}
+                        backgroundImage={`url(${signature.dataUrl})`}
                         backgroundSize="contain"
                         backgroundRepeat="no-repeat"
                         backgroundPosition="left"
                         minHeight="40px"
                     />
-                    <Text fontSize="xs" color="gray.600" style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{session?.address}</Text>
-                    <Text fontSize="xs" color="gray.600" style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{signerName}</Text>
+                    <Text fontSize="xs" color="gray.600" style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{signature.walletAddress}</Text>
+                    <Text fontSize="xs" color="gray.600" style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{signature.name}</Text>
                 </Stack>
             </Box>
         );
@@ -444,6 +503,23 @@ const PdfSigner = () => {
     const handlePageChange = (pageNumber: number, _totalPages: number) => {
         setCurrentPage(pageNumber);
     };
+
+    const loadUserSignatures= () => {
+        let url = `${backend_url}/tree/user_signatures`
+        axios.get(url, {
+            headers: {
+                "nonce": session?.nonce
+            }
+        })
+            .then(response => {
+                const userSignatures = response.data.data
+                // Make the logic here work with the current Signature Interface
+                console.log("User signatures", userSignatures)
+            })
+            .catch(error => {
+                console.log(error)
+            })
+    }
 
     // Effect to update signature positions when window is resized
     useEffect(() => {
@@ -456,7 +532,12 @@ const PdfSigner = () => {
         return () => window.removeEventListener('resize', handleResize);
     }, []);
 
-    console.log("Signature positions", signaturePositions)
+    // console.log("Signatures", signatures)
+    // console.log("Signature positions", signaturePositions)
+
+    useEffect(() => {
+        loadUserSignatures()
+    }, [])
 
     return (
         <Container maxW="container.xl" py={"6"} h={"calc(100vh - 70px)"} overflow={{base: "scroll", md: "hidden"}}>
@@ -483,7 +564,7 @@ const PdfSigner = () => {
             {/* PDF viewer and signature tools */}
             {pdfUrl && (
                 <Grid templateColumns="repeat(4, 1fr)" gap="6"
-                h={{base: "fit-content", md: "calc(100vh - 120px - 130px)"}} overflow={{base: "scroll", md: "hidden"}}
+                h={{base: "fit-content", md: "calc(100vh - 120px - 150px)"}} overflow={{base: "scroll", md: "hidden"}}
                 >
                     {/* PDF viewer */}
                     <GridItem colSpan={{ base: 12, md: 3 }} h={"100%"} overflow={"scroll"} >
@@ -546,21 +627,74 @@ const PdfSigner = () => {
                                 <FaPlus />
                                 Create Signature
                             </Button>
-
-                            {signatureDataUrl && (
+                            
+                            {/* Signature List */}
+                            {signatures.length > 0 && (
                                 <>
-                                    <Text fontWeight="bold">Your Signature:</Text>
-                                    <Box
-                                        border="1px solid"
-                                        borderColor="gray.200"
-                                        p={2}
-                                        borderRadius="md"
-                                        height="80px"
-                                        backgroundImage={`url(${signatureDataUrl})`}
-                                        backgroundSize="contain"
-                                        backgroundRepeat="no-repeat"
-                                        backgroundPosition="center"
-                                    />
+                                    <Text fontWeight="bold" mt={2}>Your Signatures:</Text>
+                                    <Box maxH="200px" overflowY="auto" border="1px solid" borderColor="gray.200" borderRadius="md">
+                                        <Stack gap={0}>
+                                            {signatures.map((signature) => (
+                                                <Box 
+                                                    key={signature.id} 
+                                                    p={2} 
+                                                    cursor="pointer"
+                                                    bg={selectedSignatureId === signature.id ? "blue.50" : "transparent"}
+                                                    _hover={{ bg: "gray.50" }}
+                                                    onClick={() => {
+                                                        setSelectedSignatureId(signature.id);
+                                                    }}
+                                                >
+                                                    <HStack>
+                                                        <Box
+                                                            width="60px"
+                                                            height="40px"
+                                                            backgroundImage={`url(${signature.dataUrl})`}
+                                                            backgroundSize="contain"
+                                                            backgroundRepeat="no-repeat"
+                                                            backgroundPosition="center"
+                                                            border="1px solid"
+                                                            borderColor="gray.200"
+                                                            borderRadius="sm"
+                                                        />
+                                                        <Stack gap={0}>
+                                                            <Text fontSize="sm" fontWeight="medium">{signature.name}</Text>
+                                                            <Text fontSize="xs" color="gray.600">
+                                                                {signature.walletAddress.length > 10 
+                                                                    ? `${signature.walletAddress.substring(0, 6)}...${signature.walletAddress.substring(signature.walletAddress.length - 4)}`
+                                                                    : signature.walletAddress
+                                                                }
+                                                            </Text>
+                                                        </Stack>
+                                                    </HStack>
+                                                </Box>
+                                            ))}
+                                        </Stack>
+                                    </Box>
+                                </>
+                            )}
+
+                            {selectedSignatureId && (
+                                <>
+                                    <Text fontWeight="bold" mt={2}>Selected Signature:</Text>
+                                    {(() => {
+                                        const selectedSignature = signatures.find(sig => sig.id === selectedSignatureId);
+                                        if (!selectedSignature) return null;
+                                        
+                                        return (
+                                            <Box
+                                                border="1px solid"
+                                                borderColor="gray.200"
+                                                p={2}
+                                                borderRadius="md"
+                                                height="80px"
+                                                backgroundImage={`url(${selectedSignature.dataUrl})`}
+                                                backgroundSize="contain"
+                                                backgroundRepeat="no-repeat"
+                                                backgroundPosition="center"
+                                            />
+                                        );
+                                    })()}
 
                                     <Field>
                                         <FieldLabel>Signature Size: {signatureSize}px</FieldLabel>
@@ -586,11 +720,44 @@ const PdfSigner = () => {
 
                                     <Button
                                         colorScheme="teal"
-                                        disabled={!signatureDataUrl}
                                         onClick={() => setPlacingSignature(true)}
                                     >
                                         Place Signature on Document
                                     </Button>
+                                    
+                                    {/* Signatures placed on document */}
+                                    {signaturePositions.length > 0 && (
+                                        <>
+                                            <Text fontWeight="bold" mt={2}>Signatures on Document:</Text>
+                                            <Box maxH="150px" overflowY="auto" border="1px solid" borderColor="gray.200" borderRadius="md">
+                                                <Stack gap={0}>
+                                                    {signaturePositions.map((position) => {
+                                                        const signature = signatures.find(sig => sig.id === position.signatureId);
+                                                        if (!signature) return null;
+                                                        
+                                                        return (
+                                                            <HStack key={position.id} p={2} justify="space-between">
+                                                                <HStack>
+                                                                    <Box
+                                                                        width="40px"
+                                                                        height="30px"
+                                                                        backgroundImage={`url(${signature.dataUrl})`}
+                                                                        backgroundSize="contain"
+                                                                        backgroundRepeat="no-repeat"
+                                                                        backgroundPosition="center"
+                                                                        border="1px solid"
+                                                                        borderColor="gray.200"
+                                                                        borderRadius="sm"
+                                                                    />
+                                                                    <Text fontSize="xs">{signature.name} (Page {position.pageIndex + 1})</Text>
+                                                                </HStack>
+                                                            </HStack>
+                                                        );
+                                                    })}
+                                                </Stack>
+                                            </Box>
+                                        </>
+                                    )}
 
                                     {signaturePositions.length > 0 && (
                                         <Text fontSize="sm" color="gray.600">

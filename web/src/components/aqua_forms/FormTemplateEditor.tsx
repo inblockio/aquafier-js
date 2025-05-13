@@ -10,7 +10,7 @@ import {
   SimpleGrid,
   Stack
 } from '@chakra-ui/react';
-import { FormField, FormTemplate } from './types/types';
+import { FormField, FormTemplate } from './types';
 // import { saveFormTemplate } from './formService';
 import { useForm } from 'react-hook-form'
 
