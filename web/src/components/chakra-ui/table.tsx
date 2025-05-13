@@ -12,7 +12,7 @@ import { Checkbox } from "./checkbox"
 import { SetStateAction, useEffect, useState } from "react"
 import { useStore } from "zustand"
 import appStore from "../../store"
-import { displayTime, getAquaTreeFileObject, getFileCategory, getFileExtension, getAquaTreeFileName, isWorkFlowData } from "../../utils/functions"
+import { displayTime, getAquaTreeFileObject, getFileCategory, getFileExtension, getAquaTreeFileName } from "../../utils/functions"
 
 import { DeleteAquaChain, LinkButton, DownloadAquaChain, SignAquaChain, WitnessAquaChain } from "../aqua_chain_actions"
 import { ChainDetailsBtn, CompleteChainView } from "../CustomDrawer"
@@ -22,13 +22,13 @@ import ShareButtonAction from "../actions/ShareButtonAction"
 import { DrawerActionTrigger, DrawerBackdrop, DrawerBody, DrawerContent, DrawerFooter, DrawerRoot, DrawerTitle } from "./drawer"
 import { LuPower, LuX } from "react-icons/lu"
 import { IDrawerStatus } from "../../models/AquaTreeDetails"
-import Aquafier, { FileObject } from "aqua-js-sdk"
+import { FileObject } from "aqua-js-sdk"
 import { useNavigate } from "react-router-dom"
 
 
 const FilesTable = () => {
     const [filesToDisplay, setFilesToDisplay] = useState<ApiFileInfo[]>([])
-    const { files, backend_url, session, setSelectedFileInfo, selectedFileInfo, systemFileInfo } = useStore(appStore)
+    const { files, backend_url, session, setSelectedFileInfo, selectedFileInfo } = useStore(appStore)
     const [selection, setSelection] = useState<string[]>([])
 
     const [isOpen, setIsOpen] = useState(false)
@@ -37,7 +37,7 @@ const FilesTable = () => {
 
     let navigate = useNavigate();
 
-    const aquafier = new Aquafier();
+    // const aquafier = new Aquafier();
     const hasSelection = selection.length > 0
     const indeterminate = hasSelection && selection.length < files.length
 
@@ -89,16 +89,18 @@ const FilesTable = () => {
 
 
     const tableItem = (fileObject: FileObject, item: ApiFileInfo, index: number) => {
-        let { isWorkFlow, workFlow } = isWorkFlowData(item.aquaTree!!, systemFileInfo.map((e) => {
-            try {
-                return getAquaTreeFileName(e.aquaTree!!)
-            } catch (e) {
-                console.log("Error")
-                return ""
-            }
-        }));
+        // let { isWorkFlow, workFlow } = isWorkFlowData(item.aquaTree!!, systemFileInfo.map((e) => {
+        //     try {
+        //         return getAquaTreeFileName(e.aquaTree!!)
+        //     } catch (e) {
+        //         console.log("Error")
+        //         return ""
+        //     }
+        // }));
 
         // { isWorkFlow : false  , workFlow: ''}
+        let isWorkFlow = true;
+        let workFlow = "document_contract";
 
 
         return <Table.Row
@@ -193,14 +195,18 @@ const FilesTable = () => {
             let fileObject = getAquaTreeFileObject(item)
 
             console.log(`Daata ${JSON.stringify(item.aquaTree, null, 4)}`)
-            let { isWorkFlow, workFlow } = aquafier.isWorkFlow(item.aquaTree!!, systemFileInfo.map((e) => {
-                try {
-                    return getAquaTreeFileName(e.aquaTree!!)
-                } catch (e) {
-                    console.log("Error")
-                    return ""
-                }
-            }));
+            // TODO: Fix this; type overloads here, `someData` can't be used in `isWorkflow` function. Type mismatch
+            // let someData = systemFileInfo.map((e) => {
+            //     try {
+            //         return getAquaTreeFileName(e.aquaTree!!)
+            //     } catch (e) {
+            //         console.log("Error")
+            //         return ""
+            //     }
+            // })
+            // let { isWorkFlow, workFlow } = aquafier.isWorkFlow(item.aquaTree!!, someData);
+            let isWorkFlow = true;
+            let workFlow = "document_contract";
 
 
             if (fileObject) {
