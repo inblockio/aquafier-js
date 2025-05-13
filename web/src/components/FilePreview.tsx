@@ -322,7 +322,7 @@ const FilePreview: React.FC<IFilePreview> = ({ fileInfo }) => {
 
     // PDF files
     if (fileType === "application/pdf") {
-        
+        console.log("File url: ", fileURL)
         return <PDFJSViewer pdfUrl={fileURL} renderControls={PdfControls} />;
     }
 

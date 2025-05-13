@@ -12,7 +12,7 @@ import { Checkbox } from "./checkbox"
 import { SetStateAction, useEffect, useState } from "react"
 import { useStore } from "zustand"
 import appStore from "../../store"
-import { displayTime, getAquaTreeFileObject, getFileCategory, getFileExtension, getAquaTreeFileName } from "../../utils/functions"
+import { displayTime, getAquaTreeFileObject, getFileCategory, getFileExtension, getAquaTreeFileName, isWorkFlowData } from "../../utils/functions"
 
 import { DeleteAquaChain, LinkButton, DownloadAquaChain, SignAquaChain, WitnessAquaChain } from "../aqua_chain_actions"
 import { ChainDetailsBtn, CompleteChainView } from "../CustomDrawer"
@@ -28,7 +28,7 @@ import { useNavigate } from "react-router-dom"
 
 const FilesTable = () => {
     const [filesToDisplay, setFilesToDisplay] = useState<ApiFileInfo[]>([])
-    const { files, backend_url, session, setSelectedFileInfo, selectedFileInfo } = useStore(appStore)
+    const { files, backend_url, session, setSelectedFileInfo, selectedFileInfo, systemFileInfo } = useStore(appStore)
     const [selection, setSelection] = useState<string[]>([])
 
     const [isOpen, setIsOpen] = useState(false)
@@ -89,18 +89,18 @@ const FilesTable = () => {
 
 
     const tableItem = (fileObject: FileObject, item: ApiFileInfo, index: number) => {
-        // let { isWorkFlow, workFlow } = isWorkFlowData(item.aquaTree!!, systemFileInfo.map((e) => {
-        //     try {
-        //         return getAquaTreeFileName(e.aquaTree!!)
-        //     } catch (e) {
-        //         console.log("Error")
-        //         return ""
-        //     }
-        // }));
+        let { isWorkFlow, workFlow } = isWorkFlowData(item.aquaTree!!, systemFileInfo.map((e) => {
+            try {
+                return getAquaTreeFileName(e.aquaTree!!)
+            } catch (e) {
+                console.log("Error")
+                return ""
+            }
+        }));
 
         // { isWorkFlow : false  , workFlow: ''}
-        let isWorkFlow = true;
-        let workFlow = "document_contract";
+        // let isWorkFlow = true;
+        // let workFlow = "document_contract";
 
 
         return <Table.Row
@@ -196,17 +196,15 @@ const FilesTable = () => {
 
             console.log(`Daata ${JSON.stringify(item.aquaTree, null, 4)}`)
             // TODO: Fix this; type overloads here, `someData` can't be used in `isWorkflow` function. Type mismatch
-            // let someData = systemFileInfo.map((e) => {
-            //     try {
-            //         return getAquaTreeFileName(e.aquaTree!!)
-            //     } catch (e) {
-            //         console.log("Error")
-            //         return ""
-            //     }
-            // })
-            // let { isWorkFlow, workFlow } = aquafier.isWorkFlow(item.aquaTree!!, someData);
-            let isWorkFlow = true;
-            let workFlow = "document_contract";
+            let someData = systemFileInfo.map((e) => {
+                try {
+                    return getAquaTreeFileName(e.aquaTree!!)
+                } catch (e) {
+                    console.log("Error")
+                    return ""
+                }
+            })
+            let { isWorkFlow, workFlow } = isWorkFlowData(item.aquaTree!!, someData);
 
 
             if (fileObject) {

@@ -8,7 +8,8 @@ import {
     VStack,
     // HStack,
     Container,
-    Heading
+    Heading,
+    Stack
 } from '@chakra-ui/react';
 // import { Card } from '@chakra-ui/react';
 // import { FaCheck, FaQuestionCircle, FaBriefcase, FaBook, FaCoffee, FaAward, FaUser } from 'react-icons/fa';
@@ -18,9 +19,9 @@ import appStore from '../../store';
 import { useStore } from "zustand"
 import { WorkFlowTimeLine } from '../../types/types';
 import { RevisionVerificationStatus } from '../../types/types';
-import Aquafier from 'aqua-js-sdk';
-import { isWorkFlowData } from '../../utils/functions';
-
+import Aquafier, { OrderRevisionInAquaTree } from 'aqua-js-sdk';
+import { ensureDomainUrlHasSSL, isWorkFlowData } from '../../utils/functions';
+import { PDFJSViewer } from 'pdfjs-react-viewer';
 // Timeline data
 // const timelineItems = [
 //     {
@@ -115,15 +116,15 @@ export default function WorkFlowPage() {
     const [error, setError] = useState("");
     const [aquaTreeVerificationWithStatuses, setAquaTreeVerificationWithStatuses] = useState<Array<RevisionVerificationStatus>>([]);
     const [timeLineItems, setTimeLineItems] = useState<Array<WorkFlowTimeLine>>([]);
-    const { selectedFileInfo, formTemplates } = useStore(appStore);
+    const { selectedFileInfo, formTemplates, session } = useStore(appStore);
 
 
     useEffect(() => {
-
-        let items: Array<WorkFlowTimeLine> = []
-        // Get the first two elements
-        // const _firstTwo = aquaTreeVerificationWithStatuses.slice(0, 2);
-        // console.log("First two elements:", firstTwo); // [1, 2]
+        async function loadTimeline() {
+            let items: Array<WorkFlowTimeLine> = []
+            // Get the first two elements
+            // const _firstTwo = aquaTreeVerificationWithStatuses.slice(0, 2);
+            // console.log("First two elements:", firstTwo); // [1, 2]
 
         items.push({
             id: 1,
@@ -147,7 +148,7 @@ export default function WorkFlowPage() {
 
             let titleData = getTitleToDisplay(index)
             let iconData = getIconToDisplay(index)
-            let contentData = getContentToDisplay(index)
+            let contentData = await getContentToDisplay(index)
 
             items.push({
                 id: index,
@@ -184,9 +185,9 @@ export default function WorkFlowPage() {
         if (items.length == 3) {
 
             let index4 =4
-            let titleData4 = getTitleToDisplay(index4)
+            let titleData4 = await getTitleToDisplay(index4)
             let iconData4 = getIconToDisplay(index4)
-            let contentData4 = getContentToDisplay(index4)
+            let contentData4 = await getContentToDisplay(index4)
 
             items.push({
                 id: 4,
@@ -201,7 +202,7 @@ export default function WorkFlowPage() {
 
             let titleData5 = getTitleToDisplay(5)
             let iconData5 = getIconToDisplay(5)
-            let contentData5 = getContentToDisplay(5)
+            let contentData5 = await getContentToDisplay(5)
 
             items.push({
                 id: 5,
@@ -219,7 +220,9 @@ export default function WorkFlowPage() {
 
         setTimeLineItems(items)
 
+    }
 
+    loadTimeline()
 
     }, [aquaTreeVerificationWithStatuses])
 
@@ -313,6 +316,7 @@ export default function WorkFlowPage() {
         }
         return ""
     }
+
     const getIconToDisplay = (index: number) => {
 
         if (index == 0 || index == 1) {
@@ -339,21 +343,117 @@ export default function WorkFlowPage() {
 
         return FaEraser
     }
-    const getContentToDisplay = (index: number) => {
+
+    // Helper function to get content type from file extension
+    // const getContentTypeFromFileName = (fileName: string): string => {
+    //     if (!fileName) return "application/octet-stream";
+    //     const extension = fileName.split('.').pop()?.toLowerCase() || "";
+    //     if (extension === "pdf") return "application/pdf";
+    //     return "application/octet-stream";
+    // };
+
+    console.log("fie: ", selectedFileInfo)
+
+    const fetchFile = async (fileUrl: string) => {
+        try {
+            const actualUrlToFetch = ensureDomainUrlHasSSL(fileUrl);
+            const response = await fetch(actualUrlToFetch, {
+                headers: {
+                    nonce: `${session?.nonce}`
+                }
+            });
+            
+            if (!response.ok) {
+                console.error("Failed to fetch file:", response.status, response.statusText);
+                return null;
+            }
+
+            // Get content type from headers
+            let contentType = response.headers.get("Content-Type") || "";
+            console.log("fetched: ", response, "content type:", contentType);
+            
+            // If content type is missing or generic, try to detect from URL
+            if (contentType === "application/octet-stream" || contentType === "") {
+                if (fileUrl.toLowerCase().endsWith(".pdf")) {
+                    contentType = "application/pdf";
+                    console.log("Determined content type from filename:", contentType);
+                }
+            }
+            
+            // Process PDF files
+            if (contentType === "application/pdf" || fileUrl.toLowerCase().endsWith(".pdf")) {
+                const arrayBuffer = await response.arrayBuffer();
+                // Ensure we use the PDF content type
+                const blob = new Blob([arrayBuffer], { type: "application/pdf" });
+                return URL.createObjectURL(blob);
+            }
+            
+            return null;
+        } catch (error) {
+            console.error("Error fetching file:", error);
+            return null;
+        }
+    }
+
+  
+    
+    const getContentToDisplay = async (index: number) => {
+
+        // const orderedTree = OrderRevisionInAquaTree(selectedFileInfo!.aquaTree!)
+        // console.log("File objects", orderedTree.file_index)
+        // const revisions = orderedTree.revisions
+        // const revisionHashes = Object.keys(revisions)
+        // console.log("selected file info: ", selectedFileInfo?.fileObject)
 
         if (index == 0 || index == 1) {
             return genesisContent()
         }
 
+        if (index == 2) {
+            const fileObjects = selectedFileInfo?.fileObject
+            const actualPdf = fileObjects?.find((e) => e.fileName.endsWith(".pdf"))
+            const fileUrl = actualPdf?.fileContent
+            const pdfUrl = await fetchFile(fileUrl as string)
+            if (!pdfUrl) {
+                return <>No PDF found</>
+            }
+            console.log("objectURL", pdfUrl)
+            return <PDFJSViewer pdfUrl={pdfUrl} />
+        }
+
+        if (index == 3) {
+            return <>Index 3</>
+        }
+
+        if (index == 4) {
+            return <>Index 4</>
+        }
+
+        if (index == 5) {
+            return <>Index 5</>
+        }
 
         return <>..</>
 
     }
 
     const genesisContent = () => {
-        return <>
-            <h6>Contract creation</h6>
-        </>
+        const orderedTree = OrderRevisionInAquaTree(selectedFileInfo!.aquaTree!)
+        const revisions = orderedTree.revisions
+        const revisionHashes = Object.keys(revisions)
+        const revision = revisions[revisionHashes[0]]
+        return (
+        <Stack>
+            <Text>A contract has been shared with you to sign. If you accept the contract, you will be able to sign it.</Text>
+            <Text>Contract Name: {selectedFileInfo!.aquaTree!.file_index[revisionHashes[0]]}</Text>
+            <Heading size="md" fontWeight={700}>All signers</Heading>
+            {
+                revision.forms_signers.split(",").map((signer: string, index: number) => {
+                    return <Alert key={index} title={signer} />
+                })
+            }
+        </Stack>
+    )
     }
 
     // Find the currently active content
