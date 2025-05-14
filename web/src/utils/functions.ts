@@ -889,6 +889,42 @@ export function timeStampToDateObject(timestamp: string): Date | null {
     }
 }
 
+
+// Function to convert data URL to File object
+export const dataURLToFile = (dataUrl: string, filename: string): File => {
+    // Split the data URL to get the MIME type and base64 data
+    const arr = dataUrl.split(',');
+    const mime = arr[0].match(/:(.*?);/)?.[1] || 'image/png';
+    const bstr = atob(arr[1]);
+    
+    // Convert base64 to binary
+    let n = bstr.length;
+    const u8arr = new Uint8Array(n);
+    
+    while (n--) {
+      u8arr[n] = bstr.charCodeAt(n);
+    }
+    
+    // Create and return File object
+    return new File([u8arr], filename, { type: mime });
+  };
+  
+  // Function to convert data URL to Uint8Array
+ export  const dataURLToUint8Array = (dataUrl: string): Uint8Array => {
+    // Extract the base64 data
+    const base64Data = dataUrl.split(',')[1];
+    // Convert base64 to binary string
+    const binaryString = atob(base64Data);
+    
+    // Create Uint8Array from binary string
+    const bytes = new Uint8Array(binaryString.length);
+    for (let i = 0; i < binaryString.length; i++) {
+      bytes[i] = binaryString.charCodeAt(i);
+    }
+    
+    return bytes;
+  };
+
 export function timeToHumanFriendly(timestamp: string | undefined, showFull: boolean = false): string {
     if (!timestamp) {
         return '-';

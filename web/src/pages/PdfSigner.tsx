@@ -29,7 +29,8 @@ import { useColorMode } from '../components/chakra-ui/color-mode';
 import { PdfControls } from '../components/FilePreview';
 import axios from 'axios';
 import { ApiFileInfo } from '../models/FileInfo';
-import { blobToDataURL, ensureDomainUrlHasSSL, timeStampToDateObject } from '../utils/functions';
+import { blobToDataURL, dataURLToFile, dummyCredential, ensureDomainUrlHasSSL, estimateFileSize, getAquaTreeFileName, getRandomNumber, timeStampToDateObject } from '../utils/functions';
+import Aquafier, { AquaTree, AquaTreeWrapper, FileObject, getAquaTreeFileObject } from 'aqua-js-sdk';
 
 // Interface for signature position
 interface SignaturePosition {
@@ -53,6 +54,9 @@ interface SignatureData {
 }
 
 const PdfSigner = () => {
+
+
+    const { formTemplates, systemFileInfo } = useStore(appStore)
     // State for PDF document
     const [pdfFile, setPdfFile] = useState<File | null>(null);
     const [pdfUrl, setPdfUrl] = useState<string | null>(null);
@@ -64,7 +68,7 @@ const PdfSigner = () => {
     const signatureRef = useRef<SignatureCanvas | null>(null);
     const [signatures, setSignatures] = useState<SignatureData[]>([]);
     const [selectedSignatureId, setSelectedSignatureId] = useState<string | null>(null);
-    const [signerName, setSignerName] = useState<string>('');
+    const [signerName, setSignerName] = useState<string>('John Doe');
     const [signaturePositions, setSignaturePositions] = useState<SignaturePosition[]>([]);
     const [placingSignature, setPlacingSignature] = useState<boolean>(false);
     const [signatureSize, setSignatureSize] = useState<number>(150);
@@ -125,53 +129,443 @@ const PdfSigner = () => {
         }
     };
 
-    // Save signature from canvas
-    const saveSignature = () => {
-        if (signatureRef.current && !signatureRef.current.isEmpty()) {
-            const dataUrl = signatureRef.current.toDataURL('image/png');
 
-            // Create a new signature object with unique ID
-            const newId = crypto.randomUUID();
-            const newSignature: SignatureData = {
-                id: newId,
-                dataUrl,
-                walletAddress: session?.address || 'No wallet connected',
-                name: signerName || 'Unnamed Signature',
-                createdAt: new Date()
-            };
 
-            // Add the new signature to the array
-            console.log('Adding new signature:', newSignature);
-            setSignatures(prevSignatures => {
-                const updatedSignatures = [...prevSignatures, newSignature];
-                console.log('Updated signatures array:', updatedSignatures);
-                return updatedSignatures;
-            });
+    const saveAquaTree = async (aquaTree: AquaTree, fileObject: FileObject, isFinal: boolean = false, isWorkflow: boolean = false, template_id: string): Promise<Boolean> => {
+        try {
+            const url = `${backend_url}/explorer_aqua_file_upload`;
 
-            // Select the newly created signature
-            setSelectedSignatureId(newId);
-            setIsOpen(false);
+            // Create a FormData object to send multipart data
+            let formData = new FormData();
 
-            // Clear the canvas for next signature
-            if (signatureRef.current) {
-                signatureRef.current.clear();
+            // Add the aquaTree as a JSON file
+            const aquaTreeBlob = new Blob([JSON.stringify(aquaTree)], { type: 'application/json' });
+            formData.append('file', aquaTreeBlob, fileObject.fileName);
+
+            // Add the account from the session
+            formData.append('account', session?.address || '');
+            formData.append('is_workflow', `${isWorkflow}`);
+
+
+            //workflow specifi
+
+            formData.append('template_id', template_id);
+
+
+            // Check if we have an actual file to upload as an asset
+            if (fileObject.fileContent) {
+                // Set has_asset to true
+                formData.append('has_asset', 'true');
+
+                // FIXED: Properly handle the file content as binary data
+                // If fileContent is already a Blob or File object, use it directly
+                if (fileObject.fileContent instanceof Blob || fileObject.fileContent instanceof File) {
+                    formData.append('asset', fileObject.fileContent, fileObject.fileName);
+                }
+                // If it's an ArrayBuffer or similar binary data
+                else if (fileObject.fileContent instanceof ArrayBuffer ||
+                    fileObject.fileContent instanceof Uint8Array) {
+                    const fileBlob = new Blob([fileObject.fileContent], { type: 'application/octet-stream' });
+                    formData.append('asset', fileBlob, fileObject.fileName);
+                }
+                // If it's a base64 string (common for image data)
+                else if (typeof fileObject.fileContent === 'string' && fileObject.fileContent.startsWith('data:')) {
+                    // Convert base64 to blob
+                    const response = await fetch(fileObject.fileContent);
+                    const blob = await response.blob();
+                    formData.append('asset', blob, fileObject.fileName);
+                }
+                // Fallback for other string formats (not recommended for binary files)
+                else if (typeof fileObject.fileContent === 'string') {
+                    const fileBlob = new Blob([fileObject.fileContent], { type: 'text/plain' });
+                    formData.append('asset', fileBlob, fileObject.fileName);
+                }
+                // If it's something else (like an object), stringify it (not recommended for files)
+                else {
+                    console.warn('Warning: fileContent is not in an optimal format for file upload');
+                    const fileBlob = new Blob([JSON.stringify(fileObject.fileContent)], { type: 'application/json' });
+                    formData.append('asset', fileBlob, fileObject.fileName);
+                }
+
+            } else {
+                formData.append('has_asset', 'false');
             }
 
-            toaster.create({
-                title: "Signature saved",
-                description: "You can now place it on the document",
-                type: "success",
-                duration: 3000,
+            const response = await axios.post(url, formData, {
+                headers: {
+                    "nonce": session?.nonce,
+                    // Don't set Content-Type header - axios will set it automatically with the correct boundary
+                }
             });
 
-            // If user is in placing mode, allow them to place the signature
-            if (!placingSignature) {
-                setPlacingSignature(true);
+            if (response.status === 200 || response.status === 201) {
+                if (isFinal) {
+                    console.log(`Is finale ${isFinal}`)
+                }
+                // setFiles(response.data.files);
+                // toaster.create({
+                //     description: `Aqua tree created successfully`,
+                //     type: "success"
+                // });
+                // // onClose();
+                // setOpen(false)
+                // setModalFormErorMessae("")
+                // setSelectedTemplate(null)
+                // setFormData({})
+                // }
+
+                console.log(`Got back a 200..`)
+            }
+            return true
+
+
+
+        } catch (error) {
+            toaster.create({
+                title: 'Error uploading aqua tree',
+                description: error instanceof Error ? error.message : 'Unknown error',
+                type: 'error',
+                duration: 5000,
+            });
+
+            return false
+        }
+    };
+
+
+
+    const createWorkflowFromTemplate = async (): Promise<Boolean> => {
+
+        const selectedTemplate = formTemplates.find((e) => e.name == "user_signature")
+
+        if (!selectedTemplate) {
+            toaster.create({
+                description: `User Signature template not found`,
+                type: "error"
+            })
+            return false
+        }
+
+
+        if (systemFileInfo.length == 0) {
+            toaster.create({
+                description: `Aqua tree for templates not found`,
+                type: "error"
+            })
+            return false
+        }
+
+        if (!signatureRef.current) {
+            toaster.create({
+                description: `Signature image not found`,
+                type: "error"
+            })
+            return false
+        }
+
+        if (session?.address == undefined) {
+            toaster.create({
+                description: `Wallet address not found`,
+                type: "error"
+            })
+            return false
+        }
+
+
+        let templateApiFileInfo = systemFileInfo.find((e) => {
+            let nameExtract = getAquaTreeFileName(e!.aquaTree!);
+            let selectedName = `${selectedTemplate?.name}.json`
+            console.log(`nameExtract ${nameExtract} == selectedName ${selectedName}`)
+            return nameExtract == selectedName
+        })
+        if (!templateApiFileInfo) {
+            toaster.create({
+                description: `Aqua tree for ${selectedTemplate?.name} not found`,
+                type: "error"
+            })
+            return false
+        }
+
+        const dataUrl = signatureRef.current.toDataURL('image/png');
+
+
+        const signatureFile = dataURLToFile(dataUrl, 'signature.png');
+
+        // Convert File to Uint8Array
+        // const arrayBuffer = await signatureFile.arrayBuffer();
+        // const uint8Array = new Uint8Array(arrayBuffer);
+
+        // Create the FileObject with properties from the File object
+        // const fileObjectPar: FileObject = {
+        //     fileContent: uint8Array,
+        //     fileName: signatureFile.name,
+        //     path: "./",
+        //     fileSize: signatureFile.size
+        // };
+
+
+
+        let formData = {
+            'name': signerName,
+            'wallet_address': session!.address,
+            'image': signatureFile
+        }
+        let aquafier = new Aquafier();
+        const filteredData: Record<string, string | number> = {};
+
+        Object.entries(formData).forEach(([key, value]) => {
+            // Only include values that are not File objects
+            if (!(value instanceof File)) {
+                filteredData[key] = value;
+            }
+        });
+
+
+        let estimateize = estimateFileSize(JSON.stringify(formData));
+
+
+
+        const jsonString = JSON.stringify(formData, null, 4);
+
+        const randomNumber = getRandomNumber(100, 1000);
+        const fileObject: FileObject = {
+            fileContent: jsonString,
+            fileName: `${selectedTemplate?.name ?? "template"}-${randomNumber}.json`,
+            path: './',
+            fileSize: estimateize
+        }
+        let genesisAquaTree = await aquafier.createGenesisRevision(fileObject, true, false, false)
+
+        if (genesisAquaTree.isOk()) {
+
+            // create a link revision with the systems aqua tree 
+            let mainAquaTreeWrapper: AquaTreeWrapper = {
+                aquaTree: genesisAquaTree.data.aquaTree!!,
+                revision: "",
+                fileObject: fileObject
+            }
+            let linkedAquaTreeFileObj = getAquaTreeFileObject(templateApiFileInfo);
+
+            if (!linkedAquaTreeFileObj) {
                 toaster.create({
-                    title: "Click on the PDF to place your signature",
-                    type: "info",
+                    description: `system Aqua tee has error`,
+                    type: "error"
+                })
+                return false
+            }
+            let linkedToAquaTreeWrapper: AquaTreeWrapper = {
+                aquaTree: templateApiFileInfo.aquaTree!!,
+                revision: "",
+                fileObject: linkedAquaTreeFileObj
+            }
+            let linkedAquaTreeResponse = await aquafier.linkAquaTree(mainAquaTreeWrapper, linkedToAquaTreeWrapper)
+
+            if (linkedAquaTreeResponse.isErr()) {
+                toaster.create({
+                    description: `Error linking aqua tree`,
+                    type: "error"
+                })
+                return false
+            }
+
+            let aquaTreeData = linkedAquaTreeResponse.data.aquaTree!!
+
+            let containsFileData = selectedTemplate?.fields.filter((e) => e.type == "file" || e.type == "image")
+            if (containsFileData && containsFileData.length > 0) {
+
+                // for (let index = 0; index < containsFileData.length; index++) {
+                //     const element = containsFileData[index];
+                //     const file: File = formData[element['name']] as File
+
+                // Create an array to store all file processing promises
+                const fileProcessingPromises = containsFileData.map(async (element) => {
+                    const file: File = formData['image'];
+
+                    // Check if file exists
+                    if (!file) {
+                        console.warn(`No file found for field: ${element.name}`);
+                        return null;
+                    }
+
+                    try {
+                        // Convert File to Uint8Array
+                        const arrayBuffer = await file.arrayBuffer();
+                        const uint8Array = new Uint8Array(arrayBuffer);
+
+                        // Create the FileObject with properties from the File object
+                        const fileObjectPar: FileObject = {
+                            fileContent: uint8Array,
+                            fileName: file.name,
+                            path: "./",
+                            fileSize: file.size
+                        };
+
+                        return fileObjectPar;
+                        // After this you can use fileObjectPar with aquafier.createGenesisRevision() or other operations
+                    } catch (error) {
+                        console.error(`Error processing file ${file.name}:`, error);
+                        return null;
+                    }
+                });
+
+                // Wait for all file processing to complete
+                try {
+                    const fileObjects = await Promise.all(fileProcessingPromises);
+                    // Filter out null results (from errors)
+                    const validFileObjects = fileObjects.filter(obj => obj !== null) as FileObject[];
+
+                    // Now you can use validFileObjects
+                    console.log(`Processed ${validFileObjects.length} files successfully`);
+
+                    // Example usage with each file object:
+                    for (let item of validFileObjects) {
+                        let aquaTreeResponse = await aquafier.createGenesisRevision(item)
+
+                        if (aquaTreeResponse.isErr()) {
+                            console.error("Error linking aqua tree:", aquaTreeResponse.data.toString());
+
+                            toaster.create({
+                                title: 'Error  linking aqua',
+                                description: 'Error  linking aqua',
+                                type: 'error',
+                                duration: 5000,
+                            });
+                            return false
+                        }
+                        // upload the single aqua tree 
+                        await saveAquaTree(aquaTreeResponse.data.aquaTree!!, item, false, true, selectedTemplate.id)
+
+                        // linke it to main aqua tree
+                        const aquaTreeWrapper: AquaTreeWrapper = {
+                            aquaTree: aquaTreeData,
+                            revision: "",
+                            fileObject: fileObject
+                        }
+
+                        const aquaTreeWrapper2: AquaTreeWrapper = {
+                            aquaTree: aquaTreeResponse.data.aquaTree!!,
+                            revision: "",
+                            fileObject: item
+                        }
+
+                        let res = await aquafier.linkAquaTree(aquaTreeWrapper, aquaTreeWrapper2)
+                        if (res.isErr()) {
+                            console.error("Error linking aqua tree:", aquaTreeResponse.data.toString());
+
+                            toaster.create({
+                                title: 'Error  linking aqua',
+                                description: 'Error  linking aqua',
+                                type: 'error',
+                                duration: 5000,
+                            });
+                            return false
+                        }
+                        aquaTreeData = res.data.aquaTree!!
+
+                    }
+
+                } catch (error) {
+                    console.error("Error processing files:", error);
+
+                    toaster.create({
+                        title: 'Error proceessing files',
+                        description: 'Error proceessing files',
+                        type: 'error',
+                        duration: 5000,
+                    });
+                    return false
+                }
+
+            }
+            const aquaTreeWrapper: AquaTreeWrapper = {
+                aquaTree: aquaTreeData,
+                revision: "",
+                fileObject: fileObject
+            }
+
+            // sign the aqua chain
+            let signRes = await aquafier.signAquaTree(aquaTreeWrapper, "metamask", dummyCredential())
+
+            if (signRes.isErr()) {
+                toaster.create({
+                    description: `Error signing failed`,
+                    type: "error"
+                })
+                return false
+            } else {
+                console.log("signRes.data", signRes.data)
+                fileObject.fileContent = formData
+                await saveAquaTree(signRes.data.aquaTree!!, fileObject, true, false, selectedTemplate.id)
+
+                return true
+            }
+
+        } else {
+
+            toaster.create({
+                title: 'Error creating Aqua tree from template',
+                description: 'Error creating Aqua tree from template',
+                type: 'error',
+                duration: 5000,
+            });
+
+            return false
+        }
+    }
+
+    // Save signature from canvas
+    const saveSignature = async () => {
+        if (signatureRef.current && !signatureRef.current.isEmpty()) {
+            // const dataUrl = signatureRef.current.toDataURL('image/png');
+
+            // // Create a new signature object with unique ID
+            // const newId = crypto.randomUUID();
+            // const newSignature: SignatureData = {
+            //     id: newId,
+            //     dataUrl,
+            //     walletAddress: session?.address || 'No wallet connected',
+            //     name: signerName || 'Unnamed Signature',
+            //     createdAt: new Date()
+            // };
+
+            // // Add the new signature to the array
+            // setSignatures(prevSignatures => {
+            //     const updatedSignatures = [...prevSignatures, newSignature];
+            //     console.log('Updated signatures array:', updatedSignatures);
+            //     return updatedSignatures;
+            // });
+
+
+            let resp = await createWorkflowFromTemplate()
+            if (resp) {
+                await loadUserSignatures()
+                // Select the newly created signature
+                // setSelectedSignatureId(newId);
+
+                setIsOpen(false);
+
+                // Clear the canvas for next signature
+                if (signatureRef.current) {
+                    signatureRef.current.clear();
+                }
+
+
+                toaster.create({
+                    title: "Signature saved",
+                    description: "You can now place it on the document",
+                    type: "success",
                     duration: 3000,
                 });
+
+                // If user is in placing mode, allow them to place the signature
+                if (!placingSignature) {
+                    setPlacingSignature(true);
+                    toaster.create({
+                        title: "Click on the PDF to place your signature",
+                        type: "info",
+                        duration: 3000,
+                    });
+                }
             }
         } else {
             toaster.create({
@@ -558,11 +952,11 @@ const PdfSigner = () => {
                 let signatureImageObject = userSignature.fileObject.find((e) => e.fileName == signatureImageName)
                 if (!signatureImageObject) {
                     console.log(`📢📢 file object does not contain the signature image object, this should be investigated`)
-                    
+
                     continue
                 }
-                
-                console.log(`&&& signatureImageName ${signatureImageName} Data ${JSON.stringify(signatureImageObject,null, 4)}`)
+
+                console.log(`&&& signatureImageName ${signatureImageName} Data ${JSON.stringify(signatureImageObject, null, 4)}`)
 
                 let fileContentUrl = signatureImageObject.fileContent
 
@@ -760,20 +1154,6 @@ const PdfSigner = () => {
                             borderColor={colorMode === "dark" ? "gray.800" : "gray.100"}
                             borderRadius="md"
                         >
-                            <Field>
-                                <FieldLabel>Signer Name</FieldLabel>
-                                <Input
-                                    value={signerName}
-                                    onChange={(e) => setSignerName(e.target.value)}
-                                    placeholder="Enter your name"
-                                    borderRadius={"lg"}
-                                />
-                            </Field>
-
-                            <Text>Wallet Address: {session?.address ?
-                                `${session?.address.substring(0, 6)}...${session?.address.substring(session?.address.length - 4)}` :
-                                'Not connected'
-                            }</Text>
 
                             <Button
                                 colorScheme="blue"
@@ -951,6 +1331,21 @@ const PdfSigner = () => {
                     </DialogHeader>
                     <DialogBody>
                         <Stack gap={4}>
+                            <Field>
+                                <FieldLabel>Signer Name</FieldLabel>
+                                <Input
+                                    value={signerName}
+                                    onChange={(e) => setSignerName(e.target.value)}
+                                    placeholder="Enter your name"
+                                    borderRadius={"lg"}
+                                />
+                            </Field>
+
+                            <Text>Wallet Address: {session?.address ?
+                                `${session?.address.substring(0, 6)}...${session?.address.substring(session?.address.length - 4)}` :
+                                'Not connected'
+                            }</Text>
+
                             <Box
                                 border="1px solid"
                                 borderColor="gray.200"
