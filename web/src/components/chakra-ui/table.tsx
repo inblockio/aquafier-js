@@ -56,15 +56,17 @@ const FilesTable = () => {
 
         if (isWorkFlow) {
             if (workFlow == "document_contract.json" || workFlow == "document_contract") {
-                return <Button size={'xs'} colorPalette={'cyan'} variant={'subtle'} w={'200px'} onClick={(e) => {
-                    e.preventDefault();
-
-                    setSelectedFileInfo(item)
-                    navigate("/workflow")
-                }} >
-                    <LuPower />
-                    Open Workflow
-                </Button>
+                return <>
+                    <Button size={'xs'} colorPalette={'cyan'} variant={'subtle'} w={'200px'} onClick={(e) => {
+                        e.preventDefault();
+                        setSelectedFileInfo(item)
+                        navigate("/workflow")
+                    }} >
+                        <LuPower />
+                        Open Workflow
+                    </Button>
+                    <ShareButtonAction nonce={session?.nonce ?? ""} item={item} />
+                </>
             }
 
             return <></>

@@ -20,7 +20,7 @@ import { useStore } from "zustand"
 import { WorkFlowTimeLine } from '../../types/types';
 import { RevisionVerificationStatus } from '../../types/types';
 import Aquafier, { OrderRevisionInAquaTree } from 'aqua-js-sdk';
-import {  ensureDomainUrlHasSSL, isWorkFlowData } from '../../utils/functions';
+import { ensureDomainUrlHasSSL, isWorkFlowData } from '../../utils/functions';
 import { PDFJSViewer } from 'pdfjs-react-viewer';
 import PdfSigner from '../PdfSigner';
 import { toaster } from '../../components/chakra-ui/toaster';
@@ -521,7 +521,25 @@ export default function WorkFlowPage() {
         }
 
         if (index == 3) {
-            return <>Index 3</>
+
+            if (selectedFileInfo == null) {
+                return <Text>An error occured</Text>
+            }
+            // all hashes 
+            let allHashes = Object.keys(selectedFileInfo.aquaTree!.revisions!);
+
+
+
+            let signRevision = selectedFileInfo.aquaTree?.revisions[allHashes[3]]
+            if (!signRevision) {
+                return <Text>signature not found</Text>
+            }
+
+
+            return <Stack>
+                Wallet {signRevision.signature_wallet_address} signed the document.
+
+            </Stack>
         }
 
         if (index == 4) {
@@ -535,7 +553,23 @@ export default function WorkFlowPage() {
                 return <>No PDF found</>
             }
 
-            return <PdfSigner file={pdfFile} />
+            let allHashes = Object.keys(selectedFileInfo!.aquaTree!.revisions!);
+
+            let firstRevision = selectedFileInfo!.aquaTree?.revisions[allHashes[0]]
+
+            if (firstRevision?.forms_signers) {
+                if (firstRevision.forms_signers == session?.address) {
+
+                    return <PdfSigner file={pdfFile} />
+                } else {
+                 return   <Alert status="info" variant="solid" title={`Error signers should be ${firstRevision?.forms_signers}`} />
+                }
+            } else {
+                return <Alert status="error" variant="solid" title={"Error signers not found"} />
+            }
+
+
+
         }
 
         if (index == 5) {
@@ -570,7 +604,7 @@ export default function WorkFlowPage() {
 
 
     const aquaTreeTimeLine = () => {
-        return <Container py={8} px={4}  mx="auto">
+        return <Container py={8} px={4} mx="auto">
             <Heading textAlign="center" mb={10}>{timeLineTitle}</Heading>
 
             {/* Horizontal Timeline */}
@@ -645,7 +679,7 @@ export default function WorkFlowPage() {
             </Box>
 
             {/* Content Area */}
-            <Box  mt={8} p={4}>
+            <Box mt={8} p={4}>
                 {activeContent()}
             </Box>
         </Container>
