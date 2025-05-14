@@ -28,6 +28,8 @@ import { PDFJSViewer } from 'pdfjs-react-viewer';
 import { useColorMode } from '../components/chakra-ui/color-mode';
 import { PdfControls } from '../components/FilePreview';
 import axios from 'axios';
+import { ApiFileInfo } from '../models/FileInfo';
+import { blobToDataURL, ensureDomainUrlHasSSL, timeStampToDateObject } from '../utils/functions';
 
 // Interface for signature position
 interface SignaturePosition {
@@ -127,7 +129,7 @@ const PdfSigner = () => {
     const saveSignature = () => {
         if (signatureRef.current && !signatureRef.current.isEmpty()) {
             const dataUrl = signatureRef.current.toDataURL('image/png');
-            
+
             // Create a new signature object with unique ID
             const newId = crypto.randomUUID();
             const newSignature: SignatureData = {
@@ -137,7 +139,7 @@ const PdfSigner = () => {
                 name: signerName || 'Unnamed Signature',
                 createdAt: new Date()
             };
-            
+
             // Add the new signature to the array
             console.log('Adding new signature:', newSignature);
             setSignatures(prevSignatures => {
@@ -145,23 +147,23 @@ const PdfSigner = () => {
                 console.log('Updated signatures array:', updatedSignatures);
                 return updatedSignatures;
             });
-            
+
             // Select the newly created signature
             setSelectedSignatureId(newId);
             setIsOpen(false);
-            
+
             // Clear the canvas for next signature
             if (signatureRef.current) {
                 signatureRef.current.clear();
             }
-            
+
             toaster.create({
                 title: "Signature saved",
                 description: "You can now place it on the document",
                 type: "success",
                 duration: 3000,
             });
-            
+
             // If user is in placing mode, allow them to place the signature
             if (!placingSignature) {
                 setPlacingSignature(true);
@@ -183,7 +185,7 @@ const PdfSigner = () => {
     // Handle click on PDF to place signature
     const handlePdfClick = (e: React.MouseEvent<HTMLDivElement>) => {
         if (!placingSignature || !pdfMainContainerRef.current || !selectedSignatureId) return;
-        
+
         const selectedSignature = signatures.find(sig => sig.id === selectedSignatureId);
         if (!selectedSignature) return;
 
@@ -246,7 +248,7 @@ const PdfSigner = () => {
 
             // Create a map of signature images for quick lookup
             const signatureImagesMap = new Map();
-            
+
             // Embed all signature images that are used in positions
             for (const signature of signatures) {
                 if (signaturePositions.some(pos => pos.signatureId === signature.id)) {
@@ -258,13 +260,13 @@ const PdfSigner = () => {
             // Add signature to each position
             for (const position of signaturePositions) {
                 if (!position.signatureId) continue;
-                
+
                 const signature = signatures.find(sig => sig.id === position.signatureId);
                 if (!signature) continue;
-                
+
                 const signatureImage = signatureImagesMap.get(position.signatureId);
                 if (!signatureImage) continue;
-                
+
                 const page = signedPdfDoc.getPage(position.pageIndex);
                 const { width, height } = page.getSize();
 
@@ -422,33 +424,11 @@ const PdfSigner = () => {
         });
     };
 
-    // Add event listeners for drag operations
-    useEffect(() => {
-        if (isDragging) {
-            // Mouse events
-            document.addEventListener('mousemove', handleDragMove as any);
-            document.addEventListener('mouseup', handleDragEnd);
-
-            // Touch events for mobile
-            document.addEventListener('touchmove', handleDragMove as any, { passive: false });
-            document.addEventListener('touchend', handleDragEnd);
-            document.addEventListener('touchcancel', handleDragEnd);
-        }
-
-        return () => {
-            // Clean up all event listeners
-            document.removeEventListener('mousemove', handleDragMove as any);
-            document.removeEventListener('mouseup', handleDragEnd);
-            document.removeEventListener('touchmove', handleDragMove as any);
-            document.removeEventListener('touchend', handleDragEnd);
-            document.removeEventListener('touchcancel', handleDragEnd);
-        };
-    }, [isDragging, activeDragId]);
 
     // Component for signature display on PDF
     const SignatureOverlay = ({ position }: { position: SignaturePosition }) => {
         if (position.pageIndex !== currentPage - 1 || !position.signatureId) return null;
-        
+
         const signature = signatures.find(sig => sig.id === position.signatureId);
         if (!signature) return null;
         console.log("Signature overlay", position)
@@ -504,25 +484,198 @@ const PdfSigner = () => {
         setCurrentPage(pageNumber);
     };
 
-    const loadUserSignatures= () => {
+    const loadUserSignatures = async () => {
+
+        if (backend_url == "http://0.0.0.0:0" || backend_url == "https://0.0.0.0:0") {
+
+            console.log(`load signature is aborted  as url is ${backend_url} `)
+            return
+        }
+        if (session?.address == undefined || session?.address == "") {
+
+            console.log(`load signature is aborted  as session is ${session?.address} `)
+            return
+        }
+
+        // proceed as url and session is set
         let url = `${backend_url}/tree/user_signatures`
-        axios.get(url, {
-            headers: {
-                "nonce": session?.nonce
+        try {
+            let response = await axios.get(url, {
+                headers: {
+                    "nonce": session?.nonce
+                }
+            })
+
+            const userSignaturesApiInfo: Array<ApiFileInfo> = response.data.data
+            // Make the logic here work with the current Signature Interface
+
+
+            let apiSigntures: SignatureData[] = []
+            // first revision should be a form
+            // second revision is a link to signature aqua tree template
+            // third revision should  be link to sinature image
+            // fourth revision is a signature
+            for (let userSignature of userSignaturesApiInfo) {
+
+                // all hashes 
+                let allHashes = Object.keys(userSignature.aquaTree!.revisions!);
+
+                let firstRevision = userSignature.aquaTree?.revisions[allHashes[0]]
+                if (!firstRevision) {
+                    console.log(`📢📢 first revision does not exist, this should be investigated`)
+                    continue
+                }
+                if (!firstRevision.forms_wallet_address) {
+                    console.log(`📢📢 first revision does not contain wallet address, this should be investigated`)
+                    continue
+                }
+                if (!firstRevision.forms_name) {
+                    console.log(`📢📢 first revision does not contain signature name, this should be investigated`)
+                    continue
+                }
+                let sinatureAquaTreeName = userSignature.aquaTree?.file_index[allHashes[0]]
+                if (!sinatureAquaTreeName) {
+                    console.log(`📢📢 aqua tree sintaure instance unique na`)
+                    continue
+                }
+                let thirdRevision = userSignature.aquaTree?.revisions[allHashes[2]]
+                if (!thirdRevision) {
+                    console.log(`📢📢 third revision does not exist, this should be investigated`)
+                    continue
+                }
+                if (!thirdRevision.link_verification_hashes) {
+                    console.log(`📢📢 third revision link_verification_hashes is undefined, this should be investigated`)
+                    continue
+                }
+                let signatureHash = thirdRevision.link_verification_hashes[0]
+                let signatureImageName = userSignature.aquaTree?.file_index[signatureHash]
+                if (!signatureImageName) {
+                    console.log(`📢📢 signature Image Name not found in index, this should be investigated`)
+
+                    continue
+                }
+
+                let signatureImageObject = userSignature.fileObject.find((e) => e.fileName == signatureImageName)
+                if (!signatureImageObject) {
+                    console.log(`📢📢 file object does not contain the signature image object, this should be investigated`)
+                    
+                    continue
+                }
+                
+                console.log(`&&& signatureImageName ${signatureImageName} Data ${JSON.stringify(signatureImageObject,null, 4)}`)
+
+                let fileContentUrl = signatureImageObject.fileContent
+
+                if (typeof fileContentUrl === 'string' && fileContentUrl.startsWith('http')) {
+
+                    const actualUrlToFetch = ensureDomainUrlHasSSL(fileContentUrl);
+                    console.log(`Fetch url ${fileContentUrl}  new ${actualUrlToFetch}`)
+
+                    const response = await fetch(actualUrlToFetch, {
+                        headers: {
+                            nonce: `${session?.nonce}`
+                        }
+                    });
+
+                    if (!response.ok) {
+                        toaster.create({
+                            description: `${signatureImageName} not found in system`,
+                            type: "error"
+                        })
+                        continue
+                        // throw new Error("Failed to fetch file");
+                    }
+
+                    // Get content type from headers or from file extension
+                    // Get content type from headers or from file extension
+                    let contentType = response.headers.get("Content-Type") || "image/png";
+                    console.log(`Content type ${contentType}`);
+
+                    // Get the blob from the response
+                    // const blob = await response.blob();
+
+                    // Clone response and get data
+                    const arrayBuffer = await response.arrayBuffer();
+
+
+                    // Create blob with correct content type
+                    const blob = new Blob([arrayBuffer], { type: contentType });
+
+
+
+                    // Convert blob to base64 data URL
+                    const dataUrl = await blobToDataURL(blob);
+
+                    console.log(`## dataUrl ${dataUrl}`);
+
+
+
+                    // Add to signature
+                    let sign: SignatureData = {
+                        id: sinatureAquaTreeName,
+                        name: firstRevision.forms_name,
+                        walletAddress: firstRevision.forms_wallet_address,
+                        dataUrl: dataUrl,
+                        createdAt: timeStampToDateObject(firstRevision.local_timestamp) ?? new Date()
+                    };
+                    apiSigntures.push(sign)
+                }
             }
-        })
-            .then(response => {
-                const userSignatures = response.data.data
-                // Make the logic here work with the current Signature Interface
-                console.log("User signatures", userSignatures)
-            })
-            .catch(error => {
-                console.log(error)
-            })
+
+
+            console.log(`Signatures length ${apiSigntures.length} now update state`)
+
+
+            // setSignatures([...signatures, ...apiSigntures])
+            // Filter out duplicates before adding to state
+            setSignatures(prevSignatures => {
+                // Create a map of existing signatures by ID for quick lookup
+                const existingSignatureIds = new Set(prevSignatures.map(sig => sig.id));
+
+                // Only add signatures that don't already exist
+                const newSignatures = apiSigntures.filter(sig => !existingSignatureIds.has(sig.id));
+
+                console.log(`Adding ${newSignatures.length} new signatures, filtered out ${apiSigntures.length - newSignatures.length} duplicates`);
+
+                return [...prevSignatures, ...newSignatures];
+            });
+
+
+        } catch (e) {
+            console.log(`loadUserSignatures Error ${e}`)
+        }
     }
+
+    // Add event listeners for drag operations
+    useEffect(() => {
+        if (isDragging) {
+            // Mouse events
+            document.addEventListener('mousemove', handleDragMove as any);
+            document.addEventListener('mouseup', handleDragEnd);
+
+            // Touch events for mobile
+            document.addEventListener('touchmove', handleDragMove as any, { passive: false });
+            document.addEventListener('touchend', handleDragEnd);
+            document.addEventListener('touchcancel', handleDragEnd);
+        }
+
+        return () => {
+            // Clean up all event listeners
+            document.removeEventListener('mousemove', handleDragMove as any);
+            document.removeEventListener('mouseup', handleDragEnd);
+            document.removeEventListener('touchmove', handleDragMove as any);
+            document.removeEventListener('touchend', handleDragEnd);
+            document.removeEventListener('touchcancel', handleDragEnd);
+        };
+    }, [isDragging, activeDragId]);
+
 
     // Effect to update signature positions when window is resized
     useEffect(() => {
+
+        loadUserSignatures()
+
+
         const handleResize = () => {
             // Force re-render to update signature positions
             setSignaturePositions(prev => [...prev]);
@@ -536,11 +689,13 @@ const PdfSigner = () => {
     // console.log("Signature positions", signaturePositions)
 
     useEffect(() => {
+
         loadUserSignatures()
-    }, [])
+
+    }, [backend_url, session, session?.address]);
 
     return (
-        <Container maxW="container.xl" py={"6"} h={"calc(100vh - 70px)"} overflow={{base: "scroll", md: "hidden"}}>
+        <Container maxW="container.xl" py={"6"} h={"calc(100vh - 70px)"} overflow={{ base: "scroll", md: "hidden" }}>
             <Heading mb={5}>PDF Signer</Heading>
 
             {/* File upload section */}
@@ -564,7 +719,7 @@ const PdfSigner = () => {
             {/* PDF viewer and signature tools */}
             {pdfUrl && (
                 <Grid templateColumns="repeat(4, 1fr)" gap="6"
-                h={{base: "fit-content", md: "calc(100vh - 120px - 150px)"}} overflow={{base: "scroll", md: "hidden"}}
+                    h={{ base: "fit-content", md: "calc(100vh - 120px - 150px)" }} overflow={{ base: "scroll", md: "hidden" }}
                 >
                     {/* PDF viewer */}
                     <GridItem colSpan={{ base: 12, md: 3 }} h={"100%"} overflow={"scroll"} >
@@ -627,7 +782,7 @@ const PdfSigner = () => {
                                 <FaPlus />
                                 Create Signature
                             </Button>
-                            
+
                             {/* Signature List */}
                             {signatures.length > 0 && (
                                 <>
@@ -635,9 +790,9 @@ const PdfSigner = () => {
                                     <Box maxH="200px" overflowY="auto" border="1px solid" borderColor="gray.200" borderRadius="md">
                                         <Stack gap={0}>
                                             {signatures.map((signature) => (
-                                                <Box 
-                                                    key={signature.id} 
-                                                    p={2} 
+                                                <Box
+                                                    key={signature.id}
+                                                    p={2}
                                                     cursor="pointer"
                                                     bg={selectedSignatureId === signature.id ? "blue.50" : "transparent"}
                                                     _hover={{ bg: "gray.50" }}
@@ -660,7 +815,7 @@ const PdfSigner = () => {
                                                         <Stack gap={0}>
                                                             <Text fontSize="sm" fontWeight="medium">{signature.name}</Text>
                                                             <Text fontSize="xs" color="gray.600">
-                                                                {signature.walletAddress.length > 10 
+                                                                {signature.walletAddress.length > 10
                                                                     ? `${signature.walletAddress.substring(0, 6)}...${signature.walletAddress.substring(signature.walletAddress.length - 4)}`
                                                                     : signature.walletAddress
                                                                 }
@@ -680,7 +835,7 @@ const PdfSigner = () => {
                                     {(() => {
                                         const selectedSignature = signatures.find(sig => sig.id === selectedSignatureId);
                                         if (!selectedSignature) return null;
-                                        
+
                                         return (
                                             <Box
                                                 border="1px solid"
@@ -724,7 +879,7 @@ const PdfSigner = () => {
                                     >
                                         Place Signature on Document
                                     </Button>
-                                    
+
                                     {/* Signatures placed on document */}
                                     {signaturePositions.length > 0 && (
                                         <>
@@ -734,7 +889,7 @@ const PdfSigner = () => {
                                                     {signaturePositions.map((position) => {
                                                         const signature = signatures.find(sig => sig.id === position.signatureId);
                                                         if (!signature) return null;
-                                                        
+
                                                         return (
                                                             <HStack key={position.id} p={2} justify="space-between">
                                                                 <HStack>

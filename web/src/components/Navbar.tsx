@@ -5,7 +5,7 @@ import { useColorMode } from "./chakra-ui/color-mode"
 import appStore from "../store"
 import { useStore } from "zustand"
 import VersionAndDisclaimer from "./VersionAndDisclaimer"
-import { Link,  useNavigate } from "react-router-dom"
+import { Link, useNavigate } from "react-router-dom"
 import AccountContracts from "./AccountContracts"
 import { Alert } from "../components/chakra-ui/alert"
 import { LuChevronDown, LuChevronUp, LuSquareChartGantt } from "react-icons/lu"
@@ -98,7 +98,7 @@ const Navbar = () => {
 
 
             //workflow specifi
-            if(selectedTemplate?.name == 'user_signature'){
+            if (selectedTemplate?.name == 'user_signature') {
                 formData.append('template_id', `${selectedTemplate.id}`);
             }
 
@@ -107,9 +107,36 @@ const Navbar = () => {
                 // Set has_asset to true
                 formData.append('has_asset', 'true');
 
-                // Create a blob from the file content and append it as the asset
-                const fileBlob = new Blob([JSON.stringify(fileObject.fileContent as string)], { type: 'application/octet-stream' });
-                formData.append('asset', fileBlob, fileObject.fileName);
+                // FIXED: Properly handle the file content as binary data
+                // If fileContent is already a Blob or File object, use it directly
+                if (fileObject.fileContent instanceof Blob || fileObject.fileContent instanceof File) {
+                    formData.append('asset', fileObject.fileContent, fileObject.fileName);
+                }
+                // If it's an ArrayBuffer or similar binary data
+                else if (fileObject.fileContent instanceof ArrayBuffer ||
+                    fileObject.fileContent instanceof Uint8Array) {
+                    const fileBlob = new Blob([fileObject.fileContent], { type: 'application/octet-stream' });
+                    formData.append('asset', fileBlob, fileObject.fileName);
+                }
+                // If it's a base64 string (common for image data)
+                else if (typeof fileObject.fileContent === 'string' && fileObject.fileContent.startsWith('data:')) {
+                    // Convert base64 to blob
+                    const response = await fetch(fileObject.fileContent);
+                    const blob = await response.blob();
+                    formData.append('asset', blob, fileObject.fileName);
+                }
+                // Fallback for other string formats (not recommended for binary files)
+                else if (typeof fileObject.fileContent === 'string') {
+                    const fileBlob = new Blob([fileObject.fileContent], { type: 'text/plain' });
+                    formData.append('asset', fileBlob, fileObject.fileName);
+                }
+                // If it's something else (like an object), stringify it (not recommended for files)
+                else {
+                    console.warn('Warning: fileContent is not in an optimal format for file upload');
+                    const fileBlob = new Blob([JSON.stringify(fileObject.fileContent)], { type: 'application/json' });
+                    formData.append('asset', fileBlob, fileObject.fileName);
+                }
+
             } else {
                 formData.append('has_asset', 'false');
             }
@@ -213,7 +240,7 @@ const Navbar = () => {
 
         let estimateize = estimateFileSize(JSON.stringify(formData));
 
-        
+
 
         const jsonString = JSON.stringify(formData, null, 4);
 
@@ -260,7 +287,7 @@ const Navbar = () => {
 
             let aquaTreeData = linkedAquaTreeResponse.data.aquaTree!!
 
-            let containsFileData = selectedTemplate?.fields.filter((e) => e.type == "file"|| e.type == "image")
+            let containsFileData = selectedTemplate?.fields.filter((e) => e.type == "file" || e.type == "image")
             if (containsFileData && containsFileData.length > 0) {
 
                 // for (let index = 0; index < containsFileData.length; index++) {
@@ -323,7 +350,7 @@ const Navbar = () => {
                             return
                         }
                         // upload the single aqua tree 
-                        await saveAquaTree(aquaTreeResponse.data.aquaTree!!, fileObject, false, true)
+                        await saveAquaTree(aquaTreeResponse.data.aquaTree!!, item, false, true)
 
                         // linke it to main aqua tree
                         const aquaTreeWrapper: AquaTreeWrapper = {
@@ -589,12 +616,12 @@ const Navbar = () => {
                                                         // })
 
                                                         if (field.type == 'image') {
-                                                            const files: File |  FileList | null = e?.target?.files;
+                                                            const files: File | FileList | null = e?.target?.files;
 
                                                             if (!files || files.length === 0) {
                                                                 return;
                                                             }
-                                                        
+
                                                             const file = files[0]
                                                             if (file && file.type.startsWith('image/')) {
                                                                 // Valid image file

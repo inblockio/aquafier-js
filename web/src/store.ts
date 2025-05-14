@@ -111,7 +111,7 @@ const appStore = createStore<TAppStore>()(
             apiFileData: [],
             systemFileInfo:[],
             formTemplates: [],
-            backend_url: "http://0.0.0.0:0",
+            backend_url: "http://0.0.0.0:3000",
             // Actions
             setUserProfile: (config) => set({ user_profile: config }),
             setSession: (session) => set({ session: session }),

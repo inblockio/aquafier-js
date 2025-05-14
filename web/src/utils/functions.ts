@@ -859,6 +859,36 @@ export const readFileContent = async (file: File): Promise<string | Uint8Array> 
 };
 
 
+// Helper function to convert Blob to Data URL
+export  const blobToDataURL = (blob: Blob): Promise<string> => {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => {
+            resolve(reader.result as string);
+        };
+        reader.onerror = reject;
+        reader.readAsDataURL(blob);
+    });
+}
+export function timeStampToDateObject(timestamp: string): Date | null {
+    try {
+        // Extract parts using substring
+        const year = parseInt(timestamp.substring(0, 4));
+        const month = parseInt(timestamp.substring(4, 6)) - 1; // Month is 0-indexed (0=Jan)
+        const day = parseInt(timestamp.substring(6, 8));
+        const hour = parseInt(timestamp.substring(8, 10));
+        const minute = parseInt(timestamp.substring(10, 12));
+        const second = parseInt(timestamp.substring(12, 14));
+
+        // Create Date object
+        const dateObj = new Date(year, month, day, hour, minute, second);
+        return dateObj
+    }catch(e){
+        console.log(`💣💣 Error occured parsing timestamp to date`);
+        return null
+    }
+}
+
 export function timeToHumanFriendly(timestamp: string | undefined, showFull: boolean = false): string {
     if (!timestamp) {
         return '-';
@@ -1409,16 +1439,42 @@ export function generateAvatar(seed: string, size = 200) {
 }
 
 
+// export function ensureDomainUrlHasSSL(actualUrlToFetch: string): string {
+//     let url = actualUrlToFetch
+//     // check if the file hash exist 
+//     // console.log(`==URL Data before ${actualUrlToFetch}`)
+//     if (actualUrlToFetch.includes("inblock.io")) {
+//         if (!actualUrlToFetch.includes("https")) {
+//             url = actualUrlToFetch.replace("http", "https")
+//         }
+//     }
+
+//     if(actualUrlToFetch.includes("https://0.0.0.0:0")){
+//         url = actualUrlToFetch.replace("https://0.0.0.0:0", "http://127.0.0.1:3000")
+//     }
+    
+//     // console.log(`==URL Data after ${actualUrlToFetch}`)
+//     return url
+// }
+
 export function ensureDomainUrlHasSSL(actualUrlToFetch: string): string {
-    // check if the file hash exist 
-    // console.log(`==URL Data before ${actualUrlToFetch}`)
-    if (actualUrlToFetch.includes("inblock.io")) {
-        if (!actualUrlToFetch.includes("https")) {
-            actualUrlToFetch = actualUrlToFetch.replace("http", "https")
-        }
+    let url = actualUrlToFetch;
+
+    // Check if the URL starts with "http://inblock.io" and upgrade to HTTPS
+    if (url.startsWith("http://inblock.io")) {
+        url = url.replace("http://", "https://");
     }
-    // console.log(`==URL Data after ${actualUrlToFetch}`)
-    return actualUrlToFetch
+    // Alternatively, if the domain is "inblock.io" but lacks protocol
+    else if (url.startsWith("inblock.io")) {
+        url = "https://" + url;
+    }
+
+    // Replace unsafe localhost URL (HTTPS on 0.0.0.0:0 → HTTP on 127.0.0.1:3000)
+    if (url.startsWith("https://0.0.0.0") || url.startsWith("http://0.0.0.0") ) {
+        url = url.replace("https://0.0.0.0", "http://127.0.0.1");
+    }
+
+    return url;
 }
 
 export function makeProperReadableWord(wordWithUnderScores: string) {
