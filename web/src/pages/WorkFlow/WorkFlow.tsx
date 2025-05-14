@@ -13,15 +13,17 @@ import {
 } from '@chakra-ui/react';
 // import { Card } from '@chakra-ui/react';
 // import { FaCheck, FaQuestionCircle, FaBriefcase, FaBook, FaCoffee, FaAward, FaUser } from 'react-icons/fa';
-import { FaAward, FaBook,  FaCheck,  FaQuestionCircle, FaUser, FaSignal, FaSignature, FaEraser } from 'react-icons/fa';
+import { FaAward, FaBook, FaCheck, FaQuestionCircle, FaUser, FaSignal, FaSignature, FaEraser } from 'react-icons/fa';
 import { Alert } from "../../components/chakra-ui/alert"
 import appStore from '../../store';
 import { useStore } from "zustand"
 import { WorkFlowTimeLine } from '../../types/types';
 import { RevisionVerificationStatus } from '../../types/types';
 import Aquafier, { OrderRevisionInAquaTree } from 'aqua-js-sdk';
-import { ensureDomainUrlHasSSL, isWorkFlowData } from '../../utils/functions';
+import {  ensureDomainUrlHasSSL, isWorkFlowData } from '../../utils/functions';
 import { PDFJSViewer } from 'pdfjs-react-viewer';
+import PdfSigner from '../PdfSigner';
+import { toaster } from '../../components/chakra-ui/toaster';
 // Timeline data
 // const timelineItems = [
 //     {
@@ -126,103 +128,103 @@ export default function WorkFlowPage() {
             // const _firstTwo = aquaTreeVerificationWithStatuses.slice(0, 2);
             // console.log("First two elements:", firstTwo); // [1, 2]
 
-        items.push({
-            id: 1,
-            completed: true,
-            content: genesisContent(),
-            icon: FaUser,
-            revisionHash: "",
-            title: "Contract Creation"
-        })
-
-
-        // Get the rest of the elements (from index 2 onward)
-        const rest = aquaTreeVerificationWithStatuses.slice(2);
-
-
-        for (const [indexItem, item] of rest.entries()) { // aquaTreeVerificationWithStatuses.entries()) {
-
-            let index = indexItem + 2;
-            console.log(`Index: ${index}, Item:`, item);
-
-
-            let titleData = getTitleToDisplay(index)
-            let iconData = getIconToDisplay(index)
-            let contentData = await getContentToDisplay(index)
-
             items.push({
-                id: index,
-                completed: item.isVerified,
-                content: contentData,
-                icon: iconData,
-                revisionHash: item.revisionHash,
-                title: titleData
+                id: 1,
+                completed: true,
+                content: genesisContent(),
+                icon: FaUser,
+                revisionHash: "",
+                title: "Contract Creation"
             })
 
-            // Now you have both the numeric index and the actual item
-            // setTimeLineItems((items) => {
-            //     let existingData = items.find((e) => e.revisionHash == item.revisionHash)
-            //     if (existingData) {
-            //         items.filter((e) => e.revisionHash != item.revisionHash)
-            //         items.push({
-            //             id: index,
-            //             completed: true,
-            //             content: contentData,
-            //             icon: iconData,
-            //             revisionHash: item.revisionHash,
-            //             title: titleData
-            //         })
-            //     } else {
-            //     }
-            //     return items
-            // })
 
+            // Get the rest of the elements (from index 2 onward)
+            const rest = aquaTreeVerificationWithStatuses.slice(2);
+
+
+            for (const [indexItem, item] of rest.entries()) { // aquaTreeVerificationWithStatuses.entries()) {
+
+                let index = indexItem + 2;
+                console.log(`Index: ${index}, Item:`, item);
+
+
+                let titleData = getTitleToDisplay(index)
+                let iconData = getIconToDisplay(index)
+                let contentData = await getContentToDisplay(index)
+
+                items.push({
+                    id: index,
+                    completed: item.isVerified,
+                    content: contentData,
+                    icon: iconData,
+                    revisionHash: item.revisionHash,
+                    title: titleData
+                })
+
+                // Now you have both the numeric index and the actual item
+                // setTimeLineItems((items) => {
+                //     let existingData = items.find((e) => e.revisionHash == item.revisionHash)
+                //     if (existingData) {
+                //         items.filter((e) => e.revisionHash != item.revisionHash)
+                //         items.push({
+                //             id: index,
+                //             completed: true,
+                //             content: contentData,
+                //             icon: iconData,
+                //             revisionHash: item.revisionHash,
+                //             title: titleData
+                //         })
+                //     } else {
+                //     }
+                //     return items
+                // })
+
+
+            }
+
+            console.log(`****************** index ${items.length} -- `)
+
+            if (items.length == 3) {
+
+                let index4 = 4
+                let titleData4 = await getTitleToDisplay(index4)
+                let iconData4 = getIconToDisplay(index4)
+                let contentData4 = await getContentToDisplay(index4)
+
+                items.push({
+                    id: 4,
+                    completed: false,
+                    content: contentData4,
+                    icon: iconData4,
+                    revisionHash: "",
+                    title: titleData4
+                })
+
+
+
+                let titleData5 = getTitleToDisplay(5)
+                let iconData5 = getIconToDisplay(5)
+                let contentData5 = await getContentToDisplay(5)
+
+                items.push({
+                    id: 5,
+                    completed: false,
+                    content: contentData5,
+                    icon: iconData5,
+                    revisionHash: "",
+                    title: titleData5
+                })
+            }
+
+            console.log(`###############################################`)
+            console.log(`items ${JSON.stringify(items, null, 4)}`)
+
+
+            setTimeLineItems(items)
 
         }
 
-        console.log(`****************** index ${items.length} -- `)
-
-        if (items.length == 3) {
-
-            let index4 =4
-            let titleData4 = await getTitleToDisplay(index4)
-            let iconData4 = getIconToDisplay(index4)
-            let contentData4 = await getContentToDisplay(index4)
-
-            items.push({
-                id: 4,
-                completed: false,
-                content: contentData4,
-                icon: iconData4,
-                revisionHash: "",
-                title: titleData4
-            })
-
-
-
-            let titleData5 = getTitleToDisplay(5)
-            let iconData5 = getIconToDisplay(5)
-            let contentData5 = await getContentToDisplay(5)
-
-            items.push({
-                id: 5,
-                completed: false,
-                content: contentData5,
-                icon: iconData5,
-                revisionHash: "",
-                title: titleData5
-            })
-        }
-
-        console.log(`###############################################`)
-        console.log(`items ${JSON.stringify(items, null, 4)}`)
-
-
-        setTimeLineItems(items)
-
-    }
-
-    loadTimeline()
+        loadTimeline()
 
     }, [aquaTreeVerificationWithStatuses])
 
@@ -281,12 +283,6 @@ export default function WorkFlowPage() {
                     });
                 })()
             }
-
-
-
-
-
-
         }
 
 
@@ -354,6 +350,7 @@ export default function WorkFlowPage() {
 
     console.log("fie: ", selectedFileInfo)
 
+    //tod replace this methd with fetchPDFfile
     const fetchFile = async (fileUrl: string) => {
         try {
             const actualUrlToFetch = ensureDomainUrlHasSSL(fileUrl);
@@ -362,7 +359,7 @@ export default function WorkFlowPage() {
                     nonce: `${session?.nonce}`
                 }
             });
-            
+
             if (!response.ok) {
                 console.error("Failed to fetch file:", response.status, response.statusText);
                 return null;
@@ -371,7 +368,7 @@ export default function WorkFlowPage() {
             // Get content type from headers
             let contentType = response.headers.get("Content-Type") || "";
             console.log("fetched: ", response, "content type:", contentType);
-            
+
             // If content type is missing or generic, try to detect from URL
             if (contentType === "application/octet-stream" || contentType === "") {
                 if (fileUrl.toLowerCase().endsWith(".pdf")) {
@@ -379,7 +376,7 @@ export default function WorkFlowPage() {
                     console.log("Determined content type from filename:", contentType);
                 }
             }
-            
+
             // Process PDF files
             if (contentType === "application/pdf" || fileUrl.toLowerCase().endsWith(".pdf")) {
                 const arrayBuffer = await response.arrayBuffer();
@@ -387,7 +384,7 @@ export default function WorkFlowPage() {
                 const blob = new Blob([arrayBuffer], { type: "application/pdf" });
                 return URL.createObjectURL(blob);
             }
-            
+
             return null;
         } catch (error) {
             console.error("Error fetching file:", error);
@@ -395,8 +392,110 @@ export default function WorkFlowPage() {
         }
     }
 
-  
-    
+    const fetchPDFfile = async (): Promise<File | null> => {
+
+        try {
+
+            if (!selectedFileInfo) {
+                console.log(`📢📢 selected file not found, this should be investigated`)
+                throw Error("Fix me")
+            }
+            // all hashes 
+            let allHashes = Object.keys(selectedFileInfo.aquaTree!.revisions!);
+
+            let firstRevision = selectedFileInfo.aquaTree?.revisions[allHashes[0]]
+            if (!firstRevision) {
+                console.log(`📢📢 first revision does not exist, this should be investigated`)
+                throw Error("Fix me 2")
+            }
+
+            let pdfLinkRevision = selectedFileInfo.aquaTree?.revisions[allHashes[2]]
+            if (!pdfLinkRevision) {
+                console.log(`📢📢 pdf link revision does not exist, this should be investigated`)
+                throw Error("Fix me 3")
+            }
+
+
+            if (!pdfLinkRevision.link_verification_hashes) {
+                console.log(`📢📢 pdf link revision link_verification_hashes is undefined, this should be investigated`)
+                throw Error("Fix me 4")
+            }
+            let pdfHash = pdfLinkRevision.link_verification_hashes[0]
+            let pdfName = selectedFileInfo.aquaTree?.file_index[pdfHash]
+            if (!pdfName) {
+                console.log(`📢📢 pdf Name not found in index, this should be investigated`)
+
+                throw Error("Fix me 5")
+            }
+
+
+
+            let pdfFileObject = selectedFileInfo.fileObject.find((e) => e.fileName == pdfName)
+            if (!pdfFileObject) {
+                console.log(`📢📢 file object does not contain the signature pdf object, this should be investigated`)
+
+
+                throw Error("Fix me 6")
+            }
+
+            console.log(`&&& pdfName ${pdfName} Data ${JSON.stringify(pdfFileObject, null, 4)}`)
+
+            let fileContentUrl = pdfFileObject.fileContent
+
+            if (typeof fileContentUrl === 'string' && fileContentUrl.startsWith('http')) {
+
+                const actualUrlToFetch = ensureDomainUrlHasSSL(fileContentUrl);
+                console.log(`Fetch url ${fileContentUrl}  new ${actualUrlToFetch}`)
+
+                const response = await fetch(actualUrlToFetch, {
+                    headers: {
+                        nonce: `${session?.nonce}`
+                    }
+                });
+
+                if (!response.ok) {
+                    toaster.create({
+                        description: `${pdfName} not found in system`,
+                        type: "error"
+                    })
+
+                    throw Error("Fix me 7")
+                }
+
+                // Get content type from headers or from file extension
+                // Get content type from headers or from file extension
+                let contentType = response.headers.get("Content-Type") || "application/pdf";
+                console.log(`Content type ${contentType}`);
+
+                // Get the blob from the response
+                // const blob = await response.blob();
+
+                // Clone response and get data
+                const arrayBuffer = await response.arrayBuffer();
+
+
+                // Create blob with correct content type
+                const blob = new Blob([arrayBuffer], { type: contentType });
+
+
+                // Convert Blob to File
+                const file = new File([blob], pdfName, {
+                    type: contentType,
+                    lastModified: Date.now(),
+                });
+
+
+                return file
+            }
+
+            return null
+
+        } catch (error) {
+            console.error("Error fetching file:", error);
+            return null;
+        }
+    }
+
     const getContentToDisplay = async (index: number) => {
 
         // const orderedTree = OrderRevisionInAquaTree(selectedFileInfo!.aquaTree!)
@@ -426,7 +525,17 @@ export default function WorkFlowPage() {
         }
 
         if (index == 4) {
-            return <>Index 4</>
+            // const fileObjects = selectedFileInfo?.fileObject
+            // const actualPdf = fileObjects?.find((e) => e.fileName.endsWith(".pdf"))
+            // const fileUrl = actualPdf?.fileContent
+            // const pdfUrl = await fetchFile(fileUrl as string)
+
+            let pdfFile = await fetchPDFfile()
+            if (!pdfFile) {
+                return <>No PDF found</>
+            }
+
+            return <PdfSigner file={pdfFile} />
         }
 
         if (index == 5) {
@@ -443,17 +552,17 @@ export default function WorkFlowPage() {
         const revisionHashes = Object.keys(revisions)
         const revision = revisions[revisionHashes[0]]
         return (
-        <Stack>
-            <Text>A contract has been shared with you to sign. If you accept the contract, you will be able to sign it.</Text>
-            <Text>Contract Name: {selectedFileInfo!.aquaTree!.file_index[revisionHashes[0]]}</Text>
-            <Heading size="md" fontWeight={700}>All signers</Heading>
-            {
-                revision.forms_signers.split(",").map((signer: string, index: number) => {
-                    return <Alert key={index} title={signer} />
-                })
-            }
-        </Stack>
-    )
+            <Stack>
+                <Text>A contract has been shared with you to sign. If you accept the contract, you will be able to sign it.</Text>
+                <Text>Contract Name: {selectedFileInfo!.aquaTree!.file_index[revisionHashes[0]]}</Text>
+                <Heading size="md" fontWeight={700}>All signers</Heading>
+                {
+                    revision.forms_signers.split(",").map((signer: string, index: number) => {
+                        return <Alert key={index} title={signer} />
+                    })
+                }
+            </Stack>
+        )
     }
 
     // Find the currently active content
@@ -461,7 +570,7 @@ export default function WorkFlowPage() {
 
 
     const aquaTreeTimeLine = () => {
-        return <Container py={8} px={4} maxW="4xl" mx="auto">
+        return <Container py={8} px={4}  mx="auto">
             <Heading textAlign="center" mb={10}>{timeLineTitle}</Heading>
 
             {/* Horizontal Timeline */}
@@ -536,7 +645,7 @@ export default function WorkFlowPage() {
             </Box>
 
             {/* Content Area */}
-            <Box mt={8} p={4}>
+            <Box  mt={8} p={4}>
                 {activeContent()}
             </Box>
         </Container>

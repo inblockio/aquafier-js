@@ -53,12 +53,18 @@ interface SignatureData {
     createdAt: Date;
 }
 
-const PdfSigner = () => {
+// const PdfSigner = ({ file }: { file: File | null }) => {
 
+
+interface PdfSignerProps {
+    file: File | null;
+}
+
+const PdfSigner: React.FC<PdfSignerProps> = ({ file }) => {
 
     const { formTemplates, systemFileInfo } = useStore(appStore)
     // State for PDF document
-    const [pdfFile, setPdfFile] = useState<File | null>(null);
+    const [pdfFile, setPdfFile] = useState<File | null>(file);
     const [pdfUrl, setPdfUrl] = useState<string | null>(null);
     const [pdfDoc, setPdfDoc] = useState<PDFDocument | null>(null);
     // const [numPages, setNumPages] = useState<number>(0);
@@ -1070,6 +1076,23 @@ const PdfSigner = () => {
         loadUserSignatures()
 
 
+        if (file) {
+            (async () => {
+                setPdfFile(file);
+
+                // Create object URL for display
+                const fileUrl = URL.createObjectURL(file);
+                setPdfUrl(fileUrl);
+
+                // Load PDF document using pdf-lib
+                const arrayBuffer = await file.arrayBuffer();
+                const pdfDoc = await PDFDocument.load(arrayBuffer);
+                setPdfDoc(pdfDoc);
+            })()
+        }
+
+
+
         const handleResize = () => {
             // Force re-render to update signature positions
             setSignaturePositions(prev => [...prev]);
@@ -1093,7 +1116,7 @@ const PdfSigner = () => {
             <Heading mb={5}>PDF Signer</Heading>
 
             {/* File upload section */}
-            <Stack gap={4} align="stretch" mb={6} >
+            {pdfFile == null ? <Stack gap={4} align="stretch" mb={6} >
                 <Field>
                     <FieldLabel>Upload PDF Document</FieldLabel>
                     <Input
@@ -1103,12 +1126,13 @@ const PdfSigner = () => {
                     />
                 </Field>
 
-                {pdfFile && (
+{/* todo fix me */}
+                {/* {pdfFile  != null ?  
                     <Text>
-                        File: {pdfFile.name} ({Math.round(pdfFile.size / 1024)} KB)
+                        File: {pdfFile.name} ({Math.round(pdfFile!.size / 1024)} KB)
                     </Text>
-                )}
-            </Stack>
+                : <></>} */}
+            </Stack> : <></>}
 
             {/* PDF viewer and signature tools */}
             {pdfUrl && (
