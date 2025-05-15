@@ -19,11 +19,12 @@ import appStore from '../../store';
 import { useStore } from "zustand"
 import { WorkFlowTimeLine } from '../../types/types';
 import { RevisionVerificationStatus } from '../../types/types';
-import Aquafier, { OrderRevisionInAquaTree } from 'aqua-js-sdk';
+import Aquafier, { AquaTreeWrapper, OrderRevisionInAquaTree } from 'aqua-js-sdk';
 import { ensureDomainUrlHasSSL, isWorkFlowData } from '../../utils/functions';
 import { PDFJSViewer } from 'pdfjs-react-viewer';
 import PdfSigner from '../PdfSigner';
 import { toaster } from '../../components/chakra-ui/toaster';
+import axios from 'axios';
 // Timeline data
 // const timelineItems = [
 //     {
@@ -118,7 +119,7 @@ export default function WorkFlowPage() {
     const [error, setError] = useState("");
     const [aquaTreeVerificationWithStatuses, setAquaTreeVerificationWithStatuses] = useState<Array<RevisionVerificationStatus>>([]);
     const [timeLineItems, setTimeLineItems] = useState<Array<WorkFlowTimeLine>>([]);
-    const { selectedFileInfo, formTemplates, session } = useStore(appStore);
+    const { selectedFileInfo, setSelectedFileInfo, formTemplates, session, backend_url } = useStore(appStore);
 
 
     useEffect(() => {
@@ -231,6 +232,22 @@ export default function WorkFlowPage() {
 
 
     useEffect(() => {
+
+
+        loadData()
+
+    }, [])
+
+    useEffect(() => {
+
+
+        loadData()
+
+    }, [selectedFileInfo])
+
+
+
+    const loadData = () => {
         if (selectedFileInfo) {
 
 
@@ -284,10 +301,7 @@ export default function WorkFlowPage() {
                 })()
             }
         }
-
-
-
-    }, [])
+    }
 
     const getTitleToDisplay = (index: number) => {
 
@@ -560,9 +574,71 @@ export default function WorkFlowPage() {
             if (firstRevision?.forms_signers) {
                 if (firstRevision.forms_signers == session?.address) {
 
-                    return <PdfSigner file={pdfFile} />
+                    //check if the document is signed
+                    if (Object.keys(selectedFileInfo!.aquaTree!.revisions).length >= 5) {
+
+                        return <Text>Pdf signed</Text>
+                    } else {
+
+                        return <PdfSigner file={pdfFile} submitSignature={async (x, y, page, signatureAquaTree) => {
+                            let aquafier = new Aquafier();
+                            let aquaTreeWrapper: AquaTreeWrapper = {
+                                aquaTree: selectedFileInfo!.aquaTree!,
+                                revision: "",
+                            }
+                            let aquaTreeWrapperLinked: AquaTreeWrapper = {
+                                aquaTree: signatureAquaTree,
+                                revision: "",
+                            }
+                            let resLinkedAquaTree = await aquafier.linkAquaTree(aquaTreeWrapper, aquaTreeWrapperLinked)
+
+                            if (resLinkedAquaTree.isOk()) {
+
+                                let newAquaTree = resLinkedAquaTree.data.aquaTree!
+                                let revisionHashes = Object.keys(newAquaTree.revisions)
+                                const lastHash = revisionHashes[revisionHashes.length - 1]
+                                const lastRevision = resLinkedAquaTree.data.aquaTree?.revisions[lastHash]
+                                // send to server
+                                const url = `${backend_url}/tree`;
+
+                                const actualUrlToFetch = ensureDomainUrlHasSSL(url);
+
+
+                                const response = await axios.post(actualUrlToFetch, {
+                                    "revision": lastRevision,
+                                    "revisionHash": lastHash,
+
+                                }, {
+                                    headers: {
+                                        "nonce": session?.address
+                                    }
+                                });
+
+                                if (response.status === 200 || response.status === 201) {
+                                    console.log(`Success ....`)
+                                    let data = selectedFileInfo
+                                    data!.aquaTree = newAquaTree
+                                    setSelectedFileInfo(data!!)
+                                }
+
+                                toaster.create({
+                                    description: `Linking successfull`,
+                                    type: "success"
+                                })
+
+                            } else {
+
+                                toaster.create({
+                                    description: `Uploading link failed`,
+                                    type: "error"
+                                })
+                            }
+
+
+                        }} />
+                    }
                 } else {
-                 return   <Alert status="info" variant="solid" title={`Error signers should be ${firstRevision?.forms_signers}`} />
+                    return <Alert status="info" variant="solid" title={`Error signers should be ${firstRevision?.forms_signers}`} />
                 }
             } else {
                 return <Alert status="error" variant="solid" title={"Error signers not found"} />

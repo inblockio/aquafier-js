@@ -31,6 +31,7 @@ import axios from 'axios';
 import { ApiFileInfo } from '../models/FileInfo';
 import { blobToDataURL, dataURLToFile, dummyCredential, ensureDomainUrlHasSSL, estimateFileSize, getAquaTreeFileName, getRandomNumber, timeStampToDateObject } from '../utils/functions';
 import Aquafier, { AquaTree, AquaTreeWrapper, FileObject, getAquaTreeFileObject } from 'aqua-js-sdk';
+import { FaCloudArrowUp } from 'react-icons/fa6';
 
 // Interface for signature position
 interface SignaturePosition {
@@ -58,9 +59,10 @@ interface SignatureData {
 
 interface PdfSignerProps {
     file: File | null;
+    submitSignature: (x: number, y: number, page: number, signatureAquaTree : AquaTree) => void
 }
 
-const PdfSigner: React.FC<PdfSignerProps> = ({ file }) => {
+const PdfSigner: React.FC<PdfSignerProps> = ({ file, submitSignature }) => {
 
     const { formTemplates, systemFileInfo } = useStore(appStore)
     // State for PDF document
@@ -629,7 +631,7 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ file }) => {
         });
     };
 
-    // Generate signed PDF
+
     const generateSignedPdf = async () => {
         if (!pdfDoc || signatures.length === 0 || signaturePositions.length === 0) {
             toaster.create({
@@ -1126,7 +1128,7 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ file }) => {
                     />
                 </Field>
 
-{/* todo fix me */}
+                {/* todo fix me */}
                 {/* {pdfFile  != null ?  
                     <Text>
                         File: {pdfFile.name} ({Math.round(pdfFile!.size / 1024)} KB)
@@ -1332,13 +1334,27 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ file }) => {
                                 </>
                             )}
 
-                            <Button
+                            {/* <Button
                                 colorScheme="green"
                                 // disabled={!pdfDoc || !signatureDataUrl || signaturePositions.length === 0}
                                 onClick={generateSignedPdf}
                             >
                                 <FaDownload />
                                 Download Signed PDF
+                            </Button> */}
+
+                            <Button
+                                colorPalette={'green'} variant={'solid'}
+                                colorScheme="white"
+                                // disabled={!pdfDoc || !signatureDataUrl || signaturePositions.length === 0}
+                                onClick={(e) => {
+                                    e.preventDefault()
+                                    throw Error("fix me ...")
+                                    // submitSignature(1, 1, 1)
+                                }}
+                            >
+                                <FaCloudArrowUp />
+                                submit signature
                             </Button>
                         </Stack>
                     </GridItem>
