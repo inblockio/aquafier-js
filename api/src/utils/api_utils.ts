@@ -479,10 +479,10 @@ const setUpSystemTemplates = async () => {
     },
     create: {
       id: "5",
-      name: "document_contract",
+      name: "aqua_sign",
       owner: SYSTEM_WALLET_ADDRESS,
       public: true,
-      title: "Document contract",
+      title: "Aqua Sign",
       created_at: today.toDateString()
     },
     update: {
@@ -512,7 +512,7 @@ const setUpSystemTemplates = async () => {
     },
     {
       name: "signers",
-      label: "Signers",
+      label: "Signers (if multiple comma seprated wallet addresses)",
       type: "wallet_address",
       required: true,
       multiple: true
@@ -539,12 +539,12 @@ const setUpSystemTemplates = async () => {
   })
 
 
-  let documentContractFieldsData = systemAquaTreesNames.find((item) => item == "document_contract.json")
+  let documentContractFieldsData = systemAquaTreesNames.find((item) => item == "aqua_sign.json")
   if (documentContractFieldsData == undefined) {
     // create aqua tree for identity template
     let documentContractObject: FileObject = {
       fileContent: JSON.stringify(documentContract),
-      fileName: "document_contract.json",
+      fileName: "aqua_sign.json",
       path: "./"
     }
 

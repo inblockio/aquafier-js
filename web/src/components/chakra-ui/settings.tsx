@@ -90,8 +90,8 @@ const Settings = ({ inline, open, updateOpenStatus }: IDialogSettings) => {
     const { setUserProfile, user_profile, backend_url, metamaskAddress, session } = useStore(appStore)
     const { colorMode } = useColorMode()
     const [activeNetwork, setActiveNetwork] = useState<string>(user_profile.witness_network)
-    const [cliPubKey, setCliPubKey] = useState<string>(user_profile.cli_pub_key)
-    const [cliPrivKey, setCliPrivKey] = useState<string>(user_profile.cli_priv_key)
+    const [cliPubKey, _setCliPubKey] = useState<string>(user_profile.cli_pub_key)
+    const [cliPrivKey, _setCliPrivKey] = useState<string>(user_profile.cli_priv_key)
     const [ensName, setEnsName] = useState<string>(user_profile.ens_name)
     const [contract, setContract] = useState<string>(user_profile.witness_contract_address ?? "0x45f59310ADD88E6d23ca58A0Fa7A55BEE6d2a611")
 

@@ -467,7 +467,7 @@ const Navbar = () => {
     const selectTemplateCallBack = (template: FormTemplate) => {
         setSelectedTemplate(template)
         template.fields.forEach((item) => {
-            if (item.name == "wallet_address") {
+            if (item.name == "wallet_address" || item.name == "sender") {
                 setFormData((formData) => {
                     formData[item.name] = session!.address ?? "--"
                     return formData

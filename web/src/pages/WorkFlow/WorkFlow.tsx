@@ -17,14 +17,15 @@ import { FaAward, FaBook, FaCheck, FaQuestionCircle, FaUser, FaSignal, FaSignatu
 import { Alert } from "../../components/chakra-ui/alert"
 import appStore from '../../store';
 import { useStore } from "zustand"
-import { WorkFlowTimeLine } from '../../types/types';
+import { SignaturePosition, WorkFlowTimeLine } from '../../types/types';
 import { RevisionVerificationStatus } from '../../types/types';
 import Aquafier, { AquaTreeWrapper, OrderRevisionInAquaTree } from 'aqua-js-sdk';
-import { ensureDomainUrlHasSSL, isWorkFlowData } from '../../utils/functions';
+import { convertTemplateNameToTitle, ensureDomainUrlHasSSL, isWorkFlowData } from '../../utils/functions';
 import { PDFJSViewer } from 'pdfjs-react-viewer';
 import PdfSigner from '../PdfSigner';
 import { toaster } from '../../components/chakra-ui/toaster';
 import axios from 'axios';
+import { ApiFileInfo } from '../../models/FileInfo';
 // Timeline data
 // const timelineItems = [
 //     {
@@ -149,6 +150,9 @@ export default function WorkFlowPage() {
                 console.log(`Index: ${index}, Item:`, item);
 
 
+                // if(index==3){
+                //     continue
+                // }
                 let titleData = getTitleToDisplay(index)
                 let iconData = getIconToDisplay(index)
                 let contentData = await getContentToDisplay(index)
@@ -260,7 +264,7 @@ export default function WorkFlowPage() {
                 return
 
             }
-            setTimeLineTitle(workFlow.replace("_", " "))
+            setTimeLineTitle(convertTemplateNameToTitle(workFlow))
 
             let intialData: Array<RevisionVerificationStatus> = []
             for (const [hash, revision] of Object.entries(selectedFileInfo!.aquaTree!.revisions!!)) {
@@ -580,15 +584,33 @@ export default function WorkFlowPage() {
                         return <Text>Pdf signed</Text>
                     } else {
 
-                        return <PdfSigner file={pdfFile} submitSignature={async (x, y, page, signatureAquaTree) => {
+                        return <PdfSigner file={pdfFile} submitSignature={async (_signaturePosition: SignaturePosition[],signAquaTree: ApiFileInfo[]) => {
+                            
+                            if(signAquaTree.length==0){
+                                toaster.create({
+                                    description: `Sinature not found`,
+                                    type: "error"
+                                })
+                            }
+
+                            // todo  create form revision first 
+
+                            // let signForm ={}
+
+                            // for()
+
+
                             let aquafier = new Aquafier();
                             let aquaTreeWrapper: AquaTreeWrapper = {
                                 aquaTree: selectedFileInfo!.aquaTree!,
                                 revision: "",
+                                // fileObject: selectedFileInfo!.fileObject
                             }
+                            let signatureAquaTree = signAquaTree[0].aquaTree!;
                             let aquaTreeWrapperLinked: AquaTreeWrapper = {
                                 aquaTree: signatureAquaTree,
                                 revision: "",
+                                // fileObject: signAquaTree[0].fileObject
                             }
                             let resLinkedAquaTree = await aquafier.linkAquaTree(aquaTreeWrapper, aquaTreeWrapperLinked)
 
@@ -625,6 +647,9 @@ export default function WorkFlowPage() {
                                     description: `Linking successfull`,
                                     type: "success"
                                 })
+
+                                
+
 
                             } else {
 

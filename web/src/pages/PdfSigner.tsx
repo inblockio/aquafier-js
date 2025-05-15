@@ -16,9 +16,10 @@ import {
     Container
 } from '@chakra-ui/react';
 import { useBoolean } from '@chakra-ui/hooks';
-import { PDFDocument, rgb, StandardFonts } from 'pdf-lib';
+// import { PDFDocument, rgb, StandardFonts } from 'pdf-lib';
+import { PDFDocument } from 'pdf-lib';
 import SignatureCanvas from 'react-signature-canvas';
-import { FaUndo, FaDownload, FaPlus } from 'react-icons/fa';
+import { FaUndo, FaPlus } from 'react-icons/fa';
 import appStore from '../store';
 import { useStore } from "zustand";
 import { toaster } from '../components/chakra-ui/toaster';
@@ -32,34 +33,15 @@ import { ApiFileInfo } from '../models/FileInfo';
 import { blobToDataURL, dataURLToFile, dummyCredential, ensureDomainUrlHasSSL, estimateFileSize, getAquaTreeFileName, getRandomNumber, timeStampToDateObject } from '../utils/functions';
 import Aquafier, { AquaTree, AquaTreeWrapper, FileObject, getAquaTreeFileObject } from 'aqua-js-sdk';
 import { FaCloudArrowUp } from 'react-icons/fa6';
+import { SignaturePosition, SignatureData } from "../types/types"
 
-// Interface for signature position
-interface SignaturePosition {
-    id: string;
-    pageIndex: number;
-    x: number;
-    y: number;
-    width: number;
-    height: number;
-    isDragging?: boolean;
-    signatureId?: string; // Reference to the signature that was placed
-}
-
-// Interface for signature data
-interface SignatureData {
-    id: string;
-    dataUrl: string;
-    walletAddress: string;
-    name: string;
-    createdAt: Date;
-}
 
 // const PdfSigner = ({ file }: { file: File | null }) => {
 
 
 interface PdfSignerProps {
     file: File | null;
-    submitSignature: (x: number, y: number, page: number, signatureAquaTree : AquaTree) => void
+    submitSignature: (signaturePosition: SignaturePosition[], signAquaTree: ApiFileInfo[]) => Promise<void>
 }
 
 const PdfSigner: React.FC<PdfSignerProps> = ({ file, submitSignature }) => {
@@ -68,12 +50,13 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ file, submitSignature }) => {
     // State for PDF document
     const [pdfFile, setPdfFile] = useState<File | null>(file);
     const [pdfUrl, setPdfUrl] = useState<string | null>(null);
-    const [pdfDoc, setPdfDoc] = useState<PDFDocument | null>(null);
+    const [_pdfDoc, setPdfDoc] = useState<PDFDocument | null>(null);
     // const [numPages, setNumPages] = useState<number>(0);
     const [currentPage, setCurrentPage] = useState<number>(1);
 
     // State for signatures
     const signatureRef = useRef<SignatureCanvas | null>(null);
+    const [signaturesAquaTree, setSignaturesAquaTree] = useState<Array<ApiFileInfo>>([]);
     const [signatures, setSignatures] = useState<SignatureData[]>([]);
     const [selectedSignatureId, setSelectedSignatureId] = useState<string | null>(null);
     const [signerName, setSignerName] = useState<string>('John Doe');
@@ -299,18 +282,33 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ file, submitSignature }) => {
 
         const signatureFile = dataURLToFile(dataUrl, 'signature.png');
 
-        // Convert File to Uint8Array
-        // const arrayBuffer = await signatureFile.arrayBuffer();
-        // const uint8Array = new Uint8Array(arrayBuffer);
+        let url = `${backend_url}/explorer_delete_file`
+        let finalUrl = ensureDomainUrlHasSSL(url)
+        //delete the existing signature 
+        for (let item of signaturesAquaTree) {
+            let allHashes = Object.keys(item.aquaTree!.revisions)
+            let lastHash = allHashes[allHashes.length - 1]
 
-        // Create the FileObject with properties from the File object
-        // const fileObjectPar: FileObject = {
-        //     fileContent: uint8Array,
-        //     fileName: signatureFile.name,
-        //     path: "./",
-        //     fileSize: signatureFile.size
-        // };
+            try {
+                let response = await axios.post(finalUrl, {
+                    revisionHash: lastHash
+                }, {
+                    headers: {
+                        "nonce": session?.nonce,
+                        // Don't set Content-Type header - axios will set it automatically with the correct boundary
+                    }
+                });
 
+                console.log(`Delete response code : ${response.status} ==  body ${response.data}`)
+
+            } catch (e) {
+                console.log(`Error deleting ${e}`)
+            }
+
+        }
+
+        setSignatures([])
+        setSignaturePositions([])
 
 
         let formData = {
@@ -505,6 +503,7 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ file, submitSignature }) => {
                 fileObject.fileContent = formData
                 await saveAquaTree(signRes.data.aquaTree!!, fileObject, true, false, selectedTemplate.id)
 
+                setSignerName("")
                 return true
             }
 
@@ -542,6 +541,22 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ file, submitSignature }) => {
             //     console.log('Updated signatures array:', updatedSignatures);
             //     return updatedSignatures;
             // });
+
+
+            if (signaturePositions.length > 0) {
+                const userConfirmed = confirm("Your document will lose all the signatures appended. Do you want to continue?");
+                if (!userConfirmed) {
+                    setSignerName("")
+                    setIsOpen(false);
+
+                    // Clear the canvas for next signature
+                    if (signatureRef.current) {
+                        signatureRef.current.clear();
+                    }
+
+                    return; // Exit if user clicks "Cancel" (No)
+                }
+            }
 
 
             let resp = await createWorkflowFromTemplate()
@@ -631,120 +646,121 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ file, submitSignature }) => {
         });
     };
 
-
-    const generateSignedPdf = async () => {
-        if (!pdfDoc || signatures.length === 0 || signaturePositions.length === 0) {
-            toaster.create({
-                title: "Missing information",
-                description: "Please upload a PDF, create a signature, and place it on the document",
-                type: "warning",
-                duration: 3000,
-            });
-            return;
-        }
-
-        try {
-            // Create a copy of the PDF
-            const pdfBytes = await pdfDoc.save();
-            const signedPdfDoc = await PDFDocument.load(pdfBytes);
-
-            // Create a map of signature images for quick lookup
-            const signatureImagesMap = new Map();
-
-            // Embed all signature images that are used in positions
-            for (const signature of signatures) {
-                if (signaturePositions.some(pos => pos.signatureId === signature.id)) {
-                    const signatureImage = await signedPdfDoc.embedPng(signature.dataUrl);
-                    signatureImagesMap.set(signature.id, signatureImage);
+    /*
+        const generateSignedPdf = async () => {
+            if (!pdfDoc || signatures.length === 0 || signaturePositions.length === 0) {
+                toaster.create({
+                    title: "Missing information",
+                    description: "Please upload a PDF, create a signature, and place it on the document",
+                    type: "warning",
+                    duration: 3000,
+                });
+                return;
+            }
+    
+            try {
+                // Create a copy of the PDF
+                const pdfBytes = await pdfDoc.save();
+                const signedPdfDoc = await PDFDocument.load(pdfBytes);
+    
+                // Create a map of signature images for quick lookup
+                const signatureImagesMap = new Map();
+    
+                // Embed all signature images that are used in positions
+                for (const signature of signatures) {
+                    if (signaturePositions.some(pos => pos.signatureId === signature.id)) {
+                        const signatureImage = await signedPdfDoc.embedPng(signature.dataUrl);
+                        signatureImagesMap.set(signature.id, signatureImage);
+                    }
                 }
+    
+                // Add signature to each position
+                for (const position of signaturePositions) {
+                    if (!position.signatureId) continue;
+    
+                    const signature = signatures.find(sig => sig.id === position.signatureId);
+                    if (!signature) continue;
+    
+                    const signatureImage = signatureImagesMap.get(position.signatureId);
+                    if (!signatureImage) continue;
+    
+                    const page = signedPdfDoc.getPage(position.pageIndex);
+                    const { width, height } = page.getSize();
+    
+                    // Calculate position without manual adjustments
+                    const signatureX = position.x * width;
+                    const signatureY = position.y * height;
+    
+                    // Draw signature image
+                    page.drawImage(signatureImage, {
+                        x: signatureX - (position.width * width / 2),
+                        y: signatureY - (position.height * height / 2),
+                        width: position.width * width,
+                        height: position.height * height,
+                    });
+    
+                    // Add name and wallet address below signature
+                    const font = await signedPdfDoc.embedFont(StandardFonts.Helvetica);
+                    const fontSize = 10;
+    
+                    // Calculate the left edge of the signature image
+                    const signatureLeftEdge = signatureX - (position.width * width / 2);
+    
+                    // Draw name aligned with the left edge of the signature
+                    page.drawText(signature.name, {
+                        x: signatureLeftEdge,
+                        y: signatureY - (position.height * height / 2) - 12,
+                        size: fontSize,
+                        font,
+                        color: rgb(0, 0, 0),
+                    });
+    
+                    // Draw wallet address
+                    const shortenedAddress = signature.walletAddress;
+    
+                    // Draw wallet address aligned with the left edge of the signature
+                    page.drawText(shortenedAddress, {
+                        x: signatureLeftEdge,
+                        y: signatureY - (position.height * height / 2) - 24,
+                        size: fontSize,
+                        font,
+                        color: rgb(0, 0, 0),
+                    });
+                }
+    
+                // Save the signed PDF
+                const signedPdfBytes = await signedPdfDoc.save();
+    
+                // Create a blob and download link
+                const blob = new Blob([signedPdfBytes], { type: 'application/pdf' });
+                const url = URL.createObjectURL(blob);
+    
+                // Create download link and trigger download
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = `signed_${pdfFile?.name || 'document.pdf'}`;
+                link.click();
+    
+                // Clean up
+                URL.revokeObjectURL(url);
+    
+                toaster.create({
+                    title: "PDF signed successfully",
+                    description: "Your signed document has been downloaded",
+                    type: "success",
+                    duration: 3000,
+                });
+            } catch (error) {
+                console.error("Error generating signed PDF:", error);
+                toaster.create({
+                    title: "Error signing PDF",
+                    description: "An error occurred while generating the signed PDF",
+                    type: "error",
+                    duration: 3000,
+                });
             }
-
-            // Add signature to each position
-            for (const position of signaturePositions) {
-                if (!position.signatureId) continue;
-
-                const signature = signatures.find(sig => sig.id === position.signatureId);
-                if (!signature) continue;
-
-                const signatureImage = signatureImagesMap.get(position.signatureId);
-                if (!signatureImage) continue;
-
-                const page = signedPdfDoc.getPage(position.pageIndex);
-                const { width, height } = page.getSize();
-
-                // Calculate position without manual adjustments
-                const signatureX = position.x * width;
-                const signatureY = position.y * height;
-
-                // Draw signature image
-                page.drawImage(signatureImage, {
-                    x: signatureX - (position.width * width / 2),
-                    y: signatureY - (position.height * height / 2),
-                    width: position.width * width,
-                    height: position.height * height,
-                });
-
-                // Add name and wallet address below signature
-                const font = await signedPdfDoc.embedFont(StandardFonts.Helvetica);
-                const fontSize = 10;
-
-                // Calculate the left edge of the signature image
-                const signatureLeftEdge = signatureX - (position.width * width / 2);
-
-                // Draw name aligned with the left edge of the signature
-                page.drawText(signature.name, {
-                    x: signatureLeftEdge,
-                    y: signatureY - (position.height * height / 2) - 12,
-                    size: fontSize,
-                    font,
-                    color: rgb(0, 0, 0),
-                });
-
-                // Draw wallet address
-                const shortenedAddress = signature.walletAddress;
-
-                // Draw wallet address aligned with the left edge of the signature
-                page.drawText(shortenedAddress, {
-                    x: signatureLeftEdge,
-                    y: signatureY - (position.height * height / 2) - 24,
-                    size: fontSize,
-                    font,
-                    color: rgb(0, 0, 0),
-                });
-            }
-
-            // Save the signed PDF
-            const signedPdfBytes = await signedPdfDoc.save();
-
-            // Create a blob and download link
-            const blob = new Blob([signedPdfBytes], { type: 'application/pdf' });
-            const url = URL.createObjectURL(blob);
-
-            // Create download link and trigger download
-            const link = document.createElement('a');
-            link.href = url;
-            link.download = `signed_${pdfFile?.name || 'document.pdf'}`;
-            link.click();
-
-            // Clean up
-            URL.revokeObjectURL(url);
-
-            toaster.create({
-                title: "PDF signed successfully",
-                description: "Your signed document has been downloaded",
-                type: "success",
-                duration: 3000,
-            });
-        } catch (error) {
-            console.error("Error generating signed PDF:", error);
-            toaster.create({
-                title: "Error signing PDF",
-                description: "An error occurred while generating the signed PDF",
-                type: "error",
-                duration: 3000,
-            });
-        }
-    };
+        };
+        */
 
     // Handle signature dragging
     const [activeDragId, setActiveDragId] = useState<string | null>(null);
@@ -911,6 +927,8 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ file, submitSignature }) => {
             const userSignaturesApiInfo: Array<ApiFileInfo> = response.data.data
             // Make the logic here work with the current Signature Interface
 
+
+            setSignaturesAquaTree(userSignaturesApiInfo)
 
             let apiSigntures: SignatureData[] = []
             // first revision should be a form
@@ -1347,10 +1365,17 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ file, submitSignature }) => {
                                 colorPalette={'green'} variant={'solid'}
                                 colorScheme="white"
                                 // disabled={!pdfDoc || !signatureDataUrl || signaturePositions.length === 0}
-                                onClick={(e) => {
+                                onClick={async (e) => {
                                     e.preventDefault()
-                                    throw Error("fix me ...")
-                                    // submitSignature(1, 1, 1)
+                                    if (signaturePositions.length == 0) {
+
+                                        toaster.create({
+                                            description: `No signature detected in document`,
+                                            type: "error"
+                                        })
+                                        return
+                                    }
+                                    await submitSignature(signaturePositions, signaturesAquaTree)
                                 }}
                             >
                                 <FaCloudArrowUp />

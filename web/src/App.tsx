@@ -46,7 +46,9 @@ function App() {
           <Route path="/loading" element={<Loading />} />
           <Route path="/share/:identifier" element={<SharePage />} />
           <Route path="/aqua-forms" element={<AquaForms /> } />
-          <Route path="/pdf-signer" element={<PdfSigner file={null} /> } />
+          <Route path="/pdf-signer" element={<PdfSigner file={null}  submitSignature={async(_one, _two)=>{
+
+          }}/> } />
           <Route path="/workflow" element={<WorkFlowPage /> } />
           <Route path="/form-generator" element={<FormGenerator />} />
           <Route path="/attestation_addresses" element={<AttestationAddresses /> } />

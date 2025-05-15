@@ -55,7 +55,7 @@ const FilesTable = () => {
     const showActionButtons = (isWorkFlow: boolean, workFlow: string, item: ApiFileInfo) => {
 
         if (isWorkFlow) {
-            if (workFlow == "document_contract.json" || workFlow == "document_contract") {
+            if (workFlow == "aqua_sign.json" || workFlow == "aqua_sign") {
                 return <>
                     <Button size={'xs'} colorPalette={'cyan'} variant={'subtle'} w={'200px'} onClick={(e) => {
                         e.preventDefault();
@@ -102,7 +102,7 @@ const FilesTable = () => {
 
         // { isWorkFlow : false  , workFlow: ''}
         // let isWorkFlow = true;
-        // let workFlow = "document_contract";
+        // let workFlow = "aqua_sign";
 
 
         return <Table.Row

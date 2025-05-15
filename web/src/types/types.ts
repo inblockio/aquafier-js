@@ -34,3 +34,25 @@ export interface RevisionVerificationStatus{
   isVerified : boolean,
   logData : LogData[]
 }
+
+
+// Interface for signature position
+export interface SignaturePosition {
+    id: string;
+    pageIndex: number;
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+    isDragging?: boolean;
+    signatureId?: string; // Reference to the signature that was placed
+}
+
+// Interface for signature data
+export interface SignatureData {
+    id: string;
+    dataUrl: string;
+    walletAddress: string;
+    name: string;
+    createdAt: Date;
+}

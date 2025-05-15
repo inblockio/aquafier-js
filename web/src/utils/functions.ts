@@ -8,6 +8,15 @@ import Aquafier, { AquaTree, CredentialsData, FileObject, OrderRevisionInAquaTre
 import jdenticon from "jdenticon/standalone";
 
 
+export const convertTemplateNameToTitle = (str: string) => {
+    return str.split('_')
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' ');
+    // const words = str.split('_');
+    // const firstWord = words[0].charAt(0).toUpperCase() + words[0].slice(1);
+    // const remainingWords = words.slice(1).join(' ');
+    // return firstWord + ' ' + remainingWords;
+  };
 
 export const isWorkFlowData = (aquaTree: AquaTree, _systemAndUserWorkFlow: string[]): { isWorkFlow: boolean; workFlow: string } => {
     let falseResponse = {

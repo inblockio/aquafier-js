@@ -6,7 +6,269 @@ import * as fs from "fs"
 import path from 'path';
 import { SaveRevision } from '../models/request_models';
 
-export async function deleteAquaTreeFromSystem(walletAddress : string,  hash: string): Promise<[number, string]>{
+
+export async function deleteAquaTree(currentHash: string, userAddress: string, url: string): Promise<[number, string]> {
+
+
+    try {
+
+        let pubkeyhash = `${userAddress}_${currentHash}`;
+        console.log(`Public_key_hash_to_delete: ${pubkeyhash}`)
+
+        // fetch specific revision 
+        let latestRevionData = await prisma.revision.findFirst({
+            where: {
+                pubkey_hash: pubkeyhash
+            }
+        });
+
+        if (latestRevionData == null) {
+            return [500, `revision with hash ${currentHash} not found in system`]
+        }
+
+
+        //
+        const latestExist = await prisma.latest.findUnique({
+            where: { hash: pubkeyhash }
+        });
+
+        if (latestExist != null) {
+
+            if (latestRevionData.previous != null) {
+                await prisma.latest.update({
+                    where: {
+                        hash: pubkeyhash
+                    },
+                    data: {
+                        hash: latestRevionData.previous
+                    }
+                })
+            }
+        }
+
+        // Use Prisma transaction to ensure all or nothing execution
+        await prisma.$transaction(async (tx) => {
+            // const revisionPubkeyHashes = revisionData.map(rev => rev.pubkey_hash);
+            const revisionPubkeyHashes = [pubkeyhash]
+
+            // Step 1: First delete all entries in related tables that reference our revisions
+            // We need to delete child records before parent records to avoid foreign key constraints
+
+            // Delete AquaForms entries
+            await tx.aquaForms.deleteMany({
+                where: {
+                    hash: {
+                        in: revisionPubkeyHashes
+                    }
+                }
+            });
+
+            // Delete Signature entries
+            await tx.signature.deleteMany({
+                where: {
+                    hash: {
+                        in: revisionPubkeyHashes
+                    }
+                }
+            });
+
+            // Delete Witness entries (note: we need to handle WitnessEvent separately)
+            const witnesses = await tx.witness.findMany({
+                where: {
+                    hash: {
+                        in: revisionPubkeyHashes
+                    }
+                }
+            });
+
+            const witnessRoots = witnesses.map(w => w.Witness_merkle_root).filter(Boolean);
+
+            await tx.witness.deleteMany({
+                where: {
+                    hash: {
+                        in: revisionPubkeyHashes
+                    }
+                }
+            });
+
+            // Check if any WitnessEvents are no longer referenced
+            for (const root of witnessRoots) {
+                const remainingWitnesses = await tx.witness.count({
+                    where: {
+                        Witness_merkle_root: root
+                    }
+                });
+
+                if (remainingWitnesses === 0 && root) {
+                    await tx.witnessEvent.delete({
+                        where: {
+                            Witness_merkle_root: root
+                        }
+                    });
+                }
+            }
+
+            // Delete Link entries
+            await tx.link.deleteMany({
+                where: {
+                    hash: {
+                        in: revisionPubkeyHashes
+                    }
+                }
+            });
+
+            // Handle File entries
+            // First, find all files related to our revisions
+            const files = await tx.file.findMany({
+                where: {
+                    hash: {
+                        in: revisionPubkeyHashes
+                    }
+                }
+            });
+
+            // Handle FileIndex entries first (as they reference files)
+            for (const file of files) {
+                // Find FileIndex entries that reference this file
+                const fileIndexEntries = await tx.fileIndex.findMany({
+                    where: {
+                        hash: {
+                            has: file.hash
+                        }
+                    }
+                });
+
+                for (const fileIndex of fileIndexEntries) {
+                    if ((fileIndex.reference_count || 0) <= 1) {
+                        // If this is the last reference, delete the FileIndex entry
+                        await tx.fileIndex.delete({
+                            where: {
+                                id: fileIndex.id
+                            }
+                        });
+                    } else {
+                        // Otherwise, remove the reference and decrement the count
+                        await tx.fileIndex.update({
+                            where: {
+                                id: fileIndex.id
+                            },
+                            data: {
+                                hash: fileIndex.hash.filter(h => h !== file.hash),
+                                reference_count: (fileIndex.reference_count || 0) - 1
+                            }
+                        });
+                    }
+                }
+
+                // Now we can safely handle the file itself
+                if ((file.reference_count || 0) <= 1) {
+                    // If this is the last reference, delete the file
+                    if (file.content) {
+                        try {
+                            fs.unlinkSync(file.content);
+                        } catch (er) {
+                            //  console.log("Error deleting file from filesystem:", er);
+                            // Continue even if file deletion fails
+                        }
+                    }
+
+                    await tx.file.delete({
+                        where: {
+                            hash: file.hash
+                        }
+                    });
+                } else {
+                    // Otherwise, decrement the reference count
+                    await tx.file.update({
+                        where: {
+                            hash: file.hash
+                        },
+                        data: {
+                            reference_count: (file.reference_count || 0) - 1
+                        }
+                    });
+                }
+            }
+
+            // Step 2: Remove any references to our revisions from other revisions
+            await tx.revision.updateMany({
+                where: {
+                    previous: {
+                        in: revisionPubkeyHashes
+                    }
+                },
+                data: {
+                    previous: null
+                }
+            });
+
+
+
+            // Step 4: Finally, delete all revisions
+            await tx.revision.delete({
+                where: {
+                    pubkey_hash: pubkeyhash
+                }
+            });
+        });
+
+        return [200, "File and revisions deleted successfully"];
+    } catch (error: any) {
+        console.error("Error in delete operation:", error);
+        return [500, `Error deleting file: ${error.message}`];
+    }
+}
+
+export async function getSignatureAquaTrees(userAddress: string, url: string): Promise<Array<{
+    aquaTree: AquaTree,
+    fileObject: FileObject[]
+}>> {
+
+    let latest = await prisma.latest.findMany({
+        where: {
+            user: userAddress
+        }
+    });
+
+    let signatureAquaTrees: Array<{
+        aquaTree: AquaTree,
+        fileObject: FileObject[]
+    }> = []
+    if (latest.length != 0) {
+        let systemAquaTrees = await fetchAquatreeFoUser(url, latest);
+        for (let item of systemAquaTrees) {
+
+
+            //get the second revision
+            // check if it a link to signature
+            let aquaTreeRevisionsOrderd = OrderRevisionInAquaTree(item.aquaTree)
+            let allHashes = Object.keys(aquaTreeRevisionsOrderd.revisions)
+
+            if (allHashes.length >= 1) {
+                let secondRevision = aquaTreeRevisionsOrderd.revisions[allHashes[1]]
+
+                if (secondRevision != undefined && secondRevision.revision_type == 'link') {
+                    let secondRevision = aquaTreeRevisionsOrderd.revisions[allHashes[1]]
+
+                    if (secondRevision.link_verification_hashes != undefined) {
+                        let revisionHash = secondRevision.link_verification_hashes[0]
+                        let name = aquaTreeRevisionsOrderd.file_index[revisionHash]
+
+                        if (name == "user_signature.json") {
+                            signatureAquaTrees.push(item)
+                        }
+
+                    }
+                }
+            }
+
+
+        }
+    }
+
+    return signatureAquaTrees
+}
+export async function deleteAquaTreeFromSystem(walletAddress: string, hash: string): Promise<[number, string]> {
 
     let filepubkeyhash = `${walletAddress}_${hash}`;
 
@@ -33,7 +295,7 @@ export async function deleteAquaTreeFromSystem(walletAddress : string,  hash: st
         }
         console.log(`Found ${revisionData.length} revisions in the chain`);
     } catch (e: any) {
-        return  [500 , `Error fetching a revision ${JSON.stringify(e, null, 4)}`];
+        return [500, `Error fetching a revision ${JSON.stringify(e, null, 4)}`];
     }
 
     try {
@@ -377,12 +639,13 @@ export async function deleteAquaTreeFromSystem(walletAddress : string,  hash: st
 
         });
 
-        return [200, "File and revisions deleted successfully" ];
+        return [200, "File and revisions deleted successfully"];
     } catch (error: any) {
         console.error("Error in delete operation:", error);
         return [500, `Error deleting file: ${error.message}`]
     }
 }
+
 export async function getUserApiFileInfo(url: string, address: string): Promise<Array<{
     aquaTree: AquaTree,
     fileObject: FileObject[]
@@ -409,6 +672,7 @@ export async function getUserApiFileInfo(url: string, address: string): Promise<
 
     return await fetchAquatreeFoUser(url, latest)
 }
+
 export function removeFilePathFromFileIndex(aquaTree: AquaTree): AquaTree {
 
 
@@ -434,6 +698,7 @@ export function removeFilePathFromFileIndex(aquaTree: AquaTree): AquaTree {
         file_index: processedFileIndex
     };
 }
+
 export async function fetchAquatreeFoUser(url: string, latest: Array<{
     hash: string;
     user: string;
@@ -686,7 +951,8 @@ export async function saveARevisionInAquaTree(revisionData: SaveRevision, userAd
 
     return [200, ""]
 }
-export async function saveAquaTree(aquaTree: AquaTree, userAddress: string, templateId  : string | null = null, isWorkFlow : boolean = false) {
+
+export async function saveAquaTree(aquaTree: AquaTree, userAddress: string, templateId: string | null = null, isWorkFlow: boolean = false) {
     // Reorder revisions to ensure proper order
     let orderedAquaTree = reorderAquaTreeRevisionsProperties(aquaTree);
     let aquaTreeWithOrderdRevision = OrderRevisionInAquaTree(orderedAquaTree);
@@ -1078,7 +1344,7 @@ export async function createAquaTreeFromRevisions(latestRevisionHash: string, ur
             pubkey_hash: {
                 contains: latestRevisionHash,
                 mode: 'insensitive' // Case-insensitive matching
-            }, 
+            },
         }
     });
 
@@ -1095,7 +1361,7 @@ export async function createAquaTreeFromRevisions(latestRevisionHash: string, ur
             let previousWithPubKey = latestRevionData?.previous!!;
 
 
-            
+
             //if previosu verification hash is not empty find the previous one
             if (latestRevionData?.previous !== null && latestRevionData?.previous?.length !== 0) {
                 let aquaTreerevision = await findAquaTreeRevision(previousWithPubKey);
