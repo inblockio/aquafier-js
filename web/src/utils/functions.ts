@@ -1479,11 +1479,11 @@ export function generateAvatar(seed: string, size = 200) {
 //     let url = actualUrlToFetch
 //     // check if the file hash exist 
 //     // console.log(`==URL Data before ${actualUrlToFetch}`)
-//     if (actualUrlToFetch.includes("inblock.io")) {
-//         if (!actualUrlToFetch.includes("https")) {
-//             url = actualUrlToFetch.replace("http", "https")
-//         }
-//     }
+    // if (actualUrlToFetch.includes("inblock.io")) {
+    //     if (!actualUrlToFetch.includes("https")) {
+    //         url = actualUrlToFetch.replace("http", "https")
+    //     }
+    // }
 
 //     if(actualUrlToFetch.includes("https://0.0.0.0:0")){
 //         url = actualUrlToFetch.replace("https://0.0.0.0:0", "http://127.0.0.1:3000")
@@ -1496,14 +1496,20 @@ export function generateAvatar(seed: string, size = 200) {
 export function ensureDomainUrlHasSSL(actualUrlToFetch: string): string {
     let url = actualUrlToFetch;
 
+    if (actualUrlToFetch.includes("inblock.io")) {
+        if (!actualUrlToFetch.includes("https")) {
+            url = actualUrlToFetch.replace("http", "https")
+        }
+    }
+
     // Check if the URL starts with "http://inblock.io" and upgrade to HTTPS
-    if (url.startsWith("http://inblock.io")) {
-        url = url.replace("http://", "https://");
-    }
+    // if (url.startsWith("http://inblock.io") || url.includes('inblock.io')) {
+    //     url = url.replace("http://", "https://");
+    // }
     // Alternatively, if the domain is "inblock.io" but lacks protocol
-    else if (url.startsWith("inblock.io")) {
-        url = "https://" + url;
-    }
+    // else if (url.startsWith("inblock.io")) {
+    //     url = "https://" + url;
+    // }
 
     // Replace unsafe localhost URL (HTTPS on 0.0.0.0:0 → HTTP on 127.0.0.1:3000)
     if (url.startsWith("https://0.0.0.0") || url.startsWith("http://0.0.0.0") ) {
