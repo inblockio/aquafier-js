@@ -36,73 +36,81 @@ export default function WorkFlowPage() {
     const { selectedFileInfo, setSelectedFileInfo, formTemplates, session, backend_url } = useStore(appStore);
 
 
+    //aqua sign revision sequesn.
+    // 1. form (sender , reciever ets)
+    // 2. link to sign aqua tree
+    // 3. link to pdf aqua tree
+    // 4. etherium sign
+    // 5. form with signature positions
+    // 6. link to signture aqua tree.
+
     useEffect(() => {
         async function loadTimeline() {
             let items: Array<WorkFlowTimeLine> = []
-            // Get the first two elements
-            // const _firstTwo = aquaTreeVerificationWithStatuses.slice(0, 2);
-            // console.log("First two elements:", firstTwo); // [1, 2]
 
-            items.push({
-                id: 1,
-                completed: true,
-                content: genesisContent(),
-                icon: FaUser,
-                revisionHash: "",
-                title: "Contract Creation"
-            })
+            let index = 0;
+            for (const [hash, revision] of Object.entries(selectedFileInfo!.aquaTree!.revisions!!)) {
+                console.log(`Hash ${hash} Revision ${JSON.stringify(revision)}`)
 
 
-            // Get the rest of the elements (from index 2 onward)
-            const rest = aquaTreeVerificationWithStatuses.slice(3);
+                if (index == 1) {
+                    // Get the first two elements
+                    items.push({
+                        id: 1,
+                        completed: true,
+                        content: genesisContent(),
+                        icon: FaUser,
+                        revisionHash: "",
+                        title: "Contract Creation"
+                    })
+                }
+
+                if (index == 2 || index == 4) {
+                    let titleData = getTitleToDisplay(index)
+                    let iconData = getIconToDisplay(index)
+                    let contentData = await getContentToDisplay(index)
 
 
-            for (const [indexItem, item] of rest.entries()) { // aquaTreeVerificationWithStatuses.entries()) {
+                    let isVerified = aquaTreeVerificationWithStatuses.find((e)=>e.revisionHash==hash)
+                    
 
-                let index = indexItem + 2;
-                console.log(`Index: ${index}, Item:`, item);
+                    items.push({
+                        id: index,
+                        completed: isVerified?.isVerified ??  false,
+                        content: contentData,
+                        icon: iconData,
+                        revisionHash: hash,
+                        title: titleData
+                    })
 
-
-                // if(index==3){
-                //     continue
-                // }
-                let titleData = getTitleToDisplay(index)
-                let iconData = getIconToDisplay(index)
-                let contentData = await getContentToDisplay(index)
-
-                items.push({
-                    id: index,
-                    completed: item.isVerified,
-                    content: contentData,
-                    icon: iconData,
-                    revisionHash: item.revisionHash,
-                    title: titleData
-                })
-
-                // Now you have both the numeric index and the actual item
-                // setTimeLineItems((items) => {
-                //     let existingData = items.find((e) => e.revisionHash == item.revisionHash)
-                //     if (existingData) {
-                //         items.filter((e) => e.revisionHash != item.revisionHash)
-                //         items.push({
-                //             id: index,
-                //             completed: true,
-                //             content: contentData,
-                //             icon: iconData,
-                //             revisionHash: item.revisionHash,
-                //             title: titleData
-                //         })
-                //     } else {
-                //     }
-                //     return items
-                // })
+                }
 
 
+                index += 1
             }
 
-            console.log(`****************** index ${items.length} -- `)
 
-            if (items.length == 2) {
+            if(Object.values(selectedFileInfo!.aquaTree!.revisions).length ==6){
+
+                let titleData5 = getTitleToDisplay(5)
+                let iconData5 = getIconToDisplay(5)
+                let contentData5 = await getContentToDisplay(5)
+
+                items.push({
+                    id: 5,
+                    completed: true,
+                    content: contentData5,
+                    icon: iconData5,
+                    revisionHash: "",
+                    title: titleData5
+                })
+            }
+
+
+
+          
+            // not signed by user 
+            if (Object.keys(selectedFileInfo!.aquaTree!.revisions!!).length == 4) {
 
                 let index4 = 4
                 let titleData4 = await getTitleToDisplay(index4)
@@ -134,8 +142,6 @@ export default function WorkFlowPage() {
                 })
             }
 
-            console.log(`###############################################`)
-            console.log(`items ${JSON.stringify(items, null, 4)}`)
 
 
             setTimeLineItems(items)

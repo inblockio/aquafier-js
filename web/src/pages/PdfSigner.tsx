@@ -120,8 +120,6 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ file, submitSignature }) => {
         }
     };
 
-
-
     const saveAquaTree = async (aquaTree: AquaTree, fileObject: FileObject, isFinal: boolean = false, isWorkflow: boolean = false, template_id: string): Promise<Boolean> => {
         try {
             const url = `${backend_url}/explorer_aqua_file_upload`;
@@ -222,8 +220,6 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ file, submitSignature }) => {
             return false
         }
     };
-
-
 
     const createWorkflowFromTemplate = async (): Promise<Boolean> => {
 
@@ -1026,9 +1022,7 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ file, submitSignature }) => {
                     // Convert blob to base64 data URL
                     const dataUrl = await blobToDataURL(blob);
 
-                    console.log(`## dataUrl ${dataUrl}`);
-
-
+                
 
                     // Add to signature
                     let sign: SignatureData = {
