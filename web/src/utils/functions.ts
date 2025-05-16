@@ -1522,8 +1522,11 @@ export function ensureDomainUrlHasSSL(actualUrlToFetch: string): string {
     // }
 
     // Replace unsafe localhost URL (HTTPS on 0.0.0.0:0 → HTTP on 127.0.0.1:3000)
-    if (url.startsWith("https://0.0.0.0") || url.startsWith("http://0.0.0.0") ) {
+    if (url.startsWith("https://0.0.0.0") || url.startsWith("http://0.0.0.0") || url.startsWith("https://127.0.0.1") || url.startsWith("https://localhost") ) {
         url = url.replace("https://0.0.0.0", "http://127.0.0.1");
+        url = url.replace("http://0.0.0.0", "http://127.0.0.1");
+        url = url.replace("https://127.0.0.1", "http://127.0.0.1");
+        url = url.replace("https://localhost", "http://127.0.0.1");
     }
 
     return url;

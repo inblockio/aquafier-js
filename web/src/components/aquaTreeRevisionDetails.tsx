@@ -81,7 +81,7 @@ const revisionDataHeader = (aquaTree: AquaTree, revisionHash: string, fileObject
 
 
                     console.log(`👁️‍🗨️ aquaTreeFiles ${allHashes.toString()} == ${revisionHash} `)
-                    return allHashes.includes(revision.link_verification_hashes[0]!)
+                    return allHashes.includes(revision.link_verification_hashes![0]!)
                 })
 
                 console.log(`👁️‍🗨️ aquaTreePick ${JSON.stringify(aquaTreePick, null, 4)} `)

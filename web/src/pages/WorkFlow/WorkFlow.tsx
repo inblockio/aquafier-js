@@ -9,7 +9,9 @@ import {
     // HStack,
     Container,
     Heading,
-    Stack
+    Stack,
+    Grid,
+    GridItem
 } from '@chakra-ui/react';
 // import { Card } from '@chakra-ui/react';
 // import { FaCheck, FaQuestionCircle, FaBriefcase, FaBook, FaCoffee, FaAward, FaUser } from 'react-icons/fa';
@@ -26,6 +28,8 @@ import PdfSigner from '../PdfSigner';
 import { toaster } from '../../components/chakra-ui/toaster';
 import axios from 'axios';
 import { ApiFileInfo } from '../../models/FileInfo';
+import SignatureItem from '../../components/pdf/SignatureItem';
+import { CompleteChainView } from '../../components/CustomDrawer';
 
 export default function WorkFlowPage() {
     const [activeStep, setActiveStep] = useState(1);
@@ -397,8 +401,8 @@ export default function WorkFlowPage() {
 
 
         for (const [index, signaturePositionItem] of signaturePosition.entries()) {
-7
-            signForm[`x_${index}`] =  parseFloat(signaturePositionItem.x.toFixed(16));
+            7
+            signForm[`x_${index}`] = parseFloat(signaturePositionItem.x.toFixed(16));
             signForm[`y_${index}`] = parseFloat(signaturePositionItem.y.toFixed(16));
             signForm[`page_${index}`] = signaturePositionItem.pageIndex.toString()
             signForm[`width_${index}`] = signaturePositionItem.width.toString()
@@ -603,7 +607,7 @@ export default function WorkFlowPage() {
             });
 
             if (!response.ok) {
-                console.error("Failed to fetch file:", response.status, response.statusText);
+                console.error("FFFailed to fetch file:", response.status, response.statusText);
                 return null;
             }
 
@@ -617,6 +621,13 @@ export default function WorkFlowPage() {
                     contentType = "application/pdf";
                     console.log("Determined content type from filename:", contentType);
                 }
+            }
+
+            if (contentType.startsWith("image")) {
+                const arrayBuffer = await response.arrayBuffer();
+                // Ensure we use the PDF content type
+                const blob = new Blob([arrayBuffer], { type: contentType });
+                return URL.createObjectURL(blob);
             }
 
             // Process PDF files
@@ -633,6 +644,44 @@ export default function WorkFlowPage() {
             return null;
         }
     }
+
+    const fetchImage = async (fileUrl: string) => {
+        try {
+            const actualUrlToFetch = ensureDomainUrlHasSSL(fileUrl);
+            const response = await fetch(actualUrlToFetch, {
+                headers: {
+                    nonce: `${session?.nonce}`
+                }
+            });
+
+            if (!response.ok) {
+                console.error("FFFailed to fetch file:", response.status, response.statusText);
+                return null;
+            }
+
+            // Get content type from headers
+            let contentType = response.headers.get("Content-Type") || "";
+            console.log("fetched: ", response, "content type:", contentType);
+
+            // If content type is missing or generic, try to detect from URL
+            if (contentType === "application/octet-stream" || contentType === "") {
+                contentType = "image/png";
+            }
+
+            if (contentType.startsWith("image")) {
+                const arrayBuffer = await response.arrayBuffer();
+                // Ensure we use the PDF content type
+                const blob = new Blob([arrayBuffer], { type: contentType });
+                return URL.createObjectURL(blob);
+            }
+
+            return null;
+        } catch (error) {
+            console.error("Error fetching file:", error);
+            return null;
+        }
+    }
+
 
     const fetchPDFfile = async (): Promise<File | null> => {
 
@@ -737,6 +786,22 @@ export default function WorkFlowPage() {
             return null;
         }
     }
+    console.log(selectedFileInfo)
+
+    /*
+        check whether a string contains a number
+        input: user_signature-753.json
+    */
+    const testStringWith3Numbers = (str: string) => {
+        const stringArray = str.split("")
+        for (let i = 0; i < stringArray.length; i++) {
+            let num = Number(stringArray[i])
+            if (!isNaN(num)) {
+                return true
+            }
+        }
+        return false
+    }
 
     const getContentToDisplay = async (index: number) => {
 
@@ -758,7 +823,6 @@ export default function WorkFlowPage() {
             if (!pdfUrl) {
                 return <>No PDF found</>
             }
-            console.log("objectURL", pdfUrl)
             return <PDFJSViewer pdfUrl={pdfUrl} />
         }
 
@@ -805,8 +869,75 @@ export default function WorkFlowPage() {
 
                     //check if the document is signed
                     if (Object.keys(selectedFileInfo!.aquaTree!.revisions).length >= 5) {
+                        const userSignatureAquaTree = selectedFileInfo!.fileObject.find((e) => e.fileName === "user_signature_data.json.aqua.json")
+                        if (!userSignatureAquaTree) {
+                            return <>No signature found</>
+                        }
+                        const signatureAquatTree: AquaTree = userSignatureAquaTree.fileContent as AquaTree
+                        const revisionHashes = Object.keys(signatureAquatTree.revisions)
+                        const revision = signatureAquatTree.revisions[revisionHashes[0]]
 
-                        return <Text>Pdf signed</Text>
+                        const fileObjects = selectedFileInfo?.fileObject
+                        const actualPdf = fileObjects?.find((e) => e.fileName.endsWith(".pdf"))
+                        const fileUrl = actualPdf?.fileContent
+                        if (!fileUrl) {
+                            return <>No PDF found</>
+                        }
+                        const pdfUrl = await fetchFile(fileUrl as string)
+                        const signature_0_Position = {
+                            height: revision.forms_height_0,
+                            width: revision.forms_width_0,
+                            x: revision.forms_x_0,
+                            y: revision.forms_y_0,
+                            page: revision.forms_page_0,
+                            name: "",
+                            walletAddress: "",
+                            image: ""
+                        }
+
+                        const signatureImageUrl = selectedFileInfo?.fileObject?.find((e) => e.fileName === "signature.png")?.fileContent
+                        if (!signatureImageUrl) {
+                            return <>No signature image url found</>
+                        }
+
+                        const image = await fetchImage(signatureImageUrl as string)
+                        if (!image) {
+                            return <>No signature image found</>
+                        }
+
+                        // Getting name and address
+
+                        const fileObject = selectedFileInfo?.fileObject?.find((e) => (testStringWith3Numbers(e.fileName) && e.fileName.endsWith(".json.aqua.json")))
+                        if (!fileObject) {
+                            return <>No signature data found</>
+                        }
+                        const signatureFormData = fileObject.fileContent as AquaTree
+                        const keys = Object.keys(signatureFormData.file_index)
+                        let hash = ""
+                        for (let i = 0; i < keys.length; i++) {
+                            if (signatureFormData.file_index[keys[i]] === fileObject.fileName.replace(".aqua.json", "")) {
+                                hash = keys[i]
+                                break
+                            }
+                        }
+                        const actualRevision = signatureFormData.revisions[hash]
+                        signature_0_Position.name = actualRevision.forms_name
+                        signature_0_Position.walletAddress = actualRevision.forms_wallet_address
+                        signature_0_Position.image = image
+
+                        return (
+                            <Grid templateColumns="repeat(4, 1fr)">
+                                <GridItem colSpan={{ base: 12, md: 3 }}>
+                                    <PDFJSViewer pdfUrl={pdfUrl!} />
+                                </GridItem>
+                                <GridItem colSpan={{ base: 12, md: 1 }}>
+                                    <Stack>
+                                        <Text fontWeight={700}>Signatures</Text>
+                                        <SignatureItem signature={signature_0_Position} />
+                                    </Stack>
+                                </GridItem>
+                            </Grid>
+                        )
                     } else {
 
                         return <PdfSigner file={pdfFile} submitSignature={submitSignatureData} />
@@ -831,7 +962,9 @@ export default function WorkFlowPage() {
         }
 
         if (index == 5) {
-            return <>Index 5</>
+            return (
+                <CompleteChainView selectedFileInfo={selectedFileInfo!} callBack={() => {}} />
+            )
         }
 
         return <>..</>
