@@ -190,10 +190,27 @@ const Navbar = () => {
 
             if (fieldItem.type === 'wallet_address') {
                 if (typeof valueInput === 'string') {
-                    let isValidWalletAddress = isValidEthereumAddress(valueInput)
-                    if (!isValidWalletAddress) {
-                        setModalFormErorMessae(`${valueInput} is not a valid wallet adress`)
-                        return
+                    if (valueInput.includes(",")) {
+                        let walletAddresses = valueInput.split(",");
+                        let seenWalletAddresses = new Set<string>();
+                        for (let walletAddress of walletAddresses) {
+                            let isValidWalletAddress = isValidEthereumAddress(walletAddress.trim())
+                            if (!isValidWalletAddress) {
+                                setModalFormErorMessae(`${walletAddress.trim()} is not a valid wallet adress`)
+                                return
+                            }
+                            if (seenWalletAddresses.has(walletAddress.trim())) {
+                                setModalFormErorMessae(`${walletAddress.trim()} is a duplicate wallet adress`)
+                                return
+                            }
+                            seenWalletAddresses.add(walletAddress.trim())
+                        }
+                    } else {
+                        let isValidWalletAddress = isValidEthereumAddress(valueInput.trim())
+                        if (!isValidWalletAddress) {
+                            setModalFormErorMessae(`${valueInput} is not a valid wallet adress`)
+                            return
+                        }
                     }
                 } else {
                     setModalFormErorMessae(`${valueInput} provided at ${fieldItem.name} is not a string`)
