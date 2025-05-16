@@ -71,12 +71,12 @@ export default function WorkFlowPage() {
                     let contentData = await getContentToDisplay(index)
 
 
-                    let isVerified = aquaTreeVerificationWithStatuses.find((e)=>e.revisionHash==hash)
-                    
+                    let isVerified = aquaTreeVerificationWithStatuses.find((e) => e.revisionHash == hash)
+
 
                     items.push({
                         id: index,
-                        completed: isVerified?.isVerified ??  false,
+                        completed: isVerified?.isVerified ?? false,
                         content: contentData,
                         icon: iconData,
                         revisionHash: hash,
@@ -90,7 +90,7 @@ export default function WorkFlowPage() {
             }
 
 
-            if(Object.values(selectedFileInfo!.aquaTree!.revisions).length ==6){
+            if (Object.values(selectedFileInfo!.aquaTree!.revisions).length == 6) {
 
                 let titleData5 = getTitleToDisplay(5)
                 let iconData5 = getIconToDisplay(5)
@@ -108,7 +108,7 @@ export default function WorkFlowPage() {
 
 
 
-          
+
             // not signed by user 
             if (Object.keys(selectedFileInfo!.aquaTree!.revisions!!).length == 4) {
 
@@ -397,12 +397,12 @@ export default function WorkFlowPage() {
 
 
         for (const [index, signaturePositionItem] of signaturePosition.entries()) {
-
-            signForm[`x_${index}`] = signaturePositionItem.x
-            signForm[`y_${index}`] = signaturePositionItem.y
-            signForm[`page_${index}`] = signaturePositionItem.pageIndex
-            signForm[`width_${index}`] = signaturePositionItem.width
-            signForm[`height_${index}`] = signaturePositionItem.height
+7
+            signForm[`x_${index}`] =  parseFloat(signaturePositionItem.x.toFixed(16));
+            signForm[`y_${index}`] = parseFloat(signaturePositionItem.y.toFixed(16));
+            signForm[`page_${index}`] = signaturePositionItem.pageIndex.toString()
+            signForm[`width_${index}`] = signaturePositionItem.width.toString()
+            signForm[`height_${index}`] = signaturePositionItem.height.toString()
 
         }
 
@@ -428,6 +428,7 @@ export default function WorkFlowPage() {
         }
         // save aqua tree to the server
 
+        console.log(`👁️‍🗨️👁️‍🗨️ Aqutree form ${JSON.stringify(userSignatureDataAquaTree.data.aquaTree!, null, 4)}  \n jsonString  ${jsonString} `)
         await saveAquaTree(userSignatureDataAquaTree.data.aquaTree!, fileObjectUserSignature, true, true, "")
 
 
