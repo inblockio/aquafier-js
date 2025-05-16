@@ -900,37 +900,7 @@ export const LinkButton = ({ item, nonce }: IShareButton) => {
             });
 
             if (response.status === 200 || response.status === 201) {
-                //  console.log("update state ...")
-                // const newFiles: ApiFileInfo[] = [];
-                // const keysPar = Object.keys(item.aquaTree!.revisions!)
-                // files.forEach((itemFile) => {
-                //     const keys = Object.keys(itemFile.aquaTree!.revisions!)
-                //     if (areArraysEqual(keys, keysPar)) {
-                //         let newData = {
-                //             ...itemFile,
-                //             aquaTree: result.data.aquaTree!,
-                //         }
-
-                //         let name = getFileName(result.data.aquaTree!)
-
-                //         newData.fileObject.push({
-                //             fileContent: linkItem!.aquaTree!,
-                //             path: "",
-                //             fileName: `${name}.aqua.json`,
-                //             fileSize: estimateStringFileSize(JSON.stringify(linkItem!.aquaTree!, null, 4))
-                //         })
-
-                //         newData.fileObject.push(...linkItem.fileObject)
-
-                //         newFiles.push(newData)
-
-                //     } else {
-                //         newFiles.push(itemFile)
-                //     }
-                // })
-
-                // //  console.log(`new file ${JSON.stringify(newFiles, null, 4)}`)
-                // setFiles(newFiles)
+               
 
                 await refetchAllUserFiles();
 

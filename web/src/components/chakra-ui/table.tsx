@@ -31,6 +31,7 @@ const FilesTable = () => {
     const { files, backend_url, session, setSelectedFileInfo, selectedFileInfo, systemFileInfo } = useStore(appStore)
     const [selection, setSelection] = useState<string[]>([])
 
+    const [disableDrawerAction, setDisableDrawerActions] = useState(false)
     const [isOpen, setIsOpen] = useState(false)
     // const [fileInfo, setFileInfo] = useState<ApiFileInfo | null>(null)
     const [drawerStatus, setDrawerStatus] = useState<IDrawerStatus | null>(null)
@@ -66,6 +67,12 @@ const FilesTable = () => {
                         Open Workflow
                     </Button>
                     <ShareButtonAction nonce={session?.nonce ?? ""} item={item} />
+                    <ChainDetailsBtn callBack={() => {
+                        setDisableDrawerActions(true)
+                        openChainDetailsView(item)
+                    }} />
+                    <DeleteAquaChain apiFileInfo={item} backendUrl={backend_url} nonce={session?.nonce ?? ""} revision="" />
+                    <DownloadAquaChain file={item} />
                 </>
             }
 
@@ -74,7 +81,10 @@ const FilesTable = () => {
 
 
         return <>
-            <ChainDetailsBtn callBack={() => openChainDetailsView(item)} />
+            <ChainDetailsBtn callBack={() => {
+                setDisableDrawerActions(false)
+                openChainDetailsView(item)
+            }} />
             <SignAquaChain apiFileInfo={item} backendUrl={backend_url} nonce={session?.nonce ?? ""} revision="" />
             <WitnessAquaChain apiFileInfo={item} backendUrl={backend_url} nonce={session?.nonce ?? ""} revision="" />
             <LinkButton item={item} nonce={session?.nonce ?? ""} />
@@ -356,11 +366,15 @@ const FilesTable = () => {
                                     </DrawerActionTrigger>
                                     {
                                         selectedFileInfo ? (
+
                                             <>
-                                                <ShareButtonAction nonce={session?.nonce ?? ""} item={selectedFileInfo} />
-                                                <WitnessAquaChain apiFileInfo={selectedFileInfo} backendUrl={backend_url} nonce={session?.nonce ?? ""} revision="" />
-                                                <SignAquaChain apiFileInfo={selectedFileInfo} backendUrl={backend_url} nonce={session?.nonce ?? ""} revision="" />
-                                                <DeleteAquaChain apiFileInfo={selectedFileInfo} backendUrl={backend_url} nonce={session?.nonce ?? ""} revision="" />
+                                                {disableDrawerAction ? <></> : <>
+                                                    <ShareButtonAction nonce={session?.nonce ?? ""} item={selectedFileInfo} />
+                                                    <WitnessAquaChain apiFileInfo={selectedFileInfo} backendUrl={backend_url} nonce={session?.nonce ?? ""} revision="" />
+                                                    <SignAquaChain apiFileInfo={selectedFileInfo} backendUrl={backend_url} nonce={session?.nonce ?? ""} revision="" />
+                                                    <DeleteAquaChain apiFileInfo={selectedFileInfo} backendUrl={backend_url} nonce={session?.nonce ?? ""} revision="" />
+                                                </>
+                                                }
                                             </>
                                         ) : null
                                     }

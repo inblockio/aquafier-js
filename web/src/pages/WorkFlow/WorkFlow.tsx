@@ -19,100 +19,13 @@ import appStore from '../../store';
 import { useStore } from "zustand"
 import { SignaturePosition, WorkFlowTimeLine } from '../../types/types';
 import { RevisionVerificationStatus } from '../../types/types';
-import Aquafier, { AquaTreeWrapper, OrderRevisionInAquaTree } from 'aqua-js-sdk';
-import { convertTemplateNameToTitle, ensureDomainUrlHasSSL, isWorkFlowData } from '../../utils/functions';
+import Aquafier, { AquaTreeWrapper, FileObject, OrderRevisionInAquaTree } from 'aqua-js-sdk';
+import { convertTemplateNameToTitle, ensureDomainUrlHasSSL, estimateFileSize, isWorkFlowData } from '../../utils/functions';
 import { PDFJSViewer } from 'pdfjs-react-viewer';
 import PdfSigner from '../PdfSigner';
 import { toaster } from '../../components/chakra-ui/toaster';
 import axios from 'axios';
 import { ApiFileInfo } from '../../models/FileInfo';
-// Timeline data
-// const timelineItems = [
-//     {
-//         id: 1,
-//         title: 'Personal Info',
-//         icon: FaUser,
-//         completed: true,
-//         revisionHash: '',
-//         content: (
-//             <Card.Root>
-//                 <Card.Body>
-//                     <Heading size="md" mb={4}>Personal Information</Heading>
-//                     <Text>This section contains all your personal details and profile information.</Text>
-//                     <Text mt={4}>Make sure to keep your contact information up to date for important notifications.</Text>
-//                 </Card.Body>
-//             </Card.Root>
-//         )
-//     },
-//     {
-//         id: 2,
-//         title: 'Education',
-//         icon: FaBook,
-//         completed: true,
-
-//         revisionHash: '',
-//         content: (
-//             <Card.Root>
-//                 <Card.Body>
-//                     <Heading size="md" mb={4}>Education History</Heading>
-//                     <Text>Your education background and academic achievements.</Text>
-//                     <Text mt={4}>You can add degrees, certifications, and relevant coursework.</Text>
-//                 </Card.Body>
-//             </Card.Root>
-//         )
-//     },
-//     {
-//         id: 3,
-//         title: 'Experience',
-//         icon: FaBriefcase,
-//         completed: true,
-
-//         revisionHash: '',
-//         content: (
-//             <Card.Root>
-//                 <Card.Body>
-//                     <Heading size="md" mb={4}>Work Experience</Heading>
-//                     <Text>Your professional history and career milestones.</Text>
-//                     <Text mt={4}>Include relevant job positions, responsibilities, and accomplishments.</Text>
-//                 </Card.Body>
-//             </Card.Root>
-//         )
-//     },
-//     {
-//         id: 4,
-//         title: 'Skills',
-//         icon: FaCoffee,
-//         completed: false,
-
-//         revisionHash: '',
-//         content: (
-//             <Card.Root>
-//                 <Card.Body>
-//                     <Heading size="md" mb={4}>Skills & Expertise</Heading>
-//                     <Text>Highlight your technical and soft skills.</Text>
-//                     <Text mt={4}>This section needs to be completed. Add your core competencies and expertise areas.</Text>
-//                 </Card.Body>
-//             </Card.Root>
-//         )
-//     },
-//     {
-//         id: 5,
-//         title: 'Achievements',
-//         icon: FaAward,
-//         completed: false,
-
-//         revisionHash: '',
-//         content: (
-//             <Card.Root>
-//                 <Card.Body>
-//                     <Heading size="md" mb={4}>Achievements & Awards</Heading>
-//                     <Text>Your notable accomplishments and recognitions.</Text>
-//                     <Text mt={4}>This section needs to be completed. Add your awards, certificates, and significant achievements.</Text>
-//                 </Card.Body>
-//             </Card.Root>
-//         )
-//     }
-// ];
 
 export default function WorkFlowPage() {
     const [activeStep, setActiveStep] = useState(1);
@@ -236,8 +149,6 @@ export default function WorkFlowPage() {
 
 
     useEffect(() => {
-
-
         loadData()
 
     }, [])
@@ -358,6 +269,205 @@ export default function WorkFlowPage() {
         return FaEraser
     }
 
+    const submitSignatureData = async (signaturePosition: SignaturePosition[], signAquaTree: ApiFileInfo[]) => {
+
+        if (signAquaTree.length == 0) {
+            toaster.create({
+                description: `Sinature not found`,
+                type: "error"
+            })
+            return
+        }
+
+        let aquafier = new Aquafier();
+
+        let signForm: {
+            [key: string]: string | number;
+        } = {}
+
+
+        for (const [index, signaturePositionItem] of signaturePosition.entries()) {
+
+            signForm[`x_${index}`] = signaturePositionItem.x
+            signForm[`y_${index}`] = signaturePositionItem.y
+            signForm[`page_${index}`] = signaturePositionItem.pageIndex
+            signForm[`width_${index}`] = signaturePositionItem.width
+            signForm[`height_${index}`] = signaturePositionItem.height
+
+        }
+
+
+        const jsonString = JSON.stringify(signForm, null, 2);
+
+        let estimateize = estimateFileSize(JSON.stringify(signForm));
+
+        const fileObject: FileObject = {
+            fileContent: jsonString,
+            fileName: `user_signature_data.json`,
+            path: './',
+            fileSize: estimateize
+        }
+        let userSignatureDataAquaTree = await aquafier.createGenesisRevision(fileObject, true, false, false)
+
+        if (userSignatureDataAquaTree.isErr()) {
+            toaster.create({
+                description: `Sinature data creation failed`,
+                type: "error"
+            })
+            return
+        }
+
+
+        // linked 
+        let aquaTreeWrapper: AquaTreeWrapper = {
+            aquaTree: selectedFileInfo!.aquaTree!,
+            revision: "",
+            // fileObject: selectedFileInfo!.fileObject
+        }
+
+        let userSignatureDataAquaTreeWrapper: AquaTreeWrapper = {
+            aquaTree: userSignatureDataAquaTree!.data.aquaTree!,
+            revision: "",
+            // fileObject: selectedFileInfo!.fileObject
+        }
+
+        let resLinkedAquaTreeWithUserSignatureData = await aquafier.linkAquaTree(aquaTreeWrapper, userSignatureDataAquaTreeWrapper)
+
+        if (resLinkedAquaTreeWithUserSignatureData.isErr()) {
+
+            toaster.create({
+                description: `Sinature data not appended to main tree succefully `,
+                type: "error"
+            })
+            return
+
+        }
+
+        //save the last link revision to db
+
+
+        try {
+            let newAquaTree = resLinkedAquaTreeWithUserSignatureData.data.aquaTree!
+            let revisionHashes = Object.keys(newAquaTree.revisions)
+            const lastHash = revisionHashes[revisionHashes.length - 1]
+            const lastRevision = resLinkedAquaTreeWithUserSignatureData.data.aquaTree?.revisions[lastHash]
+            // send to server
+            const url = `${backend_url}/tree`;
+
+            const response = await axios.post(url, {
+                "revision": lastRevision,
+                "revisionHash": lastHash,
+
+            }, {
+                headers: {
+                    "nonce": session?.nonce
+                }
+            });
+
+            if (response.status === 200 || response.status === 201) {
+
+
+                console.log(`💯 form with signature position saved sussefully to the api `)
+
+            }
+        } catch (e) {
+
+            toaster.create({
+                description: `Error saving link revsion of signature locations `,
+                type: "error"
+            })
+            return
+
+        }
+
+
+
+
+
+        let linkedAquaTreeWithUserSignatureDataWrapper: AquaTreeWrapper = {
+            aquaTree: resLinkedAquaTreeWithUserSignatureData.data.aquaTree!,
+            revision: "",
+            // fileObject: signAquaTree[0].fileObject
+        }
+
+        let signatureAquaTree = signAquaTree[0].aquaTree!;
+        let aquaTreeWrapperLinked: AquaTreeWrapper = {
+            aquaTree: signatureAquaTree,
+            revision: "",
+            // fileObject: signAquaTree[0].fileObject
+        }
+        let resLinkedAquaTree = await aquafier.linkAquaTree(linkedAquaTreeWithUserSignatureDataWrapper, aquaTreeWrapperLinked)
+
+        if (resLinkedAquaTree.isErr()) {
+
+            toaster.create({
+                description: `Sinature tree not appended to main tree succefully `,
+                type: "error"
+            })
+            return
+
+        }
+
+
+        //save the last link revision to db
+
+        try {
+
+            let newAquaTree = resLinkedAquaTree.data.aquaTree!
+            let revisionHashes = Object.keys(newAquaTree.revisions)
+            const lastHash = revisionHashes[revisionHashes.length - 1]
+            const lastRevision = resLinkedAquaTree.data.aquaTree?.revisions[lastHash]
+            // send to server
+            const url = `${backend_url}/tree`;
+
+            const actualUrlToFetch = ensureDomainUrlHasSSL(url);
+
+
+            const response = await axios.post(actualUrlToFetch, {
+                "revision": lastRevision,
+                "revisionHash": lastHash,
+
+            }, {
+                headers: {
+                    "nonce": session?.address
+                }
+            });
+
+
+
+            toaster.create({
+                description: `Linking successfull`,
+                type: "success"
+            })
+
+
+
+
+            if (response.status === 200 || response.status === 201) {
+
+
+                console.log(`💯 form with signature data saved sussefully to the api `)
+
+            }
+        } catch (e) {
+
+            toaster.create({
+                description: `Error saving link revsion of signature tree `,
+                type: "error"
+            })
+
+            return
+        }
+
+
+
+
+        let data = selectedFileInfo
+        data!.aquaTree = resLinkedAquaTree.data.aquaTree
+        setSelectedFileInfo(data!!)
+
+
+    }
     // Helper function to get content type from file extension
     // const getContentTypeFromFileName = (fileName: string): string => {
     //     if (!fileName) return "application/octet-stream";
@@ -366,7 +476,7 @@ export default function WorkFlowPage() {
     //     return "application/octet-stream";
     // };
 
-    console.log("fie: ", selectedFileInfo)
+    // console.log("fie: ", selectedFileInfo)
 
     //tod replace this methd with fetchPDFfile
     const fetchFile = async (fileUrl: string) => {
@@ -584,83 +694,7 @@ export default function WorkFlowPage() {
                         return <Text>Pdf signed</Text>
                     } else {
 
-                        return <PdfSigner file={pdfFile} submitSignature={async (_signaturePosition: SignaturePosition[],signAquaTree: ApiFileInfo[]) => {
-                            
-                            if(signAquaTree.length==0){
-                                toaster.create({
-                                    description: `Sinature not found`,
-                                    type: "error"
-                                })
-                            }
-
-                            // todo  create form revision first 
-
-                            // let signForm ={}
-
-                            // for()
-
-
-                            let aquafier = new Aquafier();
-                            let aquaTreeWrapper: AquaTreeWrapper = {
-                                aquaTree: selectedFileInfo!.aquaTree!,
-                                revision: "",
-                                // fileObject: selectedFileInfo!.fileObject
-                            }
-                            let signatureAquaTree = signAquaTree[0].aquaTree!;
-                            let aquaTreeWrapperLinked: AquaTreeWrapper = {
-                                aquaTree: signatureAquaTree,
-                                revision: "",
-                                // fileObject: signAquaTree[0].fileObject
-                            }
-                            let resLinkedAquaTree = await aquafier.linkAquaTree(aquaTreeWrapper, aquaTreeWrapperLinked)
-
-                            if (resLinkedAquaTree.isOk()) {
-
-                                let newAquaTree = resLinkedAquaTree.data.aquaTree!
-                                let revisionHashes = Object.keys(newAquaTree.revisions)
-                                const lastHash = revisionHashes[revisionHashes.length - 1]
-                                const lastRevision = resLinkedAquaTree.data.aquaTree?.revisions[lastHash]
-                                // send to server
-                                const url = `${backend_url}/tree`;
-
-                                const actualUrlToFetch = ensureDomainUrlHasSSL(url);
-
-
-                                const response = await axios.post(actualUrlToFetch, {
-                                    "revision": lastRevision,
-                                    "revisionHash": lastHash,
-
-                                }, {
-                                    headers: {
-                                        "nonce": session?.address
-                                    }
-                                });
-
-                                if (response.status === 200 || response.status === 201) {
-                                    console.log(`Success ....`)
-                                    let data = selectedFileInfo
-                                    data!.aquaTree = newAquaTree
-                                    setSelectedFileInfo(data!!)
-                                }
-
-                                toaster.create({
-                                    description: `Linking successfull`,
-                                    type: "success"
-                                })
-
-                                
-
-
-                            } else {
-
-                                toaster.create({
-                                    description: `Uploading link failed`,
-                                    type: "error"
-                                })
-                            }
-
-
-                        }} />
+                        return <PdfSigner file={pdfFile} submitSignature={submitSignatureData} />
                     }
                 } else {
                     return <Alert status="info" variant="solid" title={`Error signers should be ${firstRevision?.forms_signers}`} />
