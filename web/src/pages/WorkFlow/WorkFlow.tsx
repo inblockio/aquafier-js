@@ -686,7 +686,8 @@ export default function WorkFlowPage() {
             let firstRevision = selectedFileInfo!.aquaTree?.revisions[allHashes[0]]
 
             if (firstRevision?.forms_signers) {
-                if (firstRevision.forms_signers == session?.address) {
+                let signers = firstRevision.forms_signers.split(",").map((e: string) => e.trim())
+                if (signers.includes(session?.address)) {
 
                     //check if the document is signed
                     if (Object.keys(selectedFileInfo!.aquaTree!.revisions).length >= 5) {
@@ -697,7 +698,15 @@ export default function WorkFlowPage() {
                         return <PdfSigner file={pdfFile} submitSignature={submitSignatureData} />
                     }
                 } else {
-                    return <Alert status="info" variant="solid" title={`Error signers should be ${firstRevision?.forms_signers}`} />
+                    return (
+                        <Alert status="info" variant="solid" title={`You are not a signer of this document`}>
+                            {
+                                signers.map((signer: string, index: number) => {
+                                    return <Text key={index}>{signer.trim()}</Text>
+                                })
+                            }
+                        </Alert>
+                    )
                 }
             } else {
                 return <Alert status="error" variant="solid" title={"Error signers not found"} />
