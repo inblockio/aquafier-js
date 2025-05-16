@@ -19,7 +19,7 @@ import appStore from '../../store';
 import { useStore } from "zustand"
 import { SignaturePosition, WorkFlowTimeLine } from '../../types/types';
 import { RevisionVerificationStatus } from '../../types/types';
-import Aquafier, { AquaTreeWrapper, FileObject, OrderRevisionInAquaTree } from 'aqua-js-sdk';
+import Aquafier, { AquaTreeWrapper, FileObject, getAquaTreeFileObject, OrderRevisionInAquaTree } from 'aqua-js-sdk';
 import { convertTemplateNameToTitle, ensureDomainUrlHasSSL, estimateFileSize, isWorkFlowData } from '../../utils/functions';
 import { PDFJSViewer } from 'pdfjs-react-viewer';
 import PdfSigner from '../PdfSigner';
@@ -54,7 +54,7 @@ export default function WorkFlowPage() {
 
 
             // Get the rest of the elements (from index 2 onward)
-            const rest = aquaTreeVerificationWithStatuses.slice(2);
+            const rest = aquaTreeVerificationWithStatuses.slice(3);
 
 
             for (const [indexItem, item] of rest.entries()) { // aquaTreeVerificationWithStatuses.entries()) {
@@ -102,7 +102,7 @@ export default function WorkFlowPage() {
 
             console.log(`****************** index ${items.length} -- `)
 
-            if (items.length == 3) {
+            if (items.length == 2) {
 
                 let index4 = 4
                 let titleData4 = await getTitleToDisplay(index4)
@@ -301,13 +301,13 @@ export default function WorkFlowPage() {
 
         let estimateize = estimateFileSize(JSON.stringify(signForm));
 
-        const fileObject: FileObject = {
+        const fileObjectUserSignature: FileObject = {
             fileContent: jsonString,
             fileName: `user_signature_data.json`,
             path: './',
             fileSize: estimateize
         }
-        let userSignatureDataAquaTree = await aquafier.createGenesisRevision(fileObject, true, false, false)
+        let userSignatureDataAquaTree = await aquafier.createGenesisRevision(fileObjectUserSignature, true, false, false)
 
         if (userSignatureDataAquaTree.isErr()) {
             toaster.create({
@@ -322,13 +322,13 @@ export default function WorkFlowPage() {
         let aquaTreeWrapper: AquaTreeWrapper = {
             aquaTree: selectedFileInfo!.aquaTree!,
             revision: "",
-            // fileObject: selectedFileInfo!.fileObject
+            fileObject: getAquaTreeFileObject(selectedFileInfo!) ?? selectedFileInfo?.fileObject[0]
         }
 
         let userSignatureDataAquaTreeWrapper: AquaTreeWrapper = {
             aquaTree: userSignatureDataAquaTree!.data.aquaTree!,
             revision: "",
-            // fileObject: selectedFileInfo!.fileObject
+            fileObject:fileObjectUserSignature
         }
 
         let resLinkedAquaTreeWithUserSignatureData = await aquafier.linkAquaTree(aquaTreeWrapper, userSignatureDataAquaTreeWrapper)
@@ -387,14 +387,14 @@ export default function WorkFlowPage() {
         let linkedAquaTreeWithUserSignatureDataWrapper: AquaTreeWrapper = {
             aquaTree: resLinkedAquaTreeWithUserSignatureData.data.aquaTree!,
             revision: "",
-            // fileObject: signAquaTree[0].fileObject
+            fileObject: fileObjectUserSignature
         }
 
         let signatureAquaTree = signAquaTree[0].aquaTree!;
         let aquaTreeWrapperLinked: AquaTreeWrapper = {
             aquaTree: signatureAquaTree,
             revision: "",
-            // fileObject: signAquaTree[0].fileObject
+            fileObject: getAquaTreeFileObject(signAquaTree[0]!) ??signAquaTree[0].fileObject[0]
         }
         let resLinkedAquaTree = await aquafier.linkAquaTree(linkedAquaTreeWithUserSignatureDataWrapper, aquaTreeWrapperLinked)
 
@@ -429,7 +429,7 @@ export default function WorkFlowPage() {
 
             }, {
                 headers: {
-                    "nonce": session?.address
+                    "nonce": session?.nonce
                 }
             });
 
