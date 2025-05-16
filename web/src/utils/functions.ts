@@ -8,6 +8,7 @@ import Aquafier, { AquaTree, CredentialsData, FileObject, OrderRevisionInAquaTre
 import jdenticon from "jdenticon/standalone";
 
 
+
 export const convertTemplateNameToTitle = (str: string) => {
     return str.split('_')
     .map(word => word.charAt(0).toUpperCase() + word.slice(1))

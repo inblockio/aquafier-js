@@ -19,7 +19,7 @@ import appStore from '../../store';
 import { useStore } from "zustand"
 import { SignaturePosition, WorkFlowTimeLine } from '../../types/types';
 import { RevisionVerificationStatus } from '../../types/types';
-import Aquafier, { AquaTreeWrapper, FileObject, getAquaTreeFileObject, OrderRevisionInAquaTree } from 'aqua-js-sdk';
+import Aquafier, { AquaTree, AquaTreeWrapper, FileObject, getAquaTreeFileObject, OrderRevisionInAquaTree } from 'aqua-js-sdk';
 import { convertTemplateNameToTitle, ensureDomainUrlHasSSL, estimateFileSize, isWorkFlowData } from '../../utils/functions';
 import { PDFJSViewer } from 'pdfjs-react-viewer';
 import PdfSigner from '../PdfSigner';
@@ -269,6 +269,110 @@ export default function WorkFlowPage() {
         return FaEraser
     }
 
+
+
+    const saveAquaTree = async (aquaTree: AquaTree, fileObject: FileObject, isFinal: boolean = false, isWorkflow: boolean = false, template_id: string): Promise<Boolean> => {
+        try {
+            const url = `${backend_url}/explorer_aqua_file_upload`;
+
+            // Create a FormData object to send multipart data
+            let formData = new FormData();
+
+            // Add the aquaTree as a JSON file
+            const aquaTreeBlob = new Blob([JSON.stringify(aquaTree)], { type: 'application/json' });
+            formData.append('file', aquaTreeBlob, fileObject.fileName);
+
+            // Add the account from the session
+            formData.append('account', session?.address || '');
+            formData.append('is_workflow', `${isWorkflow}`);
+
+
+            //workflow specifi
+
+            formData.append('template_id', template_id);
+
+
+            // Check if we have an actual file to upload as an asset
+            if (fileObject.fileContent) {
+                // Set has_asset to true
+                formData.append('has_asset', 'true');
+
+                // FIXED: Properly handle the file content as binary data
+                // If fileContent is already a Blob or File object, use it directly
+                if (fileObject.fileContent instanceof Blob || fileObject.fileContent instanceof File) {
+                    formData.append('asset', fileObject.fileContent, fileObject.fileName);
+                }
+                // If it's an ArrayBuffer or similar binary data
+                else if (fileObject.fileContent instanceof ArrayBuffer ||
+                    fileObject.fileContent instanceof Uint8Array) {
+                    const fileBlob = new Blob([fileObject.fileContent], { type: 'application/octet-stream' });
+                    formData.append('asset', fileBlob, fileObject.fileName);
+                }
+                // If it's a base64 string (common for image data)
+                else if (typeof fileObject.fileContent === 'string' && fileObject.fileContent.startsWith('data:')) {
+                    // Convert base64 to blob
+                    const response = await fetch(fileObject.fileContent);
+                    const blob = await response.blob();
+                    formData.append('asset', blob, fileObject.fileName);
+                }
+                // Fallback for other string formats (not recommended for binary files)
+                else if (typeof fileObject.fileContent === 'string') {
+                    const fileBlob = new Blob([fileObject.fileContent], { type: 'text/plain' });
+                    formData.append('asset', fileBlob, fileObject.fileName);
+                }
+                // If it's something else (like an object), stringify it (not recommended for files)
+                else {
+                    console.warn('Warning: fileContent is not in an optimal format for file upload');
+                    const fileBlob = new Blob([JSON.stringify(fileObject.fileContent)], { type: 'application/json' });
+                    formData.append('asset', fileBlob, fileObject.fileName);
+                }
+
+            } else {
+                formData.append('has_asset', 'false');
+            }
+
+            const response = await axios.post(url, formData, {
+                headers: {
+                    "nonce": session?.nonce,
+                    // Don't set Content-Type header - axios will set it automatically with the correct boundary
+                }
+            });
+
+            if (response.status === 200 || response.status === 201) {
+                if (isFinal) {
+                    console.log(`Is finale ${isFinal}`)
+                }
+                // setFiles(response.data.files);
+                // toaster.create({
+                //     description: `Aqua tree created successfully`,
+                //     type: "success"
+                // });
+                // // onClose();
+                // setOpen(false)
+                // setModalFormErorMessae("")
+                // setSelectedTemplate(null)
+                // setFormData({})
+                // }
+
+                console.log(`Got back a 200..`)
+            }
+            return true
+
+
+
+        } catch (error) {
+            toaster.create({
+                title: 'Error uploading aqua tree',
+                description: error instanceof Error ? error.message : 'Unknown error',
+                type: 'error',
+                duration: 5000,
+            });
+
+            return false
+        }
+    };
+
+
     const submitSignatureData = async (signaturePosition: SignaturePosition[], signAquaTree: ApiFileInfo[]) => {
 
         if (signAquaTree.length == 0) {
@@ -316,6 +420,9 @@ export default function WorkFlowPage() {
             })
             return
         }
+        // save aqua tree to the server
+
+        await saveAquaTree(userSignatureDataAquaTree.data.aquaTree!, fileObjectUserSignature, true, true, "")
 
 
         // linked 
@@ -328,7 +435,7 @@ export default function WorkFlowPage() {
         let userSignatureDataAquaTreeWrapper: AquaTreeWrapper = {
             aquaTree: userSignatureDataAquaTree!.data.aquaTree!,
             revision: "",
-            fileObject:fileObjectUserSignature
+            fileObject: fileObjectUserSignature
         }
 
         let resLinkedAquaTreeWithUserSignatureData = await aquafier.linkAquaTree(aquaTreeWrapper, userSignatureDataAquaTreeWrapper)
@@ -394,7 +501,7 @@ export default function WorkFlowPage() {
         let aquaTreeWrapperLinked: AquaTreeWrapper = {
             aquaTree: signatureAquaTree,
             revision: "",
-            fileObject: getAquaTreeFileObject(signAquaTree[0]!) ??signAquaTree[0].fileObject[0]
+            fileObject: getAquaTreeFileObject(signAquaTree[0]!) ?? signAquaTree[0].fileObject[0]
         }
         let resLinkedAquaTree = await aquafier.linkAquaTree(linkedAquaTreeWithUserSignatureDataWrapper, aquaTreeWrapperLinked)
 
