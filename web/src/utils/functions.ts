@@ -1512,14 +1512,12 @@ export function ensureDomainUrlHasSSL(actualUrlToFetch: string): string {
         }
     }
 
-    // Check if the URL starts with "http://inblock.io" and upgrade to HTTPS
-    // if (url.startsWith("http://inblock.io") || url.includes('inblock.io')) {
-    //     url = url.replace("http://", "https://");
-    // }
+   
     // Alternatively, if the domain is "inblock.io" but lacks protocol
-    // else if (url.startsWith("inblock.io")) {
-    //     url = "https://" + url;
-    // }
+
+    if (url.startsWith("inblock.io")) {
+        url = "https://" + url;
+    }
 
     // Replace unsafe localhost URL (HTTPS on 0.0.0.0:0 → HTTP on 127.0.0.1:3000)
     if (url.startsWith("https://0.0.0.0") || url.startsWith("http://0.0.0.0") || url.startsWith("https://127.0.0.1") || url.startsWith("https://localhost") ) {
@@ -1528,6 +1526,18 @@ export function ensureDomainUrlHasSSL(actualUrlToFetch: string): string {
         url = url.replace("https://127.0.0.1", "http://127.0.0.1");
         url = url.replace("https://localhost", "http://127.0.0.1");
     }
+
+      // Check if we're on inblock.io domain but URL contains localhost IP addresses
+      const currentDomain = typeof window !== 'undefined' ? window.location.hostname : '';
+      if (currentDomain === "inblock.io") {
+          if (url.includes("127.0.0.1") || url.includes("0.0.0.0") || url.includes("localhost")) {
+              // Replace with inblock.io and ensure HTTPS
+              url = url.replace(/https?:\/\/(127\.0\.0\.1|0\.0\.0\.0|localhost)(:\d+)?/g, "https://inblock.io");
+          }
+      }
+  
+      return url;
+
 
     return url;
 }
