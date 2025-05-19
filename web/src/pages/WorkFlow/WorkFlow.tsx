@@ -32,7 +32,7 @@ import { ApiFileInfo } from '../../models/FileInfo';
 import SignatureItem from '../../components/pdf/SignatureItem';
 import { CompleteChainView } from '../../components/CustomDrawer';
 import { useColorMode } from '../../components/chakra-ui/color-mode';
-import { file } from 'jszip';
+// import { file } from 'jszip';
 import { useNavigate } from 'react-router-dom';
 
 export default function WorkFlowPage() {
