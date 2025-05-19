@@ -11,7 +11,8 @@ import {
     Heading,
     Stack,
     Grid,
-    GridItem
+    GridItem,
+    Center
 } from '@chakra-ui/react';
 // import { Card } from '@chakra-ui/react';
 // import { FaCheck, FaQuestionCircle, FaBriefcase, FaBook, FaCoffee, FaAward, FaUser } from 'react-icons/fa';
@@ -24,12 +25,13 @@ import { RevisionVerificationStatus } from '../../types/types';
 import Aquafier, { AquaTree, AquaTreeWrapper, FileObject, getAquaTreeFileObject, OrderRevisionInAquaTree } from 'aqua-js-sdk';
 import { convertTemplateNameToTitle, ensureDomainUrlHasSSL, estimateFileSize, isWorkFlowData } from '../../utils/functions';
 import { PDFJSViewer } from 'pdfjs-react-viewer';
-import PdfSigner from '../PdfSigner';
+import PdfSigner, { SignatureOverlay, SimpleSignatureOverlay } from '../PdfSigner';
 import { toaster } from '../../components/chakra-ui/toaster';
 import axios from 'axios';
 import { ApiFileInfo } from '../../models/FileInfo';
 import SignatureItem from '../../components/pdf/SignatureItem';
 import { CompleteChainView } from '../../components/CustomDrawer';
+import { useColorMode } from '../../components/chakra-ui/color-mode';
 
 export default function WorkFlowPage() {
     const [activeStep, setActiveStep] = useState(1);
@@ -38,6 +40,8 @@ export default function WorkFlowPage() {
     const [aquaTreeVerificationWithStatuses, setAquaTreeVerificationWithStatuses] = useState<Array<RevisionVerificationStatus>>([]);
     const [timeLineItems, setTimeLineItems] = useState<Array<WorkFlowTimeLine>>([]);
     const { selectedFileInfo, setSelectedFileInfo, formTemplates, session, backend_url } = useStore(appStore);
+    const { colorMode } = useColorMode();
+    const [currentPage, setCurrentPage] = useState(1);
 
 
     //aqua sign revision sequesn.
@@ -786,6 +790,7 @@ export default function WorkFlowPage() {
             return null;
         }
     }
+
     console.log(selectedFileInfo)
 
     /*
@@ -928,7 +933,39 @@ export default function WorkFlowPage() {
                         return (
                             <Grid templateColumns="repeat(4, 1fr)">
                                 <GridItem colSpan={{ base: 12, md: 3 }}>
-                                    <PDFJSViewer pdfUrl={pdfUrl!} />
+                                    {/* <PDFJSViewer pdfUrl={pdfUrl!} />  */}
+                                    <Box
+                                        position="relative"
+                                        border="1px solid"
+                                        borderColor={colorMode === "dark" ? "gray.800" : "gray.100"}
+                                        borderRadius="md"
+                                        py={"4"}
+                                    >
+                                        <Center>
+                                            <Box w={'fit-content'}>
+                                                <PDFJSViewer
+                                                    pdfUrl={pdfUrl!}
+                                                    onPageChange={(page) => {
+                                                        setCurrentPage(page)
+                                                    }}
+                                                />
+                                            </Box>
+                                        </Center>
+
+                                        {/* Signature overlays */}
+                                        {[signature_0_Position].map((position, index) => (
+                                            <>
+                                            {
+                                                Number(currentPage) === Number(position.page) ? (
+                                                    <SimpleSignatureOverlay key={index} signature={position}
+                                                    />
+                                                ): (
+                                                    <>Found nothing to render</>
+                                                )
+                                            }
+                                            </>
+                                        ))}
+                                    </Box>
                                 </GridItem>
                                 <GridItem colSpan={{ base: 12, md: 1 }}>
                                     <Stack>
@@ -963,7 +1000,7 @@ export default function WorkFlowPage() {
 
         if (index == 5) {
             return (
-                <CompleteChainView selectedFileInfo={selectedFileInfo!} callBack={() => {}} />
+                <CompleteChainView selectedFileInfo={selectedFileInfo!} callBack={() => { }} />
             )
         }
 

@@ -39,6 +39,100 @@ import { SignaturePosition, SignatureData } from "../types/types"
 
 // const PdfSigner = ({ file }: { file: File | null }) => {
 
+export const SignatureOverlay = ({ position, currentPage, signatures, pdfMainContainerRef, handleDragStart }: { position: SignaturePosition, currentPage: number, signatures: SignatureData[], pdfMainContainerRef: React.RefObject<HTMLDivElement>, handleDragStart?: (e: React.MouseEvent | React.TouchEvent, id: string) => void }) => {
+    if (!pdfMainContainerRef) return null;
+    if (position.pageIndex !== currentPage - 1 || !position.signatureId) return null;
+
+    const signature = signatures.find(sig => sig.id === position.signatureId);
+    if (!signature) return null;
+    console.log("Signature overlay", position)
+    // Find the actual PDF element for proper positioning
+    const pdfElement = pdfMainContainerRef.current?.querySelector('.react-pdf__Page');
+    const pdfRect = pdfElement?.getBoundingClientRect();
+
+    // if (!pdfElement || !pdfRect) return null;
+    console.log("PDF rect", pdfRect)
+    return (
+        <Box
+            position="absolute"
+            left={`${position.x * 100}%`}
+            top={`${(1 - position.y) * 100}%`}
+            transform="translate(-50%, -50%)"
+            backgroundSize="contain"
+            backgroundRepeat="no-repeat"
+            backgroundPosition="center"
+            pointerEvents="auto"
+            cursor={position.isDragging ? "grabbing" : "grab"}
+            zIndex={position.isDragging ? 20 : 10}
+            onMouseDown={(e) => handleDragStart?.(e, position.id)}
+            onTouchStart={(e) => handleDragStart?.(e, position.id)}
+            border={position.isDragging ? "2px dashed blue" : "none"}
+            transition="border 0.2s ease"
+            overflow={"hidden"}
+            _hover={{ boxShadow: "0 0 0 1px blue" }}
+            style={{
+                width: `${position.width * 100}%`,
+                height: `${position.height * 100}%`,
+                backgroundColor: 'rgba(255, 255, 255, 0.9)',
+                padding: '4px',
+                borderRadius: '4px'
+            }}
+        >
+            <Stack gap={1} justifyContent={"flex-start"} height="100%">
+                <Box
+                    flex="1"
+                    backgroundImage={`url(${signature.dataUrl})`}
+                    backgroundSize="contain"
+                    backgroundRepeat="no-repeat"
+                    backgroundPosition="left"
+                    minHeight="40px"
+                />
+                <Text fontSize="xs" color="gray.600" style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{signature.walletAddress}</Text>
+                <Text fontSize="xs" color="gray.600" style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{signature.name}</Text>
+            </Stack>
+        </Box>
+    );
+};
+
+export const SimpleSignatureOverlay = ({ signature }: { signature: { x: string, y: string, width: string, height: string, image: string, name: string, walletAddress: string } }) => {
+
+    return (
+        <Box
+            position="absolute"
+            left={`${Number(signature.x) * 100}%`}
+            top={`${(1 - Number(signature.y)) * 100}%`}
+            transform="translate(-50%, -50%)"
+            backgroundSize="contain"
+            backgroundRepeat="no-repeat"
+            backgroundPosition="center"
+            pointerEvents="auto"
+            transition="border 0.2s ease"
+            overflow={"hidden"}
+            _hover={{ boxShadow: "0 0 0 1px blue" }}
+            style={{
+                width: `${Number(signature.width) * 100}%`,
+                height: `${Number(signature.height) * 100}%`,
+                backgroundColor: 'rgba(255, 255, 255, 0.9)',
+                padding: '4px',
+                borderRadius: '4px'
+            }}
+        >
+            <Stack gap={1} justifyContent={"flex-start"} height="100%">
+                <Box
+                    flex="1"
+                    backgroundImage={`url(${signature.image})`}
+                    backgroundSize="contain"
+                    backgroundRepeat="no-repeat"
+                    backgroundPosition="left"
+                    minHeight="40px"
+                />
+                <Text fontSize="xs" color="gray.600" style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{signature.walletAddress}</Text>
+                <Text fontSize="xs" color="gray.600" style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{signature.name}</Text>
+            </Stack>
+        </Box>
+    )
+}
+
 
 interface PdfSignerProps {
     file: File | null;
@@ -848,59 +942,7 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ file, submitSignature }) => {
 
 
     // Component for signature display on PDF
-    const SignatureOverlay = ({ position }: { position: SignaturePosition }) => {
-        if (position.pageIndex !== currentPage - 1 || !position.signatureId) return null;
-
-        const signature = signatures.find(sig => sig.id === position.signatureId);
-        if (!signature) return null;
-        console.log("Signature overlay", position)
-        // Find the actual PDF element for proper positioning
-        const pdfElement = pdfMainContainerRef.current?.querySelector('.react-pdf__Page');
-        const pdfRect = pdfElement?.getBoundingClientRect();
-
-        // if (!pdfElement || !pdfRect) return null;
-        console.log("PDF rect", pdfRect)
-        return (
-            <Box
-                position="absolute"
-                left={`${position.x * 100}%`}
-                top={`${(1 - position.y) * 100}%`}
-                transform="translate(-50%, -50%)"
-                backgroundSize="contain"
-                backgroundRepeat="no-repeat"
-                backgroundPosition="center"
-                pointerEvents="auto"
-                cursor={position.isDragging ? "grabbing" : "grab"}
-                zIndex={position.isDragging ? 20 : 10}
-                onMouseDown={(e) => handleDragStart(e, position.id)}
-                onTouchStart={(e) => handleDragStart(e, position.id)}
-                border={position.isDragging ? "2px dashed blue" : "none"}
-                transition="border 0.2s ease"
-                overflow={"hidden"}
-                _hover={{ boxShadow: "0 0 0 1px blue" }}
-                style={{
-                    width: `${position.width * 100}%`,
-                    height: `${position.height * 100}%`,
-                    backgroundColor: 'rgba(255, 255, 255, 0.9)',
-                    padding: '4px',
-                    borderRadius: '4px'
-                }}
-            >
-                <Stack gap={1} justifyContent={"flex-start"} height="100%">
-                    <Box
-                        flex="1"
-                        backgroundImage={`url(${signature.dataUrl})`}
-                        backgroundSize="contain"
-                        backgroundRepeat="no-repeat"
-                        backgroundPosition="left"
-                        minHeight="40px"
-                    />
-                    <Text fontSize="xs" color="gray.600" style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{signature.walletAddress}</Text>
-                    <Text fontSize="xs" color="gray.600" style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{signature.name}</Text>
-                </Stack>
-            </Box>
-        );
-    };
+    
 
     const handlePageChange = (pageNumber: number, _totalPages: number) => {
         setCurrentPage(pageNumber);
@@ -1186,7 +1228,12 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ file, submitSignature }) => {
 
                             {/* Signature overlays */}
                             {signaturePositions.map((position, index) => (
-                                <SignatureOverlay key={index} position={position} />
+                                <SignatureOverlay key={index} position={position}
+                                    currentPage={currentPage}
+                                    signatures={signatures}
+                                    pdfMainContainerRef={pdfMainContainerRef}
+                                    handleDragStart={handleDragStart}
+                                />
                             ))}
                         </Box>
                     </GridItem>
