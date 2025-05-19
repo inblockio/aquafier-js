@@ -1538,16 +1538,18 @@ export function ensureDomainUrlHasSSL(actualUrlToFetch: string): string {
 
             // Replace with inblock.io and ensure HTTPS
             // Handle 127.0.0.1 with or without port
-            url = url.replace("http://127.0.0.1", "https://inblock.io");
-            url = url.replace("https://127.0.0.1", "https://inblock.io");
+
+            let domainData =  `https://${currentDomain}`
+            url = url.replace("http://127.0.0.1", domainData);
+            url = url.replace("https://127.0.0.1", domainData);
 
             // Handle 0.0.0.0 with or without port
-            url = url.replace("http://0.0.0.0", "https://inblock.io");
-            url = url.replace("https://0.0.0.0", "https://inblock.io");
+            url = url.replace("http://0.0.0.0", domainData);
+            url = url.replace("https://0.0.0.0", domainData);
 
             // Handle localhost with or without port
-            url = url.replace("http://localhost", "https://inblock.io");
-            url = url.replace("https://localhost", "https://inblock.io");
+            url = url.replace("http://localhost", domainData);
+            url = url.replace("https://localhost", domainData);
 
             // Remove any port numbers that might remain
             url = url.replace(/:\d+/g, "");
