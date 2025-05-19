@@ -1529,7 +1529,8 @@ export function ensureDomainUrlHasSSL(actualUrlToFetch: string): string {
 
     // Check if we're on inblock.io domain but URL contains localhost IP addresses
     const currentDomain = typeof window !== 'undefined' ? window.location.hostname : '';
-    if (currentDomain === "inblock.io") {
+    console.log(`ensureDomainUrlHasSSL currentDomain ${currentDomain}`)
+    if (currentDomain === "inblock.io" ||  currentDomain === "dev.inblock.io" ||  currentDomain =="aquafier.inblock.io" ||  currentDomain.includes("inblock.io")) {
         if (url.includes("127.0.0.1") || url.includes("0.0.0.0") || url.includes("localhost")) {
 
             // Replace with inblock.io and ensure HTTPS
