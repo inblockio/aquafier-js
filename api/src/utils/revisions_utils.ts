@@ -953,6 +953,8 @@ export async function saveARevisionInAquaTree(revisionData: SaveRevision, userAd
 }
 
 export async function saveAquaTree(aquaTree: AquaTree, userAddress: string, templateId: string | null = null, isWorkFlow: boolean = false) {
+  
+ 
     // Reorder revisions to ensure proper order
     let orderedAquaTree = reorderAquaTreeRevisionsProperties(aquaTree);
     let aquaTreeWithOrderdRevision = OrderRevisionInAquaTree(orderedAquaTree);
@@ -1119,7 +1121,7 @@ export async function saveAquaTree(aquaTree: AquaTree, userAddress: string, temp
 
 
 
-        if (revisionData.revision_type == "file") {
+        if (revisionData.revision_type == "file" || revisionData.revision_type == "form") {
             if (revisionData.file_hash == null || revisionData.file_hash == undefined) {
                 throw Error(`revision with hash ${revisinHash} is detected to be a file but file_hash is mising`);
             }
@@ -1481,7 +1483,7 @@ export async function createAquaTreeFromRevisions(latestRevisionHash: string, ur
             }
 
             if (revisionItem.revision_type == "file" || revisionItem.revision_type == "form") {
-                console.log("Hash only: ", hashOnly)
+                // console.log("Hash only: ", hashOnly)
                 let fileResult = await prisma.file.findFirst({
                     where: {
                         hash: {
@@ -1490,7 +1492,7 @@ export async function createAquaTreeFromRevisions(latestRevisionHash: string, ur
                         }
                     }
                 })
-                console.log("File result: ", fileResult)
+                // console.log("File result: ", fileResult)
                 if (fileResult == null) {
                     // throw Error("Revision file data  not found")
                     console.log("We fail here")

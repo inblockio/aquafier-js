@@ -25,7 +25,7 @@ import { RevisionVerificationStatus } from '../../types/types';
 import Aquafier, { AquaTree, AquaTreeWrapper, FileObject, getAquaTreeFileObject, OrderRevisionInAquaTree } from 'aqua-js-sdk';
 import { convertTemplateNameToTitle, ensureDomainUrlHasSSL, estimateFileSize, isWorkFlowData } from '../../utils/functions';
 import { PDFJSViewer } from 'pdfjs-react-viewer';
-import PdfSigner, {  SimpleSignatureOverlay } from '../PdfSigner';
+import PdfSigner, { SimpleSignatureOverlay } from '../PdfSigner';
 import { toaster } from '../../components/chakra-ui/toaster';
 import axios from 'axios';
 import { ApiFileInfo } from '../../models/FileInfo';
@@ -405,14 +405,21 @@ export default function WorkFlowPage() {
 
 
         for (const [index, signaturePositionItem] of signaturePosition.entries()) {
-            7
+
+            let pageIndex = signaturePositionItem.pageIndex +1
+            // if (pageIndex == 0) {
+            //     pageIndex += 1
+            // }
             signForm[`x_${index}`] = parseFloat(signaturePositionItem.x.toFixed(16));
             signForm[`y_${index}`] = parseFloat(signaturePositionItem.y.toFixed(16));
-            signForm[`page_${index}`] = signaturePositionItem.pageIndex.toString()
+            signForm[`page_${index}`] = pageIndex.toString()
             signForm[`width_${index}`] = signaturePositionItem.width.toString()
             signForm[`height_${index}`] = signaturePositionItem.height.toString()
 
         }
+
+
+        console.log(`Page data ${JSON.stringify(signForm, null, 4)}`)
 
 
         const jsonString = JSON.stringify(signForm, null, 2);
@@ -894,7 +901,7 @@ export default function WorkFlowPage() {
                             width: revision.forms_width_0,
                             x: revision.forms_x_0,
                             y: revision.forms_y_0,
-                            page: revision.forms_page_0,
+                            page: 1,//revision.forms_page_0,
                             name: "",
                             walletAddress: "",
                             image: ""
@@ -952,17 +959,19 @@ export default function WorkFlowPage() {
                                             </Box>
                                         </Center>
 
+
+                                        <Text>{currentPage}----{JSON.stringify(signature_0_Position)}</Text>
                                         {/* Signature overlays */}
                                         {[signature_0_Position].map((position, index) => (
                                             <>
-                                            {
-                                                Number(currentPage) === Number(position.page) ? (
-                                                    <SimpleSignatureOverlay key={index} signature={position}
-                                                    />
-                                                ): (
-                                                    <>Found nothing to render</>
-                                                )
-                                            }
+                                                {
+                                                    Number(currentPage) === Number(position.page) ? (
+                                                        <SimpleSignatureOverlay key={index} signature={position}
+                                                        />
+                                                    ) : (
+                                                        <>Found nothing to render</>
+                                                    )
+                                                }
                                             </>
                                         ))}
                                     </Box>

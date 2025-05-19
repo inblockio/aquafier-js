@@ -11,6 +11,7 @@ import appStore from "../../store"
 import { toaster } from "./toaster"
 import { Button } from "./button"
 import { IDialogSettings } from "../../types/index"
+import { useNavigate } from "react-router-dom"
 // import { useNavigate } from "react-router-dom"
 
 const networks = createListCollection({
@@ -23,67 +24,6 @@ const networks = createListCollection({
 
 
 
-const DeleteUserData = () => {
-    const [deleting, setDeleting] = useState(false)
-    const { setUserProfile, setFiles, setSession, setMetamaskAddress, setAvatar, backend_url, session } = useStore(appStore)
-
-    const deleteUserData = async () => {
-        try {
-            if (!session?.nonce) {
-                toaster.create({
-                    description: "You must be logged in to clear user data",
-                    type: "error"
-                })
-                return
-            }
-
-            setDeleting(true)
-            const url = `${backend_url}/user_data`;
-            const response = await axios.delete(url, {
-                headers: {
-                    'nonce': session.nonce
-                }
-            });
-
-            if (response.status === 200) {
-                // Clear local state
-                setUserProfile({
-                    user_pub_key: "",
-                    cli_pub_key: "",
-                    cli_priv_key: "",
-                    witness_network: "",
-                    theme: "light",
-                    ens_name: "",
-                    witness_contract_address: '0x45f59310ADD88E6d23ca58A0Fa7A55BEE6d2a611',
-                })
-                setFiles([])
-                setSession(null)
-                setMetamaskAddress(null)
-                setAvatar(undefined)
-
-                // Remove cookie
-                document.cookie = "pkc_nonce=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;"
-
-                toaster.create({
-                    description: "User data cleared successfully. You have been logged out.",
-                    type: "success"
-                })
-            }
-            setDeleting(false)
-        }
-        catch (e: any) {
-            toaster.create({
-                description: `Failed to clear user data: ${e instanceof Error ? e.message : String(e)}`,
-                type: "error"
-            })
-            setDeleting(false)
-        }
-    }
-
-    return (
-        <Button loading={deleting} colorPalette={'red'} borderRadius={'md'} variant={'outline'} onClick={deleteUserData}>Clear Account Data</Button>
-    )
-}
 
 const Settings = ({ inline, open, updateOpenStatus }: IDialogSettings) => {
 
@@ -94,6 +34,80 @@ const Settings = ({ inline, open, updateOpenStatus }: IDialogSettings) => {
     const [cliPrivKey, _setCliPrivKey] = useState<string>(user_profile.cli_priv_key)
     const [ensName, setEnsName] = useState<string>(user_profile.ens_name)
     const [contract, setContract] = useState<string>(user_profile.witness_contract_address ?? "0x45f59310ADD88E6d23ca58A0Fa7A55BEE6d2a611")
+
+
+    const DeleteUserData = () => {
+        const [deleting, setDeleting] = useState(false)
+        const { setUserProfile, setFiles, setSession, setMetamaskAddress, setAvatar, backend_url, session } = useStore(appStore)
+
+
+        let navigate = useNavigate()
+        const deleteUserData = async () => {
+            try {
+                if (!session?.nonce) {
+                    toaster.create({
+                        description: "You must be logged in to clear user data",
+                        type: "error"
+                    })
+                    return
+                }
+
+                setDeleting(true)
+                const url = `${backend_url}/user_data`;
+                const response = await axios.delete(url, {
+                    headers: {
+                        'nonce': session.nonce
+                    }
+                });
+
+                if (response.status === 200) {
+                    // Clear local state
+                    setUserProfile({
+                        user_pub_key: "",
+                        cli_pub_key: "",
+                        cli_priv_key: "",
+                        witness_network: "",
+                        theme: "light",
+                        ens_name: "",
+                        witness_contract_address: '0x45f59310ADD88E6d23ca58A0Fa7A55BEE6d2a611',
+                    })
+                    setFiles([])
+                    setSession(null)
+                    setMetamaskAddress(null)
+                    setAvatar(undefined)
+
+                    // Remove cookie
+                    document.cookie = "pkc_nonce=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;"
+
+                    toaster.create({
+                        description: "User data cleared successfully. You have been logged out.",
+                        type: "success"
+                    })
+
+                    updateOpenStatus?.(false)
+
+                    if (window.location.pathname == "/") {
+                        window.location.reload();
+                    } else {
+                        navigate("/")
+                    }
+                }
+
+                setDeleting(false)
+            }
+            catch (e: any) {
+                toaster.create({
+                    description: `Failed to clear user data: ${e instanceof Error ? e.message : String(e)}`,
+                    type: "error"
+                })
+                setDeleting(false)
+            }
+        }
+
+        return (
+            <Button loading={deleting} colorPalette={'red'} borderRadius={'md'} variant={'outline'} onClick={deleteUserData}>Clear Account Data</Button>
+        )
+    }
 
 
     const updateUserProfile = async () => {
@@ -146,7 +160,7 @@ const Settings = ({ inline, open, updateOpenStatus }: IDialogSettings) => {
 
 
     const SettingsForm = () => {
-   
+
         return (
             <VStack alignItems={'start'} gapY={'6'}>
                 <Card.Root w={'100%'} shadow={'sm'} borderRadius={'SM'}>
@@ -160,9 +174,9 @@ const Settings = ({ inline, open, updateOpenStatus }: IDialogSettings) => {
                 <Field invalid={false} label="Alias Name" errorText="This field is required" >
                     <Input placeholder="Alias" value={ensName} onChange={e => setEnsName(e.currentTarget.value)} />
                 </Field>
-    
+
                 {/* <Divider my={4} borderColor="gray.300" /> */}
-    
+
                 {/* Custom Divider */}
                 <Box
                     width="100%"
@@ -171,13 +185,13 @@ const Settings = ({ inline, open, updateOpenStatus }: IDialogSettings) => {
                     my={2}
                 />
                 <Text fontSize={'lg'}>Etherium Settings</Text>
-    
-    
+
+
                 <Container
                     p={0}
                     alignItems="start"
                     fluid >
-    
+
                     <Field invalid={false} label="Public address" helperText="self-issued identity claim used for generating/verifying aqua chain" errorText="This field is required">
                         <Input placeholder="User Public address" disabled={true} value={user_profile.user_pub_key} autoComplete="off" />
                     </Field>
@@ -204,7 +218,7 @@ const Settings = ({ inline, open, updateOpenStatus }: IDialogSettings) => {
                             </HStack>
                         </RadioCardRoot>
                     </Field>
-    
+
                 </Container>
                 {/* <Field invalid={false} label="Default File Mode" helperText="Is a file public or private" errorText="This field is required"> */}
                 {/* <Field invalid={false} label="Default File Mode" helperText="Any one can view the file or the file should be visible only to you." errorText="This field is required">
@@ -260,7 +274,7 @@ const Settings = ({ inline, open, updateOpenStatus }: IDialogSettings) => {
                     <DialogFooter>
                         <HStack w={'100%'} justifyContent={'space-between'}>
                             <VStack alignItems={'flex-start'} gap={2}>
-                                <DeleteUserData />
+                                {DeleteUserData()}
                             </VStack>
                             {/* <DialogActionTrigger asChild>
 
@@ -270,7 +284,7 @@ const Settings = ({ inline, open, updateOpenStatus }: IDialogSettings) => {
 
                             </DialogActionTrigger> */}
                             <HStack>
-                                <Button variant="solid"  bg={'green'} onClick={updateUserProfile}>Save</Button>
+                                <Button variant="solid" bg={'green'} onClick={updateUserProfile}>Save</Button>
                                 <DialogActionTrigger asChild>
                                     <Button variant="outline" onClick={() => updateOpenStatus?.(false)}>Cancel</Button>
                                 </DialogActionTrigger>

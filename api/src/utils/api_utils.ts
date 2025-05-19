@@ -237,10 +237,12 @@ const setUpSystemTemplates = async () => {
 
     if (resIdentityAquaTree.isOk()) {
 
+
+      // await saveFileObject(identityFileObject)
+      await saveTemplateFileData(resIdentityAquaTree.data.aquaTree!!, JSON.stringify(identityObject), SYSTEM_WALLET_ADDRESS)
       // save the aqua tree 
       await saveAquaTree(resIdentityAquaTree.data.aquaTree!!, SYSTEM_WALLET_ADDRESS)
       //safe json file 
-      await saveTemplateFileData(resIdentityAquaTree.data.aquaTree!!, JSON.stringify(identityObject), SYSTEM_WALLET_ADDRESS)
     }
 
 
@@ -310,10 +312,11 @@ const setUpSystemTemplates = async () => {
 
     if (resAttestationAquaTree.isOk()) {
 
+      // await saveFileObject(attestationFileObject)
+      await saveTemplateFileData(resAttestationAquaTree.data.aquaTree!!, JSON.stringify(identityAttestations), SYSTEM_WALLET_ADDRESS)
       // save the aqua tree 
       await saveAquaTree(resAttestationAquaTree.data.aquaTree!!, SYSTEM_WALLET_ADDRESS);
 
-      await saveTemplateFileData(resAttestationAquaTree.data.aquaTree!!, JSON.stringify(identityAttestations), SYSTEM_WALLET_ADDRESS)
     }
 
   }
@@ -387,10 +390,12 @@ const setUpSystemTemplates = async () => {
       // console.log(`@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@`)
       // console.log(`cheque aqua tree ${JSON.stringify(reschequeAquaTree.data.aquaTree, null, 4)}`)
 
+
+      // await saveFileObject(chequeFileObject)
+      await saveTemplateFileData(reschequeAquaTree.data.aquaTree!!, JSON.stringify(cheque), SYSTEM_WALLET_ADDRESS)
       // save the aqua tree 
       await saveAquaTree(reschequeAquaTree.data.aquaTree!!, SYSTEM_WALLET_ADDRESS);
 
-      await saveTemplateFileData(reschequeAquaTree.data.aquaTree!!, JSON.stringify(cheque), SYSTEM_WALLET_ADDRESS)
     }
 
   }
@@ -458,11 +463,13 @@ const setUpSystemTemplates = async () => {
 
     if (resaccessAquaTree.isOk()) {
 
+
+      // await saveFileObject(accessFileObject)
+      await saveTemplateFileData(resaccessAquaTree.data.aquaTree!!, JSON.stringify(accessAgreement), SYSTEM_WALLET_ADDRESS)
       // save the aqua tree 
       await saveAquaTree(resaccessAquaTree.data.aquaTree!!, SYSTEM_WALLET_ADDRESS)
 
 
-      await saveTemplateFileData(resaccessAquaTree.data.aquaTree!!, JSON.stringify(accessAgreement), SYSTEM_WALLET_ADDRESS)
     }
 
   }
@@ -552,11 +559,14 @@ const setUpSystemTemplates = async () => {
 
     if (responseDocumentContractAquaTree.isOk()) {
 
+
+      // await saveFileObject(documentContractObject)
+
+      await saveTemplateFileData(responseDocumentContractAquaTree.data.aquaTree!!, JSON.stringify(documentContractObject), SYSTEM_WALLET_ADDRESS)
       // save the aqua tree 
       await saveAquaTree(responseDocumentContractAquaTree.data.aquaTree!!, SYSTEM_WALLET_ADDRESS)
 
 
-      await saveTemplateFileData(responseDocumentContractAquaTree.data.aquaTree!!, JSON.stringify(documentContractObject), SYSTEM_WALLET_ADDRESS)
     }else{
       throw Error("Failed to create document contract")
     }
@@ -590,14 +600,15 @@ const setUpSystemTemplates = async () => {
     },
   })
 
-  // let userSinatureContract = {
-  //   "document": "",
-  //   "names": "0x...",
-  //   "wallet_address": "0x...",
+  let userSignature = {
+    "image": "",
+    "name": "0x...",
+    "wallet_address": "0x...",
   
-  // }
+  }
 
-  const walletAddressContractFields = [
+
+  const userSignatureFields = [
     {
       name: "image",
       label: "Signature Image",
@@ -619,7 +630,7 @@ const setUpSystemTemplates = async () => {
     }
   ]
 
-  walletAddressContractFields.forEach(async (fieldData, index) => {
+  userSignatureFields.forEach(async (fieldData, index) => {
     await prisma.aquaTemplateFields.upsert({
       where: {
         id: `6${index}`,
@@ -639,24 +650,26 @@ const setUpSystemTemplates = async () => {
   })
 
 
-  let walletAddressContractFieldsData = systemAquaTreesNames.find((item) => item == "user_signature.json")
-  if (walletAddressContractFieldsData == undefined) {
+  let userSignatureFieldsData = systemAquaTreesNames.find((item) => item == "user_signature.json")
+  if (userSignatureFieldsData == undefined) {
     // create aqua tree for identity template
-    let documentContractObject: FileObject = {
-      fileContent: JSON.stringify(documentContract),
+    let userSignatureObject: FileObject = {
+      fileContent: JSON.stringify(userSignature),
       fileName: "user_signature.json",
       path: "./"
     }
 
-    let responseDocumentContractAquaTree = await aquafier.createGenesisRevision(documentContractObject, true, false, false)
+    let responseuserSignatureAquaTree = await aquafier.createGenesisRevision(userSignatureObject, true, false, false)
 
-    if (responseDocumentContractAquaTree.isOk()) {
+    if (responseuserSignatureAquaTree.isOk()) {
 
+      // await saveFileObject(userSignatureObject)
+
+      await saveTemplateFileData(responseuserSignatureAquaTree.data.aquaTree!!, JSON.stringify(userSignatureObject), SYSTEM_WALLET_ADDRESS)
       // save the aqua tree 
-      await saveAquaTree(responseDocumentContractAquaTree.data.aquaTree!!, SYSTEM_WALLET_ADDRESS)
+      await saveAquaTree(responseuserSignatureAquaTree.data.aquaTree!!, SYSTEM_WALLET_ADDRESS)
 
 
-      await saveTemplateFileData(responseDocumentContractAquaTree.data.aquaTree!!, JSON.stringify(documentContractObject), SYSTEM_WALLET_ADDRESS)
     }else{
       throw Error("Failed to create document contract")
     }

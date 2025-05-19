@@ -92,7 +92,7 @@ export default async function explorerController(fastify: FastifyInstance) {
                     const file = zipData.files[fileName];
 
                     let fileContent = await file.async('text');
-                    //  console.log(`aqua.json => File name: ${fileName}, Content: ${fileContent}`);
+                    //  // console.log(`aqua.json => File name: ${fileName}, Content: ${fileContent}`);
 
                     let aquaData: AquaJsonInZip = JSON.parse(fileContent)
 
@@ -100,7 +100,7 @@ export default async function explorerController(fastify: FastifyInstance) {
                     for (let nameHash of aquaData.name_with_hash) {
 
                         let aquaFileName = `${nameHash.name}.aqua.json`;
-                        //  console.log(`name ${aquaFileName} ............ `)
+                        //  // console.log(`name ${aquaFileName} ............ `)
                         const aquaFile = zipData.files[aquaFileName];
                         if (aquaFile == null || aquaFile == undefined) {
                             return reply.code(500).send({ error: `Expected to find ${aquaFileName} as defined in aqua.json but file not found ` });
@@ -147,7 +147,7 @@ export default async function explorerController(fastify: FastifyInstance) {
                             const filePath = path.join(UPLOAD_DIR, uniqueFileName);
 
                             await fs.promises.writeFile(filePath, fileContent);
-                            //  console.log(`------> Saved file: ${filePath}`);
+                            //  // console.log(`------> Saved file: ${filePath}`);
 
 
                             let fileData = {
@@ -157,7 +157,7 @@ export default async function explorerController(fastify: FastifyInstance) {
                                 hash: filepubkeyhash,
                                 reference_count: 1,
                             }
-                            //  console.log(`--> File Data ${JSON.stringify(fileData, null, 4)} `)
+                            //  // console.log(`--> File Data ${JSON.stringify(fileData, null, 4)} `)
                             fileResult = await prisma.file.create({
 
                                 data: fileData
@@ -215,13 +215,13 @@ export default async function explorerController(fastify: FastifyInstance) {
             }
 
             for (const fileName in zipData.files) {
-                //  console.log(`=> file name ${fileName}`)
+                //  // console.log(`=> file name ${fileName}`)
                 const file = zipData.files[fileName];
 
                 try {
                     if (fileName.endsWith(".aqua.json")) {
                         let fileContent = await file.async('text');
-                        //  console.log(`=> File name: ${fileName}, Content: ${fileContent}`);
+                        //  // console.log(`=> File name: ${fileName}, Content: ${fileContent}`);
 
                         let aquaTree: AquaTree = JSON.parse(fileContent);
 
@@ -232,9 +232,9 @@ export default async function explorerController(fastify: FastifyInstance) {
 
                     } else if (fileName == 'aqua.json') {
                         //ignored for now
-                        //  console.log(`ignore aqua.json in second loop`)
+                        //  // console.log(`ignore aqua.json in second loop`)
                     } else {
-                        //  console.log(`ignore the asset  ${fileName}`)
+                        //  // console.log(`ignore the asset  ${fileName}`)
 
                     }
                 } catch (e) {
@@ -350,7 +350,7 @@ export default async function explorerController(fastify: FastifyInstance) {
                     }
                 } else if (part.type === 'field') {
 
-                    console.log(`name ${part.fieldname}  value ${part.value}  `)
+                    // console.log(`name ${part.fieldname}  value ${part.value}  `)
                     if (part.fieldname === 'has_asset') {
                         hasAsset = part.value === 'true';
                     } else if (part.fieldname === 'account') {
@@ -380,19 +380,19 @@ export default async function explorerController(fastify: FastifyInstance) {
             let aquaTree = removeFilePathFromFileIndex(aquaTreeFromFile);
 
             let [isValidAquaTree, failureReason] = validateAquaTree(aquaTree)
-            console.log(`is aqua tree valid ${isValidAquaTree} `);
+            // console.log(`is aqua tree valid ${isValidAquaTree} `);
             if (!isValidAquaTree) {
-                console.log(`failure reason ${failureReason}`)
+                // console.log(`failure reason ${failureReason}`)
                 return reply.code(412).send({ error: failureReason });
             }
 
 
 
-            console.log(`\n has asset save file ${hasAsset}  `)
+            // console.log(`\n has asset save file ${hasAsset}  `)
             // Handle the asset if it exists
             if (hasAsset && assetBuffer) {
-                console.log(`---------------------------------------------------------------`)
-                console.log(`\n has asset save file \n `)
+                // console.log(`---------------------------------------------------------------`)
+                // console.log(`\n has asset save file \n `)
                 // Process the asset - this depends on your requirements
                 // For example, you might want to store it separately or attach it to the aqua tree
                 // aquaTreeWithFileObject.assetData = assetBuffer.toString('base64');
@@ -409,7 +409,7 @@ export default async function explorerController(fastify: FastifyInstance) {
                 }
                 let filepubkeyhash = `${session.address}_${genesisHash}`
 
-                console.log(`\n ## filepubkeyhash ${filepubkeyhash}`)
+                // console.log(`\n ## filepubkeyhash ${filepubkeyhash}`)
                 const UPLOAD_DIR = getFileUploadDirectory();
 
                 // Create unique filename
@@ -432,9 +432,9 @@ export default async function explorerController(fastify: FastifyInstance) {
                         reference_count: 0, // we use 0 because  saveAquaTree increases file  by 1
                     }
                 })
-                console.log('File record created:', fileCreation);
+                // console.log('File record created:', fileCreation);
 
-                console.log('About to create fileIndex record');
+                // console.log('About to create fileIndex record');
 
                 await prisma.fileIndex.create({
                     data: {
@@ -446,13 +446,18 @@ export default async function explorerController(fastify: FastifyInstance) {
                     }
                 })
 
-                console.log('FileIndex record created');
+                // console.log('FileIndex record created');
 
             }
-            console.log("Aquatree to save: ", aquaTree)
+            // console.log("Aquatree to save: ", aquaTree)
             // Save the aqua tree
             await saveAquaTree(aquaTree, session.address, templateId.length == 0 ? null : templateId, isWorkFlow);
 
+
+
+               console.log(`Aquatree to db ${JSON.stringify(aquaTree, null, 4)}`)
+            
+                // throw Error("check hash above")
 
             // Get the host from the request headers
             const host = request.headers.host || `${getHost()}:${getPort()}`;
@@ -506,7 +511,7 @@ export default async function explorerController(fastify: FastifyInstance) {
     // get file using file hash
     fastify.get('/explorer_files', async (request, reply) => {
         // const { fileHash } = request.params as { fileHash: string };
-        ////  console.log(`Received fileHash: ${fileHash}`);
+        ////  // console.log(`Received fileHash: ${fileHash}`);
         // file content from db
         // return as a blob
 
@@ -552,7 +557,7 @@ export default async function explorerController(fastify: FastifyInstance) {
         // let displayData = await fetchAquatreeFoUser(url, latest)
         // let displayData: any[] = []
         // for (let item of latest) {
-        //     console.log(`Fetching complete revision chain for ${item.hash}`)
+        //     // console.log(`Fetching complete revision chain for ${item.hash}`)
         //     let displayDataItem = await fetchCompleteRevisionChain(item.hash.split("_")[1], session.address, url, new Set(), true, 0, true);
         //     displayData.push({
         //         aquaTree: {
@@ -640,11 +645,11 @@ export default async function explorerController(fastify: FastifyInstance) {
             }
 
             // Same for enableContent
-            if (data.fields.enableContent) {
-                const enableContentField: any = data.fields.enableContent;
+            // if (data.fields.enableContent) {
+            //     const enableContentField: any = data.fields.enableContent;
 
-                enableContent = enableContentField.value === 'true';
-            }
+            //     enableContent = enableContentField.value === 'true';
+            // }
 
             // Same for enableContent
             if (data.fields.enableScalar) {
@@ -660,7 +665,7 @@ export default async function explorerController(fastify: FastifyInstance) {
             const uint8Array = new Uint8Array(fileBuffer);
             // let fileContent = fileBuffer.toString('utf-8');
             const fileSizeInBytes = fileBuffer.length;
-            //  console.log(`File size: ${fileSizeInBytes} bytes`);
+            //  // console.log(`File size: ${fileSizeInBytes} bytes`);
 
 
             let fileObjectPar: FileObject = {
@@ -838,7 +843,7 @@ export default async function explorerController(fastify: FastifyInstance) {
                         }
                     })
 
-                    //  console.log(JSON.stringify(fileCreation, null, 4))
+                    //  // console.log(JSON.stringify(fileCreation, null, 4))
                     // console.error("====We are through here: ", fileCreation.hash)
 
                     await prisma.fileIndex.create({
@@ -850,12 +855,12 @@ export default async function explorerController(fastify: FastifyInstance) {
                             reference_count: 1
                         }
                     })
-                    //  console.log("Saved successfully")
+                    //  // console.log("Saved successfully")
                 }
 
             } catch (error) {
-                //  console.log("======================================")
-                //  console.log(`error ${error}`)
+                //  // console.log("======================================")
+                //  // console.log(`error ${error}`)
                 let logs: LogData[] = []
                 logs.push({
                     log: `Error saving genesis revision`,
