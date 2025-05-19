@@ -1,4 +1,4 @@
-import { Box, Group, HStack, Image, Text, Menu, Button, Portal, MenuOpenChangeDetails, Stack, Input, Flex, Center, SimpleGrid } from "@chakra-ui/react"
+import { Box, Group, HStack, Image, Text, Menu, Button, Portal, MenuOpenChangeDetails, Stack, Input, Flex, Center, SimpleGrid, Spinner } from "@chakra-ui/react"
 import Settings from "./chakra-ui/settings"
 import ConnectWallet from "./ConnectWallet"
 import { useColorMode } from "./chakra-ui/color-mode"
@@ -68,6 +68,7 @@ const Navbar = () => {
     const [contractsOpen, setContractsOpen] = useState(false)
     const [settingsOpen, setSettingsOpen] = useState(false)
     const [versionOpen, setVersionOpen] = useState(false)
+    const [submittingTemplateData, setSubmittingTemplateData] = useState(false)
 
     const [isDropDownOpen, setIsDropDownOpen] = useState(false);
     const [modalFormErorMessae, setModalFormErorMessae] = useState("");
@@ -160,10 +161,12 @@ const Navbar = () => {
                     setModalFormErorMessae("")
                     setSelectedTemplate(null)
                     setFormData({})
+                    setSubmittingTemplateData(false);
                 }
             }
 
         } catch (error) {
+            setSubmittingTemplateData(false);
             toaster.create({
                 title: 'Error uploading aqua tree',
                 description: error instanceof Error ? error.message : 'Unknown error',
@@ -179,7 +182,14 @@ const Navbar = () => {
         e.preventDefault();
 
 
-
+        if (submittingTemplateData) {
+            toaster.create({
+                description: `Data submission not completed, try again after some time.`,
+                type: "info"
+            })
+            return
+        }
+        setSubmittingTemplateData(true);
         for (let fieldItem of selectedTemplate!.fields) {
             let valueInput = formData[fieldItem.name]
             console.log(`fieldItem ${JSON.stringify(fieldItem)} \n formData ${JSON.stringify(formData)} valueInput ${valueInput} `)
@@ -197,10 +207,14 @@ const Navbar = () => {
                             let isValidWalletAddress = isValidEthereumAddress(walletAddress.trim())
                             if (!isValidWalletAddress) {
                                 setModalFormErorMessae(`${walletAddress.trim()} is not a valid wallet adress`)
+
+                                setSubmittingTemplateData(false);
                                 return
                             }
                             if (seenWalletAddresses.has(walletAddress.trim())) {
                                 setModalFormErorMessae(`${walletAddress.trim()} is a duplicate wallet adress`)
+
+                                setSubmittingTemplateData(false);
                                 return
                             }
                             seenWalletAddresses.add(walletAddress.trim())
@@ -208,11 +222,15 @@ const Navbar = () => {
                     } else {
                         let isValidWalletAddress = isValidEthereumAddress(valueInput.trim())
                         if (!isValidWalletAddress) {
+
+                            setSubmittingTemplateData(false);
                             setModalFormErorMessae(`${valueInput} is not a valid wallet adress`)
                             return
                         }
                     }
                 } else {
+
+                    setSubmittingTemplateData(false);
                     setModalFormErorMessae(`${valueInput} provided at ${fieldItem.name} is not a string`)
                     return
                 }
@@ -222,6 +240,8 @@ const Navbar = () => {
 
 
         if (systemFileInfo.length == 0) {
+
+            setSubmittingTemplateData(false);
             toaster.create({
                 description: `Aqua tree for templates not found`,
                 type: "error"
@@ -237,6 +257,8 @@ const Navbar = () => {
             return nameExtract == selectedName
         })
         if (!templateApiFileInfo) {
+
+            setSubmittingTemplateData(false);
             toaster.create({
                 description: `Aqua tree for ${selectedTemplate?.name} not found`,
                 type: "error"
@@ -281,6 +303,8 @@ const Navbar = () => {
             let linkedAquaTreeFileObj = getAquaTreeFileObject(templateApiFileInfo);
 
             if (!linkedAquaTreeFileObj) {
+
+                setSubmittingTemplateData(false);
                 toaster.create({
                     description: `system Aqua tee has error`,
                     type: "error"
@@ -295,6 +319,8 @@ const Navbar = () => {
             let linkedAquaTreeResponse = await aquafier.linkAquaTree(mainAquaTreeWrapper, linkedToAquaTreeWrapper)
 
             if (linkedAquaTreeResponse.isErr()) {
+
+                setSubmittingTemplateData(false);
                 toaster.create({
                     description: `Error linking aqua tree`,
                     type: "error"
@@ -338,6 +364,12 @@ const Navbar = () => {
                         // After this you can use fileObjectPar with aquafier.createGenesisRevision() or other operations
                     } catch (error) {
                         console.error(`Error processing file ${file.name}:`, error);
+
+                        toaster.create({
+                            description: `Error processing file ${file.name}`,
+                            type: "error"
+                        })
+                        setSubmittingTemplateData(false);
                         return null;
                     }
                 });
@@ -358,6 +390,7 @@ const Navbar = () => {
                         if (aquaTreeResponse.isErr()) {
                             console.error("Error linking aqua tree:", aquaTreeResponse.data.toString());
 
+                            setSubmittingTemplateData(false);
                             toaster.create({
                                 title: 'Error  linking aqua',
                                 description: 'Error  linking aqua',
@@ -386,6 +419,7 @@ const Navbar = () => {
                         if (res.isErr()) {
                             console.error("Error linking aqua tree:", aquaTreeResponse.data.toString());
 
+                            setSubmittingTemplateData(false);
                             toaster.create({
                                 title: 'Error  linking aqua',
                                 description: 'Error  linking aqua',
@@ -401,6 +435,7 @@ const Navbar = () => {
                 } catch (error) {
                     console.error("Error processing files:", error);
 
+                    setSubmittingTemplateData(false);
                     toaster.create({
                         title: 'Error proceessing files',
                         description: 'Error proceessing files',
@@ -421,6 +456,7 @@ const Navbar = () => {
             let signRes = await aquafier.signAquaTree(aquaTreeWrapper, "metamask", dummyCredential())
 
             if (signRes.isErr()) {
+                setSubmittingTemplateData(false);
                 toaster.create({
                     description: `Error signing failed`,
                     type: "error"
@@ -434,6 +470,7 @@ const Navbar = () => {
             }
 
         } else {
+            setSubmittingTemplateData(false);
 
             toaster.create({
                 title: 'Error creating Aqua tree from template',
@@ -673,17 +710,29 @@ const Navbar = () => {
                             <HStack>
                                 {selectedTemplate ?
                                     <Button type="submit" ml={3} mr={3} colorPalette={'green'} ref={cancelRef} onClick={createWorkflowFromTemplate} form="create-aqua-tree-form">
-                                        Create
+
+
+                                        {submittingTemplateData ? <>
+                                            <Spinner size="inherit" color="inherit" />
+                                            loading
+                                        </> : <span>Create</span>}
+
                                     </Button>
                                     : null
                                 }
                                 {/* <DialogActionTrigger asChild> */}
-                                <Button variant="outline" onClick={closeDialog}>Cancel</Button>
+                                <Button variant="outline" onClick={()=>{
+                                    setSubmittingTemplateData(false)
+                                    closeDialog()
+                                }}>Cancel</Button>
                                 {/* </DialogActionTrigger> */}
                             </HStack>
                         </HStack>
                     </DialogFooter>
-                    <DialogCloseTrigger onClick={closeDialog} />
+                    <DialogCloseTrigger onClick={()=>{
+                        setSubmittingTemplateData(false)
+                        closeDialog()
+                    }} />
                 </DialogContent>
             </DialogRoot>
         </>
