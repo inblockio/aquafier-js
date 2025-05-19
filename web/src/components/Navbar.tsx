@@ -194,6 +194,7 @@ const Navbar = () => {
             let valueInput = formData[fieldItem.name]
             console.log(`fieldItem ${JSON.stringify(fieldItem)} \n formData ${JSON.stringify(formData)} valueInput ${valueInput} `)
             if (fieldItem.required && valueInput == undefined) {
+                setSubmittingTemplateData(false);
                 setModalFormErorMessae(`${fieldItem.name} is mandatory`)
                 return
             }

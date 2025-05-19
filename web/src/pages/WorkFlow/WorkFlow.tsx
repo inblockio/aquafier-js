@@ -22,8 +22,8 @@ import appStore from '../../store';
 import { useStore } from "zustand"
 import { SignaturePosition, WorkFlowTimeLine } from '../../types/types';
 import { RevisionVerificationStatus } from '../../types/types';
-import Aquafier, { AquaTree, AquaTreeWrapper, FileObject, getAquaTreeFileObject, OrderRevisionInAquaTree } from 'aqua-js-sdk';
-import { convertTemplateNameToTitle, ensureDomainUrlHasSSL, estimateFileSize, isWorkFlowData } from '../../utils/functions';
+import Aquafier, { AquaTree, AquaTreeWrapper, FileObject, getAquaTreeFileObject, getGenesisHash, OrderRevisionInAquaTree } from 'aqua-js-sdk';
+import { convertTemplateNameToTitle, ensureDomainUrlHasSSL, estimateFileSize, fetchFiles, isWorkFlowData } from '../../utils/functions';
 import { PDFJSViewer } from 'pdfjs-react-viewer';
 import PdfSigner, { SimpleSignatureOverlay } from '../PdfSigner';
 import { toaster } from '../../components/chakra-ui/toaster';
@@ -32,6 +32,8 @@ import { ApiFileInfo } from '../../models/FileInfo';
 import SignatureItem from '../../components/pdf/SignatureItem';
 import { CompleteChainView } from '../../components/CustomDrawer';
 import { useColorMode } from '../../components/chakra-ui/color-mode';
+import { file } from 'jszip';
+import { useNavigate } from 'react-router-dom';
 
 export default function WorkFlowPage() {
     const [activeStep, setActiveStep] = useState(1);
@@ -39,10 +41,12 @@ export default function WorkFlowPage() {
     const [error, setError] = useState("");
     const [aquaTreeVerificationWithStatuses, setAquaTreeVerificationWithStatuses] = useState<Array<RevisionVerificationStatus>>([]);
     const [timeLineItems, setTimeLineItems] = useState<Array<WorkFlowTimeLine>>([]);
-    const { selectedFileInfo, setSelectedFileInfo, formTemplates, session, backend_url } = useStore(appStore);
+    const { selectedFileInfo, setSelectedFileInfo, formTemplates, session, backend_url, setFiles } = useStore(appStore);
     const { colorMode } = useColorMode();
     const [currentPage, setCurrentPage] = useState(1);
+    const [submittingSignatureData, setSubmittingSignatureData] = useState(false);
 
+    const navigate = useNavigate()
 
     //aqua sign revision sequesn.
     // 1. form (sender , reciever ets)
@@ -172,7 +176,7 @@ export default function WorkFlowPage() {
 
         loadData()
 
-    }, [selectedFileInfo])
+    }, [JSON.stringify(selectedFileInfo)])
 
 
 
@@ -397,6 +401,8 @@ export default function WorkFlowPage() {
             return
         }
 
+        setSubmittingSignatureData(true);
+
         let aquafier = new Aquafier();
 
         let signForm: {
@@ -404,9 +410,10 @@ export default function WorkFlowPage() {
         } = {}
 
 
+        let allfileObjects = selectedFileInfo?.fileObject ?? []
         for (const [index, signaturePositionItem] of signaturePosition.entries()) {
 
-            let pageIndex = signaturePositionItem.pageIndex +1
+            let pageIndex = signaturePositionItem.pageIndex + 1
             // if (pageIndex == 0) {
             //     pageIndex += 1
             // }
@@ -432,9 +439,15 @@ export default function WorkFlowPage() {
             path: './',
             fileSize: estimateize
         }
+
+        allfileObjects.push(fileObjectUserSignature)
+
+
         let userSignatureDataAquaTree = await aquafier.createGenesisRevision(fileObjectUserSignature, true, false, false)
 
         if (userSignatureDataAquaTree.isErr()) {
+            setSubmittingSignatureData(false);
+
             toaster.create({
                 description: `Sinature data creation failed`,
                 type: "error"
@@ -447,12 +460,15 @@ export default function WorkFlowPage() {
         await saveAquaTree(userSignatureDataAquaTree.data.aquaTree!, fileObjectUserSignature, true, true, "")
 
 
+        let sigFileObject = getAquaTreeFileObject(selectedFileInfo!) ?? selectedFileInfo?.fileObject[0]
         // linked 
         let aquaTreeWrapper: AquaTreeWrapper = {
             aquaTree: selectedFileInfo!.aquaTree!,
             revision: "",
-            fileObject: getAquaTreeFileObject(selectedFileInfo!) ?? selectedFileInfo?.fileObject[0]
+            fileObject: sigFileObject
         }
+
+
 
         let userSignatureDataAquaTreeWrapper: AquaTreeWrapper = {
             aquaTree: userSignatureDataAquaTree!.data.aquaTree!,
@@ -463,6 +479,8 @@ export default function WorkFlowPage() {
         let resLinkedAquaTreeWithUserSignatureData = await aquafier.linkAquaTree(aquaTreeWrapper, userSignatureDataAquaTreeWrapper)
 
         if (resLinkedAquaTreeWithUserSignatureData.isErr()) {
+
+            setSubmittingSignatureData(false);
 
             toaster.create({
                 description: `Sinature data not appended to main tree succefully `,
@@ -501,6 +519,8 @@ export default function WorkFlowPage() {
             }
         } catch (e) {
 
+            setSubmittingSignatureData(false);
+
             toaster.create({
                 description: `Error saving link revsion of signature locations `,
                 type: "error"
@@ -520,14 +540,20 @@ export default function WorkFlowPage() {
         }
 
         let signatureAquaTree = signAquaTree[0].aquaTree!;
+        let signatureFileObject = getAquaTreeFileObject(signAquaTree[0]!) ?? signAquaTree[0].fileObject[0]
         let aquaTreeWrapperLinked: AquaTreeWrapper = {
             aquaTree: signatureAquaTree,
             revision: "",
-            fileObject: getAquaTreeFileObject(signAquaTree[0]!) ?? signAquaTree[0].fileObject[0]
+            fileObject: signatureFileObject
         }
+
+        allfileObjects.push(signatureFileObject)
+
         let resLinkedAquaTree = await aquafier.linkAquaTree(linkedAquaTreeWithUserSignatureDataWrapper, aquaTreeWrapperLinked)
 
         if (resLinkedAquaTree.isErr()) {
+
+            setSubmittingSignatureData(false);
 
             toaster.create({
                 description: `Sinature tree not appended to main tree succefully `,
@@ -564,12 +590,8 @@ export default function WorkFlowPage() {
 
 
 
-            toaster.create({
-                description: `Linking successfull`,
-                type: "success"
-            })
 
-
+            //
 
 
             if (response.status === 200 || response.status === 201) {
@@ -579,6 +601,8 @@ export default function WorkFlowPage() {
 
             }
         } catch (e) {
+
+            setSubmittingSignatureData(false);
 
             toaster.create({
                 description: `Error saving link revsion of signature tree `,
@@ -590,13 +614,53 @@ export default function WorkFlowPage() {
 
 
 
+        //fetch user all files 
 
-        let data = selectedFileInfo
-        data!.aquaTree = resLinkedAquaTree.data.aquaTree
-        setSelectedFileInfo(data!!)
+
+
+        const url2 = `${backend_url}/explorer_files`;
+        const files = await fetchFiles(`${session?.address}`, url2, `${session?.nonce}`);
+        setFiles(files);
+
+
+        let selectedFileGenesisHash = getGenesisHash(selectedFileInfo!.aquaTree!)
+        let seletctedFile = files.find((data) => getGenesisHash(data.aquaTree!) == selectedFileGenesisHash)
+
+        if (seletctedFile) {
+
+            setSelectedFileInfo(seletctedFile!)
+
+            toaster.create({
+                description: `Document Signed successfully`,
+                type: "success"
+            })
+
+
+            setActiveStep(5)
+
+        } else {
+
+            toaster.create({
+                description: `An error occured, redirecting to home`,
+                type: "error"
+            })
+
+            setTimeout(() => {
+                window.location.reload()
+            }, 150)
+            navigate("/")
+
+        }
+
+
+        // let data = selectedFileInfo
+        // data!.aquaTree = resLinkedAquaTree.data.aquaTree
+        // data!.fileObject = allfileObjects;
+        // setSelectedFileInfo(data!!)
 
 
     }
+
     // Helper function to get content type from file extension
     // const getContentTypeFromFileName = (fileName: string): string => {
     //     if (!fileName) return "application/octet-stream";
@@ -986,7 +1050,7 @@ export default function WorkFlowPage() {
                         )
                     } else {
 
-                        return <PdfSigner file={pdfFile} submitSignature={submitSignatureData} />
+                        return <PdfSigner file={pdfFile} submitSignature={submitSignatureData} submittingSignatureData={submittingSignatureData} />
                     }
                 } else {
                     return (

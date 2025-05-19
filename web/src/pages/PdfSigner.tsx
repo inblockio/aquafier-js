@@ -137,9 +137,10 @@ export const SimpleSignatureOverlay = ({ signature }: { signature: { x: string, 
 interface PdfSignerProps {
     file: File | null;
     submitSignature: (signaturePosition: SignaturePosition[], signAquaTree: ApiFileInfo[]) => Promise<void>
+    submittingSignatureData : boolean
 }
 
-const PdfSigner: React.FC<PdfSignerProps> = ({ file, submitSignature }) => {
+const PdfSigner: React.FC<PdfSignerProps> = ({ file, submitSignature , submittingSignatureData}) => {
 
     const { formTemplates, systemFileInfo } = useStore(appStore)
     // State for PDF document
@@ -1413,6 +1414,7 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ file, submitSignature }) => {
                             <Button
                                 colorPalette={'green'} variant={'solid'}
                                 colorScheme="white"
+                                disabled={submittingSignatureData}
                                 // disabled={!pdfDoc || !signatureDataUrl || signaturePositions.length === 0}
                                 onClick={async (e) => {
                                     e.preventDefault()

@@ -169,7 +169,7 @@ const FilesTable = () => {
             if (fileObject) {
                 return tableItem(fileObject, item, index)
             } else {
-                return <>null</>
+                return <>Error</>
             }
 
         })
