@@ -10,7 +10,7 @@ import axios from "axios";
 import { toaster } from "./chakra-ui/toaster";
 import VersionDetails from "../models/VersionDetails";
 import { IVersionAndDisclaimer } from "../types/index";
-
+import versionInfo from '../version-info.json';
 
 export default function VersionAndDisclaimer({ inline, open, updateOpenStatus }: IVersionAndDisclaimer) {
     //   const {  es, avatar, setAvatar, setUserProfile, backend_url } = useStore(appStore);
@@ -38,7 +38,7 @@ export default function VersionAndDisclaimer({ inline, open, updateOpenStatus }:
                 setVersionDetails(res)
             }
         } catch (e: unknown) {
-           //  console.log("Error fetching version ", e)
+            //  console.log("Error fetching version ", e)
             toaster.create({
                 description: "Error fetching version details",
                 type: "error"
@@ -56,7 +56,7 @@ export default function VersionAndDisclaimer({ inline, open, updateOpenStatus }:
         <Dialog.Root placement={"center"} size={"sm"} open={inline ? open : isOpen} onOpenChange={(details) => setIsOpen(details.open)}>
             <DialogTrigger asChild>
                 <Button
-                colorPalette={'black'}
+                    colorPalette={'black'}
                     size={"sm"}
                     borderRadius={"md"}
                     onClick={() => {
@@ -82,20 +82,24 @@ export default function VersionAndDisclaimer({ inline, open, updateOpenStatus }:
                         <Center>
                             Product Verion Details
                         </Center>
-                        <Text fontFamily={"monospace"}>aquafier Version : {versionDetails.aquifier}  </Text>
+                        {/* <Text fontFamily={"monospace"}>aquafier Version : {versionDetails.aquifier}  </Text> */}
                         <Text fontFamily={"monospace"}>protocol Version : {versionDetails.protocol} </Text>
+                        <Text fontFamily={"monospace"}>Build Commit Hash : {versionInfo.commitHash} </Text>
+                        <Text fontFamily={"monospace"}>Build  Date: {versionInfo.buildDate} </Text>
+
+
                         <Spacer height={30} />
 
                         <Alert status="error" title="" variant="solid"   >
                             This is prototype software,use it with caution.
                         </Alert>
 
-                       <Text>
-                       This software is developed by <Link href="https://inblock.io/" target="_blank"  style={{"color":"blue"}}>inblock.io</Link> assets GmbH <br/> </Text>
                         <Text>
-                        The source code can be found:  <Link href="https://github.com/inblockio" target="_blank" style={{"color":"blue"}}>Inblock</Link>
+                            This software is developed by <Link href="https://inblock.io/" target="_blank" style={{ "color": "blue" }}>inblock.io</Link> assets GmbH <br /> </Text>
+                        <Text>
+                            The source code can be found:  <Link href="https://github.com/inblockio" target="_blank" style={{ "color": "blue" }}>Inblock</Link>
 
-                       </Text>
+                        </Text>
                         <Button borderRadius={"md"} onClick={() => {
                             inline ? updateOpenStatus?.(false) : setIsOpen(false);
                         }}>
