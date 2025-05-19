@@ -14,6 +14,7 @@ To run the api, navigate to api directory.
 4. `npm run dev` to start http server
 
 
+
 ## Database creation
 To create a database use the `create_db.sh`. Update the file with the config to use.
 ```bash
