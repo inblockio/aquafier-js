@@ -52,7 +52,7 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ file, submitSignature }) => {
     const [pdfFile, setPdfFile] = useState<File | null>(file);
     const [pdfUrl, setPdfUrl] = useState<string | null>(null);
     const [_pdfDoc, setPdfDoc] = useState<PDFDocument | null>(null);
-    const [creatingUserSignature, setCreatingUserSignature] = useState<Boolean>(false);
+    const [creatingUserSignature, setCreatingUserSignature] = useState<boolean>(false);
 
     // const [numPages, setNumPages] = useState<number>(0);
     const [currentPage, setCurrentPage] = useState<number>(1);
