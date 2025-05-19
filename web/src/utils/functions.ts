@@ -11,13 +11,13 @@ import jdenticon from "jdenticon/standalone";
 
 export const convertTemplateNameToTitle = (str: string) => {
     return str.split('_')
-    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-    .join(' ');
+        .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+        .join(' ');
     // const words = str.split('_');
     // const firstWord = words[0].charAt(0).toUpperCase() + words[0].slice(1);
     // const remainingWords = words.slice(1).join(' ');
     // return firstWord + ' ' + remainingWords;
-  };
+};
 
 export const isWorkFlowData = (aquaTree: AquaTree, _systemAndUserWorkFlow: string[]): { isWorkFlow: boolean; workFlow: string } => {
     let falseResponse = {
@@ -870,7 +870,7 @@ export const readFileContent = async (file: File): Promise<string | Uint8Array> 
 
 
 // Helper function to convert Blob to Data URL
-export  const blobToDataURL = (blob: Blob): Promise<string> => {
+export const blobToDataURL = (blob: Blob): Promise<string> => {
     return new Promise((resolve, reject) => {
         const reader = new FileReader();
         reader.onload = () => {
@@ -893,7 +893,7 @@ export function timeStampToDateObject(timestamp: string): Date | null {
         // Create Date object
         const dateObj = new Date(year, month, day, hour, minute, second);
         return dateObj
-    }catch(e){
+    } catch (e) {
         console.log(`💣💣 Error occured parsing timestamp to date`);
         return null
     }
@@ -906,34 +906,34 @@ export const dataURLToFile = (dataUrl: string, filename: string): File => {
     const arr = dataUrl.split(',');
     const mime = arr[0].match(/:(.*?);/)?.[1] || 'image/png';
     const bstr = atob(arr[1]);
-    
+
     // Convert base64 to binary
     let n = bstr.length;
     const u8arr = new Uint8Array(n);
-    
+
     while (n--) {
-      u8arr[n] = bstr.charCodeAt(n);
+        u8arr[n] = bstr.charCodeAt(n);
     }
-    
+
     // Create and return File object
     return new File([u8arr], filename, { type: mime });
-  };
-  
-  // Function to convert data URL to Uint8Array
- export  const dataURLToUint8Array = (dataUrl: string): Uint8Array => {
+};
+
+// Function to convert data URL to Uint8Array
+export const dataURLToUint8Array = (dataUrl: string): Uint8Array => {
     // Extract the base64 data
     const base64Data = dataUrl.split(',')[1];
     // Convert base64 to binary string
     const binaryString = atob(base64Data);
-    
+
     // Create Uint8Array from binary string
     const bytes = new Uint8Array(binaryString.length);
     for (let i = 0; i < binaryString.length; i++) {
-      bytes[i] = binaryString.charCodeAt(i);
+        bytes[i] = binaryString.charCodeAt(i);
     }
-    
+
     return bytes;
-  };
+};
 
 export function timeToHumanFriendly(timestamp: string | undefined, showFull: boolean = false): string {
     if (!timestamp) {
@@ -1489,16 +1489,16 @@ export function generateAvatar(seed: string, size = 200) {
 //     let url = actualUrlToFetch
 //     // check if the file hash exist 
 //     // console.log(`==URL Data before ${actualUrlToFetch}`)
-    // if (actualUrlToFetch.includes("inblock.io")) {
-    //     if (!actualUrlToFetch.includes("https")) {
-    //         url = actualUrlToFetch.replace("http", "https")
-    //     }
-    // }
+// if (actualUrlToFetch.includes("inblock.io")) {
+//     if (!actualUrlToFetch.includes("https")) {
+//         url = actualUrlToFetch.replace("http", "https")
+//     }
+// }
 
 //     if(actualUrlToFetch.includes("https://0.0.0.0:0")){
 //         url = actualUrlToFetch.replace("https://0.0.0.0:0", "http://127.0.0.1:3000")
 //     }
-    
+
 //     // console.log(`==URL Data after ${actualUrlToFetch}`)
 //     return url
 // }
@@ -1512,7 +1512,7 @@ export function ensureDomainUrlHasSSL(actualUrlToFetch: string): string {
         }
     }
 
-   
+
     // Alternatively, if the domain is "inblock.io" but lacks protocol
 
     if (url.startsWith("inblock.io")) {
@@ -1520,23 +1520,40 @@ export function ensureDomainUrlHasSSL(actualUrlToFetch: string): string {
     }
 
     // Replace unsafe localhost URL (HTTPS on 0.0.0.0:0 → HTTP on 127.0.0.1:3000)
-    if (url.startsWith("https://0.0.0.0") || url.startsWith("http://0.0.0.0") || url.startsWith("https://127.0.0.1") || url.startsWith("https://localhost") ) {
+    if (url.startsWith("https://0.0.0.0") || url.startsWith("http://0.0.0.0") || url.startsWith("https://127.0.0.1") || url.startsWith("https://localhost")) {
         url = url.replace("https://0.0.0.0", "http://127.0.0.1");
         url = url.replace("http://0.0.0.0", "http://127.0.0.1");
         url = url.replace("https://127.0.0.1", "http://127.0.0.1");
         url = url.replace("https://localhost", "http://127.0.0.1");
     }
 
-      // Check if we're on inblock.io domain but URL contains localhost IP addresses
-      const currentDomain = typeof window !== 'undefined' ? window.location.hostname : '';
-      if (currentDomain === "inblock.io") {
-          if (url.includes("127.0.0.1") || url.includes("0.0.0.0") || url.includes("localhost")) {
-              // Replace with inblock.io and ensure HTTPS
-              url = url.replace(/https?:\/\/(127\.0\.0\.1|0\.0\.0\.0|localhost)(:\d+)?/g, "https://inblock.io");
-          }
-      }
-  
-      return url;
+    // Check if we're on inblock.io domain but URL contains localhost IP addresses
+    const currentDomain = typeof window !== 'undefined' ? window.location.hostname : '';
+    if (currentDomain === "inblock.io") {
+        if (url.includes("127.0.0.1") || url.includes("0.0.0.0") || url.includes("localhost")) {
+
+            // Replace with inblock.io and ensure HTTPS
+            //   url = url.replace(/https?:\/\/(127\.0\.0\.1|0\.0\.0\.0|localhost)(:\d+)?/g, "https://inblock.io");
+
+            // Replace with inblock.io and ensure HTTPS
+            // Handle 127.0.0.1 with or without port
+            url = url.replace("http://127.0.0.1", "https://inblock.io");
+            url = url.replace("https://127.0.0.1", "https://inblock.io");
+
+            // Handle 0.0.0.0 with or without port
+            url = url.replace("http://0.0.0.0", "https://inblock.io");
+            url = url.replace("https://0.0.0.0", "https://inblock.io");
+
+            // Handle localhost with or without port
+            url = url.replace("http://localhost", "https://inblock.io");
+            url = url.replace("https://localhost", "https://inblock.io");
+
+            // Remove any port numbers that might remain
+            url = url.replace(/:\d+/g, "");
+        }
+    }
+
+    return url;
 
 
     return url;
