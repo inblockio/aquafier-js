@@ -13,7 +13,8 @@ import {
     Grid,
     GridItem,
     Center,
-    Container
+    Container,
+    Spinner
 } from '@chakra-ui/react';
 import { useBoolean } from '@chakra-ui/hooks';
 // import { PDFDocument, rgb, StandardFonts } from 'pdf-lib';
@@ -51,6 +52,8 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ file, submitSignature }) => {
     const [pdfFile, setPdfFile] = useState<File | null>(file);
     const [pdfUrl, setPdfUrl] = useState<string | null>(null);
     const [_pdfDoc, setPdfDoc] = useState<PDFDocument | null>(null);
+    const [creatingUserSignature, setCreatingUserSignature] = useState<Boolean>(false);
+
     // const [numPages, setNumPages] = useState<number>(0);
     const [currentPage, setCurrentPage] = useState<number>(1);
 
@@ -518,6 +521,7 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ file, submitSignature }) => {
 
     // Save signature from canvas
     const saveSignature = async () => {
+        setCreatingUserSignature(true);
         if (signatureRef.current && !signatureRef.current.isEmpty()) {
             // const dataUrl = signatureRef.current.toDataURL('image/png');
 
@@ -562,6 +566,7 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ file, submitSignature }) => {
                 // setSelectedSignatureId(newId);
 
                 setIsOpen(false);
+                setCreatingUserSignature(false);
 
                 // Clear the canvas for next signature
                 if (signatureRef.current) {
@@ -576,6 +581,7 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ file, submitSignature }) => {
                     duration: 3000,
                 });
 
+
                 // If user is in placing mode, allow them to place the signature
                 if (!placingSignature) {
                     setPlacingSignature(true);
@@ -587,6 +593,8 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ file, submitSignature }) => {
                 }
             }
         } else {
+            setCreatingUserSignature(false);
+
             toaster.create({
                 title: "Please draw a signature first",
                 type: "warning",
@@ -1373,7 +1381,7 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ file, submitSignature }) => {
                                 }}
                             >
                                 <FaCloudArrowUp />
-                                submit signature
+                                Sign document 
                             </Button>
                         </Stack>
                     </GridItem>
@@ -1433,8 +1441,13 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ file, submitSignature }) => {
                                 >
                                     <FaUndo />
                                 </IconButton>
-                                <Button colorScheme="blue" onClick={saveSignature}>
-                                    Save Signature
+                                <Button disabled={creatingUserSignature} colorScheme="blue" onClick={saveSignature}>
+                                    
+
+                                    {creatingUserSignature ? <>
+                                                                                <Spinner size="inherit" color="inherit" />
+                                                                                loading
+                                                                            </> : <span>Save Signature</span>}
                                 </Button>
                             </HStack>
                         </Stack>

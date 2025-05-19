@@ -512,7 +512,7 @@ const setUpSystemTemplates = async () => {
     },
     {
       name: "signers",
-      label: "Signers (if multiple comma seprated wallet addresses)",
+      label: "Signers",
       type: "wallet_address",
       required: true,
       multiple: true
