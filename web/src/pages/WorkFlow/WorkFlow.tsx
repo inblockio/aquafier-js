@@ -25,7 +25,7 @@ import { RevisionVerificationStatus } from '../../types/types';
 import Aquafier, { AquaTree, AquaTreeWrapper, FileObject, getAquaTreeFileObject, OrderRevisionInAquaTree } from 'aqua-js-sdk';
 import { convertTemplateNameToTitle, ensureDomainUrlHasSSL, estimateFileSize, isWorkFlowData } from '../../utils/functions';
 import { PDFJSViewer } from 'pdfjs-react-viewer';
-import PdfSigner, { SignatureOverlay, SimpleSignatureOverlay } from '../PdfSigner';
+import PdfSigner, {  SimpleSignatureOverlay } from '../PdfSigner';
 import { toaster } from '../../components/chakra-ui/toaster';
 import axios from 'axios';
 import { ApiFileInfo } from '../../models/FileInfo';
