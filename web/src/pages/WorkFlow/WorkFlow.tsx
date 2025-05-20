@@ -24,14 +24,13 @@ import { useStore } from "zustand"
 import { SignaturePosition, SummaryDetailsDisplayData, WorkFlowTimeLine } from '../../types/types';
 import { RevisionVerificationStatus } from '../../types/types';
 import Aquafier, { AquaTree, AquaTreeWrapper, FileObject, getAquaTreeFileObject, getGenesisHash, OrderRevisionInAquaTree, Revision } from 'aqua-js-sdk';
-import { convertTemplateNameToTitle, ensureDomainUrlHasSSL, estimateFileSize, fetchFiles, isAquaTree, isWorkFlowData, timeToHumanFriendly } from '../../utils/functions';
+import { convertTemplateNameToTitle, dummyCredential, ensureDomainUrlHasSSL, estimateFileSize, fetchFiles, isAquaTree, isWorkFlowData, timeToHumanFriendly } from '../../utils/functions';
 import { PDFJSViewer } from 'pdfjs-react-viewer';
 import PdfSigner, { SimpleSignatureOverlay } from '../PdfSigner';
 import { toaster } from '../../components/chakra-ui/toaster';
 import axios from 'axios';
 import { ApiFileInfo } from '../../models/FileInfo';
 import SignatureItem from '../../components/pdf/SignatureItem';
-import { CompleteChainView } from '../../components/CustomDrawer';
 import { useColorMode } from '../../components/chakra-ui/color-mode';
 // import { file } from 'jszip';
 import { useNavigate } from 'react-router-dom';
@@ -625,7 +624,7 @@ export default function WorkFlowPage() {
 
 
         const creatorSignatureHash = revisionHashes[3];
-        const signatureRevision: Revision = selectedFileInfo!.aquaTree!.revisions[creatorSignatureHash]
+        const signatureRevision: Revision | undefined = selectedFileInfo!.aquaTree!.revisions[creatorSignatureHash]
 
 
         let fourthItmeHashOnwards: string[] = [];
@@ -655,9 +654,13 @@ export default function WorkFlowPage() {
                     <Timeline.Title><Text textStyle="lg">Work flow created</Text></Timeline.Title>
                     <Timeline.Description>
 
-                        <Text textStyle="md">
-                            User with address {signatureRevision.signature_wallet_address} , created the workflow at &nbsp;{timeToHumanFriendly(firstRevision.local_timestamp, true)}
-                        </Text>
+                        {signatureRevision ?
+                            <Text textStyle="md">
+                                User with address {signatureRevision.signature_wallet_address} , created the workflow at &nbsp;{timeToHumanFriendly(firstRevision.local_timestamp, true)}
+                            </Text>
+                            : <Alert status="error" title="" variant="solid"   >
+                                Creator Signature not detected
+                            </Alert>}
                     </Timeline.Description>
                     <Text textStyle="sm">
                         Document <strong>{fileName}</strong>  was selected for signing
@@ -860,7 +863,6 @@ export default function WorkFlowPage() {
         } = {}
 
 
-        let allfileObjects = selectedFileInfo?.fileObject ?? []
         for (const [index, signaturePositionItem] of signaturePosition.entries()) {
 
             let pageIndex = signaturePositionItem.pageIndex + 1
@@ -890,7 +892,6 @@ export default function WorkFlowPage() {
             fileSize: estimateize
         }
 
-        allfileObjects.push(fileObjectUserSignature)
 
 
         let userSignatureDataAquaTree = await aquafier.createGenesisRevision(fileObjectUserSignature, true, false, false)
@@ -997,7 +998,6 @@ export default function WorkFlowPage() {
             fileObject: signatureFileObject
         }
 
-        allfileObjects.push(signatureFileObject)
 
         let resLinkedAquaTree = await aquafier.linkAquaTree(linkedAquaTreeWithUserSignatureDataWrapper, aquaTreeWrapperLinked)
 
@@ -1050,6 +1050,10 @@ export default function WorkFlowPage() {
                 console.log(`💯 form with signature data saved sussefully to the api `)
 
             }
+
+
+
+
         } catch (e) {
 
             setSubmittingSignatureData(false);
@@ -1061,6 +1065,82 @@ export default function WorkFlowPage() {
 
             return
         }
+
+
+        // meta mask sign 
+        let aquaTreeWrappersignatureLinked: AquaTreeWrapper = {
+            aquaTree: signatureAquaTree,
+            revision: "",
+            fileObject: signatureFileObject
+        }
+
+        let resLinkedMetaMaskSignedAquaTree = await aquafier.signAquaTree(aquaTreeWrappersignatureLinked, 'metamask', dummyCredential())
+
+        if (resLinkedMetaMaskSignedAquaTree.isErr()) {
+
+            setSubmittingSignatureData(false);
+
+            toaster.create({
+                description: `Metamask Sinature  not appended to main tree succefully `,
+                type: "error"
+            })
+            return
+
+        }
+
+
+        //save the last link revision to db
+
+        try {
+
+            let newAquaTree = resLinkedMetaMaskSignedAquaTree.data.aquaTree!
+            let revisionHashes = Object.keys(newAquaTree.revisions)
+            const lastHash = revisionHashes[revisionHashes.length - 1]
+            const lastRevision = resLinkedMetaMaskSignedAquaTree.data.aquaTree?.revisions[lastHash]
+            // send to server
+            const url = `${backend_url}/tree`;
+
+            const actualUrlToFetch = ensureDomainUrlHasSSL(url);
+
+
+            const response = await axios.post(actualUrlToFetch, {
+                "revision": lastRevision,
+                "revisionHash": lastHash,
+
+            }, {
+                headers: {
+                    "nonce": session?.nonce
+                }
+            });
+
+
+
+
+            //
+
+
+            if (response.status === 200 || response.status === 201) {
+
+
+                console.log(`💯 form with signature metamask data saved sussefully to the api `)
+
+            }
+
+
+
+
+        } catch (e) {
+
+            setSubmittingSignatureData(false);
+
+            toaster.create({
+                description: `Error saving link revsion of signature tree `,
+                type: "error"
+            })
+
+            return
+        }
+
 
 
 
@@ -1312,7 +1392,6 @@ export default function WorkFlowPage() {
         }
     }
 
-    console.log(selectedFileInfo)
 
     /*
         check whether a string contains a number
