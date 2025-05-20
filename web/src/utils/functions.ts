@@ -8,7 +8,6 @@ import Aquafier, { AquaTree, CredentialsData, FileObject, OrderRevisionInAquaTre
 import jdenticon from "jdenticon/standalone";
 
 
-
 export const convertTemplateNameToTitle = (str: string) => {
     return str.split('_')
         .map(word => word.charAt(0).toUpperCase() + word.slice(1))
@@ -38,17 +37,7 @@ export const isWorkFlowData = (aquaTree: AquaTree, _systemAndUserWorkFlow: strin
         return falseResponse
     }
     if (secondRevision.revision_type == 'link') {
-        // let allNames = fileObjects.map((e) => {
-        //     if (e != null) {
-
-        //         let res = isAquaTree(e.fileContent);
-        //         console.log(`is Aquatree ${res} --- ${JSON.stringify(e.fileContent, null, 4)}`)
-        //         if (res) {
-        //             return getAquaTreeFileName(e.fileContent as AquaTree)
-        //         }
-        //     }
-        //     return ""
-        // })
+ 
         //get the  system aqua tree name 
         let secondRevision = aquaTreeRevisionsOrderd.revisions[allHashes[1]]
         // console.log(` second hash used ${allHashes[1]}  second revision ${JSON.stringify(secondRevision, null, 4)} tree ${JSON.stringify(aquaTreeRevisionsOrderd, null, 4)}`)
@@ -206,7 +195,6 @@ export async function switchNetwork(chainId: string) {
         console.error("MetaMask is not installed.");
     }
 }
-
 
 
 /**

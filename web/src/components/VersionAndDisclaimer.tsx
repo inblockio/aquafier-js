@@ -83,7 +83,7 @@ export default function VersionAndDisclaimer({ inline, open, updateOpenStatus }:
                             Product Verion Details
                         </Center>
                         {/* <Text fontFamily={"monospace"}>aquafier Version : {versionDetails.aquifier}  </Text> */}
-                        <Text fontFamily={"monospace"}>protocol Version : {versionDetails.protocol} </Text>
+                        <Text fontFamily={"monospace"}>Protocol Version : {versionDetails.protocol} </Text>
                         <Text fontFamily={"monospace"}>Build Commit Hash : {versionInfo.commitHash} </Text>
                         <Text fontFamily={"monospace"}>Build  Date: {versionInfo.buildDate} </Text>
 

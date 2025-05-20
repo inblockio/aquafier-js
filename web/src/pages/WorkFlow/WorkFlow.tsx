@@ -14,16 +14,17 @@ import {
     GridItem,
     Center
 } from '@chakra-ui/react';
+import { Timeline } from "@chakra-ui/react"
 // import { Card } from '@chakra-ui/react';
 // import { FaCheck, FaQuestionCircle, FaBriefcase, FaBook, FaCoffee, FaAward, FaUser } from 'react-icons/fa';
 import { FaAward, FaBook, FaCheck, FaQuestionCircle, FaUser, FaSignal, FaSignature, FaEraser } from 'react-icons/fa';
 import { Alert } from "../../components/chakra-ui/alert"
 import appStore from '../../store';
 import { useStore } from "zustand"
-import { SignaturePosition, WorkFlowTimeLine } from '../../types/types';
+import { SignaturePosition, SummaryDetailsDisplayData, WorkFlowTimeLine } from '../../types/types';
 import { RevisionVerificationStatus } from '../../types/types';
-import Aquafier, { AquaTree, AquaTreeWrapper, FileObject, getAquaTreeFileObject, getGenesisHash, OrderRevisionInAquaTree } from 'aqua-js-sdk';
-import { convertTemplateNameToTitle, ensureDomainUrlHasSSL, estimateFileSize, fetchFiles, isAquaTree, isWorkFlowData } from '../../utils/functions';
+import Aquafier, { AquaTree, AquaTreeWrapper, FileObject, getAquaTreeFileObject, getGenesisHash, OrderRevisionInAquaTree, Revision } from 'aqua-js-sdk';
+import { convertTemplateNameToTitle, ensureDomainUrlHasSSL, estimateFileSize, fetchFiles, isAquaTree, isWorkFlowData, timeToHumanFriendly } from '../../utils/functions';
 import { PDFJSViewer } from 'pdfjs-react-viewer';
 import PdfSigner, { SimpleSignatureOverlay } from '../PdfSigner';
 import { toaster } from '../../components/chakra-ui/toaster';
@@ -34,6 +35,7 @@ import { CompleteChainView } from '../../components/CustomDrawer';
 import { useColorMode } from '../../components/chakra-ui/color-mode';
 // import { file } from 'jszip';
 import { useNavigate } from 'react-router-dom';
+import { LuCheck, LuPackage, LuShip } from 'react-icons/lu';
 
 export default function WorkFlowPage() {
     const [activeStep, setActiveStep] = useState(1);
@@ -48,13 +50,7 @@ export default function WorkFlowPage() {
 
     const navigate = useNavigate()
 
-    //aqua sign revision sequesn.
-    // 1. form (sender , reciever ets)
-    // 2. link to sign aqua tree
-    // 3. link to pdf aqua tree
-    // 4. etherium sign
-    // 5. form with signature positions
-    // 6. link to signture aqua tree.
+
 
     useEffect(() => {
         async function loadTimeline() {
@@ -178,8 +174,6 @@ export default function WorkFlowPage() {
 
     }, [JSON.stringify(selectedFileInfo)])
 
-
-
     const loadData = () => {
         if (selectedFileInfo) {
 
@@ -287,7 +281,463 @@ export default function WorkFlowPage() {
         return FaEraser
     }
 
+    const getContentToDisplay = async (index: number) => {
 
+
+
+        if (index == 0 || index == 1) {
+            return genesisContent()
+        }
+
+        if (index == 2) {
+            const fileObjects = selectedFileInfo?.fileObject
+            const actualPdf = fileObjects?.find((e) => e.fileName.endsWith(".pdf"))
+            const fileUrl = actualPdf?.fileContent
+            const pdfUrl = await fetchFile(fileUrl as string)
+            if (!pdfUrl) {
+                return <>No PDF found</>
+            }
+            return <PDFJSViewer pdfUrl={pdfUrl} />
+        }
+
+        if (index == 3) {
+
+            if (selectedFileInfo == null) {
+                return <Text>An error occured</Text>
+            }
+            // all hashes 
+            let allHashes = Object.keys(selectedFileInfo.aquaTree!.revisions!);
+
+
+
+            let signRevision = selectedFileInfo.aquaTree?.revisions[allHashes[3]]
+            if (!signRevision) {
+                return <Text>signature not found</Text>
+            }
+
+
+            return <Stack>
+                Wallet {signRevision.signature_wallet_address} signed the document.
+
+            </Stack>
+        }
+
+        if (index == 4) {
+            // const fileObjects = selectedFileInfo?.fileObject
+            // const actualPdf = fileObjects?.find((e) => e.fileName.endsWith(".pdf"))
+            // const fileUrl = actualPdf?.fileContent
+            // const pdfUrl = await fetchFile(fileUrl as string)
+
+            let pdfFile = await fetchPDFfile()
+            if (!pdfFile) {
+                return <>No PDF found</>
+            }
+
+            let allHashes = Object.keys(selectedFileInfo!.aquaTree!.revisions!);
+
+            let firstRevision = selectedFileInfo!.aquaTree?.revisions[allHashes[0]]
+
+            if (firstRevision?.forms_signers) {
+                let signers = firstRevision.forms_signers.split(",").map((e: string) => e.trim())
+                if (signers.includes(session?.address)) {
+
+                    //check if the document is signed
+                    if (Object.keys(selectedFileInfo!.aquaTree!.revisions).length >= 5) {
+                        const userSignatureAquaTree = selectedFileInfo!.fileObject.find((e) => e.fileName === "user_signature_data.json.aqua.json")
+                        if (!userSignatureAquaTree) {
+                            return <>No signature found</>
+                        }
+                        const signatureAquatTree: AquaTree = userSignatureAquaTree.fileContent as AquaTree
+                        const revisionHashes = Object.keys(signatureAquatTree.revisions)
+                        const revision = signatureAquatTree.revisions[revisionHashes[0]]
+
+                        const fileObjects = selectedFileInfo?.fileObject
+                        const actualPdf = fileObjects?.find((e) => e.fileName.endsWith(".pdf"))
+                        const fileUrl = actualPdf?.fileContent
+                        if (!fileUrl) {
+                            return <>No PDF found</>
+                        }
+                        const pdfUrl = await fetchFile(fileUrl as string)
+                        const signature_0_Position = {
+                            height: revision.forms_height_0,
+                            width: revision.forms_width_0,
+                            x: revision.forms_x_0,
+                            y: revision.forms_y_0,
+                            page: 1,//revision.forms_page_0,
+                            name: "",
+                            walletAddress: "",
+                            image: ""
+                        }
+
+                        let signatureImageUrl: string | object | AquaTree | Uint8Array<ArrayBufferLike> | Record<string, string> | undefined = undefined
+                        const signatureImageUrl1: string | object | AquaTree | Uint8Array<ArrayBufferLike> | Record<string, string> | undefined = selectedFileInfo?.fileObject?.find((e) => e.fileName === "signature.png")?.fileContent
+
+
+                        if (!signatureImageUrl1) {
+
+                            //fetch all aqua tree
+                            const allAquaTrees = selectedFileInfo?.fileObject.filter((e) => isAquaTree(e.fileContent)) ?? []
+
+                            const getFifthRevision = Object.values(selectedFileInfo!.aquaTree!.revisions!!)[5]
+
+                            if (getFifthRevision) {
+                                if (getFifthRevision.revision_type == "link") {
+                                    for (let item of allAquaTrees) {
+                                        const itemAquaTree: AquaTree = item.fileContent as AquaTree
+                                        let allRevisionHashes = Object.keys(itemAquaTree.revisions)
+
+                                        let linkedHash = getFifthRevision.link_verification_hashes![0]
+                                        if (allRevisionHashes.includes(linkedHash)) {
+
+                                            //get the revision previous
+
+                                            let previousHash = itemAquaTree.revisions[linkedHash].previous_verification_hash
+
+                                            let imageRevision = itemAquaTree.revisions[previousHash]
+
+                                            if (imageRevision.revision_type == "link") {
+                                                let imgaeRevisionHash = imageRevision.link_verification_hashes![0]!;
+
+                                                let imageName = itemAquaTree.file_index[imgaeRevisionHash]
+
+                                                if (imageName) {
+                                                    signatureImageUrl = selectedFileInfo?.fileObject?.find((e) => e.fileName === imageName)?.fileContent
+                                                }
+
+                                            }
+                                        }
+                                    }
+                                }
+
+                            }
+
+
+
+                        } else {
+                            signatureImageUrl = signatureImageUrl1
+                        }
+
+                        if (!signatureImageUrl) {
+                            return <>No signature image url found</>
+                        }
+                        const image = await fetchImage(signatureImageUrl as string)
+                        if (!image) {
+                            return <>No signature image found</>
+                        }
+
+                        // Getting name and address
+
+                        const fileObject = selectedFileInfo?.fileObject?.find((e) => (testStringWith3Numbers(e.fileName) && e.fileName.endsWith(".json.aqua.json")))
+                        if (!fileObject) {
+                            return <>No signature data found</>
+                        }
+                        const signatureFormData = fileObject.fileContent as AquaTree
+                        const keys = Object.keys(signatureFormData.file_index)
+                        let hash = ""
+                        for (let i = 0; i < keys.length; i++) {
+                            if (signatureFormData.file_index[keys[i]] === fileObject.fileName.replace(".aqua.json", "")) {
+                                hash = keys[i]
+                                break
+                            }
+                        }
+                        const actualRevision = signatureFormData.revisions[hash]
+                        signature_0_Position.name = actualRevision.forms_name
+                        signature_0_Position.walletAddress = actualRevision.forms_wallet_address
+                        signature_0_Position.image = image
+
+                        return (
+                            <Grid templateColumns="repeat(4, 1fr)">
+                                <GridItem colSpan={{ base: 12, md: 3 }}>
+                                    {/* <PDFJSViewer pdfUrl={pdfUrl!} />  */}
+                                    <Box
+                                        position="relative"
+                                        border="1px solid"
+                                        borderColor={colorMode === "dark" ? "gray.800" : "gray.100"}
+                                        borderRadius="md"
+                                        py={"4"}
+                                    >
+                                        <Center>
+                                            <Box w={'fit-content'}>
+                                                <PDFJSViewer
+                                                    pdfUrl={pdfUrl!}
+                                                    onPageChange={(page) => {
+                                                        setCurrentPage(page)
+                                                    }}
+                                                />
+                                            </Box>
+                                        </Center>
+
+
+
+                                        {/* Signature overlays */}
+                                        {[signature_0_Position].map((position, index) => (
+                                            <>
+                                                {
+                                                    Number(currentPage) === Number(position.page) ? (
+                                                        <SimpleSignatureOverlay key={index} signature={position}
+                                                        />
+                                                    ) : (
+                                                        <>Found nothing to render</>
+                                                    )
+                                                }
+                                            </>
+                                        ))}
+                                    </Box>
+                                </GridItem>
+                                <GridItem colSpan={{ base: 12, md: 1 }}>
+                                    <Stack>
+                                        <Text fontWeight={700}>Signatures</Text>
+                                        <SignatureItem signature={signature_0_Position} />
+                                    </Stack>
+                                </GridItem>
+                            </Grid>
+                        )
+                    } else {
+
+                        return <PdfSigner file={pdfFile} submitSignature={submitSignatureData} submittingSignatureData={submittingSignatureData} />
+                    }
+                } else {
+                    return (
+                        <Alert status="info" variant="solid" title={`You are not a signer of this document`}>
+                            {
+                                signers.map((signer: string, index: number) => {
+                                    return <Text key={index}>{signer.trim()}</Text>
+                                })
+                            }
+                        </Alert>
+                    )
+                }
+            } else {
+                return <Alert status="error" variant="solid" title={"Error signers not found"} />
+            }
+
+
+
+        }
+
+        if (index == 5) {
+            return ContractSummaryView()
+        }
+
+        return <>..</>
+
+    }
+
+
+
+    const seekEndOFFormRevision = (hashesToLoop: Array<string>): [Array<string>, Array<string>] => {
+        const hashesWithFormRevision: Array<string> = []
+
+        for (let revisionHash of hashesToLoop) {
+            let revisionItem = selectedFileInfo!.aquaTree!.revisions[revisionHash]
+            if (revisionItem.revision_type == "link") {
+                let linkHash = revisionItem.link_verification_hashes![0]!;
+
+                let aquaTreesInFileObjects = selectedFileInfo!.fileObject.filter((e) => isAquaTree(e.fileContent));
+
+                for (let aquaTreeItemFileObjectContent of aquaTreesInFileObjects) {
+                    let aquaTreeItem = aquaTreeItemFileObjectContent.fileContent as AquaTree
+                    let allHashes = Object.keys(aquaTreeItem.revisions)
+
+                    if (allHashes.includes(linkHash)) {
+
+                        let genesisHash = getGenesisHash(aquaTreeItem)
+                        if (!genesisHash) {
+                            throw Error("Aqua tree has to have a genesis")
+                        }
+
+                        if (genesisHash != "form") {
+                            break
+                        } else {
+                            hashesWithFormRevision.push(revisionHash)
+                        }
+
+                    }
+                }
+            } else {
+                throw Error("No this shoud have been a link")
+            }
+        }
+
+        let hashesToLoopRemain = hashesToLoop.filter(item => !hashesWithFormRevision.includes(item));
+        return [hashesWithFormRevision, hashesToLoopRemain]
+    }
+    const getSignatureRevionHashes = (hashesToLoopPar: Array<string>): Array<SummaryDetailsDisplayData> => {
+
+        const signatureRevionHashes: Array<SummaryDetailsDisplayData> = []
+
+        let hashesToLoop: Array<string> = hashesToLoopPar
+        while (true) {
+
+            let [formRevision, hashesToLoopRemain] = seekEndOFFormRevision(hashesToLoop);
+
+            let signatureImageRevision = hashesToLoopRemain[0]
+            let signatureRevision = hashesToLoopRemain[1]
+
+            let item: SummaryDetailsDisplayData = {
+                revisionHashWithSignaturePosition: formRevision,
+                revisionHashWithSinatureRevision: signatureImageRevision,
+                revisionHashMetamask: signatureRevision,
+            }
+
+            signatureRevionHashes.push(item)
+
+
+
+            hashesToLoop = hashesToLoopRemain.splice(0, 2);
+
+            if (hashesToLoop.length == 0) {
+                break
+            }
+
+        }
+
+
+        return signatureRevionHashes
+    }
+
+    //aqua sign revision sequesn.
+    // 1. form (sender , reciever ets)
+    // 2. link to sign aqua tree
+    // 3. link to pdf aqua tree
+    // 4. etherium sign
+
+    // 5. link form with signature positions *100 -- form 
+    // 6. link to signture aqua tree. == genesiis file break -- signature
+    // 7. metamask sign -- signature
+    const ContractSummaryView = () => {
+
+        // let firstRevisionHash = selectedFileInfo
+
+
+        const orderedTree = OrderRevisionInAquaTree(selectedFileInfo!.aquaTree!)
+        console.log("File objects", orderedTree.file_index)
+        const revisions = orderedTree.revisions
+        const revisionHashes = Object.keys(revisions)
+
+        const firstHash: string = revisionHashes[0];
+        const firstRevision: Revision = selectedFileInfo!.aquaTree!.revisions[firstHash]
+
+        const pdfHash = revisionHashes[2];
+        const thirdRevision: Revision = selectedFileInfo!.aquaTree!.revisions[pdfHash]
+        let hashOfLinkedDocument = thirdRevision.link_verification_hashes![0]!
+        let fileName = selectedFileInfo!.aquaTree!.file_index[hashOfLinkedDocument]
+
+
+        const creatorSignatureHash = revisionHashes[3];
+        const signatureRevision: Revision = selectedFileInfo!.aquaTree!.revisions[creatorSignatureHash]
+
+
+        let fourthItmeHashOnwards: string[] = [];
+        let signatureRevionHashes: Array<SummaryDetailsDisplayData> = []
+
+        if (revisionHashes.length > 4) {
+            // remove the first 4 elements from the revision list 
+            fourthItmeHashOnwards = revisionHashes.slice(4);
+            console.log(`revisionHashes  ${revisionHashes} --  ${typeof revisionHashes}`)
+            console.log(`fourthItmeHashOnwards  ${fourthItmeHashOnwards}`)
+            signatureRevionHashes = getSignatureRevionHashes(fourthItmeHashOnwards)
+
+        }
+
+        let alertcontainsInvalidRevsion = aquaTreeVerificationWithStatuses.filter((e) => e.verficationStatus == false)
+
+
+        return <Timeline.Root >
+            <Timeline.Item>
+                <Timeline.Connector>
+                    <Timeline.Separator />
+                    <Timeline.Indicator>
+                        <LuShip />
+                    </Timeline.Indicator>
+                </Timeline.Connector>
+                <Timeline.Content>
+                    <Timeline.Title><Text textStyle="lg">Work flow created</Text></Timeline.Title>
+                    <Timeline.Description>
+
+                        <Text textStyle="md">
+                            User with address {signatureRevision.signature_wallet_address} , created the workflow at &nbsp;{timeToHumanFriendly(firstRevision.local_timestamp, true)}
+                        </Text>
+                    </Timeline.Description>
+                    <Text textStyle="sm">
+                        Document <strong>{fileName}</strong>  was selected for signing
+                    </Text>
+                </Timeline.Content>
+            </Timeline.Item>
+
+
+            {
+                signatureRevionHashes.length == 0 ? <Box
+                    maxW="60%"
+                    borderWidth="1px"
+                    borderStyle="dotted"
+                    borderColor="gray.300"
+                    p={4}
+                    marginTop={4}
+                    borderRadius="md"
+                >
+                    <Text textAlign="center">No signatures detected</Text>
+                </Box> : <></>
+            }
+            {
+                signatureRevionHashes.map((signatureRevionHasheItem) => {
+
+
+                    let singatureRevisionItem = selectedFileInfo!.aquaTree!.revisions[signatureRevionHasheItem.revisionHashMetamask]
+                    return <Timeline.Item>
+                        <Timeline.Connector>
+                            <Timeline.Separator />
+                            <Timeline.Indicator>
+                                <LuCheck />
+                            </Timeline.Indicator>
+                        </Timeline.Connector>
+                        <Timeline.Content>
+                            <Timeline.Title textStyle="sm">Signature detected</Timeline.Title>
+                            <Timeline.Description> User with address {singatureRevisionItem.signature_wallet_address}
+                                signed the document {fileName},
+                                {signatureRevionHasheItem.revisionHashWithSignaturePosition.length > 1 ? <span>{signatureRevionHasheItem.revisionHashWithSignaturePosition.length} times</span> : <span>Once</span>}
+                                at {timeToHumanFriendly(singatureRevisionItem.local_timestamp)}
+                            </Timeline.Description>
+                        </Timeline.Content>
+                    </Timeline.Item>
+                })
+
+            }
+
+
+            {
+                signatureRevionHashes.length > 0 ?
+                    <Timeline.Item>
+                        <Timeline.Connector>
+                            <Timeline.Separator />
+                            <Timeline.Indicator>
+                                <LuPackage />
+                            </Timeline.Indicator>
+                        </Timeline.Connector>
+                        <Timeline.Content>
+                            <Timeline.Title textStyle="sm">Workflow Completed</Timeline.Title>
+                            <Timeline.Description>
+
+                                {alertcontainsInvalidRevsion.length > 0 ?
+                                    <Alert status="error" title="" variant="solid"   >
+                                        Workflow is not valid
+                                    </Alert>
+
+                                    :
+                                    <Alert status="success" title="" variant="solid"   >
+                                        Workflow  validated succceffully
+                                    </Alert>
+
+                                }
+                            </Timeline.Description>
+                        </Timeline.Content>
+                    </Timeline.Item>
+
+                    : <></>
+            }
+
+        </Timeline.Root>
+    }
 
     const saveAquaTree = async (aquaTree: AquaTree, fileObject: FileObject, isFinal: boolean = false, isWorkflow: boolean = false, template_id: string): Promise<Boolean> => {
         try {
@@ -879,258 +1329,7 @@ export default function WorkFlowPage() {
         return false
     }
 
-    const getContentToDisplay = async (index: number) => {
 
-        // const orderedTree = OrderRevisionInAquaTree(selectedFileInfo!.aquaTree!)
-        // console.log("File objects", orderedTree.file_index)
-        // const revisions = orderedTree.revisions
-        // const revisionHashes = Object.keys(revisions)
-        // console.log("selected file info: ", selectedFileInfo?.fileObject)
-
-        if (index == 0 || index == 1) {
-            return genesisContent()
-        }
-
-        if (index == 2) {
-            const fileObjects = selectedFileInfo?.fileObject
-            const actualPdf = fileObjects?.find((e) => e.fileName.endsWith(".pdf"))
-            const fileUrl = actualPdf?.fileContent
-            const pdfUrl = await fetchFile(fileUrl as string)
-            if (!pdfUrl) {
-                return <>No PDF found</>
-            }
-            return <PDFJSViewer pdfUrl={pdfUrl} />
-        }
-
-        if (index == 3) {
-
-            if (selectedFileInfo == null) {
-                return <Text>An error occured</Text>
-            }
-            // all hashes 
-            let allHashes = Object.keys(selectedFileInfo.aquaTree!.revisions!);
-
-
-
-            let signRevision = selectedFileInfo.aquaTree?.revisions[allHashes[3]]
-            if (!signRevision) {
-                return <Text>signature not found</Text>
-            }
-
-
-            return <Stack>
-                Wallet {signRevision.signature_wallet_address} signed the document.
-
-            </Stack>
-        }
-
-        if (index == 4) {
-            // const fileObjects = selectedFileInfo?.fileObject
-            // const actualPdf = fileObjects?.find((e) => e.fileName.endsWith(".pdf"))
-            // const fileUrl = actualPdf?.fileContent
-            // const pdfUrl = await fetchFile(fileUrl as string)
-
-            let pdfFile = await fetchPDFfile()
-            if (!pdfFile) {
-                return <>No PDF found</>
-            }
-
-            let allHashes = Object.keys(selectedFileInfo!.aquaTree!.revisions!);
-
-            let firstRevision = selectedFileInfo!.aquaTree?.revisions[allHashes[0]]
-
-            if (firstRevision?.forms_signers) {
-                let signers = firstRevision.forms_signers.split(",").map((e: string) => e.trim())
-                if (signers.includes(session?.address)) {
-
-                    //check if the document is signed
-                    if (Object.keys(selectedFileInfo!.aquaTree!.revisions).length >= 5) {
-                        const userSignatureAquaTree = selectedFileInfo!.fileObject.find((e) => e.fileName === "user_signature_data.json.aqua.json")
-                        if (!userSignatureAquaTree) {
-                            return <>No signature found</>
-                        }
-                        const signatureAquatTree: AquaTree = userSignatureAquaTree.fileContent as AquaTree
-                        const revisionHashes = Object.keys(signatureAquatTree.revisions)
-                        const revision = signatureAquatTree.revisions[revisionHashes[0]]
-
-                        const fileObjects = selectedFileInfo?.fileObject
-                        const actualPdf = fileObjects?.find((e) => e.fileName.endsWith(".pdf"))
-                        const fileUrl = actualPdf?.fileContent
-                        if (!fileUrl) {
-                            return <>No PDF found</>
-                        }
-                        const pdfUrl = await fetchFile(fileUrl as string)
-                        const signature_0_Position = {
-                            height: revision.forms_height_0,
-                            width: revision.forms_width_0,
-                            x: revision.forms_x_0,
-                            y: revision.forms_y_0,
-                            page: 1,//revision.forms_page_0,
-                            name: "",
-                            walletAddress: "",
-                            image: ""
-                        }
-
-                        let signatureImageUrl: string | object | AquaTree | Uint8Array<ArrayBufferLike> | Record<string, string> | undefined= undefined
-                        const signatureImageUrl1 : string | object | AquaTree | Uint8Array<ArrayBufferLike> | Record<string, string> | undefined  = selectedFileInfo?.fileObject?.find((e) => e.fileName === "signature.png")?.fileContent 
-
-
-                        if (!signatureImageUrl1) {
-
-                            //fetch all aqua tree
-                            const allAquaTrees = selectedFileInfo?.fileObject.filter((e) => isAquaTree(e.fileContent)) ?? []
-
-                            const getFifthRevision = Object.values(selectedFileInfo!.aquaTree!.revisions!!)[5]
-
-                            if (getFifthRevision) {
-                                if (getFifthRevision.revision_type == "link") {
-                                    for (let item of allAquaTrees) {
-                                        const itemAquaTree: AquaTree = item.fileContent as AquaTree
-                                        let allRevisionHashes = Object.keys(itemAquaTree.revisions)
-
-                                        let linkedHash = getFifthRevision.link_verification_hashes![0]
-                                        if (allRevisionHashes.includes(linkedHash)) {
-
-                                            //get the revision previous
-
-                                            let previousHash = itemAquaTree.revisions[linkedHash].previous_verification_hash
-
-                                            let imageRevision = itemAquaTree.revisions[previousHash]
-
-                                            if (imageRevision.revision_type == "link") {
-                                                let imgaeRevisionHash = imageRevision.link_verification_hashes![0]!;
-
-                                                let imageName = itemAquaTree.file_index[imgaeRevisionHash]
-
-                                                if (imageName) {
-                                                    signatureImageUrl=   selectedFileInfo?.fileObject?.find((e) => e.fileName === imageName)?.fileContent 
-                                                }
-
-                                            }
-
-                                        }
-
-
-
-
-                                    }
-                                }
-
-                            }
-
-
-
-                        } else {
-                            signatureImageUrl = signatureImageUrl1
-                        }
-
-                        if (!signatureImageUrl) {
-                            return <>No signature image url found</>
-                        }
-                        const image = await fetchImage(signatureImageUrl as string)
-                        if (!image) {
-                            return <>No signature image found</>
-                        }
-
-                        // Getting name and address
-
-                        const fileObject = selectedFileInfo?.fileObject?.find((e) => (testStringWith3Numbers(e.fileName) && e.fileName.endsWith(".json.aqua.json")))
-                        if (!fileObject) {
-                            return <>No signature data found</>
-                        }
-                        const signatureFormData = fileObject.fileContent as AquaTree
-                        const keys = Object.keys(signatureFormData.file_index)
-                        let hash = ""
-                        for (let i = 0; i < keys.length; i++) {
-                            if (signatureFormData.file_index[keys[i]] === fileObject.fileName.replace(".aqua.json", "")) {
-                                hash = keys[i]
-                                break
-                            }
-                        }
-                        const actualRevision = signatureFormData.revisions[hash]
-                        signature_0_Position.name = actualRevision.forms_name
-                        signature_0_Position.walletAddress = actualRevision.forms_wallet_address
-                        signature_0_Position.image = image
-
-                        return (
-                            <Grid templateColumns="repeat(4, 1fr)">
-                                <GridItem colSpan={{ base: 12, md: 3 }}>
-                                    {/* <PDFJSViewer pdfUrl={pdfUrl!} />  */}
-                                    <Box
-                                        position="relative"
-                                        border="1px solid"
-                                        borderColor={colorMode === "dark" ? "gray.800" : "gray.100"}
-                                        borderRadius="md"
-                                        py={"4"}
-                                    >
-                                        <Center>
-                                            <Box w={'fit-content'}>
-                                                <PDFJSViewer
-                                                    pdfUrl={pdfUrl!}
-                                                    onPageChange={(page) => {
-                                                        setCurrentPage(page)
-                                                    }}
-                                                />
-                                            </Box>
-                                        </Center>
-
-
-                                        {/* <Text>{currentPage}----{JSON.stringify(signature_0_Position)}</Text> */}
-                                        {/* Signature overlays */}
-                                        {[signature_0_Position].map((position, index) => (
-                                            <>
-                                                {
-                                                    Number(currentPage) === Number(position.page) ? (
-                                                        <SimpleSignatureOverlay key={index} signature={position}
-                                                        />
-                                                    ) : (
-                                                        <>Found nothing to render</>
-                                                    )
-                                                }
-                                            </>
-                                        ))}
-                                    </Box>
-                                </GridItem>
-                                <GridItem colSpan={{ base: 12, md: 1 }}>
-                                    <Stack>
-                                        <Text fontWeight={700}>Signatures</Text>
-                                        <SignatureItem signature={signature_0_Position} />
-                                    </Stack>
-                                </GridItem>
-                            </Grid>
-                        )
-                    } else {
-
-                        return <PdfSigner file={pdfFile} submitSignature={submitSignatureData} submittingSignatureData={submittingSignatureData} />
-                    }
-                } else {
-                    return (
-                        <Alert status="info" variant="solid" title={`You are not a signer of this document`}>
-                            {
-                                signers.map((signer: string, index: number) => {
-                                    return <Text key={index}>{signer.trim()}</Text>
-                                })
-                            }
-                        </Alert>
-                    )
-                }
-            } else {
-                return <Alert status="error" variant="solid" title={"Error signers not found"} />
-            }
-
-
-
-        }
-
-        if (index == 5) {
-            return (
-                <CompleteChainView selectedFileInfo={selectedFileInfo!} callBack={() => { }} />
-            )
-        }
-
-        return <>..</>
-
-    }
 
     const genesisContent = () => {
         const orderedTree = OrderRevisionInAquaTree(selectedFileInfo!.aquaTree!)
@@ -1260,6 +1459,8 @@ export default function WorkFlowPage() {
 
         return aquaTreeTimeLine()
     }
+
+
     return (
         <>
             {workFlowPageData()}
