@@ -10,9 +10,7 @@ import { createAquaTreeFromRevisions, fetchAquaTreeWithForwardRevisions, saveAqu
 import { SYSTEM_WALLET_ADDRESS } from '../models/constants';
 
 export default async function shareController(fastify: FastifyInstance) {
-    // get current session
-    // Can session be used as a middleware?
-
+  
     fastify.get('/share_data/:hash', async (request, reply) => {
 
         // Extract the hash parameter from the URL

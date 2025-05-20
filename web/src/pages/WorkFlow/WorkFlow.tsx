@@ -23,7 +23,7 @@ import { useStore } from "zustand"
 import { SignaturePosition, WorkFlowTimeLine } from '../../types/types';
 import { RevisionVerificationStatus } from '../../types/types';
 import Aquafier, { AquaTree, AquaTreeWrapper, FileObject, getAquaTreeFileObject, getGenesisHash, OrderRevisionInAquaTree } from 'aqua-js-sdk';
-import { convertTemplateNameToTitle, ensureDomainUrlHasSSL, estimateFileSize, fetchFiles, isWorkFlowData } from '../../utils/functions';
+import { convertTemplateNameToTitle, ensureDomainUrlHasSSL, estimateFileSize, fetchFiles, isAquaTree, isWorkFlowData } from '../../utils/functions';
 import { PDFJSViewer } from 'pdfjs-react-viewer';
 import PdfSigner, { SimpleSignatureOverlay } from '../PdfSigner';
 import { toaster } from '../../components/chakra-ui/toaster';
@@ -971,11 +971,62 @@ export default function WorkFlowPage() {
                             image: ""
                         }
 
-                        const signatureImageUrl = selectedFileInfo?.fileObject?.find((e) => e.fileName === "signature.png")?.fileContent
+                        let signatureImageUrl: string | object | AquaTree | Uint8Array<ArrayBufferLike> | Record<string, string> | undefined= undefined
+                        const signatureImageUrl1 : string | object | AquaTree | Uint8Array<ArrayBufferLike> | Record<string, string> | undefined  = selectedFileInfo?.fileObject?.find((e) => e.fileName === "signature.png")?.fileContent 
+
+
+                        if (!signatureImageUrl1) {
+
+                            //fetch all aqua tree
+                            const allAquaTrees = selectedFileInfo?.fileObject.filter((e) => isAquaTree(e.fileContent)) ?? []
+
+                            const getFifthRevision = Object.values(selectedFileInfo!.aquaTree!.revisions!!)[5]
+
+                            if (getFifthRevision) {
+                                if (getFifthRevision.revision_type == "link") {
+                                    for (let item of allAquaTrees) {
+                                        const itemAquaTree: AquaTree = item.fileContent as AquaTree
+                                        let allRevisionHashes = Object.keys(itemAquaTree.revisions)
+
+                                        let linkedHash = getFifthRevision.link_verification_hashes![0]
+                                        if (allRevisionHashes.includes(linkedHash)) {
+
+                                            //get the revision previous
+
+                                            let previousHash = itemAquaTree.revisions[linkedHash].previous_verification_hash
+
+                                            let imageRevision = itemAquaTree.revisions[previousHash]
+
+                                            if (imageRevision.revision_type == "link") {
+                                                let imgaeRevisionHash = imageRevision.link_verification_hashes![0]!;
+
+                                                let imageName = itemAquaTree.file_index[imgaeRevisionHash]
+
+                                                if (imageName) {
+                                                    signatureImageUrl=   selectedFileInfo?.fileObject?.find((e) => e.fileName === imageName)?.fileContent 
+                                                }
+
+                                            }
+
+                                        }
+
+
+
+
+                                    }
+                                }
+
+                            }
+
+
+
+                        } else {
+                            signatureImageUrl = signatureImageUrl1
+                        }
+
                         if (!signatureImageUrl) {
                             return <>No signature image url found</>
                         }
-
                         const image = await fetchImage(signatureImageUrl as string)
                         if (!image) {
                             return <>No signature image found</>
@@ -1024,7 +1075,7 @@ export default function WorkFlowPage() {
                                         </Center>
 
 
-                                        <Text>{currentPage}----{JSON.stringify(signature_0_Position)}</Text>
+                                        {/* <Text>{currentPage}----{JSON.stringify(signature_0_Position)}</Text> */}
                                         {/* Signature overlays */}
                                         {[signature_0_Position].map((position, index) => (
                                             <>

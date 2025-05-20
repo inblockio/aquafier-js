@@ -22,6 +22,8 @@ import { DialogBody, DialogCloseTrigger, DialogContent, DialogFooter, DialogHead
 import SmallScreenSidebarDrawer from "./SmallScreenSidebarDrawer"
 
 
+import { generateNonce } from "siwe"
+
 const FormTemplateCard = ({ template, selectTemplateCallBack }: { template: FormTemplate, selectTemplateCallBack: (template: FormTemplate) => void }) => {
 
     const { colorMode } = useColorMode()
@@ -82,6 +84,51 @@ const Navbar = () => {
 
     const cancelRef = React.useRef<HTMLButtonElement>(null);
 
+    const shareAquaTree = async (aquaTree: AquaTree, recipientWalletAddress: string) => {
+
+
+        try {
+
+            const unique_identifier = `${Date.now()}_${generateNonce()}`
+            // let genesisHash = getGenesisHash(aquaTree)
+
+            let allHashes = Object.keys(aquaTree.revisions);
+            let genesisHash = allHashes[0];
+            let latestHash = allHashes[allHashes.length - 1]
+
+            let url = `${backend_url}/share_data`;
+            let method = "POST"
+            let data = {
+                "latest": latestHash,
+                "genesis_hash": genesisHash,
+                "hash": unique_identifier,
+                "recipient": recipientWalletAddress,
+                "option": "latest"
+            }
+
+
+
+            const response = await axios({
+                method,
+                url,
+                data,
+                headers: {
+                    'nonce': session?.nonce
+                }
+            });
+
+
+            console.log(`Response from share request  ${response.status}`)
+        } catch (e) {
+
+            toaster.create({
+                title: 'Error sharing workflow',
+                description: `Error ${e}`,
+                type: 'error',
+                duration: 5000,
+            });
+        }
+    }
     const saveAquaTree = async (aquaTree: AquaTree, fileObject: FileObject, isFinal: boolean = false, isWorkflow: boolean = false) => {
         try {
             const url = `${backend_url}/explorer_aqua_file_upload`;
@@ -468,6 +515,14 @@ const Navbar = () => {
                 fileObject.fileContent = formData
                 await saveAquaTree(signRes.data.aquaTree!!, fileObject, true)
 
+
+                // 
+                if (formData['signers'] != session?.address) {
+
+                    await shareAquaTree(signRes.data.aquaTree!!, formData['signers'] as string)
+
+                }
+
             }
 
         } else {
@@ -722,7 +777,7 @@ const Navbar = () => {
                                     : null
                                 }
                                 {/* <DialogActionTrigger asChild> */}
-                                <Button variant="outline" onClick={()=>{
+                                <Button variant="outline" onClick={() => {
                                     setSubmittingTemplateData(false)
                                     closeDialog()
                                 }}>Cancel</Button>
@@ -730,7 +785,7 @@ const Navbar = () => {
                             </HStack>
                         </HStack>
                     </DialogFooter>
-                    <DialogCloseTrigger onClick={()=>{
+                    <DialogCloseTrigger onClick={() => {
                         setSubmittingTemplateData(false)
                         closeDialog()
                     }} />
