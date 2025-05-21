@@ -18,7 +18,8 @@ export interface ApiFileData {
 
 export interface SummaryDetailsDisplayData {
 
-  revisionHashWithSignaturePosition: Array<String>
+  revisionHashWithSignaturePositionCount: number
+  revisionHashWithSignaturePosition: String
   revisionHashWithSinatureRevision: string,
   revisionHashMetamask : string,
 }

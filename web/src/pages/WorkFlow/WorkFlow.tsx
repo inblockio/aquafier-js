@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import {
     Box,
     Flex,
@@ -22,9 +22,8 @@ import { Alert } from "../../components/chakra-ui/alert"
 import appStore from '../../store';
 import { useStore } from "zustand"
 import { SignaturePosition, SummaryDetailsDisplayData, WorkFlowTimeLine } from '../../types/types';
-import { RevisionVerificationStatus } from '../../types/types';
 import Aquafier, { AquaTree, AquaTreeWrapper, FileObject, getAquaTreeFileObject, getGenesisHash, OrderRevisionInAquaTree, Revision } from 'aqua-js-sdk';
-import { convertTemplateNameToTitle, dummyCredential, ensureDomainUrlHasSSL, estimateFileSize, fetchFiles, isAquaTree, isWorkFlowData, timeToHumanFriendly } from '../../utils/functions';
+import { convertTemplateNameToTitle, dummyCredential, ensureDomainUrlHasSSL, estimateFileSize, fetchFiles, isAquaTree, isWorkFlowData, timeToHumanFriendly, getHighestFormIndex, getFileName, getFileHashFromUrl, fetchFileData, isArrayBufferText } from '../../utils/functions';
 import { PDFJSViewer } from 'pdfjs-react-viewer';
 import PdfSigner, { SimpleSignatureOverlay } from '../PdfSigner';
 import { toaster } from '../../components/chakra-ui/toaster';
@@ -35,14 +34,19 @@ import { useColorMode } from '../../components/chakra-ui/color-mode';
 // import { file } from 'jszip';
 import { useNavigate } from 'react-router-dom';
 import { LuCheck, LuPackage, LuShip } from 'react-icons/lu';
+import { IDrawerStatus, VerificationHashAndResult } from '../../models/AquaTreeDetails';
 
 export default function WorkFlowPage() {
     const [activeStep, setActiveStep] = useState(1);
     const [timeLineTitle, setTimeLineTitle] = useState("");
     const [error, setError] = useState("");
-    const [aquaTreeVerificationWithStatuses, setAquaTreeVerificationWithStatuses] = useState<Array<RevisionVerificationStatus>>([]);
+    // const [aquaTreeVerificationWithStatuses, setAquaTreeVerificationWithStatuses] = useState<Array<RevisionVerificationStatus>>([]);
+
+    const [verificationResults, setVerificationResults] = useState<VerificationHashAndResult[]>([])
+    const [isProcessing, setIsProcessing] = useState(false)
+
     const [timeLineItems, setTimeLineItems] = useState<Array<WorkFlowTimeLine>>([]);
-    const { selectedFileInfo, setSelectedFileInfo, formTemplates, session, backend_url, setFiles } = useStore(appStore);
+    const { selectedFileInfo, setSelectedFileInfo, formTemplates, session, backend_url, setFiles, apiFileData, setApiFileData } = useStore(appStore);
     const { colorMode } = useColorMode();
     const [currentPage, setCurrentPage] = useState(1);
     const [submittingSignatureData, setSubmittingSignatureData] = useState(false);
@@ -50,182 +54,366 @@ export default function WorkFlowPage() {
     const navigate = useNavigate()
 
 
+    async function loadTimeline() {
+        let items: Array<WorkFlowTimeLine> = []
 
-    useEffect(() => {
-        async function loadTimeline() {
-            let items: Array<WorkFlowTimeLine> = []
-
-            let index = 0;
-            for (const [hash, revision] of Object.entries(selectedFileInfo!.aquaTree!.revisions!!)) {
-                console.log(`Hash ${hash} Revision ${JSON.stringify(revision)}`)
+        let index = 0;
+        for (const [hash, revision] of Object.entries(selectedFileInfo!.aquaTree!.revisions!!)) {
+            console.log(`Hash ${hash} Revision ${JSON.stringify(revision)}`)
 
 
-                if (index == 1) {
-                    // Get the first two elements
-                    items.push({
-                        id: 1,
-                        completed: true,
-                        content: genesisContent(),
-                        icon: FaUser,
-                        revisionHash: "",
-                        title: "Contract Creation"
-                    })
-                }
-
-                if (index == 2 || index == 4) {
-                    let titleData = getTitleToDisplay(index)
-                    let iconData = getIconToDisplay(index)
-                    let contentData = await getContentToDisplay(index)
-
-
-                    let isVerified = aquaTreeVerificationWithStatuses.find((e) => e.revisionHash == hash)
-
-
-                    items.push({
-                        id: index,
-                        completed: isVerified?.isVerified ?? false,
-                        content: contentData,
-                        icon: iconData,
-                        revisionHash: hash,
-                        title: titleData
-                    })
-
-                }
-
-
-                index += 1
-            }
-
-
-            if (Object.values(selectedFileInfo!.aquaTree!.revisions).length == 6) {
-
-                let titleData5 = getTitleToDisplay(5)
-                let iconData5 = getIconToDisplay(5)
-                let contentData5 = await getContentToDisplay(5)
-
+            if (index == 1) {
+                // Get the first two elements
                 items.push({
-                    id: 5,
+                    id: 1,
                     completed: true,
-                    content: contentData5,
-                    icon: iconData5,
+                    content: genesisContent(),
+                    icon: FaUser,
                     revisionHash: "",
-                    title: titleData5
+                    title: "Contract Creation"
                 })
             }
 
+            if (index == 2 || index == 4) {
+                let titleData = getTitleToDisplay(index)
+                let iconData = getIconToDisplay(index)
+                let contentData = await getContentToDisplay(index)
 
 
+                // let isVerified = aquaTreeVerificationWithStatuses.find((e) => e.revisionHash == hash)
 
-            // not signed by user 
-            if (Object.keys(selectedFileInfo!.aquaTree!.revisions!!).length == 4) {
-
-                let index4 = 4
-                let titleData4 = await getTitleToDisplay(index4)
-                let iconData4 = getIconToDisplay(index4)
-                let contentData4 = await getContentToDisplay(index4)
 
                 items.push({
-                    id: 4,
+                    id: index,
                     completed: false,
-                    content: contentData4,
-                    icon: iconData4,
-                    revisionHash: "",
-                    title: titleData4
+                    content: contentData,
+                    icon: iconData,
+                    revisionHash: hash,
+                    title: titleData
                 })
 
-
-
-                let titleData5 = getTitleToDisplay(5)
-                let iconData5 = getIconToDisplay(5)
-                let contentData5 = await getContentToDisplay(5)
-
-                items.push({
-                    id: 5,
-                    completed: false,
-                    content: contentData5,
-                    icon: iconData5,
-                    revisionHash: "",
-                    title: titleData5
-                })
             }
 
 
-
-            setTimeLineItems(items)
-
+            index += 1
         }
 
-        loadTimeline()
 
-    }, [aquaTreeVerificationWithStatuses])
+        if (Object.values(selectedFileInfo!.aquaTree!.revisions).length == 7) {
 
+            let titleData5 = getTitleToDisplay(5)
+            let iconData5 = getIconToDisplay(5)
+            let contentData5 = await getContentToDisplay(5)
+
+            items.push({
+                id: 5,
+                completed: true,
+                content: contentData5,
+                icon: iconData5,
+                revisionHash: "",
+                title: titleData5
+            })
+        }
+
+
+
+
+        // not signed by user 
+        if (Object.keys(selectedFileInfo!.aquaTree!.revisions!!).length == 4) {
+
+            let index4 = 4
+            let titleData4 = await getTitleToDisplay(index4)
+            let iconData4 = getIconToDisplay(index4)
+            let contentData4 = await getContentToDisplay(index4)
+
+            items.push({
+                id: 4,
+                completed: false,
+                content: contentData4,
+                icon: iconData4,
+                revisionHash: "",
+                title: titleData4
+            })
+
+
+
+            let titleData5 = getTitleToDisplay(5)
+            let iconData5 = getIconToDisplay(5)
+            let contentData5 = await getContentToDisplay(5)
+
+            items.push({
+                id: 5,
+                completed: false,
+                content: contentData5,
+                icon: iconData5,
+                revisionHash: "",
+                title: titleData5
+            })
+        }
+
+
+
+        setTimeLineItems(items)
+
+    }
+
+    // Memoized display text function
+    const displayBasedOnVerificationStatusText = (verificationResults: any) => {
+        if (!isVerificationComplete(verificationResults)) {
+            return "Verifying Aqua tree";
+        }
+        return isVerificationSuccessful(verificationResults) ? "This work flow  is valid.It can be trusted " : "This workflow  is invalid, it cannot be trusted";
+    }
+
+    // Memoized alert color function
+    const displayColorBasedOnVerificationAlert = (verificationResults: any): "info" | "success" | "error" => {
+        if (!isVerificationComplete(verificationResults)) {
+            return "info";
+        }
+        return isVerificationSuccessful(verificationResults) ? 'success' : 'error';
+    }
+
+    // Memoized verification completion check
+    const isVerificationComplete = useCallback((_verificationResults: VerificationHashAndResult[]): boolean => {
+        return selectedFileInfo?.aquaTree?.revisions ?
+            _verificationResults.length === Object.keys(selectedFileInfo.aquaTree.revisions).length : false;
+    }, [selectedFileInfo?.aquaTree?.revisions]);
+
+    // Memoized verification status check to prevent recalculation
+    const isVerificationSuccessful = useCallback((_verificationResults: VerificationHashAndResult[]): boolean => {
+        for (const item of _verificationResults.values()) {
+            if (!item.isSuccessful) {
+                return false;
+            }
+        }
+        return true;
+    }, []);
+
+    // Memoized color functions to prevent recalculation
+    const displayColorBasedOnVerificationStatusLight = useCallback((_verificationResults: VerificationHashAndResult[]) => {
+        if (!isVerificationComplete(_verificationResults)) {
+            return "grey";
+        }
+        return isVerificationSuccessful(_verificationResults) ? 'green.100' : 'red.100';
+    }, []);
+
+    const displayColorBasedOnVerificationStatusDark = useCallback((_verificationResults: VerificationHashAndResult[]) => {
+        if (!isVerificationComplete(_verificationResults)) {
+            return "whitesmoke";
+        }
+        return isVerificationSuccessful(_verificationResults) ? 'green.900' : 'red.900';
+    }, []);
+
+    const verifyAquaTreeRevisions = async (fileInfo: ApiFileInfo) => {
+        if (!fileInfo?.aquaTree || !fileInfo?.fileObject || isProcessing) return;
+
+        setIsProcessing(true);
+
+        try {
+            const aquafier = new Aquafier();
+            const _drawerStatus: IDrawerStatus = {
+                colorLight: "",
+                colorDark: "",
+                fileName: "",
+                isVerificationSuccessful: false
+            };
+
+            // Set file name
+            const fileName = getFileName(fileInfo.aquaTree);
+            _drawerStatus.fileName = fileName;
+
+            // Get revision hashes
+            const revisionHashes = Object.keys(fileInfo.aquaTree.revisions || {});
+
+            // Create a map for quick cache lookup
+            const cacheMap = new Map();
+            if (Array.isArray(apiFileData)) {
+                apiFileData.forEach(item => {
+                    if (item && item.fileHash) {
+                        cacheMap.set(item.fileHash, item.fileData);
+                    }
+                });
+            }
+
+            // Process files in parallel
+            const filePromises = [];
+            const fileObjectVerifier: FileObject[] = [];
+
+            for (const file of fileInfo.fileObject) {
+                if (typeof file.fileContent === 'string' &&
+                    (file.fileContent.startsWith("http://") || file.fileContent.startsWith("https://"))) {
+
+                    const fileContentUrl = file.fileContent;
+                    const fileHash = getFileHashFromUrl(fileContentUrl);
+
+                    // Check cache first
+                    let fileData = fileHash.length > 0 ? cacheMap.get(fileHash) : null;
+
+                    if (!fileData) {
+                        // If not in cache, create a promise to fetch it
+                        const fetchPromise = fetchFileData(fileContentUrl, session!.nonce).then(data => {
+
+                            if (data && fileHash.length > 0) {
+                                // Update cache
+                                // setApiFileData((prev: any) => {
+                                //     const prevArray = Array.isArray(prev) ? prev : [];
+                                //     return [...prevArray, { fileHash, fileData: data }];
+                                // });
+                                let dd = Array.isArray(apiFileData) ? [...apiFileData] : [];
+                                dd.push({ fileHash, fileData })
+                                setApiFileData(dd)
+                                return { file, data };
+                            }
+                            return null;
+                        });
+                        filePromises.push(fetchPromise);
+                    } else {
+                        // If in cache, process immediately
+                        const fileItem = { ...file };
+                        if (fileData instanceof ArrayBuffer) {
+                            if (isArrayBufferText(fileData)) {
+                                fileItem.fileContent = new TextDecoder().decode(fileData);
+                            } else {
+                                fileItem.fileContent = new Uint8Array(fileData);
+                            }
+                        } else if (typeof fileData === 'string') {
+                            fileItem.fileContent = fileData;
+                        }
+                        fileObjectVerifier.push(fileItem);
+                    }
+                } else {
+                    // Non-URL files can be added directly
+                    fileObjectVerifier.push(file);
+                }
+            }
+
+            // Wait for all file fetches to complete
+            if (filePromises.length > 0) {
+                const fetchedFiles = await Promise.all(filePromises);
+
+                // Process fetched files
+                for (const result of fetchedFiles) {
+                    if (result) {
+                        const { file, data } = result;
+                        const fileItem = { ...file };
+
+                        if (data instanceof ArrayBuffer) {
+                            if (isArrayBufferText(data)) {
+                                console.log("is array buffr text .....")
+                                fileItem.fileContent = new TextDecoder().decode(data);
+                            } else {
+                                fileItem.fileContent = new Uint8Array(data);
+                            }
+                        } else if (typeof data === 'string') {
+                            fileItem.fileContent = data;
+                        }
+
+                        fileObjectVerifier.push(fileItem);
+                    }
+                }
+            }
+
+            // Process revisions in parallel where possible
+            const verificationPromises = revisionHashes.map(async revisionHash => {
+                const revision = fileInfo.aquaTree!.revisions[revisionHash];
+                const result = await aquafier.verifyAquaTreeRevision(
+                    fileInfo.aquaTree!,
+                    revision,
+                    revisionHash,
+                    fileObjectVerifier
+                )
+                console.log("Hash: ", revisionHash, "\nResult", result)
+                return ({
+                    hash: revisionHash,
+                    isSuccessful: result.isOk()
+                })
+            });
+
+            // Wait for all verifications to complete
+            const allRevisionsVerificationsStatus = await Promise.all(verificationPromises);
+            console.log("allRevisionsVerificationsStatus", allRevisionsVerificationsStatus)
+
+            // Update state and callback
+            setVerificationResults(allRevisionsVerificationsStatus);
+            const _isVerificationSuccessful = isVerificationSuccessful(allRevisionsVerificationsStatus);
+            _drawerStatus.isVerificationSuccessful = _isVerificationSuccessful;
+            _drawerStatus.colorDark = displayColorBasedOnVerificationStatusDark(allRevisionsVerificationsStatus);
+            _drawerStatus.colorLight = displayColorBasedOnVerificationStatusLight(allRevisionsVerificationsStatus);
+            // callBack(_drawerStatus);
+        } catch (error) {
+            console.error("Error verifying AquaTree revisions:", error);
+        } finally {
+            setIsProcessing(false);
+        }
+    }
 
 
     useEffect(() => {
         loadData()
-
     }, [])
 
     useEffect(() => {
-
-
         loadData()
-
     }, [JSON.stringify(selectedFileInfo)])
 
     const loadData = () => {
         if (selectedFileInfo) {
 
-
             const templateNames = formTemplates.map((e) => e.name)
             let { isWorkFlow, workFlow } = isWorkFlowData(selectedFileInfo.aquaTree!, templateNames)
 
             if (!isWorkFlow) {
-
                 setError("The selected Aqua - Tree is not workflow")
                 return
-
             }
+
             setTimeLineTitle(convertTemplateNameToTitle(workFlow))
 
-            let intialData: Array<RevisionVerificationStatus> = []
-            for (const [hash, revision] of Object.entries(selectedFileInfo!.aquaTree!.revisions!!)) {
-                console.log(`Hash ${hash} Revision ${JSON.stringify(revision)}`)
-                intialData.push({
-                    isVerified: false,
-                    revision: revision,
-                    revisionHash: hash,
-                    verficationStatus: null,
-                    logData: []
-                })
-            }
 
-            setAquaTreeVerificationWithStatuses(intialData)
+            loadTimeline()
 
-            let aquafier = new Aquafier();
 
-            // // loop verifying each revision
-            for (const [hash, revision] of Object.entries(selectedFileInfo!.aquaTree!.revisions!!)) {
-                //self invoking function that is async
-                (async () => {
+            verifyAquaTreeRevisions(selectedFileInfo)
 
-                    let verificationData = await aquafier.verifyAquaTreeRevision(selectedFileInfo!.aquaTree!, revision, hash, selectedFileInfo.fileObject);
-                    // Update the item with matching hash in a functional manner
-                    setAquaTreeVerificationWithStatuses(prevStatuses => {
-                        return prevStatuses.map(status => {
-                            if (status.revisionHash === hash) {
-                                return {
-                                    ...status,
-                                    verficationStatus: verificationData.isOk() ? true : false, // assuming verificationData is boolean
-                                    isVerified: true,
-                                    logData: verificationData.isErr() ? verificationData.data : []
-                                };
-                            }
-                            return status;
-                        });
-                    });
-                })()
-            }
+
+            // let intialData: Array<RevisionVerificationStatus> = []
+            // for (const [hash, revision] of Object.entries(selectedFileInfo!.aquaTree!.revisions!!)) {
+            //     console.log(`Hash ${hash} Revision ${JSON.stringify(revision)}`)
+            //     intialData.push({
+            //         isVerified: false,
+            //         revision: revision,
+            //         revisionHash: hash,
+            //         verficationStatus: null,
+            //         logData: []
+            //     })
+            // }
+
+            // setAquaTreeVerificationWithStatuses(intialData)
+
+            // let aquafier = new Aquafier();
+
+            // // // loop verifying each revision
+            // for (const [hash, revision] of Object.entries(selectedFileInfo!.aquaTree!.revisions!!)) {
+            //     //self invoking function that is async
+            //     (async () => {
+
+            //         let verificationData = await aquafier.verifyAquaTreeRevision(selectedFileInfo!.aquaTree!, revision, hash, selectedFileInfo.fileObject);
+            //         // Update the item with matching hash in a functional manner
+            //         setAquaTreeVerificationWithStatuses(prevStatuses => {
+            //             return prevStatuses.map(status => {
+            //                 if (status.revisionHash === hash) {
+            //                     return {
+            //                         ...status,
+            //                         verficationStatus: verificationData.isOk() ? true : false, // assuming verificationData is boolean
+            //                         isVerified: true,
+            //                         logData: verificationData.isErr() ? verificationData.data : []
+            //                     };
+            //                 }
+            //                 return status;
+            //             });
+            //         });
+            //     })()
+            // }
         }
     }
 
@@ -523,71 +711,53 @@ export default function WorkFlowPage() {
     }
 
 
-
-    const seekEndOFFormRevision = (hashesToLoop: Array<string>): [Array<string>, Array<string>] => {
-        const hashesWithFormRevision: Array<string> = []
-
-        for (let revisionHash of hashesToLoop) {
-            let revisionItem = selectedFileInfo!.aquaTree!.revisions[revisionHash]
-            if (revisionItem.revision_type == "link") {
-                let linkHash = revisionItem.link_verification_hashes![0]!;
-
-                let aquaTreesInFileObjects = selectedFileInfo!.fileObject.filter((e) => isAquaTree(e.fileContent));
-
-                for (let aquaTreeItemFileObjectContent of aquaTreesInFileObjects) {
-                    let aquaTreeItem = aquaTreeItemFileObjectContent.fileContent as AquaTree
-                    let allHashes = Object.keys(aquaTreeItem.revisions)
-
-                    if (allHashes.includes(linkHash)) {
-
-                        let genesisHash = getGenesisHash(aquaTreeItem)
-                        if (!genesisHash) {
-                            throw Error("Aqua tree has to have a genesis")
-                        }
-
-                        if (genesisHash != "form") {
-                            break
-                        } else {
-                            hashesWithFormRevision.push(revisionHash)
-                        }
-
-                    }
-                }
-            } else {
-                throw Error("No this shoud have been a link")
-            }
-        }
-
-        let hashesToLoopRemain = hashesToLoop.filter(item => !hashesWithFormRevision.includes(item));
-        return [hashesWithFormRevision, hashesToLoopRemain]
-    }
     const getSignatureRevionHashes = (hashesToLoopPar: Array<string>): Array<SummaryDetailsDisplayData> => {
 
         const signatureRevionHashes: Array<SummaryDetailsDisplayData> = []
 
-        let hashesToLoop: Array<string> = hashesToLoopPar
-        while (true) {
 
-            let [formRevision, hashesToLoopRemain] = seekEndOFFormRevision(hashesToLoop);
+        for (let i = 0; i < hashesToLoopPar.length; i += 3) {
 
-            let signatureImageRevision = hashesToLoopRemain[0]
-            let signatureRevision = hashesToLoopRemain[1]
 
-            let item: SummaryDetailsDisplayData = {
-                revisionHashWithSignaturePosition: formRevision,
-                revisionHashWithSinatureRevision: signatureImageRevision,
-                revisionHashMetamask: signatureRevision,
+            const batch = hashesToLoopPar.slice(i, i + 3);
+            console.log(`Processing batch ${i / 3 + 1}:`, batch);
+
+
+            let signaturePositionCount = 0
+            let hashSigPosition = batch[0] ?? ""
+            let hashSigRev = batch[1] ?? ""
+            let hashSigMetamak = batch[2] ?? ""
+
+            if (hashSigPosition.length > 0) {
+                let allAquaTrees = selectedFileInfo?.fileObject.filter((e) => isAquaTree(e.fileContent))
+
+                let hashSigPositionHashString = selectedFileInfo!.aquaTree!.revisions[hashSigPosition].link_verification_hashes![0];
+
+                if (allAquaTrees) {
+                    for (let anAquaTree of allAquaTrees) {
+                        let allHashes = Object.keys(anAquaTree)
+                        if (allHashes.includes(hashSigPositionHashString)) {
+
+                            let aquaTreeData = anAquaTree.fileContent as AquaTree
+                            let revData = aquaTreeData.revisions[hashSigPositionHashString]
+                            signaturePositionCount = getHighestFormIndex(revData)
+
+                            break
+                        }
+                    }
+
+
+                }
+
+            }
+            let data: SummaryDetailsDisplayData = {
+                revisionHashWithSignaturePositionCount: signaturePositionCount,
+                revisionHashWithSignaturePosition: hashSigPosition,
+                revisionHashWithSinatureRevision: hashSigRev,
+                revisionHashMetamask: hashSigMetamak,
             }
 
-            signatureRevionHashes.push(item)
-
-
-
-            hashesToLoop = hashesToLoopRemain.splice(0, 2);
-
-            if (hashesToLoop.length == 0) {
-                break
-            }
+            signatureRevionHashes.push(data)
 
         }
 
@@ -636,10 +806,9 @@ export default function WorkFlowPage() {
             console.log(`revisionHashes  ${revisionHashes} --  ${typeof revisionHashes}`)
             console.log(`fourthItmeHashOnwards  ${fourthItmeHashOnwards}`)
             signatureRevionHashes = getSignatureRevionHashes(fourthItmeHashOnwards)
+            console.log(`signatureRevionHashes  ${JSON.stringify(signatureRevionHashes, null, 4)}`)
 
         }
-
-        let alertcontainsInvalidRevsion = aquaTreeVerificationWithStatuses.filter((e) => e.verficationStatus == false)
 
 
         return <Timeline.Root >
@@ -680,64 +849,69 @@ export default function WorkFlowPage() {
                     borderRadius="md"
                 >
                     <Text textAlign="center">No signatures detected</Text>
-                </Box> : <></>
+                </Box> : <>
+
+                    {
+                        signatureRevionHashes.map((signatureRevionHasheItem) => {
+
+
+                            let singatureRevisionItem = selectedFileInfo!.aquaTree!.revisions[signatureRevionHasheItem.revisionHashMetamask]
+                            return <Timeline.Item>
+                                <Timeline.Connector>
+                                    <Timeline.Separator minH="160px" />
+                                    <Timeline.Indicator>
+                                        <LuCheck />
+                                    </Timeline.Indicator>
+                                </Timeline.Connector>
+                                <Timeline.Content>
+                                    <Timeline.Title textStyle="sm"><Text textStyle="lg">Signature detected</Text></Timeline.Title>
+                                    <Timeline.Description> <Text textStyle="md"> User with address {singatureRevisionItem.signature_wallet_address}
+                                        signed the document {fileName}, &nbsp;
+                                        {signatureRevionHasheItem.revisionHashWithSignaturePositionCount > 1 ? <span>{signatureRevionHasheItem.revisionHashWithSignaturePositionCount} times</span> : <span>Once</span>}
+                                        &nbsp;  at   {timeToHumanFriendly(singatureRevisionItem.local_timestamp)} </Text>
+                                    </Timeline.Description>
+                                </Timeline.Content>
+                            </Timeline.Item>
+                        })
+
+                    }
+                    {
+                        <Timeline.Item>
+                            <Timeline.Connector>
+                                <Timeline.Separator />
+                                <Timeline.Indicator>
+                                    <LuPackage />
+                                </Timeline.Indicator>
+                            </Timeline.Connector>
+                            <Timeline.Content>
+                                <Timeline.Title textStyle="sm">Workflow Completed</Timeline.Title>
+                                <Timeline.Description>
+
+
+                                    <Alert status={displayColorBasedOnVerificationAlert(verificationResults)} title={displayBasedOnVerificationStatusText(verificationResults)} />
+
+
+                                    {/* {alertcontainsInvalidRevsion.length > 0 ?
+                                        <Alert status="error" title="" variant="solid"   >
+                                            Workflow is not valid
+                                        </Alert>
+
+                                        :
+                                        <Alert status="success" title="" variant="solid"   >
+                                            Workflow  validated succceffully
+                                        </Alert>
+
+                                    } */}
+
+                                </Timeline.Description>
+                            </Timeline.Content>
+                        </Timeline.Item>
+                    }
+                </>
             }
-            {
-                signatureRevionHashes.map((signatureRevionHasheItem) => {
 
 
-                    let singatureRevisionItem = selectedFileInfo!.aquaTree!.revisions[signatureRevionHasheItem.revisionHashMetamask]
-                    return <Timeline.Item>
-                        <Timeline.Connector>
-                            <Timeline.Separator />
-                            <Timeline.Indicator>
-                                <LuCheck />
-                            </Timeline.Indicator>
-                        </Timeline.Connector>
-                        <Timeline.Content>
-                            <Timeline.Title textStyle="sm">Signature detected</Timeline.Title>
-                            <Timeline.Description> User with address {singatureRevisionItem.signature_wallet_address}
-                                signed the document {fileName},
-                                {signatureRevionHasheItem.revisionHashWithSignaturePosition.length > 1 ? <span>{signatureRevionHasheItem.revisionHashWithSignaturePosition.length} times</span> : <span>Once</span>}
-                                at {timeToHumanFriendly(singatureRevisionItem.local_timestamp)}
-                            </Timeline.Description>
-                        </Timeline.Content>
-                    </Timeline.Item>
-                })
 
-            }
-
-
-            {
-                signatureRevionHashes.length > 0 ?
-                    <Timeline.Item>
-                        <Timeline.Connector>
-                            <Timeline.Separator />
-                            <Timeline.Indicator>
-                                <LuPackage />
-                            </Timeline.Indicator>
-                        </Timeline.Connector>
-                        <Timeline.Content>
-                            <Timeline.Title textStyle="sm">Workflow Completed</Timeline.Title>
-                            <Timeline.Description>
-
-                                {alertcontainsInvalidRevsion.length > 0 ?
-                                    <Alert status="error" title="" variant="solid"   >
-                                        Workflow is not valid
-                                    </Alert>
-
-                                    :
-                                    <Alert status="success" title="" variant="solid"   >
-                                        Workflow  validated succceffully
-                                    </Alert>
-
-                                }
-                            </Timeline.Description>
-                        </Timeline.Content>
-                    </Timeline.Item>
-
-                    : <></>
-            }
 
         </Timeline.Root>
     }
@@ -1014,7 +1188,7 @@ export default function WorkFlowPage() {
         }
 
 
-        //save the last link revision to db
+        //save the last link revision to db -- signature aqua tree pdf 
 
         try {
 
@@ -1069,7 +1243,7 @@ export default function WorkFlowPage() {
 
         // meta mask sign 
         let aquaTreeWrappersignatureLinked: AquaTreeWrapper = {
-            aquaTree: signatureAquaTree,
+            aquaTree: resLinkedAquaTree.data!.aquaTree!,
             revision: "",
             fileObject: signatureFileObject
         }
@@ -1089,7 +1263,7 @@ export default function WorkFlowPage() {
         }
 
 
-        //save the last link revision to db
+        //save the last  revision to db
 
         try {
 
@@ -1112,10 +1286,6 @@ export default function WorkFlowPage() {
                     "nonce": session?.nonce
                 }
             });
-
-
-
-
             //
 
 

@@ -8,6 +8,35 @@ import Aquafier, { AquaTree, CredentialsData, FileObject, OrderRevisionInAquaTre
 import jdenticon from "jdenticon/standalone";
 
 
+export  const fetchFileData = async (url: string, nonce  : string): Promise<string | ArrayBuffer | null> => {
+        try {
+            const actualUrlToFetch = ensureDomainUrlHasSSL(url);
+
+            const response = await fetch(actualUrlToFetch, {
+                headers: {
+                    nonce: nonce
+                }
+            });
+            if (!response.ok) throw new Error("Failed to fetch file");
+
+            // Get MIME type from headers
+            const contentType = response.headers.get("Content-Type") || "";
+
+            // Process based on content type
+            if (contentType.startsWith("text/") ||
+                contentType === "application/json" ||
+                contentType === "application/xml" ||
+                contentType === "application/javascript") {
+                return await response.text();
+            } else {
+                return await response.arrayBuffer();
+            }
+        } catch (e) {
+            console.error("Error fetching file:", e);
+            return null;
+        }
+    }
+
 export const convertTemplateNameToTitle = (str: string) => {
     return str.split('_')
         .map(word => word.charAt(0).toUpperCase() + word.slice(1))
@@ -1557,3 +1586,30 @@ export function makeProperReadableWord(wordWithUnderScores: string) {
     let words = wordWithUnderScores.split("_");
     return words.map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(" ");
 }
+
+
+/**
+ * Extracts the highest form index from an object with keys following the pattern "forms_*_N"
+ * where N is the index number we want to find the maximum of.
+ */
+export const getHighestFormIndex = (obj: Record<string, any>): number => {
+    let highestIndex = -1;
+    
+    // Loop through all object keys
+    for (const key of Object.keys(obj)) {
+      // Check if key matches the expected pattern (forms_*_N)
+      const match = key.match(/^forms_[^_]+_(\d+)$/);
+      
+      if (match) {
+        // Extract the index number and convert to integer
+        const index = parseInt(match[1], 10);
+        
+        // Update highest index if this one is greater
+        if (!isNaN(index) && index > highestIndex) {
+          highestIndex = index;
+        }
+      }
+    }
+    
+    return highestIndex;
+  };
