@@ -209,7 +209,8 @@ const FormTemplateEditor = ({ initialTemplate, onSave, updating }: FormTemplateE
       label: '',
       name: '',
       type: 'text',
-      required: false
+      required: false,
+      is_array: false
     };
     setFormFields(prev => [...prev, field]);
   };

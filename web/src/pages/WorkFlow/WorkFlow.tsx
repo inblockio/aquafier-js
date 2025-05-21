@@ -368,53 +368,22 @@ export default function WorkFlowPage() {
                 return
             }
 
-            setTimeLineTitle(convertTemplateNameToTitle(workFlow))
+            setTimeLineTitle(convertTemplateNameToTitle(workFlow));
 
 
-            loadTimeline()
+
+            (async () => {
+                await loadTimeline()
+            })();
+            
 
 
-            verifyAquaTreeRevisions(selectedFileInfo)
+            (async () => {
+                await verifyAquaTreeRevisions(selectedFileInfo)
+            })();
 
 
-            // let intialData: Array<RevisionVerificationStatus> = []
-            // for (const [hash, revision] of Object.entries(selectedFileInfo!.aquaTree!.revisions!!)) {
-            //     console.log(`Hash ${hash} Revision ${JSON.stringify(revision)}`)
-            //     intialData.push({
-            //         isVerified: false,
-            //         revision: revision,
-            //         revisionHash: hash,
-            //         verficationStatus: null,
-            //         logData: []
-            //     })
-            // }
-
-            // setAquaTreeVerificationWithStatuses(intialData)
-
-            // let aquafier = new Aquafier();
-
-            // // // loop verifying each revision
-            // for (const [hash, revision] of Object.entries(selectedFileInfo!.aquaTree!.revisions!!)) {
-            //     //self invoking function that is async
-            //     (async () => {
-
-            //         let verificationData = await aquafier.verifyAquaTreeRevision(selectedFileInfo!.aquaTree!, revision, hash, selectedFileInfo.fileObject);
-            //         // Update the item with matching hash in a functional manner
-            //         setAquaTreeVerificationWithStatuses(prevStatuses => {
-            //             return prevStatuses.map(status => {
-            //                 if (status.revisionHash === hash) {
-            //                     return {
-            //                         ...status,
-            //                         verficationStatus: verificationData.isOk() ? true : false, // assuming verificationData is boolean
-            //                         isVerified: true,
-            //                         logData: verificationData.isErr() ? verificationData.data : []
-            //                     };
-            //                 }
-            //                 return status;
-            //             });
-            //         });
-            //     })()
-            // }
+         
         }
     }
 
@@ -1189,9 +1158,35 @@ export default function WorkFlowPage() {
         }
 
 
-        //save the last link revision to db -- signature aqua tree pdf 
+        // we do not save the last revision here since the metamask revion that folows can be cancelled or failed.
+               
 
-        try {
+
+        // meta mask sign 
+        let aquaTreeWrappersignatureLinked: AquaTreeWrapper = {
+            aquaTree: resLinkedAquaTree.data!.aquaTree!,
+            revision: "",
+            fileObject: signatureFileObject
+        }
+
+        let resLinkedMetaMaskSignedAquaTree = await aquafier.signAquaTree(aquaTreeWrappersignatureLinked, 'metamask', dummyCredential())
+
+        if (resLinkedMetaMaskSignedAquaTree.isErr()) {
+
+            setSubmittingSignatureData(false);
+
+            toaster.create({
+                description: `Metamask Sinature  not appended to main tree succefully `,
+                type: "error"
+            })
+            return
+
+        }
+
+
+         //save the last link revision to db -- signature aqua tree pdf 
+
+         try {
 
             let newAquaTree = resLinkedAquaTree.data.aquaTree!
             let revisionHashes = Object.keys(newAquaTree.revisions)
@@ -1240,29 +1235,6 @@ export default function WorkFlowPage() {
 
             return
         }
-
-
-        // meta mask sign 
-        let aquaTreeWrappersignatureLinked: AquaTreeWrapper = {
-            aquaTree: resLinkedAquaTree.data!.aquaTree!,
-            revision: "",
-            fileObject: signatureFileObject
-        }
-
-        let resLinkedMetaMaskSignedAquaTree = await aquafier.signAquaTree(aquaTreeWrappersignatureLinked, 'metamask', dummyCredential())
-
-        if (resLinkedMetaMaskSignedAquaTree.isErr()) {
-
-            setSubmittingSignatureData(false);
-
-            toaster.create({
-                description: `Metamask Sinature  not appended to main tree succefully `,
-                type: "error"
-            })
-            return
-
-        }
-
 
         //save the last  revision to db
 

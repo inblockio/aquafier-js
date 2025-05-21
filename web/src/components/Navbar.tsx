@@ -1,4 +1,4 @@
-import { Box, Group, HStack, Image, Text, Menu, Button, Portal, MenuOpenChangeDetails, Stack, Input, Flex, Center, SimpleGrid, Spinner, IconButton } from "@chakra-ui/react"
+import { Box, Group, HStack, Image, Text, Menu, Button, Portal, MenuOpenChangeDetails, Stack, Input, Flex, Center, SimpleGrid, Spinner } from "@chakra-ui/react"
 import Settings from "./chakra-ui/settings"
 import ConnectWallet from "./ConnectWallet"
 import { useColorMode } from "./chakra-ui/color-mode"
@@ -8,11 +8,11 @@ import VersionAndDisclaimer from "./VersionAndDisclaimer"
 import { Link, useNavigate } from "react-router-dom"
 import AccountContracts from "./AccountContracts"
 import { Alert } from "../components/chakra-ui/alert"
-import { LuChevronDown, LuChevronUp, LuDelete, LuPlus, LuSquareChartGantt, LuTrash } from "react-icons/lu"
+import { LuChevronDown, LuChevronUp,  LuSquareChartGantt } from "react-icons/lu"
 import { HiDocumentPlus } from "react-icons/hi2";
 import React, { useEffect, useState } from "react"
-import { estimateFileSize, dummyCredential, getAquaTreeFileName, getAquaTreeFileObject, getRandomNumber, fetchSystemFiles, isValidEthereumAddress, getHighestCount } from "../utils/functions"
-import { FormFieldArray, FormFieldArrayItems, FormTemplate } from "../components/aqua_forms/types"
+import { estimateFileSize, dummyCredential, getAquaTreeFileName, getAquaTreeFileObject, getRandomNumber, fetchSystemFiles, isValidEthereumAddress } from "../utils/functions"
+import {   FormTemplate } from "../components/aqua_forms/types"
 import { Field } from '../components/chakra-ui/field';
 import Aquafier, { AquaTree, AquaTreeWrapper, FileObject } from "aqua-js-sdk"
 
@@ -80,7 +80,7 @@ const Navbar = () => {
     const [formData, setFormData] = useState<Record<string, string | File | number>>({});
     const [selectedTemplate, setSelectedTemplate] = useState<FormTemplate | null>(null);
 
-    const [fieldItems, setFieldItems] = useState<Array<FormFieldArray>>([])
+    // const [fieldItems, setFieldItems] = useState<Array<FormFieldArray>>([])
 
     let navigate = useNavigate();
 

@@ -33,8 +33,8 @@ import axios from 'axios';
 import { ApiFileInfo } from '../models/FileInfo';
 import { blobToDataURL, dataURLToFile, dummyCredential, ensureDomainUrlHasSSL, estimateFileSize, getAquaTreeFileName, getRandomNumber, timeStampToDateObject } from '../utils/functions';
 import Aquafier, { AquaTree, AquaTreeWrapper, FileObject, getAquaTreeFileObject } from 'aqua-js-sdk';
-import { FaCloudArrowUp } from 'react-icons/fa6';
 import { SignaturePosition, SignatureData } from "../types/types"
+import { LuTrash } from 'react-icons/lu';
 
 
 // const PdfSigner = ({ file }: { file: File | null }) => {
@@ -137,10 +137,10 @@ export const SimpleSignatureOverlay = ({ signature }: { signature: { x: string, 
 interface PdfSignerProps {
     file: File | null;
     submitSignature: (signaturePosition: SignaturePosition[], signAquaTree: ApiFileInfo[]) => Promise<void>
-    submittingSignatureData : boolean
+    submittingSignatureData: boolean
 }
 
-const PdfSigner: React.FC<PdfSignerProps> = ({ file, submitSignature , submittingSignatureData}) => {
+const PdfSigner: React.FC<PdfSignerProps> = ({ file, submitSignature, submittingSignatureData }) => {
 
     const { formTemplates, systemFileInfo } = useStore(appStore)
     // State for PDF document
@@ -160,7 +160,7 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ file, submitSignature , submittin
     const [signerName, setSignerName] = useState<string>('John Doe');
     const [signaturePositions, setSignaturePositions] = useState<SignaturePosition[]>([]);
     const [placingSignature, setPlacingSignature] = useState<boolean>(false);
-    const [signatureSize, setSignatureSize] = useState<number>(150);
+    const [signatureSize, setSignatureSize] = useState<number>(200);
 
     // Modal state
     const [isOpen, setIsOpen] = useState(false);
@@ -943,7 +943,7 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ file, submitSignature , submittin
 
 
     // Component for signature display on PDF
-    
+
 
     const handlePageChange = (pageNumber: number, _totalPages: number) => {
         setCurrentPage(pageNumber);
@@ -1073,7 +1073,7 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ file, submitSignature , submittin
                     // Convert blob to base64 data URL
                     const dataUrl = await blobToDataURL(blob);
 
-                
+
 
                     // Add to signature
                     let sign: SignatureData = {
@@ -1329,13 +1329,21 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ file, submitSignature , submittin
                                         <FieldLabel>Signature Size: {signatureSize}px</FieldLabel>
                                         <Slider.Root
                                             min={50}
-                                            max={300}
+                                            max={400}
                                             step={1}
+                                            defaultValue={[signatureSize]}
+                                            size={'lg'} key={'lg'}
+                                            width={"250px"}
                                             value={[signatureSize]}
-                                            onValueChange={(value) => {
-                                                if (Array.isArray(value)) {
-                                                    setSignatureSize(value[0]);
-                                                }
+                                            onValueChange={(changedValue) => {
+                                                console.log(`slider value ${JSON.stringify(changedValue)}`)
+                                                const newValue = changedValue.value[0]
+                                                console.log(`slider value ${newValue}`)
+
+                                                setSignatureSize(newValue);
+                                                // if (Array.isArray(changedValue)) {
+                                                // setSignatureSize(changedValue.value[0]);
+                                                // }
                                             }}
                                         >
                                             <Slider.Control>
@@ -1346,6 +1354,8 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ file, submitSignature , submittin
                                             </Slider.Control>
                                         </Slider.Root>
                                     </Field>
+
+
 
                                     <Button
                                         colorScheme="teal"
@@ -1379,6 +1389,24 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ file, submitSignature , submittin
                                                                         borderRadius="sm"
                                                                     />
                                                                     <Text fontSize="xs">{signature.name} (Page {position.pageIndex + 1})</Text>
+
+                                                                    <IconButton variant={'outline'} size={'2xs'} onClick={(e) => {
+                                                                        e.preventDefault();
+
+                                                                        console.log(`B4 Delete ${JSON.stringify(signaturePositions, null, 4)}`)
+                                                                        let newData: SignaturePosition[] = [];
+                                                                        for (let item of signaturePositions) {
+                                                                            console.log(`item id ${item.id} -- ${ position.id}`)
+                                                                            if (item.id != position.id) {
+                                                                                newData.push(item)
+                                                                            }
+                                                                        }
+
+                                                                        console.log(`After Delete ${JSON.stringify(newData, null, 4)}`)
+                                                                        setSignaturePositions(newData)
+                                                                    }}>
+                                                                        <LuTrash size={'10px'} color='red' />
+                                                                    </IconButton>
                                                                 </HStack>
                                                             </HStack>
                                                         );
@@ -1429,8 +1457,8 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ file, submitSignature , submittin
                                     await submitSignature(signaturePositions, signaturesAquaTree)
                                 }}
                             >
-                                <FaCloudArrowUp />
-                                Sign document 
+                                
+                                Sign document
                             </Button>
                         </Stack>
                     </GridItem>
@@ -1491,12 +1519,12 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ file, submitSignature , submittin
                                     <FaUndo />
                                 </IconButton>
                                 <Button disabled={creatingUserSignature} colorScheme="blue" onClick={saveSignature}>
-                                    
+
 
                                     {creatingUserSignature ? <>
-                                                                                <Spinner size="inherit" color="inherit" />
-                                                                                loading
-                                                                            </> : <span>Save Signature</span>}
+                                        <Spinner size="inherit" color="inherit" />
+                                        loading
+                                    </> : <span>Save Signature</span>}
                                 </Button>
                             </HStack>
                         </Stack>
