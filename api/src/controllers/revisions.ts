@@ -317,8 +317,8 @@ export default async function revisionsController(fastify: FastifyInstance) {
 
 
     //     // for (let item of signatureAquaTreesBeforeInsertion) {
-        //     let allHashes = Object.keys(item.aquaTree.revisions)
-        //     let lastHash = allHashes[allHashes.length-1]
+    //     let allHashes = Object.keys(item.aquaTree.revisions)
+    //     let lastHash = allHashes[allHashes.length-1]
     //     //     //delet the old signature
     //     //    let [code, reason] =await deleteAquaTree(lastHash,session?.address,url)
 
@@ -472,7 +472,7 @@ export default async function revisionsController(fastify: FastifyInstance) {
     //         await saveAquaTree(aquaTree, session.address, templateId.length == 0 ? null : templateId, isWorkFlow);
 
 
-          
+
 
     //         // // Get the host from the request headers
     //         // const host = request.headers.host || `${getHost()}:${getPort()}`;
@@ -521,6 +521,10 @@ export default async function revisionsController(fastify: FastifyInstance) {
                 return reply.code(403).send({ success: false, message: "Nounce  is invalid" });
             }
 
+            // Method 1: Check Origin header (used in CORS requests)
+            const origin = request.headers.origin;
+
+            // throw Error(`Orgin ${origin}`)
             // Get the host from the request headers
             const host = `${getHost()}:${getPort()}`;
 

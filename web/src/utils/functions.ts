@@ -1556,7 +1556,14 @@ export function ensureDomainUrlHasSSL(actualUrlToFetch: string): string {
             // Replace with inblock.io and ensure HTTPS
             // Handle 127.0.0.1 with or without port
 
-            let domainData =  `https://${currentDomain}`
+            let domainData = ''
+            if(currentDomain === "aquafier.inblock.io"){
+                domainData ='https://aquafier-api.inblock.io'
+            }else{
+                domainData ='https://dev-api.inblock.io'    
+            }
+            
+
             url = url.replace("http://127.0.0.1", domainData);
             url = url.replace("https://127.0.0.1", domainData);
 
