@@ -8,34 +8,34 @@ import Aquafier, { AquaTree, CredentialsData, FileObject, OrderRevisionInAquaTre
 import jdenticon from "jdenticon/standalone";
 
 
-export  const fetchFileData = async (url: string, nonce  : string): Promise<string | ArrayBuffer | null> => {
-        try {
-            const actualUrlToFetch = ensureDomainUrlHasSSL(url);
+export const fetchFileData = async (url: string, nonce: string): Promise<string | ArrayBuffer | null> => {
+    try {
+        const actualUrlToFetch = ensureDomainUrlHasSSL(url);
 
-            const response = await fetch(actualUrlToFetch, {
-                headers: {
-                    nonce: nonce
-                }
-            });
-            if (!response.ok) throw new Error("Failed to fetch file");
-
-            // Get MIME type from headers
-            const contentType = response.headers.get("Content-Type") || "";
-
-            // Process based on content type
-            if (contentType.startsWith("text/") ||
-                contentType === "application/json" ||
-                contentType === "application/xml" ||
-                contentType === "application/javascript") {
-                return await response.text();
-            } else {
-                return await response.arrayBuffer();
+        const response = await fetch(actualUrlToFetch, {
+            headers: {
+                nonce: nonce
             }
-        } catch (e) {
-            console.error("Error fetching file:", e);
-            return null;
+        });
+        if (!response.ok) throw new Error("Failed to fetch file");
+
+        // Get MIME type from headers
+        const contentType = response.headers.get("Content-Type") || "";
+
+        // Process based on content type
+        if (contentType.startsWith("text/") ||
+            contentType === "application/json" ||
+            contentType === "application/xml" ||
+            contentType === "application/javascript") {
+            return await response.text();
+        } else {
+            return await response.arrayBuffer();
         }
+    } catch (e) {
+        console.error("Error fetching file:", e);
+        return null;
     }
+}
 
 export const convertTemplateNameToTitle = (str: string) => {
     return str.split('_')
@@ -66,7 +66,7 @@ export const isWorkFlowData = (aquaTree: AquaTree, _systemAndUserWorkFlow: strin
         return falseResponse
     }
     if (secondRevision.revision_type == 'link') {
- 
+
         //get the  system aqua tree name 
         let secondRevision = aquaTreeRevisionsOrderd.revisions[allHashes[1]]
         // console.log(` second hash used ${allHashes[1]}  second revision ${JSON.stringify(secondRevision, null, 4)} tree ${JSON.stringify(aquaTreeRevisionsOrderd, null, 4)}`)
@@ -1547,7 +1547,7 @@ export function ensureDomainUrlHasSSL(actualUrlToFetch: string): string {
     // Check if we're on inblock.io domain but URL contains localhost IP addresses
     const currentDomain = typeof window !== 'undefined' ? window.location.hostname : '';
     console.log(`ensureDomainUrlHasSSL currentDomain ${currentDomain}`)
-    if (currentDomain === "inblock.io" ||  currentDomain === "dev.inblock.io" ||  currentDomain =="aquafier.inblock.io" ||  currentDomain.includes("inblock.io")) {
+    if (currentDomain === "inblock.io" || currentDomain === "dev.inblock.io" || currentDomain == "aquafier.inblock.io" || currentDomain.includes("inblock.io")) {
         if (url.includes("127.0.0.1") || url.includes("0.0.0.0") || url.includes("localhost")) {
 
             // Replace with inblock.io and ensure HTTPS
@@ -1557,12 +1557,12 @@ export function ensureDomainUrlHasSSL(actualUrlToFetch: string): string {
             // Handle 127.0.0.1 with or without port
 
             let domainData = ''
-            if(currentDomain === "aquafier.inblock.io"){
-                domainData ='https://aquafier-api.inblock.io'
-            }else{
-                domainData ='https://dev-api.inblock.io'    
+            if (currentDomain === "aquafier.inblock.io") {
+                domainData = 'https://aquafier-api.inblock.io'
+            } else {
+                domainData = 'https://dev-api.inblock.io'
             }
-            
+
 
             url = url.replace("http://127.0.0.1", domainData);
             url = url.replace("https://127.0.0.1", domainData);
@@ -1594,6 +1594,28 @@ export function makeProperReadableWord(wordWithUnderScores: string) {
     return words.map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(" ");
 }
 
+export const getHighestCount = (strArray: Array<string>): number => {
+
+    let highestCounter = 0;
+
+    // Loop through each string in the array
+    for (const str of strArray) {
+        // Use regex to extract the number after the underscore
+        const match = str.match(/_(\d+)$/);
+
+        if (match) {
+            // Convert the extracted number to integer
+            const counter = parseInt(match[1], 10);
+
+            // Update highest counter if this one is greater
+            if (!isNaN(counter) && counter > highestCounter) {
+                highestCounter = counter;
+            }
+        }
+    }
+    return highestCounter
+
+}
 
 /**
  * Extracts the highest form index from an object with keys following the pattern "forms_*_N"
@@ -1601,22 +1623,22 @@ export function makeProperReadableWord(wordWithUnderScores: string) {
  */
 export const getHighestFormIndex = (obj: Record<string, any>): number => {
     let highestIndex = -1;
-    
+
     // Loop through all object keys
     for (const key of Object.keys(obj)) {
-      // Check if key matches the expected pattern (forms_*_N)
-      const match = key.match(/^forms_[^_]+_(\d+)$/);
-      
-      if (match) {
-        // Extract the index number and convert to integer
-        const index = parseInt(match[1], 10);
-        
-        // Update highest index if this one is greater
-        if (!isNaN(index) && index > highestIndex) {
-          highestIndex = index;
+        // Check if key matches the expected pattern (forms_*_N)
+        const match = key.match(/^forms_[^_]+_(\d+)$/);
+
+        if (match) {
+            // Extract the index number and convert to integer
+            const index = parseInt(match[1], 10);
+
+            // Update highest index if this one is greater
+            if (!isNaN(index) && index > highestIndex) {
+                highestIndex = index;
+            }
         }
-      }
     }
-    
+
     return highestIndex;
-  };
+};

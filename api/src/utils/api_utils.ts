@@ -440,7 +440,7 @@ const setUpSystemTemplates = async () => {
         aqua_form_id: "4",
         name: keyName,
         label: convertNameToLabel(keyName),
-        type:  "string",
+        type: "string",
         required: keyName == 'note' ? false : true
       },
       update: {
@@ -501,7 +501,7 @@ const setUpSystemTemplates = async () => {
     "document": "",
     "sender": "0x...",
     "signers": "0x...",
-  
+
   }
 
   const documentContractFields = [
@@ -509,20 +509,22 @@ const setUpSystemTemplates = async () => {
       name: "document",
       label: "Document",
       type: "file",
-      required: true
+      required: true,
+      isArray: false
     },
     {
       name: "sender",
       label: "Sender",
       type: "wallet_address",
       required: true,
+      isArray: false,
     },
     {
       name: "signers",
       label: "Signers",
       type: "wallet_address",
       required: true,
-      multiple: true
+      isArray: true
     }
   ]
 
@@ -537,7 +539,9 @@ const setUpSystemTemplates = async () => {
         name: fieldData.name,
         label: fieldData.label,
         type: fieldData.type,
-        required: fieldData.required
+        required: fieldData.required,
+
+        is_array: fieldData.isArray
       },
       update: {
 
@@ -567,7 +571,7 @@ const setUpSystemTemplates = async () => {
       await saveAquaTree(responseDocumentContractAquaTree.data.aquaTree!!, SYSTEM_WALLET_ADDRESS)
 
 
-    }else{
+    } else {
       throw Error("Failed to create document contract")
     }
 
@@ -604,7 +608,7 @@ const setUpSystemTemplates = async () => {
     "image": "",
     "name": "0x...",
     "wallet_address": "0x...",
-  
+
   }
 
 
@@ -670,7 +674,7 @@ const setUpSystemTemplates = async () => {
       await saveAquaTree(responseuserSignatureAquaTree.data.aquaTree!!, SYSTEM_WALLET_ADDRESS)
 
 
-    }else{
+    } else {
       throw Error("Failed to create document contract")
     }
 

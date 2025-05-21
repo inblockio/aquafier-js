@@ -38,6 +38,7 @@ model AquaTemplateFields {
   label        String
   type         String
   required     Boolean
+  is_array     Boolean @default(false)
 
   AquaForm AquaTemplate @relation(fields: [aqua_form_id], references: [id])
 
@@ -82,7 +83,7 @@ model Latest {
   hash        String  @id
   user        String
   template_id String?
-  is_workflow Boolean @default(false) 
+  is_workflow Boolean @default(false)
   User        Users   @relation(fields: [user], references: [address])
   // Revision         Revision[]
 

@@ -1,4 +1,4 @@
-import { Box, Group, HStack, Image, Text, Menu, Button, Portal, MenuOpenChangeDetails, Stack, Input, Flex, Center, SimpleGrid, Spinner } from "@chakra-ui/react"
+import { Box, Group, HStack, Image, Text, Menu, Button, Portal, MenuOpenChangeDetails, Stack, Input, Flex, Center, SimpleGrid, Spinner, IconButton } from "@chakra-ui/react"
 import Settings from "./chakra-ui/settings"
 import ConnectWallet from "./ConnectWallet"
 import { useColorMode } from "./chakra-ui/color-mode"
@@ -8,11 +8,11 @@ import VersionAndDisclaimer from "./VersionAndDisclaimer"
 import { Link, useNavigate } from "react-router-dom"
 import AccountContracts from "./AccountContracts"
 import { Alert } from "../components/chakra-ui/alert"
-import { LuChevronDown, LuChevronUp, LuSquareChartGantt } from "react-icons/lu"
+import { LuChevronDown, LuChevronUp, LuPlus, LuSquareChartGantt } from "react-icons/lu"
 import { HiDocumentPlus } from "react-icons/hi2";
 import React, { useEffect, useState } from "react"
-import { estimateFileSize, dummyCredential, getAquaTreeFileName, getAquaTreeFileObject, getRandomNumber, fetchSystemFiles, isValidEthereumAddress } from "../utils/functions"
-import { FormTemplate } from "../components/aqua_forms/types"
+import { estimateFileSize, dummyCredential, getAquaTreeFileName, getAquaTreeFileObject, getRandomNumber, fetchSystemFiles, isValidEthereumAddress, getHighestCount } from "../utils/functions"
+import { FormFieldArray, FormFieldArrayItems, FormTemplate } from "../components/aqua_forms/types"
 import { Field } from '../components/chakra-ui/field';
 import Aquafier, { AquaTree, AquaTreeWrapper, FileObject } from "aqua-js-sdk"
 
@@ -77,8 +77,11 @@ const Navbar = () => {
     // const { open, onOpen, onClose } = useDisclosure();
     const [open, setOpen] = useState(false)
     const { session, formTemplates, backend_url, systemFileInfo, setFormTemplate, setFiles, setSystemFileInfo } = useStore(appStore)
-    const [formData, setFormData] = useState<Record<string, string | File | number>>({})
+    const [formData, setFormData] = useState<Record<string, string | File | number>>({});
     const [selectedTemplate, setSelectedTemplate] = useState<FormTemplate | null>(null);
+
+    const [fieldItems, setFieldItems] = useState<Array<FormFieldArray>>([])
+
     let navigate = useNavigate();
 
 
@@ -709,8 +712,104 @@ const Navbar = () => {
                                     }
                                     <Stack marginBottom={10}>
                                         {selectedTemplate ? selectedTemplate.fields.map((field) => {
-                                            // For file inputs, we don't want to set the value prop
+
                                             const isFileInput = field.type === 'file' || field.type === 'image';
+
+                                            if (field.is_array) {
+
+                                                if (isFileInput) {
+                                                    return <Alert status="error" title="An error occured">
+                                                        Multiple File widgets not supported
+                                                    </Alert>
+                                                }
+
+                                                let arrayItem0: FormFieldArray = {
+
+                                                    name: field.name,
+                                                    items: [{
+                                                        name: `${field.name}_1`,
+                                                        data: ''
+                                                    }]
+                                                }
+
+                                                let arraysOfName = fieldItems.find((e) => e.name == field.name)
+                                                if (!arraysOfName) {
+
+                                                    let data = [...fieldItems, arrayItem0]
+                                                    setFieldItems(data)
+                                                    arraysOfName = arrayItem0
+                                                }
+                                                return <Stack >
+                                                    <HStack alignItems={'flex-end'}>
+                                                        <Field label={field.label} errorText={''}>
+                                                            <Input name={`${field.name}_1`} onChange={(e) => {
+                                                                const text = e.target.value
+                                                                let newData = arraysOfName.items.map((e)=> {
+                                                                    if(e.name==`${field.name}_1`){
+                                                                        e.data = text
+                                                                    }
+                                                                    return e
+                                                                })
+                                                                setFieldItems((item)=>{
+                                                                    //
+                                                                })
+
+                                                            }} />
+
+                                                        </Field>
+                                                        <IconButton aria-label="Search database" onClick={(e) => {
+                                                            e.preventDefault()
+
+                                                            let existingData = fieldItems.find((e) => e.name == field.name)
+
+                                                            if (existingData) {
+                                                                let namesWithCounter = existingData.items.map((e) => e.name)
+                                                                let findLargestCount = getHighestCount(namesWithCounter)
+
+                                                                existingData.items.push({
+                                                                    name: `${field.name}_${findLargestCount + 1}`,
+                                                                    data: ''
+                                                                })
+
+                                                                let newState: Array<FormFieldArray> = []
+                                                                for (let item of fieldItems) {
+
+                                                                    if (item.name == field.name) {
+                                                                        newState.push(existingData)
+                                                                    } else {
+                                                                        newState.push(item)
+                                                                    }
+                                                                }
+
+                                                                setFieldItems(newState)
+
+                                                            } else {
+                                                                let arrayItems: FormFieldArray = {
+
+                                                                    name: field.name,
+                                                                    items: [{
+                                                                        name: `${field.name}_0`,
+                                                                        data: ''
+                                                                    }]
+                                                                }
+                                                                setFieldItems([...fieldItems, arrayItems])
+
+                                                            }
+                                                        }}>
+                                                            <LuPlus />
+                                                        </IconButton>
+                                                    </HStack>
+                                                    {arraysOfName.items.map((fieldItemData) => {
+                                                        return <Field label={fieldItemData.name} errorText={''}>
+                                                            <Input />
+
+                                                        </Field>
+                                                    })}
+                                                </Stack>
+
+                                            }
+
+                                            // For file inputs, we don't want to set the value prop
                                             return <Field label={field.label} errorText={''}>
                                                 <Input
                                                     borderRadius={"md"}
