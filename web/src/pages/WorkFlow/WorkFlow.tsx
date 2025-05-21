@@ -11,8 +11,7 @@ import {
     Heading,
     Stack,
     Grid,
-    GridItem,
-    Center
+    GridItem
 } from '@chakra-ui/react';
 import { Timeline } from "@chakra-ui/react"
 // import { Card } from '@chakra-ui/react';
@@ -25,138 +24,109 @@ import { SignaturePosition, SummaryDetailsDisplayData, WorkFlowTimeLine } from '
 import Aquafier, { AquaTree, AquaTreeWrapper, FileObject, getAquaTreeFileObject, getGenesisHash, OrderRevisionInAquaTree, Revision } from 'aqua-js-sdk';
 import { convertTemplateNameToTitle, dummyCredential, ensureDomainUrlHasSSL, estimateFileSize, fetchFiles, isAquaTree, isWorkFlowData, timeToHumanFriendly, getHighestFormIndex, getFileName, getFileHashFromUrl, fetchFileData, isArrayBufferText } from '../../utils/functions';
 import { PDFJSViewer } from 'pdfjs-react-viewer';
-import PdfSigner, { SimpleSignatureOverlay } from '../PdfSigner';
+import PdfSigner, { PDFDisplayWithJustSimpleOverlay } from '../PdfSigner';
 import { toaster } from '../../components/chakra-ui/toaster';
 import axios from 'axios';
 import { ApiFileInfo } from '../../models/FileInfo';
 import SignatureItem from '../../components/pdf/SignatureItem';
-import { useColorMode } from '../../components/chakra-ui/color-mode';
 // import { file } from 'jszip';
 import { useNavigate } from 'react-router-dom';
 import { LuCheck, LuPackage, LuShip } from 'react-icons/lu';
 import { IDrawerStatus, VerificationHashAndResult } from '../../models/AquaTreeDetails';
 import { ItemDetail } from '../../components/ItemDetails';
 
-export default function WorkFlowPage() {
-    const [activeStep, setActiveStep] = useState(1);
-    const [timeLineTitle, setTimeLineTitle] = useState("");
-    const [error, setError] = useState("");
-    // const [aquaTreeVerificationWithStatuses, setAquaTreeVerificationWithStatuses] = useState<Array<RevisionVerificationStatus>>([]);
-
+const ContractSummaryView = () => {
     const [verificationResults, setVerificationResults] = useState<VerificationHashAndResult[]>([])
     const [isProcessing, setIsProcessing] = useState(false)
+    // let firstRevisionHash = selectedFileInfo
+    const { selectedFileInfo, apiFileData, setApiFileData, session } = useStore(appStore)
 
-    const [timeLineItems, setTimeLineItems] = useState<Array<WorkFlowTimeLine>>([]);
-    const { selectedFileInfo, setSelectedFileInfo, formTemplates, session, backend_url, setFiles, apiFileData, setApiFileData } = useStore(appStore);
-    const { colorMode } = useColorMode();
-    const [currentPage, setCurrentPage] = useState(1);
-    const [submittingSignatureData, setSubmittingSignatureData] = useState(false);
+    const getSignatureRevionHashes = (hashesToLoopPar: Array<string>): Array<SummaryDetailsDisplayData> => {
 
-    const navigate = useNavigate()
+        const signatureRevionHashes: Array<SummaryDetailsDisplayData> = []
 
 
-    async function loadTimeline() {
-        let items: Array<WorkFlowTimeLine> = []
-
-        let index = 0;
-        for (const [hash, revision] of Object.entries(selectedFileInfo!.aquaTree!.revisions!!)) {
-            console.log(`Hash ${hash} Revision ${JSON.stringify(revision)}`)
+        for (let i = 0; i < hashesToLoopPar.length; i += 3) {
 
 
-            if (index == 1) {
-                // Get the first two elements
-                items.push({
-                    id: 1,
-                    completed: true,
-                    content: genesisContent(),
-                    icon: FaUser,
-                    revisionHash: "",
-                    title: "Contract Creation"
-                })
-            }
-
-            if (index == 2 || index == 4) {
-                let titleData = getTitleToDisplay(index)
-                let iconData = getIconToDisplay(index)
-                let contentData = await getContentToDisplay(index)
+            const batch = hashesToLoopPar.slice(i, i + 3);
+            console.log(`Processing batch ${i / 3 + 1}:`, batch);
 
 
-                // let isVerified = aquaTreeVerificationWithStatuses.find((e) => e.revisionHash == hash)
+            let signaturePositionCount = 0
+            let hashSigPosition = batch[0] ?? ""
+            let hashSigRev = batch[1] ?? ""
+            let hashSigMetamak = batch[2] ?? ""
+
+            if (hashSigPosition.length > 0) {
+                let allAquaTrees = selectedFileInfo?.fileObject.filter((e) => isAquaTree(e.fileContent))
+
+                let hashSigPositionHashString = selectedFileInfo!.aquaTree!.revisions[hashSigPosition].link_verification_hashes![0];
+
+                if (allAquaTrees) {
+                    for (let anAquaTree of allAquaTrees) {
+                        let allHashes = Object.keys(anAquaTree)
+                        if (allHashes.includes(hashSigPositionHashString)) {
+
+                            let aquaTreeData = anAquaTree.fileContent as AquaTree
+                            let revData = aquaTreeData.revisions[hashSigPositionHashString]
+                            signaturePositionCount = getHighestFormIndex(revData)
+
+                            break
+                        }
+                    }
 
 
-                items.push({
-                    id: index,
-                    completed: false,
-                    content: contentData,
-                    icon: iconData,
-                    revisionHash: hash,
-                    title: titleData
-                })
+                }
 
             }
+            let data: SummaryDetailsDisplayData = {
+                revisionHashWithSignaturePositionCount: signaturePositionCount,
+                revisionHashWithSignaturePosition: hashSigPosition,
+                revisionHashWithSinatureRevision: hashSigRev,
+                revisionHashMetamask: hashSigMetamak,
+            }
 
+            signatureRevionHashes.push(data)
 
-            index += 1
         }
 
 
-        if (Object.values(selectedFileInfo!.aquaTree!.revisions).length == 7) {
-
-            let titleData5 = getTitleToDisplay(5)
-            let iconData5 = getIconToDisplay(5)
-            let contentData5 = await getContentToDisplay(5)
-
-            items.push({
-                id: 5,
-                completed: true,
-                content: contentData5,
-                icon: iconData5,
-                revisionHash: "",
-                title: titleData5
-            })
-        }
+        return signatureRevionHashes
+    }
 
 
+    const orderedTree = OrderRevisionInAquaTree(selectedFileInfo!.aquaTree!)
+    // console.log("File objects", orderedTree.file_index)
+    const revisions = orderedTree.revisions
+    const revisionHashes = Object.keys(revisions)
+
+    const firstHash: string = revisionHashes[0];
+    const firstRevision: Revision = selectedFileInfo!.aquaTree!.revisions[firstHash]
+
+    const pdfHash = revisionHashes[2];
+    const thirdRevision: Revision = selectedFileInfo!.aquaTree!.revisions[pdfHash]
+    let hashOfLinkedDocument = thirdRevision.link_verification_hashes![0]!
+    let fileName = selectedFileInfo!.aquaTree!.file_index[hashOfLinkedDocument]
 
 
-        // not signed by user 
-        if (Object.keys(selectedFileInfo!.aquaTree!.revisions!!).length == 4) {
-
-            let index4 = 4
-            let titleData4 = await getTitleToDisplay(index4)
-            let iconData4 = getIconToDisplay(index4)
-            let contentData4 = await getContentToDisplay(index4)
-
-            items.push({
-                id: 4,
-                completed: false,
-                content: contentData4,
-                icon: iconData4,
-                revisionHash: "",
-                title: titleData4
-            })
+    const creatorSignatureHash = revisionHashes[3];
+    const signatureRevision: Revision | undefined = selectedFileInfo!.aquaTree!.revisions[creatorSignatureHash]
 
 
+    let fourthItmeHashOnwards: string[] = [];
+    let signatureRevionHashes: Array<SummaryDetailsDisplayData> = []
 
-            let titleData5 = getTitleToDisplay(5)
-            let iconData5 = getIconToDisplay(5)
-            let contentData5 = await getContentToDisplay(5)
-
-            items.push({
-                id: 5,
-                completed: false,
-                content: contentData5,
-                icon: iconData5,
-                revisionHash: "",
-                title: titleData5
-            })
-        }
-
-
-
-        setTimeLineItems(items)
+    if (revisionHashes.length > 4) {
+        // remove the first 4 elements from the revision list 
+        fourthItmeHashOnwards = revisionHashes.slice(4);
+        // console.log(`revisionHashes  ${revisionHashes} --  ${typeof revisionHashes}`)
+        // console.log(`fourthItmeHashOnwards  ${fourthItmeHashOnwards}`)
+        signatureRevionHashes = getSignatureRevionHashes(fourthItmeHashOnwards)
+        // console.log(`signatureRevionHashes  ${JSON.stringify(signatureRevionHashes, null, 4)}`)
 
     }
+
 
     // Memoized display text function
     const displayBasedOnVerificationStatusText = (verificationResults: any) => {
@@ -300,7 +270,7 @@ export default function WorkFlowPage() {
 
                         if (data instanceof ArrayBuffer) {
                             if (isArrayBufferText(data)) {
-                                console.log("is array buffr text .....")
+                                // console.log("is array buffr text .....")
                                 fileItem.fileContent = new TextDecoder().decode(data);
                             } else {
                                 fileItem.fileContent = new Uint8Array(data);
@@ -323,7 +293,7 @@ export default function WorkFlowPage() {
                     revisionHash,
                     fileObjectVerifier
                 )
-                console.log("Hash: ", revisionHash, "\nResult", result)
+                // console.log("Hash: ", revisionHash, "\nResult", result)
                 return ({
                     hash: revisionHash,
                     isSuccessful: result.isOk()
@@ -332,7 +302,7 @@ export default function WorkFlowPage() {
 
             // Wait for all verifications to complete
             const allRevisionsVerificationsStatus = await Promise.all(verificationPromises);
-            console.log("allRevisionsVerificationsStatus", allRevisionsVerificationsStatus)
+            // console.log("allRevisionsVerificationsStatus", allRevisionsVerificationsStatus)
 
             // Update state and callback
             setVerificationResults(allRevisionsVerificationsStatus);
@@ -342,11 +312,236 @@ export default function WorkFlowPage() {
             _drawerStatus.colorLight = displayColorBasedOnVerificationStatusLight(allRevisionsVerificationsStatus);
             // callBack(_drawerStatus);
         } catch (error) {
-            console.error("Error verifying AquaTree revisions:", error);
+            // console.error("Error verifying AquaTree revisions:", error);
         } finally {
             setIsProcessing(false);
         }
     }
+
+    useEffect(() => {
+        if(selectedFileInfo){
+            verifyAquaTreeRevisions(selectedFileInfo)
+        }
+    }, [selectedFileInfo])
+
+
+    return <Timeline.Root >
+        <Timeline.Item>
+            <Timeline.Connector>
+                <Timeline.Separator />
+                <Timeline.Indicator>
+                    <LuShip />
+                </Timeline.Indicator>
+            </Timeline.Connector>
+            <Timeline.Content>
+                <Timeline.Title><Text textStyle="lg">Work flow created</Text></Timeline.Title>
+                <Timeline.Description>
+
+                    {signatureRevision ?
+                        <Text textStyle="md">
+                            User with address {signatureRevision.signature_wallet_address} , created the workflow at &nbsp;{timeToHumanFriendly(firstRevision.local_timestamp, true)}
+                        </Text>
+                        : <Alert status="error" title="" variant="solid"   >
+                            Creator Signature not detected
+                        </Alert>}
+                </Timeline.Description>
+                <Text textStyle="sm">
+                    Document <strong>{fileName}</strong>  was selected for signing
+                </Text>
+            </Timeline.Content>
+        </Timeline.Item>
+
+
+        {
+            signatureRevionHashes.length == 0 ? <Box
+                maxW="60%"
+                borderWidth="1px"
+                borderStyle="dotted"
+                borderColor="gray.300"
+                p={4}
+                marginTop={4}
+                borderRadius="md"
+            >
+                <Text textAlign="center">No signatures detected</Text>
+            </Box> : <>
+
+                {
+                    signatureRevionHashes.map((signatureRevionHasheItem) => {
+
+
+                        let singatureRevisionItem = selectedFileInfo!.aquaTree!.revisions[signatureRevionHasheItem.revisionHashMetamask]
+                        return <Timeline.Item>
+                            <Timeline.Connector>
+                                <Timeline.Separator minH="160px" />
+                                <Timeline.Indicator>
+                                    <LuCheck />
+                                </Timeline.Indicator>
+                            </Timeline.Connector>
+                            <Timeline.Content>
+                                <Timeline.Title textStyle="sm"><Text textStyle="lg">Signature detected</Text></Timeline.Title>
+                                <Timeline.Description> <Text textStyle="md"> User with address {singatureRevisionItem.signature_wallet_address}
+                                    signed the document {fileName}, &nbsp;
+                                    {signatureRevionHasheItem.revisionHashWithSignaturePositionCount > 1 ? <span>{signatureRevionHasheItem.revisionHashWithSignaturePositionCount} times</span> : <span>Once</span>}
+                                    &nbsp;  at   {timeToHumanFriendly(singatureRevisionItem.local_timestamp)} </Text>
+                                </Timeline.Description>
+                            </Timeline.Content>
+                        </Timeline.Item>
+                    })
+
+                }
+                {
+                    <Timeline.Item>
+                        <Timeline.Connector>
+                            <Timeline.Separator />
+                            <Timeline.Indicator>
+                                <LuPackage />
+                            </Timeline.Indicator>
+                        </Timeline.Connector>
+                        <Timeline.Content>
+                            <Timeline.Title textStyle="sm">Workflow Completed</Timeline.Title>
+                            <Timeline.Description>
+
+
+                                <Alert status={displayColorBasedOnVerificationAlert(verificationResults)} title={displayBasedOnVerificationStatusText(verificationResults)} />
+
+
+                                {/* {alertcontainsInvalidRevsion.length > 0 ?
+                                    <Alert status="error" title="" variant="solid"   >
+                                        Workflow is not valid
+                                    </Alert>
+
+                                    :
+                                    <Alert status="success" title="" variant="solid"   >
+                                        Workflow  validated succceffully
+                                    </Alert>
+
+                                } */}
+
+                            </Timeline.Description>
+                        </Timeline.Content>
+                    </Timeline.Item>
+                }
+            </>
+        }
+
+    </Timeline.Root>
+}
+
+export default function WorkFlowPage() {
+    const [activeStep, setActiveStep] = useState(1);
+    const [timeLineTitle, setTimeLineTitle] = useState("");
+    const [error, setError] = useState("");
+    const [timeLineItems, setTimeLineItems] = useState<Array<WorkFlowTimeLine>>([]);
+    const { selectedFileInfo, setSelectedFileInfo, formTemplates, session, backend_url, setFiles } = useStore(appStore);
+    const [submittingSignatureData, setSubmittingSignatureData] = useState(false);
+
+    const navigate = useNavigate()
+
+
+
+    async function loadTimeline() {
+        let items: Array<WorkFlowTimeLine> = []
+
+        let index = 0;
+        for (const [hash, revision] of Object.entries(selectedFileInfo!.aquaTree!.revisions!!)) {
+            console.log(`Hash ${hash} Revision ${JSON.stringify(revision)}`)
+
+
+            if (index == 1) {
+                // Get the first two elements
+                items.push({
+                    id: 1,
+                    completed: true,
+                    content: genesisContent(),
+                    icon: FaUser,
+                    revisionHash: "",
+                    title: "Contract Creation"
+                })
+            }
+
+            if (index == 2 || index == 4) {
+                let titleData = getTitleToDisplay(index)
+                let iconData = getIconToDisplay(index)
+                let contentData = await getContentToDisplay(index)
+
+
+                // let isVerified = aquaTreeVerificationWithStatuses.find((e) => e.revisionHash == hash)
+
+
+                items.push({
+                    id: index,
+                    completed: false,
+                    content: contentData,
+                    icon: iconData,
+                    revisionHash: hash,
+                    title: titleData
+                })
+
+            }
+
+
+            index += 1
+        }
+
+
+        if (Object.values(selectedFileInfo!.aquaTree!.revisions).length == 7) {
+
+            let titleData5 = getTitleToDisplay(5)
+            let iconData5 = getIconToDisplay(5)
+            let contentData5 = await getContentToDisplay(5)
+
+            items.push({
+                id: 5,
+                completed: true,
+                content: contentData5,
+                icon: iconData5,
+                revisionHash: "",
+                title: titleData5
+            })
+        }
+
+
+
+
+        // not signed by user 
+        if (Object.keys(selectedFileInfo!.aquaTree!.revisions!!).length == 4) {
+
+            let index4 = 4
+            let titleData4 = await getTitleToDisplay(index4)
+            let iconData4 = getIconToDisplay(index4)
+            let contentData4 = await getContentToDisplay(index4)
+
+            items.push({
+                id: 4,
+                completed: false,
+                content: contentData4,
+                icon: iconData4,
+                revisionHash: "",
+                title: titleData4
+            })
+
+
+
+            let titleData5 = getTitleToDisplay(5)
+            let iconData5 = getIconToDisplay(5)
+            let contentData5 = await getContentToDisplay(5)
+
+            items.push({
+                id: 5,
+                completed: false,
+                content: contentData5,
+                icon: iconData5,
+                revisionHash: "",
+                title: titleData5
+            })
+        }
+
+
+
+        setTimeLineItems(items)
+
+    }
+
 
 
     useEffect(() => {
@@ -373,48 +568,6 @@ export default function WorkFlowPage() {
 
             loadTimeline()
 
-
-            verifyAquaTreeRevisions(selectedFileInfo)
-
-
-            // let intialData: Array<RevisionVerificationStatus> = []
-            // for (const [hash, revision] of Object.entries(selectedFileInfo!.aquaTree!.revisions!!)) {
-            //     console.log(`Hash ${hash} Revision ${JSON.stringify(revision)}`)
-            //     intialData.push({
-            //         isVerified: false,
-            //         revision: revision,
-            //         revisionHash: hash,
-            //         verficationStatus: null,
-            //         logData: []
-            //     })
-            // }
-
-            // setAquaTreeVerificationWithStatuses(intialData)
-
-            // let aquafier = new Aquafier();
-
-            // // // loop verifying each revision
-            // for (const [hash, revision] of Object.entries(selectedFileInfo!.aquaTree!.revisions!!)) {
-            //     //self invoking function that is async
-            //     (async () => {
-
-            //         let verificationData = await aquafier.verifyAquaTreeRevision(selectedFileInfo!.aquaTree!, revision, hash, selectedFileInfo.fileObject);
-            //         // Update the item with matching hash in a functional manner
-            //         setAquaTreeVerificationWithStatuses(prevStatuses => {
-            //             return prevStatuses.map(status => {
-            //                 if (status.revisionHash === hash) {
-            //                     return {
-            //                         ...status,
-            //                         verficationStatus: verificationData.isOk() ? true : false, // assuming verificationData is boolean
-            //                         isVerified: true,
-            //                         logData: verificationData.isErr() ? verificationData.data : []
-            //                     };
-            //                 }
-            //                 return status;
-            //             });
-            //         });
-            //     })()
-            // }
         }
     }
 
@@ -551,7 +704,7 @@ export default function WorkFlowPage() {
                             width: revision.forms_width_0,
                             x: revision.forms_x_0,
                             y: revision.forms_y_0,
-                            page: 1,//revision.forms_page_0,
+                            page: revision.forms_page_0,//revision.forms_page_0,
                             name: "",
                             walletAddress: "",
                             image: ""
@@ -637,40 +790,7 @@ export default function WorkFlowPage() {
                             <Grid templateColumns="repeat(4, 1fr)">
                                 <GridItem colSpan={{ base: 12, md: 3 }}>
                                     {/* <PDFJSViewer pdfUrl={pdfUrl!} />  */}
-                                    <Box
-                                        position="relative"
-                                        border="1px solid"
-                                        borderColor={colorMode === "dark" ? "gray.800" : "gray.100"}
-                                        borderRadius="md"
-                                        py={"4"}
-                                    >
-                                        <Center>
-                                            <Box w={'fit-content'}>
-                                                <PDFJSViewer
-                                                    pdfUrl={pdfUrl!}
-                                                    onPageChange={(page) => {
-                                                        setCurrentPage(page)
-                                                    }}
-                                                />
-                                            </Box>
-                                        </Center>
-
-
-
-                                        {/* Signature overlays */}
-                                        {[signature_0_Position].map((position, index) => (
-                                            <>
-                                                {
-                                                    Number(currentPage) === Number(position.page) ? (
-                                                        <SimpleSignatureOverlay key={index} signature={position}
-                                                        />
-                                                    ) : (
-                                                        <>Found nothing to render</>
-                                                    )
-                                                }
-                                            </>
-                                        ))}
-                                    </Box>
+                                    <PDFDisplayWithJustSimpleOverlay pdfUrl={pdfUrl!} signatures={[signature_0_Position]} />
                                 </GridItem>
                                 <GridItem colSpan={{ base: 12, md: 1 }}>
                                     <Stack>
@@ -704,66 +824,11 @@ export default function WorkFlowPage() {
         }
 
         if (index == 5) {
-            return ContractSummaryView()
+            return <ContractSummaryView />
         }
 
         return <>..</>
 
-    }
-
-
-    const getSignatureRevionHashes = (hashesToLoopPar: Array<string>): Array<SummaryDetailsDisplayData> => {
-
-        const signatureRevionHashes: Array<SummaryDetailsDisplayData> = []
-
-
-        for (let i = 0; i < hashesToLoopPar.length; i += 3) {
-
-
-            const batch = hashesToLoopPar.slice(i, i + 3);
-            console.log(`Processing batch ${i / 3 + 1}:`, batch);
-
-
-            let signaturePositionCount = 0
-            let hashSigPosition = batch[0] ?? ""
-            let hashSigRev = batch[1] ?? ""
-            let hashSigMetamak = batch[2] ?? ""
-
-            if (hashSigPosition.length > 0) {
-                let allAquaTrees = selectedFileInfo?.fileObject.filter((e) => isAquaTree(e.fileContent))
-
-                let hashSigPositionHashString = selectedFileInfo!.aquaTree!.revisions[hashSigPosition].link_verification_hashes![0];
-
-                if (allAquaTrees) {
-                    for (let anAquaTree of allAquaTrees) {
-                        let allHashes = Object.keys(anAquaTree)
-                        if (allHashes.includes(hashSigPositionHashString)) {
-
-                            let aquaTreeData = anAquaTree.fileContent as AquaTree
-                            let revData = aquaTreeData.revisions[hashSigPositionHashString]
-                            signaturePositionCount = getHighestFormIndex(revData)
-
-                            break
-                        }
-                    }
-
-
-                }
-
-            }
-            let data: SummaryDetailsDisplayData = {
-                revisionHashWithSignaturePositionCount: signaturePositionCount,
-                revisionHashWithSignaturePosition: hashSigPosition,
-                revisionHashWithSinatureRevision: hashSigRev,
-                revisionHashMetamask: hashSigMetamak,
-            }
-
-            signatureRevionHashes.push(data)
-
-        }
-
-
-        return signatureRevionHashes
     }
 
     //aqua sign revision sequesn.
@@ -775,147 +840,7 @@ export default function WorkFlowPage() {
     // 5. link form with signature positions *100 -- form 
     // 6. link to signture aqua tree. == genesiis file break -- signature
     // 7. metamask sign -- signature
-    const ContractSummaryView = () => {
-
-        // let firstRevisionHash = selectedFileInfo
-
-
-        const orderedTree = OrderRevisionInAquaTree(selectedFileInfo!.aquaTree!)
-        console.log("File objects", orderedTree.file_index)
-        const revisions = orderedTree.revisions
-        const revisionHashes = Object.keys(revisions)
-
-        const firstHash: string = revisionHashes[0];
-        const firstRevision: Revision = selectedFileInfo!.aquaTree!.revisions[firstHash]
-
-        const pdfHash = revisionHashes[2];
-        const thirdRevision: Revision = selectedFileInfo!.aquaTree!.revisions[pdfHash]
-        let hashOfLinkedDocument = thirdRevision.link_verification_hashes![0]!
-        let fileName = selectedFileInfo!.aquaTree!.file_index[hashOfLinkedDocument]
-
-
-        const creatorSignatureHash = revisionHashes[3];
-        const signatureRevision: Revision | undefined = selectedFileInfo!.aquaTree!.revisions[creatorSignatureHash]
-
-
-        let fourthItmeHashOnwards: string[] = [];
-        let signatureRevionHashes: Array<SummaryDetailsDisplayData> = []
-
-        if (revisionHashes.length > 4) {
-            // remove the first 4 elements from the revision list 
-            fourthItmeHashOnwards = revisionHashes.slice(4);
-            console.log(`revisionHashes  ${revisionHashes} --  ${typeof revisionHashes}`)
-            console.log(`fourthItmeHashOnwards  ${fourthItmeHashOnwards}`)
-            signatureRevionHashes = getSignatureRevionHashes(fourthItmeHashOnwards)
-            console.log(`signatureRevionHashes  ${JSON.stringify(signatureRevionHashes, null, 4)}`)
-
-        }
-
-
-        return <Timeline.Root >
-            <Timeline.Item>
-                <Timeline.Connector>
-                    <Timeline.Separator />
-                    <Timeline.Indicator>
-                        <LuShip />
-                    </Timeline.Indicator>
-                </Timeline.Connector>
-                <Timeline.Content>
-                    <Timeline.Title><Text textStyle="lg">Work flow created</Text></Timeline.Title>
-                    <Timeline.Description>
-
-                        {signatureRevision ?
-                            <Text textStyle="md">
-                                User with address {signatureRevision.signature_wallet_address} , created the workflow at &nbsp;{timeToHumanFriendly(firstRevision.local_timestamp, true)}
-                            </Text>
-                            : <Alert status="error" title="" variant="solid"   >
-                                Creator Signature not detected
-                            </Alert>}
-                    </Timeline.Description>
-                    <Text textStyle="sm">
-                        Document <strong>{fileName}</strong>  was selected for signing
-                    </Text>
-                </Timeline.Content>
-            </Timeline.Item>
-
-
-            {
-                signatureRevionHashes.length == 0 ? <Box
-                    maxW="60%"
-                    borderWidth="1px"
-                    borderStyle="dotted"
-                    borderColor="gray.300"
-                    p={4}
-                    marginTop={4}
-                    borderRadius="md"
-                >
-                    <Text textAlign="center">No signatures detected</Text>
-                </Box> : <>
-
-                    {
-                        signatureRevionHashes.map((signatureRevionHasheItem) => {
-
-
-                            let singatureRevisionItem = selectedFileInfo!.aquaTree!.revisions[signatureRevionHasheItem.revisionHashMetamask]
-                            return <Timeline.Item>
-                                <Timeline.Connector>
-                                    <Timeline.Separator minH="160px" />
-                                    <Timeline.Indicator>
-                                        <LuCheck />
-                                    </Timeline.Indicator>
-                                </Timeline.Connector>
-                                <Timeline.Content>
-                                    <Timeline.Title textStyle="sm"><Text textStyle="lg">Signature detected</Text></Timeline.Title>
-                                    <Timeline.Description> <Text textStyle="md"> User with address {singatureRevisionItem.signature_wallet_address}
-                                        signed the document {fileName}, &nbsp;
-                                        {signatureRevionHasheItem.revisionHashWithSignaturePositionCount > 1 ? <span>{signatureRevionHasheItem.revisionHashWithSignaturePositionCount} times</span> : <span>Once</span>}
-                                        &nbsp;  at   {timeToHumanFriendly(singatureRevisionItem.local_timestamp)} </Text>
-                                    </Timeline.Description>
-                                </Timeline.Content>
-                            </Timeline.Item>
-                        })
-
-                    }
-                    {
-                        <Timeline.Item>
-                            <Timeline.Connector>
-                                <Timeline.Separator />
-                                <Timeline.Indicator>
-                                    <LuPackage />
-                                </Timeline.Indicator>
-                            </Timeline.Connector>
-                            <Timeline.Content>
-                                <Timeline.Title textStyle="sm">Workflow Completed</Timeline.Title>
-                                <Timeline.Description>
-
-
-                                    <Alert status={displayColorBasedOnVerificationAlert(verificationResults)} title={displayBasedOnVerificationStatusText(verificationResults)} />
-
-
-                                    {/* {alertcontainsInvalidRevsion.length > 0 ?
-                                        <Alert status="error" title="" variant="solid"   >
-                                            Workflow is not valid
-                                        </Alert>
-
-                                        :
-                                        <Alert status="success" title="" variant="solid"   >
-                                            Workflow  validated succceffully
-                                        </Alert>
-
-                                    } */}
-
-                                </Timeline.Description>
-                            </Timeline.Content>
-                        </Timeline.Item>
-                    }
-                </>
-            }
-
-
-
-
-        </Timeline.Root>
-    }
+    
 
     const saveAquaTree = async (aquaTree: AquaTree, fileObject: FileObject, isFinal: boolean = false, isWorkflow: boolean = false, template_id: string): Promise<Boolean> => {
         try {

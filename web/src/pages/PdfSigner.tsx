@@ -94,14 +94,25 @@ export const SignatureOverlay = ({ position, currentPage, signatures, pdfMainCon
     );
 };
 
-export const SimpleSignatureOverlay = ({ signature }: { signature: { x: string, y: string, width: string, height: string, image: string, name: string, walletAddress: string } }) => {
+interface IQuickSignature { x: string,
+    y: string,
+    width: string,
+    height: string,
+    image: string,
+    name: string,
+    walletAddress: string,
+    page: string | number
+}
 
+export const SimpleSignatureOverlay = ({ signature }: { signature: IQuickSignature }) => {
+    const { colorMode } = useColorMode();
+    const isDarkMode = colorMode === "dark";
     return (
         <Box
             position="absolute"
             left={`${Number(signature.x) * 100}%`}
             top={`${(1 - Number(signature.y)) * 100}%`}
-            transform="translate(-50%, -50%)"
+            transform={`translate(-${Number(signature.width) * 50}%, -${Number(signature.height) * 50}%)`}
             backgroundSize="contain"
             backgroundRepeat="no-repeat"
             backgroundPosition="center"
@@ -110,14 +121,17 @@ export const SimpleSignatureOverlay = ({ signature }: { signature: { x: string, 
             overflow={"hidden"}
             _hover={{ boxShadow: "0 0 0 1px blue" }}
             style={{
-                width: `${Number(signature.width) * 100}%`,
-                height: `${Number(signature.height) * 100}%`,
+                // width: `${Number(signature.width) * 100}%`,
+                // height: `${Number(signature.height) * 100}%`,
                 backgroundColor: 'rgba(255, 255, 255, 0.9)',
                 padding: '4px',
-                borderRadius: '4px'
+                borderRadius: '4px',
+                boxShadow: "0 0 0 1px blue"
             }}
         >
-            <Stack gap={1} justifyContent={"flex-start"} height="100%">
+            <Stack gap={1} justifyContent={"flex-start"} height="100%" bg={isDarkMode ? "gray.800" : "gray.50"} borderRadius={"lg"} style={{
+                padding: "6px"
+            }}>
                 <Box
                     flex="1"
                     backgroundImage={`url(${signature.image})`}
@@ -126,9 +140,48 @@ export const SimpleSignatureOverlay = ({ signature }: { signature: { x: string, 
                     backgroundPosition="left"
                     minHeight="40px"
                 />
-                <Text fontSize="xs" color="gray.600" style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{signature.walletAddress}</Text>
-                <Text fontSize="xs" color="gray.600" style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{signature.name}</Text>
+                <Text fontSize="xs" color="gray.600">{signature.walletAddress}</Text>
+                <Text fontSize="xs" color="gray.600">{signature.name}</Text>
             </Stack>
+        </Box>
+    )
+}
+
+
+export const PDFDisplayWithJustSimpleOverlay = ({ pdfUrl, signatures }: { pdfUrl: string, signatures: IQuickSignature[] }) => {
+    const { colorMode } = useColorMode();
+    const [currentPage, setCurrentPage] = useState<number>(1);
+
+    return (
+        <Box
+            position="relative"
+            border="1px solid"
+            borderColor={colorMode === "dark" ? "gray.800" : "gray.100"}
+            borderRadius="md"
+            py={"4"}
+        >
+            <Center>
+                <Box w={'fit-content'}>
+                    <PDFJSViewer
+                        pdfUrl={pdfUrl}
+                        onPageChange={(page) => {
+                            setCurrentPage(page)
+                        }}
+                    />
+                </Box>
+            </Center>
+
+            {/* Signature overlays */}
+            {signatures.map((signature, index) => (
+                <>
+                    {
+                        Number(currentPage) === Number(signature.page) ? (
+                            <SimpleSignatureOverlay key={index} signature={signature}
+                            />
+                        ) : null
+                    }
+                </>
+            ))}
         </Box>
     )
 }
@@ -137,10 +190,10 @@ export const SimpleSignatureOverlay = ({ signature }: { signature: { x: string, 
 interface PdfSignerProps {
     file: File | null;
     submitSignature: (signaturePosition: SignaturePosition[], signAquaTree: ApiFileInfo[]) => Promise<void>
-    submittingSignatureData : boolean
+    submittingSignatureData: boolean
 }
 
-const PdfSigner: React.FC<PdfSignerProps> = ({ file, submitSignature , submittingSignatureData}) => {
+const PdfSigner: React.FC<PdfSignerProps> = ({ file, submitSignature, submittingSignatureData }) => {
 
     const { formTemplates, systemFileInfo } = useStore(appStore)
     // State for PDF document
@@ -943,7 +996,7 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ file, submitSignature , submittin
 
 
     // Component for signature display on PDF
-    
+
 
     const handlePageChange = (pageNumber: number, _totalPages: number) => {
         setCurrentPage(pageNumber);
@@ -1073,7 +1126,7 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ file, submitSignature , submittin
                     // Convert blob to base64 data URL
                     const dataUrl = await blobToDataURL(blob);
 
-                
+
 
                     // Add to signature
                     let sign: SignatureData = {
@@ -1430,7 +1483,7 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ file, submitSignature , submittin
                                 }}
                             >
                                 <FaCloudArrowUp />
-                                Sign document 
+                                Sign document
                             </Button>
                         </Stack>
                     </GridItem>
@@ -1491,12 +1544,12 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ file, submitSignature , submittin
                                     <FaUndo />
                                 </IconButton>
                                 <Button disabled={creatingUserSignature} colorScheme="blue" onClick={saveSignature}>
-                                    
+
 
                                     {creatingUserSignature ? <>
-                                                                                <Spinner size="inherit" color="inherit" />
-                                                                                loading
-                                                                            </> : <span>Save Signature</span>}
+                                        <Spinner size="inherit" color="inherit" />
+                                        loading
+                                    </> : <span>Save Signature</span>}
                                 </Button>
                             </HStack>
                         </Stack>

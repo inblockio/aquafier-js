@@ -8,11 +8,11 @@ import VersionAndDisclaimer from "./VersionAndDisclaimer"
 import { Link, useNavigate } from "react-router-dom"
 import AccountContracts from "./AccountContracts"
 import { Alert } from "../components/chakra-ui/alert"
-import { LuChevronDown, LuChevronUp, LuDelete, LuPlus, LuSquareChartGantt, LuTrash } from "react-icons/lu"
+import { LuChevronDown, LuChevronUp, LuPlus, LuSquareChartGantt, LuTrash } from "react-icons/lu"
 import { HiDocumentPlus } from "react-icons/hi2";
 import React, { useEffect, useState } from "react"
-import { estimateFileSize, dummyCredential, getAquaTreeFileName, getAquaTreeFileObject, getRandomNumber, fetchSystemFiles, isValidEthereumAddress, getHighestCount } from "../utils/functions"
-import { FormFieldArray, FormFieldArrayItems, FormTemplate } from "../components/aqua_forms/types"
+import { estimateFileSize, dummyCredential, getAquaTreeFileName, getAquaTreeFileObject, getRandomNumber, fetchSystemFiles, isValidEthereumAddress } from "../utils/functions"
+import { FormTemplate } from "../components/aqua_forms/types"
 import { Field } from '../components/chakra-ui/field';
 import Aquafier, { AquaTree, AquaTreeWrapper, FileObject } from "aqua-js-sdk"
 
@@ -63,7 +63,6 @@ const FormTemplateCard = ({ template, selectTemplateCallBack }: { template: Form
 }
 
 
-
 const Navbar = () => {
     const { colorMode } = useColorMode()
 
@@ -80,9 +79,21 @@ const Navbar = () => {
     const [formData, setFormData] = useState<Record<string, string | File | number>>({});
     const [selectedTemplate, setSelectedTemplate] = useState<FormTemplate | null>(null);
 
-    const [fieldItems, setFieldItems] = useState<Array<FormFieldArray>>([])
+    const [multipleAddresses, setMultipleAddresses] = useState<string[]>([])
 
     let navigate = useNavigate();
+
+    const addAddress = () => {
+        if (multipleAddresses.length === 0 && session?.address) {
+            setMultipleAddresses([...multipleAddresses, session.address, ""])
+        } else {
+            setMultipleAddresses([...multipleAddresses, ""])
+        }
+    }
+
+    const removeAddress = (index: number) => {
+        setMultipleAddresses(multipleAddresses.filter((_, i) => i !== index))
+    }
 
 
     const cancelRef = React.useRef<HTMLButtonElement>(null);
@@ -91,37 +102,51 @@ const Navbar = () => {
 
 
         try {
-
-            const unique_identifier = `${Date.now()}_${generateNonce()}`
-            // let genesisHash = getGenesisHash(aquaTree)
-
-            let allHashes = Object.keys(aquaTree.revisions);
-            let genesisHash = allHashes[0];
-            let latestHash = allHashes[allHashes.length - 1]
-
-            let url = `${backend_url}/share_data`;
-            let method = "POST"
-            let data = {
-                "latest": latestHash,
-                "genesis_hash": genesisHash,
-                "hash": unique_identifier,
-                "recipient": recipientWalletAddress,
-                "option": "latest"
+            let recipients: string[] = []
+            if(recipientWalletAddress.includes(", ")){
+                recipients = recipientWalletAddress.split(", ")
+                    .map((address) => address.trim())
+                    .filter((address) => address !== session?.address.trim())
+            }else{
+                // Only add the recipient if it's not the logged-in user
+                if(recipientWalletAddress.trim() !== session?.address.trim()) {
+                    recipients = [recipientWalletAddress.trim()]
+                } else {
+                    recipients = []
+                }
             }
 
+            for (let recipient of recipients) {
+                const unique_identifier = `${Date.now()}_${generateNonce()}`
+                // let genesisHash = getGenesisHash(aquaTree)
 
+                let allHashes = Object.keys(aquaTree.revisions);
+                let genesisHash = allHashes[0];
+                let latestHash = allHashes[allHashes.length - 1]
 
-            const response = await axios({
-                method,
-                url,
-                data,
-                headers: {
-                    'nonce': session?.nonce
+                let url = `${backend_url}/share_data`;
+                let method = "POST"
+                let data = {
+                    "latest": latestHash,
+                    "genesis_hash": genesisHash,
+                    "hash": unique_identifier,
+                    "recipient": recipient,
+                    "option": "latest"
                 }
-            });
 
 
-            console.log(`Response from share request  ${response.status}`)
+
+                const response = await axios({
+                    method,
+                    url,
+                    data,
+                    headers: {
+                        'nonce': session?.nonce
+                    }
+                });   
+                
+                console.log(`Response from share request  ${response.status}`)
+        }
         } catch (e) {
 
             toaster.create({
@@ -231,309 +256,322 @@ const Navbar = () => {
     const createWorkflowFromTemplate = async (e: React.FormEvent) => {
         e.preventDefault();
 
+        try {
 
-        if (submittingTemplateData) {
-            toaster.create({
-                description: `Data submission not completed, try again after some time.`,
-                type: "info"
-            })
-            return
-        }
-        setSubmittingTemplateData(true);
-        for (let fieldItem of selectedTemplate!.fields) {
-            let valueInput = formData[fieldItem.name]
-            console.log(`fieldItem ${JSON.stringify(fieldItem)} \n formData ${JSON.stringify(formData)} valueInput ${valueInput} `)
-            if (fieldItem.required && valueInput == undefined) {
-                setSubmittingTemplateData(false);
-                setModalFormErorMessae(`${fieldItem.name} is mandatory`)
+
+            if (submittingTemplateData) {
+                toaster.create({
+                    description: `Data submission not completed, try again after some time.`,
+                    type: "info"
+                })
                 return
             }
-
-            if (fieldItem.type === 'wallet_address') {
-                if (typeof valueInput === 'string') {
-                    if (valueInput.includes(",")) {
-                        let walletAddresses = valueInput.split(",");
-                        let seenWalletAddresses = new Set<string>();
-                        for (let walletAddress of walletAddresses) {
-                            let isValidWalletAddress = isValidEthereumAddress(walletAddress.trim())
-                            if (!isValidWalletAddress) {
-                                setModalFormErorMessae(`${walletAddress.trim()} is not a valid wallet adress`)
-
-                                setSubmittingTemplateData(false);
-                                return
-                            }
-                            if (seenWalletAddresses.has(walletAddress.trim())) {
-                                setModalFormErorMessae(`${walletAddress.trim()} is a duplicate wallet adress`)
-
-                                setSubmittingTemplateData(false);
-                                return
-                            }
-                            seenWalletAddresses.add(walletAddress.trim())
-                        }
-                    } else {
-                        let isValidWalletAddress = isValidEthereumAddress(valueInput.trim())
-                        if (!isValidWalletAddress) {
-
-                            setSubmittingTemplateData(false);
-                            setModalFormErorMessae(`${valueInput} is not a valid wallet adress`)
-                            return
-                        }
-                    }
-                } else {
-
+            setSubmittingTemplateData(true);
+            for (let fieldItem of selectedTemplate!.fields) {
+                let valueInput = formData[fieldItem.name]
+                console.log(`fieldItem ${JSON.stringify(fieldItem)} \n formData ${JSON.stringify(formData)} valueInput ${valueInput} `)
+                if (fieldItem.required && valueInput == undefined) {
                     setSubmittingTemplateData(false);
-                    setModalFormErorMessae(`${valueInput} provided at ${fieldItem.name} is not a string`)
+                    setModalFormErorMessae(`${fieldItem.name} is mandatory`)
                     return
                 }
-            }
 
-        }
+                if (fieldItem.type === 'wallet_address') {
+                    if (typeof valueInput === 'string') {
+                        if (valueInput.includes(",")) {
+                            let walletAddresses = valueInput.split(",");
+                            let seenWalletAddresses = new Set<string>();
+                            for (let walletAddress of walletAddresses) {
+                                let isValidWalletAddress = isValidEthereumAddress(walletAddress.trim())
+                                if (!isValidWalletAddress) {
+                                    setModalFormErorMessae(`${walletAddress.trim()} is not a valid wallet adress`)
 
+                                    setSubmittingTemplateData(false);
+                                    return
+                                }
+                                if (seenWalletAddresses.has(walletAddress.trim())) {
+                                    setModalFormErorMessae(`${walletAddress.trim()} is a duplicate wallet adress`)
 
-        if (systemFileInfo.length == 0) {
+                                    setSubmittingTemplateData(false);
+                                    return
+                                }
+                                seenWalletAddresses.add(walletAddress.trim())
+                            }
+                        } else {
+                            let isValidWalletAddress = isValidEthereumAddress(valueInput.trim())
+                            if (!isValidWalletAddress) {
 
-            setSubmittingTemplateData(false);
-            toaster.create({
-                description: `Aqua tree for templates not found`,
-                type: "error"
-            })
-            return
-        }
+                                setSubmittingTemplateData(false);
+                                setModalFormErorMessae(`${valueInput} is not a valid wallet adress`)
+                                return
+                            }
+                        }
+                    } else {
 
-
-        let templateApiFileInfo = systemFileInfo.find((e) => {
-            let nameExtract = getAquaTreeFileName(e!.aquaTree!);
-            let selectedName = `${selectedTemplate?.name}.json`
-            console.log(`nameExtract ${nameExtract} == selectedName ${selectedName}`)
-            return nameExtract == selectedName
-        })
-        if (!templateApiFileInfo) {
-
-            setSubmittingTemplateData(false);
-            toaster.create({
-                description: `Aqua tree for ${selectedTemplate?.name} not found`,
-                type: "error"
-            })
-            return
-        }
-
-        let aquafier = new Aquafier();
-        const filteredData: Record<string, string | number> = {};
-
-        Object.entries(formData).forEach(([key, value]) => {
-            // Only include values that are not File objects
-            if (!(value instanceof File)) {
-                filteredData[key] = value;
-            }
-        });
-
-
-        let estimateize = estimateFileSize(JSON.stringify(formData));
-
-
-
-        const jsonString = JSON.stringify(formData, null, 4);
-
-        const randomNumber = getRandomNumber(100, 1000);
-        const fileObject: FileObject = {
-            fileContent: jsonString,
-            fileName: `${selectedTemplate?.name ?? "template"}-${randomNumber}.json`,
-            path: './',
-            fileSize: estimateize
-        }
-        let genesisAquaTree = await aquafier.createGenesisRevision(fileObject, true, false, false)
-
-        if (genesisAquaTree.isOk()) {
-
-            // create a link revision with the systems aqua tree 
-            let mainAquaTreeWrapper: AquaTreeWrapper = {
-                aquaTree: genesisAquaTree.data.aquaTree!!,
-                revision: "",
-                fileObject: fileObject
-            }
-            let linkedAquaTreeFileObj = getAquaTreeFileObject(templateApiFileInfo);
-
-            if (!linkedAquaTreeFileObj) {
-
-                setSubmittingTemplateData(false);
-                toaster.create({
-                    description: `system Aqua tee has error`,
-                    type: "error"
-                })
-                return
-            }
-            let linkedToAquaTreeWrapper: AquaTreeWrapper = {
-                aquaTree: templateApiFileInfo.aquaTree!!,
-                revision: "",
-                fileObject: linkedAquaTreeFileObj
-            }
-            let linkedAquaTreeResponse = await aquafier.linkAquaTree(mainAquaTreeWrapper, linkedToAquaTreeWrapper)
-
-            if (linkedAquaTreeResponse.isErr()) {
-
-                setSubmittingTemplateData(false);
-                toaster.create({
-                    description: `Error linking aqua tree`,
-                    type: "error"
-                })
-                return
-            }
-
-            let aquaTreeData = linkedAquaTreeResponse.data.aquaTree!!
-
-            let containsFileData = selectedTemplate?.fields.filter((e) => e.type == "file" || e.type == "image")
-            if (containsFileData && containsFileData.length > 0) {
-
-                // for (let index = 0; index < containsFileData.length; index++) {
-                //     const element = containsFileData[index];
-                //     const file: File = formData[element['name']] as File
-
-                // Create an array to store all file processing promises
-                const fileProcessingPromises = containsFileData.map(async (element) => {
-                    const file: File = formData[element.name] as File;
-
-                    // Check if file exists
-                    if (!file) {
-                        console.warn(`No file found for field: ${element.name}`);
-                        return null;
-                    }
-
-                    try {
-                        // Convert File to Uint8Array
-                        const arrayBuffer = await file.arrayBuffer();
-                        const uint8Array = new Uint8Array(arrayBuffer);
-
-                        // Create the FileObject with properties from the File object
-                        const fileObjectPar: FileObject = {
-                            fileContent: uint8Array,
-                            fileName: file.name,
-                            path: "./",
-                            fileSize: file.size
-                        };
-
-                        return fileObjectPar;
-                        // After this you can use fileObjectPar with aquafier.createGenesisRevision() or other operations
-                    } catch (error) {
-                        console.error(`Error processing file ${file.name}:`, error);
-
-                        toaster.create({
-                            description: `Error processing file ${file.name}`,
-                            type: "error"
-                        })
                         setSubmittingTemplateData(false);
-                        return null;
+                        setModalFormErorMessae(`${valueInput} provided at ${fieldItem.name} is not a string`)
+                        return
                     }
-                });
+                }
 
-                // Wait for all file processing to complete
-                try {
-                    const fileObjects = await Promise.all(fileProcessingPromises);
-                    // Filter out null results (from errors)
-                    const validFileObjects = fileObjects.filter(obj => obj !== null) as FileObject[];
+            }
 
-                    // Now you can use validFileObjects
-                    console.log(`Processed ${validFileObjects.length} files successfully`);
 
-                    // Example usage with each file object:
-                    for (let item of validFileObjects) {
-                        let aquaTreeResponse = await aquafier.createGenesisRevision(item)
+            if (systemFileInfo.length == 0) {
 
-                        if (aquaTreeResponse.isErr()) {
-                            console.error("Error linking aqua tree:", aquaTreeResponse.data.toString());
+                setSubmittingTemplateData(false);
+                toaster.create({
+                    description: `Aqua tree for templates not found`,
+                    type: "error"
+                })
+                return
+            }
 
-                            setSubmittingTemplateData(false);
-                            toaster.create({
-                                title: 'Error  linking aqua',
-                                description: 'Error  linking aqua',
-                                type: 'error',
-                                duration: 5000,
-                            });
-                            return
-                        }
-                        // upload the single aqua tree 
-                        await saveAquaTree(aquaTreeResponse.data.aquaTree!!, item, false, true)
 
-                        // linke it to main aqua tree
-                        const aquaTreeWrapper: AquaTreeWrapper = {
-                            aquaTree: aquaTreeData,
-                            revision: "",
-                            fileObject: fileObject
-                        }
+            let templateApiFileInfo = systemFileInfo.find((e) => {
+                let nameExtract = getAquaTreeFileName(e!.aquaTree!);
+                let selectedName = `${selectedTemplate?.name}.json`
+                console.log(`nameExtract ${nameExtract} == selectedName ${selectedName}`)
+                return nameExtract == selectedName
+            })
+            if (!templateApiFileInfo) {
 
-                        const aquaTreeWrapper2: AquaTreeWrapper = {
-                            aquaTree: aquaTreeResponse.data.aquaTree!!,
-                            revision: "",
-                            fileObject: item
-                        }
+                setSubmittingTemplateData(false);
+                toaster.create({
+                    description: `Aqua tree for ${selectedTemplate?.name} not found`,
+                    type: "error"
+                })
+                return
+            }
 
-                        let res = await aquafier.linkAquaTree(aquaTreeWrapper, aquaTreeWrapper2)
-                        if (res.isErr()) {
-                            console.error("Error linking aqua tree:", aquaTreeResponse.data.toString());
+            let aquafier = new Aquafier();
+            const filteredData: Record<string, string | number> = {};
 
-                            setSubmittingTemplateData(false);
-                            toaster.create({
-                                title: 'Error  linking aqua',
-                                description: 'Error  linking aqua',
-                                type: 'error',
-                                duration: 5000,
-                            });
-                            return
-                        }
-                        aquaTreeData = res.data.aquaTree!!
+            Object.entries(formData).forEach(([key, value]) => {
+                // Only include values that are not File objects
+                if (!(value instanceof File)) {
+                    filteredData[key] = value;
+                }
+            });
 
-                    }
 
-                } catch (error) {
-                    console.error("Error processing files:", error);
+            let estimateize = estimateFileSize(JSON.stringify(formData));
+
+
+
+            const jsonString = JSON.stringify(formData, null, 4);
+
+            const randomNumber = getRandomNumber(100, 1000);
+            const fileObject: FileObject = {
+                fileContent: jsonString,
+                fileName: `${selectedTemplate?.name ?? "template"}-${randomNumber}.json`,
+                path: './',
+                fileSize: estimateize
+            }
+            let genesisAquaTree = await aquafier.createGenesisRevision(fileObject, true, false, false)
+
+            if (genesisAquaTree.isOk()) {
+
+                // create a link revision with the systems aqua tree 
+                let mainAquaTreeWrapper: AquaTreeWrapper = {
+                    aquaTree: genesisAquaTree.data.aquaTree!!,
+                    revision: "",
+                    fileObject: fileObject
+                }
+                let linkedAquaTreeFileObj = getAquaTreeFileObject(templateApiFileInfo);
+
+                if (!linkedAquaTreeFileObj) {
 
                     setSubmittingTemplateData(false);
                     toaster.create({
-                        title: 'Error proceessing files',
-                        description: 'Error proceessing files',
-                        type: 'error',
-                        duration: 5000,
-                    });
+                        description: `system Aqua tee has error`,
+                        type: "error"
+                    })
+                    return
+                }
+                let linkedToAquaTreeWrapper: AquaTreeWrapper = {
+                    aquaTree: templateApiFileInfo.aquaTree!!,
+                    revision: "",
+                    fileObject: linkedAquaTreeFileObj
+                }
+                let linkedAquaTreeResponse = await aquafier.linkAquaTree(mainAquaTreeWrapper, linkedToAquaTreeWrapper)
+
+                if (linkedAquaTreeResponse.isErr()) {
+
+                    setSubmittingTemplateData(false);
+                    toaster.create({
+                        description: `Error linking aqua tree`,
+                        type: "error"
+                    })
                     return
                 }
 
-            }
-            const aquaTreeWrapper: AquaTreeWrapper = {
-                aquaTree: aquaTreeData,
-                revision: "",
-                fileObject: fileObject
-            }
+                let aquaTreeData = linkedAquaTreeResponse.data.aquaTree!!
 
-            // sign the aqua chain
-            let signRes = await aquafier.signAquaTree(aquaTreeWrapper, "metamask", dummyCredential())
+                let containsFileData = selectedTemplate?.fields.filter((e) => e.type == "file" || e.type == "image")
+                if (containsFileData && containsFileData.length > 0) {
 
-            if (signRes.isErr()) {
-                setSubmittingTemplateData(false);
-                toaster.create({
-                    description: `Error signing failed`,
-                    type: "error"
-                })
-                return
-            } else {
-                console.log("signRes.data", signRes.data)
-                fileObject.fileContent = formData
-                await saveAquaTree(signRes.data.aquaTree!!, fileObject, true)
+                    // for (let index = 0; index < containsFileData.length; index++) {
+                    //     const element = containsFileData[index];
+                    //     const file: File = formData[element['name']] as File
+
+                    // Create an array to store all file processing promises
+                    const fileProcessingPromises = containsFileData.map(async (element) => {
+                        const file: File = formData[element.name] as File;
+
+                        // Check if file exists
+                        if (!file) {
+                            console.warn(`No file found for field: ${element.name}`);
+                            return null;
+                        }
+
+                        try {
+                            // Convert File to Uint8Array
+                            const arrayBuffer = await file.arrayBuffer();
+                            const uint8Array = new Uint8Array(arrayBuffer);
+
+                            // Create the FileObject with properties from the File object
+                            const fileObjectPar: FileObject = {
+                                fileContent: uint8Array,
+                                fileName: file.name,
+                                path: "./",
+                                fileSize: file.size
+                            };
+
+                            return fileObjectPar;
+                            // After this you can use fileObjectPar with aquafier.createGenesisRevision() or other operations
+                        } catch (error) {
+                            console.error(`Error processing file ${file.name}:`, error);
+
+                            toaster.create({
+                                description: `Error processing file ${file.name}`,
+                                type: "error"
+                            })
+                            setSubmittingTemplateData(false);
+                            return null;
+                        }
+                    });
+
+                    // Wait for all file processing to complete
+                    try {
+                        const fileObjects = await Promise.all(fileProcessingPromises);
+                        // Filter out null results (from errors)
+                        const validFileObjects = fileObjects.filter(obj => obj !== null) as FileObject[];
+
+                        // Now you can use validFileObjects
+                        console.log(`Processed ${validFileObjects.length} files successfully`);
+
+                        // Example usage with each file object:
+                        for (let item of validFileObjects) {
+                            let aquaTreeResponse = await aquafier.createGenesisRevision(item)
+
+                            if (aquaTreeResponse.isErr()) {
+                                console.error("Error linking aqua tree:", aquaTreeResponse.data.toString());
+
+                                setSubmittingTemplateData(false);
+                                toaster.create({
+                                    title: 'Error  linking aqua',
+                                    description: 'Error  linking aqua',
+                                    type: 'error',
+                                    duration: 5000,
+                                });
+                                return
+                            }
+                            // upload the single aqua tree 
+                            await saveAquaTree(aquaTreeResponse.data.aquaTree!!, item, false, true)
+
+                            // linke it to main aqua tree
+                            const aquaTreeWrapper: AquaTreeWrapper = {
+                                aquaTree: aquaTreeData,
+                                revision: "",
+                                fileObject: fileObject
+                            }
+
+                            const aquaTreeWrapper2: AquaTreeWrapper = {
+                                aquaTree: aquaTreeResponse.data.aquaTree!!,
+                                revision: "",
+                                fileObject: item
+                            }
+
+                            let res = await aquafier.linkAquaTree(aquaTreeWrapper, aquaTreeWrapper2)
+                            if (res.isErr()) {
+                                console.error("Error linking aqua tree:", aquaTreeResponse.data.toString());
+
+                                setSubmittingTemplateData(false);
+                                toaster.create({
+                                    title: 'Error  linking aqua',
+                                    description: 'Error  linking aqua',
+                                    type: 'error',
+                                    duration: 5000,
+                                });
+                                return
+                            }
+                            aquaTreeData = res.data.aquaTree!!
+
+                        }
+
+                    } catch (error) {
+                        console.error("Error processing files:", error);
+
+                        setSubmittingTemplateData(false);
+                        toaster.create({
+                            title: 'Error proceessing files',
+                            description: 'Error proceessing files',
+                            type: 'error',
+                            duration: 5000,
+                        });
+                        return
+                    }
+
+                }
+                const aquaTreeWrapper: AquaTreeWrapper = {
+                    aquaTree: aquaTreeData,
+                    revision: "",
+                    fileObject: fileObject
+                }
+
+                // sign the aqua chain
+                let signRes = await aquafier.signAquaTree(aquaTreeWrapper, "metamask", dummyCredential())
+
+                if (signRes.isErr()) {
+                    setSubmittingTemplateData(false);
+                    toaster.create({
+                        description: `Error signing failed`,
+                        type: "error"
+                    })
+                    return
+                } else {
+                    console.log("signRes.data", signRes.data)
+                    fileObject.fileContent = formData
+                    await saveAquaTree(signRes.data.aquaTree!!, fileObject, true)
 
 
-                // 
-                if (formData['signers'] != session?.address) {
+                    // 
+                    if (formData['signers'] != session?.address) {
 
-                    await shareAquaTree(signRes.data.aquaTree!!, formData['signers'] as string)
+                        await shareAquaTree(signRes.data.aquaTree!!, formData['signers'] as string)
+
+                    }
 
                 }
 
+            } else {
+                setSubmittingTemplateData(false);
+
+                toaster.create({
+                    title: 'Error creating Aqua tree from template',
+                    description: 'Error creating Aqua tree from template',
+                    type: 'error',
+                    duration: 5000,
+                });
             }
+        }
+        catch (error: any) {
 
-        } else {
             setSubmittingTemplateData(false);
-
             toaster.create({
                 title: 'Error creating Aqua tree from template',
-                description: 'Error creating Aqua tree from template',
+                description: error?.message ?? 'Unknown error',
                 type: 'error',
                 duration: 5000,
             });
@@ -545,6 +583,7 @@ const Navbar = () => {
         const systemFiles = await fetchSystemFiles(url3, session?.address ?? "")
         setSystemFileInfo(systemFiles)
     }
+
     const loadTemplates = async () => {
         try {
             // const loadedTemplates = getFormTemplates();
@@ -606,6 +645,21 @@ const Navbar = () => {
             loadTemplatesAquaTrees();
         }
     }, [backend_url, session]);
+
+    useEffect(() => {
+        if (selectedTemplate && selectedTemplate.name === "aqua_sign" && session?.address) {
+            setMultipleAddresses([session.address])
+        }
+    }, [selectedTemplate])
+
+    useEffect(() => {
+        if (selectedTemplate && selectedTemplate.name === "aqua_sign" && multipleAddresses.length > 0) {
+            setFormData((formData) => {
+                formData["signers"] = multipleAddresses.join(",")
+                return formData
+            })
+        }
+    }, [multipleAddresses])
 
 
     return (
@@ -680,13 +734,11 @@ const Navbar = () => {
             </Box>
 
             <DialogRoot size={{ md: 'lg', smDown: 'full' }} placement={'top'} open={open}
-            //  onOpenChange={e => {
-            //     if (!e.open) {
-            //         closeDialog()
-            //     } else {
-            //         setOpen(e.open)
-            //     }
-            // }}
+                onOpenChange={(e) => {
+                    if (!e.open) {
+                        setMultipleAddresses([])
+                    }
+                }}
             >
                 <DialogContent borderRadius={{ base: 0, md: 'xl' }}>
                     <DialogHeader py={"3"} px={"5"}>
@@ -715,135 +767,49 @@ const Navbar = () => {
 
                                             const isFileInput = field.type === 'file' || field.type === 'image';
 
-                                            // @dalmas
-                                            // todo uncmment me
-                                            /*
                                             if (field.is_array) {
 
-                                                if (isFileInput) {
-                                                    return <Alert status="error" title="An error occured">
-                                                        Multiple File widgets not supported
-                                                    </Alert>
-                                                }
-
-                                                let arrayItem0: FormFieldArray = {
-
-                                                    name: field.name,
-                                                    items: [
-                                                    //     {
-                                                    //     name: `${field.name}_1`,
-                                                    //     data: ''
-                                                    // }
-                                                ]
-                                                }
-
-                                                let arraysOfName = fieldItems.find((e) => e.name == field.name)
-                                                if (!arraysOfName) {
-
-                                                    let data = [...fieldItems, arrayItem0]
-                                                    setFieldItems(data)
-                                                    arraysOfName = arrayItem0
-                                                }
                                                 return <Stack >
-                                                    <HStack alignItems={'flex-end'}>
-                                                        <Field label={field.label} errorText={''}>
-                                                            <Input name={`${field.name}_1`} onChange={(e) => {
-                                                                const text = e.target.value
-
-                                                                if (text.includes(',')) {
-                                                                    toaster.create({
-                                                                        description: ` character ',' not allowed in input`,
-                                                                        type: "error"
-                                                                    })
-                                                                    return;
-
-                                                                }
-                                                                let newData = arraysOfName.items.map((e) => {
-                                                                    if (e.name == `${field.name}_1`) {
-                                                                        e.data = text
-                                                                    }
-                                                                    return e
-                                                                })
-
-
-                                                                setFieldItems((state: FormFieldArray[]) => {
-                                                                    let newState: FormFieldArray[] = [];
-                                                                    for (let item of state) {
-                                                                        if (item.name == field.name) {
-                                                                            newState.push({
-                                                                                name: item.name,
-                                                                                items: newData
-                                                                            })
-                                                                        } else {
-                                                                            newState.push(item)
-                                                                        }
-                                                                    }
-                                                                    return newState
-
-                                                                })
-
-                                                            }} />
-
-                                                        </Field>
-                                                        <IconButton aria-label="Search database" onClick={(e) => {
-                                                            e.preventDefault()
-
-                                                            let existingData = fieldItems.find((e) => e.name == field.name)
-
-                                                            if (existingData) {
-                                                                let namesWithCounter = existingData.items.map((e) => e.name)
-                                                                let findLargestCount = getHighestCount(namesWithCounter)
-
-                                                                existingData.items.push({
-                                                                    name: `${field.name}_${findLargestCount + 1}`,
-                                                                    data: ''
-                                                                })
-
-                                                                let newState: Array<FormFieldArray> = []
-                                                                for (let item of fieldItems) {
-
-                                                                    if (item.name == field.name) {
-                                                                        newState.push(existingData)
-                                                                    } else {
-                                                                        newState.push(item)
-                                                                    }
-                                                                }
-
-                                                                setFieldItems(newState)
-
-                                                            } else {
-                                                                let arrayItems: FormFieldArray = {
-
-                                                                    name: field.name,
-                                                                    items: [{
-                                                                        name: `${field.name}_0`,
-                                                                        data: ''
-                                                                    }]
-                                                                }
-                                                                setFieldItems([...fieldItems, arrayItems])
-
-                                                            }
-                                                        }}>
+                                                    <HStack alignItems={'flex-end'} justify={'space-between'}>
+                                                        <Text fontSize={"lg"}>{field.label}</Text>
+                                                        {/* Add a new address input */}
+                                                        <IconButton aria-label="Add Address" size={"sm"} borderRadius={"lg"} onClick={addAddress}>
                                                             <LuPlus />
                                                         </IconButton>
                                                     </HStack>
-                                                    {arraysOfName.items.map((fieldItemData) => {
-                                                        return <HStack alignItems={'flex-end'}>
-                                                            <Field label={fieldItemData.name} errorText={''}>
-                                                                <Input />
-
-                                                            </Field>
-                                                            <IconButton aria-label="Search database" onClick={(e) => {
-
-                                                            }}>
-                                                                <LuTrash />
-                                                            </IconButton>
-                                                        </HStack>
-                                                    })}
+                                                    {/* Display all addresses and ability to update them through input */}
+                                                    {
+                                                        multipleAddresses.map((address, index) => {
+                                                            return <HStack alignItems={'flex-end'}>
+                                                                <Field>
+                                                                    <HStack w={"full"}>
+                                                                        <Text fontSize={"lg"}>{index + 1}. </Text>
+                                                                        <Box flex={1}>
+                                                                            <Input
+                                                                                // disabled={session?.address === address}
+                                                                                borderRadius={"lg"} value={address} onChange={(ev) => {
+                                                                                    let newData = multipleAddresses.map((e, i) => {
+                                                                                        if (i == index) {
+                                                                                            return ev.target.value
+                                                                                        }
+                                                                                        return e
+                                                                                    })
+                                                                                    setMultipleAddresses(newData)
+                                                                                }} size={"sm"} />
+                                                                        </Box>
+                                                                    </HStack>
+                                                                </Field>
+                                                                {/* Remove address given index */}
+                                                                <IconButton aria-label="Remove address" size={"sm"} borderRadius={"lg"} onClick={() => removeAddress(index)}>
+                                                                    <LuTrash />
+                                                                </IconButton>
+                                                            </HStack>
+                                                        })
+                                                    }
                                                 </Stack>
 
                                             }
-*/
+
                                             // For file inputs, we don't want to set the value prop
                                             return <Field label={field.label} errorText={''}>
                                                 <Input
