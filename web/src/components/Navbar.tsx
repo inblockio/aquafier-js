@@ -8,7 +8,7 @@ import VersionAndDisclaimer from "./VersionAndDisclaimer"
 import { Link, useNavigate } from "react-router-dom"
 import AccountContracts from "./AccountContracts"
 import { Alert } from "../components/chakra-ui/alert"
-import { LuChevronDown, LuChevronUp, LuPlus, LuSquareChartGantt } from "react-icons/lu"
+import { LuChevronDown, LuChevronUp, LuDelete, LuPlus, LuSquareChartGantt, LuTrash } from "react-icons/lu"
 import { HiDocumentPlus } from "react-icons/hi2";
 import React, { useEffect, useState } from "react"
 import { estimateFileSize, dummyCredential, getAquaTreeFileName, getAquaTreeFileObject, getRandomNumber, fetchSystemFiles, isValidEthereumAddress, getHighestCount } from "../utils/functions"
@@ -715,6 +715,9 @@ const Navbar = () => {
 
                                             const isFileInput = field.type === 'file' || field.type === 'image';
 
+                                            // @dalmas
+                                            // todo uncmment me
+                                            /*
                                             if (field.is_array) {
 
                                                 if (isFileInput) {
@@ -726,10 +729,12 @@ const Navbar = () => {
                                                 let arrayItem0: FormFieldArray = {
 
                                                     name: field.name,
-                                                    items: [{
-                                                        name: `${field.name}_1`,
-                                                        data: ''
-                                                    }]
+                                                    items: [
+                                                    //     {
+                                                    //     name: `${field.name}_1`,
+                                                    //     data: ''
+                                                    // }
+                                                ]
                                                 }
 
                                                 let arraysOfName = fieldItems.find((e) => e.name == field.name)
@@ -744,14 +749,37 @@ const Navbar = () => {
                                                         <Field label={field.label} errorText={''}>
                                                             <Input name={`${field.name}_1`} onChange={(e) => {
                                                                 const text = e.target.value
-                                                                let newData = arraysOfName.items.map((e)=> {
-                                                                    if(e.name==`${field.name}_1`){
+
+                                                                if (text.includes(',')) {
+                                                                    toaster.create({
+                                                                        description: ` character ',' not allowed in input`,
+                                                                        type: "error"
+                                                                    })
+                                                                    return;
+
+                                                                }
+                                                                let newData = arraysOfName.items.map((e) => {
+                                                                    if (e.name == `${field.name}_1`) {
                                                                         e.data = text
                                                                     }
                                                                     return e
                                                                 })
-                                                                setFieldItems((item)=>{
-                                                                    //
+
+
+                                                                setFieldItems((state: FormFieldArray[]) => {
+                                                                    let newState: FormFieldArray[] = [];
+                                                                    for (let item of state) {
+                                                                        if (item.name == field.name) {
+                                                                            newState.push({
+                                                                                name: item.name,
+                                                                                items: newData
+                                                                            })
+                                                                        } else {
+                                                                            newState.push(item)
+                                                                        }
+                                                                    }
+                                                                    return newState
+
                                                                 })
 
                                                             }} />
@@ -800,15 +828,22 @@ const Navbar = () => {
                                                         </IconButton>
                                                     </HStack>
                                                     {arraysOfName.items.map((fieldItemData) => {
-                                                        return <Field label={fieldItemData.name} errorText={''}>
-                                                            <Input />
+                                                        return <HStack alignItems={'flex-end'}>
+                                                            <Field label={fieldItemData.name} errorText={''}>
+                                                                <Input />
 
-                                                        </Field>
+                                                            </Field>
+                                                            <IconButton aria-label="Search database" onClick={(e) => {
+
+                                                            }}>
+                                                                <LuTrash />
+                                                            </IconButton>
+                                                        </HStack>
                                                     })}
                                                 </Stack>
 
                                             }
-
+*/
                                             // For file inputs, we don't want to set the value prop
                                             return <Field label={field.label} errorText={''}>
                                                 <Input

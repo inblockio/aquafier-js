@@ -35,6 +35,7 @@ import { useColorMode } from '../../components/chakra-ui/color-mode';
 import { useNavigate } from 'react-router-dom';
 import { LuCheck, LuPackage, LuShip } from 'react-icons/lu';
 import { IDrawerStatus, VerificationHashAndResult } from '../../models/AquaTreeDetails';
+import { ItemDetail } from '../../components/ItemDetails';
 
 export default function WorkFlowPage() {
     const [activeStep, setActiveStep] = useState(1);
@@ -1580,14 +1581,30 @@ export default function WorkFlowPage() {
 
 
 
+
     const genesisContent = () => {
         const orderedTree = OrderRevisionInAquaTree(selectedFileInfo!.aquaTree!)
         const revisions = orderedTree.revisions
         const revisionHashes = Object.keys(revisions)
         const revision = revisions[revisionHashes[0]]
+        let contractCreatorAddress = "";
+        let creatorSignatureRevision = revisions[revisionHashes[3]] // fourth revision
+        if (creatorSignatureRevision.revision_type == "signature") {
+            contractCreatorAddress = creatorSignatureRevision.signature_wallet_address ?? ""
+        }
         return (
             <Stack>
-                <Text>A contract has been shared with you to sign. If you accept the contract, you will be able to sign it.</Text>
+                {contractCreatorAddress == session?.address ?
+                    <Text>Your wallet address  created this workflow wallet  address </Text> : <>
+
+                        <ItemDetail label="Wallet address:"
+                            displayValue={contractCreatorAddress}
+                            value={contractCreatorAddress} showCopyIcon={true}
+                        />
+                        <Text>{contractCreatorAddress} created the workflow</Text>
+                    </>
+                }
+                <Text>Creation date {timeToHumanFriendly(revision.local_timestamp, true)}</Text>
                 <Text>Contract Name: {selectedFileInfo!.aquaTree!.file_index[revisionHashes[0]]}</Text>
                 <Heading size="md" fontWeight={700}>All signers</Heading>
                 {

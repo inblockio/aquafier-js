@@ -1,7 +1,10 @@
 import { useEffect, useState } from "react";
+import { copyToClipboardModern } from "../utils/functions";
+
+import { toaster } from "../components/chakra-ui/toaster";
 import { DialogBody, DialogCloseTrigger, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "./chakra-ui/dialog";
-import { Circle, Dialog, Float, HStack, IconButton, Stack, Text } from "@chakra-ui/react";
-import { LuLink2, LuShare2 } from "react-icons/lu";
+import { Circle, Dialog, Float, HStack, IconButton, Span, Stack, Text } from "@chakra-ui/react";
+import { LuCopy,  LuShare2 } from "react-icons/lu";
 import { useStore } from 'zustand'
 import appStore from '../store'
 import axios from "axios";
@@ -69,9 +72,34 @@ export default function AccountContracts({ inline, open, updateOpenStatus }: IAc
                                     <Text flex={1} wordBreak={'break-word'}>{contract.sender}</Text>
                                     <Link to={`/share/${contract.hash}`}>
                                         <IconButton onClick={() => { updateOpenStatus?.(false) }}>
-                                            <LuLink2 />
+                                            <svg stroke="currentColor" fill="currentColor" stroke-width="0" viewBox="0 0 24 24" height="200px" width="200px" xmlns="http://www.w3.org/2000/svg"><path fill="none" d="M0 0h24v24H0z"></path><path d="M19 19H5V5h7V3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14c1.1 0 2-.9 2-2v-7h-2v7zM14 3v2h3.59l-9.83 9.83 1.41 1.41L19 6.41V10h2V3h-7z"></path></svg>
+
                                         </IconButton>
                                     </Link>
+                                    <IconButton onClick={async () => {
+                                        let res = await copyToClipboardModern(`${window.location.href}/share/${contract.hash}`)
+                                        if (res) {
+
+                                            toaster.create({
+                                                title: "Link copied ot clipoboard",
+                                                description: "",
+                                                type: "success",
+                                                duration: 3000,
+                                                // placement: "bottom-end"
+                                            });
+                                        } else {
+
+                                            toaster.create({
+                                                description: `Error witnessing failed`,
+                                                type: "error"
+                                            })
+                                        }
+                                    }}>
+                                        <Stack>
+                                            <LuCopy size={12} title="copy" />
+                                            {/* <Span fontSize={'x-small'} padding={0} mt={0}>copy</Span> */}
+                                        </Stack>
+                                    </IconButton>
                                 </HStack>
                             ))}
                         </Stack>

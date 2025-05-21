@@ -8,6 +8,17 @@ import Aquafier, { AquaTree, CredentialsData, FileObject, OrderRevisionInAquaTre
 import jdenticon from "jdenticon/standalone";
 
 
+export const copyToClipboardModern = async (text: string) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      console.log('Text copied to clipboard');
+      return true;
+    } catch (err) {
+      console.error('Failed to copy text: ', err);
+      return false;
+    }
+  };
+
 export const fetchFileData = async (url: string, nonce: string): Promise<string | ArrayBuffer | null> => {
     try {
         const actualUrlToFetch = ensureDomainUrlHasSSL(url);
@@ -1037,8 +1048,6 @@ export function isDeepLinkRevision(aquaTree: AquaTree, revisionHash: string): bo
 
 
 }
-
-
 
 export function fetchLinkedFileName(aquaTree: AquaTree, revision: Revision): string {
     if (revision.link_verification_hashes == undefined) {
