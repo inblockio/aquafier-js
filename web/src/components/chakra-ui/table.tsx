@@ -20,10 +20,11 @@ import { Alert } from "./alert"
 import { ApiFileInfo } from "../../models/FileInfo"
 import ShareButtonAction from "../actions/ShareButtonAction"
 import { DrawerActionTrigger, DrawerBackdrop, DrawerBody, DrawerContent, DrawerFooter, DrawerRoot, DrawerTitle } from "./drawer"
-import { LuPower, LuX } from "react-icons/lu"
+import { LuX } from "react-icons/lu"
 import { IDrawerStatus } from "../../models/AquaTreeDetails"
 import { FileObject } from "aqua-js-sdk"
 import { useNavigate } from "react-router-dom"
+import { FaFileExport } from "react-icons/fa6"
 
 
 const FilesTable = () => {
@@ -58,12 +59,12 @@ const FilesTable = () => {
         if (isWorkFlow) {
             if (workFlow == "aqua_sign.json" || workFlow == "aqua_sign") {
                 return <>
-                    <Button size={'xs'} colorPalette={'cyan'} variant={'subtle'} w={'200px'} onClick={(e) => {
+                    <Button size={'xs'} colorPalette={'cyan'} variant={'subtle'} w={'208px'} onClick={(e) => {
                         e.preventDefault();
                         setSelectedFileInfo(item)
                         navigate("/workflow")
                     }} >
-                        <LuPower />
+                        <FaFileExport />
                         Open Workflow
                     </Button>
                     <ShareButtonAction nonce={session?.nonce ?? ""} item={item} />
