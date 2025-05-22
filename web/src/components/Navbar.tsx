@@ -8,11 +8,11 @@ import VersionAndDisclaimer from "./VersionAndDisclaimer"
 import { Link, useNavigate } from "react-router-dom"
 import AccountContracts from "./AccountContracts"
 import { Alert } from "../components/chakra-ui/alert"
-import { LuChevronDown, LuChevronUp,  LuPlus,  LuSquareChartGantt, LuTrash } from "react-icons/lu"
+import { LuChevronDown, LuChevronUp, LuPlus, LuSquareChartGantt, LuTrash } from "react-icons/lu"
 import { HiDocumentPlus } from "react-icons/hi2";
 import React, { useEffect, useState } from "react"
 import { estimateFileSize, dummyCredential, getAquaTreeFileName, getAquaTreeFileObject, getRandomNumber, fetchSystemFiles, isValidEthereumAddress } from "../utils/functions"
-import {   FormTemplate } from "../components/aqua_forms/types"
+import { FormTemplate } from "../components/aqua_forms/types"
 import { Field } from '../components/chakra-ui/field';
 import Aquafier, { AquaTree, AquaTreeWrapper, FileObject } from "aqua-js-sdk"
 
@@ -103,13 +103,13 @@ const Navbar = () => {
 
         try {
             let recipients: string[] = []
-            if(recipientWalletAddress.includes(",")){
+            if (recipientWalletAddress.includes(",")) {
                 recipients = recipientWalletAddress.split(",")
                     .map((address) => address.trim())
                     .filter((address) => address !== session?.address.trim())
-            }else{
+            } else {
                 // Only add the recipient if it's not the logged-in user
-                if(recipientWalletAddress.trim() !== session?.address.trim()) {
+                if (recipientWalletAddress.trim() !== session?.address.trim()) {
                     recipients = [recipientWalletAddress.trim()]
                 } else {
                     recipients = []
@@ -143,10 +143,10 @@ const Navbar = () => {
                     headers: {
                         'nonce': session?.nonce
                     }
-                });   
-                
+                });
+
                 console.log(`Response from share request  ${response.status}`)
-        }
+            }
         } catch (e) {
 
             toaster.create({
@@ -252,6 +252,14 @@ const Navbar = () => {
     };
 
 
+    // function formatDate(date: Date) {
+    //     const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+    //         'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    //     const day = date.getDate().toString().padStart(2, '0');
+    //     const month = months[date.getMonth()];
+    //     const year = date.getFullYear();
+    //     return `${day}-${month}-${year}`;
+    // }
 
     const createWorkflowFromTemplate = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -347,24 +355,44 @@ const Navbar = () => {
             let aquafier = new Aquafier();
             const filteredData: Record<string, string | number> = {};
 
+            const jsonString = JSON.stringify(formData, null, 4);
+            const randomNumber = getRandomNumber(100, 1000);
+
+
+            let fileName = `${selectedTemplate?.name ?? "template"}-${randomNumber}.json`;
+
+            // if (selectedTemplate?.name == "aqua_sign") {
+            //     const theFile = formData['document'] as File
+
+            //     // Get filename without extension and the extension separately
+            //     const fileNameWithoutExt = theFile.name.substring(0, theFile.name.lastIndexOf('.'));
+            //     const fileExtension = theFile.name.substring(theFile.name.lastIndexOf('.'));
+
+            //     fileName = fileNameWithoutExt + '-' + formatDate(new Date()) + '-' + randomNumber + fileExtension;
+            // }
+
+
+            const epochTimeInSeconds = Math.floor(Date.now() / 1000);
+            // console.log(epochTimeInSeconds);
             Object.entries(formData).forEach(([key, value]) => {
                 // Only include values that are not File objects
                 if (!(value instanceof File)) {
                     filteredData[key] = value;
+                } else {
+                    filteredData[key] = value.name;
                 }
             });
 
+            //for uniquness of the form
+            formData['created_at'] = epochTimeInSeconds;
 
             let estimateize = estimateFileSize(JSON.stringify(formData));
 
 
 
-            const jsonString = JSON.stringify(formData, null, 4);
-
-            const randomNumber = getRandomNumber(100, 1000);
             const fileObject: FileObject = {
                 fileContent: jsonString,
-                fileName: `${selectedTemplate?.name ?? "template"}-${randomNumber}.json`,
+                fileName: fileName,
                 path: './',
                 fileSize: estimateize
             }

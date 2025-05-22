@@ -1449,7 +1449,7 @@ export async function createAquaTreeFromRevisions(latestRevisionHash: string, ur
                         fileObject.push({
                             fileContent: fullUrl,//fileContent.toString(),
                             fileName: fileIndex.uri!!,
-                            path: "",
+                            path: "...here...",
                             fileSize: fileSizeInBytes
                         })
                     }
@@ -1601,7 +1601,7 @@ export async function createAquaTreeFromRevisions(latestRevisionHash: string, ur
                                 fileObject.push({
                                     fileContent: aquaTreeLinked,
                                     fileName: `${name}.aqua.json`,
-                                    path: "",
+                                    path: `genesisHash ${genesisHash} hashSearchText ${hashSearchText}`,
                                     fileSize: estimateStringFileSize(JSON.stringify(aquaTreeLinked, null, 4))
                                 })
 
@@ -1621,7 +1621,7 @@ export async function createAquaTreeFromRevisions(latestRevisionHash: string, ur
                             fileObject.push({
                                 fileContent: aquaTreeLinked,
                                 fileName: `${aquaTreeLinked.file_index[genesisHash]}.aqua.json`,
-                                path: "",
+                                path: `linkData.link_verification_hashes[0] ${linkData.link_verification_hashes[0]}`,
                                 fileSize: estimateStringFileSize(JSON.stringify(aquaTreeLinked, null, 4))
                             })
                             // throw Error("Revision data not found for hash ${linkData.link_verification_hashes[0]}")
