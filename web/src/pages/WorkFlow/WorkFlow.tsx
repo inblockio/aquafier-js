@@ -21,8 +21,8 @@ import { Alert } from "../../components/chakra-ui/alert"
 import appStore from '../../store';
 import { useStore } from "zustand"
 import { SignaturePosition, SummaryDetailsDisplayData, WorkFlowTimeLine } from '../../types/types';
-import Aquafier, { AquaTree, AquaTreeWrapper, FileObject, getAquaTreeFileObject, getGenesisHash, OrderRevisionInAquaTree, Revision } from 'aqua-js-sdk';
-import { convertTemplateNameToTitle, dummyCredential, ensureDomainUrlHasSSL, estimateFileSize, fetchFiles, isAquaTree, isWorkFlowData, timeToHumanFriendly, getHighestFormIndex, getFileName, getFileHashFromUrl, fetchFileData, isArrayBufferText } from '../../utils/functions';
+import Aquafier, { AquaTree, AquaTreeWrapper, FileObject, getGenesisHash, OrderRevisionInAquaTree, Revision } from 'aqua-js-sdk';
+import { convertTemplateNameToTitle, dummyCredential, ensureDomainUrlHasSSL, estimateFileSize, fetchFiles, isAquaTree, isWorkFlowData, timeToHumanFriendly, getHighestFormIndex, getFileName, getFileHashFromUrl, fetchFileData, isArrayBufferText, getAquaTreeFileObject } from '../../utils/functions';
 import { PDFJSViewer } from 'pdfjs-react-viewer';
 import PdfSigner, { PDFDisplayWithJustSimpleOverlay } from '../PdfSigner';
 import { toaster } from '../../components/chakra-ui/toaster';
@@ -319,7 +319,7 @@ const ContractSummaryView = () => {
     }
 
     useEffect(() => {
-        if(selectedFileInfo){
+        if (selectedFileInfo) {
             verifyAquaTreeRevisions(selectedFileInfo)
         }
     }, [selectedFileInfo])
@@ -366,6 +366,8 @@ const ContractSummaryView = () => {
             </Box> : <>
 
                 {
+
+                   
                     signatureRevionHashes.map((signatureRevionHasheItem) => {
 
 
@@ -389,6 +391,7 @@ const ContractSummaryView = () => {
                     })
 
                 }
+        
                 {
                     <Timeline.Item>
                         <Timeline.Connector>
@@ -570,7 +573,7 @@ export default function WorkFlowPage() {
             (async () => {
                 await loadTimeline()
             })();
-         
+
         }
     }
 
@@ -843,7 +846,7 @@ export default function WorkFlowPage() {
     // 5. link form with signature positions *100 -- form 
     // 6. link to signture aqua tree. == genesiis file break -- signature
     // 7. metamask sign -- signature
-    
+
 
     const saveAquaTree = async (aquaTree: AquaTree, fileObject: FileObject, isFinal: boolean = false, isWorkflow: boolean = false, template_id: string): Promise<Boolean> => {
         try {
@@ -947,336 +950,620 @@ export default function WorkFlowPage() {
     };
 
 
-    const submitSignatureData = async (signaturePosition: SignaturePosition[], signAquaTree: ApiFileInfo[]) => {
 
-        if (signAquaTree.length == 0) {
+
+    // start of submitSignatureData
+
+
+
+    const submitSignatureData = async (signaturePosition: SignaturePosition[], signAquaTree: ApiFileInfo[]) => {
+        // Early validation
+        if (signAquaTree.length === 0) {
             toaster.create({
-                description: `Sinature not found`,
+                description: `Signature not found`,
                 type: "error"
-            })
-            return
+            });
+            return;
         }
 
         setSubmittingSignatureData(true);
 
-        let aquafier = new Aquafier();
+        try {
+            const aquafier = new Aquafier();
 
-        let signForm: {
-            [key: string]: string | number;
-        } = {}
+            // Step 1: Create signature form data
+            const signForm = createSignatureFormData(signaturePosition);
+            console.log(`Page data ${JSON.stringify(signForm, null, 4)}`);
 
+            // Step 2: Create user signature data aqua tree
+            const userSignatureDataAquaTree = await createUserSignatureAquaTree(aquafier, signForm);
+            if (!userSignatureDataAquaTree) return;
 
-        for (const [index, signaturePositionItem] of signaturePosition.entries()) {
+            // Step 3: Link main document with user signature data
+            const linkedAquaTreeWithUserSignatureData = await linkMainDocumentWithSignatureData(
+                aquafier,
+                userSignatureDataAquaTree
+            );
+            if (!linkedAquaTreeWithUserSignatureData) return;
 
-            let pageIndex = signaturePositionItem.pageIndex + 1
-            // if (pageIndex == 0) {
-            //     pageIndex += 1
-            // }
+            // Step 4: Link signature tree with the document
+            const linkedAquaTreeWithSignature = await linkSignatureTreeToDocument(
+                aquafier,
+                linkedAquaTreeWithUserSignatureData,
+                signAquaTree[0]
+            );
+            if (!linkedAquaTreeWithSignature) return;
+
+            await saveRevisionsToServer([
+                linkedAquaTreeWithUserSignatureData,
+                linkedAquaTreeWithSignature,
+               
+            ]);
+
+            // Step 5: Sign with MetaMask
+            const metaMaskSignedAquaTree = await signWithMetaMask(aquafier, linkedAquaTreeWithSignature);
+            if (!metaMaskSignedAquaTree) return;
+
+            // Step 6: Save both revisions to server (only after successful MetaMask signing)
+            await saveRevisionsToServer([
+               
+                metaMaskSignedAquaTree
+            ]);
+
+            // Step 7: Update UI and refresh files
+            await updateUIAfterSuccess();
+
+        } catch (error) {
+            console.error('Error in submitSignatureData:', error);
+            showError('An unexpected error occurred during signature submission');
+        } finally {
+            setSubmittingSignatureData(false);
+        }
+    };
+
+    // Helper function to create signature form data
+    const createSignatureFormData = (signaturePosition: SignaturePosition[]) => {
+        const signForm: { [key: string]: string | number } = {};
+
+        signaturePosition.forEach((signaturePositionItem, index) => {
+            const pageIndex = signaturePositionItem.pageIndex + 1;
             signForm[`x_${index}`] = parseFloat(signaturePositionItem.x.toFixed(16));
             signForm[`y_${index}`] = parseFloat(signaturePositionItem.y.toFixed(16));
-            signForm[`page_${index}`] = pageIndex.toString()
-            signForm[`width_${index}`] = signaturePositionItem.width.toString()
-            signForm[`height_${index}`] = signaturePositionItem.height.toString()
+            signForm[`page_${index}`] = pageIndex.toString();
+            signForm[`width_${index}`] = signaturePositionItem.width.toString();
+            signForm[`height_${index}`] = signaturePositionItem.height.toString();
+        });
 
-        }
+        return signForm;
+    };
 
-
-        console.log(`Page data ${JSON.stringify(signForm, null, 4)}`)
-
-
+    // Helper function to create user signature aqua tree
+    const createUserSignatureAquaTree = async (aquafier: Aquafier, signForm: any) => {
         const jsonString = JSON.stringify(signForm, null, 2);
-
-        let estimateize = estimateFileSize(JSON.stringify(signForm));
+        const estimateSize = estimateFileSize(jsonString);
 
         const fileObjectUserSignature: FileObject = {
             fileContent: jsonString,
             fileName: `user_signature_data.json`,
             path: './',
-            fileSize: estimateize
-        }
+            fileSize: estimateSize
+        };
 
-
-
-        let userSignatureDataAquaTree = await aquafier.createGenesisRevision(fileObjectUserSignature, true, false, false)
+        const userSignatureDataAquaTree = await aquafier.createGenesisRevision(
+            fileObjectUserSignature,
+            true,
+            false,
+            false
+        );
 
         if (userSignatureDataAquaTree.isErr()) {
-            setSubmittingSignatureData(false);
-
-            toaster.create({
-                description: `Sinature data creation failed`,
-                type: "error"
-            })
-            return
+            showError('Signature data creation failed');
+            return null;
         }
-        // save aqua tree to the server
 
-        console.log(`👁️‍🗨️👁️‍🗨️ Aqutree form ${JSON.stringify(userSignatureDataAquaTree.data.aquaTree!, null, 4)}  \n jsonString  ${jsonString} `)
-        await saveAquaTree(userSignatureDataAquaTree.data.aquaTree!, fileObjectUserSignature, true, true, "")
+        console.log(`👁️‍🗨️👁️‍🗨️ AquaTree form ${JSON.stringify(userSignatureDataAquaTree.data.aquaTree!, null, 4)} \n jsonString ${jsonString}`);
 
+        // Save to server
+        await saveAquaTree(userSignatureDataAquaTree.data.aquaTree!, fileObjectUserSignature, true, true, "");
 
-        let sigFileObject = getAquaTreeFileObject(selectedFileInfo!) ?? selectedFileInfo?.fileObject[0]
-        // linked 
-        let aquaTreeWrapper: AquaTreeWrapper = {
+        return {
+            aquaTree: userSignatureDataAquaTree.data.aquaTree!,
+            fileObject: fileObjectUserSignature
+        };
+    };
+
+    // Helper function to link main document with signature data
+    const linkMainDocumentWithSignatureData = async (aquafier: Aquafier, userSignatureData: any) => {
+        const sigFileObject = getAquaTreeFileObject(selectedFileInfo!) ?? selectedFileInfo?.fileObject[0];
+
+        const aquaTreeWrapper: AquaTreeWrapper = {
             aquaTree: selectedFileInfo!.aquaTree!,
             revision: "",
             fileObject: sigFileObject
-        }
+        };
 
-
-
-        let userSignatureDataAquaTreeWrapper: AquaTreeWrapper = {
-            aquaTree: userSignatureDataAquaTree!.data.aquaTree!,
+        const userSignatureDataAquaTreeWrapper: AquaTreeWrapper = {
+            aquaTree: userSignatureData.aquaTree,
             revision: "",
-            fileObject: fileObjectUserSignature
-        }
+            fileObject: userSignatureData.fileObject
+        };
 
-        let resLinkedAquaTreeWithUserSignatureData = await aquafier.linkAquaTree(aquaTreeWrapper, userSignatureDataAquaTreeWrapper)
+        const resLinkedAquaTreeWithUserSignatureData = await aquafier.linkAquaTree(
+            aquaTreeWrapper,
+            userSignatureDataAquaTreeWrapper
+        );
 
         if (resLinkedAquaTreeWithUserSignatureData.isErr()) {
-
-            setSubmittingSignatureData(false);
-
-            toaster.create({
-                description: `Sinature data not appended to main tree succefully `,
-                type: "error"
-            })
-            return
-
+            showError('Signature data not appended to main tree successfully');
+            return null;
         }
 
-        //save the last link revision to db
+        return resLinkedAquaTreeWithUserSignatureData.data.aquaTree!;
+    };
 
-
-        try {
-            let newAquaTree = resLinkedAquaTreeWithUserSignatureData.data.aquaTree!
-            let revisionHashes = Object.keys(newAquaTree.revisions)
-            const lastHash = revisionHashes[revisionHashes.length - 1]
-            const lastRevision = resLinkedAquaTreeWithUserSignatureData.data.aquaTree?.revisions[lastHash]
-            // send to server
-            const url = `${backend_url}/tree`;
-
-            const response = await axios.post(url, {
-                "revision": lastRevision,
-                "revisionHash": lastHash,
-
-            }, {
-                headers: {
-                    "nonce": session?.nonce
-                }
-            });
-
-            if (response.status === 200 || response.status === 201) {
-
-
-                console.log(`💯 form with signature position saved sussefully to the api `)
-
-            }
-        } catch (e) {
-
-            setSubmittingSignatureData(false);
-
-            toaster.create({
-                description: `Error saving link revsion of signature locations `,
-                type: "error"
-            })
-            return
-
-        }
-
-
-
-
-
-        let linkedAquaTreeWithUserSignatureDataWrapper: AquaTreeWrapper = {
-            aquaTree: resLinkedAquaTreeWithUserSignatureData.data.aquaTree!,
+    // Helper function to link signature tree to document
+    const linkSignatureTreeToDocument = async (aquafier: Aquafier, linkedAquaTree: any, signatureInfo: ApiFileInfo) => {
+        const linkedAquaTreeWrapper: AquaTreeWrapper = {
+            aquaTree: linkedAquaTree,
             revision: "",
-            fileObject: fileObjectUserSignature
-        }
+            fileObject: getAquaTreeFileObject(selectedFileInfo!) ?? selectedFileInfo?.fileObject[0]
+        };
 
-        let signatureAquaTree = signAquaTree[0].aquaTree!;
-        let signatureFileObject = getAquaTreeFileObject(signAquaTree[0]!) ?? signAquaTree[0].fileObject[0]
-        let aquaTreeWrapperLinked: AquaTreeWrapper = {
-            aquaTree: signatureAquaTree,
+        const signatureFileObject = getAquaTreeFileObject(signatureInfo) ?? signatureInfo.fileObject[0];
+        const signatureAquaTreeWrapper: AquaTreeWrapper = {
+            aquaTree: signatureInfo.aquaTree!,
             revision: "",
             fileObject: signatureFileObject
-        }
+        };
 
-
-        let resLinkedAquaTree = await aquafier.linkAquaTree(linkedAquaTreeWithUserSignatureDataWrapper, aquaTreeWrapperLinked)
+        const resLinkedAquaTree = await aquafier.linkAquaTree(linkedAquaTreeWrapper, signatureAquaTreeWrapper);
 
         if (resLinkedAquaTree.isErr()) {
-
-            setSubmittingSignatureData(false);
-
-            toaster.create({
-                description: `Sinature tree not appended to main tree succefully `,
-                type: "error"
-            })
-            return
-
+            showError('Signature tree not appended to main tree successfully');
+            return null;
         }
 
+        return resLinkedAquaTree.data.aquaTree!;
+    };
 
-        // we do not save the last revision here since the metamask revion that folows can be cancelled or failed.
-               
+    // Helper function to sign with MetaMask
+    const signWithMetaMask = async (aquafier: Aquafier, aquaTree: AquaTree) => {
+        const signatureFileObject = getAquaTreeFileObject(selectedFileInfo!) ?? selectedFileInfo?.fileObject[0];
+        //getAquaTreeFileObject(aquaTree) ?? signAquaTree[0].fileObject[0];
 
-
-        // meta mask sign 
-         //save the last link revision to db -- signature aqua tree pdf 
-
-         try {
-
-            let newAquaTree = resLinkedAquaTree.data.aquaTree!
-            let revisionHashes = Object.keys(newAquaTree.revisions)
-            const lastHash = revisionHashes[revisionHashes.length - 1]
-            const lastRevision = resLinkedAquaTree.data.aquaTree?.revisions[lastHash]
-            // send to server
-            const url = `${backend_url}/tree`;
-
-            const actualUrlToFetch = ensureDomainUrlHasSSL(url);
-
-
-            const response = await axios.post(actualUrlToFetch, {
-                "revision": lastRevision,
-                "revisionHash": lastHash,
-
-            }, {
-                headers: {
-                    "nonce": session?.nonce
-                }
-            });
-
-
-            if (response.status === 200 || response.status === 201) {
-
-
-                console.log(`💯 form with signature data saved sussefully to the api `)
-
-            }
-
-        } catch (e) {
-
-            setSubmittingSignatureData(false);
-
-            toaster.create({
-                description: `Error saving link revsion of signature tree `,
-                type: "error"
-            })
-
-            return
-        }
-        let aquaTreeWrappersignatureLinked: AquaTreeWrapper = {
-            aquaTree: resLinkedAquaTree.data!.aquaTree!,
+        const aquaTreeWrapper: AquaTreeWrapper = {
+            aquaTree: aquaTree,
             revision: "",
             fileObject: signatureFileObject
-        }
+        };
 
-        let resLinkedMetaMaskSignedAquaTree = await aquafier.signAquaTree(aquaTreeWrappersignatureLinked, 'metamask', dummyCredential())
+        const resLinkedMetaMaskSignedAquaTree = await aquafier.signAquaTree(
+            aquaTreeWrapper,
+            'metamask',
+            dummyCredential()
+        );
 
         if (resLinkedMetaMaskSignedAquaTree.isErr()) {
-
-            setSubmittingSignatureData(false);
-
-            toaster.create({
-                description: `Metamask Sinature  not appended to main tree succefully `,
-                type: "error"
-            })
-            return
-
+            showError('MetaMask signature not appended to main tree successfully');
+            return null;
         }
 
-        //save the last  revision to db
+        return resLinkedMetaMaskSignedAquaTree.data.aquaTree!;
+    };
 
-        try {
+    // Helper function to save multiple revisions to server
+    const saveRevisionsToServer = async (aquaTrees: AquaTree[]) => {
 
-            let newAquaTree = resLinkedMetaMaskSignedAquaTree.data.aquaTree!
-            let revisionHashes = Object.keys(newAquaTree.revisions)
-            const lastHash = revisionHashes[revisionHashes.length - 1]
-            const lastRevision = resLinkedMetaMaskSignedAquaTree.data.aquaTree?.revisions[lastHash]
-            // send to server
-            const url = `${backend_url}/tree`;
+        console.log(`aquaTrees ${aquaTrees.length}`)
+        for (let index = 0; index < aquaTrees.length; index++) {
+            const aquaTree = aquaTrees[index];
 
-            const actualUrlToFetch = ensureDomainUrlHasSSL(url);
+            console.log(`aquaTrees ${index}  ${JSON.stringify(aquaTree, null, 4)}`)
+            try {
+                const revisionHashes = Object.keys(aquaTree.revisions);
+                const lastHash = revisionHashes[revisionHashes.length - 1];
+                const lastRevision = aquaTree.revisions[lastHash];
 
+                const url = `${backend_url}/tree`;
+                const actualUrlToFetch = ensureDomainUrlHasSSL(url);
 
-            const response = await axios.post(actualUrlToFetch, {
-                "revision": lastRevision,
-                "revisionHash": lastHash,
+                const response = await axios.post(actualUrlToFetch, {
+                    revision: lastRevision,
+                    revisionHash: lastHash,
+                }, {
+                    headers: {
+                        nonce: session?.nonce
+                    }
+                });
 
-            }, {
-                headers: {
-                    "nonce": session?.nonce
+                if (response.status === 200 || response.status === 201) {
+                    console.log(`💯 Revision ${index + 1} saved successfully to the API`);
+
                 }
-            });
-            //
 
-
-            if (response.status === 200 || response.status === 201) {
-
-
-                console.log(`💯 form with signature metamask data saved sussefully to the api `)
-
+            } catch (error) {
+                console.error(`Error saving revision ${index + 1}:`, error);
+                throw new Error(`Error saving revision ${index + 1} to server`);
             }
-
-
-
-
-        } catch (e) {
-
-            setSubmittingSignatureData(false);
-
-            toaster.create({
-                description: `Error saving link revsion of signature tree `,
-                type: "error"
-            })
-
-            return
         }
 
-        //fetch user all files 
+    };
 
-        const url2 = `${backend_url}/explorer_files`;
-        const files = await fetchFiles(`${session?.address}`, url2, `${session?.nonce}`);
-        setFiles(files);
+    // Helper function to update UI after success
+    const updateUIAfterSuccess = async () => {
+        try {
+            // Fetch updated files
+            const url2 = `${backend_url}/explorer_files`;
+            const files = await fetchFiles(`${session?.address}`, url2, `${session?.nonce}`);
+            setFiles(files);
 
+            // Find and update selected file
+            const selectedFileGenesisHash = getGenesisHash(selectedFileInfo!.aquaTree!);
+            const selectedFile = files.find((data) => getGenesisHash(data.aquaTree!) === selectedFileGenesisHash);
 
-        let selectedFileGenesisHash = getGenesisHash(selectedFileInfo!.aquaTree!)
-        let seletctedFile = files.find((data) => getGenesisHash(data.aquaTree!) == selectedFileGenesisHash)
-
-        if (seletctedFile) {
-
-            setSelectedFileInfo(seletctedFile!)
-
+            if (selectedFile) {
+                setSelectedFileInfo(selectedFile);
+                toaster.create({
+                    description: `Document signed successfully`,
+                    type: "success"
+                });
+                setActiveStep(5);
+            } else {
+                throw new Error('Updated file not found');
+            }
+        } catch (error) {
             toaster.create({
-                description: `Document Signed successfully`,
-                type: "success"
-            })
-
-
-            setActiveStep(5)
-
-        } else {
-
-            toaster.create({
-                description: `An error occured, redirecting to home`,
+                description: `An error occurred, redirecting to home`,
                 type: "error"
-            })
+            });
 
             setTimeout(() => {
-                window.location.reload()
-            }, 150)
-            navigate("/")
-
+                window.location.reload();
+            }, 150);
+            navigate("/");
         }
+    };
+
+    // Helper function to show error messages
+    const showError = (message: string) => {
+        toaster.create({
+            description: message,
+            type: "error"
+        });
+    };
 
 
-        // let data = selectedFileInfo
-        // data!.aquaTree = resLinkedAquaTree.data.aquaTree
-        // data!.fileObject = allfileObjects;
-        // setSelectedFileInfo(data!!)
+    // const submitSignatureData = async (signaturePosition: SignaturePosition[], signAquaTree: ApiFileInfo[]) => {
+
+    //     if (signAquaTree.length == 0) {
+    //         toaster.create({
+    //             description: `Sinature not found`,
+    //             type: "error"
+    //         })
+    //         return
+    //     }
+
+    //     setSubmittingSignatureData(true);
+
+    //     let aquafier = new Aquafier();
+
+    //     let signForm: {
+    //         [key: string]: string | number;
+    //     } = {}
 
 
-    }
+    //     for (const [index, signaturePositionItem] of signaturePosition.entries()) {
+
+    //         let pageIndex = signaturePositionItem.pageIndex + 1
+    //         // if (pageIndex == 0) {
+    //         //     pageIndex += 1
+    //         // }
+    //         signForm[`x_${index}`] = parseFloat(signaturePositionItem.x.toFixed(16));
+    //         signForm[`y_${index}`] = parseFloat(signaturePositionItem.y.toFixed(16));
+    //         signForm[`page_${index}`] = pageIndex.toString()
+    //         signForm[`width_${index}`] = signaturePositionItem.width.toString()
+    //         signForm[`height_${index}`] = signaturePositionItem.height.toString()
+
+    //     }
+
+
+    //     console.log(`Page data ${JSON.stringify(signForm, null, 4)}`)
+
+
+    //     const jsonString = JSON.stringify(signForm, null, 2);
+
+    //     let estimateize = estimateFileSize(JSON.stringify(signForm));
+
+    //     const fileObjectUserSignature: FileObject = {
+    //         fileContent: jsonString,
+    //         fileName: `user_signature_data.json`,
+    //         path: './',
+    //         fileSize: estimateize
+    //     }
+
+
+
+    //     let userSignatureDataAquaTree = await aquafier.createGenesisRevision(fileObjectUserSignature, true, false, false)
+
+    //     if (userSignatureDataAquaTree.isErr()) {
+    //         setSubmittingSignatureData(false);
+
+    //         toaster.create({
+    //             description: `Sinature data creation failed`,
+    //             type: "error"
+    //         })
+    //         return
+    //     }
+    //     // save aqua tree to the server
+
+    //     console.log(`👁️‍🗨️👁️‍🗨️ Aqutree form ${JSON.stringify(userSignatureDataAquaTree.data.aquaTree!, null, 4)}  \n jsonString  ${jsonString} `)
+    //     await saveAquaTree(userSignatureDataAquaTree.data.aquaTree!, fileObjectUserSignature, true, true, "")
+
+
+    //     let sigFileObject = getAquaTreeFileObject(selectedFileInfo!) ?? selectedFileInfo?.fileObject[0]
+    //     // linked 
+    //     let aquaTreeWrapper: AquaTreeWrapper = {
+    //         aquaTree: selectedFileInfo!.aquaTree!,
+    //         revision: "",
+    //         fileObject: sigFileObject
+    //     }
+
+
+
+    //     let userSignatureDataAquaTreeWrapper: AquaTreeWrapper = {
+    //         aquaTree: userSignatureDataAquaTree!.data.aquaTree!,
+    //         revision: "",
+    //         fileObject: fileObjectUserSignature
+    //     }
+
+    //     let resLinkedAquaTreeWithUserSignatureData = await aquafier.linkAquaTree(aquaTreeWrapper, userSignatureDataAquaTreeWrapper)
+
+    //     if (resLinkedAquaTreeWithUserSignatureData.isErr()) {
+
+    //         setSubmittingSignatureData(false);
+
+    //         toaster.create({
+    //             description: `Sinature data not appended to main tree succefully `,
+    //             type: "error"
+    //         })
+    //         return
+
+    //     }
+
+    //     //save the last link revision to db
+
+
+    //     try {
+    //         let newAquaTree = resLinkedAquaTreeWithUserSignatureData.data.aquaTree!
+    //         let revisionHashes = Object.keys(newAquaTree.revisions)
+    //         const lastHash = revisionHashes[revisionHashes.length - 1]
+    //         const lastRevision = resLinkedAquaTreeWithUserSignatureData.data.aquaTree?.revisions[lastHash]
+    //         // send to server
+    //         const url = `${backend_url}/tree`;
+
+    //         const response = await axios.post(url, {
+    //             "revision": lastRevision,
+    //             "revisionHash": lastHash,
+
+    //         }, {
+    //             headers: {
+    //                 "nonce": session?.nonce
+    //             }
+    //         });
+
+    //         if (response.status === 200 || response.status === 201) {
+
+
+    //             console.log(`💯 form with signature position saved sussefully to the api `)
+
+    //         }
+    //     } catch (e) {
+
+    //         setSubmittingSignatureData(false);
+
+    //         toaster.create({
+    //             description: `Error saving link revsion of signature locations `,
+    //             type: "error"
+    //         })
+    //         return
+
+    //     }
+
+
+    // end of submitSignature 
+
+
+
+    //     let linkedAquaTreeWithUserSignatureDataWrapper: AquaTreeWrapper = {
+    //         aquaTree: resLinkedAquaTreeWithUserSignatureData.data.aquaTree!,
+    //         revision: "",
+    //         fileObject: fileObjectUserSignature
+    //     }
+
+    //     let signatureAquaTree = signAquaTree[0].aquaTree!;
+    //     let signatureFileObject = getAquaTreeFileObject(signAquaTree[0]!) ?? signAquaTree[0].fileObject[0]
+    //     let aquaTreeWrapperLinked: AquaTreeWrapper = {
+    //         aquaTree: signatureAquaTree,
+    //         revision: "",
+    //         fileObject: signatureFileObject
+    //     }
+
+
+    //     let resLinkedAquaTree = await aquafier.linkAquaTree(linkedAquaTreeWithUserSignatureDataWrapper, aquaTreeWrapperLinked)
+
+    //     if (resLinkedAquaTree.isErr()) {
+
+    //         setSubmittingSignatureData(false);
+
+    //         toaster.create({
+    //             description: `Sinature tree not appended to main tree succefully `,
+    //             type: "error"
+    //         })
+    //         return
+
+    //     }
+
+
+    //     // we do not save the last revision here since the metamask revion that folows can be cancelled or failed.
+
+
+
+    //     // meta mask sign 
+    //      //save the last link revision to db -- signature aqua tree pdf 
+
+    //      try {
+
+    //         let newAquaTree = resLinkedAquaTree.data.aquaTree!
+    //         let revisionHashes = Object.keys(newAquaTree.revisions)
+    //         const lastHash = revisionHashes[revisionHashes.length - 1]
+    //         const lastRevision = resLinkedAquaTree.data.aquaTree?.revisions[lastHash]
+    //         // send to server
+    //         const url = `${backend_url}/tree`;
+
+    //         const actualUrlToFetch = ensureDomainUrlHasSSL(url);
+
+
+    //         const response = await axios.post(actualUrlToFetch, {
+    //             "revision": lastRevision,
+    //             "revisionHash": lastHash,
+
+    //         }, {
+    //             headers: {
+    //                 "nonce": session?.nonce
+    //             }
+    //         });
+
+
+    //         if (response.status === 200 || response.status === 201) {
+
+
+    //             console.log(`💯 form with signature data saved sussefully to the api `)
+
+    //         }
+
+    //     } catch (e) {
+
+    //         setSubmittingSignatureData(false);
+
+    //         toaster.create({
+    //             description: `Error saving link revsion of signature tree `,
+    //             type: "error"
+    //         })
+
+    //         return
+    //     }
+    //     let aquaTreeWrappersignatureLinked: AquaTreeWrapper = {
+    //         aquaTree: resLinkedAquaTree.data!.aquaTree!,
+    //         revision: "",
+    //         fileObject: signatureFileObject
+    //     }
+
+    //     let resLinkedMetaMaskSignedAquaTree = await aquafier.signAquaTree(aquaTreeWrappersignatureLinked, 'metamask', dummyCredential())
+
+    //     if (resLinkedMetaMaskSignedAquaTree.isErr()) {
+
+    //         setSubmittingSignatureData(false);
+
+    //         toaster.create({
+    //             description: `Metamask Sinature  not appended to main tree succefully `,
+    //             type: "error"
+    //         })
+    //         return
+
+    //     }
+
+    //     //save the last  revision to db
+
+    //     try {
+
+    //         let newAquaTree = resLinkedMetaMaskSignedAquaTree.data.aquaTree!
+    //         let revisionHashes = Object.keys(newAquaTree.revisions)
+    //         const lastHash = revisionHashes[revisionHashes.length - 1]
+    //         const lastRevision = resLinkedMetaMaskSignedAquaTree.data.aquaTree?.revisions[lastHash]
+    //         // send to server
+    //         const url = `${backend_url}/tree`;
+
+    //         const actualUrlToFetch = ensureDomainUrlHasSSL(url);
+
+
+    //         const response = await axios.post(actualUrlToFetch, {
+    //             "revision": lastRevision,
+    //             "revisionHash": lastHash,
+
+    //         }, {
+    //             headers: {
+    //                 "nonce": session?.nonce
+    //             }
+    //         });
+    //         //
+
+
+    //         if (response.status === 200 || response.status === 201) {
+
+
+    //             console.log(`💯 form with signature metamask data saved sussefully to the api `)
+
+    //         }
+
+
+
+
+    //     } catch (e) {
+
+    //         setSubmittingSignatureData(false);
+
+    //         toaster.create({
+    //             description: `Error saving link revsion of signature tree `,
+    //             type: "error"
+    //         })
+
+    //         return
+    //     }
+
+    //     //fetch user all files 
+
+    //     const url2 = `${backend_url}/explorer_files`;
+    //     const files = await fetchFiles(`${session?.address}`, url2, `${session?.nonce}`);
+    //     setFiles(files);
+
+
+    //     let selectedFileGenesisHash = getGenesisHash(selectedFileInfo!.aquaTree!)
+    //     let seletctedFile = files.find((data) => getGenesisHash(data.aquaTree!) == selectedFileGenesisHash)
+
+    //     if (seletctedFile) {
+
+    //         setSelectedFileInfo(seletctedFile!)
+
+    //         toaster.create({
+    //             description: `Document Signed successfully`,
+    //             type: "success"
+    //         })
+
+
+    //         setActiveStep(5)
+
+    //     } else {
+
+    //         toaster.create({
+    //             description: `An error occured, redirecting to home`,
+    //             type: "error"
+    //         })
+
+    //         setTimeout(() => {
+    //             window.location.reload()
+    //         }, 150)
+    //         navigate("/")
+
+    //     }
+
+
+    //     // let data = selectedFileInfo
+    //     // data!.aquaTree = resLinkedAquaTree.data.aquaTree
+    //     // data!.fileObject = allfileObjects;
+    //     // setSelectedFileInfo(data!!)
+
+
+    // }
 
     // Helper function to get content type from file extension
     // const getContentTypeFromFileName = (fileName: string): string => {
@@ -1288,7 +1575,9 @@ export default function WorkFlowPage() {
 
     // console.log("fie: ", selectedFileInfo)
 
+
     //tod replace this methd with fetchPDFfile
+
     const fetchFile = async (fileUrl: string) => {
         try {
             const actualUrlToFetch = ensureDomainUrlHasSSL(fileUrl);
