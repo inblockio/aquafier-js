@@ -1595,6 +1595,8 @@ export async function createAquaTreeFromRevisions(latestRevisionHash: string, ur
 
                                 // let name = Object.values(aquaTreeLinked.file_index)[0] ?? "--error--"
                                 let genesisHash = getGenesisHash(aquaTreeLinked) ?? ""
+
+                                // throw Error(`Data  aquaTreeLinked ${JSON.stringify(aquaTreeLinked)} -- genesisHash ${genesisHash}`)
                                 let name = aquaTreeLinked.file_index[genesisHash]
                                 fileObject.push({
                                     fileContent: aquaTreeLinked,
@@ -1652,8 +1654,23 @@ export async function createAquaTreeFromRevisions(latestRevisionHash: string, ur
                 })
                 if (name) {
                     //  console.log(`----------  name ${JSON.stringify(name, null, 4)}`)
-                    anAquaTree.file_index[hashOnly] = name?.uri ?? "--error--."
-                    revisionWithData["file_hash"] = name?.file_hash ?? "--error--"
+                    anAquaTree.file_index[hashOnly] = name.uri!
+                    revisionWithData["file_hash"] = name.file_hash
+
+                } else {
+
+                    let data = await prisma.fileIndex.findFirst({
+                        where: {
+                            hash: {
+                                has: revisionItem.pubkey_hash
+                            }
+                        }
+                    });
+
+                    if(data){
+                        anAquaTree.file_index[hashOnly] = data.uri!
+                        revisionWithData["file_hash"] = data.file_hash
+                    }
 
                 }
             }
