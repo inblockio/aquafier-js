@@ -994,19 +994,15 @@ export default function WorkFlowPage() {
             );
             if (!linkedAquaTreeWithSignature) return;
 
-            await saveRevisionsToServer([
-                linkedAquaTreeWithUserSignatureData,
-                linkedAquaTreeWithSignature,
-               
-            ]);
-
+            
             // Step 5: Sign with MetaMask
-            const metaMaskSignedAquaTree = await signWithMetaMask(aquafier, linkedAquaTreeWithSignature);
+            const metaMaskSignedAquaTree = await signWithMetaMask(aquafier, structuredClone(linkedAquaTreeWithSignature));
             if (!metaMaskSignedAquaTree) return;
 
             // Step 6: Save both revisions to server (only after successful MetaMask signing)
             await saveRevisionsToServer([
-               
+                linkedAquaTreeWithUserSignatureData,
+                linkedAquaTreeWithSignature,
                 metaMaskSignedAquaTree
             ]);
 
