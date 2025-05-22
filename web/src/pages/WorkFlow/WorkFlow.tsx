@@ -563,11 +563,14 @@ export default function WorkFlowPage() {
                 return
             }
 
-            setTimeLineTitle(convertTemplateNameToTitle(workFlow))
+            setTimeLineTitle(convertTemplateNameToTitle(workFlow));
 
 
-            loadTimeline()
 
+            (async () => {
+                await loadTimeline()
+            })();
+         
         }
     }
 
@@ -1114,9 +1117,14 @@ export default function WorkFlowPage() {
         }
 
 
-        //save the last link revision to db -- signature aqua tree pdf 
+        // we do not save the last revision here since the metamask revion that folows can be cancelled or failed.
+               
 
-        try {
+
+        // meta mask sign 
+         //save the last link revision to db -- signature aqua tree pdf 
+
+         try {
 
             let newAquaTree = resLinkedAquaTree.data.aquaTree!
             let revisionHashes = Object.keys(newAquaTree.revisions)
@@ -1165,9 +1173,6 @@ export default function WorkFlowPage() {
 
             return
         }
-
-
-        // meta mask sign 
         let aquaTreeWrappersignatureLinked: AquaTreeWrapper = {
             aquaTree: resLinkedAquaTree.data!.aquaTree!,
             revision: "",
@@ -1188,6 +1193,8 @@ export default function WorkFlowPage() {
 
         }
 
+
+        
 
         //save the last  revision to db
 
@@ -1520,7 +1527,7 @@ export default function WorkFlowPage() {
         return (
             <Stack>
                 {contractCreatorAddress == session?.address ?
-                    <Text>Your wallet address  created this workflow wallet  address </Text> : <>
+                    <Text>Your wallet address created this workflow </Text> : <>
 
                         <ItemDetail label="Wallet address:"
                             displayValue={contractCreatorAddress}

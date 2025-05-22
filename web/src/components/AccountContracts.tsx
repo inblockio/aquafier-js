@@ -3,7 +3,7 @@ import { copyToClipboardModern } from "../utils/functions";
 
 import { toaster } from "../components/chakra-ui/toaster";
 import { DialogBody, DialogCloseTrigger, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "./chakra-ui/dialog";
-import { Circle, Dialog, Float, HStack, IconButton, Stack, Text } from "@chakra-ui/react";
+import { Circle, Dialog, Float, HStack, IconButton,  Stack, Text } from "@chakra-ui/react";
 import { LuCopy,  LuShare2 } from "react-icons/lu";
 import { useStore } from 'zustand'
 import appStore from '../store'

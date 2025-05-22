@@ -33,8 +33,8 @@ import axios from 'axios';
 import { ApiFileInfo } from '../models/FileInfo';
 import { blobToDataURL, dataURLToFile, dummyCredential, ensureDomainUrlHasSSL, estimateFileSize, getAquaTreeFileName, getRandomNumber, timeStampToDateObject } from '../utils/functions';
 import Aquafier, { AquaTree, AquaTreeWrapper, FileObject, getAquaTreeFileObject } from 'aqua-js-sdk';
-import { FaCloudArrowUp } from 'react-icons/fa6';
 import { SignaturePosition, SignatureData } from "../types/types"
+import { LuTrash } from 'react-icons/lu';
 
 
 // const PdfSigner = ({ file }: { file: File | null }) => {
@@ -213,7 +213,7 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ file, submitSignature, submitting
     const [signerName, setSignerName] = useState<string>('John Doe');
     const [signaturePositions, setSignaturePositions] = useState<SignaturePosition[]>([]);
     const [placingSignature, setPlacingSignature] = useState<boolean>(false);
-    const [signatureSize, setSignatureSize] = useState<number>(150);
+    const [signatureSize, setSignatureSize] = useState<number>(250);
 
     // Modal state
     const [isOpen, setIsOpen] = useState(false);
@@ -1382,13 +1382,21 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ file, submitSignature, submitting
                                         <FieldLabel>Signature Size: {signatureSize}px</FieldLabel>
                                         <Slider.Root
                                             min={50}
-                                            max={300}
+                                            max={400}
                                             step={1}
+                                            defaultValue={[signatureSize]}
+                                            size={'lg'} key={'lg'}
+                                            width={"250px"}
                                             value={[signatureSize]}
-                                            onValueChange={(value) => {
-                                                if (Array.isArray(value)) {
-                                                    setSignatureSize(value[0]);
-                                                }
+                                            onValueChange={(changedValue) => {
+                                                console.log(`slider value ${JSON.stringify(changedValue)}`)
+                                                const newValue = changedValue.value[0]
+                                                console.log(`slider value ${newValue}`)
+
+                                                setSignatureSize(newValue);
+                                                // if (Array.isArray(changedValue)) {
+                                                // setSignatureSize(changedValue.value[0]);
+                                                // }
                                             }}
                                         >
                                             <Slider.Control>
@@ -1399,6 +1407,8 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ file, submitSignature, submitting
                                             </Slider.Control>
                                         </Slider.Root>
                                     </Field>
+
+
 
                                     <Button
                                         colorScheme="teal"
@@ -1432,6 +1442,24 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ file, submitSignature, submitting
                                                                         borderRadius="sm"
                                                                     />
                                                                     <Text fontSize="xs">{signature.name} (Page {position.pageIndex + 1})</Text>
+
+                                                                    <IconButton variant={'outline'} size={'2xs'} onClick={(e) => {
+                                                                        e.preventDefault();
+
+                                                                        console.log(`B4 Delete ${JSON.stringify(signaturePositions, null, 4)}`)
+                                                                        let newData: SignaturePosition[] = [];
+                                                                        for (let item of signaturePositions) {
+                                                                            console.log(`item id ${item.id} -- ${ position.id}`)
+                                                                            if (item.id != position.id) {
+                                                                                newData.push(item)
+                                                                            }
+                                                                        }
+
+                                                                        console.log(`After Delete ${JSON.stringify(newData, null, 4)}`)
+                                                                        setSignaturePositions(newData)
+                                                                    }}>
+                                                                        <LuTrash size={'10px'} color='red' />
+                                                                    </IconButton>
                                                                 </HStack>
                                                             </HStack>
                                                         );
@@ -1482,8 +1510,7 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ file, submitSignature, submitting
                                     await submitSignature(signaturePositions, signaturesAquaTree)
                                 }}
                             >
-                                <FaCloudArrowUp />
-                                Sign document
+                                Sign document 
                             </Button>
                         </Stack>
                     </GridItem>
