@@ -15,6 +15,8 @@ import { Switch } from "../chakra-ui/switch"
 import { ethers } from "ethers"
 import { Alert } from "../chakra-ui/alert"
 import { RadioCardItem, RadioCardLabel, RadioCardRoot } from "../chakra-ui/radio-card"
+import { getGenesisHash, isAquaTree } from "../../utils/functions"
+import { AquaTree } from "aqua-js-sdk"
 
 interface ISharingOptions {
     value: string;
@@ -316,6 +318,30 @@ const ShareButtonAction = ({ item, nonce }: IShareButtonAction) => {
         }
     }
 
+    const getFileNameFromAquatree = (hash: string): string => {
+        let data = item.aquaTree!.file_index[hash]
+        if (data) {
+            return data
+        }
+        const allAquaTrees = item?.fileObject.filter((e) => isAquaTree(e.fileContent)) ?? []
+        let name: string = '--name--'
+        for (let item of allAquaTrees) {
+            const itemAquaTree: AquaTree = item.fileContent as AquaTree
+            let allRevisionHashes = Object.keys(itemAquaTree.revisions)
+
+            // let linkedHash = getFifthRevision.link_verification_hashes![0]
+            if (allRevisionHashes.includes(hash)) {
+                let genHash = getGenesisHash(itemAquaTree)
+                if (genHash) {
+
+                    name = itemAquaTree.file_index[genHash]
+                    break
+                }
+            }
+        }
+
+        return name
+    }
     const checkIfFileContainsLinkAndShowWarning = () => {
         let linkHahses: string[] = [];
         let revisionHashes = Object.keys(item.aquaTree!.revisions!!)
@@ -326,6 +352,7 @@ const ShareButtonAction = ({ item, nonce }: IShareButtonAction) => {
                 linkHahses.push(data)
             }
         }
+
 
         if (linkHahses.length != 0) {
 
@@ -339,7 +366,9 @@ const ShareButtonAction = ({ item, nonce }: IShareButtonAction) => {
                             return <List.Item> <List.Indicator>
                                 {index + 1}.
                             </List.Indicator>
-                                {item.aquaTree!.file_index[itemLoop]}</List.Item>
+                                {/* {} */}
+                                {getFileNameFromAquatree(itemLoop)}
+                            </List.Item>
                         })}
                     </List.Root>
                 </Stack>
