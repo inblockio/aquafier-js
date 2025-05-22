@@ -284,6 +284,9 @@ const ContractSummaryView = () => {
                 }
             }
 
+
+            console.log(`---< fileobject ${fileObjectVerifier.map((e)=>e.fileName).toString()} ll file names`)
+
             // Process revisions in parallel where possible
             const verificationPromises = revisionHashes.map(async revisionHash => {
                 const revision = fileInfo.aquaTree!.revisions[revisionHash];
@@ -293,7 +296,7 @@ const ContractSummaryView = () => {
                     revisionHash,
                     fileObjectVerifier
                 )
-                // console.log("Hash: ", revisionHash, "\nResult", result)
+                console.log("Hash: ", revisionHash, "\nResult", result)
                 return ({
                     hash: revisionHash,
                     isSuccessful: result.isOk()
@@ -302,7 +305,7 @@ const ContractSummaryView = () => {
 
             // Wait for all verifications to complete
             const allRevisionsVerificationsStatus = await Promise.all(verificationPromises);
-            // console.log("allRevisionsVerificationsStatus", allRevisionsVerificationsStatus)
+            console.log("allRevisionsVerificationsStatus", allRevisionsVerificationsStatus)
 
             // Update state and callback
             setVerificationResults(allRevisionsVerificationsStatus);
@@ -312,7 +315,7 @@ const ContractSummaryView = () => {
             _drawerStatus.colorLight = displayColorBasedOnVerificationStatusLight(allRevisionsVerificationsStatus);
             // callBack(_drawerStatus);
         } catch (error) {
-            // console.error("Error verifying AquaTree revisions:", error);
+            console.error("Error verifying AquaTree revisions:", error);
         } finally {
             setIsProcessing(false);
         }
@@ -664,7 +667,7 @@ export default function WorkFlowPage() {
 
 
             return <Stack>
-                Wallet {signRevision.signature_wallet_address} signed the document.
+                Wallet {signRevision.signature_wallet_address} &nbsp; signed the document.
 
             </Stack>
         }
@@ -690,6 +693,9 @@ export default function WorkFlowPage() {
 
                     //check if the document is signed
                     if (Object.keys(selectedFileInfo!.aquaTree!.revisions).length >= 5) {
+
+                        let allSignatures: any[] = []
+
                         const userSignatureAquaTree = selectedFileInfo!.fileObject.find((e) => e.fileName === "user_signature_data.json.aqua.json")
                         if (!userSignatureAquaTree) {
                             return <>No signature found</>
@@ -792,19 +798,35 @@ export default function WorkFlowPage() {
                         signature_0_Position.walletAddress = actualRevision.forms_wallet_address
                         signature_0_Position.image = image
 
+                        
+                        allSignatures.push(signature_0_Position)
+                        let isUserSignatureIncluded = allSignatures.some((e) => e.walletAddress === session?.address)
+
                         return (
-                            <Grid templateColumns="repeat(4, 1fr)">
-                                <GridItem colSpan={{ base: 12, md: 3 }}>
-                                    {/* <PDFJSViewer pdfUrl={pdfUrl!} />  */}
-                                    <PDFDisplayWithJustSimpleOverlay pdfUrl={pdfUrl!} signatures={[signature_0_Position]} />
-                                </GridItem>
-                                <GridItem colSpan={{ base: 12, md: 1 }}>
-                                    <Stack>
-                                        <Text fontWeight={700}>Signatures</Text>
-                                        <SignatureItem signature={signature_0_Position} />
-                                    </Stack>
-                                </GridItem>
-                            </Grid>
+                            <>
+                                {
+                                    isUserSignatureIncluded ? (
+                                        <Grid templateColumns="repeat(4, 1fr)">
+                                            <GridItem colSpan={{ base: 12, md: 3 }}>
+                                                <PDFDisplayWithJustSimpleOverlay pdfUrl={pdfUrl!} signatures={[signature_0_Position]} />
+                                            </GridItem>
+                                            <GridItem colSpan={{ base: 12, md: 1 }}>
+                                                <Stack>
+                                                    <Text fontWeight={700}>Signatures</Text>
+                                                    {
+                                                        allSignatures.map((signature: any, index: number) => {
+                                                            return <SignatureItem signature={signature} key={index} />
+                                                        })
+                                                    }
+                                                </Stack>
+                                            </GridItem>
+                                        </Grid>
+                                    ) : (
+                                        <PdfSigner file={pdfFile} submitSignature={submitSignatureData} submittingSignatureData={submittingSignatureData} />
+                                    )
+                                }
+
+                            </>
                         )
                     } else {
 

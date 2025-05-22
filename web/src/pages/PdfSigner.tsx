@@ -1301,7 +1301,6 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ file, submitSignature, submitting
                             borderColor={colorMode === "dark" ? "gray.800" : "gray.100"}
                             borderRadius="md"
                         >
-
                             <Button
                                 colorScheme="blue"
                                 onClick={() => setIsOpen(true)}
@@ -1312,7 +1311,7 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ file, submitSignature, submitting
 
                             {/* Signature List */}
                             {signatures.length > 0 && (
-                                <>
+                                <Stack>
                                     <Text fontWeight="bold" mt={2}>Your Signatures:</Text>
                                     <Box maxH="200px" overflowY="auto" border="1px solid" borderColor="gray.200" borderRadius="md">
                                         <Stack gap={0}>
@@ -1353,7 +1352,7 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ file, submitSignature, submitting
                                             ))}
                                         </Stack>
                                     </Box>
-                                </>
+                                </Stack>
                             )}
 
                             {selectedSignatureId && (

@@ -953,8 +953,8 @@ export async function saveARevisionInAquaTree(revisionData: SaveRevision, userAd
 }
 
 export async function saveAquaTree(aquaTree: AquaTree, userAddress: string, templateId: string | null = null, isWorkFlow: boolean = false) {
-  
- 
+
+
     // Reorder revisions to ensure proper order
     let orderedAquaTree = reorderAquaTreeRevisionsProperties(aquaTree);
     let aquaTreeWithOrderdRevision = OrderRevisionInAquaTree(orderedAquaTree);
@@ -1586,11 +1586,12 @@ export async function createAquaTreeFromRevisions(latestRevisionHash: string, ur
                             if (filesData == null) {
                                 console.log(` 💣💣💣💣  File index with hash ${hashSearchText} not found `)
                             } else {
-                                anAquaTree.file_index[hashSearchText] = filesData?.uri ?? "--error--."
+                                anAquaTree.file_index[hashSearchText] = filesData!.uri!! //?? "--error--."
 
 
 
-                                let [aquaTreeLinked, fileObjectLinked] = await createAquaTreeFromRevisions(filesData.id, url);
+                                // let [aquaTreeLinked, fileObjectLinked] = await createAquaTreeFromRevisions(filesData.id, url);
+                                let [aquaTreeLinked, fileObjectLinked] = await createAquaTreeFromRevisions(hashSearchText, url);
 
                                 // let name = Object.values(aquaTreeLinked.file_index)[0] ?? "--error--"
                                 let genesisHash = getGenesisHash(aquaTreeLinked) ?? ""
@@ -1604,6 +1605,7 @@ export async function createAquaTreeFromRevisions(latestRevisionHash: string, ur
 
 
                                 fileObject.push(...fileObjectLinked)
+
                             }
 
 
@@ -1648,10 +1650,12 @@ export async function createAquaTreeFromRevisions(latestRevisionHash: string, ur
                     // Check if any hash in the array contains the hashOnly part
                     return item.hash.some((hashItem: string) => hashItem.includes(hashOnly));
                 })
-                //  console.log(`----------  name ${JSON.stringify(name, null, 4)}`)
-                anAquaTree.file_index[hashOnly] = name?.uri ?? "--error--."
-                revisionWithData["file_hash"] = name?.file_hash ?? "--error--"
+                if (name) {
+                    //  console.log(`----------  name ${JSON.stringify(name, null, 4)}`)
+                    anAquaTree.file_index[hashOnly] = name?.uri ?? "--error--."
+                    revisionWithData["file_hash"] = name?.file_hash ?? "--error--"
 
+                }
             }
             let aquaTreeWithOrderdRevisionProperties = reorderRevisionsProperties(revisionWithData)
             anAquaTree.revisions[hashOnly] = aquaTreeWithOrderdRevisionProperties;
