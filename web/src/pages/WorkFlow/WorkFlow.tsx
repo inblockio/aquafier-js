@@ -1147,20 +1147,12 @@ export default function WorkFlowPage() {
             });
 
 
-
-
-            //
-
-
             if (response.status === 200 || response.status === 201) {
 
 
                 console.log(`💯 form with signature data saved sussefully to the api `)
 
             }
-
-
-
 
         } catch (e) {
 
@@ -1192,9 +1184,6 @@ export default function WorkFlowPage() {
             return
 
         }
-
-
-        
 
         //save the last  revision to db
 
@@ -1244,12 +1233,7 @@ export default function WorkFlowPage() {
             return
         }
 
-
-
-
         //fetch user all files 
-
-
 
         const url2 = `${backend_url}/explorer_files`;
         const files = await fetchFiles(`${session?.address}`, url2, `${session?.nonce}`);
@@ -1512,8 +1496,6 @@ export default function WorkFlowPage() {
     }
 
 
-
-
     const genesisContent = () => {
         const orderedTree = OrderRevisionInAquaTree(selectedFileInfo!.aquaTree!)
         const revisions = orderedTree.revisions
@@ -1657,7 +1639,6 @@ export default function WorkFlowPage() {
 
         return aquaTreeTimeLine()
     }
-
 
     return (
         <>
