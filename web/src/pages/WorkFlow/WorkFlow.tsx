@@ -293,7 +293,7 @@ const ContractSummaryView = () => {
                     revisionHash,
                     fileObjectVerifier
                 )
-                // console.log("Hash: ", revisionHash, "\nResult", result)
+                console.log("Hash: ", revisionHash, "\nResult", result)
                 return ({
                     hash: revisionHash,
                     isSuccessful: result.isOk()
@@ -302,7 +302,7 @@ const ContractSummaryView = () => {
 
             // Wait for all verifications to complete
             const allRevisionsVerificationsStatus = await Promise.all(verificationPromises);
-            // console.log("allRevisionsVerificationsStatus", allRevisionsVerificationsStatus)
+            console.log("allRevisionsVerificationsStatus", allRevisionsVerificationsStatus)
 
             // Update state and callback
             setVerificationResults(allRevisionsVerificationsStatus);
@@ -312,14 +312,14 @@ const ContractSummaryView = () => {
             _drawerStatus.colorLight = displayColorBasedOnVerificationStatusLight(allRevisionsVerificationsStatus);
             // callBack(_drawerStatus);
         } catch (error) {
-            // console.error("Error verifying AquaTree revisions:", error);
+            console.error("Error verifying AquaTree revisions:", error);
         } finally {
             setIsProcessing(false);
         }
     }
 
     useEffect(() => {
-        if(selectedFileInfo){
+        if (selectedFileInfo) {
             verifyAquaTreeRevisions(selectedFileInfo)
         }
     }, [selectedFileInfo])
@@ -570,7 +570,7 @@ export default function WorkFlowPage() {
             (async () => {
                 await loadTimeline()
             })();
-         
+
         }
     }
 
@@ -687,6 +687,9 @@ export default function WorkFlowPage() {
 
                     //check if the document is signed
                     if (Object.keys(selectedFileInfo!.aquaTree!.revisions).length >= 5) {
+
+                        let allSignatures: any[] = []
+
                         const userSignatureAquaTree = selectedFileInfo!.fileObject.find((e) => e.fileName === "user_signature_data.json.aqua.json")
                         if (!userSignatureAquaTree) {
                             return <>No signature found</>
@@ -789,19 +792,35 @@ export default function WorkFlowPage() {
                         signature_0_Position.walletAddress = actualRevision.forms_wallet_address
                         signature_0_Position.image = image
 
+                        
+                        allSignatures.push(signature_0_Position)
+                        let isUserSignatureIncluded = allSignatures.some((e) => e.walletAddress === session?.address)
+
                         return (
-                            <Grid templateColumns="repeat(4, 1fr)">
-                                <GridItem colSpan={{ base: 12, md: 3 }}>
-                                    {/* <PDFJSViewer pdfUrl={pdfUrl!} />  */}
-                                    <PDFDisplayWithJustSimpleOverlay pdfUrl={pdfUrl!} signatures={[signature_0_Position]} />
-                                </GridItem>
-                                <GridItem colSpan={{ base: 12, md: 1 }}>
-                                    <Stack>
-                                        <Text fontWeight={700}>Signatures</Text>
-                                        <SignatureItem signature={signature_0_Position} />
-                                    </Stack>
-                                </GridItem>
-                            </Grid>
+                            <>
+                                {
+                                    isUserSignatureIncluded ? (
+                                        <Grid templateColumns="repeat(4, 1fr)">
+                                            <GridItem colSpan={{ base: 12, md: 3 }}>
+                                                <PDFDisplayWithJustSimpleOverlay pdfUrl={pdfUrl!} signatures={[signature_0_Position]} />
+                                            </GridItem>
+                                            <GridItem colSpan={{ base: 12, md: 1 }}>
+                                                <Stack>
+                                                    <Text fontWeight={700}>Signatures</Text>
+                                                    {
+                                                        allSignatures.map((signature: any, index: number) => {
+                                                            return <SignatureItem signature={signature} key={index} />
+                                                        })
+                                                    }
+                                                </Stack>
+                                            </GridItem>
+                                        </Grid>
+                                    ) : (
+                                        <PdfSigner file={pdfFile} submitSignature={submitSignatureData} submittingSignatureData={submittingSignatureData} />
+                                    )
+                                }
+
+                            </>
                         )
                     } else {
 
@@ -843,7 +862,7 @@ export default function WorkFlowPage() {
     // 5. link form with signature positions *100 -- form 
     // 6. link to signture aqua tree. == genesiis file break -- signature
     // 7. metamask sign -- signature
-    
+
 
     const saveAquaTree = async (aquaTree: AquaTree, fileObject: FileObject, isFinal: boolean = false, isWorkflow: boolean = false, template_id: string): Promise<Boolean> => {
         try {
@@ -1118,13 +1137,13 @@ export default function WorkFlowPage() {
 
 
         // we do not save the last revision here since the metamask revion that folows can be cancelled or failed.
-               
+
 
 
         // meta mask sign 
-         //save the last link revision to db -- signature aqua tree pdf 
+        //save the last link revision to db -- signature aqua tree pdf 
 
-         try {
+        try {
 
             let newAquaTree = resLinkedAquaTree.data.aquaTree!
             let revisionHashes = Object.keys(newAquaTree.revisions)
