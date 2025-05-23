@@ -109,10 +109,8 @@ const ContractSummaryView = () => {
     let hashOfLinkedDocument = thirdRevision.link_verification_hashes![0]!
     let fileName = selectedFileInfo!.aquaTree!.file_index[hashOfLinkedDocument]
 
-
     const creatorSignatureHash = revisionHashes[3];
     const signatureRevision: Revision | undefined = selectedFileInfo!.aquaTree!.revisions[creatorSignatureHash]
-
 
     let fourthItmeHashOnwards: string[] = [];
     let signatureRevionHashes: Array<SummaryDetailsDisplayData> = []
@@ -126,7 +124,6 @@ const ContractSummaryView = () => {
         // console.log(`signatureRevionHashes  ${JSON.stringify(signatureRevionHashes, null, 4)}`)
 
     }
-
 
     // Memoized display text function
     const displayBasedOnVerificationStatusText = (verificationResults: any) => {
@@ -285,7 +282,7 @@ const ContractSummaryView = () => {
             }
 
 
-            console.log(`---< fileobject ${fileObjectVerifier.map((e)=>e.fileName).toString()} ll file names`)
+            console.log(`---< fileobject ${fileObjectVerifier.map((e) => e.fileName).toString()} ll file names`)
 
             // Process revisions in parallel where possible
             const verificationPromises = revisionHashes.map(async revisionHash => {
@@ -370,7 +367,7 @@ const ContractSummaryView = () => {
 
                 {
 
-                   
+
                     signatureRevionHashes.map((signatureRevionHasheItem) => {
 
 
@@ -394,7 +391,7 @@ const ContractSummaryView = () => {
                     })
 
                 }
-        
+
                 {
                     <Timeline.Item>
                         <Timeline.Connector>
@@ -442,8 +439,6 @@ export default function WorkFlowPage() {
     const [submittingSignatureData, setSubmittingSignatureData] = useState(false);
 
     const navigate = useNavigate()
-
-
 
     async function loadTimeline() {
         let items: Array<WorkFlowTimeLine> = []
@@ -548,8 +543,6 @@ export default function WorkFlowPage() {
 
     }
 
-
-
     useEffect(() => {
         loadData()
     }, [])
@@ -631,6 +624,8 @@ export default function WorkFlowPage() {
         return FaEraser
     }
 
+    console.log("selectedFileInfo", selectedFileInfo)
+
     const getContentToDisplay = async (index: number) => {
 
 
@@ -690,9 +685,18 @@ export default function WorkFlowPage() {
             if (firstRevision?.forms_signers) {
                 let signers = firstRevision.forms_signers.split(",").map((e: string) => e.trim())
                 if (signers.includes(session?.address)) {
+                    let revisionHashes = Object.keys(selectedFileInfo!.aquaTree!.revisions)
 
                     //check if the document is signed
-                    if (Object.keys(selectedFileInfo!.aquaTree!.revisions).length >= 5) {
+                    if (revisionHashes.length >= 5) {
+
+                        let linkRevisions: Revision[] = []
+
+                        for (let i = 0; i < revisionHashes.length; i++) {
+                           if(selectedFileInfo!.aquaTree?.revisions[revisionHashes[i]].type == "link"){
+                            linkRevisions.push(selectedFileInfo!.aquaTree?.revisions[revisionHashes[i]])
+                           }
+                        }
 
                         let allSignatures: any[] = []
 
@@ -701,7 +705,6 @@ export default function WorkFlowPage() {
                             return <>No signature found</>
                         }
                         const signatureAquatTree: AquaTree = userSignatureAquaTree.fileContent as AquaTree
-                        const revisionHashes = Object.keys(signatureAquatTree.revisions)
                         const revision = signatureAquatTree.revisions[revisionHashes[0]]
 
                         const fileObjects = selectedFileInfo?.fileObject
@@ -798,7 +801,7 @@ export default function WorkFlowPage() {
                         signature_0_Position.walletAddress = actualRevision.forms_wallet_address
                         signature_0_Position.image = image
 
-                        
+
                         allSignatures.push(signature_0_Position)
                         let isUserSignatureIncluded = allSignatures.some((e) => e.walletAddress === session?.address)
 
@@ -1016,7 +1019,7 @@ export default function WorkFlowPage() {
             );
             if (!linkedAquaTreeWithSignature) return;
 
-            
+
             // Step 5: Sign with MetaMask
             const metaMaskSignedAquaTree = await signWithMetaMask(aquafier, structuredClone(linkedAquaTreeWithSignature));
             if (!metaMaskSignedAquaTree) return;
