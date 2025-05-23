@@ -30,7 +30,7 @@
     }
   },
   "file_index": {
-    "0x5ea1129a733086d131c9bec1758b8bbefdfa90bcb38179ec595f532fe14ab67f": "/home/kamau/Development/Typescript/aquafier-js/api/assets/identity_attestation.json"
+    "0x5ea1129a733086d131c9bec1758b8bbefdfa90bcb38179ec595f532fe14ab67f": "identity_attestation.json"
   },
   "tree": {
     "hash": "0x5ea1129a733086d131c9bec1758b8bbefdfa90bcb38179ec595f532fe14ab67f",

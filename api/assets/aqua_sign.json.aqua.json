@@ -24,7 +24,7 @@
     }
   },
   "file_index": {
-    "0xfd2085151958e5dbaa32322f1266a3cf86ff547c75379a4c3ebd2272d4abd89f": "/home/kamau/Development/Typescript/aquafier-js/api/assets/aqua_sign.json"
+    "0xfd2085151958e5dbaa32322f1266a3cf86ff547c75379a4c3ebd2272d4abd89f": "aqua_sign.json"
   },
   "tree": {
     "hash": "0xfd2085151958e5dbaa32322f1266a3cf86ff547c75379a4c3ebd2272d4abd89f",

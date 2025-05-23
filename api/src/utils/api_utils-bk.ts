@@ -1,4 +1,32 @@
-// function sample() {
+/**
+ * let aquafier = new Aquafier()
+
+  let systemAquaTreesNames: Array<string> = []
+  let latest = await prisma.latest.findMany({
+    where: {
+      user: SYSTEM_WALLET_ADDRESS
+    }
+  });
+  // Get the host from the request headers
+  const host = `${getHost()}:${getPort()}`;
+
+  // Get the protocol (http or https)
+  const protocol = 'https'
+
+  // Construct the full URL
+  const url = `${protocol}://${host}`;
+
+  if (latest.length != 0) {
+    let systemAquaTrees = await fetchAquatreeFoUser(url, latest);
+    for (let item of systemAquaTrees) {
+      let aquaName = getAquaTreeFileName(item.aquaTree);
+      systemAquaTreesNames.push(aquaName)
+    }
+  }
+
+ */
+
+  // function sample() {
     
 
     

@@ -108,26 +108,34 @@ export const saveTemplateFileData = async (aquaTree: AquaTree, fileData: string,
   // Save the file
   // await pump(data.file, fs.createWriteStream(filePath))
   await fs.promises.writeFile(filePath, fileData);
-  let fileCreation = await prisma.file.create({
-    data: {
+  let fileCreation = await prisma.file.upsert({
+    where: {
+      hash: filepubkeyhash,
+    },
+    create: {
       hash: filepubkeyhash,
       file_hash: fileHash,
       content: filePath,
       reference_count: 0, // we use 0 because  saveAquaTree increases file  by 1
-    }
+    },
+    update: {}
   })
   console.log('File record created:', fileCreation);
 
   console.log('About to create fileIndex record');
 
-  await prisma.fileIndex.create({
-    data: {
+  await prisma.fileIndex.upsert({
+    where: {
+      id: fileCreation.hash,
+    },
+    create: {
       id: fileCreation.hash,
       hash: [filepubkeyhash],
       file_hash: fileHash,
       uri: fileName,
       reference_count: 0 // we use 0 because  saveAquaTree increases file  undex  by 1
-    }
+    },
+    update: {}
   })
 
   console.log('FileIndex record created');
@@ -147,7 +155,7 @@ async function checkFolderExists(folderPath: string) {
 }
 
 const setUpSystemTemplates = async () => {
-  //create user system 
+
   await prisma.users.upsert({
     where: {
       address: SYSTEM_WALLET_ADDRESS
@@ -161,33 +169,8 @@ const setUpSystemTemplates = async () => {
   });
 
 
-  // end of create user system
 
   let today = new Date();
-  let aquafier = new Aquafier()
-
-  let systemAquaTreesNames: Array<string> = []
-  let latest = await prisma.latest.findMany({
-    where: {
-      user: SYSTEM_WALLET_ADDRESS
-    }
-  });
-  // Get the host from the request headers
-  const host = `${getHost()}:${getPort()}`;
-
-  // Get the protocol (http or https)
-  const protocol = 'https'
-
-  // Construct the full URL
-  const url = `${protocol}://${host}`;
-
-  if (latest.length != 0) {
-    let systemAquaTrees = await fetchAquatreeFoUser(url, latest);
-    for (let item of systemAquaTrees) {
-      let aquaName = getAquaTreeFileName(item.aquaTree);
-      systemAquaTreesNames.push(aquaName)
-    }
-  }
 
 
   let assetsPath = getAquaAssetDirectory()
@@ -216,7 +199,7 @@ const setUpSystemTemplates = async () => {
   let templates = [
     "access_agreement",
     "aqua_sign",
-    "cheque.json",
+    "cheque",
     "identity_attestation",
     "identity_claim",
     "user_signature"
@@ -271,15 +254,18 @@ const setUpSystemTemplates = async () => {
     })
 
 
-    //save aqua tre
+
+    //save aqua tree
     let templateAquaTreeDataContent = fs.readFileSync(templateAquaTreeData, 'utf8')
     let templateAquaTree: AquaTree = JSON.parse(templateAquaTreeDataContent)
+
+
+    let templateDataContent = fs.readFileSync(templateData, 'utf8')
+    await saveTemplateFileData(templateAquaTree, templateDataContent, SYSTEM_WALLET_ADDRESS)
     await saveAquaTree(templateAquaTree, SYSTEM_WALLET_ADDRESS);
 
 
   }
-  throw Error("oops")
-
 
 }
 

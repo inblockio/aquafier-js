@@ -28,7 +28,7 @@
     }
   },
   "file_index": {
-    "0x6ff9a00f08f675cf17eb6ce8572a7fdcbd9d43ff6b043f2b233e7b70e2d9c15f": "/home/kamau/Development/Typescript/aquafier-js/api/assets/access_agreement.json"
+    "0x6ff9a00f08f675cf17eb6ce8572a7fdcbd9d43ff6b043f2b233e7b70e2d9c15f": "access_agreement.json"
   },
   "tree": {
     "hash": "0x6ff9a00f08f675cf17eb6ce8572a7fdcbd9d43ff6b043f2b233e7b70e2d9c15f",
