@@ -79,6 +79,7 @@ export const SignatureOverlay = ({ position, currentPage, signatures, pdfMainCon
             }}
         >
             <Stack gap={1} justifyContent={"flex-start"} height="100%">
+                <Text fontSize="xs" color="gray.600" style={{ overflow: 'auto', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{signature.name}</Text>
                 <Box
                     flex="1"
                     backgroundImage={`url(${signature.dataUrl})`}
@@ -87,8 +88,7 @@ export const SignatureOverlay = ({ position, currentPage, signatures, pdfMainCon
                     backgroundPosition="left"
                     minHeight="40px"
                 />
-                <Text fontSize="xs" color="gray.600" style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{signature.walletAddress}</Text>
-                <Text fontSize="xs" color="gray.600" style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{signature.name}</Text>
+                <Text fontSize="xs" color="gray.600" style={{ overflow: 'auto', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{signature.walletAddress}</Text>
             </Stack>
         </Box>
     );
@@ -132,6 +132,7 @@ export const SimpleSignatureOverlay = ({ signature }: { signature: IQuickSignatu
             <Stack gap={1} justifyContent={"flex-start"} height="100%" bg={isDarkMode ? "gray.800" : "gray.50"} borderRadius={"lg"} style={{
                 padding: "6px"
             }}>
+                <Text fontSize="xs" color="gray.600">{signature.name}</Text>
                 <Box
                     flex="1"
                     backgroundImage={`url(${signature.image})`}
@@ -140,8 +141,7 @@ export const SimpleSignatureOverlay = ({ signature }: { signature: IQuickSignatu
                     backgroundPosition="left"
                     minHeight="40px"
                 />
-                <Text fontSize="xs" color="gray.600">{signature.walletAddress}</Text>
-                <Text fontSize="xs" color="gray.600">{signature.name}</Text>
+                <Text fontSize="xs" overflow={'hidden'} color="gray.600">{signature.walletAddress}</Text>
             </Stack>
         </Box>
     )
@@ -213,7 +213,7 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ file, submitSignature, submitting
     const [signerName, setSignerName] = useState<string>('John Doe');
     const [signaturePositions, setSignaturePositions] = useState<SignaturePosition[]>([]);
     const [placingSignature, setPlacingSignature] = useState<boolean>(false);
-    const [signatureSize, setSignatureSize] = useState<number>(250);
+    const [signatureSize, setSignatureSize] = useState<number>(330);
 
     // Modal state
     const [isOpen, setIsOpen] = useState(false);
@@ -709,7 +709,7 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ file, submitSignature, submitting
 
             let resp = await createWorkflowFromTemplate()
             if (resp) {
-                await loadUserSignatures()
+                await loadUserSignatures(true)
                 // Select the newly created signature
                 // setSelectedSignatureId(newId);
 
@@ -730,6 +730,7 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ file, submitSignature, submitting
                 });
 
 
+               
                 // If user is in placing mode, allow them to place the signature
                 if (!placingSignature) {
                     setPlacingSignature(true);
@@ -1002,7 +1003,7 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ file, submitSignature, submitting
         setCurrentPage(pageNumber);
     };
 
-    const loadUserSignatures = async () => {
+    const loadUserSignatures = async (selectSignature: boolean=false) => {
 
         if (backend_url == "http://0.0.0.0:0" || backend_url == "https://0.0.0.0:0") {
 
@@ -1158,6 +1159,14 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ file, submitSignature, submitting
                 return [...prevSignatures, ...newSignatures];
             });
 
+        
+           if(selectSignature){
+                if(session?.address === apiSigntures[0].walletAddress){
+                    setSelectedSignatureId(apiSigntures[0].id);
+                }
+            }
+
+
 
         } catch (e) {
             console.log(`loadUserSignatures Error ${e}`)
@@ -1191,7 +1200,7 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ file, submitSignature, submitting
     // Effect to update signature positions when window is resized
     useEffect(() => {
 
-        loadUserSignatures()
+        loadUserSignatures(true)
 
 
         if (file) {
@@ -1225,7 +1234,7 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ file, submitSignature, submitting
 
     useEffect(() => {
 
-        loadUserSignatures()
+        loadUserSignatures(true)
 
     }, [backend_url, session, session?.address]);
 
@@ -1428,8 +1437,8 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ file, submitSignature, submitting
                                     <Field>
                                         <FieldLabel>Signature Size: {signatureSize}px</FieldLabel>
                                         <Slider.Root
-                                            min={50}
-                                            max={400}
+                                            min={280}
+                                            max={450}
                                             step={1}
                                             defaultValue={[signatureSize]}
                                             size={'lg'} key={'lg'}

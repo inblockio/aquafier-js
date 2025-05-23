@@ -471,7 +471,7 @@ export default function WorkFlowPage() {
 
                 items.push({
                     id: index,
-                    completed: false,
+                    completed: index==2 ? true : false,
                     content: contentData,
                     icon: iconData,
                     revisionHash: hash,
