@@ -471,7 +471,7 @@ export default function WorkFlowPage() {
 
                 items.push({
                     id: index,
-                    completed: index==2 ? true : false,
+                    completed: index == 2 ? true : false,
                     content: contentData,
                     icon: iconData,
                     revisionHash: hash,
@@ -693,9 +693,9 @@ export default function WorkFlowPage() {
                         let linkRevisions: Revision[] = []
 
                         for (let i = 0; i < revisionHashes.length; i++) {
-                           if(selectedFileInfo!.aquaTree?.revisions[revisionHashes[i]].type == "link"){
-                            linkRevisions.push(selectedFileInfo!.aquaTree?.revisions[revisionHashes[i]])
-                           }
+                            if (selectedFileInfo!.aquaTree?.revisions[revisionHashes[i]].type == "link") {
+                                linkRevisions.push(selectedFileInfo!.aquaTree?.revisions[revisionHashes[i]])
+                            }
                         }
 
                         let allSignatures: any[] = []
@@ -1031,9 +1031,18 @@ export default function WorkFlowPage() {
                 metaMaskSignedAquaTree
             ]);
 
+
             // Step 7: Update UI and refresh files
             await updateUIAfterSuccess();
 
+            // step 8 
+            // check if the owner of the document is a different wallet address send him the above revsions
+            // send the revision to the other wallet address if possible
+            await shareRevisionsToOwnerOfDocument([
+                linkedAquaTreeWithUserSignatureData,
+                linkedAquaTreeWithSignature,
+                metaMaskSignedAquaTree
+            ])
         } catch (error) {
             console.error('Error in submitSignatureData:', error);
             showError('An unexpected error occurred during signature submission');
@@ -1172,6 +1181,87 @@ export default function WorkFlowPage() {
         return resLinkedMetaMaskSignedAquaTree.data.aquaTree!;
     };
 
+    const shareRevisionsToOwnerOfDocument = async (aquaTrees: AquaTree[]) => {
+
+        //get genesis hash
+        let genesisHash = getGenesisHash(selectedFileInfo!.aquaTree!)
+
+        if (genesisHash) {
+
+            let revision = selectedFileInfo!.aquaTree!.revisions[genesisHash];
+            let sender: string | undefined = revision['forms_sender'];
+            let signers: string | undefined = revision['forms_signers']
+
+            if (sender == undefined) {
+                showError("Workflow sender not found");
+                return
+            }
+
+            if (signers == undefined) {
+                showError("Workflow signers not found");
+                return
+            }
+
+            if (signers.includes(',')) {
+                let allSigners: string[] = signers.split(",")
+
+                for (let aSigner of allSigners) {
+
+                    // dont resend the revision to the user as this was handled before this function call
+                    if (aSigner != session?.address) {
+                        await saveRevisionsToServerForUser(aquaTrees, aSigner)
+                    }
+                }
+            }
+
+            if (sender != signers) {
+                //send the signatures to workflow creator 
+                await saveRevisionsToServerForUser(aquaTrees, sender)
+            }
+
+
+        }
+
+    }
+
+    // Helper function to save multiple revisions to server
+    const saveRevisionsToServerForUser = async (aquaTrees: AquaTree[], address: string) => {
+
+        console.log(`aquaTrees ${aquaTrees.length}`)
+        for (let index = 0; index < aquaTrees.length; index++) {
+            const aquaTree = aquaTrees[index];
+
+            console.log(`aquaTrees ${index}  ${JSON.stringify(aquaTree, null, 4)}`)
+            try {
+                const revisionHashes = Object.keys(aquaTree.revisions);
+                const lastHash = revisionHashes[revisionHashes.length - 1];
+                const lastRevision = aquaTree.revisions[lastHash];
+
+                const url = `${backend_url}/tree/user`;
+                const actualUrlToFetch = ensureDomainUrlHasSSL(url);
+
+                const response = await axios.post(actualUrlToFetch, {
+                    revision: lastRevision,
+                    revisionHash: lastHash,
+                    address: address
+                }, {
+                    headers: {
+                        nonce: session?.nonce
+                    }
+                });
+
+                if (response.status === 200 || response.status === 201) {
+                    console.log(`💯 Revision ${index + 1} saved successfully to the API`);
+                    // todo a method to notify the other user should go here
+                }
+
+            } catch (error) {
+                console.error(`Error saving revision ${index + 1}:`, error);
+                throw new Error(`Error saving revision ${index + 1} to server`);
+            }
+        }
+
+    };
     // Helper function to save multiple revisions to server
     const saveRevisionsToServer = async (aquaTrees: AquaTree[]) => {
 

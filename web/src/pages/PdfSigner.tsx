@@ -94,7 +94,8 @@ export const SignatureOverlay = ({ position, currentPage, signatures, pdfMainCon
     );
 };
 
-interface IQuickSignature { x: string,
+interface IQuickSignature {
+    x: string,
     y: string,
     width: string,
     height: string,
@@ -730,7 +731,7 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ file, submitSignature, submitting
                 });
 
 
-               
+
                 // If user is in placing mode, allow them to place the signature
                 if (!placingSignature) {
                     setPlacingSignature(true);
@@ -1003,7 +1004,7 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ file, submitSignature, submitting
         setCurrentPage(pageNumber);
     };
 
-    const loadUserSignatures = async (selectSignature: boolean=false) => {
+    const loadUserSignatures = async (selectSignature: boolean = false) => {
 
         if (backend_url == "http://0.0.0.0:0" || backend_url == "https://0.0.0.0:0") {
 
@@ -1159,10 +1160,12 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ file, submitSignature, submitting
                 return [...prevSignatures, ...newSignatures];
             });
 
-        
-           if(selectSignature){
-                if(session?.address === apiSigntures[0].walletAddress){
-                    setSelectedSignatureId(apiSigntures[0].id);
+
+            if (selectSignature) {
+                if (apiSigntures.length > 0) {
+                    if (session?.address === apiSigntures[0].walletAddress) {
+                        setSelectedSignatureId(apiSigntures[0].id);
+                    }
                 }
             }
 
@@ -1321,94 +1324,94 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ file, submitSignature, submitting
                             {/* Signature List */}
                             {signatures.length > 0 && (
                                 <>
-                                <Stack>
-                                    <Text fontWeight="bold" mt={2}>Your Signatures:</Text>
-                                    <Box maxH="200px" overflowY="auto" border="1px solid" borderColor="gray.200" borderRadius="md">
-                                        <Stack gap={0}>
-                                            {signatures.filter((signature) => signature.walletAddress === session?.address).map((signature) => (
-                                                <Box
-                                                    key={signature.id}
-                                                    p={2}
-                                                    cursor="pointer"
-                                                    bg={selectedSignatureId === signature.id ? "blue.50" : "transparent"}
-                                                    _hover={{ bg: "gray.50" }}
-                                                    onClick={() => {
-                                                        if(session?.address === signature.walletAddress){
-                                                            setSelectedSignatureId(signature.id);
-                                                        }
-                                                    }}
-                                                >
-                                                    <HStack>
-                                                        <Box
-                                                            width="60px"
-                                                            height="40px"
-                                                            backgroundImage={`url(${signature.dataUrl})`}
-                                                            backgroundSize="contain"
-                                                            backgroundRepeat="no-repeat"
-                                                            backgroundPosition="center"
-                                                            border="1px solid"
-                                                            borderColor="gray.200"
-                                                            borderRadius="sm"
-                                                        />
-                                                        <Stack gap={0}>
-                                                            <Text fontSize="sm" fontWeight="medium">{signature.name}</Text>
-                                                            <Text fontSize="xs" color="gray.600">
-                                                                {signature.walletAddress.length > 10
-                                                                    ? `${signature.walletAddress.substring(0, 6)}...${signature.walletAddress.substring(signature.walletAddress.length - 4)}`
-                                                                    : signature.walletAddress
-                                                                }
-                                                            </Text>
-                                                        </Stack>
-                                                    </HStack>
-                                                </Box>
-                                            ))}
-                                        </Stack>
-                                    </Box>
-                                </Stack>
-                                <Stack>
-                                    <Text fontWeight="bold" mt={2}>Other Signatures:</Text>
-                                    <Box maxH="200px" overflowY="auto" border="1px solid" borderColor="gray.200" borderRadius="md">
-                                        <Stack gap={0}>
-                                            {signatures.filter((signature) => signature.walletAddress !== session?.address).map((signature) => (
-                                                <Box
-                                                    key={signature.id}
-                                                    p={2}
-                                                    cursor="pointer"
-                                                    bg={selectedSignatureId === signature.id ? "blue.50" : "transparent"}
-                                                    _hover={{ bg: "gray.50" }}
-                                                    onClick={() => {
-                                                        if(session?.address === signature.walletAddress){
-                                                            setSelectedSignatureId(signature.id);
-                                                        }
-                                                    }}
-                                                >
-                                                    <HStack>
-                                                        <Box
-                                                            width="60px"
-                                                            height="40px"
-                                                            backgroundImage={`url(${signature.dataUrl})`}
-                                                            backgroundSize="contain"
-                                                            backgroundRepeat="no-repeat"
-                                                            backgroundPosition="center"
-                                                            border="1px solid"
-                                                            borderColor="gray.200"
-                                                            borderRadius="sm"
-                                                        />
-                                                        <Stack gap={0}>
-                                                            <Text fontSize="sm" fontWeight="medium">{signature.name}</Text>
-                                                            <Text fontSize="xs" color="gray.600">
-                                                                {signature.walletAddress.length > 10
-                                                                    ? `${signature.walletAddress.substring(0, 6)}...${signature.walletAddress.substring(signature.walletAddress.length - 4)}`
-                                                                    : signature.walletAddress
-                                                                }
-                                                            </Text>
-                                                        </Stack>
-                                                    </HStack>
-                                                </Box>
-                                            ))}
-                                        </Stack>
-                                    </Box>
-                                </Stack>
+                                    <Stack>
+                                        <Text fontWeight="bold" mt={2}>Your Signatures:</Text>
+                                        <Box maxH="200px" overflowY="auto" border="1px solid" borderColor="gray.200" borderRadius="md">
+                                            <Stack gap={0}>
+                                                {signatures.filter((signature) => signature.walletAddress === session?.address).map((signature) => (
+                                                    <Box
+                                                        key={signature.id}
+                                                        p={2}
+                                                        cursor="pointer"
+                                                        bg={selectedSignatureId === signature.id ? "blue.50" : "transparent"}
+                                                        _hover={{ bg: "gray.50" }}
+                                                        onClick={() => {
+                                                            if (session?.address === signature.walletAddress) {
+                                                                setSelectedSignatureId(signature.id);
+                                                            }
+                                                        }}
+                                                    >
+                                                        <HStack>
+                                                            <Box
+                                                                width="60px"
+                                                                height="40px"
+                                                                backgroundImage={`url(${signature.dataUrl})`}
+                                                                backgroundSize="contain"
+                                                                backgroundRepeat="no-repeat"
+                                                                backgroundPosition="center"
+                                                                border="1px solid"
+                                                                borderColor="gray.200"
+                                                                borderRadius="sm"
+                                                            />
+                                                            <Stack gap={0}>
+                                                                <Text fontSize="sm" fontWeight="medium">{signature.name}</Text>
+                                                                <Text fontSize="xs" color="gray.600">
+                                                                    {signature.walletAddress.length > 10
+                                                                        ? `${signature.walletAddress.substring(0, 6)}...${signature.walletAddress.substring(signature.walletAddress.length - 4)}`
+                                                                        : signature.walletAddress
+                                                                    }
+                                                                </Text>
+                                                            </Stack>
+                                                        </HStack>
+                                                    </Box>
+                                                ))}
+                                            </Stack>
+                                        </Box>
+                                    </Stack>
+                                    <Stack>
+                                        <Text fontWeight="bold" mt={2}>Other Signatures:</Text>
+                                        <Box maxH="200px" overflowY="auto" border="1px solid" borderColor="gray.200" borderRadius="md">
+                                            <Stack gap={0}>
+                                                {signatures.filter((signature) => signature.walletAddress !== session?.address).map((signature) => (
+                                                    <Box
+                                                        key={signature.id}
+                                                        p={2}
+                                                        cursor="pointer"
+                                                        bg={selectedSignatureId === signature.id ? "blue.50" : "transparent"}
+                                                        _hover={{ bg: "gray.50" }}
+                                                        onClick={() => {
+                                                            if (session?.address === signature.walletAddress) {
+                                                                setSelectedSignatureId(signature.id);
+                                                            }
+                                                        }}
+                                                    >
+                                                        <HStack>
+                                                            <Box
+                                                                width="60px"
+                                                                height="40px"
+                                                                backgroundImage={`url(${signature.dataUrl})`}
+                                                                backgroundSize="contain"
+                                                                backgroundRepeat="no-repeat"
+                                                                backgroundPosition="center"
+                                                                border="1px solid"
+                                                                borderColor="gray.200"
+                                                                borderRadius="sm"
+                                                            />
+                                                            <Stack gap={0}>
+                                                                <Text fontSize="sm" fontWeight="medium">{signature.name}</Text>
+                                                                <Text fontSize="xs" color="gray.600">
+                                                                    {signature.walletAddress.length > 10
+                                                                        ? `${signature.walletAddress.substring(0, 6)}...${signature.walletAddress.substring(signature.walletAddress.length - 4)}`
+                                                                        : signature.walletAddress
+                                                                    }
+                                                                </Text>
+                                                            </Stack>
+                                                        </HStack>
+                                                    </Box>
+                                                ))}
+                                            </Stack>
+                                        </Box>
+                                    </Stack>
                                 </>
                             )}
 
@@ -1505,7 +1508,7 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ file, submitSignature, submitting
                                                                         console.log(`B4 Delete ${JSON.stringify(signaturePositions, null, 4)}`)
                                                                         let newData: SignaturePosition[] = [];
                                                                         for (let item of signaturePositions) {
-                                                                            console.log(`item id ${item.id} -- ${ position.id}`)
+                                                                            console.log(`item id ${item.id} -- ${position.id}`)
                                                                             if (item.id != position.id) {
                                                                                 newData.push(item)
                                                                             }
@@ -1566,7 +1569,7 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ file, submitSignature, submitting
                                     await submitSignature(signaturePositions, signaturesAquaTree)
                                 }}
                             >
-                                Sign document 
+                                Sign document
                             </Button>
                         </Stack>
                     </GridItem>
