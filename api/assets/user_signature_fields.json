@@ -1,0 +1,24 @@
+[
+    {
+        "name": "image",
+        "label": "Signature Image",
+        "type": "image",
+        "required": true,
+        "isArray": false
+    },
+    {
+        "name": "name",
+        "label": "Name",
+        "type": "string",
+        "required": true,
+        "isArray": false
+    },
+
+    {
+        "name": "wallet_address",
+        "label": "Wallet Address",
+        "type": "wallet_address",
+        "required": true,
+        "isArray": false
+    }
+]

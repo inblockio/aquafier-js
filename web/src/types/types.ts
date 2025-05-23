@@ -10,6 +10,7 @@ export interface Session {
 }
 
 
+
 export interface ApiFileData {
   fileHash: string,
   fileData: string | ArrayBuffer

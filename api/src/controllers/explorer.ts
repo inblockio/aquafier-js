@@ -455,9 +455,9 @@ export default async function explorerController(fastify: FastifyInstance) {
 
 
 
-               console.log(`Aquatree to db ${JSON.stringify(aquaTree, null, 4)}`)
-            
-                // throw Error("check hash above")
+            console.log(`Aquatree to db ${JSON.stringify(aquaTree, null, 4)}`)
+
+            // throw Error("check hash above")
 
             // Get the host from the request headers
             const host = request.headers.host || `${getHost()}:${getPort()}`;
@@ -481,30 +481,6 @@ export default async function explorerController(fastify: FastifyInstance) {
         }
 
 
-        // try {
-        // Process the multipart data
-        // const data = await request.file();
-
-        // if (data == undefined || data.file === undefined) {
-        //     return reply.code(400).send({ error: 'No file uploaded' });
-        // }
-        // // Verify file size (200MB = 200 * 1024 * 1024 bytes)
-        // const maxFileSize = 200 * 1024 * 1024;
-        // if (data.file.bytesRead > maxFileSize) {
-        //     return reply.code(413).send({ error: 'File too large. Maximum file size is 200MB' });
-        // }
-
-        // const fileBuffer = await streamToBuffer(data.file);
-        // let fileContent = fileBuffer.toString('utf-8');
-
-        // let aquaTreeWithFileObject: AquaTree = JSON.parse(fileContent)
-
-        // // save the aqua tree 
-        // await saveAquaTree(aquaTreeWithFileObject, session.address)
-        // } catch (error) {
-        //     request.log.error(error);
-        //     return reply.code(500).send({ error: 'File upload failed' });
-        // }
 
     });
 

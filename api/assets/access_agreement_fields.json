@@ -1,0 +1,38 @@
+[
+    
+    {
+      "name": "sender",
+      "label": "Sender",
+      "type": "wallet_address",
+      "required": true,
+      "isArray": false
+    },
+    {
+      "name": "receiver",
+      "label": "Receiver",
+      "type": "wallet_address",
+      "required": true,
+      "isArray": true
+    },
+    {
+      "name": "resource",
+      "label": "Resource",
+      "type": "string",
+      "required": true,
+      "isArray": false
+    },
+    {
+      "name": "option",
+      "label": "Option",
+      "type": "string",
+      "required": false,
+      "isArray": false
+    },
+    {
+      "name": "terms",
+      "label": "Terms",
+      "type": "string",
+      "required": false,
+      "isArray": false
+    }
+  ]

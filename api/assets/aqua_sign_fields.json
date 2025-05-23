@@ -1,0 +1,23 @@
+[
+    {
+      "name": "document",
+      "label": "Document",
+      "type": "file",
+      "required": true,
+      "isArray": false
+    },
+    {
+      "name": "sender",
+      "label": "Sender",
+      "type": "wallet_address",
+      "required": true,
+      "isArray": false
+    },
+    {
+      "name": "signers",
+      "label": "Signers",
+      "type": "wallet_address",
+      "required": true,
+      "isArray": true
+    }
+  ]
