@@ -1266,7 +1266,8 @@ export const isJSONKeyValueStringContent = (fileContent: string): boolean => {
         }
 
         // Check if all keys map to string values
-        return Object.entries(parsedContent).every(([_, value]) => typeof value === 'string');
+        // return Object.entries(parsedContent).every(([_, value]) => typeof value === 'string');
+        return true
     } catch (error) {
         // If JSON.parse throws an error, it's not valid JSON
         return false;

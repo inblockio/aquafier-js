@@ -105,11 +105,12 @@ interface IQuickSignature {
     page: string | number
 }
 
-export const SimpleSignatureOverlay = ({ signature }: { signature: IQuickSignature }) => {
+export const SimpleSignatureOverlay = ({ signature, currentPage }: { signature: IQuickSignature, currentPage: number }) => {
     const { colorMode } = useColorMode();
     const isDarkMode = colorMode === "dark";
     return (
         <Box
+        display={Number(currentPage) === Number(signature.page) ? "block" : "none"}
             position="absolute"
             left={`${Number(signature.x) * 100}%`}
             top={`${(1 - Number(signature.y)) * 100}%`}
@@ -177,7 +178,7 @@ export const PDFDisplayWithJustSimpleOverlay = ({ pdfUrl, signatures }: { pdfUrl
                 <>
                     {
                         Number(currentPage) === Number(signature.page) ? (
-                            <SimpleSignatureOverlay key={index} signature={signature}
+                            <SimpleSignatureOverlay key={index} signature={signature} currentPage={currentPage}
                             />
                         ) : null
                     }
@@ -192,9 +193,10 @@ interface PdfSignerProps {
     file: File | null;
     submitSignature: (signaturePosition: SignaturePosition[], signAquaTree: ApiFileInfo[]) => Promise<void>
     submittingSignatureData: boolean
+    existingSignatures?: IQuickSignature[]
 }
 
-const PdfSigner: React.FC<PdfSignerProps> = ({ file, submitSignature, submittingSignatureData }) => {
+const PdfSigner: React.FC<PdfSignerProps> = ({ file, submitSignature, submittingSignatureData, existingSignatures }) => {
 
     const { formTemplates, systemFileInfo } = useStore(appStore)
     // State for PDF document
@@ -1299,6 +1301,10 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ file, submitSignature, submitting
                                     signatures={signatures}
                                     pdfMainContainerRef={pdfMainContainerRef}
                                     handleDragStart={handleDragStart}
+                                />
+                            ))} 
+                            {existingSignatures?.map((signature, index) => (
+                                <SimpleSignatureOverlay key={index} signature={signature} currentPage={currentPage}
                                 />
                             ))}
                         </Box>

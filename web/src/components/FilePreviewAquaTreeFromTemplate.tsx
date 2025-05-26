@@ -199,9 +199,25 @@ export const FilePreviewAquaTreeFromTemplate = ({ formData }: { formData: Record
     }
     return isVisible
   }
+
+  const renderItemValue = (value: any) => {
+    if (typeof value === "object") {
+      return <Text key={JSON.stringify(value)} fontSize={"sm"}>{JSON.stringify(value)}</Text>
+    }
+    else if (typeof value === "string" && value.includes(",")) {
+      return value.split(",").map((item: string) => (
+        <Text key={item} fontSize={"sm"}>{item}</Text>
+      ))
+    }
+    else if (typeof value === "number") {
+      return <Text key={value} fontSize={"sm"}>{value}</Text>
+    }
+    return <Text key={value} fontSize={"sm"}>{value}</Text>
+  }
+
   return (
     <>
-      <Table.Root variant={"outline"}  borderRadius={"xl"} interactive>
+      <Table.Root variant={"outline"} borderRadius={"xl"} interactive>
         <Table.Header>
           <Table.Row>
             <Table.ColumnHeader fontWeight={600}>Field</Table.ColumnHeader>
@@ -214,9 +230,9 @@ export const FilePreviewAquaTreeFromTemplate = ({ formData }: { formData: Record
               <Table.Row key={`item_${index}_${keyItem}`}>
                 <Table.Cell>{makeProperReadableWord(keyItem)}</Table.Cell>
                 <Table.Cell>
-                  <Text wordBreak={'break-word'}>
-                  {formData[keyItem]}
-                  </Text>
+                    {
+                      renderItemValue(formData[keyItem])
+                    }
                   <ClipboardRoot value={formData[keyItem]} hidden={!checkCopyButtonVisibility(keyItem)} w={"fit-content"}>
                     <ClipboardIconButton size={'2xs'} />
                   </ClipboardRoot>

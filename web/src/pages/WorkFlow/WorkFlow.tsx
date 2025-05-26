@@ -690,22 +690,143 @@ export default function WorkFlowPage() {
                     //check if the document is signed
                     if (revisionHashes.length >= 5) {
 
-                        let linkRevisions: Revision[] = []
+                        /*
+                        Each entry here is a signature
+                        */
+                        let linkRevisionsThatWeNeed: {
+                            revision: Revision,
+                            revisionHash: string,
+                            linkHash: string,
+                            nextRevisionHash: string,
+                            nextRevision: Revision
+                            nextLinkHash: string,
+                        }[] = []
+
+                        // We track all the signatures here
+                        let allSignatures: any[] = []
+
+                        /* 
+                            Collect all Link Verification hashes to help identify all the linked aqua trees. 
+                            This will help collect all the aqua trees from the fileObject[] and Identify them as signature or not
+                        */
+                        let aquaTreeFileIndexKeysWithSignature: string[] = []
+
+                        let aquaTreeFileIndexKeys = selectedFileInfo?.aquaTree?.file_index
+
+                        Object.keys(aquaTreeFileIndexKeys ?? {}).forEach((key) => {
+                            let value = aquaTreeFileIndexKeys![key]
+                            if (value.includes("signature")) {
+                                aquaTreeFileIndexKeysWithSignature.push(key)
+                            }
+                        })
 
                         for (let i = 0; i < revisionHashes.length; i++) {
-                            if (selectedFileInfo!.aquaTree?.revisions[revisionHashes[i]].type == "link") {
-                                linkRevisions.push(selectedFileInfo!.aquaTree?.revisions[revisionHashes[i]])
+                            const currentHash = revisionHashes[i]
+                            const nextHash = revisionHashes[i + 1]
+                            const currentRevision = selectedFileInfo!.aquaTree?.revisions[currentHash]
+                            const nextRevision = selectedFileInfo!.aquaTree?.revisions[nextHash]
+                            if (currentRevision && currentRevision.revision_type == "link" && nextRevision && nextRevision.previous_verification_hash === currentHash) {
+                                // linkRevisions.push({revision: currentRevision, revisionHash: currentHash, linkVerificationHashes: currentRevision.link_verification_hashes ?? []})
+                                if (currentRevision.link_verification_hashes && currentRevision.link_verification_hashes.length > 0) {
+                                    let linkVerificationHash = currentRevision.link_verification_hashes[0]
+                                    if (aquaTreeFileIndexKeysWithSignature.includes(linkVerificationHash)) {
+                                        // linkVerificationHashes.push(linkVerificationHash)
+                                        linkRevisionsThatWeNeed.push({
+                                            revision: currentRevision, revisionHash: currentHash,
+                                            linkHash: linkVerificationHash,
+                                            nextRevisionHash: nextHash,
+                                            nextRevision: nextRevision,
+                                            nextLinkHash: nextRevision.link_verification_hashes![0]
+                                        })
+                                    }
+                                }
                             }
                         }
 
-                        let allSignatures: any[] = []
+                        console.log("Link Revisions: ", linkRevisionsThatWeNeed)
+                        /*
+                          Now we start looping through to create the signatures as expected
+                          1. We obtain the relevant aqua trees from the fileobject
+                          2. We create the signature position
+                          3. We create the signature image
+                          4. We create the signature object
+                        */
 
-                        const userSignatureAquaTree = selectedFileInfo!.fileObject.find((e) => e.fileName === "user_signature_data.json.aqua.json")
-                        if (!userSignatureAquaTree) {
-                            return <>No signature found</>
+                        for (let i = 0; i < linkRevisionsThatWeNeed.length; i++) {
+                            const linkRevision = linkRevisionsThatWeNeed[i]
+                            let theCurrentPositionAquaTree: AquaTree | null = null
+                            let theCurrentSignatureDetailsAquaTree: AquaTree | null = null
+
+                            // Loop through fileObjects and find the aqua tree that matches the linkRevision.linkHash
+                            for (let i = 0; i < selectedFileInfo!.fileObject.length; i++) {
+                                let currentFileObject = selectedFileInfo!.fileObject[i]
+                                let fileObject = currentFileObject.fileContent
+                                if (typeof fileObject === 'object' && fileObject !== null && 'revisions' in fileObject) {
+                                    let aquaTree = fileObject as AquaTree
+                                    let aquaTreeRevisions = Object.keys(aquaTree.revisions)
+                                    if (aquaTreeRevisions.includes(linkRevision.linkHash)) {
+                                        theCurrentPositionAquaTree = aquaTree
+                                    }
+                                    if (aquaTreeRevisions.includes(linkRevision.nextLinkHash)) {
+                                        theCurrentSignatureDetailsAquaTree = aquaTree
+                                    }
+                                    if (theCurrentPositionAquaTree && theCurrentSignatureDetailsAquaTree) {
+                                        break;
+                                    }
+                                }
+                            }
+                            if (theCurrentPositionAquaTree && theCurrentSignatureDetailsAquaTree) {
+                                console.log("theCurrentPositionAquaTree", theCurrentPositionAquaTree)
+                                let signatureDetails = {
+                                    height: theCurrentPositionAquaTree.revisions[linkRevision.linkHash].forms_height_0,
+                                    width: theCurrentPositionAquaTree.revisions[linkRevision.linkHash].forms_width_0,
+                                    x: theCurrentPositionAquaTree.revisions[linkRevision.linkHash].forms_x_0,
+                                    y: theCurrentPositionAquaTree.revisions[linkRevision.linkHash].forms_y_0,
+                                    page: theCurrentPositionAquaTree.revisions[linkRevision.linkHash].forms_page_0,//revision.forms_page_0,
+                                    name: "",
+                                    walletAddress: "",
+                                    image: ""
+                                }
+                                // Using the current Signature Details AquaTree to get the signature name, wallet address and image
+                                // Lets reorder the tree first
+                                console.log("theCurrentSignatureDetailsAquaTree", theCurrentSignatureDetailsAquaTree)
+                                let reorderedTree = OrderRevisionInAquaTree(theCurrentSignatureDetailsAquaTree)
+                                let hashes = Object.keys(reorderedTree.revisions)
+                                let formRevision = reorderedTree.revisions[hashes[0]]
+                                if (formRevision.revision_type === "form") {
+                                    signatureDetails.name = formRevision.forms_name
+                                    signatureDetails.walletAddress = formRevision.forms_wallet_address
+                                }
+                                // We then update the image
+                                // The first revision is form, followed by a link to it then another link revision to the file
+                                let linkRevisionWithFile = reorderedTree.revisions[hashes[2]]
+                                if (linkRevisionWithFile.revision_type === "link"
+                                    && linkRevisionWithFile.link_file_hashes
+                                    && linkRevisionWithFile.link_file_hashes.length > 0) {
+                                    // signatureDetails.image = linkRevisionWithFile.link_verification_hashes![0]
+                                    let fileHash = linkRevisionWithFile.link_file_hashes[0]
+                                    //    Lets find the file object with this in its filecontent as string
+                                    for (let i = 0; i < selectedFileInfo!.fileObject.length; i++) {
+                                        let currentFileObject = selectedFileInfo!.fileObject[i]
+                                        let _fileContent = currentFileObject.fileContent
+                                        if (typeof _fileContent === 'string' && _fileContent !== null) {
+                                            if (_fileContent.includes(fileHash)) {
+                                                // We fetch the image here
+                                                const image = await fetchImage(_fileContent as string)
+                                                if (image) {
+                                                    signatureDetails.image = image
+                                                }
+                                                break;
+                                            }
+                                        }
+                                    }
+                                }
+
+                                // Finally we push the signature Details
+                                allSignatures.push(signatureDetails)
+
+                            }
                         }
-                        const signatureAquatTree: AquaTree = userSignatureAquaTree.fileContent as AquaTree
-                        const revision = signatureAquatTree.revisions[revisionHashes[0]]
 
                         const fileObjects = selectedFileInfo?.fileObject
                         const actualPdf = fileObjects?.find((e) => e.fileName.endsWith(".pdf"))
@@ -714,95 +835,7 @@ export default function WorkFlowPage() {
                             return <>No PDF found</>
                         }
                         const pdfUrl = await fetchFile(fileUrl as string)
-                        const signature_0_Position = {
-                            height: revision.forms_height_0,
-                            width: revision.forms_width_0,
-                            x: revision.forms_x_0,
-                            y: revision.forms_y_0,
-                            page: revision.forms_page_0,//revision.forms_page_0,
-                            name: "",
-                            walletAddress: "",
-                            image: ""
-                        }
-
-                        let signatureImageUrl: string | object | AquaTree | Uint8Array<ArrayBufferLike> | Record<string, string> | undefined = undefined
-                        const signatureImageUrl1: string | object | AquaTree | Uint8Array<ArrayBufferLike> | Record<string, string> | undefined = selectedFileInfo?.fileObject?.find((e) => e.fileName === "signature.png")?.fileContent
-
-
-                        if (!signatureImageUrl1) {
-
-                            //fetch all aqua tree
-                            const allAquaTrees = selectedFileInfo?.fileObject.filter((e) => isAquaTree(e.fileContent)) ?? []
-
-                            const getFifthRevision = Object.values(selectedFileInfo!.aquaTree!.revisions!!)[5]
-
-                            if (getFifthRevision) {
-                                if (getFifthRevision.revision_type == "link") {
-                                    for (let item of allAquaTrees) {
-                                        const itemAquaTree: AquaTree = item.fileContent as AquaTree
-                                        let allRevisionHashes = Object.keys(itemAquaTree.revisions)
-
-                                        let linkedHash = getFifthRevision.link_verification_hashes![0]
-                                        if (allRevisionHashes.includes(linkedHash)) {
-
-                                            //get the revision previous
-
-                                            let previousHash = itemAquaTree.revisions[linkedHash].previous_verification_hash
-
-                                            let imageRevision = itemAquaTree.revisions[previousHash]
-
-                                            if (imageRevision.revision_type == "link") {
-                                                let imgaeRevisionHash = imageRevision.link_verification_hashes![0]!;
-
-                                                let imageName = itemAquaTree.file_index[imgaeRevisionHash]
-
-                                                if (imageName) {
-                                                    signatureImageUrl = selectedFileInfo?.fileObject?.find((e) => e.fileName === imageName)?.fileContent
-                                                }
-
-                                            }
-                                        }
-                                    }
-                                }
-
-                            }
-
-
-
-                        } else {
-                            signatureImageUrl = signatureImageUrl1
-                        }
-
-                        if (!signatureImageUrl) {
-                            return <>No signature image url found</>
-                        }
-                        const image = await fetchImage(signatureImageUrl as string)
-                        if (!image) {
-                            return <>No signature image found</>
-                        }
-
-                        // Getting name and address
-
-                        const fileObject = selectedFileInfo?.fileObject?.find((e) => (testStringWith3Numbers(e.fileName) && e.fileName.endsWith(".json.aqua.json")))
-                        if (!fileObject) {
-                            return <>No signature data found</>
-                        }
-                        const signatureFormData = fileObject.fileContent as AquaTree
-                        const keys = Object.keys(signatureFormData.file_index)
-                        let hash = ""
-                        for (let i = 0; i < keys.length; i++) {
-                            if (signatureFormData.file_index[keys[i]] === fileObject.fileName.replace(".aqua.json", "")) {
-                                hash = keys[i]
-                                break
-                            }
-                        }
-                        const actualRevision = signatureFormData.revisions[hash]
-                        signature_0_Position.name = actualRevision.forms_name
-                        signature_0_Position.walletAddress = actualRevision.forms_wallet_address
-                        signature_0_Position.image = image
-
-
-                        allSignatures.push(signature_0_Position)
+                        
                         let isUserSignatureIncluded = allSignatures.some((e) => e.walletAddress === session?.address)
 
                         return (
@@ -811,7 +844,7 @@ export default function WorkFlowPage() {
                                     isUserSignatureIncluded ? (
                                         <Grid templateColumns="repeat(4, 1fr)">
                                             <GridItem colSpan={{ base: 12, md: 3 }}>
-                                                <PDFDisplayWithJustSimpleOverlay pdfUrl={pdfUrl!} signatures={[signature_0_Position]} />
+                                                <PDFDisplayWithJustSimpleOverlay pdfUrl={pdfUrl!} signatures={allSignatures} />
                                             </GridItem>
                                             <GridItem colSpan={{ base: 12, md: 1 }}>
                                                 <Stack>
@@ -825,7 +858,7 @@ export default function WorkFlowPage() {
                                             </GridItem>
                                         </Grid>
                                     ) : (
-                                        <PdfSigner file={pdfFile} submitSignature={submitSignatureData} submittingSignatureData={submittingSignatureData} />
+                                        <PdfSigner existingSignatures={allSignatures} file={pdfFile} submitSignature={submitSignatureData} submittingSignatureData={submittingSignatureData} />
                                     )
                                 }
 
@@ -1878,23 +1911,6 @@ export default function WorkFlowPage() {
             return null;
         }
     }
-
-
-    /*
-        check whether a string contains a number
-        input: user_signature-753.json
-    */
-    const testStringWith3Numbers = (str: string) => {
-        const stringArray = str.split("")
-        for (let i = 0; i < stringArray.length; i++) {
-            let num = Number(stringArray[i])
-            if (!isNaN(num)) {
-                return true
-            }
-        }
-        return false
-    }
-
 
     const genesisContent = () => {
         const orderedTree = OrderRevisionInAquaTree(selectedFileInfo!.aquaTree!)
