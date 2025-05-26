@@ -23,6 +23,7 @@ export interface SummaryDetailsDisplayData {
   revisionHashWithSignaturePosition: String
   revisionHashWithSinatureRevision: string,
   revisionHashMetamask : string,
+  walletAddress : string
 }
 
 

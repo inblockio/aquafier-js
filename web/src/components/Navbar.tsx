@@ -855,6 +855,14 @@ const Navbar = () => {
                                                         //     [field.name]: e.target.value
                                                         // })
 
+                                                        if(selectedTemplate?.name == "aqua_sign" && field.name.toLowerCase() =="sender" ){
+
+                                                            toaster.create({
+                                                                description: `Aqua Sign sender cannot be change`,
+                                                                type: "info"
+                                                            });
+                                                            return
+                                                        }
                                                         if (field.type == 'image') {
                                                             const files: File | FileList | null = e?.target?.files;
 

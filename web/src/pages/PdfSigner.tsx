@@ -191,13 +191,14 @@ export const PDFDisplayWithJustSimpleOverlay = ({ pdfUrl, signatures }: { pdfUrl
 
 
 interface PdfSignerProps {
+    userCanSign: boolean
     file: File | null;
     submitSignature: (signaturePosition: SignaturePosition[], signAquaTree: ApiFileInfo[]) => Promise<void>
     submittingSignatureData: boolean
     existingSignatures?: IQuickSignature[]
 }
 
-const PdfSigner: React.FC<PdfSignerProps> = ({ file, submitSignature, submittingSignatureData, existingSignatures }) => {
+const PdfSigner: React.FC<PdfSignerProps> = ({ userCanSign, file, submitSignature, submittingSignatureData, existingSignatures }) => {
 
     const { formTemplates, systemFileInfo, selectedFileInfo } = useStore(appStore)
     // State for PDF document
@@ -1609,7 +1610,7 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ file, submitSignature, submitting
                     h={{ base: "fit-content", md: "calc(100vh - 120px - 150px)" }} overflow={{ base: "scroll", md: "hidden" }}
                 >
                     {/* PDF viewer */}
-                    <GridItem colSpan={{ base: 12, md: 3 }} h={"100%"} overflow={"scroll"} >
+                    <GridItem colSpan={{ base: 12, md: userCanSign ? 3 : 4 }} h={"100%"} overflow={"scroll"} >
                         <Box
                             position="relative"
                             border="1px solid"
@@ -1646,10 +1647,14 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ file, submitSignature, submitting
                             ))}
                         </Box>
                     </GridItem>
-                    <GridItem colSpan={{ base: 12, md: 1 }} h={{ base: "fit-content", md: "100%" }} overflow={{ base: "hidden", md: "auto" }}>
-                        {/* Signature tools */}
-                        {userSignatureDetails()}
-                    </GridItem>
+                   
+                    {userCanSign ?
+                        <GridItem colSpan={{ base: 12, md: 1 }} h={{ base: "fit-content", md: "100%" }} overflow={{ base: "hidden", md: "auto" }}>
+                            {/* Signature tools */}
+                            {userSignatureDetails()}
+                        </GridItem>
+                        : <></>
+                    }
                 </Grid>
             )}
 
