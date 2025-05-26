@@ -456,7 +456,7 @@ export default function WorkFlowPage() {
                     content: genesisContent(),
                     icon: FaUser,
                     revisionHash: "",
-                    title: "Contract Creation"
+                    title: "Contract Information"
                 })
             }
 
@@ -576,7 +576,7 @@ export default function WorkFlowPage() {
     const getTitleToDisplay = (index: number) => {
 
         if (index == 0 || index == 1) {
-            return "Contract Creation"
+            return "Contract Information"
         }
 
         if (index == 2) {

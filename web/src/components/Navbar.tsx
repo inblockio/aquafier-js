@@ -84,11 +84,11 @@ const Navbar = () => {
     let navigate = useNavigate();
 
     const addAddress = () => {
-        if (multipleAddresses.length === 0 && session?.address) {
-            setMultipleAddresses([...multipleAddresses, session.address, ""])
-        } else {
+        // if (multipleAddresses.length === 0 && session?.address) {
+        //     setMultipleAddresses([...multipleAddresses, session.address, ""])
+        // } else {
             setMultipleAddresses([...multipleAddresses, ""])
-        }
+        // }
     }
 
     const removeAddress = (index: number) => {
@@ -266,6 +266,7 @@ const Navbar = () => {
 
         try {
 
+            setModalFormErorMessae("")
 
             if (submittingTemplateData) {
                 toaster.create({
@@ -676,7 +677,8 @@ const Navbar = () => {
 
     useEffect(() => {
         if (selectedTemplate && selectedTemplate.name === "aqua_sign" && session?.address) {
-            setMultipleAddresses([session.address])
+            // setMultipleAddresses([session.address])
+            setMultipleAddresses([""])
         }
     }, [selectedTemplate])
 
