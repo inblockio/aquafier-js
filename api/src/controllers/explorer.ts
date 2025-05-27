@@ -17,7 +17,7 @@ import { getHost, getPort } from '../utils/api_utils';
 import { AquaJsonInZip, DeleteRevision, SaveAquaTree } from '../models/request_models';
 import { fetchCompleteRevisionChain } from '../utils/quick_utils';
 import { transferRevisionChain, mergeRevisionChain } from '../utils/quick_revision_utils';
-import { sendToUserWebsockerAMessage } from './websocket';
+import { sendToUserWebsockerAMessage } from './websocketController';
 // import getStream from 'get-stream';
 // Promisify pipeline
 const pump = util.promisify(pipeline);

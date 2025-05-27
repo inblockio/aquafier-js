@@ -1,6 +1,7 @@
 
-import { ClientConnection, connectedClients } from "src/server";
-
+// import { ClientConnection,  } from "../server";
+import { connectedClients } from "../store/store";
+import { ClientConnection } from "../models/types";
 import { FastifyInstance } from 'fastify';
 import { WebSocket as WSWebSocket } from 'ws';
 
@@ -21,7 +22,7 @@ export function broadcastToAllClients(action: string) {
 
             if (client?.socket && client.socket.readyState === WebSocket.OPEN) {
                 console.log(`Pinging clients ${userId} `)
-                client.socket.send(messageString,(err)=>{
+                client.socket.send(messageString, (err) => {
                     if (err) {
                         console.error(`Error sending message to user ${userId}:`, err);
                     } else {
@@ -30,7 +31,7 @@ export function broadcastToAllClients(action: string) {
                 });
             } else {
                 // Remove invalid or disconnected clients
-                
+
                 console.warn(`Removing invalid or disconnected client: ${userId}`);
                 connectedClients.delete(userId);
             }
@@ -94,7 +95,7 @@ export default async function webSocketController(fastify: FastifyInstance) {
         // const userId = (req.query as any)?.userId;
         const userId = (req.query as { userId?: string })?.userId;
 
-        const ws = connection ;
+        const ws = connection;
 
         if (!userId) {
             console.log('WebSocket connection rejected: No user ID provided');

@@ -12,7 +12,7 @@ import path from 'path';
 import { SYSTEM_WALLET_ADDRESS } from 'src/models/constants';
 import { getFileUploadDirectory, streamToBuffer } from 'src/utils/file_utils';
 import { randomUUID } from 'crypto';
-import { sendToUserWebsockerAMessage } from './websocket';
+import { sendToUserWebsockerAMessage } from './websocketController';
 
 export default async function revisionsController(fastify: FastifyInstance) {
     // fetch aqua tree from a revision hash
