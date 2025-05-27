@@ -72,15 +72,17 @@ export const SignatureOverlay = ({ position, currentPage, signatures, pdfMainCon
             overflow={"hidden"}
             _hover={{ boxShadow: "0 0 0 1px blue" }}
             style={{
-                width: `${position.width * 100}%`,
-                height: `${position.height * 100}%`,
-                backgroundColor: 'rgba(255, 255, 255, 0.9)',
+                // width: `${position.width * 100}%`,
+                maxWidth: "250px",
+                // height: `${position.height * 100}%`,
+                // backgroundColor: 'rgba(255, 255, 255, 0.9)',
                 padding: '4px',
-                borderRadius: '4px'
+                borderRadius: '4px',
+                border: "1px solid rgb(216, 216, 216)"
             }}
         >
             <Stack gap={1} justifyContent={"flex-start"} height="100%">
-                <Text fontSize="xs" color="gray.600" style={{ overflow: 'auto', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{signature.name}</Text>
+                {/* <Text fontSize="xs" color="gray.600" style={{ overflow: 'auto', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{signature.name}</Text>
                 <Box
                     flex="1"
                     backgroundImage={`url(${signature.dataUrl})`}
@@ -89,7 +91,17 @@ export const SignatureOverlay = ({ position, currentPage, signatures, pdfMainCon
                     backgroundPosition="left"
                     minHeight="40px"
                 />
-                <Text fontSize="xs" color="gray.600" style={{ overflow: 'auto', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{signature.walletAddress}</Text>
+                <Text fontSize="xs" color="gray.600" style={{ overflow: 'auto', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{signature.walletAddress}</Text> */}
+                <Box
+                    flex="1"
+                    backgroundImage={`url(${signature.dataUrl})`}
+                    backgroundSize="contain"
+                    backgroundRepeat="no-repeat"
+                    backgroundPosition="left"
+                    minHeight="40px"
+                />
+                <Text fontSize="xs" color="gray.600">{signature.name}</Text>
+                <Text fontSize="xs" overflow={'hidden'} color="gray.600">{signature.walletAddress}</Text>
             </Stack>
         </Box>
     );
@@ -107,8 +119,8 @@ interface IQuickSignature {
 }
 
 export const SimpleSignatureOverlay = ({ signature, currentPage }: { signature: IQuickSignature, currentPage: number }) => {
-    const { colorMode } = useColorMode();
-    const isDarkMode = colorMode === "dark";
+    // const { colorMode } = useColorMode();
+    // const isDarkMode = colorMode === "dark";
     return (
         <Box
             display={Number(currentPage) === Number(signature.page) ? "block" : "none"}
@@ -122,20 +134,21 @@ export const SimpleSignatureOverlay = ({ signature, currentPage }: { signature: 
             pointerEvents="auto"
             transition="border 0.2s ease"
             overflow={"hidden"}
-            _hover={{ boxShadow: "0 0 0 1px blue" }}
+            // border={"2px solid red"}
+            // _hover={{ boxShadow: "0 0 0 1px rgba(255, 255, 255, 0.9)" }}
             style={{
                 // width: `${Number(signature.width) * 100}%`,
+                maxWidth: "250px",
                 // height: `${Number(signature.height) * 100}%`,
-                backgroundColor: 'rgba(255, 255, 255, 0.9)',
+                // backgroundColor: 'rgba(104, 12, 12, 0.9)',
                 padding: '4px',
                 borderRadius: '4px',
-                boxShadow: "0 0 0 1px blue"
+                border: "1px solid rgb(216, 216, 216)"
             }}
         >
-            <Stack gap={1} justifyContent={"flex-start"} height="100%" bg={isDarkMode ? "gray.800" : "gray.50"} borderRadius={"lg"} style={{
+            <Stack gap={1} justifyContent={"flex-start"} height="100%" borderRadius={"lg"} style={{
                 padding: "6px"
             }}>
-                <Text fontSize="xs" color="gray.600">{signature.name}</Text>
                 <Box
                     flex="1"
                     backgroundImage={`url(${signature.image})`}
@@ -144,6 +157,7 @@ export const SimpleSignatureOverlay = ({ signature, currentPage }: { signature: 
                     backgroundPosition="left"
                     minHeight="40px"
                 />
+                <Text fontSize="xs" color="gray.600">{signature.name}</Text>
                 <Text fontSize="xs" overflow={'hidden'} color="gray.600">{signature.walletAddress}</Text>
             </Stack>
         </Box>
@@ -1380,7 +1394,7 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ userCanSign, file, submitSignatur
                         );
                     })()}
 
-                    <Field>
+                    <Field display={"none"}>
                         <FieldLabel>Signature Size: {signatureSize}px</FieldLabel>
                         <Slider.Root
                             min={280}
@@ -1576,7 +1590,6 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ userCanSign, file, submitSignatur
     // console.log("Signature positions", signaturePositions)
 
     useEffect(() => {
-
         loadUserSignatures(true)
 
     }, [backend_url, session, session?.address]);
@@ -1647,7 +1660,7 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ userCanSign, file, submitSignatur
                             ))}
                         </Box>
                     </GridItem>
-                   
+
                     {userCanSign ?
                         <GridItem colSpan={{ base: 12, md: 1 }} h={{ base: "fit-content", md: "100%" }} overflow={{ base: "hidden", md: "auto" }}>
                             {/* Signature tools */}
@@ -1698,9 +1711,9 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ userCanSign, file, submitSignatur
                                         },
                                         width: 500,
                                         height: 200,
-                                        className: 'signature-canvas'
+                                        className: 'signature-canvas',
                                     }}
-                                    backgroundColor="white"
+                                    backgroundColor="transparent"
                                 />
                             </Box>
 
