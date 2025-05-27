@@ -436,11 +436,7 @@ const ContractInformationView = () => {
             <Timeline.Content>
                 <Timeline.Title textStyle="sm">Workflow Completed </Timeline.Title>
                 <Timeline.Description>
-
-
                     <Alert status={displayColorBasedOnVerificationAlert(verificationResults)} title={displayBasedOnVerificationStatusText(verificationResults)} />
-
-
                 </Timeline.Description>
             </Timeline.Content>
         </Timeline.Item>
