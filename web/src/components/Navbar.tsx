@@ -754,6 +754,7 @@ const Navbar = () => {
             };
 
             websocket.onclose = (event) => {
+                console.log('Disconnected from WebSocket:', event);
                 console.log('Disconnected from WebSocket:', event.reason);
                 setIsConnected(false);
                 setWs(null);
@@ -763,6 +764,10 @@ const Navbar = () => {
                     description: `Realtime Connection disconnected error.`,
                     type: "error"
                 })
+
+                setTimeout(()=>{
+                    connectWebsocket()
+                }, 1000)
             };
 
             websocket.onerror = (error) => {
@@ -773,6 +778,9 @@ const Navbar = () => {
                     description: `Realtime Connection with api failed.`,
                     type: "error"
                 })
+                setTimeout(()=>{
+                    connectWebsocket()
+                }, 1000)
             };
 
         } catch (error) {
