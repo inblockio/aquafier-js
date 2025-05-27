@@ -1,6 +1,6 @@
 import { Box, Group, HStack, Image, Text, Menu, Button, Portal, MenuOpenChangeDetails, Stack, Input, Flex, Center, SimpleGrid, Spinner, IconButton } from "@chakra-ui/react"
 import Settings from "./chakra-ui/settings"
-import ConnectWallet from "./ConnectWallet"
+import { ConnectWallet } from "./ConnectWallet"
 import { useColorMode } from "./chakra-ui/color-mode"
 import appStore from "../store"
 import { useStore } from "zustand"
@@ -11,7 +11,7 @@ import { Alert } from "../components/chakra-ui/alert"
 import { LuChevronDown, LuChevronUp, LuPlus, LuSquareChartGantt, LuTrash } from "react-icons/lu"
 import { HiDocumentPlus } from "react-icons/hi2";
 import React, { useEffect, useState } from "react"
-import { estimateFileSize, dummyCredential, getAquaTreeFileName, getAquaTreeFileObject, getRandomNumber, fetchSystemFiles, isValidEthereumAddress } from "../utils/functions"
+import { estimateFileSize, dummyCredential, getAquaTreeFileName, getAquaTreeFileObject, getRandomNumber, fetchSystemFiles, isValidEthereumAddress, convertToWebsocketUrl, ensureDomainUrlHasSSL, fetchFiles, getGenesisHash } from "../utils/functions"
 import { FormTemplate } from "../components/aqua_forms/types"
 import { Field } from '../components/chakra-ui/field';
 import Aquafier, { AquaTree, AquaTreeWrapper, FileObject } from "aqua-js-sdk"
@@ -23,6 +23,7 @@ import SmallScreenSidebarDrawer from "./SmallScreenSidebarDrawer"
 
 
 import { generateNonce } from "siwe"
+import { WebSocketMessage } from "../types/types"
 
 const FormTemplateCard = ({ template, selectTemplateCallBack }: { template: FormTemplate, selectTemplateCallBack: (template: FormTemplate) => void }) => {
 
@@ -75,19 +76,24 @@ const Navbar = () => {
     const [modalFormErorMessae, setModalFormErorMessae] = useState("");
     // const { open, onOpen, onClose } = useDisclosure();
     const [open, setOpen] = useState(false)
-    const { session, formTemplates, backend_url, systemFileInfo, setFormTemplate, setFiles, setSystemFileInfo } = useStore(appStore)
+    const { session, formTemplates, backend_url, systemFileInfo, setFormTemplate, setFiles, setSystemFileInfo, selectedFileInfo, setSelectedFileInfo } = useStore(appStore)
     const [formData, setFormData] = useState<Record<string, string | File | number>>({});
     const [selectedTemplate, setSelectedTemplate] = useState<FormTemplate | null>(null);
 
     const [multipleAddresses, setMultipleAddresses] = useState<string[]>([])
 
+    const [ws, setWs] = useState<WebSocket | null>(null);
+    const [isConnected, setIsConnected] = useState(false);
+    const [connectedUsers, setConnectedUsers] = useState<string[]>([]);
+
+    const cancelRef = React.useRef<HTMLButtonElement>(null);
     let navigate = useNavigate();
 
     const addAddress = () => {
         // if (multipleAddresses.length === 0 && session?.address) {
         //     setMultipleAddresses([...multipleAddresses, session.address, ""])
         // } else {
-            setMultipleAddresses([...multipleAddresses, ""])
+        setMultipleAddresses([...multipleAddresses, ""])
         // }
     }
 
@@ -96,7 +102,6 @@ const Navbar = () => {
     }
 
 
-    const cancelRef = React.useRef<HTMLButtonElement>(null);
 
     const shareAquaTree = async (aquaTree: AquaTree, recipientWalletAddress: string) => {
 
@@ -251,15 +256,6 @@ const Navbar = () => {
         }
     };
 
-
-    // function formatDate(date: Date) {
-    //     const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-    //         'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-    //     const day = date.getDate().toString().padStart(2, '0');
-    //     const month = months[date.getMonth()];
-    //     const year = date.getFullYear();
-    //     return `${day}-${month}-${year}`;
-    // }
 
     const createWorkflowFromTemplate = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -668,10 +664,157 @@ const Navbar = () => {
     }
 
 
+    // Fetch connected users from server
+    const fetchConnectedUsers = async () => {
+        try {
+
+            // Step 1: Ensure SSL if needed
+            let validHttpAndDomain = ensureDomainUrlHasSSL(backend_url);
+            const response = await axios.get(`${validHttpAndDomain}/ws/clients`);
+            const users = response.data.clients.map((client: any) => client.userId);
+            setConnectedUsers(users);
+        } catch (error) {
+            console.error('Error fetching connected users:', error);
+        }
+    };
+
+    const connectWebsocket = () => {
+
+        let userId = session!.address!;
+        let WS_URL = `${convertToWebsocketUrl(backend_url)}/ws`;
+        try {
+            const websocket = new WebSocket(`${WS_URL}?userId=${encodeURIComponent(userId)}`);
+
+            websocket.onopen = () => {
+                console.log(`Connected to WebSocket as user: ${userId}`);
+                setIsConnected(true);
+                setWs(websocket);
+                // fetchConnectedUsers();
+            };
+
+            websocket.onmessage = (event) => {
+                try {
+                    const message: WebSocketMessage = JSON.parse(event.data);
+                    // setMessages(prev => [...prev, message]);
+
+                    // 
+                    // Update connected users when welcome message is received
+                    // 
+                    //    
+                    // }
+
+                    if (message.action === "refetch") {
+                        (async () => {
+                            if (session && session.address && session?.nonce) {
+                                const files = await fetchFiles(session?.address, `${backend_url}/explorer_files`, session.nonce);
+                                setFiles(files);
+
+                                if (selectedFileInfo) {
+                                    let genesisHash = getGenesisHash(selectedFileInfo!.aquaTree!!);
+                                    if (genesisHash) {
+                                        for (let itemTree of files) {
+                                            let genesisHashItem = getGenesisHash(itemTree.aquaTree!!);
+                                            if (genesisHashItem) {
+                                                if (genesisHashItem == genesisHash) {
+                                                    setSelectedFileInfo(itemTree)
+                                                    break;
+                                                }
+                                            }
+                                        }
+                                    }else{
+                                        console.log(`🔌 - Genesis hash not found for selected file`)
+                                    }
+                                }else{
+                                    console.log(`🔌 - No selected file`)
+                                }
+                            } else {
+                                console.log(`🔌 - Cannot refetch files as session or address or nounce is not defined DEBUG : ${JSON.stringify(session ?? {})}  `)
+                            }
+
+                        })()
+                    } if (message.action === 'fetchUsers') {
+                        fetchConnectedUsers();
+
+                    } else {
+                        console.log(`🔌 - message received ${JSON.stringify(message, null, 4)}`)
+                    }
+                } catch (error) {
+                    console.error('Error parsing WebSocket message:', error);
+                    // Handle non-JSON messages
+                    // const message: WebSocketMessage = {
+                    //     type: 'raw',
+                    //     data: event.data,
+                    //     timestamp: new Date().toISOString()
+                    // };
+                    // console.log(`Raw message ${JSON.stringify(message)}`)
+                    // setMessages(prev => [...prev, message]);
+                }
+            };
+
+            websocket.onclose = (event) => {
+                console.log('Disconnected from WebSocket:', event.reason);
+                setIsConnected(false);
+                setWs(null);
+                // setConnectedUsers([]);
+
+                toaster.create({
+                    description: `Realtime Connection disconnected error.`,
+                    type: "error"
+                })
+            };
+
+            websocket.onerror = (error) => {
+                console.error('WebSocket error:', error);
+                setIsConnected(false);
+
+                toaster.create({
+                    description: `Realtime Connection with api failed.`,
+                    type: "error"
+                })
+            };
+
+        } catch (error) {
+            console.error('Failed to connect to WebSocket:', error);
+            toaster.create({
+                description: `Realtime Connection catastrophic error.`,
+                type: "error"
+            })
+        }
+    };
+
+    // Disconnect WebSocket
+    const disconnectWebSocket = () => {
+        if (ws) {
+            ws.close();
+            setWs(null);
+            setIsConnected(false);
+            // setConnectedUsers([]);
+        }
+    };
+
+    // Send message through WebSocket
+    // const sendMessage = () => {
+    //     if (ws && messageInput.trim()) {
+    //         const message = {
+    //             type: 'message',
+    //             data: messageInput,
+    //             timestamp: new Date().toISOString()
+    //         };
+    //         ws.send(JSON.stringify(message));
+    //         setMessageInput('');
+    //     }
+    // };
+
     useEffect(() => {
         if (session != null && session.nonce != undefined && backend_url != "http://0.0.0.0:0") {
             loadTemplates();
             loadTemplatesAquaTrees();
+            if (!isConnected) {
+                console.log(`websocket is connected ${isConnected}`)
+                connectWebsocket()
+            } else {
+                console.log(`websocket is connected ${isConnected}`)
+            }
         }
     }, [backend_url, session]);
 
@@ -700,7 +843,9 @@ const Navbar = () => {
                         <Image src={colorMode === 'light' ? "/images/logo.png" : "/images/logo-dark.png"} maxH={'60%'} />
                     </Link>
                     <HStack display={{ base: 'flex', md: 'none' }} gap={"2"}>
-                        <ConnectWallet />
+                        <ConnectWallet disConnectWebsocket={() => {
+                            disconnectWebSocket()
+                        }} />
                         <SmallScreenSidebarDrawer openCreateForm={() => setOpen(true)} />
                     </HStack>
 
@@ -758,7 +903,9 @@ const Navbar = () => {
                             </>
                             ) : null
                         }
-                        <ConnectWallet />
+                        <ConnectWallet disConnectWebsocket={() => {
+                            disconnectWebSocket()
+                        }} />
                     </HStack>
                 </HStack>
             </Box>
@@ -855,7 +1002,7 @@ const Navbar = () => {
                                                         //     [field.name]: e.target.value
                                                         // })
 
-                                                        if(selectedTemplate?.name == "aqua_sign" && field.name.toLowerCase() =="sender" ){
+                                                        if (selectedTemplate?.name == "aqua_sign" && field.name.toLowerCase() == "sender") {
 
                                                             toaster.create({
                                                                 description: `Aqua Sign sender cannot be change`,

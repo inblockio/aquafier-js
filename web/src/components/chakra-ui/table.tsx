@@ -207,7 +207,7 @@ const FilesTable = () => {
 
             let fileObject = getAquaTreeFileObject(item)
 
-            console.log(`Daata ${JSON.stringify(item.aquaTree, null, 4)}`)
+            // console.log(`Daata ${JSON.stringify(item.aquaTree, null, 4)}`)
             // TODO: Fix this; type overloads here, `someData` can't be used in `isWorkflow` function. Type mismatch
             let someData = systemFileInfo.map((e) => {
                 try {

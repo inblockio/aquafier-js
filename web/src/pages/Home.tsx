@@ -3,7 +3,7 @@ import { FileUploadDropzone, FileUploadList, FileUploadRoot } from "../component
 import FilesTable from "../components/chakra-ui/table"
 import { useStore } from "zustand"
 import appStore from "../store"
-import ConnectWallet from "../components/ConnectWallet"
+import {ConnectWallet} from "../components/ConnectWallet"
 
 
 const Home = () => {
@@ -51,7 +51,7 @@ const Home = () => {
                         <Center h={'100%'}>
                             <Stack>
                                 <Text>Connect wallet to upload files</Text>
-                                <ConnectWallet />
+                                <ConnectWallet  disConnectWebsocket={()=>{console.log('ws need global storage')}}/>
                             </Stack>
                         </Center>
                     </Container>

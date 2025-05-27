@@ -24,6 +24,18 @@ import fetchChainController from './controllers/fetch-chain';
 import templatesController from './controllers/templates';
 import { setUpSystemTemplates } from './utils/api_utils';
 import systemController from './controllers/system';
+import webSocketController, {broadcastToAllClients} from './controllers/websocket';
+import { WebSocket as WSWebSocket } from 'ws';
+
+// Store connected WebSocket clients
+export const connectedClients: Map<string, ClientConnection> = new Map();
+
+// Interface for client connection with user ID
+export interface ClientConnection {
+    socket: WSWebSocket;
+    userId: string;
+    connectedAt: Date;
+}
 
 
 function buildServer() {
@@ -85,7 +97,14 @@ function buildServer() {
         }
     });
 
+    fastify.register(import('@fastify/websocket'));
 
+
+    // setInterval(() => {
+
+    //     console.log(`Ping all websockets`);
+    //     broadcastToAllClients("ping all conections ")
+    // }, 1000)
 
     // Register controllers
     fastify.register(authController);
@@ -101,6 +120,7 @@ function buildServer() {
     fastify.register(templatesController);
     fastify.register(chequeApiController);
     fastify.register(systemController);
+    fastify.register(webSocketController);
 
     return fastify
 

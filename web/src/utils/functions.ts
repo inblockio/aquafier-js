@@ -8,16 +8,27 @@ import Aquafier, { AquaTree, CredentialsData, FileObject, OrderRevisionInAquaTre
 import jdenticon from "jdenticon/standalone";
 
 
+
+
+// function formatDate(date: Date) {
+//     const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+//         'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+//     const day = date.getDate().toString().padStart(2, '0');
+//     const month = months[date.getMonth()];
+//     const year = date.getFullYear();
+//     return `${day}-${month}-${year}`;
+// }
+
 export const copyToClipboardModern = async (text: string) => {
     try {
-      await navigator.clipboard.writeText(text);
-      console.log('Text copied to clipboard');
-      return true;
+        await navigator.clipboard.writeText(text);
+        console.log('Text copied to clipboard');
+        return true;
     } catch (err) {
-      console.error('Failed to copy text: ', err);
-      return false;
+        console.error('Failed to copy text: ', err);
+        return false;
     }
-  };
+};
 
 export const fetchFileData = async (url: string, nonce: string): Promise<string | ArrayBuffer | null> => {
     try {
@@ -1530,6 +1541,22 @@ export function generateAvatar(seed: string, size = 200) {
 //     return url
 // }
 
+export function convertToWebsocketUrl(actualUrlToFetch: string): string {
+
+    // Step 1: Ensure SSL if needed
+    let validHttpAndDomain = ensureDomainUrlHasSSL(actualUrlToFetch);
+
+    // Step 2: Convert protocol from http(s) to ws(s)
+    if (validHttpAndDomain.startsWith('https://')) {
+        return validHttpAndDomain.replace('https://', 'wss://');
+    } else if (validHttpAndDomain.startsWith('http://')) {
+        return validHttpAndDomain.replace('http://', 'ws://');
+    }
+
+    // If no recognizable protocol is found, assume secure websocket as fallback
+    return 'wss://' + validHttpAndDomain;
+}
+
 export function ensureDomainUrlHasSSL(actualUrlToFetch: string): string {
     let url = actualUrlToFetch;
 
@@ -1560,12 +1587,6 @@ export function ensureDomainUrlHasSSL(actualUrlToFetch: string): string {
     if (currentDomain === "inblock.io" || currentDomain === "dev.inblock.io" || currentDomain == "aquafier.inblock.io" || currentDomain.includes("inblock.io")) {
         if (url.includes("127.0.0.1") || url.includes("0.0.0.0") || url.includes("localhost")) {
 
-            // Replace with inblock.io and ensure HTTPS
-            //   url = url.replace(/https?:\/\/(127\.0\.0\.1|0\.0\.0\.0|localhost)(:\d+)?/g, "https://inblock.io");
-
-            // Replace with inblock.io and ensure HTTPS
-            // Handle 127.0.0.1 with or without port
-
             let domainData = ''
             if (currentDomain === "aquafier.inblock.io") {
                 domainData = 'https://aquafier-api.inblock.io'
@@ -1593,7 +1614,6 @@ export function ensureDomainUrlHasSSL(actualUrlToFetch: string): string {
     return url;
 
 
-    return url;
 }
 
 export function makeProperReadableWord(wordWithUnderScores: string) {

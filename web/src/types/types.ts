@@ -27,6 +27,19 @@ export interface SummaryDetailsDisplayData {
 }
 
 
+export interface WebSocketMessage {
+  action: string;
+  // type: string;
+  // data: any;
+  // timestamp: string;
+  // connectedClients?: number;
+  // userId?: string;
+  // targetUserId?: string;
+  // targetUserIds?: string[];
+  // sender?: string;
+}
+
+
 export interface WorkFlowTimeLine {
 
   id: number,
