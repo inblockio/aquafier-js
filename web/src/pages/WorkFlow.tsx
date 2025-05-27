@@ -403,7 +403,8 @@ const ContractInformationView = () => {
         let signers: string[] = firstRevisionData?.forms_signers.split(",")
 
         let signatureRevionHashesDataAddress = signatureRevionHashesData.map((e) => e.walletAddress)
-        let remainSigners = signers.filter((item) => signatureRevionHashesDataAddress.includes(item))
+        let remainSigners = signers.filter((item) => !signatureRevionHashesDataAddress.includes(item))
+
 
 
         if (remainSigners.length > 0) {

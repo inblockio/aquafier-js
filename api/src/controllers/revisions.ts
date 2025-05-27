@@ -130,17 +130,15 @@ export default async function revisionsController(fastify: FastifyInstance) {
             }
 
 
-            const [httpCode, message] = await saveARevisionInAquaTree(revisionData, revisionData.address);
+            const [_httpCode, _message] = await saveARevisionInAquaTree(revisionData, revisionData.address);
 
-            if (httpCode != 200) {
-                return reply.code(httpCode).send({ success: false, message: message });
-            }
+            // if (httpCode != 200 && httpCode !== 407) {
+            //     return reply.code(httpCode).send({ success: false, message: message });
+            // }
 
 
             return reply.code(200).send({
                 success: true,
-
-
             });
 
         } catch (error) {

@@ -780,7 +780,7 @@ export async function saveARevisionInAquaTree(revisionData: SaveRevision, userAd
     });
 
     if (existData == null) {
-        return [400, `previous  hash  not found ${oldFilePubKeyHash}`] ///reply.code(401).send({ success: false, message: `previous  hash  not found ${oldFilePubKeyHash}` });
+        return [407, `previous  hash  not found ${oldFilePubKeyHash}`] ///reply.code(401).send({ success: false, message: `previous  hash  not found ${oldFilePubKeyHash}` });
 
     }
 
