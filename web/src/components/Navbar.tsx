@@ -80,6 +80,7 @@ const Navbar = () => {
     const [formData, setFormData] = useState<Record<string, string | File | number>>({});
     const [selectedTemplate, setSelectedTemplate] = useState<FormTemplate | null>(null);
 
+    const [userSelectedFile, setUserSelectedFile] = useState(selectedFileInfo)
     const [multipleAddresses, setMultipleAddresses] = useState<string[]>([])
 
     const [ws, setWs] = useState<WebSocket | null>(null);
@@ -710,8 +711,8 @@ const Navbar = () => {
                                 const files = await fetchFiles(session?.address, `${backend_url}/explorer_files`, session.nonce);
                                 setFiles(files);
 
-                                if (selectedFileInfo) {
-                                    let genesisHash = getGenesisHash(selectedFileInfo!.aquaTree!!);
+                                if (userSelectedFile) {
+                                    let genesisHash = getGenesisHash(userSelectedFile!.aquaTree!!);
                                     if (genesisHash) {
                                         for (let itemTree of files) {
                                             let genesisHashItem = getGenesisHash(itemTree.aquaTree!!);
@@ -806,6 +807,10 @@ const Navbar = () => {
     //     }
     // };
 
+    useEffect(() => {
+        console.log(`navbar user selected file`)
+        setUserSelectedFile(selectedFileInfo)
+    }, [selectedFileInfo]);
     useEffect(() => {
         if (session != null && session.nonce != undefined && backend_url != "http://0.0.0.0:0") {
             loadTemplates();
