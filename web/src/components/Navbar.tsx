@@ -10,7 +10,7 @@ import AccountContracts from "./AccountContracts"
 import { Alert } from "../components/chakra-ui/alert"
 import { LuChevronDown, LuChevronUp, LuPlus, LuSquareChartGantt, LuTrash } from "react-icons/lu"
 import { HiDocumentPlus } from "react-icons/hi2";
-import React, { useEffect, useState } from "react"
+import React, { useEffect, useState, useRef } from "react"
 import { estimateFileSize, dummyCredential, getAquaTreeFileName, getAquaTreeFileObject, getRandomNumber, fetchSystemFiles, isValidEthereumAddress, convertToWebsocketUrl, ensureDomainUrlHasSSL, fetchFiles, getGenesisHash } from "../utils/functions"
 import { FormTemplate } from "../components/aqua_forms/types"
 import { Field } from '../components/chakra-ui/field';
@@ -80,7 +80,10 @@ const Navbar = () => {
     const [formData, setFormData] = useState<Record<string, string | File | number>>({});
     const [selectedTemplate, setSelectedTemplate] = useState<FormTemplate | null>(null);
 
-    const [userSelectedFile, setUserSelectedFile] = useState(selectedFileInfo)
+    // const [userSelectedFile, setUserSelectedFile] = useState(selectedFileInfo)
+     // Use useRef to maintain current value that WebSocket handlers can access
+     const selectedFileRef = useRef(selectedFileInfo);
+
     const [multipleAddresses, setMultipleAddresses] = useState<string[]>([])
 
     const [ws, setWs] = useState<WebSocket | null>(null);
@@ -718,8 +721,12 @@ const Navbar = () => {
                                 const files = await fetchFiles(session?.address, `${backend_url}/explorer_files`, session.nonce);
                                 setFiles(files);
 
-                                if (userSelectedFile) {
-                                    let genesisHash = getGenesisHash(userSelectedFile!.aquaTree!!);
+                                  // Use the ref to get the current value
+                                  const currentSelectedFile = selectedFileRef.current;
+                                
+                                  if (currentSelectedFile) {
+                                // if (userSelectedFile) {
+                                    let genesisHash = getGenesisHash(currentSelectedFile!.aquaTree!!);
                                     if (genesisHash) {
                                         for (let itemTree of files) {
                                             let genesisHashItem = getGenesisHash(itemTree.aquaTree!!);
@@ -734,7 +741,9 @@ const Navbar = () => {
                                         console.log(`🔌 - Genesis hash not found for selected file`)
                                     }
                                 }else{
-                                    console.log(`🔌 - No selected file`)
+                                    // console.log(`🔌 -1- No selected file ${userSelectedFile}`)
+                                    // console.log(`🔌 -2- No selected file ${selectedFileInfo}`)
+                                    console.log(`🔌 -3- No selected file ${currentSelectedFile}`)
                                 }
                             } else {
                                 console.log(`🔌 - Cannot refetch files as session or address or nounce is not defined DEBUG : ${JSON.stringify(session ?? {})}  `)
@@ -827,8 +836,11 @@ const Navbar = () => {
 
     useEffect(() => {
         console.log(`navbar user selected file`)
-        setUserSelectedFile(selectedFileInfo)
+        // setUserSelectedFile(selectedFileInfo)
+        selectedFileRef.current = selectedFileInfo;
     }, [selectedFileInfo]);
+
+
     useEffect(() => {
         if (session != null && session.nonce != undefined && backend_url != "http://0.0.0.0:0") {
             loadTemplates();
