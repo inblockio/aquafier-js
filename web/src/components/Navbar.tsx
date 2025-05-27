@@ -84,7 +84,7 @@ const Navbar = () => {
 
     const [ws, setWs] = useState<WebSocket | null>(null);
     const [isConnected, setIsConnected] = useState(false);
-    const [connectedUsers, setConnectedUsers] = useState<string[]>([]);
+    // const [_connectedUsers, setConnectedUsers] = useState<string[]>([]);
 
     const cancelRef = React.useRef<HTMLButtonElement>(null);
     let navigate = useNavigate();
@@ -672,7 +672,8 @@ const Navbar = () => {
             let validHttpAndDomain = ensureDomainUrlHasSSL(backend_url);
             const response = await axios.get(`${validHttpAndDomain}/ws/clients`);
             const users = response.data.clients.map((client: any) => client.userId);
-            setConnectedUsers(users);
+            console.log(`Users ${users} ..`)
+            // setConnectedUsers(users);
         } catch (error) {
             console.error('Error fetching connected users:', error);
         }

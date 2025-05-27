@@ -41,7 +41,7 @@ export function broadcastToAllClients(action: string) {
 }
 
 // Function to send message to specific user
-export function sendToUserWebsockerAMessage(userId: string, message: string) {
+export function sendToUserWebsockerAMessage(userId: string, action: string) {
     const client = connectedClients.get(userId);
 
     if (!client) {
@@ -49,7 +49,12 @@ export function sendToUserWebsockerAMessage(userId: string, message: string) {
     }
 
     if (client.socket.readyState === WSWebSocket.OPEN) {
-        client.socket.send(JSON.stringify(message));
+        let message = {
+            "action": action
+        }
+        const messageString = JSON.stringify(message);
+
+        client.socket.send(messageString);
         return { success: true };
     } else {
         connectedClients.delete(userId);
