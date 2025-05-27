@@ -83,6 +83,9 @@ const Navbar = () => {
     // const [userSelectedFile, setUserSelectedFile] = useState(selectedFileInfo)
      // Use useRef to maintain current value that WebSocket handlers can access
      const selectedFileRef = useRef(selectedFileInfo);
+     const nounceRef = useRef(session?.nonce ?? "");
+     const walletAddressRef = useRef(session?.address ?? "");
+     const backendUrlRef = useRef(backend_url);
 
     const [multipleAddresses, setMultipleAddresses] = useState<string[]>([])
 
@@ -717,8 +720,12 @@ const Navbar = () => {
 
                     if (message.action === "refetch") {
                         (async () => {
-                            if (session && session.address && session?.nonce) {
-                                const files = await fetchFiles(session?.address, `${backend_url}/explorer_files`, session.nonce);
+                            if (walletAddressRef.current && nounceRef.current ) {
+
+
+                                const url =`${backend_url}/explorer_files`
+                                const actualUrlToFetch = ensureDomainUrlHasSSL(url);
+                                const files = await fetchFiles(walletAddressRef.current,actualUrlToFetch , nounceRef.current);
                                 setFiles(files);
 
                                   // Use the ref to get the current value
@@ -843,8 +850,12 @@ const Navbar = () => {
 
     useEffect(() => {
         if (session != null && session.nonce != undefined && backend_url != "http://0.0.0.0:0") {
+            backendUrlRef.current = backend_url
+            nounceRef.current =  session.nonce
+            walletAddressRef.current =  session.address
             loadTemplates();
             loadTemplatesAquaTrees();
+            
             if (!isConnected) {
                 console.log(`websocket is connected ${isConnected}`)
                 connectWebsocket()
