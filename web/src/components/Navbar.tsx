@@ -718,10 +718,11 @@ const Navbar = () => {
                     //    
                     // }
 
+                     console.log(`🔌 ECHO - message received ${message.action}`)
                     if (message.action === "refetch") {
                         (async () => {
                             if (walletAddressRef.current && nounceRef.current ) {
-
+                                console.log(`🔌 ECHO - message  fetching data`)
 
                                 const url =`${backend_url}/explorer_files`
                                 const actualUrlToFetch = ensureDomainUrlHasSSL(url);
@@ -761,7 +762,7 @@ const Navbar = () => {
                         fetchConnectedUsers();
 
                     } else {
-                        console.log(`🔌 - message received ${JSON.stringify(message, null, 4)}`)
+                        console.log(`🔌 ECHO - message received ${JSON.stringify(message, null, 4)}`)
                     }
                 } catch (error) {
                     console.error('Error parsing WebSocket message:', error);
