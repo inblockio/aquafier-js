@@ -87,6 +87,9 @@ const Navbar = () => {
     const [isConnected, setIsConnected] = useState(false);
     // const [_connectedUsers, setConnectedUsers] = useState<string[]>([]);
 
+    let pingInterval: NodeJS.Timeout | null = null;
+
+
     const cancelRef = React.useRef<HTMLButtonElement>(null);
     let navigate = useNavigate();
 
@@ -692,6 +695,10 @@ const Navbar = () => {
                 setIsConnected(true);
                 setWs(websocket);
                 // fetchConnectedUsers();
+
+                pingInterval = setInterval(() => {
+                    websocket.send(JSON.stringify({ action: "ping" }));
+                }, 20000); //
             };
 
             websocket.onmessage = (event) => {
@@ -758,7 +765,8 @@ const Navbar = () => {
                 console.log('Disconnected from WebSocket:', event.reason);
                 setIsConnected(false);
                 setWs(null);
-                // setConnectedUsers([]);
+                
+                if (pingInterval) clearInterval(pingInterval);
 
                 toaster.create({
                     description: `Realtime Connection disconnected error.`,
@@ -773,7 +781,9 @@ const Navbar = () => {
             websocket.onerror = (error) => {
                 console.error('WebSocket error:', error);
                 setIsConnected(false);
+                if (pingInterval) clearInterval(pingInterval);
 
+                
                 toaster.create({
                     description: `Realtime Connection with api failed.`,
                     type: "error"
