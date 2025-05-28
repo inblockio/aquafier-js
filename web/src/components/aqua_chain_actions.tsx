@@ -331,6 +331,7 @@ export const DeleteAquaChain = ({ apiFileInfo, backendUrl, nonce }: RevionOperat
             document.location.reload()
         }
     }
+
     const deleteFileAction = async () => {
         setDeleting(true)
 
@@ -378,40 +379,37 @@ export const DeleteAquaChain = ({ apiFileInfo, backendUrl, nonce }: RevionOperat
             <Dialog.Root lazyMount open={open} onOpenChange={(e) => {
                 setOpen(e.open)
             }}>
-                {/* <Dialog.Trigger asChild>
-        <Button variant="outline">Open</Button>
-      </Dialog.Trigger> */}
                 <Portal>
                     <Dialog.Backdrop />
                     <Dialog.Positioner>
                         <Dialog.Content>
                             <Dialog.Header>
-                                <Dialog.Title> This action will corrupt your some file(s)</Dialog.Title>
+                                <Dialog.Title>This action will corrupt your some file(s)</Dialog.Title>
                             </Dialog.Header>
                             <Dialog.Body>
                                 <Text>The following aqua trees will become corrupt, as they reference the file you are about to delete</Text>
                                 <List.Root as="ol">
-
-                                    {aquaTreesAffected.map((apiFileInfoItem) => {
-                                        return <List.Item>
+                                    {aquaTreesAffected.map((apiFileInfoItem, index) => {
+                                        return <List.Item key={index}>
                                             {getFileName(apiFileInfoItem.aquaTree!) ?? "--error--"}
                                         </List.Item>
                                     })}
                                 </List.Root>
-
                             </Dialog.Body>
-                            {/* 
-                                <Dialog.ActionTrigger asChild>
-                                    <Button variant="outline">Cancel</Button>
-                                </Dialog.ActionTrigger>
-                                <Button>Save</Button>
-                            </Dialog.Footer> */}
                             <Dialog.Footer>
-
                                 <Dialog.CloseTrigger asChild>
-                                    <Button onClick={() => {
-                                        deleteFileApi()
-                                    }} size="sm" colorPalette={'red'} >
+                                    <Button variant="outline" size="sm">
+                                        Cancel
+                                    </Button>
+                                </Dialog.CloseTrigger>
+                                <Dialog.CloseTrigger asChild>
+                                    <Button
+                                        onClick={() => {
+                                            deleteFileApi()
+                                        }}
+                                        size="sm"
+                                        colorPalette={'red'}
+                                    >
                                         Proceed to delete &nbsp;<LuX />
                                     </Button>
                                 </Dialog.CloseTrigger>

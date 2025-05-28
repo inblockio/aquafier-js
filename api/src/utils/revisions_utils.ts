@@ -1398,6 +1398,42 @@ export async function createAquaTreeFromRevisions(latestRevisionHash: string, ur
 
 
         let fileIndexes: FileIndex[] = [];
+
+        // attempt to fetch the files again
+        // this time using the file index
+        if (files == null) {
+
+
+            for (let revisionItem of revisionData) {
+                let hashOnly = revisionItem.pubkey_hash.split("_")[1]
+
+
+                // if (revisionItem.previous == null || revisionItem.previous == undefined || revisionItem.previous == "") {
+
+                let fileIndexResult = await prisma.fileIndex.findFirst({
+                    where: {
+                        hash: {
+                            has: hashOnly
+                        }
+                    }
+                })
+
+                if (fileIndexResult != null) {
+                    let filesEmbedded = await prisma.file.findMany({
+                        where: {
+                            file_hash: fileIndexResult.file_hash
+                        }
+
+                    })
+
+                    files = [...files, ...filesEmbedded]
+                }
+
+                // }
+            }
+
+        }
+
         if (files != null) {
             //  console.log("#### file is not null ")
 
@@ -1483,6 +1519,9 @@ export async function createAquaTreeFromRevisions(latestRevisionHash: string, ur
             }
 
             if (revisionItem.revision_type == "file" || revisionItem.revision_type == "form") {
+
+                revisionWithData["file_nonce"] = revisionItem.nonce ?? "--error--"
+
                 // console.log("Hash only: ", hashOnly)
                 let fileResult = await prisma.file.findFirst({
                     where: {
@@ -1494,19 +1533,44 @@ export async function createAquaTreeFromRevisions(latestRevisionHash: string, ur
                 })
                 // console.log("File result: ", fileResult)
                 if (fileResult == null) {
-                    // throw Error("Revision file data  not found")
-                    console.log("We fail here")
-                    console.error(`💣💣💣💣 hash not found in file hash => ${hashOnly}`)
+
+
+                    let fileIndexResult = await prisma.fileIndex.findFirst({
+                        where: {
+                            hash: {
+                                has: hashOnly
+                            }
+                        }
+                    })
+
+                    if (fileIndexResult != null) {
+
+                        revisionWithData["file_hash"] = fileIndexResult?.file_hash
+
+                        anAquaTree.file_index[hashOnly] = fileIndexResult.uri!
+
+                        //we update fileResult by fetching with file hash
+
+                    } else {
+
+
+
+                        console.log("We fail here")
+                        console.error(`💣💣💣💣 hash not found in file hash => ${hashOnly}`)
+
+
+                    }
+
                 } else {
 
-                    revisionWithData["file_nonce"] = revisionItem.nonce ?? "--error--"
+
                     revisionWithData["file_hash"] = fileResult?.file_hash ?? "--error--"
                 }
             }
             let revisionInfoData = await FetchRevisionInfo(revisionItem.pubkey_hash, revisionItem)
 
             if (revisionInfoData == null) {
-                console.log(`Revision data ${JSON.stringify(revisionItem, null, 4)} not found foir revision item`)
+                console.log(`Ignore this log if its file revision --Revision data ${JSON.stringify(revisionItem, null, 4)} not found foir revision item`)
                 // throw Error("Revision info not found")
             } else {
                 if (revisionItem.revision_type == "form") {
@@ -1570,7 +1634,7 @@ export async function createAquaTreeFromRevisions(latestRevisionHash: string, ur
                     } else {
                         let hashSearchText = linkData.link_verification_hashes[0]
 
-                        if(hashSearchText==undefined){
+                        if (hashSearchText == undefined) {
                             throw Error("This should not be  undifined ")
                         }
                         if (revisionData.revision_type == "file" || revisionData.revision_type == "form") {
@@ -1665,17 +1729,65 @@ export async function createAquaTreeFromRevisions(latestRevisionHash: string, ur
 
                 } else {
 
+                    // let data = await prisma.fileIndex.findFirst({
+                    //     where: {
+                    //         hash: {
+                    //             has: revisionItem.pubkey_hash,
+
+                    //         }
+                    //     }
+                    // });
                     let data = await prisma.fileIndex.findFirst({
                         where: {
                             hash: {
-                                has: revisionItem.pubkey_hash
+                                hasSome: [revisionItem.pubkey_hash, hashOnly],
+
                             }
                         }
                     });
 
-                    if(data){
+                    if (data) {
                         anAquaTree.file_index[hashOnly] = data.uri!
                         revisionWithData["file_hash"] = data.file_hash
+
+                        //push to file objects 
+                        let fileSizeInBytes = 0;
+
+                        let fileItem = await prisma.file.findFirst({
+                            where: {
+                                file_hash: data.file_hash!!
+                            }
+                        })
+
+                        if (fileItem) {
+                            const stats = fs.statSync(fileItem.content!!);
+                            fileSizeInBytes = stats.size;
+                            //  console.log(`File size: ${fileSizeInBytes} bytes`);
+
+                            // Extract just the original filename (without the UUID prefix)
+                            const fullFilename = path.basename(fileItem.content!!) // Gets filename.ext from full path
+                            const _originalFilename = fullFilename.substring(fullFilename.indexOf('-') + 1) // Removes UUID-
+                            //  console.log(`Original filename: ${originalFilename}`)
+
+
+                        }
+
+
+
+
+                        // Path you want to add
+                        const urlPath = `/files/${data.file_hash}`;
+
+                        // Construct the full URL
+                        const fullUrl = `${url}${urlPath}`;
+                        fileObject.push({
+                            fileContent: fullUrl,//fileContent.toString(),
+                            fileName: data.uri!!,
+                            path: ".extreme.",
+                            fileSize: fileSizeInBytes
+                        })
+
+
                     }
 
                 }

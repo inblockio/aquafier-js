@@ -171,6 +171,7 @@ const FilesTable = () => {
             if (fileObject) {
                 return tableItem(fileObject, item, index)
             } else {
+                console.log(`@@--@@--${JSON.stringify(item, null, 4)}`)
                 return <>Error</>
             }
 
