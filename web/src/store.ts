@@ -25,6 +25,7 @@ type AppStoreState = {
     metamaskAddress: string | null,
     avatar: string | undefined,
     backend_url: string,
+    contracts : any[]
 }
 
 type AppStoreActions = {
@@ -58,9 +59,13 @@ type AppStoreActions = {
     setFormTemplate: (
         apiFileData: FormTemplate[],
     ) => void,
+    setContracts: (
+        contracts: any[],
+    ) => void,
     setBackEndUrl: (
         backend_url: AppStoreState['backend_url'],
     ) => void
+
 
 }
 
@@ -112,6 +117,8 @@ const appStore = createStore<TAppStore>()(
             systemFileInfo:[],
             formTemplates: [],
             backend_url: "http://0.0.0.0:3000",
+            contracts: [],
+
             // Actions
             setUserProfile: (config) => set({ user_profile: config }),
             setSession: (session) => set({ session: session }),
@@ -136,13 +143,15 @@ const appStore = createStore<TAppStore>()(
             setFormTemplate: (
                 apiFormTemplate: FormTemplate[]
             ) => set({ formTemplates: apiFormTemplate }),
+            setContracts: (
+                contractData: any[]
+            ) => set({ contracts: contractData }),
             addFile: (
                 file: ApiFileInfo,
             ) => {
                 const { files } = appStore.getState()
                 set({ files: [...files, file] })
             },
-
             setBackEndUrl: (
                 backend_url: AppStoreState['backend_url'],
             ) => set({ backend_url: backend_url }),

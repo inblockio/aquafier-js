@@ -24,6 +24,7 @@ import SmallScreenSidebarDrawer from "./SmallScreenSidebarDrawer"
 
 import { generateNonce } from "siwe"
 import { WebSocketMessage } from "../types/types"
+import WebSocketActions from "../constants/constants"
 
 const FormTemplateCard = ({ template, selectTemplateCallBack }: { template: FormTemplate, selectTemplateCallBack: (template: FormTemplate) => void }) => {
 
@@ -76,16 +77,16 @@ const Navbar = () => {
     const [modalFormErorMessae, setModalFormErorMessae] = useState("");
     // const { open, onOpen, onClose } = useDisclosure();
     const [open, setOpen] = useState(false)
-    const { session, formTemplates, backend_url, systemFileInfo, setFormTemplate, setFiles, setSystemFileInfo, selectedFileInfo, setSelectedFileInfo } = useStore(appStore)
+    const { session, formTemplates, backend_url, systemFileInfo, setFormTemplate, setFiles, setSystemFileInfo, selectedFileInfo, setSelectedFileInfo, setContracts } = useStore(appStore)
     const [formData, setFormData] = useState<Record<string, string | File | number>>({});
     const [selectedTemplate, setSelectedTemplate] = useState<FormTemplate | null>(null);
 
     // const [userSelectedFile, setUserSelectedFile] = useState(selectedFileInfo)
-     // Use useRef to maintain current value that WebSocket handlers can access
-     const selectedFileRef = useRef(selectedFileInfo);
-     const nounceRef = useRef(session?.nonce ?? "");
-     const walletAddressRef = useRef(session?.address ?? "");
-     const backendUrlRef = useRef(backend_url);
+    // Use useRef to maintain current value that WebSocket handlers can access
+    const selectedFileRef = useRef(selectedFileInfo);
+    const nounceRef = useRef(session?.nonce ?? "");
+    const walletAddressRef = useRef(session?.address ?? "");
+    const backendUrlRef = useRef(backend_url);
 
     const [multipleAddresses, setMultipleAddresses] = useState<string[]>([])
 
@@ -703,7 +704,7 @@ const Navbar = () => {
                 // fetchConnectedUsers();
 
                 pingInterval = setInterval(() => {
-                    websocket.send(JSON.stringify({ action: "ping" }));
+                    websocket.send(JSON.stringify({ action: "ping", type: "ping" }));
                 }, 20000); //
             };
 
@@ -718,22 +719,22 @@ const Navbar = () => {
                     //    
                     // }
 
-                     console.log(`🔌 ECHO - message received ${message.action}`)
-                    if (message.action === "refetch") {
+                    console.log(`🔌 ECHO - message received ${message.action}`)
+                    if (message.action === WebSocketActions.REFETCH_FILES) {
                         (async () => {
-                            if (walletAddressRef.current && nounceRef.current ) {
+                            if (walletAddressRef.current && nounceRef.current) {
                                 console.log(`🔌 ECHO - message  fetching data`)
 
-                                const url =`${backend_url}/explorer_files`
+                                const url = `${backend_url}/explorer_files`
                                 const actualUrlToFetch = ensureDomainUrlHasSSL(url);
-                                const files = await fetchFiles(walletAddressRef.current,actualUrlToFetch , nounceRef.current);
+                                const files = await fetchFiles(walletAddressRef.current, actualUrlToFetch, nounceRef.current);
                                 setFiles(files);
 
-                                  // Use the ref to get the current value
-                                  const currentSelectedFile = selectedFileRef.current;
-                                
-                                  if (currentSelectedFile) {
-                                // if (userSelectedFile) {
+                                // Use the ref to get the current value
+                                const currentSelectedFile = selectedFileRef.current;
+
+                                if (currentSelectedFile) {
+                                    // if (userSelectedFile) {
                                     let genesisHash = getGenesisHash(currentSelectedFile!.aquaTree!!);
                                     if (genesisHash) {
                                         for (let itemTree of files) {
@@ -745,10 +746,10 @@ const Navbar = () => {
                                                 }
                                             }
                                         }
-                                    }else{
+                                    } else {
                                         console.log(`🔌 - Genesis hash not found for selected file`)
                                     }
-                                }else{
+                                } else {
                                     // console.log(`🔌 -1- No selected file ${userSelectedFile}`)
                                     // console.log(`🔌 -2- No selected file ${selectedFileInfo}`)
                                     console.log(`🔌 -3- No selected file ${currentSelectedFile}`)
@@ -758,7 +759,33 @@ const Navbar = () => {
                             }
 
                         })()
-                    } if (message.action === 'fetchUsers') {
+                    } else if (message.action === WebSocketActions.REFETCH_SHARE_CONTRACTS) {
+                        (async () => {
+                            try {
+                                const url = `${backend_url}/contracts`;
+                                const response = await axios.get(url, {
+                                    params: {
+                                        receiver: walletAddressRef.current
+                                    },
+                                    headers: {
+                                        'nonce':  nounceRef.current
+                                    }
+                                });
+                                if (response.status === 200) {
+                                    setContracts(response.data?.contracts)
+                                }
+
+                                toaster.create({
+                                    description: `An item was shared to your account`,
+                                    type: "success"
+                                })
+
+                            } catch (e) {
+                                console.log("Error loadin cntract")
+                            }
+                        })()
+
+                    } else if (message.action === WebSocketActions.FETCH_USERS) {
                         fetchConnectedUsers();
 
                     } else {
@@ -782,7 +809,7 @@ const Navbar = () => {
                 console.log('Disconnected from WebSocket:', event.reason);
                 setIsConnected(false);
                 setWs(null);
-                
+
                 if (pingInterval) clearInterval(pingInterval);
 
                 toaster.create({
@@ -790,7 +817,7 @@ const Navbar = () => {
                     type: "error"
                 })
 
-                setTimeout(()=>{
+                setTimeout(() => {
                     connectWebsocket()
                 }, 1000)
             };
@@ -800,12 +827,12 @@ const Navbar = () => {
                 setIsConnected(false);
                 if (pingInterval) clearInterval(pingInterval);
 
-                
+
                 toaster.create({
                     description: `Realtime Connection with api failed.`,
                     type: "error"
                 })
-                setTimeout(()=>{
+                setTimeout(() => {
                     connectWebsocket()
                 }, 1000)
             };
@@ -852,11 +879,11 @@ const Navbar = () => {
     useEffect(() => {
         if (session != null && session.nonce != undefined && backend_url != "http://0.0.0.0:0") {
             backendUrlRef.current = backend_url
-            nounceRef.current =  session.nonce
-            walletAddressRef.current =  session.address
+            nounceRef.current = session.nonce
+            walletAddressRef.current = session.address
             loadTemplates();
             loadTemplatesAquaTrees();
-            
+
             if (!isConnected) {
                 console.log(`websocket is connected ${isConnected}`)
                 connectWebsocket()

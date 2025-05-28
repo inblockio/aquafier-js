@@ -2,11 +2,11 @@ import { useState, useEffect, useCallback, useMemo } from "react";
 import { LuCheck, LuExternalLink, LuTrash, LuX } from "react-icons/lu"
 import { Box, Button, Card, Collapsible, For, Group, Icon, IconButton, Link, Span, Stack, Text } from "@chakra-ui/react"
 import { TimelineConnector, TimelineContent, TimelineDescription, TimelineItem, TimelineRoot, TimelineTitle } from "./chakra-ui/timeline"
-import { displayTime, formatCryptoAddress, fetchLinkedFileName, fetchFiles, getAquaTreeFileObject, isDeepLinkRevision, isAquaTree, getGenesisHash } from "../utils/functions"
+import { displayTime, formatCryptoAddress, fetchLinkedFileName, getFileNameWithDeepLinking, fetchFiles, getAquaTreeFileObject, isDeepLinkRevision, isAquaTree, getGenesisHash } from "../utils/functions"
 import { Alert } from "./chakra-ui/alert"
 import { AquaTree, FileObject, LogTypeEmojis, Revision } from "aqua-js-sdk";
 import ReactLoading from "react-loading"
-import { ERROR_TEXT, WITNESS_NETWORK_MAP } from "../utils/constants"
+import { ERROR_TEXT, WITNESS_NETWORK_MAP, ERROR_UKNOWN } from "../utils/constants"
 import { WalletEnsView } from "./chakra-ui/wallet_ens"
 import { AquaTreeDetailsData, RevisionDetailsSummaryData } from "../models/AquaTreeDetails"
 
@@ -17,28 +17,66 @@ import axios from "axios"
 import { toaster } from "./chakra-ui/toaster";
 import { ApiFileInfo } from "../models/FileInfo";
 
-const viewLinkedFile = (aquaTree: AquaTree, revisionHash: string, revision: Revision, apiFileInfo: ApiFileInfo[], updateSelectedFile: (fileInfo: ApiFileInfo) => void): JSX.Element => {
+const viewLinkedFile = (selectedApiFileInfo: ApiFileInfo, revisionHash: string, revision: Revision, apiFileInfo: ApiFileInfo[], updateSelectedFile: (fileInfo: ApiFileInfo) => void, isWorkflow: boolean): JSX.Element => {
 
     if (revision.revision_type == "link") {
 
-        if (isDeepLinkRevision(aquaTree, revisionHash)) {
+        if (isDeepLinkRevision(selectedApiFileInfo.aquaTree!!, revisionHash)) {
             return <></>
         }
 
         return <Button onClick={
             () => {
-                let linkedFileName = fetchLinkedFileName(aquaTree!!, revision)
+                let linkedFileName = fetchLinkedFileName(selectedApiFileInfo.aquaTree!!, revision);
+                let allFileObjects = [...selectedApiFileInfo.fileObject]
+                apiFileInfo.forEach((e) => {
+                    allFileObjects = [...allFileObjects, ...e.fileObject];
+                })
+                if (isWorkflow || linkedFileName == ERROR_TEXT) {
 
-                if (linkedFileName != ERROR_TEXT) {
+
+
+                    linkedFileName = getFileNameWithDeepLinking(selectedApiFileInfo.aquaTree!!, revisionHash, allFileObjects)
+
+                }
+
+                let fileInfoFound: ApiFileInfo | undefined = undefined
+                if (linkedFileName != ERROR_TEXT && linkedFileName != ERROR_UKNOWN) {
                     for (let fileInfo of apiFileInfo) {
                         let fileObject = getAquaTreeFileObject(fileInfo);
                         if (fileObject) {
                             if (linkedFileName == fileObject.fileName) {
 
-                                updateSelectedFile(fileInfo)
+                                fileInfoFound = fileInfo
                                 break
                             }
                         }
+                    }
+                    if (fileInfoFound) {
+                        updateSelectedFile(fileInfoFound)
+                    } else {
+
+                        for (let fileObject of allFileObjects) {
+                           
+                                if (linkedFileName == fileObject.fileName) {
+                                    // updateSelectedFile({
+                                    //     aquaTree : fileObject.fileContent as AquaTree,
+                                    //     fileObject: [fileObject],
+                                    //     linkedFileObjects: [],
+                                    //     mode:"",
+                                    //     owner:""
+                                    // } )
+
+                                    console.log(`show  ${linkedFileName}  filw object ${JSON.stringify(fileObject,null,4)}`)
+                                    toaster.create({
+                                        title: "View not available",
+                                        type: 'info'
+                                    })
+                                    break
+                                }
+                            
+                        }
+
                     }
                 } else {
                     toaster.create({
@@ -353,7 +391,7 @@ export const RevisionDisplay = ({ fileInfo, revision, revisionHash, isVerificati
                                                                     />
                                                                 ) : null
                                                             }
-                                                            {viewLinkedFile(fileInfo!.aquaTree!, revisionHash, revision, files, setSelectedFileInfo)}
+                                                            {viewLinkedFile(fileInfo!, revisionHash, revision, files, setSelectedFileInfo, false)}
                                                         </TimelineContent>
 
                                                     </TimelineItem>
@@ -484,7 +522,7 @@ export const RevisionDisplay = ({ fileInfo, revision, revisionHash, isVerificati
 
 
 
-export const RevisionDetailsSummary = ({ fileInfo }: RevisionDetailsSummaryData) => {
+export const RevisionDetailsSummary = ({ fileInfo, isWorkFlow }: RevisionDetailsSummaryData) => {
 
     const { files, setSelectedFileInfo } = useStore(appStore)
     // const pageData: PageData = JSON.parse(fileInfo.page_data);
@@ -623,7 +661,7 @@ export const RevisionDetailsSummary = ({ fileInfo }: RevisionDetailsSummaryData)
                             /> */}
                                 {revisionDataHeader(fileInfo!.aquaTree!, revisionHash, fileInfo!.fileObject)}
                                 <Box />
-                                {viewLinkedFile(fileInfo!.aquaTree!, revisionHash, revision!!, files, setSelectedFileInfo)}
+                                {viewLinkedFile(fileInfo!, revisionHash, revision!!, files, setSelectedFileInfo, isWorkFlow)}
                                 {/* <br />
                             <ItemDetail label="Timestamp (UTC) : "
                                 displayValue={displayTime(revision.witness_timestamp?.toString() ?? "")}

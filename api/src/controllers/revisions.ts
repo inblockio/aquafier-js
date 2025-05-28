@@ -13,6 +13,7 @@ import { SYSTEM_WALLET_ADDRESS } from 'src/models/constants';
 import { getFileUploadDirectory, streamToBuffer } from 'src/utils/file_utils';
 import { randomUUID } from 'crypto';
 import { sendToUserWebsockerAMessage } from './websocketController';
+import WebSocketActions from 'src/constants/constants';
 
 export default async function revisionsController(fastify: FastifyInstance) {
     // fetch aqua tree from a revision hash
@@ -139,7 +140,7 @@ export default async function revisionsController(fastify: FastifyInstance) {
 
 
             //trigger the other party to refetch explorer files
-            sendToUserWebsockerAMessage(revisionData.address, "refetch")
+            sendToUserWebsockerAMessage(revisionData.address, WebSocketActions.REFETCH_FILES)
 
 
             return reply.code(200).send({

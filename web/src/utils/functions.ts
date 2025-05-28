@@ -2,7 +2,7 @@
 import { isAddress, getAddress } from 'ethers';
 
 import { ApiFileInfo } from "../models/FileInfo";
-import { documentTypes, ERROR_TEXT, imageTypes, musicTypes, videoTypes } from "./constants";
+import { documentTypes, ERROR_TEXT, ERROR_UKNOWN, imageTypes, musicTypes, videoTypes } from "./constants";
 // import { AvatarGenerator } from 'random-avatar-generator';
 import Aquafier, { AquaTree, CredentialsData, FileObject, OrderRevisionInAquaTree, Revision } from "aqua-js-sdk";
 import jdenticon from "jdenticon/standalone";
@@ -102,9 +102,14 @@ export const isWorkFlowData = (aquaTree: AquaTree, _systemAndUserWorkFlow: strin
         // console.log(`--  name ${name}  all hashes ${revisionHash}  second revision ${JSON.stringify(secondRevision, null, 4)} tree ${JSON.stringify(aquaTreeRevisionsOrderd, null, 4)}`)
 
         // if (systemAndUserWorkFlow.map((e)=>e.replace(".json", "")).includes(name)) {
+
+        let nameWithoutJson = "--error--";
+        if (name) {
+            nameWithoutJson = name.replace(".json", "")
+        }
         return {
             isWorkFlow: true,
-            workFlow: name.replace(".json", "")
+            workFlow: nameWithoutJson
         }
         // }
 
@@ -1043,6 +1048,63 @@ export function areArraysEqual(array1: Array<string>, array2: Array<string>) {
     return array2Copy.length === 0;
 }
 
+
+export function getFileNameWithDeepLinking(aquaTree: AquaTree, revisionHash: string, fileObject: FileObject[]): string {
+    
+        const revision = aquaTree.revisions[revisionHash]
+    
+        if (revision.previous_verification_hash.length == 0) {
+    
+            return aquaTree.file_index[revisionHash]
+        }
+        if (revision.revision_type == "link") {
+            let isDeepLink = isDeepLinkRevision(aquaTree, revisionHash)
+            if (isDeepLink == null) {
+                return ERROR_UKNOWN
+            }
+            if (isDeepLink) {
+                // before returning deep link we traverse the current  aqua tree 
+                const aquaTreeFiles = fileObject.filter(file => isAquaTree(file.fileContent));
+                console.log(`👁️‍🗨️ aquaTreeFiles ${aquaTreeFiles.length} --  `)
+                if (aquaTreeFiles.length > 0) {
+                    let aquaTreePick = aquaTreeFiles.find((e) => {
+                        let tree: AquaTree = e.fileContent as AquaTree
+                        let allHashes = Object.keys(tree.revisions);
+    
+    
+                        console.log(`👁️‍🗨️ aquaTreeFiles ${allHashes.toString()} == ${revisionHash} `)
+                        return allHashes.includes(revision.link_verification_hashes![0]!)
+                    })
+    
+                    console.log(`👁️‍🗨️ aquaTreePick ${JSON.stringify(aquaTreePick, null, 4)} `)
+                    if (aquaTreePick) {
+                        let tree: AquaTree = aquaTreePick.fileContent as AquaTree
+                        let genesisHash = getGenesisHash(tree)
+    
+                        console.log(`👁️‍🗨️  genesisHash ${genesisHash}`)
+                        if (genesisHash) {
+    
+                            let fileName = tree.file_index[genesisHash]
+                            console.log(`👁️‍🗨️ fileName ${fileName}`)
+    
+                            if (fileName) {
+                                return fileName
+                            }
+                        }
+    
+                    }
+                }
+    
+                return ERROR_TEXT
+            } else {
+                return fetchLinkedFileName(aquaTree, revision)
+                
+            }
+        }
+    
+        return  ERROR_TEXT
+    
+}
 export function isDeepLinkRevision(aquaTree: AquaTree, revisionHash: string): boolean | null {
 
     let revisionData = aquaTree.revisions[revisionHash]

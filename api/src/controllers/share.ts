@@ -8,9 +8,11 @@ import { AquaTree, FileObject, OrderRevisionInAquaTree, reorderAquaTreeRevisions
 import { getHost, getPort } from '../utils/api_utils';
 import { createAquaTreeFromRevisions, fetchAquaTreeWithForwardRevisions, saveAquaTree } from '../utils/revisions_utils';
 import { SYSTEM_WALLET_ADDRESS } from '../models/constants';
+import { sendToUserWebsockerAMessage } from './websocketController';
+import WebSocketActions from 'src/constants/constants';
 
 export default async function shareController(fastify: FastifyInstance) {
-  
+
     fastify.get('/share_data/:hash', async (request, reply) => {
 
         // Extract the hash parameter from the URL
@@ -79,10 +81,10 @@ export default async function shareController(fastify: FastifyInstance) {
 
             if (contractData.option == "latest") {
                 let [_anAquaTree, _fileObject] = await fetchAquaTreeWithForwardRevisions(revision_pubkey_hash, url)
-                
+
                 let orderRevisionPrpoerties = reorderAquaTreeRevisionsProperties(_anAquaTree)
                 let sortedAquaTree = OrderRevisionInAquaTree(orderRevisionPrpoerties)
-                
+
                 anAquaTree = sortedAquaTree
                 fileObject = _fileObject
 
@@ -106,10 +108,12 @@ export default async function shareController(fastify: FastifyInstance) {
 
             // return aqua tree
             // return displayData
-            return reply.code(200).send({ success: true, data: {
-                displayData: displayData,
-                contractData: contractData
-            } });
+            return reply.code(200).send({
+                success: true, data: {
+                    displayData: displayData,
+                    contractData: contractData
+                }
+            });
 
         } catch (error) {
             console.error("Error fetching session:", error);
@@ -169,6 +173,10 @@ export default async function shareController(fastify: FastifyInstance) {
                 reference_count: 1
             }
         });
+
+
+        //trigger the other party to refetch explorer files
+        sendToUserWebsockerAMessage(recipient, WebSocketActions.REFETCH_SHARE_CONTRACTS)
 
         return reply.code(200).send({ success: true, message: "share contract created successfully." });
 

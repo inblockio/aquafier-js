@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { copyToClipboardModern } from "../utils/functions";
 
 import { toaster } from "../components/chakra-ui/toaster";
@@ -12,8 +12,8 @@ import { Link } from "react-router-dom";
 import { IAccountContracts } from "../types/index";
 
 export default function AccountContracts({ inline, open, updateOpenStatus }: IAccountContracts) {
-    const [contracts, setContracts] = useState<any[]>([])
-    const { backend_url, session } = useStore(appStore)
+    // const [contracts, setContracts] = useState<any[]>([])
+    const { backend_url, session, setContracts, contracts } = useStore(appStore)
 
     const loadAccountSharedContracts = async () => {
         const url = `${backend_url}/contracts`;

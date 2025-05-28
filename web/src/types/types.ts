@@ -29,7 +29,7 @@ export interface SummaryDetailsDisplayData {
 
 export interface WebSocketMessage {
   action: string;
-  // type: string;
+  type: string;
   // data: any;
   // timestamp: string;
   // connectedClients?: number;
