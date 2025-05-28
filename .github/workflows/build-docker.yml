@@ -14,6 +14,18 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
+
+      - name: Free Disk Space
+        run: |
+          sudo rm -rf /usr/share/dotnet
+          sudo rm -rf /usr/local/lib/android
+          sudo rm -rf /opt/ghc
+          sudo rm -rf "/usr/local/share/boost"
+          sudo rm -rf "$AGENT_TOOLSDIRECTORY"
+          sudo docker system prune -af
+          sudo apt-get clean
+          df -h
+          
       - uses: actions/checkout@v3
 
       - name: Log in to the Container registry
