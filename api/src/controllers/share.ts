@@ -9,7 +9,7 @@ import { getHost, getPort } from '../utils/api_utils';
 import { createAquaTreeFromRevisions, fetchAquaTreeWithForwardRevisions, saveAquaTree } from '../utils/revisions_utils';
 import { SYSTEM_WALLET_ADDRESS } from '../models/constants';
 import { sendToUserWebsockerAMessage } from './websocketController';
-import WebSocketActions from 'src/constants/constants';
+import WebSocketActions from '..//constants/constants';
 
 export default async function shareController(fastify: FastifyInstance) {
 

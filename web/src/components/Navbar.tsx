@@ -711,13 +711,7 @@ const Navbar = () => {
             websocket.onmessage = (event) => {
                 try {
                     const message: WebSocketMessage = JSON.parse(event.data);
-                    // setMessages(prev => [...prev, message]);
-
-                    // 
-                    // Update connected users when welcome message is received
-                    // 
-                    //    
-                    // }
+              
 
                     console.log(`🔌 ECHO - message received ${message.action}`)
                     if (message.action === WebSocketActions.REFETCH_FILES) {

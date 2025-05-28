@@ -5,8 +5,8 @@ import { FastifyInstance } from 'fastify';
 import path from 'path';
 
 import * as fs from "fs"
-import { getHost, getPort } from 'src/utils/api_utils';
-import { randomUUID } from 'crypto';
+// import { getHost, getPort } from 'src/utils/api_utils';
+// import { randomUUID } from 'crypto';
 
 export default async function filesController(fastify: FastifyInstance) {
     // get file using file hash

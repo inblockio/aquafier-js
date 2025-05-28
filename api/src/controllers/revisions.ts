@@ -9,11 +9,11 @@ import Aquafier, { AquaTree, FileObject, getAquaTreeFileName, getGenesisHash, Or
 import { FastifyInstance } from 'fastify';
 import * as fs from "fs"
 import path from 'path';
-import { SYSTEM_WALLET_ADDRESS } from 'src/models/constants';
-import { getFileUploadDirectory, streamToBuffer } from 'src/utils/file_utils';
+import { SYSTEM_WALLET_ADDRESS } from '..//models/constants';
+import { getFileUploadDirectory, streamToBuffer } from '../utils/file_utils';
 import { randomUUID } from 'crypto';
 import { sendToUserWebsockerAMessage } from './websocketController';
-import WebSocketActions from 'src/constants/constants';
+import WebSocketActions from '../constants/constants';
 
 export default async function revisionsController(fastify: FastifyInstance) {
     // fetch aqua tree from a revision hash
