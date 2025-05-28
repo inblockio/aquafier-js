@@ -13,6 +13,17 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
+      - name: Free Disk Space
+        run: |
+          sudo rm -rf /usr/share/dotnet
+          sudo rm -rf /usr/local/lib/android
+          sudo rm -rf /opt/ghc
+          sudo rm -rf "/usr/local/share/boost"
+          sudo rm -rf "$AGENT_TOOLSDIRECTORY"
+          sudo docker system prune -af
+          sudo apt-get clean
+          df -h
+          
       - name: Execute update on host
         uses: appleboy/ssh-action@v1
         with:
@@ -21,3 +32,26 @@ jobs:
           key: ${{ secrets.RUNNER_PRIVATE_KEY }}
           passphrase: ${{ secrets.PRIVATE_KEY_PASSWORD }}
           script: /home/dev/scripts/pull_latest_version_aquafier-js.sh
+# name: "Deploy Dev-Environment"
+
+# on:
+#   workflow_call:
+#     secrets:
+#       RUNNER_PRIVATE_KEY:
+#         required: true
+#       PRIVATE_KEY_PASSWORD:
+#         required: true
+#   workflow_dispatch:
+
+# jobs:
+#   deploy:
+#     runs-on: ubuntu-latest
+#     steps:
+#       - name: Execute update on host
+#         uses: appleboy/ssh-action@v1
+#         with:
+#           host: "dev.inblock.io"
+#           username: "dev"
+#           key: ${{ secrets.RUNNER_PRIVATE_KEY }}
+#           passphrase: ${{ secrets.PRIVATE_KEY_PASSWORD }}
+#           script: /home/dev/scripts/pull_latest_version_aquafier-js.sh

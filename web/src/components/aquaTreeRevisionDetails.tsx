@@ -57,24 +57,37 @@ const viewLinkedFile = (selectedApiFileInfo: ApiFileInfo, revisionHash: string, 
                     } else {
 
                         for (let fileObject of allFileObjects) {
-                           
-                                if (linkedFileName == fileObject.fileName) {
-                                    // updateSelectedFile({
-                                    //     aquaTree : fileObject.fileContent as AquaTree,
-                                    //     fileObject: [fileObject],
-                                    //     linkedFileObjects: [],
-                                    //     mode:"",
-                                    //     owner:""
-                                    // } )
 
-                                    console.log(`show  ${linkedFileName}  filw object ${JSON.stringify(fileObject,null,4)}`)
+                            if (linkedFileName == fileObject.fileName) {
+                                let aquaTree: AquaTree | undefined = undefined;
+                                if (linkedFileName.endsWith(".aqua.json")) {
+                                    aquaTree = fileObject.fileContent as AquaTree
+                                } else {
+                                    let fileObjCtItem = allFileObjects.find((e) => e.fileName == `${linkedFileName}.aqua.json`)
+                                    if(fileObjCtItem){
+                                    aquaTree = fileObjCtItem.fileContent as AquaTree
+                                    }
+                                }
+
+                                if (aquaTree == undefined) {
+                                    console.log(`show  ${linkedFileName}  filw object ${JSON.stringify(fileObject, null, 4)}`)
                                     toaster.create({
                                         title: "View not available",
                                         type: 'info'
                                     })
-                                    break
+                                } else {
+                                    updateSelectedFile({
+                                        aquaTree: aquaTree,
+                                        fileObject: [fileObject],
+                                        linkedFileObjects: [],
+                                        mode: "",
+                                        owner: ""
+                                    })
                                 }
-                            
+
+                                break
+                            }
+
                         }
 
                     }
