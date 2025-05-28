@@ -1,4 +1,4 @@
-import { LuDelete, LuDownload, LuGlasses, LuLink2, LuShare2, LuSignature, LuX } from "react-icons/lu"
+import { LuDelete, LuDownload, LuGlasses, LuLink2, LuShare2, LuSignature, LuTrash } from "react-icons/lu"
 import { Button } from "./chakra-ui/button"
 import { areArraysEqual, dummyCredential, ensureDomainUrlHasSSL, extractFileHash, fetchFiles, getAquaTreeFileObject, getFileName, getGenesisHash, isAquaTree, isWorkFlowData } from "../utils/functions"
 import { useStore } from "zustand"
@@ -269,9 +269,18 @@ export const DeleteAquaChain = ({ apiFileInfo, backendUrl, nonce }: RevionOperat
     const { files, setFiles, session, backend_url } = useStore(appStore)
     const [deleting, setDeleting] = useState(false)
     const [open, setOpen] = useState(false)
+    const [isLoading, setIsloading] = useState(false)
     const [aquaTreesAffected, setAquaTreesAffected] = useState<ApiFileInfo[]>([])
 
     const deleteFileApi = async () => {
+        if (isLoading) {
+            toaster.create({
+                description: "File deletion in progress",
+                type: "info"
+            })
+            return
+        }
+        setIsloading(true)
         try {
             const allRevisionHashes = Object.keys(apiFileInfo.aquaTree!.revisions!);
             const lastRevisionHash = allRevisionHashes[allRevisionHashes.length - 1]
@@ -298,6 +307,9 @@ export const DeleteAquaChain = ({ apiFileInfo, backendUrl, nonce }: RevionOperat
                 // })
 
                 // setFiles(newFiles)
+                setOpen(!open)
+
+                setIsloading(false)
                 toaster.create({
                     description: "File deleted successfully",
                     type: "success"
@@ -345,6 +357,7 @@ export const DeleteAquaChain = ({ apiFileInfo, backendUrl, nonce }: RevionOperat
             if (genesisHash == genesisOfFileBeingDeleted) {
                 console.log(`skipping  ${fileNameBeingDeleted} the file is being deleted`)
             } else {
+
                 let indexValues = Object.values(anAquaTree.aquaTree!.file_index)
                 for (let fileName of indexValues) {
                     if (fileNameBeingDeleted == fileName) {
@@ -388,7 +401,7 @@ export const DeleteAquaChain = ({ apiFileInfo, backendUrl, nonce }: RevionOperat
                             </Dialog.Header>
                             <Dialog.Body>
                                 <Text>The following aqua trees will become corrupt, as they reference the file you are about to delete</Text>
-                                <List.Root as="ol">
+                                <List.Root as="ol" ml={5} mt={5} alignItems={'start'}>
                                     {aquaTreesAffected.map((apiFileInfoItem, index) => {
                                         return <List.Item key={index}>
                                             {getFileName(apiFileInfoItem.aquaTree!) ?? "--error--"}
@@ -397,22 +410,27 @@ export const DeleteAquaChain = ({ apiFileInfo, backendUrl, nonce }: RevionOperat
                                 </List.Root>
                             </Dialog.Body>
                             <Dialog.Footer>
-                                <Dialog.CloseTrigger asChild>
-                                    <Button variant="outline" size="sm">
+                                <HStack>
+                                    {/* <Dialog.CloseTrigger asChild> */}
+                                    <Button variant="outline" size="sm" onClick={() => {
+                                        setOpen(!open)
+                                    }}>
                                         Cancel
                                     </Button>
-                                </Dialog.CloseTrigger>
-                                <Dialog.CloseTrigger asChild>
+                                    {/* </Dialog.CloseTrigger> */}
+                                    {/* <Dialog.CloseTrigger asChild> */}
                                     <Button
                                         onClick={() => {
                                             deleteFileApi()
                                         }}
+                                    
                                         size="sm"
                                         colorPalette={'red'}
                                     >
-                                        Proceed to delete &nbsp;<LuX />
+                                        Proceed to delete &nbsp;<LuTrash />
                                     </Button>
-                                </Dialog.CloseTrigger>
+                                    {/* </Dialog.CloseTrigger> */}
+                                </HStack>
                             </Dialog.Footer>
                         </Dialog.Content>
                     </Dialog.Positioner>
