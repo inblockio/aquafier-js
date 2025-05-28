@@ -1,6 +1,6 @@
 import { LuDelete, LuDownload, LuGlasses, LuLink2, LuShare2, LuSignature, LuTrash } from "react-icons/lu"
 import { Button } from "./chakra-ui/button"
-import { areArraysEqual, dummyCredential, ensureDomainUrlHasSSL, extractFileHash, fetchFiles, getAquaTreeFileObject, getFileName, getGenesisHash, isAquaTree, isWorkFlowData } from "../utils/functions"
+import { areArraysEqual, dummyCredential, ensureDomainUrlHasSSL, extractFileHash, fetchFiles, getAquaTreeFileObject, getFileName, getGenesisHash, isAquaTree, isWorkFlowData, getAquaTreeFileName } from "../utils/functions"
 import { useStore } from "zustand"
 import appStore from "../store"
 import axios from "axios"
@@ -266,7 +266,7 @@ export const SignAquaChain = ({ apiFileInfo, backendUrl, nonce }: RevionOperatio
 
 
 export const DeleteAquaChain = ({ apiFileInfo, backendUrl, nonce }: RevionOperation) => {
-    const { files, setFiles, session, backend_url } = useStore(appStore)
+    const { files, setFiles, session, backend_url, systemFileInfo } = useStore(appStore)
     const [deleting, setDeleting] = useState(false)
     const [open, setOpen] = useState(false)
     const [isLoading, setIsloading] = useState(false)
@@ -281,6 +281,7 @@ export const DeleteAquaChain = ({ apiFileInfo, backendUrl, nonce }: RevionOperat
             return
         }
         setIsloading(true)
+        setDeleting(true)
         try {
             const allRevisionHashes = Object.keys(apiFileInfo.aquaTree!.revisions!);
             const lastRevisionHash = allRevisionHashes[allRevisionHashes.length - 1]
@@ -345,7 +346,7 @@ export const DeleteAquaChain = ({ apiFileInfo, backendUrl, nonce }: RevionOperat
     }
 
     const deleteFileAction = async () => {
-        setDeleting(true)
+        
 
         let allFilesAffected: ApiFileInfo[] = []
         let genesisOfFileBeingDeleted = getGenesisHash(apiFileInfo.aquaTree!)
@@ -358,15 +359,28 @@ export const DeleteAquaChain = ({ apiFileInfo, backendUrl, nonce }: RevionOperat
                 console.log(`skipping  ${fileNameBeingDeleted} the file is being deleted`)
             } else {
 
-                let indexValues = Object.values(anAquaTree.aquaTree!.file_index)
-                for (let fileName of indexValues) {
-                    if (fileNameBeingDeleted == fileName) {
-                        allFilesAffected.push(anAquaTree)
+                
+                let { isWorkFlow } = isWorkFlowData(anAquaTree.aquaTree!, systemFileInfo.map((e) => {
+                    try {
+                        return getAquaTreeFileName(e.aquaTree!!)
+                    } catch (e) {
+                        console.log("Error")
+                        return ""
+                    }
+                }));
+               
+                if (!isWorkFlow) {
+                    let indexValues = Object.values(anAquaTree.aquaTree!.file_index)
+                    for (let fileName of indexValues) {
+                        if (fileNameBeingDeleted == fileName) {
+                            allFilesAffected.push(anAquaTree)
+                        }
                     }
                 }
             }
         }
 
+       
         if (allFilesAffected.length == 0) {
             await deleteFileApi()
         } else {
@@ -375,7 +389,6 @@ export const DeleteAquaChain = ({ apiFileInfo, backendUrl, nonce }: RevionOperat
         }
 
 
-        setDeleting(false)
     }
 
 
@@ -397,7 +410,7 @@ export const DeleteAquaChain = ({ apiFileInfo, backendUrl, nonce }: RevionOperat
                     <Dialog.Positioner>
                         <Dialog.Content>
                             <Dialog.Header>
-                                <Dialog.Title>This action will corrupt your some file(s)</Dialog.Title>
+                                <Dialog.Title>This action will corrupt your some  file(s)</Dialog.Title>
                             </Dialog.Header>
                             <Dialog.Body>
                                 <Text>The following aqua trees will become corrupt, as they reference the file you are about to delete</Text>
@@ -423,7 +436,7 @@ export const DeleteAquaChain = ({ apiFileInfo, backendUrl, nonce }: RevionOperat
                                         onClick={() => {
                                             deleteFileApi()
                                         }}
-                                    
+
                                         size="sm"
                                         colorPalette={'red'}
                                     >
