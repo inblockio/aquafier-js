@@ -43,9 +43,9 @@ export default async function systemController(fastify: FastifyInstance) {
                             contains: metamaskAddress,
                             mode: 'insensitive'
                         },
-                        // template_id: {
-                        //     not: null
-                        // }
+                        template_id: {
+                            not: null
+                        }
                     }
                 }
             });

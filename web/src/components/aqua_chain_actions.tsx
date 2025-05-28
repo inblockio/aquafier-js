@@ -1,6 +1,6 @@
 import { LuDelete, LuDownload, LuGlasses, LuLink2, LuShare2, LuSignature, LuX } from "react-icons/lu"
 import { Button } from "./chakra-ui/button"
-import { areArraysEqual, dummyCredential, ensureDomainUrlHasSSL, extractFileHash, fetchFiles, getAquaTreeFileObject, getFileName, getGenesisHash, isAquaTree } from "../utils/functions"
+import { areArraysEqual, dummyCredential, ensureDomainUrlHasSSL, extractFileHash, fetchFiles, getAquaTreeFileObject, getFileName, getGenesisHash, isAquaTree, isWorkFlowData } from "../utils/functions"
 import { useStore } from "zustand"
 import appStore from "../store"
 import axios from "axios"
@@ -12,7 +12,7 @@ import { DialogActionTrigger, DialogBody, DialogCloseTrigger, DialogContent, Dia
 import { generateNonce } from "siwe"
 import Loading from "react-loading"
 import { Checkbox } from "./chakra-ui/checkbox"
-import { Box, Center, Input, HStack, Text, VStack, Portal, Dialog, List } from "@chakra-ui/react"
+import { Box, Center, Input, HStack, Text, VStack, Portal, Dialog, List, Loader, Stack, Group } from "@chakra-ui/react"
 import { ClipboardButton, ClipboardIconButton, ClipboardInput, ClipboardLabel, ClipboardRoot } from "./chakra-ui/clipboard"
 import { InputGroup } from "./chakra-ui/input-group"
 import Aquafier, { AquaTree, AquaTreeWrapper, Revision, WitnessNetwork } from "aqua-js-sdk"
@@ -842,7 +842,7 @@ export const ShareButton = ({ item, nonce }: IShareButton) => {
 
 
 export const LinkButton = ({ item, nonce }: IShareButton) => {
-    const { backend_url, setFiles, files, session } = useStore(appStore)
+    const { backend_url, setFiles, files, session, systemFileInfo } = useStore(appStore)
     const [isOpen, setIsOpen] = useState(false)
     const [linking, setLinking] = useState(false)
     const [linkItem, setLinkItem] = useState<ApiFileInfo | null>(null)
@@ -900,7 +900,7 @@ export const LinkButton = ({ item, nonce }: IShareButton) => {
             });
 
             if (response.status === 200 || response.status === 201) {
-               
+
 
                 await refetchAllUserFiles();
 
@@ -960,10 +960,13 @@ export const LinkButton = ({ item, nonce }: IShareButton) => {
                         {files?.length <= 1 ? <VStack>
                             <Alert status="warning" title={"For linking to work you need multiple files, curently you only have " + files?.length} />
                         </VStack> :
-                            <VStack textAlign={'start'}>
-                                <p>
+                            <Stack textAlign={'start'}>
+                                <Text>
                                     {`You are about to link ${item.fileObject[0].fileName}. Once a file is linked, don't delete it otherwise it will be broken if one tries to use the Aqua tree.`}
-                                </p>
+                                </Text>
+                                <Text>
+                                    Select the file you want to link to.
+                                </Text>
 
 
 
@@ -981,32 +984,43 @@ export const LinkButton = ({ item, nonce }: IShareButton) => {
                                         const keys = Object.keys(itemLoop.aquaTree!.revisions!)
                                         const keysPar = Object.keys(item.aquaTree!.revisions!)
                                         const res = areArraysEqual(keys, keysPar)
+                                        const { isWorkFlow } = isWorkFlowData(itemLoop.aquaTree!, systemFileInfo.map((e) => getFileName(e.aquaTree!!)))
                                         //  console.log(`res ${res} ${JSON.stringify(itemLoop.fileObject)}`)
                                         if (res) {
                                             return <div key={index}> </div>
+                                        }
+                                        if (isWorkFlow) {
+                                            let fileName = getFileName(itemLoop.aquaTree!!)
+                                            return <div key={index}>
+                                                <Text>
+                                                    {index + 1}. {`${fileName} - This is a workflow file. You can't link to it.`}
+                                                </Text>
+                                            </div>
                                         }
 
                                         let fileObject = getAquaTreeFileObject(itemLoop)
 
                                         if (fileObject) {
 
-                                            return <Checkbox
-                                                key={index}
-                                                aria-label="Select File"
-                                                checked={linkItem == null ? false :
-                                                    Object.keys(linkItem?.aquaTree?.revisions!)[0] === Object.keys(itemLoop.aquaTree?.revisions!)[0]}
-                                                onCheckedChange={(changes) => {
-                                                    if (changes.checked) {
-                                                        setLinkItem(itemLoop)
-                                                    } else {
-                                                        setLinkItem(null)
-                                                    }
+                                            return <Group key={index}>
+                                                <Text>{index + 1}.</Text>
+                                                <Checkbox
+                                                    aria-label="Select File"
+                                                    checked={linkItem == null ? false :
+                                                        Object.keys(linkItem?.aquaTree?.revisions!)[0] === Object.keys(itemLoop.aquaTree?.revisions!)[0]}
+                                                    onCheckedChange={(changes) => {
+                                                        if (changes.checked) {
+                                                            setLinkItem(itemLoop)
+                                                        } else {
+                                                            setLinkItem(null)
+                                                        }
 
-                                                }}
-                                                value={index.toString()}
-                                            >
-                                                {itemLoop.fileObject[0].fileName}
-                                            </Checkbox>
+                                                    }}
+                                                    value={index.toString()}
+                                                >
+                                                    {itemLoop.fileObject[0].fileName}
+                                                </Checkbox>
+                                            </Group>
                                         } else {
                                             return <Text>Error</Text>
                                         }
@@ -1016,12 +1030,12 @@ export const LinkButton = ({ item, nonce }: IShareButton) => {
                                 {
                                     linking ?
                                         <Center>
-                                            <Loading />
+                                            <Loader />
                                         </Center>
                                         : null
                                 }
 
-                            </VStack>
+                            </Stack>
                         }
                     </DialogBody>
                     <DialogFooter>

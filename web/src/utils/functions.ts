@@ -69,11 +69,12 @@ export const convertTemplateNameToTitle = (str: string) => {
     // return firstWord + ' ' + remainingWords;
 };
 
-export const isWorkFlowData = (aquaTree: AquaTree, _systemAndUserWorkFlow: string[]): { isWorkFlow: boolean; workFlow: string } => {
+export const isWorkFlowData = (aquaTree: AquaTree, systemAndUserWorkFlow: string[]): { isWorkFlow: boolean; workFlow: string } => {
     let falseResponse = {
         isWorkFlow: false,
         workFlow: ""
     }
+    console.log("System workflows: ", systemAndUserWorkFlow)
 
     //order revision in aqua tree 
     let aquaTreeRevisionsOrderd = OrderRevisionInAquaTree(aquaTree)
@@ -106,12 +107,17 @@ export const isWorkFlowData = (aquaTree: AquaTree, _systemAndUserWorkFlow: strin
         let nameWithoutJson = "--error--";
         if (name) {
             nameWithoutJson = name.replace(".json", "")
+            if(systemAndUserWorkFlow.map((e) => e.replace(".json", "")).includes(nameWithoutJson)){
+                return {
+                    isWorkFlow: true,
+                    workFlow: nameWithoutJson
+                }
+            }
         }
         return {
-            isWorkFlow: true,
-            workFlow: nameWithoutJson
+            isWorkFlow: false,
+            workFlow: ""
         }
-        // }
 
 
     }

@@ -77,7 +77,7 @@ const FilesTable = () => {
                 </>
             }
 
-            return <></>
+            return <>{isWorkFlow ? "true" : "False"} {workFlow}</>
         }
 
 
@@ -100,8 +100,9 @@ const FilesTable = () => {
     }
 
 
-
+    console.log("System file info: ", JSON.stringify(systemFileInfo, null, 4))
     const tableItem = (fileObject: FileObject, item: ApiFileInfo, index: number) => {
+        console.log("Item: ", item.aquaTree)
         let { isWorkFlow, workFlow } = isWorkFlowData(item.aquaTree!!, systemFileInfo.map((e) => {
             try {
                 return getAquaTreeFileName(e.aquaTree!!)

@@ -92,6 +92,7 @@ const Navbar = () => {
 
     const [ws, setWs] = useState<WebSocket | null>(null);
     const [isConnected, setIsConnected] = useState(false);
+    const [websocketReconnectAttempts, setWebsocketReconnectAttempts] = useState(0);
     // const [_connectedUsers, setConnectedUsers] = useState<string[]>([]);
 
     let pingInterval: NodeJS.Timeout | null = null;
@@ -701,6 +702,7 @@ const Navbar = () => {
                 console.log(`Connected to WebSocket as user: ${userId}`);
                 setIsConnected(true);
                 setWs(websocket);
+                setWebsocketReconnectAttempts(0);
                 // fetchConnectedUsers();
 
                 pingInterval = setInterval(() => {
@@ -798,6 +800,30 @@ const Navbar = () => {
                 }
             };
 
+            // Track reconnection attempts for exponential backoff
+            const reconnectWithBackoff = (reason: string) => {
+                console.log("Backoff connection Reason: ", reason)
+                // Get the current reconnection attempt count from state or default to 0
+                const attemptCount = websocketReconnectAttempts;
+                
+                // Calculate delay with exponential backoff: 1s, 2s, 4s, 8s, etc.
+                // Cap at 30 seconds maximum delay
+                const baseDelay = 1000;
+                const maxDelay = 30000;
+                const delay = Math.min(Math.pow(2, attemptCount) * baseDelay, maxDelay);
+                
+                console.log(`Scheduling reconnection attempt ${attemptCount + 1} in ${delay}ms`);
+                
+                // Increment the reconnection attempt counter
+                setWebsocketReconnectAttempts(attemptCount + 1);
+                
+                // Schedule reconnection with calculated delay
+                setTimeout(() => {
+                    console.log(`Attempting reconnection #${attemptCount + 1}`);
+                    connectWebsocket();
+                }, delay);
+            };
+
             websocket.onclose = (event) => {
                 console.log('Disconnected from WebSocket:', event);
                 console.log('Disconnected from WebSocket:', event.reason);
@@ -809,11 +835,10 @@ const Navbar = () => {
                 toaster.create({
                     description: `Realtime Connection disconnected error.`,
                     type: "error"
-                })
+                });
 
-                setTimeout(() => {
-                    connectWebsocket()
-                }, 1000)
+                // Use exponential backoff for reconnection
+                reconnectWithBackoff('connection closed');
             };
 
             websocket.onerror = (error) => {
@@ -821,14 +846,13 @@ const Navbar = () => {
                 setIsConnected(false);
                 if (pingInterval) clearInterval(pingInterval);
 
-
                 toaster.create({
                     description: `Realtime Connection with api failed.`,
                     type: "error"
-                })
-                setTimeout(() => {
-                    connectWebsocket()
-                }, 1000)
+                });
+                
+                // Use exponential backoff for reconnection
+                reconnectWithBackoff('connection error');
             };
 
         } catch (error) {

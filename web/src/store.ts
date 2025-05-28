@@ -163,7 +163,7 @@ const appStore = createStore<TAppStore>()(
                 // List all state properties you want to persist EXCEPT selectedFileInfo
                 user_profile: state.user_profile,
                 session: state.session,
-                files: state.files,
+                // files: state.files,
                 apiFileData: state.apiFileData,
                 metamaskAddress: state.metamaskAddress,
                 avatar: state.avatar,
