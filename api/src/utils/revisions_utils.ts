@@ -1568,11 +1568,14 @@ export async function createAquaTreeFromRevisions(latestRevisionHash: string, ur
                     if (revisionData == null) {
                         console.log(`💣💣💣💣 Revision data not found for hash ${linkData.link_verification_hashes[0]}`)
                     } else {
+                        let hashSearchText = linkData.link_verification_hashes[0]
+
+                        if(hashSearchText==undefined){
+                            throw Error("This should not be  undifined ")
+                        }
                         if (revisionData.revision_type == "file" || revisionData.revision_type == "form") {
 
 
-                            // throw Error("Revision data not found for hash ..............." + revisionData.revision_type)
-                            let hashSearchText = linkData.link_verification_hashes[0]
                             //  console.log(`link ....search for ${hashSearchText} --> `)
                             let filesData = await prisma.fileIndex.findFirst({
                                 where: {
@@ -1621,10 +1624,13 @@ export async function createAquaTreeFromRevisions(latestRevisionHash: string, ur
                             fileObject.push({
                                 fileContent: aquaTreeLinked,
                                 fileName: `${aquaTreeLinked.file_index[genesisHash]}.aqua.json`,
-                                path: `linkData.link_verification_hashes[0] ${linkData.link_verification_hashes[0]}`,
+                                path: ``,
                                 fileSize: estimateStringFileSize(JSON.stringify(aquaTreeLinked, null, 4))
                             })
-                            // throw Error("Revision data not found for hash ${linkData.link_verification_hashes[0]}")
+
+
+                            //experimental
+                            anAquaTree.file_index[hashSearchText] = aquaTreeLinked.file_index[genesisHash]
                         }
 
                     }

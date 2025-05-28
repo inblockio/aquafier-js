@@ -446,7 +446,9 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ userCanSign, file, submitSignatur
         const dataUrl = signatureRef.current.toDataURL('image/png');
 
 
-        const signatureFile = dataURLToFile(dataUrl, 'signature.png');
+        const epochInSeconds = Math.floor(Date.now() / 1000);
+        const lastFiveCharactersOfWalletAddres = session?.address.slice(-5);
+        const signatureFile = dataURLToFile(dataUrl, `signature_${lastFiveCharactersOfWalletAddres}_${epochInSeconds}.png`);
 
         let url = `${backend_url}/explorer_delete_file`
         let finalUrl = ensureDomainUrlHasSSL(url)
