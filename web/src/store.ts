@@ -12,6 +12,7 @@ type AppStoreState = {
         cli_pub_key: string,
         cli_priv_key: string,
         witness_network: string,
+        alchemy_key: string,
         theme: string,
         ens_name: string,
         witness_contract_address: string | null
@@ -105,6 +106,7 @@ const appStore = createStore<TAppStore>()(
                 cli_pub_key: "",
                 cli_priv_key: "",
                 witness_network: "",
+                alchemy_key: "",
                 theme: "light",
                 witness_contract_address: '0x45f59310ADD88E6d23ca58A0Fa7A55BEE6d2a611',
             },

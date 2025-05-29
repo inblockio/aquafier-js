@@ -34,6 +34,7 @@ const Settings = ({ inline, open, updateOpenStatus }: IDialogSettings) => {
     const [cliPrivKey, _setCliPrivKey] = useState<string>(user_profile.cli_priv_key)
     const [ensName, setEnsName] = useState<string>(user_profile.ens_name)
     const [contract, setContract] = useState<string>(user_profile.witness_contract_address ?? "0x45f59310ADD88E6d23ca58A0Fa7A55BEE6d2a611")
+    const [alchemyKey, setAlchemyKey] = useState<string>(user_profile.alchemy_key ?? "ZaQtnup49WhU7fxrujVpkFdRz4JaFRtZ")
 
 
     const DeleteUserData = () => {
@@ -67,6 +68,7 @@ const Settings = ({ inline, open, updateOpenStatus }: IDialogSettings) => {
                         cli_pub_key: "",
                         cli_priv_key: "",
                         witness_network: "",
+                        alchemy_key: "",
                         theme: "light",
                         ens_name: "",
                         witness_contract_address: '0x45f59310ADD88E6d23ca58A0Fa7A55BEE6d2a611',
@@ -127,6 +129,7 @@ const Settings = ({ inline, open, updateOpenStatus }: IDialogSettings) => {
             'cli_priv_key': cliPrivKey,
             'cli_pub_key': cliPubKey,
             'witness_contract_address': contract,
+            'alchemy_key': alchemyKey,
             'witness_network': activeNetwork,
             'user_pub_key': metamaskAddress ?? user_profile.user_pub_key,
             'theme': colorMode ?? "light",
@@ -145,6 +148,7 @@ const Settings = ({ inline, open, updateOpenStatus }: IDialogSettings) => {
                 ens_name: ensName,
                 cli_priv_key: cliPrivKey,
                 witness_network: activeNetwork,
+                alchemy_key: alchemyKey,
                 theme: colorMode ?? "light",
                 witness_contract_address: contract ?? '0x45f59310ADD88E6d23ca58A0Fa7A55BEE6d2a611',
 
@@ -201,6 +205,9 @@ const Settings = ({ inline, open, updateOpenStatus }: IDialogSettings) => {
                     {/* <Field invalid={false} label="CLI private key " helperText="self-issued identity claim used for generating/verifying aqua chain" errorText="This field is required">
                     <Input placeholder="XXXXXXXXX" value={cliPrivKey} type={"password"} onChange={e => setCliPrivKey(e.currentTarget.value)} autoComplete="off" />
                 </Field> */}
+                    <Field invalid={false} label="Alchemy Key" errorText="This field is required" >
+                        <Input placeholder="Alchemy Key" value={alchemyKey} onChange={e => setAlchemyKey(e.currentTarget.value)} />
+                    </Field>
                     <Field invalid={false} label="Contract Address" errorText="This field is required" >
                         <Input placeholder="Contract Address" value={contract} disabled={true} onChange={e => setContract(e.currentTarget.value)} />
                     </Field>

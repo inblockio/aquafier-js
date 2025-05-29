@@ -221,6 +221,7 @@ model Settings {
   user_pub_key             String  @id
   cli_pub_key              String?
   cli_priv_key             String?
+  alchemy_key              String  @default("ZaQtnup49WhU7fxrujVpkFdRz4JaFRtZ")
   witness_network          String?
   witness_contract_address String?
   theme                    String?

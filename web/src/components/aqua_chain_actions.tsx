@@ -25,7 +25,7 @@ import { AquaJsonInZip, AquaNameWithHash } from "../models/Aqua"
 
 
 export const WitnessAquaChain = ({ apiFileInfo, backendUrl, nonce }: RevionOperation) => {
-    const { files, setFiles, metamaskAddress, selectedFileInfo, setSelectedFileInfo, user_profile } = useStore(appStore)
+    const { setFiles, metamaskAddress, selectedFileInfo, setSelectedFileInfo, user_profile } = useStore(appStore)
     const [witnessing, setWitnessing] = useState(false)
 
 
@@ -52,6 +52,7 @@ export const WitnessAquaChain = ({ apiFileInfo, backendUrl, nonce }: RevionOpera
                     fileObject: undefined
                 }
                 let xCredentials = dummyCredential()
+                xCredentials.alchemy_key = user_profile?.alchemy_key ?? ""
                 xCredentials.witness_eth_network = user_profile?.witness_network ?? "sepolia"
                 const result = await aquafier.witnessAquaTree(aquaTreeWrapper, "eth", xCredentials.witness_eth_network as WitnessNetwork, "metamask", xCredentials)
                 if (result.isErr()) {
@@ -85,24 +86,20 @@ export const WitnessAquaChain = ({ apiFileInfo, backendUrl, nonce }: RevionOpera
                     });
 
                     if (response.status === 200 || response.status === 201) {
-                        //  console.log("update state ...")
-                        const newFiles: ApiFileInfo[] = [];
-                        const keysPar = Object.keys(apiFileInfo.aquaTree!.revisions!)
-                        files.forEach((item) => {
-                            const keys = Object.keys(item.aquaTree!.revisions!)
-                            if (areArraysEqual(keys, keysPar)) {
-                                newFiles.push({
-                                    ...apiFileInfo,
-                                    aquaTree: result.data.aquaTree!,
-                                })
-                            } else {
-                                newFiles.push(item)
-                            }
-                        })
-                        let _selectFileInfo = selectedFileInfo!!
-                        _selectFileInfo.aquaTree = result.data.aquaTree!
-                        setSelectedFileInfo(_selectFileInfo)
+                        let newFiles: ApiFileInfo[] = response.data.data
                         setFiles(newFiles)
+                        
+                        if(selectedFileInfo){
+                            let genesisHash = getGenesisHash(selectedFileInfo.aquaTree!)
+                            for (let i = 0; i < newFiles.length; i++) {
+                                const newFile = newFiles[i];
+                                let newGenesisHash = getGenesisHash(newFile.aquaTree!)
+                                if (newGenesisHash == genesisHash) {
+                                    setSelectedFileInfo(newFile)
+                                }
+                            }
+                        }
+
                     }
 
                     toaster.create({
@@ -114,7 +111,7 @@ export const WitnessAquaChain = ({ apiFileInfo, backendUrl, nonce }: RevionOpera
                 setWitnessing(false)
 
             } catch (error) {
-                //  console.log("Error  ", error)
+                 console.log("Error  ", error)
                 setWitnessing(false)
                 toaster.create({
                     description: `Error during witnessing`,

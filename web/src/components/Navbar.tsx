@@ -990,7 +990,6 @@ const Navbar = () => {
                             session ? (<>
                                 <AccountContracts inline={false} open={contractsOpen} updateOpenStatus={(open) => setContractsOpen(open)} />
                                 <Settings inline={false} open={settingsOpen} updateOpenStatus={(open) => {
-                                    console.log(open)
                                     setSettingsOpen(open)
                                 }} />
                             </>

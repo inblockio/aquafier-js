@@ -222,12 +222,13 @@ export const  ConnectWallet: React.FC<ConnectWalletProps> = ({ disConnectWebsock
         disConnectWebsocket()
       }
     } catch (error: any) {
-      if (error?.response?.status === 404) {
+      console.log("error", error)
+      // if (error?.response?.status === 404 || error?.response?.status === 401) {
         setMetamaskAddress(null);
         setAvatar(undefined);
         setSession(null)
         setFiles([]);
-      }
+      // }
     }
     setLoading(false);
     setIsOpen(false);

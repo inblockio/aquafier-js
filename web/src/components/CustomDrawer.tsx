@@ -13,6 +13,7 @@ import { useStore } from "zustand"
 import appStore from "../store"
 import { getFileHashFromUrl } from "../utils/functions";
 import { ApiFileInfo } from "../models/FileInfo"
+import { toaster } from "./chakra-ui/toaster"
 
 
 export const ChainDetailsBtn = ({ callBack }: IChainDetailsBtn) => {
@@ -30,7 +31,7 @@ export const CompleteChainView = ({ callBack, selectedFileInfo }: ICompleteChain
     const [showMoreDetails, setShowMoreDetails] = useState(false)
 
     const [isSelectedFileAWorkFlow, setSelectedFileAWorkFlow] = useState(false)
-    const { session, setApiFileData, apiFileData, systemFileInfo } = useStore(appStore)
+    const { session, setApiFileData, apiFileData, systemFileInfo, user_profile } = useStore(appStore)
     const [deletedRevisions, setDeletedRevisions] = useState<string[]>([])
     const [verificationResults, setVerificationResults] = useState<VerificationHashAndResult[]>([])
     const [isProcessing, setIsProcessing] = useState(false)
@@ -200,14 +201,37 @@ export const CompleteChainView = ({ callBack, selectedFileInfo }: ICompleteChain
                 }
             }
 
+            // Toast to warn the user if they are using default alchemykey
+            if (user_profile?.alchemy_key == "") {
+                toaster.create({
+                    description: `Please add your alchemy key to continue`,
+                    type: "warning"
+                })
+            }else if(user_profile?.alchemy_key == "ZaQtnup49WhU7fxrujVpkFdRz4JaFRtZ"){
+                toaster.create({
+                    description: `You are using default alchemy key. Please update it in settings to get better results`,
+                    type: "warning"
+                })
+            }
+
             // Process revisions in parallel where possible
             const verificationPromises = revisionHashes.map(async revisionHash => {
+                
                 const revision = fileInfo.aquaTree!.revisions[revisionHash];
+
                 const result = await aquafier.verifyAquaTreeRevision(
                     fileInfo.aquaTree!,
                     revision,
                     revisionHash,
-                    fileObjectVerifier
+                    fileObjectVerifier,
+                    {
+                        mnemonic: "",
+                        nostr_sk: "",
+                        did_key: "",
+                        alchemy_key: user_profile?.alchemy_key ?? "",
+                        witness_eth_network: user_profile?.witness_network ?? "sepolia",
+                        witness_method: "metamask",
+                    }
                 )
                 console.log("Hash: ", revisionHash, "\nResult", result)
                 return ({

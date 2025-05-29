@@ -45,6 +45,7 @@ export interface SettingsRequest {
   cli_pub_key: string | null;
   cli_priv_key: string | null;
   witness_network: string | null;
+  alchemy_key: string;
   witness_contract_address: string | null;
   theme: string | null;
   ens_name: string
