@@ -88,8 +88,8 @@ export const WitnessAquaChain = ({ apiFileInfo, backendUrl, nonce }: RevionOpera
                     if (response.status === 200 || response.status === 201) {
                         let newFiles: ApiFileInfo[] = response.data.data
                         setFiles(newFiles)
-                        
-                        if(selectedFileInfo){
+
+                        if (selectedFileInfo) {
                             let genesisHash = getGenesisHash(selectedFileInfo.aquaTree!)
                             for (let i = 0; i < newFiles.length; i++) {
                                 const newFile = newFiles[i];
@@ -111,7 +111,7 @@ export const WitnessAquaChain = ({ apiFileInfo, backendUrl, nonce }: RevionOpera
                 setWitnessing(false)
 
             } catch (error) {
-                 console.log("Error  ", error)
+                console.log("Error  ", error)
                 setWitnessing(false)
                 toaster.create({
                     description: `Error during witnessing`,
@@ -141,7 +141,7 @@ export const WitnessAquaChain = ({ apiFileInfo, backendUrl, nonce }: RevionOpera
 
 
 export const SignAquaChain = ({ apiFileInfo, backendUrl, nonce }: RevionOperation) => {
-    const { files, setFiles, setSelectedFileInfo, selectedFileInfo, user_profile } = useStore(appStore)
+    const { files, setFiles, setSelectedFileInfo, selectedFileInfo, user_profile, session, backend_url } = useStore(appStore)
     const [signing, setSigning] = useState(false)
 
     const signFileHandler = async () => {
@@ -197,14 +197,40 @@ export const SignAquaChain = ({ apiFileInfo, backendUrl, nonce }: RevionOperatio
 
                             let newFiles: ApiFileInfo[] = response.data.data
 
-                            let data = {
-                                ...selectedFileInfo!!,
-                                aquaTree: result.data.aquaTree!!
+                            // let data = {
+                            //     ...selectedFileInfo!!,
+                            //     aquaTree: result.data.aquaTree!!
+                            // }
+                            // if (data) {
+                            //     setSelectedFileInfo(data)
+                            // }
+                            // setFiles(newFiles)
+
+                            try {
+                                let url = ensureDomainUrlHasSSL(`${backend_url}/explorer_files`)
+                                const files = await fetchFiles(session!.address!, url, session!.nonce);
+                                setFiles(files);
+
+                                if (selectedFileInfo) {
+                                    let genesisHash = getGenesisHash(selectedFileInfo.aquaTree!)
+                                    for (let i = 0; i < newFiles.length; i++) {
+                                        const newFile = newFiles[i];
+                                        let newGenesisHash = getGenesisHash(newFile.aquaTree!)
+                                        if (newGenesisHash == genesisHash) {
+                                            setSelectedFileInfo(newFile)
+                                        }
+                                    }
+                                }
+
+
+                            } catch (e) {
+                                //  console.log(`Error ${e}`)
+                                toaster.create({
+                                    description: "Error updating files",
+                                    type: "error"
+                                })
+                                // document.location.reload()
                             }
-                            if (data) {
-                                setSelectedFileInfo(data)
-                            }
-                            setFiles(newFiles)
 
                         } else {
                             //  console.log("update state ...")
@@ -343,7 +369,7 @@ export const DeleteAquaChain = ({ apiFileInfo, backendUrl, nonce }: RevionOperat
     }
 
     const deleteFileAction = async () => {
-        
+
 
         let allFilesAffected: ApiFileInfo[] = []
         let genesisOfFileBeingDeleted = getGenesisHash(apiFileInfo.aquaTree!)
@@ -356,7 +382,7 @@ export const DeleteAquaChain = ({ apiFileInfo, backendUrl, nonce }: RevionOperat
                 console.log(`skipping  ${fileNameBeingDeleted} the file is being deleted`)
             } else {
 
-                
+
                 let { isWorkFlow } = isWorkFlowData(anAquaTree.aquaTree!, systemFileInfo.map((e) => {
                     try {
                         return getAquaTreeFileName(e.aquaTree!!)
@@ -365,7 +391,7 @@ export const DeleteAquaChain = ({ apiFileInfo, backendUrl, nonce }: RevionOperat
                         return ""
                     }
                 }));
-               
+
                 if (!isWorkFlow) {
                     let indexValues = Object.values(anAquaTree.aquaTree!.file_index)
                     for (let fileName of indexValues) {
@@ -377,7 +403,7 @@ export const DeleteAquaChain = ({ apiFileInfo, backendUrl, nonce }: RevionOperat
             }
         }
 
-       
+
         if (allFilesAffected.length == 0) {
             await deleteFileApi()
         } else {
