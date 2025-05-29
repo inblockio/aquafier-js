@@ -99,6 +99,7 @@ export const SignatureOverlay = ({ position, currentPage, signatures, pdfMainCon
                     backgroundRepeat="no-repeat"
                     backgroundPosition="left"
                     minHeight="40px"
+                    minWidth={"150px"}
                 />
                 <Text fontSize="xs" color="gray.600">{signature.name}</Text>
                 <Text fontSize="xs" overflow={'hidden'} color="gray.600">{signature.walletAddress}</Text>
@@ -156,6 +157,7 @@ export const SimpleSignatureOverlay = ({ signature, currentPage }: { signature: 
                     backgroundRepeat="no-repeat"
                     backgroundPosition="left"
                     minHeight="40px"
+                    minWidth={"150px"}
                 />
                 <Text fontSize="xs" color="gray.600">{signature.name}</Text>
                 <Text fontSize="xs" overflow={'hidden'} color="gray.600">{signature.walletAddress}</Text>

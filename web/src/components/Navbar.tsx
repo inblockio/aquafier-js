@@ -643,7 +643,11 @@ const Navbar = () => {
                 // })
             }
 
-        } catch (error) {
+        } catch (error: any) {
+            // Don't show the popup, only wait for the user to login
+            if(error.response?.status === 401){
+                return
+            }
             toaster.create({
                 title: 'Error loading templates',
                 description: error instanceof Error ? error.message : 'Unknown error',
