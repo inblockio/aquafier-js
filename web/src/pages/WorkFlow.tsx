@@ -18,7 +18,7 @@ import {
 import { Timeline } from "@chakra-ui/react"
 // import { Card } from '@chakra-ui/react';
 // import { FaCheck, FaQuestionCircle, FaBriefcase, FaBook, FaCoffee, FaAward, FaUser } from 'react-icons/fa';
-import {  FaCheck, FaQuestionCircle, FaUser } from 'react-icons/fa';
+import { FaCheck, FaQuestionCircle, FaUser } from 'react-icons/fa';
 import { Alert } from "../components/chakra-ui/alert"
 import appStore from '../store';
 import { useStore } from "zustand"
@@ -574,7 +574,7 @@ const ContractDocumentView: React.FC<ContractDocumentViewProps> = ({ setActiveSt
     const [signaturesLoading, setSignaturesLoading] = useState<boolean>(false);
     const [userCanSign, setUserCanSign] = useState<boolean>(false);
     // const [authorizedSigners, setAuthorizedSigners] = useState<string[]>([]);
-    const { selectedFileInfo, setSelectedFileInfo,  session, backend_url, setFiles } = useStore(appStore);
+    const { selectedFileInfo, setSelectedFileInfo, session, backend_url, setFiles } = useStore(appStore);
     const [submittingSignatureData, setSubmittingSignatureData] = useState(false);
     const navigate = useNavigate();
 
@@ -1104,7 +1104,7 @@ const ContractDocumentView: React.FC<ContractDocumentViewProps> = ({ setActiveSt
             const { canSign, signers } = checkUserAuthorization();
             setUserCanSign(canSign);
             console.log(`sigers ${signers}`)
-         //   setAuthorizedSigners(signers);
+            //   setAuthorizedSigners(signers);
 
             if (shouldLoadSignatures()) {
                 setSignaturesLoading(true);
@@ -1225,7 +1225,9 @@ const ContractDocumentView: React.FC<ContractDocumentViewProps> = ({ setActiveSt
 
     const loadSignatures = async (): Promise<any[]> => {
         try {
+            console.log("Identifying link revisions")
             const linkRevisionsThatWeNeed = identifySignatureRevisions();
+            console.log("Link revisions that we need", linkRevisionsThatWeNeed)
             const signatures = await Promise.all(
                 linkRevisionsThatWeNeed.map(linkRevision => processSignatureRevision(linkRevision))
             );
@@ -1255,18 +1257,22 @@ const ContractDocumentView: React.FC<ContractDocumentViewProps> = ({ setActiveSt
             const currentRevision = selectedFileInfo.aquaTree.revisions[currentHash];
             const nextRevision = selectedFileInfo.aquaTree.revisions[nextHash];
 
+            console.log("Next revision", nextRevision)
+
             if (isValidSignatureRevisionPair(currentRevision, nextRevision, currentHash)) {
                 const linkVerificationHash = currentRevision.link_verification_hashes![0];
 
                 if (aquaTreeFileIndexKeysWithSignature.includes(linkVerificationHash)) {
-                    linkRevisionsThatWeNeed.push({
-                        revision: currentRevision,
-                        revisionHash: currentHash,
-                        linkHash: linkVerificationHash,
-                        nextRevisionHash: nextHash,
-                        nextRevision: nextRevision,
-                        nextLinkHash: nextRevision.link_verification_hashes![0]
-                    });
+                    if (nextRevision.revision_type === "link") {
+                        linkRevisionsThatWeNeed.push({
+                            revision: currentRevision,
+                            revisionHash: currentHash,
+                            linkHash: linkVerificationHash,
+                            nextRevisionHash: nextHash,
+                            nextRevision: nextRevision,
+                            nextLinkHash: nextRevision.link_verification_hashes![0]
+                        });
+                    }
                 }
             }
         }
@@ -1287,7 +1293,10 @@ const ContractDocumentView: React.FC<ContractDocumentViewProps> = ({ setActiveSt
 
     const processSignatureRevision = async (linkRevision: any): Promise<any | null> => {
         try {
+            console.log("----- Link Revision: ", linkRevision)
             const { positionAquaTree, signatureDetailsAquaTree } = findRelatedAquaTrees(linkRevision);
+            console.log("----- Position Aqua Tree: ", positionAquaTree)
+            console.log("----- Signature Details Aqua Tree: ", signatureDetailsAquaTree)
 
             if (!positionAquaTree || !signatureDetailsAquaTree) {
                 return null;
@@ -1333,6 +1342,7 @@ const ContractDocumentView: React.FC<ContractDocumentViewProps> = ({ setActiveSt
 
     const extractSignaturePosition = (aquaTree: AquaTree, linkHash: string) => {
         const revision = aquaTree.revisions[linkHash];
+        console.log("----- LInk HASH: ", linkHash)
 
         return {
             height: revision.forms_height_0,
@@ -1626,7 +1636,6 @@ export default function WorkFlowPage() {
             </Box>
         </Container>
     }
-
 
     const workFlowPageData = () => {
 
