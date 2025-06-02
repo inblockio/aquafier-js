@@ -33,7 +33,7 @@ import { useColorMode } from '../../components/chakra-ui/color-mode';
 import { PdfControls } from '../../components/FilePreview';
 import axios from 'axios';
 import { ApiFileInfo } from '../../models/FileInfo';
-import { blobToDataURL, dataURLToFile, dummyCredential, ensureDomainUrlHasSSL, estimateFileSize, getAquaTreeFileName, getRandomNumber, timeStampToDateObject } from '../../utils/functions';
+import { blobToDataURL, dataURLToFile, dummyCredential, ensureDomainUrlHasSSL, estimateFileSize, getAquaTreeFileName, getGenesisHash, getRandomNumber, timeStampToDateObject } from '../../utils/functions';
 import Aquafier, { AquaTree, AquaTreeWrapper, FileObject, getAquaTreeFileObject } from 'aqua-js-sdk';
 import { SignaturePosition, SignatureData, SignatureRichData } from "../../types/types"
 import { LuTrash } from 'react-icons/lu';
@@ -70,7 +70,8 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ file, submitSignature, submitting
     const [signaturesAquaTree, setSignaturesAquaTree] = useState<Array<ApiFileInfo>>([]);
     const [signatures, setSignatures] = useState<SignatureData[]>(existingSignatures ? existingSignatures!.map(sig => {
         return {
-            id: sig.id,
+            id: crypto.randomUUID(),
+            hash: sig.id,
             dataUrl: sig.dataUrl,
             walletAddress: sig.walletAddress,
             name: sig.name,
@@ -527,7 +528,8 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ file, submitSignature, submitting
                     return false
                 }
                 let mySignature: SignatureData = {
-                    id: signatureFileName,
+                    id: crypto.randomUUID(),
+                    hash: getGenesisHash(signRes.data.aquaTree!!) ?? "",
                     dataUrl: dataUrl,
                     walletAddress: session.address,
                     name: signerName,
@@ -663,122 +665,7 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ file, submitSignature, submitting
         });
     };
 
-    /*
-        const generateSignedPdf = async () => {
-            if (!pdfDoc || signatures.length === 0 || signaturePositions.length === 0) {
-                toaster.create({
-                    title: "Missing information",
-                    description: "Please upload a PDF, create a signature, and place it on the document",
-                    type: "warning",
-                    duration: 3000,
-                });
-                return;
-            }
-    
-            try {
-                // Create a copy of the PDF
-                const pdfBytes = await pdfDoc.save();
-                const signedPdfDoc = await PDFDocument.load(pdfBytes);
-    
-                // Create a map of signature images for quick lookup
-                const signatureImagesMap = new Map();
-    
-                // Embed all signature images that are used in positions
-                for (const signature of signatures) {
-                    if (signaturePositions.some(pos => pos.signatureId === signature.id)) {
-                        const signatureImage = await signedPdfDoc.embedPng(signature.dataUrl);
-                        signatureImagesMap.set(signature.id, signatureImage);
-                    }
-                }
-    
-                // Add signature to each position
-                for (const position of signaturePositions) {
-                    if (!position.signatureId) continue;
-    
-                    const signature = signatures.find(sig => sig.id === position.signatureId);
-                    if (!signature) continue;
-    
-                    const signatureImage = signatureImagesMap.get(position.signatureId);
-                    if (!signatureImage) continue;
-    
-                    const page = signedPdfDoc.getPage(position.pageIndex);
-                    const { width, height } = page.getSize();
-    
-                    // Calculate position without manual adjustments
-                    const signatureX = position.x * width;
-                    const signatureY = position.y * height;
-    
-                    // Draw signature image
-                    page.drawImage(signatureImage, {
-                        x: signatureX - (position.width * width / 2),
-                        y: signatureY - (position.height * height / 2),
-                        width: position.width * width,
-                        height: position.height * height,
-                    });
-    
-                    // Add name and wallet address below signature
-                    const font = await signedPdfDoc.embedFont(StandardFonts.Helvetica);
-                    const fontSize = 10;
-    
-                    // Calculate the left edge of the signature image
-                    const signatureLeftEdge = signatureX - (position.width * width / 2);
-    
-                    // Draw name aligned with the left edge of the signature
-                    page.drawText(signature.name, {
-                        x: signatureLeftEdge,
-                        y: signatureY - (position.height * height / 2) - 12,
-                        size: fontSize,
-                        font,
-                        color: rgb(0, 0, 0),
-                    });
-    
-                    // Draw wallet address
-                    const shortenedAddress = signature.walletAddress;
-    
-                    // Draw wallet address aligned with the left edge of the signature
-                    page.drawText(shortenedAddress, {
-                        x: signatureLeftEdge,
-                        y: signatureY - (position.height * height / 2) - 24,
-                        size: fontSize,
-                        font,
-                        color: rgb(0, 0, 0),
-                    });
-                }
-    
-                // Save the signed PDF
-                const signedPdfBytes = await signedPdfDoc.save();
-    
-                // Create a blob and download link
-                const blob = new Blob([signedPdfBytes], { type: 'application/pdf' });
-                const url = URL.createObjectURL(blob);
-    
-                // Create download link and trigger download
-                const link = document.createElement('a');
-                link.href = url;
-                link.download = `signed_${pdfFile?.name || 'document.pdf'}`;
-                link.click();
-    
-                // Clean up
-                URL.revokeObjectURL(url);
-    
-                toaster.create({
-                    title: "PDF signed successfully",
-                    description: "Your signed document has been downloaded",
-                    type: "success",
-                    duration: 3000,
-                });
-            } catch (error) {
-                console.error("Error generating signed PDF:", error);
-                toaster.create({
-                    title: "Error signing PDF",
-                    description: "An error occurred while generating the signed PDF",
-                    type: "error",
-                    duration: 3000,
-                });
-            }
-        };
-        */
-
+  
     // Handle signature dragging
     const [activeDragId, setActiveDragId] = useState<string | null>(null);
     const [isDragging, setIsDragging] = useBoolean(false);
@@ -993,7 +880,8 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ file, submitSignature, submitting
 
                     // Add to signature
                     let sign: SignatureData = {
-                        id: sinatureAquaTreeName,
+                        id: crypto.randomUUID(),
+                        hash: getGenesisHash(userSignature.aquaTree!) ?? "",
                         name: firstRevision.forms_name,
                         walletAddress: firstRevision.forms_wallet_address,
                         dataUrl: dataUrl,
@@ -1490,11 +1378,12 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ file, submitSignature, submitting
         // Load user signatures when component mounts
         if (existingSignatures) {
             setSignatures(existingSignatures.map(sig => ({
-                id: sig.id,
+                id: crypto.randomUUID(),
+                hash: sig.id,
                 dataUrl: sig.dataUrl,
                 walletAddress: sig.walletAddress,
                 name: sig.name,
-                 createdAt: timeStampToDateObject(typeof sig.createdAt === "string" ? sig.createdAt : sig.createdAt?.toISOString?.() ?? "") ?? new Date()
+                createdAt: timeStampToDateObject(typeof sig.createdAt === "string" ? sig.createdAt : sig.createdAt?.toISOString?.() ?? "") ?? new Date()
             })));
         }
     }, [JSON.stringify(existingSignatures)]);
@@ -1532,6 +1421,7 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ file, submitSignature, submitting
                         <Box
                             position="relative"
                             border="1px solid"
+
                             borderColor={colorMode === "dark" ? "gray.800" : "gray.100"}
                             borderRadius="md"
                             ref={pdfContainerRef}
@@ -1551,14 +1441,31 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ file, submitSignature, submitting
                             </Center>
 
                             {/* Signature overlays */}
-                            {signaturePositions.map((position, index) => (
-                                <SignatureOverlay key={index} position={position}
+                            {signaturePositions.map((position, index) => {
+
+                                console.log(`@@@@@@@@@@@@@@@@@ 7777  Signature position ${JSON.stringify(signatures, null, 4)}`)
+                                return <SignatureOverlay key={index} position={position}
                                     currentPage={currentPage}
-                                    signatures={existingSignatures ?? []}
+                                    signatures={(signatures ?? []).map(sig => ({
+                                        id: sig.id,
+                                        dataUrl:  sig.dataUrl,
+                                        walletAddress: sig.walletAddress,
+                                        name: sig.name,
+                                        createdAt: sig.createdAt ?? new Date(),
+                                        height:  0,
+                                        width:  0,
+                                        x:  0,
+                                        y:  0,
+                                        pageIndex:  0,
+                                        page: 0, // Provide a default or actual page number if available
+                                        image: sig.dataUrl // Provide a default or actual image data if available
+                                    }))}
                                     pdfMainContainerRef={pdfMainContainerRef}
                                     handleDragStart={handleDragStart}
                                 />
-                            ))}
+
+
+                            })}
                             {existingSignatures?.map((signature, index) => (
                                 <SimpleSignatureOverlay key={index} signature={signature} currentPage={currentPage}
                                 />

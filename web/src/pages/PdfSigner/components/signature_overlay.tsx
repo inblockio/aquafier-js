@@ -14,9 +14,11 @@ export const SignatureOverlay = ({ position, currentPage, signatures, pdfMainCon
     if (!pdfMainContainerRef) return null;
     if (position.pageIndex !== currentPage - 1 || !position.signatureId) return null;
 
+    console.log(`Signature overlay ${JSON.stringify(position, null, 2)} ---- ${JSON.stringify(signatures, null, 2)}`);
     const signature = signatures.find(sig => sig.id === position.signatureId);
-    if (!signature) return null;
-    console.log("Signature overlay", position)
+    if (!signature) return <></>;
+
+    // return <Text>{JSON.stringify(position, null, 4)}</Text>
     // Find the actual PDF element for proper positioning
     const pdfElement = pdfMainContainerRef.current?.querySelector('.react-pdf__Page');
     const pdfRect = pdfElement?.getBoundingClientRect();
@@ -26,8 +28,8 @@ export const SignatureOverlay = ({ position, currentPage, signatures, pdfMainCon
     return (
         <Box
             position="absolute"
-            left={`${position.x * 100}%`}
-            top={`${(1 - position.y) * 100}%`}
+            left={`calc(${Number(position.x) * 100}% + 200px)`} // Adjusted for better visibility
+            top={`calc(${(1 - Number(position.y)) * 100}% )`} // Adjusted for better visibility
             transform="translate(-50%, -50%)"
             backgroundSize="contain"
             backgroundRepeat="no-repeat"

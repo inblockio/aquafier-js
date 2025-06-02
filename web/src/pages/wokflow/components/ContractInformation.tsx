@@ -29,7 +29,7 @@ import { ItemDetail } from '../../../components/ItemDetails';
 
 
 
-export const ContractInformationView: React.FC<ContractDocumentViewProps> = ({ setActiveStep }) => {
+export const ContractInformationView: React.FC<ContractDocumentViewProps> = ({ setActiveStep,updateDocumentIconInWorkflowTabs }) => {
 
 
 
@@ -439,8 +439,11 @@ export const ContractInformationView: React.FC<ContractDocumentViewProps> = ({ s
             </>
         }
 
+    
+
+
         if (isVerificationComplete(verificationResults) && isVerificationSuccessful(verificationResults)) {
-          
+            updateDocumentIconInWorkflowTabs(true)
         }
 
         return <Timeline.Item>

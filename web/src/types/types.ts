@@ -75,6 +75,7 @@ export interface SignaturePosition {
 // Interface for signature data
 export interface SignatureData {
   id: string;
+  hash: string;
   dataUrl: string;
   walletAddress: string;
   name: string;

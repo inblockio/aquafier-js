@@ -674,11 +674,11 @@ export const ContractDocumentView: React.FC<ContractDocumentViewProps> = ({ setA
             console.log("Identifying link revisions")
             const linkRevisionsThatWeNeed = identifySignatureRevisions();
             console.log("Link revisions that we need", linkRevisionsThatWeNeed)
-            const signatures = await Promise.all(
+            const signaturesItem = await Promise.all(
                 linkRevisionsThatWeNeed.map(linkRevision => processSignatureRevision(linkRevision))
             );
 
-            return signatures.filter(signature => signature !== null);
+            return signaturesItem.filter(signature => signature !== null);
         } catch (error) {
             console.error("Error loading signatures:", error);
             return [];

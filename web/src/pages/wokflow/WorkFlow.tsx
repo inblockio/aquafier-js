@@ -30,19 +30,9 @@ export default function WorkFlowPage() {
 
     const [error, setError] = useState("");
     const [timeLineItems, setTimeLineItems] = useState<Array<WorkFlowTimeLine>>([]);
+    const [isWorkflowCompleteAndValid, setIsWorkflowCompleteAndValid] = useState(false);
     const { selectedFileInfo, formTemplates } = useStore(appStore);
 
-    const updateDocumentIconInWorkflowTabs = (isWorkFlowOk: boolean) => {
-
-        let allData = timeLineItems
-        for (let i = 0; i < allData.length; i++) {
-            if (allData[i].id === 2) {
-                allData[i].completed = isWorkFlowOk
-            }
-        }
-        setTimeLineItems(allData)
-
-    }
 
     function loadTimeline() {
         let items: Array<WorkFlowTimeLine> = []
@@ -53,7 +43,8 @@ export default function WorkFlowPage() {
             content: <ContractInformationView setActiveStep={(index) => {
                 setActiveStep(index)
             }} updateDocumentIconInWorkflowTabs={(isWorkFlowOk) => {
-                updateDocumentIconInWorkflowTabs(isWorkFlowOk)
+                console.log("=====################# updateDocumentIconInWorkflowTabs", isWorkFlowOk)
+                setIsWorkflowCompleteAndValid(isWorkFlowOk)
             }} />,
             icon: FaUser,
             revisionHash: "",
@@ -62,11 +53,12 @@ export default function WorkFlowPage() {
 
         items.push({
             id: 2,
-            completed: false,
+            completed: isWorkflowCompleteAndValid,
             content: <ContractDocumentView setActiveStep={(index) => {
                 setActiveStep(index)
             }} updateDocumentIconInWorkflowTabs={(isWorkFlowOk) => {
-                updateDocumentIconInWorkflowTabs(isWorkFlowOk)
+          console.log("################# updateDocumentIconInWorkflowTabs", isWorkFlowOk)
+                setIsWorkflowCompleteAndValid(isWorkFlowOk)
             }} />,
             icon: FaUser,
             revisionHash: "",

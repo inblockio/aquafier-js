@@ -994,6 +994,7 @@ export function timeToHumanFriendly(
     if (!timestamp) {
         return '-';
     }
+    
 
     // Extract the date components
     const year = timestamp.substring(0, 4);
