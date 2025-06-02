@@ -80,3 +80,14 @@ export interface SignatureData {
   name: string;
   createdAt: Date;
 }
+
+export interface IQuickSignature {
+    x: string,
+    y: string,
+    width: string,
+    height: string,
+    image: string,
+    name: string,
+    walletAddress: string,
+    page: string | number
+}

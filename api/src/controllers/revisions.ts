@@ -127,7 +127,7 @@ export default async function revisionsController(fastify: FastifyInstance) {
             }
 
             if (revisionData.address === session.address) {
-                return reply.code(403).send({ success: false, message: "use /tree to save revision for a specific user /tree/user is for different address" });
+                return reply.code(202).send({ success: false, message: "use /tree to save revision for a specific user /tree/user is for different address" });
 
             }
 

@@ -26,7 +26,8 @@ import { SignaturePosition, SummaryDetailsDisplayData, WorkFlowTimeLine } from '
 import Aquafier, { AquaTree, AquaTreeWrapper, FileObject, getGenesisHash, OrderRevisionInAquaTree, Revision } from 'aqua-js-sdk';
 import { convertTemplateNameToTitle, dummyCredential, ensureDomainUrlHasSSL, estimateFileSize, fetchFiles, isAquaTree, isWorkFlowData, timeToHumanFriendly, getHighestFormIndex, getFileName, getFileHashFromUrl, fetchFileData, isArrayBufferText, getAquaTreeFileObject } from '../utils/functions';
 
-import PdfSigner, { PDFDisplayWithJustSimpleOverlay } from './PdfSigner';
+import { PDFDisplayWithJustSimpleOverlay } from './PdfSigner/components/signature_overlay';
+import PdfSigner from './PdfSigner/PdfSigner';
 import { toaster } from '../components/chakra-ui/toaster';
 import axios from 'axios';
 import { ApiFileInfo } from '../models/FileInfo';
@@ -532,9 +533,9 @@ const ContractInformationView = () => {
                                     <Timeline.Content>
                                         <Timeline.Title textStyle="sm"><Text textStyle="lg">Signature detected</Text></Timeline.Title>
                                         <Timeline.Description> <Text textStyle="md"> User with address {singatureRevisionItem.signature_wallet_address} &nbsp;
-                                            signed the document {fileNameData}, &nbsp;
+                                            signed the document , &nbsp;
                                             {signatureRevionHasheItem.revisionHashWithSignaturePositionCount > 1 ? <span>{signatureRevionHasheItem.revisionHashWithSignaturePositionCount} times</span> : <span>Once</span>}
-                                            &nbsp;  at   {timeToHumanFriendly(singatureRevisionItem.local_timestamp)} </Text>
+                                            &nbsp;  at   {timeToHumanFriendly(singatureRevisionItem.local_timestamp, true)} </Text>
                                         </Timeline.Description>
                                     </Timeline.Content>
                                 </Timeline.Item>
@@ -572,7 +573,7 @@ const ContractDocumentView: React.FC<ContractDocumentViewProps> = ({ setActiveSt
     const [pdfURLObject, setPdfURLObject] = useState<string | null>(null);
     const [signatures, setSignatures] = useState<any[]>([]);
     const [signaturesLoading, setSignaturesLoading] = useState<boolean>(false);
-    const [userCanSign, setUserCanSign] = useState<boolean>(false);
+    // const [userCanSign, setUserCanSign] = useState<boolean>(false);
     // const [authorizedSigners, setAuthorizedSigners] = useState<string[]>([]);
     const { selectedFileInfo, setSelectedFileInfo, session, backend_url, setFiles } = useStore(appStore);
     const [submittingSignatureData, setSubmittingSignatureData] = useState(false);
@@ -1101,9 +1102,9 @@ const ContractDocumentView: React.FC<ContractDocumentViewProps> = ({ setActiveSt
             setLoadingPdfFile(false);
 
             // Check authorization and load signatures
-            const { canSign, signers } = checkUserAuthorization();
-            setUserCanSign(canSign);
-            console.log(`sigers ${signers}`)
+            // const { canSign, signers } = checkUserAuthorization();
+            // setUserCanSign(canSign);
+            // console.log(`sigers ${signers}`)
             //   setAuthorizedSigners(signers);
 
             if (shouldLoadSignatures()) {
@@ -1195,26 +1196,26 @@ const ContractDocumentView: React.FC<ContractDocumentViewProps> = ({ setActiveSt
         });
     };
 
-    const checkUserAuthorization = (): { canSign: boolean; signers: string[] } => {
-        if (!selectedFileInfo?.aquaTree?.revisions) {
-            return { canSign: false, signers: [] };
-        }
+    // const checkUserAuthorization = (): { canSign: boolean; signers: string[] } => {
+    //     if (!selectedFileInfo?.aquaTree?.revisions) {
+    //         return { canSign: false, signers: [] };
+    //     }
 
-        const allHashes = Object.keys(selectedFileInfo.aquaTree.revisions);
-        const firstRevision = selectedFileInfo.aquaTree.revisions[allHashes[0]];
+    //     const allHashes = Object.keys(selectedFileInfo.aquaTree.revisions);
+    //     const firstRevision = selectedFileInfo.aquaTree.revisions[allHashes[0]];
 
-        if (!firstRevision?.forms_signers) {
-            return { canSign: false, signers: [] };
-        }
+    //     if (!firstRevision?.forms_signers) {
+    //         return { canSign: false, signers: [] };
+    //     }
 
-        const signers = firstRevision.forms_signers
-            .split(",")
-            .map((signer: string) => signer.trim());
+    //     const signers = firstRevision.forms_signers
+    //         .split(",")
+    //         .map((signer: string) => signer.trim());
 
-        const canSign = signers.includes(session?.address);
+    //     const canSign = signers.includes(session?.address);
 
-        return { canSign, signers };
-    };
+    //     return { canSign, signers };
+    // };
 
     const shouldLoadSignatures = (): boolean => {
         if (!selectedFileInfo?.aquaTree?.revisions) return false;
@@ -1439,9 +1440,9 @@ const ContractDocumentView: React.FC<ContractDocumentViewProps> = ({ setActiveSt
                             signatures={signatures}
                         />
                     </GridItem>
-                    <GridItem colSpan={{ base: 12, md: 1 }}>
+                    <GridItem colSpan={{ base: 12, md: 1 }} m={5}>
                         <Stack>
-                            <Text fontWeight={700}>Signatures</Text>
+                            <Text fontWeight={700}>Signatures in document</Text>
                             {signatures.map((signature: any, index: number) => (
                                 <SignatureItem signature={signature} key={index} />
                             ))}
@@ -1453,7 +1454,6 @@ const ContractDocumentView: React.FC<ContractDocumentViewProps> = ({ setActiveSt
 
         return (
             <PdfSigner
-                userCanSign={userCanSign}
                 existingSignatures={signatures}
                 file={pdfFile}
                 submitSignature={submitSignatureData}
