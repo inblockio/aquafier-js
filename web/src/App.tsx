@@ -13,7 +13,7 @@ import AquaForms from './pages/AquaForms';
 import FormGenerator from './pages/FormGenerator';
 import AttestationAddresses from './pages/AttestationAddresses';
 import PdfSigner from './pages/PdfSigner/PdfSigner';
-import WorkFlowPage from './pages/WorkFlow';
+import WorkFlowPage from './pages/wokflow/WorkFlow';
 // import Aquafier from 'aqua-js-sdk';
 declare global {
   interface Window {

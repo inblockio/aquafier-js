@@ -7,10 +7,10 @@ import {
 // import { PDFDocument, rgb, StandardFonts } from 'pdf-lib';
 import { PDFJSViewer } from 'pdfjs-react-viewer';
 import { useColorMode } from '../../../components/chakra-ui/color-mode';
-import { SignaturePosition, SignatureData, IQuickSignature } from "../../../types/types"
+import { SignaturePosition, SignatureRichData } from "../../../types/types"
 
 
-export const SignatureOverlay = ({ position, currentPage, signatures, pdfMainContainerRef, handleDragStart }: { position: SignaturePosition, currentPage: number, signatures: SignatureData[], pdfMainContainerRef: React.RefObject<HTMLDivElement>, handleDragStart?: (e: React.MouseEvent | React.TouchEvent, id: string) => void }) => {
+export const SignatureOverlay = ({ position, currentPage, signatures, pdfMainContainerRef, handleDragStart }: { position: SignaturePosition, currentPage: number, signatures: SignatureRichData[], pdfMainContainerRef: React.RefObject<HTMLDivElement>, handleDragStart?: (e: React.MouseEvent | React.TouchEvent, id: string) => void }) => {
     if (!pdfMainContainerRef) return null;
     if (position.pageIndex !== currentPage - 1 || !position.signatureId) return null;
 
@@ -79,15 +79,15 @@ export const SignatureOverlay = ({ position, currentPage, signatures, pdfMainCon
 };
 
 
-export const SimpleSignatureOverlay = ({ signature, currentPage }: { signature: IQuickSignature, currentPage: number }) => {
+export const SimpleSignatureOverlay = ({ signature, currentPage }: { signature: SignatureRichData, currentPage: number }) => {
     // const { colorMode } = useColorMode();
     // const isDarkMode = colorMode === "dark";
     return (
         <Box
             display={Number(currentPage) === Number(signature.page) ? "block" : "none"}
             position="absolute"
-            left={`${Number(signature.x) * 100}%`}
-            top={`${(1 - Number(signature.y)) * 100}%`}
+            left={`calc(${Number(signature.x) * 100}% - 80px)`} // Adjusted for better visibility
+            top={`calc(${(1 - Number(signature.y)) * 100}% - 40px)`} // Adjusted for better visibility
             transform={`translate(-${Number(signature.width) * 50}%, -${Number(signature.height) * 50}%)`}
             backgroundSize="contain"
             backgroundRepeat="no-repeat"
@@ -127,7 +127,7 @@ export const SimpleSignatureOverlay = ({ signature, currentPage }: { signature: 
 }
 
 
-export const PDFDisplayWithJustSimpleOverlay = ({ pdfUrl, signatures }: { pdfUrl: string, signatures: IQuickSignature[] }) => {
+export const PDFDisplayWithJustSimpleOverlay = ({ pdfUrl, signatures }: { pdfUrl: string, signatures: SignatureRichData[] }) => {
     const { colorMode } = useColorMode();
     const [currentPage, setCurrentPage] = useState<number>(1);
 

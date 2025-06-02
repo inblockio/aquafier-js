@@ -81,13 +81,33 @@ export interface SignatureData {
   createdAt: Date;
 }
 
-export interface IQuickSignature {
-    x: string,
-    y: string,
-    width: string,
-    height: string,
-    image: string,
-    name: string,
-    walletAddress: string,
-    page: string | number
+// export interface IQuickSignature {
+//     x: string,
+//     y: string,
+//     width: string,
+//     height: string,
+//     image: string,
+//     name: string,
+//     walletAddress: string,
+//     page: string | number
+// }
+
+
+export interface ContractDocumentViewProps {
+    setActiveStep: (step: number) => void
+    updateDocumentIconInWorkflowTabs: (isWorkFlowOk: boolean) => void
+}
+
+export interface SignatureRichData {
+   id: string;
+    height: any;
+    width: any;
+    x: any;
+    y: any;
+    page: any;
+    name: string;
+    walletAddress: string;
+    image: string;
+  createdAt: Date;
+    dataUrl: string;
 }

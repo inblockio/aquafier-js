@@ -35,7 +35,7 @@ import axios from 'axios';
 import { ApiFileInfo } from '../../models/FileInfo';
 import { blobToDataURL, dataURLToFile, dummyCredential, ensureDomainUrlHasSSL, estimateFileSize, getAquaTreeFileName, getRandomNumber, timeStampToDateObject } from '../../utils/functions';
 import Aquafier, { AquaTree, AquaTreeWrapper, FileObject, getAquaTreeFileObject } from 'aqua-js-sdk';
-import { SignaturePosition, SignatureData, IQuickSignature } from "../../types/types"
+import { SignaturePosition, SignatureData, SignatureRichData } from "../../types/types"
 import { LuTrash } from 'react-icons/lu';
 import { SignatureOverlay, SimpleSignatureOverlay } from './components/signature_overlay';
 
@@ -47,7 +47,7 @@ interface PdfSignerProps {
     file: File | null;
     submitSignature: (signaturePosition: SignaturePosition[], signAquaTree: ApiFileInfo[]) => Promise<void>
     submittingSignatureData: boolean
-    existingSignatures?: IQuickSignature[]
+    existingSignatures?: SignatureRichData[]
 }
 
 const PdfSigner: React.FC<PdfSignerProps> = ({ file, submitSignature, submittingSignatureData, existingSignatures }) => {
@@ -68,7 +68,15 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ file, submitSignature, submitting
     // State for signatures
     const signatureRef = useRef<SignatureCanvas | null>(null);
     const [signaturesAquaTree, setSignaturesAquaTree] = useState<Array<ApiFileInfo>>([]);
-    const [signatures, setSignatures] = useState<SignatureData[]>([]);
+    const [signatures, setSignatures] = useState<SignatureData[]>(existingSignatures ? existingSignatures!.map(sig => {
+        return {
+            id: sig.id,
+            dataUrl: sig.dataUrl,
+            walletAddress: sig.walletAddress,
+            name: sig.name,
+            createdAt: timeStampToDateObject(typeof sig.createdAt === "string" ? sig.createdAt : sig.createdAt?.toISOString?.() ?? "") ?? new Date()
+        }
+    }) : []);
     const [selectedSignatureId, setSelectedSignatureId] = useState<string | null>(null);
     const [signerName, setSignerName] = useState<string>('John Doe');
     const [signaturePositions, setSignaturePositions] = useState<SignaturePosition[]>([]);
@@ -1158,43 +1166,47 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ file, submitSignature, submitting
                         <Text fontWeight="bold" mt={2}>Other Signatures:</Text>
                         <Box maxH="200px" overflowY="auto" border="1px solid" borderColor="gray.200" borderRadius="md">
                             <Stack gap={0}>
-                                {signatures.filter((signature) => signature.walletAddress !== session?.address).map((signature) => (
-                                    <Box
-                                        key={signature.id}
-                                        p={2}
-                                        cursor="pointer"
-                                        bg={selectedSignatureId === signature.id ? "blue.50" : "transparent"}
-                                        _hover={{ bg: "gray.50" }}
-                                        onClick={() => {
-                                            if (session?.address === signature.walletAddress) {
-                                                setSelectedSignatureId(signature.id);
-                                            }
-                                        }}
-                                    >
-                                        <HStack>
-                                            <Box
-                                                width="60px"
-                                                height="40px"
-                                                backgroundImage={`url(${signature.dataUrl})`}
-                                                backgroundSize="contain"
-                                                backgroundRepeat="no-repeat"
-                                                backgroundPosition="center"
-                                                border="1px solid"
-                                                borderColor="gray.200"
-                                                borderRadius="sm"
-                                            />
-                                            <Stack gap={0}>
-                                                <Text fontSize="sm" fontWeight="medium">{signature.name}</Text>
-                                                <Text fontSize="xs" color="gray.600">
-                                                    {signature.walletAddress.length > 10
-                                                        ? `${signature.walletAddress.substring(0, 6)}...${signature.walletAddress.substring(signature.walletAddress.length - 4)}`
-                                                        : signature.walletAddress
-                                                    }
-                                                </Text>
-                                            </Stack>
-                                        </HStack>
-                                    </Box>
-                                ))}
+                                {signatures
+                                    .filter((signature) => signature.walletAddress !== session?.address)
+                                    .filter((signature, index, self) =>
+                                        index === self.findIndex(s => s.walletAddress === signature.walletAddress)
+                                    ).map((signature) => (
+                                        <Box
+                                            key={signature.id}
+                                            p={2}
+                                            cursor="pointer"
+                                            bg={selectedSignatureId === signature.id ? "blue.50" : "transparent"}
+                                            _hover={{ bg: "gray.50" }}
+                                            onClick={() => {
+                                                if (session?.address === signature.walletAddress) {
+                                                    setSelectedSignatureId(signature.id);
+                                                }
+                                            }}
+                                        >
+                                            <HStack>
+                                                <Box
+                                                    width="60px"
+                                                    height="40px"
+                                                    backgroundImage={`url(${signature.dataUrl})`}
+                                                    backgroundSize="contain"
+                                                    backgroundRepeat="no-repeat"
+                                                    backgroundPosition="center"
+                                                    border="1px solid"
+                                                    borderColor="gray.200"
+                                                    borderRadius="sm"
+                                                />
+                                                <Stack gap={0}>
+                                                    <Text fontSize="sm" fontWeight="medium">{signature.name}</Text>
+                                                    <Text fontSize="xs" color="gray.600">
+                                                        {signature.walletAddress.length > 10
+                                                            ? `${signature.walletAddress.substring(0, 6)}...${signature.walletAddress.substring(signature.walletAddress.length - 4)}`
+                                                            : signature.walletAddress
+                                                        }
+                                                    </Text>
+                                                </Stack>
+                                            </HStack>
+                                        </Box>
+                                    ))}
                             </Stack>
                         </Box>
                     </Stack>
@@ -1382,7 +1394,6 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ file, submitSignature, submitting
         };
     }, [isDragging, activeDragId]);
 
-
     // Effect to update signature positions when window is resized
     useEffect(() => {
 
@@ -1470,13 +1481,23 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ file, submitSignature, submitting
         return () => window.removeEventListener('resize', handleResize);
     }, []);
 
-    // console.log("Signatures", signatures)
-    // console.log("Signature positions", signaturePositions)
-
     useEffect(() => {
         loadUserSignatures(true)
 
     }, [backend_url, session, session?.address]);
+
+    useEffect(() => {
+        // Load user signatures when component mounts
+        if (existingSignatures) {
+            setSignatures(existingSignatures.map(sig => ({
+                id: sig.id,
+                dataUrl: sig.dataUrl,
+                walletAddress: sig.walletAddress,
+                name: sig.name,
+                 createdAt: timeStampToDateObject(typeof sig.createdAt === "string" ? sig.createdAt : sig.createdAt?.toISOString?.() ?? "") ?? new Date()
+            })));
+        }
+    }, [JSON.stringify(existingSignatures)]);
 
     return (
         <Container maxW="container.xl" py={"6"} h={"calc(100vh - 70px)"} overflow={{ base: "scroll", md: "hidden" }}>
@@ -1533,7 +1554,7 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ file, submitSignature, submitting
                             {signaturePositions.map((position, index) => (
                                 <SignatureOverlay key={index} position={position}
                                     currentPage={currentPage}
-                                    signatures={signatures}
+                                    signatures={existingSignatures ?? []}
                                     pdfMainContainerRef={pdfMainContainerRef}
                                     handleDragStart={handleDragStart}
                                 />

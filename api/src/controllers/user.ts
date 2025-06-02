@@ -631,10 +631,38 @@ export default async function userController(fastify: FastifyInstance) {
                     }
 
                     // Step 2: Delete file indexes with reference count <= 1 (including those we just decremented from 2 to 1)
+                    // if (fileIndexesToDelete.length > 0) {
+                    //     console.log(`File indexes to delete after processing: ${JSON.stringify(fileIndexesToDelete, null, 4)}`);
+
+                    //     // Delete the file indexes
+                    //     await tx.fileIndex.deleteMany({
+                    //         where: {
+                    //             id: {
+                    //                 in: fileIndexesToDelete
+                    //             }
+                    //         }
+                    //     });
+
+                    //     // Delete the files if they exist
+                    //     if (fileHashesToDelete.size > 0) {
+                    //         const uniqueFileHashes = Array.from(fileHashesToDelete).filter(Boolean);
+                    //         console.log(`File hashes to delete: ${JSON.stringify(uniqueFileHashes, null, 4)}`);
+
+                    //         await tx.file.deleteMany({
+                    //             where: {
+                    //                 file_hash: {
+                    //                     in: uniqueFileHashes as string[]
+                    //                 }
+                    //             }
+                    //         });
+                    //     }
+                    // }
+
+                    // Step 2: Delete file indexes with reference count <= 1 (including those we just decremented from 2 to 1)
                     if (fileIndexesToDelete.length > 0) {
                         console.log(`File indexes to delete after processing: ${JSON.stringify(fileIndexesToDelete, null, 4)}`);
 
-                        // Delete the file indexes
+                        // FIRST: Delete the file indexes (they reference File records)
                         await tx.fileIndex.deleteMany({
                             where: {
                                 id: {
@@ -642,8 +670,9 @@ export default async function userController(fastify: FastifyInstance) {
                                 }
                             }
                         });
+                        console.log('Deleted file indexes');
 
-                        // Delete the files if they exist
+                        // SECOND: Delete the files (now that nothing references them)
                         if (fileHashesToDelete.size > 0) {
                             const uniqueFileHashes = Array.from(fileHashesToDelete).filter(Boolean);
                             console.log(`File hashes to delete: ${JSON.stringify(uniqueFileHashes, null, 4)}`);
@@ -655,6 +684,7 @@ export default async function userController(fastify: FastifyInstance) {
                                     }
                                 }
                             });
+                            console.log('Deleted files');
                         }
                     }
 

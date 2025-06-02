@@ -985,7 +985,12 @@ export const dataURLToUint8Array = (dataUrl: string): Uint8Array => {
     return bytes;
 };
 
-export function timeToHumanFriendly(timestamp: string | undefined, showFull: boolean = false): string {
+
+export function timeToHumanFriendly(
+    timestamp: string | undefined, 
+    showFull: boolean = false, 
+    timezone?: string
+): string {
     if (!timestamp) {
         return '-';
     }
@@ -998,23 +1003,88 @@ export function timeToHumanFriendly(timestamp: string | undefined, showFull: boo
     const minutes = timestamp.substring(10, 12);
     const seconds = timestamp.substring(12, 14);
 
-    // Create a new Date object
+    // Create a new Date object in UTC
     const date = new Date(Date.UTC(Number(year), month, Number(day), Number(hours), Number(minutes), Number(seconds)));
 
+    // Auto-detect user's local timezone if none provided
+    const defaultTimezone = timezone || Intl.DateTimeFormat().resolvedOptions().timeZone;
+
+    // Timezone mapping for common East African timezones
+    const timezoneMap: { [key: string]: string } = {
+        // African timezones
+        'EAT': 'Africa/Nairobi',      // East Africa Time (UTC+3)
+        'CAT': 'Africa/Harare',       // Central Africa Time (UTC+2)
+        'WAT': 'Africa/Lagos',        // West Africa Time (UTC+1)
+        
+        // European timezones
+        'CET': 'Europe/Berlin',       // Central European Time (UTC+1)
+        'CEST': 'Europe/Berlin',      // Central European Summer Time (UTC+2)
+        'GMT': 'GMT',                 // Greenwich Mean Time (UTC+0)
+        'BST': 'Europe/London',       // British Summer Time (UTC+1)
+        'EET': 'Europe/Athens',       // Eastern European Time (UTC+2)
+        
+        // North American timezones
+        'PST': 'America/Los_Angeles', // Pacific Standard Time (UTC-8)
+        'PDT': 'America/Los_Angeles', // Pacific Daylight Time (UTC-7)
+        'MST': 'America/Denver',      // Mountain Standard Time (UTC-7)
+        'MDT': 'America/Denver',      // Mountain Daylight Time (UTC-6)
+        'CST': 'America/Chicago',     // Central Standard Time (UTC-6)
+        'CDT': 'America/Chicago',     // Central Daylight Time (UTC-5)
+        'EST': 'America/New_York',    // Eastern Standard Time (UTC-5)
+        'EDT': 'America/New_York',    // Eastern Daylight Time (UTC-4)
+        
+        // Asian timezones
+        'JST': 'Asia/Tokyo',          // Japan Standard Time (UTC+9)
+        'KST': 'Asia/Seoul',          // Korea Standard Time (UTC+9)
+        'CST_CHINA': 'Asia/Shanghai', // China Standard Time (UTC+8)
+        'IST': 'Asia/Kolkata',        // India Standard Time (UTC+5:30)
+        'GST': 'Asia/Dubai',          // Gulf Standard Time (UTC+4)
+        
+        // Australian timezones
+        'AEST': 'Australia/Sydney',   // Australian Eastern Standard Time (UTC+10)
+        'AWST': 'Australia/Perth',    // Australian Western Standard Time (UTC+8)
+        
+        // Other common
+        'UTC': 'UTC',
+        'NZST': 'Pacific/Auckland'    // New Zealand Standard Time (UTC+12)
+        // Add more mappings as needed
+    };
+
+    // Use the mapped timezone or the provided timezone directly
+    const resolvedTimezone = timezoneMap[defaultTimezone.toUpperCase()] || defaultTimezone;
+
     // Format options
-    const dateOptions: Intl.DateTimeFormatOptions = { year: 'numeric', month: 'short', day: 'numeric' };
+    const dateOptions: Intl.DateTimeFormatOptions = { 
+        year: 'numeric', 
+        month: 'short', 
+        day: 'numeric',
+        timeZone: resolvedTimezone
+    };
+    
     const fullOptions: Intl.DateTimeFormatOptions = {
         ...dateOptions,
         hour: '2-digit',
         minute: '2-digit',
         second: '2-digit',
         hour12: false,
-        timeZone: 'UTC',
+        timeZone: resolvedTimezone,
     };
 
-    // Return formatted string based on showFull
-    return date.toLocaleDateString('en-US', showFull ? fullOptions : dateOptions);
+    try {
+        // Return formatted string based on showFull
+        return date.toLocaleDateString('en-US', showFull ? fullOptions : dateOptions);
+    } catch (error) {
+        // Fallback to user's local timezone if specified timezone is invalid
+        console.warn(`Invalid timezone: ${defaultTimezone}, falling back to local timezone`);
+        const userTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+        const fallbackOptions = showFull ? 
+            { ...fullOptions, timeZone: userTimezone } : 
+            { ...dateOptions, timeZone: userTimezone };
+        return date.toLocaleDateString('en-US', fallbackOptions);
+    }
 }
+
+
 
 export function dummyCredential(): CredentialsData {
     return {
