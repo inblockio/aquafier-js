@@ -29,7 +29,7 @@ import { ItemDetail } from '../../../components/ItemDetails';
 
 
 
-export const ContractInformationView: React.FC<ContractDocumentViewProps> = ({ setActiveStep,updateDocumentIconInWorkflowTabs }) => {
+export const ContractInformationView: React.FC<ContractDocumentViewProps> = ({ setActiveStep, updateDocumentIconInWorkflowTabs }) => {
 
 
 
@@ -307,7 +307,7 @@ export const ContractInformationView: React.FC<ContractDocumentViewProps> = ({ s
 
     const intializeContractInformation = () => {
 
-         if (selectedFileInfo) {
+        if (selectedFileInfo) {
 
 
             const orderedTree = OrderRevisionInAquaTree(selectedFileInfo!.aquaTree!)
@@ -362,14 +362,14 @@ export const ContractInformationView: React.FC<ContractDocumentViewProps> = ({ s
         }
     }
     useEffect(() => {
-       intializeContractInformation()
+        intializeContractInformation()
     }, [])
 
 
-      useEffect(() => {
-           intializeContractInformation()
-        }, [JSON.stringify(selectedFileInfo), selectedFileInfo])
-    
+    useEffect(() => {
+        intializeContractInformation()
+    }, [JSON.stringify(selectedFileInfo), selectedFileInfo])
+
 
     const genesisContent = () => {
 
@@ -403,6 +403,14 @@ export const ContractInformationView: React.FC<ContractDocumentViewProps> = ({ s
         )
     }
 
+    const OpenDocumentButton = () => {
+        return <Button size={'lg'}  colorPalette={'green'} variant={'subtle'} w={'200px'} onClick={() => {
+            setActiveStep(2) // Open the contract document
+        }} >
+            <LuFile />
+            Open  Document
+        </Button>
+    }
     const isWorkFLowCompleted = () => {
         let signers: string[] = firstRevisionData?.forms_signers.split(",")
 
@@ -426,20 +434,15 @@ export const ContractInformationView: React.FC<ContractDocumentViewProps> = ({ s
                     alignContent={"center"}
                     display="flex" flexDirection="column" justifyContent="center" alignItems="center"
                 >
-                    <Text textAlign="center"  my={3} >{remainSigners.length} {remainSigners.length > 1 ? <>signatures</> : <>signature</>} pending for workflow to be completed</Text>
+                    <Text textAlign="center" my={3} >{remainSigners.length} {remainSigners.length > 1 ? <>signatures</> : <>signature</>} pending for workflow to be completed</Text>
 
-                    <Button size={'xs'} colorPalette={'green'} variant={'subtle'} w={'200px'} onClick={() => {
-                        setActiveStep(2) // Open the contract document
-                    }} >
-                        <LuFile />
-                        Open Contract Document
-                    </Button>
+                    <>{OpenDocumentButton()}</>
                 </Box>
 
             </>
         }
 
-    
+
 
 
         if (isVerificationComplete(verificationResults) && isVerificationSuccessful(verificationResults)) {
@@ -457,7 +460,7 @@ export const ContractInformationView: React.FC<ContractDocumentViewProps> = ({ s
                 <Timeline.Title textStyle="sm">Workflow Completed </Timeline.Title>
                 <Timeline.Description>
                     <Alert status={remainSigners.length > 0 ? "info" : "success"} title={displayBasedOnWorkflowStatusText(remainSigners.length == 0)} />
-                        <Box my={3}></Box>
+                    <Box my={3}></Box>
                     <Alert status={displayColorBasedOnVerificationAlert(verificationResults)} title={displayBasedOnVerificationStatusText(verificationResults)} />
                 </Timeline.Description>
             </Timeline.Content>
@@ -538,12 +541,7 @@ export const ContractInformationView: React.FC<ContractDocumentViewProps> = ({ s
                     >
 
                         <Text textAlign="center" my={3}>No signatures detected</Text>
-                        <Button size={'xs'} colorPalette={'green'} variant={'subtle'} w={'200px'} onClick={() => {
-                            setActiveStep(2) // Open the contract document
-                        }} >
-                            <LuFile />
-                            Open Contract Document
-                        </Button>
+                        {OpenDocumentButton()}
                     </Box> : <>
 
                         {
