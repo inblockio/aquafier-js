@@ -343,9 +343,10 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ file, submitSignature, submitting
         const jsonString = JSON.stringify(formData, null, 4);
 
         const randomNumber = getRandomNumber(100, 1000);
+        let lastSixChar = session?.address.substring(session?.address.length - 6)
         const fileObject: FileObject = {
             fileContent: jsonString,
-            fileName: `${selectedTemplate?.name ?? "template"}-${randomNumber}.json`,
+            fileName: `${selectedTemplate?.name ?? "template"}-${lastSixChar}-${randomNumber}.json`,
             path: './',
             fileSize: estimateize
         }
@@ -665,7 +666,7 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ file, submitSignature, submitting
         });
     };
 
-  
+
     // Handle signature dragging
     const [activeDragId, setActiveDragId] = useState<string | null>(null);
     const [isDragging, setIsDragging] = useBoolean(false);
@@ -1308,38 +1309,42 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ file, submitSignature, submitting
         let fourthItmeHashOnwards = allHashes.slice(4);
         let allSignersData = [...signers]
 
-        if (signers.includes(session!.address)) {
-            setUserCanSign(true)
+        try {
+            if (signers.includes(session!.address)) {
+                setUserCanSign(true)
 
-            let indexOfMyWalletAddress = signers.indexOf(session!.address);
-            console.log(`beffore index of my wallet ${indexOfMyWalletAddress}`)
-            //get all previous signature 
+                let indexOfMyWalletAddress = signers.indexOf(session!.address);
+                console.log(`beffore index of my wallet ${indexOfMyWalletAddress}`)
+                //get all previous signature 
 
-            let index = 0
-            for (let i = 0; i < fourthItmeHashOnwards.length; i += 3) {
-
-
-                const batch = fourthItmeHashOnwards.slice(i, i + 3);
-                // let hashSigPosition = batch[0] ?? ""
-                // let hashSigRev = batch[1] ?? ""
-                let hashSigMetamak = batch[2] ?? ""
-
-                let revision = selectedFileInfo!.aquaTree!.revisions![hashSigMetamak];
-
-                allSignersData = allSignersData.filter(item => item !== revision.signature_wallet_address); //pop()
+                let index = 0
+                for (let i = 0; i < fourthItmeHashOnwards.length; i += 3) {
 
 
-                index += 1
+                    const batch = fourthItmeHashOnwards.slice(i, i + 3);
+                    // let hashSigPosition = batch[0] ?? ""
+                    // let hashSigRev = batch[1] ?? ""
+                    let hashSigMetamak = batch[2] ?? ""
+
+                    let revision = selectedFileInfo!.aquaTree!.revisions![hashSigMetamak];
+
+                    allSignersData = allSignersData.filter(item => item !== revision.signature_wallet_address); //pop()
+
+
+                    index += 1
+                }
+
+                let indexOfMyWalletAddressAfter = allSignersData.indexOf(session!.address)
+                console.log(` index ${index} index of my wallet b4 ${indexOfMyWalletAddress} after ${indexOfMyWalletAddressAfter}`)
+
+                let allSignersBeforeMe = allSignersData.slice(0, indexOfMyWalletAddressAfter)
+                // if (indexOfMyWalletAddress != index) {
+                setAllSignersBeforeMe(allSignersBeforeMe)
+
+
             }
-
-            let indexOfMyWalletAddressAfter = allSignersData.indexOf(session!.address)
-            console.log(` index ${index} index of my wallet b4 ${indexOfMyWalletAddress} after ${indexOfMyWalletAddressAfter}`)
-
-            let allSignersBeforeMe = allSignersData.slice(0, indexOfMyWalletAddressAfter)
-            // if (indexOfMyWalletAddress != index) {
-            setAllSignersBeforeMe(allSignersBeforeMe)
-
-
+        } catch (e) {
+            console.log(`Error PDF Signer -  ${e}`)
         }
 
 
@@ -1448,15 +1453,15 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ file, submitSignature, submitting
                                     currentPage={currentPage}
                                     signatures={(signatures ?? []).map(sig => ({
                                         id: sig.id,
-                                        dataUrl:  sig.dataUrl,
+                                        dataUrl: sig.dataUrl,
                                         walletAddress: sig.walletAddress,
                                         name: sig.name,
                                         createdAt: sig.createdAt ?? new Date(),
-                                        height:  0,
-                                        width:  0,
-                                        x:  0,
-                                        y:  0,
-                                        pageIndex:  0,
+                                        height: 0,
+                                        width: 0,
+                                        x: 0,
+                                        y: 0,
+                                        pageIndex: 0,
                                         page: 0, // Provide a default or actual page number if available
                                         image: sig.dataUrl // Provide a default or actual image data if available
                                     }))}

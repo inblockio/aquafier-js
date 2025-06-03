@@ -11,7 +11,7 @@ import { Alert } from "../components/chakra-ui/alert"
 import { LuChevronDown, LuChevronUp, LuPlus, LuSquareChartGantt, LuTrash } from "react-icons/lu"
 import { HiDocumentPlus } from "react-icons/hi2";
 import React, { useEffect, useState, useRef } from "react"
-import { estimateFileSize, dummyCredential, getAquaTreeFileName, getAquaTreeFileObject, getRandomNumber, fetchSystemFiles, isValidEthereumAddress, convertToWebsocketUrl, ensureDomainUrlHasSSL, fetchFiles, getGenesisHash } from "../utils/functions"
+import { estimateFileSize, dummyCredential, getAquaTreeFileName, getAquaTreeFileObject, getRandomNumber, fetchSystemFiles, isValidEthereumAddress, convertToWebsocketUrl, ensureDomainUrlHasSSL, fetchFiles, getGenesisHash, formatDate } from "../utils/functions"
 import { FormTemplate } from "../components/aqua_forms/types"
 import { Field } from '../components/chakra-ui/field';
 import Aquafier, { AquaTree, AquaTreeWrapper, FileObject } from "aqua-js-sdk"
@@ -370,15 +370,15 @@ const Navbar = () => {
 
             let fileName = `${selectedTemplate?.name ?? "template"}-${randomNumber}.json`;
 
-            // if (selectedTemplate?.name == "aqua_sign") {
-            //     const theFile = formData['document'] as File
+            if (selectedTemplate?.name == "aqua_sign") {
+                const theFile = formData['document'] as File
 
-            //     // Get filename without extension and the extension separately
-            //     const fileNameWithoutExt = theFile.name.substring(0, theFile.name.lastIndexOf('.'));
-            //     const fileExtension = theFile.name.substring(theFile.name.lastIndexOf('.'));
+                // Get filename without extension and the extension separately
+                const fileNameWithoutExt = theFile.name.substring(0, theFile.name.lastIndexOf('.'));
+                const fileExtension = theFile.name.substring(theFile.name.lastIndexOf('.'));
 
-            //     fileName = fileNameWithoutExt + '-' + formatDate(new Date()) + '-' + randomNumber + fileExtension;
-            // }
+                fileName = fileNameWithoutExt + '-' + formatDate(new Date()) + '-' + randomNumber + fileExtension;
+            }
 
 
             const epochTimeInSeconds = Math.floor(Date.now() / 1000);

@@ -28,7 +28,7 @@ export const SignatureOverlay = ({ position, currentPage, signatures, pdfMainCon
     return (
         <Box
             position="absolute"
-            left={`calc(${Number(position.x) * 100}% + 200px)`} // Adjusted for better visibility
+            left={`calc(${Number(position.x) * 100}% - 40px)`} // Adjusted for better visibility
             top={`calc(${(1 - Number(position.y)) * 100}% )`} // Adjusted for better visibility
             transform="translate(-50%, -50%)"
             backgroundSize="contain"
@@ -70,6 +70,8 @@ export const SignatureOverlay = ({ position, currentPage, signatures, pdfMainCon
                     backgroundSize="contain"
                     backgroundRepeat="no-repeat"
                     backgroundPosition="left"
+                    width={"240px"}
+                    height={"290px"}
                     minHeight="40px"
                     minWidth={"150px"}
                 />
@@ -88,7 +90,7 @@ export const SimpleSignatureOverlay = ({ signature, currentPage }: { signature: 
         <Box
             display={Number(currentPage) === Number(signature.page) ? "block" : "none"}
             position="absolute"
-            left={`calc(${Number(signature.x) * 100}% - 80px)`} // Adjusted for better visibility
+            left={`calc(${Number(signature.x) * 100}% - 40px)`} // Adjusted for better visibility
             top={`calc(${(1 - Number(signature.y)) * 100}% - 40px)`} // Adjusted for better visibility
             transform={`translate(-${Number(signature.width) * 50}%, -${Number(signature.height) * 50}%)`}
             backgroundSize="contain"
@@ -118,6 +120,8 @@ export const SimpleSignatureOverlay = ({ signature, currentPage }: { signature: 
                     backgroundSize="contain"
                     backgroundRepeat="no-repeat"
                     backgroundPosition="left"
+                    width={"240px"}
+                    height={"290px"}
                     minHeight="40px"
                     minWidth={"150px"}
                 />
