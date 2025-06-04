@@ -7,7 +7,7 @@ import { AquaTree, FileObject, OrderRevisionInAquaTree, Revision } from 'aqua-js
 import { FastifyInstance } from 'fastify';
 import { sendToUserWebsockerAMessage } from './websocketController';
 import WebSocketActions from '../constants/constants';
-import { createAquaTreeFromRevisions } from 'src/utils/revisions_operations_utils';
+import { createAquaTreeFromRevisions } from '../utils/revisions_operations_utils';
 
 export default async function revisionsController(fastify: FastifyInstance) {
     // fetch aqua tree from a revision hash

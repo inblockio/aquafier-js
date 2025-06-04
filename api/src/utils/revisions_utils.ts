@@ -128,7 +128,7 @@ export async function fetchAquatreeFoUser(url: string, latest: Array<{
         return filenameA.localeCompare(filenameB);
     });
 
-  
+
 
     return displayData;
 }
@@ -519,7 +519,7 @@ async function findFileIndexesToProcess(tx: any, revisionHashes: string[]): Prom
 
         for (const revHash of revisionHashes) {
             const existingIds = fileIndexesToProcess.map(fi => fi.id);
-            
+
             let additionalMatches: any[];
             if (existingIds.length > 0) {
                 additionalMatches = await tx.$queryRaw`
@@ -614,7 +614,7 @@ async function handleMultipleFileCleanup(tx: any, revisionHashes: string[]) {
     for (const fileIndex of fileIndexesToProcess) {
         // For bulk deletion, we'll be more aggressive and delete file indexes
         // that reference any of our revisions
-        const hasReferencesToDelete = fileIndex.pubkey_hash.some((hash: string) => 
+        const hasReferencesToDelete = fileIndex.pubkey_hash.some((hash: string) =>
             revisionHashes.some(revHash => hash.includes(revHash))
         );
 
@@ -638,7 +638,7 @@ async function handleMultipleFileCleanup(tx: any, revisionHashes: string[]) {
         // Delete associated files
         if (fileHashesToDelete.size > 0) {
             const uniqueFileHashes = Array.from(fileHashesToDelete);
-            
+
             const filesToDelete = await tx.file.findMany({
                 where: { file_hash: { in: uniqueFileHashes } }
             });
@@ -694,7 +694,7 @@ async function deleteRevisions(tx: any, revisions: RevisionData[]) {
 // Utility function to handle contract deletion
 async function deleteContracts(tx: any, revisionHashes: string[], walletAddress: string) {
     const hashOnly = revisionHashes.map(hash => extractHashFromPubkey(hash));
-    
+
     const deletedContract = await tx.contract.deleteMany({
         where: {
             OR: [
@@ -739,9 +739,9 @@ export async function deleteAquaTree(currentHash: string, userAddress: string, u
 
         // Handle latest table update/deletion (outside transaction)
         await handleLatestTableOperation(
-            prisma, 
-            pubkeyHash, 
-            latestRevisionData.previous, 
+            prisma,
+            pubkeyHash,
+            latestRevisionData.previous,
             'single'
         );
 
@@ -782,7 +782,7 @@ export async function deleteAquaTreeFromSystem(walletAddress: string, hash: stri
     try {
         // Fetch all revisions in the chain
         const revisionData: RevisionData[] = [];
-        
+
         const latestRevisionData = await prisma.revision.findFirst({
             where: { pubkey_hash: filepubkeyHash }
         });
@@ -794,13 +794,13 @@ export async function deleteAquaTreeFromSystem(walletAddress: string, hash: stri
         revisionData.push(latestRevisionData);
 
         console.log(`Processing revision chain starting with: ${filepubkeyHash}`);
-        
+
         // Fetch previous revisions if they exist
         if (latestRevisionData?.previous !== null && latestRevisionData?.previous?.length !== 0) {
             const aquaTreeRevisions = await findAquaTreeRevision(latestRevisionData.previous);
             revisionData.push(...aquaTreeRevisions);
         }
-        
+
         console.log(`Found ${revisionData.length} revisions in the chain`);
 
         // Use transaction for all deletion operations
@@ -850,310 +850,312 @@ export async function deleteAquaTreeFromSystem(walletAddress: string, hash: stri
 // =====================================================
 
 interface FileProcessingResult {
-  fileExists: boolean;
-  fileData?: any;
-  fileIndexData?: any;
+    fileExists: boolean;
+    fileData?: any;
+    fileIndexData?: any;
 }
 
 /**
  * Processes file data and ensures file exists in database
  */
 async function processFileData(
-  fileHash: string, 
-  userAddress: string, 
-  revisionHash: string,
-  fileAsset?: any,
-  fileName?: string
+    fileHash: string,
+    userAddress: string,
+    revisionHash: string,
+    fileAsset?: any,
+    fileName?: string
 ): Promise<FileProcessingResult> {
-  const pubKeyHash = `${userAddress}_${revisionHash}`;
-  
-  let fileResult = await prisma.file.findFirst({
-    where: { file_hash: fileHash }
-  });
+    const pubKeyHash = `${userAddress}_${revisionHash}`;
 
-  let existingFileIndex = await prisma.fileIndex.findFirst({
-    where: { file_hash: fileHash }
-  });
-
-  if (!fileResult && fileAsset && fileName) {
-    // Create new file
-    const fileContent = await fileAsset.async('nodebuffer');
-    const UPLOAD_DIR = getFileUploadDirectory();
-    await fs.promises.mkdir(UPLOAD_DIR, { recursive: true });
-    const uniqueFileName = `${randomUUID()}-${path.basename(fileName)}`;
-    const filePath = path.join(UPLOAD_DIR, uniqueFileName);
-    await fs.promises.writeFile(filePath, fileContent);
-
-    await prisma.file.create({
-      data: {
-        file_hash: fileHash,
-        file_location: filePath,
-      }
+    let fileResult = await prisma.file.findFirst({
+        where: { file_hash: fileHash }
     });
 
-    await prisma.fileIndex.create({
-      data: {
-        pubkey_hash: [pubKeyHash],
-        file_hash: fileHash,
-      }
+    let existingFileIndex = await prisma.fileIndex.findFirst({
+        where: { file_hash: fileHash }
     });
 
-    await prisma.fileName.create({
-      data: {
-        pubkey_hash: pubKeyHash,
-        file_name: fileName,
-      }
-    });
+    if (!fileResult && fileAsset && fileName) {
+        // Create new file
+        const fileContent = await fileAsset.async('nodebuffer');
+        const UPLOAD_DIR = getFileUploadDirectory();
+        await fs.promises.mkdir(UPLOAD_DIR, { recursive: true });
+        const uniqueFileName = `${randomUUID()}-${path.basename(fileName)}`;
+        const filePath = path.join(UPLOAD_DIR, uniqueFileName);
+        await fs.promises.writeFile(filePath, fileContent);
 
-    return { fileExists: true };
-  }
+        await prisma.file.create({
+            data: {
+                file_hash: fileHash,
+                file_location: filePath,
+            }
+        });
 
-  if (fileResult && existingFileIndex) {
-    // Update existing file index
-    if (!existingFileIndex.pubkey_hash.includes(pubKeyHash)) {
-      existingFileIndex.pubkey_hash.push(pubKeyHash);
+        await prisma.fileIndex.create({
+            data: {
+                pubkey_hash: [pubKeyHash],
+                file_hash: fileHash,
+            }
+        });
+
+        await prisma.fileName.create({
+            data: {
+                pubkey_hash: pubKeyHash,
+                file_name: fileName,
+            }
+        });
+
+        return { fileExists: true };
     }
 
-    await prisma.fileIndex.update({
-      data: { pubkey_hash: existingFileIndex.pubkey_hash },
-      where: { file_hash: existingFileIndex.file_hash }
-    });
+    if (fileResult && existingFileIndex) {
+        // Update existing file index
+        if (!existingFileIndex.pubkey_hash.includes(pubKeyHash)) {
+            existingFileIndex.pubkey_hash.push(pubKeyHash);
+        }
 
-    await prisma.fileName.upsert({
-      where: { pubkey_hash: pubKeyHash },
-      create: {
-        pubkey_hash: pubKeyHash,
-        file_name: fileName || fileHash
-      },
-      update: {
-        file_name: fileName || fileHash
-      }
-    });
+        await prisma.fileIndex.update({
+            data: { pubkey_hash: existingFileIndex.pubkey_hash },
+            where: { file_hash: existingFileIndex.file_hash }
+        });
 
-    return { 
-      fileExists: true, 
-      fileData: fileResult, 
-      fileIndexData: existingFileIndex 
-    };
-  }
+        await prisma.fileName.upsert({
+            where: { pubkey_hash: pubKeyHash },
+            create: {
+                pubkey_hash: pubKeyHash,
+                file_name: fileName || fileHash
+            },
+            update: {
+                file_name: fileName || fileHash
+            }
+        });
 
-  return { fileExists: false };
+        return {
+            fileExists: true,
+            fileData: fileResult,
+            fileIndexData: existingFileIndex
+        };
+    }
+
+    return { fileExists: false };
 }
 
 /**
  * Processes revision data based on revision type
  */
 async function processRevisionByType(
-  revisionData: any, 
-  pubKeyHash: string, 
-  userAddress: string,
-  aquaTree: AquaTree
+    revisionData: any,
+    pubKeyHash: string,
+    userAddress: string,
+    aquaTree: AquaTree
 ) {
-  const { revision_type } = revisionData;
+    const { revision_type } = revisionData;
 
-  switch (revision_type) {
-    case "form":
-      await processFormRevision(revisionData, pubKeyHash);
-      break;
-    
-    case "signature":
-      await processSignatureRevision(revisionData, pubKeyHash);
-      break;
-    
-    case "witness":
-      await processWitnessRevision(revisionData, pubKeyHash);
-      break;
-    
-    case "file":
-      await processFileRevision(revisionData, pubKeyHash, userAddress);
-      break;
-    
-    case "link":
-      await processLinkRevision(revisionData, pubKeyHash);
-      break;
-  }
+    switch (revision_type) {
+        case "form":
+            await processFormRevision(revisionData, pubKeyHash);
+            break;
 
-  // Handle genesis revision file setup
-  if (!revisionData.previous_verification_hash) {
-    await processGenesisRevision(revisionData, userAddress, aquaTree);
-  }
+        case "signature":
+            await processSignatureRevision(revisionData, pubKeyHash);
+            break;
+
+        case "witness":
+            await processWitnessRevision(revisionData, pubKeyHash);
+            break;
+
+        case "file":
+            await processFileRevision(revisionData, pubKeyHash, userAddress);
+            break;
+
+        case "link":
+            await processLinkRevision(revisionData, pubKeyHash);
+            break;
+    }
+
+    // Handle genesis revision file setup
+    if (!revisionData.previous_verification_hash) {
+        await processGenesisRevision(revisionData, userAddress, aquaTree);
+    }
 }
 
 async function processFormRevision(revisionData: any, pubKeyHash: string) {
-  const formKeys = Object.keys(revisionData).filter(key => key.startsWith("forms_"));
-  
-  for (const formKey of formKeys) {
-    await prisma.aquaForms.create({
-      data: {
-        hash: pubKeyHash,
-        key: formKey,
-        value: revisionData[formKey],
-        type: typeof revisionData[formKey]
-      }
-    });
-  }
+    const formKeys = Object.keys(revisionData).filter(key => key.startsWith("forms_"));
+
+    for (const formKey of formKeys) {
+        await prisma.aquaForms.create({
+            data: {
+                hash: pubKeyHash,
+                key: formKey,
+                value: revisionData[formKey],
+                type: typeof revisionData[formKey]
+            }
+        });
+    }
 }
 
 async function processSignatureRevision(revisionData: any, pubKeyHash: string) {
-  const signature = typeof revisionData.signature === "string" 
-    ? revisionData.signature 
-    : JSON.stringify(revisionData.signature);
+    const signature = typeof revisionData.signature === "string"
+        ? revisionData.signature
+        : JSON.stringify(revisionData.signature);
 
-  await prisma.signature.upsert({
-    where: { hash: pubKeyHash },
-    update: { reference_count: { increment: 1 } },
-    create: {
-      hash: pubKeyHash,
-      signature_digest: signature,
-      signature_wallet_address: revisionData.signature_wallet_address,
-      signature_type: revisionData.signature_type,
-      signature_public_key: revisionData.signature_public_key,
-      reference_count: 1
-    }
-  });
+    await prisma.signature.upsert({
+        where: { hash: pubKeyHash },
+        update: { reference_count: { increment: 1 } },
+        create: {
+            hash: pubKeyHash,
+            signature_digest: signature,
+            signature_wallet_address: revisionData.signature_wallet_address,
+            signature_type: revisionData.signature_type,
+            signature_public_key: revisionData.signature_public_key,
+            reference_count: 1
+        }
+    });
 }
 
 async function processWitnessRevision(revisionData: any, pubKeyHash: string) {
-  await prisma.witness.upsert({
-    where: { hash: pubKeyHash },
-    update: { reference_count: { increment: 1 } },
-    create: {
-      hash: pubKeyHash,
-      Witness_merkle_root: revisionData.witness_merkle_root,
-      reference_count: 1
-    }
-  });
+    await prisma.witness.upsert({
+        where: { hash: pubKeyHash },
+        update: { reference_count: { increment: 1 } },
+        create: {
+            hash: pubKeyHash,
+            Witness_merkle_root: revisionData.witness_merkle_root,
+            reference_count: 1
+        }
+    });
 
-  await prisma.witnessEvent.upsert({
-    where: { Witness_merkle_root: revisionData.witness_merkle_root! },
-    update: {
-      Witness_merkle_root: revisionData.witness_merkle_root!,
-      Witness_timestamp: revisionData.witness_timestamp?.toString(),
-      Witness_network: revisionData.witness_network,
-      Witness_smart_contract_address: revisionData.witness_smart_contract_address,
-      Witness_transaction_hash: revisionData.witness_transaction_hash,
-      Witness_sender_account_address: revisionData.witness_sender_account_address
-    },
-    create: {
-      Witness_merkle_root: revisionData.witness_merkle_root!,
-      Witness_timestamp: revisionData.witness_timestamp?.toString(),
-      Witness_network: revisionData.witness_network,
-      Witness_smart_contract_address: revisionData.witness_smart_contract_address,
-      Witness_transaction_hash: revisionData.witness_transaction_hash,
-      Witness_sender_account_address: revisionData.witness_sender_account_address
-    }
-  });
+    await prisma.witnessEvent.upsert({
+        where: { Witness_merkle_root: revisionData.witness_merkle_root! },
+        update: {
+            Witness_merkle_root: revisionData.witness_merkle_root!,
+            Witness_timestamp: revisionData.witness_timestamp?.toString(),
+            Witness_network: revisionData.witness_network,
+            Witness_smart_contract_address: revisionData.witness_smart_contract_address,
+            Witness_transaction_hash: revisionData.witness_transaction_hash,
+            Witness_sender_account_address: revisionData.witness_sender_account_address
+        },
+        create: {
+            Witness_merkle_root: revisionData.witness_merkle_root!,
+            Witness_timestamp: revisionData.witness_timestamp?.toString(),
+            Witness_network: revisionData.witness_network,
+            Witness_smart_contract_address: revisionData.witness_smart_contract_address,
+            Witness_transaction_hash: revisionData.witness_transaction_hash,
+            Witness_sender_account_address: revisionData.witness_sender_account_address
+        }
+    });
 }
 
 async function processFileRevision(revisionData: any, pubKeyHash: string, userAddress: string) {
-  if (!revisionData.file_hash) {
-    throw new Error(`Revision is detected to be a file but file_hash is missing`);
-  }
-
-  const fileResult = await prisma.file.findFirst({
-    where: {
-      file_hash: { contains: revisionData.file_hash, mode: 'insensitive' }
+    if (!revisionData.file_hash) {
+        throw new Error(`Revision is detected to be a file but file_hash is missing`);
     }
-  });
 
-  if (!fileResult) {
-    throw new Error(`File data should be in database but is not found.`);
-  }
-
-//   await prisma.file.updateMany({
-//     where: {
-//         file_hash : fileResult.file_hash
-//     //   OR: [
-//     //     { hash: fileResult.hash },
-//     //     { hash: { contains: fileResult.hash, mode: 'insensitive' } }
-//     //   ]
-//     },
-//     data: { reference_count: fileResult.reference_count! + 1 }
-//   });
-
-  // Update file index
-  const existingFileIndex = await prisma.fileIndex.findFirst({
-    where: { file_hash: fileResult.file_hash }
-  });
-
-  if (existingFileIndex) {
-    if (!existingFileIndex.pubkey_hash.includes(pubKeyHash)) {
-      existingFileIndex.pubkey_hash.push(pubKeyHash);
-    }
-    
-    await prisma.fileIndex.update({
-      data: { pubkey_hash: existingFileIndex.pubkey_hash },
-      where: { file_hash: existingFileIndex.file_hash }
+    let fileResult = await prisma.file.findFirst({
+        where: {
+            file_hash: { contains: revisionData.file_hash, mode: 'insensitive' }
+        }
     });
-  } else {
-    throw new Error(`File index data should be in database but is not found.`);
-  }
+
+    if (!fileResult) {
+        throw new Error(`File data should be in database but is not found.`);
+    }
+
+    //   await prisma.file.updateMany({
+    //     where: {
+    //         file_hash : fileResult.file_hash
+    //     //   OR: [
+    //     //     { hash: fileResult.hash },
+    //     //     { hash: { contains: fileResult.hash, mode: 'insensitive' } }
+    //     //   ]
+    //     },
+    //     data: { reference_count: fileResult.reference_count! + 1 }
+    //   });
+
+    // Update file index
+    const existingFileIndex = await prisma.fileIndex.findFirst({
+        where: { file_hash: fileResult.file_hash }
+    });
+
+    if (existingFileIndex) {
+        if (!existingFileIndex.pubkey_hash.includes(pubKeyHash)) {
+            existingFileIndex.pubkey_hash.push(pubKeyHash);
+        }
+
+        await prisma.fileIndex.update({
+            data: { pubkey_hash: existingFileIndex.pubkey_hash },
+            where: { file_hash: existingFileIndex.file_hash }
+        });
+    } else {
+        throw new Error(`File index data should be in database but is not found.`);
+    }
+
+
 }
 
 async function processLinkRevision(revisionData: any, pubKeyHash: string) {
-  await prisma.link.upsert({
-    where: { hash: pubKeyHash },
-    update: {
-      hash: pubKeyHash,
-      link_type: "aqua",
-      link_require_indepth_verification: false,
-      link_verification_hashes: revisionData.link_verification_hashes,
-      link_file_hashes: revisionData.link_file_hashes,
-      reference_count: 0
-    },
-    create: {
-      hash: pubKeyHash,
-      link_type: "aqua",
-      link_require_indepth_verification: false,
-      link_verification_hashes: revisionData.link_verification_hashes,
-      link_file_hashes: revisionData.link_file_hashes,
-      reference_count: 0
-    }
-  });
-
-  // Process linked hashes
-  if (revisionData.link_verification_hashes?.length > 0) {
-    for (const linkedHash of revisionData.link_verification_hashes) {
-      const linkedRevision = await prisma.revision.findFirst({
-        where: {
-          pubkey_hash: { contains: linkedHash, mode: 'insensitive' }
+    await prisma.link.upsert({
+        where: { hash: pubKeyHash },
+        update: {
+            hash: pubKeyHash,
+            link_type: "aqua",
+            link_require_indepth_verification: false,
+            link_verification_hashes: revisionData.link_verification_hashes,
+            link_file_hashes: revisionData.link_file_hashes,
+            reference_count: 0
+        },
+        create: {
+            hash: pubKeyHash,
+            link_type: "aqua",
+            link_require_indepth_verification: false,
+            link_verification_hashes: revisionData.link_verification_hashes,
+            link_file_hashes: revisionData.link_file_hashes,
+            reference_count: 0
         }
-      });
-      
-      if (linkedRevision) {
-        console.log(`Found linked revision chain with hash ${linkedHash}`);
-      }
+    });
+
+    // Process linked hashes
+    if (revisionData.link_verification_hashes?.length > 0) {
+        for (const linkedHash of revisionData.link_verification_hashes) {
+            const linkedRevision = await prisma.revision.findFirst({
+                where: {
+                    pubkey_hash: { contains: linkedHash, mode: 'insensitive' }
+                }
+            });
+
+            if (linkedRevision) {
+                console.log(`Found linked revision chain with hash ${linkedHash}`);
+            }
+        }
     }
-  }
 }
 
 async function processGenesisRevision(revisionData: any, userAddress: string, aquaTree: AquaTree) {
-  const fileHash = revisionData.file_hash;
-  if (!fileHash) {
-    throw new Error(`Genesis revision detected but file hash is null.`);
-  }
-
-  const existingFileIndex = await prisma.fileIndex.findFirst({
-    where: { file_hash: fileHash }
-  });
-
-  if (existingFileIndex) {
-    const genHash = getGenesisHash(aquaTree);
-    if (!genHash) {
-      throw new Error(`Genesis hash cannot be null`);
+    const fileHash = revisionData.file_hash;
+    if (!fileHash) {
+        throw new Error(`Genesis revision detected but file hash is null.`);
     }
 
-    const pubKeyHash = `${userAddress}_${genHash}`;
-    
-    if (!existingFileIndex.pubkey_hash.includes(pubKeyHash)) {
-      existingFileIndex.pubkey_hash.push(pubKeyHash);
-    }
-
-    await prisma.fileIndex.update({
-      data: { pubkey_hash: existingFileIndex.pubkey_hash },
-      where: { file_hash: existingFileIndex.file_hash }
+    const existingFileIndex = await prisma.fileIndex.findFirst({
+        where: { file_hash: fileHash }
     });
-  }
+
+    if (existingFileIndex) {
+        const genHash = getGenesisHash(aquaTree);
+        if (!genHash) {
+            throw new Error(`Genesis hash cannot be null`);
+        }
+
+        const pubKeyHash = `${userAddress}_${genHash}`;
+
+        if (!existingFileIndex.pubkey_hash.includes(pubKeyHash)) {
+            existingFileIndex.pubkey_hash.push(pubKeyHash);
+        }
+
+        await prisma.fileIndex.update({
+            data: { pubkey_hash: existingFileIndex.pubkey_hash },
+            where: { file_hash: existingFileIndex.file_hash }
+        });
+    }
 }
 
 // =====================================================
@@ -1164,78 +1166,78 @@ async function processGenesisRevision(revisionData: any, userAddress: string, aq
  * Refactored saveAquaTree function with improved modularity
  */
 export async function saveAquaTree(
-  aquaTree: AquaTree, 
-  userAddress: string, 
-  templateId: string | null = null, 
-  isWorkFlow: boolean = false
+    aquaTree: AquaTree,
+    userAddress: string,
+    templateId: string | null = null,
+    isWorkFlow: boolean = false
 ) {
-  // Reorder revisions to ensure proper order
-  const orderedAquaTree = reorderAquaTreeRevisionsProperties(aquaTree);
-  const aquaTreeWithOrderdRevision = OrderRevisionInAquaTree(orderedAquaTree);
-  
-  // Get all revision hashes in the chain
-  const allHash = Object.keys(aquaTreeWithOrderdRevision.revisions);
-  
-  if (allHash.length === 0) {
-    throw new Error("No revisions found in the aqua tree");
-  }
+    // Reorder revisions to ensure proper order
+    const orderedAquaTree = reorderAquaTreeRevisionsProperties(aquaTree);
+    const aquaTreeWithOrderdRevision = OrderRevisionInAquaTree(orderedAquaTree);
 
-  // The last hash in the sorted array is the latest
-  const latestHash = allHash[allHash.length - 1];
-  const lastPubKeyHash = `${userAddress}_${latestHash}`;
+    // Get all revision hashes in the chain
+    const allHash = Object.keys(aquaTreeWithOrderdRevision.revisions);
 
-  // Only register the latest hash for the user
-  await prisma.latest.upsert({
-    where: { hash: lastPubKeyHash },
-    create: {
-      hash: lastPubKeyHash,
-      user: userAddress,
-      template_id: templateId,
-      is_workflow: isWorkFlow
-    },
-    update: {
-      hash: lastPubKeyHash,
-      user: userAddress,
-      template_id: templateId
+    if (allHash.length === 0) {
+        throw new Error("No revisions found in the aqua tree");
     }
-  });
 
-  // Process each revision
-  for (const revisionHash of allHash) {
-    const revisionData = aquaTreeWithOrderdRevision.revisions[revisionHash];
-    const pubKeyHash = `${userAddress}_${revisionHash}`;
-    const pubKeyPrevious = revisionData.previous_verification_hash.length > 0 
-      ? `${userAddress}_${revisionData.previous_verification_hash}` 
-      : "";
+    // The last hash in the sorted array is the latest
+    const latestHash = allHash[allHash.length - 1];
+    const lastPubKeyHash = `${userAddress}_${latestHash}`;
 
-    // Insert/update revision in the database
-    await prisma.revision.upsert({
-      where: { pubkey_hash: pubKeyHash },
-      create: {
-        pubkey_hash: pubKeyHash,
-        file_hash : revisionData.file_hash,
-        nonce: revisionData.file_nonce ?? "",
-        shared: [],
-        previous: pubKeyPrevious,
-        local_timestamp: revisionData.local_timestamp,
-        revision_type: revisionData.revision_type,
-        verification_leaves: revisionData.leaves ?? [],
-      },
-      update: {
-        pubkey_hash: pubKeyHash,
-           file_hash : revisionData.file_hash,
-        nonce: revisionData.file_nonce ?? "",
-        shared: [],
-        previous: pubKeyPrevious,
-        local_timestamp: revisionData.local_timestamp,
-        revision_type: revisionData.revision_type,
-        verification_leaves: revisionData.leaves ?? [],
-      },
+    // Only register the latest hash for the user
+    await prisma.latest.upsert({
+        where: { hash: lastPubKeyHash },
+        create: {
+            hash: lastPubKeyHash,
+            user: userAddress,
+            template_id: templateId,
+            is_workflow: isWorkFlow
+        },
+        update: {
+            hash: lastPubKeyHash,
+            user: userAddress,
+            template_id: templateId
+        }
     });
 
-    // Process revision based on type
-    await processRevisionByType(revisionData, pubKeyHash, userAddress, aquaTreeWithOrderdRevision);
-  }
+    // Process each revision
+    for (const revisionHash of allHash) {
+        const revisionData = aquaTreeWithOrderdRevision.revisions[revisionHash];
+        const pubKeyHash = `${userAddress}_${revisionHash}`;
+        const pubKeyPrevious = revisionData.previous_verification_hash.length > 0
+            ? `${userAddress}_${revisionData.previous_verification_hash}`
+            : "";
+
+        // Insert/update revision in the database
+        await prisma.revision.upsert({
+            where: { pubkey_hash: pubKeyHash },
+            create: {
+                pubkey_hash: pubKeyHash,
+                file_hash: revisionData.file_hash,
+                nonce: revisionData.file_nonce ?? "",
+                shared: [],
+                previous: pubKeyPrevious,
+                local_timestamp: revisionData.local_timestamp,
+                revision_type: revisionData.revision_type,
+                verification_leaves: revisionData.leaves ?? [],
+            },
+            update: {
+                pubkey_hash: pubKeyHash,
+                file_hash: revisionData.file_hash,
+                nonce: revisionData.file_nonce ?? "",
+                shared: [],
+                previous: pubKeyPrevious,
+                local_timestamp: revisionData.local_timestamp,
+                revision_type: revisionData.revision_type,
+                verification_leaves: revisionData.leaves ?? [],
+            },
+        });
+
+        // Process revision based on type
+        await processRevisionByType(revisionData, pubKeyHash, userAddress, aquaTreeWithOrderdRevision);
+    }
 }
 
 
@@ -1245,59 +1247,59 @@ export async function saveAquaTree(
 // =====================================================
 
 export async function streamToBuffer(stream: any): Promise<Buffer> {
-  const chunks = [];
-  for await (const chunk of stream) {
-    chunks.push(chunk);
-  }
-  return Buffer.concat(chunks);
+    const chunks = [];
+    for await (const chunk of stream) {
+        chunks.push(chunk);
+    }
+    return Buffer.concat(chunks);
 }
 
 export async function processAquaMetadata(zipData: JSZip, userAddress: string) {
-  const aquaJsonFile = zipData.files['aqua.json'];
-  if (!aquaJsonFile) return;
+    const aquaJsonFile = zipData.files['aqua.json'];
+    if (!aquaJsonFile) return;
 
-  const fileContent = await aquaJsonFile.async('text');
-  const aquaData: AquaJsonInZip = JSON.parse(fileContent);
+    const fileContent = await aquaJsonFile.async('text');
+    const aquaData: AquaJsonInZip = JSON.parse(fileContent);
 
-  for (const nameHash of aquaData.name_with_hash) {
-    const aquaFileName = `${nameHash.name}.aqua.json`;
-    const aquaFile = zipData.files[aquaFileName];
-    
-    if (!aquaFile) {
-      throw new Error(`Expected to find ${aquaFileName} as defined in aqua.json but file not found`);
+    for (const nameHash of aquaData.name_with_hash) {
+        const aquaFileName = `${nameHash.name}.aqua.json`;
+        const aquaFile = zipData.files[aquaFileName];
+
+        if (!aquaFile) {
+            throw new Error(`Expected to find ${aquaFileName} as defined in aqua.json but file not found`);
+        }
+
+        const aquaFileDataText = await aquaFile.async('text');
+        const aquaTreeData: AquaTree = JSON.parse(aquaFileDataText);
+
+        const genesisHash = getGenesisHash(aquaTreeData);
+        if (!genesisHash) {
+            throw new Error(`Genesis hash cannot be null`);
+        }
+
+        const filePubKeyHash = `${userAddress}_${genesisHash}`;
+        const fileAsset = zipData.files[nameHash.name];
+
+        await processFileData(
+            nameHash.hash,
+            userAddress,
+            genesisHash,
+            fileAsset,
+            nameHash.name
+        );
     }
-
-    const aquaFileDataText = await aquaFile.async('text');
-    const aquaTreeData: AquaTree = JSON.parse(aquaFileDataText);
-    
-    const genesisHash = getGenesisHash(aquaTreeData);
-    if (!genesisHash) {
-      throw new Error(`Genesis hash cannot be null`);
-    }
-
-    const filePubKeyHash = `${userAddress}_${genesisHash}`;
-    const fileAsset = zipData.files[nameHash.name];
-
-    await processFileData(
-      nameHash.hash, 
-      userAddress, 
-      genesisHash, 
-      fileAsset, 
-      nameHash.name
-    );
-  }
 }
 
 export async function processAquaFiles(zipData: JSZip, userAddress: string) {
-  for (const fileName in zipData.files) {
-    if (fileName.endsWith(".aqua.json") && fileName !== 'aqua.json') {
-      const file = zipData.files[fileName];
-      const fileContent = await file.async('text');
-      const aquaTree: AquaTree = JSON.parse(fileContent);
-      
-      await saveAquaTree(aquaTree, userAddress);
+    for (const fileName in zipData.files) {
+        if (fileName.endsWith(".aqua.json") && fileName !== 'aqua.json') {
+            const file = zipData.files[fileName];
+            const fileContent = await file.async('text');
+            const aquaTree: AquaTree = JSON.parse(fileContent);
+
+            await saveAquaTree(aquaTree, userAddress);
+        }
     }
-  }
 }
 // export async function saveAquaTree(aquaTree: AquaTree, userAddress: string, templateId: string | null = null, isWorkFlow: boolean = false) {
 //     // Reorder revisions to ensure proper order
@@ -1513,7 +1515,7 @@ export async function processAquaFiles(zipData: JSZip, userAddress: string) {
 //                 await prisma.fileIndex.update({
 //                     data: {
 //                         pubkey_hash: existingFileIndex.pubkey_hash,
-                       
+
 //                     },
 //                     where: {
 //                         file_hash: existingFileIndex.file_hash
@@ -1596,7 +1598,7 @@ export async function processAquaFiles(zipData: JSZip, userAddress: string) {
 //                     throw Error(`an error occured , genesis hash cvannot be null`)
 //                 }
 //                 let pubKeyHash = `${userAddress}_${genHash}`
-              
+
 
 //                 if(!existingFileIndex.pubkey_hash.includes(pubKeyHash)){
 //                     existingFileIndex.pubkey_hash.push(pubKeyHash)
@@ -1604,7 +1606,7 @@ export async function processAquaFiles(zipData: JSZip, userAddress: string) {
 //                 await prisma.fileIndex.update({
 //                     data: {
 //                         pubkey_hash: existingFileIndex.pubkey_hash,
-                       
+
 //                     },
 //                     where: {
 //                         file_hash: existingFileIndex.file_hash

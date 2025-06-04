@@ -131,6 +131,21 @@ export const saveTemplateFileData = async (aquaTree: AquaTree, fileData: string,
 
   console.log('FileIndex record created');
 
+   await prisma.fileName.upsert({
+    where: {
+      pubkey_hash: fileHash,
+    },
+    create: {
+     
+      pubkey_hash: filepubkeyhash,
+      file_name:fileName ,
+     
+    },
+    update: {
+       file_name:fileName ,
+    }
+  })
+
 }
 
 
