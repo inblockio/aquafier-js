@@ -106,6 +106,7 @@ export async function fetchAquatreeFoUser(url: string, latest: Array<{
     // Process each latest revision entry
     for (let revisionLatestItem of latest) {
         // Retrieve the tree starting from the latest hash
+        let userAddress = revisionLatestItem.user
         let [anAquaTree, fileObject] = await createAquaTreeFromRevisions(revisionLatestItem.hash, url);
 
         // Ensure the tree is properly ordered
@@ -238,7 +239,7 @@ export async function saveARevisionInAquaTree(revisionData: SaveRevision, userAd
 
     if (revisionData.revision.revision_type == "signature") {
         let signature = "";
-        if (typeof revisionData.revision.signature == "string") {
+        if (typeof revisionData.revision.signature === "string") {
             signature = revisionData.revision.signature
         } else {
             signature = JSON.stringify(revisionData.revision.signature)

@@ -1,23 +1,18 @@
-import Aquafier, { AquaTree, FileObject, getHashSum, LogData, LogType, OrderRevisionInAquaTree, Revision } from 'aqua-js-sdk';
+import Aquafier, { AquaTree, FileObject, LogData, LogType, Revision } from 'aqua-js-sdk';
 import { FastifyInstance } from 'fastify';
 import { prisma } from '../database/db';
-import { BusboyFileStream } from '@fastify/busboy';
-import { getFileUploadDirectory, isTextFile, isTextFileProbability, streamToBuffer } from '../utils/file_utils';
+import { getFileUploadDirectory, streamToBuffer } from '../utils/file_utils';
 import path from 'path';
 import JSZip from "jszip";
 import { randomUUID } from 'crypto';
 import util from 'util';
 import { pipeline } from 'stream';
 import * as fs from "fs"
-import { error } from 'console';
-import { deleteAquaTreeFromSystem, fetchAquatreeFoUser, FetchRevisionInfo, findAquaTreeRevision, getUserApiFileInfo, processAquaFiles, processAquaMetadata, saveAquaTree } from '../utils/revisions_utils';
-import { fileURLToPath } from 'url';
-import { AquaForms, FileIndex, Signature, Witness, WitnessEvent } from '@prisma/client';
+import { deleteAquaTreeFromSystem, getUserApiFileInfo, processAquaFiles, processAquaMetadata, saveAquaTree } from '../utils/revisions_utils';
 import { getHost, getPort } from '../utils/api_utils';
-import { AquaJsonInZip, DeleteRevision, SaveAquaTree } from '../models/request_models';
+import { DeleteRevision } from '../models/request_models';
 import { fetchCompleteRevisionChain } from '../utils/quick_utils';
 import { transferRevisionChain, mergeRevisionChain } from '../utils/quick_revision_utils';
-import { sendToUserWebsockerAMessage } from './websocketController';
 import { getGenesisHash, removeFilePathFromFileIndex, validateAquaTree } from 'src/utils/aqua_tree_utils';
 // import getStream from 'get-stream';
 // Promisify pipeline
@@ -257,7 +252,7 @@ export default async function explorerController(fastify: FastifyInstance) {
                     //         reference_count: 0 // we use 0 because  saveAquaTree increases file  undex  by 1
                     //     }
                     // })
-
+ 
 
                     await prisma.file.create({
                         data: {
@@ -279,9 +274,8 @@ export default async function explorerController(fastify: FastifyInstance) {
 
                     await prisma.fileName.create({
                         data: {
-
                             pubkey_hash: filepubkeyhash,
-                            file_name: fileHash,
+                            file_name: fileName,
 
                         }
                     })

@@ -28,8 +28,10 @@ export async function createAquaTreeFromRevisions(
         }
 
         // Step 2: Get all associated files
-        const files = await getAssociatedFiles(revisionData);
+        const files = await getAssociatedFiles(revisionData); 
+        console.log("Associated files: ", files)
         const fileIndexes = await getFileIndexes(revisionData);
+        console.log("File indexes: ", fileIndexes)
 
         // Step 3: Create file objects for download
         fileObjects = await createFileObjects(files, fileIndexes, url);
@@ -184,9 +186,19 @@ async function getAssociatedFiles(revisionData: Revision[]): Promise<any[]> {
     let allFiles = [];
 
     for (const revision of revisionData) {
-        const hashOnly = extractHashOnly(revision.pubkey_hash);
+        const revisionPubKeyHash = revision.pubkey_hash
+        const hashOnly = extractHashOnly(revisionPubKeyHash);
 
         // Try to find files directly by file_hash
+        // const files = await prisma.file.findMany({
+        //     where: {
+        //         file_hash: {
+        //             contains: hashOnly,
+        //             mode: 'insensitive'
+        //         }
+        //     }
+        // });
+
         const files = await prisma.file.findMany({
             where: {
                 file_hash: {
@@ -195,12 +207,12 @@ async function getAssociatedFiles(revisionData: Revision[]): Promise<any[]> {
                 }
             }
         });
-
+        
         if (files.length > 0) {
             allFiles.push(...files);
         } else {
             // Try to find via file index
-            const filesViaIndex = await getFilesViaIndex(hashOnly);
+            const filesViaIndex = await getFilesViaIndex(hashOnly, revisionPubKeyHash);
             allFiles.push(...filesViaIndex);
         }
     }
@@ -208,26 +220,44 @@ async function getAssociatedFiles(revisionData: Revision[]): Promise<any[]> {
     return allFiles;
 }
 
-async function getFilesViaIndex(hashOnly: string): Promise<any[]> {
+async function getFilesViaIndex(hashOnly: string, pubkey_hash: string): Promise<any[]> {
     // FileIndex: file_hash (PK), pubkey_hash (String[])
     const fileIndexResult = await prisma.fileIndex.findFirst({
         where: {
             pubkey_hash: {
                 has: hashOnly
             }
-        }
+        },
+        
     });
+
+    const fileName = await prisma.fileName.findFirst({
+        where: {
+            pubkey_hash: pubkey_hash,
+        }
+    })
 
     if (!fileIndexResult) {
         return [];
     }
 
-    return await prisma.file.findMany({
+    // return await prisma.file.findMany({
+    //     where: {
+    //         file_hash: fileIndexResult.file_hash
+    //     }
+    // });
+    let actualFile = await prisma.file.findMany({
         where: {
             file_hash: fileIndexResult.file_hash
         }
     });
+    let actualFileWithAllInfo = {
+        ...actualFile,
+        fileName: fileName?.file_name ?? "File name not found",
+    }
+    return [actualFileWithAllInfo]
 }
+
 
 async function getFileIndexes(revisionData: Revision[]): Promise<any[]> {
     const fileIndexes = [];

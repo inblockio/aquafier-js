@@ -102,7 +102,7 @@ const FilesTable = () => {
 
     // console.log("System file info: ", JSON.stringify(systemFileInfo, null, 4))
     const tableItem = (fileObject: FileObject, item: ApiFileInfo, index: number) => {
-        console.log("Item: ", item.aquaTree)
+
         let reorderdAquaTreed =  reorderAquaTreeRevisionsProperties(item.aquaTree!!)
         let { isWorkFlow, workFlow } = isWorkFlowData(reorderdAquaTreed, systemFileInfo.map((e) => {
             try {
