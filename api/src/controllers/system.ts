@@ -4,21 +4,16 @@ import { SiweMessage } from 'siwe';
 import { prisma } from '../database/db';
 import { Settings } from '@prisma/client';
 import { SessionQuery, ShareRequest, SiweRequest } from '../models/request_models';
-// import { verifySiweMessage } from '../utils/auth_utils';
 import { AquaTree, FileObject, OrderRevisionInAquaTree, reorderAquaTreeRevisionsProperties } from 'aqua-js-sdk';
 import { getHost, getPort } from '../utils/api_utils';
-import { createAquaTreeFromRevisions, fetchAquatreeFoUser, fetchAquaTreeWithForwardRevisions, saveAquaTree } from '../utils/revisions_utils';
+import { fetchAquatreeFoUser, fetchAquaTreeWithForwardRevisions, saveAquaTree } from '../utils/revisions_utils';
 import { SYSTEM_WALLET_ADDRESS } from '../models/constants';
 
 export default async function systemController(fastify: FastifyInstance) {
-    // get current session
-    // Can session be used as a middleware?
-
+    
     fastify.get('/system/aqua_tree', async (request, reply) => {
 
-
         // fetch all from latetst
-
         let trees: {
             hash: string;
             user: string;
@@ -75,6 +70,5 @@ export default async function systemController(fastify: FastifyInstance) {
 
         return reply.code(200).send({ data: displayData })
     });
-
 
 }

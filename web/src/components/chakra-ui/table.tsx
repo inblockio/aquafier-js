@@ -22,7 +22,7 @@ import ShareButtonAction from "../actions/ShareButtonAction"
 import { DrawerActionTrigger, DrawerBackdrop, DrawerBody, DrawerContent, DrawerFooter, DrawerRoot, DrawerTitle } from "./drawer"
 import { LuX } from "react-icons/lu"
 import { IDrawerStatus } from "../../models/AquaTreeDetails"
-import { FileObject } from "aqua-js-sdk"
+import { FileObject, reorderAquaTreeRevisionsProperties } from "aqua-js-sdk"
 import { useNavigate } from "react-router-dom"
 import { FaFileExport } from "react-icons/fa6"
 
@@ -100,10 +100,11 @@ const FilesTable = () => {
     }
 
 
-    console.log("System file info: ", JSON.stringify(systemFileInfo, null, 4))
+    // console.log("System file info: ", JSON.stringify(systemFileInfo, null, 4))
     const tableItem = (fileObject: FileObject, item: ApiFileInfo, index: number) => {
         console.log("Item: ", item.aquaTree)
-        let { isWorkFlow, workFlow } = isWorkFlowData(item.aquaTree!!, systemFileInfo.map((e) => {
+        let reorderdAquaTreed =  reorderAquaTreeRevisionsProperties(item.aquaTree!!)
+        let { isWorkFlow, workFlow } = isWorkFlowData(reorderdAquaTreed, systemFileInfo.map((e) => {
             try {
                 return getAquaTreeFileName(e.aquaTree!!)
             } catch (e) {
@@ -111,10 +112,6 @@ const FilesTable = () => {
                 return ""
             }
         }));
-
-        // { isWorkFlow : false  , workFlow: ''}
-        // let isWorkFlow = true;
-        // let workFlow = "aqua_sign";
 
 
         return <Table.Row

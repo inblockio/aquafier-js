@@ -2,18 +2,12 @@ import { canDeleteRevision, deleteRevisionAndChildren } from '../utils/quick_rev
 import { prisma } from '../database/db';
 import { DeleteRevision, FetchAquaTreeRequest, SaveRevision, SaveRevisionForUser } from '../models/request_models';
 import { getHost, getPort } from '../utils/api_utils';
-import { createAquaTreeFromRevisions, deleteAquaTree, fetchAquatreeFoUser, FetchRevisionInfo, findAquaTreeRevision, getSignatureAquaTrees, getUserApiFileInfo, removeFilePathFromFileIndex, saveAquaTree, saveARevisionInAquaTree, validateAquaTree } from '../utils/revisions_utils';
-// import { formatTimestamp } from '../utils/time_utils';
-// import { AquaForms, FileIndex, Signature, WitnessEvent, Revision as RevisonDB } from 'prisma/client';
-import Aquafier, { AquaTree, FileObject, getAquaTreeFileName, getGenesisHash, OrderRevisionInAquaTree, Revision } from 'aqua-js-sdk';
+import {  deleteAquaTree, fetchAquatreeFoUser, getSignatureAquaTrees, saveARevisionInAquaTree } from '../utils/revisions_utils';
+import { AquaTree, FileObject, OrderRevisionInAquaTree, Revision } from 'aqua-js-sdk';
 import { FastifyInstance } from 'fastify';
-import * as fs from "fs"
-import path from 'path';
-import { SYSTEM_WALLET_ADDRESS } from '..//models/constants';
-import { getFileUploadDirectory, streamToBuffer } from '../utils/file_utils';
-import { randomUUID } from 'crypto';
 import { sendToUserWebsockerAMessage } from './websocketController';
 import WebSocketActions from '../constants/constants';
+import { createAquaTreeFromRevisions } from 'src/utils/revisions_operations_utils';
 
 export default async function revisionsController(fastify: FastifyInstance) {
     // fetch aqua tree from a revision hash
@@ -52,26 +46,12 @@ export default async function revisionsController(fastify: FastifyInstance) {
         // Construct the full URL
         const url = `${protocol}://${host}`;
 
-        // // Get the host from the request headers, with more robust fallback
-        // const host = request.headers.host ||
-        //     request.headers['x-forwarded-host'] ||
-        //     `${getHost()}:${getPort()}`;
-
-        // // Get the protocol with more robust detection
-        // const protocol = Array.isArray(request.headers['x-forwarded-proto']) 
-        //     ? request.headers['x-forwarded-proto'][0] 
-        //     : (request.headers['x-forwarded-proto'] as string | undefined) ||
-        //       request.protocol ||
-        //       'https';  // Default to https
-
-        // // Construct the full URL
-        // const url = `${protocol}://${host}`;
+     
 
         try {
 
             const [anAquaTree, fileObject] = await createAquaTreeFromRevisions(latestRevisionHash, url)
 
-            ////  console.log(`----> ${JSON.stringify(anAquaTree, null, 4)}`)
             let sortedAquaTree = OrderRevisionInAquaTree(anAquaTree)
             displayData.push({
                 aquaTree: sortedAquaTree,
@@ -152,7 +132,6 @@ export default async function revisionsController(fastify: FastifyInstance) {
             return reply.code(500).send({ error: "Failed to process revisions" });
         }
     });
-
 
     // save revision for the user in the session
     fastify.post('/tree', async (request, reply) => {

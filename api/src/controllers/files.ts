@@ -59,11 +59,11 @@ export default async function filesController(fastify: FastifyInstance) {
         let revision = prisma.revision.findFirst({
             where: {
                 OR: [
-                    { pubkey_hash: file.hash },
+                    { pubkey_hash: file.file_hash }, // Check if the file's pubkey_hash matches the session's pubkey_hash
                     {
                         // Check if any of the fileIndex hashes are in the revision's pubkey_hash
                         pubkey_hash: {
-                            in: fileIndex.hash
+                            in: fileIndex.pubkey_hash
                         }
                     }
                 ]
@@ -77,10 +77,10 @@ export default async function filesController(fastify: FastifyInstance) {
 
         try {
             // Read the file
-            let fileContent = fs.readFileSync(file.content!!);
+            let fileContent = fs.readFileSync(file.file_location!!);
 
             // Set appropriate headers based on file type
-            const fileExt = path.extname(fileIndex.uri ?? "").toLowerCase();
+            const fileExt = path.extname(file.file_location ?? "").toLowerCase();
             if (fileExt === '.pdf') {
                 reply.header('Content-Type', 'application/pdf');
             } else {
@@ -88,7 +88,7 @@ export default async function filesController(fastify: FastifyInstance) {
             }
 
             // Encode the filename for Content-Disposition header
-            const encodedFilename = encodeURIComponent(fileIndex.uri ?? "")
+            const encodedFilename = encodeURIComponent(file.file_location ?? "")
                 .replace(/['()]/g, escape) // handle special cases
                 .replace(/\*/g, '%2A');
 

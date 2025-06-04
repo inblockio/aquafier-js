@@ -241,7 +241,7 @@ export async function fetchCompleteRevisionChain(
             // Note: This logic assumes FileIndex.hash stores prefixed hashes.
             fileIndexes = await prisma.fileIndex.findMany({
                 where: {
-                    hash: {
+                    pubkey_hash: {
                         has: genesisRevisionInChain.pubkey_hash // Check if the prefixed hash exists in the array
                     }
                 }
@@ -250,23 +250,23 @@ export async function fetchCompleteRevisionChain(
             if (fileIndexes.length > 0) {
                 console.log(`${indent}[Depth:${_depth}] Found ${fileIndexes.length} FileIndexes for genesis hash ${genesisHashInChain}`);
                 for (const fi of fileIndexes) {
-                    console.log(`${indent}[Depth:${_depth}] FileIndex: ${fi.uri}, file_hash: ${fi.file_hash}`);
+                    console.log(`${indent}[Depth:${_depth}] FileIndex: ${fi.file_hash}`, fi.pubkey_hash);
                 }
             } else {
                 console.log(`${indent}[Depth:${_depth}] No FileIndexes found for genesis hash, trying non-prefixed hash`);
-
+throw Error(`No FileIndexes found for genesis hash ${genesisHashInChain}`);
                 // Try with non-prefixed hash as fallback
-                fileIndexes = await prisma.fileIndex.findMany({
-                    where: {
-                        hash: {
-                            has: genesisHashInChain
-                        }
-                    }
-                });
+                // fileIndexes = await prisma.fileIndex.findMany({
+                //     where: {
+                //         pubkey_hash: {
+                //             has: genesisHashInChain
+                //         }
+                //     }
+                // });
 
-                if (fileIndexes.length > 0) {
-                    console.log(`${indent}[Depth:${_depth}] Found ${fileIndexes.length} FileIndexes for non-prefixed genesis hash`);
-                }
+                // if (fileIndexes.length > 0) {
+                //     console.log(`${indent}[Depth:${_depth}] Found ${fileIndexes.length} FileIndexes for non-prefixed genesis hash`);
+                // }
             }
 
             // If still no fileIndexes found, try a more general approach for any revision hash
@@ -277,7 +277,7 @@ export async function fetchCompleteRevisionChain(
                 for (const rev of allRevisionData) {
                     const foundIndexes = await prisma.fileIndex.findMany({
                         where: {
-                            hash: {
+                            pubkey_hash: {
                                 has: rev.pubkey_hash
                             }
                         }
@@ -326,12 +326,12 @@ export async function fetchCompleteRevisionChain(
             // For file revisions, add file_hash and file_nonce
             revisionWithData.file_nonce = revisionItem.nonce ?? "--error--"; // Use nonce from revision
             // Find the associated FileIndex to get the definitive file_hash and uri
-            const fileIndexForFileRev = fileIndexes.find(fi => fi.hash.includes(revisionItem.pubkey_hash));
+            const fileIndexForFileRev = fileIndexes.find(fi => fi.pubkey_hash.includes(revisionItem.pubkey_hash) || fi.file_hash === hashOnly);
             if (fileIndexForFileRev) {
                 revisionWithData.file_hash = fileIndexForFileRev.file_hash ?? "--error--";
                 // Optionally add the file index URI to the main tree's index
                 if (!anAquaTree.file_index[hashOnly]) { // Add only if not already present (genesis might add it later)
-                    anAquaTree.file_index[hashOnly] = fileIndexForFileRev.uri ?? "--error_uri--";
+                    anAquaTree.file_index[hashOnly] = fileIndexForFileRev.file_hash ?? "--error--";
                 }
                 
                 // If we're including fileObjects, create and add a FileObject for this file revision
@@ -342,10 +342,10 @@ export async function fetchCompleteRevisionChain(
                             file_hash: fileIndexForFileRev.file_hash,
                         }
                     });
-                    const stats = fs.statSync(fileItem!!.content!!);
+                    const stats = fs.statSync(fileItem!!.file_location!!);
                     const fileSizeInBytes = stats.size;
                     const fileObject: FileObject = {
-                        fileName: fileIndexForFileRev.uri ?? "--error_uri--",
+                        fileName: fileIndexForFileRev.file_hash ?? "--error_uri--",
                         fileContent: `${url}/files/${fileIndexForFileRev.file_hash}`, // Using file_hash as content reference
                         path: "./",
                         // fileSize: fileIndexForFileRev.reference_count ? Number(fileIndexForFileRev.reference_count) : 0 // Using reference_count as a fallback for size
@@ -417,39 +417,25 @@ export async function fetchCompleteRevisionChain(
                                 if (typeof linkedHash === 'string' && linkedHash.length > 0) {
                                     console.log(`${indent}[Depth:${_depth}] Processing linked hash: ${linkedHash}`);
 
-                                    // Use the original user address for all processing
-                                    // The linked hash doesn't include the user address - it's just the hash part
-
-                                    // Find FileIndex for the linked hash
-                                    const fullLinkedHash = `${userAddress}_${linkedHash}`;
+                                    // Find FileIndex for the linked hash (by pubkey_hash or file_hash)
                                     let linkedFileIndex = await prisma.fileIndex.findFirst({
-                                        where: { id: fullLinkedHash }
+                                        where: { pubkey_hash: { has: linkedHash } }
                                     });
-
                                     if (!linkedFileIndex) {
-                                        // Try contains approach
                                         linkedFileIndex = await prisma.fileIndex.findFirst({
-                                            where: {
-                                                hash: {
-                                                    has: fullLinkedHash
-                                                }
-                                            }
+                                            where: { file_hash: linkedHash }
                                         });
                                     }
-
-                                    if (linkedFileIndex) {
-                                        console.log(`${indent}[Depth:${_depth}] Found FileIndex with URI: ${linkedFileIndex.uri}`);
-                                        anAquaTree.file_index[linkedHash] = linkedFileIndex.uri ?? "--missing-uri--";
-                                    } else {
-                                        console.warn(`${indent}[Depth:${_depth}] FileIndex not found for linked hash: ${linkedHash}`);
-                                    }
+                                    // Find FileName for user-friendly name
+                                    let fileNameEntry = await prisma.fileName.findFirst({ where: { pubkey_hash: linkedHash } });
+                                    anAquaTree.file_index[linkedHash] = fileNameEntry?.file_name ?? linkedFileIndex?.file_hash ?? '--error--';
 
                                     // For linkedChains feature, we need to recursively fetch each linked chain as a complete tree
                                     if (_includeLinkedChains && anAquaTree.linkedChains) {
                                         try {
                                             // Skip if already processed to prevent infinite recursion
-                                            if (_processedHashes.has(fullLinkedHash)) {
-                                                console.log(`${indent}[Depth:${_depth}] Skipping already processed linked chain: ${fullLinkedHash}`);
+                                            if (_processedHashes.has(linkedHash)) {
+                                                console.log(`${indent}[Depth:${_depth}] Skipping already processed linked chain: ${linkedHash}`);
                                                 continue;
                                             }
 
@@ -460,16 +446,20 @@ export async function fetchCompleteRevisionChain(
                                             try {
                                                 // Check if we can find a file index for this linked hash
                                                 // This will help populate the file_index for the linked chain's genesis
+
+                                                let pubHash = anAquaTree.linkedChains?.[linkedHash]?.revisions?.[linkedHash]?.link_verification_hashes?.[0] ?? linkedHash
+                                              
+                                                console.log(`${indent}[Depth:${_depth}] Pre-fetching FileIndex for linked chain's genesis: ${pubHash}`);
                                                 const linkedFileIndex = await prisma.fileIndex.findFirst({
                                                     where: {
-                                                        hash: {
-                                                            has: fullLinkedHash
+                                                        pubkey_hash: {
+                                                            has: pubHash
                                                         }
                                                     }
                                                 });
 
                                                 if (linkedFileIndex) {
-                                                    console.log(`${indent}[Depth:${_depth}] Found FileIndex for linked chain's genesis: ${linkedFileIndex.uri}`);
+                                                    console.log(`${indent}[Depth:${_depth}] Found FileIndex for linked chain's genesis: ${linkedFileIndex.file_hash}`);
                                                 }
                                             } catch (indexError) {
                                                 console.warn(`${indent}[Depth:${_depth}] Error pre-fetching FileIndex for linked chain: ${indexError}`);
@@ -528,14 +518,14 @@ export async function fetchCompleteRevisionChain(
             console.log(`${indent}[Depth:${_depth}] Found genesis revision: ${revisionItem.pubkey_hash}, hash: ${hashOnly}`);
 
             // Try to find the file index for this genesis hash
-            const genesisFileIndex = fileIndexes.find(item => item.hash.includes(revisionItem.pubkey_hash));
+            const genesisFileIndex = fileIndexes.find(item => item.pubkey_hash.includes(revisionItem.pubkey_hash) || item.file_hash === hashOnly);
 
             if (genesisFileIndex) {
-                console.log(`${indent}[Depth:${_depth}] Found FileIndex for genesis with URI: ${genesisFileIndex.uri}`);
-                anAquaTree.file_index[hashOnly] = genesisFileIndex.uri ?? "--error_uri--";
+                console.log(`${indent}[Depth:${_depth}] Found FileIndex for genesis with file_hash: ${genesisFileIndex.file_hash}`);
+                anAquaTree.file_index[hashOnly] = genesisFileIndex.file_hash ?? "--error--";
                 // Add file_hash to the genesis revision itself if it's a file type (might be redundant but ensures presence)
                 if (revisionWithData.revision_type === 'file') {
-                    revisionWithData.file_hash = genesisFileIndex.file_hash ?? "--error_hash--";
+                    revisionWithData.file_hash = genesisFileIndex.file_hash ?? "--error--";
                 }
             } else {
                 // If we didn't find the file index in our initial lookup, try a direct query
@@ -545,33 +535,33 @@ export async function fetchCompleteRevisionChain(
                 try {
                     const directFileIndex = await prisma.fileIndex.findFirst({
                         where: {
-                            hash: {
+                            pubkey_hash: {
                                 has: revisionItem.pubkey_hash
                             }
                         }
                     });
 
                     if (directFileIndex) {
-                        console.log(`${indent}[Depth:${_depth}] Found FileIndex for genesis with direct query: ${directFileIndex.uri}`);
-                        anAquaTree.file_index[hashOnly] = directFileIndex.uri ?? "--error_uri--";
+                        console.log(`${indent}[Depth:${_depth}] Found FileIndex for genesis with direct query: ${directFileIndex.file_hash}`);
+                        anAquaTree.file_index[hashOnly] = directFileIndex.file_hash ?? "--error--";
                         if (revisionWithData.revision_type === 'file') {
-                            revisionWithData.file_hash = directFileIndex.file_hash ?? "--error_hash--";
+                            revisionWithData.file_hash = directFileIndex.file_hash ?? "--error--";
                         }
                     } else {
                         // Try by a more fuzzy match if needed
                         const fuzzyFileIndex = await prisma.fileIndex.findFirst({
                             where: {
-                                hash: {
+                                pubkey_hash: {
                                     has: hashOnly
                                 }
                             }
                         });
 
                         if (fuzzyFileIndex) {
-                            console.log(`${indent}[Depth:${_depth}] Found FileIndex for genesis with fuzzy query: ${fuzzyFileIndex.uri}`);
-                            anAquaTree.file_index[hashOnly] = fuzzyFileIndex.uri ?? "--error_uri--";
+                            console.log(`${indent}[Depth:${_depth}] Found FileIndex for genesis with fuzzy query: ${fuzzyFileIndex.file_hash}`);
+                            anAquaTree.file_index[hashOnly] = fuzzyFileIndex.file_hash ?? "--error--";
                             if (revisionWithData.revision_type === 'file') {
-                                revisionWithData.file_hash = fuzzyFileIndex.file_hash ?? "--error_hash--";
+                                revisionWithData.file_hash = fuzzyFileIndex.file_hash ?? "--error--";
                             }
                         } else {
                             console.warn(`${indent}[Depth:${_depth}] FileIndex not found for genesis revision: ${revisionItem.pubkey_hash}`);
@@ -698,21 +688,23 @@ export async function diagnoseLinks(): Promise<void> {
 
                         // Try to fetch the linked revision
                         const linkedRev = await prisma.revision.findFirst({
-                            where: { pubkey_hash: linkedHash }
+                            where: { pubkey_hash: { equals: linkedHash } }
                         });
 
                         console.log(`Linked revision exists: ${!!linkedRev}`);
                         if (linkedRev) {
                             console.log('Linked revision type:', linkedRev.revision_type);
 
+                            // throw Error(`PLEASELinked revision found: ${linkedRev.pubkey_hash}, type: ${linkedRev.revision_type}`);
+                           
                             // Check if FileIndex exists for this link
                             const linkedFileIndex = await prisma.fileIndex.findFirst({
-                                where: { id: linkedHash }
+                                where: { pubkey_hash: { has: linkedHash } }
                             });
 
                             console.log(`FileIndex exists for linked hash: ${!!linkedFileIndex}`);
                             if (linkedFileIndex) {
-                                console.log('FileIndex URI:', linkedFileIndex.uri);
+                                // Removed logging of .uri for FileIndex (not present in schema)
                             } else {
                                 // Try alternate approach with fuzzy match
                                 const parts = linkedHash.split('_');
@@ -720,16 +712,16 @@ export async function diagnoseLinks(): Promise<void> {
                                     const linkedHashOnly = parts[1];
                                     const fuzzyFileIndex = await prisma.fileIndex.findFirst({
                                         where: {
-                                            id: {
-                                                contains: linkedHashOnly,
-                                                mode: 'insensitive'
+                                            pubkey_hash: {
+                                                has: linkedHashOnly,
+                                                
                                             }
                                         }
                                     });
 
                                     console.log(`FileIndex exists via fuzzy match: ${!!fuzzyFileIndex}`);
                                     if (fuzzyFileIndex) {
-                                        console.log('FileIndex URI (fuzzy match):', fuzzyFileIndex.uri);
+                                        // Removed logging of .uri for FileIndex (not present in schema)
                                     }
                                 }
                             }

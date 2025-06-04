@@ -5,7 +5,9 @@ import { FastifyInstance } from "fastify";
 import { ChequeRegisterRequest, SaveRevision, VerifyRequestBody } from "../models/request_models";
 import { prisma } from "../database/db";
 import { getHost, getPort } from "../utils/api_utils";
-import { createAquaTreeFromRevisions, estimateStringFileSize, saveARevisionInAquaTree } from "../utils/revisions_utils";
+import { saveARevisionInAquaTree } from "../utils/revisions_utils";
+import { estimateStringFileSize } from "../utils/file_utils";
+import { createAquaTreeFromRevisions } from "../utils/revisions_operations_utils";
 
 export default async function chequeApiController(fastify: FastifyInstance) {
 

@@ -112,6 +112,7 @@ const LoadConfiguration = () => {
                     description: "You are not logged in! Please login",
                     type: "info",
                 })
+                // window.location.reload()
             }
         }else{
             console.log(`backend url is ${backend_url}`)

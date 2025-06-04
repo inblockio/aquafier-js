@@ -8,6 +8,7 @@ import { randomUUID } from 'crypto';
 import { AquaTemplatesFields } from "../models/types"
 import * as fs from "fs"
 import path from 'path';
+import { getGenesisHash } from "./aqua_tree_utils"
 
 const getHost = (): string => {
   return process.env.HOST || '127.0.0.1'
@@ -58,23 +59,8 @@ export function getAquaTreeFileName(aquaTree: AquaTree): string {
   return aquaTree!.file_index[mainAquaHash] ?? "";
 
 }
+ 
 
-export function getGenesisHash(aquaTree: AquaTree): string | null {
-  let aquaTreeGenesisHash: string | null = null;
-  let allAquuaTreeHashes = Object.keys(aquaTree!.revisions);
-
-  for (let hash of allAquuaTreeHashes) {
-    let revisionItem = aquaTree!.revisions[hash];
-    if (revisionItem.previous_verification_hash == "" || revisionItem.previous_verification_hash == null || revisionItem.previous_verification_hash == undefined) {
-
-      aquaTreeGenesisHash = hash //revisionItem.previous_verification_hash
-      break;
-
-    }
-  }
-
-  return aquaTreeGenesisHash
-}
 
 
 export const saveTemplateFileData = async (aquaTree: AquaTree, fileData: string, walletAddress: string = SYSTEM_WALLET_ADDRESS) => {
@@ -110,13 +96,13 @@ export const saveTemplateFileData = async (aquaTree: AquaTree, fileData: string,
   await fs.promises.writeFile(filePath, fileData);
   let fileCreation = await prisma.file.upsert({
     where: {
-      hash: filepubkeyhash,
+      file_hash: fileHash,
     },
     create: {
-      hash: filepubkeyhash,
+     
       file_hash: fileHash,
-      content: filePath,
-      reference_count: 0, // we use 0 because  saveAquaTree increases file  by 1
+      file_location: filePath,
+      
     },
     update: {}
   })
@@ -126,14 +112,13 @@ export const saveTemplateFileData = async (aquaTree: AquaTree, fileData: string,
 
   await prisma.fileIndex.upsert({
     where: {
-      id: fileCreation.hash,
+      file_hash: fileHash,
     },
     create: {
-      id: fileCreation.hash,
-      hash: [filepubkeyhash],
+     
+      pubkey_hash: [filepubkeyhash],
       file_hash: fileHash,
-      uri: fileName,
-      reference_count: 0 // we use 0 because  saveAquaTree increases file  undex  by 1
+     
     },
     update: {}
   })

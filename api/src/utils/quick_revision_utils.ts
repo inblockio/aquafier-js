@@ -183,62 +183,54 @@ export async function deleteRevisionAndChildren(
                         // First check if this revision is referenced in any FileIndex
                         const fileIndexEntries = await tx.fileIndex.findMany({
                             where: {
-                                hash: {
-                                    has: hash
+                                pubkey_hash: {
+                                    has: fullRevisionHash
                                 }
                             }
                         });
                         
                         for (const fileIndex of fileIndexEntries) {
-                            if ((fileIndex.reference_count || 1) <= 1) {
+                            if (fileIndex.pubkey_hash.length  <= 1) {
                                 // If this is the last reference, delete the FileIndex entry
                                 await tx.fileIndex.delete({
                                     where: {
-                                        id: fileIndex.id
+                                        file_hash: fileIndex.file_hash
                                     }
                                 });
                                 deletedFileIndexes++;
                                 
                                 // If a file record exists for this file, handle it
                                 const file = await tx.file.findUnique({
-                                    where: { hash: fileIndex.id }
+                                    where: { file_hash: fileIndex.file_hash }
                                 });
                                 
                                 if (file) {
-                                    if ((file.reference_count || 1) <= 1) {
+                                    
                                         // If this is the last reference to the file, delete the actual file if it exists
-                                        if (file.content && fs.existsSync(file.content)) {
+                                        if (file.file_location && fs.existsSync(file.file_location)) {
                                             try {
-                                                fs.unlinkSync(file.content);
+                                                fs.unlinkSync(file.file_location);
                                             } catch (e) {
-                                                console.error(`Error deleting file from filesystem: ${file.content}`, e);
+                                                console.error(`Error deleting file from filesystem: ${file.file_location}`, e);
                                             }
                                         }
                                         
                                         // Delete the file record
                                         await tx.file.delete({
-                                            where: { hash: file.hash }
+                                            where: { file_hash: file.file_hash }
                                         });
                                         deletedFiles++;
-                                    } else {
-                                        // Decrement the reference count
-                                        await tx.file.update({
-                                            where: { hash: file.hash },
-                                            data: { 
-                                                reference_count: (file.reference_count || 1) - 1 
-                                            }
-                                        });
-                                    }
+                                   
                                 }
                             } else {
                                 // Otherwise, remove this hash from the hash array and decrement count
                                 await tx.fileIndex.update({
                                     where: {
-                                        id: fileIndex.id
+                                        file_hash: fileIndex.file_hash
                                     },
                                     data: {
-                                        hash: fileIndex.hash.filter(h => h !== hash),
-                                        reference_count: (fileIndex.reference_count || 1) - 1
+                                        pubkey_hash: fileIndex.pubkey_hash.filter(h => h !== hash),
+                                      
                                     }
                                 });
                             }
@@ -533,7 +525,7 @@ export async function transferRevisionChain(
                     // For file revisions, handle file indexes
                     const fileIndexes = await prisma.fileIndex.findMany({
                         where: {
-                            hash: {
+                            pubkey_hash: {
                                 has: sourceFullHash
                             }
                         }
@@ -542,10 +534,9 @@ export async function transferRevisionChain(
                     for (const fileIndex of fileIndexes) {
                         // Update file index to include the new hash
                         await prisma.fileIndex.update({
-                            where: { id: fileIndex.id },
+                            where: { file_hash: fileIndex.file_hash },
                             data: {
-                                hash: [...fileIndex.hash, targetFullHash],
-                                reference_count: (fileIndex.reference_count || 0) + 1
+                                pubkey_hash: [...fileIndex.pubkey_hash, targetFullHash]
                             }
                         });
                     }
@@ -1273,7 +1264,7 @@ async function transferRevisionAssociatedData(
             // For file revisions, handle file indexes
             const fileIndexes = await prisma.fileIndex.findMany({
                 where: {
-                    hash: {
+                    pubkey_hash: {
                         has: sourceFullHash
                     }
                 }
@@ -1282,10 +1273,9 @@ async function transferRevisionAssociatedData(
             for (const fileIndex of fileIndexes) {
                 // Update file index to include the new hash
                 await prisma.fileIndex.update({
-                    where: { id: fileIndex.id },
+                    where: { file_hash: fileIndex.file_hash },
                     data: {
-                        hash: [...fileIndex.hash, targetFullHash],
-                        reference_count: (fileIndex.reference_count || 0) + 1
+                        pubkey_hash: [...fileIndex.pubkey_hash, targetFullHash],
                     }
                 });
             }
