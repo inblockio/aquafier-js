@@ -1,6 +1,6 @@
 import axios from "axios";
 import { useEffect } from "react";
-import { fetchFiles, generateAvatar, getCookie } from "../utils/functions";
+import { fetchFiles, fetchSystemFiles, generateAvatar, getCookie } from "../utils/functions";
 import { useStore } from "zustand";
 import appStore from "../store";
 import { toaster } from "./chakra-ui/toaster";
@@ -8,7 +8,7 @@ import { ethers } from "ethers";
 
 
 const LoadConfiguration = () => {
-    const { setMetamaskAddress, setUserProfile, setFiles, setAvatar, backend_url, setSession } = useStore(appStore)
+    const { setMetamaskAddress, setUserProfile, setFiles, setAvatar, setSystemFileInfo, backend_url, setSession } = useStore(appStore)
 
     const fetchAddressGivenANonce = async (nonce: string) => {
         if (!backend_url.includes('0.0.0.0')) {
@@ -34,6 +34,10 @@ const LoadConfiguration = () => {
                         setFiles(files)
                         fetchUserProfile(_address,nonce)
                         setSession(response.data?.session)
+                        const url3 = `${backend_url}/system/aqua_tree`;
+                        const systemFiles = await  fetchSystemFiles(url3,address )
+                        setSystemFileInfo(systemFiles)
+
                     }
                 }
             }
@@ -49,6 +53,7 @@ const LoadConfiguration = () => {
                     user_pub_key: "",
                     cli_pub_key: "",
                     cli_priv_key: "",
+                    alchemy_key: "",
                     witness_network: "",
                     theme: "light",
                     witness_contract_address: '0x45f59310ADD88E6d23ca58A0Fa7A55BEE6d2a611',
@@ -97,6 +102,7 @@ const LoadConfiguration = () => {
                     user_pub_key: "",
                     cli_pub_key: "",
                     cli_priv_key: "",
+                    alchemy_key: "",
                     witness_network: "",
                     theme: "light",
                     witness_contract_address: '0x45f59310ADD88E6d23ca58A0Fa7A55BEE6d2a611',

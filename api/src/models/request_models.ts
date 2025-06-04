@@ -12,6 +12,26 @@ export interface VerifyRequestBody {
 }
 
 
+
+// Define the field type for the "fields" array
+export interface AquaFormFieldRequest {
+  id: string;
+  label: string;
+  name: string;
+  type: string;
+  required: boolean;
+}
+
+// Define the main data model
+export interface AquaFormRequest {
+  id: string;
+  name: string;
+  title: string;
+  public : boolean;
+  fields: AquaFormFieldRequest[];
+}
+
+
 export interface FetchAquaTreeRequest {
   latestRevisionHash: string
 
@@ -25,6 +45,7 @@ export interface SettingsRequest {
   cli_pub_key: string | null;
   cli_priv_key: string | null;
   witness_network: string | null;
+  alchemy_key: string;
   witness_contract_address: string | null;
   theme: string | null;
   ens_name: string
@@ -35,6 +56,11 @@ export interface SiweRequest {
   domain: string;
 }
 
+export interface ChequeRegisterRequest {
+  amount: number;
+  wallet_address: string;
+  aqua_tree_revision_hash: string;
+}
 
 
 export interface ShareRequest {
@@ -58,6 +84,12 @@ export interface DeleteRevision {
 export interface SaveRevision {
   revision: Revision,
   revisionHash: string
+}
+
+export interface SaveRevisionForUser {
+  revision: Revision,
+  revisionHash: string,
+  address : string,
 }
 
 export interface AquaNameWithHash {

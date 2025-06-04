@@ -2,11 +2,11 @@ import { useState, useEffect, useCallback, useMemo } from "react";
 import { LuCheck, LuExternalLink, LuTrash, LuX } from "react-icons/lu"
 import { Box, Button, Card, Collapsible, For, Group, Icon, IconButton, Link, Span, Stack, Text } from "@chakra-ui/react"
 import { TimelineConnector, TimelineContent, TimelineDescription, TimelineItem, TimelineRoot, TimelineTitle } from "./chakra-ui/timeline"
-import { displayTime, formatCryptoAddress, fetchLinkedFileName, fetchFiles, getAquaTreeFileObject, isDeepLinkRevision } from "../utils/functions"
+import { displayTime, formatCryptoAddress, fetchLinkedFileName, getFileNameWithDeepLinking, fetchFiles, getAquaTreeFileObject, isDeepLinkRevision, isAquaTree, getGenesisHash } from "../utils/functions"
 import { Alert } from "./chakra-ui/alert"
-import { AquaTree, LogTypeEmojis, Revision } from "aqua-js-sdk";
+import { AquaTree, FileObject, LogTypeEmojis, Revision } from "aqua-js-sdk";
 import ReactLoading from "react-loading"
-import { ERROR_TEXT, WITNESS_NETWORK_MAP } from "../utils/constants"
+import { ERROR_TEXT, WITNESS_NETWORK_MAP, ERROR_UKNOWN } from "../utils/constants"
 import { WalletEnsView } from "./chakra-ui/wallet_ens"
 import { AquaTreeDetailsData, RevisionDetailsSummaryData } from "../models/AquaTreeDetails"
 
@@ -17,28 +17,79 @@ import axios from "axios"
 import { toaster } from "./chakra-ui/toaster";
 import { ApiFileInfo } from "../models/FileInfo";
 
-const viewLinkedFile = (aquaTree: AquaTree, revisionHash: string, revision: Revision, apiFileInfo: ApiFileInfo[], updateSelectedFile: (fileInfo: ApiFileInfo) => void): JSX.Element => {
+const viewLinkedFile = (selectedApiFileInfo: ApiFileInfo, revisionHash: string, revision: Revision, apiFileInfo: ApiFileInfo[], updateSelectedFile: (fileInfo: ApiFileInfo) => void, isWorkflow: boolean): JSX.Element => {
 
     if (revision.revision_type == "link") {
 
-        if (isDeepLinkRevision(aquaTree, revisionHash)) {
+        if (isDeepLinkRevision(selectedApiFileInfo.aquaTree!!, revisionHash)) {
             return <></>
         }
 
         return <Button onClick={
             () => {
-                let linkedFileName = fetchLinkedFileName(aquaTree!!, revision)
+                let linkedFileName = fetchLinkedFileName(selectedApiFileInfo.aquaTree!!, revision);
+                let allFileObjects = [...selectedApiFileInfo.fileObject]
+                apiFileInfo.forEach((e) => {
+                    allFileObjects = [...allFileObjects, ...e.fileObject];
+                })
+                if (isWorkflow || linkedFileName == ERROR_TEXT) {
 
-                if (linkedFileName != ERROR_TEXT) {
+
+
+                    linkedFileName = getFileNameWithDeepLinking(selectedApiFileInfo.aquaTree!!, revisionHash, allFileObjects)
+
+                }
+
+                let fileInfoFound: ApiFileInfo | undefined = undefined
+                if (linkedFileName != ERROR_TEXT && linkedFileName != ERROR_UKNOWN) {
                     for (let fileInfo of apiFileInfo) {
                         let fileObject = getAquaTreeFileObject(fileInfo);
                         if (fileObject) {
                             if (linkedFileName == fileObject.fileName) {
 
-                                updateSelectedFile(fileInfo)
+                                fileInfoFound = fileInfo
                                 break
                             }
                         }
+                    }
+                    if (fileInfoFound) {
+                        updateSelectedFile(fileInfoFound)
+                    } else {
+
+                        for (let fileObject of allFileObjects) {
+
+                            if (linkedFileName == fileObject.fileName) {
+                                let aquaTree: AquaTree | undefined = undefined;
+                                if (linkedFileName.endsWith(".aqua.json")) {
+                                    aquaTree = fileObject.fileContent as AquaTree
+                                } else {
+                                    let fileObjCtItem = allFileObjects.find((e) => e.fileName == `${linkedFileName}.aqua.json`)
+                                    if(fileObjCtItem){
+                                    aquaTree = fileObjCtItem.fileContent as AquaTree
+                                    }
+                                }
+
+                                if (aquaTree == undefined) {
+                                    console.log(`show  ${linkedFileName}  filw object ${JSON.stringify(fileObject, null, 4)}`)
+                                    toaster.create({
+                                        title: "View not available",
+                                        type: 'info'
+                                    })
+                                } else {
+                                    updateSelectedFile({
+                                        aquaTree: aquaTree,
+                                        fileObject: [fileObject],
+                                        linkedFileObjects: [],
+                                        mode: "",
+                                        owner: ""
+                                    })
+                                }
+
+                                break
+                            }
+
+                        }
+
                     }
                 } else {
                     toaster.create({
@@ -55,7 +106,7 @@ const viewLinkedFile = (aquaTree: AquaTree, revisionHash: string, revision: Revi
 }
 
 
-const revisionDataHeader = (aquaTree: AquaTree, revisionHash: string): JSX.Element => {
+const revisionDataHeader = (aquaTree: AquaTree, revisionHash: string, fileObject: FileObject[]): JSX.Element => {
 
     const revision = aquaTree.revisions[revisionHash]
 
@@ -71,8 +122,42 @@ const revisionDataHeader = (aquaTree: AquaTree, revisionHash: string): JSX.Eleme
             return <Span>{ERROR_TEXT}</Span>
         }
         if (isDeepLink) {
+            // before returning deep link we traverse the current  aqua tree 
+            const aquaTreeFiles = fileObject.filter(file => isAquaTree(file.fileContent));
+            console.log(`👁️‍🗨️ aquaTreeFiles ${aquaTreeFiles.length} --  `)
+            if (aquaTreeFiles.length > 0) {
+                let aquaTreePick = aquaTreeFiles.find((e) => {
+                    let tree: AquaTree = e.fileContent as AquaTree
+                    let allHashes = Object.keys(tree.revisions);
+
+
+                    console.log(`👁️‍🗨️ aquaTreeFiles ${allHashes.toString()} == ${revisionHash} `)
+                    return allHashes.includes(revision.link_verification_hashes![0]!)
+                })
+
+                console.log(`👁️‍🗨️ aquaTreePick ${JSON.stringify(aquaTreePick, null, 4)} `)
+                if (aquaTreePick) {
+                    let tree: AquaTree = aquaTreePick.fileContent as AquaTree
+                    let genesisHash = getGenesisHash(tree)
+
+                    console.log(`👁️‍🗨️  genesisHash ${genesisHash}`)
+                    if (genesisHash) {
+
+                        let fileName = tree.file_index[genesisHash]
+                        console.log(`👁️‍🗨️ fileName ${fileName}`)
+
+                        if (fileName) {
+                            return <Span fontSize={"md"}>
+                                Linked to {fileName}
+                            </Span>
+                        }
+                    }
+
+                }
+            }
+
             return <Span>
-                Deep Link
+                Deep Link previous {revision.previous_verification_hash} revisionHash {revisionHash}
             </Span>
         } else {
             return <Span fontSize={"md"}>
@@ -195,7 +280,7 @@ export const RevisionDisplay = ({ fileInfo, revision, revisionHash, isVerificati
                     description: "The revision has been deleted",
                     type: "success",
                     duration: 3000,
-                    placement: "bottom-end"
+                    // placement: "bottom-end"
                 });
 
                 // Reload files for the current user
@@ -205,6 +290,16 @@ export const RevisionDisplay = ({ fileInfo, revision, revisionHash, isVerificati
                     const url2 = `${backend_url}/explorer_files`;
                     const files = await fetchFiles(`${session?.address}`, url2, `${session?.nonce}`);
                     setFiles(files);
+
+                    // we need to update the side drawer for reverification to start
+                    const selectedFileData = files.find((e) => {
+                        Object.keys(e.aquaTree!.revisions!)[0] == Object.keys(selectedFileData!.aquaTree!.revisions)[0]
+                    })
+                    if (selectedFileData) {
+                        setSelectedFileInfo(selectedFileData)
+                    }
+
+
                     // Remove the revision from the list of revisions
                     deleteRevision(revisionHash);
                 }
@@ -214,7 +309,7 @@ export const RevisionDisplay = ({ fileInfo, revision, revisionHash, isVerificati
                     description: "The revision has not been deleted",
                     type: "error",
                     duration: 3000,
-                    placement: "bottom-end"
+                    // placement: "bottom-end"
                 });
             }
         } catch (error) {
@@ -223,7 +318,7 @@ export const RevisionDisplay = ({ fileInfo, revision, revisionHash, isVerificati
                 description: "The revision has not been deleted",
                 type: "error",
                 duration: 3000,
-                placement: "bottom-end"
+                // placement: "bottom-end"
             });
         } finally {
             setIsDeleting(false);
@@ -296,7 +391,7 @@ export const RevisionDisplay = ({ fileInfo, revision, revisionHash, isVerificati
 
                                                         <TimelineContent gap="2">
                                                             <TimelineTitle>
-                                                                {revisionDataHeader(fileInfo!.aquaTree!, revisionHash)}
+                                                                {revisionDataHeader(fileInfo!.aquaTree!, revisionHash, fileInfo.fileObject)}
 
                                                             </TimelineTitle>
                                                             <TimelineDescription>{displayTime(revision.local_timestamp)}&nbsp;(UTC)</TimelineDescription>
@@ -309,7 +404,7 @@ export const RevisionDisplay = ({ fileInfo, revision, revisionHash, isVerificati
                                                                     />
                                                                 ) : null
                                                             }
-                                                            {viewLinkedFile(fileInfo!.aquaTree!, revisionHash, revision, files, setSelectedFileInfo)}
+                                                            {viewLinkedFile(fileInfo!, revisionHash, revision, files, setSelectedFileInfo, false)}
                                                         </TimelineContent>
 
                                                     </TimelineItem>
@@ -440,7 +535,7 @@ export const RevisionDisplay = ({ fileInfo, revision, revisionHash, isVerificati
 
 
 
-export const RevisionDetailsSummary = ({ fileInfo }: RevisionDetailsSummaryData) => {
+export const RevisionDetailsSummary = ({ fileInfo, isWorkFlow }: RevisionDetailsSummaryData) => {
 
     const { files, setSelectedFileInfo } = useStore(appStore)
     // const pageData: PageData = JSON.parse(fileInfo.page_data);
@@ -577,9 +672,9 @@ export const RevisionDetailsSummary = ({ fileInfo }: RevisionDetailsSummaryData)
                                 displayValue={formatCryptoAddress(revision.witness_network ?? "", 4, 6)}
                                 value={revision.witness_network ?? " "} showCopyIcon={false}
                             /> */}
-                                {revisionDataHeader(fileInfo!.aquaTree!, revisionHash)}
+                                {revisionDataHeader(fileInfo!.aquaTree!, revisionHash, fileInfo!.fileObject)}
                                 <Box />
-                                {viewLinkedFile(fileInfo!.aquaTree!, revisionHash, revision!!, files, setSelectedFileInfo)}
+                                {viewLinkedFile(fileInfo!, revisionHash, revision!!, files, setSelectedFileInfo, isWorkFlow)}
                                 {/* <br />
                             <ItemDetail label="Timestamp (UTC) : "
                                 displayValue={displayTime(revision.witness_timestamp?.toString() ?? "")}

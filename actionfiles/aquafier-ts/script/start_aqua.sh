@@ -18,7 +18,6 @@ while [ $attempt -lt $max_attempts ]; do
     echo "Database is ready!"
     break
   fi
-
   
   echo "Waiting for database connection... (Attempt $((attempt+1))/$max_attempts)"
   sleep 5
@@ -33,16 +32,30 @@ done
 # Unset PGPASSWORD for security
 unset PGPASSWORD
 
-# Run Prisma migrations
+# Run Prisma commands with proper initialization
 cd /app/backend
-npx prisma migrate reset --force || {
-  echo "ERROR: Prisma migration reset failed"
+
+# Initialize Prisma client first
+echo "Generating Prisma client..."
+npx prisma generate || {
+  echo "ERROR: Prisma generate failed"
   exit 1
 }
 
+# Try creating the initial database schema if migrations fail
+echo "Running Prisma migrations..."
 npx prisma migrate dev --name init || {
-  echo "ERROR: Prisma migration dev failed"
-  exit 1
+  echo "Migration failed, trying to push schema directly..."
+  npx prisma db push --force-reset || {
+    echo "ERROR: Both migration and schema push failed"
+    exit 1
+  }
+  
+  # After successful db push, try migrations again
+  npx prisma migrate dev --name init || {
+    echo "WARN: Could not create migrations after schema push, but schema is ready"
+    # Continue execution despite this warning
+  }
 }
 
 # Set backend URL

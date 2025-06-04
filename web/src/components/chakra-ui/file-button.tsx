@@ -185,7 +185,7 @@ const FileUploadItem = (props: FileUploadItemProps) => {
 
 
 
-            <Button size={'xs'} colorPalette={'red'} variant={'subtle'} w={'100px'} >
+            <Button  size={'xs'} h={"32px"} colorPalette={'red'} variant={'subtle'} w={'80px'}>
               Delete
               <LuX />
             </Button>

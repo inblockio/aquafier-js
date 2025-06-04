@@ -1,0 +1,45 @@
+[
+    
+    {
+      "name": "identity_claim_id",
+      "label": "Identity Claim Id",
+      "type": "wallet_address",
+      "required": true,
+      "isArray": false
+    },
+    {
+      "name": "name",
+      "label": "Name",
+      "type": "string",
+      "required": true,
+      "isArray": true
+    },
+    {
+      "name": "surname",
+      "label": "Surname",
+      "type": "string",
+      "required": true,
+      "isArray": false
+    },
+    {
+      "name": "email",
+      "label": "Email",
+      "type": "string",
+      "required": true,
+      "isArray": false
+    },
+    {
+      "name": "context",
+      "label": "Context",
+      "type": "string",
+      "required": false,
+      "isArray": false
+    },
+    {
+        "name": "wallet_address",
+        "label": "Wallet Address",
+        "type": "wallet_address",
+        "required": false,
+        "isArray": false
+      }
+  ]

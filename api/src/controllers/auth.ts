@@ -29,6 +29,31 @@ export default async function authController(fastify: FastifyInstance) {
         return reply.code(401).send({ success: false, message: "Session expired" });
       }
 
+
+      let settingsData = await prisma.settings.findFirst({
+        where: {
+          user_pub_key: session.address!!
+        }
+      })
+
+      if (settingsData == null) {
+        let defaultData = {
+          user_pub_key: session.address!!,
+          cli_pub_key: "",
+          cli_priv_key: "",
+          alchemy_key: "ZaQtnup49WhU7fxrujVpkFdRz4JaFRtZ",
+          witness_network: "sepolia",
+          theme: "light",
+          witness_contract_address: '0x45f59310ADD88E6d23ca58A0Fa7A55BEE6d2a611',
+        }
+
+        settingsData = defaultData
+
+        await prisma.settings.create({
+          data: defaultData
+        })
+      }
+
       return {
         success: true,
         session: {
@@ -36,7 +61,8 @@ export default async function authController(fastify: FastifyInstance) {
           nonce: session.nonce,
           issued_at: session.issuedAt,
           expiration_time: session.expirationTime
-        }
+        },
+        user_settings: settingsData 
       };
     } catch (error) {
       console.error("Error fetching session:", error);
@@ -81,7 +107,7 @@ export default async function authController(fastify: FastifyInstance) {
         logs.push("Invalid sign in message")
         logs.push(siweData.error)
         return reply.code(400).send({
-          success: true,
+          success: false,
           logs
         });
       }
@@ -152,10 +178,14 @@ export default async function authController(fastify: FastifyInstance) {
           user_pub_key: siweData.address!!,
           cli_pub_key: "",
           cli_priv_key: "",
+          alchemy_key: "ZaQtnup49WhU7fxrujVpkFdRz4JaFRtZ",
           witness_network: "sepolia",
           theme: "light",
           witness_contract_address: '0x45f59310ADD88E6d23ca58A0Fa7A55BEE6d2a611',
         }
+
+        settingsData = defaultData
+
         await prisma.settings.create({
           data: defaultData
         })
@@ -167,6 +197,7 @@ export default async function authController(fastify: FastifyInstance) {
         success: true,
         logs,
         session,
+        user_settings: settingsData 
       });
     } catch (error) {
       logs.push(`SIWE sign-in failed: ${error}`);

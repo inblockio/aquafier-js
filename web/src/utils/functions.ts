@@ -1,9 +1,133 @@
 // import { ethers } from "ethers";
+import { isAddress, getAddress } from 'ethers';
+
 import { ApiFileInfo } from "../models/FileInfo";
-import { documentTypes, ERROR_TEXT, imageTypes, musicTypes, videoTypes } from "./constants";
+import { documentTypes, ERROR_TEXT, ERROR_UKNOWN, imageTypes, musicTypes, videoTypes } from "./constants";
 // import { AvatarGenerator } from 'random-avatar-generator';
-import Aquafier, { AquaTree, CredentialsData, FileObject, Revision } from "aqua-js-sdk";
+import Aquafier, { AquaTree, CredentialsData, FileObject, OrderRevisionInAquaTree, Revision } from "aqua-js-sdk";
 import jdenticon from "jdenticon/standalone";
+
+
+
+
+
+
+export function formatDate(date: Date) {
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+        'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const day = date.getDate().toString().padStart(2, '0');
+    const month = months[date.getMonth()];
+    const year = date.getFullYear();
+    return `${day}-${month}-${year}`;
+}
+
+export const copyToClipboardModern = async (text: string) => {
+    try {
+        await navigator.clipboard.writeText(text);
+        console.log('Text copied to clipboard');
+        return true;
+    } catch (err) {
+        console.error('Failed to copy text: ', err);
+        return false;
+    }
+};
+
+export const fetchFileData = async (url: string, nonce: string): Promise<string | ArrayBuffer | null> => {
+    try {
+        const actualUrlToFetch = ensureDomainUrlHasSSL(url);
+
+        const response = await fetch(actualUrlToFetch, {
+            headers: {
+                nonce: nonce
+            }
+        });
+        if (!response.ok) throw new Error("Failed to fetch file");
+
+        // Get MIME type from headers
+        const contentType = response.headers.get("Content-Type") || "";
+
+        // Process based on content type
+        if (contentType.startsWith("text/") ||
+            contentType === "application/json" ||
+            contentType === "application/xml" ||
+            contentType === "application/javascript") {
+            return await response.text();
+        } else {
+            return await response.arrayBuffer();
+        }
+    } catch (e) {
+        console.error("Error fetching file:", e);
+        return null;
+    }
+}
+
+export const convertTemplateNameToTitle = (str: string) => {
+    return str.split('_')
+        .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+        .join(' ');
+    // const words = str.split('_');
+    // const firstWord = words[0].charAt(0).toUpperCase() + words[0].slice(1);
+    // const remainingWords = words.slice(1).join(' ');
+    // return firstWord + ' ' + remainingWords;
+};
+
+export const isWorkFlowData = (aquaTree: AquaTree, systemAndUserWorkFlow: string[]): { isWorkFlow: boolean; workFlow: string } => {
+    let falseResponse = {
+        isWorkFlow: false,
+        workFlow: ""
+    }
+    console.log("System workflows: ", systemAndUserWorkFlow)
+
+    //order revision in aqua tree 
+    let aquaTreeRevisionsOrderd = OrderRevisionInAquaTree(aquaTree)
+    let allHashes = Object.keys(aquaTreeRevisionsOrderd.revisions)
+    if (allHashes.length <= 1) {
+        console.log(`Aqua tree has one revision`)
+        return falseResponse
+    }
+    let secondRevision = aquaTreeRevisionsOrderd.revisions[allHashes[1]]
+    if (!secondRevision) {
+        console.log(`Aqua tree has second revision not found`)
+        return falseResponse
+    }
+    if (secondRevision.revision_type == 'link') {
+
+        //get the  system aqua tree name 
+        let secondRevision = aquaTreeRevisionsOrderd.revisions[allHashes[1]]
+        // console.log(` second hash used ${allHashes[1]}  second revision ${JSON.stringify(secondRevision, null, 4)} tree ${JSON.stringify(aquaTreeRevisionsOrderd, null, 4)}`)
+
+        if (secondRevision.link_verification_hashes == undefined) {
+            console.log(`link verification hash is undefined`)
+            return falseResponse
+        }
+        let revisionHash = secondRevision.link_verification_hashes[0]
+        let name = aquaTreeRevisionsOrderd.file_index[revisionHash]
+        // console.log(`--  name ${name}  all hashes ${revisionHash}  second revision ${JSON.stringify(secondRevision, null, 4)} tree ${JSON.stringify(aquaTreeRevisionsOrderd, null, 4)}`)
+
+        // if (systemAndUserWorkFlow.map((e)=>e.replace(".json", "")).includes(name)) {
+
+        let nameWithoutJson = "--error--";
+        if (name) {
+            nameWithoutJson = name.replace(".json", "")
+            if(systemAndUserWorkFlow.map((e) => e.replace(".json", "")).includes(nameWithoutJson)){
+                return {
+                    isWorkFlow: true,
+                    workFlow: nameWithoutJson
+                }
+            }
+        }
+        return {
+            isWorkFlow: false,
+            workFlow: ""
+        }
+
+
+    }
+    console.log(`Aqua tree has second revision is of type ${secondRevision.revision_type}`)
+
+
+    return falseResponse
+}
 
 export function isAquaTree(content: any): boolean {
     // Check if content has the properties of an AquaTree
@@ -46,6 +170,24 @@ export function setCookie(name: string, value: string, expirationTime: Date) {
     // For UTC cookie settings
     // document.cookie = `${name}=${value}; expires=${expirationDate.toUTCString()}; path=/; Secure; SameSite=Strict`;
     document.cookie = `${name}=${value}; expires=${expirationDate}; path=/; Secure; SameSite=Strict`;
+}
+
+export function getAquaTreeFileName(aquaTree: AquaTree): string {
+
+    let mainAquaHash = "";
+    // fetch the genesis 
+    let revisionHashes = Object.keys(aquaTree!.revisions!)
+    for (let revisionHash of revisionHashes) {
+        let revisionData = aquaTree!.revisions![revisionHash];
+        if (revisionData.previous_verification_hash == null || revisionData.previous_verification_hash == "") {
+            mainAquaHash = revisionHash;
+            break;
+        }
+    }
+
+
+    return aquaTree!.file_index[mainAquaHash] ?? "";
+
 }
 
 export function getAquaTreeFileObject(fileInfo: ApiFileInfo): FileObject | undefined {
@@ -119,6 +261,63 @@ export async function switchNetwork(chainId: string) {
 }
 
 
+/**
+ * Validates if a string is a valid Ethereum address using ethers.js v6
+ * @param address The string to check
+ * @returns Boolean indicating if the address is valid
+ */
+export function isValidEthereumAddress(address: string): boolean {
+    try {
+        return isAddress(address);
+    } catch (error) {
+        console.error('Error validating Ethereum address:', error);
+        return false;
+    }
+}
+
+/**
+ * Validates an address and returns the checksummed version if valid
+ * @param address The address to check and format
+ * @returns The checksummed address if valid, or null if invalid
+ */
+export function getValidChecksumAddress(address: string): string | null {
+    try {
+        if (!isAddress(address)) {
+            return null;
+        }
+
+        // Convert to checksum address (properly capitalized)
+        return getAddress(address);
+    } catch (error) {
+        console.error('Error processing Ethereum address:', error);
+        return null;
+    }
+}
+
+
+export async function fetchSystemFiles(url: string, metamaskAddress: string = ""): Promise<Array<ApiFileInfo>> {
+    try {
+
+        const query = await fetch(url, {
+            method: 'GET',
+            headers: {
+                'metamask_address': metamaskAddress,
+            },
+        });
+        const response = await query.json()
+
+        if (!query.ok) {
+            throw new Error(`HTTP error! status: ${query.status}`);
+        }
+
+        return response.data;
+
+    } catch (error) {
+        console.error("Error fetching files:", error);
+        return [];
+    }
+}
+
 export async function fetchFiles(publicMetaMaskAddress: string, url: string, nonce: string): Promise<Array<ApiFileInfo>> {
     try {
 
@@ -173,7 +372,7 @@ export function validateAquaTree(tree: AquaTree): [boolean, string] {
     for (const hash in tree.revisions) {
         const revision = tree.revisions[hash];
 
-        console.log(`Revision --  ${JSON.stringify(revision)}`)
+        // console.log(`Revision --  ${JSON.stringify(revision)}`)
         // Check required fields for all revisions
         if (revision.previous_verification_hash === undefined || revision.previous_verification_hash === null) {
             return [false, "A revision must contain previous_verification_hash"];
@@ -435,8 +634,6 @@ function calculateBase64Size(base64String: string) {
     return (base64String.length * 3) / 4 - padding;
 }
 
-
-
 /**
  * Converts a Blob (typically from an HTTP response) to a base64 string
  * 
@@ -467,6 +664,26 @@ export function blobToBase64(blob: Blob): Promise<string> {
     });
 }
 
+// Basic random number function
+export function getRandomNumber(min: number, max: number): number | null {
+    // Ensure min and max are numbers
+    min = Number(min);
+    max = Number(max);
+
+    // Validate inputs
+    if (isNaN(min) || isNaN(max)) {
+        console.log("Please provide valid numbers");
+        return null
+    }
+
+    // Swap if min is greater than max
+    if (min > max) {
+        [min, max] = [max, min];
+    }
+
+    // Generate random number between min and max (inclusive)
+    return Math.floor(Math.random() * (max - min + 1)) + min;
+}
 
 // Function to convert file to base64
 export async function fileToBase64(file: File): Promise<string> {
@@ -485,29 +702,103 @@ export async function fileToBase64(file: File): Promise<string> {
         reader.onerror = error => reject(error)
     })
 }
-
 export const isArrayBufferText = (buffer: ArrayBuffer): boolean => {
     // Convert the ArrayBuffer to a Uint8Array
     const uint8Array = new Uint8Array(buffer);
 
-      // Check for PDF signature
-      if (uint8Array.length >= 5) {
-        // Check for %PDF- signature
-        if (uint8Array[0] === 37 && uint8Array[1] === 80 && 
-            uint8Array[2] === 68 && uint8Array[3] === 70 && 
-            uint8Array[4] === 45) {
-            return false; // This is a PDF file
-        }
+    // If buffer is too small, it's likely not a valid file
+    if (uint8Array.length < 4) {
+        // Default to text for very small buffers
+        return true;
     }
-    
+
+    // Check for common binary file signatures (magic numbers)
+
+    // Check for PDF signature: %PDF-
+    if (uint8Array.length >= 5 &&
+        uint8Array[0] === 37 && uint8Array[1] === 80 &&
+        uint8Array[2] === 68 && uint8Array[3] === 70 &&
+        uint8Array[4] === 45) {
+        return false;
+    }
+
+    // Check for JPEG signature: FF D8 FF
+    if (uint8Array.length >= 3 &&
+        uint8Array[0] === 0xFF && uint8Array[1] === 0xD8 &&
+        uint8Array[2] === 0xFF) {
+        return false;
+    }
+
+    // Check for PNG signature: 89 50 4E 47 0D 0A 1A 0A
+    if (uint8Array.length >= 8 &&
+        uint8Array[0] === 0x89 && uint8Array[1] === 0x50 &&
+        uint8Array[2] === 0x4E && uint8Array[3] === 0x47 &&
+        uint8Array[4] === 0x0D && uint8Array[5] === 0x0A &&
+        uint8Array[6] === 0x1A && uint8Array[7] === 0x0A) {
+        return false;
+    }
+
+    // Check for GIF signatures: GIF87a or GIF89a
+    if (uint8Array.length >= 6 &&
+        uint8Array[0] === 0x47 && uint8Array[1] === 0x49 &&
+        uint8Array[2] === 0x46 && uint8Array[3] === 0x38 &&
+        (uint8Array[4] === 0x37 || uint8Array[4] === 0x39) &&
+        uint8Array[5] === 0x61) {
+        return false;
+    }
+
+    // Check for BMP signature: BM
+    if (uint8Array.length >= 2 &&
+        uint8Array[0] === 0x42 && uint8Array[1] === 0x4D) {
+        return false;
+    }
+
+    // Check for WEBP signature: RIFF....WEBP
+    if (uint8Array.length >= 12 &&
+        uint8Array[0] === 0x52 && uint8Array[1] === 0x49 &&
+        uint8Array[2] === 0x46 && uint8Array[3] === 0x46 &&
+        uint8Array[8] === 0x57 && uint8Array[9] === 0x45 &&
+        uint8Array[10] === 0x42 && uint8Array[11] === 0x50) {
+        return false;
+    }
+
+    // Check for SVG signature: typically starts with <?xml or <svg
+    // SVG is actually text-based (XML), but we might want to treat it as a binary format
+    // depending on your application's needs
+    if (uint8Array.length >= 5) {
+        // Check for <?xml
+        const possibleXml = (uint8Array[0] === 0x3C && uint8Array[1] === 0x3F &&
+            uint8Array[2] === 0x78 && uint8Array[3] === 0x6D &&
+            uint8Array[4] === 0x6C);
+
+        // Check for <svg
+        const possibleSvg = (uint8Array.length >= 4 &&
+            uint8Array[0] === 0x3C && uint8Array[1] === 0x73 &&
+            uint8Array[2] === 0x76 && uint8Array[3] === 0x67);
+
+        // If SVG should be treated as binary, uncomment:
+        if (possibleXml || possibleSvg) return false;
+    }
+
+    // Check for TIFF signature: 49 49 2A 00 (little endian) or 4D 4D 00 2A (big endian)
+    if (uint8Array.length >= 4 &&
+        ((uint8Array[0] === 0x49 && uint8Array[1] === 0x49 &&
+            uint8Array[2] === 0x2A && uint8Array[3] === 0x00) ||
+            (uint8Array[0] === 0x4D && uint8Array[1] === 0x4D &&
+                uint8Array[2] === 0x00 && uint8Array[3] === 0x2A))) {
+        return false;
+    }
+
     // Check if the byte sequence looks like text
     // 1. Check for null bytes (usually not in text files)
     // 2. Check for high ratio of printable ASCII characters
+    // 3. Check for high ratio of control characters
 
     // Check first 1000 bytes or the whole buffer, whichever is smaller
     const bytesToCheck = Math.min(1000, uint8Array.length);
     let textCharCount = 0;
     let nullByteCount = 0;
+    let controlCharCount = 0;
 
     for (let i = 0; i < bytesToCheck; i++) {
         const byte = uint8Array[i];
@@ -517,19 +808,30 @@ export const isArrayBufferText = (buffer: ArrayBuffer): boolean => {
             nullByteCount++;
         }
 
+        // Count control characters (0-8, 14-31, 127)
+        // Exclude common whitespace (9-13: tab, LF, VT, FF, CR)
+        if ((byte >= 0 && byte <= 8) || (byte >= 14 && byte <= 31) || byte === 127) {
+            controlCharCount++;
+        }
+
         // Count printable ASCII characters (32-126) plus common whitespace (9-13)
         if ((byte >= 32 && byte <= 126) || (byte >= 9 && byte <= 13)) {
             textCharCount++;
         }
     }
 
-    // If more than 5% are null bytes, probably not text
-    if (nullByteCount > bytesToCheck * 0.05) {
+    // If more than 3% are null bytes, probably not text
+    if (nullByteCount > bytesToCheck * 0.03) {
         return false;
     }
 
-    // If more than 90% are printable characters, probably text
-    return textCharCount > bytesToCheck * 0.9;
+    // If more than 10% are control characters (excluding whitespace), probably not text
+    if (controlCharCount > bytesToCheck * 0.1) {
+        return false;
+    }
+
+    // If more than 85% are printable characters, probably text
+    return textCharCount > bytesToCheck * 0.85;
 }
 
 // More comprehensive function to check if a file is text-based
@@ -619,10 +921,82 @@ export const readFileContent = async (file: File): Promise<string | Uint8Array> 
 };
 
 
-export function timeToHumanFriendly(timestamp: string | undefined, showFull: boolean = false): string {
+// Helper function to convert Blob to Data URL
+export const blobToDataURL = (blob: Blob): Promise<string> => {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => {
+            resolve(reader.result as string);
+        };
+        reader.onerror = reject;
+        reader.readAsDataURL(blob);
+    });
+}
+export function timeStampToDateObject(timestamp: string): Date | null {
+    try {
+        // Extract parts using substring
+        const year = parseInt(timestamp.substring(0, 4));
+        const month = parseInt(timestamp.substring(4, 6)) - 1; // Month is 0-indexed (0=Jan)
+        const day = parseInt(timestamp.substring(6, 8));
+        const hour = parseInt(timestamp.substring(8, 10));
+        const minute = parseInt(timestamp.substring(10, 12));
+        const second = parseInt(timestamp.substring(12, 14));
+
+        // Create Date object
+        const dateObj = new Date(year, month, day, hour, minute, second);
+        return dateObj
+    } catch (e) {
+        console.log(`💣💣 Error occured parsing timestamp to date`);
+        return null
+    }
+}
+
+
+// Function to convert data URL to File object
+export const dataURLToFile = (dataUrl: string, filename: string): File => {
+    // Split the data URL to get the MIME type and base64 data
+    const arr = dataUrl.split(',');
+    const mime = arr[0].match(/:(.*?);/)?.[1] || 'image/png';
+    const bstr = atob(arr[1]);
+
+    // Convert base64 to binary
+    let n = bstr.length;
+    const u8arr = new Uint8Array(n);
+
+    while (n--) {
+        u8arr[n] = bstr.charCodeAt(n);
+    }
+
+    // Create and return File object
+    return new File([u8arr], filename, { type: mime });
+};
+
+// Function to convert data URL to Uint8Array
+export const dataURLToUint8Array = (dataUrl: string): Uint8Array => {
+    // Extract the base64 data
+    const base64Data = dataUrl.split(',')[1];
+    // Convert base64 to binary string
+    const binaryString = atob(base64Data);
+
+    // Create Uint8Array from binary string
+    const bytes = new Uint8Array(binaryString.length);
+    for (let i = 0; i < binaryString.length; i++) {
+        bytes[i] = binaryString.charCodeAt(i);
+    }
+
+    return bytes;
+};
+
+
+export function timeToHumanFriendly(
+    timestamp: string | undefined, 
+    showFull: boolean = false, 
+    timezone?: string
+): string {
     if (!timestamp) {
         return '-';
     }
+    
 
     // Extract the date components
     const year = timestamp.substring(0, 4);
@@ -632,23 +1006,88 @@ export function timeToHumanFriendly(timestamp: string | undefined, showFull: boo
     const minutes = timestamp.substring(10, 12);
     const seconds = timestamp.substring(12, 14);
 
-    // Create a new Date object
+    // Create a new Date object in UTC
     const date = new Date(Date.UTC(Number(year), month, Number(day), Number(hours), Number(minutes), Number(seconds)));
 
+    // Auto-detect user's local timezone if none provided
+    const defaultTimezone = timezone || Intl.DateTimeFormat().resolvedOptions().timeZone;
+
+    // Timezone mapping for common East African timezones
+    const timezoneMap: { [key: string]: string } = {
+        // African timezones
+        'EAT': 'Africa/Nairobi',      // East Africa Time (UTC+3)
+        'CAT': 'Africa/Harare',       // Central Africa Time (UTC+2)
+        'WAT': 'Africa/Lagos',        // West Africa Time (UTC+1)
+        
+        // European timezones
+        'CET': 'Europe/Berlin',       // Central European Time (UTC+1)
+        'CEST': 'Europe/Berlin',      // Central European Summer Time (UTC+2)
+        'GMT': 'GMT',                 // Greenwich Mean Time (UTC+0)
+        'BST': 'Europe/London',       // British Summer Time (UTC+1)
+        'EET': 'Europe/Athens',       // Eastern European Time (UTC+2)
+        
+        // North American timezones
+        'PST': 'America/Los_Angeles', // Pacific Standard Time (UTC-8)
+        'PDT': 'America/Los_Angeles', // Pacific Daylight Time (UTC-7)
+        'MST': 'America/Denver',      // Mountain Standard Time (UTC-7)
+        'MDT': 'America/Denver',      // Mountain Daylight Time (UTC-6)
+        'CST': 'America/Chicago',     // Central Standard Time (UTC-6)
+        'CDT': 'America/Chicago',     // Central Daylight Time (UTC-5)
+        'EST': 'America/New_York',    // Eastern Standard Time (UTC-5)
+        'EDT': 'America/New_York',    // Eastern Daylight Time (UTC-4)
+        
+        // Asian timezones
+        'JST': 'Asia/Tokyo',          // Japan Standard Time (UTC+9)
+        'KST': 'Asia/Seoul',          // Korea Standard Time (UTC+9)
+        'CST_CHINA': 'Asia/Shanghai', // China Standard Time (UTC+8)
+        'IST': 'Asia/Kolkata',        // India Standard Time (UTC+5:30)
+        'GST': 'Asia/Dubai',          // Gulf Standard Time (UTC+4)
+        
+        // Australian timezones
+        'AEST': 'Australia/Sydney',   // Australian Eastern Standard Time (UTC+10)
+        'AWST': 'Australia/Perth',    // Australian Western Standard Time (UTC+8)
+        
+        // Other common
+        'UTC': 'UTC',
+        'NZST': 'Pacific/Auckland'    // New Zealand Standard Time (UTC+12)
+        // Add more mappings as needed
+    };
+
+    // Use the mapped timezone or the provided timezone directly
+    const resolvedTimezone = timezoneMap[defaultTimezone.toUpperCase()] || defaultTimezone;
+
     // Format options
-    const dateOptions: Intl.DateTimeFormatOptions = { year: 'numeric', month: 'short', day: 'numeric' };
+    const dateOptions: Intl.DateTimeFormatOptions = { 
+        year: 'numeric', 
+        month: 'short', 
+        day: 'numeric',
+        timeZone: resolvedTimezone
+    };
+    
     const fullOptions: Intl.DateTimeFormatOptions = {
         ...dateOptions,
         hour: '2-digit',
         minute: '2-digit',
         second: '2-digit',
         hour12: false,
-        timeZone: 'UTC',
+        timeZone: resolvedTimezone,
     };
 
-    // Return formatted string based on showFull
-    return date.toLocaleDateString('en-US', showFull ? fullOptions : dateOptions);
+    try {
+        // Return formatted string based on showFull
+        return date.toLocaleDateString('en-US', showFull ? fullOptions : dateOptions);
+    } catch (error) {
+        // Fallback to user's local timezone if specified timezone is invalid
+        console.warn(`Invalid timezone: ${defaultTimezone}, falling back to local timezone`);
+        const userTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+        const fallbackOptions = showFull ? 
+            { ...fullOptions, timeZone: userTimezone } : 
+            { ...dateOptions, timeZone: userTimezone };
+        return date.toLocaleDateString('en-US', fallbackOptions);
+    }
 }
+
+
 
 export function dummyCredential(): CredentialsData {
     return {
@@ -688,6 +1127,63 @@ export function areArraysEqual(array1: Array<string>, array2: Array<string>) {
     return array2Copy.length === 0;
 }
 
+
+export function getFileNameWithDeepLinking(aquaTree: AquaTree, revisionHash: string, fileObject: FileObject[]): string {
+    
+        const revision = aquaTree.revisions[revisionHash]
+    
+        if (revision.previous_verification_hash.length == 0) {
+    
+            return aquaTree.file_index[revisionHash]
+        }
+        if (revision.revision_type == "link") {
+            let isDeepLink = isDeepLinkRevision(aquaTree, revisionHash)
+            if (isDeepLink == null) {
+                return ERROR_UKNOWN
+            }
+            if (isDeepLink) {
+                // before returning deep link we traverse the current  aqua tree 
+                const aquaTreeFiles = fileObject.filter(file => isAquaTree(file.fileContent));
+                console.log(`👁️‍🗨️ aquaTreeFiles ${aquaTreeFiles.length} --  `)
+                if (aquaTreeFiles.length > 0) {
+                    let aquaTreePick = aquaTreeFiles.find((e) => {
+                        let tree: AquaTree = e.fileContent as AquaTree
+                        let allHashes = Object.keys(tree.revisions);
+    
+    
+                        console.log(`👁️‍🗨️ aquaTreeFiles ${allHashes.toString()} == ${revisionHash} `)
+                        return allHashes.includes(revision.link_verification_hashes![0]!)
+                    })
+    
+                    console.log(`👁️‍🗨️ aquaTreePick ${JSON.stringify(aquaTreePick, null, 4)} `)
+                    if (aquaTreePick) {
+                        let tree: AquaTree = aquaTreePick.fileContent as AquaTree
+                        let genesisHash = getGenesisHash(tree)
+    
+                        console.log(`👁️‍🗨️  genesisHash ${genesisHash}`)
+                        if (genesisHash) {
+    
+                            let fileName = tree.file_index[genesisHash]
+                            console.log(`👁️‍🗨️ fileName ${fileName}`)
+    
+                            if (fileName) {
+                                return fileName
+                            }
+                        }
+    
+                    }
+                }
+    
+                return ERROR_TEXT
+            } else {
+                return fetchLinkedFileName(aquaTree, revision)
+                
+            }
+        }
+    
+        return  ERROR_TEXT
+    
+}
 export function isDeepLinkRevision(aquaTree: AquaTree, revisionHash: string): boolean | null {
 
     let revisionData = aquaTree.revisions[revisionHash]
@@ -705,8 +1201,6 @@ export function isDeepLinkRevision(aquaTree: AquaTree, revisionHash: string): bo
 
 }
 
-
-  
 export function fetchLinkedFileName(aquaTree: AquaTree, revision: Revision): string {
     if (revision.link_verification_hashes == undefined) {
         return ERROR_TEXT
@@ -924,7 +1418,8 @@ export const isJSONKeyValueStringContent = (fileContent: string): boolean => {
         }
 
         // Check if all keys map to string values
-        return Object.entries(parsedContent).every(([_, value]) => typeof value === 'string');
+        // return Object.entries(parsedContent).every(([_, value]) => typeof value === 'string');
+        return true
     } catch (error) {
         // If JSON.parse throws an error, it's not valid JSON
         return false;
@@ -1169,14 +1664,152 @@ export function generateAvatar(seed: string, size = 200) {
 }
 
 
+// export function ensureDomainUrlHasSSL(actualUrlToFetch: string): string {
+//     let url = actualUrlToFetch
+//     // check if the file hash exist 
+//     // console.log(`==URL Data before ${actualUrlToFetch}`)
+// if (actualUrlToFetch.includes("inblock.io")) {
+//     if (!actualUrlToFetch.includes("https")) {
+//         url = actualUrlToFetch.replace("http", "https")
+//     }
+// }
+
+//     if(actualUrlToFetch.includes("https://0.0.0.0:0")){
+//         url = actualUrlToFetch.replace("https://0.0.0.0:0", "http://127.0.0.1:3000")
+//     }
+
+//     // console.log(`==URL Data after ${actualUrlToFetch}`)
+//     return url
+// }
+
+export function convertToWebsocketUrl(actualUrlToFetch: string): string {
+
+    // Step 1: Ensure SSL if needed
+    let validHttpAndDomain = ensureDomainUrlHasSSL(actualUrlToFetch);
+
+    // Step 2: Convert protocol from http(s) to ws(s)
+    if (validHttpAndDomain.startsWith('https://')) {
+        return validHttpAndDomain.replace('https://', 'wss://');
+    } else if (validHttpAndDomain.startsWith('http://')) {
+        return validHttpAndDomain.replace('http://', 'ws://');
+    }
+
+    // If no recognizable protocol is found, assume secure websocket as fallback
+    return 'wss://' + validHttpAndDomain;
+}
+
 export function ensureDomainUrlHasSSL(actualUrlToFetch: string): string {
-    // check if the file hash exist 
-    // console.log(`==URL Data before ${actualUrlToFetch}`)
+    let url = actualUrlToFetch;
+
     if (actualUrlToFetch.includes("inblock.io")) {
         if (!actualUrlToFetch.includes("https")) {
-            actualUrlToFetch = actualUrlToFetch.replace("http", "https")
+            url = actualUrlToFetch.replace("http", "https")
         }
     }
-    // console.log(`==URL Data after ${actualUrlToFetch}`)
-    return actualUrlToFetch
+
+
+    // Alternatively, if the domain is "inblock.io" but lacks protocol
+
+    if (url.startsWith("inblock.io")) {
+        url = "https://" + url;
+    }
+
+    // Replace unsafe localhost URL (HTTPS on 0.0.0.0:0 → HTTP on 127.0.0.1:3000)
+    if (url.startsWith("https://0.0.0.0") || url.startsWith("http://0.0.0.0") || url.startsWith("https://127.0.0.1") || url.startsWith("https://localhost")) {
+        url = url.replace("https://0.0.0.0", "http://127.0.0.1");
+        url = url.replace("http://0.0.0.0", "http://127.0.0.1");
+        url = url.replace("https://127.0.0.1", "http://127.0.0.1");
+        url = url.replace("https://localhost", "http://127.0.0.1");
+    }
+
+    // Check if we're on inblock.io domain but URL contains localhost IP addresses
+    const currentDomain = typeof window !== 'undefined' ? window.location.hostname : '';
+    console.log(`ensureDomainUrlHasSSL currentDomain ${currentDomain}`)
+    if (currentDomain === "inblock.io" || currentDomain === "dev.inblock.io" || currentDomain == "aquafier.inblock.io" || currentDomain.includes("inblock.io")) {
+        if (url.includes("127.0.0.1") || url.includes("0.0.0.0") || url.includes("localhost")) {
+
+            let domainData = ''
+            if (currentDomain === "aquafier.inblock.io") {
+                domainData = 'https://aquafier-api.inblock.io'
+            } else {
+                domainData = 'https://dev-api.inblock.io'
+            }
+
+
+            url = url.replace("http://127.0.0.1", domainData);
+            url = url.replace("https://127.0.0.1", domainData);
+
+            // Handle 0.0.0.0 with or without port
+            url = url.replace("http://0.0.0.0", domainData);
+            url = url.replace("https://0.0.0.0", domainData);
+
+            // Handle localhost with or without port
+            url = url.replace("http://localhost", domainData);
+            url = url.replace("https://localhost", domainData);
+
+            // Remove any port numbers that might remain
+            url = url.replace(/:\d+/g, "");
+        }
+    }
+
+    return url;
+
+
 }
+
+export function makeProperReadableWord(wordWithUnderScores: string) {
+    if (!wordWithUnderScores) {
+        return wordWithUnderScores;
+    }
+    let words = wordWithUnderScores.split("_");
+    return words.map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(" ");
+}
+
+export const getHighestCount = (strArray: Array<string>): number => {
+
+    let highestCounter = 0;
+
+    // Loop through each string in the array
+    for (const str of strArray) {
+        // Use regex to extract the number after the underscore
+        const match = str.match(/_(\d+)$/);
+
+        if (match) {
+            // Convert the extracted number to integer
+            const counter = parseInt(match[1], 10);
+
+            // Update highest counter if this one is greater
+            if (!isNaN(counter) && counter > highestCounter) {
+                highestCounter = counter;
+            }
+        }
+    }
+    return highestCounter
+
+}
+
+/**
+ * Extracts the highest form index from an object with keys following the pattern "forms_*_N"
+ * where N is the index number we want to find the maximum of.
+ */
+export const getHighestFormIndex = (obj: Record<string, any>): number => {
+    let highestIndex = -1;
+
+    // Loop through all object keys
+    for (const key of Object.keys(obj)) {
+        // Check if key matches the expected pattern (forms_*_N)
+        const match = key.match(/^forms_[^_]+_(\d+)$/);
+
+        if (match) {
+            // Extract the index number and convert to integer
+            const index = parseInt(match[1], 10);
+
+            // Update highest index if this one is greater
+            if (!isNaN(index) && index > highestIndex) {
+                highestIndex = index;
+            }
+        }
+    }
+
+    return highestIndex;
+};

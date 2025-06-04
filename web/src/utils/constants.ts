@@ -12,6 +12,7 @@ export const maxFileSizeForUpload = 200 * 1024 * 1024; // 200MB in bytes
 
 export const SESSION_COOKIE_NAME = "pkc_nonce"
 export const ERROR_TEXT="--error--"
+export const ERROR_UKNOWN="--unknown--"
 export const ETH_CHAINID_MAP: Record<string, string> = {
   'mainnet': '0x1',
   'sepolia': '0xaa36a7',

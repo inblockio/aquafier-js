@@ -1,4 +1,4 @@
-import { useState, useEffect, FormEvent, useRef } from 'react';
+import { useState, FormEvent, useRef } from 'react';
 import {
   Container,
   Box,
@@ -13,8 +13,10 @@ import {
   Select
 } from '@chakra-ui/react';
 import { Field } from '../components/chakra-ui/field';
-import { FormTemplate, getFormTemplates, getFormTemplateById } from '../components/aqua_forms';
+import { FormTemplate } from '../components/aqua_forms/types';
 import { NumberInputField, NumberInputRoot } from '../components/chakra-ui/number-input';
+import { useStore } from 'zustand';
+import appStore from '../store';
 
 // Template Select Component
 interface TemplateSelectProps {
@@ -72,20 +74,15 @@ interface FormValues {
 }
 
 const FormGenerator = () => {
-  const [templates, setTemplates] = useState<FormTemplate[]>([]);
   const [selectedTemplateId, setSelectedTemplateId] = useState<string>('');
   const [selectedTemplate, setSelectedTemplate] = useState<FormTemplate | null>(null);
   const [formValues, setFormValues] = useState<FormValues>({});
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSubmitted, setIsSubmitted] = useState(false);
 
-  // No toast in this project, we'll use console.log instead
+  const { formTemplates } = useStore(appStore);
 
-  // Load templates on component mount
-  useEffect(() => {
-    const loadedTemplates = getFormTemplates();
-    setTemplates(loadedTemplates);
-  }, []);
+  // No toast in this project, we'll use console.log instead
 
   // Handle template selection
   const handleTemplateChange = (templateId: string) => {
@@ -93,7 +90,7 @@ const FormGenerator = () => {
     setIsSubmitted(false);
 
     if (templateId) {
-      const template = getFormTemplateById(templateId);
+      const template = formTemplates.find(template => template.id === templateId);
       setSelectedTemplate(template || null);
 
       // Reset form values and errors when template changes
@@ -176,7 +173,7 @@ const FormGenerator = () => {
 
         <Field label="Select a Form Template" mb={6}>
           <TemplateSelect
-            templates={templates}
+            templates={formTemplates}
             value={selectedTemplateId}
             onChange={handleTemplateChange}
           />

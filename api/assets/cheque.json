@@ -1,0 +1,7 @@
+{
+    "sender": "0x...",
+    "receiver": "0x...",
+    "amount": "John",
+    "currency": "Doe",
+    "note": "john.doe@example.com"
+}

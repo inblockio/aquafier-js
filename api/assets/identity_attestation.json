@@ -1,0 +1,8 @@
+{
+    "identity_claim_id": "0x5721891d757ee81ab3cd00442293f3808a99e676d2d1bda03cda26bae23daed1",
+    "name": "John",
+    "surname": "Doe",
+    "email": "john.doe@example.com",
+    "context": "I verified the attributes against a government issued ID. I hereby attest that the above information is true and correct to the best of my knowledge.",
+    "wallet_address": "0x6b2f22390c318107e95c58c90a66afaf7ef06853"
+}

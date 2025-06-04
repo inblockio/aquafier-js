@@ -8,15 +8,16 @@ import JSZip from "jszip";
 import { randomUUID } from 'crypto';
 import util from 'util';
 import { pipeline } from 'stream';
-import * as fs from "fs" 
+import * as fs from "fs"
 import { error } from 'console';
-import { createAquaTreeFromRevisions, fetchAquatreeFoUser, FetchRevisionInfo, findAquaTreeRevision, getGenesisHash, removeFilePathFromFileIndex, saveAquaTree, validateAquaTree } from '../utils/revisions_utils';
+import { createAquaTreeFromRevisions, deleteAquaTreeFromSystem, fetchAquatreeFoUser, FetchRevisionInfo, findAquaTreeRevision, getGenesisHash, getUserApiFileInfo, removeFilePathFromFileIndex, saveAquaTree, validateAquaTree } from '../utils/revisions_utils';
 import { fileURLToPath } from 'url';
 import { AquaForms, FileIndex, Signature, Witness, WitnessEvent } from '@prisma/client';
 import { getHost, getPort } from '../utils/api_utils';
 import { AquaJsonInZip, DeleteRevision, SaveAquaTree } from '../models/request_models';
 import { fetchCompleteRevisionChain } from '../utils/quick_utils';
 import { transferRevisionChain, mergeRevisionChain } from '../utils/quick_revision_utils';
+import { sendToUserWebsockerAMessage } from './websocketController';
 // import getStream from 'get-stream';
 // Promisify pipeline
 const pump = util.promisify(pipeline);
@@ -92,7 +93,7 @@ export default async function explorerController(fastify: FastifyInstance) {
                     const file = zipData.files[fileName];
 
                     let fileContent = await file.async('text');
-                    //  console.log(`aqua.json => File name: ${fileName}, Content: ${fileContent}`);
+                    //  // console.log(`aqua.json => File name: ${fileName}, Content: ${fileContent}`);
 
                     let aquaData: AquaJsonInZip = JSON.parse(fileContent)
 
@@ -100,7 +101,7 @@ export default async function explorerController(fastify: FastifyInstance) {
                     for (let nameHash of aquaData.name_with_hash) {
 
                         let aquaFileName = `${nameHash.name}.aqua.json`;
-                        //  console.log(`name ${aquaFileName} ............ `)
+                        //  // console.log(`name ${aquaFileName} ............ `)
                         const aquaFile = zipData.files[aquaFileName];
                         if (aquaFile == null || aquaFile == undefined) {
                             return reply.code(500).send({ error: `Expected to find ${aquaFileName} as defined in aqua.json but file not found ` });
@@ -147,7 +148,7 @@ export default async function explorerController(fastify: FastifyInstance) {
                             const filePath = path.join(UPLOAD_DIR, uniqueFileName);
 
                             await fs.promises.writeFile(filePath, fileContent);
-                            //  console.log(`------> Saved file: ${filePath}`);
+                            //  // console.log(`------> Saved file: ${filePath}`);
 
 
                             let fileData = {
@@ -157,7 +158,7 @@ export default async function explorerController(fastify: FastifyInstance) {
                                 hash: filepubkeyhash,
                                 reference_count: 1,
                             }
-                            //  console.log(`--> File Data ${JSON.stringify(fileData, null, 4)} `)
+                            //  // console.log(`--> File Data ${JSON.stringify(fileData, null, 4)} `)
                             fileResult = await prisma.file.create({
 
                                 data: fileData
@@ -215,13 +216,13 @@ export default async function explorerController(fastify: FastifyInstance) {
             }
 
             for (const fileName in zipData.files) {
-                //  console.log(`=> file name ${fileName}`)
+                //  // console.log(`=> file name ${fileName}`)
                 const file = zipData.files[fileName];
 
                 try {
                     if (fileName.endsWith(".aqua.json")) {
                         let fileContent = await file.async('text');
-                        //  console.log(`=> File name: ${fileName}, Content: ${fileContent}`);
+                        //  // console.log(`=> File name: ${fileName}, Content: ${fileContent}`);
 
                         let aquaTree: AquaTree = JSON.parse(fileContent);
 
@@ -232,9 +233,9 @@ export default async function explorerController(fastify: FastifyInstance) {
 
                     } else if (fileName == 'aqua.json') {
                         //ignored for now
-                        //  console.log(`ignore aqua.json in second loop`)
+                        //  // console.log(`ignore aqua.json in second loop`)
                     } else {
-                        //  console.log(`ignore the asset  ${fileName}`)
+                        //  // console.log(`ignore the asset  ${fileName}`)
 
                     }
                 } catch (e) {
@@ -247,16 +248,29 @@ export default async function explorerController(fastify: FastifyInstance) {
 
             // fetch all from latetst
 
-            let latest = await prisma.latest.findMany({
-                where: {
-                    user: session.address
-                }
-            });
+            // let latest = await prisma.latest.findMany({
+            //     where: {
+            //         user: session.address
+            //     }
+            // });
 
-            if (latest.length == 0) {
-                return reply.code(200).send({ data: [] });
-            }
+            // if (latest.length == 0) {
+            //     return reply.code(200).send({ data: [] });
+            // }
 
+
+            // // Get the host from the request headers
+            // const host = request.headers.host || `${getHost()}:${getPort()}`;
+
+            // // Get the protocol (http or https)
+            // const protocol = request.protocol || 'https'
+
+            // // Construct the full URL
+            // const url = `${protocol}://${host}`;
+
+            // let displayData = await fetchAquatreeFoUser(url, latest)
+
+            // return reply.code(200).send({ data: displayData });
 
             // Get the host from the request headers
             const host = request.headers.host || `${getHost()}:${getPort()}`;
@@ -267,9 +281,12 @@ export default async function explorerController(fastify: FastifyInstance) {
             // Construct the full URL
             const url = `${protocol}://${host}`;
 
-            let displayData = await fetchAquatreeFoUser(url, latest)
-
-            return reply.code(200).send({ data: displayData });
+            const displayData = await getUserApiFileInfo(url, session.address)
+            return reply.code(200).send({
+                success: true,
+                message: 'Aqua tree saved successfully',
+                files: displayData
+            });
         } catch (error) {
             request.log.error(error);
             return reply.code(500).send({ error: 'File upload failed' });
@@ -307,209 +324,171 @@ export default async function explorerController(fastify: FastifyInstance) {
         }
 
         try {
+            // Process the multipart form data
+            const parts = request.parts();
 
+            let fileBuffer;
+            let assetBuffer = null;
+            let hasAsset = false;
+            let assetFilename = "";
+            let isWorkFlow = false
+            let templateId = ""
 
-
-
-            // Process the multipart data
-            // const data = await request.file();
-
-            // if (data == undefined || data.file === undefined) {
-            //     return reply.code(400).send({ error: 'No file uploaded' });
-            // }
-            // // Verify file size (200MB = 200 * 1024 * 1024 bytes)
-            // const maxFileSize = 200 * 1024 * 1024;
-            // if (data.file.bytesRead > maxFileSize) {
-            //     return reply.code(413).send({ error: 'File too large. Maximum file size is 200MB' });
-            // }
-
-            // const fileBuffer = await streamToBuffer(data.file);
-            // let fileContent = fileBuffer.toString('utf-8');
-
-            // let aquaTreeWithFileObject: AquaTree = JSON.parse(fileContent)
-
-            // // save the aqua tree 
-            // await saveAquaTree(aquaTreeWithFileObject, session.address)
-
-
-
-            try {
-                // Process the multipart form data
-                const parts = request.parts();
-
-                let fileBuffer;
-                let assetBuffer = null;
-                let hasAsset = false;
-                let assetFilename = "";
-
-                // Process each part of the multipart form
-                for await (const part of parts) {
-                    if (part.type === 'file') {
-                        if (part.fieldname === 'file') {
-                            // Verify file size (200MB = 200 * 1024 * 1024 bytes)
-                            const maxFileSize = 200 * 1024 * 1024;
-                            if (part.file.bytesRead > maxFileSize) {
-                                return reply.code(413).send({ error: 'File too large. Maximum file size is 200MB' });
-                            }
-                            fileBuffer = await streamToBuffer(part.file);
-                        } else if (part.fieldname === 'asset') {
-                            assetBuffer = await streamToBuffer(part.file);
-                            // Extract filename from the asset file
-                            assetFilename = part.filename;
+            // Process each part of the multipart form
+            for await (const part of parts) {
+                if (part.type === 'file') {
+                    if (part.fieldname === 'file') {
+                        // Verify file size (200MB = 200 * 1024 * 1024 bytes)
+                        const maxFileSize = 200 * 1024 * 1024;
+                        if (part.file.bytesRead > maxFileSize) {
+                            return reply.code(413).send({ error: 'File too large. Maximum file size is 200MB' });
                         }
-                    } else if (part.type === 'field') {
-                        if (part.fieldname === 'has_asset') {
-                            hasAsset = part.value === 'true';
-                        } else if (part.fieldname === 'account') {
-                            // Store account if needed for further processing
-                            const account = part.value;
-                            // Verify account matches session address
-                            if (account !== session.address) {
-                                return reply.code(403).send({ error: 'Account mismatch with authenticated session' });
-                            }
+                        fileBuffer = await streamToBuffer(part.file);
+                    } else if (part.fieldname === 'asset') {
+                        assetBuffer = await streamToBuffer(part.file);
+                        // Extract filename from the asset file
+                        assetFilename = part.filename;
+                    }
+                } else if (part.type === 'field') {
+
+                    // console.log(`name ${part.fieldname}  value ${part.value}  `)
+                    if (part.fieldname === 'has_asset') {
+                        hasAsset = part.value === 'true';
+                    } else if (part.fieldname === 'account') {
+                        // Store account if needed for further processing
+                        const account = part.value;
+                        // Verify account matches session address
+                        if (account !== session.address) {
+                            return reply.code(403).send({ error: 'Account mismatch with authenticated session' });
                         }
+                    } else if (part.fieldname === 'is_workflow') {
+                        isWorkFlow = part.value === 'true';
+                    } else if (part.fieldname === 'template_id') {
+                        templateId = part.value as string;
                     }
                 }
-
-                if (!fileBuffer) {
-                    return reply.code(400).send({ error: 'No file uploaded' });
-                }
-
-                let fileContent = fileBuffer.toString('utf-8');
-                let aquaTreeFromFile: AquaTree = JSON.parse(fileContent);
-
-                let aquaTree = removeFilePathFromFileIndex(aquaTreeFromFile);
-                
-                let [isValidAquaTree, failureReason] = validateAquaTree(aquaTree)
-                console.log(`is aqua tree valid ${isValidAquaTree} `);
-                if (!isValidAquaTree) {
-                    console.log(`failure reason ${failureReason}`)
-                    return reply.code(412).send({ error: failureReason });
-                }
-
-
-
-                console.log(`\n has asset save file ${hasAsset}  `)
-                // Handle the asset if it exists
-                if (hasAsset && assetBuffer) {
-                    console.log(`---------------------------------------------------------------`)
-                    console.log(`\n has asset save file \n `)
-                    // Process the asset - this depends on your requirements
-                    // For example, you might want to store it separately or attach it to the aqua tree
-                    // aquaTreeWithFileObject.assetData = assetBuffer.toString('base64');
-                    // Or handle the asset in some other way based on your application's needs
-
-                    let aquafier = new Aquafier()
-
-                    const uint8Array = new Uint8Array(assetBuffer);
-                    let fileHash = aquafier.getFileHash(uint8Array);
-
-                    let genesisHash = getGenesisHash(aquaTree);
-                    if (genesisHash == null || genesisHash == "") {
-                        return reply.code(500).send({ error: 'Genesis hash not found in aqua tree' });
-                    }
-                    let filepubkeyhash = `${session.address}_${genesisHash}`
-
-                    console.log(`\n ## filepubkeyhash ${filepubkeyhash}`)
-                    const UPLOAD_DIR = getFileUploadDirectory();
-
-                    // Create unique filename
-                    let fileName = assetFilename;
-                    let aquaTreeName = await aquafier.getFileByHash(aquaTree, genesisHash);
-                    if (aquaTreeName.isOk()) {
-                        fileName = aquaTreeName.data
-                    }
-                    const filename = `${randomUUID()}-${fileName}`;
-                    const filePath = path.join(UPLOAD_DIR, filename);
-
-                    // Save the file
-                    // await pump(data.file, fs.createWriteStream(filePath))
-                    await fs.promises.writeFile(filePath, assetBuffer);
-
-                    console.log('About to create file record in database');
-                    let fileCreation = await prisma.file.create({
-                        data: {
-                            hash: filepubkeyhash,
-                            file_hash: fileHash,
-                            content: filePath,
-                            reference_count: 0, // we use 0 because  saveAquaTree increases file  by 1
-                        }
-                    })
-                    console.log('File record created:', fileCreation);
-
-                    console.log('About to create fileIndex record');
-
-                    await prisma.fileIndex.create({
-                        data: {
-                            id: fileCreation.hash,
-                            hash: [filepubkeyhash],
-                            file_hash: fileHash,
-                            uri: fileName,
-                            reference_count: 0 // we use 0 because  saveAquaTree increases file  undex  by 1
-                        }
-                    })
-
-                    console.log('FileIndex record created');
-
-                }
-
-                // Save the aqua tree
-                await saveAquaTree(aquaTree, session.address);
-
-                // Get all user files to return in response
-                // const userFiles = await getUserFiles(session.address);
-
-
-                // fetch all from latetst
-
-                let latest = await prisma.latest.findMany({
-                    where: {
-                        user: session.address
-                    }
-                });
-
-                if (latest.length == 0) {
-                    console.log("This should never happen , the uploaded aqua tree  &  file was not inserted succesfully ")
-                    return reply.code(200).send({ data: [] });
-                }
-
-
-                // Get the host from the request headers
-                const host = request.headers.host || `${getHost()}:${getPort()}`;
-
-                // Get the protocol (http or https)
-                const protocol = request.protocol || 'https'
-
-                // Construct the full URL
-                const url = `${protocol}://${host}`;
-
-                let displayData = await fetchAquatreeFoUser(url, latest)
-
-                return reply.code(200).send({
-                    success: true,
-                    message: 'Aqua tree saved successfully',
-                    files: displayData
-
-                });
-            } catch (error) {
-                console.error('\n\n Specific error in file/fileIndex creation:', error);
-                request.log.error(error);
-                return reply.code(500).send({ error: `Error ${error}` });
             }
 
 
 
+            if (!fileBuffer) {
+                return reply.code(400).send({ error: 'No file uploaded' });
+            }
+
+            let fileContent = fileBuffer.toString('utf-8');
+            let aquaTreeFromFile: AquaTree = JSON.parse(fileContent);
+
+            let aquaTree = removeFilePathFromFileIndex(aquaTreeFromFile);
+
+            let [isValidAquaTree, failureReason] = validateAquaTree(aquaTree)
+            // console.log(`is aqua tree valid ${isValidAquaTree} `);
+            if (!isValidAquaTree) {
+                // console.log(`failure reason ${failureReason}`)
+                return reply.code(412).send({ error: failureReason });
+            }
+
+
+
+            // console.log(`\n has asset save file ${hasAsset}  `)
+            // Handle the asset if it exists
+            if (hasAsset && assetBuffer) {
+                // console.log(`---------------------------------------------------------------`)
+                // console.log(`\n has asset save file \n `)
+                // Process the asset - this depends on your requirements
+                // For example, you might want to store it separately or attach it to the aqua tree
+                // aquaTreeWithFileObject.assetData = assetBuffer.toString('base64');
+                // Or handle the asset in some other way based on your application's needs
+
+                let aquafier = new Aquafier()
+
+                const uint8Array = new Uint8Array(assetBuffer);
+                let fileHash = aquafier.getFileHash(uint8Array);
+
+                let genesisHash = getGenesisHash(aquaTree);
+                if (genesisHash == null || genesisHash == "") {
+                    return reply.code(500).send({ error: 'Genesis hash not found in aqua tree' });
+                }
+                let filepubkeyhash = `${session.address}_${genesisHash}`
+
+                // console.log(`\n ## filepubkeyhash ${filepubkeyhash}`)
+                const UPLOAD_DIR = getFileUploadDirectory();
+
+                // Create unique filename
+                let fileName = assetFilename;
+                let aquaTreeName = await aquafier.getFileByHash(aquaTree, genesisHash);
+                if (aquaTreeName.isOk()) {
+                    fileName = aquaTreeName.data
+                }
+                const filename = `${randomUUID()}-${fileName}`;
+                const filePath = path.join(UPLOAD_DIR, filename);
+
+                // Save the file
+                // await pump(data.file, fs.createWriteStream(filePath))
+                await fs.promises.writeFile(filePath, assetBuffer);
+                let fileCreation = await prisma.file.create({
+                    data: {
+                        hash: filepubkeyhash,
+                        file_hash: fileHash,
+                        content: filePath,
+                        reference_count: 0, // we use 0 because  saveAquaTree increases file  by 1
+                    }
+                })
+                // console.log('File record created:', fileCreation);
+
+                // console.log('About to create fileIndex record');
+
+                await prisma.fileIndex.create({
+                    data: {
+                        id: fileCreation.hash,
+                        hash: [filepubkeyhash],
+                        file_hash: fileHash,
+                        uri: fileName,
+                        reference_count: 0 // we use 0 because  saveAquaTree increases file  undex  by 1
+                    }
+                })
+
+                // console.log('FileIndex record created');
+
+            }
+            // console.log("Aquatree to save: ", aquaTree)
+            // Save the aqua tree
+            await saveAquaTree(aquaTree, session.address, templateId.length == 0 ? null : templateId, isWorkFlow);
+
+
+
+            console.log(`Aquatree to db ${JSON.stringify(aquaTree, null, 4)}`)
+
+            // throw Error("check hash above")
+
+            // Get the host from the request headers
+            const host = request.headers.host || `${getHost()}:${getPort()}`;
+
+            // Get the protocol (http or https)
+            const protocol = request.protocol || 'https'
+
+            // Construct the full URL
+            const url = `${protocol}://${host}`;
+
+            const displayData = await getUserApiFileInfo(url, session.address)
+            return reply.code(200).send({
+                success: true,
+                message: 'Aqua tree saved successfully',
+                files: displayData
+            });
         } catch (error) {
+            console.error('\n\n Specific error in file/fileIndex creation:', error);
             request.log.error(error);
-            return reply.code(500).send({ error: 'File upload failed' });
+            return reply.code(500).send({ error: `Error ${error}` });
         }
+
+
 
     });
 
     // get file using file hash
     fastify.get('/explorer_files', async (request, reply) => {
         // const { fileHash } = request.params as { fileHash: string };
-        ////  console.log(`Received fileHash: ${fileHash}`);
+        ////  // console.log(`Received fileHash: ${fileHash}`);
         // file content from db
         // return as a blob
 
@@ -532,30 +511,30 @@ export default async function explorerController(fastify: FastifyInstance) {
 
         // fetch all from latetst
 
-        let latest = await prisma.latest.findMany({
-            where: {
-                user: session.address
-            }
-        });
+        // let latest = await prisma.latest.findMany({
+        //     where: {
+        //         user: session.address
+        //     }
+        // });
 
-        if (latest.length == 0) {
-            return reply.code(200).send({ data: [] });
-        }
+        // if (latest.length == 0) {
+        //     return reply.code(200).send({ data: [] });
+        // }
 
 
-        // Get the host from the request headers
-        const host = request.headers.host || `${getHost()}:${getPort()}`;
+        // // Get the host from the request headers
+        // const host = request.headers.host || `${getHost()}:${getPort()}`;
 
-        // Get the protocol (http or https)
-        const protocol = request.protocol || 'https'
+        // // Get the protocol (http or https)
+        // const protocol = request.protocol || 'https'
 
-        // Construct the full URL
-        const url = `${protocol}://${host}`;
+        // // Construct the full URL
+        // const url = `${protocol}://${host}`;
 
-        let displayData = await fetchAquatreeFoUser(url, latest)
+        // let displayData = await fetchAquatreeFoUser(url, latest)
         // let displayData: any[] = []
         // for (let item of latest) {
-        //     console.log(`Fetching complete revision chain for ${item.hash}`)
+        //     // console.log(`Fetching complete revision chain for ${item.hash}`)
         //     let displayDataItem = await fetchCompleteRevisionChain(item.hash.split("_")[1], session.address, url, new Set(), true, 0, true);
         //     displayData.push({
         //         aquaTree: {
@@ -566,10 +545,23 @@ export default async function explorerController(fastify: FastifyInstance) {
         //     })
         // }
 
+        // Get the host from the request headers
+        const host = request.headers.host || `${getHost()}:${getPort()}`;
 
-        return reply.code(200).send({ data: displayData })
+        // Get the protocol (http or https)
+        const protocol = request.protocol || 'https'
+
+        // Construct the full URL
+        const url = `${protocol}://${host}`;
+
+        const displayData = await getUserApiFileInfo(url, session.address)
+        return reply.code(200).send({
+            success: true,
+            message: 'Aqua tree saved successfully',
+            data: displayData
+        });
+
     });
-
 
     fastify.post('/explorer_files', async (request, reply) => {
 
@@ -630,11 +622,11 @@ export default async function explorerController(fastify: FastifyInstance) {
             }
 
             // Same for enableContent
-            if (data.fields.enableContent) {
-                const enableContentField: any = data.fields.enableContent;
+            // if (data.fields.enableContent) {
+            //     const enableContentField: any = data.fields.enableContent;
 
-                enableContent = enableContentField.value === 'true';
-            }
+            //     enableContent = enableContentField.value === 'true';
+            // }
 
             // Same for enableContent
             if (data.fields.enableScalar) {
@@ -650,7 +642,7 @@ export default async function explorerController(fastify: FastifyInstance) {
             const uint8Array = new Uint8Array(fileBuffer);
             // let fileContent = fileBuffer.toString('utf-8');
             const fileSizeInBytes = fileBuffer.length;
-            //  console.log(`File size: ${fileSizeInBytes} bytes`);
+            //  // console.log(`File size: ${fileSizeInBytes} bytes`);
 
 
             let fileObjectPar: FileObject = {
@@ -828,7 +820,7 @@ export default async function explorerController(fastify: FastifyInstance) {
                         }
                     })
 
-                    //  console.log(JSON.stringify(fileCreation, null, 4))
+                    //  // console.log(JSON.stringify(fileCreation, null, 4))
                     // console.error("====We are through here: ", fileCreation.hash)
 
                     await prisma.fileIndex.create({
@@ -840,12 +832,12 @@ export default async function explorerController(fastify: FastifyInstance) {
                             reference_count: 1
                         }
                     })
-                    //  console.log("Saved successfully")
+                    //  // console.log("Saved successfully")
                 }
 
             } catch (error) {
-                //  console.log("======================================")
-                //  console.log(`error ${error}`)
+                //  // console.log("======================================")
+                //  // console.log(`error ${error}`)
                 let logs: LogData[] = []
                 logs.push({
                     log: `Error saving genesis revision`,
@@ -893,384 +885,9 @@ export default async function explorerController(fastify: FastifyInstance) {
             return reply.code(400).send({ success: false, message: "revision hash is required" });
         }
 
-        let filepubkeyhash = `${session.address}_${revisionDataPar.revisionHash}`;
+        let response = await deleteAquaTreeFromSystem(session.address, revisionDataPar.revisionHash)
 
-        //fetch all the revisions 
-        let revisionData = [];
-        // fetch latest revision 
-        let latestRevionData = await prisma.revision.findFirst({
-            where: {
-                pubkey_hash: filepubkeyhash
-            }
-        });
-
-        if (latestRevionData == null) {
-            return reply.code(500).send({ success: false, message: `revision with hash ${revisionDataPar.revisionHash} not found in system` });
-        }
-        revisionData.push(latestRevionData);
-
-        try {
-            console.log(`Processing revision chain starting with: ${filepubkeyhash}`);
-            //if previous verification hash is not empty find the previous one
-            if (latestRevionData?.previous !== null && latestRevionData?.previous?.length !== 0) {
-                let aquaTreerevision = await findAquaTreeRevision(latestRevionData?.previous!!);
-                revisionData.push(...aquaTreerevision);
-            }
-            console.log(`Found ${revisionData.length} revisions in the chain`);
-        } catch (e: any) {
-            return reply.code(500).send({ success: false, message: `Error fetching a revision ${JSON.stringify(e, null, 4)}` });
-        }
-
-        try {
-            // Use Prisma transaction to ensure all or nothing execution
-            await prisma.$transaction(async (tx) => {
-                console.log('Starting revision chain deletion transaction');
-                const revisionPubkeyHashes = revisionData.map(rev => rev.pubkey_hash);
-                console.log(`Revisions to delete: ${revisionPubkeyHashes.join(', ')}`);
-
-                // Step 1: First delete all entries in related tables that reference our revisions
-                // We need to delete child records before parent records to avoid foreign key constraints
-
-                // 1a. Delete AquaForms entries
-                const deletedAquaForms = await tx.aquaForms.deleteMany({
-                    where: {
-                        hash: {
-                            in: revisionPubkeyHashes
-                        }
-                    }
-                });
-                console.log(`Deleted ${deletedAquaForms.count} AquaForms entries`);
-
-                // 1b. Delete Witness entries (note: we need to handle WitnessEvent separately)
-                // We need to handle this first because Witness has a foreign key to Revision
-                const witnesses = await tx.witness.findMany({
-                    where: {
-                        hash: {
-                            in: revisionPubkeyHashes
-                        }
-                    }
-                });
-
-                const witnessRoots = witnesses.map(w => w.Witness_merkle_root).filter(Boolean) as string[];
-                console.log(`Found ${witnesses.length} Witness entries with ${witnessRoots.length} unique merkle roots`);
-
-                const deletedWitnesses = await tx.witness.deleteMany({
-                    where: {
-                        hash: {
-                            in: revisionPubkeyHashes
-                        }
-                    }
-                });
-                console.log(`Deleted ${deletedWitnesses.count} Witness entries`);
-
-                // Check if any WitnessEvents are no longer referenced
-                let deletedWitnessEvents = 0;
-                for (const root of witnessRoots) {
-                    const remainingWitnesses = await tx.witness.count({
-                        where: {
-                            Witness_merkle_root: root
-                        }
-                    });
-
-                    if (remainingWitnesses === 0) {
-                        await tx.witnessEvent.delete({
-                            where: {
-                                Witness_merkle_root: root
-                            }
-                        });
-                        deletedWitnessEvents++;
-                    }
-                }
-                console.log(`Deleted ${deletedWitnessEvents} WitnessEvent entries`);
-
-                // 1c. Delete Link entries
-                const deletedLinks = await tx.link.deleteMany({
-                    where: {
-                        hash: {
-                            in: revisionPubkeyHashes
-                        }
-                    }
-                });
-                console.log(`Deleted ${deletedLinks.count} Link entries`);
-
-                // 1d. Delete Signature entries
-                const deletedSignatures = await tx.signature.deleteMany({
-                    where: {
-                        hash: {
-                            in: revisionPubkeyHashes
-                        }
-                    }
-                });
-                console.log(`Deleted ${deletedSignatures.count} Signature entries`);
-
-                // Step 2: Handle File and FileIndex entries
-                // First, find all fileIndexes that reference our revisions
-                console.log('Finding FileIndex entries that reference the revisions to delete');
-
-                // Start with exact matches using hasSome
-                const fileIndexesToProcess = await tx.fileIndex.findMany({
-                    where: {
-                        hash: {
-                            hasSome: revisionPubkeyHashes
-                        }
-                    },
-                    select: {
-                        id: true,
-                        file_hash: true,
-                        reference_count: true,
-                        hash: true
-                    }
-                });
-
-                // If few or no matches, try a more flexible search with case-insensitive partial matching
-                if (fileIndexesToProcess.length < revisionPubkeyHashes.length) {
-                    console.log(`Found only ${fileIndexesToProcess.length} exact matches, trying partial matching`);
-
-                    // For each revision hash, try to find partial matches
-                    for (const revHash of revisionPubkeyHashes) {
-                        // This is a complex query to find any FileIndex where any element in the hash array
-                        // contains the revision hash as a substring
-                        // Build the SQL query differently based on whether we have existing IDs
-                        let rawQuery;
-                        if (fileIndexesToProcess.length > 0) {
-                            // If we have existing IDs, exclude them from the query
-                            const existingIdsFormatted = fileIndexesToProcess.map(fi => `'${fi.id}'`).join(',');
-                            rawQuery = await tx.$queryRaw`
-                                SELECT id, file_hash, reference_count, hash 
-                                FROM file_index 
-                                WHERE EXISTS (
-                                    SELECT 1 FROM unnest(hash) AS h 
-                                    WHERE LOWER(h) LIKE LOWER('%' || ${revHash} || '%')
-                                )
-                                AND id NOT IN (${existingIdsFormatted})
-                            `;
-                        } else {
-                            // If no existing IDs, just run the query without the NOT IN clause
-                            rawQuery = await tx.$queryRaw`
-                                SELECT id, file_hash, reference_count, hash 
-                                FROM file_index 
-                                WHERE EXISTS (
-                                    SELECT 1 FROM unnest(hash) AS h 
-                                    WHERE LOWER(h) LIKE LOWER('%' || ${revHash} || '%')
-                                )
-                            `;
-                        }
-
-                        // Convert raw query results and add to our list
-                        const rawResults = rawQuery as { id: string, file_hash: string, reference_count: number | null, hash: string[] }[];
-                        if (rawResults.length > 0) {
-                            console.log(`Found ${rawResults.length} additional matches with partial matching for ${revHash}`);
-                            fileIndexesToProcess.push(...rawResults);
-                        }
-                    }
-                }
-
-                console.log(`Found total of ${fileIndexesToProcess.length} FileIndex entries to process`);
-
-                // Track which file indexes to delete and which to update
-                const fileIndexesToDelete = [];
-                const fileIndexesToUpdate = [];
-                const fileHashesToUpdate = new Set<string>();
-                const fileHashesToDelete = new Set<string>();
-
-                // Process each file index based on its reference count
-                for (const fileIndex of fileIndexesToProcess) {
-                    const refCount = fileIndex.reference_count;
-
-                    if (refCount === null || refCount <= 1) {
-                        // If reference count is null or ≤ 1, mark for deletion
-                        fileIndexesToDelete.push(fileIndex.id);
-                        if (fileIndex.file_hash) {
-                            fileHashesToDelete.add(fileIndex.file_hash);
-                        }
-                    } else if (refCount >= 2) {
-                        // If reference count is >= 2, mark for update
-                        fileIndexesToUpdate.push(fileIndex.id);
-                        if (fileIndex.file_hash) {
-                            fileHashesToUpdate.add(fileIndex.file_hash);
-                        }
-
-                        // If it's exactly 2, it will become 1 after decrementing, so mark for deletion too
-                        // if (refCount === 2) {
-                        //     fileIndexesToDelete.push(fileIndex.id);
-                        //     if (fileIndex.file_hash) {
-                        //         fileHashesToDelete.add(fileIndex.file_hash);
-                        //     }
-                        // }
-                    }
-                }
-
-                console.log(`FileIndex operations planned: ${fileIndexesToUpdate.length} to update, ${fileIndexesToDelete.length} to delete`);
-                console.log(`File operations planned: ${fileHashesToUpdate.size} to update, ${fileHashesToDelete.size} to delete`);
-
-                // Step 2a: Update reference counts for file indexes that need updating
-                if (fileIndexesToUpdate.length > 0) {
-                    // Decrement reference count for file indexes
-                    const updatedFileIndexes = await tx.fileIndex.updateMany({
-                        where: {
-                            id: {
-                                in: fileIndexesToUpdate
-                            }
-                        },
-                        data: {
-                            reference_count: {
-                                decrement: 1
-                            }
-                        }
-                    });
-                    console.log(`Updated ${updatedFileIndexes.count} FileIndex entries`);
-
-                    // Update files linked to these file indexes
-                    if (fileHashesToUpdate.size > 0) {
-                        const updatedFiles = await tx.file.updateMany({
-                            where: {
-                                file_hash: {
-                                    in: Array.from(fileHashesToUpdate) as string[]
-                                }
-                            },
-                            data: {
-                                reference_count: {
-                                    decrement: 1
-                                }
-                            }
-                        });
-                        console.log(`Updated ${updatedFiles.count} File entries`);
-                    }
-                }
-
-                // Step 2b: Delete file indexes with reference count <= 1
-                if (fileIndexesToDelete.length > 0) {
-                    const deletedFileIndexes = await tx.fileIndex.deleteMany({
-                        where: {
-                            id: {
-                                in: fileIndexesToDelete
-                            }
-                        }
-                    });
-                    console.log(`Deleted ${deletedFileIndexes.count} FileIndex entries`);
-
-                    // Delete the files if they exist
-                    if (fileHashesToDelete.size > 0) {
-                        const uniqueFileHashes = Array.from(fileHashesToDelete).filter(Boolean) as string[];
-                        console.log(`File hashes to delete: ${uniqueFileHashes.length}`);
-
-                        // First get the files to delete so we can handle filesystem files
-                        const filesToDelete = await tx.file.findMany({
-                            where: {
-                                file_hash: {
-                                    in: uniqueFileHashes
-                                }
-                            }
-                        });
-
-                        // Delete any filesystem files
-                        for (const file of filesToDelete) {
-                            if (file.content) {
-                                try {
-                                    fs.unlinkSync(file.content);
-                                    console.log(`Deleted file from filesystem: ${file.content}`);
-                                } catch (er) {
-                                    console.log(`Error deleting file from filesystem: ${file.content}`, er);
-                                    // Continue even if file deletion fails
-                                }
-                            }
-                        }
-
-                        // Delete the database records
-                        const deletedFiles = await tx.file.deleteMany({
-                            where: {
-                                file_hash: {
-                                    in: uniqueFileHashes
-                                }
-                            }
-                        });
-                        console.log(`Deleted ${deletedFiles.count} File entries`);
-                    }
-                }
-
-                // Step 3: Remove any references to our revisions from other revisions
-                const updatedRevisions = await tx.revision.updateMany({
-                    where: {
-                        previous: {
-                            in: revisionPubkeyHashes
-                        }
-                    },
-                    data: {
-                        previous: null
-                    }
-                });
-                console.log(`Updated ${updatedRevisions.count} revisions that referenced the deleted revisions`);
-
-                // Step 4: Delete the latest entry - we need to do this before deleting revisions
-                const deletedLatest = await tx.latest.deleteMany({
-                    where: {
-                        hash: {
-                            in: revisionPubkeyHashes
-                        }
-                    }
-                });
-                console.log(`Deleted ${deletedLatest.count} Latest entries`);
-
-                // Step 5: Finally, delete all revisions
-                let deletedRevisionCount = 0;
-                for (let item of revisionData) {
-                    await tx.revision.delete({
-                        where: {
-                            pubkey_hash: item.pubkey_hash
-                        }
-                    });
-                    deletedRevisionCount++;
-                }
-                console.log(`Deleted ${deletedRevisionCount} Revision entries`);
-                console.log('Revision chain deletion completed successfully');
-
-                let hashOnly: string[] = []
-
-                revisionPubkeyHashes.forEach((data) => {
-                    if (data.includes("_")) {
-                        let data2 = data.split("_")[1]
-                        hashOnly.push(data2)
-                    } else {
-                        hashOnly.push(data)
-                    }
-                })
-                console.log(`B4 revisionPubkeyHashes ${revisionPubkeyHashes} \n After hashOnly -- ${JSON.stringify(hashOnly)}`);
-
-                //delete contract
-                const deletedContract = await tx.contract.deleteMany({
-                    where: {
-                        OR: [
-                            {
-                                latest: {
-                                    in: hashOnly
-                                },
-                            },
-                            {
-                                genesis_hash: {
-                                    in: hashOnly
-                                }
-                            }
-                        ],
-                        AND: [
-                            {
-                                sender: session.address
-                            }
-                        ]
-                    }
-                });
-                console.log(`Deleted ${deletedContract.count} contract entries`);
-
-            });
-
-            return reply.code(200).send({ success: true, message: "File and revisions deleted successfully" });
-        } catch (error: any) {
-            console.error("Error in delete operation:", error);
-            return reply.code(500).send({
-                success: false,
-                message: `Error deleting file: ${error.message}`,
-                details: error
-            });
-        }
+        return reply.code(response[0]).send({ success: response[0] == 200 ? true : false, message: response[1] });
     });
 
     fastify.post('/transfer_chain', async (request, reply) => {
@@ -1300,31 +917,32 @@ export default async function explorerController(fastify: FastifyInstance) {
 
             // Fetch the entire chain from the source user
             const entireChain = await fetchCompleteRevisionChain(latestRevisionHash, userAddress, url);
-            
+
             // Check if the user exists (create if not)
             const targetUser = await prisma.users.findUnique({
                 where: { address: session.address }
             });
-            
+
             if (!targetUser) {
                 await prisma.users.create({
                     data: { address: session.address }
                 });
             }
-            
+
             // Transfer the chain to the target user (session.address)
             const transferResult = await transferRevisionChain(
                 entireChain,
                 session.address,
                 userAddress
             );
-            
+
             if (!transferResult.success) {
                 return reply.code(500).send({
                     success: false,
                     message: transferResult.message
                 });
             }
+
             
             return reply.code(200).send({
                 success: true,
@@ -1343,8 +961,8 @@ export default async function explorerController(fastify: FastifyInstance) {
 
     fastify.post('/merge_chain', async (request, reply) => {
         try {
-            const { latestRevisionHash, userAddress, mergeStrategy } = request.body as { 
-                latestRevisionHash: string, 
+            const { latestRevisionHash, userAddress, mergeStrategy } = request.body as {
+                latestRevisionHash: string,
                 userAddress: string,
                 mergeStrategy?: "replace" | "fork"  // Optional merge strategy
             };
@@ -1371,18 +989,18 @@ export default async function explorerController(fastify: FastifyInstance) {
 
             // Fetch the entire chain from the source user
             const entireChain = await fetchCompleteRevisionChain(latestRevisionHash, userAddress, url);
-            
+
             // Check if the user exists (create if not)
             const targetUser = await prisma.users.findUnique({
                 where: { address: session.address }
             });
-            
+
             if (!targetUser) {
                 await prisma.users.create({
                     data: { address: session.address }
                 });
             }
-            
+
             // Merge the chain to the target user (session.address)
             const mergeResult = await mergeRevisionChain(
                 entireChain,
@@ -1390,14 +1008,14 @@ export default async function explorerController(fastify: FastifyInstance) {
                 userAddress,
                 mergeStrategy || "fork" // Use the provided strategy or default to "fork"
             );
-            
+
             if (!mergeResult.success) {
                 return reply.code(500).send({
                     success: false,
                     message: mergeResult.message
                 });
             }
-            
+
             return reply.code(200).send({
                 success: true,
                 message: `Chain merged successfully using "${mergeResult.strategy}" strategy: ${mergeResult.transferredRevisions} revisions and ${mergeResult.linkedChainsTransferred} linked chains`,

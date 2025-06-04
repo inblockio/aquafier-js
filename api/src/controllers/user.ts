@@ -91,13 +91,13 @@ export default async function userController(fastify: FastifyInstance) {
                 where: {
                     address: address,
                 },
-                update:{
+                update: {
 
                 },
                 create: {
                     ens_name: ensName,
-                    address:address,
-                    email:''
+                    address: address,
+                    email: ''
                 }
             });
 
@@ -445,7 +445,7 @@ export default async function userController(fastify: FastifyInstance) {
                         }
                     })
                     if (res) {
-                        
+
                         let roots = res.map((e) => e.Witness_merkle_root ?? "")
                         await tx.witnessEvent.deleteMany({
                             where: {
@@ -630,31 +630,34 @@ export default async function userController(fastify: FastifyInstance) {
                         }
                     }
 
+                    
                     // Step 2: Delete file indexes with reference count <= 1 (including those we just decremented from 2 to 1)
                     if (fileIndexesToDelete.length > 0) {
                         console.log(`File indexes to delete after processing: ${JSON.stringify(fileIndexesToDelete, null, 4)}`);
 
-                        // Delete the file indexes
-                        await tx.fileIndex.deleteMany({
-                            where: {
-                                id: {
-                                    in: fileIndexesToDelete
-                                }
-                            }
-                        });
+                        // FIRST: Delete the file indexes (they reference File records)
+                        // await tx.fileIndex.deleteMany({
+                        //     where: {
+                        //         id: {
+                        //             in: fileIndexesToDelete
+                        //         }
+                        //     }
+                        // });
+                        console.log('Deleted file indexes');
 
-                        // Delete the files if they exist
+                        // SECOND: Delete the files (now that nothing references them)
                         if (fileHashesToDelete.size > 0) {
                             const uniqueFileHashes = Array.from(fileHashesToDelete).filter(Boolean);
                             console.log(`File hashes to delete: ${JSON.stringify(uniqueFileHashes, null, 4)}`);
 
-                            await tx.file.deleteMany({
-                                where: {
-                                    file_hash: {
-                                        in: uniqueFileHashes as string[]
-                                    }
-                                }
-                            });
+                            // await tx.file.deleteMany({
+                            //     where: {
+                            //         file_hash: {
+                            //             in: uniqueFileHashes as string[]
+                            //         }
+                            //     }
+                            // });
+                            console.log('Deleted files');
                         }
                     }
 
@@ -676,6 +679,26 @@ export default async function userController(fastify: FastifyInstance) {
                 console.log('User data deletion completed successfully');
             });
 
+
+            // get all user tmplates
+            let allTemplates = await prisma.aquaTemplate.findMany({
+                where: {
+                    owner: userAddress
+                }
+            })
+            for (let templateItem of allTemplates) {
+                await prisma.aquaTemplateFields.deleteMany({
+                    where: {
+                        aqua_form_id: templateItem.id
+                    }
+                })
+                await prisma.aquaTemplate.delete({
+                    where: {
+                        id: templateItem.id
+                    }
+                })
+
+            }
             // Delete the session as well (similar to logout)
             await prisma.siweSession.delete({
                 where: { nonce }

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import {
   Container,
   Box,
@@ -12,13 +12,12 @@ import {
 } from '@chakra-ui/react';
 
 import FormTemplateEditor from '../components/aqua_forms/FormTemplateEditor';
-import { FormTemplate, getFormTemplates } from '../components/aqua_forms';
+import { FormTemplate } from '../components/aqua_forms/types';
 import FormTemplateList from '../components/aqua_forms/FormTemplateList';
 import { DialogCloseTrigger, DialogContent, DialogRoot } from '../components/chakra-ui/dialog';
 import FormTemplateViewer from '../components/aqua_forms/FormTemplateViewer';
 
 const AquaForms = () => {
-  const [_templates, setTemplates] = useState<FormTemplate[]>([]);
   const [selectedTemplate, setSelectedTemplate] = useState<FormTemplate | null>(null);
 
   const {
@@ -32,11 +31,6 @@ const AquaForms = () => {
     onOpen: viewerOnOpen,
     onClose: viewerOnClose
   } = useDisclosure();
-
-  const loadTemplates = () => {
-    const loadedTemplates = getFormTemplates();
-    setTemplates(loadedTemplates);
-  };
 
   const handleCreateTemplate = () => {
     setSelectedTemplate(null);
@@ -55,14 +49,9 @@ const AquaForms = () => {
 
   const handleTemplateSaved = () => {
     editorOnClose();
-    loadTemplates();
   };
-  
-  useEffect(() => {
-    loadTemplates();
-  }, []);
 
-  // console.log("Templates: ", JSON.stringify(templates, null, 4))
+
 
   return (
     <>
@@ -83,7 +72,8 @@ const AquaForms = () => {
             <FormTemplateList
               onEdit={handleEditTemplate}
               onView={handleViewTemplate}
-              onRefresh={loadTemplates}
+              // onRefresh={formTemplates}
+              onRefresh={() => {}}
             />
           </Box>
         </Box>
@@ -106,6 +96,7 @@ const AquaForms = () => {
               <FormTemplateEditor
                 initialTemplate={selectedTemplate || undefined}
                 onSave={handleTemplateSaved}
+                updating={!!selectedTemplate}
               />
             </DialogBody>
           </DialogContent>
