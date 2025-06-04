@@ -13,7 +13,7 @@ import { getHost, getPort } from '../utils/api_utils';
 import { DeleteRevision } from '../models/request_models';
 import { fetchCompleteRevisionChain } from '../utils/quick_utils';
 import { transferRevisionChain, mergeRevisionChain } from '../utils/quick_revision_utils';
-import { getGenesisHash, removeFilePathFromFileIndex, validateAquaTree } from 'src/utils/aqua_tree_utils';
+import { getGenesisHash, removeFilePathFromFileIndex, validateAquaTree } from '../utils/aqua_tree_utils';
 // import getStream from 'get-stream';
 // Promisify pipeline
 const pump = util.promisify(pipeline);
