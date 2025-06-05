@@ -577,12 +577,30 @@ async function updateLinkRevisionFileIndex(revision: Revision,
     }
     let newHash = linkData.link_verification_hashes[0]
     let newPubKeyHash = `${userAddress}_${newHash}`
-    const newAquaTreeFileData = await fetchAquaTreeFileData([newPubKeyHash]);
-    console.log("File indexes: ", aquaTreeFileData)
+
+
+
+
+    let linkedAquaTreeData = await createAquaTreeFromRevisions(newPubKeyHash, url)
+
+    let linkedAquaTreeDataGenesisHash = getGenesisHash(linkedAquaTreeData[0])
+    if (linkedAquaTreeDataGenesisHash == null) {
+
+        throw Error(`Expected genesis hash no to be null  `)
+
+
+    }
+    let genesisPubKeyHash = newPubKeyHash
+    if (newHash != linkedAquaTreeDataGenesisHash) {
+        // genesisHash = linkedAquaTreeDataGenesisHash
+        genesisPubKeyHash = `${userAddress}_${linkedAquaTreeDataGenesisHash}`
+    }
+
+    const newAquaTreeFileData = await fetchAquaTreeFileData([genesisPubKeyHash]);
 
     let fileData = newAquaTreeFileData[0]
     if (fileData == undefined) {
-        throw Error(`Expected file in linked revision to  exist`)
+        throw Error(`Expected file in linked revision to  exist genesisPubKeyHash ${genesisPubKeyHash} newPubKeyHash ${newPubKeyHash} newAquaTreeFileData ${newAquaTreeFileData.length}`)
     }
 
     // if it exist is okay to ovewrite in index
@@ -616,23 +634,23 @@ async function updateLinkRevisionFileIndex(revision: Revision,
     }
 
 
-    //todo 
-    // fetch the aqua.json file
+    let aquaJsonFile = `${fileData.name}.aqua.json`
 
-    let res = await createAquaTreeFromRevisions(newPubKeyHash, url)
-    updatedFileObjects.push(
-
-        {
-            fileContent: res[0],
-            fileName: `${fileData.name}.aqua.json`, // file_hash as identifier
-            path: '',
-            fileSize: 0
-        }
-    )
+    let existInFileObjects = updatedFileObjects.find((e) => e.fileName == aquaJsonFile)
+    if (!existInFileObjects) {
+        updatedFileObjects.push(
+            {
+                fileContent: linkedAquaTreeData[0],
+                fileName: aquaJsonFile, // file_hash as identifier
+                path: '',
+                fileSize: 0
+            }
+        )
+    }
 
 
     // add the extra file objects only if the dont exist
-    for (const newFileObject of updatedFileObjects) {
+    for (const newFileObject of linkedAquaTreeData[1]) {
         let existInFileObjects = updatedFileObjects.find((e) => e.fileName == newFileObject.fileName)
         if (!existInFileObjects) {
             updatedFileObjects.push(newFileObject)
