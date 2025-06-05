@@ -131,6 +131,7 @@ const FileUploadItem = (props: FileUploadItemProps) => {
     }
 
     if (isJson) {
+      console.log("isJson: ", file)
       return <>
 
         <>
