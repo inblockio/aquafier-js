@@ -51,3 +51,8 @@ export interface UpdateGenesisResult {
   fileObjects: FileObject[];
   revisionData: AquaRevision;
 }
+// Return type for processRevision function
+export interface ProcessRevisionResult {
+    aquaTree: AquaTree;
+    fileObjects: FileObject[];
+}

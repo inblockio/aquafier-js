@@ -6,7 +6,7 @@ import { Link, Revision, Prisma, WitnessEvent, Signature, AquaForms } from '@pri
 import * as fs from "fs"
 import path from 'path';
 import { getGenesisHash } from './aqua_tree_utils';
-import { AquaTreeFileData, LinkedRevisionResult, UpdateGenesisResult } from 'src/models/types';
+import { AquaTreeFileData, LinkedRevisionResult, ProcessRevisionResult, UpdateGenesisResult } from 'src/models/types';
 import { file } from 'jszip';
 
 // Main refactored function
@@ -27,10 +27,36 @@ export async function createAquaTreeFromRevisions(
         if (revisionData.length === 0) {
             console.error(`Revision with hash ${latestRevisionHash} not found in system`);
             return [aquaTree, []];
+
         }
 
+        let revisionPubKeyHashes = revisionData.map(revision => revision.pubkey_hash);
+
+        let userAddress = "";
+
+        let first = revisionPubKeyHashes[0];
+        if (first) {
+            let items = first.split('_')
+            userAddress = items[0]
+        }
+        let linkedPubKeyHashes = revisionData
+            .filter(revision => revision.revision_type == 'link');
+
+
+        for (const revision of linkedPubKeyHashes) {
+            let linkHash = await prisma.link.findFirst({
+                where: { hash: revision.pubkey_hash }
+            });
+            if (linkHash && linkHash.link_verification_hashes && linkHash.link_verification_hashes.length > 0) {
+                let linkedPubKeyHash = linkHash.link_verification_hashes.map((hashDataItem) => `${userAddress}_${hashDataItem}`)
+
+                revisionPubKeyHashes.push(...linkedPubKeyHash);
+            }
+        }
+
+
         // Step 2: Get all associated files
-        const aquaTreeFileData = await fetchAquaTreeFileData(revisionData.map(rev => rev.pubkey_hash));
+        const aquaTreeFileData = await fetchAquaTreeFileData(revisionPubKeyHashes);
         console.log("File indexes: ", aquaTreeFileData)
 
         // Step 3: Create file objects for download
@@ -245,7 +271,7 @@ async function createFileObjects(aquaTreesFileData: AquaTreeFileData[], url: str
             fileObjects.push({
                 fileContent: fullUrl,
                 fileName: item.name, // No uri in schema, use file_hash
-                path: item.fileLocation,
+                path: "",//item.fileLocation,
                 fileSize: fileStats.fileSizeInBytes
             });
         } catch (error) {
@@ -256,11 +282,7 @@ async function createFileObjects(aquaTreesFileData: AquaTreeFileData[], url: str
 }
 
 
-// Return type for processRevision function
-interface ProcessRevisionResult {
-    aquaTree: AquaTree;
-    fileObjects: FileObject[];
-}
+
 
 async function processRevision(
     revision: Revision,
@@ -293,11 +315,18 @@ async function processRevision(
     let updatedFileObjects = processResult.fileObjects;
 
     // Update file index for genesis revision
-    if (!previousHashOnly) {
+    if (previousHashOnly == "") {
         const genesisResult = await updateGenesisFileIndex(revision, revisionData, updatedAquaTree, updatedFileObjects, aquaTreeFileData, url);
         updatedAquaTree = genesisResult.aquaTree;
         updatedFileObjects = genesisResult.fileObjects;
         revisionData = genesisResult.revisionData;
+    }
+
+    if (revision.revision_type == "link") {
+        const linkedRevisionResult = await updateLinkRevisionFileIndex(revision, revisionData, updatedAquaTree, updatedFileObjects, aquaTreeFileData, url);
+        updatedAquaTree = linkedRevisionResult.aquaTree;
+        updatedFileObjects = linkedRevisionResult.fileObjects;
+        revisionData = linkedRevisionResult.revisionData
     }
 
     // Add to aqua tree - create new tree with updated revisions
@@ -520,6 +549,106 @@ function getFileStats(filePath: string): { fileSizeInBytes: number; originalFile
     }
 }
 
+async function updateLinkRevisionFileIndex(revision: Revision,
+    revisionData: AquaRevision,
+    aquaTree: AquaTree,
+    fileObjects: FileObject[],
+    aquaTreeFileData: AquaTreeFileData[],
+    url: string
+): Promise<UpdateGenesisResult> {
+    //   const hashOnly = extractHashOnly(revision.);
+
+    let linkData = await prisma.link.findFirst({
+        where: {
+            hash: revision.pubkey_hash
+        }
+    })
+
+    if (linkData == null) {
+        return { aquaTree, fileObjects, revisionData };
+    }
+
+    let userAddress = "";
+
+    let first = revision.pubkey_hash
+    if (first) {
+        let items = first.split('_')
+        userAddress = items[0]
+    }
+    let newHash = linkData.link_verification_hashes[0]
+    let newPubKeyHash = `${userAddress}_${newHash}`
+    const newAquaTreeFileData = await fetchAquaTreeFileData([newPubKeyHash]);
+    console.log("File indexes: ", aquaTreeFileData)
+
+    let fileData = newAquaTreeFileData[0]
+    if (fileData == undefined) {
+        throw Error(`Expected file in linked revision to  exist`)
+    }
+
+    // if it exist is okay to ovewrite in index
+    const updatedAquaTree: AquaTree = {
+        ...aquaTree,
+        file_index: {
+            ...aquaTree.file_index,
+            [newHash]: fileData.name
+        }
+    };
+
+
+    let updatedFileObjects = [...fileObjects];
+
+    const fileStats = getFileStats(fileData.fileLocation);
+    if (fileStats) {
+        const fullUrl = `${url}/files/${fileData.fileHash}`;
+        let existInFileObjects = updatedFileObjects.find((e) => e.fileName == fileData.name)
+        // add it to file objects array if it does not exist to avoid large payloads
+        if (!existInFileObjects) {
+            updatedFileObjects = [
+                ...fileObjects,
+                {
+                    fileContent: fullUrl,
+                    fileName: fileData.name, // file_hash as identifier
+                    path: fileData.fileLocation,
+                    fileSize: fileStats.fileSizeInBytes
+                }
+            ];
+        }
+    }
+
+
+    //todo 
+    // fetch the aqua.json file
+
+    let res = await createAquaTreeFromRevisions(newPubKeyHash, url)
+    updatedFileObjects.push(
+
+        {
+            fileContent: res[0],
+            fileName: `${fileData.name}.aqua.json`, // file_hash as identifier
+            path: '',
+            fileSize: 0
+        }
+    )
+
+
+    // add the extra file objects only if the dont exist
+    for (const newFileObject of updatedFileObjects) {
+        let existInFileObjects = updatedFileObjects.find((e) => e.fileName == newFileObject.fileName)
+        if (!existInFileObjects) {
+            updatedFileObjects.push(newFileObject)
+        }
+    }
+
+
+    return {
+        aquaTree: updatedAquaTree,
+        fileObjects: updatedFileObjects,
+        revisionData: revisionData
+    };
+
+
+
+}
 async function updateGenesisFileIndex(
     revision: Revision,
     revisionData: AquaRevision,
@@ -538,7 +667,7 @@ async function updateGenesisFileIndex(
             ...aquaTree,
             file_index: {
                 ...aquaTree.file_index,
-                [hashOnly]: aquaTreeFileItemData.name 
+                [hashOnly]: aquaTreeFileItemData.name
             }
         };
         const updatedRevisionData = {
@@ -551,15 +680,21 @@ async function updateGenesisFileIndex(
         const fileStats = getFileStats(aquaTreeFileItemData.fileLocation);
         if (fileStats) {
             const fullUrl = `${url}/files/${aquaTreeFileItemData.fileHash}`;
-            updatedFileObjects = [
-                ...fileObjects,
-                {
-                    fileContent: fullUrl,
-                    fileName: aquaTreeFileItemData.fileHash, // file_hash as identifier
-                    path: aquaTreeFileItemData.fileLocation,
-                    fileSize: fileStats.fileSizeInBytes
-                }
-            ];
+
+            let existInFileObjects = fileObjects.find((e) => e.fileName == aquaTreeFileItemData.name)
+            // add it to file objects array if it does not exist to avoid large payloads
+            if (!existInFileObjects) {
+
+                updatedFileObjects = [
+                    ...fileObjects,
+                    {
+                        fileContent: fullUrl,
+                        fileName: aquaTreeFileItemData.name, // file_hash as identifier
+                        path: "..",
+                        fileSize: fileStats.fileSizeInBytes
+                    }
+                ];
+            }
         }
 
         return {
@@ -577,11 +712,11 @@ async function processLinkedFileRevision(
     fileObjects: FileObject[],
     url: string
 ): Promise<LinkedRevisionResult> {
-  
+
 
     let aquaTreeFileData = await fetchAquaTreeFileData([linkedHash]);
     if (aquaTreeFileData.length === 0) {
-  console.log(`File index with hash ${linkedHash} not found`);
+        console.log(`File index with hash ${linkedHash} not found`);
         return { aquaTree, fileObjects };
     }
 

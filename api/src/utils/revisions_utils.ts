@@ -554,7 +554,7 @@ if (fileIndexesToProcess.length === 0) {
                 const file = await tx.file.findFirst({
                     where: { file_hash: fileIndex.file_hash }
                 });
-                
+
 
                 if (file && file.file_location) {
                     try {
@@ -580,11 +580,7 @@ if (fileIndexesToProcess.length === 0) {
 
             });
         }
-
     }
-
-
-
 
 }
 
