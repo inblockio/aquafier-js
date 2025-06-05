@@ -1,6 +1,7 @@
 import { prisma } from '../database/db';
 import { Revision, Link, Signature, WitnessEvent, AquaForms } from '@prisma/client';
 import * as fs from 'fs';
+import { ExtendedAquaTreeData } from 'src/models/types';
 
 /**
  * Recursively deletes a revision and all its child revisions (revisions that reference this as their previous hash)
@@ -12,20 +13,20 @@ import * as fs from 'fs';
 export async function deleteRevisionAndChildren(
     revisionHash: string,
     userAddress?: string
-): Promise<{  
-    success: boolean; 
-    deleted: number; 
+): Promise<{
+    success: boolean;
+    deleted: number;
     details: { revisions: string[]; related: { signatures: number; links: number; witnesses: number; forms: number; files: number; fileIndexes: number } }
 }> {
     // Create a full hash if needed (userAddress_revisionHash format)
-    const fullRevisionHash = revisionHash.includes('_') 
-        ? revisionHash 
-        : userAddress 
+    const fullRevisionHash = revisionHash.includes('_')
+        ? revisionHash
+        : userAddress
             ? `${userAddress}_${revisionHash}`
             : revisionHash;
-    
+
     console.log(`Starting deletion process for revision: ${fullRevisionHash}`);
-    
+
     // To track all deleted items
     const deletedRevisions: string[] = [];
     let deletedSignatures = 0;
@@ -34,57 +35,57 @@ export async function deleteRevisionAndChildren(
     let deletedForms = 0;
     let deletedFiles = 0;
     let deletedFileIndexes = 0;
-    
+
     // Find all revisions in the deletion chain to process in a single transaction
     const revisionsToProcess: string[] = [];
-    
+
     // Helper function to identify all affected revisions
     async function collectRevisionsToDelete(hash: string): Promise<void> {
         // If we've already processed this revision, skip it
         if (revisionsToProcess.includes(hash)) return;
-        
+
         // Add this revision to the list
         revisionsToProcess.push(hash);
-        
+
         // Find all child revisions that reference this hash as their previous
         const childRevisions = await prisma.revision.findMany({
             where: { previous: hash }
         });
-        
+
         // Recursively collect all child revisions
         for (const child of childRevisions) {
             await collectRevisionsToDelete(child.pubkey_hash);
         }
     }
-    
+
     try {
         // First collect all revisions that need to be deleted
         await collectRevisionsToDelete(fullRevisionHash);
         console.log(`Collected ${revisionsToProcess.length} revisions to process`);
-        
+
         // Process all revisions in a single transaction for data consistency
         await prisma.$transaction(async (tx) => {
             // Process revisions in reverse order (children first, then parents)
             for (let i = revisionsToProcess.length - 1; i >= 0; i--) {
                 const hash = revisionsToProcess[i];
-                
+
                 // Get the revision
                 const revision = await tx.revision.findUnique({
                     where: { pubkey_hash: hash }
                 });
-                
+
                 if (!revision) {
                     console.log(`Revision ${hash} not found, skipping`);
                     continue;
                 }
-                
+
                 // Handle related data based on revision type
                 switch (revision.revision_type) {
                     case "signature":
                         const signature = await tx.signature.findFirst({
                             where: { hash: hash }
                         });
-                        
+
                         if (signature) {
                             if ((signature.reference_count || 1) <= 1) {
                                 // Delete if this is the last reference
@@ -96,20 +97,20 @@ export async function deleteRevisionAndChildren(
                                 // Otherwise decrement the count
                                 await tx.signature.update({
                                     where: { hash: hash },
-                                    data: { 
-                                        reference_count: (signature.reference_count || 1) - 1 
+                                    data: {
+                                        reference_count: (signature.reference_count || 1) - 1
                                     }
                                 });
                             }
                         }
                         break;
-                        
+
                     case "witness":
                         // First find the witness record to get the merkle root
                         const witnessRecord = await tx.witness.findFirst({
                             where: { hash: hash }
                         });
-                        
+
                         if (witnessRecord) {
                             if ((witnessRecord.reference_count || 1) <= 1) {
                                 // If this is the last reference to this witness, check if the witness event
@@ -121,7 +122,7 @@ export async function deleteRevisionAndChildren(
                                             hash: { not: hash }
                                         }
                                     });
-                                    
+
                                     if (otherWitnesses === 0) {
                                         // If no other witnesses reference this event, delete it
                                         await tx.witnessEvent.deleteMany({
@@ -129,7 +130,7 @@ export async function deleteRevisionAndChildren(
                                         });
                                     }
                                 }
-                                
+
                                 // Delete the witness record
                                 await tx.witness.delete({
                                     where: { hash: hash }
@@ -139,26 +140,26 @@ export async function deleteRevisionAndChildren(
                                 // Decrement the reference count
                                 await tx.witness.update({
                                     where: { hash: hash },
-                                    data: { 
-                                        reference_count: (witnessRecord.reference_count || 1) - 1 
+                                    data: {
+                                        reference_count: (witnessRecord.reference_count || 1) - 1
                                     }
                                 });
                             }
                         }
                         break;
-                        
+
                     case "form":
                         const deletedFormItems = await tx.aquaForms.deleteMany({
                             where: { hash: hash }
                         });
                         deletedForms += deletedFormItems.count;
                         break;
-                        
+
                     case "link":
                         const link = await tx.link.findFirst({
                             where: { hash: hash }
                         });
-                        
+
                         if (link) {
                             if ((link.reference_count || 1) <= 1) {
                                 // Delete if this is the last reference
@@ -170,14 +171,14 @@ export async function deleteRevisionAndChildren(
                                 // Otherwise decrement the count
                                 await tx.link.update({
                                     where: { hash: hash },
-                                    data: { 
-                                        reference_count: (link.reference_count || 1) - 1 
+                                    data: {
+                                        reference_count: (link.reference_count || 1) - 1
                                     }
                                 });
                             }
                         }
                         break;
-                        
+
                     case "file":
                         // For file revisions, handle file and fileIndex entries
                         // First check if this revision is referenced in any FileIndex
@@ -188,9 +189,9 @@ export async function deleteRevisionAndChildren(
                                 }
                             }
                         });
-                        
+
                         for (const fileIndex of fileIndexEntries) {
-                            if (fileIndex.pubkey_hash.length  <= 1) {
+                            if (fileIndex.pubkey_hash.length <= 1) {
                                 // If this is the last reference, delete the FileIndex entry
                                 await tx.fileIndex.delete({
                                     where: {
@@ -198,29 +199,29 @@ export async function deleteRevisionAndChildren(
                                     }
                                 });
                                 deletedFileIndexes++;
-                                
+
                                 // If a file record exists for this file, handle it
                                 const file = await tx.file.findUnique({
                                     where: { file_hash: fileIndex.file_hash }
                                 });
-                                
+
                                 if (file) {
-                                    
-                                        // If this is the last reference to the file, delete the actual file if it exists
-                                        if (file.file_location && fs.existsSync(file.file_location)) {
-                                            try {
-                                                fs.unlinkSync(file.file_location);
-                                            } catch (e) {
-                                                console.error(`Error deleting file from filesystem: ${file.file_location}`, e);
-                                            }
+
+                                    // If this is the last reference to the file, delete the actual file if it exists
+                                    if (file.file_location && fs.existsSync(file.file_location)) {
+                                        try {
+                                            fs.unlinkSync(file.file_location);
+                                        } catch (e) {
+                                            console.error(`Error deleting file from filesystem: ${file.file_location}`, e);
                                         }
-                                        
-                                        // Delete the file record
-                                        await tx.file.delete({
-                                            where: { file_hash: file.file_hash }
-                                        });
-                                        deletedFiles++;
-                                   
+                                    }
+
+                                    // Delete the file record
+                                    await tx.file.delete({
+                                        where: { file_hash: file.file_hash }
+                                    });
+                                    deletedFiles++;
+
                                 }
                             } else {
                                 // Otherwise, remove this hash from the hash array and decrement count
@@ -230,22 +231,22 @@ export async function deleteRevisionAndChildren(
                                     },
                                     data: {
                                         pubkey_hash: fileIndex.pubkey_hash.filter(h => h !== hash),
-                                      
+
                                     }
                                 });
                             }
                         }
                         break;
-                        
+
                     default:
                         console.warn(`Unknown revision type encountered: ${revision.revision_type} for ${hash}`);
                 }
-                
+
                 // Before deleting the revision, check if it's in Latest table
                 const latestEntry = await tx.latest.findUnique({
                     where: { hash: hash }
                 });
-                
+
                 if (latestEntry) {
                     // If this is a latest entry, update it to point to previous revision
                     if (revision.previous) {
@@ -260,17 +261,17 @@ export async function deleteRevisionAndChildren(
                         });
                     }
                 }
-                
+
                 // Finally delete the revision itself
                 await tx.revision.delete({
                     where: { pubkey_hash: hash }
                 });
-                
+
                 deletedRevisions.push(hash);
                 console.log(`Deleted revision: ${hash}`);
             }
         });
-        
+
         return {
             success: true,
             deleted: deletedRevisions.length,
@@ -318,15 +319,15 @@ export async function canDeleteRevision(
     requesterAddress: string
 ): Promise<boolean> {
     // Extract the address part if the hash includes it
-    const addressFromHash = revisionHash.includes('_') 
+    const addressFromHash = revisionHash.includes('_')
         ? revisionHash.split('_')[0]
         : null;
-    
+
     // Hash might either contain the address or not
     const hashToQuery = revisionHash.includes('_')
         ? revisionHash
         : `${requesterAddress}_${revisionHash}`;
-    
+
     try {
         // Try to find the revision
         const revision = await prisma.revision.findUnique({
@@ -334,20 +335,20 @@ export async function canDeleteRevision(
                 pubkey_hash: hashToQuery
             }
         });
-        
+
         if (!revision) {
             console.log(`Revision ${hashToQuery} not found`);
             return false;
         }
-        
+
         // If the hash had an address, check if it matches the requester
         if (addressFromHash && addressFromHash !== requesterAddress) {
             console.log(`Unauthorized: Hash address ${addressFromHash} doesn't match requester ${requesterAddress}`);
             return false;
         }
-        
+
         // Additional checks can be added here (e.g., admin privileges, time limits)
-        
+
         return true;
     } catch (error) {
         console.error(`Error checking revision deletability: ${error}`);
@@ -364,11 +365,11 @@ export async function canDeleteRevision(
  * @returns A summary of the transfer operation
  */
 export async function transferRevisionChain(
-    entireChain: any,
+    entireChain:  ExtendedAquaTreeData,
     targetUserAddress: string,
     sourceUserAddress: string
-): Promise<{ 
-    success: boolean; 
+): Promise<{
+    success: boolean;
     message: string;
     transferredRevisions: number;
     linkedChainsTransferred: number;
@@ -395,27 +396,27 @@ export async function transferRevisionChain(
             // Create a new hash with the target user's address
             const sourceFullHash = `${sourceUserAddress}_${hash}`;
             const targetFullHash = `${targetUserAddress}_${hash}`;
-            
+
             // Check if the revision already exists for the target user
             const existingRevision = await prisma.revision.findUnique({
                 where: { pubkey_hash: targetFullHash }
             });
-            
+
             if (existingRevision) {
                 console.log(`Revision already exists for target user: ${targetFullHash}`);
                 continue;
             }
-            
+
             // Get the original revision from the database
             const originalRevision = await prisma.revision.findUnique({
                 where: { pubkey_hash: sourceFullHash }
             });
-            
+
             if (!originalRevision) {
                 console.warn(`Original revision not found in database: ${sourceFullHash}`);
                 continue;
             }
-            
+
             // Create a new revision for the target user with modified previous hash
             let previousHash = "";
             if (originalRevision.previous && originalRevision.previous.startsWith(sourceUserAddress)) {
@@ -428,7 +429,7 @@ export async function transferRevisionChain(
                 // If it's an external reference, keep it as is
                 previousHash = originalRevision.previous;
             }
-            
+
             // Insert the new revision
             await prisma.revision.create({
                 data: {
@@ -444,16 +445,16 @@ export async function transferRevisionChain(
                     verification_leaves: originalRevision.verification_leaves
                 }
             });
-            
+
             transferredRevisions++;
-            
+
             // Handle related data based on revision type
             switch (originalRevision.revision_type) {
                 case "signature":
                     const signature = await prisma.signature.findUnique({
                         where: { hash: sourceFullHash }
                     });
-                    
+
                     if (signature) {
                         await prisma.signature.create({
                             data: {
@@ -467,12 +468,12 @@ export async function transferRevisionChain(
                         });
                     }
                     break;
-                    
+
                 case "witness":
                     const witness = await prisma.witness.findUnique({
                         where: { hash: sourceFullHash }
                     });
-                    
+
                     if (witness) {
                         await prisma.witness.create({
                             data: {
@@ -483,12 +484,12 @@ export async function transferRevisionChain(
                         });
                     }
                     break;
-                    
+
                 case "form":
                     const formItems = await prisma.aquaForms.findMany({
                         where: { hash: sourceFullHash }
                     });
-                    
+
                     for (const formItem of formItems) {
                         await prisma.aquaForms.create({
                             data: {
@@ -501,12 +502,12 @@ export async function transferRevisionChain(
                         });
                     }
                     break;
-                    
+
                 case "link":
                     const link = await prisma.link.findUnique({
                         where: { hash: sourceFullHash }
                     });
-                    
+
                     if (link) {
                         await prisma.link.create({
                             data: {
@@ -520,48 +521,60 @@ export async function transferRevisionChain(
                         });
                     }
                     break;
-                    
+
                 case "file":
+                    if (originalRevision.file_hash === null) {
+                        throw Error("File hash is null for file revision, cannot transfer");
+                    }
                     // For file revisions, handle file indexes
-                    const fileIndexes = await prisma.fileIndex.findMany({
+                    const fileIndexes = await prisma.fileIndex.findFirst({
                         where: {
-                            pubkey_hash: {
-                                has: sourceFullHash
-                            }
+                            file_hash: originalRevision.file_hash
+                        }
+                    });
+
+                    if (fileIndexes === null) {
+                        throw Error("File index is null for file revision, cannot transfer");
+                    }
+
+                    // Update file index to include the new hash
+                    await prisma.fileIndex.update({
+                        where: { file_hash: originalRevision.file_hash },
+                        data: {
+                            pubkey_hash: [...fileIndexes.pubkey_hash, targetFullHash]
+                        }
+                    });
+
+                     await prisma.fileName.create({
+                        
+                        data: {
+                            pubkey_hash: targetFullHash,
+                            file_name: entireChain.file_index[hash] || "+ Unknown File",
                         }
                     });
                     
-                    for (const fileIndex of fileIndexes) {
-                        // Update file index to include the new hash
-                        await prisma.fileIndex.update({
-                            where: { file_hash: fileIndex.file_hash },
-                            data: {
-                                pubkey_hash: [...fileIndex.pubkey_hash, targetFullHash]
-                            }
-                        });
-                    }
                     break;
             }
         }
-        
+
         // Add a single latest hash entry for the whole chain
         // The latest hash will be the one provided in entireChain.latestHash or the last one in the chain
         if (Object.keys(entireChain.revisions).length > 0) {
             // Get the latest hash - either from the provided value or determine it from the chain
-            let latestHashValue = entireChain.latestHash;
-            
-            if (!latestHashValue) {
+            // let latestHashValue = //entireChain.latestHash;
+
+            // if (!latestHashValue) {
                 // If no specific latestHash was provided, find the last revision in the chain
                 // (the one that has no children pointing to it)
                 const allHashes = Object.keys(entireChain.revisions);
                 const allPrevious = Object.values(entireChain.revisions)
                     .map(rev => (rev as any).previous_verification_hash)
                     .filter(Boolean);
-                
+
                 // The latest hash is the one that isn't in the previous list of any other revision
-                latestHashValue = allHashes.find(hash => !allPrevious.includes(hash));
-            }
-            
+              let  latestHashValue = allHashes.find(hash => !allPrevious.includes(hash));
+            // }
+
             if (latestHashValue) {
                 const targetLatestHash = `${targetUserAddress}_${latestHashValue}`;
                 let latestRevision = await prisma.latest.findFirst({
@@ -573,10 +586,10 @@ export async function transferRevisionChain(
                     }
                 })
 
-                if(!latestRevision){
+                if (!latestRevision) {
                     throw Error("Latest revision not found")
                 }
-                
+
                 // Add to latest table for the target user
                 await prisma.latest.create({
                     data: {
@@ -586,11 +599,11 @@ export async function transferRevisionChain(
                         template_id: latestRevision.template_id,
                     }
                 });
-                
+
                 latestHashes.push(targetLatestHash);
             }
         }
-        
+
         // Handle linked chains if they exist
         if (entireChain.linkedChains) {
             for (const [linkedHash, linkedChain] of Object.entries(entireChain.linkedChains)) {
@@ -600,14 +613,14 @@ export async function transferRevisionChain(
                     targetUserAddress,
                     sourceUserAddress
                 );
-                
+
                 if (linkedResult.success) {
                     linkedChainsTransferred++;
                     latestHashes = [...latestHashes, ...linkedResult.latestHashes];
                 }
             }
         }
-        
+
         return {
             success: true,
             message: `Successfully transferred ${transferredRevisions} revisions and ${linkedChainsTransferred} linked chains`,
@@ -637,12 +650,12 @@ export async function transferRevisionChain(
  * @returns A summary of the merge operation
  */
 export async function mergeRevisionChain(
-    entireChain: any,
+    entireChain: ExtendedAquaTreeData,
     targetUserAddress: string,
     sourceUserAddress: string,
     mergeStrategy: "replace" | "fork" = "fork"
-): Promise<{ 
-    success: boolean; 
+): Promise<{
+    success: boolean;
     message: string;
     transferredRevisions: number;
     linkedChainsTransferred: number;
@@ -667,7 +680,7 @@ export async function mergeRevisionChain(
     let latestHashes: string[] = [];
     let appliedStrategy = "none"; // Track which strategy was actually applied
     let mergePoint: string | undefined = undefined;
-    
+
     try {
         // First, order the incoming chain to understand its structure
         const orderedIncomingChain = orderRevisionsInChain(entireChain);
@@ -681,21 +694,21 @@ export async function mergeRevisionChain(
                 strategy: "none"
             };
         }
-        
+
         // Find the latest hash of the incoming chain
         const incomingLatestHash = orderedIncomingChain[orderedIncomingChain.length - 1];
         console.log(`Incoming chain latest hash: ${incomingLatestHash}`);
-        
+
         // Now examine target user's existing chains that might match or overlap with this chain
         // Start by checking if the genesis revision of the incoming chain exists for the target user
         const incomingGenesisHash = orderedIncomingChain[0];
         const targetGenesisHash = `${targetUserAddress}_${incomingGenesisHash}`;
-        
+
         console.log(`Checking if target user has genesis revision: ${targetGenesisHash}`);
         const existingGenesis = await prisma.revision.findUnique({
             where: { pubkey_hash: targetGenesisHash }
         });
-        
+
         if (!existingGenesis) {
             console.log("No matching genesis found, performing a simple transfer");
             // No overlap, so we just do a standard transfer (simplest case)
@@ -704,17 +717,17 @@ export async function mergeRevisionChain(
                 targetUserAddress,
                 sourceUserAddress
             );
-            
+
             appliedStrategy = "full_transfer";
             return {
                 ...transferResult,
                 strategy: appliedStrategy
             };
         }
-        
+
         // Target user has the genesis, so we need to find where chains diverge (if they do)
         console.log("Found matching genesis, analyzing chains to find merge point");
-        
+
         // Order target user's chain starting from the same genesis
         const targetUserChain = await orderUserChain(targetGenesisHash);
         if (!targetUserChain || targetUserChain.length === 0) {
@@ -725,21 +738,21 @@ export async function mergeRevisionChain(
                 targetUserAddress,
                 sourceUserAddress
             );
-            
+
             appliedStrategy = "full_transfer_fallback";
             return {
                 ...transferResult,
                 strategy: appliedStrategy
             };
         }
-        
+
         console.log(`Target user chain has ${targetUserChain.length} revisions`);
         console.log(`Incoming chain has ${orderedIncomingChain.length} revisions`);
-        
+
         // Find last common revision (divergence point)
         let lastCommonIndex = -1;
         let lastCommonHash = "";
-        
+
         for (let i = 0; i < Math.min(targetUserChain.length, orderedIncomingChain.length); i++) {
             if (targetUserChain[i].split('_')[1] === orderedIncomingChain[i]) {
                 lastCommonIndex = i;
@@ -748,36 +761,36 @@ export async function mergeRevisionChain(
                 break; // Chains diverge at this point
             }
         }
-        
+
         console.log(`Last common revision index: ${lastCommonIndex}, hash: ${lastCommonHash}`);
         mergePoint = lastCommonHash;
-        
+
         if (lastCommonIndex === targetUserChain.length - 1) {
             // Target chain is a subset of incoming chain - simple addition case
             console.log("Target chain is a subset of incoming chain, adding new revisions");
             appliedStrategy = "simple_addition";
-            
+
             // Transfer only the new revisions (from lastCommonIndex+1 onward)
             const newRevisions = orderedIncomingChain.slice(lastCommonIndex + 1);
-            
+
             for (const hash of newRevisions) {
                 const sourceFullHash = `${sourceUserAddress}_${hash}`;
                 const targetFullHash = `${targetUserAddress}_${hash}`;
-                
+
                 // Get the original revision
                 const originalRevision = await prisma.revision.findUnique({
                     where: { pubkey_hash: sourceFullHash }
                 });
-                
+
                 if (!originalRevision) {
                     console.warn(`Original revision not found in database: ${sourceFullHash}`);
                     continue;
                 }
-                
+
                 // Determine previous hash
                 let previousHashFromSource = originalRevision.previous;
                 let previousHash = "";
-                
+
                 if (previousHashFromSource) {
                     if (previousHashFromSource.startsWith(sourceUserAddress)) {
                         // If previous is from same source user, update to target user
@@ -790,7 +803,7 @@ export async function mergeRevisionChain(
                         previousHash = previousHashFromSource;
                     }
                 }
-                
+
                 // Insert the new revision
                 await prisma.revision.create({
                     data: {
@@ -806,29 +819,29 @@ export async function mergeRevisionChain(
                         verification_leaves: originalRevision.verification_leaves
                     }
                 });
-                
+
                 transferredRevisions++;
-                
+
                 // Handle related data based on revision type
                 await transferRevisionAssociatedData(originalRevision, sourceFullHash, targetFullHash);
             }
-            
+
             // Update latest hash to the new tip
             const latestHashValue = orderedIncomingChain[orderedIncomingChain.length - 1];
             const targetLatestHash = `${targetUserAddress}_${latestHashValue}`;
-            
+
             // Remove the old latest entry and add a new one
             await updateLatestHash(targetUserAddress, targetUserChain[targetUserChain.length - 1], targetLatestHash);
             latestHashes.push(targetLatestHash);
-            
+
         } else if (lastCommonIndex < targetUserChain.length - 1 && lastCommonIndex < orderedIncomingChain.length - 1) {
             // Chains have diverged - handle according to merge strategy
             console.log(`Chains diverge after index ${lastCommonIndex}, applying ${mergeStrategy} strategy`);
             appliedStrategy = mergeStrategy;
-            
+
             if (mergeStrategy === "replace") {
                 // Replace target's divergent revisions with incoming revisions
-                
+
                 // 1. Mark the divergent target revisions as obsolete (could soft-delete or add metadata)
                 const divergentTargetRevisions = targetUserChain.slice(lastCommonIndex + 1);
                 for (const obsoleteHash of divergentTargetRevisions) {
@@ -840,28 +853,28 @@ export async function mergeRevisionChain(
                     //     data: { is_obsolete: true }
                     // });
                 }
-                
+
                 // 2. Import the incoming chain's divergent revisions
                 const newRevisions = orderedIncomingChain.slice(lastCommonIndex + 1);
-                
+
                 for (const hash of newRevisions) {
                     const sourceFullHash = `${sourceUserAddress}_${hash}`;
                     const targetFullHash = `${targetUserAddress}_${hash}`;
-                    
+
                     // Get the original revision
                     const originalRevision = await prisma.revision.findUnique({
                         where: { pubkey_hash: sourceFullHash }
                     });
-                    
+
                     if (!originalRevision) {
                         console.warn(`Original revision not found in database: ${sourceFullHash}`);
                         continue;
                     }
-                    
+
                     // Determine previous hash
                     let previousHashFromSource = originalRevision.previous;
                     let previousHash = "";
-                    
+
                     if (previousHashFromSource) {
                         if (previousHashFromSource.startsWith(sourceUserAddress)) {
                             // If previous is from same source user, update to target user
@@ -874,7 +887,7 @@ export async function mergeRevisionChain(
                             previousHash = previousHashFromSource;
                         }
                     }
-                    
+
                     // Insert the new revision
                     await prisma.revision.create({
                         data: {
@@ -890,55 +903,55 @@ export async function mergeRevisionChain(
                             verification_leaves: originalRevision.verification_leaves
                         }
                     });
-                    
+
                     transferredRevisions++;
-                    
+
                     // Handle related data based on revision type
                     await transferRevisionAssociatedData(originalRevision, sourceFullHash, targetFullHash);
                 }
-                
+
                 // 3. Update latest hash to the new tip from incoming chain
                 const latestHashValue = orderedIncomingChain[orderedIncomingChain.length - 1];
                 const targetLatestHash = `${targetUserAddress}_${latestHashValue}`;
-                
+
                 // Remove the old latest entry and add a new one
                 await updateLatestHash(targetUserAddress, targetUserChain[targetUserChain.length - 1], targetLatestHash);
                 latestHashes.push(targetLatestHash);
-                
+
             } else { // "fork" strategy
                 // Keep both branches (target's existing chain and import the divergent part as a separate branch)
-                
+
                 // 1. Import only the divergent part of the incoming chain
                 const newRevisions = orderedIncomingChain.slice(lastCommonIndex + 1);
-                
+
                 for (const hash of newRevisions) {
                     const sourceFullHash = `${sourceUserAddress}_${hash}`;
                     const targetFullHash = `${targetUserAddress}_${hash}`;
-                    
+
                     // Skip if revision already exists
                     const existingRev = await prisma.revision.findUnique({
                         where: { pubkey_hash: targetFullHash }
                     });
-                    
+
                     if (existingRev) {
                         console.log(`Revision ${targetFullHash} already exists, skipping`);
                         continue;
                     }
-                    
+
                     // Get the original revision
                     const originalRevision = await prisma.revision.findUnique({
                         where: { pubkey_hash: sourceFullHash }
                     });
-                    
+
                     if (!originalRevision) {
                         console.warn(`Original revision not found in database: ${sourceFullHash}`);
                         continue;
                     }
-                    
+
                     // Determine previous hash
                     let previousHashFromSource = originalRevision.previous;
                     let previousHash = "";
-                    
+
                     if (previousHashFromSource) {
                         if (previousHashFromSource.startsWith(sourceUserAddress)) {
                             // If previous is from same source user, update to target user
@@ -951,7 +964,7 @@ export async function mergeRevisionChain(
                             previousHash = previousHashFromSource;
                         }
                     }
-                    
+
                     // Insert the new revision
                     await prisma.revision.create({
                         data: {
@@ -967,18 +980,18 @@ export async function mergeRevisionChain(
                             verification_leaves: originalRevision.verification_leaves
                         }
                     });
-                    
+
                     transferredRevisions++;
-                    
+
                     // Handle related data based on revision type
                     await transferRevisionAssociatedData(originalRevision, sourceFullHash, targetFullHash);
                 }
-                
+
                 // 2. Add the new tip as another "latest" entry, keeping the existing one
                 // This creates a fork with two current tips
                 const latestHashValue = orderedIncomingChain[orderedIncomingChain.length - 1];
                 const targetLatestHash = `${targetUserAddress}_${latestHashValue}`;
-                
+
                 // Add a new latest entry without removing the existing one
                 await prisma.latest.create({
                     data: {
@@ -986,7 +999,7 @@ export async function mergeRevisionChain(
                         user: targetUserAddress
                     }
                 });
-                
+
                 latestHashes.push(targetLatestHash);
                 // Also retain the existing latest hash
                 latestHashes.push(targetUserChain[targetUserChain.length - 1]);
@@ -998,7 +1011,7 @@ export async function mergeRevisionChain(
             // The target user already has all these revisions and more
             latestHashes.push(targetUserChain[targetUserChain.length - 1]);
         }
-        
+
         // Handle linked chains if they exist
         if (entireChain.linkedChains) {
             for (const [linkedHash, linkedChain] of Object.entries(entireChain.linkedChains)) {
@@ -1009,14 +1022,14 @@ export async function mergeRevisionChain(
                     sourceUserAddress,
                     mergeStrategy
                 );
-                
+
                 if (linkedResult.success) {
                     linkedChainsTransferred++;
                     latestHashes = [...latestHashes, ...linkedResult.latestHashes];
                 }
             }
         }
-        
+
         return {
             success: true,
             message: `Successfully merged chain using "${appliedStrategy}" strategy: ${transferredRevisions} revisions and ${linkedChainsTransferred} linked chains`,
@@ -1047,7 +1060,7 @@ async function orderUserChain(genesisHash: string): Promise<string[]> {
     try {
         const orderedChain: string[] = [genesisHash];
         let currentHash = genesisHash;
-        
+
         // Starting from genesis, follow the chain by finding revisions that point to the current one
         while (true) {
             const nextRevision = await prisma.revision.findFirst({
@@ -1055,15 +1068,15 @@ async function orderUserChain(genesisHash: string): Promise<string[]> {
                     previous: currentHash
                 }
             });
-            
+
             if (!nextRevision) {
                 break;  // End of chain
             }
-            
+
             orderedChain.push(nextRevision.pubkey_hash);
             currentHash = nextRevision.pubkey_hash;
         }
-        
+
         return orderedChain;
     } catch (error) {
         console.error("Error ordering user chain:", error);
@@ -1078,7 +1091,7 @@ function orderRevisionsInChain(chainData: any): string[] {
     try {
         const revisions = chainData.revisions || {};
         const ordered: string[] = [];
-        
+
         // Find genesis (revision with no previous_verification_hash)
         let genesisHash = "";
         for (const [hash, revision] of Object.entries(revisions)) {
@@ -1087,19 +1100,19 @@ function orderRevisionsInChain(chainData: any): string[] {
                 break;
             }
         }
-        
+
         if (!genesisHash) {
             // Fallback: look for revision not referenced as previous by any other
             const allHashes = new Set(Object.keys(revisions));
             const allPrevious = new Set();
-            
+
             for (const revision of Object.values(revisions)) {
                 const prevHash = (revision as any).previous_verification_hash;
                 if (prevHash) {
                     allPrevious.add(prevHash);
                 }
             }
-            
+
             for (const hash of allHashes) {
                 if (!allPrevious.has(hash)) {
                     genesisHash = hash;
@@ -1107,16 +1120,16 @@ function orderRevisionsInChain(chainData: any): string[] {
                 }
             }
         }
-        
+
         if (!genesisHash) {
             console.error("Could not find genesis revision");
             return [];
         }
-        
+
         // Build ordered chain from genesis
         ordered.push(genesisHash);
         let currentHash = genesisHash;
-        
+
         while (true) {
             // Find revision that refers to current hash as its previous
             let found = false;
@@ -1128,12 +1141,12 @@ function orderRevisionsInChain(chainData: any): string[] {
                     break;
                 }
             }
-            
+
             if (!found) {
                 break;  // End of chain reached
             }
         }
-        
+
         return ordered;
     } catch (error) {
         console.error("Error ordering revisions:", error);
@@ -1153,7 +1166,7 @@ async function updateLatestHash(userAddress: string, oldHash: string, newHash: s
                 user: userAddress
             }
         });
-        
+
         if (existingLatest) {
             // Update existing entry to point to new hash
             await prisma.latest.update({
@@ -1192,7 +1205,7 @@ async function transferRevisionAssociatedData(
             const signature = await prisma.signature.findUnique({
                 where: { hash: sourceFullHash }
             });
-            
+
             if (signature) {
                 await prisma.signature.create({
                     data: {
@@ -1206,12 +1219,12 @@ async function transferRevisionAssociatedData(
                 });
             }
             break;
-            
+
         case "witness":
             const witness = await prisma.witness.findUnique({
                 where: { hash: sourceFullHash }
             });
-            
+
             if (witness) {
                 await prisma.witness.create({
                     data: {
@@ -1222,12 +1235,12 @@ async function transferRevisionAssociatedData(
                 });
             }
             break;
-            
+
         case "form":
             const formItems = await prisma.aquaForms.findMany({
                 where: { hash: sourceFullHash }
             });
-            
+
             for (const formItem of formItems) {
                 await prisma.aquaForms.create({
                     data: {
@@ -1240,12 +1253,12 @@ async function transferRevisionAssociatedData(
                 });
             }
             break;
-            
+
         case "link":
             const link = await prisma.link.findUnique({
                 where: { hash: sourceFullHash }
             });
-            
+
             if (link) {
                 await prisma.link.create({
                     data: {
@@ -1259,7 +1272,7 @@ async function transferRevisionAssociatedData(
                 });
             }
             break;
-            
+
         case "file":
             // For file revisions, handle file indexes
             const fileIndexes = await prisma.fileIndex.findMany({
@@ -1269,7 +1282,7 @@ async function transferRevisionAssociatedData(
                     }
                 }
             });
-            
+
             for (const fileIndex of fileIndexes) {
                 // Update file index to include the new hash
                 await prisma.fileIndex.update({

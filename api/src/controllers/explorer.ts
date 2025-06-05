@@ -207,6 +207,19 @@ export default async function explorerController(fastify: FastifyInstance) {
 
                 // Create unique filename
                 let fileName = assetFilename;
+                 await prisma.fileName.upsert({
+                    where: {
+                        pubkey_hash: filepubkeyhash,
+                    },
+                    create: {
+                        pubkey_hash: filepubkeyhash,
+                        file_name: `fileName-${fileName}`,
+                    },
+                    update: {
+                         file_name: `fileName-${fileName}`,
+                    }
+                })
+
                 if (existingFileIndex != null) {
                     console.log(`Update file index counter`)
 
@@ -258,13 +271,10 @@ export default async function explorerController(fastify: FastifyInstance) {
                     // console.log('FileIndex record created');
                 }
 
-                await prisma.fileName.create({
-                    data: {
-                        pubkey_hash: filepubkeyhash,
-                        file_name: fileName,
-
-                    }
-                })
+               
+            }else{
+                  // console.log(`failure reason ${failureReason}`)
+                return reply.code(500).send({ error: `Asset is required` });
             }
             // console.log("Aquatree to save: ", aquaTree)
             // Save the aqua tree

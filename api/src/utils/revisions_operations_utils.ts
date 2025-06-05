@@ -6,7 +6,7 @@ import { Link, Revision, Prisma, WitnessEvent, Signature, AquaForms } from '@pri
 import * as fs from "fs"
 import path from 'path';
 import { getGenesisHash } from './aqua_tree_utils';
-import { AquaTreeFileData, UpdateGenesisResult } from 'src/models/types';
+import { AquaTreeFileData, LinkedRevisionResult, UpdateGenesisResult } from 'src/models/types';
 import { file } from 'jszip';
 
 // Main refactored function
@@ -491,14 +491,8 @@ async function processLinkRevision(
     }
 }
 
-// Return type for linked revision processing functions
-interface LinkedRevisionResult {
-    aquaTree: AquaTree;
-    fileObjects: FileObject[];
-}
 
 // Utility functions
-
 function extractHashOnly(pubkeyHash: string): string {
     if (!pubkeyHash) return "";
     const parts = pubkeyHash.split("_");
@@ -654,8 +648,6 @@ async function processLinkedNonFileRevision(
         fileObjects: newFileObjects
     };
 }
-
-
 
 async function addRevisionContent(revision: Revision, revisionData: AquaRevision, aquaTreeFiledata: AquaTreeFileData[]): Promise<AquaRevision> {
     const fileItem = aquaTreeFiledata.find(f => f.fileHash === revision.pubkey_hash);
