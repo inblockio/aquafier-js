@@ -124,8 +124,8 @@ model File {
 
 model FileIndex {
   file_hash              String   @id 
-  pubkey_hash            String[]
-        
+  pubkey_hash            String[] 
+  
 
   @@map("file_index")
 }
@@ -133,7 +133,7 @@ model FileIndex {
 model FileName {
    
    pubkey_hash String @id 
-   file_name             String
+   file_name   String
 
   @@map("file_name")
 }

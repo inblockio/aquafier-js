@@ -20,68 +20,68 @@ const pump = util.promisify(pipeline);
 
 export default async function explorerController(fastify: FastifyInstance) {
 
-  fastify.post('/explorer_aqua_zip', async (request: any, reply: any) => {
-    try {
-      // Authentication
-      const nonce = request.headers['nonce'];
-      if (!nonce || typeof nonce !== 'string' || nonce.trim() === '') {
-        return reply.code(401).send({ error: 'Unauthorized: Missing or empty nonce header' });
-      }
+    fastify.post('/explorer_aqua_zip', async (request: any, reply: any) => {
+        try {
+            // Authentication
+            const nonce = request.headers['nonce'];
+            if (!nonce || typeof nonce !== 'string' || nonce.trim() === '') {
+                return reply.code(401).send({ error: 'Unauthorized: Missing or empty nonce header' });
+            }
 
-      const session = await prisma.siweSession.findUnique({ where: { nonce } });
-      if (!session) {
-        return reply.code(403).send({ success: false, message: "Nonce is invalid" });
-      }
+            const session = await prisma.siweSession.findUnique({ where: { nonce } });
+            if (!session) {
+                return reply.code(403).send({ success: false, message: "Nonce is invalid" });
+            }
 
-      // Validate multipart request
-      if (!request.isMultipart()) {
-        return reply.code(400).send({ error: 'Expected multipart form data' });
-      }
+            // Validate multipart request
+            if (!request.isMultipart()) {
+                return reply.code(400).send({ error: 'Expected multipart form data' });
+            }
 
-      // Process file upload
-      const data = await request.file();
-      if (!data?.file) {
-        return reply.code(400).send({ error: 'No file uploaded' });
-      }
+            // Process file upload
+            const data = await request.file();
+            if (!data?.file) {
+                return reply.code(400).send({ error: 'No file uploaded' });
+            }
 
-      // Verify file size (200MB limit)
-      const maxFileSize = 200 * 1024 * 1024;
-      if (data.file.bytesRead > maxFileSize) {
-        return reply.code(413).send({ error: 'File too large. Maximum file size is 200MB' });
-      }
+            // Verify file size (200MB limit)
+            const maxFileSize = 200 * 1024 * 1024;
+            if (data.file.bytesRead > maxFileSize) {
+                return reply.code(413).send({ error: 'File too large. Maximum file size is 200MB' });
+            }
 
-      // Process ZIP file
-      const fileBuffer = await streamToBuffer(data.file);
-      const zip = new JSZip();
-      const zipData = await zip.loadAsync(fileBuffer);
+            // Process ZIP file
+            const fileBuffer = await streamToBuffer(data.file);
+            const zip = new JSZip();
+            const zipData = await zip.loadAsync(fileBuffer);
 
-      // Process aqua.json metadata first
-      await processAquaMetadata(zipData, session.address);
+            // Process aqua.json metadata first
+            await processAquaMetadata(zipData, session.address);
 
-      // Process individual .aqua.json files
-      await processAquaFiles(zipData, session.address);
+            // Process individual .aqua.json files
+            await processAquaFiles(zipData, session.address);
 
-      // Return response with file info
-      const host = request.headers.host || `${getHost()}:${getPort()}`;
-      const protocol = request.protocol || 'https';
-      const url = `${protocol}://${host}`;
-      const displayData = await getUserApiFileInfo(url, session.address);
+            // Return response with file info
+            const host = request.headers.host || `${getHost()}:${getPort()}`;
+            const protocol = request.protocol || 'https';
+            const url = `${protocol}://${host}`;
+            const displayData = await getUserApiFileInfo(url, session.address);
 
-      return reply.code(200).send({
-        success: true,
-        message: 'Aqua tree saved successfully',
-        files: displayData
-      });
+            return reply.code(200).send({
+                success: true,
+                message: 'Aqua tree saved successfully',
+                files: displayData
+            });
 
-    } catch (error) {
-      request.log.error(error);
-      return reply.code(500).send({ 
-        error: error instanceof Error ? error.message : 'File upload failed' 
-      });
-    }
-  });
+        } catch (error) {
+            request.log.error(error);
+            return reply.code(500).send({
+                error: error instanceof Error ? error.message : 'File upload failed'
+            });
+        }
+    });
 
-  
+
 
     fastify.post('/explorer_aqua_file_upload', async (request, reply) => {
 
@@ -199,10 +199,14 @@ export default async function explorerController(fastify: FastifyInstance) {
                     return reply.code(500).send({ error: 'Genesis hash not found in aqua tree' });
                 }
 
+                let filepubkeyhash = `${session.address}_${genesisHash}`
+
                 let existingFileIndex = await prisma.fileIndex.findFirst({
                     where: { file_hash: fileHash },
                 });
 
+                // Create unique filename
+                let fileName = assetFilename;
                 if (existingFileIndex != null) {
                     console.log(`Update file index counter`)
 
@@ -213,16 +217,13 @@ export default async function explorerController(fastify: FastifyInstance) {
                         }
                     });
 
+
+
                 } else {
-
-
-                    let filepubkeyhash = `${session.address}_${genesisHash}`
-
                     // console.log(`\n ## filepubkeyhash ${filepubkeyhash}`)
                     const UPLOAD_DIR = getFileUploadDirectory();
 
-                    // Create unique filename
-                    let fileName = assetFilename;
+
                     let aquaTreeName = await aquafier.getFileByHash(aquaTree, genesisHash);
                     if (aquaTreeName.isOk()) {
                         fileName = aquaTreeName.data
@@ -233,26 +234,7 @@ export default async function explorerController(fastify: FastifyInstance) {
                     // Save the file
                     // await pump(data.file, fs.createWriteStream(filePath))
                     await fs.promises.writeFile(filePath, assetBuffer);
-                    // let fileCreations = await prisma.file.create({
-                    //     data: {
-                    //         hash: filepubkeyhash,
-                    //         file_hash: fileHash,
-                    //         content: filePath,
-                    //         reference_count: 0, // we use 0 because  saveAquaTree increases file  by 1
-                    //     }
-                    // })
 
-
-                    // await prisma.fileIndex.create({
-                    //     data: {
-                    //         id: fileCreation.hash,
-                    //         hash: [filepubkeyhash],
-                    //         file_hash: fileHash,
-                    //         uri: fileName,
-                    //         reference_count: 0 // we use 0 because  saveAquaTree increases file  undex  by 1
-                    //     }
-                    // })
- 
 
                     await prisma.file.create({
                         data: {
@@ -272,15 +254,17 @@ export default async function explorerController(fastify: FastifyInstance) {
                         }
                     })
 
-                    await prisma.fileName.create({
-                        data: {
-                            pubkey_hash: filepubkeyhash,
-                            file_name: fileName,
 
-                        }
-                    })
                     // console.log('FileIndex record created');
                 }
+
+                await prisma.fileName.create({
+                    data: {
+                        pubkey_hash: filepubkeyhash,
+                        file_name: fileName,
+
+                    }
+                })
             }
             // console.log("Aquatree to save: ", aquaTree)
             // Save the aqua tree
@@ -340,42 +324,6 @@ export default async function explorerController(fastify: FastifyInstance) {
             return reply.code(403).send({ success: false, message: "Nounce  is invalid" });
         }
 
-
-        // fetch all from latetst
-
-        // let latest = await prisma.latest.findMany({
-        //     where: {
-        //         user: session.address
-        //     }
-        // });
-
-        // if (latest.length == 0) {
-        //     return reply.code(200).send({ data: [] });
-        // }
-
-
-        // // Get the host from the request headers
-        // const host = request.headers.host || `${getHost()}:${getPort()}`;
-
-        // // Get the protocol (http or https)
-        // const protocol = request.protocol || 'https'
-
-        // // Construct the full URL
-        // const url = `${protocol}://${host}`;
-
-        // let displayData = await fetchAquatreeFoUser(url, latest)
-        // let displayData: any[] = []
-        // for (let item of latest) {
-        //     // console.log(`Fetching complete revision chain for ${item.hash}`)
-        //     let displayDataItem = await fetchCompleteRevisionChain(item.hash.split("_")[1], session.address, url, new Set(), true, 0, true);
-        //     displayData.push({
-        //         aquaTree: {
-        //             revisions: displayDataItem.revisions,
-        //             file_index: displayDataItem.file_index
-        //         },
-        //         fileObject: displayDataItem.fileObjects
-        //     })
-        // }
 
         // Get the host from the request headers
         const host = request.headers.host || `${getHost()}:${getPort()}`;
@@ -454,11 +402,10 @@ export default async function explorerController(fastify: FastifyInstance) {
             }
 
             // Same for enableContent
-            // if (data.fields.enableContent) {
-            //     const enableContentField: any = data.fields.enableContent;
-
-            //     enableContent = enableContentField.value === 'true';
-            // }
+            if (data.fields.enableContent) {
+                const enableContentField: any = data.fields.enableContent;
+                enableContent = enableContentField.value === 'true';
+            }
 
             // Same for enableContent
             if (data.fields.enableScalar) {
@@ -511,7 +458,6 @@ export default async function explorerController(fastify: FastifyInstance) {
             }
 
 
-
             // let fileHash = getHashSum(data.file)
             let resData: AquaTree = res.data.aquaTree!!;
 
@@ -520,17 +466,6 @@ export default async function explorerController(fastify: FastifyInstance) {
             if (!genesisHash) {
                 return reply.code(500).send({ error: 'Genesis revision cannot be found' });
             }
-            // let allHashes: string[] = Object.keys(resData.revisions);
-            // let genesisHash = allHashes[0];
-            // for (let hashItem of allHashes) {
-            //     let revision = resData.revisions[hashItem];
-            //     if (revision.previous_verification_hash == null || revision.previous_verification_hash == undefined || revision.previous_verification_hash == "") {
-            //         if (genesisHash != hashItem) {
-            //             genesisHash = hashItem
-            //         }
-            //         break
-            //     }
-            // }
 
 
             let revisionData: Revision = resData.revisions[genesisHash];
@@ -578,17 +513,14 @@ export default async function explorerController(fastify: FastifyInstance) {
                 await prisma.revision.create({
                     data: {
                         pubkey_hash: filepubkeyhash,
-                        // user: session.address, // Replace with actual user identifier (e.g., request.user.id)
                         nonce: revisionData.file_nonce || "",
                         shared: [],
-                        // contract: revisionData.witness_smart_contract_address
-                        //     ? [{ address: revisionData.witness_smart_contract_address }]
-                        //     : [],
                         previous: revisionData.previous_verification_hash || "",
-                        // children: {},
                         local_timestamp: revisionData.local_timestamp,
                         revision_type: revisionData.revision_type,
                         verification_leaves: revisionData.leaves || [],
+                        file_hash: fileHash,
+                        has_content: enableContent,
 
                     },
                 });
@@ -609,13 +541,6 @@ export default async function explorerController(fastify: FastifyInstance) {
                         }
                     }
                 }
-
-
-                // Check if file already exists in the database
-                let existingFile = await prisma.file.findFirst({
-                    where: { file_hash: fileHash },
-                });
-
 
 
                 let existingFileIndex = await prisma.fileIndex.findFirst({
@@ -645,30 +570,26 @@ export default async function explorerController(fastify: FastifyInstance) {
 
                     await prisma.file.create({
                         data: {
-
                             file_hash: fileHash,
                             file_location: filePath,
-
                         }
                     })
 
                     await prisma.fileIndex.create({
                         data: {
-
                             pubkey_hash: [filepubkeyhash],
                             file_hash: fileHash,
-
                         }
                     })
 
                     await prisma.fileName.create({
                         data: {
                             pubkey_hash: filepubkeyhash,
-                            file_name: fileHash,
+                            file_name: data.filename,
 
                         }
                     })
-                    //  // console.log("Saved successfully")
+
                 }
 
             } catch (error) {

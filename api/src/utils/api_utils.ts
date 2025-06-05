@@ -133,7 +133,7 @@ export const saveTemplateFileData = async (aquaTree: AquaTree, fileData: string,
 
    await prisma.fileName.upsert({
     where: {
-      pubkey_hash: fileHash,
+      pubkey_hash: filepubkeyhash,
     },
     create: {
      
@@ -142,6 +142,7 @@ export const saveTemplateFileData = async (aquaTree: AquaTree, fileData: string,
      
     },
     update: {
+      pubkey_hash: filepubkeyhash,
        file_name:fileName ,
     }
   })

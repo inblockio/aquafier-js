@@ -6,6 +6,8 @@ import { Link, Revision, Prisma, WitnessEvent, Signature, AquaForms } from '@pri
 import * as fs from "fs"
 import path from 'path';
 import { getGenesisHash } from './aqua_tree_utils';
+import { AquaTreeFileData, UpdateGenesisResult } from 'src/models/types';
+import { file } from 'jszip';
 
 // Main refactored function
 export async function createAquaTreeFromRevisions(
@@ -28,17 +30,15 @@ export async function createAquaTreeFromRevisions(
         }
 
         // Step 2: Get all associated files
-        const files = await getAssociatedFiles(revisionData); 
-        console.log("Associated files: ", files)
-        const fileIndexes = await getFileIndexes(revisionData);
-        console.log("File indexes: ", fileIndexes)
+        const aquaTreeFileData = await fetchAquaTreeFileData(revisionData.map(rev => rev.pubkey_hash));
+        console.log("File indexes: ", aquaTreeFileData)
 
         // Step 3: Create file objects for download
-        fileObjects = await createFileObjects(files, fileIndexes, url);
+        fileObjects = await createFileObjects(aquaTreeFileData, url);
 
         // Step 4: Process each revision
         for (const revision of revisionData) {
-            const processResult = await processRevision(revision, aquaTree, fileObjects, files, fileIndexes, url);
+            const processResult = await processRevision(revision, aquaTree, fileObjects, aquaTreeFileData, url);
             aquaTree = processResult.aquaTree;
             fileObjects = processResult.fileObjects;
         }
@@ -182,138 +182,79 @@ function estimateStringFileSize(str: string): number {
     }, 0);
 }
 
-async function getAssociatedFiles(revisionData: Revision[]): Promise<any[]> {
-    let allFiles = [];
-
-    for (const revision of revisionData) {
-        const revisionPubKeyHash = revision.pubkey_hash
-        const hashOnly = extractHashOnly(revisionPubKeyHash);
-
-        // Try to find files directly by file_hash
-        // const files = await prisma.file.findMany({
-        //     where: {
-        //         file_hash: {
-        //             contains: hashOnly,
-        //             mode: 'insensitive'
-        //         }
-        //     }
-        // });
-
-        const files = await prisma.file.findMany({
-            where: {
-                file_hash: {
-                    contains: hashOnly,
-                    mode: 'insensitive'
-                }
-            }
-        });
-        
-        if (files.length > 0) {
-            allFiles.push(...files);
-        } else {
-            // Try to find via file index
-            const filesViaIndex = await getFilesViaIndex(hashOnly, revisionPubKeyHash);
-            allFiles.push(...filesViaIndex);
-        }
-    }
-
-    return allFiles;
-}
-
-async function getFilesViaIndex(hashOnly: string, pubkey_hash: string): Promise<any[]> {
-    // FileIndex: file_hash (PK), pubkey_hash (String[])
-    const fileIndexResult = await prisma.fileIndex.findFirst({
-        where: {
-            pubkey_hash: {
-                has: hashOnly
-            }
-        },
-        
-    });
-
-    const fileName = await prisma.fileName.findFirst({
-        where: {
-            pubkey_hash: pubkey_hash,
-        }
-    })
-
-    if (!fileIndexResult) {
-        return [];
-    }
-
-    // return await prisma.file.findMany({
-    //     where: {
-    //         file_hash: fileIndexResult.file_hash
-    //     }
-    // });
-    let actualFile = await prisma.file.findMany({
-        where: {
-            file_hash: fileIndexResult.file_hash
-        }
-    });
-    let actualFileWithAllInfo = {
-        ...actualFile,
-        fileName: fileName?.file_name ?? "File name not found",
-    }
-    return [actualFileWithAllInfo]
-}
 
 
-async function getFileIndexes(revisionData: Revision[]): Promise<any[]> {
-    const fileIndexes = [];
 
-    for (const revision of revisionData) {
-        console.log(` revision  pubkey_hash ${revision.pubkey_hash}`)
-        const hashOnly = extractHashOnly(revision.pubkey_hash);
+async function fetchAquaTreeFileData(pubKeyHashes: string[]): Promise<AquaTreeFileData[]> {
+    let allData: AquaTreeFileData[] = [];
+
+    for (const pubKeyHash of pubKeyHashes) {
+        console.log(` revision  pubkey_hash ${pubKeyHash}`)
+        const hashOnly = extractHashOnly(pubKeyHash);
         const fileIndex = await prisma.fileIndex.findFirst({
             where: {
                 OR: [
-                    { pubkey_hash: { has: revision.pubkey_hash } },
+                    { pubkey_hash: { has: pubKeyHash } },
                     { pubkey_hash: { has: hashOnly } }
                 ]
             }
         });
         if (fileIndex) {
-            fileIndexes.push(fileIndex);
+
+
+            const fileNameData = await prisma.fileName.findFirst({
+                where: {
+                    pubkey_hash: pubKeyHash
+                },
+            });
+
+            const fileData = await prisma.file.findFirst({
+                where: {
+                    file_hash: fileIndex.file_hash
+                },
+            });
+
+            if (fileNameData) {
+
+
+                let data: AquaTreeFileData = {
+                    name: fileNameData?.file_name ?? "File name not found",
+                    fileHash: fileIndex.file_hash,
+                    referenceCount: fileIndex.pubkey_hash.length,
+                    fileLocation: fileData?.file_location ?? "File location not found",
+                    pubKeyHash: pubKeyHash
+
+                }
+
+                allData.push(data);
+            }
         } else {
             console.log(`File index not found ..`)
         }
     }
-    return fileIndexes;
+    return allData;
 }
 
-async function createFileObjects(files: any[], fileIndexes: any[], url: string): Promise<FileObject[]> {
+async function createFileObjects(aquaTreesFileData: AquaTreeFileData[], url: string): Promise<FileObject[]> {
     const fileObjects: FileObject[] = [];
-    for (const file of files) {
+    for (const item of aquaTreesFileData) {
         try {
-            const fileStats = getFileStats(file.file_location);
+            const fileStats = getFileStats(item.fileLocation);
             if (!fileStats) continue;
-            const fileIndex = await getFileIndexForFile(file.file_hash);
-            if (!fileIndex) {
-                console.log(`File ${fileStats.originalFilename} not found in index`);
-                continue;
-            }
-            const fullUrl = `${url}/files/${file.file_hash}`;
+            const fullUrl = `${url}/files/${item.fileHash}`;
             fileObjects.push({
                 fileContent: fullUrl,
-                fileName: fileIndex.file_hash, // No uri in schema, use file_hash
-                path: file.file_location,
+                fileName: item.name, // No uri in schema, use file_hash
+                path: item.fileLocation,
                 fileSize: fileStats.fileSizeInBytes
             });
         } catch (error) {
-            console.error(`Error processing file ${file.file_hash}:`, error);
+            console.error(`Error processing file with hash ${item.fileHash} pub key hash ${item.pubKeyHash} :`, error);
         }
     }
     return fileObjects;
 }
 
-async function getFileIndexForFile(fileHash: string): Promise<any> {
-    return await prisma.fileIndex.findFirst({
-        where: {
-            file_hash: fileHash
-        }
-    });
-}
 
 // Return type for processRevision function
 interface ProcessRevisionResult {
@@ -325,8 +266,7 @@ async function processRevision(
     revision: Revision,
     aquaTree: AquaTree,
     fileObjects: FileObject[],
-    files: any[],
-    fileIndexes: any[],
+    aquaTreeFileData: AquaTreeFileData[],
     url: string
 ): Promise<ProcessRevisionResult> {
     const hashOnly = extractHashOnly(revision.pubkey_hash);
@@ -343,7 +283,7 @@ async function processRevision(
 
     // Add content if revision has it
     if (revision.has_content) {
-        revisionData = await addRevisionContent(revision, revisionData, files);
+        revisionData = await addRevisionContent(revision, revisionData, aquaTreeFileData);
     }
 
     // Process based on revision type
@@ -354,7 +294,7 @@ async function processRevision(
 
     // Update file index for genesis revision
     if (!previousHashOnly) {
-        const genesisResult = await updateGenesisFileIndex(revision, revisionData, updatedAquaTree, updatedFileObjects, fileIndexes, url);
+        const genesisResult = await updateGenesisFileIndex(revision, revisionData, updatedAquaTree, updatedFileObjects, aquaTreeFileData, url);
         updatedAquaTree = genesisResult.aquaTree;
         updatedFileObjects = genesisResult.fileObjects;
         revisionData = genesisResult.revisionData;
@@ -520,7 +460,14 @@ async function processLinkRevision(
     }
 
     const linkedHash = linkData.link_verification_hashes[0];
-    const linkedRevision = await getRevisionByHash(linkedHash);
+    const linkedRevision = await prisma.revision.findFirst({
+        where: {
+            pubkey_hash: {
+                contains: linkedHash,
+                mode: 'insensitive'
+            }
+        }
+    });
 
     if (!linkedRevision) {
         console.log(`Linked revision not found for hash ${linkedHash}`);
@@ -584,60 +531,43 @@ async function updateGenesisFileIndex(
     revisionData: AquaRevision,
     aquaTree: AquaTree,
     fileObjects: FileObject[],
-    fileIndexes: any[],
+    aquaTreeFileData: AquaTreeFileData[],
     url: string
 ): Promise<UpdateGenesisResult> {
     const hashOnly = extractHashOnly(revision.pubkey_hash);
-    let fileIndex = fileIndexes.find(item =>
-        item.pubkey_hash.includes(revision.pubkey_hash) ||
-        item.pubkey_hash.some((hashItem: string) => hashItem.includes(hashOnly))
+    let aquaTreeFileItemData = aquaTreeFileData.find(item =>
+        item.pubKeyHash.includes(revision.pubkey_hash)
     );
-    if (!fileIndex) {
-        fileIndex = await prisma.fileIndex.findFirst({
-            where: {
-                OR: [
-                    { pubkey_hash: { has: revision.pubkey_hash } },
-                    { pubkey_hash: { has: hashOnly } }
-                ]
-            }
-        });
-    }
-    if (fileIndex) {
+
+    if (aquaTreeFileItemData) {
         const updatedAquaTree: AquaTree = {
             ...aquaTree,
             file_index: {
                 ...aquaTree.file_index,
-                [hashOnly]: fileIndex.file_hash // file_hash is the PK and identifier
+                [hashOnly]: aquaTreeFileItemData.name 
             }
         };
         const updatedRevisionData = {
             ...revisionData,
-            file_hash: fileIndex.file_hash
+            file_hash: aquaTreeFileItemData.fileHash
         };
-        // Add to file objects
-        const fileItem = await prisma.file.findFirst({
-            where: {
-                file_hash: fileIndex.file_hash
-            }
-        });
+
         let updatedFileObjects = [...fileObjects];
-        if (fileItem) {
-            if (fileItem.file_location) {
-                const fileStats = getFileStats(fileItem.file_location);
-                if (fileStats) {
-                    const fullUrl = `${url}/files/${fileIndex.file_hash}`;
-                    updatedFileObjects = [
-                        ...fileObjects,
-                        {
-                            fileContent: fullUrl,
-                            fileName: fileIndex.file_hash, // file_hash as identifier
-                            path: fileItem.file_location,
-                            fileSize: fileStats.fileSizeInBytes
-                        }
-                    ];
+
+        const fileStats = getFileStats(aquaTreeFileItemData.fileLocation);
+        if (fileStats) {
+            const fullUrl = `${url}/files/${aquaTreeFileItemData.fileHash}`;
+            updatedFileObjects = [
+                ...fileObjects,
+                {
+                    fileContent: fullUrl,
+                    fileName: aquaTreeFileItemData.fileHash, // file_hash as identifier
+                    path: aquaTreeFileItemData.fileLocation,
+                    fileSize: fileStats.fileSizeInBytes
                 }
-            }
+            ];
         }
+
         return {
             aquaTree: updatedAquaTree,
             fileObjects: updatedFileObjects,
@@ -653,24 +583,24 @@ async function processLinkedFileRevision(
     fileObjects: FileObject[],
     url: string
 ): Promise<LinkedRevisionResult> {
-    // FileIndex: file_hash (PK), pubkey_hash (String[])
-    const filesData = await prisma.fileIndex.findFirst({
-        where: {
-            file_hash: {
-                contains: linkedHash,
-                mode: 'insensitive'
-            }
-        }
-    });
-    if (!filesData) {
-        console.log(`File index with hash ${linkedHash} not found`);
+  
+
+    let aquaTreeFileData = await fetchAquaTreeFileData([linkedHash]);
+    if (aquaTreeFileData.length === 0) {
+  console.log(`File index with hash ${linkedHash} not found`);
         return { aquaTree, fileObjects };
+    }
+
+    if (aquaTreeFileData.length > 1) {
+        console.warn(`Multiple file entries found for hash ${linkedHash}, using the first one.`);
+        throw new Error(`Multiple file entries found for hash ${linkedHash}`);
+
     }
     const updatedAquaTree: AquaTree = {
         ...aquaTree,
         file_index: {
             ...aquaTree.file_index,
-            [linkedHash]: filesData.file_hash
+            [linkedHash]: aquaTreeFileData[0].name
         }
     };
     const [linkedAquaTree, linkedFileObjects] = await createAquaTreeFromRevisions(linkedHash, url);
@@ -679,7 +609,7 @@ async function processLinkedFileRevision(
         ...fileObjects,
         {
             fileContent: linkedAquaTree,
-            fileName: `${name}.aqua.json`,
+            fileName: `${name}.aqua.json+++`,
             path: `genesisHash ${linkedHash}`,
             fileSize: estimateStringFileSize(JSON.stringify(linkedAquaTree, null, 4))
         },
@@ -725,18 +655,13 @@ async function processLinkedNonFileRevision(
     };
 }
 
-// Return type for updateGenesisFileIndex function
-interface UpdateGenesisResult {
-    aquaTree: AquaTree;
-    fileObjects: FileObject[];
-    revisionData: AquaRevision;
-}
 
-async function addRevisionContent(revision: Revision, revisionData: AquaRevision, files: any[]): Promise<AquaRevision> {
-    const fileItem = files.find(f => f.file_hash === revision.pubkey_hash);
-    if (fileItem?.file_location) {
+
+async function addRevisionContent(revision: Revision, revisionData: AquaRevision, aquaTreeFiledata: AquaTreeFileData[]): Promise<AquaRevision> {
+    const fileItem = aquaTreeFiledata.find(f => f.fileHash === revision.pubkey_hash);
+    if (fileItem?.fileLocation) {
         try {
-            const fileContent = fs.readFileSync(fileItem.file_location, 'utf8');
+            const fileContent = fs.readFileSync(fileItem.fileLocation, 'utf8');
             return { ...revisionData, content: fileContent };
         } catch (error) {
             console.error(`Error reading file content: ${error}`);
@@ -744,15 +669,4 @@ async function addRevisionContent(revision: Revision, revisionData: AquaRevision
         }
     }
     return revisionData;
-}
-
-async function getRevisionByHash(hash: string): Promise<any> {
-    return await prisma.revision.findFirst({
-        where: {
-            pubkey_hash: {
-                contains: hash,
-                mode: 'insensitive'
-            }
-        }
-    });
 }
