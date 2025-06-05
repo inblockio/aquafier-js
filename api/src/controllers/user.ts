@@ -371,7 +371,6 @@ export default async function userController(fastify: FastifyInstance) {
 
 
     // Clear all user data
-    // Clear all user data
     fastify.delete('/user_data', async (request, reply) => {
         const nonce = request.headers['nonce'];
 
@@ -498,10 +497,10 @@ export default async function userController(fastify: FastifyInstance) {
                     console.log(`Deleted ${deletedAquaForms.count} aqua forms records`);
 
                     // Step 4: Handle Files and FileIndex records
-                    revisionHashes.forEach(async (hash) => {
+                    for (const hash of revisionHashes) {
                         console.log(`Processing files for revision hash: ${hash}`);
                         await handleFilesDeletion(tx, hash);
-                    });
+                    }
 
                     // Step 5: Finally delete Revision records
                     const deletedRevisions = await tx.revision.deleteMany({

@@ -457,6 +457,8 @@ export default async function explorerController(fastify: FastifyInstance) {
 
             if (res.isErr()) {
 
+                 console.log("^&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&")
+                 console.log(`error`)
                 res.data.push({
                     log: `Error creating genesis revision`,
                     logType: LogType.ERROR
@@ -474,6 +476,8 @@ export default async function explorerController(fastify: FastifyInstance) {
             let genesisHash = getGenesisHash(resData);
 
             if (!genesisHash) {
+                 console.log("^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^")
+                 console.log(`error`)
                 return reply.code(500).send({ error: 'Genesis revision cannot be found' });
             }
 
@@ -483,6 +487,8 @@ export default async function explorerController(fastify: FastifyInstance) {
 
 
             if (!fileHash) {
+                 console.log("^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^")
+                 console.log(`error`)
                 return reply.code(500).send({ error: "File hash missing from AquaTree response" });
             }
 
@@ -578,8 +584,15 @@ export default async function explorerController(fastify: FastifyInstance) {
                     // await pump(data.file, fs.createWriteStream(filePath))
                     await fs.promises.writeFile(filePath, fileBuffer);
 
-                    await prisma.file.create({
-                        data: {
+                    await prisma.file.upsert({
+                        where: {
+                            file_hash: fileHash,
+                        },
+                        create: {
+                            file_hash: fileHash,
+                            file_location: filePath,
+                        },
+                        update: {
                             file_hash: fileHash,
                             file_location: filePath,
                         }
@@ -592,8 +605,16 @@ export default async function explorerController(fastify: FastifyInstance) {
                         }
                     })
 
-                    await prisma.fileName.create({
-                        data: {
+                    await prisma.fileName.upsert({
+                        where:{
+                            pubkey_hash: filepubkeyhash,
+                        },
+                        create: {
+                            pubkey_hash: filepubkeyhash,
+                            file_name: data.filename,
+
+                        },
+                         update: {
                             pubkey_hash: filepubkeyhash,
                             file_name: data.filename,
 
@@ -603,8 +624,8 @@ export default async function explorerController(fastify: FastifyInstance) {
                 }
 
             } catch (error) {
-                //  // console.log("======================================")
-                //  // console.log(`error ${error}`)
+                 console.log("======================================")
+                 console.log(`error ${error}`)
                 let logs: LogData[] = []
                 logs.push({
                     log: `Error saving genesis revision`,
@@ -623,6 +644,8 @@ export default async function explorerController(fastify: FastifyInstance) {
                 fileObject: fileObject
             });
         } catch (error) {
+            console.log("++++++++++++++++++++++++++++++++++++++=")
+                 console.log(`error ${error}`)
             request.log.error(error);
             return reply.code(500).send({ error: 'File upload failed' });
         }
