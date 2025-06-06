@@ -43,7 +43,7 @@ const LoadConfiguration = () => {
             }
             catch (error: any) {
                 // if (error?.response?.status === 404) {
-                console.log("Error: ", error)
+                // console.log("Error: ", error)
                 setMetamaskAddress(null)
                 setAvatar(undefined)
                 setSession(null)

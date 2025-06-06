@@ -1,7 +1,7 @@
 import { prisma } from '../database/db';
 import { Revision, Link, Signature, WitnessEvent, AquaForms } from '@prisma/client';
 import * as fs from 'fs';
-import { ExtendedAquaTreeData } from 'src/models/types';
+import { ExtendedAquaTreeData } from '../models/types';
 
 /**
  * Recursively deletes a revision and all its child revisions (revisions that reference this as their previous hash)

@@ -2,7 +2,7 @@ import { prisma } from '../database/db';
 import { AquaTree, FileObject, Revision as AquaRevision, OrderRevisionInAquaTree } from 'aqua-js-sdk';
 import { Revision, Link, Signature, WitnessEvent, AquaForms, FileIndex } from '@prisma/client';
 import * as fs from "fs"
-import { ExtendedAquaTree, ExtendedAquaTreeData } from 'src/models/types';
+import { ExtendedAquaTree, ExtendedAquaTreeData } from '../models/types';
 
 
 

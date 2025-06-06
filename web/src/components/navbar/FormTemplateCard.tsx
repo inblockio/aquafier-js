@@ -7,7 +7,7 @@ import { HiDocumentPlus } from "react-icons/hi2";
 const FormTemplateCard = ({ template, selectTemplateCallBack }: { template: FormTemplate, selectTemplateCallBack: (template: FormTemplate) => void }) => {
 
     const { colorMode } = useColorMode()
-
+    
     return (
         <Box
             borderWidth="2px"
