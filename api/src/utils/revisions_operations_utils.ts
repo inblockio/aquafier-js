@@ -8,6 +8,7 @@ import path from 'path';
 import { getGenesisHash } from './aqua_tree_utils';
 import { AquaTreeFileData, LinkedRevisionResult, ProcessRevisionResult, UpdateGenesisResult } from 'src/models/types';
 import { file } from 'jszip';
+import { SYSTEM_WALLET_ADDRESS } from 'src/models/constants';
 
 // Main refactored function
 export async function createAquaTreeFromRevisions(
@@ -29,6 +30,8 @@ export async function createAquaTreeFromRevisions(
             return [aquaTree, []];
 
         }
+
+        console.log(`🎾🎾🎾 All revision ${JSON.stringify(revisionData, null, 4)}`)
 
         let revisionPubKeyHashes = revisionData.map(revision => revision.pubkey_hash);
 
@@ -61,6 +64,8 @@ export async function createAquaTreeFromRevisions(
 
         // Step 3: Create file objects for download
         fileObjects = await createFileObjects(aquaTreeFileData, url);
+
+        console.log("File indexe----: ", JSON.stringify(fileObjects, null, 4))
 
         // Step 4: Process each revision
         for (const revision of revisionData) {
@@ -215,7 +220,7 @@ async function fetchAquaTreeFileData(pubKeyHashes: string[]): Promise<AquaTreeFi
     let allData: AquaTreeFileData[] = [];
 
     for (const pubKeyHash of pubKeyHashes) {
-        console.log(` revision  pubkey_hash ${pubKeyHash}`)
+
         const hashOnly = extractHashOnly(pubKeyHash);
         const fileIndex = await prisma.fileIndex.findFirst({
             where: {
@@ -258,6 +263,7 @@ async function fetchAquaTreeFileData(pubKeyHashes: string[]): Promise<AquaTreeFi
             console.log(`File index not found ..`)
         }
     }
+
     return allData;
 }
 
@@ -569,24 +575,41 @@ async function updateLinkRevisionFileIndex(revision: Revision,
     }
 
     let userAddress = "";
-
-    let first = revision.pubkey_hash
-    if (first) {
-        let items = first.split('_')
-        userAddress = items[0]
-    }
     let newHash = linkData.link_verification_hashes[0]
+
+    if(newHash == undefined) {
+ throw Error(`Expected linke revision to have alteast one verification hash ${JSON.stringify(linkData)}`)
+
+    }
+    let systemTemplateHashes = [
+        '0x6ff9a00f08f675cf17eb6ce8572a7fdcbd9d43ff6b043f2b233e7b70e2d9c15f',
+        '0xfd2085151958e5dbaa32322f1266a3cf86ff547c75379a4c3ebd2272d4abd89f',
+        '0x9da9cfc4587b102da24aec2ec0dbf5f7d702284f8073b476f9e94043673cf481',
+        '0x5ea1129a733086d131c9bec1758b8bbefdfa90bcb38179ec595f532fe14ab67f',
+        '0x99dc1b20c233df77a59bd4c79f346ea4e8bffaf127d4e9850400624638bc1686',
+        '0x2a068d95f1f0e9e1f998bff3a7dffd0429aff2f0cc71b357733a19c2a926265c',
+
+    ]
+    if (systemTemplateHashes.includes(newHash)) {
+userAddress= SYSTEM_WALLET_ADDRESS
+    } else {
+        let first = revision.pubkey_hash
+        if (first) {
+            let items = first.split('_')
+            userAddress = items[0]
+        }
+    }
+
+
     let newPubKeyHash = `${userAddress}_${newHash}`
 
 
+    let linkedAquaTreeData = await createAquaTreeFromRevisions(newPubKeyHash, url);
+    let linkedAquaTreeDataGenesisHash = getGenesisHash(linkedAquaTreeData[0]);
 
-
-    let linkedAquaTreeData = await createAquaTreeFromRevisions(newPubKeyHash, url)
-
-    let linkedAquaTreeDataGenesisHash = getGenesisHash(linkedAquaTreeData[0])
     if (linkedAquaTreeDataGenesisHash == null) {
 
-        throw Error(`Expected genesis hash no to be null  `)
+        throw Error(`Expected genesis hash no to be null`)
 
 
     }

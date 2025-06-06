@@ -30,12 +30,12 @@ export default async function systemController(fastify: FastifyInstance) {
 
         } else {
 
-            
+            // throw Error(`Metamask address is not provided or is invalid ${metamaskAddress}`);
             let data = await prisma.latest.findMany({
                 where: {
                     AND: {
                         user: {
-                            contains: metamaskAddress,
+                            contains: SYSTEM_WALLET_ADDRESS,
                             mode: 'insensitive'
                         },
                         template_id: {
@@ -64,6 +64,8 @@ export default async function systemController(fastify: FastifyInstance) {
         // Construct the full URL
         const url = `${protocol}://${host}`;
 
+
+        // throw Error(`Fetching AquaTree for user ${metamaskAddress} with url ${url}  -- ${JSON.stringify(trees, null, 4)}`)
         let displayData = await fetchAquatreeFoUser(url, trees)
 
 

@@ -102,9 +102,6 @@ export default async function explorerController(fastify: FastifyInstance) {
         }
 
 
-        let aquafier = new Aquafier();
-
-
         // Check if the request is multipart
         const isMultipart = request.isMultipart();
 

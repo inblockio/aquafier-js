@@ -53,9 +53,9 @@ export function getAquaTreeFileName(aquaTree: AquaTree): string {
     //   mainAquaHash = revisionHash;
     //   break;
     // }
-    if(!revisionData.previous_verification_hash){
+    if (!revisionData.previous_verification_hash) {
       let fileHash = revisionData.file_hash
-      if(fileHash){
+      if (fileHash) {
         let fileName
       }
     }
@@ -65,11 +65,22 @@ export function getAquaTreeFileName(aquaTree: AquaTree): string {
   return aquaTree!.file_index[mainAquaHash] ?? "";
 
 }
- 
+
 
 
 
 export const saveTemplateFileData = async (aquaTree: AquaTree, fileData: string, walletAddress: string = SYSTEM_WALLET_ADDRESS) => {
+
+
+  let systemUUid = new Map()
+
+
+  systemUUid.set("access_agreement.json", "a1b2c3d4-e5f6-4a7b-8c9d-0e1f2a3b4c5d");
+  systemUUid.set("aqua_sign.json", "f47ac10b-58cc-4372-a567-0e02b2c3d4e5");
+  systemUUid.set("cheque.json", "6ba7b810-9dad-11d1-80b4-00c04fd430c8");
+  systemUUid.set("identity_attestation.json", "550e8400-e29b-41d4-a716-446655440000");
+  systemUUid.set("identity_claim.json", "c9bf9e57-1685-4c89-badb-56781234abcd");
+  systemUUid.set("user_signature.json", "d5a3e2f1-9c13-47a8-86ef-789012345678");
 
   let genesisHashData = getGenesisHash(aquaTree);
   if (!genesisHashData) {
@@ -81,11 +92,11 @@ export const saveTemplateFileData = async (aquaTree: AquaTree, fileData: string,
   let aquafier = new Aquafier();
   let fileHash = aquafier.getFileHash(fileData);
 
-  console.log(`\n ## fileHash ${fileHash} for data ${fileData}`)
+  // console.log(`\n ## fileHash ${fileHash} for data ${fileData}`)
 
   let filepubkeyhash = `${walletAddress}_${genesisHash}`
 
-  console.log(`\n ## filepubkeyhash ${filepubkeyhash}`)
+  // console.log(`\n ## filepubkeyhash ${filepubkeyhash}`)
   const UPLOAD_DIR = getFileUploadDirectory();
 
   // Create unique filename
@@ -94,56 +105,61 @@ export const saveTemplateFileData = async (aquaTree: AquaTree, fileData: string,
   if (aquaTreeName.isOk()) {
     fileName = aquaTreeName.data
   }
-  const filename = `${randomUUID()}-${fileName}`;
+
+
+  let newUUid = systemUUid.get(fileName) || randomUUID();
+  // console.log(`\n ## newUUid ${newUUid} for fileName ${fileName}`)
+  
+  const filename = `${newUUid}-${fileName}`;
   const filePath = path.join(UPLOAD_DIR, filename);
 
   // Save the file
   // await pump(data.file, fs.createWriteStream(filePath))
   await fs.promises.writeFile(filePath, fileData);
-  let fileCreation = await prisma.file.upsert({
+   await prisma.file.upsert({
     where: {
       file_hash: fileHash,
     },
     create: {
-     
+
       file_hash: fileHash,
       file_location: filePath,
-      
+
     },
     update: {}
   })
-  console.log('File record created:', fileCreation);
+  // console.log('File record created:', fileCreation);
 
-  console.log('About to create fileIndex record');
+  // console.log('About to create fileIndex record');
 
   await prisma.fileIndex.upsert({
     where: {
       file_hash: fileHash,
     },
     create: {
-     
+
       pubkey_hash: [filepubkeyhash],
       file_hash: fileHash,
-     
+
     },
     update: {}
   })
 
   console.log('FileIndex record created');
 
-   await prisma.fileName.upsert({
+  await prisma.fileName.upsert({
     where: {
       pubkey_hash: filepubkeyhash,
     },
     create: {
-     
+
       pubkey_hash: filepubkeyhash,
-      file_name:fileName ,
-     
+      file_name: fileName,
+
     },
     update: {
       pubkey_hash: filepubkeyhash,
-       file_name:fileName ,
+      file_name: fileName,
     }
   })
 
