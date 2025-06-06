@@ -6,9 +6,9 @@ import { Link, Revision, Prisma, WitnessEvent, Signature, AquaForms } from '@pri
 import * as fs from "fs"
 import path from 'path';
 import { getGenesisHash } from './aqua_tree_utils';
-import { AquaTreeFileData, LinkedRevisionResult, ProcessRevisionResult, UpdateGenesisResult } from 'src/models/types';
+import { AquaTreeFileData, LinkedRevisionResult, ProcessRevisionResult, UpdateGenesisResult } from '../models/types';
 import { file } from 'jszip';
-import { SYSTEM_WALLET_ADDRESS } from 'src/models/constants';
+import { SYSTEM_WALLET_ADDRESS } from '../models/constants';
 
 // Main refactored function
 export async function createAquaTreeFromRevisions(
