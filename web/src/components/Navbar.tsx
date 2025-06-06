@@ -26,6 +26,14 @@ import { generateNonce } from "siwe"
 import { WebSocketMessage } from "../types/types"
 import WebSocketActions from "../constants/constants"
 
+// Add these at the component level (outside the component if using class)
+// let pingInterval: NodeJS.Timeout | null = null;
+let isExplicitDisconnect = false;
+let activeReconnectTimeout: NodeJS.Timeout | null = null;
+const MAX_RECONNECT_ATTEMPTS = 10; // Maximum number of reconnection attempts
+const RECONNECT_BASE_DELAY = 1000; // 1 second base delay
+const RECONNECT_MAX_DELAY = 30000; // 30 seconds maximum delay
+
 const FormTemplateCard = ({ template, selectTemplateCallBack }: { template: FormTemplate, selectTemplateCallBack: (template: FormTemplate) => void }) => {
 
     const { colorMode } = useColorMode()
@@ -80,6 +88,9 @@ const Navbar = () => {
     const { session, formTemplates, backend_url, systemFileInfo, setFormTemplate, setFiles, setSystemFileInfo, selectedFileInfo, setSelectedFileInfo, setContracts } = useStore(appStore)
     const [formData, setFormData] = useState<Record<string, string | File | number>>({});
     const [selectedTemplate, setSelectedTemplate] = useState<FormTemplate | null>(null);
+
+    // Track the session changes locally
+    const [localSession, setLocalSession] = useState(session);
 
     // const [userSelectedFile, setUserSelectedFile] = useState(selectedFileInfo)
     // Use useRef to maintain current value that WebSocket handlers can access
@@ -174,6 +185,7 @@ const Navbar = () => {
             });
         }
     }
+
     const saveAquaTree = async (aquaTree: AquaTree, fileObject: FileObject, isFinal: boolean = false, isWorkflow: boolean = false) => {
         try {
             const url = `${backend_url}/explorer_aqua_file_upload`;
@@ -267,7 +279,6 @@ const Navbar = () => {
             });
         }
     };
-
 
     const createWorkflowFromTemplate = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -645,7 +656,7 @@ const Navbar = () => {
 
         } catch (error: any) {
             // Don't show the popup, only wait for the user to login
-            if(error.response?.status === 401){
+            if (error.response?.status === 401) {
                 return
             }
             toaster.create({
@@ -695,10 +706,74 @@ const Navbar = () => {
         }
     };
 
+    const checkServerStatus = async () => {
+        try {
+            const response = await axios.get(`${backend_url}`);
+            console.log(`Server status ${response.data}`)
+            return true
+        } catch (error) {
+            console.error('Error checking server status:', error);
+            return false
+        }
+    }   
+
     const connectWebsocket = () => {
+        // Cancel any pending reconnection if we're explicitly connecting
+        if (activeReconnectTimeout) {
+            clearTimeout(activeReconnectTimeout);
+            activeReconnectTimeout = null;
+        }
 
         let userId = session!.address!;
         let WS_URL = `${convertToWebsocketUrl(backend_url)}/ws`;
+
+        // Update your reconnectWithBackoff function
+        const reconnectWithBackoff = (reason: string) => {
+            console.log("Connection Reason: ", reason);
+
+            // Don't reconnect if we explicitly disconnected or reached max attempts
+            if (isExplicitDisconnect) {
+                console.log("Not reconnecting - explicit disconnect");
+                return;
+            }
+
+            // Get the current reconnection attempt count
+            const attemptCount = websocketReconnectAttempts;
+
+            // Stop if we've reached maximum attempts
+            if (attemptCount >= MAX_RECONNECT_ATTEMPTS) {
+                console.log(`Max reconnection attempts (${MAX_RECONNECT_ATTEMPTS}) reached. Giving up.`);
+                toaster.create({
+                    description: "Could not reconnect to server. Please refresh the page.",
+                    type: "error"
+                });
+                return;
+            }
+
+            // Calculate delay with exponential backoff
+            const delay = Math.min(
+                Math.pow(2, attemptCount) * RECONNECT_BASE_DELAY,
+                RECONNECT_MAX_DELAY
+            );
+
+            console.log(`Scheduling reconnection attempt ${attemptCount + 1} in ${delay}ms`);
+
+            // Increment the reconnection attempt counter
+            setWebsocketReconnectAttempts(prev => prev + 1);
+
+            // Clear any existing timeout before setting a new one
+            if (activeReconnectTimeout) {
+                clearTimeout(activeReconnectTimeout);
+            }
+
+            // Set new reconnection timeout
+            activeReconnectTimeout = setTimeout(() => {
+                console.log(`Attempting reconnection #${attemptCount + 1}`);
+                activeReconnectTimeout = null;
+                connectWebsocket();
+            }, delay);
+        };
+
         try {
             const websocket = new WebSocket(`${WS_URL}?userId=${encodeURIComponent(userId)}`);
 
@@ -707,17 +782,24 @@ const Navbar = () => {
                 setIsConnected(true);
                 setWs(websocket);
                 setWebsocketReconnectAttempts(0);
-                // fetchConnectedUsers();
 
+                // Clear any existing ping interval
+                if (pingInterval) {
+                    clearInterval(pingInterval);
+                }
+
+                // Set up new ping interval
                 pingInterval = setInterval(() => {
-                    websocket.send(JSON.stringify({ action: "ping", type: "ping" }));
-                }, 20000); //
+                    if (websocket.readyState === WebSocket.OPEN) {
+                        websocket.send(JSON.stringify({ action: "ping", type: "ping" }));
+                    }
+                }, 20000);
             };
 
             websocket.onmessage = (event) => {
                 try {
                     const message: WebSocketMessage = JSON.parse(event.data);
-              
+
 
                     console.log(`🔌 ECHO - message received ${message.action}`)
                     if (message.action === WebSocketActions.REFETCH_FILES) {
@@ -768,7 +850,7 @@ const Navbar = () => {
                                         receiver: walletAddressRef.current
                                     },
                                     headers: {
-                                        'nonce':  nounceRef.current
+                                        'nonce': nounceRef.current
                                     }
                                 });
                                 if (response.status === 200) {
@@ -804,77 +886,78 @@ const Navbar = () => {
                 }
             };
 
-            // Track reconnection attempts for exponential backoff
-            const reconnectWithBackoff = (reason: string) => {
-                console.log("Backoff connection Reason: ", reason)
-                // Get the current reconnection attempt count from state or default to 0
-                const attemptCount = websocketReconnectAttempts;
-                
-                // Calculate delay with exponential backoff: 1s, 2s, 4s, 8s, etc.
-                // Cap at 30 seconds maximum delay
-                const baseDelay = 1000;
-                const maxDelay = 30000;
-                const delay = Math.min(Math.pow(2, attemptCount) * baseDelay, maxDelay);
-                
-                console.log(`Scheduling reconnection attempt ${attemptCount + 1} in ${delay}ms`);
-                
-                // Increment the reconnection attempt counter
-                setWebsocketReconnectAttempts(attemptCount + 1);
-                
-                // Schedule reconnection with calculated delay
-                setTimeout(() => {
-                    console.log(`Attempting reconnection #${attemptCount + 1}`);
-                    connectWebsocket();
-                }, delay);
-            };
-
-            websocket.onclose = (event) => {
+            websocket.onclose = async(event) => {
                 console.log('Disconnected from WebSocket:', event);
-                console.log('Disconnected from WebSocket:', event.reason);
                 setIsConnected(false);
                 setWs(null);
 
-                if (pingInterval) clearInterval(pingInterval);
+                if (pingInterval) {
+                    clearInterval(pingInterval);
+                    pingInterval = null;
+                }
 
-                toaster.create({
-                    description: `Realtime Connection disconnected error.`,
-                    type: "error"
-                });
-
-                // Use exponential backoff for reconnection
-                reconnectWithBackoff('connection closed');
+                // Only show error if not an explicit disconnect
+                if (!isExplicitDisconnect) {
+                    toaster.create({
+                        description: `Realtime connection disconnected: ${event.reason || 'No reason provided'}`,
+                        type: "error"
+                    });
+                    const serverStatus = await checkServerStatus()
+                    if(serverStatus){
+                        reconnectWithBackoff('connection closed');
+                    }
+                }
             };
 
             websocket.onerror = (error) => {
                 console.error('WebSocket error:', error);
                 setIsConnected(false);
-                if (pingInterval) clearInterval(pingInterval);
 
-                toaster.create({
-                    description: `Realtime Connection with api failed.`,
-                    type: "error"
-                });
-                
-                // Use exponential backoff for reconnection
-                reconnectWithBackoff('connection error');
+                if (pingInterval) {
+                    clearInterval(pingInterval);
+                    pingInterval = null;
+                }
+
+                if (!isExplicitDisconnect) {
+                    toaster.create({
+                        description: `Realtime connection error occurred`,
+                        type: "error"
+                    });
+
+                    // The onclose handler will trigger reconnection
+                }
             };
 
         } catch (error) {
             console.error('Failed to connect to WebSocket:', error);
-            toaster.create({
-                description: `Realtime Connection catastrophic error.`,
-                type: "error"
-            })
+            if (!isExplicitDisconnect) {
+                toaster.create({
+                    description: `Failed to establish realtime connection`,
+                    type: "error"
+                });
+                reconnectWithBackoff('connection error');
+            }
         }
     };
 
     // Disconnect WebSocket
     const disconnectWebSocket = () => {
+        isExplicitDisconnect = true;
+
         if (ws) {
             ws.close();
             setWs(null);
             setIsConnected(false);
-            // setConnectedUsers([]);
+        }
+
+        if (pingInterval) {
+            clearInterval(pingInterval);
+            pingInterval = null;
+        }
+
+        if (activeReconnectTimeout) {
+            clearTimeout(activeReconnectTimeout);
+            activeReconnectTimeout = null;
         }
     };
 
@@ -892,27 +975,32 @@ const Navbar = () => {
     // };
 
     useEffect(() => {
-        console.log(`navbar user selected file`)
+        // console.log(`navbar user selected file`)
         // setUserSelectedFile(selectedFileInfo)
         selectedFileRef.current = selectedFileInfo;
     }, [selectedFileInfo]);
 
 
+    // Add cleanup in useEffect
     useEffect(() => {
         if (session != null && session.nonce != undefined && backend_url != "http://0.0.0.0:0") {
-            backendUrlRef.current = backend_url
-            nounceRef.current = session.nonce
-            walletAddressRef.current = session.address
+            backendUrlRef.current = backend_url;
+            nounceRef.current = session.nonce;
+            walletAddressRef.current = session.address;
             loadTemplates();
             loadTemplatesAquaTrees();
 
             if (!isConnected) {
-                console.log(`websocket is connected ${isConnected}`)
-                connectWebsocket()
-            } else {
-                console.log(`websocket is connected ${isConnected}`)
+                console.log(`websocket is connected ${isConnected}`);
+                isExplicitDisconnect = false; // Reset flag when attempting new connection
+                connectWebsocket();
             }
         }
+
+        // Cleanup function
+        return () => {
+            disconnectWebSocket();
+        };
     }, [backend_url, session]);
 
     useEffect(() => {
@@ -931,6 +1019,10 @@ const Navbar = () => {
         }
     }, [multipleAddresses])
 
+    useEffect(() => {
+        setLocalSession(session)
+    }, [session])
+
 
     return (
         <>
@@ -948,7 +1040,7 @@ const Navbar = () => {
 
                     <HStack h={'100%'} gap={"4"} justifyContent={'space-between'} display={{ base: 'none', md: 'flex' }}>
                         {
-                            session ? (<>
+                            localSession ? (<>
                                 <Group gap={4}>
                                     <Menu.Root onOpenChange={(open: MenuOpenChangeDetails) => setIsDropDownOpen(open.open)}  >
                                         <Menu.Trigger asChild >
@@ -991,7 +1083,7 @@ const Navbar = () => {
                         }
                         <VersionAndDisclaimer inline={false} open={versionOpen} updateOpenStatus={(open) => setVersionOpen(open)} />
                         {
-                            session ? (<>
+                            localSession ? (<>
                                 <AccountContracts inline={false} open={contractsOpen} updateOpenStatus={(open) => setContractsOpen(open)} />
                                 <Settings inline={false} open={settingsOpen} updateOpenStatus={(open) => {
                                     setSettingsOpen(open)
