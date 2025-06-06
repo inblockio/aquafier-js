@@ -1,6 +1,6 @@
 import { Button, VStack, Box, HStack, Input, Text, IconButton, Stack, Heading, Collapsible, List } from "@chakra-ui/react"
 import axios from "axios"
-import { useState, useEffect } from "react"
+import { useState, useEffect, SetStateAction } from "react"
 import { LuImport, LuLoader, LuShare2, LuTrash2 } from "react-icons/lu"
 import { generateNonce } from "siwe"
 import { useStore } from "zustand"
@@ -270,15 +270,16 @@ const ContractItem = ({ contract, i, mutate }: IContractItem) => {
 }
 
 interface IShareButtonAction {
-    item: ApiFileInfo
+    item: ApiFileInfo | null
     nonce: string
+    isOpen?: boolean
+    setIsOpen?: (value: SetStateAction<boolean>) => void
 
 }
 
-const ShareButtonAction = ({ item, nonce }: IShareButtonAction) => {
+export const SharingActionContent = ({ item, nonce, isOpen, setIsOpen }: IShareButtonAction) => {
+
     const { backend_url } = useStore(appStore)
-    const [isOpen, setIsOpen] = useState(false)
-    // const [sharing, setSharing] = useState(false)
     const [fileName, setFileName] = useState("")
     const [contracts, setContracts] = useState<any[]>([])
 
@@ -319,6 +320,9 @@ const ShareButtonAction = ({ item, nonce }: IShareButtonAction) => {
     }
 
     const getFileNameFromAquatree = (hash: string): string => {
+        if (!item) {
+            return "select file to share"
+        }
         let data = item.aquaTree!.file_index[hash]
         if (data) {
             return data
@@ -343,6 +347,9 @@ const ShareButtonAction = ({ item, nonce }: IShareButtonAction) => {
         return name
     }
     const checkIfFileContainsLinkAndShowWarning = () => {
+        if (!item) {
+            return <></>
+        }
         let linkHahses: string[] = [];
         let revisionHashes = Object.keys(item.aquaTree!.revisions!!)
         for (let rev of revisionHashes) {
@@ -381,9 +388,8 @@ const ShareButtonAction = ({ item, nonce }: IShareButtonAction) => {
     }
 
     useEffect(() => {
-        loadAllContracts()
-
-        if (item) {
+        if(item){
+            loadAllContracts()
             const name = item.fileObject[0].fileName;
             setFileName(name)
         }
@@ -391,16 +397,8 @@ const ShareButtonAction = ({ item, nonce }: IShareButtonAction) => {
 
     return (
         <>
-            <Button size={'xs'} colorPalette={'orange'} variant={'subtle'} w={'100px'} onClick={() => setIsOpen(true)}>
-                <LuShare2 />
-                Share
-            </Button>
-            <DialogRoot open={isOpen} onOpenChange={e => setIsOpen(e.open)}>
-                {/* <DialogTrigger asChild>
-                    <Button variant="outline" size="sm">
-                        Open Dialog
-                    </Button>
-                </DialogTrigger> */}
+
+            <DialogRoot open={isOpen} onOpenChange={e => setIsOpen?.(e.open)}>
                 <DialogContent>
                     <DialogHeader>
                         <DialogTitle>{`Sharing ${fileName}`}</DialogTitle>
@@ -428,7 +426,7 @@ const ShareButtonAction = ({ item, nonce }: IShareButtonAction) => {
                                 <Heading as={"h3"} fontWeight={500}>Existing sharing contracts</Heading>
                                 <VStack>
                                     {contracts?.map((contract, i: number) => (
-                                        <ContractItem key={contract.id} contract={contract} i={i} mutate={loadAllContracts} />
+                                        <ContractItem key={contract.hash} contract={contract} i={i} mutate={loadAllContracts} />
                                     ))}
                                 </VStack>
                             </Stack>
@@ -452,6 +450,19 @@ const ShareButtonAction = ({ item, nonce }: IShareButtonAction) => {
                     <DialogCloseTrigger />
                 </DialogContent>
             </DialogRoot>
+
+        </>
+    )
+}
+
+const ShareButtonAction = ({ callBack }: { callBack: () => void }) => {
+
+    return (
+        <>
+            <Button size={'xs'} colorPalette={'orange'} variant={'subtle'} w={'100px'} onClick={callBack}>
+                <LuShare2 />
+                Share
+            </Button>
         </>
     )
 }

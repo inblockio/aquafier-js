@@ -1,6 +1,6 @@
 "use client"
 
-import { Box, Card, CardBody, Drawer, FormatByte, Group, Kbd, Portal, Table, Text, VStack } from "@chakra-ui/react"
+import { Box, Card, CardBody, Drawer, FormatByte, Group, Kbd, Portal, Table, Text, useMediaQuery, VStack } from "@chakra-ui/react"
 import {
     ActionBarContent,
     ActionBarRoot,
@@ -18,7 +18,7 @@ import { DeleteAquaChain, LinkButton, DownloadAquaChain, SignAquaChain, WitnessA
 import { ChainDetailsBtn, CompleteChainView } from "../CustomDrawer"
 import { Alert } from "./alert"
 import { ApiFileInfo } from "../../models/FileInfo"
-import ShareButtonAction from "../actions/ShareButtonAction"
+import ShareButtonAction, { SharingActionContent } from "../actions/ShareButtonAction"
 import { DrawerActionTrigger, DrawerBackdrop, DrawerBody, DrawerContent, DrawerFooter, DrawerRoot, DrawerTitle } from "./drawer"
 import { LuX } from "react-icons/lu"
 import { IDrawerStatus } from "../../models/AquaTreeDetails"
@@ -34,10 +34,13 @@ const FilesTable = () => {
 
     const [disableDrawerAction, setDisableDrawerActions] = useState(false)
     const [isOpen, setIsOpen] = useState(false)
+    const [sharingOpen, setSharingOpen] = useState(false)
+    const [sharingItem, setSharingItem] = useState<ApiFileInfo | null>(null)
     // const [fileInfo, setFileInfo] = useState<ApiFileInfo | null>(null)
     const [drawerStatus, setDrawerStatus] = useState<IDrawerStatus | null>(null)
 
     let navigate = useNavigate();
+    let [isSmallScreen] = useMediaQuery(["(max-width: 768px)"], { ssr: false })
 
     // const aquafier = new Aquafier();
     const hasSelection = selection.length > 0
@@ -53,7 +56,6 @@ const FilesTable = () => {
     }
 
 
-
     const showActionButtons = (isWorkFlow: boolean, workFlow: string, item: ApiFileInfo) => {
 
         if (isWorkFlow) {
@@ -67,7 +69,11 @@ const FilesTable = () => {
                         <FaFileExport />
                         Open Workflow
                     </Button>
-                    <ShareButtonAction nonce={session?.nonce ?? ""} item={item} />
+                    {/* <ShareButtonAction nonce={session?.nonce ?? ""} item={item} /> */}
+                    <ShareButtonAction callBack={() => {
+                        setSharingOpen(true)
+                        setSharingItem(item)
+                    }} />
                     <ChainDetailsBtn callBack={() => {
                         setDisableDrawerActions(true)
                         openChainDetailsView(item)
@@ -91,7 +97,10 @@ const FilesTable = () => {
             <LinkButton item={item} nonce={session?.nonce ?? ""} />
 
             {/* <ShareButton nonce={session?.nonce ?? ""} item={item} /> */}
-            <ShareButtonAction nonce={session?.nonce ?? ""} item={item} />
+            <ShareButtonAction callBack={() => {
+                setSharingOpen(true)
+                setSharingItem(item)
+            }} />
             <DeleteAquaChain apiFileInfo={item} backendUrl={backend_url} nonce={session?.nonce ?? ""} revision="" />
             <DownloadAquaChain file={item} />
         </>
@@ -103,7 +112,7 @@ const FilesTable = () => {
     // console.log("System file info: ", JSON.stringify(systemFileInfo, null, 4))
     const tableItem = (fileObject: FileObject, item: ApiFileInfo, index: number) => {
 
-        let reorderdAquaTreed =  reorderAquaTreeRevisionsProperties(item.aquaTree!!)
+        let reorderdAquaTreed = reorderAquaTreeRevisionsProperties(item.aquaTree!!)
         let { isWorkFlow, workFlow } = isWorkFlowData(reorderdAquaTreed, systemFileInfo.map((e) => {
             try {
                 return getAquaTreeFileName(e.aquaTree!!)
@@ -199,35 +208,56 @@ const FilesTable = () => {
         </Box>
     }
 
+    // const smallTableItems = () => {
+    //     return files?.map((item: ApiFileInfo, index: number) => {
+    //         // console.log("Item: ", item.aquaTree)
+    //         // return <Text>{JSON.stringify(item, null, 4)}</Text>
+
+    //         let fileObject = getAquaTreeFileObject(item)
+
+    //         // console.log(`Daata ${JSON.stringify(item.aquaTree, null, 4)}`)
+    //         // TODO: Fix this; type overloads here, `someData` can't be used in `isWorkflow` function. Type mismatch
+    //         let someData = systemFileInfo.map((e) => {
+    //             try {
+    //                 return getAquaTreeFileName(e.aquaTree!!)
+    //             } catch (e) {
+    //                 console.log("Error")
+    //                 return ""
+    //             }
+    //         })
+    //         let { isWorkFlow, workFlow } = isWorkFlowData(item.aquaTree!!, someData);
+
+
+    //         if (fileObject) {
+    //             return smallTableItem(fileObject, item, index, isWorkFlow, workFlow)
+    //         } else {
+    //             return <></>
+    //         }
+
+    //     })
+
+    // }
+
     const smallTableItems = () => {
-        return files?.map((item: ApiFileInfo, index: number) => {
-            // console.log("Item: ", item.aquaTree)
-            // return <Text>{JSON.stringify(item, null, 4)}</Text>
-
-            let fileObject = getAquaTreeFileObject(item)
-
-            // console.log(`Daata ${JSON.stringify(item.aquaTree, null, 4)}`)
-            // TODO: Fix this; type overloads here, `someData` can't be used in `isWorkflow` function. Type mismatch
-            let someData = systemFileInfo.map((e) => {
-                try {
-                    return getAquaTreeFileName(e.aquaTree!!)
-                } catch (e) {
-                    console.log("Error")
-                    return ""
-                }
-            })
-            let { isWorkFlow, workFlow } = isWorkFlowData(item.aquaTree!!, someData);
-
-
-            if (fileObject) {
-                return smallTableItem(fileObject, item, index, isWorkFlow, workFlow)
-            } else {
-                return <></>
+        // Process systemFileInfo ONCE outside the map
+        const someData = systemFileInfo.map((e) => {
+            try {
+                return getAquaTreeFileName(e.aquaTree!!);
+            } catch (e) {
+                console.log("Error processing system file"); // More descriptive
+                return "";
             }
-
-        })
-
-    }
+        });
+    
+        return files?.map((item: ApiFileInfo, index: number) => {
+            const fileObject = getAquaTreeFileObject(item);
+            const { isWorkFlow, workFlow } = isWorkFlowData(item.aquaTree!!, someData);
+    
+            return fileObject 
+                ? smallTableItem(fileObject, item, index, isWorkFlow, workFlow)
+                : null; // Better than <></> for array items
+        });
+    };
 
     useEffect(() => {
         if (files) {
@@ -267,57 +297,63 @@ const FilesTable = () => {
                 <Text fontWeight={500} fontSize={'2xl'}>Files</Text>
             </Card.Header>
             <CardBody px={0}>
-                <Box hideFrom={'md'}>
-                    <VStack gap={4}>
-                        {smallTableItems()}
-                    </VStack>
-                </Box>
-                <Table.ScrollArea hideBelow={'md'}>
-                    <Table.Root borderRadius={'2xl'} borderCollapse={'collapse'} borderSpacing={'4'}>
-                        <Table.Header>
-                            <Table.Row>
-                                <Table.ColumnHeader w="6">
-                                    <Checkbox
-                                        top="1"
-                                        aria-label="Select all rows"
-                                        checked={indeterminate ? "indeterminate" : selection.length > 0}
-                                        onCheckedChange={(_changes) => {
-                                            //todo fix me
-                                            // let genesis =  Object.values(files.)
-                                            // let fileHash =   getFileHashFromUrl()
-                                            // setSelection(
-                                            //     changes.checked ? files.map((item: ApiFileInfo) => item.id.toString()) : [],
-                                            // )
-                                        }}
-                                    />
-                                </Table.ColumnHeader>
-                                <Table.ColumnHeader fontWeight={600} fontSize={{ base: 'sm', md: 'md' }}>File Name</Table.ColumnHeader>
-                                <Table.ColumnHeader fontWeight={600} fontSize={{ base: 'sm', md: 'md' }}>Type</Table.ColumnHeader>
-                                <Table.ColumnHeader fontWeight={600} fontSize={{ base: 'sm', md: 'md' }}>Uploaded At</Table.ColumnHeader>
-                                <Table.ColumnHeader fontWeight={600} fontSize={{ base: 'sm', md: 'md' }}>File Size</Table.ColumnHeader>
-                                <Table.ColumnHeader fontWeight={600} fontSize={{ base: 'sm', md: 'md' }}>Action</Table.ColumnHeader>
-                            </Table.Row>
-                        </Table.Header>
-                        <Table.Body>
-                            {tableItems()}
-                            {filesToDisplay.length === 0 ?
-                                <Table.Row>
-                                    <Table.Cell colSpan={6}>
-                                        <Alert title="No Data">
-                                            Please upload some files or import an Aqua Chain
-                                        </Alert>
-                                    </Table.Cell>
-                                </Table.Row>
-                                :
-                                <>
+                {
+                    isSmallScreen ? (
+                        <Box hideFrom={'md'}>
+                            <VStack gap={4}>
+                                {smallTableItems()}
+                            </VStack>
+                        </Box>
+                    ) : (
+                        <Table.ScrollArea hideBelow={'md'}>
+                            <Table.Root borderRadius={'2xl'} borderCollapse={'collapse'} borderSpacing={'4'}>
+                                <Table.Header>
+                                    <Table.Row>
+                                        <Table.ColumnHeader w="6">
+                                            <Checkbox
+                                                top="1"
+                                                aria-label="Select all rows"
+                                                checked={indeterminate ? "indeterminate" : selection.length > 0}
+                                                onCheckedChange={(_changes) => {
+                                                    //todo fix me
+                                                    // let genesis =  Object.values(files.)
+                                                    // let fileHash =   getFileHashFromUrl()
+                                                    // setSelection(
+                                                    //     changes.checked ? files.map((item: ApiFileInfo) => item.id.toString()) : [],
+                                                    // )
+                                                }}
+                                            />
+                                        </Table.ColumnHeader>
+                                        <Table.ColumnHeader fontWeight={600} fontSize={{ base: 'sm', md: 'md' }}>File Name</Table.ColumnHeader>
+                                        <Table.ColumnHeader fontWeight={600} fontSize={{ base: 'sm', md: 'md' }}>Type</Table.ColumnHeader>
+                                        <Table.ColumnHeader fontWeight={600} fontSize={{ base: 'sm', md: 'md' }}>Uploaded At</Table.ColumnHeader>
+                                        <Table.ColumnHeader fontWeight={600} fontSize={{ base: 'sm', md: 'md' }}>File Size</Table.ColumnHeader>
+                                        <Table.ColumnHeader fontWeight={600} fontSize={{ base: 'sm', md: 'md' }}>Action</Table.ColumnHeader>
+                                    </Table.Row>
+                                </Table.Header>
+                                <Table.Body>
+                                    {tableItems()}
+                                    {filesToDisplay.length === 0 ?
+                                        <Table.Row>
+                                            <Table.Cell colSpan={6}>
+                                                <Alert title="No Data">
+                                                    Please upload some files or import an Aqua Chain
+                                                </Alert>
+                                            </Table.Cell>
+                                        </Table.Row>
+                                        :
+                                        <>
 
 
-                                </>
-                            }
-                        </Table.Body>
-                    </Table.Root>
-                </Table.ScrollArea>
+                                        </>
+                                    }
+                                </Table.Body>
+                            </Table.Root>
+                        </Table.ScrollArea>
+                    )
+                }
 
+                {/* Action Bar for the table */}
                 <ActionBarRoot open={hasSelection}>
                     <ActionBarContent>
                         <ActionBarSelectionTrigger>
@@ -333,6 +369,11 @@ const FilesTable = () => {
                     </ActionBarContent>
                 </ActionBarRoot>
 
+                {/* Sharing Modal */}
+
+                <SharingActionContent item={sharingItem} nonce={session?.nonce ?? ""} isOpen={sharingOpen} setIsOpen={setSharingOpen} />
+
+                {/* Sidebar Drawer for aqua chain details */}
                 <DrawerRoot open={isOpen} size={{ base: 'full', mdToXl: "xl" }} id="aqua-chain-details-modal"
                     onOpenChange={(e) => setIsOpen(e.open)} closeOnEscape={true} >
 
@@ -369,7 +410,10 @@ const FilesTable = () => {
 
                                             <>
                                                 {disableDrawerAction ? <></> : <>
-                                                    <ShareButtonAction nonce={session?.nonce ?? ""} item={selectedFileInfo} />
+                                                    <ShareButtonAction callBack={() => {
+                                                        setSharingOpen(true)
+                                                        setSharingItem(selectedFileInfo)
+                                                     }} />
                                                     <WitnessAquaChain apiFileInfo={selectedFileInfo} backendUrl={backend_url} nonce={session?.nonce ?? ""} revision="" />
                                                     <SignAquaChain apiFileInfo={selectedFileInfo} backendUrl={backend_url} nonce={session?.nonce ?? ""} revision="" />
                                                     <DeleteAquaChain apiFileInfo={selectedFileInfo} backendUrl={backend_url} nonce={session?.nonce ?? ""} revision="" />

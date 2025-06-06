@@ -1,35 +1,41 @@
 import { useEffect } from "react";
-import { copyToClipboardModern } from "../utils/functions";
+import { copyToClipboardModern } from "../../utils/functions";
 
-import { toaster } from "../components/chakra-ui/toaster";
-import { DialogBody, DialogCloseTrigger, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "./chakra-ui/dialog";
-import { Circle, Dialog, Float, HStack, IconButton,  Stack, Text } from "@chakra-ui/react";
-import { LuCopy,  LuShare2 } from "react-icons/lu";
+import { toaster } from "../chakra-ui/toaster";
+import { DialogBody, DialogCloseTrigger, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "../chakra-ui/dialog";
+import { Circle, Dialog, Float, HStack, IconButton, Stack, Text } from "@chakra-ui/react";
+import { LuCopy, LuExternalLink, LuShare2 } from "react-icons/lu";
 import { useStore } from 'zustand'
-import appStore from '../store'
+import appStore from '../../store'
 import axios from "axios";
 import { Link } from "react-router-dom";
-import { IAccountContracts } from "../types/index";
+import { IAccountContracts } from "../../types/index";
 
 export default function AccountContracts({ inline, open, updateOpenStatus }: IAccountContracts) {
     // const [contracts, setContracts] = useState<any[]>([])
     const { backend_url, session, setContracts, contracts } = useStore(appStore)
 
     const loadAccountSharedContracts = async () => {
-        const url = `${backend_url}/contracts`;
-        const response = await axios.get(url, {
-            params: {
-                receiver: session?.address
-            },
-            headers: {
-                'nonce': session?.nonce
+        if (!session) {
+            return
+        }
+        try {
+            const url = `${backend_url}/contracts`;
+            const response = await axios.get(url, {
+                params: {
+                    receiver: session?.address
+                },
+                headers: {
+                    'nonce': session?.nonce
+                }
+            });
+            if (response.status === 200) {
+                setContracts(response.data?.contracts)
             }
-        });
-        if (response.status === 200) {
-            setContracts(response.data?.contracts)
+        } catch (error) {
+            console.error(error)
         }
     }
-
     // console.log(contracts)
 
     useEffect(() => {
@@ -72,8 +78,8 @@ export default function AccountContracts({ inline, open, updateOpenStatus }: IAc
                                     <Text flex={1} wordBreak={'break-word'}>{contract.sender}</Text>
                                     <Link to={`/share/${contract.hash}`}>
                                         <IconButton onClick={() => { updateOpenStatus?.(false) }}>
-                                            <svg stroke="currentColor" fill="currentColor" stroke-width="0" viewBox="0 0 24 24" height="200px" width="200px" xmlns="http://www.w3.org/2000/svg"><path fill="none" d="M0 0h24v24H0z"></path><path d="M19 19H5V5h7V3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14c1.1 0 2-.9 2-2v-7h-2v7zM14 3v2h3.59l-9.83 9.83 1.41 1.41L19 6.41V10h2V3h-7z"></path></svg>
-
+                                            {/* <svg stroke="currentColor" fill="currentColor" stroke-width="0" viewBox="0 0 24 24" height="200px" width="200px" xmlns="http://www.w3.org/2000/svg"><path fill="none" d="M0 0h24v24H0z"></path><path d="M19 19H5V5h7V3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14c1.1 0 2-.9 2-2v-7h-2v7zM14 3v2h3.59l-9.83 9.83 1.41 1.41L19 6.41V10h2V3h-7z"></path></svg> */}
+                                            <LuExternalLink />
                                         </IconButton>
                                     </Link>
                                     <IconButton onClick={async () => {

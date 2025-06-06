@@ -76,18 +76,18 @@ export const isWorkFlowData = (aquaTree: AquaTree, systemAndUserWorkFlow: string
         isWorkFlow: false,
         workFlow: ""
     }
-    console.log("System workflows: ", systemAndUserWorkFlow)
+    // console.log("System workflows: ", systemAndUserWorkFlow)
 
     //order revision in aqua tree 
     let aquaTreeRevisionsOrderd = OrderRevisionInAquaTree(aquaTree)
     let allHashes = Object.keys(aquaTreeRevisionsOrderd.revisions)
     if (allHashes.length <= 1) {
-        console.log(`Aqua tree has one revision`)
+        // console.log(`Aqua tree has one revision`)
         return falseResponse
     }
     let secondRevision = aquaTreeRevisionsOrderd.revisions[allHashes[1]]
     if (!secondRevision) {
-        console.log(`Aqua tree has second revision not found`)
+        // console.log(`Aqua tree has second revision not found`)
         return falseResponse
     }
     if (secondRevision.revision_type == 'link') {
@@ -97,7 +97,7 @@ export const isWorkFlowData = (aquaTree: AquaTree, systemAndUserWorkFlow: string
         // console.log(` second hash used ${allHashes[1]}  second revision ${JSON.stringify(secondRevision, null, 4)} tree ${JSON.stringify(aquaTreeRevisionsOrderd, null, 4)}`)
 
         if (secondRevision.link_verification_hashes == undefined) {
-            console.log(`link verification hash is undefined`)
+            // console.log(`link verification hash is undefined`)
             return falseResponse
         }
         let revisionHash = secondRevision.link_verification_hashes[0]
@@ -123,7 +123,7 @@ export const isWorkFlowData = (aquaTree: AquaTree, systemAndUserWorkFlow: string
 
 
     }
-    console.log(`Aqua tree has second revision is of type ${secondRevision.revision_type}`)
+    // console.log(`Aqua tree has second revision is of type ${secondRevision.revision_type}`)
 
 
     return falseResponse
@@ -1724,7 +1724,7 @@ export function ensureDomainUrlHasSSL(actualUrlToFetch: string): string {
 
     // Check if we're on inblock.io domain but URL contains localhost IP addresses
     const currentDomain = typeof window !== 'undefined' ? window.location.hostname : '';
-    console.log(`ensureDomainUrlHasSSL currentDomain ${currentDomain}`)
+    // console.log(`ensureDomainUrlHasSSL currentDomain ${currentDomain}`)
     if (currentDomain === "inblock.io" || currentDomain === "dev.inblock.io" || currentDomain == "aquafier.inblock.io" || currentDomain.includes("inblock.io")) {
         if (url.includes("127.0.0.1") || url.includes("0.0.0.0") || url.includes("localhost")) {
 

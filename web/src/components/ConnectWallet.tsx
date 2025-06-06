@@ -27,12 +27,8 @@ const CustomCopyButton = ({ value }: { value: string }) => {
 }
 
 
-interface ConnectWalletProps {
-    disConnectWebsocket: () => void
-}
 
-
-export const  ConnectWallet: React.FC<ConnectWalletProps> = ({ disConnectWebsocket }) => {
+export const  ConnectWallet: React.FC = () => {
   const { setMetamaskAddress, session, setFiles, avatar, setAvatar, setUserProfile, backend_url, setSession } = useStore(appStore);
 
   const [isOpen, setIsOpen] = useState(false);
@@ -219,7 +215,7 @@ export const  ConnectWallet: React.FC<ConnectWalletProps> = ({ disConnectWebsock
         setAvatar(undefined);
         setSession(null)
         setFiles([]);
-        disConnectWebsocket()
+        // disConnectWebsocket()
       }
     } catch (error: any) {
       console.log("error", error)

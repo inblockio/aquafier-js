@@ -3,7 +3,7 @@ import { useEffect } from "react";
 import { fetchFiles, fetchSystemFiles, generateAvatar, getCookie } from "../utils/functions";
 import { useStore } from "zustand";
 import appStore from "../store";
-import { toaster } from "./chakra-ui/toaster";
+// import { toaster } from "./chakra-ui/toaster";
 import { ethers } from "ethers";
 
 
@@ -20,7 +20,7 @@ const LoadConfiguration = () => {
                         'Content-Type': 'application/x-www-form-urlencoded'
                     }
                 });
-                console.log(response)
+                
                 if (response.status === 200) {
                     const url2 = `${backend_url}/explorer_files`;
                     const _address = response.data?.session.address
@@ -32,7 +32,7 @@ const LoadConfiguration = () => {
                         setAvatar(avatar) 
                         const files = await fetchFiles(address, url2, nonce);
                         setFiles(files)
-                        fetchUserProfile(_address,nonce)
+                        fetchUserProfile(_address, nonce)
                         setSession(response.data?.session)
                         const url3 = `${backend_url}/system/aqua_tree`;
                         const systemFiles = await  fetchSystemFiles(url3,address )
@@ -90,7 +90,6 @@ const LoadConfiguration = () => {
             
             const nonce = getCookie("pkc_nonce");
             if (nonce) {
-
                 fetchAddressGivenANonce(nonce)
             } else {
                 setMetamaskAddress(null)
@@ -108,14 +107,14 @@ const LoadConfiguration = () => {
                     witness_contract_address: '0x45f59310ADD88E6d23ca58A0Fa7A55BEE6d2a611',
 
                 })
-                toaster.create({
-                    description: "You are not logged in! Please login",
-                    type: "info",
-                })
+                // toaster.create({
+                //     description: "You are not logged in! Please login",
+                //     type: "info",
+                // })
                 // window.location.reload()
             }
         }else{
-            console.log(`backend url is ${backend_url}`)
+            // console.log(`backend url is ${backend_url}`)
         }
     }, [backend_url]);
 
