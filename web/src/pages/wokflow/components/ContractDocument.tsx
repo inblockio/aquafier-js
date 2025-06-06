@@ -13,7 +13,7 @@ import {
 import { Alert } from "../../../components/chakra-ui/alert"
 import appStore from '../../../store';
 import { useStore } from "zustand"
-import { ContractDocumentViewProps, SignaturePosition, SignatureRichData } from '../../../types/types';
+import { ContractDocumentViewProps,  SignatureData } from '../../../types/types';
 import Aquafier, { AquaTree, AquaTreeWrapper, FileObject, getGenesisHash, OrderRevisionInAquaTree } from 'aqua-js-sdk';
 import { dummyCredential, ensureDomainUrlHasSSL, estimateFileSize, fetchFiles, getAquaTreeFileObject } from '../../../utils/functions';
 
@@ -36,7 +36,7 @@ export const ContractDocumentView: React.FC<ContractDocumentViewProps> = ({ setA
     const [pdfLoadingFile, setLoadingPdfFile] = useState<boolean>(true);
     const [pdfFile, setPdfFile] = useState<File | null>(null);
     const [pdfURLObject, setPdfURLObject] = useState<string | null>(null);
-    const [signatures, setSignatures] = useState< SignatureRichData[]>([]);
+    const [signatures, setSignatures] = useState< SignatureData[]>([]);
         // const [signaturesData, setSignaturesData] = useState<SignatureData[]>([]);
     const [signaturesLoading, setSignaturesLoading] = useState<boolean>(false);
     // const [userCanSign, setUserCanSign] = useState<boolean>(false);
@@ -195,7 +195,7 @@ export const ContractDocumentView: React.FC<ContractDocumentViewProps> = ({ setA
     };
 
 
-    const submitSignatureData = async (signaturePosition: SignaturePosition[], signAquaTree: ApiFileInfo[]) => {
+    const submitSignatureData = async (signaturePosition: SignatureData[], signAquaTree: ApiFileInfo[]) => {
         // Early validation
         if (signAquaTree.length === 0) {
             toaster.create({
@@ -266,11 +266,11 @@ export const ContractDocumentView: React.FC<ContractDocumentViewProps> = ({ setA
     };
 
     // Helper function to create signature form data
-    const createSignatureFormData = (signaturePosition: SignaturePosition[]) => {
+    const createSignatureFormData = (signaturePosition: SignatureData[]) => {
         const signForm: { [key: string]: string | number } = {};
 
         signaturePosition.forEach((signaturePositionItem, index) => {
-            const pageIndex = signaturePositionItem.pageIndex + 1;
+            const pageIndex = signaturePositionItem.page + 1;
             signForm[`x_${index}`] = parseFloat(signaturePositionItem.x.toFixed(16));
             signForm[`y_${index}`] = parseFloat(signaturePositionItem.y.toFixed(16));
             signForm[`page_${index}`] = pageIndex.toString();
@@ -574,7 +574,7 @@ export const ContractDocumentView: React.FC<ContractDocumentViewProps> = ({ setA
 
             if (shouldLoadSignatures()) {
                 setSignaturesLoading(true);
-                const allSignatures : SignatureRichData[] = await loadSignatures();
+                const allSignatures : SignatureData[] = await loadSignatures();
                 setSignatures(allSignatures);
                 setSignaturesLoading(false);
             }
@@ -669,7 +669,7 @@ export const ContractDocumentView: React.FC<ContractDocumentViewProps> = ({ setA
         return revisionHashes.length >= 5; // Document has signatures
     };
 
-    const loadSignatures = async (): Promise< SignatureRichData[]> => {
+    const loadSignatures = async (): Promise< SignatureData[]> => {
         try {
             console.log("Identifying link revisions")
             const linkRevisionsThatWeNeed = identifySignatureRevisions();
@@ -678,7 +678,7 @@ export const ContractDocumentView: React.FC<ContractDocumentViewProps> = ({ setA
                 linkRevisionsThatWeNeed.map(linkRevision => processSignatureRevision(linkRevision))
             );
 
-            return signaturesItem.filter(signature => signature !== null);
+            return signaturesItem.filter((signature : SignatureData |  null) => signature !== null);
         } catch (error) {
             console.error("Error loading signatures:", error);
             return [];
@@ -737,7 +737,7 @@ export const ContractDocumentView: React.FC<ContractDocumentViewProps> = ({ setA
         );
     };
 
-    const processSignatureRevision = async (linkRevision: any): Promise<SignatureRichData | null> => {
+    const processSignatureRevision = async (linkRevision: any): Promise<SignatureData | null> => {
         try {
             console.log("----- Link Revision: ", linkRevision)
             const { positionAquaTree, signatureDetailsAquaTree } = findRelatedAquaTrees(linkRevision);
@@ -748,8 +748,8 @@ export const ContractDocumentView: React.FC<ContractDocumentViewProps> = ({ setA
                 return null;
             }
 
-            const signatureDetails : SignatureRichData = extractSignaturePosition(positionAquaTree, linkRevision.linkHash);
-            await populateSignatureDetails(signatureDetails, signatureDetailsAquaTree, linkRevision.nextLinkHash);
+            let signatureDetails : SignatureData = extractSignaturePosition(positionAquaTree, linkRevision.linkHash);
+            signatureDetails = await populateSignatureDetails(signatureDetails, signatureDetailsAquaTree, linkRevision.nextLinkHash);
 
             return signatureDetails;
         } catch (error) {
@@ -786,7 +786,7 @@ export const ContractDocumentView: React.FC<ContractDocumentViewProps> = ({ setA
         return { positionAquaTree, signatureDetailsAquaTree };
     };
 
-    const extractSignaturePosition = (aquaTree: AquaTree, linkHash: string ) : SignatureRichData => {
+    const extractSignaturePosition = (aquaTree: AquaTree, linkHash: string ) : SignatureData => {
         const revision = aquaTree.revisions[linkHash];
        
 
@@ -799,13 +799,16 @@ export const ContractDocumentView: React.FC<ContractDocumentViewProps> = ({ setA
             page: revision.forms_page_0,
             name: "",
             walletAddress: "",
-            image: "",
             createdAt: new Date(revision.created_at || Date.now()),
             dataUrl: "",
+            hash:revision.revision_hash,
+            isDragging: false,
+            signatureId: revision.revision_hash // Assuming revision_hash is used as signatureId
+
         };
     };
 
-    const populateSignatureDetails = async (signatureDetails:  SignatureRichData, aquaTree: AquaTree, _nextLinkHash: string) :  Promise<SignatureRichData> => {
+    const populateSignatureDetails = async (signatureDetails:  SignatureData, aquaTree: AquaTree, _nextLinkHash: string) :  Promise<SignatureData> => {
         const reorderedTree = OrderRevisionInAquaTree(aquaTree);
         const hashes = Object.keys(reorderedTree.revisions);
         const formRevision = reorderedTree.revisions[hashes[0]];
@@ -826,8 +829,7 @@ export const ContractDocumentView: React.FC<ContractDocumentViewProps> = ({ setA
             if (imageUrl) {
                 const image = await fetchImage(imageUrl);
                 if (image) {
-                    signatureDetails.image = image;
-                    signatureDetails.dataUrl = image;//imageUrl;
+                    signatureDetails.dataUrl = image;
                 }
             }
         }
@@ -896,7 +898,7 @@ export const ContractDocumentView: React.FC<ContractDocumentViewProps> = ({ setA
 
         return (
             <PdfSigner
-                existingSignatures={signatures}
+                documentSignatures={signatures}
                 file={pdfFile}
                 submitSignature={submitSignatureData}
                 submittingSignatureData={submittingSignatureData}

@@ -39,7 +39,7 @@ export interface WebSocketMessage {
   // sender?: string;
 }
 
-
+export 
 export interface WorkFlowTimeLine {
 
   id: number,
@@ -60,38 +60,24 @@ export interface RevisionVerificationStatus {
 }
 
 
-// Interface for signature position
-export interface SignaturePosition {
-  id: string;
-  pageIndex: number;
-  x: number;
-  y: number;
-  width: number;
-  height: number;
-  isDragging?: boolean;
-  signatureId?: string; // Reference to the signature that was placed
-}
 
-// Interface for signature data
+
 export interface SignatureData {
-  id: string;
-  hash: string;
-  dataUrl: string;
-  walletAddress: string;
-  name: string;
-  createdAt: Date;
+   id: string;
+    height: number;
+    width: number;
+    x: number;
+    y: number;
+    page: number;
+    name: string;
+    walletAddress: string;
+    hash: string;
+    createdAt: Date;
+    dataUrl: string;
+    isDragging?: boolean;
+    signatureId?: string; 
 }
 
-// export interface IQuickSignature {
-//     x: string,
-//     y: string,
-//     width: string,
-//     height: string,
-//     image: string,
-//     name: string,
-//     walletAddress: string,
-//     page: string | number
-// }
 
 
 export interface ContractDocumentViewProps {
@@ -99,16 +85,3 @@ export interface ContractDocumentViewProps {
     updateDocumentIconInWorkflowTabs: (isWorkFlowOk: boolean) => void
 }
 
-export interface SignatureRichData {
-   id: string;
-    height: any;
-    width: any;
-    x: any;
-    y: any;
-    page: any;
-    name: string;
-    walletAddress: string;
-    image: string;
-  createdAt: Date;
-    dataUrl: string;
-}

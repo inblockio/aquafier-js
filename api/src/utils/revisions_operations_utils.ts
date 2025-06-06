@@ -577,8 +577,8 @@ async function updateLinkRevisionFileIndex(revision: Revision,
     let userAddress = "";
     let newHash = linkData.link_verification_hashes[0]
 
-    if(newHash == undefined) {
- throw Error(`Expected linke revision to have alteast one verification hash ${JSON.stringify(linkData)}`)
+    if (newHash == undefined) {
+        throw Error(`Expected linke revision to have alteast one verification hash ${JSON.stringify(linkData)}`)
 
     }
     let systemTemplateHashes = [
@@ -591,7 +591,7 @@ async function updateLinkRevisionFileIndex(revision: Revision,
 
     ]
     if (systemTemplateHashes.includes(newHash)) {
-userAddress= SYSTEM_WALLET_ADDRESS
+        userAddress = SYSTEM_WALLET_ADDRESS
     } else {
         let first = revision.pubkey_hash
         if (first) {
