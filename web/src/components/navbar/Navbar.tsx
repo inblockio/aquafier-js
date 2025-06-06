@@ -1,68 +1,30 @@
-import { Box, Group, HStack, Image, Text, Menu, Button, Portal, MenuOpenChangeDetails, Stack, Input, Flex, Center, SimpleGrid, Spinner, IconButton } from "@chakra-ui/react"
-import Settings from "./chakra-ui/settings"
-import { ConnectWallet } from "./ConnectWallet"
-import { useColorMode } from "./chakra-ui/color-mode"
-import appStore from "../store"
+import { Box, Group, HStack, Image, Text, Menu, Button, Portal, MenuOpenChangeDetails, Stack, Input, SimpleGrid, Spinner, IconButton } from "@chakra-ui/react"
+import Settings from "../chakra-ui/settings"
+import { ConnectWallet } from "../ConnectWallet"
+import { useColorMode } from "../chakra-ui/color-mode"
+import appStore from "../../store"
 import { useStore } from "zustand"
-import VersionAndDisclaimer from "./VersionAndDisclaimer"
+import VersionAndDisclaimer from "../VersionAndDisclaimer"
 import { Link, useNavigate } from "react-router-dom"
 import AccountContracts from "./AccountContracts"
-import { Alert } from "../components/chakra-ui/alert"
+import { Alert } from "../chakra-ui/alert"
 import { LuChevronDown, LuChevronUp, LuPlus, LuSquareChartGantt, LuTrash } from "react-icons/lu"
-import { HiDocumentPlus } from "react-icons/hi2";
-import React, { useEffect, useState, useRef } from "react"
-import { estimateFileSize, dummyCredential, getAquaTreeFileName, getAquaTreeFileObject, getRandomNumber, fetchSystemFiles, isValidEthereumAddress, convertToWebsocketUrl, ensureDomainUrlHasSSL, fetchFiles, getGenesisHash, formatDate } from "../utils/functions"
-import { FormTemplate } from "../components/aqua_forms/types"
-import { Field } from '../components/chakra-ui/field';
+import React, { useEffect, useState } from "react"
+import { estimateFileSize, dummyCredential, getAquaTreeFileName, getAquaTreeFileObject, getRandomNumber, fetchSystemFiles, isValidEthereumAddress, formatDate } from "../../utils/functions"
+import { FormTemplate } from "../aqua_forms/types"
+import { Field } from '../chakra-ui/field';
 import Aquafier, { AquaTree, AquaTreeWrapper, FileObject } from "aqua-js-sdk"
 
-import { toaster } from "../components/chakra-ui/toaster";
+import { toaster } from "../chakra-ui/toaster";
 import axios from "axios"
-import { DialogBody, DialogCloseTrigger, DialogContent, DialogFooter, DialogHeader, DialogRoot } from "./chakra-ui/dialog";
-import SmallScreenSidebarDrawer from "./SmallScreenSidebarDrawer"
+import { DialogBody, DialogCloseTrigger, DialogContent, DialogFooter, DialogHeader, DialogRoot } from "../chakra-ui/dialog";
+import SmallScreenSidebarDrawer from "../SmallScreenSidebarDrawer"
 
 
 import { generateNonce } from "siwe"
-import { WebSocketMessage } from "../types/types"
-import WebSocketActions from "../constants/constants"
+import FormTemplateCard from "./FormTemplateCard"
+import WebsocketFragment from "./WebsocketFragment"
 
-const FormTemplateCard = ({ template, selectTemplateCallBack }: { template: FormTemplate, selectTemplateCallBack: (template: FormTemplate) => void }) => {
-
-    const { colorMode } = useColorMode()
-
-    return (
-        <Box
-            borderWidth="2px"
-            borderStyle="dashed"
-            borderColor={colorMode === "light" ? "gray.300" : "gray.600"}
-            borderRadius="md"
-            cursor={"pointer"}
-            bg={colorMode === "light" ? "gray.50" : "blackAlpha.500"}
-            css={{
-                "&:hover": {
-                    bg: colorMode === "light" ? "gray.200" : "blackAlpha.700"
-                }
-            }}
-            h="120px"
-            p={4}
-            onClick={() => {
-                selectTemplateCallBack(template)
-            }}
-        >
-            <Flex direction="column" align="center" justify="center" h="100%">
-                <Text textAlign="center" mb={2} ml={2} mr={2} fontWeight="bold">
-                    {template.title}
-                </Text>
-                <Center
-                    mt={2}
-                    borderRadius="full"
-                >
-                    <HiDocumentPlus size={"32px"} />
-                </Center>
-            </Flex>
-        </Box>
-    )
-}
 
 
 const Navbar = () => {
@@ -77,25 +39,14 @@ const Navbar = () => {
     const [modalFormErorMessae, setModalFormErorMessae] = useState("");
     // const { open, onOpen, onClose } = useDisclosure();
     const [open, setOpen] = useState(false)
-    const { session, formTemplates, backend_url, systemFileInfo, setFormTemplate, setFiles, setSystemFileInfo, selectedFileInfo, setSelectedFileInfo, setContracts } = useStore(appStore)
+    const { session, formTemplates, backend_url, systemFileInfo, setFormTemplate, setFiles, setSystemFileInfo } = useStore(appStore)
     const [formData, setFormData] = useState<Record<string, string | File | number>>({});
     const [selectedTemplate, setSelectedTemplate] = useState<FormTemplate | null>(null);
 
-    // const [userSelectedFile, setUserSelectedFile] = useState(selectedFileInfo)
-    // Use useRef to maintain current value that WebSocket handlers can access
-    const selectedFileRef = useRef(selectedFileInfo);
-    const nounceRef = useRef(session?.nonce ?? "");
-    const walletAddressRef = useRef(session?.address ?? "");
-    const backendUrlRef = useRef(backend_url);
+    // Track the session changes locally
+    const [localSession, setLocalSession] = useState(session);
 
     const [multipleAddresses, setMultipleAddresses] = useState<string[]>([])
-
-    const [ws, setWs] = useState<WebSocket | null>(null);
-    const [isConnected, setIsConnected] = useState(false);
-    const [websocketReconnectAttempts, setWebsocketReconnectAttempts] = useState(0);
-    // const [_connectedUsers, setConnectedUsers] = useState<string[]>([]);
-
-    let pingInterval: NodeJS.Timeout | null = null;
 
 
     const cancelRef = React.useRef<HTMLButtonElement>(null);
@@ -174,6 +125,7 @@ const Navbar = () => {
             });
         }
     }
+
     const saveAquaTree = async (aquaTree: AquaTree, fileObject: FileObject, isFinal: boolean = false, isWorkflow: boolean = false) => {
         try {
             const url = `${backend_url}/explorer_aqua_file_upload`;
@@ -267,7 +219,6 @@ const Navbar = () => {
             });
         }
     };
-
 
     const createWorkflowFromTemplate = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -645,7 +596,7 @@ const Navbar = () => {
 
         } catch (error: any) {
             // Don't show the popup, only wait for the user to login
-            if(error.response?.status === 401){
+            if (error.response?.status === 401) {
                 return
             }
             toaster.create({
@@ -680,203 +631,7 @@ const Navbar = () => {
     }
 
 
-    // Fetch connected users from server
-    const fetchConnectedUsers = async () => {
-        try {
 
-            // Step 1: Ensure SSL if needed
-            let validHttpAndDomain = ensureDomainUrlHasSSL(backend_url);
-            const response = await axios.get(`${validHttpAndDomain}/ws/clients`);
-            const users = response.data.clients.map((client: any) => client.userId);
-            console.log(`Users ${users} ..`)
-            // setConnectedUsers(users);
-        } catch (error) {
-            console.error('Error fetching connected users:', error);
-        }
-    };
-
-    const connectWebsocket = () => {
-
-        let userId = session!.address!;
-        let WS_URL = `${convertToWebsocketUrl(backend_url)}/ws`;
-        try {
-            const websocket = new WebSocket(`${WS_URL}?userId=${encodeURIComponent(userId)}`);
-
-            websocket.onopen = () => {
-                console.log(`Connected to WebSocket as user: ${userId}`);
-                setIsConnected(true);
-                setWs(websocket);
-                setWebsocketReconnectAttempts(0);
-                // fetchConnectedUsers();
-
-                pingInterval = setInterval(() => {
-                    websocket.send(JSON.stringify({ action: "ping", type: "ping" }));
-                }, 20000); //
-            };
-
-            websocket.onmessage = (event) => {
-                try {
-                    const message: WebSocketMessage = JSON.parse(event.data);
-              
-
-                    console.log(`🔌 ECHO - message received ${message.action}`)
-                    if (message.action === WebSocketActions.REFETCH_FILES) {
-                        (async () => {
-                            if (walletAddressRef.current && nounceRef.current) {
-                                console.log(`🔌 ECHO - message  fetching data`)
-
-                                const url = `${backend_url}/explorer_files`
-                                const actualUrlToFetch = ensureDomainUrlHasSSL(url);
-                                const files = await fetchFiles(walletAddressRef.current, actualUrlToFetch, nounceRef.current);
-                                setFiles(files);
-
-                                // Use the ref to get the current value
-                                const currentSelectedFile = selectedFileRef.current;
-
-                                if (currentSelectedFile) {
-                                    // if (userSelectedFile) {
-                                    let genesisHash = getGenesisHash(currentSelectedFile!.aquaTree!!);
-                                    if (genesisHash) {
-                                        for (let itemTree of files) {
-                                            let genesisHashItem = getGenesisHash(itemTree.aquaTree!!);
-                                            if (genesisHashItem) {
-                                                if (genesisHashItem == genesisHash) {
-                                                    setSelectedFileInfo(itemTree)
-                                                    break;
-                                                }
-                                            }
-                                        }
-                                    } else {
-                                        console.log(`🔌 - Genesis hash not found for selected file`)
-                                    }
-                                } else {
-                                    // console.log(`🔌 -1- No selected file ${userSelectedFile}`)
-                                    // console.log(`🔌 -2- No selected file ${selectedFileInfo}`)
-                                    console.log(`🔌 -3- No selected file ${currentSelectedFile}`)
-                                }
-                            } else {
-                                console.log(`🔌 - Cannot refetch files as session or address or nounce is not defined DEBUG : ${JSON.stringify(session ?? {})}  `)
-                            }
-
-                        })()
-                    } else if (message.action === WebSocketActions.REFETCH_SHARE_CONTRACTS) {
-                        (async () => {
-                            try {
-                                const url = `${backend_url}/contracts`;
-                                const response = await axios.get(url, {
-                                    params: {
-                                        receiver: walletAddressRef.current
-                                    },
-                                    headers: {
-                                        'nonce':  nounceRef.current
-                                    }
-                                });
-                                if (response.status === 200) {
-                                    setContracts(response.data?.contracts)
-                                }
-
-                                toaster.create({
-                                    description: `An item was shared to your account`,
-                                    type: "success"
-                                })
-
-                            } catch (e) {
-                                console.log("Error loadin cntract")
-                            }
-                        })()
-
-                    } else if (message.action === WebSocketActions.FETCH_USERS) {
-                        fetchConnectedUsers();
-
-                    } else {
-                        console.log(`🔌 ECHO - message received ${JSON.stringify(message, null, 4)}`)
-                    }
-                } catch (error) {
-                    console.error('Error parsing WebSocket message:', error);
-                    // Handle non-JSON messages
-                    // const message: WebSocketMessage = {
-                    //     type: 'raw',
-                    //     data: event.data,
-                    //     timestamp: new Date().toISOString()
-                    // };
-                    // console.log(`Raw message ${JSON.stringify(message)}`)
-                    // setMessages(prev => [...prev, message]);
-                }
-            };
-
-            // Track reconnection attempts for exponential backoff
-            const reconnectWithBackoff = (reason: string) => {
-                console.log("Backoff connection Reason: ", reason)
-                // Get the current reconnection attempt count from state or default to 0
-                const attemptCount = websocketReconnectAttempts;
-                
-                // Calculate delay with exponential backoff: 1s, 2s, 4s, 8s, etc.
-                // Cap at 30 seconds maximum delay
-                const baseDelay = 1000;
-                const maxDelay = 30000;
-                const delay = Math.min(Math.pow(2, attemptCount) * baseDelay, maxDelay);
-                
-                console.log(`Scheduling reconnection attempt ${attemptCount + 1} in ${delay}ms`);
-                
-                // Increment the reconnection attempt counter
-                setWebsocketReconnectAttempts(attemptCount + 1);
-                
-                // Schedule reconnection with calculated delay
-                setTimeout(() => {
-                    console.log(`Attempting reconnection #${attemptCount + 1}`);
-                    connectWebsocket();
-                }, delay);
-            };
-
-            websocket.onclose = (event) => {
-                console.log('Disconnected from WebSocket:', event);
-                console.log('Disconnected from WebSocket:', event.reason);
-                setIsConnected(false);
-                setWs(null);
-
-                if (pingInterval) clearInterval(pingInterval);
-
-                toaster.create({
-                    description: `Realtime Connection disconnected error.`,
-                    type: "error"
-                });
-
-                // Use exponential backoff for reconnection
-                reconnectWithBackoff('connection closed');
-            };
-
-            websocket.onerror = (error) => {
-                console.error('WebSocket error:', error);
-                setIsConnected(false);
-                if (pingInterval) clearInterval(pingInterval);
-
-                toaster.create({
-                    description: `Realtime Connection with api failed.`,
-                    type: "error"
-                });
-                
-                // Use exponential backoff for reconnection
-                reconnectWithBackoff('connection error');
-            };
-
-        } catch (error) {
-            console.error('Failed to connect to WebSocket:', error);
-            toaster.create({
-                description: `Realtime Connection catastrophic error.`,
-                type: "error"
-            })
-        }
-    };
-
-    // Disconnect WebSocket
-    const disconnectWebSocket = () => {
-        if (ws) {
-            ws.close();
-            setWs(null);
-            setIsConnected(false);
-            // setConnectedUsers([]);
-        }
-    };
 
     // Send message through WebSocket
     // const sendMessage = () => {
@@ -891,32 +646,21 @@ const Navbar = () => {
     //     }
     // };
 
-    useEffect(() => {
-        console.log(`navbar user selected file`)
-        // setUserSelectedFile(selectedFileInfo)
-        selectedFileRef.current = selectedFileInfo;
-    }, [selectedFileInfo]);
 
-
+    // Add cleanup in useEffect
     useEffect(() => {
         if (session != null && session.nonce != undefined && backend_url != "http://0.0.0.0:0") {
-            backendUrlRef.current = backend_url
-            nounceRef.current = session.nonce
-            walletAddressRef.current = session.address
             loadTemplates();
             loadTemplatesAquaTrees();
 
-            if (!isConnected) {
-                console.log(`websocket is connected ${isConnected}`)
-                connectWebsocket()
-            } else {
-                console.log(`websocket is connected ${isConnected}`)
-            }
         }
-    }, [backend_url, session]);
+
+        // Cleanup function
+    }, []);
 
     useEffect(() => {
         if (selectedTemplate && selectedTemplate.name === "aqua_sign" && session?.address) {
+            // Enable this if you want to add wallet address to the form for signers
             // setMultipleAddresses([session.address])
             setMultipleAddresses([""])
         }
@@ -931,24 +675,28 @@ const Navbar = () => {
         }
     }, [multipleAddresses])
 
+    useEffect(() => {
+        setLocalSession(session)
+    }, [session])
+
 
     return (
         <>
+            {/* Websocket fragment called here to handle all websocket connection stuff */}
+            <WebsocketFragment />
             <Box bg={{ base: 'rgb(255, 255, 255)', _dark: 'rgba(0, 0, 0, 0.9)' }} h={'70px'} pos={'sticky'} top={0} left={0} right={0} zIndex={1000} borderBottom={"1px solid "} borderColor={colorMode === "dark" ? "gray.900" : "gray.200"}>
                 <HStack h={'100%'} px={"4"} justifyContent={'space-between'}>
                     <Link to={'/'} style={{ height: "100%", display: "flex", alignItems: "center" }}>
                         <Image src={colorMode === 'light' ? "/images/logo.png" : "/images/logo-dark.png"} maxH={'60%'} />
                     </Link>
                     <HStack display={{ base: 'flex', md: 'none' }} gap={"2"}>
-                        <ConnectWallet disConnectWebsocket={() => {
-                            disconnectWebSocket()
-                        }} />
+                        <ConnectWallet />
                         <SmallScreenSidebarDrawer openCreateForm={() => setOpen(true)} />
                     </HStack>
 
                     <HStack h={'100%'} gap={"4"} justifyContent={'space-between'} display={{ base: 'none', md: 'flex' }}>
                         {
-                            session ? (<>
+                            localSession ? (<>
                                 <Group gap={4}>
                                     <Menu.Root onOpenChange={(open: MenuOpenChangeDetails) => setIsDropDownOpen(open.open)}  >
                                         <Menu.Trigger asChild >
@@ -991,7 +739,7 @@ const Navbar = () => {
                         }
                         <VersionAndDisclaimer inline={false} open={versionOpen} updateOpenStatus={(open) => setVersionOpen(open)} />
                         {
-                            session ? (<>
+                            localSession ? (<>
                                 <AccountContracts inline={false} open={contractsOpen} updateOpenStatus={(open) => setContractsOpen(open)} />
                                 <Settings inline={false} open={settingsOpen} updateOpenStatus={(open) => {
                                     setSettingsOpen(open)
@@ -999,9 +747,7 @@ const Navbar = () => {
                             </>
                             ) : null
                         }
-                        <ConnectWallet disConnectWebsocket={() => {
-                            disconnectWebSocket()
-                        }} />
+                        <ConnectWallet />
                     </HStack>
                 </HStack>
             </Box>

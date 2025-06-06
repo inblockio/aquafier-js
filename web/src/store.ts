@@ -1,5 +1,5 @@
 
-import { openDB } from 'idb';
+import { IDBPDatabase, openDB } from 'idb';
 import { createStore } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
 import { ApiFileInfo } from './models/FileInfo';
@@ -74,25 +74,97 @@ type TAppStore = AppStoreState & AppStoreActions
 
 
 // Open an IndexedDB instance
-const dbPromise = openDB('aquafier-db', 2, {
-    upgrade(db) {
-        db.createObjectStore('store');
-    },
-});
+// const dbPromise = openDB('aquafier-db', 2, {
+//     upgrade(db) {
+//         db.createObjectStore('store');
+//     },
+// });
+
+// // Custom storage object for Zustand using IndexedDB
+// const indexedDBStorage = {
+//     getItem: async (name: string) => {
+//         const db = await dbPromise;
+//         return (await db.get('store', name)) || null;
+//     },
+//     setItem: async (name: string, value: string) => {
+//         const db = await dbPromise;
+//         await db.put('store', value, name);
+//     },
+//     removeItem: async (name: string) => {
+//         const db = await dbPromise;
+//         await db.delete('store', name);
+//     },
+// };
+
+// Create a singleton promise for the database to prevent multiple upgrade attempts
+let dbPromiseInstance: Promise<IDBPDatabase> | null = null;
+
+const getDbPromise = () => {
+    if (!dbPromiseInstance) {
+        dbPromiseInstance = openDB('aquafier-db', 2, {
+            upgrade(db, oldVersion, newVersion, _transaction) {
+                console.log(`Upgrading from version ${oldVersion} to ${newVersion}`);
+                
+                // Handle version upgrades properly
+                if (!db.objectStoreNames.contains('store')) {
+                    db.createObjectStore('store');
+                }
+                
+                // Add more version upgrade logic here if needed
+                // Example for future versions:
+                // if (oldVersion < 2) {
+                //     // Migration logic for version 2
+                // }
+            },
+            
+            // Add blocking handler to prevent version conflicts
+            blocked() {
+                console.warn('Database upgrade blocked by another connection');
+                // Optionally notify user or handle the blocking situation
+            },
+            
+            // Add blocking handler for close events
+            blocking() {
+                console.warn('Database needs to close for upgrade');
+                // Optionally notify user or handle the blocking situation
+            }
+        }).catch(error => {
+            console.error('Database opening error:', error);
+            dbPromiseInstance = null; // Reset on error to allow retry
+            throw error;
+        });
+    }
+    return dbPromiseInstance;
+};
 
 // Custom storage object for Zustand using IndexedDB
 const indexedDBStorage = {
     getItem: async (name: string) => {
-        const db = await dbPromise;
-        return (await db.get('store', name)) || null;
+        try {
+            const db = await getDbPromise();
+            return (await db.get('store', name)) || null;
+        } catch (error) {
+            console.error('Error getting item from IndexedDB:', error);
+            return null;
+        }
     },
     setItem: async (name: string, value: string) => {
-        const db = await dbPromise;
-        await db.put('store', value, name);
+        try {
+            const db = await getDbPromise();
+            await db.put('store', value, name);
+        } catch (error) {
+            console.error('Error setting item in IndexedDB:', error);
+            throw error;
+        }
     },
     removeItem: async (name: string) => {
-        const db = await dbPromise;
-        await db.delete('store', name);
+        try {
+            const db = await getDbPromise();
+            await db.delete('store', name);
+        } catch (error) {
+            console.error('Error removing item from IndexedDB:', error);
+            throw error;
+        }
     },
 };
 
