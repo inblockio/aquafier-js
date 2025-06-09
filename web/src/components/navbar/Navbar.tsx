@@ -326,9 +326,13 @@ const Navbar = () => {
 
                 // Get filename without extension and the extension separately
                 const fileNameWithoutExt = theFile.name.substring(0, theFile.name.lastIndexOf('.'));
-                const fileExtension = theFile.name.substring(theFile.name.lastIndexOf('.'));
+                // console.log(`name ${fileNameWithoutExt}`)
+                // console.log(`===============================================`)
+                // throw Error(`fix me`)
 
-                fileName = fileNameWithoutExt + '-' + formatDate(new Date()) + '-' + randomNumber + fileExtension;
+                // const fileExtension = theFile.name.substring(theFile.name.lastIndexOf('.'));
+
+                fileName = fileNameWithoutExt + '-' + formatDate(new Date()) + '-' + randomNumber + ".json";
             }
 
 

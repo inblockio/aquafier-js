@@ -107,6 +107,12 @@ async function processLinkedChains(
                     }
 
                     try {
+                        
+                        console.log(`All File Object s %${JSON.stringify(allFileObjects, null, 4)}%`);
+                        console.log(`=======================================================================`);
+                        console.log(`Aqua Trees %${JSON.stringify(aquaTree, null, 4)}%`);
+                
+
                         // Update file index for the linked hash using existing helper
                         const fileIndexValue = await updateFileIndexForLinkedHash(linkedHash);
                         updatedAquaTree.file_index[linkedHash] = fileIndexValue;
@@ -140,7 +146,7 @@ async function processLinkedChains(
                     } catch (linkError) {
                         console.error(`${indent}[Depth:${depth}] Error processing linked hash ${linkedHash}:`, linkError);
                         // Set error value for this linked hash
-                        updatedAquaTree.file_index[linkedHash] = '--error--';
+                        updatedAquaTree.file_index[linkedHash] = '--error--@';
                     }
                 }
             }
@@ -161,23 +167,14 @@ async function processLinkedChains(
  */
 async function updateFileIndexForLinkedHash(linkedHash: string): Promise<string> {
     try {
-        // Use the same logic as the working implementation
-        let linkedFileIndex = await prisma.fileIndex.findFirst({
-            where: { pubkey_hash: { has: linkedHash } }
-        });
-        
-        if (!linkedFileIndex) {
-            linkedFileIndex = await prisma.fileIndex.findFirst({
-                where: { file_hash: linkedHash }
-            });
-        }
+
 
         // Find FileName for user-friendly name
         let fileNameEntry = await prisma.fileName.findFirst({ 
             where: { pubkey_hash: linkedHash } 
         });
 
-        return fileNameEntry?.file_name ?? linkedFileIndex?.file_hash ?? '--error--';
+        return fileNameEntry?.file_name ?? '--error--++';
     } catch (error) {
         console.error(`Error updating file index for linked hash ${linkedHash}:`, error);
         return '--error--';
