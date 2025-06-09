@@ -33,7 +33,7 @@ import { useColorMode } from '../../components/chakra-ui/color-mode';
 import { PdfControls } from '../../components/FilePreview';
 import axios from 'axios';
 import { ApiFileInfo } from '../../models/FileInfo';
-import { blobToDataURL, dataURLToFile, dummyCredential, ensureDomainUrlHasSSL, estimateFileSize, getAquaTreeFileName, getGenesisHash, getRandomNumber, timeStampToDateObject } from '../../utils/functions';
+import { blobToDataURL, dataURLToFile, dummyCredential, ensureDomainUrlHasSSL, estimateFileSize, getAquaTreeFileName, getGenesisHash, getLatestApiFileInfObject, getRandomNumber, timeStampToDateObject } from '../../utils/functions';
 import Aquafier, { AquaTree, AquaTreeWrapper, FileObject, getAquaTreeFileObject, OrderRevisionInAquaTree } from 'aqua-js-sdk';
 import { SignatureData } from "../../types/types"
 import { LuTrash } from 'react-icons/lu';
@@ -742,22 +742,20 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ file, submitSignature, submitting
             throw Error("File object not found for signature: " + selectedSignatureId);
         }
 
-        const imageUrl = await fetchImage(fileobject.fileContent as string)
-
-        // const newPosition: SignatureData = { 
-        //     id: crypto.randomUUID(),
-        //     page: currentPage - 1,
-        //     x: relativeX,
-        //     y: relativeY,
-        //     width: relativeWidth,
-        //     height: relativeHeight,
-        //     signatureId: selectedSignatureId,
-        //     hash: genesisHash!!,
-        //     name: selectedSignatureAquaTree?.aquaTree?.revisions[genesisHash!!]?.forms_name,
-        //     walletAddress: selectedSignatureAquaTree?.aquaTree?.revisions[genesisHash!!]?.forms_wallet_address,
-        //     dataUrl: imageUrl!!,
-        //     createdAt: timeStampToDateObject(selectedFileInfo?.aquaTree?.revisions[genesisHash!!]?.local_timestamp!!) ?? new Date()
-        // };
+        const newPosition: SignatureData = {
+            id: crypto.randomUUID(),
+            page: currentPage - 1,
+            x: relativeX,
+            y: relativeY,
+            width: relativeWidth,
+            height: relativeHeight,
+            signatureId: selectedSignatureId,
+            hash: genesisHash!!,
+            name: selectedSignatureAquaTree?.aquaTree?.revisions[genesisHash!!]?.forms_name,
+            walletAddress: selectedSignatureAquaTree?.aquaTree?.revisions[genesisHash!!]?.forms_wallet_address,
+            dataUrl: "0000000",// todo fix me
+            createdAt: timeStampToDateObject(selectedFileInfo?.aquaTree?.revisions[genesisHash!!]?.local_timestamp!!) ?? new Date()
+        };
 
         setSignaturePositions(prev => [...prev, newPosition]);
         setPlacingSignature(false);
@@ -943,45 +941,45 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ file, submitSignature, submitting
 
                 if (typeof fileContentUrl === 'string' && fileContentUrl.startsWith('http')) {
 
-                    const actualUrlToFetch = ensureDomainUrlHasSSL(fileContentUrl);
-                    console.log(`Fetch url ${fileContentUrl}  new ${actualUrlToFetch}`)
+                    // const actualUrlToFetch = ensureDomainUrlHasSSL(fileContentUrl);
+                    // console.log(`Fetch url ${fileContentUrl}  new ${actualUrlToFetch}`)
 
-                    const response = await fetch(actualUrlToFetch, {
-                        headers: {
-                            nonce: `${session?.nonce}`
-                        }
-                    });
+                    // const response = await fetch(actualUrlToFetch, {
+                    //     headers: {
+                    //         nonce: `${session?.nonce}`
+                    //     }
+                    // });
 
-                    if (!response.ok) {
-                        toaster.create({
-                            description: `${signatureImageName} not found in system`,
-                            type: "error"
-                        })
-                        continue
-                        // throw new Error("Failed to fetch file");
-                    }
+                    // if (!response.ok) {
+                    //     toaster.create({
+                    //         description: `${signatureImageName} not found in system`,
+                    //         type: "error"
+                    //     })
+                    //     continue
+                    //     // throw new Error("Failed to fetch file");
+                    // }
 
-                    // Get content type from headers or from file extension
-                    // Get content type from headers or from file extension
-                    let contentType = response.headers.get("Content-Type") || "image/png";
-                    console.log(`Content type ${contentType}`);
+                    // // Get content type from headers or from file extension
+                    // // Get content type from headers or from file extension
+                    // let contentType = response.headers.get("Content-Type") || "image/png";
+                    // console.log(`Content type ${contentType}`);
 
-                    // Get the blob from the response
-                    // const blob = await response.blob();
+                    // // Get the blob from the response
+                    // // const blob = await response.blob();
 
-                    // Clone response and get data
-                    const arrayBuffer = await response.arrayBuffer();
-
-
-                    // Create blob with correct content type
-                    const blob = new Blob([arrayBuffer], { type: contentType });
+                    // // Clone response and get data
+                    // const arrayBuffer = await response.arrayBuffer();
 
 
+                    // // Create blob with correct content type
+                    // const blob = new Blob([arrayBuffer], { type: contentType });
 
-                    // Convert blob to base64 data URL
-                    const dataUrl = await blobToDataURL(blob);
 
 
+                    // // Convert blob to base64 data URL
+                    // const dataUrl = await blobToDataURL(blob);
+
+                    const dataUrl = await fetchImage(fileContentUrl);
 
                     // Add to signature
                     let sign: SignatureData = {
@@ -989,8 +987,15 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ file, submitSignature, submitting
                         hash: getGenesisHash(userSignature.aquaTree!) ?? "",
                         name: firstRevision.forms_name,
                         walletAddress: firstRevision.forms_wallet_address,
-                        dataUrl: dataUrl,
-                        createdAt: timeStampToDateObject(firstRevision.local_timestamp) ?? new Date()
+                        dataUrl:  dataUrl ?? "",
+                        createdAt: timeStampToDateObject(firstRevision.local_timestamp) ?? new Date(),
+                        page: 0, // Default to 0, will be updated when placed
+                        x: 0, // Default to 0, will be updated when placeholder
+                        y: 0, // Default to 0, will be updated when placeholder
+                        width: 0, // Default width, will be updated when placed
+                        height: 0, // Default height, will be updated when placed
+                        isDragging: false, // Default to false, will be updated when dragging
+                        signatureId: signatureHash, // Use the signature hash as the ID
                     };
                     apiSigntures.push(sign)
                 }
@@ -1000,27 +1005,16 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ file, submitSignature, submitting
             console.log(`Signatures length ${apiSigntures.length} now update state`)
 
 
-            // setSignatures([...signatures, ...apiSigntures])
-            // Filter out duplicates before adding to state
-
-            //todo fix me
-            // setSignatures(prevSignatures => {
-            //     // Create a map of existing signatures by ID for quick lookup
-            //     const existingSignatureIds = new Set(prevSignatures.map(sig => sig.id));
-
-            //     // Only add signatures that don't already exist
-            //     const newSignatures = apiSigntures.filter(sig => !existingSignatureIds.has(sig.id));
-
-            //     console.log(`Adding ${newSignatures.length} new signatures, filtered out ${apiSigntures.length - newSignatures.length} duplicates`);
-
-            //     return [...prevSignatures, ...newSignatures];
-            // });
-
+            // Update mySignatureData with the fetched signatures
+            setMySignatureData(apiSigntures)
 
             if (selectSignature) {
                 if (apiSigntures.length > 0) {
-                    if (session?.address === apiSigntures[0].walletAddress) {
-                        setSelectedSignatureId(apiSigntures[0].id);
+                    let latestSignature = getLatestApiFileInfObject(userSignaturesApiInfo);
+                    if (latestSignature) {
+
+                        let genHash = getGenesisHash(latestSignature.aquaTree!!);
+                        setSelectedSignatureId(genHash);
                     }
                 }
             }
@@ -1116,9 +1110,9 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ file, submitSignature, submitting
                             <Stack gap={0}>
                                 {(() => {
                                     // const signature = signatures.find((signature) => signature.walletAddress === session?.address);
-                                    const signature = mySignatureData.find(sig => sig.id === selectedSignatureId);
+                                    const signature = mySignatureData.find(sig => sig.hash === selectedSignatureId || sig.id === selectedSignatureId);
                                     if (!signature) {
-                                        return <div style={{whiteSpace: "pre-wrap"}}>Signature not found {JSON.stringify(mySignatureData, null, 4)} - {selectedSignatureId}</div>
+                                        return <div style={{ whiteSpace: "pre-wrap" }}>Signature not found </div>
                                     }
 
                                     return signature ? (
@@ -1130,13 +1124,14 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ file, submitSignature, submitting
                                             bg={"blue.50"}
                                             _hover={{ bg: "gray.50" }}
                                             onClick={() => {
-                                                console.log(`Signature clicked ${JSON.stringify(signature, null, 4)} -- ${genesisHash}`)
+                                                console.log(`Signature clicked ${JSON.stringify(signature, null, 4)} -- ${signature.hash} -- ${signature.id}`)
                                                 // if (session?.address === signature.walletAddress) {
                                                 //     setSelectedSignatureId(signature.id);
                                                 // }
                                             }}
                                         >
                                             <HStack>
+                                             
                                                 <Box
                                                     width="60px"
                                                     height="40px"
@@ -1218,11 +1213,11 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ file, submitSignature, submitting
 
             {selectedSignatureId && (
                 <>
-                    <Text fontWeight="bold" mt={2}>Selected Signature:</Text>
+                    <Text fontWeight="bold" mt={2}>Selected Signature: </Text>
                     {(() => {
-                        const selectedSignature = mySignaturesAquaTree.find(sig => getGenesisHash(sig.aquaTree!!) === selectedSignatureId);
-                        if (!selectedSignature) return null;
-
+                        const selectedSignature = mySignatureData.find(sig => sig.hash.trim() === selectedSignatureId.trim());
+                        if (!selectedSignature) return <>Error</>;
+                      
                         return (
                             <Box
                                 border="1px solid"
@@ -1393,6 +1388,8 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ file, submitSignature, submitting
 
             let image = await fetchImage(imageUrl)
 
+            console.log(`handleCreateSignatureData Signature image url ${imageUrl} image ${image}`)
+
             const newSignatureData: SignatureData = {
                 id: crypto.randomUUID(),
                 page: currentPage - 1,
@@ -1404,7 +1401,7 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ file, submitSignature, submitting
                 hash: genesisHash!!,
                 name: signatureAquaTree?.aquaTree?.revisions[genesisHash!!]?.forms_name,
                 walletAddress: signatureAquaTree?.aquaTree?.revisions[genesisHash!!]?.forms_wallet_address,
-                dataUrl: image!!,
+                dataUrl:image??"",
                 createdAt: timeStampToDateObject(signatureAquaTree?.aquaTree?.revisions[genesisHash!!]?.local_timestamp!!) ?? new Date()
             };
             signatureData.push(newSignatureData)

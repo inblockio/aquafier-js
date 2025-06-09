@@ -230,7 +230,7 @@ async function fetchAquaTreeFileData(pubKeyHashes: string[]): Promise<AquaTreeFi
                 ]
             }
         });
-        if (fileIndex) {
+       if (fileIndex) {
 
 
             const fileNameData = await prisma.fileName.findFirst({
@@ -244,7 +244,6 @@ async function fetchAquaTreeFileData(pubKeyHashes: string[]): Promise<AquaTreeFi
                     file_hash: fileIndex.file_hash
                 },
             });
-
             if (fileNameData) {
 
 
@@ -258,9 +257,11 @@ async function fetchAquaTreeFileData(pubKeyHashes: string[]): Promise<AquaTreeFi
                 }
 
                 allData.push(data);
+            }else{
+                console.log(`💣💣💣 File name not found for pubKeyHash ${pubKeyHash}`);
             }
         } else {
-            console.log(`File index not found ..`)
+            console.log(`💣💣💣 File index not found ..`)
         }
     }
 
