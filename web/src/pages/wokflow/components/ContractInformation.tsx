@@ -9,7 +9,8 @@ import {
     // Stack,
     Spinner,
     // Button,
-    Span
+    Span,
+    Container
 } from '@chakra-ui/react';
 // import { Timeline } from "@chakra-ui/react"
 // import { Card } from '@chakra-ui/react';
@@ -525,7 +526,7 @@ export const ContractInformationView: React.FC<ContractDocumentViewProps> = ({ s
 
 
 
-        return <Box>
+        return <Container maxWidth={"8xl"}>
             <ContractFirstPage data={{
                 name: fileNameData,
                 creationDate: timeToHumanFriendly(firstRevisionData?.local_timestamp, true),
@@ -669,7 +670,7 @@ export const ContractInformationView: React.FC<ContractDocumentViewProps> = ({ s
 
                 </Timeline.Root>
             </Box> */}
-        </Box>
+        </Container>
     }
 
     return <>{displayData()}</>
