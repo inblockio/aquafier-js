@@ -428,10 +428,10 @@ export const ContractDocumentView: React.FC<ContractDocumentViewProps> = ({ setA
                 }
             }
 
-            if (sender != signers) {
-                //send the signatures to workflow creator 
-                await saveRevisionsToServerForUser(aquaTrees, sender)
-            }
+            // if (sender != signers) {
+            //     //send the signatures to workflow creator 
+            //     await saveRevisionsToServerForUser(aquaTrees, sender)
+            // }
 
 
         }

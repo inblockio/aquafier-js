@@ -365,7 +365,7 @@ export async function canDeleteRevision(
  * @returns A summary of the transfer operation
  */
 export async function transferRevisionChain(
-    entireChain:  ExtendedAquaTreeData,
+    entireChain: ExtendedAquaTreeData,
     targetUserAddress: string,
     sourceUserAddress: string
 ): Promise<{
@@ -523,8 +523,9 @@ export async function transferRevisionChain(
                     break;
 
                 case "file":
+                case "form":
                     if (originalRevision.file_hash === null) {
-                        throw Error("File hash is null for file revision, cannot transfer");
+                        throw Error("File hash is null for file/form revision, cannot transfer");
                     }
                     // For file revisions, handle file indexes
                     const fileIndexes = await prisma.fileIndex.findFirst({
@@ -545,14 +546,14 @@ export async function transferRevisionChain(
                         }
                     });
 
-                     await prisma.fileName.create({
-                        
+                    await prisma.fileName.create({
+
                         data: {
                             pubkey_hash: targetFullHash,
                             file_name: entireChain.file_index[hash] || "+ Unknown File",
                         }
                     });
-                    
+
                     break;
             }
         }
@@ -564,15 +565,15 @@ export async function transferRevisionChain(
             // let latestHashValue = //entireChain.latestHash;
 
             // if (!latestHashValue) {
-                // If no specific latestHash was provided, find the last revision in the chain
-                // (the one that has no children pointing to it)
-                const allHashes = Object.keys(entireChain.revisions);
-                const allPrevious = Object.values(entireChain.revisions)
-                    .map(rev => (rev as any).previous_verification_hash)
-                    .filter(Boolean);
+            // If no specific latestHash was provided, find the last revision in the chain
+            // (the one that has no children pointing to it)
+            const allHashes = Object.keys(entireChain.revisions);
+            const allPrevious = Object.values(entireChain.revisions)
+                .map(rev => (rev as any).previous_verification_hash)
+                .filter(Boolean);
 
-                // The latest hash is the one that isn't in the previous list of any other revision
-              let  latestHashValue = allHashes.find(hash => !allPrevious.includes(hash));
+            // The latest hash is the one that isn't in the previous list of any other revision
+            let latestHashValue = allHashes.find(hash => !allPrevious.includes(hash));
             // }
 
             if (latestHashValue) {
@@ -591,8 +592,14 @@ export async function transferRevisionChain(
                 }
 
                 // Add to latest table for the target user
-                await prisma.latest.create({
-                    data: {
+                await prisma.latest.upsert({
+                    where: {
+                        hash: targetLatestHash,
+                    },
+                    update: {
+
+                    },
+                    create: {
                         hash: targetLatestHash,
                         user: targetUserAddress,
                         is_workflow: latestRevision.is_workflow,

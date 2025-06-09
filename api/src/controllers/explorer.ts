@@ -8,7 +8,7 @@ import { randomUUID } from 'crypto';
 import util from 'util';
 import { pipeline } from 'stream';
 import * as fs from "fs"
-import { deleteAquaTreeFromSystem, getUserApiFileInfo, processAquaFiles, processAquaMetadata, saveAquaTree } from '../utils/revisions_utils';
+import { deleteAquaTreeFromSystem, fetchAquatreeFoUser, getUserApiFileInfo, processAquaFiles, processAquaMetadata, saveAquaTree, transferRevisionChainData } from '../utils/revisions_utils';
 import { getHost, getPort } from '../utils/api_utils';
 import { DeleteRevision } from '../models/request_models';
 import { fetchCompleteRevisionChain } from '../utils/quick_utils';
@@ -204,16 +204,16 @@ export default async function explorerController(fastify: FastifyInstance) {
 
                 // Create unique filename
                 let fileName = assetFilename;
-                 await prisma.fileName.upsert({
+                await prisma.fileName.upsert({
                     where: {
                         pubkey_hash: filepubkeyhash,
                     },
                     create: {
                         pubkey_hash: filepubkeyhash,
-                        file_name: `fileName-${fileName}`,
+                        file_name: fileName,
                     },
                     update: {
-                         file_name: `fileName-${fileName}`,
+                        file_name: fileName,
                     }
                 })
 
@@ -268,9 +268,9 @@ export default async function explorerController(fastify: FastifyInstance) {
                     // console.log('FileIndex record created');
                 }
 
-               
-            }else{
-                  // console.log(`failure reason ${failureReason}`)
+
+            } else {
+                // console.log(`failure reason ${failureReason}`)
                 return reply.code(500).send({ error: `Asset is required` });
             }
             // console.log("Aquatree to save: ", aquaTree)
@@ -454,8 +454,8 @@ export default async function explorerController(fastify: FastifyInstance) {
 
             if (res.isErr()) {
 
-                 console.log("^&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&")
-                 console.log(`error`)
+                console.log("^&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&")
+                console.log(`error`)
                 res.data.push({
                     log: `Error creating genesis revision`,
                     logType: LogType.ERROR
@@ -473,8 +473,8 @@ export default async function explorerController(fastify: FastifyInstance) {
             let genesisHash = getGenesisHash(resData);
 
             if (!genesisHash) {
-                 console.log("^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^")
-                 console.log(`error`)
+                console.log("^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^")
+                console.log(`error`)
                 return reply.code(500).send({ error: 'Genesis revision cannot be found' });
             }
 
@@ -484,8 +484,8 @@ export default async function explorerController(fastify: FastifyInstance) {
 
 
             if (!fileHash) {
-                 console.log("^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^")
-                 console.log(`error`)
+                console.log("^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^")
+                console.log(`error`)
                 return reply.code(500).send({ error: "File hash missing from AquaTree response" });
             }
 
@@ -603,7 +603,7 @@ export default async function explorerController(fastify: FastifyInstance) {
                     })
 
                     await prisma.fileName.upsert({
-                        where:{
+                        where: {
                             pubkey_hash: filepubkeyhash,
                         },
                         create: {
@@ -611,7 +611,7 @@ export default async function explorerController(fastify: FastifyInstance) {
                             file_name: data.filename,
 
                         },
-                         update: {
+                        update: {
                             pubkey_hash: filepubkeyhash,
                             file_name: data.filename,
 
@@ -621,8 +621,8 @@ export default async function explorerController(fastify: FastifyInstance) {
                 }
 
             } catch (error) {
-                 console.log("======================================")
-                 console.log(`error ${error}`)
+                console.log("======================================")
+                console.log(`error ${error}`)
                 let logs: LogData[] = []
                 logs.push({
                     log: `Error saving genesis revision`,
@@ -642,7 +642,7 @@ export default async function explorerController(fastify: FastifyInstance) {
             });
         } catch (error) {
             console.log("++++++++++++++++++++++++++++++++++++++=")
-                 console.log(`error ${error}`)
+            console.log(`error ${error}`)
             request.log.error(error);
             return reply.code(500).send({ error: 'File upload failed' });
         }
@@ -703,7 +703,17 @@ export default async function explorerController(fastify: FastifyInstance) {
             const url = `${protocol}://${host}`;
 
             // Fetch the entire chain from the source user
-            const entireChain = await fetchCompleteRevisionChain(latestRevisionHash, userAddress, url);
+            // const entireChain = await fetchCompleteRevisionChain(latestRevisionHash, userAddress, url);
+            let latest: Array<{
+                hash: string;
+                user: string;
+            }> = [
+                    {
+                        hash: `${userAddress}_${latestRevisionHash}`,
+                        user: userAddress
+                    }
+                ]
+            const entireChain = await fetchAquatreeFoUser(url, latest)//(latestRevisionHash, userAddress, url);
 
             // Check if the user exists (create if not)
             const targetUser = await prisma.users.findUnique({
@@ -715,12 +725,21 @@ export default async function explorerController(fastify: FastifyInstance) {
                     data: { address: session.address }
                 });
             }
+           
+            if (entireChain.length === 0) {
+                return reply.code(404).send({   success: false, message: "No revisions found for the provided hash" });
+
+            }
+            if (entireChain.length > 1) {
+                return reply.code(400).send({ success: false, message: "Multiple revisions found for the provided hash. Please provide a unique revision hash." });     
+            }
+
+            
 
             // Transfer the chain to the target user (session.address)
-            const transferResult = await transferRevisionChain(
-                entireChain,
+            const transferResult = await transferRevisionChainData(
                 session.address,
-                userAddress
+                entireChain[0],
             );
 
             if (!transferResult.success) {
@@ -733,8 +752,8 @@ export default async function explorerController(fastify: FastifyInstance) {
 
             return reply.code(200).send({
                 success: true,
-                message: `Chain transferred successfully: ${transferResult.transferredRevisions} revisions and ${transferResult.linkedChainsTransferred} linked chains`,
-                latestHashes: transferResult.latestHashes
+                message: '',//`Chain transferred successfully: ${transferResult.transferredRevisions} revisions and ${transferResult.linkedChainsTransferred} linked chains`,
+                latestHashes:'' // transferResult.latestHashes
             });
         } catch (error: any) {
             console.error("Error in transfer_chain operation:", error);
