@@ -219,7 +219,7 @@ export default function WorkFlowPage() {
 
 
         const aquaTreeTimeLine = () => {
-            return <Container py={8} px={4} mx="auto">
+            return <Container fluid py={8} px={{base: 1, md: 4}} mx="auto">
                 <Heading textAlign="center" mb={10}>{timeLineTitle}</Heading>
 
                 {/* Horizontal Timeline */}
@@ -294,7 +294,7 @@ export default function WorkFlowPage() {
                 </Box>
 
                 {/* Content Area */}
-                <Box mt={8} p={4}>
+                <Box mt={2} p={{base: 0, md: 4}}>
                     {activeContent()}
                 </Box>
             </Container>
