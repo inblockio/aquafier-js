@@ -684,7 +684,7 @@ const Navbar = () => {
         <>
             {/* Websocket fragment called here to handle all websocket connection stuff */}
             <WebsocketFragment />
-            <Box bg={{ base: 'rgb(255, 255formTemplates, 255)', _dark: 'rgba(0, 0, 0, 0.9)' }} h={'70px'} pos={'sticky'} top={0} left={0} right={0} zIndex={1000} borderBottom={"1px solid "} borderColor={colorMode === "dark" ? "gray.900" : "gray.200"}>
+            <Box bg={{ base: 'rgb(255, 255, 255)', _dark: 'rgba(0, 0, 0, 0.9)' }} h={'70px'} pos={'sticky'} top={0} left={0} right={0} zIndex={1000} borderBottom={"1px solid "} borderColor={colorMode === "dark" ? "gray.900" : "gray.200"}>
                 <HStack h={'100%'} px={"4"} justifyContent={'space-between'}>
                     <Link to={'/'} style={{ height: "100%", display: "flex", alignItems: "center" }}>
                         <Image src={colorMode === 'light' ? "/images/logo.png" : "/images/logo-dark.png"} maxH={'60%'} />
