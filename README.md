@@ -23,4 +23,4 @@ chmod +x ./create_db.sh
 
 
 ## Deployment
-check out [docker.md](./docker.md)
+check out [docker.md](./docker.md) 
