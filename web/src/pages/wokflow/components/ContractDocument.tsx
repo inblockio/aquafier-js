@@ -7,9 +7,6 @@ import {
     Grid,
     GridItem,
     Spinner,
-    Group,
-
-    List
 } from '@chakra-ui/react';
 // import { Card } from '@chakra-ui/react';
 // import { FaCheck, FaQuestionCircle, FaBriefcase, FaBook, FaCoffee, FaAward, FaUser } from 'react-icons/fa';

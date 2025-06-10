@@ -33,8 +33,8 @@ import { useColorMode } from '../../components/chakra-ui/color-mode';
 import { PdfControls } from '../../components/FilePreview';
 import axios from 'axios';
 import { ApiFileInfo } from '../../models/FileInfo';
-import { blobToDataURL, dataURLToFile, dummyCredential, ensureDomainUrlHasSSL, estimateFileSize, getAquaTreeFileName, getGenesisHash, getLatestApiFileInfObject, getRandomNumber, timeStampToDateObject } from '../../utils/functions';
-import Aquafier, { AquaTree, AquaTreeWrapper, FileObject, getAquaTreeFileObject, OrderRevisionInAquaTree } from 'aqua-js-sdk';
+import {  dataURLToFile, dummyCredential, ensureDomainUrlHasSSL, estimateFileSize, getAquaTreeFileName, getGenesisHash, getLatestApiFileInfObject, getRandomNumber, timeStampToDateObject } from '../../utils/functions';
+import Aquafier, { AquaTree, AquaTreeWrapper, FileObject, getAquaTreeFileObject } from 'aqua-js-sdk';
 import { SignatureData } from "../../types/types"
 import { LuTrash } from 'react-icons/lu';
 import { SignatureOverlay, SimpleSignatureOverlay } from './components/signature_overlay';
