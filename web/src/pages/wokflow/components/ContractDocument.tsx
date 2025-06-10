@@ -225,6 +225,12 @@ export const ContractDocumentView: React.FC<ContractDocumentViewProps> = ({ setA
                 linkedAquaTreeWithSignature,
                 metaMaskSignedAquaTree
             ])
+
+
+            // After successful submission
+    const updatedSignatures = await loadSignatures();
+    setSignatures(updatedSignatures);
+    
         } catch (error) {
             console.error('Error in submitSignatureData:', error);
             showError('An unexpected error occurred during signature submission');
@@ -796,7 +802,7 @@ export const ContractDocumentView: React.FC<ContractDocumentViewProps> = ({ setA
             if (shouldLoad) {
                 setSignaturesLoading(true);
                 const allSignatures: SignatureData[] = await loadSignatures();
-                console.log(`allSignatures ${allSignatures.length} `)
+                console.log(`allSignatures ${allSignatures.length} --${JSON.stringify(allSignatures, null, 4)} `)
                 setSignatures(allSignatures);
                 setSignaturesLoading(false);
             }
@@ -933,6 +939,7 @@ export const ContractDocumentView: React.FC<ContractDocumentViewProps> = ({ setA
                         <Stack>
                             <Text fontWeight={700}>Signatures in document</Text>
                             {signatures.map((signature: SignatureData, index: number) => (
+                           
                                 <SignatureItem signature={signature} key={index} />
                             ))}
                         </Stack>

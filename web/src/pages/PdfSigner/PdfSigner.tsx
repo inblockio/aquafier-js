@@ -515,7 +515,7 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ file, submitSignature, submitting
             } else {
                 console.log("signRes.data", signRes.data)
                 fileObject.fileContent = formData
-                const resApi = await saveAquaTree(signRes.data.aquaTree!!, fileObject, true, false, selectedTemplate.id)
+                const resApi = await saveAquaTree(signRes.data.aquaTree!!, fileObject, true, true, selectedTemplate.id)
 
                 if (resApi == false) {
                     toaster.create({
@@ -1313,8 +1313,8 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ file, submitSignature, submitting
                             <Box maxH="150px" overflowY="auto" border="1px solid" borderColor="gray.200" borderRadius="md">
                                 <Stack gap={0}>
                                     {signaturePositions.map((position) => {
-                                        const signature = signaturesInDocument.find(sig => sig.id === position.signatureId);
-                                        if (!signature) return null;
+                                        // const signature = signaturesInDocument.find(sig => sig.id === position.signatureId);
+                                        // if (!signature) return null;
 
                                         return (
                                             <HStack key={position.id} p={2} justify="space-between">
@@ -1322,7 +1322,7 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ file, submitSignature, submitting
                                                     <Box
                                                         width="40px"
                                                         height="30px"
-                                                        backgroundImage={`url(${signature.dataUrl})`}
+                                                        backgroundImage={`url(${position.dataUrl})`}
                                                         backgroundSize="contain"
                                                         backgroundRepeat="no-repeat"
                                                         backgroundPosition="center"
@@ -1330,7 +1330,7 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ file, submitSignature, submitting
                                                         borderColor="gray.200"
                                                         borderRadius="sm"
                                                     />
-                                                    <Text fontSize="xs">{signature.name} (Page {position.page + 1})</Text>
+                                                    <Text fontSize="xs">{position.name} (Page {position.page + 1})</Text>
 
                                                     <IconButton variant={'outline'} size={'2xs'} onClick={(e) => {
                                                         e.preventDefault();
