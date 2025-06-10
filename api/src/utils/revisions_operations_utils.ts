@@ -25,6 +25,7 @@ export async function createAquaTreeFromRevisions(
         // Step 1: Get all revisions in the chain
         const revisionData = await getRevisionChain(latestRevisionHash);
 
+        console.log(`🤔🤔 revisionData ${JSON.stringify(revisionData, null, 4)} `)
         if (revisionData.length === 0) {
             console.error(`Revision with hash ${latestRevisionHash} not found in system`);
             return [aquaTree, []];
@@ -121,6 +122,26 @@ async function getRevisionChain(latestRevisionHash: string): Promise<Revision[]>
             }
         }
     });
+
+    // const latestRevision = await prisma.revision.findFirst({
+    //     where: {
+    //         OR: [
+    //             {
+    //                 pubkey_hash: {
+    //                     contains: latestRevisionHash,
+    //                     mode: 'insensitive'
+    //                 }
+    //             },
+    //              {
+    //                 pubkey_hash: {
+    //                     contains: latestRevisionHash.split("_")[1] ?? "",
+    //                     mode: 'insensitive'
+    //                 }
+    //             }
+    //         ]
+
+    //     }
+    // });
 
     if (!latestRevision) {
         return [];
@@ -788,7 +809,7 @@ async function processLinkedFileRevision(
     url: string
 ): Promise<LinkedRevisionResult> {
 
-    console.log(`🎇🎇 processLinkedFileRevision All revision pubkey hashes ${JSON.stringify(linkedHash, null, 4)}`)
+    // console.log(`🎇🎇 processLinkedFileRevision All revision pubkey hashes ${JSON.stringify(linkedHash, null, 4)}`)
     let aquaTreeFileData = await fetchAquaTreeFileData([linkedHash]);
     if (aquaTreeFileData.length === 0) {
         console.log(`File index with hash ${linkedHash} not found`);

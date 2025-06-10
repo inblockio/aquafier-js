@@ -252,7 +252,7 @@ export const ContractDocumentView: React.FC<ContractDocumentViewProps> = ({ setA
             // step 8 
             // check if the owner of the document is a different wallet address send him the above revsions
             // send the revision to the other wallet address if possible
-            await shareRevisionsToOwnerOfDocument([
+            await shareRevisionsToOwnerAnOtherSignersOfDocument([
                 linkedAquaTreeWithUserSignatureData,
                 linkedAquaTreeWithSignature,
                 metaMaskSignedAquaTree
@@ -395,7 +395,7 @@ export const ContractDocumentView: React.FC<ContractDocumentViewProps> = ({ setA
         return resLinkedMetaMaskSignedAquaTree.data.aquaTree!;
     };
 
-    const shareRevisionsToOwnerOfDocument = async (aquaTrees: AquaTree[]) => {
+    const shareRevisionsToOwnerAnOtherSignersOfDocument = async (aquaTrees: AquaTree[]) => {
 
         //get genesis hash
         let genesisHash = getGenesisHash(selectedFileInfo!.aquaTree!)
@@ -428,10 +428,10 @@ export const ContractDocumentView: React.FC<ContractDocumentViewProps> = ({ setA
                 }
             }
 
-            // if (sender != signers) {
-            //     //send the signatures to workflow creator 
-            //     await saveRevisionsToServerForUser(aquaTrees, sender)
-            // }
+            if (sender != signers) {
+                //send the signatures to workflow creator 
+                await saveRevisionsToServerForUser(aquaTrees, sender)
+            }
 
 
         }
@@ -457,7 +457,8 @@ export const ContractDocumentView: React.FC<ContractDocumentViewProps> = ({ setA
                 const response = await axios.post(actualUrlToFetch, {
                     revision: lastRevision,
                     revisionHash: lastHash,
-                    address: address
+                    address: address,
+                    orginAddress : session?.address
                 }, {
                     headers: {
                         nonce: session?.nonce
@@ -887,7 +888,7 @@ export const ContractDocumentView: React.FC<ContractDocumentViewProps> = ({ setA
                     <GridItem colSpan={{ base: 12, md: 1 }} m={5}>
                         <Stack>
                             <Text fontWeight={700}>Signatures in document</Text>
-                            {signatures.map((signature: any, index: number) => (
+                            {signatures.map((signature: SignatureData, index: number) => (
                                 <SignatureItem signature={signature} key={index} />
                             ))}
                         </Stack>

@@ -979,15 +979,19 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ file, submitSignature, submitting
                     // // Convert blob to base64 data URL
                     // const dataUrl = await blobToDataURL(blob);
 
-                    const dataUrl = await fetchImage(fileContentUrl);
+                    let dataUrl = await fetchImage(fileContentUrl);
+
+                    if (!dataUrl) {
+                        dataUrl = '/images/placeholder-img.png';
+                    }
 
                     // Add to signature
                     let sign: SignatureData = {
                         id: crypto.randomUUID(),
-                        hash: getGenesisHash(userSignature.aquaTree!) ?? "",
+                        hash: getGenesisHash(userSignature.aquaTree!) ?? "err",
                         name: firstRevision.forms_name,
                         walletAddress: firstRevision.forms_wallet_address,
-                        dataUrl:  dataUrl ?? "",
+                        dataUrl: dataUrl,
                         createdAt: timeStampToDateObject(firstRevision.local_timestamp) ?? new Date(),
                         page: 0, // Default to 0, will be updated when placed
                         x: 0, // Default to 0, will be updated when placeholder
@@ -1131,7 +1135,7 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ file, submitSignature, submitting
                                             }}
                                         >
                                             <HStack>
-                                             
+
                                                 <Box
                                                     width="60px"
                                                     height="40px"
@@ -1217,7 +1221,7 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ file, submitSignature, submitting
                     {(() => {
                         const selectedSignature = mySignatureData.find(sig => sig.hash.trim() === selectedSignatureId.trim());
                         if (!selectedSignature) return <>Error</>;
-                      
+
                         return (
                             <Box
                                 border="1px solid"
@@ -1401,7 +1405,7 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ file, submitSignature, submitting
                 hash: genesisHash!!,
                 name: signatureAquaTree?.aquaTree?.revisions[genesisHash!!]?.forms_name,
                 walletAddress: signatureAquaTree?.aquaTree?.revisions[genesisHash!!]?.forms_wallet_address,
-                dataUrl:image??"",
+                dataUrl: image ?? "",
                 createdAt: timeStampToDateObject(signatureAquaTree?.aquaTree?.revisions[genesisHash!!]?.local_timestamp!!) ?? new Date()
             };
             signatureData.push(newSignatureData)

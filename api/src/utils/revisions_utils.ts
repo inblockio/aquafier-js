@@ -3,7 +3,7 @@ import { prisma } from '../database/db';
 // For specific model types
 import { Signature, Revision, AquaForms, WitnessEvent, Link, FileIndex } from '@prisma/client';
 import * as fs from "fs"
-import { AquaJsonInZip, SaveRevision } from '../models/request_models';
+import { AquaJsonInZip, SaveRevision, SaveRevisionForUser } from '../models/request_models';
 import { getAquaTreeFileName } from './api_utils';
 import { createAquaTreeFromRevisions } from './revisions_operations_utils';
 import { getGenesisHash } from './aqua_tree_utils';
@@ -159,7 +159,7 @@ export async function transferRevisionChainData(userAddress: string, chainData: 
 }): Promise<{ success: boolean, message: string }> {
     try {
 
-        
+
         let allAquaTrees: AquaTree[] = [];
         let allHashes = Object.keys(chainData.aquaTree.revisions);
         if (allHashes.length == 0) {
@@ -191,7 +191,7 @@ export async function transferRevisionChainData(userAddress: string, chainData: 
                 for (let key in chainData.aquaTree.file_index) {
                     // Ensure the file object has a valid hashe
                     const value = chainData.aquaTree.file_index[key];
-                     console.log(`b 🎈🎈 file_index key ${key} vs Value ${value} `)
+                    console.log(`b 🎈🎈 file_index key ${key} vs Value ${value} `)
                     hashName.set(key, value);
                 }
             } else {
@@ -319,7 +319,7 @@ export async function fetchAquatreeFoUser(url: string, latest: Array<{
     return displayData;
 }
 
-export async function saveARevisionInAquaTree(revisionData: SaveRevision, userAddress: string): Promise<[number, string]> {
+export async function saveARevisionInAquaTree(revisionData: SaveRevisionForUser, userAddress: string, url: string): Promise<[number, string]> {
 
     if (!revisionData.revision) {
         return [400, "revision Data is required"]//reply.code(400).send({ success: false, message: "revision Data is required" });
@@ -503,6 +503,8 @@ export async function saveARevisionInAquaTree(revisionData: SaveRevision, userAd
 
 
     if (revisionData.revision.revision_type == "link") {
+
+
         await prisma.link.create({
             data: {
                 hash: filePubKeyHash,
@@ -513,6 +515,33 @@ export async function saveARevisionInAquaTree(revisionData: SaveRevision, userAd
                 reference_count: 0
             }
         })
+        // fetch the other entire chain and bring it to the current user scope
+        if (revisionData.orginAddress != userAddress) {
+            if (revisionData.revision.link_verification_hashes?.length == 0) {
+                throw Error(`Linke verification hashes length cannot be 0`)
+
+            }
+            let hash = (revisionData.revision.link_verification_hashes && revisionData.revision.link_verification_hashes.length > 0)
+                ? revisionData.revision.link_verification_hashes[0]
+                : undefined;
+            if (!hash) {
+                throw Error(`Linke verification hashes  cannot be undefined`)
+            }
+            let pubKeyHash = `${revisionData.orginAddress}_${hash}`
+
+            console.log(`pubKeyHash ${pubKeyHash}`)
+            let [anAquaTree, fileObject] = await createAquaTreeFromRevisions(pubKeyHash, url);
+
+             console.log(`anAquaTree ${JSON.stringify(anAquaTree, null, 4)}  fileObject  ${JSON.stringify(fileObject, null, 4)}`)
+            let response = await transferRevisionChainData(userAddress, {
+                aquaTree: anAquaTree,
+                fileObject: fileObject
+            })
+            if (response.success == false) {
+                throw Error(`An error occured transfering chain ${response.message}`)
+            }
+
+        }
     }
 
     if (revisionData.revision.revision_type == "file" || revisionData.revision.revision_type == "form") {

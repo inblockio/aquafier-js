@@ -111,8 +111,16 @@ export default async function revisionsController(fastify: FastifyInstance) {
 
             }
 
+// Get the host from the request headers
+            const host = request.headers.host || `${getHost()}:${getPort()}`;
 
-            const [_httpCode, _message] = await saveARevisionInAquaTree(revisionData, revisionData.address);
+            // Get the protocol (http or https)
+            const protocol = request.protocol || 'https'
+
+            // Construct the full URL
+            const url = `${protocol}://${host}`;
+
+            const [_httpCode, _message] = await saveARevisionInAquaTree(revisionData, revisionData.address, url);
 
             // if (httpCode != 200 && httpCode !== 407) {
             //     return reply.code(httpCode).send({ success: false, message: message });
@@ -152,7 +160,7 @@ export default async function revisionsController(fastify: FastifyInstance) {
                 return reply.code(403).send({ success: false, message: "Nounce  is invalid" });
             }
 
-            const revisionData = request.body as SaveRevision
+            const revisionData = request.body as SaveRevisionForUser
 
             if (!revisionData.revision) {
                 return reply.code(400).send({ success: false, message: "revision Data is required" });
@@ -174,8 +182,16 @@ export default async function revisionsController(fastify: FastifyInstance) {
             }
 
 
+// Get the host from the request headers
+            const host = request.headers.host || `${getHost()}:${getPort()}`;
 
-            const [httpCode, message] = await saveARevisionInAquaTree(revisionData, session.address);
+            // Get the protocol (http or https)
+            const protocol = request.protocol || 'https'
+
+            // Construct the full URL
+            const url = `${protocol}://${host}`;
+
+            const [httpCode, message] = await saveARevisionInAquaTree(revisionData, session.address, url);
 
             if (httpCode != 200) {
                 return reply.code(httpCode).send({ success: false, message: message });
@@ -195,14 +211,6 @@ export default async function revisionsController(fastify: FastifyInstance) {
             }
 
 
-            // Get the host from the request headers
-            const host = request.headers.host || `${getHost()}:${getPort()}`;
-
-            // Get the protocol (http or https)
-            const protocol = request.protocol || 'https'
-
-            // Construct the full URL
-            const url = `${protocol}://${host}`;
 
             let displayData = await fetchAquatreeFoUser(url, latest)
 

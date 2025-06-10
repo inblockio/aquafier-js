@@ -90,6 +90,7 @@ export interface SaveRevisionForUser {
   revision: Revision,
   revisionHash: string,
   address : string,
+  orginAddress :string
 }
 
 export interface AquaNameWithHash {
