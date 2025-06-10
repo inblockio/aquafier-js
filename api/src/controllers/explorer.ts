@@ -58,9 +58,24 @@ export default async function explorerController(fastify: FastifyInstance) {
             // Process aqua.json metadata first
             await processAquaMetadata(zipData, session.address);
 
+
+            let isWorkFlow = false
+            const isWorkFlowPar = request.headers['is_workflow'];
+            if (isWorkFlowPar != undefined || isWorkFlowPar != null || isWorkFlowPar != "") {
+                if (isWorkFlowPar == "true") {
+                    isWorkFlow = true
+                }
+            }
+            const isTemplateId = request.headers['is_template_id'];
+            let templateId = null
+            if (isTemplateId != undefined || isTemplateId != null || isTemplateId != "") {
+                templateId = isTemplateId
+            }
+
+           
             // Process individual .aqua.json files
             //todo fix me to check for workflo
-            await processAquaFiles(zipData, session.address);
+            await processAquaFiles(zipData, session.address, templateId, isWorkFlow);
 
             // Return response with file info
             const host = request.headers.host || `${getHost()}:${getPort()}`;
@@ -274,8 +289,12 @@ export default async function explorerController(fastify: FastifyInstance) {
                 // console.log(`failure reason ${failureReason}`)
                 return reply.code(500).send({ error: `Asset is required` });
             }
+
+            //  throw Error(`isWorkFlow ${isWorkFlow}  -- templateId ${templateId} `)
             // console.log("Aquatree to save: ", aquaTree)
             // Save the aqua tree
+
+            console.log(`🧭🧭 ${isWorkFlow +"--"} `)
             await saveAquaTree(aquaTree, session.address, templateId.length == 0 ? null : templateId, isWorkFlow);
 
 
@@ -726,16 +745,16 @@ export default async function explorerController(fastify: FastifyInstance) {
                     data: { address: session.address }
                 });
             }
-           
+
             if (entireChain.length === 0) {
-                return reply.code(404).send({   success: false, message: "No revisions found for the provided hash" });
+                return reply.code(404).send({ success: false, message: "No revisions found for the provided hash" });
 
             }
             if (entireChain.length > 1) {
-                return reply.code(400).send({ success: false, message: "Multiple revisions found for the provided hash. Please provide a unique revision hash." });     
+                return reply.code(400).send({ success: false, message: "Multiple revisions found for the provided hash. Please provide a unique revision hash." });
             }
 
-            
+
 
             // Transfer the chain to the target user (session.address)
             const transferResult = await transferRevisionChainData(
@@ -754,7 +773,7 @@ export default async function explorerController(fastify: FastifyInstance) {
             return reply.code(200).send({
                 success: true,
                 message: '',//`Chain transferred successfully: ${transferResult.transferredRevisions} revisions and ${transferResult.linkedChainsTransferred} linked chains`,
-                latestHashes:'' // transferResult.latestHashes
+                latestHashes: '' // transferResult.latestHashes
             });
         } catch (error: any) {
             console.error("Error in transfer_chain operation:", error);

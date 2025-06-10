@@ -1476,14 +1476,15 @@ export async function processAquaMetadata(zipData: JSZip, userAddress: string) {
     }
 }
 
-export async function processAquaFiles(zipData: JSZip, userAddress: string) {
+export async function processAquaFiles(zipData: JSZip, userAddress: string,  templateId: string | null = null,
+    isWorkFlow: boolean = false) {
     for (const fileName in zipData.files) {
         if (fileName.endsWith(".aqua.json") && fileName !== 'aqua.json') {
             const file = zipData.files[fileName];
             const fileContent = await file.async('text');
             const aquaTree: AquaTree = JSON.parse(fileContent);
 
-            await saveAquaTree(aquaTree, userAddress, );
+            await saveAquaTree(aquaTree, userAddress, templateId , isWorkFlow);
         }
     }
 }

@@ -561,7 +561,7 @@ export const ContractInformationView: React.FC<ContractDocumentViewProps> = ({ s
                         const singatureRevisionItem = selectedFileInfo!.aquaTree!.revisions[_signatureRevionHasheItem.revisionHashMetamask]
                         return ({
                             type: "signed" as any,
-                            address: singatureRevisionItem.signature_wallet_address,
+                            address: singatureRevisionItem.signature_wallet_address ?? "",
                             timestamp: timeToHumanFriendly(singatureRevisionItem.local_timestamp, true),
                             // details: "Document sample-local-pdf.pdf was selected for signing",
                         })
