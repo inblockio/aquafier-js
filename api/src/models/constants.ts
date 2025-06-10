@@ -1,2 +1,13 @@
 
 export const SYSTEM_WALLET_ADDRESS = "0xfabacc150f2a0000000000000000000000000000"
+
+
+export let systemTemplateHashes = [
+        '0x6ff9a00f08f675cf17eb6ce8572a7fdcbd9d43ff6b043f2b233e7b70e2d9c15f',
+        '0xfd2085151958e5dbaa32322f1266a3cf86ff547c75379a4c3ebd2272d4abd89f',
+        '0x9da9cfc4587b102da24aec2ec0dbf5f7d702284f8073b476f9e94043673cf481',
+        '0x5ea1129a733086d131c9bec1758b8bbefdfa90bcb38179ec595f532fe14ab67f',
+        '0x99dc1b20c233df77a59bd4c79f346ea4e8bffaf127d4e9850400624638bc1686',
+        '0x2a068d95f1f0e9e1f998bff3a7dffd0429aff2f0cc71b357733a19c2a926265c',
+
+    ]

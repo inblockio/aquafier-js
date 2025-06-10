@@ -3,7 +3,7 @@ import { prisma } from '../database/db';
 // For specific model types
 import { Signature, Revision, AquaForms, WitnessEvent, Link, FileIndex } from '@prisma/client';
 import * as fs from "fs"
-import { AquaJsonInZip, SaveRevision } from '../models/request_models';
+import { AquaJsonInZip, SaveRevision, SaveRevisionForUser } from '../models/request_models';
 import { getAquaTreeFileName } from './api_utils';
 import { createAquaTreeFromRevisions } from './revisions_operations_utils';
 import { getGenesisHash } from './aqua_tree_utils';
@@ -88,6 +88,192 @@ export async function getUserApiFileInfo(url: string, address: string): Promise<
     return await fetchAquatreeFoUser(url, latest)
 }
 
+export const isWorkFlowData = (aquaTree: AquaTree, systemAndUserWorkFlow: string[]): { isWorkFlow: boolean; workFlow: string } => {
+    let falseResponse = {
+        isWorkFlow: false,
+        workFlow: ""
+    }
+    // console.log("System workflows: ", systemAndUserWorkFlow)
+
+    //order revision in aqua tree 
+    let aquaTreeRevisionsOrderd = OrderRevisionInAquaTree(aquaTree)
+    let allHashes = Object.keys(aquaTreeRevisionsOrderd.revisions)
+    if (allHashes.length <= 1) {
+        // console.log(`Aqua tree has one revision`)
+        return falseResponse
+    }
+    let secondRevision = aquaTreeRevisionsOrderd.revisions[allHashes[1]]
+    if (!secondRevision) {
+        // console.log(`Aqua tree has second revision not found`)
+        return falseResponse
+    }
+    if (secondRevision.revision_type == 'link') {
+
+        //get the  system aqua tree name 
+        let secondRevision = aquaTreeRevisionsOrderd.revisions[allHashes[1]]
+        // console.log(` second hash used ${allHashes[1]}  second revision ${JSON.stringify(secondRevision, null, 4)} tree ${JSON.stringify(aquaTreeRevisionsOrderd, null, 4)}`)
+
+        if (secondRevision.link_verification_hashes == undefined) {
+            // console.log(`link verification hash is undefined`)
+            return falseResponse
+        }
+        let revisionHash = secondRevision.link_verification_hashes[0]
+        let name = aquaTreeRevisionsOrderd.file_index[revisionHash]
+        // console.log(`--  name ${name}  all hashes ${revisionHash}  second revision ${JSON.stringify(secondRevision, null, 4)} tree ${JSON.stringify(aquaTreeRevisionsOrderd, null, 4)}`)
+
+        // if (systemAndUserWorkFlow.map((e)=>e.replace(".json", "")).includes(name)) {
+
+        let nameWithoutJson = "--error--";
+        if (name) {
+            nameWithoutJson = name.replace(".json", "")
+            if (systemAndUserWorkFlow.map((e) => e.replace(".json", "")).includes(nameWithoutJson)) {
+                return {
+                    isWorkFlow: true,
+                    workFlow: nameWithoutJson
+                }
+            }
+        }
+        return {
+            isWorkFlow: false,
+            workFlow: ""
+        }
+
+
+    }
+    // console.log(`Aqua tree has second revision is of type ${secondRevision.revision_type}`)
+
+
+    return falseResponse
+}
+
+export function isAquaTree(content: any): boolean {
+    // Check if content has the properties of an AquaTree
+    return content &&
+        typeof content === 'object' &&
+        'revisions' in content &&
+        'file_index' in content;
+}
+
+export async function transferRevisionChainData(userAddress: string, chainData: {
+    aquaTree: AquaTree; fileObject: FileObject[]
+},templateId: string | null = null, isWorkFlow: boolean=false ): Promise<{ success: boolean, message: string }> {
+    try {
+
+
+        let allAquaTrees: AquaTree[] = [];
+        let allHashes = Object.keys(chainData.aquaTree.revisions);
+        if (allHashes.length == 0) {
+            throw new Error("No revisions found in the aqua tree");
+        }
+
+        console.log(`🎈🎈 aquaTree  ${JSON.stringify(chainData.aquaTree, null, 4)}`)
+        let hashName = new Map<string, string>();
+        // Save the aqua tree
+        await saveAquaTree(chainData.aquaTree, userAddress, templateId, isWorkFlow);
+        allAquaTrees.push(chainData.aquaTree);
+
+        for (let key in chainData.aquaTree.file_index) {
+            const value = chainData.aquaTree.file_index[key];
+            console.log(`a 🎈🎈 file_index key ${key} vs Value ${value} `)
+
+            hashName.set(key, value);
+        }
+
+
+        // save aquatree in file objects
+        for (let fileObject of chainData.fileObject) {
+            // Ensure the file object has a valid hashe
+            let isAquaTreeData = isAquaTree(fileObject.fileContent);
+            if (isAquaTreeData) {
+                let aquaTree = fileObject.fileContent as AquaTree
+                await saveAquaTree(aquaTree, userAddress, null, true);
+                allAquaTrees.push(aquaTree);
+                for (let key in chainData.aquaTree.file_index) {
+                    // Ensure the file object has a valid hashe
+                    const value = chainData.aquaTree.file_index[key];
+                    console.log(`b 🎈🎈 file_index key ${key} vs Value ${value} `)
+                    hashName.set(key, value);
+                }
+            } else {
+
+                console.log(`File object is not an AquaTree: ${JSON.stringify(fileObject, null, 2)}`);
+            }
+        }
+
+        console.log(`🎈🎈 hashName Map: ${JSON.stringify(Array.from(hashName.entries()), null, 2)}`);
+        // throw new Error(`here `)
+        for (const [key, value] of hashName) {
+            console.log(`🎈🎈 Key: ${key}, Value: ${value}`);
+
+            // fetch file hash from file object
+            let fileObjectItem = chainData.fileObject.find(obj => obj.fileName === value);
+            if (!fileObjectItem) {
+                throw new Error(`File hash not found for key: ${key}`);
+            }
+
+            // Extract the hash from fileContent URL
+            const fileUrl = fileObjectItem.fileContent as string;
+            const fileHash = fileUrl.split('/').pop(); // Gets the last segment of the URL
+            if (!fileHash) {
+                throw new Error(`Invalid file URL (no file hash found): ${fileUrl}`);
+            }
+            let hash = key
+
+            for (let aquaTree of allAquaTrees) {
+                let allHashes = Object.keys(aquaTree.revisions);
+                if (allHashes.includes(hash)) {
+                    let selectedRevion = aquaTree.revisions[hash];
+                    if (selectedRevion.revision_type == "file" || selectedRevion.revision_type == "form") {
+                        console.log(`OK: Revision type is ${selectedRevion.revision_type} for hash ${hash} in aqua tree ${aquaTree.file_index[hash]}`);
+                    } else {
+                        let genesisHash = getGenesisHash(aquaTree);
+                        hash = genesisHash ?? "genesis_hash_error";
+                    }
+                }
+
+                const userAddressHash = `${userAddress}_${hash}`;
+
+                let existingFileIndex = await prisma.fileIndex.findFirst({
+                    where: { file_hash: fileHash }
+                });
+
+                if (!existingFileIndex) {
+                    throw new Error(`File index  not found for key: ${value}  with file hash: ${fileHash}`);
+                }
+
+                // Update existing file index
+                if (!existingFileIndex.pubkey_hash.includes(userAddressHash)) {
+                    existingFileIndex.pubkey_hash.push(userAddressHash);
+                }
+
+                await prisma.fileIndex.update({
+                    data: { pubkey_hash: existingFileIndex.pubkey_hash },
+                    where: { file_hash: existingFileIndex.file_hash }
+                });
+
+                await prisma.fileName.upsert({
+                    where: { pubkey_hash: userAddressHash },
+                    create: {
+                        pubkey_hash: userAddressHash,
+                        file_name: fileObjectItem.fileName
+                    },
+                    update: {}
+                });
+            }
+        }
+        return { success: true, message: "This function is not implemented yet" };
+    } catch (error: any) {
+        console.error("Error in function transfer:", error);
+        return { success: false, message: `Error transferring data: ${error.message}` };
+    }
+
+}
+/**
+ * Fetches aqua trees for a user based on their latest revision hashes.
+ * @param url - The base URL for the API.
+ * @param latest - An array of objects containing the latest revision hashes and user addresses.
+ * @returns An array of objects containing the aqua tree and associated file objects.
+ */
 export async function fetchAquatreeFoUser(url: string, latest: Array<{
     hash: string;
     user: string;
@@ -133,7 +319,7 @@ export async function fetchAquatreeFoUser(url: string, latest: Array<{
     return displayData;
 }
 
-export async function saveARevisionInAquaTree(revisionData: SaveRevision, userAddress: string): Promise<[number, string]> {
+export async function saveARevisionInAquaTree(revisionData: SaveRevisionForUser, userAddress: string, url: string): Promise<[number, string]> {
 
     if (!revisionData.revision) {
         return [400, "revision Data is required"]//reply.code(400).send({ success: false, message: "revision Data is required" });
@@ -167,7 +353,7 @@ export async function saveARevisionInAquaTree(revisionData: SaveRevision, userAd
     });
 
     if (existData == null) {
-        return [407, `previous  hash  not found ${oldFilePubKeyHash}`] ///reply.code(401).send({ success: false, message: `previous  hash  not found ${oldFilePubKeyHash}` });
+        return [405 , `previous  hash  not found ${oldFilePubKeyHash}`] ///reply.code(401).send({ success: false, message: `previous  hash  not found ${oldFilePubKeyHash}` });
 
     }
 
@@ -217,6 +403,7 @@ export async function saveARevisionInAquaTree(revisionData: SaveRevision, userAd
             local_timestamp: revisionData.revision.local_timestamp, // revisionData.revision.local_timestamp,
             revision_type: revisionData.revision.revision_type,
             verification_leaves: revisionData.revision.leaves || [],
+            file_hash: revisionData.revision.file_hash,
 
         },
     });
@@ -316,6 +503,8 @@ export async function saveARevisionInAquaTree(revisionData: SaveRevision, userAd
 
 
     if (revisionData.revision.revision_type == "link") {
+
+
         await prisma.link.create({
             data: {
                 hash: filePubKeyHash,
@@ -326,14 +515,88 @@ export async function saveARevisionInAquaTree(revisionData: SaveRevision, userAd
                 reference_count: 0
             }
         })
+        // fetch the other entire chain and bring it to the current user scope
+        if (revisionData.orginAddress != userAddress) {
+            if (revisionData.revision.link_verification_hashes?.length == 0) {
+                throw Error(`Linke verification hashes length cannot be 0`)
+
+            }
+            let hash = (revisionData.revision.link_verification_hashes && revisionData.revision.link_verification_hashes.length > 0)
+                ? revisionData.revision.link_verification_hashes[0]
+                : undefined;
+            if (!hash) {
+                throw Error(`Linke verification hashes  cannot be undefined`)
+            }
+            let pubKeyHash = `${revisionData.orginAddress}_${hash}`
+
+            console.log(`pubKeyHash ${pubKeyHash}`)
+            let [anAquaTree, fileObject] = await createAquaTreeFromRevisions(pubKeyHash, url);
+
+             console.log(`anAquaTree ${JSON.stringify(anAquaTree, null, 4)}  fileObject  ${JSON.stringify(fileObject, null, 4)}`)
+
+            
+
+            let response = await transferRevisionChainData(userAddress, {
+                aquaTree: anAquaTree,
+                fileObject: fileObject
+            },null, true  )
+            if (response.success == false) {
+                throw Error(`An error occured transfering chain ${response.message}`)
+            }
+
+        }
     }
 
-    if (revisionData.revision.revision_type == "file") {
+    if (revisionData.revision.revision_type == "file" || revisionData.revision.revision_type == "form") {
 
-        return [500, "not implemented"]
-        // return reply.code(500).send({
-        //     message: "not implemented",
-        // });
+        let existingFileIndex = await prisma.fileIndex.findFirst({
+            where: {
+                file_hash: revisionData.revision.file_hash
+            }
+        })
+
+        if (!existingFileIndex) {
+            throw Error(`File index not found for ${revisionData.revision.file_hash} this should exist are you are saving for another user.`)
+        }
+        await prisma.fileIndex.update({
+            where: {
+                file_hash: filePubKeyHash,
+            },
+
+            data: {
+                pubkey_hash: [...existingFileIndex.pubkey_hash, filePubKeyHash]
+            }
+        });
+
+        let existingFileName = await prisma.fileName.findFirst({
+
+            where: {
+                pubkey_hash: {
+                    contains: revisionData.revisionHash,
+                    mode: 'insensitive'
+                }
+            }
+        })
+
+        if (!existingFileIndex) {
+            throw Error(`File name not found for hash ${revisionData.revisionHash} this should exist are you are saving for another user.`)
+        }
+
+        await prisma.fileName.upsert({
+            where: {
+                pubkey_hash: filePubKeyHash,
+            },
+            create: {
+
+                pubkey_hash: filePubKeyHash,
+                file_name: existingFileName!.file_name,
+
+            },
+            update: {
+                pubkey_hash: filePubKeyHash,
+                file_name: existingFileName!.file_name
+            }
+        })
     }
 
     return [200, ""]
@@ -429,7 +692,7 @@ async function deleteRelatedTableEntries(tx: any, revisionHashes: string[]) {
 // Utility function to handle witness cleanup
 async function handleWitnessCleanup(tx: any, revisionHashes: string[]) {
     // Find witnesses to delete
-    const witnesses : WitnessEvent[] = await tx.witness.findMany({
+    const witnesses: WitnessEvent[] = await tx.witness.findMany({
         where: {
             hash: { in: revisionHashes }
         }
@@ -519,34 +782,34 @@ async function handleSingleFileCleanup(tx: any, pubkeyHash: string) {
 
 // Utility function to handle complex file cleanup for multiple files
 async function handleMultipleFileCleanup(tx: any, revisionHashes: string[]) {
-   
-    
-     // Start with exact matches
+
+
+    // Start with exact matches
     let fileIndexesToProcess: FileIndex[] = await tx.fileIndex.findMany({
         where: {
             pubkey_hash: {
                 hasSome: revisionHashes
             }
         },
-    
+
     });
 
-if (fileIndexesToProcess.length === 0) {
+    if (fileIndexesToProcess.length === 0) {
         console.log("No FileIndex entries found for the provided revision hashes");
         return;
     }
-    
+
     for (const fileIndex of fileIndexesToProcess) {
 
-        
-        if(fileIndex.pubkey_hash.length === 1) {
+
+        if (fileIndex.pubkey_hash.length === 1) {
 
 
             // If the file index only has one pubkey hash, we can safely delete it
             await tx.fileIndex.delete({
-                where: { 
+                where: {
                     file_hash: fileIndex.file_hash
-                 }
+                }
             });
 
             // Delete the associated file if it exists
@@ -569,14 +832,14 @@ if (fileIndexesToProcess.length === 0) {
                     where: { file_hash: fileIndex.file_hash }
                 });
             }
-        }else{
-             await tx.fileIndex.update({
-                where: { 
+        } else {
+            await tx.fileIndex.update({
+                where: {
                     file_hash: fileIndex.file_hash
-                 },
-                 data:{
+                },
+                data: {
                     pubkey_hash: fileIndex.pubkey_hash.filter((hash: string) => !revisionHashes.includes(hash))
-                 }
+                }
 
             });
         }
@@ -704,9 +967,9 @@ export async function deleteAquaTreeFromSystem(walletAddress: string, hash: stri
 
     try {
         // Fetch all revisions in the chain
-        const revisionData: Revision [] = [];
+        const revisionData: Revision[] = [];
 
-        const latestRevisionData : Revision |  null= await prisma.revision.findFirst({
+        const latestRevisionData: Revision | null = await prisma.revision.findFirst({
             where: { pubkey_hash: filepubkeyHash }
         });
 
@@ -1213,14 +1476,15 @@ export async function processAquaMetadata(zipData: JSZip, userAddress: string) {
     }
 }
 
-export async function processAquaFiles(zipData: JSZip, userAddress: string) {
+export async function processAquaFiles(zipData: JSZip, userAddress: string,  templateId: string | null = null,
+    isWorkFlow: boolean = false) {
     for (const fileName in zipData.files) {
         if (fileName.endsWith(".aqua.json") && fileName !== 'aqua.json') {
             const file = zipData.files[fileName];
             const fileContent = await file.async('text');
             const aquaTree: AquaTree = JSON.parse(fileContent);
 
-            await saveAquaTree(aquaTree, userAddress);
+            await saveAquaTree(aquaTree, userAddress, templateId , isWorkFlow);
         }
     }
 }

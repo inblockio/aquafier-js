@@ -7,11 +7,6 @@ import { documentTypes, ERROR_TEXT, ERROR_UKNOWN, imageTypes, musicTypes, videoT
 import Aquafier, { AquaTree, CredentialsData, FileObject, OrderRevisionInAquaTree, Revision } from "aqua-js-sdk";
 import jdenticon from "jdenticon/standalone";
 
-
-
-
-
-
 export function formatDate(date: Date) {
     const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
         'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
@@ -191,7 +186,7 @@ export function getAquaTreeFileName(aquaTree: AquaTree): string {
 }
 
 export function getAquaTreeFileObject(fileInfo: ApiFileInfo): FileObject | undefined {
-
+console.log(`getAquaTreeFileObject ${JSON.stringify(fileInfo, null, 4)}`)
     let mainAquaFileName = "";
     let mainAquaHash = "";
     // fetch the genesis 
@@ -1813,3 +1808,33 @@ export const getHighestFormIndex = (obj: Record<string, any>): number => {
 
     return highestIndex;
 };
+
+
+export function getLatestApiFileInfObject(jsonArray : ApiFileInfo[]): ApiFileInfo | null {
+    if (!Array.isArray(jsonArray) || jsonArray.length === 0) {
+        return null;
+    }
+    
+    let latestObject  :  ApiFileInfo | null = null;
+    let latestTimestamp = '';
+    
+    jsonArray.forEach(obj => {
+        // Navigate through the nested structure to find revisions
+        const aquaTree = obj.aquaTree;
+        if (aquaTree && aquaTree.revisions) {
+            // Get all revision keys and check their timestamps
+            Object.keys(aquaTree.revisions).forEach(revisionKey => {
+                const revision = aquaTree.revisions[revisionKey];
+                const timestamp = revision.local_timestamp;
+                
+                // Compare timestamps (they're in YYYYMMDDHHMMSS format, so string comparison works)
+                if (timestamp > latestTimestamp) {
+                    latestTimestamp = timestamp;
+                    latestObject = obj;
+                }
+            });
+        }
+    });
+    
+    return latestObject;
+}

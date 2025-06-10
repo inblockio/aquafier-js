@@ -8,7 +8,7 @@ import path from 'path';
 import { getGenesisHash } from './aqua_tree_utils';
 import { AquaTreeFileData, LinkedRevisionResult, ProcessRevisionResult, UpdateGenesisResult } from '../models/types';
 import { file } from 'jszip';
-import { SYSTEM_WALLET_ADDRESS } from '../models/constants';
+import { SYSTEM_WALLET_ADDRESS, systemTemplateHashes } from '../models/constants';
 
 // Main refactored function
 export async function createAquaTreeFromRevisions(
@@ -25,13 +25,14 @@ export async function createAquaTreeFromRevisions(
         // Step 1: Get all revisions in the chain
         const revisionData = await getRevisionChain(latestRevisionHash);
 
+        console.log(`🤔🤔 revisionData ${JSON.stringify(revisionData, null, 4)} `)
         if (revisionData.length === 0) {
             console.error(`Revision with hash ${latestRevisionHash} not found in system`);
             return [aquaTree, []];
 
         }
 
-        console.log(`🎾🎾🎾 All revision ${JSON.stringify(revisionData, null, 4)}`)
+        // console.log(`🎾🎾🎾 All revision ${JSON.stringify(revisionData, null, 4)}`)
 
         let revisionPubKeyHashes = revisionData.map(revision => revision.pubkey_hash);
 
@@ -51,21 +52,46 @@ export async function createAquaTreeFromRevisions(
                 where: { hash: revision.pubkey_hash }
             });
             if (linkHash && linkHash.link_verification_hashes && linkHash.link_verification_hashes.length > 0) {
-                let linkedPubKeyHash = linkHash.link_verification_hashes.map((hashDataItem) => `${userAddress}_${hashDataItem}`)
+
+                let linkedPubKeyHash = linkHash.link_verification_hashes.map((hashDataItem) => {
+                    if (systemTemplateHashes.includes(hashDataItem)) {
+                        userAddress = SYSTEM_WALLET_ADDRESS
+                    } else {
+                        let first = revision.pubkey_hash
+                        if (first) {
+                            let items = first.split('_')
+                            userAddress = items[0]
+                        }
+                    }
+
+                    return `${userAddress}_${hashDataItem}`
+                })
 
                 revisionPubKeyHashes.push(...linkedPubKeyHash);
             }
         }
 
+        let fileOrFormPubKeyHashes: string[] = []
+        // sometimes a revision could be linked to another revision that is not a file or form
+        // so we need to filter out those pubkey hashes
+        for (let item of revisionPubKeyHashes) {
+            let revData = revisionData.find(revision => revision.pubkey_hash == item);
+            if (revData && (revData.revision_type == 'file' || revData.revision_type == 'form')) {
+                fileOrFormPubKeyHashes.push(item);
+            }
+        }
+
+        console.log(`🎇🎇 All revision pubkey hashes ${JSON.stringify(fileOrFormPubKeyHashes, null, 4)}`)
+
 
         // Step 2: Get all associated files
         const aquaTreeFileData = await fetchAquaTreeFileData(revisionPubKeyHashes);
-        console.log("File indexes: ", aquaTreeFileData)
+        // console.log("File indexes: ", aquaTreeFileData)
 
         // Step 3: Create file objects for download
         fileObjects = await createFileObjects(aquaTreeFileData, url);
 
-        console.log("File indexe----: ", JSON.stringify(fileObjects, null, 4))
+        // console.log("File indexe----: ", JSON.stringify(fileObjects, null, 4))
 
         // Step 4: Process each revision
         for (const revision of revisionData) {
@@ -97,6 +123,26 @@ async function getRevisionChain(latestRevisionHash: string): Promise<Revision[]>
         }
     });
 
+    // const latestRevision = await prisma.revision.findFirst({
+    //     where: {
+    //         OR: [
+    //             {
+    //                 pubkey_hash: {
+    //                     contains: latestRevisionHash,
+    //                     mode: 'insensitive'
+    //                 }
+    //             },
+    //              {
+    //                 pubkey_hash: {
+    //                     contains: latestRevisionHash.split("_")[1] ?? "",
+    //                     mode: 'insensitive'
+    //                 }
+    //             }
+    //         ]
+
+    //     }
+    // });
+
     if (!latestRevision) {
         return [];
     }
@@ -107,7 +153,7 @@ async function getRevisionChain(latestRevisionHash: string): Promise<Revision[]>
     if (latestRevision.previous && latestRevision.previous.length > 0) {
         try {
             const previousRevisions = await findAquaTreeRevision(latestRevision.previous);
-            console.log("Genesis revision: ", previousRevisions);
+            // console.log("Genesis revision: ", previousRevisions);
             revisionData.push(...previousRevisions);
         } catch (error) {
             throw new Error(`Error fetching previous revisions: ${JSON.stringify(error, null, 4)}`);
@@ -233,18 +279,30 @@ async function fetchAquaTreeFileData(pubKeyHashes: string[]): Promise<AquaTreeFi
         if (fileIndex) {
 
 
+            // const fileNameData = await prisma.fileName.findFirst({
+            //     where: {
+            //         pubkey_hash: pubKeyHash
+            //     },
+            // });
+            let hashOnly = pubKeyHash.split("_")[1]
             const fileNameData = await prisma.fileName.findFirst({
                 where: {
-                    pubkey_hash: pubKeyHash
-                },
+                    OR: [
+                        { pubkey_hash: pubKeyHash },
+                        {
+                            pubkey_hash: {
+                                contains: hashOnly,
+                                mode: 'insensitive' // Makes the search case-insensitive
+                            }
+                        }
+                    ]
+                }
             });
-
             const fileData = await prisma.file.findFirst({
                 where: {
                     file_hash: fileIndex.file_hash
                 },
             });
-
             if (fileNameData) {
 
 
@@ -258,9 +316,11 @@ async function fetchAquaTreeFileData(pubKeyHashes: string[]): Promise<AquaTreeFi
                 }
 
                 allData.push(data);
+            } else {
+                console.log(`💣💣💣 File name not found for pubKeyHash ${pubKeyHash}`);
             }
         } else {
-            console.log(`File index not found ..`)
+            console.log(`💣💣💣 File index not found ..pubKeyHash ${pubKeyHash} --  ${hashOnly}`)
         }
     }
 
@@ -395,7 +455,7 @@ async function processFileRevision(revision: Revision, revisionData: AquaRevisio
     const hashOnly = extractHashOnly(revision.pubkey_hash);
     const updatedRevisionData = {
         ...revisionData,
-        file_nonce: revision.nonce ?? "--error--"
+        file_nonce: revision.nonce ?? "--error--!"
     };
 
     // Try to find file directly
@@ -424,7 +484,7 @@ async function processFileRevision(revision: Revision, revisionData: AquaRevisio
             console.error(`Hash not found in file index: ${hashOnly}`);
         }
     } else {
-        updatedRevisionData.file_hash = fileResult.file_hash ?? "--error--";
+        updatedRevisionData.file_hash = fileResult.file_hash ?? "**--error--***";
     }
 
     // Process form data if it's a form revision
@@ -577,21 +637,13 @@ async function updateLinkRevisionFileIndex(revision: Revision,
     let userAddress = "";
     let newHash = linkData.link_verification_hashes[0]
 
-    if(newHash == undefined) {
- throw Error(`Expected linke revision to have alteast one verification hash ${JSON.stringify(linkData)}`)
+    if (newHash == undefined) {
+        throw Error(`Expected linke revision to have alteast one verification hash ${JSON.stringify(linkData)}`)
 
     }
-    let systemTemplateHashes = [
-        '0x6ff9a00f08f675cf17eb6ce8572a7fdcbd9d43ff6b043f2b233e7b70e2d9c15f',
-        '0xfd2085151958e5dbaa32322f1266a3cf86ff547c75379a4c3ebd2272d4abd89f',
-        '0x9da9cfc4587b102da24aec2ec0dbf5f7d702284f8073b476f9e94043673cf481',
-        '0x5ea1129a733086d131c9bec1758b8bbefdfa90bcb38179ec595f532fe14ab67f',
-        '0x99dc1b20c233df77a59bd4c79f346ea4e8bffaf127d4e9850400624638bc1686',
-        '0x2a068d95f1f0e9e1f998bff3a7dffd0429aff2f0cc71b357733a19c2a926265c',
 
-    ]
     if (systemTemplateHashes.includes(newHash)) {
-userAddress= SYSTEM_WALLET_ADDRESS
+        userAddress = SYSTEM_WALLET_ADDRESS
     } else {
         let first = revision.pubkey_hash
         if (first) {
@@ -604,12 +656,13 @@ userAddress= SYSTEM_WALLET_ADDRESS
     let newPubKeyHash = `${userAddress}_${newHash}`
 
 
-    let linkedAquaTreeData = await createAquaTreeFromRevisions(newPubKeyHash, url);
-    let linkedAquaTreeDataGenesisHash = getGenesisHash(linkedAquaTreeData[0]);
+    let [linkedAquaTreeData, linkedFileObjects] = await createAquaTreeFromRevisions(newPubKeyHash, url);
+    console.log(` ✨✨ linkedAquaTreeData ${JSON.stringify(linkedAquaTreeData, null, 4)}`)
+    let linkedAquaTreeDataGenesisHash = getGenesisHash(linkedAquaTreeData);
 
     if (linkedAquaTreeDataGenesisHash == null) {
 
-        throw Error(`Expected genesis hash no to be null`)
+        throw Error(`Expected genesis hash ${newPubKeyHash}  not to be null ${JSON.stringify(linkedAquaTreeData, null, 4)}`)
 
 
     }
@@ -619,6 +672,8 @@ userAddress= SYSTEM_WALLET_ADDRESS
         genesisPubKeyHash = `${userAddress}_${linkedAquaTreeDataGenesisHash}`
     }
 
+
+    console.log(`🎇🎇 updateLinkRevisionFileIndex All revision pubkey hashes ${JSON.stringify(genesisPubKeyHash, null, 4)}`)
     const newAquaTreeFileData = await fetchAquaTreeFileData([genesisPubKeyHash]);
 
     let fileData = newAquaTreeFileData[0]
@@ -663,7 +718,7 @@ userAddress= SYSTEM_WALLET_ADDRESS
     if (!existInFileObjects) {
         updatedFileObjects.push(
             {
-                fileContent: linkedAquaTreeData[0],
+                fileContent: linkedAquaTreeData,
                 fileName: aquaJsonFile, // file_hash as identifier
                 path: '',
                 fileSize: 0
@@ -673,7 +728,7 @@ userAddress= SYSTEM_WALLET_ADDRESS
 
 
     // add the extra file objects only if the dont exist
-    for (const newFileObject of linkedAquaTreeData[1]) {
+    for (const newFileObject of linkedFileObjects) {
         let existInFileObjects = updatedFileObjects.find((e) => e.fileName == newFileObject.fileName)
         if (!existInFileObjects) {
             updatedFileObjects.push(newFileObject)
@@ -754,7 +809,7 @@ async function processLinkedFileRevision(
     url: string
 ): Promise<LinkedRevisionResult> {
 
-
+    // console.log(`🎇🎇 processLinkedFileRevision All revision pubkey hashes ${JSON.stringify(linkedHash, null, 4)}`)
     let aquaTreeFileData = await fetchAquaTreeFileData([linkedHash]);
     if (aquaTreeFileData.length === 0) {
         console.log(`File index with hash ${linkedHash} not found`);
@@ -833,7 +888,7 @@ async function addRevisionContent(revision: Revision, revisionData: AquaRevision
             return { ...revisionData, content: fileContent };
         } catch (error) {
             console.error(`Error reading file content: ${error}`);
-            return { ...revisionData, content: "--error--" };
+            return { ...revisionData, content: "--error--&" };
         }
     }
     return revisionData;

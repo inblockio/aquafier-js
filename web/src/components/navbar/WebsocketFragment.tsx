@@ -320,6 +320,12 @@ const WebsocketFragment = () => {
             isExplicitDisconnect = false; // Reset flag when attempting new connection
             connectWebsocket();
         }
+        if (session != null && session.nonce != undefined && backend_url != "http://0.0.0.0:0") {
+            backendUrlRef.current = backend_url;
+            nounceRef.current = session.nonce;
+            walletAddressRef.current = session.address;
+
+        }
         // return () => {
         //     disconnectWebSocket();
         // };

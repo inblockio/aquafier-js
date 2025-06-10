@@ -149,14 +149,14 @@ export default async function chequeApiController(fastify: FastifyInstance) {
       revision: lastRevision,
       revisionHash: lastHash
     }
-    const [httpCode, message] = await saveARevisionInAquaTree(saveRevision, wallet_address);
+    // const [httpCode, message] = await saveARevisionInAquaTree(saveRevision, wallet_address, "eror");
 
-    if (httpCode != 200) {
-      return reply.code(httpCode).send({ success: false, message: message });
-    }
+    // if (httpCode != 200) {
+    //   return reply.code(httpCode).send({ success: false, message: message });
+    // }
 
 
-    return { message: 'creat a new revision' };
+    return { message: 'created a new revision' };
   });
 
 
