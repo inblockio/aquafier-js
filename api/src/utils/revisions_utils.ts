@@ -156,7 +156,7 @@ export function isAquaTree(content: any): boolean {
 
 export async function transferRevisionChainData(userAddress: string, chainData: {
     aquaTree: AquaTree; fileObject: FileObject[]
-}): Promise<{ success: boolean, message: string }> {
+},templateId: string | null = null, isWorkFlow: boolean=false ): Promise<{ success: boolean, message: string }> {
     try {
 
 
@@ -169,7 +169,7 @@ export async function transferRevisionChainData(userAddress: string, chainData: 
         console.log(`🎈🎈 aquaTree  ${JSON.stringify(chainData.aquaTree, null, 4)}`)
         let hashName = new Map<string, string>();
         // Save the aqua tree
-        await saveAquaTree(chainData.aquaTree, userAddress, null, false);
+        await saveAquaTree(chainData.aquaTree, userAddress, templateId, isWorkFlow);
         allAquaTrees.push(chainData.aquaTree);
 
         for (let key in chainData.aquaTree.file_index) {
@@ -263,7 +263,7 @@ export async function transferRevisionChainData(userAddress: string, chainData: 
         }
         return { success: true, message: "This function is not implemented yet" };
     } catch (error: any) {
-        console.error("Error in transferRevisionChainData:", error);
+        console.error("Error in function transfer:", error);
         return { success: false, message: `Error transferring data: ${error.message}` };
     }
 
@@ -353,7 +353,7 @@ export async function saveARevisionInAquaTree(revisionData: SaveRevisionForUser,
     });
 
     if (existData == null) {
-        return [407, `previous  hash  not found ${oldFilePubKeyHash}`] ///reply.code(401).send({ success: false, message: `previous  hash  not found ${oldFilePubKeyHash}` });
+        return [405 , `previous  hash  not found ${oldFilePubKeyHash}`] ///reply.code(401).send({ success: false, message: `previous  hash  not found ${oldFilePubKeyHash}` });
 
     }
 
@@ -533,10 +533,13 @@ export async function saveARevisionInAquaTree(revisionData: SaveRevisionForUser,
             let [anAquaTree, fileObject] = await createAquaTreeFromRevisions(pubKeyHash, url);
 
              console.log(`anAquaTree ${JSON.stringify(anAquaTree, null, 4)}  fileObject  ${JSON.stringify(fileObject, null, 4)}`)
+
+            
+
             let response = await transferRevisionChainData(userAddress, {
                 aquaTree: anAquaTree,
                 fileObject: fileObject
-            })
+            },null, true  )
             if (response.success == false) {
                 throw Error(`An error occured transfering chain ${response.message}`)
             }

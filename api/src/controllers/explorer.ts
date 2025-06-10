@@ -59,6 +59,7 @@ export default async function explorerController(fastify: FastifyInstance) {
             await processAquaMetadata(zipData, session.address);
 
             // Process individual .aqua.json files
+            //todo fix me to check for workflo
             await processAquaFiles(zipData, session.address);
 
             // Return response with file info
