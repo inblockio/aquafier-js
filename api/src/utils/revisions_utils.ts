@@ -159,20 +159,23 @@ export async function transferRevisionChainData(userAddress: string, chainData: 
 }): Promise<{ success: boolean, message: string }> {
     try {
 
+        
         let allAquaTrees: AquaTree[] = [];
         let allHashes = Object.keys(chainData.aquaTree.revisions);
         if (allHashes.length == 0) {
             throw new Error("No revisions found in the aqua tree");
         }
 
+        console.log(`🎈🎈 aquaTree  ${JSON.stringify(chainData.aquaTree, null, 4)}`)
         let hashName = new Map<string, string>();
         // Save the aqua tree
         await saveAquaTree(chainData.aquaTree, userAddress, null, false);
         allAquaTrees.push(chainData.aquaTree);
 
         for (let key in chainData.aquaTree.file_index) {
-
             const value = chainData.aquaTree.file_index[key];
+            console.log(`a 🎈🎈 file_index key ${key} vs Value ${value} `)
+
             hashName.set(key, value);
         }
 
@@ -188,6 +191,7 @@ export async function transferRevisionChainData(userAddress: string, chainData: 
                 for (let key in chainData.aquaTree.file_index) {
                     // Ensure the file object has a valid hashe
                     const value = chainData.aquaTree.file_index[key];
+                     console.log(`b 🎈🎈 file_index key ${key} vs Value ${value} `)
                     hashName.set(key, value);
                 }
             } else {

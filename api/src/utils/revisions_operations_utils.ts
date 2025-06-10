@@ -51,7 +51,7 @@ export async function createAquaTreeFromRevisions(
                 where: { hash: revision.pubkey_hash }
             });
             if (linkHash && linkHash.link_verification_hashes && linkHash.link_verification_hashes.length > 0) {
-               
+
                 let linkedPubKeyHash = linkHash.link_verification_hashes.map((hashDataItem) => {
                     if (systemTemplateHashes.includes(hashDataItem)) {
                         userAddress = SYSTEM_WALLET_ADDRESS
@@ -63,17 +63,17 @@ export async function createAquaTreeFromRevisions(
                         }
                     }
 
-                   return `${userAddress}_${hashDataItem}`
+                    return `${userAddress}_${hashDataItem}`
                 })
 
                 revisionPubKeyHashes.push(...linkedPubKeyHash);
             }
         }
 
-        let fileOrFormPubKeyHashes : string[] = []
-       // sometimes a revision could be linked to another revision that is not a file or form
+        let fileOrFormPubKeyHashes: string[] = []
+        // sometimes a revision could be linked to another revision that is not a file or form
         // so we need to filter out those pubkey hashes
-        for(let item of revisionPubKeyHashes){
+        for (let item of revisionPubKeyHashes) {
             let revData = revisionData.find(revision => revision.pubkey_hash == item);
             if (revData && (revData.revision_type == 'file' || revData.revision_type == 'form')) {
                 fileOrFormPubKeyHashes.push(item);
@@ -82,7 +82,7 @@ export async function createAquaTreeFromRevisions(
 
         console.log(`🎇🎇 All revision pubkey hashes ${JSON.stringify(fileOrFormPubKeyHashes, null, 4)}`)
 
-       
+
         // Step 2: Get all associated files
         const aquaTreeFileData = await fetchAquaTreeFileData(revisionPubKeyHashes);
         // console.log("File indexes: ", aquaTreeFileData)
@@ -258,12 +258,25 @@ async function fetchAquaTreeFileData(pubKeyHashes: string[]): Promise<AquaTreeFi
         if (fileIndex) {
 
 
+            // const fileNameData = await prisma.fileName.findFirst({
+            //     where: {
+            //         pubkey_hash: pubKeyHash
+            //     },
+            // });
+            let hashOnly = pubKeyHash.split("_")[1]
             const fileNameData = await prisma.fileName.findFirst({
                 where: {
-                    pubkey_hash: pubKeyHash
-                },
+                    OR: [
+                        { pubkey_hash: pubKeyHash },
+                        {
+                            pubkey_hash: {
+                                contains: hashOnly,
+                                mode: 'insensitive' // Makes the search case-insensitive
+                            }
+                        }
+                    ]
+                }
             });
-
             const fileData = await prisma.file.findFirst({
                 where: {
                     file_hash: fileIndex.file_hash
