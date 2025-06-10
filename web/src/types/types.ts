@@ -20,7 +20,7 @@ export interface ApiFileData {
 export interface SummaryDetailsDisplayData {
 
   revisionHashWithSignaturePositionCount: number
-  revisionHashWithSignaturePosition: String
+  revisionHashWithSignaturePosition: string
   revisionHashWithSinatureRevision: string,
   revisionHashMetamask : string,
   walletAddress : string

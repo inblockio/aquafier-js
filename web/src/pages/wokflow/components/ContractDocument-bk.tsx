@@ -8,7 +8,7 @@ import {
     GridItem,
     Spinner,
     Group,
-
+   
     List
 } from '@chakra-ui/react';
 // import { Card } from '@chakra-ui/react';
@@ -16,9 +16,9 @@ import {
 import { Alert } from "../../../components/chakra-ui/alert"
 import appStore from '../../../store';
 import { useStore } from "zustand"
-import { ContractDocumentViewProps, SignatureData, SummaryDetailsDisplayData } from '../../../types/types';
-import Aquafier, { AquaTree, AquaTreeWrapper, FileObject, getGenesisHash, OrderRevisionInAquaTree, reorderAquaTreeRevisionsProperties, Revision } from 'aqua-js-sdk';
-import { dummyCredential, ensureDomainUrlHasSSL, estimateFileSize, fetchFiles, getAquaTreeFileObject, getHighestFormIndex, isAquaTree } from '../../../utils/functions';
+import { ContractDocumentViewProps,  SignatureData } from '../../../types/types';
+import Aquafier, { AquaTree, AquaTreeWrapper, FileObject, getGenesisHash, OrderRevisionInAquaTree } from 'aqua-js-sdk';
+import { dummyCredential, ensureDomainUrlHasSSL, estimateFileSize, fetchFiles, getAquaTreeFileObject } from '../../../utils/functions';
 
 import { PDFDisplayWithJustSimpleOverlay } from '../../PdfSigner/components/signature_overlay';
 import PdfSigner from '../../PdfSigner/PdfSigner';
@@ -39,8 +39,8 @@ export const ContractDocumentView: React.FC<ContractDocumentViewProps> = ({ setA
     const [pdfLoadingFile, setLoadingPdfFile] = useState<boolean>(true);
     const [pdfFile, setPdfFile] = useState<File | null>(null);
     const [pdfURLObject, setPdfURLObject] = useState<string | null>(null);
-    const [signatures, setSignatures] = useState<SignatureData[]>([]);
-    // const [signaturesData, setSignaturesData] = useState<SignatureData[]>([]);
+    const [signatures, setSignatures] = useState< SignatureData[]>([]);
+        // const [signaturesData, setSignaturesData] = useState<SignatureData[]>([]);
     const [signaturesLoading, setSignaturesLoading] = useState<boolean>(false);
     // const [userCanSign, setUserCanSign] = useState<boolean>(false);
     // const [authorizedSigners, setAuthorizedSigners] = useState<string[]>([]);
@@ -59,7 +59,42 @@ export const ContractDocumentView: React.FC<ContractDocumentViewProps> = ({ setA
 
 
 
+    const fetchImage = async (fileUrl: string) => {
+        try {
+            const actualUrlToFetch = ensureDomainUrlHasSSL(fileUrl);
+            const response = await fetch(actualUrlToFetch, {
+                headers: {
+                    nonce: `${session?.nonce}`
+                }
+            });
 
+            if (!response.ok) {
+                console.error("FFFailed to fetch file:", response.status, response.statusText);
+                return null;
+            }
+
+            // Get content type from headers
+            let contentType = response.headers.get("Content-Type") || "";
+            console.log("fetched: ", response, "content type:", contentType);
+
+            // If content type is missing or generic, try to detect from URL
+            if (contentType === "application/octet-stream" || contentType === "") {
+                contentType = "image/png";
+            }
+
+            if (contentType.startsWith("image")) {
+                const arrayBuffer = await response.arrayBuffer();
+                // Ensure we use the PDF content type
+                const blob = new Blob([arrayBuffer], { type: contentType });
+                return URL.createObjectURL(blob);
+            }
+
+            return null;
+        } catch (error) {
+            console.error("Error fetching file:", error);
+            return null;
+        }
+    }
 
     const saveAquaTree = async (aquaTree: AquaTree, fileObject: FileObject, isFinal: boolean = false, isWorkflow: boolean = false, template_id: string): Promise<Boolean> => {
         try {
@@ -426,7 +461,7 @@ export const ContractDocumentView: React.FC<ContractDocumentViewProps> = ({ setA
                     revision: lastRevision,
                     revisionHash: lastHash,
                     address: address,
-                    orginAddress: session?.address
+                    orginAddress : session?.address
                 }, {
                     headers: {
                         nonce: session?.nonce
@@ -464,7 +499,7 @@ export const ContractDocumentView: React.FC<ContractDocumentViewProps> = ({ setA
                 const response = await axios.post(actualUrlToFetch, {
                     revision: lastRevision,
                     revisionHash: lastHash,
-                    orginAddress: session?.address
+                    orginAddress : session?.address
                 }, {
                     headers: {
                         nonce: session?.nonce
@@ -527,260 +562,7 @@ export const ContractDocumentView: React.FC<ContractDocumentViewProps> = ({ setA
         });
     };
 
-    const getSignatureRevionHashes = (hashesToLoopPar: Array<string>): Array<SummaryDetailsDisplayData> => {
 
-        const signatureRevionHashes: Array<SummaryDetailsDisplayData> = []
-
-
-        for (let i = 0; i < hashesToLoopPar.length; i += 3) {
-
-
-            const batch = hashesToLoopPar.slice(i, i + 3);
-            // console.log(`Processing batch ${i / 3 + 1}:`, batch);
-
-
-            let signaturePositionCount = 0
-            let hashSigPosition = batch[0] ?? ""
-            let hashSigRev = batch[1] ?? ""
-            let hashSigMetamak = batch[2] ?? ""
-            let walletAddress = "";
-
-            if (hashSigPosition.length > 0) {
-                let allAquaTrees = selectedFileInfo?.fileObject.filter((e) => isAquaTree(e.fileContent))
-
-                let hashSigPositionHashString = selectedFileInfo!.aquaTree!.revisions[hashSigPosition].link_verification_hashes![0];
-
-                if (allAquaTrees) {
-                    for (let anAquaTree of allAquaTrees) {
-                        let allHashes = Object.keys(anAquaTree)
-                        if (allHashes.includes(hashSigPositionHashString)) {
-
-                            let aquaTreeData = anAquaTree.fileContent as AquaTree
-                            let revData = aquaTreeData.revisions[hashSigPositionHashString]
-                            signaturePositionCount = getHighestFormIndex(revData)
-
-                            break
-                        }
-                    }
-
-
-                }
-
-            }
-
-            let metaMaskRevision = selectedFileInfo!.aquaTree!.revisions[hashSigMetamak];
-            if (metaMaskRevision) {
-                walletAddress = metaMaskRevision.signature_wallet_address ?? ""
-            }
-            let data: SummaryDetailsDisplayData = {
-                revisionHashWithSignaturePositionCount: signaturePositionCount,
-                revisionHashWithSignaturePosition: hashSigPosition,
-                revisionHashWithSinatureRevision: hashSigRev,
-                revisionHashMetamask: hashSigMetamak,
-                walletAddress: walletAddress
-            }
-
-            signatureRevionHashes.push(data)
-
-        }
-
-
-        return signatureRevionHashes
-    }
-
-
-    const fetchImage = async (fileUrl: string) => {
-        try {
-            const actualUrlToFetch = ensureDomainUrlHasSSL(fileUrl);
-            const response = await fetch(actualUrlToFetch, {
-                headers: {
-                    nonce: `${session?.nonce}`
-                }
-            });
-
-            if (!response.ok) {
-                console.error("FFFailed to fetch file:", response.status, response.statusText);
-                return null;
-            }
-
-            // Get content type from headers
-            let contentType = response.headers.get("Content-Type") || "";
-            console.log("fetched: ", response, "content type:", contentType);
-
-            // If content type is missing or generic, try to detect from URL
-            if (contentType === "application/octet-stream" || contentType === "") {
-                contentType = "image/png";
-            }
-
-            if (contentType.startsWith("image")) {
-                const arrayBuffer = await response.arrayBuffer();
-                // Ensure we use the PDF content type
-                const blob = new Blob([arrayBuffer], { type: contentType });
-                return URL.createObjectURL(blob);
-            }
-
-            return null;
-        } catch (error) {
-            console.error("Error fetching file:", error);
-            return null;
-        }
-    }
-
-    const findImageUrl = (fileHash: string): string | null => {
-        for (const fileObject of selectedFileInfo!.fileObject) {
-            const fileContent = fileObject.fileContent;
-
-            if (typeof fileContent === 'string' && fileContent.includes(fileHash)) {
-                return fileContent;
-            }
-        }
-
-        return null;
-    };
-    const loadSignatures = async (): Promise<SignatureData[]> => {
-        let sigData: SignatureData[] = []
-        const orderedTree = OrderRevisionInAquaTree(selectedFileInfo!.aquaTree!)
-        const revisions = orderedTree.revisions
-        const revisionHashes = Object.keys(revisions)
-        let fourthItmeHashOnwards: string[] = [];
-        let signatureRevionHashes: Array<SummaryDetailsDisplayData> = []
-
-        if (revisionHashes.length > 4) {
-            // remove the first 4 elements from the revision list 
-            fourthItmeHashOnwards = revisionHashes.slice(4);
-            signatureRevionHashes = getSignatureRevionHashes(fourthItmeHashOnwards)
-        }
-
-        console.log(`signatureRevionHashes length  ${signatureRevionHashes.length}`)
-
-        for (let sigHash of signatureRevionHashes) {
-
-
-            let revisionSigImage = selectedFileInfo!.aquaTree!.revisions[sigHash.revisionHashWithSinatureRevision]
-            const revisionSigPosition: Revision = selectedFileInfo!.aquaTree!.revisions[sigHash.revisionHashWithSignaturePosition];
-            const revisionMetMask: Revision = selectedFileInfo!.aquaTree!.revisions[sigHash.revisionHashMetamask];
-
-            const fileHash = revisionSigImage.link_file_hashes![0]!;
-            console.log(`fileHash ${fileHash}`)
-
-
-
-
-
-            // get the name
-            let referenceRevisin: string = revisionSigImage.link_verification_hashes![0]
-            let name = "name-err"
-            let imageDataUrl = ""
-            for (let item of selectedFileInfo?.fileObject ?? []) {
-                let isAquaTreeItem = isAquaTree(item.fileContent)
-                console.log(`isAquaTreeItem ${isAquaTreeItem} loopin gfile objects ${JSON.stringify(item, null, 4)}`)
-                if (isAquaTreeItem) {
-                    console.log(`looping aqua tree`)
-                    let aquaTreeGeneral = item.fileContent as AquaTree
-                    let aquaTree = reorderAquaTreeRevisionsProperties(aquaTreeGeneral)
-                    let allHashes = Object.keys(aquaTree.revisions)
-                    console.log(`looping aqua tree allHashes ${allHashes}`)
-                    if (allHashes.includes(referenceRevisin)) {
-                        let genesisHash = getGenesisHash(aquaTree)!
-                        console.log(`include genesisHash ${genesisHash}`)
-                        let genRevision = aquaTree.revisions[genesisHash]
-                        name = genRevision["forms_name"]
-
-
-                        //the image url
-                        //seconnd last or 3 one
-                        let signatureRevisionHash: string = allHashes[2]
-                        let signatureRevision: Revision = aquaTree.revisions[signatureRevisionHash]
-                        if (signatureRevision.revision_type != "link") {
-                            throw Error(`Error expected link`)
-                        }
-                        let imgFileHash = signatureRevision.link_file_hashes![0];
-                        let imageUrl = findImageUrl(imgFileHash)
-
-                        if (imageUrl) {
-                            console.log(` imageUrl ==  ${imageUrl}`)
-                            const image = await fetchImage(imageUrl);
-                            if (image) {
-                                imageDataUrl = image
-                            } else {
-                                // Read default preview image from public folder and convert to data URL
-                                try {
-                                    const response = await fetch('/preview.png');
-                                    if (response.ok) {
-                                        const blob = await response.blob();
-                                        imageDataUrl = await new Promise<string>((resolve) => {
-                                            const reader = new FileReader();
-                                            reader.onloadend = () => resolve(reader.result as string);
-                                            reader.readAsDataURL(blob);
-                                        });
-                                    }
-                                } catch (error) {
-                                    console.error('Error loading preview.png:', error);
-                                    imageDataUrl = "errror"; // fallback to empty string
-                                }
-                            }
-                        }
-                        break;
-                    }
-                }
-            }
-
-
-
-
-            if (sigHash.revisionHashWithSignaturePositionCount == 0) {
-
-                let signatureDetails: SignatureData = {
-                    id: sigHash.revisionHashWithSignaturePosition, // Use the hash key instead of revision.revision_hash
-                    height: revisionSigPosition.forms_height_0,
-                    width: revisionSigPosition.forms_width_0,
-                    x: revisionSigPosition.forms_x_0,
-                    y: revisionSigPosition.forms_y_0,
-                    page: revisionSigPosition.forms_page_0,
-                    name: name,
-                    walletAddress: revisionMetMask.signature_wallet_address ?? "error",
-                    // ISSUE 2: created_at doesn't exist, use local_timestamp instead
-                    createdAt: new Date(
-                        revisionSigPosition.local_timestamp
-                            ? `${revisionSigPosition.local_timestamp.slice(0, 4)}-${revisionSigPosition.local_timestamp.slice(4, 6)}-${revisionSigPosition.local_timestamp.slice(6, 8)}T${revisionSigPosition.local_timestamp.slice(8, 10)}:${revisionSigPosition.local_timestamp.slice(10, 12)}:${revisionSigPosition.local_timestamp.slice(12, 14)}`
-                            : Date.now()
-                    ),
-                    dataUrl: imageDataUrl,
-                    hash: sigHash.revisionHashWithSignaturePosition, // Use the hash key
-                    isDragging: false,
-                    signatureId: sigHash.revisionHashWithSignaturePosition // Use the hash key
-                };
-                sigData.push(signatureDetails)
-            } else {
-                const randomArray = Array.from({ length: sigHash.revisionHashWithSignaturePositionCount + 1 }, () => Math.random());
-                for (let index = 0; index < randomArray.length; index++) {
-                    let signatureDetails: SignatureData = {
-                        id: `${sigHash.revisionHashWithSignaturePosition}_${index}`, // Make unique IDs for multiple signatures
-                        height: revisionSigPosition[`forms_height_${index}`],
-                        width: revisionSigPosition[`forms_width_${index}`],
-                        x: revisionSigPosition[`forms_x_${index}`],
-                        y: revisionSigPosition[`forms_y_${index}`],
-                        page: revisionSigPosition[`forms_page_${index}`],
-                        name: name,
-                        walletAddress: revisionMetMask.signature_wallet_address ?? "error",
-                        createdAt: new Date(
-                            revisionSigPosition.local_timestamp
-                                ? `${revisionSigPosition.local_timestamp.slice(0, 4)}-${revisionSigPosition.local_timestamp.slice(4, 6)}-${revisionSigPosition.local_timestamp.slice(6, 8)}T${revisionSigPosition.local_timestamp.slice(8, 10)}:${revisionSigPosition.local_timestamp.slice(10, 12)}:${revisionSigPosition.local_timestamp.slice(12, 14)}`
-                                : Date.now()
-                        ),
-                        dataUrl: imageDataUrl,
-                        hash: sigHash.revisionHashWithSignaturePosition,
-                        isDragging: false,
-                        signatureId: `${sigHash.revisionHashWithSignaturePosition}_${index}` // Make unique signature IDs
-                    };
-                    sigData.push(signatureDetails)
-                }
-            }
-        }
-
-        console.log(`sigData length  ${JSON.stringify(sigData, null, 4)}`)
-        return sigData;
-    }
 
     const initializeComponent = async () => {
         try {
@@ -789,13 +571,18 @@ export const ContractDocumentView: React.FC<ContractDocumentViewProps> = ({ setA
             setPdfFile(pdfFile);
             setLoadingPdfFile(false);
 
+            // Check authorization and load signatures
+            // const { canSign, signers } = checkUserAuthorization();
+            // setUserCanSign(canSign);
+            // console.log(`sigers ${signers}`)
+            //   setAuthorizedSigners(signers);
 
-            let shouldLoad = shouldLoadSignatures()
-            console.log(`Should load ${shouldLoad + "="} ....`)
+            let shouldLoad =shouldLoadSignatures()
+            console.log(`Should load ${shouldLoad+"="} ....`)
 
             if (shouldLoad) {
                 setSignaturesLoading(true);
-                const allSignatures: SignatureData[] = await loadSignatures();
+                const allSignatures : SignatureData[] = await loadSignatures();
                 console.log(`allSignatures ${allSignatures.length} `)
                 setSignatures(allSignatures);
                 setSignaturesLoading(false);
@@ -891,6 +678,186 @@ export const ContractDocumentView: React.FC<ContractDocumentViewProps> = ({ setA
         return revisionHashes.length >= 5; // Document has signatures
     };
 
+    const loadSignatures = async (): Promise< SignatureData[]> => {
+        try {
+            console.log("Identifying link revisions")
+            const linkRevisionsThatWeNeed = identifySignatureRevisions();
+            console.log("Link revisions that we need", linkRevisionsThatWeNeed)
+            const signaturesItem = await Promise.all(
+                linkRevisionsThatWeNeed.map(linkRevision => processSignatureRevision(linkRevision))
+            );
+
+            return signaturesItem.filter((signature : SignatureData |  null) => signature !== null);
+        } catch (error) {
+            console.error("Error loading signatures:", error);
+            return [];
+        }
+    };
+
+    const identifySignatureRevisions = () => {
+        if (!selectedFileInfo?.aquaTree?.revisions) return [];
+
+        const revisionHashes = Object.keys(selectedFileInfo.aquaTree.revisions);
+        const aquaTreeFileIndexKeys = selectedFileInfo.aquaTree.file_index || {};
+
+        // Find signature-related hashes
+        const aquaTreeFileIndexKeysWithSignature = Object.keys(aquaTreeFileIndexKeys)
+            .filter(key => aquaTreeFileIndexKeys[key].includes("signature"));
+
+        const linkRevisionsThatWeNeed: any[] = [];
+
+        for (let i = 0; i < revisionHashes.length; i++) {
+            const currentHash = revisionHashes[i];
+            const nextHash = revisionHashes[i + 1];
+            const currentRevision = selectedFileInfo.aquaTree.revisions[currentHash];
+            const nextRevision = selectedFileInfo.aquaTree.revisions[nextHash];
+
+            console.log("Next revision", nextRevision)
+
+            if (isValidSignatureRevisionPair(currentRevision, nextRevision, currentHash)) {
+                const linkVerificationHash = currentRevision.link_verification_hashes![0];
+
+                if (aquaTreeFileIndexKeysWithSignature.includes(linkVerificationHash)) {
+                    if (nextRevision.revision_type === "link") {
+                        linkRevisionsThatWeNeed.push({
+                            revision: currentRevision,
+                            revisionHash: currentHash,
+                            linkHash: linkVerificationHash,
+                            nextRevisionHash: nextHash,
+                            nextRevision: nextRevision,
+                            nextLinkHash: nextRevision.link_verification_hashes![0]
+                        });
+                    }
+                }
+            }
+        }
+
+        return linkRevisionsThatWeNeed;
+    };
+
+    const isValidSignatureRevisionPair = (currentRevision: any, nextRevision: any, currentHash: string): boolean => {
+        return (
+            currentRevision &&
+            currentRevision.revision_type === "link" &&
+            nextRevision &&
+            nextRevision.previous_verification_hash === currentHash &&
+            currentRevision.link_verification_hashes &&
+            currentRevision.link_verification_hashes.length > 0
+        );
+    };
+
+    const processSignatureRevision = async (linkRevision: any): Promise<SignatureData | null> => {
+        try {
+            console.log("----- Link Revision: ", linkRevision)
+            const { positionAquaTree, signatureDetailsAquaTree } = findRelatedAquaTrees(linkRevision);
+            console.log("----- Position Aqua Tree: ", positionAquaTree)
+            console.log("----- Signature Details Aqua Tree: ", signatureDetailsAquaTree)
+
+            if (!positionAquaTree || !signatureDetailsAquaTree) {
+                return null;
+            }
+
+            let signatureDetails : SignatureData = extractSignaturePosition(positionAquaTree, linkRevision.linkHash);
+            signatureDetails = await populateSignatureDetails(signatureDetails, signatureDetailsAquaTree, linkRevision.nextLinkHash);
+
+            return signatureDetails;
+        } catch (error) {
+            console.error("Error processing signature revision:", error);
+            return null;
+        }
+    };
+
+    const findRelatedAquaTrees = (linkRevision: any) => {
+        let positionAquaTree: AquaTree | null = null;
+        let signatureDetailsAquaTree: AquaTree | null = null;
+
+        for (const fileObject of selectedFileInfo!.fileObject) {
+            const content = fileObject.fileContent;
+
+            if (typeof content === 'object' && content !== null && 'revisions' in content) {
+                const aquaTree = content as AquaTree;
+                const aquaTreeRevisions = Object.keys(aquaTree.revisions);
+
+                if (aquaTreeRevisions.includes(linkRevision.linkHash)) {
+                    positionAquaTree = aquaTree;
+                }
+
+                if (aquaTreeRevisions.includes(linkRevision.nextLinkHash)) {
+                    signatureDetailsAquaTree = aquaTree;
+                }
+
+                if (positionAquaTree && signatureDetailsAquaTree) {
+                    break;
+                }
+            }
+        }
+
+        return { positionAquaTree, signatureDetailsAquaTree };
+    };
+
+    const extractSignaturePosition = (aquaTree: AquaTree, linkHash: string ) : SignatureData => {
+        const revision = aquaTree.revisions[linkHash];
+       
+
+        return {
+            id: revision.revision_hash || "",
+            height: revision.forms_height_0,
+            width: revision.forms_width_0,
+            x: revision.forms_x_0,
+            y: revision.forms_y_0,
+            page: revision.forms_page_0,
+            name: "",
+            walletAddress: "",
+            createdAt: new Date(revision.created_at || Date.now()),
+            dataUrl: "",
+            hash:revision.revision_hash,
+            isDragging: false,
+            signatureId: revision.revision_hash // Assuming revision_hash is used as signatureId
+
+        };
+    };
+
+    const populateSignatureDetails = async (signatureDetails:  SignatureData, aquaTree: AquaTree, _nextLinkHash: string) :  Promise<SignatureData> => {
+        const reorderedTree = OrderRevisionInAquaTree(aquaTree);
+        const hashes = Object.keys(reorderedTree.revisions);
+        const formRevision = reorderedTree.revisions[hashes[0]];
+
+        if (formRevision.revision_type === "form") {
+            signatureDetails.name = formRevision.forms_name;
+            signatureDetails.walletAddress = formRevision.forms_wallet_address;
+        }
+
+        // Load signature image
+        const linkRevisionWithFile = reorderedTree.revisions[hashes[2]];
+        if (linkRevisionWithFile?.revision_type === "link" &&
+            linkRevisionWithFile!.link_file_hashes!.length > 0) {
+
+            const fileHash = linkRevisionWithFile.link_file_hashes![0]!;
+            const imageUrl = findImageUrl(fileHash);
+
+            if (imageUrl) {
+                const image = await fetchImage(imageUrl);
+                if (image) {
+                    signatureDetails.dataUrl = image;
+                }
+            }
+        }
+
+        return signatureDetails;
+    };
+
+    const findImageUrl = (fileHash: string): string | null => {
+        for (const fileObject of selectedFileInfo!.fileObject) {
+            const fileContent = fileObject.fileContent;
+
+            if (typeof fileContent === 'string' && fileContent.includes(fileHash)) {
+                return fileContent;
+            }
+        }
+
+        return null;
+    };
+
     const renderContent = () => {
         if (pdfLoadingFile) {
             return (
@@ -916,7 +883,17 @@ export const ContractDocumentView: React.FC<ContractDocumentViewProps> = ({ setA
         }
 
 
-      
+         return( <Group>
+                        <Text>Signers</Text>
+                        <List.Root>
+                            {
+                                signatures.map((e) => {
+                                    return <List.Item>{e.hash}</List.Item>
+                                })
+                            }
+        
+                        </List.Root>
+                    </Group>)
 
         const isUserSignatureIncluded = signatures.some((sig) => sig.walletAddress === session?.address);
 
