@@ -86,12 +86,12 @@ export async function createAquaTreeFromRevisions(
 
         // Step 2: Get all associated files
         const aquaTreeFileData = await fetchAquaTreeFileData(revisionPubKeyHashes);
-        // console.log("File indexes: ", aquaTreeFileData)
+        console.log("File indexes: ", aquaTreeFileData)
 
         // Step 3: Create file objects for download
         fileObjects = await createFileObjects(aquaTreeFileData, url);
 
-        // console.log("File indexe----: ", JSON.stringify(fileObjects, null, 4))
+        console.log("File indexe----: ", JSON.stringify(fileObjects, null, 4))
 
         // Step 4: Process each revision
         for (const revision of revisionData) {
@@ -284,7 +284,7 @@ async function fetchAquaTreeFileData(pubKeyHashes: string[]): Promise<AquaTreeFi
                     file_hash: fileIndex.file_hash
                 },
             });
-            if (fileNameData) {
+            // if (fileNameData) {
 
 
                 let data: AquaTreeFileData = {
@@ -297,9 +297,9 @@ async function fetchAquaTreeFileData(pubKeyHashes: string[]): Promise<AquaTreeFi
                 }
 
                 allData.push(data);
-            } else {
-                console.log(`💣💣💣 File name not found for pubKeyHash ${pubKeyHash}`);
-            }
+            // } else {
+            //     console.log(`💣💣💣 File name not found for pubKeyHash ${pubKeyHash}`);
+            // }
         } else {
             console.log(`💣💣💣 File index not found ..pubKeyHash ${pubKeyHash} --  ${hashOnly}`)
         }
@@ -687,13 +687,15 @@ async function updateLinkRevisionFileIndex(revision: Revision,
                 }
             ];
         }
+    }else{
+        throw Error(`Expected file not found  fileData.fileLocation`)
     }
 
 
     let aquaJsonFile = `${fileData.name}.aqua.json`
 
-    let existInFileObjects = updatedFileObjects.find((e) => e.fileName == aquaJsonFile)
-    if (!existInFileObjects) {
+    // let existInFileObjects = updatedFileObjects.find((e) => e.fileName == aquaJsonFile)
+    // if (!existInFileObjects) {
         updatedFileObjects.push(
             {
                 fileContent: linkedAquaTreeData,
@@ -702,7 +704,7 @@ async function updateLinkRevisionFileIndex(revision: Revision,
                 fileSize: 0
             }
         )
-    }
+    // }
 
 
     // add the extra file objects only if the dont exist

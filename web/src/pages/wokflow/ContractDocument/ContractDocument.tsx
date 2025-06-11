@@ -325,6 +325,8 @@ export const ContractDocumentView: React.FC<ContractDocumentViewProps> = ({ setA
                 }
             }else{
                 console.log(`signature positions not found   searchiong for gensis ${revisionHashWithPositions} `)
+                // we try with fetching the image 
+            //  ......    
             }
         }
 
@@ -466,7 +468,7 @@ export const ContractDocumentView: React.FC<ContractDocumentViewProps> = ({ setA
         }
 
         const isUserSignatureIncluded = signatures.some((sig) => sig.walletAddress === session?.address);
-
+        // return <Text style={{whiteSpace: "pre-wrap", wordBreak: "break-all"}}>{JSON.stringify(signatures, null, 4)}</Text>
         if (isUserSignatureIncluded) {
             return (
                 <Grid templateColumns="repeat(4, 1fr)">
