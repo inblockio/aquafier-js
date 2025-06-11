@@ -39,7 +39,7 @@ import { SignatureData } from "../../types/types"
 import { LuTrash } from 'react-icons/lu';
 import { SignatureOverlay, SimpleSignatureOverlay } from './components/signature_overlay';
 
-
+ 
 
 
 interface PdfSignerProps {
@@ -285,34 +285,7 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ file, submitSignature, submitting
         const signatureFileName = `user_signature_${lastFiveCharactersOfWalletAddres}_${epochInSeconds}.png`
         const signatureFile = dataURLToFile(dataUrl, signatureFileName);
 
-        // let url = `${backend_url}/explorer_delete_file`
-        // let finalUrl = ensureDomainUrlHasSSL(url)
-        // //delete the existing signature 
-        // for (let item of signaturesAquaTree) {
-        //     let allHashes = Object.keys(item.aquaTree!.revisions)
-        //     let lastHash = allHashes[allHashes.length - 1]
-
-        //     try {
-        //         let response = await axios.post(finalUrl, {
-        //             revisionHash: lastHash
-        //         }, {
-        //             headers: {
-        //                 "nonce": session?.nonce,
-        //                 // Don't set Content-Type header - axios will set it automatically with the correct boundary
-        //             }
-        //         });
-
-        //         console.log(`Delete response code : ${response.status} ==  body ${response.data}`)
-
-        //     } catch (e) {
-        //         console.log(`Error deleting ${e}`)
-        //     }
-
-        // }
-
-        // let otherSignatures = signatures.filter((e) => e.walletAddress != session.address)
-        // setSignatures(otherSignatures)
-
+      
 
         setSignaturePositions([])
 
@@ -1041,8 +1014,7 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ file, submitSignature, submitting
             console.log(`Signatures length ${apiSigntures.length} now update state`)
 
 
-            // Update mySignatureData with the fetched signatures
-            setMySignatureData(apiSigntures)
+            
 
             if (selectSignature) {
                 if (apiSigntures.length > 0) {
@@ -1054,7 +1026,9 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ file, submitSignature, submitting
                     }
                 }
             }
-
+            
+// Update mySignatureData with the fetched signatures
+            setMySignatureData(apiSigntures)
 
 
         } catch (e) {
@@ -1148,7 +1122,7 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ file, submitSignature, submitting
                                     // const signature = signatures.find((signature) => signature.walletAddress === session?.address);
                                     const signature = mySignatureData.find(sig => sig.hash === selectedSignatureId || sig.id === selectedSignatureId);
                                     if (!signature) {
-                                        return <div style={{ whiteSpace: "pre-wrap" }}>Signature not found </div>
+                                        return <div style={{ whiteSpace: "pre-wrap" }}>Signature not found ${selectedSignatureId} </div>
                                     }
 
                                     return signature ? (

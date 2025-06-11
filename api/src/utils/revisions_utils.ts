@@ -503,7 +503,7 @@ export async function saveARevisionInAquaTree(revisionData: SaveRevisionForUser,
 
 
     if (revisionData.revision.revision_type == "link") {
-
+console.log(`☢️☢️ an error occured......${JSON.stringify(revisionData, null, 2)}`)
 
         await prisma.link.create({
             data: {
@@ -1246,16 +1246,7 @@ async function processFileRevision(revisionData: any, pubKeyHash: string, userAd
         throw new Error(`File data should be in database but is not found.`);
     }
 
-    //   await prisma.file.updateMany({
-    //     where: {
-    //         file_hash : fileResult.file_hash
-    //     //   OR: [
-    //     //     { hash: fileResult.hash },
-    //     //     { hash: { contains: fileResult.hash, mode: 'insensitive' } }
-    //     //   ]
-    //     },
-    //     data: { reference_count: fileResult.reference_count! + 1 }
-    //   });
+   
 
     // Update file index
     const existingFileIndex = await prisma.fileIndex.findFirst({
@@ -1282,12 +1273,12 @@ async function processLinkRevision(revisionData: any, pubKeyHash: string) {
     await prisma.link.upsert({
         where: { hash: pubKeyHash },
         update: {
-            hash: pubKeyHash,
-            link_type: "aqua",
-            link_require_indepth_verification: false,
-            link_verification_hashes: revisionData.link_verification_hashes,
-            link_file_hashes: revisionData.link_file_hashes,
-            reference_count: 0
+            // hash: pubKeyHash,
+            // link_type: "aqua",
+            // link_require_indepth_verification: false,
+            // link_verification_hashes: revisionData.link_verification_hashes,
+            // link_file_hashes: revisionData.link_file_hashes,
+            // reference_count: 0
         },
         create: {
             hash: pubKeyHash,
@@ -1300,11 +1291,12 @@ async function processLinkRevision(revisionData: any, pubKeyHash: string) {
     });
 
     // Process linked hashes
+    //not sure about the following code
     if (revisionData.link_verification_hashes?.length > 0) {
         for (const linkedHash of revisionData.link_verification_hashes) {
             const linkedRevision = await prisma.revision.findFirst({
                 where: {
-                    pubkey_hash: { contains: linkedHash, mode: 'insensitive' }
+                    pubkey_hash: linkedHash
                 }
             });
 

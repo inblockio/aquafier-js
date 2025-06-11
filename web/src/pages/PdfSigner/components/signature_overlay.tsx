@@ -163,7 +163,7 @@ export const PDFDisplayWithJustSimpleOverlay = ({ pdfUrl, signatures }: { pdfUrl
                         Number(currentPage) === Number(signature.page) ? (
                             <SimpleSignatureOverlay key={index} signature={signature} currentPage={currentPage}
                             />
-                        ) : null
+                        ) : <Text>fixxxxxxxxx {currentPage} -- ${JSON.stringify(signature, null, 4)+"--"}</Text>
                     }
                 </>
             ))}

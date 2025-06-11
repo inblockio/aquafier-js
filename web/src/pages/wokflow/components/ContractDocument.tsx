@@ -127,7 +127,7 @@ export const ContractDocumentView: React.FC<ContractDocumentViewProps> = ({ setA
 
             if (response.status === 200 || response.status === 201) {
                 if (isFinal) {
-                    console.log(`Is finale ${isFinal}`)
+                    // console.log(`Is finale ${isFinal}`)
                 }
                 // setFiles(response.data.files);
                 // toaster.create({
@@ -141,7 +141,7 @@ export const ContractDocumentView: React.FC<ContractDocumentViewProps> = ({ setA
                 // setFormData({})
                 // }
 
-                console.log(`Got back a 200..`)
+                // console.log(`Got back a 200..`)
             }
             return true
 
@@ -177,7 +177,7 @@ export const ContractDocumentView: React.FC<ContractDocumentViewProps> = ({ setA
 
             // Step 1: Create signature form data
             const signForm = createSignatureFormData(signaturePosition);
-            console.log(`Page data ${JSON.stringify(signForm, null, 4)}`);
+            // console.log(`Page data ${JSON.stringify(signForm, null, 4)}`);
 
             // Step 2: Create user signature data aqua tree
             const userSignatureDataAquaTree = await createUserSignatureAquaTree(aquafier, signForm);
@@ -225,9 +225,9 @@ export const ContractDocumentView: React.FC<ContractDocumentViewProps> = ({ setA
 
 
             // After successful submission
-    const updatedSignatures = await loadSignatures();
-    setSignatures(updatedSignatures);
-    
+            const updatedSignatures = await loadSignatures();
+            setSignatures(updatedSignatures);
+
         } catch (error) {
             console.error('Error in submitSignatureData:', error);
             showError('An unexpected error occurred during signature submission');
@@ -276,7 +276,7 @@ export const ContractDocumentView: React.FC<ContractDocumentViewProps> = ({ setA
             return null;
         }
 
-        console.log(`👁️‍🗨️👁️‍🗨️ AquaTree form ${JSON.stringify(userSignatureDataAquaTree.data.aquaTree!, null, 4)} \n jsonString ${jsonString}`);
+        // console.log(`👁️‍🗨️👁️‍🗨️ AquaTree form ${JSON.stringify(userSignatureDataAquaTree.data.aquaTree!, null, 4)} \n jsonString ${jsonString}`);
 
         // Save to server
         await saveAquaTree(userSignatureDataAquaTree.data.aquaTree!, fileObjectUserSignature, true, true, "");
@@ -412,11 +412,11 @@ export const ContractDocumentView: React.FC<ContractDocumentViewProps> = ({ setA
     // Helper function to save multiple revisions to server
     const saveRevisionsToServerForUser = async (aquaTrees: AquaTree[], address: string) => {
 
-        console.log(`aquaTrees ${aquaTrees.length}`)
+        // console.log(`aquaTrees ${aquaTrees.length}`)
         for (let index = 0; index < aquaTrees.length; index++) {
             const aquaTree = aquaTrees[index];
 
-            console.log(`aquaTrees ${index}  ${JSON.stringify(aquaTree, null, 4)}`)
+            // console.log(`aquaTrees ${index}  ${JSON.stringify(aquaTree, null, 4)}`)
             try {
                 const revisionHashes = Object.keys(aquaTree.revisions);
                 const lastHash = revisionHashes[revisionHashes.length - 1];
@@ -437,7 +437,7 @@ export const ContractDocumentView: React.FC<ContractDocumentViewProps> = ({ setA
                 });
 
                 if (response.status === 200 || response.status === 201) {
-                    console.log(`💯 Revision ${index + 1} saved successfully to the API`);
+                    // console.log(`💯 Revision ${index + 1} saved successfully to the API`);
                     // todo a method to notify the other user should go here
                 }
 
@@ -451,11 +451,11 @@ export const ContractDocumentView: React.FC<ContractDocumentViewProps> = ({ setA
     // Helper function to save multiple revisions to server
     const saveRevisionsToServer = async (aquaTrees: AquaTree[]) => {
 
-        console.log(`aquaTrees ${aquaTrees.length}`)
+        // console.log(`aquaTrees ${aquaTrees.length}`)
         for (let index = 0; index < aquaTrees.length; index++) {
             const aquaTree = aquaTrees[index];
 
-            console.log(`aquaTrees ${index}  ${JSON.stringify(aquaTree, null, 4)}`)
+            // console.log(`aquaTrees ${index}  ${JSON.stringify(aquaTree, null, 4)}`)
             try {
                 const revisionHashes = Object.keys(aquaTree.revisions);
                 const lastHash = revisionHashes[revisionHashes.length - 1];
@@ -475,7 +475,7 @@ export const ContractDocumentView: React.FC<ContractDocumentViewProps> = ({ setA
                 });
 
                 if (response.status === 200 || response.status === 201) {
-                    console.log(`💯 Revision ${index + 1} saved successfully to the API`);
+                    // console.log(`💯 Revision ${index + 1} saved successfully to the API`);
 
                 }
 
@@ -539,7 +539,7 @@ export const ContractDocumentView: React.FC<ContractDocumentViewProps> = ({ setA
 
 
             const batch = hashesToLoopPar.slice(i, i + 3);
-            // console.log(`Processing batch ${i / 3 + 1}:`, batch);
+            //  // console.log(`Processing batch ${i / 3 + 1}:`, batch);
 
 
             let signaturePositionCount = 0
@@ -608,7 +608,7 @@ export const ContractDocumentView: React.FC<ContractDocumentViewProps> = ({ setA
 
             // Get content type from headers
             let contentType = response.headers.get("Content-Type") || "";
-            console.log("fetched: ", response, "content type:", contentType);
+            // console.log("fetched: ", response, "content type:", contentType);
 
             // If content type is missing or generic, try to detect from URL
             if (contentType === "application/octet-stream" || contentType === "") {
@@ -651,20 +651,22 @@ export const ContractDocumentView: React.FC<ContractDocumentViewProps> = ({ setA
         if (revisionHashes.length > 4) {
             // remove the first 4 elements from the revision list 
             fourthItmeHashOnwards = revisionHashes.slice(4);
+
+            console.log(`fourthItmeHashOnwards data 00 ${JSON.stringify(fourthItmeHashOnwards, null, 4)}`)
             signatureRevionHashes = getSignatureRevionHashes(fourthItmeHashOnwards)
         }
 
-        console.log(`signatureRevionHashes length  ${signatureRevionHashes.length}`)
+        console.log(`signatureRevionHashes data 00 ${JSON.stringify(signatureRevionHashes, null, 4)}`)
 
         for (let sigHash of signatureRevionHashes) {
 
 
             let revisionSigImage = selectedFileInfo!.aquaTree!.revisions[sigHash.revisionHashWithSinatureRevision]
-            const revisionSigPosition: Revision = selectedFileInfo!.aquaTree!.revisions[sigHash.revisionHashWithSignaturePosition];
+            const linkRevisionWithSignaturePositions: Revision = selectedFileInfo!.aquaTree!.revisions[sigHash.revisionHashWithSignaturePosition];
             const revisionMetMask: Revision = selectedFileInfo!.aquaTree!.revisions[sigHash.revisionHashMetamask];
 
-            const fileHash = revisionSigImage.link_file_hashes![0]!;
-            console.log(`fileHash ${fileHash}`)
+            // const fileHash = revisionSigImage.link_file_hashes![0]!;
+            // console.log(`fileHash ${fileHash}`)
 
 
 
@@ -676,16 +678,16 @@ export const ContractDocumentView: React.FC<ContractDocumentViewProps> = ({ setA
             let imageDataUrl = ""
             for (let item of selectedFileInfo?.fileObject ?? []) {
                 let isAquaTreeItem = isAquaTree(item.fileContent)
-                console.log(`isAquaTreeItem ${isAquaTreeItem} loopin gfile objects ${JSON.stringify(item, null, 4)}`)
+                // console.log(`isAquaTreeItem ${isAquaTreeItem} loopin gfile objects ${JSON.stringify(item, null, 4)}`)
                 if (isAquaTreeItem) {
-                    console.log(`looping aqua tree`)
+                    //  // console.log(`looping aqua tree`)
                     let aquaTreeGeneral = item.fileContent as AquaTree
                     let aquaTree = reorderAquaTreeRevisionsProperties(aquaTreeGeneral)
                     let allHashes = Object.keys(aquaTree.revisions)
-                    console.log(`looping aqua tree allHashes ${allHashes}`)
+                    //  // console.log(`looping aqua tree allHashes ${allHashes}`)
                     if (allHashes.includes(referenceRevisin)) {
                         let genesisHash = getGenesisHash(aquaTree)!
-                        console.log(`include genesisHash ${genesisHash}`)
+                        // console.log(`include genesisHash ${genesisHash}`)
                         let genRevision = aquaTree.revisions[genesisHash]
                         name = genRevision["forms_name"]
 
@@ -701,7 +703,7 @@ export const ContractDocumentView: React.FC<ContractDocumentViewProps> = ({ setA
                         let imageUrl = findImageUrl(imgFileHash)
 
                         if (imageUrl) {
-                            console.log(` imageUrl ==  ${imageUrl}`)
+                            // console.log(` imageUrl ==  ${imageUrl}`)
                             const image = await fetchImage(imageUrl);
                             if (image) {
                                 imageDataUrl = image
@@ -729,59 +731,81 @@ export const ContractDocumentView: React.FC<ContractDocumentViewProps> = ({ setA
             }
 
 
+            let revisionSigPosition: Revision | null = null;
 
+            let revisionHashWithPositions = linkRevisionWithSignaturePositions.link_verification_hashes![0]
+            console.log(`revisionSigPosition === ${revisionHashWithPositions}`);
 
-            if (sigHash.revisionHashWithSignaturePositionCount == 0) {
+            for (let item of selectedFileInfo?.fileObject ?? []) {
+                let isAquaTreeItem = isAquaTree(item.fileContent)
+                if (isAquaTreeItem) {
+                    let aquaTreeGeneral = item.fileContent as AquaTree
+                    let aquaTree = reorderAquaTreeRevisionsProperties(aquaTreeGeneral)
+                    let allHashes = Object.keys(aquaTree.revisions)
+                    //  // console.log(`looping aqua tree allHashes ${allHashes}`)
+                    if (allHashes.includes(revisionHashWithPositions)) {
+                        revisionSigPosition = aquaTree.revisions[revisionHashWithPositions]
+                    }
+                }
+            }
 
-                let signatureDetails: SignatureData = {
-                    id: sigHash.revisionHashWithSignaturePosition, // Use the hash key instead of revision.revision_hash
-                    height: revisionSigPosition.forms_height_0,
-                    width: revisionSigPosition.forms_width_0,
-                    x: revisionSigPosition.forms_x_0,
-                    y: revisionSigPosition.forms_y_0,
-                    page: revisionSigPosition.forms_page_0,
-                    name: name,
-                    walletAddress: revisionMetMask.signature_wallet_address ?? "error",
-                    // ISSUE 2: created_at doesn't exist, use local_timestamp instead
-                    createdAt: new Date(
-                        revisionSigPosition.local_timestamp
-                            ? `${revisionSigPosition.local_timestamp.slice(0, 4)}-${revisionSigPosition.local_timestamp.slice(4, 6)}-${revisionSigPosition.local_timestamp.slice(6, 8)}T${revisionSigPosition.local_timestamp.slice(8, 10)}:${revisionSigPosition.local_timestamp.slice(10, 12)}:${revisionSigPosition.local_timestamp.slice(12, 14)}`
-                            : Date.now()
-                    ),
-                    dataUrl: imageDataUrl,
-                    hash: sigHash.revisionHashWithSignaturePosition, // Use the hash key
-                    isDragging: false,
-                    signatureId: sigHash.revisionHashWithSignaturePosition // Use the hash key
-                };
-                sigData.push(signatureDetails)
-            } else {
-                const randomArray = Array.from({ length: sigHash.revisionHashWithSignaturePositionCount + 1 }, () => Math.random());
-                for (let index = 0; index < randomArray.length; index++) {
+            if (revisionSigPosition != null) {
+                console.log(`revisionSigPosition ===== ${JSON.stringify(revisionSigPosition, null, 4)}`)
+                if (sigHash.revisionHashWithSignaturePositionCount == 0) {
+
                     let signatureDetails: SignatureData = {
-                        id: `${sigHash.revisionHashWithSignaturePosition}_${index}`, // Make unique IDs for multiple signatures
-                        height: revisionSigPosition[`forms_height_${index}`],
-                        width: revisionSigPosition[`forms_width_${index}`],
-                        x: revisionSigPosition[`forms_x_${index}`],
-                        y: revisionSigPosition[`forms_y_${index}`],
-                        page: revisionSigPosition[`forms_page_${index}`],
+                        id: sigHash.revisionHashWithSignaturePosition, // Use the hash key instead of revision.revision_hash
+                        height: revisionSigPosition.forms_height_0,
+                        width: revisionSigPosition.forms_width_0,
+                        x: revisionSigPosition.forms_x_0,
+                        y: revisionSigPosition.forms_y_0,
+                        page: revisionSigPosition.forms_page_0,
                         name: name,
                         walletAddress: revisionMetMask.signature_wallet_address ?? "error",
+                        // ISSUE 2: created_at doesn't exist, use local_timestamp instead
                         createdAt: new Date(
                             revisionSigPosition.local_timestamp
                                 ? `${revisionSigPosition.local_timestamp.slice(0, 4)}-${revisionSigPosition.local_timestamp.slice(4, 6)}-${revisionSigPosition.local_timestamp.slice(6, 8)}T${revisionSigPosition.local_timestamp.slice(8, 10)}:${revisionSigPosition.local_timestamp.slice(10, 12)}:${revisionSigPosition.local_timestamp.slice(12, 14)}`
                                 : Date.now()
                         ),
                         dataUrl: imageDataUrl,
-                        hash: sigHash.revisionHashWithSignaturePosition,
+                        hash: sigHash.revisionHashWithSignaturePosition, // Use the hash key
                         isDragging: false,
-                        signatureId: `${sigHash.revisionHashWithSignaturePosition}_${index}` // Make unique signature IDs
+                        signatureId: sigHash.revisionHashWithSignaturePosition // Use the hash key
                     };
                     sigData.push(signatureDetails)
+                } else {
+                    const randomArray = Array.from({ length: sigHash.revisionHashWithSignaturePositionCount + 1 }, () => Math.random());
+                    for (let index = 0; index < randomArray.length; index++) {
+                        // console.log(`Looping  ${index}`)
+                        let signatureDetails: SignatureData = {
+                            id: `${sigHash.revisionHashWithSignaturePosition}_${index}`, // Make unique IDs for multiple signatures
+                            height: revisionSigPosition[`forms_height_${index}`],
+                            width: revisionSigPosition[`forms_width_${index}`],
+                            x: revisionSigPosition[`forms_x_${index}`],
+                            y: revisionSigPosition[`forms_y_${index}`],
+                            page: revisionSigPosition[`forms_page_${index}`],
+                            name: name,
+                            walletAddress: revisionMetMask.signature_wallet_address ?? "error",
+                            createdAt: new Date(
+                                revisionSigPosition.local_timestamp
+                                    ? `${revisionSigPosition.local_timestamp.slice(0, 4)}-${revisionSigPosition.local_timestamp.slice(4, 6)}-${revisionSigPosition.local_timestamp.slice(6, 8)}T${revisionSigPosition.local_timestamp.slice(8, 10)}:${revisionSigPosition.local_timestamp.slice(10, 12)}:${revisionSigPosition.local_timestamp.slice(12, 14)}`
+                                    : Date.now()
+                            ),
+                            dataUrl: imageDataUrl,
+                            hash: sigHash.revisionHashWithSignaturePosition,
+                            isDragging: false,
+                            signatureId: `${sigHash.revisionHashWithSignaturePosition}_${index}` // Make unique signature IDs
+                        };
+                        sigData.push(signatureDetails)
+                    }
                 }
+            }else{
+                console.log(`signature positions not found   searchiong for gensis ${revisionHashWithPositions} `)
             }
         }
 
-        console.log(`sigData length  ${JSON.stringify(sigData, null, 4)}`)
+        // console.log(`sigData length  ${JSON.stringify(sigData, null, 4)}`)
         return sigData;
     }
 
@@ -794,12 +818,12 @@ export const ContractDocumentView: React.FC<ContractDocumentViewProps> = ({ setA
 
 
             let shouldLoad = shouldLoadSignatures()
-            console.log(`Should load ${shouldLoad + "="} ....`)
+            // console.log(`Should load ${shouldLoad + "="} ....`)
 
             if (shouldLoad) {
                 setSignaturesLoading(true);
                 const allSignatures: SignatureData[] = await loadSignatures();
-                console.log(`allSignatures ${allSignatures.length} --${JSON.stringify(allSignatures, null, 4)} `)
+                // console.log(`allSignatures ${allSignatures.length} --${JSON.stringify(allSignatures, null, 4)} `)
                 setSignatures(allSignatures);
                 setSignaturesLoading(false);
             }
@@ -919,7 +943,7 @@ export const ContractDocumentView: React.FC<ContractDocumentViewProps> = ({ setA
         }
 
 
-      
+
 
         const isUserSignatureIncluded = signatures.some((sig) => sig.walletAddress === session?.address);
 
@@ -936,7 +960,7 @@ export const ContractDocumentView: React.FC<ContractDocumentViewProps> = ({ setA
                         <Stack>
                             <Text fontWeight={700}>Signatures in document</Text>
                             {signatures.map((signature: SignatureData, index: number) => (
-                           
+
                                 <SignatureItem signature={signature} key={index} />
                             ))}
                         </Stack>

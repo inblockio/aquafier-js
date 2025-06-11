@@ -32,7 +32,7 @@ export async function createAquaTreeFromRevisions(
 
         }
 
-        // console.log(`🎾🎾🎾 All revision ${JSON.stringify(revisionData, null, 4)}`)
+        console.log(`🎾🎾🎾 All revision ${JSON.stringify(revisionData, null, 4)}`)
 
         let revisionPubKeyHashes = revisionData.map(revision => revision.pubkey_hash);
 
@@ -113,35 +113,15 @@ export async function createAquaTreeFromRevisions(
 // Helper functions
 
 async function getRevisionChain(latestRevisionHash: string): Promise<Revision[]> {
-    // Get the latest revision
+
+  
     const latestRevision = await prisma.revision.findFirst({
         where: {
-            pubkey_hash: {
-                contains: latestRevisionHash,
-                mode: 'insensitive'
-            }
+            pubkey_hash: latestRevisionHash
         }
     });
 
-    // const latestRevision = await prisma.revision.findFirst({
-    //     where: {
-    //         OR: [
-    //             {
-    //                 pubkey_hash: {
-    //                     contains: latestRevisionHash,
-    //                     mode: 'insensitive'
-    //                 }
-    //             },
-    //              {
-    //                 pubkey_hash: {
-    //                     contains: latestRevisionHash.split("_")[1] ?? "",
-    //                     mode: 'insensitive'
-    //                 }
-    //             }
-    //         ]
-
-    //     }
-    // });
+   
 
     if (!latestRevision) {
         return [];
@@ -203,6 +183,7 @@ type RevisionInfo =
     | null;
 
 export async function FetchRevisionInfo(hash: string, revision: Revision): Promise<RevisionInfo> {
+    console.log(`⚠️⚠️ hash ${hash} `)
     if (revision.revision_type == "signature") {
         return await prisma.signature.findFirst({
             where: {
@@ -426,7 +407,7 @@ async function processRevisionByType(
     url: string
 ): Promise<ProcessRevisionByTypeResult> {
     const revisionInfo = await FetchRevisionInfo(revision.pubkey_hash, revision);
-
+console.log(`revisionInfo = ${JSON.stringify(revisionInfo)}`)
     if (!revisionInfo && revision.revision_type !== "file") {
         console.log(`Revision info not found for ${revision.pubkey_hash}`);
         return { revisionData, aquaTree, fileObjects };
@@ -557,10 +538,7 @@ async function processLinkRevision(
     const linkedHash = linkData.link_verification_hashes[0];
     const linkedRevision = await prisma.revision.findFirst({
         where: {
-            pubkey_hash: {
-                contains: linkedHash,
-                mode: 'insensitive'
-            }
+            pubkey_hash: linkedHash
         }
     });
 

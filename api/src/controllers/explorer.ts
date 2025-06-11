@@ -351,7 +351,6 @@ export default async function explorerController(fastify: FastifyInstance) {
             return reply.code(403).send({ success: false, message: "Nounce  is invalid" });
         }
 
-
         // Get the host from the request headers
         const host = request.headers.host || `${getHost()}:${getPort()}`;
 
@@ -362,6 +361,7 @@ export default async function explorerController(fastify: FastifyInstance) {
         const url = `${protocol}://${host}`;
 
         const displayData = await getUserApiFileInfo(url, session.address)
+        
         return reply.code(200).send({
             success: true,
             message: 'Aqua tree saved successfully',
