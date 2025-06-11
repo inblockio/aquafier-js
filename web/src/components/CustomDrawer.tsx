@@ -13,6 +13,7 @@ import { useStore } from "zustand"
 import appStore from "../store"
 import { getFileHashFromUrl } from "../utils/functions";
 import { ApiFileInfo } from "../models/FileInfo"
+import { toaster } from "./chakra-ui/toaster"
 // import { toaster } from "./chakra-ui/toaster"
 
 
@@ -201,18 +202,32 @@ export const CompleteChainView = ({ callBack, selectedFileInfo }: ICompleteChain
                 }
             }
 
-            // Toast to warn the user if they are using default alchemykey
-            // if (user_profile?.alchemy_key == "") {
-            //     toaster.create({
-            //         description: `Please add your alchemy key to continue`,
-            //         type: "warning"
-            //     })
-            // }else if(user_profile?.alchemy_key == "ZaQtnup49WhU7fxrujVpkFdRz4JaFRtZ"){
-            //     toaster.create({
-            //         description: `You are using default alchemy key. Please update it in settings to get better results`,
-            //         type: "warning"
-            //     })
-            // }
+            let containsWitness= false
+            for(let item of revisionHashes){
+                let revisionItem = fileInfo.aquaTree.revisions[item]
+                if(revisionItem.revision_type=="witness"){
+                    containsWitness= true
+                    break;
+                }
+            }
+
+            if(containsWitness){
+// Toast to warn the user if they are using default alchemykey
+            if (user_profile?.alchemy_key == "") {
+                toaster.create({
+                    description: `Please add your alchemy key to avoid rate limiting`,
+                    type: "warning"
+                })
+            }else if(user_profile?.alchemy_key == "ZaQtnup49WhU7fxrujVpkFdRz4JaFRtZ"){
+                toaster.create({
+                    description: `You are using default alchemy key. Please update it in settings to get better results`,
+                    type: "warning"
+                })
+            }
+            }
+
+
+            
 
             // Process revisions in parallel where possible
             const verificationPromises = revisionHashes.map(async revisionHash => {

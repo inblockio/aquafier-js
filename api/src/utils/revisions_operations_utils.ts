@@ -198,7 +198,9 @@ export async function FetchRevisionInfo(hash: string, revision: Revision): Promi
         });
         console.log("Witness: ", res);
         if (res == null) {
-            throw new Error(`witness is null ${revision.revision_type}`);
+            // throw new Error(`witness is null ${revision.revision_type}`);
+             console.log(`☢️☢️ witness is null with hash ${hash}`);
+        return null;
         }
         return await prisma.witnessEvent.findFirst({
             where: {

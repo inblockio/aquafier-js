@@ -1200,6 +1200,28 @@ async function processSignatureRevision(revisionData: any, pubKeyHash: string) {
 }
 
 async function processWitnessRevision(revisionData: any, pubKeyHash: string) {
+
+    // First, create or update the WitnessEvent (the referenced table)
+    await prisma.witnessEvent.upsert({
+        where: { Witness_merkle_root: revisionData.witness_merkle_root },
+        update: {
+            Witness_timestamp: revisionData.witness_timestamp?.toString(),
+            Witness_network: revisionData.witness_network,
+            Witness_smart_contract_address: revisionData.witness_smart_contract_address,
+            Witness_transaction_hash: revisionData.witness_transaction_hash,
+            Witness_sender_account_address: revisionData.witness_sender_account_address
+        },
+        create: {
+            Witness_merkle_root: revisionData.witness_merkle_root,
+            Witness_timestamp: revisionData.witness_timestamp?.toString(),
+            Witness_network: revisionData.witness_network,
+            Witness_smart_contract_address: revisionData.witness_smart_contract_address,
+            Witness_transaction_hash: revisionData.witness_transaction_hash,
+            Witness_sender_account_address: revisionData.witness_sender_account_address
+        }
+    });
+
+    // Then, create or update the Witness record
     await prisma.witness.upsert({
         where: { hash: pubKeyHash },
         update: { reference_count: { increment: 1 } },
@@ -1209,26 +1231,35 @@ async function processWitnessRevision(revisionData: any, pubKeyHash: string) {
             reference_count: 1
         }
     });
+    // await prisma.witness.upsert({
+    //     where: { hash: pubKeyHash },
+    //     update: { reference_count: { increment: 1 } },
+    //     create: {
+    //         hash: pubKeyHash,
+    //         Witness_merkle_root: revisionData.witness_merkle_root,
+    //         reference_count: 1
+    //     }
+    // });
 
-    await prisma.witnessEvent.upsert({
-        where: { Witness_merkle_root: revisionData.witness_merkle_root! },
-        update: {
-            Witness_merkle_root: revisionData.witness_merkle_root!,
-            Witness_timestamp: revisionData.witness_timestamp?.toString(),
-            Witness_network: revisionData.witness_network,
-            Witness_smart_contract_address: revisionData.witness_smart_contract_address,
-            Witness_transaction_hash: revisionData.witness_transaction_hash,
-            Witness_sender_account_address: revisionData.witness_sender_account_address
-        },
-        create: {
-            Witness_merkle_root: revisionData.witness_merkle_root!,
-            Witness_timestamp: revisionData.witness_timestamp?.toString(),
-            Witness_network: revisionData.witness_network,
-            Witness_smart_contract_address: revisionData.witness_smart_contract_address,
-            Witness_transaction_hash: revisionData.witness_transaction_hash,
-            Witness_sender_account_address: revisionData.witness_sender_account_address
-        }
-    });
+    // await prisma.witnessEvent.upsert({
+    //     where: { Witness_merkle_root: revisionData.witness_merkle_root! },
+    //     update: {
+    //         Witness_merkle_root: revisionData.witness_merkle_root!,
+    //         Witness_timestamp: revisionData.witness_timestamp?.toString(),
+    //         Witness_network: revisionData.witness_network,
+    //         Witness_smart_contract_address: revisionData.witness_smart_contract_address,
+    //         Witness_transaction_hash: revisionData.witness_transaction_hash,
+    //         Witness_sender_account_address: revisionData.witness_sender_account_address
+    //     },
+    //     create: {
+    //         Witness_merkle_root: revisionData.witness_merkle_root!,
+    //         Witness_timestamp: revisionData.witness_timestamp?.toString(),
+    //         Witness_network: revisionData.witness_network,
+    //         Witness_smart_contract_address: revisionData.witness_smart_contract_address,
+    //         Witness_transaction_hash: revisionData.witness_transaction_hash,
+    //         Witness_sender_account_address: revisionData.witness_sender_account_address
+    //     }
+    // });
 }
 
 async function processFileRevision(revisionData: any, pubKeyHash: string, userAddress: string) {
