@@ -186,7 +186,7 @@ export function getAquaTreeFileName(aquaTree: AquaTree): string {
 }
 
 export function getAquaTreeFileObject(fileInfo: ApiFileInfo): FileObject | undefined {
-console.log(`getAquaTreeFileObject ${JSON.stringify(fileInfo, null, 4)}`)
+
     let mainAquaFileName = "";
     let mainAquaHash = "";
     // fetch the genesis 

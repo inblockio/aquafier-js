@@ -6,8 +6,8 @@ import {
     Center} from '@chakra-ui/react';
 // import { PDFDocument, rgb, StandardFonts } from 'pdf-lib';
 import { PDFJSViewer } from 'pdfjs-react-viewer';
-import { useColorMode } from '../../../components/chakra-ui/color-mode';
-import { SignatureData } from "../../../types/types"
+import { useColorMode } from '../../../../components/chakra-ui/color-mode';
+import { SignatureData } from "../../../../types/types"
 
 
 export const SignatureOverlay = ({ signature, currentPage, pdfMainContainerRef, handleDragStart }: { signature: SignatureData, currentPage: number, pdfMainContainerRef: React.RefObject<HTMLDivElement>, handleDragStart?: (e: React.MouseEvent | React.TouchEvent, id: string) => void }) => {

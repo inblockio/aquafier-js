@@ -7,20 +7,17 @@ import {
     Circle,
     Icon,
     VStack,
-    // HStack,
     Container,
     Heading
 } from '@chakra-ui/react';
-// import { Card } from '@chakra-ui/react';
-// import { FaCheck, FaQuestionCircle, FaBriefcase, FaBook, FaCoffee, FaAward, FaUser } from 'react-icons/fa';
 import { FaCheck, FaQuestionCircle, FaUser } from 'react-icons/fa';
 import { Alert } from "../../components/chakra-ui/alert"
 import appStore from '../../store';
 import { useStore } from "zustand"
 import { SummaryDetailsDisplayData, WorkFlowTimeLine } from '../../types/types';
 import { convertTemplateNameToTitle, getHighestFormIndex, isAquaTree, isWorkFlowData } from '../../utils/functions';
-import { ContractDocumentView } from './components/ContractDocument';
-import { ContractInformationView } from './components/ContractInformation';
+import { ContractDocumentView } from './ContractDocument/ContractDocument';
+import { ContractSummaryView } from './ContractSummary/ContractSummary';
 import { AquaTree, OrderRevisionInAquaTree, Revision } from 'aqua-js-sdk';
 
 
@@ -28,10 +25,8 @@ export default function WorkFlowPage() {
 
     const [activeStep, setActiveStep] = useState(1);
     const [timeLineTitle, setTimeLineTitle] = useState("");
-
     const [error, setError] = useState("");
     const [timeLineItems, setTimeLineItems] = useState<Array<WorkFlowTimeLine>>([]);
-    // const [isWorkflowCompleteAndValid, setIsWorkflowCompleteAndValid] = useState(false);
     const { selectedFileInfo, formTemplates } = useStore(appStore);
 
 
@@ -151,7 +146,7 @@ export default function WorkFlowPage() {
             items.push({
                 id: 1,
                 completed: true,
-                content: <ContractInformationView setActiveStep={(index) => {
+                content: <ContractSummaryView setActiveStep={(index) => {
                     setActiveStep(index)
                 }} updateDocumentIconInWorkflowTabs={(isWorkFlowOk) => {
                     console.log("=====################# updateDocumentIconInWorkflowTabs", isWorkFlowOk)

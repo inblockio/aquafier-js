@@ -6,16 +6,10 @@ import {
     Text,
     VStack,
     Heading,
-    // Stack,
     Spinner,
-    // Button,
     Span,
     Container
 } from '@chakra-ui/react';
-// import { Timeline } from "@chakra-ui/react"
-// import { Card } from '@chakra-ui/react';
-// import { FaCheck, FaQuestionCircle, FaBriefcase, FaBook, FaCoffee, FaAward, FaUser } from 'react-icons/fa';
-// import { Alert } from "../../../components/chakra-ui/alert"
 import appStore from '../../../store';
 import { useStore } from "zustand"
 import { ContractDocumentViewProps, SummaryDetailsDisplayData } from '../../../types/types';
@@ -23,18 +17,13 @@ import Aquafier, { AquaTree, FileObject, OrderRevisionInAquaTree, Revision } fro
 import { isAquaTree, timeToHumanFriendly, getHighestFormIndex, getFileName, getFileHashFromUrl, fetchFileData, isArrayBufferText } from '../../../utils/functions';
 
 import { ApiFileInfo } from '../../../models/FileInfo';
-// import { file } from 'jszip';
-// import { LuCheck, LuFile, LuPackage, LuShip } from 'react-icons/lu';
 import { IDrawerStatus, VerificationHashAndResult } from '../../../models/AquaTreeDetails';
-// import { ItemDetail } from '../../../components/ItemDetails';
-import ContractFirstPage from './ContractFirstPage';
+import ContractSummaryDetails from './ContractSummaryDetails';
 
 
 
 
-export const ContractInformationView: React.FC<ContractDocumentViewProps> = ({ setActiveStep, updateDocumentIconInWorkflowTabs }) => {
-
-
+export const ContractSummaryView: React.FC<ContractDocumentViewProps> = ({ setActiveStep, updateDocumentIconInWorkflowTabs }) => {
 
     const [isLoading, setIsLoading] = useState(true);
     const [signatureRevionHashesData, setSignatureRevionHashes] = useState<SummaryDetailsDisplayData[]>([])
@@ -527,7 +516,7 @@ export const ContractInformationView: React.FC<ContractDocumentViewProps> = ({ s
 
 
         return <Container maxWidth={"8xl"}>
-            <ContractFirstPage data={{
+            <ContractSummaryDetails data={{
                 name: fileNameData,
                 creationDate: timeToHumanFriendly(firstRevisionData?.local_timestamp, true),
                 creatorAddress: contractCreatorAddress,

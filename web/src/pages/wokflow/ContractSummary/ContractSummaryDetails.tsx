@@ -33,7 +33,7 @@ const DisplayWalletAddress = ({ walletAddress, enableNameResolution }: { walletA
   )
 }
 
-const ContractFirstPage = ({ data, goToSecondPage, enableNameResolution = false, isValidTree }: IContractWorkFlowFirstPage) => {
+const ContractSummaryDetails = ({ data, goToSecondPage, enableNameResolution = false, isValidTree }: IContractWorkFlowFirstPage) => {
 
   const mockContractData = data
 
@@ -288,4 +288,4 @@ const ContractFirstPage = ({ data, goToSecondPage, enableNameResolution = false,
   );
 };
 
-export default ContractFirstPage;
+export default ContractSummaryDetails;
