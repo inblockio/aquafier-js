@@ -196,7 +196,7 @@ export default async function revisionsController(fastify: FastifyInstance) {
 
 
             if(!revisionData.orginAddress){
-                 return reply.code(400).send({ success: false, message: "origin address not defined" });
+                 return reply.code(400).send({ success: false, message: "origin address not defined.." });
             }
 
 // Get the host from the request headers

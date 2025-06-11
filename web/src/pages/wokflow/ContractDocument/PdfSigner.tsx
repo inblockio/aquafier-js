@@ -1428,7 +1428,7 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ file, setActiveStep, documentSign
                                     // const signature = signatures.find((signature) => signature.walletAddress === session?.address);
                                     const signature = mySignatureData.find(sig => sig.hash === selectedSignatureId || sig.id === selectedSignatureId);
                                     if (!signature) {
-                                        return <div style={{ whiteSpace: "pre-wrap" }}>Signature not found  ${selectedSignatureId} </div>
+                                        return <div style={{ whiteSpace: "pre-wrap" }}>Signature not found  </div>
                                     }
 
                                     return signature ? (

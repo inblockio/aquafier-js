@@ -114,14 +114,14 @@ export async function createAquaTreeFromRevisions(
 
 async function getRevisionChain(latestRevisionHash: string): Promise<Revision[]> {
 
-  
+
     const latestRevision = await prisma.revision.findFirst({
         where: {
             pubkey_hash: latestRevisionHash
         }
     });
 
-   
+
 
     if (!latestRevision) {
         return [];
@@ -287,16 +287,16 @@ async function fetchAquaTreeFileData(pubKeyHashes: string[]): Promise<AquaTreeFi
             // if (fileNameData) {
 
 
-                let data: AquaTreeFileData = {
-                    name: fileNameData?.file_name ?? "File name not found",
-                    fileHash: fileIndex.file_hash,
-                    referenceCount: fileIndex.pubkey_hash.length,
-                    fileLocation: fileData?.file_location ?? "File location not found",
-                    pubKeyHash: pubKeyHash
+            let data: AquaTreeFileData = {
+                name: fileNameData?.file_name ?? "File name not found",
+                fileHash: fileIndex.file_hash,
+                referenceCount: fileIndex.pubkey_hash.length,
+                fileLocation: fileData?.file_location ?? "File location not found",
+                pubKeyHash: pubKeyHash
 
-                }
+            }
 
-                allData.push(data);
+            allData.push(data);
             // } else {
             //     console.log(`💣💣💣 File name not found for pubKeyHash ${pubKeyHash}`);
             // }
@@ -407,7 +407,7 @@ async function processRevisionByType(
     url: string
 ): Promise<ProcessRevisionByTypeResult> {
     const revisionInfo = await FetchRevisionInfo(revision.pubkey_hash, revision);
-console.log(`revisionInfo = ${JSON.stringify(revisionInfo)}`)
+    console.log(`revisionInfo = ${JSON.stringify(revisionInfo)}`)
     if (!revisionInfo && revision.revision_type !== "file") {
         console.log(`Revision info not found for ${revision.pubkey_hash}`);
         return { revisionData, aquaTree, fileObjects };
@@ -640,8 +640,13 @@ async function updateLinkRevisionFileIndex(revision: Revision,
 
     if (linkedAquaTreeDataGenesisHash == null) {
 
-        throw Error(`Expected genesis hash ${newPubKeyHash}  not to be null ${JSON.stringify(linkedAquaTreeData, null, 4)}`)
-
+        // throw Error(`Expected genesis hash ${newPubKeyHash}  not to be null ${JSON.stringify(linkedAquaTreeData, null, 4)}`)
+        console.log(`Expected genesis hash ${newPubKeyHash}  not to be null ${JSON.stringify(linkedAquaTreeData, null, 4)}`)
+        return {
+            aquaTree: aquaTree,
+            fileObjects: fileObjects,
+            revisionData: revisionData
+        };
 
     }
     let genesisPubKeyHash = newPubKeyHash
@@ -687,7 +692,7 @@ async function updateLinkRevisionFileIndex(revision: Revision,
                 }
             ];
         }
-    }else{
+    } else {
         throw Error(`Expected file not found  fileData.fileLocation`)
     }
 
@@ -696,14 +701,14 @@ async function updateLinkRevisionFileIndex(revision: Revision,
 
     // let existInFileObjects = updatedFileObjects.find((e) => e.fileName == aquaJsonFile)
     // if (!existInFileObjects) {
-        updatedFileObjects.push(
-            {
-                fileContent: linkedAquaTreeData,
-                fileName: aquaJsonFile, // file_hash as identifier
-                path: '',
-                fileSize: 0
-            }
-        )
+    updatedFileObjects.push(
+        {
+            fileContent: linkedAquaTreeData,
+            fileName: aquaJsonFile, // file_hash as identifier
+            path: '',
+            fileSize: 0
+        }
+    )
     // }
 
 

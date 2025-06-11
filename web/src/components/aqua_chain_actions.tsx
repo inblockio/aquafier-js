@@ -25,7 +25,7 @@ import { AquaJsonInZip, AquaNameWithHash } from "../models/Aqua"
 
 
 export const WitnessAquaChain = ({ apiFileInfo, backendUrl, nonce }: RevionOperation) => {
-    const { setFiles, metamaskAddress, selectedFileInfo, setSelectedFileInfo, user_profile } = useStore(appStore)
+    const { setFiles, metamaskAddress, selectedFileInfo, setSelectedFileInfo, user_profile, session } = useStore(appStore)
     const [witnessing, setWitnessing] = useState(false)
 
 
@@ -78,7 +78,7 @@ export const WitnessAquaChain = ({ apiFileInfo, backendUrl, nonce }: RevionOpera
                     const response = await axios.post(url, {
                         "revision": lastRevision,
                         "revisionHash": lastHash,
-
+                        "orginAddress": session?.address
                     }, {
                         headers: {
                             "nonce": nonce
@@ -185,7 +185,7 @@ export const SignAquaChain = ({ apiFileInfo, backendUrl, nonce }: RevionOperatio
                     const response = await axios.post(url, {
                         "revision": lastRevision,
                         "revisionHash": lastHash,
-
+                        "orginAddress": session?.address
                     }, {
                         headers: {
                             "nonce": nonce
@@ -944,7 +944,7 @@ export const LinkButton = ({ item, nonce }: IShareButton) => {
             const response = await axios.post(url, {
                 "revision": lastRevision,
                 "revisionHash": lastHash,
-
+                "orginAddress": session?.address
             }, {
                 headers: {
                     "nonce": nonce
