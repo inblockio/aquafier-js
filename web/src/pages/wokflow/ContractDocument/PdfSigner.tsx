@@ -33,7 +33,7 @@ import { useColorMode } from '../../../components/chakra-ui/color-mode';
 import { PdfControls } from '../../../components/FilePreview';
 import axios from 'axios';
 import { ApiFileInfo } from '../../../models/FileInfo';
-import { dataURLToFile, dummyCredential, ensureDomainUrlHasSSL, estimateFileSize, fetchFiles, getAquaTreeFileName, getGenesisHash, getLatestApiFileInfObject, getRandomNumber, timeStampToDateObject } from '../../../utils/functions';
+import { dataURLToFile, dummyCredential, ensureDomainUrlHasSSL, estimateFileSize, fetchFiles, getAquaTreeFileName, getGenesisHash, getRandomNumber, timeStampToDateObject } from '../../../utils/functions';
 import Aquafier, { AquaTree, AquaTreeWrapper, FileObject, getAquaTreeFileObject } from 'aqua-js-sdk';
 import { SignatureData } from "../../../types/types"
 import { LuTrash } from 'react-icons/lu';
@@ -417,7 +417,7 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ file, setActiveStep, documentSign
 
 
     const submitSignatureData = async (signaturePosition: SignatureData[]) => {
-       
+
 
         setSubmittingSignatureData(true);
 
@@ -443,7 +443,7 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ file, setActiveStep, documentSign
             const linkedAquaTreeWithSignature = await linkSignatureTreeToDocument(
                 aquafier,
                 linkedAquaTreeWithUserSignatureData,
-       
+
             );
             if (!linkedAquaTreeWithSignature) return;
 
@@ -1317,7 +1317,7 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ file, setActiveStep, documentSign
             }
 
 
-            console.log(`Signatures length ${apiSigntures.length} now update state`)
+            console.log(`Signatures length ${apiSigntures.length} now update state ${JSON.stringify(apiSigntures)}`)
 
 
             // Update mySignatureData with the fetched signatures
@@ -1325,15 +1325,31 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ file, setActiveStep, documentSign
 
 
             if (selectSignature) {
+                let latestObject: SignatureData | null = null;
+                let latestTimestamp: Date | null = null;
                 if (apiSigntures.length > 0) {
-                    let latestSignature = getLatestApiFileInfObject(userSignaturesApiInfo);
-                    if (latestSignature) {
-                        let genHash = getGenesisHash(latestSignature.aquaTree!!);
-                        console.log(`selectSignature genHash ${genHash} now update state`)
-                        setSelectedSignatureId(genHash);
-                    }
+
+                    for (const obj of apiSigntures) {
+
+                        if (latestTimestamp == null) {
+                            latestTimestamp = obj.createdAt
+                            latestObject = obj;
+                        } else {
+                            if (obj.createdAt > latestTimestamp) {
+                                latestTimestamp = obj.createdAt;
+                                latestObject = obj;
+                            }
+                        }
+                    };
+                }
+
+                if (latestObject != null) {
+                    setSelectedSignatureId(latestObject.hash)
                 }
             }
+
+
+
 
 
 
@@ -1847,7 +1863,6 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ file, setActiveStep, documentSign
     // Effect to update signature positions when window is resized
     useEffect(() => {
 
-        loadUserSignatures(true)
 
 
 
@@ -1924,6 +1939,10 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ file, setActiveStep, documentSign
             })()
         }
 
+
+        (async () => {
+            await loadUserSignatures(true)
+        })()
 
 
         const handleResize = () => {

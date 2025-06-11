@@ -551,7 +551,7 @@ export const ContractSummaryView: React.FC<ContractDocumentViewProps> = ({ setAc
                         return ({
                             type: "signed" as any,
                             address: singatureRevisionItem && singatureRevisionItem.signature_wallet_address ?  singatureRevisionItem.signature_wallet_address  : "",
-                            timestamp: timeToHumanFriendly(singatureRevisionItem.local_timestamp, true),
+                            timestamp:singatureRevisionItem && singatureRevisionItem.local_timestamp ? timeToHumanFriendly(singatureRevisionItem.local_timestamp, true) : "time   error",
                             // details: "Document sample-local-pdf.pdf was selected for signing",
                         })
                     }),
