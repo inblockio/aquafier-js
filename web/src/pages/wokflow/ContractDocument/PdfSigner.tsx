@@ -10,14 +10,8 @@ import {
     Slider,
     IconButton,
     FieldLabel,
-    Grid,
-    GridItem,
-    Center,
     Container,
-    Spinner,
-    List,
-    Group
-} from '@chakra-ui/react';
+    Spinner} from '@chakra-ui/react';
 import { useBoolean } from '@chakra-ui/hooks';
 // import { PDFDocument, rgb, StandardFonts } from 'pdf-lib';
 import { PDFDocument } from 'pdf-lib';
@@ -28,17 +22,16 @@ import { useStore } from "zustand";
 import { toaster } from '../../../components/chakra-ui/toaster';
 import { Field } from '../../../components/chakra-ui/field';
 import { DialogBody, DialogContent, DialogHeader, DialogRoot } from '../../../components/chakra-ui/dialog';
-import { PDFJSViewer } from 'pdfjs-react-viewer';
 import { useColorMode } from '../../../components/chakra-ui/color-mode';
-import { PdfControls } from '../../../components/FilePreview';
+// import { PdfControls } from '../../../components/FilePreview';
 import axios from 'axios';
 import { ApiFileInfo } from '../../../models/FileInfo';
 import { dataURLToFile, dummyCredential, ensureDomainUrlHasSSL, estimateFileSize, fetchFiles, getAquaTreeFileName, getGenesisHash, getRandomNumber, timeStampToDateObject } from '../../../utils/functions';
 import Aquafier, { AquaTree, AquaTreeWrapper, FileObject, getAquaTreeFileObject } from 'aqua-js-sdk';
 import { SignatureData } from "../../../types/types"
 import { LuTrash } from 'react-icons/lu';
-import { SignatureOverlay, SimpleSignatureOverlay } from './components/signature_overlay';
 import { useNavigate } from 'react-router-dom';
+import SignerPage from './signer/SignerPage';
 
 
 
@@ -54,22 +47,21 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ file, setActiveStep, documentSign
 
     const { formTemplates, systemFileInfo, selectedFileInfo, setSelectedFileInfo, setFiles } = useStore(appStore)
     // State for PDF document
-    const [pdfFile, setPdfFile] = useState<File | null>(file);
-    const [pdfUrl, setPdfUrl] = useState<string | null>(null);
+    const [_pdfFile, setPdfFile] = useState<File | null>(file);
+    const [_pdfUrl, setPdfUrl] = useState<string | null>(null);
     const [_pdfDoc, setPdfDoc] = useState<PDFDocument | null>(null);
     const [creatingUserSignature, setCreatingUserSignature] = useState<boolean>(false);
-    const [signers, setSigners] = useState<string[]>([]);
-    const [allSignersBeforeMe, setAllSignersBeforeMe] = useState<string[]>([]);
-    const [userCanSign, setUserCanSign] = useState<boolean>(false);
+    const [_signers, setSigners] = useState<string[]>([]);
+    const [_allSignersBeforeMe, setAllSignersBeforeMe] = useState<string[]>([]);
+    const [_userCanSign, setUserCanSign] = useState<boolean>(false);
 
     // const [numPages, setNumPages] = useState<number>(0);
-    const [currentPage, setCurrentPage] = useState<number>(1);
+    // const [currentPage, setCurrentPage] = useState<number>(1);
 
     // State for signatures
     const signatureRef = useRef<SignatureCanvas | null>(null);
     const [mySignaturesAquaTree, setMySignaturesAquaTree] = useState<Array<ApiFileInfo>>([]);
     const [mySignatureData, setMySignatureData] = useState<Array<SignatureData>>([]);
-
 
     const [signaturesInDocument, setSignaturesInDocument] = useState<SignatureData[]>(documentSignatures || []);
 
@@ -90,7 +82,7 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ file, setActiveStep, documentSign
     const { session, backend_url } = useStore(appStore);
 
     // PDF viewer container ref
-    const pdfContainerRef = useRef<HTMLDivElement>(null);
+    // const pdfContainerRef = useRef<HTMLDivElement>(null);
     const pdfMainContainerRef = useRef<HTMLDivElement>(null);
 
 
@@ -152,7 +144,7 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ file, setActiveStep, documentSign
         const signForm: { [key: string]: string | number } = {};
 
         signaturePosition.forEach((signaturePositionItem, index) => {
-            const pageIndex = signaturePositionItem.page + 1;
+            const pageIndex = signaturePositionItem.page;
             signForm[`x_${index}`] = parseFloat(signaturePositionItem.x.toFixed(16));
             signForm[`y_${index}`] = parseFloat(signaturePositionItem.y.toFixed(16));
             signForm[`page_${index}`] = pageIndex.toString();
@@ -418,7 +410,6 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ file, setActiveStep, documentSign
 
     const submitSignatureData = async (signaturePosition: SignatureData[]) => {
 
-
         setSubmittingSignatureData(true);
 
         try {
@@ -480,42 +471,6 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ file, setActiveStep, documentSign
             showError('An unexpected error occurred during signature submission');
         } finally {
             setSubmittingSignatureData(false);
-        }
-    };
-
-
-    // Handle file upload
-    const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-        const file = e.target.files?.[0];
-        if (file) {
-            try {
-                setPdfFile(file);
-
-                // Create object URL for display
-                const fileUrl = URL.createObjectURL(file);
-                setPdfUrl(fileUrl);
-
-                // Load PDF document using pdf-lib
-                const arrayBuffer = await file.arrayBuffer();
-                const pdfDoc = await PDFDocument.load(arrayBuffer);
-                setPdfDoc(pdfDoc);
-                // setNumPages(pdfDoc.getPageCount());
-                // setCurrentPage(1);
-
-                toaster.create({
-                    title: "PDF loaded successfully",
-                    type: "success",
-                    duration: 3000,
-                });
-            } catch (error) {
-                console.error("Error loading PDF:", error);
-                toaster.create({
-                    title: "Error loading PDF",
-                    description: "Please try another file",
-                    type: "error",
-                    duration: 3000,
-                });
-            }
         }
     };
 
@@ -1020,100 +975,100 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ file, setActiveStep, documentSign
     }
 
     // Handle click on PDF to place signature
-    const handlePdfClick = async (e: React.MouseEvent<HTMLDivElement>) => {
-        if (!placingSignature || !pdfMainContainerRef.current || !selectedSignatureId) return;
+    // const handlePdfClick = async (e: React.MouseEvent<HTMLDivElement>) => {
+    //     if (!placingSignature || !pdfMainContainerRef.current || !selectedSignatureId) return;
 
-        // const selectedSignature = mySignaturesAquaTree.find(sig => getGenesisHash(sig.aquaTree!!) === selectedSignatureId);
-        // if (!selectedSignature) return;
+    //     // const selectedSignature = mySignaturesAquaTree.find(sig => getGenesisHash(sig.aquaTree!!) === selectedSignatureId);
+    //     // if (!selectedSignature) return;
 
-        // Get the PDF container dimensions
-        const rect = pdfMainContainerRef.current.getBoundingClientRect();
+    //     // Get the PDF container dimensions
+    //     const rect = pdfMainContainerRef.current.getBoundingClientRect();
 
-        // Find the actual PDF element within the container
-        const pdfElement = pdfMainContainerRef.current.querySelector('.react-pdf__Page');
-        const pdfRect = pdfElement ? pdfElement.getBoundingClientRect() : rect;
+    //     // Find the actual PDF element within the container
+    //     const pdfElement = pdfMainContainerRef.current.querySelector('.react-pdf__Page');
+    //     const pdfRect = pdfElement ? pdfElement.getBoundingClientRect() : rect;
 
-        // Calculate position relative to the PDF element, not the container
-        const x = e.clientX - pdfRect.left;
-        const y = e.clientY - pdfRect.top;
+    //     // Calculate position relative to the PDF element, not the container
+    //     const x = e.clientX - pdfRect.left;
+    //     const y = e.clientY - pdfRect.top;
 
-        // Calculate relative position (0-1) for PDF coordinates
-        const relativeX = x / pdfRect.width;
-        const relativeY = 1 - (y / pdfRect.height); // Invert Y for PDF coordinates
+    //     // Calculate relative position (0-1) for PDF coordinates
+    //     const relativeX = x / pdfRect.width;
+    //     const relativeY = 1 - (y / pdfRect.height); // Invert Y for PDF coordinates
 
-        // Calculate width and height relative to PDF
-        const relativeWidth = signatureSize / pdfRect.width;
-        const relativeHeight = (signatureSize / 2) / pdfRect.height;
+    //     // Calculate width and height relative to PDF
+    //     const relativeWidth = signatureSize / pdfRect.width;
+    //     const relativeHeight = (signatureSize / 2) / pdfRect.height;
 
 
-        // console.log("Selected signature aqua tree is: ", selectedSignatureAquaTree)
+    //     // console.log("Selected signature aqua tree is: ", selectedSignatureAquaTree)
 
-        let selectedSignatureAquaTree = mySignaturesAquaTree.find((item) => getGenesisHash(item.aquaTree!!) == selectedSignatureId)
+    //     let selectedSignatureAquaTree = mySignaturesAquaTree.find((item) => getGenesisHash(item.aquaTree!!) == selectedSignatureId)
 
-        if (!selectedSignatureAquaTree) {
+    //     if (!selectedSignatureAquaTree) {
 
-            toaster.create({
-                title: "Selected siignature not found",
-                type: "error",
-                duration: 3000,
-            });
-            return
-        }
-        let genesisHash = getGenesisHash(selectedSignatureAquaTree?.aquaTree!!)
-        let genesisFilename = selectedSignatureAquaTree?.aquaTree?.file_index[genesisHash!!]
-        let fileobject = selectedSignatureAquaTree?.fileObject.find(file => file.fileName === genesisFilename!!)
+    //         toaster.create({
+    //             title: "Selected siignature not found",
+    //             type: "error",
+    //             duration: 3000,
+    //         });
+    //         return
+    //     }
+    //     let genesisHash = getGenesisHash(selectedSignatureAquaTree?.aquaTree!!)
+    //     let genesisFilename = selectedSignatureAquaTree?.aquaTree?.file_index[genesisHash!!]
+    //     let fileobject = selectedSignatureAquaTree?.fileObject.find(file => file.fileName === genesisFilename!!)
 
-        if (!fileobject) {
-            console.error("File object not found for signature:", selectedSignatureId);
-            throw Error("File object not found for signature: " + selectedSignatureId);
-        }
+    //     if (!fileobject) {
+    //         console.error("File object not found for signature:", selectedSignatureId);
+    //         throw Error("File object not found for signature: " + selectedSignatureId);
+    //     }
 
-        let mySignatureDataItem = mySignatureData.find((e) => e.hash == genesisHash)
-        if (!selectedSignatureAquaTree) {
+    //     let mySignatureDataItem = mySignatureData.find((e) => e.hash == genesisHash)
+    //     if (!selectedSignatureAquaTree) {
 
-            toaster.create({
-                title: "Selected siignature data not found",
-                type: "error",
-                duration: 3000,
-            });
-            return
-        }
-        const newPosition: SignatureData = {
-            id: crypto.randomUUID(),
-            page: currentPage - 1,
-            x: relativeX,
-            y: relativeY,
-            width: relativeWidth,
-            height: relativeHeight,
-            signatureId: selectedSignatureId,
-            hash: genesisHash!!,
-            name: selectedSignatureAquaTree?.aquaTree?.revisions[genesisHash!!]?.forms_name,
-            walletAddress: selectedSignatureAquaTree?.aquaTree?.revisions[genesisHash!!]?.forms_wallet_address,
-            dataUrl: mySignatureDataItem!.dataUrl,
-            createdAt: timeStampToDateObject(selectedFileInfo?.aquaTree?.revisions[genesisHash!!]?.local_timestamp!!) ?? new Date()
-        };
+    //         toaster.create({
+    //             title: "Selected siignature data not found",
+    //             type: "error",
+    //             duration: 3000,
+    //         });
+    //         return
+    //     }
+    //     const newPosition: SignatureData = {
+    //         id: crypto.randomUUID(),
+    //         page: currentPage - 1,
+    //         x: relativeX,
+    //         y: relativeY,
+    //         width: relativeWidth,
+    //         height: relativeHeight,
+    //         signatureId: selectedSignatureId,
+    //         hash: genesisHash!!,
+    //         name: selectedSignatureAquaTree?.aquaTree?.revisions[genesisHash!!]?.forms_name,
+    //         walletAddress: selectedSignatureAquaTree?.aquaTree?.revisions[genesisHash!!]?.forms_wallet_address,
+    //         dataUrl: mySignatureDataItem!.dataUrl,
+    //         createdAt: timeStampToDateObject(selectedFileInfo?.aquaTree?.revisions[genesisHash!!]?.local_timestamp!!) ?? new Date()
+    //     };
 
-        setSignaturePositions(prev => [...prev, newPosition]);
-        setPlacingSignature(false);
+    //     setSignaturePositions(prev => [...prev, newPosition]);
+    //     setPlacingSignature(false);
 
-        toaster.create({
-            title: "Signature placed",
-            description: "You can drag the signature to adjust its position",
-            type: "success",
-            duration: 3000,
-        });
-    };
+    //     toaster.create({
+    //         title: "Signature placed",
+    //         description: "You can drag the signature to adjust its position",
+    //         type: "success",
+    //         duration: 3000,
+    //     });
+    // };
 
 
     // Handle signature dragging
     const [activeDragId, setActiveDragId] = useState<string | null>(null);
     const [isDragging, setIsDragging] = useBoolean(false);
 
-    const handleDragStart = (e: React.MouseEvent | React.TouchEvent, id: string) => {
-        e.stopPropagation();
-        setActiveDragId(id);
-        setIsDragging.on();
-    };
+    // const handleDragStart = (e: React.MouseEvent | React.TouchEvent, id: string) => {
+    //     e.stopPropagation();
+    //     setActiveDragId(id);
+    //     setIsDragging.on();
+    // };
 
     // Helper function to get position from either mouse or touch event
     const getEventPosition = (e: MouseEvent | TouchEvent) => {
@@ -1187,9 +1142,9 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ file, setActiveStep, documentSign
 
 
     // Component for signature display on PDF
-    const handlePageChange = (pageNumber: number, _totalPages: number) => {
-        setCurrentPage(pageNumber);
-    };
+    // const handlePageChange = (pageNumber: number, _totalPages: number) => {
+    //     setCurrentPage(pageNumber);
+    // };
 
     const loadUserSignatures = async (selectSignature: boolean = false) => {
 
@@ -1282,7 +1237,6 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ file, setActiveStep, documentSign
                     console.log(` 🤫🤫 skip signature as its not mine`)
                     continue
                 }
-                console.log(`&&& signatureImageName ${signatureImageName} Data ${JSON.stringify(signatureImageObject, null, 4)}`)
 
                 let fileContentUrl = signatureImageObject.fileContent
 
@@ -1359,61 +1313,61 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ file, setActiveStep, documentSign
     }
 
 
-    const signatureSideBar = () => {
+    // const signatureSideBar = () => {
 
 
-        if (signers.length == 0) {
-            return <Text>Signers for  document workflow not found</Text>
-        }
+    //     if (signers.length == 0) {
+    //         return <Text>Signers for  document workflow not found</Text>
+    //     }
 
 
-        if (!signers.includes(session!.address)) {
-            return <Group>
-                <Text>Signers</Text>
-                <List.Root>
-                    {
-                        signers.map((e) => {
-                            return <List.Item>{e}</List.Item>
-                        })
-                    }
+    //     if (!signers.includes(session!.address)) {
+    //         return <Group>
+    //             <Text>Signers</Text>
+    //             <List.Root>
+    //                 {
+    //                     signers.map((e) => {
+    //                         return <List.Item>{e}</List.Item>
+    //                     })
+    //                 }
 
-                </List.Root>
-            </Group>
-        }
-
-
-        if (allSignersBeforeMe.length > 0) {
-            return <Stack
-                gap={4}
-                align="stretch"
-                p={4}
-                border="1px solid"
-                borderColor={colorMode === "dark" ? "gray.800" : "gray.100"}
-                borderRadius="md"
-            >
-                <Text fontSize={'md'} >The following wallet address need to sign before you can. </Text>
-
-                <List.Root as="ol" listStyle="decimal">
-                    {
-                        allSignersBeforeMe.map((e) => {
-                            return <List.Item>{e}</List.Item>
-                        })
-                    }
-                </List.Root>
+    //             </List.Root>
+    //         </Group>
+    //     }
 
 
+    //     if (allSignersBeforeMe.length > 0) {
+    //         return <Stack
+    //             gap={4}
+    //             align="stretch"
+    //             p={4}
+    //             border="1px solid"
+    //             borderColor={colorMode === "dark" ? "gray.800" : "gray.100"}
+    //             borderRadius="md"
+    //         >
+    //             <Text fontSize={'md'} >The following wallet address need to sign before you can. </Text>
 
-            </Stack>
-        }
+    //             <List.Root as="ol" listStyle="decimal">
+    //                 {
+    //                     allSignersBeforeMe.map((e) => {
+    //                         return <List.Item>{e}</List.Item>
+    //                     })
+    //                 }
+    //             </List.Root>
 
 
 
-        return <GridItem colSpan={{ base: 12, md: 1 }} h={{ base: "fit-content", md: "100%" }} overflow={{ base: "hidden", md: "auto" }}>
-            {/* Signature tools */}
-            {userSignatureDetails()}
-        </GridItem>
+    //         </Stack>
+    //     }
 
-    }
+
+
+    //     return <GridItem colSpan={{ base: 12, md: 1 }} h={{ base: "fit-content", md: "100%" }} overflow={{ base: "hidden", md: "auto" }}>
+    //         {/* Signature tools */}
+    //         {userSignatureDetails()}
+    //     </GridItem>
+
+    // }
 
     const userSignatureDetails = () => {
 
@@ -1677,7 +1631,7 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ file, setActiveStep, documentSign
             Download Signed PDF
         </Button> */}
 
-            <Button
+            {/* <Button
                 colorPalette={'green'} variant={'solid'}
                 colorScheme="white"
                 disabled={submittingSignatureData}
@@ -1696,8 +1650,21 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ file, setActiveStep, documentSign
                 }}
             >
                 Sign document
-            </Button>
+            </Button> */}
         </Stack>
+    }
+
+    const handleSignatureSubmission = async () => {
+        if (signaturePositions.length == 0) {
+
+            toaster.create({
+                description: `No signature detected in document`,
+                type: "error"
+            })
+            return
+        }
+        console.log("before sumbb: ", signaturePositions)
+        await submitSignatureData(signaturePositions)
     }
 
     // const _handleCreateSignatureData = async () => {
@@ -1968,35 +1935,36 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ file, setActiveStep, documentSign
 
 
     return (
-        <Container maxW="container.xl" py={"6"} h={"calc(100vh - 70px)"} overflow={{ base: "scroll", md: "hidden" }}>
-            <Heading mb={5}>PDF Signer</Heading>
-
-            {/* File upload section */}
-            {pdfFile == null ? <Stack gap={4} align="stretch" mb={6} >
-                <Field>
-                    <FieldLabel>Upload PDF Document</FieldLabel>
-                    <Input
-                        type="file"
-                        onChange={handleFileUpload}
-                        p={1}
-                    />
-                </Field>
-
-                {/* todo fix me */}
-                {/* {pdfFile  != null ?  
-                    <Text>
-                        File: {pdfFile.name} ({Math.round(pdfFile!.size / 1024)} KB)
-                    </Text>
-                : <></>} */}
-            </Stack> : <></>}
+        <Container fluid h={"calc(100vh - 70px)"} overflow={{ base: "scroll", md: "hidden" }}>
+            <Box h="60px" display={"flex"} alignItems={"center"}>
+                <Heading>PDF Signer</Heading>
+            </Box>
 
             {/* PDF viewer and signature tools */}
-            {pdfUrl && (
+            <Box h={"calc(100% - 60px)"}>
+                {
+                    file ? (
+                        <SignerPage
+                            file={file}
+                            mySignatures={mySignatureData}
+                            displayUserSignatures={userSignatureDetails}
+                            selectSignature={(id: string) => setSelectedSignatureId(id)}
+                            selectedSignatureHash={selectedSignatureId}
+                            onAnnotationUpdate={(positions: SignatureData[]) => setSignaturePositions(positions)}
+                            handleSignatureSubmission={handleSignatureSubmission}
+                            submittingSignatureData={submittingSignatureData}
+                            signaturesInDocument={signaturesInDocument}
+                        />
+                    ) : null
+                }
+            </Box>
+
+            {/* {pdfUrl && (
                 <Grid templateColumns="repeat(4, 1fr)" gap="6"
                     h={{ base: "fit-content", md: "calc(100vh - 120px - 150px)" }} overflow={{ base: "scroll", md: "hidden" }}
                 >
-                    {/* PDF viewer */}
-                    <GridItem colSpan={{ base: 12, md: userCanSign ? 3 : 4 }} h={"100%"} overflow={"scroll"} >
+                    <SignerPage file={file} setActiveStep={setActiveStep}  />
+                    <GridItem display={"none"} colSpan={{ base: 12, md: userCanSign ? 3 : 4 }} h={"100%"} overflow={"scroll"} >
                         <Box
                             position="relative"
                             border="1px solid"
@@ -2010,6 +1978,7 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ file, setActiveStep, documentSign
                         >
                             <Center>
                                 <Box ref={pdfMainContainerRef} w={'fit-content'}>
+                                    fadsfadsfds
                                     <PDFJSViewer
                                         pdfUrl={pdfUrl}
                                         onPageChange={handlePageChange}
@@ -2019,7 +1988,6 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ file, setActiveStep, documentSign
                                 </Box>
                             </Center>
 
-                            {/* Signature overlays */}
                             {signaturePositions.map((position, index) => {
 
                                 console.log(`@@@@@@@@@@@@@@@@@ 7777  Signature position ${JSON.stringify(position, null, 4)}`)
@@ -2029,8 +1997,6 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ file, setActiveStep, documentSign
                                     pdfMainContainerRef={pdfMainContainerRef}
                                     handleDragStart={handleDragStart}
                                 />
-
-
                             })}
 
                             {signaturesInDocument?.map((signature, index) => (
@@ -2042,7 +2008,7 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ file, setActiveStep, documentSign
 
                     {signatureSideBar()}
                 </Grid>
-            )}
+            )} */}
 
             {/* Signature drawing modal */}
             <DialogRoot open={isOpen}

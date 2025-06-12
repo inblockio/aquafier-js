@@ -1,18 +1,21 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
     Box,
     Text,
     Stack,
-    Center} from '@chakra-ui/react';
+} from '@chakra-ui/react';
 // import { PDFDocument, rgb, StandardFonts } from 'pdf-lib';
-import { PDFJSViewer } from 'pdfjs-react-viewer';
+// import { PDFJSViewer } from 'pdfjs-react-viewer';
 import { useColorMode } from '../../../../components/chakra-ui/color-mode';
 import { SignatureData } from "../../../../types/types"
+import { EasyPDFRenderer } from '../signer/SignerPage';
+import { handleLoadFromUrl } from '../../../../utils/functions';
+import { toaster } from '../../../../components/chakra-ui/toaster';
 
 
 export const SignatureOverlay = ({ signature, currentPage, pdfMainContainerRef, handleDragStart }: { signature: SignatureData, currentPage: number, pdfMainContainerRef: React.RefObject<HTMLDivElement>, handleDragStart?: (e: React.MouseEvent | React.TouchEvent, id: string) => void }) => {
     if (!pdfMainContainerRef) return null;
-    if (signature.page !== currentPage - 1 || !signature.signatureId) return null;
+    if (signature.page !== currentPage || !signature.signatureId) return null;
 
     // console.log(`Signature overlay ${JSON.stringify(position, null, 2)} ---- ${JSON.stringify(signatures, null, 2)}`);
     // const signature = signatures.find(sig => sig.id === position.signatureId);
@@ -135,7 +138,24 @@ export const SimpleSignatureOverlay = ({ signature, currentPage }: { signature: 
 
 export const PDFDisplayWithJustSimpleOverlay = ({ pdfUrl, signatures }: { pdfUrl: string, signatures: SignatureData[] }) => {
     const { colorMode } = useColorMode();
-    const [currentPage, setCurrentPage] = useState<number>(1);
+    const [pdfFile, setPdfFile] = useState<File | null>(null);
+
+    useEffect(() => {
+        const loadPdf = async () => {
+            try {
+                const result = await handleLoadFromUrl(pdfUrl, "Contract document.pdf", toaster);
+                if (!result.error) {
+                    setPdfFile(result.file);
+                }
+            } catch (error) {
+                console.error("Error loading PDF:", error);
+            }
+        };
+        loadPdf();
+
+    }, [pdfUrl]);
+
+    if (!pdfFile) return <p>Loading PDF...</p>;
 
     return (
         <Box
@@ -145,28 +165,26 @@ export const PDFDisplayWithJustSimpleOverlay = ({ pdfUrl, signatures }: { pdfUrl
             borderRadius="md"
             py={"4"}
         >
-            <Center>
-                <Box w={'fit-content'}>
-                    <PDFJSViewer
-                        pdfUrl={pdfUrl}
-                        onPageChange={(page) => {
-                            setCurrentPage(page)
-                        }}
-                    />
-                </Box>
-            </Center>
+            <EasyPDFRenderer
+                pdfFile={pdfFile}
+                annotations={signatures.map((signature) => ({
+                    // ...signature,
+                    type: "profile" as const,
+                    imageAlt: signature.name,
+                    rotation: 0,
+                    imageSrc: signature.dataUrl,
+                    imageWidth: "140px",
+                    imageHeight: "80px",
+                    page: parseInt(signature.page.toString()),
+                    "id": signature.id,
+                    "x": signature.x,
+                    "y": signature.y,
+                    "name": signature.name,
+                    "walletAddress": signature.walletAddress,
 
-            {/* Signature overlays */}
-            {signatures.map((signature, index) => (
-                <>
-                    {
-                        Number(currentPage) === Number(signature.page) ? (
-                            <SimpleSignatureOverlay key={index} signature={signature} currentPage={currentPage}
-                            />
-                        ) : <Text>fixxxxxxxxx {currentPage} -- ${JSON.stringify(signature, null, 4)+"--"}</Text>
-                    }
-                </>
-            ))}
+                }))}
+            />
         </Box>
     )
 }
+

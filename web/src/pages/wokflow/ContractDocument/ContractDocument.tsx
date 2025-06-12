@@ -24,8 +24,6 @@ import SignatureItem from '../../../components/pdf/SignatureItem';
 
 
 
-
-
 export const ContractDocumentView: React.FC<ContractDocumentViewProps> = ({ setActiveStep }) => {
 
 
@@ -39,7 +37,7 @@ export const ContractDocumentView: React.FC<ContractDocumentViewProps> = ({ setA
     // const [userCanSign, setUserCanSign] = useState<boolean>(false);
     // const [authorizedSigners, setAuthorizedSigners] = useState<string[]>([]);
     const { selectedFileInfo, session } = useStore(appStore);
-   
+
 
 
     useEffect(() => {
@@ -323,10 +321,10 @@ export const ContractDocumentView: React.FC<ContractDocumentViewProps> = ({ setA
                         sigData.push(signatureDetails)
                     }
                 }
-            }else{
+            } else {
                 console.log(`signature positions not found   searchiong for gensis ${revisionHashWithPositions} `)
                 // we try with fetching the image 
-            //  ......    
+                //  ......    
             }
         }
 
@@ -348,7 +346,7 @@ export const ContractDocumentView: React.FC<ContractDocumentViewProps> = ({ setA
             if (shouldLoad) {
                 setSignaturesLoading(true);
                 const allSignatures: SignatureData[] = await loadSignatures();
-                
+
                 setSignatures(allSignatures);
                 setSignaturesLoading(false);
             }
@@ -492,11 +490,11 @@ export const ContractDocumentView: React.FC<ContractDocumentViewProps> = ({ setA
         }
 
         return (
-            <PdfSigner
-                documentSignatures={signatures}
-                file={pdfFile}
-                setActiveStep={setActiveStep}
-            />
+                <PdfSigner
+                    documentSignatures={signatures}
+                    file={pdfFile}
+                    setActiveStep={setActiveStep}
+                />
         );
     };
 
