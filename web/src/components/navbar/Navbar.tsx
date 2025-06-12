@@ -538,11 +538,13 @@ const Navbar = () => {
                     await saveAquaTree(signRes.data.aquaTree!!, fileObject, true)
 
 
-                    // 
-                    if (formData['signers'] != session?.address) {
+                    //check if aqua sign 
+                    if (selectedTemplate && selectedTemplate.name === "aqua_sign" && session?.address) {
+                        if (formData['signers'] != session?.address) {
 
-                        await shareAquaTree(signRes.data.aquaTree!!, formData['signers'] as string)
+                            await shareAquaTree(signRes.data.aquaTree!!, formData['signers'] as string)
 
+                        }
                     }
 
                 }

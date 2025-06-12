@@ -503,7 +503,6 @@ export async function saveARevisionInAquaTree(revisionData: SaveRevisionForUser,
 
 
     if (revisionData.revision.revision_type == "link") {
-console.log(`☢️☢️ an error occured......${JSON.stringify(revisionData, null, 2)}`)
 
         await prisma.link.create({
             data: {

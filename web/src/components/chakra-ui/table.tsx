@@ -83,7 +83,7 @@ const FilesTable = () => {
                 </>
             }
 
-            return <>{isWorkFlow ? "true" : "False"} {workFlow}</>
+            // return <>{isWorkFlow ? "true" : "False"} {workFlow}</>
         }
 
 
