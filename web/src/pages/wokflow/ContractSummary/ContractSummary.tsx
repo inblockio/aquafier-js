@@ -23,7 +23,7 @@ import ContractSummaryDetails from './ContractSummaryDetails';
 
 
 
-export const ContractSummaryView: React.FC<ContractDocumentViewProps> = ({ setActiveStep, updateDocumentIconInWorkflowTabs }) => {
+export const ContractSummaryView: React.FC<ContractDocumentViewProps> = ({ setActiveStep }) => {
 
     const [isLoading, setIsLoading] = useState(true);
     const [signatureRevionHashesData, setSignatureRevionHashes] = useState<SummaryDetailsDisplayData[]>([])
@@ -362,11 +362,7 @@ export const ContractSummaryView: React.FC<ContractDocumentViewProps> = ({ setAc
         intializeContractInformation()
     }, [JSON.stringify(selectedFileInfo), selectedFileInfo])
 
-    useEffect(() => {
-        if (isVerificationComplete(verificationResults) && isVerificationSuccessful(verificationResults)) {
-            updateDocumentIconInWorkflowTabs(true)
-        }
-    }, [verificationResults])
+   
 
 
     // const genesisContent = () => {

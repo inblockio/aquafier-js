@@ -24,8 +24,6 @@ import SignatureItem from '../../../components/pdf/SignatureItem';
 
 
 
-
-
 export const ContractDocumentView: React.FC<ContractDocumentViewProps> = ({ setActiveStep }) => {
 
 
@@ -39,7 +37,7 @@ export const ContractDocumentView: React.FC<ContractDocumentViewProps> = ({ setA
     // const [userCanSign, setUserCanSign] = useState<boolean>(false);
     // const [authorizedSigners, setAuthorizedSigners] = useState<string[]>([]);
     const { selectedFileInfo, session } = useStore(appStore);
-   
+
 
 
     useEffect(() => {
@@ -47,9 +45,9 @@ export const ContractDocumentView: React.FC<ContractDocumentViewProps> = ({ setA
     }, []);
 
 
-    useEffect(() => {
-        initializeComponent()
-    }, [JSON.stringify(selectedFileInfo), selectedFileInfo])
+    // useEffect(() => {
+    //     initializeComponent()
+    // }, [JSON.stringify(selectedFileInfo), selectedFileInfo])
 
 
 
@@ -294,7 +292,12 @@ export const ContractDocumentView: React.FC<ContractDocumentViewProps> = ({ setA
                         dataUrl: imageDataUrl,
                         hash: sigHash.revisionHashWithSignaturePosition, // Use the hash key
                         isDragging: false,
-                        signatureId: sigHash.revisionHashWithSignaturePosition // Use the hash key
+                        signatureId: sigHash.revisionHashWithSignaturePosition, // Use the hash key
+                        type: "signature",
+                        imageWidth: 100,
+                        imageHeight: 120,
+                        imageAlt: 'err -img not found',
+                        rotation: 0
                     };
                     sigData.push(signatureDetails)
                 } else {
@@ -318,15 +321,20 @@ export const ContractDocumentView: React.FC<ContractDocumentViewProps> = ({ setA
                             dataUrl: imageDataUrl,
                             hash: sigHash.revisionHashWithSignaturePosition,
                             isDragging: false,
-                            signatureId: `${sigHash.revisionHashWithSignaturePosition}_${index}` // Make unique signature IDs
+                            signatureId: `${sigHash.revisionHashWithSignaturePosition}_${index}`,// Make unique signature IDs
+                            type: "signature",
+                            imageWidth: 100,
+                            imageHeight: 120,
+                            imageAlt: 'error -img not found.',
+                            rotation: 0
                         };
                         sigData.push(signatureDetails)
                     }
                 }
-            }else{
+            } else {
                 console.log(`signature positions not found   searchiong for gensis ${revisionHashWithPositions} `)
                 // we try with fetching the image 
-            //  ......    
+                //  ......    
             }
         }
 
@@ -336,21 +344,23 @@ export const ContractDocumentView: React.FC<ContractDocumentViewProps> = ({ setA
 
     const initializeComponent = async () => {
         try {
-            // Load PDF first
-            const pdfFile = await fetchPDFfile();
-            setPdfFile(pdfFile);
-            setLoadingPdfFile(false);
+            if (pdfFile == null) {
+                // Load PDF first
+                const pdfFile = await fetchPDFfile();
+                setPdfFile(pdfFile);
+                setLoadingPdfFile(false);
 
 
-            let shouldLoad = shouldLoadSignatures()
-            // console.log(`Should load ${shouldLoad + "="} ....`)
+                let shouldLoad = shouldLoadSignatures()
+                // console.log(`Should load ${shouldLoad + "="} ....`)
 
-            if (shouldLoad) {
-                setSignaturesLoading(true);
-                const allSignatures: SignatureData[] = await loadSignatures();
-                
-                setSignatures(allSignatures);
-                setSignaturesLoading(false);
+                if (shouldLoad) {
+                    setSignaturesLoading(true);
+                    const allSignatures: SignatureData[] = await loadSignatures();
+
+                    setSignatures(allSignatures);
+                    setSignaturesLoading(false);
+                }
             }
         } catch (error) {
             console.error("Error initializing component:", error);
@@ -494,7 +504,7 @@ export const ContractDocumentView: React.FC<ContractDocumentViewProps> = ({ setA
         return (
             <PdfSigner
                 documentSignatures={signatures}
-                file={pdfFile}
+                fileData={pdfFile}
                 setActiveStep={setActiveStep}
             />
         );

@@ -46,7 +46,7 @@ function App() {
           <Route path="/loading" element={<Loading />} />
           <Route path="/share/:identifier" element={<SharePage />} />
           <Route path="/aqua-forms" element={<AquaForms /> } />
-          <Route path="/pdf-signer" element={<PdfSigner  file={null}  setActiveStep={(_one)=>{
+          <Route path="/pdf-signer" element={<PdfSigner  fileData={null}  setActiveStep={(_one)=>{
 
           }}/> } />
           <Route path="/workflow" element={<WorkFlowPage /> } />

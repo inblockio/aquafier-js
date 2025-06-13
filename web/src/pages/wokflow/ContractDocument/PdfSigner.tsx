@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import {
     Box,
     Button,
@@ -10,14 +10,17 @@ import {
     Slider,
     IconButton,
     FieldLabel,
-    Grid,
-    GridItem,
-    Center,
     Container,
     Spinner,
+    Grid,
+    GridItem,
+    Card,
+    Image as ChakraImage,
+    Group,
     List,
-    Group
+    VStack
 } from '@chakra-ui/react';
+import { Alert } from '../../../components/chakra-ui/alert';
 import { useBoolean } from '@chakra-ui/hooks';
 // import { PDFDocument, rgb, StandardFonts } from 'pdf-lib';
 import { PDFDocument } from 'pdf-lib';
@@ -28,57 +31,61 @@ import { useStore } from "zustand";
 import { toaster } from '../../../components/chakra-ui/toaster';
 import { Field } from '../../../components/chakra-ui/field';
 import { DialogBody, DialogContent, DialogHeader, DialogRoot } from '../../../components/chakra-ui/dialog';
-import { PDFJSViewer } from 'pdfjs-react-viewer';
 import { useColorMode } from '../../../components/chakra-ui/color-mode';
-import { PdfControls } from '../../../components/FilePreview';
+// import { PdfControls } from '../../../components/FilePreview';
 import axios from 'axios';
 import { ApiFileInfo } from '../../../models/FileInfo';
 import { dataURLToFile, dummyCredential, ensureDomainUrlHasSSL, estimateFileSize, fetchFiles, getAquaTreeFileName, getGenesisHash, getRandomNumber, timeStampToDateObject } from '../../../utils/functions';
 import Aquafier, { AquaTree, AquaTreeWrapper, FileObject, getAquaTreeFileObject } from 'aqua-js-sdk';
 import { SignatureData } from "../../../types/types"
-import { LuTrash } from 'react-icons/lu';
-import { SignatureOverlay, SimpleSignatureOverlay } from './components/signature_overlay';
+import { LuInfo, LuTrash } from 'react-icons/lu';
 import { useNavigate } from 'react-router-dom';
+// import SignerPage from './signer/SignerPage';
+// import AnnotationSidebar from './signer/annotation-sidebar';
+import { Annotation } from './signer/types';
+import { PdfRenderer } from './signer/SignerPage';
+import { Trash2 } from 'lucide-react';
+import React from 'react';
 
 
 
 
 interface PdfSignerProps {
 
-    file: File | null;
+    fileData: File | null;
     setActiveStep: (page: number) => void;
     documentSignatures?: SignatureData[]
 }
 
-const PdfSigner: React.FC<PdfSignerProps> = ({ file, setActiveStep, documentSignatures }) => {
+const PdfSigner: React.FC<PdfSignerProps> = ({ fileData, setActiveStep, documentSignatures }) => {
 
     const { formTemplates, systemFileInfo, selectedFileInfo, setSelectedFileInfo, setFiles } = useStore(appStore)
     // State for PDF document
-    const [pdfFile, setPdfFile] = useState<File | null>(file);
+    const [pdfFile, setPdfFile] = useState<File | null>(null);
     const [pdfUrl, setPdfUrl] = useState<string | null>(null);
-    const [_pdfDoc, setPdfDoc] = useState<PDFDocument | null>(null);
+    const [pdfDoc, setPdfDoc] = useState<PDFDocument | null>(null);
     const [creatingUserSignature, setCreatingUserSignature] = useState<boolean>(false);
     const [signers, setSigners] = useState<string[]>([]);
     const [allSignersBeforeMe, setAllSignersBeforeMe] = useState<string[]>([]);
-    const [userCanSign, setUserCanSign] = useState<boolean>(false);
+    // const [userCanSign, setUserCanSign] = useState<boolean>(false);
 
     // const [numPages, setNumPages] = useState<number>(0);
-    const [currentPage, setCurrentPage] = useState<number>(1);
+    // const [currentPage, setCurrentPage] = useState<number>(1);
 
     // State for signatures
     const signatureRef = useRef<SignatureCanvas | null>(null);
     const [mySignaturesAquaTree, setMySignaturesAquaTree] = useState<Array<ApiFileInfo>>([]);
     const [mySignatureData, setMySignatureData] = useState<Array<SignatureData>>([]);
 
-
-    const [signaturesInDocument, setSignaturesInDocument] = useState<SignatureData[]>(documentSignatures || []);
+    // const [signaturesInDocument, setSignaturesInDocument] = useState<SignatureData[]>(documentSignatures || []);
 
     const [selectedSignatureId, setSelectedSignatureId] = useState<string | null>(null);
     const [signerName, setSignerName] = useState<string>('John Doe');
     const [signaturePositions, setSignaturePositions] = useState<SignatureData[]>([]);
     const [placingSignature, setPlacingSignature] = useState<boolean>(false);
     const [signatureSize, setSignatureSize] = useState<number>(330);
-
+    const [canPlaceSignature, setCanPlaceSignature] = useState(false)
+    const [selectedTool, setSelectedTool] = useState<'text' | 'image' | 'profile' | 'signature' | null>(null);
     const [submittingSignatureData, setSubmittingSignatureData] = useState(false);
 
     // Modal state
@@ -90,7 +97,7 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ file, setActiveStep, documentSign
     const { session, backend_url } = useStore(appStore);
 
     // PDF viewer container ref
-    const pdfContainerRef = useRef<HTMLDivElement>(null);
+    // const pdfContainerRef = useRef<HTMLDivElement>(null);
     const pdfMainContainerRef = useRef<HTMLDivElement>(null);
 
 
@@ -152,9 +159,9 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ file, setActiveStep, documentSign
         const signForm: { [key: string]: string | number } = {};
 
         signaturePosition.forEach((signaturePositionItem, index) => {
-            const pageIndex = signaturePositionItem.page + 1;
-            signForm[`x_${index}`] = parseFloat(signaturePositionItem.x.toFixed(16));
-            signForm[`y_${index}`] = parseFloat(signaturePositionItem.y.toFixed(16));
+            const pageIndex = signaturePositionItem.page;
+            signForm[`x_${index}`] = Number(signaturePositionItem.x.toFixed(14));
+            signForm[`y_${index}`] = Number(signaturePositionItem.y.toFixed(14));
             signForm[`page_${index}`] = pageIndex.toString();
             signForm[`width_${index}`] = signaturePositionItem.width.toString();
             signForm[`height_${index}`] = signaturePositionItem.height.toString();
@@ -192,6 +199,7 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ file, setActiveStep, documentSign
         // Save to server
         await saveAquaTree(userSignatureDataAquaTree.data.aquaTree!, fileObjectUserSignature, true, true, "");
 
+        console.log(`here 1`)
         return {
             aquaTree: userSignatureDataAquaTree.data.aquaTree!,
             fileObject: fileObjectUserSignature
@@ -418,7 +426,6 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ file, setActiveStep, documentSign
 
     const submitSignatureData = async (signaturePosition: SignatureData[]) => {
 
-
         setSubmittingSignatureData(true);
 
         try {
@@ -480,42 +487,6 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ file, setActiveStep, documentSign
             showError('An unexpected error occurred during signature submission');
         } finally {
             setSubmittingSignatureData(false);
-        }
-    };
-
-
-    // Handle file upload
-    const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-        const file = e.target.files?.[0];
-        if (file) {
-            try {
-                setPdfFile(file);
-
-                // Create object URL for display
-                const fileUrl = URL.createObjectURL(file);
-                setPdfUrl(fileUrl);
-
-                // Load PDF document using pdf-lib
-                const arrayBuffer = await file.arrayBuffer();
-                const pdfDoc = await PDFDocument.load(arrayBuffer);
-                setPdfDoc(pdfDoc);
-                // setNumPages(pdfDoc.getPageCount());
-                // setCurrentPage(1);
-
-                toaster.create({
-                    title: "PDF loaded successfully",
-                    type: "success",
-                    duration: 3000,
-                });
-            } catch (error) {
-                console.error("Error loading PDF:", error);
-                toaster.create({
-                    title: "Error loading PDF",
-                    description: "Please try another file",
-                    type: "error",
-                    duration: 3000,
-                });
-            }
         }
     };
 
@@ -812,6 +783,7 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ file, setActiveStep, documentSign
                         }
                         // upload the single aqua tree 
                         let resApi = await saveAquaTree(aquaTreeResponse.data.aquaTree!!, item, false, true, selectedTemplate.id)
+                        console.log(`here 2`)
                         if (resApi == false) {
                             toaster.create({
                                 title: "An Error  occured saving signature",
@@ -862,6 +834,8 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ file, setActiveStep, documentSign
                 }
 
             }
+
+            console.log(`here 2.5`)
             const aquaTreeWrapper: AquaTreeWrapper = {
                 aquaTree: aquaTreeData,
                 revision: "",
@@ -872,6 +846,7 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ file, setActiveStep, documentSign
             let signRes = await aquafier.signAquaTree(aquaTreeWrapper, "metamask", dummyCredential())
 
             if (signRes.isErr()) {
+                console.log(`here 2.6 -- err`)
                 toaster.create({
                     description: `Error signing failed`,
                     type: "error"
@@ -881,7 +856,7 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ file, setActiveStep, documentSign
                 console.log("signRes.data", signRes.data)
                 fileObject.fileContent = formData
                 const resApi = await saveAquaTree(signRes.data.aquaTree!!, fileObject, true, true, selectedTemplate.id)
-
+                console.log(`here 3`)
                 if (resApi == false) {
                     toaster.create({
                         title: "An Error  occured saving signature",
@@ -941,8 +916,10 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ file, setActiveStep, documentSign
 
             let resp = await createWorkflowFromTemplate()
             if (resp) {
+                console.log(`log here 4..`)
                 await loadUserSignatures(true)
 
+                console.log(`log here 5..`)
                 setIsOpen(false);
                 setCreatingUserSignature(false);
 
@@ -1019,101 +996,17 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ file, setActiveStep, documentSign
         }
     }
 
-    // Handle click on PDF to place signature
-    const handlePdfClick = async (e: React.MouseEvent<HTMLDivElement>) => {
-        if (!placingSignature || !pdfMainContainerRef.current || !selectedSignatureId) return;
-
-        // const selectedSignature = mySignaturesAquaTree.find(sig => getGenesisHash(sig.aquaTree!!) === selectedSignatureId);
-        // if (!selectedSignature) return;
-
-        // Get the PDF container dimensions
-        const rect = pdfMainContainerRef.current.getBoundingClientRect();
-
-        // Find the actual PDF element within the container
-        const pdfElement = pdfMainContainerRef.current.querySelector('.react-pdf__Page');
-        const pdfRect = pdfElement ? pdfElement.getBoundingClientRect() : rect;
-
-        // Calculate position relative to the PDF element, not the container
-        const x = e.clientX - pdfRect.left;
-        const y = e.clientY - pdfRect.top;
-
-        // Calculate relative position (0-1) for PDF coordinates
-        const relativeX = x / pdfRect.width;
-        const relativeY = 1 - (y / pdfRect.height); // Invert Y for PDF coordinates
-
-        // Calculate width and height relative to PDF
-        const relativeWidth = signatureSize / pdfRect.width;
-        const relativeHeight = (signatureSize / 2) / pdfRect.height;
-
-
-        // console.log("Selected signature aqua tree is: ", selectedSignatureAquaTree)
-
-        let selectedSignatureAquaTree = mySignaturesAquaTree.find((item) => getGenesisHash(item.aquaTree!!) == selectedSignatureId)
-
-        if (!selectedSignatureAquaTree) {
-
-            toaster.create({
-                title: "Selected siignature not found",
-                type: "error",
-                duration: 3000,
-            });
-            return
-        }
-        let genesisHash = getGenesisHash(selectedSignatureAquaTree?.aquaTree!!)
-        let genesisFilename = selectedSignatureAquaTree?.aquaTree?.file_index[genesisHash!!]
-        let fileobject = selectedSignatureAquaTree?.fileObject.find(file => file.fileName === genesisFilename!!)
-
-        if (!fileobject) {
-            console.error("File object not found for signature:", selectedSignatureId);
-            throw Error("File object not found for signature: " + selectedSignatureId);
-        }
-
-        let mySignatureDataItem = mySignatureData.find((e) => e.hash == genesisHash)
-        if (!selectedSignatureAquaTree) {
-
-            toaster.create({
-                title: "Selected siignature data not found",
-                type: "error",
-                duration: 3000,
-            });
-            return
-        }
-        const newPosition: SignatureData = {
-            id: crypto.randomUUID(),
-            page: currentPage - 1,
-            x: relativeX,
-            y: relativeY,
-            width: relativeWidth,
-            height: relativeHeight,
-            signatureId: selectedSignatureId,
-            hash: genesisHash!!,
-            name: selectedSignatureAquaTree?.aquaTree?.revisions[genesisHash!!]?.forms_name,
-            walletAddress: selectedSignatureAquaTree?.aquaTree?.revisions[genesisHash!!]?.forms_wallet_address,
-            dataUrl: mySignatureDataItem!.dataUrl,
-            createdAt: timeStampToDateObject(selectedFileInfo?.aquaTree?.revisions[genesisHash!!]?.local_timestamp!!) ?? new Date()
-        };
-
-        setSignaturePositions(prev => [...prev, newPosition]);
-        setPlacingSignature(false);
-
-        toaster.create({
-            title: "Signature placed",
-            description: "You can drag the signature to adjust its position",
-            type: "success",
-            duration: 3000,
-        });
-    };
 
 
     // Handle signature dragging
     const [activeDragId, setActiveDragId] = useState<string | null>(null);
     const [isDragging, setIsDragging] = useBoolean(false);
 
-    const handleDragStart = (e: React.MouseEvent | React.TouchEvent, id: string) => {
-        e.stopPropagation();
-        setActiveDragId(id);
-        setIsDragging.on();
-    };
+    // const handleDragStart = (e: React.MouseEvent | React.TouchEvent, id: string) => {
+    //     e.stopPropagation();
+    //     setActiveDragId(id);
+    //     setIsDragging.on();
+    // };
 
     // Helper function to get position from either mouse or touch event
     const getEventPosition = (e: MouseEvent | TouchEvent) => {
@@ -1187,9 +1080,9 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ file, setActiveStep, documentSign
 
 
     // Component for signature display on PDF
-    const handlePageChange = (pageNumber: number, _totalPages: number) => {
-        setCurrentPage(pageNumber);
-    };
+    // const handlePageChange = (pageNumber: number, _totalPages: number) => {
+    //     setCurrentPage(pageNumber);
+    // };
 
     const loadUserSignatures = async (selectSignature: boolean = false) => {
 
@@ -1282,7 +1175,6 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ file, setActiveStep, documentSign
                     console.log(` 🤫🤫 skip signature as its not mine`)
                     continue
                 }
-                console.log(`&&& signatureImageName ${signatureImageName} Data ${JSON.stringify(signatureImageObject, null, 4)}`)
 
                 let fileContentUrl = signatureImageObject.fileContent
 
@@ -1298,8 +1190,9 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ file, setActiveStep, documentSign
 
                     // Add to signature
                     let sign: SignatureData = {
+                        type: 'signature',
                         id: crypto.randomUUID(),
-                        hash: getGenesisHash(userSignature.aquaTree!) ?? "err",
+                        hash: getGenesisHash(userSignature.aquaTree!) ?? "err2",
                         name: firstRevision.forms_name,
                         walletAddress: firstRevision.forms_wallet_address,
                         dataUrl: dataUrl,
@@ -1307,10 +1200,14 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ file, setActiveStep, documentSign
                         page: 0, // Default to 0, will be updated when placed
                         x: 0, // Default to 0, will be updated when placeholder
                         y: 0, // Default to 0, will be updated when placeholder
-                        width: 0, // Default width, will be updated when placed
-                        height: 0, // Default height, will be updated when placed
+                        width: 100, // Default width, will be updated when placed
+                        height: 120, // Default height, will be updated when placed
                         isDragging: false, // Default to false, will be updated when dragging
                         signatureId: signatureHash, // Use the signature hash as the ID
+                        rotation: 0,
+                        imageWidth: 100,
+                        imageHeight: 150,
+                        imageAlt: 'No image found'
                     };
                     apiSigntures.push(sign)
                 }
@@ -1354,9 +1251,170 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ file, setActiveStep, documentSign
 
 
         } catch (e) {
-            console.log(`loadUserSignatures Error ${e}`)
+            console.log(`loadUserSignaturez Error ${e}`)
         }
     }
+
+
+    // const onAnnotationUpdate
+
+    const renderProfileAnnotationEditor = (_anno: SignatureData) => {
+        {/* Signatures placed on document */ }
+        return <>
+            {signaturePositions.length > 0 && (
+                <>
+                    {/* <Text fontWeight="bold" mt={2}>Signatures on Document:</Text> */}
+                    <Box maxH="150px" overflowY="auto" border="1px solid" borderColor="gray.200" borderRadius="md">
+                        <Stack gap={0}>
+                            {signaturePositions.map((position) => {
+                                // const signature = signaturesInDocument.find(sig => sig.id === position.signatureId);
+                                // if (!signature) return null;
+
+                                return (
+                                    <HStack key={position.id} p={2} justify="space-between">
+                                        <HStack>
+                                            <Box
+                                                width="40px"
+                                                height="30px"
+                                                backgroundImage={`url(${position.dataUrl})`}
+                                                backgroundSize="contain"
+                                                backgroundRepeat="no-repeat"
+                                                backgroundPosition="center"
+                                                border="1px solid"
+                                                borderColor="gray.200"
+                                                borderRadius="sm"
+                                            />
+                                            <Text fontSize="xs">{position.name} (Page {position.page})</Text>
+
+                                            <IconButton variant={'outline'} size={'2xs'} onClick={(e) => {
+                                                e.preventDefault();
+
+                                                console.log(`B4 Delete ${JSON.stringify(signaturePositions, null, 4)}`)
+                                                let newData: SignatureData[] = [];
+                                                for (let item of signaturePositions) {
+                                                    console.log(`item id ${item.id} -- ${position.id}`)
+                                                    if (item.id != position.id) {
+                                                        newData.push(item)
+                                                    }
+                                                }
+
+                                                console.log(`After Delete ${JSON.stringify(newData, null, 4)}`)
+                                                setSignaturePositions(newData)
+                                            }}>
+                                                <LuTrash size={'10px'} color='red' />
+                                            </IconButton>
+                                        </HStack>
+                                    </HStack>
+                                );
+                            })}
+                        </Stack>
+                    </Box>
+                </>
+            )}
+        </>
+    }
+    // const renderProfileAnnotationEditor = (anno: SignatureData) => (
+    //     <Card.Root key={anno.id} borderRadius={"lg"} borderColor={selectedSignatureId === anno.id ? "blue.400" : "gray.200"} borderWidth={"2px"} onClick={() => {
+    //         //  onAnnotationSelect(anno.id)
+    //     }}>
+    //         <Card.Header p={2}>
+    //             <Card.Title className="text-base font-headline flex justify-between items-center">
+    //                 <HStack justify={"space-between"}>
+    //                     Signature (Page {anno.page})
+    //                     <IconButton variant="subtle" colorPalette={"red"} size="sm" borderRadius={"md"} onClick={(e) => {
+    //                         e.stopPropagation();
+
+    //                         deleteAnnotation(anno.id)
+
+    //                     }}>
+    //                         <Trash2 className="h-4 w-4" />
+    //                     </IconButton>
+    //                 </HStack>
+    //             </Card.Title>
+    //         </Card.Header>
+    //         <Card.Body p={2}>
+    //             <Stack>
+    //                 <Heading size="md">Image Settings</Heading>
+    //                 <Box bg={"gray.100"} borderRadius={"lg"}>
+    //                     <ChakraImage borderRadius={"lg"} src={anno.dataUrl} alt={'error'} h={24} mx={"auto"} data-ai-hint="profile picture" />
+    //                 </Box>
+    //                 <Field>
+    //                     <FieldLabel>Image</FieldLabel>
+    //                     {/* <Input disabled placeholder="Enter your image" defaultValue={anno.dataUrl} onChange={(e) => {
+    //                         onAnnotationUpdate({ ...anno, imageSrc: e.target.value })}
+    //                         } /> */}
+    //                 </Field>
+
+    //                 {/* <Field>
+    //             <FieldLabel>Image Alt Text</FieldLabel>
+    //             <Input placeholder="Enter your image alt text" defaultValue={anno.imageAlt} onChange={(e) => onAnnotationUpdate({ ...anno, imageAlt: e.target.value })} />
+    //           </Field> */}
+
+    //                 <HStack>
+    //                     <Field>
+    //                         <FieldLabel>Image Width</FieldLabel>
+    //                         {/* <Input placeholder="Enter your image width" defaultValue={anno.imageWidth} onChange={(e) =>{ 
+    //                               onAnnotationUpdate({ ...anno, imageWidth: e.target.value })
+    //                             }
+    //                              } />
+    //                               */}
+    //                     </Field>
+
+    //                     <Field>
+    //                         <FieldLabel>Image Height</FieldLabel>
+    //                         {/* <Input placeholder="Enter your image height" defaultValue={anno.imageHeight} onChange={(e) => onAnnotationUpdate({ ...anno, imageHeight: e.target.value })} /> */}
+    //                     </Field>
+    //                 </HStack>
+
+    //                 <Box
+    //                     h={"1px"}
+    //                     bg="gray.200"
+    //                     my={2}
+    //                 />
+
+    //                 <Heading size="md">Info</Heading>
+
+    //                 <Field>
+    //                     <FieldLabel>Name</FieldLabel>
+    //                     {/* <Input disabled placeholder="Enter your name" defaultValue={anno.name} onChange={(e) => onAnnotationUpdate({ ...anno, name: e.target.value })} /> */}
+    //                 </Field>
+
+    //                 <Field>
+    //                     <FieldLabel>Wallet Address</FieldLabel>
+    //                     {/* <Input disabled placeholder="Enter your wallet address" defaultValue={anno.walletAddress} onChange={(e) => onAnnotationUpdate({ ...anno, walletAddress: e.target.value })} /> */}
+    //                 </Field>
+
+
+    //             </Stack>
+    //         </Card.Body>
+    //     </Card.Root>
+    // );
+
+
+    const annotationSidebar = () => {
+
+
+
+        return (
+            <Stack borderRadius={"xl"} className="w-96 bg-card border-l p-4 h-full flex flex-col">
+                <Card.Root>
+                    <Card.Header>
+                        <Card.Title className="text-base font-headline flex justify-between items-center">
+                            Signatures in Document
+                        </Card.Title>
+                    </Card.Header>
+                    <Card.Body>
+                        {signaturePositions.length > 0 ? (
+                            signaturePositions.map(renderProfileAnnotationEditor)
+                        ) : (
+                            <p className="text-muted-foreground text-sm text-center py-4">No signatures yet.</p>
+                        )}
+
+                    </Card.Body>
+                </Card.Root>
+            </Stack>
+        );
+    };
 
 
     const signatureSideBar = () => {
@@ -1373,10 +1431,13 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ file, setActiveStep, documentSign
                 <List.Root>
                     {
                         signers.map((e) => {
-                            return <List.Item>{e}</List.Item>
+                            return <HStack key={e} p={2} justify="space-between">
+                                <HStack>
+                                    <Text fontSize="xs">{e}</Text>
+                                </HStack>
+                            </HStack>
                         })
                     }
-
                 </List.Root>
             </Group>
         }
@@ -1384,22 +1445,27 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ file, setActiveStep, documentSign
 
         if (allSignersBeforeMe.length > 0) {
             return <Stack
-                gap={4}
+                gap={2}
                 align="stretch"
-                p={4}
+                p={2}
                 border="1px solid"
                 borderColor={colorMode === "dark" ? "gray.800" : "gray.100"}
                 borderRadius="md"
             >
                 <Text fontSize={'md'} >The following wallet address need to sign before you can. </Text>
 
-                <List.Root as="ol" listStyle="decimal">
+                <Stack p={2} justify="space-between">
                     {
-                        allSignersBeforeMe.map((e) => {
-                            return <List.Item>{e}</List.Item>
+                        allSignersBeforeMe.map((e, index) => {
+                            return <Box bg="bg" shadow="xsm" padding={2} borderRadius="sm">
+                                <HStack>
+                                    <Text key={e} fontSize="xs">{index + 1}</Text>.
+                                    <Text key={e} fontSize="xs"> {e}</Text>
+                                </HStack>
+                            </Box>
                         })
                     }
-                </List.Root>
+                </Stack>
 
 
 
@@ -1409,216 +1475,55 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ file, setActiveStep, documentSign
 
 
         return <GridItem colSpan={{ base: 12, md: 1 }} h={{ base: "fit-content", md: "100%" }} overflow={{ base: "hidden", md: "auto" }}>
-            {/* Signature tools */}
-            {userSignatureDetails()}
-        </GridItem>
-
-    }
-
-    const userSignatureDetails = () => {
-
-        return <Stack
-            gap={4}
-            align="stretch"
-            p={4}
-            border="1px solid"
-            borderColor={colorMode === "dark" ? "gray.800" : "gray.100"}
-            borderRadius="md"
-        >
-            <Button
-                colorScheme="blue"
-                onClick={() => setIsOpen(true)}
+            <Stack
+                gap={4}
+                align="stretch"
+                p={4}
+                border="1px solid"
+                borderColor={colorMode === "dark" ? "gray.800" : "gray.100"}
+                borderRadius="md"
             >
-                <FaPlus />
-                Create Signature
-            </Button>
+                <Button
+                    colorScheme="blue"
+                    onClick={() => setIsOpen(true)}
+                >
+                    <FaPlus />
+                    Create Signature
+                </Button>
 
-            {/* Signature List */}
-            {mySignaturesAquaTree.length > 0 && (
-                <>
-                    <Stack>
-                        <Text fontWeight="bold" mt={2}>Your Signatures:</Text>
-                        <Box maxH="200px" overflowY="auto" border="1px solid" borderColor="gray.200" borderRadius="md">
-                            <Stack gap={0}>
-                                {(() => {
-                                    // const signature = signatures.find((signature) => signature.walletAddress === session?.address);
-                                    const signature = mySignatureData.find(sig => sig.hash === selectedSignatureId || sig.id === selectedSignatureId);
-                                    if (!signature) {
-                                        return <div style={{ whiteSpace: "pre-wrap" }}>Signature not found  </div>
-                                    }
-
-                                    return signature ? (
-                                        <Box
-                                            key={signature.hash}
-                                            p={2}
-                                            cursor="pointer"
-                                            // bg={selectedSignatureId === signature.id ? "blue.50" : "transparent"}
-                                            bg={"blue.50"}
-                                            _hover={{ bg: "gray.50" }}
-                                            onClick={() => {
-                                                console.log(`Signature clicked ${JSON.stringify(signature, null, 4)} -- ${signature.hash} -- ${signature.id}`)
-
-                                            }}
-                                        >
-                                            <HStack>
-
-                                                <Box
-                                                    width="60px"
-                                                    height="40px"
-                                                    backgroundImage={`url(${signature.dataUrl})`}
-                                                    backgroundSize="contain"
-                                                    backgroundRepeat="no-repeat"
-                                                    backgroundPosition="center"
-                                                    border="1px solid"
-                                                    borderColor="gray.200"
-                                                    borderRadius="sm"
-                                                />
-                                                <Stack gap={0}>
-                                                    <Text fontSize="sm" fontWeight="medium">{signature.name}</Text>
-                                                    <Text fontSize="xs" color="gray.600">
-                                                        {signature.walletAddress.length > 10
-                                                            ? `${signature.walletAddress.substring(0, 6)}...${signature.walletAddress.substring(signature.walletAddress.length - 4)}`
-                                                            : signature.walletAddress
-                                                        }
-                                                    </Text>
-                                                </Stack>
-                                            </HStack>
-                                        </Box>
-                                    ) : null;
-                                })()}
-                            </Stack>
-                        </Box>
-                    </Stack>
-                    <Stack>
-                        <Text fontWeight="bold" mt={2}>Other Signatures:</Text>
-                        <Box maxH="200px" overflowY="auto" border="1px solid" borderColor="gray.200" borderRadius="md">
-                            <Stack gap={0}>
-                                {signaturesInDocument
-                                    // .filter((signature) => signature.walletAddress !== session?.address)
-                                    // .filter((signature, index, self) =>
-                                    //     index === self.findIndex(s => s.walletAddress === signature.walletAddress)
-                                    // )
-                                    .map((signature) => (
-                                        <Box
-                                            key={signature.id}
-                                            p={2}
-                                            cursor="pointer"
-                                            bg={selectedSignatureId === signature.id ? "blue.50" : "transparent"}
-                                            _hover={{ bg: "gray.50" }}
-                                            onClick={() => {
-                                                if (session?.address === signature.walletAddress) {
-                                                    setSelectedSignatureId(signature.id);
-                                                }
-                                            }}
-                                        >
-                                            <HStack>
-                                                <Box
-                                                    width="60px"
-                                                    height="40px"
-                                                    backgroundImage={`url(${signature.dataUrl})`}
-                                                    backgroundSize="contain"
-                                                    backgroundRepeat="no-repeat"
-                                                    backgroundPosition="center"
-                                                    border="1px solid"
-                                                    borderColor="gray.200"
-                                                    borderRadius="sm"
-                                                />
-                                                <Stack gap={0}>
-                                                    <Text fontSize="sm" fontWeight="medium">{signature.name}</Text>
-                                                    <Text fontSize="xs" color="gray.600">
-                                                        {signature.walletAddress.length > 10
-                                                            ? `${signature.walletAddress.substring(0, 6)}...${signature.walletAddress.substring(signature.walletAddress.length - 4)}`
-                                                            : signature.walletAddress
-                                                        }
-                                                    </Text>
-                                                </Stack>
-                                            </HStack>
-                                        </Box>
-                                    ))}
-                            </Stack>
-                        </Box>
-                    </Stack>
-                </>
-            )}
-
-            {selectedSignatureId && (
-                <>
-                    <Text fontWeight="bold" mt={2}>Selected Signature: </Text>
-                    {(() => {
-                        const selectedSignature = mySignatureData.find(sig => sig.hash.trim() === selectedSignatureId.trim());
-                        if (!selectedSignature) return <>Error</>;
-
-                        return (
-                            <Box
-                                border="1px solid"
-                                borderColor="gray.200"
-                                p={2}
-                                borderRadius="md"
-                                height="80px"
-                                backgroundImage={`url(${selectedSignature.dataUrl})`}
-                                backgroundSize="contain"
-                                backgroundRepeat="no-repeat"
-                                backgroundPosition="center"
-                            />
-                        );
-                    })()}
-
-                    <Field display={"none"}>
-                        <FieldLabel>Signature Size: {signatureSize}px</FieldLabel>
-                        <Slider.Root
-                            min={280}
-                            max={450}
-                            step={1}
-                            defaultValue={[signatureSize]}
-                            size={'lg'} key={'lg'}
-                            width={"250px"}
-                            value={[signatureSize]}
-                            onValueChange={(changedValue) => {
-                                console.log(`slider value ${JSON.stringify(changedValue)}`)
-                                const newValue = changedValue.value[0]
-                                console.log(`slider value ${newValue}`)
-
-                                setSignatureSize(newValue);
-                                // if (Array.isArray(changedValue)) {
-                                // setSignatureSize(changedValue.value[0]);
-                                // }
-                            }}
-                        >
-                            <Slider.Control>
-                                <Slider.Track>
-                                    <Slider.Range />
-                                </Slider.Track>
-                                <Slider.Thumb index={0} />
-                            </Slider.Control>
-                        </Slider.Root>
-                    </Field>
-
-
-
-                    <Button
-                        colorScheme="teal"
-                        onClick={() => setPlacingSignature(true)}
-                    >
-                        Place Signature on Document
-                    </Button>
-
-                    {/* Signatures placed on document */}
-                    {signaturePositions.length > 0 && (
-                        <>
-                            <Text fontWeight="bold" mt={2}>Signatures on Document:</Text>
-                            <Box maxH="150px" overflowY="auto" border="1px solid" borderColor="gray.200" borderRadius="md">
+                {/* Signature List */}
+                {mySignaturesAquaTree.length > 0 && (
+                    <>
+                        <Stack>
+                            <Text fontWeight="bold" mt={2}>Your Signatures:</Text>
+                            <Box maxH="200px" overflowY="auto" border="1px solid" borderColor="gray.200" borderRadius="md">
                                 <Stack gap={0}>
-                                    {signaturePositions.map((position) => {
-                                        // const signature = signaturesInDocument.find(sig => sig.id === position.signatureId);
-                                        // if (!signature) return null;
+                                    {(() => {
+                                        // const signature = signatures.find((signature) => signature.walletAddress === session?.address);
+                                        const signature = mySignatureData.find(sig => sig.hash === selectedSignatureId || sig.id === selectedSignatureId);
+                                        if (!signature) {
+                                            return <div style={{ whiteSpace: "pre-wrap" }}>Signature not found  </div>
+                                        }
 
-                                        return (
-                                            <HStack key={position.id} p={2} justify="space-between">
+                                        return signature ? (
+                                            <Box
+                                                key={signature.hash}
+                                                p={2}
+                                                cursor="pointer"
+                                                // bg={selectedSignatureId === signature.id ? "blue.50" : "transparent"}
+                                                bg={"blue.50"}
+                                                _hover={{ bg: "gray.50" }}
+                                                onClick={() => {
+                                                    console.log(`Signature clicked ${JSON.stringify(signature, null, 4)} -- ${signature.hash} -- ${signature.id}`)
+
+                                                }}
+                                            >
                                                 <HStack>
+
                                                     <Box
-                                                        width="40px"
-                                                        height="30px"
-                                                        backgroundImage={`url(${position.dataUrl})`}
+                                                        width="60px"
+                                                        height="40px"
+                                                        backgroundImage={`url(${signature.dataUrl})`}
                                                         backgroundSize="contain"
                                                         backgroundRepeat="no-repeat"
                                                         backgroundPosition="center"
@@ -1626,216 +1531,187 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ file, setActiveStep, documentSign
                                                         borderColor="gray.200"
                                                         borderRadius="sm"
                                                     />
-                                                    <Text fontSize="xs">{position.name} (Page {position.page + 1})</Text>
-
-                                                    <IconButton variant={'outline'} size={'2xs'} onClick={(e) => {
-                                                        e.preventDefault();
-
-                                                        console.log(`B4 Delete ${JSON.stringify(signaturePositions, null, 4)}`)
-                                                        let newData: SignatureData[] = [];
-                                                        for (let item of signaturePositions) {
-                                                            console.log(`item id ${item.id} -- ${position.id}`)
-                                                            if (item.id != position.id) {
-                                                                newData.push(item)
+                                                    <Stack gap={0}>
+                                                        <Text fontSize="sm" fontWeight="medium">{signature.name}</Text>
+                                                        <Text fontSize="xs" color="gray.600">
+                                                            {signature.walletAddress.length > 10
+                                                                ? `${signature.walletAddress.substring(0, 6)}...${signature.walletAddress.substring(signature.walletAddress.length - 4)}`
+                                                                : signature.walletAddress
                                                             }
-                                                        }
-
-                                                        console.log(`After Delete ${JSON.stringify(newData, null, 4)}`)
-                                                        setSignaturePositions(newData)
-                                                    }}>
-                                                        <LuTrash size={'10px'} color='red' />
-                                                    </IconButton>
+                                                        </Text>
+                                                    </Stack>
                                                 </HStack>
-                                            </HStack>
-                                        );
-                                    })}
+                                            </Box>
+                                        ) : null;
+                                    })()}
                                 </Stack>
                             </Box>
-                        </>
-                    )}
+                        </Stack>
+                        <Stack>
+                            <Text fontWeight="bold" mt={2}>Other Signatures:</Text>
+                            <Box maxH="200px" overflowY="auto" border="1px solid" borderColor="gray.200" borderRadius="md">
+                                <Stack gap={0}>
+                                    {documentSignatures ?
+                                        // .filter((signature) => signature.walletAddress !== session?.address)
+                                        // .filter((signature, index, self) =>
+                                        //     index === self.findIndex(s => s.walletAddress === signature.walletAddress)
+                                        // )
+                                        documentSignatures.map((signature) => (
+                                            <Box
+                                                key={signature.id}
+                                                p={2}
+                                                cursor="pointer"
+                                                bg={selectedSignatureId === signature.id ? "blue.50" : "transparent"}
+                                                _hover={{ bg: "gray.50" }}
+                                                onClick={() => {
+                                                    if (session?.address === signature.walletAddress) {
+                                                        setSelectedSignatureId(signature.id);
+                                                    }
+                                                }}
+                                            >
+                                                <HStack>
+                                                    <Box
+                                                        width="60px"
+                                                        height="40px"
+                                                        backgroundImage={`url(${signature.dataUrl})`}
+                                                        backgroundSize="contain"
+                                                        backgroundRepeat="no-repeat"
+                                                        backgroundPosition="center"
+                                                        border="1px solid"
+                                                        borderColor="gray.200"
+                                                        borderRadius="sm"
+                                                    />
+                                                    <Stack gap={0}>
+                                                        <Text fontSize="sm" fontWeight="medium">{signature.name}</Text>
+                                                        <Text fontSize="xs" color="gray.600">
+                                                            {signature.walletAddress.length > 10
+                                                                ? `${signature.walletAddress.substring(0, 6)}...${signature.walletAddress.substring(signature.walletAddress.length - 4)}`
+                                                                : signature.walletAddress
+                                                            }
+                                                        </Text>
+                                                    </Stack>
+                                                </HStack>
+                                            </Box>
+                                        )) : <></>}
+                                </Stack>
+                            </Box>
+                        </Stack>
+                    </>
+                )}
 
-                    {signaturePositions.length > 0 && (
-                        <Text fontSize="sm" color="gray.600">
-                            Tip: You can drag placed signatures to adjust their position
-                        </Text>
-                    )}
 
-                    {placingSignature && (
-                        <Text color="blue.500">
-                            Click on the document to place your signature
-                        </Text>
-                    )}
-                </>
-            )}
 
-            {/* <Button
-            colorScheme="green"
-            // disabled={!pdfDoc || !signatureDataUrl || signaturePositions.length === 0}
-            onClick={generateSignedPdf}
-        >
-            <FaDownload />
-            Download Signed PDF
-        </Button> */}
 
-            <Button
-                colorPalette={'green'} variant={'solid'}
-                colorScheme="white"
-                disabled={submittingSignatureData}
-                // disabled={!pdfDoc || !signatureDataUrl || signaturePositions.length === 0}
-                onClick={async (e) => {
-                    e.preventDefault()
-                    if (signaturePositions.length == 0) {
 
-                        toaster.create({
-                            description: `No signature detected in document`,
-                            type: "error"
-                        })
-                        return
-                    }
-                    await submitSignatureData(signaturePositions)
-                }}
-            >
-                Sign document
-            </Button>
-        </Stack>
+                {canPlaceSignature ? (
+                    <Alert colorPalette={"blue"} variant={"subtle"} title="Click on the document to place your signature" icon={<LuInfo />} />
+                ) : null}
+
+                <Button onClick={() => {
+                    setSelectedTool("signature");
+                    //   setSelectedSignatureHash(selectedSignatureHash as any)
+                    setCanPlaceSignature(true)
+                }}>
+                    Add Signature to document
+                </Button>
+
+
+
+                {annotationSidebar()}
+
+                <Button
+                    colorPalette={'green'} variant={'solid'}
+                    colorScheme="white"
+                    disabled={signaturePositions.length === 0}
+                    // disabled={!pdfDoc || !signatureDataUrl || signaturePositions.length === 0}
+                    onClick={handleSignatureSubmission}
+                    loading={submittingSignatureData}
+                >
+                    Sign document
+                </Button>
+
+
+            </Stack>
+        </GridItem>
+
     }
 
-    // const _handleCreateSignatureData = async () => {
-
-    //     const apiSigntures: SignatureData[] = [];
-    //     for (let i = 0; i < mySignaturesAquaTree.length; i++) {
 
 
-    //         let userSignature = mySignaturesAquaTree[i]
-    //         // all hashes 
-    //         let allHashes = Object.keys(userSignature.aquaTree!.revisions!);
+    const handleSignatureSubmission = async () => {
+        if (signaturePositions.length == 0) {
 
-    //         let firstRevision = userSignature.aquaTree?.revisions[allHashes[0]]
-    //         if (!firstRevision) {
-    //             console.log(`📢📢 first revision does not exist, this should be investigated`)
-    //             continue
-    //         }
-    //         if (!firstRevision.forms_wallet_address) {
-    //             console.log(`📢📢 first revision does not contain wallet address, this should be investigated`)
-    //             continue
-    //         }
-    //         if (!firstRevision.forms_name) {
-    //             console.log(`📢📢 first revision does not contain signature name, this should be investigated`)
-    //             continue
-    //         }
-    //         let sinatureAquaTreeName = userSignature.aquaTree?.file_index[allHashes[0]]
-    //         if (!sinatureAquaTreeName) {
-    //             console.log(`📢📢 aqua tree sintaure instance unique na`)
-    //             continue
-    //         }
-    //         let thirdRevision = userSignature.aquaTree?.revisions[allHashes[2]]
-    //         if (!thirdRevision) {
-    //             console.log(`📢📢 third revision does not exist, this should be investigated`)
-    //             continue
-    //         }
-    //         if (!thirdRevision.link_verification_hashes) {
-    //             console.log(`📢📢 third revision link_verification_hashes is undefined, this should be investigated`)
-    //             continue
-    //         }
-    //         let signatureHash = thirdRevision.link_verification_hashes[0]
-    //         let signatureImageName = userSignature.aquaTree?.file_index[signatureHash]
-    //         if (!signatureImageName) {
-    //             console.log(`📢📢 signature Image Name not found in index, this should be investigated`)
-
-    //             continue
-    //         }
-
-    //         let signatureImageObject = userSignature.fileObject.find((e) => e.fileName == signatureImageName)
-    //         if (!signatureImageObject) {
-    //             console.log(`📢📢 file object does not contain the signature image object, this should be investigated`)
-
-    //             continue
-    //         }
-
-
-    //         let forthRevision = userSignature.aquaTree?.revisions[allHashes[3]]
-    //         if (!thirdRevision) {
-    //             console.log(`📢📢 forth revision does not exist, this should be investigated`)
-    //             continue
-    //         }
-
-    //         if (forthRevision?.signature_wallet_address != session?.address) {
-    //             console.log(` 🤫🤫 skip signature as its not mine`)
-    //             continue
-    //         }
-    //         console.log(`&&& signatureImageName ${signatureImageName} Data ${JSON.stringify(signatureImageObject, null, 4)}`)
-
-    //         let fileContentUrl = signatureImageObject.fileContent
-
-    //         if (typeof fileContentUrl === 'string' && fileContentUrl.startsWith('http')) {
+            toaster.create({
+                description: `No signature detected in document`,
+                type: "error"
+            })
+            return
+        }
+        console.log("before sumbb: ", signaturePositions)
+        await submitSignatureData(signaturePositions)
+    }
 
 
 
-    //             let dataUrl = await fetchImage(fileContentUrl);
+    const addAnnotation = useCallback((newAnnotationData: Annotation) => {
+       
+        const id = Date.now().toString() + Math.random().toString(36).substring(2, 9);
+        const selectedSignatureInfo = mySignatureData.find(signature => signature.hash === selectedSignatureId)
 
-    //             if (!dataUrl) {
-    //                 dataUrl = '/images/placeholder-img.png';
-    //             }
+        if (!selectedSignatureInfo) {
+            console.log(`error signature hash not found `)
+            return
+        }
+        console.log("Selected signature info: ", selectedSignatureInfo)
+        // ...newAnnotationData, id,
+        const newAnnotation: SignatureData = {
+            ...newAnnotationData as SignatureData,
+            id,
+            name:selectedSignatureInfo.name,
+            walletAddress: selectedSignatureInfo.walletAddress,
+            dataUrl: selectedSignatureInfo.dataUrl
+        }
+        // const newAnnotation: SignatureData = {
+        //     dataUrl: selectedSignatureInfo.dataUrl,
+        //     name: selectedSignatureInfo.name,
+        //     walletAddress: selectedSignatureInfo.walletAddress,
+        //     height: 0,
+        //     width: 0,
+        //     imageWidth: 0,
+        //     imageHeight: 0,
+        //     imageAlt: '',
+        //     hash: selectedSignatureInfo.hash,
+        //     createdAt: new Date(),
+        //     type: 'signature',
+        //     id: selectedSignatureInfo.id,
+        //     x: selectedSignatureInfo.x,
+        //     y: selectedSignatureInfo.y,
+        //     page: selectedSignatureInfo.page,
+        //     rotation: selectedSignatureInfo.rotation
+        // };
+        setSignaturePositions((prev: any) => [...prev, newAnnotation]);
+        setSelectedTool(null);
+        setCanPlaceSignature(false)
+        // setSelectedSignatureHash(null)
+        // setSelectedAnnotationId(id);
+    }, [mySignatureData, selectedSignatureId]);
 
-    //             // Add to signature
-    //             let sign: SignatureData = {
-    //                 id: crypto.randomUUID(),
-    //                 hash: getGenesisHash(userSignature.aquaTree!) ?? "err",
-    //                 name: firstRevision.forms_name,
-    //                 walletAddress: firstRevision.forms_wallet_address,
-    //                 dataUrl: dataUrl,
-    //                 createdAt: timeStampToDateObject(firstRevision.local_timestamp) ?? new Date(),
-    //                 page: 0, // Default to 0, will be updated when placed
-    //                 x: 0, // Default to 0, will be updated when placeholder
-    //                 y: 0, // Default to 0, will be updated when placeholder
-    //                 width: 0, // Default width, will be updated when placed
-    //                 height: 0, // Default height, will be updated when placed
-    //                 isDragging: false, // Default to false, will be updated when dragging
-    //                 signatureId: signatureHash, // Use the signature hash as the ID
-    //             };
-    //             apiSigntures.push(sign)
-    //         }
+    const updateAnnotation = useCallback((updatedAnnotation: Annotation) => {
+        setSignaturePositions((prev: any) =>
+            prev.map((anno: any) => (anno.id === updatedAnnotation.id ? updatedAnnotation : anno))
+        );
+    }, []);
 
-    //     }
+    const deleteAnnotation = useCallback((id: string) => {
+        setSignaturePositions((prev) => prev.filter((anno) => anno.id !== id));
+        if (selectedSignatureId === id) {
+            setSelectedSignatureId(null);
+        }
+    }, [selectedSignatureId]);
 
-    //     setMySignatureData(apiSigntures)
 
-    //     let selectedSignatureAquaTree = null
 
-    //     if (mySignaturesAquaTree.length > 1) {
-    //         // Loop through aquatrees
-    //         for (let i = 0; i < mySignaturesAquaTree.length; i++) {
-    //             let apiFileInfo = mySignaturesAquaTree[i]
-    //             let disOrderedAquaTree = apiFileInfo.aquaTree
-    //             let genesisHash = getGenesisHash(disOrderedAquaTree!!)
-    //             let genesisRevision = disOrderedAquaTree?.revisions[genesisHash!!]
 
-    //             if (!selectedSignatureAquaTree) {
-    //                 selectedSignatureAquaTree = apiFileInfo
-    //             }
-    //             else {
-    //                 let aquaTreeTimestamp = selectedSignatureAquaTree?.aquaTree?.revisions[getGenesisHash(selectedSignatureAquaTree?.aquaTree!!)!!]?.timestamp!!
-    //                 if (genesisRevision?.local_timestamp!! > aquaTreeTimestamp) {
-    //                     selectedSignatureAquaTree = apiFileInfo
-    //                 }
-    //             }
-    //         }
-    //         // Get genesis revision
-    //         // Read timestamp
-    //         // check if it is the latest one
-    //         // Assign it to selected signature aquatree
-    //     }
-    //     else {
-    //         selectedSignatureAquaTree = mySignaturesAquaTree[0]
-    //     }
-
-    //     console.log("Selected signature aqua tree is: ", selectedSignatureAquaTree)
-
-    //     let genesisHash = getGenesisHash(selectedSignatureAquaTree?.aquaTree!!)
-
-    //     setSelectedSignatureId(genesisHash!!)
-
-    // }
 
     // Add event listeners for drag operations
     useEffect(() => {
@@ -1863,9 +1739,6 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ file, setActiveStep, documentSign
     // Effect to update signature positions when window is resized
     useEffect(() => {
 
-
-
-
         let signers: string[] = [];
         let allHashes = Object.keys(selectedFileInfo!.aquaTree!.revisions!);
         let firstRevision = selectedFileInfo!.aquaTree?.revisions[allHashes[0]]
@@ -1880,14 +1753,12 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ file, setActiveStep, documentSign
 
         setSigners(signers)
 
-
-
         let fourthItmeHashOnwards = allHashes.slice(4);
         let allSignersData = [...signers]
 
         try {
             if (signers.includes(session!.address)) {
-                setUserCanSign(true)
+                // setUserCanSign(true)
 
                 let indexOfMyWalletAddress = signers.indexOf(session!.address);
                 console.log(`beffore index of my wallet ${indexOfMyWalletAddress}`)
@@ -1917,23 +1788,27 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ file, setActiveStep, documentSign
                 // if (indexOfMyWalletAddress != index) {
                 setAllSignersBeforeMe(allSignersBeforeMe)
 
-
             }
         } catch (e) {
             console.log(`Error PDF Signer -  ${e}`)
+            toaster.create({
+                description: `Error Loading pdf`,
+                type: "error"
+            })
         }
 
 
-        if (file) {
+        if (fileData) {
             (async () => {
-                setPdfFile(file);
+                console.log(`Fetch pdf file....`)
+                setPdfFile(fileData);
 
                 // Create object URL for display
-                const fileUrl = URL.createObjectURL(file);
+                const fileUrl = URL.createObjectURL(fileData);
                 setPdfUrl(fileUrl);
 
                 // Load PDF document using pdf-lib
-                const arrayBuffer = await file.arrayBuffer();
+                const arrayBuffer = await fileData.arrayBuffer();
                 const pdfDoc = await PDFDocument.load(arrayBuffer);
                 setPdfDoc(pdfDoc);
             })()
@@ -1954,95 +1829,79 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ file, setActiveStep, documentSign
         return () => window.removeEventListener('resize', handleResize);
     }, []);
 
-    useEffect(() => {
-        loadUserSignatures(true)
+    // useEffect(() => {
+    //     console.log(`loadUserSignatures true -backend_url, session, session?.address ${backend_url}, ${session}, ${session?.address}`)
+    //     loadUserSignatures(true)
 
-    }, [backend_url, session, session?.address]);
+    // }, [backend_url, session, session?.address]);
 
-    useEffect(() => {
-        // Load user signatures when component mounts
-        if (documentSignatures) {
-            setSignaturesInDocument(documentSignatures);
-        }
-    }, [JSON.stringify(documentSignatures)]);
+    // useEffect(() => {
+    //     // Load user signatures when component mounts
+    //     if (documentSignatures) {
+    //         setSignaturesInDocument(documentSignatures);
+    //     }
+    // }, [JSON.stringify(documentSignatures)]);
+
+
+
 
 
     return (
-        <Container maxW="container.xl" py={"6"} h={"calc(100vh - 70px)"} overflow={{ base: "scroll", md: "hidden" }}>
-            <Heading mb={5}>PDF Signer</Heading>
-
-            {/* File upload section */}
-            {pdfFile == null ? <Stack gap={4} align="stretch" mb={6} >
-                <Field>
-                    <FieldLabel>Upload PDF Document</FieldLabel>
-                    <Input
-                        type="file"
-                        onChange={handleFileUpload}
-                        p={1}
-                    />
-                </Field>
-
-                {/* todo fix me */}
-                {/* {pdfFile  != null ?  
-                    <Text>
-                        File: {pdfFile.name} ({Math.round(pdfFile!.size / 1024)} KB)
-                    </Text>
-                : <></>} */}
-            </Stack> : <></>}
+        <Container fluid h={"calc(100vh - 70px)"} overflow={{ base: "scroll", md: "hidden" }}>
+            <Box h="60px" display={"flex"} alignItems={"center"}>
+                <Heading>PDF Signer</Heading>
+            </Box>
 
             {/* PDF viewer and signature tools */}
-            {pdfUrl && (
-                <Grid templateColumns="repeat(4, 1fr)" gap="6"
-                    h={{ base: "fit-content", md: "calc(100vh - 120px - 150px)" }} overflow={{ base: "scroll", md: "hidden" }}
-                >
-                    {/* PDF viewer */}
-                    <GridItem colSpan={{ base: 12, md: userCanSign ? 3 : 4 }} h={"100%"} overflow={"scroll"} >
-                        <Box
-                            position="relative"
-                            border="1px solid"
+            <Box h={"calc(100% - 60px)"}>
+                {
+                    pdfFile ? (
+                        <>
+                            <Box h={"100%"}>
+                                <Box h={"100%"}>
+                                    <Grid
+                                        // templateRows="repeat(2, 1fr)"
+                                        templateColumns="repeat(12, 1fr)"
+                                        gap={0}
+                                        h={"100%"}
+                                    >
+                                        <GridItem bg={"gray.100"} colSpan={{ base: 12, md: 9 }} overflowX={"auto"} overflowY={"scroll"} height={"100%"}>
+                                            <Box h={"100%"} p={0} m={0} >
 
-                            borderColor={colorMode === "dark" ? "gray.800" : "gray.100"}
-                            borderRadius="md"
-                            ref={pdfContainerRef}
-                            onClick={handlePdfClick}
-                            py={"4"}
-                            cursor={placingSignature ? "crosshair" : "default"}
-                        >
-                            <Center>
-                                <Box ref={pdfMainContainerRef} w={'fit-content'}>
-                                    <PDFJSViewer
-                                        pdfUrl={pdfUrl}
-                                        onPageChange={handlePageChange}
-                                        renderControls={PdfControls}
-                                    // onDocumentLoad={(totalPages) => setNumPages(totalPages)}
-                                    />
+
+
+                                                <PdfRenderer
+                                                    pdfFile={pdfFile}
+                                                    annotations={signaturePositions}
+                                                    onAnnotationAdd={addAnnotation}
+                                                    onAnnotationUpdate={updateAnnotation}
+                                                    onAnnotationDelete={deleteAnnotation}
+                                                    selectedTool={selectedTool}
+                                                    selectedAnnotationId={selectedSignatureId}
+                                                    onAnnotationSelect={() => { }}
+                                                    onAnnotationRotate={() => { }}
+                                                />
+
+
+                                            </Box>
+                                        </GridItem>
+                                        <GridItem colSpan={{ base: 12, md: 3 }} bg={"gray.100"} overflow={"hidden"}>
+                                            <Box p={4} h={"100%"} overflowY={"scroll"} overflowX={"hidden"} wordBreak={"break-word"}>
+                                                {signatureSideBar()}
+
+                                            </Box>
+                                        </GridItem>
+                                        {/* </div> */}
+                                    </Grid>
                                 </Box>
-                            </Center>
+                            </Box>
+                        </>
 
-                            {/* Signature overlays */}
-                            {signaturePositions.map((position, index) => {
-
-                                console.log(`@@@@@@@@@@@@@@@@@ 7777  Signature position ${JSON.stringify(position, null, 4)}`)
-                                return <SignatureOverlay key={index}
-                                    currentPage={currentPage}
-                                    signature={position}
-                                    pdfMainContainerRef={pdfMainContainerRef}
-                                    handleDragStart={handleDragStart}
-                                />
+                    ) : <>Error Loading PDF</>
+                }
+            </Box>
 
 
-                            })}
-
-                            {signaturesInDocument?.map((signature, index) => (
-                                <SimpleSignatureOverlay key={index} signature={signature} currentPage={currentPage}
-                                />
-                            ))}
-                        </Box>
-                    </GridItem>
-
-                    {signatureSideBar()}
-                </Grid>
-            )}
 
             {/* Signature drawing modal */}
             <DialogRoot open={isOpen}
@@ -2122,3 +1981,4 @@ declare global {
 }
 
 export default PdfSigner
+

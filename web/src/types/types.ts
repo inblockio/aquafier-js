@@ -63,25 +63,33 @@ export interface RevisionVerificationStatus {
 
 
 export interface SignatureData {
+    type: 'signature';
    id: string;
     height: number;
     width: number;
     x: number;
     y: number;
+    imageWidth: number;
+    imageHeight : number;
+    imageAlt:string;
     page: number;
     name: string;
     walletAddress: string;
     hash: string;
     createdAt: Date;
     dataUrl: string;
+    rotation: number
     isDragging?: boolean;
     signatureId?: string; 
+    walletAddressFontSize?: string; 
+    nameColor?: string; 
+    nameFontSize?: string; 
+    walletAddressColor?: string; 
 }
 
 
 
 export interface ContractDocumentViewProps {
     setActiveStep: (step: number) => void
-    updateDocumentIconInWorkflowTabs: (isWorkFlowOk: boolean) => void
 }
 
