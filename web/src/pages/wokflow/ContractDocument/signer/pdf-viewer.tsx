@@ -9,7 +9,7 @@ import { SignatureData } from '../../../../types/types';
 interface PdfViewerProps {
   file: File | null;
   annotations: Annotation[];
-  onAnnotationAdd: (annotation: Omit<Annotation, 'id'>) => void;
+  onAnnotationAdd: (annotation: Annotation) => void;
   onAnnotationUpdate: (annotation: Annotation) => void;
   onAnnotationDelete: (id: string) => void;
   selectedTool: 'text' | 'image' | 'profile' | 'signature' | null;
@@ -151,7 +151,7 @@ const PdfViewer: React.FC<PdfViewerProps> = ({
 
     try {
       setPdfLoadingError(null);
-      
+
       // Cancel any existing render task
       if (renderTaskRef.current) {
         renderTaskRef.current.cancel();
@@ -172,7 +172,7 @@ const PdfViewer: React.FC<PdfViewerProps> = ({
 
       // Clear the canvas before rendering
       context.clearRect(0, 0, canvas.width, canvas.height);
-      
+
       canvas.height = viewport.height;
       canvas.width = viewport.width;
 
@@ -183,7 +183,7 @@ const PdfViewer: React.FC<PdfViewerProps> = ({
 
       // Store the render task reference
       renderTaskRef.current = page.render(renderContext);
-      
+
       try {
         await renderTaskRef.current.promise;
         setPageDimensions({ width: viewport.width, height: viewport.height });
@@ -229,50 +229,50 @@ const PdfViewer: React.FC<PdfViewerProps> = ({
     }
   }, [pdfDoc, currentPage, numPages, scale, isPdfjsLibLoaded, renderPage, file, pdfLoadingError]);
 
-const handleAnnotationMouseDown = useCallback((event: React.MouseEvent, annotation: Annotation) => {
-  // This will ALWAYS print, regardless of any conditions
-  console.log(`at the root ... - Annotation ID: ${annotation.id}, Type: ${annotation.type}`);
-  console.log('Event details:', {
-    target: event.target,
-    currentTarget: event.currentTarget,
-    clientX: event.clientX,
-    clientY: event.clientY
-  });
+  const handleAnnotationMouseDown = useCallback((event: React.MouseEvent, annotation: Annotation) => {
+    // This will ALWAYS print, regardless of any conditions
+    console.log(`at the root ... - Annotation ID: ${annotation.id}, Type: ${annotation.type}`);
+    console.log('Event details:', {
+      target: event.target,
+      currentTarget: event.currentTarget,
+      clientX: event.clientX,
+      clientY: event.clientY
+    });
 
-  // Check if it's a resize handle - if so, don't proceed with drag logic but still log
-  if ((event.target as HTMLElement).dataset.resizeHandle) {
-    console.log('Resize handle clicked, returning early');
-    return;
-  }
+    // Check if it's a resize handle - if so, don't proceed with drag logic but still log
+    if ((event.target as HTMLElement).dataset.resizeHandle) {
+      console.log('Resize handle clicked, returning early');
+      return;
+    }
 
-  // Prevent default behavior and stop propagation
-  event.preventDefault();
-  event.stopPropagation();
+    // Prevent default behavior and stop propagation
+    event.preventDefault();
+    event.stopPropagation();
 
-  // Select the annotation
-  onAnnotationSelect(annotation.id);
+    // Select the annotation
+    onAnnotationSelect(annotation.id);
 
-  if (!canvasRef.current) {
-    console.log('Canvas ref not available');
-    return;
-  }
+    if (!canvasRef.current) {
+      console.log('Canvas ref not available');
+      return;
+    }
 
-  const canvasRect = canvasRef.current.getBoundingClientRect();
+    const canvasRect = canvasRef.current.getBoundingClientRect();
 
-  const clickXCanvasPercent = ((event.clientX - canvasRect.left) / canvasRect.width) * 100;
-  const clickYCanvasPercent = ((event.clientY - canvasRect.top) / canvasRect.height) * 100;
+    const clickXCanvasPercent = ((event.clientX - canvasRect.left) / canvasRect.width) * 100;
+    const clickYCanvasPercent = ((event.clientY - canvasRect.top) / canvasRect.height) * 100;
 
-  console.log('Setting drag start offset:', {
-    x: clickXCanvasPercent - annotation.x,
-    y: clickYCanvasPercent - annotation.y
-  });
+    console.log('Setting drag start offset:', {
+      x: clickXCanvasPercent - annotation.x,
+      y: clickYCanvasPercent - annotation.y
+    });
 
-  setDragStartOffset({
-    x: clickXCanvasPercent - annotation.x,
-    y: clickYCanvasPercent - annotation.y,
-  });
-  setDraggingAnnotationId(annotation.id);
-}, [onAnnotationSelect, canvasRef]);
+    setDragStartOffset({
+      x: clickXCanvasPercent - annotation.x,
+      y: clickYCanvasPercent - annotation.y,
+    });
+    setDraggingAnnotationId(annotation.id);
+  }, [onAnnotationSelect, canvasRef]);
   const handleDragMove = useCallback((event: MouseEvent) => {
     if (!draggingAnnotationId || !dragStartOffset || !canvasRef.current || !viewerRef.current) return;
 
@@ -478,7 +478,8 @@ const handleAnnotationMouseDown = useCallback((event: React.MouseEvent, annotati
     if (xPercent < 0 || xPercent > 100 || yPercent < 0 || yPercent > 100) return;
 
     if (selectedTool === 'text') {
-      const newAnnotation: Omit<TextAnnotation, 'id'> = {
+      const newAnnotation: TextAnnotation = {
+         id:crypto.randomUUID(),
         type: 'text',
         page: currentPage,
         x: Math.max(0, Math.min(xPercent, 99.9)),
@@ -495,7 +496,8 @@ const handleAnnotationMouseDown = useCallback((event: React.MouseEvent, annotati
     }
     else if (selectedTool === 'image' || selectedTool === 'profile') {
       if (selectedTool === 'image') {
-        const newAnnotation: Omit<ImageAnnotation, 'id'> = {
+        const newAnnotation: ImageAnnotation = {
+           id:crypto.randomUUID(),
           type: 'image',
           page: currentPage,
           x: Math.max(0, Math.min(xPercent, 99.9)),
@@ -509,7 +511,8 @@ const handleAnnotationMouseDown = useCallback((event: React.MouseEvent, annotati
         onAnnotationAdd(newAnnotation);
       }
       else if (selectedTool === 'profile') {
-        const newAnnotation: Omit<ProfileAnnotation, 'id'> = {
+        const newAnnotation: ProfileAnnotation = {
+           id:crypto.randomUUID(),
           type: 'profile',
           page: currentPage,
           x: Math.max(0, Math.min(xPercent, 99.9)),
@@ -529,7 +532,8 @@ const handleAnnotationMouseDown = useCallback((event: React.MouseEvent, annotati
         onAnnotationAdd(newAnnotation);
       }
     } else if (selectedTool === 'signature') {
-      const newAnnotation: Omit<SignatureData, 'id'> = {
+      const newAnnotation: SignatureData = {
+        id:crypto.randomUUID(),
         type: 'signature',
         page: currentPage,
         x: Math.max(0, Math.min(xPercent, 99.9)),
@@ -736,9 +740,9 @@ const handleAnnotationMouseDown = useCallback((event: React.MouseEvent, annotati
                       </div>
                     );
                   }
-               
 
-                         else if (anno.type === 'signature') {
+
+                  else if (anno.type === 'signature') {
                     const profileAnno = anno as SignatureData;
                     const profileStyle: React.CSSProperties = {
                       ...baseStyle,
@@ -758,17 +762,7 @@ const handleAnnotationMouseDown = useCallback((event: React.MouseEvent, annotati
                           data-annotation-id={`${anno.id}-image`}
                         >
 
-                          <Box
-                                                    width="160px"
-                                                    height="140px"
-                                                    backgroundImage={`url(${profileAnno.dataUrl})`}
-                                                    backgroundSize="contain"
-                                                    backgroundRepeat="no-repeat"
-                                                    backgroundPosition="center"
-                                                    border="1px solid"
-                                                    borderColor="gray.200"
-                                                    borderRadius="sm"
-                                                />
+                         
                           <img
                             src={profileAnno.dataUrl}
                             alt={profileAnno.imageAlt}

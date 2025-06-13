@@ -1191,7 +1191,7 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ fileData, setActiveStep, document
                     let sign: SignatureData = {
                         type: 'signature',
                         id: crypto.randomUUID(),
-                        hash: getGenesisHash(userSignature.aquaTree!) ?? "err",
+                        hash: getGenesisHash(userSignature.aquaTree!) ?? "err2",
                         name: firstRevision.forms_name,
                         walletAddress: firstRevision.forms_wallet_address,
                         dataUrl: dataUrl,
@@ -1199,8 +1199,8 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ fileData, setActiveStep, document
                         page: 0, // Default to 0, will be updated when placed
                         x: 0, // Default to 0, will be updated when placeholder
                         y: 0, // Default to 0, will be updated when placeholder
-                        width: 0, // Default width, will be updated when placed
-                        height: 0, // Default height, will be updated when placed
+                        width: 100, // Default width, will be updated when placed
+                        height: 120, // Default height, will be updated when placed
                         isDragging: false, // Default to false, will be updated when dragging
                         signatureId: signatureHash, // Use the signature hash as the ID
                         rotation: 0,
@@ -1718,7 +1718,7 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ fileData, setActiveStep, document
 
 
 
-    const addAnnotation = useCallback((newAnnotationData: Omit<Annotation, 'id'>) => {
+    const addAnnotation = useCallback((newAnnotationData: Annotation) => {
         console.log("Here: ", newAnnotationData)
         const id = Date.now().toString() + Math.random().toString(36).substring(2, 9);
         const selectedSignatureInfo = mySignatureData.find(signature => signature.hash === selectedSignatureId)
@@ -1728,12 +1728,30 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ fileData, setActiveStep, document
             return
         }
         console.log("Selected signature info: ", selectedSignatureInfo)
-        const newAnnotation = {
-            ...newAnnotationData, id,
-            imageSrc: selectedSignatureInfo.dataUrl ?? "/images/preview.jpg",
-            name: selectedSignatureInfo.name,
-            walletAddress: selectedSignatureInfo.walletAddress
-        };
+        // ...newAnnotationData, id,
+        const newAnnotation: SignatureData = {
+            ...newAnnotationData as SignatureData,
+            id,
+            dataUrl: selectedSignatureInfo.dataUrl
+        }
+        // const newAnnotation: SignatureData = {
+        //     dataUrl: selectedSignatureInfo.dataUrl,
+        //     name: selectedSignatureInfo.name,
+        //     walletAddress: selectedSignatureInfo.walletAddress,
+        //     height: 0,
+        //     width: 0,
+        //     imageWidth: 0,
+        //     imageHeight: 0,
+        //     imageAlt: '',
+        //     hash: selectedSignatureInfo.hash,
+        //     createdAt: new Date(),
+        //     type: 'signature',
+        //     id: selectedSignatureInfo.id,
+        //     x: selectedSignatureInfo.x,
+        //     y: selectedSignatureInfo.y,
+        //     page: selectedSignatureInfo.page,
+        //     rotation: selectedSignatureInfo.rotation
+        // };
         setSignaturePositions((prev: any) => [...prev, newAnnotation]);
         setSelectedTool(null);
         setCanPlaceSignature(false)

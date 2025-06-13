@@ -34,7 +34,7 @@ import { LuInfo } from 'react-icons/lu';
 interface PdfRendererProps {
   pdfFile: File | null;
   annotations: Annotation[];
-  onAnnotationAdd: (newAnnotationData: Omit<Annotation, 'id'>) => void;
+  onAnnotationAdd: (newAnnotationData: Annotation) => void;
   onAnnotationUpdate: (updatedAnnotation: Annotation) => void;
   onAnnotationDelete: (id: string) => void;
   selectedTool: 'text' | 'image' | 'profile' | 'signature' | null;
@@ -157,7 +157,7 @@ export default function SignerPage({ file, mySignatures, displayUserSignatures, 
   // const [scale, setScale] = useState(1.0);
   const [selectedAnnotationId, setSelectedAnnotationId] = useState<string | null>(null);
 
-  const addAnnotation = useCallback((newAnnotationData: Omit<Annotation, 'id'>) => {
+  const addAnnotation = useCallback((newAnnotationData: Annotation) => {
     const id = Date.now().toString() + Math.random().toString(36).substring(2, 9);
     const selectedSignatureInfo = mySignatures.find(signature => signature.hash === _selectedSignatureHash)
     console.log("Here", _selectedSignatureHash, mySignatures)
