@@ -45,9 +45,9 @@ export const ContractDocumentView: React.FC<ContractDocumentViewProps> = ({ setA
     }, []);
 
 
-    useEffect(() => {
-        initializeComponent()
-    }, [JSON.stringify(selectedFileInfo), selectedFileInfo])
+    // useEffect(() => {
+    //     initializeComponent()
+    // }, [JSON.stringify(selectedFileInfo), selectedFileInfo])
 
 
 
@@ -292,7 +292,12 @@ export const ContractDocumentView: React.FC<ContractDocumentViewProps> = ({ setA
                         dataUrl: imageDataUrl,
                         hash: sigHash.revisionHashWithSignaturePosition, // Use the hash key
                         isDragging: false,
-                        signatureId: sigHash.revisionHashWithSignaturePosition // Use the hash key
+                        signatureId: sigHash.revisionHashWithSignaturePosition, // Use the hash key
+                        type: "signature",
+                        imageWidth: 100,
+                        imageHeight: 120,
+                        imageAlt: 'err -img not found',
+                        rotation: 0
                     };
                     sigData.push(signatureDetails)
                 } else {
@@ -316,7 +321,12 @@ export const ContractDocumentView: React.FC<ContractDocumentViewProps> = ({ setA
                             dataUrl: imageDataUrl,
                             hash: sigHash.revisionHashWithSignaturePosition,
                             isDragging: false,
-                            signatureId: `${sigHash.revisionHashWithSignaturePosition}_${index}` // Make unique signature IDs
+                            signatureId: `${sigHash.revisionHashWithSignaturePosition}_${index}`,// Make unique signature IDs
+                            type: "signature",
+                            imageWidth: 100,
+                            imageHeight: 120,
+                            imageAlt: 'error -img not found.',
+                            rotation: 0
                         };
                         sigData.push(signatureDetails)
                     }
@@ -490,11 +500,11 @@ export const ContractDocumentView: React.FC<ContractDocumentViewProps> = ({ setA
         }
 
         return (
-                <PdfSigner
-                    documentSignatures={signatures}
-                    file={pdfFile}
-                    setActiveStep={setActiveStep}
-                />
+            <PdfSigner
+                documentSignatures={signatures}
+                file={pdfFile}
+                setActiveStep={setActiveStep}
+            />
         );
     };
 

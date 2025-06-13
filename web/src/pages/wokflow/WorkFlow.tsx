@@ -148,10 +148,7 @@ export default function WorkFlowPage() {
             completed: true,
             content: <ContractSummaryView setActiveStep={(index) => {
                 setActiveStep(index)
-            }} updateDocumentIconInWorkflowTabs={(isWorkFlowOk) => {
-                console.log("=====################# updateDocumentIconInWorkflowTabs", isWorkFlowOk)
-                // setIsWorkflowCompleteAndValid(isWorkFlowOk)
-            }} />,
+            }}  />,
             icon: FaUser,
             revisionHash: "",
             title: "Contract Information"
@@ -162,10 +159,7 @@ export default function WorkFlowPage() {
             completed: computeIsWorkflowCOmplete(),
             content: <ContractDocumentView setActiveStep={(index) => {
                 setActiveStep(index)
-            }} updateDocumentIconInWorkflowTabs={(isWorkFlowOk) => {
-                console.log("################# updateDocumentIconInWorkflowTabs", isWorkFlowOk)
-                // setIsWorkflowCompleteAndValid(isWorkFlowOk)
-            }} />,
+            }}  />,
             icon: FaUser,
             revisionHash: "",
             title: "Contract Document"

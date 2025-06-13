@@ -91,6 +91,5 @@ export interface SignatureData {
 
 export interface ContractDocumentViewProps {
     setActiveStep: (step: number) => void
-    updateDocumentIconInWorkflowTabs: (isWorkFlowOk: boolean) => void
 }
 

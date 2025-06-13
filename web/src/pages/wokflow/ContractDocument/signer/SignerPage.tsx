@@ -1,5 +1,5 @@
 
-import { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import type { Annotation } from './types';
 import PdfViewer from './pdf-viewer';
 import AnnotationSidebar from './annotation-sidebar';
@@ -43,7 +43,7 @@ interface PdfRendererProps {
   onAnnotationRotate: (direction: 'cw' | 'ccw') => void;
 }
 
-export function PdfRenderer({
+function PdfRendererComponent({
   pdfFile,
   annotations,
   onAnnotationAdd,
@@ -52,7 +52,6 @@ export function PdfRenderer({
   selectedTool,
   selectedAnnotationId,
   onAnnotationSelect,
-  // onAnnotationRotate,
 }: PdfRendererProps) {
   const [currentPage, setCurrentPage] = useState(1);
   const [numPages, setNumPages] = useState(0);
@@ -96,6 +95,15 @@ export function PdfRenderer({
     </Box>
   );
 }
+
+// Memoize the PdfRenderer component to prevent unnecessary re-renders
+export const PdfRenderer = React.memo(PdfRendererComponent, (prevProps, nextProps) => {
+  // Only re-render if file or annotations change
+  return (
+    prevProps.pdfFile === nextProps.pdfFile &&
+    prevProps.annotations === nextProps.annotations
+  );
+});
 
 interface EasyPDFRendererProps {
   pdfFile: File | null;
