@@ -483,7 +483,7 @@ const PdfViewer: React.FC<PdfViewerProps> = ({
         name: 'User Name',
         walletAddress: '0x123...',
         // imageSrc: "/images/preview.jpg",
-        // imageAlt: 'Profile picture',
+        imageAlt: 'Profile picture',
         width: 50,
         height: 50,
         rotation: 0,
@@ -491,10 +491,12 @@ const PdfViewer: React.FC<PdfViewerProps> = ({
         dataUrl: "err",
         createdAt: new Date(),
 
-        // nameFontSize: "12pt",
-        // nameColor: '#333333',
-        // walletAddressFontSize: "10pt",
-        // walletAddressColor: '#555555',
+        nameFontSize: "12pt",
+        nameColor: '#333333',
+        walletAddressFontSize: "10pt",
+        walletAddressColor: '#555555',
+        imageWidth: 100,
+        imageHeight: 150
       };
       onAnnotationAdd(newAnnotation);
     }
@@ -699,7 +701,7 @@ const PdfViewer: React.FC<PdfViewerProps> = ({
                           data-annotation-id={`${anno.id}-image`}
                         >
                           <img
-                            src={profileAnno.imageSrc}
+                            src={profileAnno.dataUrl}
                             alt={profileAnno.imageAlt}
                             style={{ width: '100%', height: '100%', objectFit: 'cover', pointerEvents: 'none' }}
                           />

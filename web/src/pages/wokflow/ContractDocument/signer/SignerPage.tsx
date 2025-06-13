@@ -409,6 +409,9 @@ export default function SignerPage({ file, mySignatures, displayUserSignatures, 
         signatureId: "",
         type: annotation.type ?? "signature",
         rotation: annotation.rotation ?? 0,
+        imageWidth: annotation.imageWidth ?? "140px",
+        imageHeight: annotation.imageHeight ?? "80px",
+        imageAlt: annotation.imageAlt ?? annotation.name ?? "",
       }))
       onAnnotationUpdate(newSignatureDataPositions)
     }

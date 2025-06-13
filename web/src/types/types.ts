@@ -69,15 +69,22 @@ export interface SignatureData {
     width: number;
     x: number;
     y: number;
+    imageWidth: number;
+    imageHeight : number;
+    imageAlt:string;
     page: number;
     name: string;
     walletAddress: string;
     hash: string;
     createdAt: Date;
     dataUrl: string;
+    rotation: number
     isDragging?: boolean;
     signatureId?: string; 
-    rotation: number
+    walletAddressFontSize?: string; 
+    nameColor?: string; 
+    nameFontSize?: string; 
+    walletAddressColor?: string; 
 }
 
 

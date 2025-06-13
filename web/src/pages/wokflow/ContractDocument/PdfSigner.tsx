@@ -43,6 +43,7 @@ import { useNavigate } from 'react-router-dom';
 // import AnnotationSidebar from './signer/annotation-sidebar';
 import { Annotation } from './signer/types';
 import { PdfRenderer } from './signer/SignerPage';
+import { Trash2 } from 'lucide-react';
 
 
 
@@ -157,8 +158,8 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ file, setActiveStep, documentSign
 
         signaturePosition.forEach((signaturePositionItem, index) => {
             const pageIndex = signaturePositionItem.page;
-            signForm[`x_${index}`] = parseFloat(signaturePositionItem.x.toFixed(16));
-            signForm[`y_${index}`] = parseFloat(signaturePositionItem.y.toFixed(16));
+            signForm[`x_${index}`] = Number(signaturePositionItem.x.toFixed(16));
+            signForm[`y_${index}`] = Number(signaturePositionItem.y.toFixed(16));
             signForm[`page_${index}`] = pageIndex.toString();
             signForm[`width_${index}`] = signaturePositionItem.width.toString();
             signForm[`height_${index}`] = signaturePositionItem.height.toString();
@@ -1278,7 +1279,10 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ file, setActiveStep, documentSign
                         height: 0, // Default height, will be updated when placed
                         isDragging: false, // Default to false, will be updated when dragging
                         signatureId: signatureHash, // Use the signature hash as the ID
-                        rotation: 0
+                        rotation: 0,
+                        imageWidth: 100,
+                        imageHeight: 150,
+                        imageAlt: 'No image found'
                     };
                     apiSigntures.push(sign)
                 }
@@ -1337,9 +1341,14 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ file, setActiveStep, documentSign
                 <Card.Title className="text-base font-headline flex justify-between items-center">
                     <HStack justify={"space-between"}>
                         Signature (Page {anno.page})
-                        {/* <IconButton variant="subtle" colorPalette={"red"} size="sm" borderRadius={"md"} onClick={(e) => { e.stopPropagation(); onAnnotationDelete(anno.id); }}>
+                        <IconButton variant="subtle" colorPalette={"red"} size="sm" borderRadius={"md"} onClick={(e) => { 
+                            e.stopPropagation(); 
+            
+                            deleteAnnotation(anno.id)
+                            
+                            }}>
                             <Trash2 className="h-4 w-4" />
-                        </IconButton> */}
+                        </IconButton>
                     </HStack>
                 </Card.Title>
             </Card.Header>
@@ -2087,12 +2096,8 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ file, setActiveStep, documentSign
                                 pdfFile={file}
                                 annotations={signaturePositions}
                                 onAnnotationAdd={addAnnotation}
-                                onAnnotationUpdate={() => {
-
-                                }}
-                                onAnnotationDelete={() => {
-
-                                }}
+                                onAnnotationUpdate={updateAnnotation}
+                                onAnnotationDelete={deleteAnnotation}
                                 selectedTool={selectedTool}
                                 // currentPage={currentPage}
                                 // onPageChange={setCurrentPage}
