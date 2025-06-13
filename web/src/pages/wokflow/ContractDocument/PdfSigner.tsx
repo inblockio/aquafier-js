@@ -51,18 +51,18 @@ import React from 'react';
 
 interface PdfSignerProps {
 
-    file: File | null;
+    fileData: File | null;
     setActiveStep: (page: number) => void;
     documentSignatures?: SignatureData[]
 }
 
-const PdfSigner: React.FC<PdfSignerProps> = ({ file, setActiveStep, documentSignatures }) => {
+const PdfSigner: React.FC<PdfSignerProps> = ({ fileData, setActiveStep, documentSignatures }) => {
 
     const { formTemplates, systemFileInfo, selectedFileInfo, setSelectedFileInfo, setFiles } = useStore(appStore)
     // State for PDF document
-    // const [pdfFile, setPdfFile] = useState<File | null>(file);
-    // const [pdfUrl, setPdfUrl] = useState<string | null>(null);
-    // const [pdfDoc, setPdfDoc] = useState<PDFDocument | null>(null);
+    const [pdfFile, setPdfFile] = useState<File | null>(null);
+    const [pdfUrl, setPdfUrl] = useState<string | null>(null);
+    const [pdfDoc, setPdfDoc] = useState<PDFDocument | null>(null);
     const [creatingUserSignature, setCreatingUserSignature] = useState<boolean>(false);
     const [signers, setSigners] = useState<string[]>([]);
     const [allSignersBeforeMe, setAllSignersBeforeMe] = useState<string[]>([]);
@@ -782,7 +782,7 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ file, setActiveStep, documentSign
                         }
                         // upload the single aqua tree 
                         let resApi = await saveAquaTree(aquaTreeResponse.data.aquaTree!!, item, false, true, selectedTemplate.id)
-                              console.log(`here 2`)
+                        console.log(`here 2`)
                         if (resApi == false) {
                             toaster.create({
                                 title: "An Error  occured saving signature",
@@ -834,7 +834,7 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ file, setActiveStep, documentSign
 
             }
 
-             console.log(`here 2.5`)
+            console.log(`here 2.5`)
             const aquaTreeWrapper: AquaTreeWrapper = {
                 aquaTree: aquaTreeData,
                 revision: "",
@@ -845,7 +845,7 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ file, setActiveStep, documentSign
             let signRes = await aquafier.signAquaTree(aquaTreeWrapper, "metamask", dummyCredential())
 
             if (signRes.isErr()) {
-                 console.log(`here 2.6 -- err`)
+                console.log(`here 2.6 -- err`)
                 toaster.create({
                     description: `Error signing failed`,
                     type: "error"
@@ -855,7 +855,7 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ file, setActiveStep, documentSign
                 console.log("signRes.data", signRes.data)
                 fileObject.fileContent = formData
                 const resApi = await saveAquaTree(signRes.data.aquaTree!!, fileObject, true, true, selectedTemplate.id)
-      console.log(`here 3`)
+                console.log(`here 3`)
                 if (resApi == false) {
                     toaster.create({
                         title: "An Error  occured saving signature",
@@ -918,7 +918,7 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ file, setActiveStep, documentSign
                 console.log(`log here 4..`)
                 await loadUserSignatures(true)
 
-                 console.log(`log here 5..`)
+                console.log(`log here 5..`)
                 setIsOpen(false);
                 setCreatingUserSignature(false);
 
@@ -1250,7 +1250,7 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ file, setActiveStep, documentSign
 
 
         } catch (e) {
-            console.log(`loadUserSignatures Error ${e}`)
+            console.log(`loadUserSignaturez Error ${e}`)
         }
     }
 
@@ -1361,132 +1361,134 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ file, setActiveStep, documentSign
     };
 
     const signatureSideBarOld = () => {
-  {selectedSignatureId && (
-                    <>
-                        <Text fontWeight="bold" mt={2}>Selected Signature: </Text>
-                        {(() => {
-                            const selectedSignature = mySignatureData.find(sig => sig.hash.trim() === selectedSignatureId.trim());
-                            if (!selectedSignature) return <>Error</>;
+        {
+            selectedSignatureId && (
+                <>
+                    <Text fontWeight="bold" mt={2}>Selected Signature: </Text>
+                    {(() => {
+                        const selectedSignature = mySignatureData.find(sig => sig.hash.trim() === selectedSignatureId.trim());
+                        if (!selectedSignature) return <>Error</>;
 
-                            return (
-                                <Box
-                                    border="1px solid"
-                                    borderColor="gray.200"
-                                    p={2}
-                                    borderRadius="md"
-                                    height="80px"
-                                    backgroundImage={`url(${selectedSignature.dataUrl})`}
-                                    backgroundSize="contain"
-                                    backgroundRepeat="no-repeat"
-                                    backgroundPosition="center"
-                                />
-                            );
-                        })()}
+                        return (
+                            <Box
+                                border="1px solid"
+                                borderColor="gray.200"
+                                p={2}
+                                borderRadius="md"
+                                height="80px"
+                                backgroundImage={`url(${selectedSignature.dataUrl})`}
+                                backgroundSize="contain"
+                                backgroundRepeat="no-repeat"
+                                backgroundPosition="center"
+                            />
+                        );
+                    })()}
 
-                        <Field display={"none"}>
-                            <FieldLabel>Signature Size: {signatureSize}px</FieldLabel>
-                            <Slider.Root
-                                min={280}
-                                max={450}
-                                step={1}
-                                defaultValue={[signatureSize]}
-                                size={'lg'} key={'lg'}
-                                width={"250px"}
-                                value={[signatureSize]}
-                                onValueChange={(changedValue) => {
-                                    console.log(`slider value ${JSON.stringify(changedValue)}`)
-                                    const newValue = changedValue.value[0]
-                                    console.log(`slider value ${newValue}`)
+                    <Field display={"none"}>
+                        <FieldLabel>Signature Size: {signatureSize}px</FieldLabel>
+                        <Slider.Root
+                            min={280}
+                            max={450}
+                            step={1}
+                            defaultValue={[signatureSize]}
+                            size={'lg'} key={'lg'}
+                            width={"250px"}
+                            value={[signatureSize]}
+                            onValueChange={(changedValue) => {
+                                console.log(`slider value ${JSON.stringify(changedValue)}`)
+                                const newValue = changedValue.value[0]
+                                console.log(`slider value ${newValue}`)
 
-                                    setSignatureSize(newValue);
-                                    // if (Array.isArray(changedValue)) {
-                                    // setSignatureSize(changedValue.value[0]);
-                                    // }
-                                }}
-                            >
-                                <Slider.Control>
-                                    <Slider.Track>
-                                        <Slider.Range />
-                                    </Slider.Track>
-                                    <Slider.Thumb index={0} />
-                                </Slider.Control>
-                            </Slider.Root>
-                        </Field>
-
-
-
-                        <Button
-                            colorScheme="teal"
-                            onClick={() => setPlacingSignature(true)}
+                                setSignatureSize(newValue);
+                                // if (Array.isArray(changedValue)) {
+                                // setSignatureSize(changedValue.value[0]);
+                                // }
+                            }}
                         >
-                            Place Signature on Document
-                        </Button>
+                            <Slider.Control>
+                                <Slider.Track>
+                                    <Slider.Range />
+                                </Slider.Track>
+                                <Slider.Thumb index={0} />
+                            </Slider.Control>
+                        </Slider.Root>
+                    </Field>
 
-                        {/* Signatures placed on document */}
-                        {signaturePositions.length > 0 && (
-                            <>
-                                <Text fontWeight="bold" mt={2}>Signatures on Document:</Text>
-                                <Box maxH="150px" overflowY="auto" border="1px solid" borderColor="gray.200" borderRadius="md">
-                                    <Stack gap={0}>
-                                        {signaturePositions.map((position) => {
-                                            // const signature = signaturesInDocument.find(sig => sig.id === position.signatureId);
-                                            // if (!signature) return null;
 
-                                            return (
-                                                <HStack key={position.id} p={2} justify="space-between">
-                                                    <HStack>
-                                                        <Box
-                                                            width="40px"
-                                                            height="30px"
-                                                            backgroundImage={`url(${position.dataUrl})`}
-                                                            backgroundSize="contain"
-                                                            backgroundRepeat="no-repeat"
-                                                            backgroundPosition="center"
-                                                            border="1px solid"
-                                                            borderColor="gray.200"
-                                                            borderRadius="sm"
-                                                        />
-                                                        <Text fontSize="xs">{position.name} (Page {position.page + 1})</Text>
 
-                                                        <IconButton variant={'outline'} size={'2xs'} onClick={(e) => {
-                                                            e.preventDefault();
+                    <Button
+                        colorScheme="teal"
+                        onClick={() => setPlacingSignature(true)}
+                    >
+                        Place Signature on Document
+                    </Button>
 
-                                                            console.log(`B4 Delete ${JSON.stringify(signaturePositions, null, 4)}`)
-                                                            let newData: SignatureData[] = [];
-                                                            for (let item of signaturePositions) {
-                                                                console.log(`item id ${item.id} -- ${position.id}`)
-                                                                if (item.id != position.id) {
-                                                                    newData.push(item)
-                                                                }
+                    {/* Signatures placed on document */}
+                    {signaturePositions.length > 0 && (
+                        <>
+                            <Text fontWeight="bold" mt={2}>Signatures on Document:</Text>
+                            <Box maxH="150px" overflowY="auto" border="1px solid" borderColor="gray.200" borderRadius="md">
+                                <Stack gap={0}>
+                                    {signaturePositions.map((position) => {
+                                        // const signature = signaturesInDocument.find(sig => sig.id === position.signatureId);
+                                        // if (!signature) return null;
+
+                                        return (
+                                            <HStack key={position.id} p={2} justify="space-between">
+                                                <HStack>
+                                                    <Box
+                                                        width="40px"
+                                                        height="30px"
+                                                        backgroundImage={`url(${position.dataUrl})`}
+                                                        backgroundSize="contain"
+                                                        backgroundRepeat="no-repeat"
+                                                        backgroundPosition="center"
+                                                        border="1px solid"
+                                                        borderColor="gray.200"
+                                                        borderRadius="sm"
+                                                    />
+                                                    <Text fontSize="xs">{position.name} (Page {position.page + 1})</Text>
+
+                                                    <IconButton variant={'outline'} size={'2xs'} onClick={(e) => {
+                                                        e.preventDefault();
+
+                                                        console.log(`B4 Delete ${JSON.stringify(signaturePositions, null, 4)}`)
+                                                        let newData: SignatureData[] = [];
+                                                        for (let item of signaturePositions) {
+                                                            console.log(`item id ${item.id} -- ${position.id}`)
+                                                            if (item.id != position.id) {
+                                                                newData.push(item)
                                                             }
+                                                        }
 
-                                                            console.log(`After Delete ${JSON.stringify(newData, null, 4)}`)
-                                                            setSignaturePositions(newData)
-                                                        }}>
-                                                            <LuTrash size={'10px'} color='red' />
-                                                        </IconButton>
-                                                    </HStack>
+                                                        console.log(`After Delete ${JSON.stringify(newData, null, 4)}`)
+                                                        setSignaturePositions(newData)
+                                                    }}>
+                                                        <LuTrash size={'10px'} color='red' />
+                                                    </IconButton>
                                                 </HStack>
-                                            );
-                                        })}
-                                    </Stack>
-                                </Box>
-                            </>
-                        )}
+                                            </HStack>
+                                        );
+                                    })}
+                                </Stack>
+                            </Box>
+                        </>
+                    )}
 
-                        {signaturePositions.length > 0 && (
-                            <Text fontSize="sm" color="gray.600">
-                                Tip: You can drag placed signatures to adjust their position
-                            </Text>
-                        )}
+                    {signaturePositions.length > 0 && (
+                        <Text fontSize="sm" color="gray.600">
+                            Tip: You can drag placed signatures to adjust their position
+                        </Text>
+                    )}
 
-                        {placingSignature && (
-                            <Text color="blue.500">
-                                Click on the document to place your signature
-                            </Text>
-                        )}
-                    </>
-                )}
+                    {placingSignature && (
+                        <Text color="blue.500">
+                            Click on the document to place your signature
+                        </Text>
+                    )}
+                </>
+            )
+        }
     }
     const signatureSideBar = () => {
 
@@ -1525,7 +1527,7 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ file, setActiveStep, documentSign
                 <List.Root as="ol" listStyle="decimal">
                     {
                         allSignersBeforeMe.map((e) => {
-                            return <List.Item>{e}</List.Item>
+                            return <List.Item key={e}>{e}</List.Item>
                         })
                     }
                 </List.Root>
@@ -1662,7 +1664,7 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ file, setActiveStep, documentSign
                     </>
                 )}
 
-              
+
 
 
 
@@ -1752,78 +1754,9 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ file, setActiveStep, documentSign
         }
     }, [selectedSignatureId]);
 
-const PdfRendererWrapperData = React.memo(function ExpensiveComponent({
-  file,
-  signaturePositions,
-  selectedTool,
-  selectedSignatureId,
-  addAnnotation,
-  updateAnnotation,
-  deleteAnnotation,
-}: {
-  file: File;
-  signaturePositions: Annotation[];
-  selectedTool:  'text' | 'image' | 'profile' | 'signature' | null;
-  selectedSignatureId: string | null;
-  addAnnotation: (data: Omit<Annotation, 'id'>) => void;
-  updateAnnotation: (annotation: Annotation) => void;
-  deleteAnnotation: (id: string) => void;
-}) {
-  return (
-    <PdfRenderer
-      pdfFile={file}
-      annotations={signaturePositions}
-      onAnnotationAdd={addAnnotation}
-      onAnnotationUpdate={updateAnnotation}
-      onAnnotationDelete={deleteAnnotation}
-      selectedTool={selectedTool}
-      selectedAnnotationId={selectedSignatureId}
-      onAnnotationSelect={() => {}}
-      onAnnotationRotate={() => {}}
-    />
-  );
-});
 
 
 
-    const pdfRendererWrapper = () => {
-        return <Box h={"100%"}>
-            <Box h={"100%"}>
-                <Grid
-                    // templateRows="repeat(2, 1fr)"
-                    templateColumns="repeat(12, 1fr)"
-                    gap={0}
-                    h={"100%"}
-                >
-                    <GridItem bg={"gray.100"} colSpan={{ base: 12, md: 9 }} overflowX={"auto"} overflowY={"scroll"} height={"100%"}>
-                        <Box h={"100%"} p={0} m={0} >
-                           
-                           
-                <PdfRendererWrapperData
-                  file={file!!}
-                  signaturePositions={signaturePositions}
-                  selectedTool={selectedTool}
-                  selectedSignatureId={selectedSignatureId}
-                  addAnnotation={addAnnotation}
-                  updateAnnotation={updateAnnotation}
-                  deleteAnnotation={deleteAnnotation}
-                />
-              
-
-
-                        </Box>
-                    </GridItem>
-                    <GridItem colSpan={{ base: 12, md: 3 }} bg={"gray.100"} overflow={"hidden"}>
-                        <Box p={4} h={"100%"} overflowY={"scroll"} overflowX={"hidden"} wordBreak={"break-word"}>
-                            {signatureSideBar()}
-
-                        </Box>
-                    </GridItem>
-                    {/* </div> */}
-                </Grid>
-            </Box>
-        </Box>
-    }
 
     // Add event listeners for drag operations
     useEffect(() => {
@@ -1910,21 +1843,21 @@ const PdfRendererWrapperData = React.memo(function ExpensiveComponent({
         }
 
 
-        // if (file) {
-        //     (async () => {
-        //         console.log(`Fetch pdf file....`)
-        //         setPdfFile(file);
+        if (fileData) {
+            (async () => {
+                console.log(`Fetch pdf file....`)
+                setPdfFile(fileData);
 
-        //         // Create object URL for display
-        //         const fileUrl = URL.createObjectURL(file);
-        //         setPdfUrl(fileUrl);
+                // Create object URL for display
+                const fileUrl = URL.createObjectURL(fileData);
+                setPdfUrl(fileUrl);
 
-        //         // Load PDF document using pdf-lib
-        //         const arrayBuffer = await file.arrayBuffer();
-        //         const pdfDoc = await PDFDocument.load(arrayBuffer);
-        //         setPdfDoc(pdfDoc);
-        //     })()
-        // }
+                // Load PDF document using pdf-lib
+                const arrayBuffer = await fileData.arrayBuffer();
+                const pdfDoc = await PDFDocument.load(arrayBuffer);
+                setPdfDoc(pdfDoc);
+            })()
+        }
 
 
         (async () => {
@@ -1941,11 +1874,11 @@ const PdfRendererWrapperData = React.memo(function ExpensiveComponent({
         return () => window.removeEventListener('resize', handleResize);
     }, []);
 
-    useEffect(() => {
-        console.log(`loadUserSignatures true -backend_url, session, session?.address ${backend_url}, ${session}, ${session?.address}`)
-        loadUserSignatures(true)
+    // useEffect(() => {
+    //     console.log(`loadUserSignatures true -backend_url, session, session?.address ${backend_url}, ${session}, ${session?.address}`)
+    //     loadUserSignatures(true)
 
-    }, [backend_url, session, session?.address]);
+    // }, [backend_url, session, session?.address]);
 
     // useEffect(() => {
     //     // Load user signatures when component mounts
@@ -1967,9 +1900,46 @@ const PdfRendererWrapperData = React.memo(function ExpensiveComponent({
             {/* PDF viewer and signature tools */}
             <Box h={"calc(100% - 60px)"}>
                 {
-                    file ? (
+                    pdfFile ? (
                         <>
-                            {pdfRendererWrapper()}
+                            <Box h={"100%"}>
+                                <Box h={"100%"}>
+                                    <Grid
+                                        // templateRows="repeat(2, 1fr)"
+                                        templateColumns="repeat(12, 1fr)"
+                                        gap={0}
+                                        h={"100%"}
+                                    >
+                                        <GridItem bg={"gray.100"} colSpan={{ base: 12, md: 9 }} overflowX={"auto"} overflowY={"scroll"} height={"100%"}>
+                                            <Box h={"100%"} p={0} m={0} >
+
+
+
+                                                <PdfRenderer
+                                                    pdfFile={pdfFile}
+                                                    annotations={signaturePositions}
+                                                    onAnnotationAdd={addAnnotation}
+                                                    onAnnotationUpdate={updateAnnotation}
+                                                    onAnnotationDelete={deleteAnnotation}
+                                                    selectedTool={selectedTool}
+                                                    selectedAnnotationId={selectedSignatureId}
+                                                    onAnnotationSelect={() => { }}
+                                                    onAnnotationRotate={() => { }}
+                                                />
+
+
+                                            </Box>
+                                        </GridItem>
+                                        <GridItem colSpan={{ base: 12, md: 3 }} bg={"gray.100"} overflow={"hidden"}>
+                                            <Box p={4} h={"100%"} overflowY={"scroll"} overflowX={"hidden"} wordBreak={"break-word"}>
+                                                {signatureSideBar()}
+
+                                            </Box>
+                                        </GridItem>
+                                        {/* </div> */}
+                                    </Grid>
+                                </Box>
+                            </Box>
                         </>
 
                     ) : <>Error Loading PDF</>

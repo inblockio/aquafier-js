@@ -344,21 +344,23 @@ export const ContractDocumentView: React.FC<ContractDocumentViewProps> = ({ setA
 
     const initializeComponent = async () => {
         try {
-            // Load PDF first
-            const pdfFile = await fetchPDFfile();
-            setPdfFile(pdfFile);
-            setLoadingPdfFile(false);
+            if (pdfFile == null) {
+                // Load PDF first
+                const pdfFile = await fetchPDFfile();
+                setPdfFile(pdfFile);
+                setLoadingPdfFile(false);
 
 
-            let shouldLoad = shouldLoadSignatures()
-            // console.log(`Should load ${shouldLoad + "="} ....`)
+                let shouldLoad = shouldLoadSignatures()
+                // console.log(`Should load ${shouldLoad + "="} ....`)
 
-            if (shouldLoad) {
-                setSignaturesLoading(true);
-                const allSignatures: SignatureData[] = await loadSignatures();
+                if (shouldLoad) {
+                    setSignaturesLoading(true);
+                    const allSignatures: SignatureData[] = await loadSignatures();
 
-                setSignatures(allSignatures);
-                setSignaturesLoading(false);
+                    setSignatures(allSignatures);
+                    setSignaturesLoading(false);
+                }
             }
         } catch (error) {
             console.error("Error initializing component:", error);
@@ -502,7 +504,7 @@ export const ContractDocumentView: React.FC<ContractDocumentViewProps> = ({ setA
         return (
             <PdfSigner
                 documentSignatures={signatures}
-                file={pdfFile}
+                fileData={pdfFile}
                 setActiveStep={setActiveStep}
             />
         );

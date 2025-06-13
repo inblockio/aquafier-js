@@ -97,13 +97,15 @@ function PdfRendererComponent({
 }
 
 // Memoize the PdfRenderer component to prevent unnecessary re-renders
-export const PdfRenderer = React.memo(PdfRendererComponent, (prevProps, nextProps) => {
-  // Only re-render if file or annotations change
-  return (
-    prevProps.pdfFile === nextProps.pdfFile &&
-    prevProps.annotations === nextProps.annotations
-  );
-});
+// export const PdfRenderer = React.memo(PdfRendererComponent, (prevProps, nextProps) => {
+//   // Only re-render if file or annotations change
+//   return (
+//     prevProps.pdfFile === nextProps.pdfFile &&
+//     prevProps.annotations === nextProps.annotations
+//   );
+// });
+
+export const PdfRenderer =PdfRendererComponent
 
 interface EasyPDFRendererProps {
   pdfFile: File | null;
