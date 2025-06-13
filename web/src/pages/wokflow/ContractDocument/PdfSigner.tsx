@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import {
     Box,
     Button,
@@ -15,7 +15,9 @@ import {
     Grid,
     GridItem,
     Card,
-    Image as ChakraImage
+    Image as ChakraImage,
+    Group,
+    List
 } from '@chakra-ui/react';
 import { Alert } from '../../../components/chakra-ui/alert';
 import { useBoolean } from '@chakra-ui/hooks';
@@ -40,7 +42,7 @@ import { useNavigate } from 'react-router-dom';
 // import SignerPage from './signer/SignerPage';
 // import AnnotationSidebar from './signer/annotation-sidebar';
 import { Trash2 } from 'lucide-react';
-import { ProfileAnnotation } from './signer/types';
+import { Annotation, ProfileAnnotation } from './signer/types';
 import { PdfRenderer } from './signer/SignerPage';
 
 
@@ -57,13 +59,13 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ file, setActiveStep, documentSign
 
     const { formTemplates, systemFileInfo, selectedFileInfo, setSelectedFileInfo, setFiles } = useStore(appStore)
     // State for PDF document
-    const [_pdfFile, setPdfFile] = useState<File | null>(file);
-    const [_pdfUrl, setPdfUrl] = useState<string | null>(null);
-    const [_pdfDoc, setPdfDoc] = useState<PDFDocument | null>(null);
+    const [pdfFile, setPdfFile] = useState<File | null>(file);
+    const [pdfUrl, setPdfUrl] = useState<string | null>(null);
+    const [pdfDoc, setPdfDoc] = useState<PDFDocument | null>(null);
     const [creatingUserSignature, setCreatingUserSignature] = useState<boolean>(false);
-    const [_signers, setSigners] = useState<string[]>([]);
-    const [_allSignersBeforeMe, setAllSignersBeforeMe] = useState<string[]>([]);
-    const [_userCanSign, setUserCanSign] = useState<boolean>(false);
+    const [signers, setSigners] = useState<string[]>([]);
+    const [allSignersBeforeMe, setAllSignersBeforeMe] = useState<string[]>([]);
+    const [userCanSign, setUserCanSign] = useState<boolean>(false);
 
     // const [numPages, setNumPages] = useState<number>(0);
     // const [currentPage, setCurrentPage] = useState<number>(1);
@@ -1277,6 +1279,7 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ file, setActiveStep, documentSign
                         height: 0, // Default height, will be updated when placed
                         isDragging: false, // Default to false, will be updated when dragging
                         signatureId: signatureHash, // Use the signature hash as the ID
+                        rotation:0
                     };
                     apiSigntures.push(sign)
                 }
@@ -1614,61 +1617,61 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ file, setActiveStep, documentSign
         );
     };
 
-    // const signatureSideBar = () => {
+    const signatureSideBar = () => {
 
 
-    //     if (signers.length == 0) {
-    //         return <Text>Signers for  document workflow not found</Text>
-    //     }
+        if (signers.length == 0) {
+            return <Text>Signers for  document workflow not found</Text>
+        }
 
 
-    //     if (!signers.includes(session!.address)) {
-    //         return <Group>
-    //             <Text>Signers</Text>
-    //             <List.Root>
-    //                 {
-    //                     signers.map((e) => {
-    //                         return <List.Item>{e}</List.Item>
-    //                     })
-    //                 }
+        if (!signers.includes(session!.address)) {
+            return <Group>
+                <Text>Signers</Text>
+                <List.Root>
+                    {
+                        signers.map((e) => {
+                            return <List.Item>{e}</List.Item>
+                        })
+                    }
 
-    //             </List.Root>
-    //         </Group>
-    //     }
-
-
-    //     if (allSignersBeforeMe.length > 0) {
-    //         return <Stack
-    //             gap={4}
-    //             align="stretch"
-    //             p={4}
-    //             border="1px solid"
-    //             borderColor={colorMode === "dark" ? "gray.800" : "gray.100"}
-    //             borderRadius="md"
-    //         >
-    //             <Text fontSize={'md'} >The following wallet address need to sign before you can. </Text>
-
-    //             <List.Root as="ol" listStyle="decimal">
-    //                 {
-    //                     allSignersBeforeMe.map((e) => {
-    //                         return <List.Item>{e}</List.Item>
-    //                     })
-    //                 }
-    //             </List.Root>
+                </List.Root>
+            </Group>
+        }
 
 
+        if (allSignersBeforeMe.length > 0) {
+            return <Stack
+                gap={4}
+                align="stretch"
+                p={4}
+                border="1px solid"
+                borderColor={colorMode === "dark" ? "gray.800" : "gray.100"}
+                borderRadius="md"
+            >
+                <Text fontSize={'md'} >The following wallet address need to sign before you can. </Text>
 
-    //         </Stack>
-    //     }
+                <List.Root as="ol" listStyle="decimal">
+                    {
+                        allSignersBeforeMe.map((e) => {
+                            return <List.Item>{e}</List.Item>
+                        })
+                    }
+                </List.Root>
 
 
 
-    //     return <GridItem colSpan={{ base: 12, md: 1 }} h={{ base: "fit-content", md: "100%" }} overflow={{ base: "hidden", md: "auto" }}>
-    //         {/* Signature tools */}
-    //         {userSignatureDetails()}
-    //     </GridItem>
+            </Stack>
+        }
 
-    // }
+
+
+        return <GridItem colSpan={{ base: 12, md: 1 }} h={{ base: "fit-content", md: "100%" }} overflow={{ base: "hidden", md: "auto" }}>
+            {/* Signature tools */}
+            {userSignatureDetails()}
+        </GridItem>
+
+    }
 
     const userSignatureDetails = () => {
 
@@ -1970,6 +1973,40 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ file, setActiveStep, documentSign
 
 
 
+     const addAnnotation = useCallback((newAnnotationData: Omit<Annotation, 'id'>) => {
+        const id = Date.now().toString() + Math.random().toString(36).substring(2, 9);
+        const selectedSignatureInfo = mySignatureData.find(signature => signature.hash === selectedSignatureId)
+       
+        if (!selectedSignatureInfo) {
+            console.log(`error signature hash not found `)
+          return
+        }
+        const newAnnotation = {
+          ...newAnnotationData, id,
+          imageSrc: selectedSignatureInfo.dataUrl ?? "/images/preview.jpg",
+          name: selectedSignatureInfo.name,
+          walletAddress: selectedSignatureInfo.walletAddress
+        };
+        setSignaturePositions((prev: any) => [...prev, newAnnotation]);
+        setSelectedTool(null);
+        setCanPlaceSignature(false)
+        // setSelectedSignatureHash(null)
+        // setSelectedAnnotationId(id);
+      }, [mySignatureData, selectedSignatureId]);
+    
+      const updateAnnotation = useCallback((updatedAnnotation: Annotation) => {
+        setSignaturePositions((prev) =>
+          prev.map((anno) => (anno.id === updatedAnnotation.id ? updatedAnnotation : anno))
+        );
+      }, []);
+    
+      const deleteAnnotation = useCallback((id: string) => {
+        setSignaturePositions((prev) => prev.filter((anno) => anno.id !== id));
+        if (selectedSignatureId === id) {
+          setSelectedSignatureId(null);
+        }
+      }, [selectedSignatureId]);
+
     const pdfRendererWrapper = () => {
         return <Box h={"100%"}>
             {/* <Box h={"70px"} p={4}>
@@ -2048,9 +2085,7 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ file, setActiveStep, documentSign
                             <PdfRenderer
                                 pdfFile={file}
                                 annotations={signaturePositions}
-                                onAnnotationAdd={() => {
-
-                                }}
+                                onAnnotationAdd={addAnnotation}
                                 onAnnotationUpdate={() => {
 
                                 }}
@@ -2178,7 +2213,7 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ file, setActiveStep, documentSign
                                         </Stack>
                                     ) : (
                                         <>
-                                            <Text>Fix mee .....</Text>
+                                           {signatureSideBar()}
                                             {/* {displayUserSignatures ? displayUserSignatures() : null} */}
                                         </>
                                     )
@@ -2189,7 +2224,7 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ file, setActiveStep, documentSign
                                 ) : null}
 
                                 <Button onClick={() => {
-                                    setSelectedTool("profile");
+                                    setSelectedTool("signature");
                                     //   setSelectedSignatureHash(selectedSignatureHash as any)
                                     setCanPlaceSignature(true)
                                 }}>

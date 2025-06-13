@@ -407,6 +407,8 @@ export default function SignerPage({ file, mySignatures, displayUserSignatures, 
         dataUrl: annotation.imageSrc,
         isDragging: false,
         signatureId: "",
+        type: annotation.type ?? "signature",
+        rotation: annotation.rotation ?? 0,
       }))
       onAnnotationUpdate(newSignatureDataPositions)
     }

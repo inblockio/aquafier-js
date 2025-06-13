@@ -481,13 +481,17 @@ const PdfViewer: React.FC<PdfViewerProps> = ({
           walletAddress: '0x123...',
           // imageSrc: "/images/preview.jpg",
           // imageAlt: 'Profile picture',
-          width: '50px',
-          height: '50px',
+          width: 50,
+          height: 50,
           rotation: 0,
-          nameFontSize: "12pt",
-          nameColor: '#333333',
-          walletAddressFontSize: "10pt",
-          walletAddressColor: '#555555',
+          hash:"err",
+          dataUrl:"err",
+          createdAt: new Date(),
+
+          // nameFontSize: "12pt",
+          // nameColor: '#333333',
+          // walletAddressFontSize: "10pt",
+          // walletAddressColor: '#555555',
         };
         onAnnotationAdd(newAnnotation);
       }

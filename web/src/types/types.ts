@@ -77,6 +77,7 @@ export interface SignatureData {
     dataUrl: string;
     isDragging?: boolean;
     signatureId?: string; 
+    rotation: number
 }
 
 
