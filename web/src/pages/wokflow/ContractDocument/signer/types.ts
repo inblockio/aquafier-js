@@ -1,3 +1,4 @@
+import { SignatureData } from "../../../../types/types";
 
 export interface BaseAnnotation {
   id: string;
@@ -42,4 +43,4 @@ export interface ProfileAnnotation extends BaseAnnotation {
   walletAddressColor?: string; // hex color
 }
 
-export type Annotation = TextAnnotation | ImageAnnotation | ProfileAnnotation;
+export type Annotation = TextAnnotation | ImageAnnotation | ProfileAnnotation | SignatureData;

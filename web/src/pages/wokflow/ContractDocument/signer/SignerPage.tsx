@@ -37,7 +37,7 @@ interface PdfRendererProps {
   onAnnotationAdd: (newAnnotationData: Omit<Annotation, 'id'>) => void;
   onAnnotationUpdate: (updatedAnnotation: Annotation) => void;
   onAnnotationDelete: (id: string) => void;
-  selectedTool: 'text' | 'image' | 'profile' | null;
+  selectedTool: 'text' | 'image' | 'profile' | 'signature' | null;
   selectedAnnotationId: string | null;
   onAnnotationSelect: (id: string | null) => void;
   onAnnotationRotate: (direction: 'cw' | 'ccw') => void;

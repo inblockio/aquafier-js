@@ -63,6 +63,7 @@ export interface RevisionVerificationStatus {
 
 
 export interface SignatureData {
+    type: 'signature';
    id: string;
     height: number;
     width: number;

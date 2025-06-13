@@ -204,9 +204,6 @@ export default function WorkFlowPage() {
         loadData()
     }, [JSON.stringify(selectedFileInfo), selectedFileInfo])
 
-
-
-
     // Find the currently active content
     const activeContent = () => timeLineItems.find(item => item.id === activeStep)?.content;
 

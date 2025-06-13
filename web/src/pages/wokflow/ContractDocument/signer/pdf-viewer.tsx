@@ -2,6 +2,7 @@ import type React from 'react';
 import { useEffect, useRef, useState, useCallback } from 'react';
 import type { Annotation, TextAnnotation, ImageAnnotation, ProfileAnnotation } from './types';
 import { Box, Text } from '@chakra-ui/react';
+import { SignatureData } from '../../../../types/types';
 
 interface PdfViewerProps {
   file: File | null;
@@ -9,7 +10,7 @@ interface PdfViewerProps {
   onAnnotationAdd: (annotation: Omit<Annotation, 'id'>) => void;
   onAnnotationUpdate: (annotation: Annotation) => void;
   onAnnotationDelete: (id: string) => void;
-  selectedTool: 'text' | 'image' | 'profile' | null;
+  selectedTool: 'text' | 'image' | 'profile' | 'signature' | null;
   currentPage: number;
   onPageChange: (page: number) => void;
   numPages: number;
@@ -463,6 +464,25 @@ const PdfViewer: React.FC<PdfViewerProps> = ({
           imageAlt: 'Profile picture',
           imageWidth: '50px',
           imageHeight: '50px',
+          rotation: 0,
+          nameFontSize: "12pt",
+          nameColor: '#333333',
+          walletAddressFontSize: "10pt",
+          walletAddressColor: '#555555',
+        };
+        onAnnotationAdd(newAnnotation);
+      }else  if (selectedTool === 'signature') {
+        const newAnnotation: Omit<SignatureData, 'id'> = {
+          type: 'signature',
+          page: currentPage,
+          x: Math.max(0, Math.min(xPercent, 99.9)),
+          y: Math.max(0, Math.min(yPercent, 99.9)),
+          name: 'User Name',
+          walletAddress: '0x123...',
+          // imageSrc: "/images/preview.jpg",
+          // imageAlt: 'Profile picture',
+          width: '50px',
+          height: '50px',
           rotation: 0,
           nameFontSize: "12pt",
           nameColor: '#333333',
