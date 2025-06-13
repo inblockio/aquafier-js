@@ -41,8 +41,7 @@ import { LuInfo, LuTrash } from 'react-icons/lu';
 import { useNavigate } from 'react-router-dom';
 // import SignerPage from './signer/SignerPage';
 // import AnnotationSidebar from './signer/annotation-sidebar';
-import { Trash2 } from 'lucide-react';
-import { Annotation, ProfileAnnotation } from './signer/types';
+import { Annotation } from './signer/types';
 import { PdfRenderer } from './signer/SignerPage';
 
 
@@ -1279,7 +1278,7 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ file, setActiveStep, documentSign
                         height: 0, // Default height, will be updated when placed
                         isDragging: false, // Default to false, will be updated when dragging
                         signatureId: signatureHash, // Use the signature hash as the ID
-                        rotation:0
+                        rotation: 0
                     };
                     apiSigntures.push(sign)
                 }
@@ -1973,39 +1972,41 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ file, setActiveStep, documentSign
 
 
 
-     const addAnnotation = useCallback((newAnnotationData: Omit<Annotation, 'id'>) => {
+    const addAnnotation = useCallback((newAnnotationData: Omit<Annotation, 'id'>) => {
+        console.log("Here: ", newAnnotationData)
         const id = Date.now().toString() + Math.random().toString(36).substring(2, 9);
         const selectedSignatureInfo = mySignatureData.find(signature => signature.hash === selectedSignatureId)
-       
+
         if (!selectedSignatureInfo) {
             console.log(`error signature hash not found `)
-          return
+            return
         }
+        console.log("Selected signature info: ", selectedSignatureInfo)
         const newAnnotation = {
-          ...newAnnotationData, id,
-          imageSrc: selectedSignatureInfo.dataUrl ?? "/images/preview.jpg",
-          name: selectedSignatureInfo.name,
-          walletAddress: selectedSignatureInfo.walletAddress
+            ...newAnnotationData, id,
+            imageSrc: selectedSignatureInfo.dataUrl ?? "/images/preview.jpg",
+            name: selectedSignatureInfo.name,
+            walletAddress: selectedSignatureInfo.walletAddress
         };
         setSignaturePositions((prev: any) => [...prev, newAnnotation]);
         setSelectedTool(null);
         setCanPlaceSignature(false)
         // setSelectedSignatureHash(null)
         // setSelectedAnnotationId(id);
-      }, [mySignatureData, selectedSignatureId]);
-    
-      const updateAnnotation = useCallback((updatedAnnotation: Annotation) => {
-        setSignaturePositions((prev) =>
-          prev.map((anno) => (anno.id === updatedAnnotation.id ? updatedAnnotation : anno))
+    }, [mySignatureData, selectedSignatureId]);
+
+    const updateAnnotation = useCallback((updatedAnnotation: Annotation) => {
+        setSignaturePositions((prev: any) =>
+            prev.map((anno: any) => (anno.id === updatedAnnotation.id ? updatedAnnotation : anno))
         );
-      }, []);
-    
-      const deleteAnnotation = useCallback((id: string) => {
+    }, []);
+
+    const deleteAnnotation = useCallback((id: string) => {
         setSignaturePositions((prev) => prev.filter((anno) => anno.id !== id));
         if (selectedSignatureId === id) {
-          setSelectedSignatureId(null);
+            setSelectedSignatureId(null);
         }
-      }, [selectedSignatureId]);
+    }, [selectedSignatureId]);
 
     const pdfRendererWrapper = () => {
         return <Box h={"100%"}>
@@ -2213,7 +2214,7 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ file, setActiveStep, documentSign
                                         </Stack>
                                     ) : (
                                         <>
-                                           {signatureSideBar()}
+                                            {signatureSideBar()}
                                             {/* {displayUserSignatures ? displayUserSignatures() : null} */}
                                         </>
                                     )

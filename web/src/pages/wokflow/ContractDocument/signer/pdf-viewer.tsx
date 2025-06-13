@@ -438,7 +438,8 @@ const PdfViewer: React.FC<PdfViewerProps> = ({
         rotation: 0,
       };
       onAnnotationAdd(newAnnotation);
-    } else if (selectedTool === 'image' || selectedTool === 'profile') {
+    }
+    else if (selectedTool === 'image' || selectedTool === 'profile') {
       if (selectedTool === 'image') {
         const newAnnotation: Omit<ImageAnnotation, 'id'> = {
           type: 'image',
@@ -452,7 +453,8 @@ const PdfViewer: React.FC<PdfViewerProps> = ({
           rotation: 0,
         };
         onAnnotationAdd(newAnnotation);
-      } else if (selectedTool === 'profile') {
+      }
+      else if (selectedTool === 'profile') {
         const newAnnotation: Omit<ProfileAnnotation, 'id'> = {
           type: 'profile',
           page: currentPage,
@@ -471,30 +473,30 @@ const PdfViewer: React.FC<PdfViewerProps> = ({
           walletAddressColor: '#555555',
         };
         onAnnotationAdd(newAnnotation);
-      }else  if (selectedTool === 'signature') {
-        const newAnnotation: Omit<SignatureData, 'id'> = {
-          type: 'signature',
-          page: currentPage,
-          x: Math.max(0, Math.min(xPercent, 99.9)),
-          y: Math.max(0, Math.min(yPercent, 99.9)),
-          name: 'User Name',
-          walletAddress: '0x123...',
-          // imageSrc: "/images/preview.jpg",
-          // imageAlt: 'Profile picture',
-          width: 50,
-          height: 50,
-          rotation: 0,
-          hash:"err",
-          dataUrl:"err",
-          createdAt: new Date(),
-
-          // nameFontSize: "12pt",
-          // nameColor: '#333333',
-          // walletAddressFontSize: "10pt",
-          // walletAddressColor: '#555555',
-        };
-        onAnnotationAdd(newAnnotation);
       }
+    } else if (selectedTool === 'signature') {
+      const newAnnotation: Omit<SignatureData, 'id'> = {
+        type: 'signature',
+        page: currentPage,
+        x: Math.max(0, Math.min(xPercent, 99.9)),
+        y: Math.max(0, Math.min(yPercent, 99.9)),
+        name: 'User Name',
+        walletAddress: '0x123...',
+        // imageSrc: "/images/preview.jpg",
+        // imageAlt: 'Profile picture',
+        width: 50,
+        height: 50,
+        rotation: 0,
+        hash: "err",
+        dataUrl: "err",
+        createdAt: new Date(),
+
+        // nameFontSize: "12pt",
+        // nameColor: '#333333',
+        // walletAddressFontSize: "10pt",
+        // walletAddressColor: '#555555',
+      };
+      onAnnotationAdd(newAnnotation);
     }
   };
 
@@ -629,6 +631,57 @@ const PdfViewer: React.FC<PdfViewerProps> = ({
                   }
                   else if (anno.type === 'profile') {
                     const profileAnno = anno as ProfileAnnotation;
+                    const profileStyle: React.CSSProperties = {
+                      ...baseStyle,
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: '4px',
+                      padding: '5px',
+                      backgroundColor: 'rgba(255, 255, 255, 0.7)',
+                    };
+                    return (
+                      <div key={anno.id} style={profileStyle} data-ai-hint="profile annotation" data-annotation-id={anno.id}
+                        onMouseDown={(e) => handleAnnotationMouseDown(e, anno)}>
+                        <div
+                          className="relative"
+                          style={{ width: profileAnno.imageWidth, height: profileAnno.imageHeight }}
+                          data-annotation-id={`${anno.id}-image`}
+                        >
+                          <img
+                            src={profileAnno.imageSrc}
+                            alt={profileAnno.imageAlt}
+                            style={{ width: '100%', height: '100%', objectFit: 'cover', pointerEvents: 'none' }}
+                          />
+                          {isSelected && (
+                            <>
+                              {renderResizeHandle(anno, 'topLeft', 'image')}
+                              {renderResizeHandle(anno, 'topRight', 'image')}
+                              {renderResizeHandle(anno, 'bottomLeft', 'image')}
+                              {renderResizeHandle(anno, 'bottomRight', 'image')}
+                            </>
+                          )}
+                        </div>
+                        <div style={{
+                          fontSize: profileAnno.nameFontSize || "12pt",
+                          color: profileAnno.nameColor || '#333333',
+                          fontWeight: 'bold',
+                          pointerEvents: 'none'
+                        }}>
+                          {profileAnno.name}
+                        </div>
+                        <div style={{
+                          fontSize: profileAnno.walletAddressFontSize || "10pt",
+                          color: profileAnno.walletAddressColor || '#555555',
+                          pointerEvents: 'none',
+                          wordBreak: 'break-all'
+                        }}>
+                          {profileAnno.walletAddress}
+                        </div>
+                      </div>
+                    );
+                  }
+                  else if (anno.type === 'signature') {
+                    const profileAnno = anno as SignatureData;
                     const profileStyle: React.CSSProperties = {
                       ...baseStyle,
                       display: 'flex',

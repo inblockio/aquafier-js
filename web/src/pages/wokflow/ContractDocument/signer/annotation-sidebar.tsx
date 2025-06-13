@@ -3,6 +3,7 @@ import type { Annotation, ProfileAnnotation } from "./types";
 import { Trash2 } from 'lucide-react';
 import { Card, FieldLabel, Image, Input, Stack, Box, HStack, Heading, IconButton } from '@chakra-ui/react';
 import { Field } from '../../../../components/chakra-ui/field';
+import { SignatureData } from '../../../../types/types';
 
 interface AnnotationSidebarProps {
   annotations: Annotation[];
@@ -28,7 +29,10 @@ const AnnotationSidebar: React.FC<AnnotationSidebarProps> = ({
   const profileAnnotations = annotations.filter(
     (anno) => anno.type === 'profile'
   ) as ProfileAnnotation[];
-
+   const signatureAnnotations = annotations.filter(
+    (anno) => anno.type === 'signature'
+  ) as SignatureData[];
+ 
   // const renderTextAnnotationEditor = (anno: TextAnnotation) => (
   //   <Card.Root key={anno.id} className={`mb-4 ${selectedAnnotationId === anno.id ? 'border-primary' : ''}`} onClick={() => onAnnotationSelect(anno.id)}>
   //     <Card.Header className="p-4">
@@ -237,6 +241,104 @@ const AnnotationSidebar: React.FC<AnnotationSidebarProps> = ({
     </Card.Root>
   );
 
+  const renderSignatureAnnotationEditor = (anno: SignatureData) => {
+    console.log("anno: ", anno)
+    return (
+    <Card.Root key={anno.id} borderRadius={"lg"} borderColor={selectedAnnotationId === anno.id ? "blue.400" : "gray.200"} borderWidth={"2px"} onClick={() => onAnnotationSelect(anno.id)}>
+      <Card.Header p={2}>
+        <Card.Title className="text-base font-headline flex justify-between items-center">
+          <HStack justify={"space-between"}>
+            Signature (Page {anno.page})
+            <IconButton variant="subtle" colorPalette={"red"} size="sm" borderRadius={"md"} onClick={(e) => { e.stopPropagation(); onAnnotationDelete(anno.id); }}>
+              <Trash2 className="h-4 w-4" />
+            </IconButton>
+          </HStack>
+        </Card.Title>
+      </Card.Header>
+      <Card.Body p={2}>
+        <Stack>
+          <Heading size="md">Image Settings</Heading>
+          <Box bg={"gray.100"} borderRadius={"lg"}>
+            <Image borderRadius={"lg"} src={anno.dataUrl} alt={anno.name} h={24} mx={"auto"} data-ai-hint="profile picture" />
+          </Box>
+          <Field>
+            <FieldLabel>Image</FieldLabel>
+            <Input disabled placeholder="Enter your image" defaultValue={anno.dataUrl} onChange={(e) => onAnnotationUpdate({ ...anno, dataUrl: e.target.value })} />
+          </Field>
+
+          {/* <Field>
+            <FieldLabel>Image Alt Text</FieldLabel>
+            <Input placeholder="Enter your image alt text" defaultValue={anno.imageAlt} onChange={(e) => onAnnotationUpdate({ ...anno, imageAlt: e.target.value })} />
+          </Field> */}
+
+          {/* <HStack>
+            <Field>
+              <FieldLabel>Image Width</FieldLabel>
+              <Input placeholder="Enter your image width" defaultValue={anno.imageWidth} onChange={(e) => onAnnotationUpdate({ ...anno, imageWidth: e.target.value })} />
+            </Field>
+
+            <Field>
+              <FieldLabel>Image Height</FieldLabel>
+              <Input placeholder="Enter your image height" defaultValue={anno.imageHeight} onChange={(e) => onAnnotationUpdate({ ...anno, imageHeight: e.target.value })} />
+            </Field>
+          </HStack> */}
+
+          <Box
+            h={"1px"}
+            bg="gray.200"
+            my={2}
+          />
+
+          <Heading size="md">Info</Heading>
+
+          <Field>
+            <FieldLabel>Name</FieldLabel>
+            <Input disabled placeholder="Enter your name" defaultValue={anno.name} onChange={(e) => onAnnotationUpdate({ ...anno, name: e.target.value })} />
+          </Field>
+
+          <Field>
+            <FieldLabel>Wallet Address</FieldLabel>
+            <Input disabled placeholder="Enter your wallet address" defaultValue={anno.walletAddress} onChange={(e) => onAnnotationUpdate({ ...anno, walletAddress: e.target.value })} />
+          </Field>
+
+          {/* <HStack>
+            <Field>
+              <FieldLabel>Font Size</FieldLabel>
+              <Input placeholder="Enter Font Size" defaultValue={anno.nameFontSize} onChange={(e) => onAnnotationUpdate({ ...anno, nameFontSize: e.target.value })} />
+            </Field>
+            <Field>
+              <FieldLabel>Color</FieldLabel>
+              <Input type='color' placeholder="Enter your name height" defaultValue={anno.nameColor} onChange={(e) => onAnnotationUpdate({ ...anno, nameColor: e.target.value })} />
+            </Field>
+          </HStack>
+
+          <Box
+            h={"1px"}
+            bg="gray.200"
+            my={2}
+          />
+
+          <Heading size="md">Wallet Address Settings</Heading>
+
+          <Field>
+            <FieldLabel>Wallet Address</FieldLabel>
+            <Input placeholder="Enter your wallet address" defaultValue={anno.walletAddress} onChange={(e) => onAnnotationUpdate({ ...anno, walletAddress: e.target.value })} />
+          </Field>
+          <HStack>
+            <Field>
+              <FieldLabel>Font Size</FieldLabel>
+              <Input placeholder="Enter Font Size" defaultValue={anno.walletAddressFontSize} onChange={(e) => onAnnotationUpdate({ ...anno, walletAddressFontSize: e.target.value })} />
+            </Field>
+            <Field>
+              <FieldLabel>Color</FieldLabel>
+              <Input type='color' placeholder="Enter your name height" defaultValue={anno.walletAddressColor} onChange={(e) => onAnnotationUpdate({ ...anno, walletAddressColor: e.target.value })} />
+            </Field>
+          </HStack> */}
+        </Stack>
+      </Card.Body>
+    </Card.Root>
+  )};
+
 
   return (
     <Stack borderRadius={"xl"} className="w-96 bg-card border-l p-4 h-full flex flex-col">
@@ -248,7 +350,7 @@ const AnnotationSidebar: React.FC<AnnotationSidebarProps> = ({
         </Card.Header>
         <Card.Body>
           {profileAnnotations.length > 0 ? (
-            profileAnnotations.map(renderProfileAnnotationEditor)
+            signatureAnnotations.map(renderSignatureAnnotationEditor)
           ) : (
             <p className="text-muted-foreground text-sm text-center py-4">No signatures yet.</p>
           )}
