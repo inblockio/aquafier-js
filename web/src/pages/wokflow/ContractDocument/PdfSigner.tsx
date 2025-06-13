@@ -17,7 +17,8 @@ import {
     Card,
     Image as ChakraImage,
     Group,
-    List
+    List,
+    VStack
 } from '@chakra-ui/react';
 import { Alert } from '../../../components/chakra-ui/alert';
 import { useBoolean } from '@chakra-ui/hooks';
@@ -159,8 +160,8 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ fileData, setActiveStep, document
 
         signaturePosition.forEach((signaturePositionItem, index) => {
             const pageIndex = signaturePositionItem.page;
-            signForm[`x_${index}`] = Number(signaturePositionItem.x.toFixed(16));
-            signForm[`y_${index}`] = Number(signaturePositionItem.y.toFixed(16));
+            signForm[`x_${index}`] = Number(signaturePositionItem.x.toFixed(14));
+            signForm[`y_${index}`] = Number(signaturePositionItem.y.toFixed(14));
             signForm[`page_${index}`] = pageIndex.toString();
             signForm[`width_${index}`] = signaturePositionItem.width.toString();
             signForm[`height_${index}`] = signaturePositionItem.height.toString();
@@ -1257,82 +1258,137 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ fileData, setActiveStep, document
 
     // const onAnnotationUpdate
 
-    const renderProfileAnnotationEditor = (anno: SignatureData) => (
-        <Card.Root key={anno.id} borderRadius={"lg"} borderColor={selectedSignatureId === anno.id ? "blue.400" : "gray.200"} borderWidth={"2px"} onClick={() => {
-            //  onAnnotationSelect(anno.id)
-        }}>
-            <Card.Header p={2}>
-                <Card.Title className="text-base font-headline flex justify-between items-center">
-                    <HStack justify={"space-between"}>
-                        Signature (Page {anno.page})
-                        <IconButton variant="subtle" colorPalette={"red"} size="sm" borderRadius={"md"} onClick={(e) => {
-                            e.stopPropagation();
+    const renderProfileAnnotationEditor = (_anno: SignatureData) => {
+        {/* Signatures placed on document */ }
+        return <>
+            {signaturePositions.length > 0 && (
+                <>
+                    {/* <Text fontWeight="bold" mt={2}>Signatures on Document:</Text> */}
+                    <Box maxH="150px" overflowY="auto" border="1px solid" borderColor="gray.200" borderRadius="md">
+                        <Stack gap={0}>
+                            {signaturePositions.map((position) => {
+                                // const signature = signaturesInDocument.find(sig => sig.id === position.signatureId);
+                                // if (!signature) return null;
 
-                            deleteAnnotation(anno.id)
+                                return (
+                                    <HStack key={position.id} p={2} justify="space-between">
+                                        <HStack>
+                                            <Box
+                                                width="40px"
+                                                height="30px"
+                                                backgroundImage={`url(${position.dataUrl})`}
+                                                backgroundSize="contain"
+                                                backgroundRepeat="no-repeat"
+                                                backgroundPosition="center"
+                                                border="1px solid"
+                                                borderColor="gray.200"
+                                                borderRadius="sm"
+                                            />
+                                            <Text fontSize="xs">{position.name} (Page {position.page + 1})</Text>
 
-                        }}>
-                            <Trash2 className="h-4 w-4" />
-                        </IconButton>
-                    </HStack>
-                </Card.Title>
-            </Card.Header>
-            <Card.Body p={2}>
-                <Stack>
-                    <Heading size="md">Image Settings</Heading>
-                    <Box bg={"gray.100"} borderRadius={"lg"}>
-                        <ChakraImage borderRadius={"lg"} src={anno.dataUrl} alt={'error'} h={24} mx={"auto"} data-ai-hint="profile picture" />
+                                            <IconButton variant={'outline'} size={'2xs'} onClick={(e) => {
+                                                e.preventDefault();
+
+                                                console.log(`B4 Delete ${JSON.stringify(signaturePositions, null, 4)}`)
+                                                let newData: SignatureData[] = [];
+                                                for (let item of signaturePositions) {
+                                                    console.log(`item id ${item.id} -- ${position.id}`)
+                                                    if (item.id != position.id) {
+                                                        newData.push(item)
+                                                    }
+                                                }
+
+                                                console.log(`After Delete ${JSON.stringify(newData, null, 4)}`)
+                                                setSignaturePositions(newData)
+                                            }}>
+                                                <LuTrash size={'10px'} color='red' />
+                                            </IconButton>
+                                        </HStack>
+                                    </HStack>
+                                );
+                            })}
+                        </Stack>
                     </Box>
-                    <Field>
-                        <FieldLabel>Image</FieldLabel>
-                        {/* <Input disabled placeholder="Enter your image" defaultValue={anno.dataUrl} onChange={(e) => {
-                            onAnnotationUpdate({ ...anno, imageSrc: e.target.value })}
-                            } /> */}
-                    </Field>
+                </>
+            )}
+        </>
+    }
+    // const renderProfileAnnotationEditor = (anno: SignatureData) => (
+    //     <Card.Root key={anno.id} borderRadius={"lg"} borderColor={selectedSignatureId === anno.id ? "blue.400" : "gray.200"} borderWidth={"2px"} onClick={() => {
+    //         //  onAnnotationSelect(anno.id)
+    //     }}>
+    //         <Card.Header p={2}>
+    //             <Card.Title className="text-base font-headline flex justify-between items-center">
+    //                 <HStack justify={"space-between"}>
+    //                     Signature (Page {anno.page})
+    //                     <IconButton variant="subtle" colorPalette={"red"} size="sm" borderRadius={"md"} onClick={(e) => {
+    //                         e.stopPropagation();
 
-                    {/* <Field>
-                <FieldLabel>Image Alt Text</FieldLabel>
-                <Input placeholder="Enter your image alt text" defaultValue={anno.imageAlt} onChange={(e) => onAnnotationUpdate({ ...anno, imageAlt: e.target.value })} />
-              </Field> */}
+    //                         deleteAnnotation(anno.id)
 
-                    <HStack>
-                        <Field>
-                            <FieldLabel>Image Width</FieldLabel>
-                            {/* <Input placeholder="Enter your image width" defaultValue={anno.imageWidth} onChange={(e) =>{ 
-                                  onAnnotationUpdate({ ...anno, imageWidth: e.target.value })
-                                }
-                                 } />
-                                  */}
-                        </Field>
+    //                     }}>
+    //                         <Trash2 className="h-4 w-4" />
+    //                     </IconButton>
+    //                 </HStack>
+    //             </Card.Title>
+    //         </Card.Header>
+    //         <Card.Body p={2}>
+    //             <Stack>
+    //                 <Heading size="md">Image Settings</Heading>
+    //                 <Box bg={"gray.100"} borderRadius={"lg"}>
+    //                     <ChakraImage borderRadius={"lg"} src={anno.dataUrl} alt={'error'} h={24} mx={"auto"} data-ai-hint="profile picture" />
+    //                 </Box>
+    //                 <Field>
+    //                     <FieldLabel>Image</FieldLabel>
+    //                     {/* <Input disabled placeholder="Enter your image" defaultValue={anno.dataUrl} onChange={(e) => {
+    //                         onAnnotationUpdate({ ...anno, imageSrc: e.target.value })}
+    //                         } /> */}
+    //                 </Field>
 
-                        <Field>
-                            <FieldLabel>Image Height</FieldLabel>
-                            {/* <Input placeholder="Enter your image height" defaultValue={anno.imageHeight} onChange={(e) => onAnnotationUpdate({ ...anno, imageHeight: e.target.value })} /> */}
-                        </Field>
-                    </HStack>
+    //                 {/* <Field>
+    //             <FieldLabel>Image Alt Text</FieldLabel>
+    //             <Input placeholder="Enter your image alt text" defaultValue={anno.imageAlt} onChange={(e) => onAnnotationUpdate({ ...anno, imageAlt: e.target.value })} />
+    //           </Field> */}
 
-                    <Box
-                        h={"1px"}
-                        bg="gray.200"
-                        my={2}
-                    />
+    //                 <HStack>
+    //                     <Field>
+    //                         <FieldLabel>Image Width</FieldLabel>
+    //                         {/* <Input placeholder="Enter your image width" defaultValue={anno.imageWidth} onChange={(e) =>{ 
+    //                               onAnnotationUpdate({ ...anno, imageWidth: e.target.value })
+    //                             }
+    //                              } />
+    //                               */}
+    //                     </Field>
 
-                    <Heading size="md">Info</Heading>
+    //                     <Field>
+    //                         <FieldLabel>Image Height</FieldLabel>
+    //                         {/* <Input placeholder="Enter your image height" defaultValue={anno.imageHeight} onChange={(e) => onAnnotationUpdate({ ...anno, imageHeight: e.target.value })} /> */}
+    //                     </Field>
+    //                 </HStack>
 
-                    <Field>
-                        <FieldLabel>Name</FieldLabel>
-                        {/* <Input disabled placeholder="Enter your name" defaultValue={anno.name} onChange={(e) => onAnnotationUpdate({ ...anno, name: e.target.value })} /> */}
-                    </Field>
+    //                 <Box
+    //                     h={"1px"}
+    //                     bg="gray.200"
+    //                     my={2}
+    //                 />
 
-                    <Field>
-                        <FieldLabel>Wallet Address</FieldLabel>
-                        {/* <Input disabled placeholder="Enter your wallet address" defaultValue={anno.walletAddress} onChange={(e) => onAnnotationUpdate({ ...anno, walletAddress: e.target.value })} /> */}
-                    </Field>
+    //                 <Heading size="md">Info</Heading>
+
+    //                 <Field>
+    //                     <FieldLabel>Name</FieldLabel>
+    //                     {/* <Input disabled placeholder="Enter your name" defaultValue={anno.name} onChange={(e) => onAnnotationUpdate({ ...anno, name: e.target.value })} /> */}
+    //                 </Field>
+
+    //                 <Field>
+    //                     <FieldLabel>Wallet Address</FieldLabel>
+    //                     {/* <Input disabled placeholder="Enter your wallet address" defaultValue={anno.walletAddress} onChange={(e) => onAnnotationUpdate({ ...anno, walletAddress: e.target.value })} /> */}
+    //                 </Field>
 
 
-                </Stack>
-            </Card.Body>
-        </Card.Root>
-    );
+    //             </Stack>
+    //         </Card.Body>
+    //     </Card.Root>
+    // );
 
 
     const annotationSidebar = () => {
@@ -1344,7 +1400,7 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ fileData, setActiveStep, document
                 <Card.Root>
                     <Card.Header>
                         <Card.Title className="text-base font-headline flex justify-between items-center">
-                            Signatures
+                            Signatures in Document
                         </Card.Title>
                     </Card.Header>
                     <Card.Body>
@@ -1360,136 +1416,7 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ fileData, setActiveStep, document
         );
     };
 
-    const signatureSideBarOld = () => {
-        {
-            selectedSignatureId && (
-                <>
-                    <Text fontWeight="bold" mt={2}>Selected Signature: </Text>
-                    {(() => {
-                        const selectedSignature = mySignatureData.find(sig => sig.hash.trim() === selectedSignatureId.trim());
-                        if (!selectedSignature) return <>Error</>;
 
-                        return (
-                            <Box
-                                border="1px solid"
-                                borderColor="gray.200"
-                                p={2}
-                                borderRadius="md"
-                                height="80px"
-                                backgroundImage={`url(${selectedSignature.dataUrl})`}
-                                backgroundSize="contain"
-                                backgroundRepeat="no-repeat"
-                                backgroundPosition="center"
-                            />
-                        );
-                    })()}
-
-                    <Field display={"none"}>
-                        <FieldLabel>Signature Size: {signatureSize}px</FieldLabel>
-                        <Slider.Root
-                            min={280}
-                            max={450}
-                            step={1}
-                            defaultValue={[signatureSize]}
-                            size={'lg'} key={'lg'}
-                            width={"250px"}
-                            value={[signatureSize]}
-                            onValueChange={(changedValue) => {
-                                console.log(`slider value ${JSON.stringify(changedValue)}`)
-                                const newValue = changedValue.value[0]
-                                console.log(`slider value ${newValue}`)
-
-                                setSignatureSize(newValue);
-                                // if (Array.isArray(changedValue)) {
-                                // setSignatureSize(changedValue.value[0]);
-                                // }
-                            }}
-                        >
-                            <Slider.Control>
-                                <Slider.Track>
-                                    <Slider.Range />
-                                </Slider.Track>
-                                <Slider.Thumb index={0} />
-                            </Slider.Control>
-                        </Slider.Root>
-                    </Field>
-
-
-
-                    <Button
-                        colorScheme="teal"
-                        onClick={() => setPlacingSignature(true)}
-                    >
-                        Place Signature on Document
-                    </Button>
-
-                    {/* Signatures placed on document */}
-                    {signaturePositions.length > 0 && (
-                        <>
-                            <Text fontWeight="bold" mt={2}>Signatures on Document:</Text>
-                            <Box maxH="150px" overflowY="auto" border="1px solid" borderColor="gray.200" borderRadius="md">
-                                <Stack gap={0}>
-                                    {signaturePositions.map((position) => {
-                                        // const signature = signaturesInDocument.find(sig => sig.id === position.signatureId);
-                                        // if (!signature) return null;
-
-                                        return (
-                                            <HStack key={position.id} p={2} justify="space-between">
-                                                <HStack>
-                                                    <Box
-                                                        width="40px"
-                                                        height="30px"
-                                                        backgroundImage={`url(${position.dataUrl})`}
-                                                        backgroundSize="contain"
-                                                        backgroundRepeat="no-repeat"
-                                                        backgroundPosition="center"
-                                                        border="1px solid"
-                                                        borderColor="gray.200"
-                                                        borderRadius="sm"
-                                                    />
-                                                    <Text fontSize="xs">{position.name} (Page {position.page + 1})</Text>
-
-                                                    <IconButton variant={'outline'} size={'2xs'} onClick={(e) => {
-                                                        e.preventDefault();
-
-                                                        console.log(`B4 Delete ${JSON.stringify(signaturePositions, null, 4)}`)
-                                                        let newData: SignatureData[] = [];
-                                                        for (let item of signaturePositions) {
-                                                            console.log(`item id ${item.id} -- ${position.id}`)
-                                                            if (item.id != position.id) {
-                                                                newData.push(item)
-                                                            }
-                                                        }
-
-                                                        console.log(`After Delete ${JSON.stringify(newData, null, 4)}`)
-                                                        setSignaturePositions(newData)
-                                                    }}>
-                                                        <LuTrash size={'10px'} color='red' />
-                                                    </IconButton>
-                                                </HStack>
-                                            </HStack>
-                                        );
-                                    })}
-                                </Stack>
-                            </Box>
-                        </>
-                    )}
-
-                    {signaturePositions.length > 0 && (
-                        <Text fontSize="sm" color="gray.600">
-                            Tip: You can drag placed signatures to adjust their position
-                        </Text>
-                    )}
-
-                    {placingSignature && (
-                        <Text color="blue.500">
-                            Click on the document to place your signature
-                        </Text>
-                    )}
-                </>
-            )
-        }
-    }
     const signatureSideBar = () => {
 
 
@@ -1504,10 +1431,13 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ fileData, setActiveStep, document
                 <List.Root>
                     {
                         signers.map((e) => {
-                            return <List.Item>{e}</List.Item>
+                            return <HStack key={e} p={2} justify="space-between">
+                                <HStack>
+                                    <Text fontSize="xs">{e}</Text>
+                                </HStack>
+                            </HStack>
                         })
                     }
-
                 </List.Root>
             </Group>
         }
@@ -1515,22 +1445,27 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ fileData, setActiveStep, document
 
         if (allSignersBeforeMe.length > 0) {
             return <Stack
-                gap={4}
+                gap={2}
                 align="stretch"
-                p={4}
+                p={2}
                 border="1px solid"
                 borderColor={colorMode === "dark" ? "gray.800" : "gray.100"}
                 borderRadius="md"
             >
                 <Text fontSize={'md'} >The following wallet address need to sign before you can. </Text>
 
-                <List.Root as="ol" listStyle="decimal">
+                <Stack p={2} justify="space-between">
                     {
-                        allSignersBeforeMe.map((e) => {
-                            return <List.Item key={e}>{e}</List.Item>
+                        allSignersBeforeMe.map((e, index) => {
+                            return <Box bg="bg" shadow="xsm" padding={2} borderRadius="sm">
+                                <HStack>
+                                    <Text key={e} fontSize="xs">{index + 1}</Text>.
+                                    <Text key={e} fontSize="xs"> {e}</Text>
+                                </HStack>
+                            </Box>
                         })
                     }
-                </List.Root>
+                </Stack>
 
 
 
@@ -1683,18 +1618,18 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ fileData, setActiveStep, document
 
 
                 {annotationSidebar()}
-                <Box>
-                    <Button
-                        colorPalette={'green'} variant={'solid'}
-                        colorScheme="white"
-                        disabled={signaturePositions.length === 0}
-                        // disabled={!pdfDoc || !signatureDataUrl || signaturePositions.length === 0}
-                        onClick={handleSignatureSubmission}
-                        loading={submittingSignatureData}
-                    >
-                        Sign document
-                    </Button>
-                </Box>
+
+                <Button
+                    colorPalette={'green'} variant={'solid'}
+                    colorScheme="white"
+                    disabled={signaturePositions.length === 0}
+                    // disabled={!pdfDoc || !signatureDataUrl || signaturePositions.length === 0}
+                    onClick={handleSignatureSubmission}
+                    loading={submittingSignatureData}
+                >
+                    Sign document
+                </Button>
+
 
             </Stack>
         </GridItem>
