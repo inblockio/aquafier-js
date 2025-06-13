@@ -1284,7 +1284,7 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ fileData, setActiveStep, document
                                                 borderColor="gray.200"
                                                 borderRadius="sm"
                                             />
-                                            <Text fontSize="xs">{position.name} (Page {position.page + 1})</Text>
+                                            <Text fontSize="xs">{position.name} (Page {position.page})</Text>
 
                                             <IconButton variant={'outline'} size={'2xs'} onClick={(e) => {
                                                 e.preventDefault();
@@ -1654,7 +1654,7 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ fileData, setActiveStep, document
 
 
     const addAnnotation = useCallback((newAnnotationData: Annotation) => {
-        console.log("Here: ", newAnnotationData)
+       
         const id = Date.now().toString() + Math.random().toString(36).substring(2, 9);
         const selectedSignatureInfo = mySignatureData.find(signature => signature.hash === selectedSignatureId)
 
@@ -1667,6 +1667,8 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ fileData, setActiveStep, document
         const newAnnotation: SignatureData = {
             ...newAnnotationData as SignatureData,
             id,
+            name:selectedSignatureInfo.name,
+            walletAddress: selectedSignatureInfo.walletAddress,
             dataUrl: selectedSignatureInfo.dataUrl
         }
         // const newAnnotation: SignatureData = {
