@@ -7,7 +7,6 @@ import {
     Input,
     Heading,
     HStack,
-    Slider,
     IconButton,
     FieldLabel,
     Container,
@@ -15,11 +14,8 @@ import {
     Grid,
     GridItem,
     Card,
-    Image as ChakraImage,
     Group,
-    List,
-    VStack
-} from '@chakra-ui/react';
+    List} from '@chakra-ui/react';
 import { Alert } from '../../../components/chakra-ui/alert';
 import { useBoolean } from '@chakra-ui/hooks';
 // import { PDFDocument, rgb, StandardFonts } from 'pdf-lib';
@@ -44,7 +40,6 @@ import { useNavigate } from 'react-router-dom';
 // import AnnotationSidebar from './signer/annotation-sidebar';
 import { Annotation } from './signer/types';
 import { PdfRenderer } from './signer/SignerPage';
-import { Trash2 } from 'lucide-react';
 import React from 'react';
 
 
@@ -62,8 +57,8 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ fileData, setActiveStep, document
     const { formTemplates, systemFileInfo, selectedFileInfo, setSelectedFileInfo, setFiles } = useStore(appStore)
     // State for PDF document
     const [pdfFile, setPdfFile] = useState<File | null>(null);
-    const [pdfUrl, setPdfUrl] = useState<string | null>(null);
-    const [pdfDoc, setPdfDoc] = useState<PDFDocument | null>(null);
+    const [_pdfUrl, setPdfUrl] = useState<string | null>(null);
+    const [_pdfDoc, setPdfDoc] = useState<PDFDocument | null>(null);
     const [creatingUserSignature, setCreatingUserSignature] = useState<boolean>(false);
     const [signers, setSigners] = useState<string[]>([]);
     const [allSignersBeforeMe, setAllSignersBeforeMe] = useState<string[]>([]);
@@ -83,7 +78,7 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ fileData, setActiveStep, document
     const [signerName, setSignerName] = useState<string>('John Doe');
     const [signaturePositions, setSignaturePositions] = useState<SignatureData[]>([]);
     const [placingSignature, setPlacingSignature] = useState<boolean>(false);
-    const [signatureSize, setSignatureSize] = useState<number>(330);
+    // const [signatureSize, setSignatureSize] = useState<number>(330);
     const [canPlaceSignature, setCanPlaceSignature] = useState(false)
     const [selectedTool, setSelectedTool] = useState<'text' | 'image' | 'profile' | 'signature' | null>(null);
     const [submittingSignatureData, setSubmittingSignatureData] = useState(false);
@@ -1552,10 +1547,7 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ fileData, setActiveStep, document
                             <Box maxH="200px" overflowY="auto" border="1px solid" borderColor="gray.200" borderRadius="md">
                                 <Stack gap={0}>
                                     {documentSignatures ?
-                                        // .filter((signature) => signature.walletAddress !== session?.address)
-                                        // .filter((signature, index, self) =>
-                                        //     index === self.findIndex(s => s.walletAddress === signature.walletAddress)
-                                        // )
+                                        
                                         documentSignatures.map((signature) => (
                                             <Box
                                                 key={signature.id}
@@ -1873,6 +1865,7 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ fileData, setActiveStep, document
                                                 <PdfRenderer
                                                     pdfFile={pdfFile}
                                                     annotations={signaturePositions}
+                                                    annotationsInDocument={documentSignatures ?? []}
                                                     onAnnotationAdd={addAnnotation}
                                                     onAnnotationUpdate={updateAnnotation}
                                                     onAnnotationDelete={deleteAnnotation}

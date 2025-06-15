@@ -485,6 +485,7 @@ export const ContractDocumentView: React.FC<ContractDocumentViewProps> = ({ setA
                     <GridItem colSpan={{ base: 12, md: 3 }}>
                         <PDFDisplayWithJustSimpleOverlay
                             pdfUrl={pdfURLObject!}
+                            annotationsInDocument={signatures}
                             signatures={signatures}
                         />
                     </GridItem>

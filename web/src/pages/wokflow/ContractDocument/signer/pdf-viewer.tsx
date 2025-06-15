@@ -9,6 +9,7 @@ import { SignatureData } from '../../../../types/types';
 interface PdfViewerProps {
   file: File | null;
   annotations: Annotation[];
+  annotationsInDocument: SignatureData[];
   onAnnotationAdd: (annotation: Annotation) => void;
   onAnnotationUpdate: (annotation: Annotation) => void;
   onAnnotationDelete: (id: string) => void;
@@ -43,6 +44,7 @@ interface ResizeState {
 const PdfViewer: React.FC<PdfViewerProps> = ({
   file,
   annotations,
+  annotationsInDocument,
   onAnnotationAdd,
   onAnnotationUpdate,
   // onAnnotationDelete,
@@ -479,7 +481,7 @@ const PdfViewer: React.FC<PdfViewerProps> = ({
 
     if (selectedTool === 'text') {
       const newAnnotation: TextAnnotation = {
-         id:crypto.randomUUID(),
+        id: crypto.randomUUID(),
         type: 'text',
         page: currentPage,
         x: Math.max(0, Math.min(xPercent, 99.9)),
@@ -497,7 +499,7 @@ const PdfViewer: React.FC<PdfViewerProps> = ({
     else if (selectedTool === 'image' || selectedTool === 'profile') {
       if (selectedTool === 'image') {
         const newAnnotation: ImageAnnotation = {
-           id:crypto.randomUUID(),
+          id: crypto.randomUUID(),
           type: 'image',
           page: currentPage,
           x: Math.max(0, Math.min(xPercent, 99.9)),
@@ -512,7 +514,7 @@ const PdfViewer: React.FC<PdfViewerProps> = ({
       }
       else if (selectedTool === 'profile') {
         const newAnnotation: ProfileAnnotation = {
-           id:crypto.randomUUID(),
+          id: crypto.randomUUID(),
           type: 'profile',
           page: currentPage,
           x: Math.max(0, Math.min(xPercent, 99.9)),
@@ -533,7 +535,7 @@ const PdfViewer: React.FC<PdfViewerProps> = ({
       }
     } else if (selectedTool === 'signature') {
       const newAnnotation: SignatureData = {
-        id:crypto.randomUUID(),
+        id: crypto.randomUUID(),
         type: 'signature',
         page: currentPage,
         x: Math.max(0, Math.min(xPercent, 99.9)),
@@ -560,8 +562,15 @@ const PdfViewer: React.FC<PdfViewerProps> = ({
     }
   };
 
-  const annotationsOnCurrentPage = annotations.filter((anno) => anno.page === currentPage);
+  const annotationsInDocumentOnCurrentPage = annotationsInDocument.filter((anno) => anno.page == currentPage);
+  console.log(`annotationsInDocumentOnCurrentPage ${annotationsInDocumentOnCurrentPage.length} currentPage  ${currentPage} annotationsInDocument ${JSON.stringify(annotationsInDocument, null, 4)}`)
+  let annotationsOnCurrentPage = annotations.filter((anno) => anno.page === currentPage);
 
+  if(annotationsInDocumentOnCurrentPage.length >1){
+  annotationsOnCurrentPage = annotationsOnCurrentPage.filter((e) => 
+    !annotationsInDocumentOnCurrentPage.some((exist) => exist.id == e.id)
+  )
+  }
   const renderResizeHandle = (
     anno: Annotation,
     handleType: ResizeHandleType,
@@ -762,7 +771,7 @@ const PdfViewer: React.FC<PdfViewerProps> = ({
                           data-annotation-id={`${anno.id}-image`}
                         >
 
-                         
+
                           <img
                             src={profileAnno.dataUrl}
                             alt={profileAnno.imageAlt}
@@ -798,6 +807,76 @@ const PdfViewer: React.FC<PdfViewerProps> = ({
                   }
                   return null;
                 })}
+
+                {annotationsInDocumentOnCurrentPage.map((profileAnno) => {
+                  let baseStyle: React.CSSProperties = {
+                    position: 'absolute',
+                    left: `${profileAnno.x}%`,
+                    top: `${profileAnno.y}%`,
+                    // marginTop: '3px',
+                    transform: `rotate(${profileAnno.rotation || 0}deg)`,
+                    transformOrigin: 'top left',
+                    // border: isSelected ? '2px solid rgb(26, 146, 216)' : '1px dashed black',
+                    border: '1px solid black',
+                    cursor: 'pointer',// draggingAnnotationId === anno.id || resizeState?.annotationId === anno.id ? 'grabbing' : 'move',
+                    userSelect: 'none',
+                    boxSizing: 'border-box',
+                  };
+                  //  const profileAnno = anno as SignatureData;
+                  const profileStyle: React.CSSProperties = {
+                    ...baseStyle,
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '4px',
+                    padding: '5px',
+                    backgroundColor: 'rgba(255, 255, 255, 0.7)',
+                  };
+                  // return <Text>here</Text>
+                  return (
+                    <div key={profileAnno.id} style={profileStyle} data-ai-hint="profile annotation" data-annotation-id={profileAnno.id}
+                      onMouseDown={(e) => handleAnnotationMouseDown(e, profileAnno)}>
+                      <div
+                        className="relative"
+                        style={{ width: profileAnno.imageWidth, height: profileAnno.imageHeight }}
+                        data-annotation-id={`${profileAnno.id}-image`}
+                      >
+
+                        <Box
+                          width="100%"
+                          height="100%"
+                          backgroundImage={`url(${profileAnno.dataUrl})`}
+                          backgroundSize="contain"
+                          backgroundRepeat="no-repeat"
+                          backgroundPosition="center"
+                          minWidth="200px"  // Ensure minimum size
+                          minHeight="100px"
+                        // border="1px solid"
+                        // borderColor="gray.200"
+                        // borderRadius="sm"
+                        />
+
+
+                      </div>
+                      <div style={{
+                        fontSize: profileAnno.nameFontSize || "12pt",
+                        color: profileAnno.nameColor || '#333333',
+                        fontWeight: 'bold',
+                        pointerEvents: 'none'
+                      }}>
+                        {profileAnno.name}
+                      </div>
+                      <div style={{
+                        fontSize: profileAnno.walletAddressFontSize || "10pt",
+                        color: profileAnno.walletAddressColor || '#555555',
+                        pointerEvents: 'none',
+                        wordBreak: 'break-all'
+                      }}>
+                        {profileAnno.walletAddress}
+                      </div>
+                    </div>
+                  );
+                })}
+
               </Box>
               {pdfDoc && pageDimensions.width === 0 && currentPage > 0 && currentPage <= numPages && !pdfLoadingError && (
                 <Text position={"absolute"} color={"gray.700"}>Rendering page {currentPage}...</Text>

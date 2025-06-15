@@ -69,7 +69,7 @@ function PdfViewerComponent({ fileType, fileURL, fileInfo }: IPdfViewerComponent
 
     if (!pdfFile) return <p>Loading PDF...</p>;
 
-    return <EasyPDFRenderer pdfFile={pdfFile} annotations={[]} />;
+    return <EasyPDFRenderer pdfFile={pdfFile} annotations={[]} annotationsInDocument={[]}/>;
 }
 
 // Add declaration for docx-preview global type

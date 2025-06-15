@@ -1,5 +1,5 @@
 
-import React, { useState, useCallback, useEffect } from 'react';
+import  { useState, useCallback, useEffect } from 'react';
 import type { Annotation } from './types';
 import PdfViewer from './pdf-viewer';
 import AnnotationSidebar from './annotation-sidebar';
@@ -34,6 +34,7 @@ import { LuInfo } from 'react-icons/lu';
 interface PdfRendererProps {
   pdfFile: File | null;
   annotations: Annotation[];
+  annotationsInDocument: SignatureData[];
   onAnnotationAdd: (newAnnotationData: Annotation) => void;
   onAnnotationUpdate: (updatedAnnotation: Annotation) => void;
   onAnnotationDelete: (id: string) => void;
@@ -46,6 +47,7 @@ interface PdfRendererProps {
 function PdfRendererComponent({
   pdfFile,
   annotations,
+  annotationsInDocument,
   onAnnotationAdd,
   onAnnotationUpdate,
   onAnnotationDelete,
@@ -78,6 +80,7 @@ function PdfRendererComponent({
         <PdfViewer
           file={pdfFile}
           annotations={annotations}
+          annotationsInDocument={annotationsInDocument}
           onAnnotationAdd={onAnnotationAdd}
           onAnnotationUpdate={onAnnotationUpdate}
           onAnnotationDelete={onAnnotationDelete}
@@ -110,14 +113,16 @@ export const PdfRenderer =PdfRendererComponent
 interface EasyPDFRendererProps {
   pdfFile: File | null;
   annotations: Annotation[];
+  annotationsInDocument: SignatureData[];
 }
 
-export const EasyPDFRenderer = ({ pdfFile, annotations }: EasyPDFRendererProps) => {
+export const EasyPDFRenderer = ({ pdfFile, annotations , annotationsInDocument}: EasyPDFRendererProps) => {
   console.log("existing annotations: ", annotations)
   return (
     <PdfRenderer
       pdfFile={pdfFile}
       annotations={annotations}
+      annotationsInDocument={annotationsInDocument}
       onAnnotationAdd={(_newAnnotationData: Omit<Annotation, 'id'>) => { }}
       onAnnotationUpdate={(_updatedAnnotation: Annotation) => { }}
       onAnnotationDelete={(_id: string) => { }}
@@ -134,6 +139,7 @@ export const EasyPDFRenderer = ({ pdfFile, annotations }: EasyPDFRendererProps) 
 interface PdfSignerProps {
   file: File | null;
   mySignatures: SignatureData[]
+  annotationsInDocument: SignatureData[]
   displayUserSignatures?: () => void
   selectSignature: (id: string) => void
   selectedSignatureHash?: string | null
@@ -144,7 +150,7 @@ interface PdfSignerProps {
 }
 
 
-export default function SignerPage({ file, mySignatures, displayUserSignatures, selectSignature, selectedSignatureHash,
+export default function SignerPage({ file, mySignatures, annotationsInDocument, displayUserSignatures, selectSignature, selectedSignatureHash,
   onAnnotationUpdate, handleSignatureSubmission, submittingSignatureData, signaturesInDocument }: PdfSignerProps) {
   const pdfFile = file
   // const [pdfFile, setPdfFile] = useState<File | null>(null);
@@ -529,6 +535,7 @@ export default function SignerPage({ file, mySignatures, displayUserSignatures, 
               <PdfRenderer
                 pdfFile={pdfFile}
                 annotations={annotations}
+                annotationsInDocument={annotationsInDocument}
                 onAnnotationAdd={addAnnotation}
                 onAnnotationUpdate={updateAnnotation}
                 onAnnotationDelete={deleteAnnotation}

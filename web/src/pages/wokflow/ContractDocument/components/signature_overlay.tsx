@@ -136,7 +136,7 @@ export const SimpleSignatureOverlay = ({ signature, currentPage }: { signature: 
 }
 
 
-export const PDFDisplayWithJustSimpleOverlay = ({ pdfUrl, signatures }: { pdfUrl: string, signatures: SignatureData[] }) => {
+export const PDFDisplayWithJustSimpleOverlay = ({ pdfUrl, signatures }: { pdfUrl: string, signatures: SignatureData[], annotationsInDocument :SignatureData[]  }) => {
     const { colorMode } = useColorMode();
     const [pdfFile, setPdfFile] = useState<File | null>(null);
 
@@ -167,6 +167,7 @@ export const PDFDisplayWithJustSimpleOverlay = ({ pdfUrl, signatures }: { pdfUrl
         >
             <EasyPDFRenderer
                 pdfFile={pdfFile}
+                annotationsInDocument={signatures}
                 annotations={signatures.map((signature) => ({
                     // ...signature,
                     type: "profile" as const,
