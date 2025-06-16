@@ -1508,10 +1508,10 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ fileData, setActiveStep, document
                                                 // bg={selectedSignatureId === signature.id ? "blue.50" : "transparent"}
                                                 bg={"blue.50"}
                                                 _hover={{ bg: "gray.50" }}
-                                                onClick={() => {
-                                                    console.log(`Signature clicked ${JSON.stringify(signature, null, 4)} -- ${signature.hash} -- ${signature.id}`)
+                                                // onClick={() => {
+                                                //     console.log(`Signature clicked ${JSON.stringify(signature, null, 4)} -- ${signature.hash} -- ${signature.id}`)
 
-                                                }}
+                                                // }}
                                             >
                                                 <HStack>
 
@@ -1529,10 +1529,11 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ fileData, setActiveStep, document
                                                     <Stack gap={0}>
                                                         <Text fontSize="sm" fontWeight="medium">{signature.name}</Text>
                                                         <Text fontSize="xs" color="gray.600">
-                                                            {signature.walletAddress.length > 10
+                                                            {/* {signature.walletAddress.length > 10
                                                                 ? `${signature.walletAddress.substring(0, 6)}...${signature.walletAddress.substring(signature.walletAddress.length - 4)}`
                                                                 : signature.walletAddress
-                                                            }
+                                                            } */}
+                                                            {signature.walletAddress ?? "NO WALLET ADDRESS"}
                                                         </Text>
                                                     </Stack>
                                                 </HStack>
@@ -1859,8 +1860,6 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ fileData, setActiveStep, document
                                     >
                                         <GridItem bg={"gray.100"} colSpan={{ base: 12, md: 9 }} overflowX={"auto"} overflowY={"scroll"} height={"100%"}>
                                             <Box h={"100%"} p={0} m={0} >
-
-
 
                                                 <PdfRenderer
                                                     pdfFile={pdfFile}

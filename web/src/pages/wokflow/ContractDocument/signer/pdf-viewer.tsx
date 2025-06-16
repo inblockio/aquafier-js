@@ -233,13 +233,13 @@ const PdfViewer: React.FC<PdfViewerProps> = ({
 
   const handleAnnotationMouseDown = useCallback((event: React.MouseEvent, annotation: Annotation) => {
     // This will ALWAYS print, regardless of any conditions
-    console.log(`at the root ... - Annotation ID: ${annotation.id}, Type: ${annotation.type}`);
-    console.log('Event details:', {
-      target: event.target,
-      currentTarget: event.currentTarget,
-      clientX: event.clientX,
-      clientY: event.clientY
-    });
+    // console.log(`at the root ... - Annotation ID: ${annotation.id}, Type: ${annotation.type}`);
+    // console.log('Event details:', {
+    //   target: event.target,
+    //   currentTarget: event.currentTarget,
+    //   clientX: event.clientX,
+    //   clientY: event.clientY
+    // });
 
     // Check if it's a resize handle - if so, don't proceed with drag logic but still log
     if ((event.target as HTMLElement).dataset.resizeHandle) {
@@ -563,13 +563,13 @@ const PdfViewer: React.FC<PdfViewerProps> = ({
   };
 
   const annotationsInDocumentOnCurrentPage = annotationsInDocument.filter((anno) => anno.page == currentPage);
-  console.log(`annotationsInDocumentOnCurrentPage ${annotationsInDocumentOnCurrentPage.length} currentPage  ${currentPage} annotationsInDocument ${JSON.stringify(annotationsInDocument, null, 4)}`)
+  // console.log(`annotationsInDocumentOnCurrentPage ${annotationsInDocumentOnCurrentPage.length} currentPage  ${currentPage} annotationsInDocument ${JSON.stringify(annotationsInDocument, null, 4)}`)
   let annotationsOnCurrentPage = annotations.filter((anno) => anno.page === currentPage);
 
-  if(annotationsInDocumentOnCurrentPage.length >1){
-  annotationsOnCurrentPage = annotationsOnCurrentPage.filter((e) => 
-    !annotationsInDocumentOnCurrentPage.some((exist) => exist.id == e.id)
-  )
+  if (annotationsInDocumentOnCurrentPage.length > 1) {
+    annotationsOnCurrentPage = annotationsOnCurrentPage.filter((e) =>
+      !annotationsInDocumentOnCurrentPage.some((exist) => exist.id == e.id)
+    )
   }
   const renderResizeHandle = (
     anno: Annotation,
@@ -595,6 +595,19 @@ const PdfViewer: React.FC<PdfViewerProps> = ({
       />
     );
   };
+
+  function calculateMaxScaleForCanvas(): number {
+    if (!pageDimensions) {
+      return 1
+    }
+    const contentWidth = pageDimensions.width; // Replace with your content's original width
+    const canvasWidth = pageDimensions.width;  // Replace with your canvas width
+
+    return canvasWidth / contentWidth;
+  }
+
+  const maxAllowedScale = calculateMaxScaleForCanvas(); // You'll need to implement this
+  const effectiveScale = Math.min(scale, 1, maxAllowedScale);
 
   return (
     <Box py={4} px={2} maxW={"100%"} w={"100%"} overflowX={"auto"} ref={viewerRef} onClick={handleViewerClick}>
@@ -635,13 +648,15 @@ const PdfViewer: React.FC<PdfViewerProps> = ({
                     position: 'absolute',
                     left: `${anno.x}%`,
                     top: `${anno.y}%`,
-                    transform: `rotate(${anno.rotation || 0}deg)`,
+                    // transform: `rotate(${anno.rotation || 0}deg)`,
                     transformOrigin: 'top left',
                     border: isSelected ? '2px solid rgb(26, 146, 216)' : '1px dashed black',
                     cursor: draggingAnnotationId === anno.id || resizeState?.annotationId === anno.id ? 'grabbing' : 'move',
                     userSelect: 'none',
                     boxSizing: 'border-box',
+                    transform: `scale(${effectiveScale})`
                   };
+                  console.log("Scale: ", scale)
 
                   if (anno.type === 'text') {
                     const textStyle: React.CSSProperties = {
@@ -821,6 +836,7 @@ const PdfViewer: React.FC<PdfViewerProps> = ({
                     cursor: 'pointer',// draggingAnnotationId === anno.id || resizeState?.annotationId === anno.id ? 'grabbing' : 'move',
                     userSelect: 'none',
                     boxSizing: 'border-box',
+                    scale: scale
                   };
                   //  const profileAnno = anno as SignatureData;
                   const profileStyle: React.CSSProperties = {
