@@ -374,13 +374,13 @@ const FilesTable = () => {
                 <SharingActionContent item={sharingItem} nonce={session?.nonce ?? ""} isOpen={sharingOpen} setIsOpen={setSharingOpen} />
 
                 {/* Sidebar Drawer for aqua chain details */}
-                <DrawerRoot open={isOpen} size={{ base: 'full', mdToXl: "xl" }} id="aqua-chain-details-modal"
+                <DrawerRoot open={isOpen} size={{ base: 'full'}} id="aqua-chain-details-modal"
                     onOpenChange={(e) => setIsOpen(e.open)} closeOnEscape={true} >
 
                     <Portal>
                         <DrawerBackdrop />
-                        <Drawer.Positioner>
-                            <DrawerContent borderLeftRadius={'xl'} overflow={'hidden'}>
+                        <Drawer.Positioner style={{boxSizing: "border-box"}}>
+                            <DrawerContent offset={{base: 4, md: 10}} h={'100%'} borderRadius={{base: "sm", sm: "xl"}} overflow={'hidden'}>
                                 <Drawer.Header bg={{ base: drawerStatus?.colorLight, _dark: drawerStatus?.colorDark }}>
                                     <DrawerTitle flex="1">{drawerStatus?.fileName}</DrawerTitle>
                                     <Button

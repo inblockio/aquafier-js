@@ -11,7 +11,7 @@ import { Alert } from "../chakra-ui/alert"
 import { LuChevronDown, LuChevronUp, LuPlus, LuSquareChartGantt, LuTrash } from "react-icons/lu"
 import React, { useEffect, useState } from "react"
 import { estimateFileSize, dummyCredential, getAquaTreeFileName, getAquaTreeFileObject, getRandomNumber, fetchSystemFiles, isValidEthereumAddress, formatDate } from "../../utils/functions"
-import { FormTemplate } from "../aqua_forms/types"
+import { FormField, FormTemplate } from "../aqua_forms/types"
 import { Field } from '../chakra-ui/field';
 import Aquafier, { AquaTree, AquaTreeWrapper, FileObject } from "aqua-js-sdk"
 
@@ -652,6 +652,35 @@ const Navbar = () => {
     //     }
     // };
 
+    // Reorder all the form fields in order to have consistency input order
+    const reorderInputFields = (fields: FormField[]) => {
+        const sortedFields = fields.sort((a, b) => {
+            return a.name.localeCompare(b.name);
+        });
+
+        // Return a new array with fields ordered by name
+        return sortedFields;
+    }
+
+    // Get place holder or default
+    const getFieldDefaultValue = (field: FormField, currentState: any) => {
+        if (field.type === "number") {
+            return currentState ?? 0
+        }
+        if (field.type === "date") {
+            return new Date().toISOString()
+        }
+        if (field.type === "text") {
+            return currentState ?? ""
+        }
+        if (field.type === "file") {
+            return currentState ?? null
+        }
+        if (field.type === "wallet_address") {
+            return currentState ?? session?.address ?? ""
+        }
+        return ""
+    }
 
     // Add cleanup in useEffect
     useEffect(() => {
@@ -784,7 +813,7 @@ const Navbar = () => {
                                         : <></>
                                     }
                                     <Stack marginBottom={10}>
-                                        {selectedTemplate ? selectedTemplate.fields.map((field) => {
+                                        {selectedTemplate ? reorderInputFields(selectedTemplate.fields).map((field) => {
 
                                             const isFileInput = field.type === 'file' || field.type === 'image';
 
@@ -838,7 +867,7 @@ const Navbar = () => {
                                                     size={"sm"}
                                                     // value={formData[field.name]}
                                                     // Only set value for non-file inputs
-                                                    {...(!isFileInput ? { value: formData[field.name] as string | number } : {})}
+                                                    {...(!isFileInput ? { defaultValue: getFieldDefaultValue(field, formData[field.name]) } : {})}
                                                     type={field.type == 'image' ? 'file' : field.type}
                                                     onChange={(e) => {
                                                         // setFormData({
@@ -847,9 +876,8 @@ const Navbar = () => {
                                                         // })
 
                                                         if (selectedTemplate?.name == "aqua_sign" && field.name.toLowerCase() == "sender") {
-
                                                             toaster.create({
-                                                                description: `Aqua Sign sender cannot be change`,
+                                                                description: `Aqua Sign sender cannot be changed`,
                                                                 type: "info"
                                                             });
                                                             return

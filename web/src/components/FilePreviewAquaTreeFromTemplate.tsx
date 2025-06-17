@@ -210,9 +210,9 @@ export const FilePreviewAquaTreeFromTemplate = ({ formData }: { formData: Record
       ))
     }
     else if (typeof value === "number") {
-      return <Text key={value} fontSize={"sm"}>{value}</Text>
+      return <Text key={value} fontSize={"sm"} wordBreak={"break-all"} whiteSpace={"pre-wrap"}>{value}</Text>
     }
-    return <Text key={value} fontSize={"sm"}>{value}</Text>
+    return <Text key={value} fontSize={"sm"} wordBreak={"break-all"} whiteSpace={"pre-wrap"}>{value}</Text>
   }
 
   return (

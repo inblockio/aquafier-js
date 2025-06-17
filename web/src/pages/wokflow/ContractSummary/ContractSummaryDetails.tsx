@@ -17,18 +17,20 @@ import { FiAlertCircle, FiCalendar, FiCheck, FiCheckCircle, FiCheckSquare, FiCop
 import { BsCheckCircleFill } from "react-icons/bs";
 import { IContractWorkFlowFirstPage } from "../../../types/contract_workflow";
 import { TimelineConnector, TimelineContent, TimelineIndicator, TimelineItem, TimelineRoot, TimelineTitle } from "../../../components/chakra-ui/timeline";
-import { WalletEnsView } from "../../../components/chakra-ui/wallet_ens";
-import { formatCryptoAddress } from "../../../utils/functions";
+// import { WalletEnsView } from "../../../components/chakra-ui/wallet_ens";
+// import { formatCryptoAddress } from "../../../utils/functions";
 
-const DisplayWalletAddress = ({ walletAddress, enableNameResolution }: { walletAddress: string, enableNameResolution: boolean }) => {
+const DisplayWalletAddress = ({ walletAddress, }: { walletAddress: string, enableNameResolution: boolean }) => {
 
   return (
     <>
-      {
+    {/* If we enable name resolution, we can easily do it here without any chaos */}
+      {/* {
         enableNameResolution ?
           <WalletEnsView walletAddress={walletAddress} inline={true} />
           : formatCryptoAddress(walletAddress, 10, 4)
-      }
+      } */}
+      {walletAddress}
     </>
   )
 }

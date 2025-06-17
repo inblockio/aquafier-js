@@ -335,7 +335,7 @@ const FilePreview: React.FC<IFilePreview> = ({ fileInfo }) => {
 
     // PDF files
     if (fileType === "application/pdf") { 
-        console.log("File url: ", fileURL)
+        // console.log("File url: ", fileURL)
         return <PdfViewerComponent fileType={fileType} fileURL={fileURL} fileInfo={fileInfo} />
     }
 
@@ -347,7 +347,7 @@ const FilePreview: React.FC<IFilePreview> = ({ fileInfo }) => {
 
         if (fileType === "application/json") {
             let isForm = isJSONKeyValueStringContent(newTxtContent)
-            console.log(`is this ${newTxtContent} is form ${isForm}-----`)
+            // console.log(`is this ${newTxtContent} is form ${isForm}-----`)
             if (isForm) {
                 return <FilePreviewAquaTreeFromTemplate formData={JSON.parse(newTxtContent)} />
             }

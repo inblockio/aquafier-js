@@ -243,7 +243,7 @@ const PdfViewer: React.FC<PdfViewerProps> = ({
 
     // Check if it's a resize handle - if so, don't proceed with drag logic but still log
     if ((event.target as HTMLElement).dataset.resizeHandle) {
-      console.log('Resize handle clicked, returning early');
+      // console.log('Resize handle clicked, returning early');
       return;
     }
 
@@ -255,7 +255,7 @@ const PdfViewer: React.FC<PdfViewerProps> = ({
     onAnnotationSelect(annotation.id);
 
     if (!canvasRef.current) {
-      console.log('Canvas ref not available');
+      // console.log('Canvas ref not available');
       return;
     }
 
@@ -264,10 +264,10 @@ const PdfViewer: React.FC<PdfViewerProps> = ({
     const clickXCanvasPercent = ((event.clientX - canvasRect.left) / canvasRect.width) * 100;
     const clickYCanvasPercent = ((event.clientY - canvasRect.top) / canvasRect.height) * 100;
 
-    console.log('Setting drag start offset:', {
-      x: clickXCanvasPercent - annotation.x,
-      y: clickYCanvasPercent - annotation.y
-    });
+    // console.log('Setting drag start offset:', {
+    //   x: clickXCanvasPercent - annotation.x,
+    //   y: clickYCanvasPercent - annotation.y
+    // });
 
     setDragStartOffset({
       x: clickXCanvasPercent - annotation.x,
@@ -609,6 +609,29 @@ const PdfViewer: React.FC<PdfViewerProps> = ({
   const maxAllowedScale = calculateMaxScaleForCanvas(); // You'll need to implement this
   const effectiveScale = Math.min(scale, 1, maxAllowedScale);
 
+  // TODO: FIX ME --- This any array is quite not well
+  const cleanSignatureToAvoidRepeating = (): any[] => {
+    // Given this two arrays, return a single array without repeating either annotations by id
+    // [...annotationsOnCurrentPage, ...annotationsInDocumentOnCurrentPage]
+    const uniqueAnnotations = annotationsOnCurrentPage.map((anno) => {
+      return {
+        ...anno,
+        type: "signature" as any,
+        // dataUrl: anno["imageSrc"],
+      }
+    })
+    annotationsInDocumentOnCurrentPage.forEach((anno) => {
+      if (!annotationsOnCurrentPage.some((exist) => exist.id == anno.id)) {
+        uniqueAnnotations.push({
+          ...anno,
+          type: "signature" as any,
+          // dataUrl: anno.imageSrc,
+        })
+      }
+    })
+    return uniqueAnnotations
+  }
+
   return (
     <Box py={4} px={2} maxW={"100%"} w={"100%"} overflowX={"auto"} ref={viewerRef} onClick={handleViewerClick}>
       {!file && <Text color={"gray.700"} _dark={{ color: "gray.900" }}>Upload a PDF to start annotating.</Text>}
@@ -642,7 +665,7 @@ const PdfViewer: React.FC<PdfViewerProps> = ({
                 }
               >
                 <canvas ref={canvasRef} />
-                {pageDimensions.width > 0 && annotationsOnCurrentPage.map((anno) => {
+                {pageDimensions.width > 0 && cleanSignatureToAvoidRepeating().map((anno) => {
                   const isSelected = selectedAnnotationId === anno.id || draggingAnnotationId === anno.id || resizeState?.annotationId === anno.id;
                   let baseStyle: React.CSSProperties = {
                     position: 'absolute',
@@ -656,7 +679,6 @@ const PdfViewer: React.FC<PdfViewerProps> = ({
                     boxSizing: 'border-box',
                     transform: `scale(${effectiveScale})`
                   };
-                  console.log("Scale: ", scale)
 
                   if (anno.type === 'text') {
                     const textStyle: React.CSSProperties = {
@@ -764,8 +786,6 @@ const PdfViewer: React.FC<PdfViewerProps> = ({
                       </div>
                     );
                   }
-
-
                   else if (anno.type === 'signature') {
                     const profileAnno = anno as SignatureData;
                     const profileStyle: React.CSSProperties = {
@@ -782,15 +802,18 @@ const PdfViewer: React.FC<PdfViewerProps> = ({
                         onMouseDown={(e) => handleAnnotationMouseDown(e, anno)}>
                         <div
                           className="relative"
-                          style={{ width: profileAnno.imageWidth, height: profileAnno.imageHeight }}
+                          // style={{ width: profileAnno.imageWidth, height: profileAnno.imageHeight }}
                           data-annotation-id={`${anno.id}-image`}
                         >
-
-
                           <img
                             src={profileAnno.dataUrl}
                             alt={profileAnno.imageAlt}
-                            style={{ width: '100%', height: '100%', objectFit: 'cover', pointerEvents: 'none' }}
+                            style={{ 
+                              // Fixed image width to avoid distorting the image with height
+                              width: "150px", 
+                              // height: profileAnno.imageHeight,
+                               objectFit: 'cover', pointerEvents: 'none' 
+                              }}
                           />
                           {isSelected && (
                             <>
@@ -823,29 +846,32 @@ const PdfViewer: React.FC<PdfViewerProps> = ({
                   return null;
                 })}
 
+                {/* I have squashed this to avoid repeating annotations */}
                 {annotationsInDocumentOnCurrentPage.map((profileAnno) => {
                   let baseStyle: React.CSSProperties = {
                     position: 'absolute',
                     left: `${profileAnno.x}%`,
                     top: `${profileAnno.y}%`,
                     // marginTop: '3px',
-                    transform: `rotate(${profileAnno.rotation || 0}deg)`,
+                    // transform: `rotate(${profileAnno.rotation || 0}deg)`,
                     transformOrigin: 'top left',
                     // border: isSelected ? '2px solid rgb(26, 146, 216)' : '1px dashed black',
                     border: '1px solid black',
                     cursor: 'pointer',// draggingAnnotationId === anno.id || resizeState?.annotationId === anno.id ? 'grabbing' : 'move',
                     userSelect: 'none',
                     boxSizing: 'border-box',
-                    scale: scale
+                    // scale: scale
                   };
                   //  const profileAnno = anno as SignatureData;
                   const profileStyle: React.CSSProperties = {
                     ...baseStyle,
-                    display: 'flex',
                     flexDirection: 'column',
                     gap: '4px',
                     padding: '5px',
                     backgroundColor: 'rgba(255, 255, 255, 0.7)',
+                    // Lets hide this one
+                    // display: 'flex',
+                    display: 'none'
                   };
                   // return <Text>here</Text>
                   return (

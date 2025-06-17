@@ -47,7 +47,7 @@ export const ContractSummaryView: React.FC<ContractDocumentViewProps> = ({ setAc
 
 
             const batch = hashesToLoopPar.slice(i, i + 3);
-            console.log(`Processing batch ${i / 3 + 1}:`, batch);
+            // console.log(`Processing batch ${i / 3 + 1}:`, batch);
 
 
             let signaturePositionCount = 0
@@ -260,7 +260,7 @@ export const ContractSummaryView: React.FC<ContractDocumentViewProps> = ({ setAc
             }
 
 
-            console.log(`---< fileobject ${fileObjectVerifier.map((e) => e.fileName).toString()} ll file names`)
+            // console.log(`---< fileobject ${fileObjectVerifier.map((e) => e.fileName).toString()} ll file names`)
 
             // Process revisions in parallel where possible
             const verificationPromises = revisionHashes.map(async revisionHash => {
@@ -271,7 +271,7 @@ export const ContractSummaryView: React.FC<ContractDocumentViewProps> = ({ setAc
                     revisionHash,
                     fileObjectVerifier
                 )
-                console.log("Hash: ", revisionHash, "\nResult", result)
+                // console.log("Hash: ", revisionHash, "\nResult", result)
                 return ({
                     hash: revisionHash,
                     isSuccessful: result.isOk()
@@ -280,7 +280,7 @@ export const ContractSummaryView: React.FC<ContractDocumentViewProps> = ({ setAc
 
             // Wait for all verifications to complete
             const allRevisionsVerificationsStatus = await Promise.all(verificationPromises);
-            console.log("allRevisionsVerificationsStatus", allRevisionsVerificationsStatus)
+            // console.log("allRevisionsVerificationsStatus", allRevisionsVerificationsStatus)
 
             // Update state and callback
             setVerificationResults(allRevisionsVerificationsStatus);

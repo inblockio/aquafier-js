@@ -57,7 +57,7 @@ function PdfRendererComponent({
 }: PdfRendererProps) {
   const [currentPage, setCurrentPage] = useState(1);
   const [numPages, setNumPages] = useState(0);
-  const [scale, setScale] = useState(1.0);
+  const [scale, setScale] = useState(1.5);
 
   return (
     <Box >
@@ -117,11 +117,15 @@ interface EasyPDFRendererProps {
 }
 
 export const EasyPDFRenderer = ({ pdfFile, annotations , annotationsInDocument}: EasyPDFRendererProps) => {
-  console.log("existing annotations: ", annotations)
+  // console.log("existing annotations: ", annotations)
   return (
     <PdfRenderer
       pdfFile={pdfFile}
-      annotations={annotations}
+      annotations={annotations.map((anno: any) => ({
+        ...anno,
+        type: "signature" as any,
+        dataUrl: anno.dataUrl ||anno.imageSrc,
+      }))}
       annotationsInDocument={annotationsInDocument}
       onAnnotationAdd={(_newAnnotationData: Omit<Annotation, 'id'>) => { }}
       onAnnotationUpdate={(_updatedAnnotation: Annotation) => { }}

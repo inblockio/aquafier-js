@@ -12,7 +12,7 @@
       "label": "Name",
       "type": "string",
       "required": true,
-      "isArray": true
+      "isArray": false
     },
     {
       "name": "surname",

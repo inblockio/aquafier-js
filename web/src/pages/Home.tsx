@@ -54,8 +54,6 @@ const Home = () => {
                     </Container>
                 )
             }
-
-          
         </>
     )
 }
