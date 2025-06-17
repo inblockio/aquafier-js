@@ -6,7 +6,7 @@ import { Box, Container, Group, VStack } from '@chakra-ui/react'
 import { Alert } from '../components/chakra-ui/alert'
 import { IDrawerStatus } from '../models/AquaTreeDetails'
 import { CompleteChainView } from '../components/CustomDrawer'
-import { ImportAquaChainFromChain } from '../components/dropzone_file_actions'
+import { ImportAquaChainFromChain } from '../components/dropzone_file_actions/dropzone_file_actions'
 
 interface IImportPage {
     incomingFileInfo: ApiFileInfo

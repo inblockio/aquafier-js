@@ -1,5 +1,6 @@
 import { LogData, Revision } from "aqua-js-sdk";
 import { IconType } from "react-icons/lib";
+import { ApiFileInfo } from "../models/FileInfo";
 
 export interface Session {
   id: number;
@@ -60,8 +61,28 @@ export interface RevisionVerificationStatus {
 }
 
 
+export interface IDropzoneAction2 {
+    aquaFile: File
+    fileIndex: number
+    uploadedIndexes: number[]
+    updateUploadedIndex: (fileIndex: number) => void
+    autoUpload: boolean
+}
+export interface IDropzoneAction {
+    file: File
+    fileIndex: number
+    uploadedIndexes: number[]
+    updateUploadedIndex: (fileIndex: number) => void
+    autoUpload: boolean
+}
 
 
+export interface ImportChainFromChainProps { fileInfo: ApiFileInfo, isVerificationSuccessful: boolean | null, contractData?: any }
+
+export interface BtnContent {
+    text: string
+    color: string
+}
 export interface SignatureData {
     type: 'signature';
    id: string;

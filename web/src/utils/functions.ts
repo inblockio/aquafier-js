@@ -124,6 +124,19 @@ export const isWorkFlowData = (aquaTree: AquaTree, systemAndUserWorkFlow: string
     return falseResponse
 }
 
+export function allLinkRevisionHashes(aquaTree: AquaTree): Array<string> {
+
+    let hashesWithLinkRevisions: Array<string> = []
+    let allHashes = Object.keys(aquaTree.revisions);
+    for (let hashItem of allHashes) {
+        let revision = aquaTree.revisions[hashItem];
+        if (revision.revision_type == "link") {
+            hashesWithLinkRevisions.push(hashItem)
+        }
+    }
+
+    return hashesWithLinkRevisions
+}
 export function isAquaTree(content: any): boolean {
     // Check if content has the properties of an AquaTree
     return content &&

@@ -14,13 +14,16 @@ import {
 } from "@chakra-ui/react"
 import { forwardRef, useEffect, useState } from "react"
 import { LuFile, LuUpload, LuX } from "react-icons/lu"
-import { FormRevisionFile, ImportAquaTree, ImportAquaTreeZip, UploadFile } from "../dropzone_file_actions"
 import { determineFileType, getFileName, isJSONFile, isJSONKeyValueStringContent, isZipFile, readFileContent } from "../../utils/functions"
 import React from "react"
 import appStore from "../../store"
 import { useStore } from "zustand"
 import { toaster } from "./toaster"
 import { maxUserFileSizeForUpload } from "../../utils/constants"
+import { FormRevisionFile } from "../dropzone_file_actions/form_revision"
+import { ImportAquaTree } from "../dropzone_file_actions/import_aqua_tree"
+import { UploadFile } from "../dropzone_file_actions/upload_file"
+import { ImportAquaTreeZip } from "../dropzone_file_actions/import_aqua_tree_zip"
 // import ImportByModal from "../ImportByModal"
 
 export interface FileUploadRootProps extends ChakraFileUpload.RootProps {
@@ -136,7 +139,7 @@ const FileUploadItem = (props: FileUploadItemProps) => {
         <>
           {isJsonForm ? <FormRevisionFile file={file} fileIndex={fileIndex} uploadedIndexes={uploadedIndexes} updateUploadedIndex={updateUploadedIndex} autoUpload={false} /> : <></>}
         </>
-        <ImportAquaTree file={file} fileIndex={fileIndex} uploadedIndexes={uploadedIndexes} updateUploadedIndex={updateUploadedIndex} autoUpload={false} />
+        <ImportAquaTree aquaFile={file} fileIndex={fileIndex} uploadedIndexes={uploadedIndexes} updateUploadedIndex={updateUploadedIndex} autoUpload={false} />
 
         {/* <ImportByModal file={file} fileIndex={fileIndex} uploadedIndexes={uploadedIndexes} updateUploadedIndex={updateUploadedIndex} /> */}
         {/* <ImportAquaChainFromFile file={file} fileIndex={fileIndex} uploadedIndexes={uploadedIndexes} updateUploadedIndex={zupdateUploadedIndex} /> */}
