@@ -286,8 +286,7 @@ async function fetchAquaTreeFileData(pubKeyHashes: string[]): Promise<AquaTreeFi
                     file_hash: fileIndex.file_hash
                 },
             });
-            // if (fileNameData) {
-
+            
 
             let data: AquaTreeFileData = {
                 name: fileNameData?.file_name ?? "File name not found",

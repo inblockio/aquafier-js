@@ -10,7 +10,11 @@ export interface Session {
   expirationTime: string; // ISO 8601 string format
 }
 
+export interface IShareButton {
+    item: ApiFileInfo
+    nonce: string
 
+}
 
 export interface ApiFileData {
   fileHash: string,

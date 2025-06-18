@@ -642,23 +642,24 @@ export default async function explorerController(fastify: FastifyInstance) {
                         }
                     })
 
-                    await prisma.fileName.upsert({
-                        where: {
-                            pubkey_hash: filepubkeyhash,
-                        },
-                        create: {
-                            pubkey_hash: filepubkeyhash,
-                            file_name: data.filename,
-
-                        },
-                        update: {
-                            pubkey_hash: filepubkeyhash,
-                            file_name: data.filename,
-
-                        }
-                    })
+                   
 
                 }
+                await prisma.fileName.upsert({
+                    where: {
+                        pubkey_hash: filepubkeyhash,
+                    },
+                    create: {
+                        pubkey_hash: filepubkeyhash,
+                        file_name: data.filename,
+
+                    },
+                    update: {
+                        pubkey_hash: filepubkeyhash,
+                        file_name: data.filename,
+
+                    }
+                })
 
             } catch (error) {
                 console.log("======================================")

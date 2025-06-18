@@ -115,7 +115,7 @@ export const ImportAquaTree = ({ aquaFile, uploadedIndexes, fileIndex, updateUpl
 
         if (!response.ok) {
             setExpectedFile({
-                displayText: `please upload ${aquaTree.file_index[genHash]} $$`,
+                displayText: `please upload ${aquaTree.file_index[genHash]}`,
                 exectedFileHash: genRevision.file_hash!!,
                 expectedFileName: aquaTree.file_index[genHash],
                 itemRevisionHash: "",
@@ -281,7 +281,7 @@ export const ImportAquaTree = ({ aquaFile, uploadedIndexes, fileIndex, updateUpl
         const aquaFileItemObject = newFileObjects.find((e) => e.fileObject.fileName === aquaFile);
         if (!aquaFileItemObject) {
             return {
-                displayText: `please upload ${aquaFile} -- ${linkHash}`,
+                displayText: `please upload ${aquaFile}.`,
                 exectedFileHash: "",
                 itemRevisionHash: fileRevisionHash,
                 expectedFileName: aquaFile,
@@ -295,7 +295,7 @@ export const ImportAquaTree = ({ aquaFile, uploadedIndexes, fileIndex, updateUpl
             const aquaFileItemObject = newFileObjects.find((e) => e.fileObject.fileName === aquaFile);
             if (!aquaFileItemObject) {
                 return {
-                    displayText: `please upload ${aquaFile} -- ${linkHash}`,
+                    displayText: `please upload ${aquaFile} .`,
                     exectedFileHash: "",
                     itemRevisionHash: fileRevisionHash,
                     expectedFileName: aquaFile,
@@ -320,7 +320,7 @@ export const ImportAquaTree = ({ aquaFile, uploadedIndexes, fileIndex, updateUpl
             let fileHash = genRevision.file_hash
 
             return {
-                displayText: `please upload ${fileName} ++`,
+                displayText: `please upload ${fileName}`,
                 exectedFileHash: fileHash ?? "errors",
                 expectedFileName: fileName,
                 itemRevisionHash: fileRevisionHash,
