@@ -1395,7 +1395,7 @@ export async function saveAquaTree(
     const lastPubKeyHash = `${userAddress}_${latestHash}`;
 
     // Only register the latest hash for the user
-    await prisma.latest.upsert({
+  let inserRes =  await prisma.latest.upsert({
         where: { hash: lastPubKeyHash },
         create: {
             hash: lastPubKeyHash,
@@ -1406,9 +1406,12 @@ export async function saveAquaTree(
         update: {
             hash: lastPubKeyHash,
             user: userAddress,
-            template_id: templateId
+            template_id: templateId,
+            is_workflow: isWorkFlow
         }
     });
+
+    console.log(`latest insert res ${JSON.stringify(inserRes, null ,4)}`)
 
     // Process each revision
     for (const revisionHash of allHash) {

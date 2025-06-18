@@ -170,9 +170,11 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ fileData, setActiveStep, document
         const jsonString = JSON.stringify(signForm, null, 2);
         const estimateSize = estimateFileSize(jsonString);
 
+        const randomNumber = getRandomNumber(100, 1000);
+        let lastFourChar = session?.address.substring(session?.address.length - 4)
         const fileObjectUserSignature: FileObject = {
             fileContent: jsonString,
-            fileName: `user_signature_data.json`,
+            fileName: `user_signature_data_${lastFourChar}_${randomNumber}.json`,
             path: './',
             fileSize: estimateSize
         };

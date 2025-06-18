@@ -481,6 +481,7 @@ export const DownloadAquaChain = ({ file }: { file: ApiFileInfo }) => {
     const [downloading, setDownloading] = useState(false)
 
 
+
     const downloadLinkAquaJson = async () => {
         const zip = new JSZip();
         let aquafier = new Aquafier();
@@ -554,12 +555,14 @@ export const DownloadAquaChain = ({ file }: { file: ApiFileInfo }) => {
         };
         zip.file('aqua.json', JSON.stringify(aquaObject))
 
+        let nameWithoutExtension =   mainAquaFileName.replace(/\.[^/.]+$/, "");
         // Generate the zip file
         zip.generateAsync({ type: "blob" }).then((blob) => {
             // Create a download link
             const link = document.createElement("a");
             link.href = URL.createObjectURL(blob);
-            link.download = "aqua_tree.zip";
+           
+            link.download = `${nameWithoutExtension}.zip`;
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);

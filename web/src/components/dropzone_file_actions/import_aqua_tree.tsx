@@ -291,9 +291,37 @@ export const ImportAquaTree = ({ aquaFile, uploadedIndexes, fileIndex, updateUpl
         // Check if the actual file exists
         const fileItemObject = newFileObjects.find((e) => e.fileObject.fileName === fileName);
         if (!fileItemObject) {
+
+            const aquaFileItemObject = newFileObjects.find((e) => e.fileObject.fileName === aquaFile);
+            if (!aquaFileItemObject) {
+                return {
+                    displayText: `please upload ${aquaFile} -- ${linkHash}`,
+                    exectedFileHash: "",
+                    itemRevisionHash: fileRevisionHash,
+                    expectedFileName: aquaFile,
+                    isAquaFile: true
+                };
+            }
+
+            let aquaTree: AquaTree;
+            let contentData = aquaFileItemObject.fileObject.fileContent;
+            if (typeof contentData == 'string') {
+                aquaTree = JSON.parse(aquaFileItemObject.fileObject.fileContent as string)
+            } else if (typeof contentData === 'object') {
+                aquaTree = aquaFileItemObject.fileObject.fileContent as AquaTree
+            } else {
+                throw Error(`An error occured. could not deduce aqua tree`)
+            }
+            let genHash = getGenesisHash(aquaTree)
+            if (genHash == null) {
+                throw Error(`Genesis hash cannot be null for ${aquaFileItemObject.fileObject.fileName}`)
+            }
+            let genRevision = aquaTree.revisions[genHash]
+            let fileHash = genRevision.file_hash
+
             return {
                 displayText: `please upload ${fileName} ++`,
-                exectedFileHash: revisionItem.link_file_hashes![0],
+                exectedFileHash: fileHash ?? "errors",
                 expectedFileName: fileName,
                 itemRevisionHash: fileRevisionHash,
                 isAquaFile: false
@@ -326,28 +354,7 @@ export const ImportAquaTree = ({ aquaFile, uploadedIndexes, fileIndex, updateUpl
         return null;
     }
 
-    // Helper function to upload all aqua tree files
-    const uploadAllAquaTreeFiles = async (
-        allAquaTrees: Array<{ file: File, fileObject: FileObject }>,
-        newFileObjects: Array<{ file: File, fileObject: FileObject }>
-    ) => {
-        for (const item of allAquaTrees) {
-            const aquaTreeItem: AquaTree = item.fileObject.fileContent as AquaTree;
-            const fileName = getAquaTreeFileName(aquaTreeItem);
-            const fileObjWrapper = newFileObjects.find((e) => e.fileObject.fileName === fileName);
 
-            if (!fileObjWrapper) {
-                toaster.create({
-                    description: "An internal error occured, genesis cannot be null ",
-                    type: "error"
-                });
-                return false;
-            }
-
-            await uploadFileData(item.file, fileObjWrapper.file, true);
-        }
-        return true;
-    }
 
     const inspectMultiFileUpload = async (filePar: File) => {
         if (!expectedFile) {
@@ -381,7 +388,7 @@ export const ImportAquaTree = ({ aquaFile, uploadedIndexes, fileIndex, updateUpl
                 console.log(`Its okay continue ......`)
             } else {
                 toaster.create({
-                    description: "Aqua file does not contain "+expectedFile.itemRevisionHash,
+                    description: "Aqua file does not contain " + expectedFile.itemRevisionHash,
                     type: "error"
                 });
                 return;
@@ -397,16 +404,27 @@ export const ImportAquaTree = ({ aquaFile, uploadedIndexes, fileIndex, updateUpl
             return;
         }
 
-        console.log(`inspectMultiFileUpload continue`)
 
+        let fileData = fileDataContent
+        if (filePar.name.endsWith(`.aqua.json`)) {
+            fileData = JSON.parse(fileDataContent as string)
+        }
         const fileObject: FileObject = {
-            fileContent: fileDataContent,
+            fileContent: fileData,
             fileName: filePar.name,
             fileSize: filePar.size,
             path: ""
         };
 
-        const newFileObjects = [...allFileObjectWrapper, { file: filePar, fileObject }];
+        console.log(`New file object ${JSON.stringify(fileObject, null, 4)}`)
+
+        const newFileObjects = allFileObjectWrapper;//[...allFileObjectWrapper, { file: filePar, fileObject }];
+        newFileObjects.push({
+            file: filePar, fileObject: fileObject
+        })
+
+
+        console.log(`--- inspectMultiFileUpload continue ${JSON.stringify(newFileObjects, null, 4)} `)
         setAllFileObjectsWrapper(newFileObjects);
 
         // Scan through all aqua trees and confirm all assets are selected
@@ -420,11 +438,33 @@ export const ImportAquaTree = ({ aquaFile, uploadedIndexes, fileIndex, updateUpl
             onOpen();
             return;
         }
-        console.log(` contrinue to upload `)
+        console.log(`allAquaTrees contrinue to upload  ${JSON.stringify(allAquaTrees, null, 4)}`)
 
         // Upload all aqua tree files
-        const uploadSuccess = await uploadAllAquaTreeFiles(allAquaTrees, newFileObjects);
-        if (!uploadSuccess) return;
+        // const uploadSuccess = await uploadAllAquaTreeFiles(allAquaTrees, newFileObjects);
+        // if (!uploadSuccess) return;
+
+        for (const item of allAquaTrees) {
+
+            console.log(` looping aqua tree file ${item.file.name} `)
+            if (aquaFile.name == item.file.name) {
+                console.log(`skip main file .. ${aquaFile.name}`)
+            } else {
+                const aquaTreeItem: AquaTree = item.fileObject.fileContent as AquaTree;
+                const fileName = getAquaTreeFileName(aquaTreeItem);
+                const fileObjWrapper = newFileObjects.find((e) => e.fileObject.fileName === fileName);
+
+                if (!fileObjWrapper) {
+                    toaster.create({
+                        description: `An internal error occured , cannot find file ${fileName}`,
+                        type: "error"
+                    });
+                    return false;
+                }
+
+                await uploadFileData(item.file, fileObjWrapper.file, true);
+            }
+        }
 
         // Upload the main file
         const fileContent = await readFileAsText(aquaFile);
@@ -460,7 +500,20 @@ export const ImportAquaTree = ({ aquaFile, uploadedIndexes, fileIndex, updateUpl
                     type: "error"
                 })
             } else {
-                await handleContinue(selectedFile)
+
+
+                setSelectedFileName(selectedFile.name)
+                onClose()
+
+                try {
+                    await uploadFileData(aquaFile, selectedFile, false)
+                } catch (error) {
+                    toaster.create({
+                        description: `Error processing: ${error instanceof Error ? error.message : String(error)}`,
+                        type: "error"
+                    })
+                    setUploading(false)
+                }
             }
         }
     }
@@ -489,28 +542,7 @@ export const ImportAquaTree = ({ aquaFile, uploadedIndexes, fileIndex, updateUpl
         event.preventDefault()
     }
 
-    const handleContinue = async (assetFile: File) => {
-        if (!assetFile) {
-            toaster.create({
-                description: "Please select a file first.",
-                type: "warning"
-            })
-            return
-        }
 
-        setSelectedFileName(assetFile.name)
-        onClose()
-
-        try {
-            await uploadFileData(aquaFile, assetFile)
-        } catch (error) {
-            toaster.create({
-                description: `Error processing: ${error instanceof Error ? error.message : String(error)}`,
-                type: "error"
-            })
-            setUploading(false)
-        }
-    }
 
     return (
         <>
