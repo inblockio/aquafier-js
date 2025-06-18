@@ -72,7 +72,7 @@ export default async function explorerController(fastify: FastifyInstance) {
                 templateId = isTemplateId
             }
 
-           
+
             // Process individual .aqua.json files
             //todo fix me to check for workflo
             await processAquaFiles(zipData, session.address, templateId, isWorkFlow);
@@ -286,15 +286,35 @@ export default async function explorerController(fastify: FastifyInstance) {
 
 
             } else {
+                let genhash = getGenesisHash(aquaTree)
+                if (genhash == null) {
+                    throw Error(`--> genhash ${genhash}.`)
+                }
+                let genRev = aquaTree.revisions[genhash!]
+                let fileHash = genRev.file_hash
+                console.log(`Request does not have asset buffer.... ${fileHash}`)
+                let res = await prisma.file.findFirst({
+                    where: {
+
+                        file_hash: fileHash,
+
+
+                    }
+                })
+
+                if (res == null) {
+
+                    return reply.code(500).send({ error: `Asset is required , not found in system -- hasAsset ${hasAsset} -- assetBuffer ${assetBuffer}` });
+                }
+
                 // console.log(`failure reason ${failureReason}`)
-                return reply.code(500).send({ error: `Asset is required` });
             }
 
             //  throw Error(`isWorkFlow ${isWorkFlow}  -- templateId ${templateId} `)
             // console.log("Aquatree to save: ", aquaTree)
             // Save the aqua tree
 
-            console.log(`🧭🧭 ${isWorkFlow +"--"} `)
+            console.log(`🧭🧭 ${isWorkFlow + "--"} `)
             await saveAquaTree(aquaTree, session.address, templateId.length == 0 ? null : templateId, isWorkFlow);
 
 
@@ -361,7 +381,7 @@ export default async function explorerController(fastify: FastifyInstance) {
         const url = `${protocol}://${host}`;
 
         const displayData = await getUserApiFileInfo(url, session.address)
-        
+
         return reply.code(200).send({
             success: true,
             message: 'Aqua tree saved successfully',

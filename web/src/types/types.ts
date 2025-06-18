@@ -61,6 +61,13 @@ export interface RevisionVerificationStatus {
 }
 
 
+export interface UploadLinkAquaTreeExpectedData {
+        expectedFileName: string,
+        displayText: string,
+        exectedFileHash: string,
+        itemRevisionHash: string,
+        isAquaFile: boolean
+    }
 export interface IDropzoneAction2 {
     aquaFile: File
     fileIndex: number
