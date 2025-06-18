@@ -53,7 +53,13 @@ const viewLinkedFile = (selectedApiFileInfo: ApiFileInfo, revisionHash: string, 
                         }
                     }
                     if (fileInfoFound) {
-                        updateSelectedFile(fileInfoFound)
+                        updateSelectedFile({
+                            aquaTree: fileInfoFound.aquaTree,
+                            fileObject:[...fileInfoFound.fileObject, ...allFileObjects],
+                            linkedFileObjects:[],
+                            mode:"",
+                            owner:""
+                        })
                     } else {
 
                         for (let fileObject of allFileObjects) {
@@ -78,7 +84,7 @@ const viewLinkedFile = (selectedApiFileInfo: ApiFileInfo, revisionHash: string, 
                                 } else {
                                     updateSelectedFile({
                                         aquaTree: aquaTree,
-                                        fileObject: [fileObject],
+                                        fileObject: allFileObjects,
                                         linkedFileObjects: [],
                                         mode: "",
                                         owner: ""

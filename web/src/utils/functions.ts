@@ -1424,10 +1424,18 @@ export const isJSONKeyValueStringContent = (fileContent: string): boolean => {
         if (typeof parsedContent !== 'object' || parsedContent === null || Array.isArray(parsedContent)) {
             return false;
         }
+        let isKeyValueString = true
+        let values = Object.values(parsedContent)
+        for (let item of values) {
+
+            if (typeof item == 'object' || item === null || Array.isArray(parsedContent)) {
+                isKeyValueString = false
+            }
+        }
 
         // Check if all keys map to string values
         // return Object.entries(parsedContent).every(([_, value]) => typeof value === 'string');
-        return true
+        return isKeyValueString
     } catch (error) {
         // If JSON.parse throws an error, it's not valid JSON
         return false;
