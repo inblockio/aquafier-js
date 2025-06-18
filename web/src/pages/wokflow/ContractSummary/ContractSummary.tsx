@@ -13,7 +13,7 @@ import {
 import appStore from '../../../store';
 import { useStore } from "zustand"
 import { ContractDocumentViewProps, SummaryDetailsDisplayData } from '../../../types/types';
-import Aquafier, { AquaTree, FileObject, OrderRevisionInAquaTree, Revision } from 'aqua-js-sdk';
+import Aquafier, { AquaTree, FileObject, OrderRevisionInAquaTree, Revision } from 'aqua-js-sdk/web';
 import { isAquaTree, timeToHumanFriendly, getHighestFormIndex, getFileName, getFileHashFromUrl, fetchFileData, isArrayBufferText } from '../../../utils/functions';
 
 import { ApiFileInfo } from '../../../models/FileInfo';

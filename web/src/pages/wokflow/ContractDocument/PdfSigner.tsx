@@ -32,7 +32,7 @@ import { useColorMode } from '../../../components/chakra-ui/color-mode';
 import axios from 'axios';
 import { ApiFileInfo } from '../../../models/FileInfo';
 import { dataURLToFile, dummyCredential, ensureDomainUrlHasSSL, estimateFileSize, fetchFiles, getAquaTreeFileName, getGenesisHash, getRandomNumber, timeStampToDateObject } from '../../../utils/functions';
-import Aquafier, { AquaTree, AquaTreeWrapper, FileObject, getAquaTreeFileObject } from 'aqua-js-sdk';
+import Aquafier, { AquaTree, AquaTreeWrapper, FileObject, getAquaTreeFileObject } from 'aqua-js-sdk/web';
 import { SignatureData } from "../../../types/types"
 import { LuInfo, LuTrash } from 'react-icons/lu';
 import { useNavigate } from 'react-router-dom';

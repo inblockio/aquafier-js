@@ -9,7 +9,7 @@ import {
 //   HStack,
   StackProps
 } from '@chakra-ui/react';
-import { LogData, LogType, LogTypeEmojis } from 'aqua-js-sdk';
+import { LogData, LogType, LogTypeEmojis } from 'aqua-js-sdk/web';
 import { useColorModeValue } from '../chakra-ui/color-mode';
 // import { LogEntry, LogType, LogTypeEmojis } from '../types/LogTypes';
 

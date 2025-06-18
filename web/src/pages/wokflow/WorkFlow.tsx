@@ -18,7 +18,7 @@ import { SummaryDetailsDisplayData, WorkFlowTimeLine } from '../../types/types';
 import { convertTemplateNameToTitle, getHighestFormIndex, isAquaTree, isWorkFlowData } from '../../utils/functions';
 import { ContractDocumentView } from './ContractDocument/ContractDocument';
 import { ContractSummaryView } from './ContractSummary/ContractSummary';
-import { AquaTree, OrderRevisionInAquaTree, Revision } from 'aqua-js-sdk';
+import { AquaTree, OrderRevisionInAquaTree, Revision } from 'aqua-js-sdk/web';
 
 
 export default function WorkFlowPage() {

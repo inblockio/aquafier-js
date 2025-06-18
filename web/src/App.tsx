@@ -14,7 +14,7 @@ import FormGenerator from './pages/FormGenerator';
 import AttestationAddresses from './pages/AttestationAddresses';
 import PdfSigner from './pages/wokflow/ContractDocument/PdfSigner';
 import WorkFlowPage from './pages/wokflow/WorkFlow';
-// import Aquafier from 'aqua-js-sdk';
+
 declare global {
   interface Window {
     ethereum?: ethers.Eip1193Provider;
