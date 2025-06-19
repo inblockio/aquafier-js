@@ -4,5 +4,17 @@
     "config:recommended"
   ],
   "baseBranches": ["dev"],
-  "prHourlyLimit":0
+  "prHourlyLimit":0,
+  "prConcurrentLimit":0,
+  {
+  "groupName": null,
+  "schedule": [],
+  "dependencyDashboardApproval": false,
+  "minimumReleaseAge": null,
+  "rangeStrategy": "update-lockfile",
+  "commitMessageSuffix": "[SECURITY]",
+  "branchTopic": "{{{datasource}}}-{{{depNameSanitized}}}-vulnerability",
+  "prCreation": "immediate",
+  "vulnerabilityFixStrategy": "lowest"
+  }
 }
