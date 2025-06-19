@@ -248,7 +248,7 @@ export const ImportAquaTree = ({ aquaFile, uploadedIndexes, fileIndex, updateUpl
             if (userHasAquaTreeByGenesis(importedAquaTreeGenesisHash!)) {
                 setUploading(false)
                 toaster.create({
-                    description: `Aqua tree is not valid: Genesis hash not found`,
+                    description: `Aqua tree exists already in your files`,
                     type: "error"
                 })
                 return;
