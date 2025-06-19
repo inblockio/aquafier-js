@@ -11,7 +11,7 @@ import JSZip from 'jszip';
 import { getFileUploadDirectory } from './file_utils';
 import { hash, randomUUID } from 'crypto';
 import path from 'path';
-import { systemTemplateHashes } from 'src/models/constants';
+import { systemTemplateHashes } from '../models/constants';
 
 // import { PrismaClient } from '@prisma/client';
 
