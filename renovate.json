@@ -6,17 +6,16 @@
   "baseBranches": ["dev"],
   "prHourlyLimit":0,
   "prConcurrentLimit":0,
-  "packageRules": [
-    {
-      "groupName": null,
-      "schedule": [],
-      "dependencyDashboardApproval": false,
-      "minimumReleaseAge": null,
-      "rangeStrategy": "update-lockfile",
-      "commitMessageSuffix": "[SECURITY]",
-      "branchTopic": "{{{datasource}}}-{{{depNameSanitized}}}-vulnerability",
-      "prCreation": "immediate",
-      "vulnerabilityFixStrategy": "lowest"
-    }
-  ]
+  "osvVulnerabilityAlerts": true,
+  "vulnerabilityAlerts": {
+    "groupName": null,
+    "schedule": [],
+    "dependencyDashboardApproval": false,
+    "minimumReleaseAge": null,
+    "rangeStrategy": "update-lockfile",
+    "commitMessageSuffix": "[SECURITY]",
+    "branchTopic": "{{{datasource}}}-{{{depNameSanitized}}}-vulnerability",
+    "prCreation": "immediate",
+    "vulnerabilityFixStrategy": "lowest"
+  }
 }
