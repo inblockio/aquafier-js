@@ -11,6 +11,7 @@ import JSZip from 'jszip';
 import { getFileUploadDirectory } from './file_utils';
 import { hash, randomUUID } from 'crypto';
 import path from 'path';
+import { systemTemplateHashes } from 'src/models/constants';
 
 // import { PrismaClient } from '@prisma/client';
 
@@ -93,7 +94,7 @@ export const isWorkFlowData = (aquaTree: AquaTree, systemAndUserWorkFlow: string
         isWorkFlow: false,
         workFlow: ""
     }
-    // console.log("System workflows: ", systemAndUserWorkFlow)
+    console.log("System workflows: ", systemAndUserWorkFlow)
 
     //order revision in aqua tree 
     let aquaTreeRevisionsOrderd = OrderRevisionInAquaTree(aquaTree)
@@ -104,14 +105,14 @@ export const isWorkFlowData = (aquaTree: AquaTree, systemAndUserWorkFlow: string
     }
     let secondRevision = aquaTreeRevisionsOrderd.revisions[allHashes[1]]
     if (!secondRevision) {
-        // console.log(`Aqua tree has second revision not found`)
+        console.log(`Aqua tree has second revision not found`)
         return falseResponse
     }
     if (secondRevision.revision_type == 'link') {
 
         //get the  system aqua tree name 
         let secondRevision = aquaTreeRevisionsOrderd.revisions[allHashes[1]]
-        // console.log(` second hash used ${allHashes[1]}  second revision ${JSON.stringify(secondRevision, null, 4)} tree ${JSON.stringify(aquaTreeRevisionsOrderd, null, 4)}`)
+        console.log(` second hash used ${allHashes[1]}  second revision ${JSON.stringify(secondRevision, null, 4)} tree ${JSON.stringify(aquaTreeRevisionsOrderd, null, 4)}`)
 
         if (secondRevision.link_verification_hashes == undefined) {
             // console.log(`link verification hash is undefined`)
@@ -123,6 +124,15 @@ export const isWorkFlowData = (aquaTree: AquaTree, systemAndUserWorkFlow: string
 
         // if (systemAndUserWorkFlow.map((e)=>e.replace(".json", "")).includes(name)) {
 
+        // try with hash
+        if (systemAndUserWorkFlow.includes(revisionHash)) {
+            return {
+                isWorkFlow: true,
+                workFlow: name
+            }
+        }
+
+        // trye with name
         let nameWithoutJson = "--error--";
         if (name) {
             nameWithoutJson = name.replace(".json", "")
@@ -140,7 +150,7 @@ export const isWorkFlowData = (aquaTree: AquaTree, systemAndUserWorkFlow: string
 
 
     }
-    // console.log(`Aqua tree has second revision is of type ${secondRevision.revision_type}`)
+    console.log(`Aqua tree has second revision is of type ${secondRevision.revision_type}`)
 
 
     return falseResponse
@@ -154,9 +164,11 @@ export function isAquaTree(content: any): boolean {
         'file_index' in content;
 }
 
+
+
 export async function transferRevisionChainData(userAddress: string, chainData: {
     aquaTree: AquaTree; fileObject: FileObject[]
-},templateId: string | null = null, isWorkFlow: boolean=false ): Promise<{ success: boolean, message: string }> {
+}, templateId: string | null = null, isWorkFlow: boolean = false): Promise<{ success: boolean, message: string }> {
     try {
 
 
@@ -353,7 +365,7 @@ export async function saveARevisionInAquaTree(revisionData: SaveRevisionForUser,
     });
 
     if (existData == null) {
-        return [405 , `previous  hash  not found ${oldFilePubKeyHash}`] ///reply.code(401).send({ success: false, message: `previous  hash  not found ${oldFilePubKeyHash}` });
+        return [405, `previous  hash  not found ${oldFilePubKeyHash}`] ///reply.code(401).send({ success: false, message: `previous  hash  not found ${oldFilePubKeyHash}` });
 
     }
 
@@ -531,14 +543,14 @@ export async function saveARevisionInAquaTree(revisionData: SaveRevisionForUser,
             console.log(`pubKeyHash ${pubKeyHash}`)
             let [anAquaTree, fileObject] = await createAquaTreeFromRevisions(pubKeyHash, url);
 
-             console.log(`anAquaTree ${JSON.stringify(anAquaTree, null, 4)}  fileObject  ${JSON.stringify(fileObject, null, 4)}`)
+            console.log(`anAquaTree ${JSON.stringify(anAquaTree, null, 4)}  fileObject  ${JSON.stringify(fileObject, null, 4)}`)
 
-            
+
 
             let response = await transferRevisionChainData(userAddress, {
                 aquaTree: anAquaTree,
                 fileObject: fileObject
-            },null, true  )
+            }, null, true)
             if (response.success == false) {
                 throw Error(`An error occured transfering chain ${response.message}`)
             }
@@ -1083,8 +1095,13 @@ async function processFileData(
             }
         });
 
-        await prisma.fileName.create({
-            data: {
+        await prisma.fileName.upsert({
+            where: { pubkey_hash: pubKeyHash },
+            create: {
+                pubkey_hash: pubKeyHash,
+                file_name: fileName,
+            },
+            update: {
                 pubkey_hash: pubKeyHash,
                 file_name: fileName,
             }
@@ -1276,7 +1293,7 @@ async function processFileRevision(revisionData: any, pubKeyHash: string, userAd
         throw new Error(`File data should be in database but is not found.`);
     }
 
-   
+
 
     // Update file index
     const existingFileIndex = await prisma.fileIndex.findFirst({
@@ -1395,7 +1412,7 @@ export async function saveAquaTree(
     const lastPubKeyHash = `${userAddress}_${latestHash}`;
 
     // Only register the latest hash for the user
-  let inserRes =  await prisma.latest.upsert({
+    let inserRes = await prisma.latest.upsert({
         where: { hash: lastPubKeyHash },
         create: {
             hash: lastPubKeyHash,
@@ -1411,7 +1428,7 @@ export async function saveAquaTree(
         }
     });
 
-    console.log(`latest insert res ${JSON.stringify(inserRes, null ,4)}`)
+    // console.log(`latest insert res ${JSON.stringify(inserRes, null, 4)}`)
 
     // Process each revision
     for (const revisionHash of allHash) {
@@ -1501,18 +1518,132 @@ export async function processAquaMetadata(zipData: JSZip, userAddress: string) {
     }
 }
 
-export async function processAquaFiles(zipData: JSZip, userAddress: string,  templateId: string | null = null,
-    isWorkFlow: boolean = false) {
-    for (const fileName in zipData.files) {
-        if (fileName.endsWith(".aqua.json") && fileName !== 'aqua.json') {
-            const file = zipData.files[fileName];
-            const fileContent = await file.async('text');
-            const aquaTree: AquaTree = JSON.parse(fileContent);
 
-            await saveAquaTree(aquaTree, userAddress, templateId , isWorkFlow);
-        }
+
+// read zip file and create AquaTree from revisions
+
+
+export async function processAquaFiles(
+    zipData: JSZip,
+    userAddress: string,
+    templateId: string | null = null,
+    isWorkFlow: boolean = false
+) {
+    try {
+        const aquaConfig = await getAquaConfiguration(zipData);
+        console.log(`config Aqua Tree: ${JSON.stringify(aquaConfig, null, 2)}`);
+        const mainAquaTree = await getMainAquaTree(zipData, aquaConfig);
+        console.log(`Main Aqua Tree: ${JSON.stringify(mainAquaTree, null, 2)}`);
+        const actualIsWorkFlow = determineWorkFlowStatus(mainAquaTree, isWorkFlow);
+        console.log(`actualIsWorkFlow: ${actualIsWorkFlow}`);
+
+
+        await processAllAquaFiles(zipData, userAddress, templateId, aquaConfig, mainAquaTree, actualIsWorkFlow);
+    } catch (error) {
+        console.error('Error processing aqua files:', error);
+        // Fallback: process all aqua files without special workflow handling
+        await processAllAquaFilesGeneric(zipData, userAddress, templateId, isWorkFlow);
     }
 }
+
+async function getAquaConfiguration(zipData: JSZip): Promise<AquaJsonInZip | null> {
+    const aquaJson = zipData.files['aqua.json'];
+    if (!aquaJson) return null;
+
+    const fileContent = await aquaJson.async('text');
+    const aquaData: AquaJsonInZip = JSON.parse(fileContent);
+    console.log(`Processing aqua files with genesis: ${aquaData.genesis}`);
+    return aquaData;
+}
+
+async function getMainAquaTree(zipData: JSZip, aquaConfig: AquaJsonInZip | null): Promise<AquaTree | null> {
+    if (!aquaConfig) return null;
+
+    const mainAquaFile = zipData.files[`${aquaConfig.genesis}.aqua.json`];
+    if (!mainAquaFile) return null;
+
+    const aquaTreeContent = await mainAquaFile.async('text');
+
+    if (!aquaTreeContent) return null;
+
+    return JSON.parse(aquaTreeContent);
+}
+
+function determineWorkFlowStatus(mainAquaTree: AquaTree | null, fallbackStatus: boolean): boolean {
+    if (!mainAquaTree) return fallbackStatus;
+    return isWorkFlowData(mainAquaTree, systemTemplateHashes).isWorkFlow || fallbackStatus;
+}
+
+async function processAllAquaFiles(
+    zipData: JSZip,
+    userAddress: string,
+    templateId: string | null,
+    aquaConfig: AquaJsonInZip | null,
+    mainAquaTree: AquaTree | null,
+    isWorkFlow: boolean
+) {
+    const aquaFiles = getAquaFiles(zipData);
+
+    if (isWorkFlow && mainAquaTree && aquaConfig) {
+        // Process workflow: save non-main files first, then main file
+        await processWorkflowFiles(aquaFiles, aquaConfig.genesis, userAddress, templateId);
+        await saveAquaTree(mainAquaTree, userAddress, templateId, false);
+    } else {
+        // Process regular files
+        await processRegularFiles(aquaFiles, userAddress, templateId, isWorkFlow);
+    }
+}
+
+async function processWorkflowFiles(
+    aquaFiles: Array<{ fileName: string; file: JSZip.JSZipObject }>,
+    genesisFileName: string,
+    userAddress: string,
+    templateId: string | null
+) {
+    const nonMainFiles = aquaFiles.filter(({ fileName }) => fileName !== genesisFileName);
+
+    for (const { file } of nonMainFiles) {
+        const aquaTree = await parseAquaFile(file);
+        await saveAquaTree(aquaTree, userAddress, templateId, true);
+    }
+}
+
+async function processRegularFiles(
+    aquaFiles: Array<{ fileName: string; file: JSZip.JSZipObject }>,
+    userAddress: string,
+    templateId: string | null,
+    isWorkFlow: boolean
+) {
+    for (const { file } of aquaFiles) {
+        const aquaTree = await parseAquaFile(file);
+        await saveAquaTree(aquaTree, userAddress, templateId, isWorkFlow);
+    }
+}
+
+async function processAllAquaFilesGeneric(
+    zipData: JSZip,
+    userAddress: string,
+    templateId: string | null,
+    isWorkFlow: boolean
+) {
+    const aquaFiles = getAquaFiles(zipData);
+    await processRegularFiles(aquaFiles, userAddress, templateId, isWorkFlow);
+}
+
+function getAquaFiles(zipData: JSZip): Array<{ fileName: string; file: JSZip.JSZipObject }> {
+    return Object.entries(zipData.files)
+        .filter(([fileName]) => fileName.endsWith(".aqua.json") && fileName !== 'aqua.json')
+        .map(([fileName, file]) => ({ fileName, file }));
+}
+
+async function parseAquaFile(file: JSZip.JSZipObject): Promise<AquaTree> {
+    const fileContent = await file.async('text');
+    return JSON.parse(fileContent);
+}
+
+//end of read zip file and create AquaTree from revisions
+
+
 
 export async function fetchAquaTreeWithForwardRevisions(latestRevisionHash: string, url: string): Promise<[AquaTree, FileObject[]]> {
     // Fetch the revision chain starting from the latest hash

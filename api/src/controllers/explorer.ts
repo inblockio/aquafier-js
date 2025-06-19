@@ -59,13 +59,13 @@ export default async function explorerController(fastify: FastifyInstance) {
             await processAquaMetadata(zipData, session.address);
 
 
-            let isWorkFlow = false
-            const isWorkFlowPar = request.headers['is_workflow'];
-            if (isWorkFlowPar != undefined || isWorkFlowPar != null || isWorkFlowPar != "") {
-                if (isWorkFlowPar == "true") {
-                    isWorkFlow = true
-                }
-            }
+            // let isWorkFlow = false
+            // const isWorkFlowPar = request.headers['is_workflow'];
+            // if (isWorkFlowPar != undefined || isWorkFlowPar != null || isWorkFlowPar != "") {
+            //     if (isWorkFlowPar == "true") {
+            //         isWorkFlow = true
+            //     }
+            // }
             const isTemplateId = request.headers['is_template_id'];
             let templateId = null
             if (isTemplateId != undefined || isTemplateId != null || isTemplateId != "") {
@@ -75,7 +75,7 @@ export default async function explorerController(fastify: FastifyInstance) {
 
             // Process individual .aqua.json files
             //todo fix me to check for workflo
-            await processAquaFiles(zipData, session.address, templateId, isWorkFlow);
+            await processAquaFiles(zipData, session.address, templateId, false);
 
             // Return response with file info
             const host = request.headers.host || `${getHost()}:${getPort()}`;
@@ -86,7 +86,7 @@ export default async function explorerController(fastify: FastifyInstance) {
             return reply.code(200).send({
                 success: true,
                 message: 'Aqua tree saved successfully',
-                files: displayData
+                data: displayData
             });
 
         } catch (error) {
@@ -281,7 +281,6 @@ export default async function explorerController(fastify: FastifyInstance) {
                     })
 
 
-                    // console.log('FileIndex record created');
                 }
 
 

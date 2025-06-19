@@ -1,4 +1,4 @@
-import { LuScan } from "react-icons/lu";
+import {  LuSave } from "react-icons/lu";
 import { Button } from "../chakra-ui/button";
 import axios from "axios";
 import { useStore } from "zustand";
@@ -112,8 +112,8 @@ export const ImportAquaTreeZip = ({ file, uploadedIndexes, fileIndex, updateUplo
     };
 
     return (
-        <Button size={'xs'} colorPalette={'blackAlpha'} variant={'subtle'} w={'80px'} onClick={importFile} disabled={uploadedIndexes.includes(fileIndex) || uploaded} loading={uploading}>
-            <LuScan />
+        <Button size={'xs'} colorPalette={'green'} variant={'subtle'} w={'80px'} onClick={importFile} disabled={uploadedIndexes.includes(fileIndex) || uploaded} loading={uploading}>
+            <LuSave />
             Import
         </Button>
     )

@@ -1,5 +1,11 @@
 {
-    "sender": "0x...",
+    "sender":  {
+      "name": "sender",
+      "label": "Sender",
+      "type": "wallet_address",
+      "required": true,
+      "isArray": false
+    },
     "receiver": "0x...",
     "resource": "John",
     "option": "Doe",

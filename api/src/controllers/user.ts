@@ -498,6 +498,13 @@ export default async function userController(fastify: FastifyInstance) {
 
                     // Step 4: Handle Files and FileIndex records
                     for (const hash of revisionHashes) {
+                        // Use deleteMany instead of delete to avoid errors when records don't exist
+                        await prisma.fileName.deleteMany({
+                            where: {
+                                pubkey_hash: hash
+                            }
+                        });
+                        
                         console.log(`Processing files for revision hash: ${hash}`);
                         await handleFilesDeletion(tx, hash);
                     }
