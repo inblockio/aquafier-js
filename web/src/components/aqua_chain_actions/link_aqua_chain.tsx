@@ -157,16 +157,16 @@ export const LinkButton = ({ item, nonce }: IShareButton) => {
                                         const keys = Object.keys(itemLoop.aquaTree!.revisions!)
                                         const keysPar = Object.keys(item.aquaTree!.revisions!)
                                         const res = areArraysEqual(keys, keysPar)
-                                        const { isWorkFlow } = isWorkFlowData(itemLoop.aquaTree!, systemFileInfo.map((e) => getFileName(e.aquaTree!!)))
+                                        const { isWorkFlow, workFlow } = isWorkFlowData(itemLoop.aquaTree!, systemFileInfo.map((e) => getFileName(e.aquaTree!!)))
                                         //  console.log(`res ${res} ${JSON.stringify(itemLoop.fileObject)}`)
                                         if (res) {
                                             return <div key={index}> </div>
                                         }
-                                        if (isWorkFlow) {
+                                        if (isWorkFlow  && workFlow=="aqua_sign") {
                                             let fileName = getFileName(itemLoop.aquaTree!!)
                                             return <div key={index}>
                                                 <Text>
-                                                    {index + 1}. {`${fileName} - This is a workflow file. You can't link to it.`}
+                                                    {index }. {`${fileName} - This is a workflow file (${workFlow}). You can't link to it. `}
                                                 </Text>
                                             </div>
                                         }
@@ -191,7 +191,7 @@ export const LinkButton = ({ item, nonce }: IShareButton) => {
                                                     }}
                                                     value={index.toString()}
                                                 >
-                                                    {itemLoop.fileObject[0].fileName}
+                                                    {itemLoop.fileObject[0].fileName} {isWorkFlow ? `- This is a workflow file (${workFlow}).` : ""}
                                                 </Checkbox>
                                             </Group>
                                         } else {
