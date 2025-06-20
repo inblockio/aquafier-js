@@ -21,7 +21,7 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: echo
-        run: echo ${{ setps.build.outputs.docker-image-tag }}
+        run: echo ${{ steps.build.outputs.docker-image-tag }}
 
 #      - uses: actions/setup-node@v4
 #        with:
