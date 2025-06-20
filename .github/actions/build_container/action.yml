@@ -14,6 +14,11 @@ inputs:
     required: true
     description: "Github-Token"
 
+outputs:
+  docker-image-tag:
+    value: ${{ steps.meta.outputs.tags }}
+    description: "docker tag"
+
 
 
 

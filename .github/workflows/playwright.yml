@@ -2,6 +2,11 @@ name: Playwright Tests
 on:
   push:
 
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
 jobs:
   test:
     timeout-minutes: 60
@@ -9,10 +14,14 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - name: build
+        id: build
         uses: ./.github/actions/build_container
         with:
           load: true
           token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: echo
+        run: echo ${{ setps.build.outputs.docker-image-tag }}
 
 #      - uses: actions/setup-node@v4
 #        with:
