@@ -9,11 +9,13 @@ on:
     branches:
       - main
       - dev
+      - playwright
 
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v3
       - name: build
         uses: ./.github/actions/build_container
         with:
