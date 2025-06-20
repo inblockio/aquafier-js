@@ -12,6 +12,7 @@ jobs:
         uses: ./.github/actions/build_container
         with:
           load: true
+          token: ${{ secrets.GITHUB_TOKEN }}
 
 #      - uses: actions/setup-node@v4
 #        with:

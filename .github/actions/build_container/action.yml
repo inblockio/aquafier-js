@@ -10,6 +10,11 @@ inputs:
     required: false
     default: false
 
+  token:
+    required: true
+    description: "Github-Token"
+
+
 
 
 runs:
@@ -20,7 +25,7 @@ runs:
       with:
         registry: ${{ env.REGISTRY }}
         username: ${{ github.actor }}
-        password: ${{ secrets.GITHUB_TOKEN }}
+        password: ${{ inputs.token }}
 
     - name: Extract metadata (tags, labels) for Docker
       id: meta
@@ -33,7 +38,8 @@ runs:
       uses: docker/build-push-action@f2a1d5e99d037542a71f64918e516c093c6f3fc4
       with:
         context: .
-        push: true
+        push: ${{ inputs.push }}
+        load: ${{ inputs.load }}
         tags: ${{ steps.meta.outputs.tags }}
         labels: ${{ steps.meta.outputs.labels }}
         file: actionfiles/aquafier-ts/dockerfile/Dockerfile

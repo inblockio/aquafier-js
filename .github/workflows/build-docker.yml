@@ -19,6 +19,7 @@ jobs:
       - name: build
         uses: ./.github/actions/build_container
         with:
+          token: ${{ secrets.GITHUB_TOKEN }}
           push: true
 
   deploy_dev:
