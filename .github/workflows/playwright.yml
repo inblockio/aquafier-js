@@ -40,7 +40,7 @@ jobs:
       - name: Run Playwright tests
         env:
           DISPLAY: :99
-        run: npx playwright test
+        run: cd e2e && npx playwright test
       - uses: actions/upload-artifact@v4
         if: ${{ !cancelled() }}
         with:
