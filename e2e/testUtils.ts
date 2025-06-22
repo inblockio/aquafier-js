@@ -16,7 +16,7 @@ export async function registerNewMetaMaskWallet(): Promise<BrowserContext>{
     const metamaskPath = path.join(__dirname, 'metamask-extension');
 
     const context = await chromium.launchPersistentContext('', {
-        headless: false,
+        headless: true,
         args: [
             `--disable-extensions-except=${metamaskPath}`,
             `--load-extension=${metamaskPath}`,

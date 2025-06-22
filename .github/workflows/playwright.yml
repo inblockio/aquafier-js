@@ -13,15 +13,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      - name: build
-        id: build
-        uses: ./.github/actions/build_container
+      - name: Docker Compose Action
+        uses: hoverkraft-tech/compose-action@v2.2.0
         with:
-          load: true
-          token: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: echo
-        run: echo ${{ steps.build.outputs.docker-image-tag }}
+          compose-file: 'e2e/docker-compose.yml'
+          compose-flags: '-d'
 
 #      - uses: actions/setup-node@v4
 #        with:
