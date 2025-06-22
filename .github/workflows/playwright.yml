@@ -22,8 +22,6 @@ jobs:
           load: 'true'
           tags: 'latest'
 
-      - run: docker image ls
-
       - name: Set up Docker Compose
         run: |
           sudo curl -L "https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)" \
@@ -60,4 +58,4 @@ jobs:
         uses: mikepenz/action-junit-report@v5
         if: success() || failure() # always run even if the previous step fails
         with:
-          report_paths: 'playwright-report/TEST-*.xml'
+          report_paths: 'results.xml'
