@@ -13,13 +13,16 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
+      - name: change env
+        run: cat "BASE_URL=http://127.0.0.1:3000" >> e2e/.env
+      - run: cat e2e/.env
 
-#      - name: Prepare Test-Env
-#        uses: hoverkraft-tech/compose-action@v2.2.0
-#        with:
-#          compose-file: 'docker-compose.yml'
-#          up-flags: '-d'
-#          cwd: '${{ github.workspace }}/e2e'
+      - name: Prepare Test-Env
+        uses: hoverkraft-tech/compose-action@v2.2.0
+        with:
+          compose-file: 'docker-compose.yml'
+          up-flags: '-d'
+          cwd: '${{ github.workspace }}/e2e'
 
       - name: Start Xvfb
         run: |
