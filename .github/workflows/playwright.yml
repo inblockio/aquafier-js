@@ -14,12 +14,12 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
-      - name: Prepare Test-Env
-        uses: hoverkraft-tech/compose-action@v2.2.0
-        with:
-          compose-file: 'docker-compose.yml'
-          up-flags: '-d'
-          cwd: '${{ github.workspace }}/e2e'
+#      - name: Prepare Test-Env
+#        uses: hoverkraft-tech/compose-action@v2.2.0
+#        with:
+#          compose-file: 'docker-compose.yml'
+#          up-flags: '-d'
+#          cwd: '${{ github.workspace }}/e2e'
 
       - uses: actions/setup-node@v4
         with:
