@@ -16,8 +16,9 @@ jobs:
       - name: Docker Compose Action
         uses: hoverkraft-tech/compose-action@v2.2.0
         with:
-          compose-file: 'e2e/docker-compose.yml'
+          compose-file: 'docker-compose.yml'
           up-flags: '-d'
+          cwd: '${{ github.workspace }}/e2e'
 
 #      - uses: actions/setup-node@v4
 #        with:
