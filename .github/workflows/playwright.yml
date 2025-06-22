@@ -14,7 +14,7 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - name: change env
-        run: echo "\nBASE_URL=http://127.0.0.1:3000" >> e2e/.env
+        run: echo "BASE_URL=http://127.0.0.1:3000" >> e2e/.env
       - run: cat e2e/.env
 
       - name: Prepare Test-Env
