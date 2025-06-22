@@ -15,9 +15,8 @@ services:
       retries: 5
 
   aqua-container:
-    build:
-      context: ./..
-      dockerfile: actionfiles/aquafier-ts/dockerfile/Dockerfile
+    image: ghcr.io/inblockio/aquafier-js:latest
+    pull_policy: never
     depends_on:
       postgres:
         condition: service_healthy
