@@ -13,16 +13,24 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
+
       - name: change env
         run: echo "BASE_URL=http://127.0.0.1:3000" >> e2e/.env
-      - run: cat e2e/.env
 
+
+      - name: Set up Docker Compose
+      - run: |
+          sudo curl -L "https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)" \
+            -o /usr/local/bin/docker-compose
+          sudo chmod +x /usr/local/bin/docker-compose
+#      - name: Prepare Test-Env
+#        uses: hoverkraft-tech/compose-action@v2.2.0
+#        with:
+#          compose-file: 'docker-compose.yml'
+#          up-flags: '-d'
+#          cwd: '${{ github.workspace }}/e2e'
       - name: Prepare Test-Env
-        uses: hoverkraft-tech/compose-action@v2.2.0
-        with:
-          compose-file: 'docker-compose.yml'
-          up-flags: '-d'
-          cwd: '${{ github.workspace }}/e2e'
+        run: cd e2e && docker compose up -d
 
       - name: Start Xvfb
         run: |
@@ -40,7 +48,7 @@ jobs:
       - name: Run Playwright tests
         env:
           DISPLAY: :99
-        run: cd e2e && npx playwright test
+        run: npx playwright test
       - uses: actions/upload-artifact@v4
         if: ${{ !cancelled() }}
         with:
