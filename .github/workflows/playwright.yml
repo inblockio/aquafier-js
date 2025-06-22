@@ -19,12 +19,7 @@ jobs:
           sudo curl -L "https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)" \
             -o /usr/local/bin/docker-compose
           sudo chmod +x /usr/local/bin/docker-compose
-#      - name: Prepare Test-Env
-#        uses: hoverkraft-tech/compose-action@v2.2.0
-#        with:
-#          compose-file: 'docker-compose.yml'
-#          up-flags: '-d'
-#          cwd: '${{ github.workspace }}/e2e'
+
       - name: Prepare Test-Env
         run: cd e2e && docker compose up -d
 
@@ -51,3 +46,8 @@ jobs:
           name: playwright-report
           path: playwright-report/
           retention-days: 30
+      - name: Publish Test Report
+        uses: mikepenz/action-junit-report@v5
+        if: success() || failure() # always run even if the previous step fails
+        with:
+          report_paths: 'playwright-report/TEST-*.xml'
