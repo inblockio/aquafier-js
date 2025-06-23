@@ -302,6 +302,7 @@ export const CompleteChainView = ({ callBack, selectedFileInfo }: ICompleteChain
     // Optimized useEffect with proper dependencies
     useEffect(() => {
         if (selectedFileInfo) {
+            setAllLogs([])
             verifyAquaTreeRevisions(selectedFileInfo);
 
             let someData = systemFileInfo.map((e) => {
