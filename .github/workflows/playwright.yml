@@ -13,6 +13,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
+      - name: Prepare MetaMask
+        run: ./e2e/script/prepare_browser.sh
 
       - name: build and load docker image
         uses: ./.github/actions/build_container
@@ -44,6 +46,7 @@ jobs:
         run: npm ci
       - name: Install Playwright Browsers
         run: npx playwright install --with-deps chromium
+
       - name: Run Playwright tests
         env:
           DISPLAY: :99
