@@ -11,3 +11,4 @@ android
 /blob-report/
 /playwright/.cache/
 /e2e/metamask-extension/
+/results.xml

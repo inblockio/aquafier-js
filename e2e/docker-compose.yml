@@ -29,14 +29,3 @@ services:
       LETSENCRYPT_EMAIL: ${LETSENCRYPT_EMAIL}
     env_file:
       - .env
-#
-#  playwright-tests:
-#    build:
-#      context: ./..
-#      dockerfile: e2e/docker/Dockerfile
-#    depends_on:
-#      - aqua-container
-#      - postgres
-#    environment:
-#      BASE_URL: http://aqua-container
-#    restart: no
