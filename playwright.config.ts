@@ -17,8 +17,6 @@ export default defineConfig({
   fullyParallel: true,
   /* Fail the build on CI if you accidentally left test.only in the source code. */
   forbidOnly: !!process.env.CI,
-  /* Retry on CI only */
-  retries: process.env.RETRIES ? parseInt(process.env.RETRIES) : 0,
   /* Opt out of parallel tests on CI. */
   workers: process.env.WORKERS ? parseInt(process.env.WORKERS) : 1,
   /* Reporter to use. See https://playwright.dev/docs/test-reporters */

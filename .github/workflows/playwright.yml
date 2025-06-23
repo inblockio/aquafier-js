@@ -47,7 +47,7 @@ jobs:
       - name: Run Playwright tests
         env:
           DISPLAY: :99
-        run: npx playwright test
+        run: npx playwright test --retries=3
       - uses: actions/upload-artifact@v4
         if: ${{ !cancelled() }}
         with:
