@@ -24,7 +24,7 @@ const fetchEnsName = async (walletAddress: string, infuraKey: string): Promise<s
   let ensName = "";
   try {
     // Create an Ethereum provider
-    const provider = new ethers.JsonRpcProvider(
+    const provider = new ethers.providers.JsonRpcProvider(
       `https://mainnet.infura.io/v3/${infuraKey}`
     );
 

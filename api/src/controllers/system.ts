@@ -15,6 +15,7 @@ import { getAquaAssetDirectory } from 'src/utils/file_utils';
 
 export default async function systemController(fastify: FastifyInstance) {
 
+
     fastify.get('/system/templates', async (request, reply) => {
 
         let assetsPath = getAquaAssetDirectory()
@@ -37,7 +38,7 @@ export default async function systemController(fastify: FastifyInstance) {
             }
         } else {
             console.warn(`Assets path ${assetsPath} does not exist`)
-                return reply.code(200).send({ data: [] });
+            return reply.code(200).send({ data: [] });
         }
 
         let dataMap: Map<string, string> = new Map();
@@ -68,9 +69,68 @@ export default async function systemController(fastify: FastifyInstance) {
 
         }
 
-       // Convert Map to Object for JSON serialization
-    const dataObject = Object.fromEntries(dataMap);
-    return reply.code(200).send({ data: dataObject })
+        // Convert Map to Object for JSON serialization
+        const dataObject = Object.fromEntries(dataMap);
+        return reply.code(200).send({ data: dataObject })
+
+    });
+
+    fastify.get('/system/templates', async (request, reply) => {
+
+        let assetsPath = getAquaAssetDirectory()
+        console.log(`Assets path ${assetsPath}`)
+
+        let assetPathExist = await checkFolderExists(assetsPath)
+        const assetFiles = [];
+        if (assetPathExist) {
+
+            const files = await fs.promises.readdir(assetsPath);
+
+            // Filter only files (exclude directories)
+            for (const file of files) {
+                const filePath = path.join(assetsPath, file);
+                const stats = await fs.promises.lstat(filePath);
+                if (stats.isFile()) {
+                    console.log(`file ${file}`)
+                    assetFiles.push(filePath);
+                }
+            }
+        } else {
+            console.warn(`Assets path ${assetsPath} does not exist`)
+            return reply.code(200).send({ data: [] });
+        }
+
+        let dataMap: Map<string, string> = new Map();
+        let templates = [
+            "access_agreement",
+            "aqua_sign",
+            "cheque",
+            "identity_attestation",
+            "identity_claim",
+            "user_signature"
+        ]
+
+        for (let index = 0; index < templates.length; index++) {
+            const templateItem = templates[index];
+            let templateAquaTreeData = path.join(assetsPath, `${templateItem}.json.aqua.json`);
+
+
+            let templateAquaTreeDataContent = fs.readFileSync(templateAquaTreeData, 'utf8')
+            let templateAquaTree: AquaTree = JSON.parse(templateAquaTreeDataContent)
+            let genHash = getGenesisHash(templateAquaTree);
+            console.log(`Template ${templateItem} with genesis hash ${genHash}`)
+
+            if (!genHash) {
+                throw new Error(`Genesis hash for template ${templateItem} is not defined`);
+            }
+            // save to map
+            dataMap.set(templateItem, genHash);
+
+        }
+
+        // Convert Map to Object for JSON serialization
+        const dataObject = Object.fromEntries(dataMap);
+        return reply.code(200).send({ data: dataObject })
 
     });
     fastify.get('/system/aqua_tree', async (request, reply) => {
