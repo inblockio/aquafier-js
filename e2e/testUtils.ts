@@ -77,9 +77,10 @@ export async function registerNewMetaMaskWalletAndLogin(){
     await testPage.waitForLoadState("load")
     await testPage.goto("/")
     await testPage.waitForSelector('[id="dialog::r7::trigger"]', {state: 'visible'})
+    const metamaskPromise = context.waitForEvent("page")
     await testPage.click('[id="dialog::r7::trigger"]')
+    await metamaskPromise;
 
-    await context.waitForEvent("page")
     const metamaskPage = context.pages()[1]
     await metamaskPage.waitForSelector('[data-testid="confirm-btn"]', {state: 'visible'})
     await metamaskPage.click('[data-testid="confirm-btn"]')

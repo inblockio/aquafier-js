@@ -28,19 +28,19 @@ test("upload, sign, download", async () => {
 
     //sign
     await testPage.getByText("Sign").waitFor({state: 'visible'})
+    let metaMaskPromise = context.waitForEvent("page");
     await testPage.getByText("Sign").click()
 
     //wait for metamask
-    await context.waitForEvent("page")
+    await metaMaskPromise;
 
+
+    //switch network
     let metaMaskPage = context.pages()[1];
+    await metaMaskPage.getByText("Sepolia").waitFor({state: 'visible'})
     await metaMaskPage.waitForSelector('[data-testid="page-container-footer-next"]', {state: 'visible'});
     await metaMaskPage.click('[data-testid="page-container-footer-next"]')
 
-    //sign
-    await context.waitForEvent("page")
-
-    metaMaskPage = context.pages()[1];
     await metaMaskPage.waitForSelector('[data-testid="confirm-footer-button"]', {state: 'visible'})
     await metaMaskPage.click('[data-testid="confirm-footer-button"]')
 
