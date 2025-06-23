@@ -68,7 +68,9 @@ export default async function systemController(fastify: FastifyInstance) {
 
         }
 
-        return reply.code(200).send({ data: dataMap })
+       // Convert Map to Object for JSON serialization
+    const dataObject = Object.fromEntries(dataMap);
+    return reply.code(200).send({ data: dataObject })
 
     });
     fastify.get('/system/aqua_tree', async (request, reply) => {
