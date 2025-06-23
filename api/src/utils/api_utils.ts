@@ -167,7 +167,7 @@ export const saveTemplateFileData = async (aquaTree: AquaTree, fileData: string,
 
 
 // Method 2: Using fs.promises.access (asynchronous)
-async function checkFolderExists(folderPath: string) {
+export async function checkFolderExists(folderPath: string) {
   try {
     await fs.promises.access(folderPath, fs.constants.F_OK);
     const stats = await fs.promises.lstat(folderPath);
