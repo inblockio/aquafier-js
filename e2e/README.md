@@ -1,6 +1,5 @@
 ### Preparation
-Download the latest version of the MetaMask Chrome-Extension: https://github.com/MetaMask/metamask-extension/releases
-Place the content of the *chrome zip into the e2e folder e2e/metamask-extension/\<zipContent\>
+Execute the e2e/script/prepare_browser.sh from the project root :)
 
 ### Run tests
 ``npx playwright test [--tries=3]``
