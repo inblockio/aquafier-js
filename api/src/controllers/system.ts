@@ -1,5 +1,6 @@
 
 import { FastifyInstance, FastifyRequest } from 'fastify';
+import fastifyRateLimit from '@fastify/rate-limit';
 import { SiweMessage } from 'siwe';
 import { prisma } from '../database/db';
 import { Settings } from '@prisma/client';
@@ -15,8 +16,13 @@ import { getAquaAssetDirectory } from 'src/utils/file_utils';
 
 export default async function systemController(fastify: FastifyInstance) {
 
+    // Register rate limiter plugin
+    await fastify.register(fastifyRateLimit, {
+        max: 100, // Maximum 100 requests
+        timeWindow: '15m' // Per 15 minutes
+    });
 
-    fastify.get('/system/templates', async (request, reply) => {
+    fastify.get('/system/templates', { config: { rateLimit: { max: 100, timeWindow: '15m' } } }, async (request, reply) => {
 
         let assetsPath = getAquaAssetDirectory()
         console.log(`Assets path ${assetsPath}`)
