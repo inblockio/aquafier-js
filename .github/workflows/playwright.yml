@@ -50,6 +50,9 @@ jobs:
       - name: Install Playwright Browsers
         run: npx playwright install --with-deps chromium
 
+      - name: Change MetaMask install-script permissions
+        run: chmod +x ./e2e/script/prepare_browser.sh
+
       - name: Prepare MetaMask
         run: ./e2e/script/prepare_browser.sh
 
