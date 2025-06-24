@@ -1,0 +1,31 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15
+    container_name: aquafier-postgres
+    environment:
+      POSTGRES_DB: aquafier
+      POSTGRES_USER: ${DB_USER:-aquafier}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-changeme}
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U aquafier -d aquafier"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  aqua-container:
+    image: ghcr.io/inblockio/aquafier-js:latest
+    pull_policy: never
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql://${DB_USER:-aquafier}:${DB_PASSWORD:-changeme}@postgres:5432/aquafier
+      BACKEND_URL: ${BACKEND_URL:-localhost:3000}
+      FRONTEND_URL: ${FRONTEND_URL:-localhost:3600}
+      VITE_INFURA_PROJECT_ID: ${VITE_INFURA_PROJECT_ID}
+      LETSENCRYPT_HOST: ${FRONTEND_URL}, ${BACKEND_URL}
+      LETSENCRYPT_EMAIL: ${LETSENCRYPT_EMAIL}
+    env_file:
+      - .env

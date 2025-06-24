@@ -4,3 +4,11 @@ dist
 android
 .env
 .cursor
+
+# Playwright
+/test-results/
+/playwright-report/
+/blob-report/
+/playwright/.cache/
+/e2e/metamask-extension/
+/results.xml
