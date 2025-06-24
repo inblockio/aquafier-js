@@ -66,7 +66,7 @@ export async function fetchCompleteRevisionChain(
         return extendedAquaTree;
 
     } catch (error) {
-        console.error(`${indent}[Depth:${_depth}] Error fetching revision chain for ${fullLatestHash}:`, error);
+        console.error(`${indent}[Depth:%s] Error fetching revision chain for %s:`, _depth, fullLatestHash, error);
         throw error;
     }
 }
