@@ -1250,10 +1250,11 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ fileData, setActiveStep, document
     }
 
 
-    // const onAnnotationUpdate
 
-    const renderProfileAnnotationEditor = (_anno: SignatureData) => {
+    // const renderProfileAnnotationEditor = (_anno: SignatureData) => {
+    const renderProfileAnnotationEditor = () => {
         {/* Signatures placed on document */ }
+        console.log(`renderProfileAnnotationEditor called with annotation: ${JSON.stringify(signaturePositions, null,  4)}`)
         return <>
             {signaturePositions.length > 0 && (
                 <>
@@ -1307,82 +1308,7 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ fileData, setActiveStep, document
             )}
         </>
     }
-    // const renderProfileAnnotationEditor = (anno: SignatureData) => (
-    //     <Card.Root key={anno.id} borderRadius={"lg"} borderColor={selectedSignatureId === anno.id ? "blue.400" : "gray.200"} borderWidth={"2px"} onClick={() => {
-    //         //  onAnnotationSelect(anno.id)
-    //     }}>
-    //         <Card.Header p={2}>
-    //             <Card.Title className="text-base font-headline flex justify-between items-center">
-    //                 <HStack justify={"space-between"}>
-    //                     Signature (Page {anno.page})
-    //                     <IconButton variant="subtle" colorPalette={"red"} size="sm" borderRadius={"md"} onClick={(e) => {
-    //                         e.stopPropagation();
-
-    //                         deleteAnnotation(anno.id)
-
-    //                     }}>
-    //                         <Trash2 className="h-4 w-4" />
-    //                     </IconButton>
-    //                 </HStack>
-    //             </Card.Title>
-    //         </Card.Header>
-    //         <Card.Body p={2}>
-    //             <Stack>
-    //                 <Heading size="md">Image Settings</Heading>
-    //                 <Box bg={"gray.100"} borderRadius={"lg"}>
-    //                     <ChakraImage borderRadius={"lg"} src={anno.dataUrl} alt={'error'} h={24} mx={"auto"} data-ai-hint="profile picture" />
-    //                 </Box>
-    //                 <Field>
-    //                     <FieldLabel>Image</FieldLabel>
-    //                     {/* <Input disabled placeholder="Enter your image" defaultValue={anno.dataUrl} onChange={(e) => {
-    //                         onAnnotationUpdate({ ...anno, imageSrc: e.target.value })}
-    //                         } /> */}
-    //                 </Field>
-
-    //                 {/* <Field>
-    //             <FieldLabel>Image Alt Text</FieldLabel>
-    //             <Input placeholder="Enter your image alt text" defaultValue={anno.imageAlt} onChange={(e) => onAnnotationUpdate({ ...anno, imageAlt: e.target.value })} />
-    //           </Field> */}
-
-    //                 <HStack>
-    //                     <Field>
-    //                         <FieldLabel>Image Width</FieldLabel>
-    //                         {/* <Input placeholder="Enter your image width" defaultValue={anno.imageWidth} onChange={(e) =>{ 
-    //                               onAnnotationUpdate({ ...anno, imageWidth: e.target.value })
-    //                             }
-    //                              } />
-    //                               */}
-    //                     </Field>
-
-    //                     <Field>
-    //                         <FieldLabel>Image Height</FieldLabel>
-    //                         {/* <Input placeholder="Enter your image height" defaultValue={anno.imageHeight} onChange={(e) => onAnnotationUpdate({ ...anno, imageHeight: e.target.value })} /> */}
-    //                     </Field>
-    //                 </HStack>
-
-    //                 <Box
-    //                     h={"1px"}
-    //                     bg="gray.200"
-    //                     my={2}
-    //                 />
-
-    //                 <Heading size="md">Info</Heading>
-
-    //                 <Field>
-    //                     <FieldLabel>Name</FieldLabel>
-    //                     {/* <Input disabled placeholder="Enter your name" defaultValue={anno.name} onChange={(e) => onAnnotationUpdate({ ...anno, name: e.target.value })} /> */}
-    //                 </Field>
-
-    //                 <Field>
-    //                     <FieldLabel>Wallet Address</FieldLabel>
-    //                     {/* <Input disabled placeholder="Enter your wallet address" defaultValue={anno.walletAddress} onChange={(e) => onAnnotationUpdate({ ...anno, walletAddress: e.target.value })} /> */}
-    //                 </Field>
-
-
-    //             </Stack>
-    //         </Card.Body>
-    //     </Card.Root>
-    // );
+   
 
 
     const annotationSidebar = () => {
@@ -1399,7 +1325,8 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ fileData, setActiveStep, document
                     </Card.Header>
                     <Card.Body>
                         {signaturePositions.length > 0 ? (
-                            signaturePositions.map(renderProfileAnnotationEditor)
+                            // signaturePositions.map(renderProfileAnnotationEditor)
+                            <>{renderProfileAnnotationEditor()}</>
                         ) : (
                             <p className="text-muted-foreground text-sm text-center py-4">No signatures yet.</p>
                         )}
@@ -1646,7 +1573,7 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ fileData, setActiveStep, document
 
 
     const addAnnotation = useCallback((newAnnotationData: Annotation) => {
-       
+       console.log(`addAnnotation called with data: ${JSON.stringify(newAnnotationData, null, 4)}`)
         const id = Date.now().toString() + Math.random().toString(36).substring(2, 9);
         const selectedSignatureInfo = mySignatureData.find(signature => signature.hash === selectedSignatureId)
 
@@ -1663,29 +1590,29 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ fileData, setActiveStep, document
             walletAddress: selectedSignatureInfo.walletAddress,
             dataUrl: selectedSignatureInfo.dataUrl
         }
-        // const newAnnotation: SignatureData = {
-        //     dataUrl: selectedSignatureInfo.dataUrl,
-        //     name: selectedSignatureInfo.name,
-        //     walletAddress: selectedSignatureInfo.walletAddress,
-        //     height: 0,
-        //     width: 0,
-        //     imageWidth: 0,
-        //     imageHeight: 0,
-        //     imageAlt: '',
-        //     hash: selectedSignatureInfo.hash,
-        //     createdAt: new Date(),
-        //     type: 'signature',
-        //     id: selectedSignatureInfo.id,
-        //     x: selectedSignatureInfo.x,
-        //     y: selectedSignatureInfo.y,
-        //     page: selectedSignatureInfo.page,
-        //     rotation: selectedSignatureInfo.rotation
+       
         // };
-        setSignaturePositions((prev: any) => [...prev, newAnnotation]);
+
+        let data = signaturePositions.find((anno: SignatureData) => anno.id === newAnnotation.id)
+
+        if (data) {
+            console.log(`Annotation with id ${newAnnotation.id} already exists, skipping addition.`)
+            return;
+        }
+        setSignaturePositions((prev: any) => {
+            let newData = [...prev, newAnnotation];
+            // console.log(`New annotation added: ${JSON.stringify(newData, null, 4)}`)
+            // Remove duplicates based on id
+            newData = newData.filter((item: SignatureData, index: number, self: SignatureData[]) =>
+                index === self.findIndex((t) => t.id === item.id)
+            );
+            return newData;
+        });
+        
         setSelectedTool(null);
         setCanPlaceSignature(false)
-        // setSelectedSignatureHash(null)
-        // setSelectedAnnotationId(id);
+       
+   
     }, [mySignatureData, selectedSignatureId]);
 
     const updateAnnotation = useCallback((updatedAnnotation: Annotation) => {

@@ -61,13 +61,13 @@ export const ContractSummaryView: React.FC<ContractDocumentViewProps> = ({ setAc
                 let allAquaTrees = selectedFileInfo?.fileObject.filter((e) => isAquaTree(e.fileContent))
 
                 let hashSigPositionHashString = selectedFileInfo!.aquaTree!.revisions[hashSigPosition].link_verification_hashes![0];
-console.log(`Hash with positions ${hashSigPosition}`)
-console.log(`Revision Hash with positions ${hashSigPositionHashString}`)
+                console.log(`Hash with positions ${hashSigPosition}`)
+                console.log(`Revision Hash with positions ${hashSigPositionHashString}`)
 
                 if (allAquaTrees) {
                     console.log(`All aqua trees valid`)
                     for (let anAquaTreeFileObject of allAquaTrees) {
-                        let anAquaTree : AquaTree =  anAquaTreeFileObject.fileContent as AquaTree
+                        let anAquaTree: AquaTree = anAquaTreeFileObject.fileContent as AquaTree
                         let allHashes = Object.keys(anAquaTree.revisions)
                         if (allHashes.includes(hashSigPositionHashString)) {
 
@@ -79,7 +79,7 @@ console.log(`Revision Hash with positions ${hashSigPositionHashString}`)
                             console.log(`signaturePositionCount  ${signaturePositionCount}`)
 
                             break
-                        }else{
+                        } else {
                             console.log(`allHashes ${allHashes} does not incude ${hashSigPositionHashString} `)
                         }
                     }
@@ -358,15 +358,15 @@ console.log(`Revision Hash with positions ${hashSigPositionHashString}`)
                 console.log(`signatureRevionHashes  ${JSON.stringify(signatureRevionHashes, null, 4)}`)
 
 
-                    let signers: string[] = firstRevision.forms_signers.split(",")
-                    let signatureRevionHashesDataAddress = signatureRevionHashes.map((e) => e.walletAddress);
-                    console.log(`signatureRevionHashesDataAddress ${signatureRevionHashesDataAddress} from signatureRevionHashes `)
-                    let remainSigners = signers.filter((item) => !signatureRevionHashesDataAddress.includes(item))
-                    console.log(`remainSigners ${remainSigners} from signers ${signers} `)
-                     if(remainSigners.length == 0){
-                        setIsWorkFlowComplete(remainSigners)
-                     }
-                
+                let signers: string[] = firstRevision.forms_signers.split(",")
+                let signatureRevionHashesDataAddress = signatureRevionHashes.map((e) => e.walletAddress);
+                console.log(`signatureRevionHashesDataAddress ${signatureRevionHashesDataAddress} from signatureRevionHashes `)
+                let remainSigners = signers.filter((item) => !signatureRevionHashesDataAddress.includes(item))
+                console.log(`remainSigners ${remainSigners} from signers ${signers} `)
+                if (remainSigners.length == 0) {
+                    setIsWorkFlowComplete(remainSigners)
+                }
+
                 setSignatureRevionHashes(signatureRevionHashes)
             }
 
@@ -382,7 +382,7 @@ console.log(`Revision Hash with positions ${hashSigPositionHashString}`)
         intializeContractInformation()
     }, [JSON.stringify(selectedFileInfo), selectedFileInfo])
 
-   
+
 
 
     // const isWorkflowComplete = () => {
@@ -394,11 +394,11 @@ console.log(`Revision Hash with positions ${hashSigPositionHashString}`)
 
     const getActualState = () => {
         let status = "pending"
-        if(isVerificationComplete(verificationResults)){
-            if(isVerificationSuccessful(verificationResults)){
+        if (isVerificationComplete(verificationResults)) {
+            if (isVerificationSuccessful(verificationResults)) {
                 status = "successful"
             }
-            else{ 
+            else {
                 status = "failed"
             }
         }
@@ -446,7 +446,7 @@ console.log(`Revision Hash with positions ${hashSigPositionHashString}`)
                     ...firstRevisionData?.forms_signers.split(",").map((signer: string) => {
                         console.log(`signers  ${signer}  signatureRevionHashesData  ${JSON.stringify(signatureRevionHashesData, null, 4)}`)
                         let item = signatureRevionHashesData.find((e) => e.walletAddress.toLowerCase().trim() == signer.toLowerCase().trim())
-                        
+
                         if (item) {
                             return ({
                                 address: signer,
@@ -471,8 +471,8 @@ console.log(`Revision Hash with positions ${hashSigPositionHashString}`)
                         const singatureRevisionItem = selectedFileInfo!.aquaTree!.revisions[_signatureRevionHasheItem.revisionHashMetamask]
                         return ({
                             type: "signed" as any,
-                            address: singatureRevisionItem && singatureRevisionItem.signature_wallet_address ?  singatureRevisionItem.signature_wallet_address  : "",
-                            timestamp:singatureRevisionItem && singatureRevisionItem.local_timestamp ? timeToHumanFriendly(singatureRevisionItem.local_timestamp, true) : "time   error",
+                            address: singatureRevisionItem && singatureRevisionItem.signature_wallet_address ? singatureRevisionItem.signature_wallet_address : "",
+                            timestamp: singatureRevisionItem && singatureRevisionItem.local_timestamp ? timeToHumanFriendly(singatureRevisionItem.local_timestamp, true) : "time   error",
                             // details: "Document sample-local-pdf.pdf was selected for signing",
                         })
                     }),
@@ -492,7 +492,7 @@ console.log(`Revision Hash with positions ${hashSigPositionHashString}`)
                 isValidTree={getActualState() as "pending" | "successful" | "failed"}
             />
 
-           
+
         </Container>
     }
 
