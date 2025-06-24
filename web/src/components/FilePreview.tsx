@@ -2,11 +2,10 @@ import { FileObject } from "aqua-js-sdk";
 import { useEffect, useRef, useState } from "react";
 import { useStore } from "zustand";
 import appStore from "../store";
-import { ensureDomainUrlHasSSL, isJSONKeyValueStringContent } from "../utils/functions";
-import { PDFJSViewer, PDFControlsProps } from "pdfjs-react-viewer";
-import { Group, IconButton, Text } from "@chakra-ui/react";
-import { LuChevronLeft, LuChevronRight } from "react-icons/lu";
+import { ensureDomainUrlHasSSL, handleLoadFromUrl, isJSONKeyValueStringContent } from "../utils/functions";
 import  {FilePreviewAquaTreeFromTemplate} from "./FilePreviewAquaTreeFromTemplate"
+import { EasyPDFRenderer } from "../pages/wokflow/ContractDocument/signer/SignerPage";
+import { toaster } from "./chakra-ui/toaster";
 
 // Define file extensions to content type mappings
 const fileExtensionMap: { [key: string]: string } = {
@@ -43,20 +42,34 @@ interface IFilePreview {
     fileInfo: FileObject;
 }
 
-export const PdfControls = ({ currentPage, isNextDisabled, isPrevDisabled, onNextPage, onPrevPage, totalPages }: PDFControlsProps) => {
-    return (
-        <Group mb={"4"}>
-            <IconButton disabled={isPrevDisabled} onClick={onPrevPage} size={"xs"} borderRadius={"full"}>
-                <LuChevronLeft />
-            </IconButton>
-            <Text>
-                {`Page ${currentPage} / ${totalPages}`}
-            </Text>
-            <IconButton disabled={isNextDisabled} onClick={onNextPage} size={"xs"} borderRadius={"full"}>
-                <LuChevronRight />
-            </IconButton>
-        </Group>
-    )
+interface IPdfViewerComponent {
+    fileType: string;
+    fileURL: string;
+    fileInfo: FileObject;
+}
+
+function PdfViewerComponent({ fileType, fileURL, fileInfo }: IPdfViewerComponent) {
+    const [pdfFile, setPdfFile] = useState<File | null>(null);
+
+    useEffect(() => {
+        if (fileType === "application/pdf") {
+            const loadPdf = async () => {
+                try {
+                    const result = await handleLoadFromUrl(fileURL, fileInfo.fileName || "", toaster);
+                    if (!result.error) {
+                        setPdfFile(result.file);
+                    }
+                } catch (error) {
+                    console.error("Error loading PDF:", error);
+                }
+            };
+            loadPdf();
+        }
+    }, [fileType, fileURL, fileInfo.fileName]);
+
+    if (!pdfFile) return <p>Loading PDF...</p>;
+
+    return <EasyPDFRenderer pdfFile={pdfFile} annotations={[]} annotationsInDocument={[]}/>;
 }
 
 // Add declaration for docx-preview global type
@@ -321,9 +334,9 @@ const FilePreview: React.FC<IFilePreview> = ({ fileInfo }) => {
 
 
     // PDF files
-    if (fileType === "application/pdf") {
-        console.log("File url: ", fileURL)
-        return <PDFJSViewer pdfUrl={fileURL} renderControls={PdfControls} />;
+    if (fileType === "application/pdf") { 
+        // console.log("File url: ", fileURL)
+        return <PdfViewerComponent fileType={fileType} fileURL={fileURL} fileInfo={fileInfo} />
     }
 
     // Text files
@@ -334,7 +347,7 @@ const FilePreview: React.FC<IFilePreview> = ({ fileInfo }) => {
 
         if (fileType === "application/json") {
             let isForm = isJSONKeyValueStringContent(newTxtContent)
-            console.log(`is this ${newTxtContent} is form ${isForm}-----`)
+            // console.log(`is this ${newTxtContent} is form ${isForm}-----`)
             if (isForm) {
                 return <FilePreviewAquaTreeFromTemplate formData={JSON.parse(newTxtContent)} />
             }

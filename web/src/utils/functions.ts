@@ -7,11 +7,6 @@ import { documentTypes, ERROR_TEXT, ERROR_UKNOWN, imageTypes, musicTypes, videoT
 import Aquafier, { AquaTree, CredentialsData, FileObject, OrderRevisionInAquaTree, Revision } from "aqua-js-sdk";
 import jdenticon from "jdenticon/standalone";
 
-
-
-
-
-
 export function formatDate(date: Date) {
     const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
         'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
@@ -76,18 +71,18 @@ export const isWorkFlowData = (aquaTree: AquaTree, systemAndUserWorkFlow: string
         isWorkFlow: false,
         workFlow: ""
     }
-    console.log("System workflows: ", systemAndUserWorkFlow)
+    // console.log("System workflows: ", systemAndUserWorkFlow)
 
     //order revision in aqua tree 
     let aquaTreeRevisionsOrderd = OrderRevisionInAquaTree(aquaTree)
     let allHashes = Object.keys(aquaTreeRevisionsOrderd.revisions)
     if (allHashes.length <= 1) {
-        console.log(`Aqua tree has one revision`)
+        // console.log(`Aqua tree has one revision`)
         return falseResponse
     }
     let secondRevision = aquaTreeRevisionsOrderd.revisions[allHashes[1]]
     if (!secondRevision) {
-        console.log(`Aqua tree has second revision not found`)
+        // console.log(`Aqua tree has second revision not found`)
         return falseResponse
     }
     if (secondRevision.revision_type == 'link') {
@@ -97,7 +92,7 @@ export const isWorkFlowData = (aquaTree: AquaTree, systemAndUserWorkFlow: string
         // console.log(` second hash used ${allHashes[1]}  second revision ${JSON.stringify(secondRevision, null, 4)} tree ${JSON.stringify(aquaTreeRevisionsOrderd, null, 4)}`)
 
         if (secondRevision.link_verification_hashes == undefined) {
-            console.log(`link verification hash is undefined`)
+            // console.log(`link verification hash is undefined`)
             return falseResponse
         }
         let revisionHash = secondRevision.link_verification_hashes[0]
@@ -109,7 +104,7 @@ export const isWorkFlowData = (aquaTree: AquaTree, systemAndUserWorkFlow: string
         let nameWithoutJson = "--error--";
         if (name) {
             nameWithoutJson = name.replace(".json", "")
-            if(systemAndUserWorkFlow.map((e) => e.replace(".json", "")).includes(nameWithoutJson)){
+            if (systemAndUserWorkFlow.map((e) => e.replace(".json", "")).includes(nameWithoutJson)) {
                 return {
                     isWorkFlow: true,
                     workFlow: nameWithoutJson
@@ -123,12 +118,25 @@ export const isWorkFlowData = (aquaTree: AquaTree, systemAndUserWorkFlow: string
 
 
     }
-    console.log(`Aqua tree has second revision is of type ${secondRevision.revision_type}`)
+    // console.log(`Aqua tree has second revision is of type ${secondRevision.revision_type}`)
 
 
     return falseResponse
 }
 
+export function allLinkRevisionHashes(aquaTree: AquaTree): Array<string> {
+
+    let hashesWithLinkRevisions: Array<string> = []
+    let allHashes = Object.keys(aquaTree.revisions);
+    for (let hashItem of allHashes) {
+        let revision = aquaTree.revisions[hashItem];
+        if (revision.revision_type == "link") {
+            hashesWithLinkRevisions.push(hashItem)
+        }
+    }
+
+    return hashesWithLinkRevisions
+}
 export function isAquaTree(content: any): boolean {
     // Check if content has the properties of an AquaTree
     return content &&
@@ -989,14 +997,14 @@ export const dataURLToUint8Array = (dataUrl: string): Uint8Array => {
 
 
 export function timeToHumanFriendly(
-    timestamp: string | undefined, 
-    showFull: boolean = false, 
+    timestamp: string | undefined,
+    showFull: boolean = false,
     timezone?: string
 ): string {
     if (!timestamp) {
         return '-';
     }
-    
+
 
     // Extract the date components
     const year = timestamp.substring(0, 4);
@@ -1018,14 +1026,14 @@ export function timeToHumanFriendly(
         'EAT': 'Africa/Nairobi',      // East Africa Time (UTC+3)
         'CAT': 'Africa/Harare',       // Central Africa Time (UTC+2)
         'WAT': 'Africa/Lagos',        // West Africa Time (UTC+1)
-        
+
         // European timezones
         'CET': 'Europe/Berlin',       // Central European Time (UTC+1)
         'CEST': 'Europe/Berlin',      // Central European Summer Time (UTC+2)
         'GMT': 'GMT',                 // Greenwich Mean Time (UTC+0)
         'BST': 'Europe/London',       // British Summer Time (UTC+1)
         'EET': 'Europe/Athens',       // Eastern European Time (UTC+2)
-        
+
         // North American timezones
         'PST': 'America/Los_Angeles', // Pacific Standard Time (UTC-8)
         'PDT': 'America/Los_Angeles', // Pacific Daylight Time (UTC-7)
@@ -1035,18 +1043,18 @@ export function timeToHumanFriendly(
         'CDT': 'America/Chicago',     // Central Daylight Time (UTC-5)
         'EST': 'America/New_York',    // Eastern Standard Time (UTC-5)
         'EDT': 'America/New_York',    // Eastern Daylight Time (UTC-4)
-        
+
         // Asian timezones
         'JST': 'Asia/Tokyo',          // Japan Standard Time (UTC+9)
         'KST': 'Asia/Seoul',          // Korea Standard Time (UTC+9)
         'CST_CHINA': 'Asia/Shanghai', // China Standard Time (UTC+8)
         'IST': 'Asia/Kolkata',        // India Standard Time (UTC+5:30)
         'GST': 'Asia/Dubai',          // Gulf Standard Time (UTC+4)
-        
+
         // Australian timezones
         'AEST': 'Australia/Sydney',   // Australian Eastern Standard Time (UTC+10)
         'AWST': 'Australia/Perth',    // Australian Western Standard Time (UTC+8)
-        
+
         // Other common
         'UTC': 'UTC',
         'NZST': 'Pacific/Auckland'    // New Zealand Standard Time (UTC+12)
@@ -1057,13 +1065,13 @@ export function timeToHumanFriendly(
     const resolvedTimezone = timezoneMap[defaultTimezone.toUpperCase()] || defaultTimezone;
 
     // Format options
-    const dateOptions: Intl.DateTimeFormatOptions = { 
-        year: 'numeric', 
-        month: 'short', 
+    const dateOptions: Intl.DateTimeFormatOptions = {
+        year: 'numeric',
+        month: 'short',
         day: 'numeric',
         timeZone: resolvedTimezone
     };
-    
+
     const fullOptions: Intl.DateTimeFormatOptions = {
         ...dateOptions,
         hour: '2-digit',
@@ -1080,8 +1088,8 @@ export function timeToHumanFriendly(
         // Fallback to user's local timezone if specified timezone is invalid
         console.warn(`Invalid timezone: ${defaultTimezone}, falling back to local timezone`);
         const userTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-        const fallbackOptions = showFull ? 
-            { ...fullOptions, timeZone: userTimezone } : 
+        const fallbackOptions = showFull ?
+            { ...fullOptions, timeZone: userTimezone } :
             { ...dateOptions, timeZone: userTimezone };
         return date.toLocaleDateString('en-US', fallbackOptions);
     }
@@ -1129,60 +1137,60 @@ export function areArraysEqual(array1: Array<string>, array2: Array<string>) {
 
 
 export function getFileNameWithDeepLinking(aquaTree: AquaTree, revisionHash: string, fileObject: FileObject[]): string {
-    
-        const revision = aquaTree.revisions[revisionHash]
-    
-        if (revision.previous_verification_hash.length == 0) {
-    
-            return aquaTree.file_index[revisionHash]
+
+    const revision = aquaTree.revisions[revisionHash]
+
+    if (revision.previous_verification_hash.length == 0) {
+
+        return aquaTree.file_index[revisionHash]
+    }
+    if (revision.revision_type == "link") {
+        let isDeepLink = isDeepLinkRevision(aquaTree, revisionHash)
+        if (isDeepLink == null) {
+            return ERROR_UKNOWN
         }
-        if (revision.revision_type == "link") {
-            let isDeepLink = isDeepLinkRevision(aquaTree, revisionHash)
-            if (isDeepLink == null) {
-                return ERROR_UKNOWN
-            }
-            if (isDeepLink) {
-                // before returning deep link we traverse the current  aqua tree 
-                const aquaTreeFiles = fileObject.filter(file => isAquaTree(file.fileContent));
-                console.log(`👁️‍🗨️ aquaTreeFiles ${aquaTreeFiles.length} --  `)
-                if (aquaTreeFiles.length > 0) {
-                    let aquaTreePick = aquaTreeFiles.find((e) => {
-                        let tree: AquaTree = e.fileContent as AquaTree
-                        let allHashes = Object.keys(tree.revisions);
-    
-    
-                        console.log(`👁️‍🗨️ aquaTreeFiles ${allHashes.toString()} == ${revisionHash} `)
-                        return allHashes.includes(revision.link_verification_hashes![0]!)
-                    })
-    
-                    console.log(`👁️‍🗨️ aquaTreePick ${JSON.stringify(aquaTreePick, null, 4)} `)
-                    if (aquaTreePick) {
-                        let tree: AquaTree = aquaTreePick.fileContent as AquaTree
-                        let genesisHash = getGenesisHash(tree)
-    
-                        console.log(`👁️‍🗨️  genesisHash ${genesisHash}`)
-                        if (genesisHash) {
-    
-                            let fileName = tree.file_index[genesisHash]
-                            console.log(`👁️‍🗨️ fileName ${fileName}`)
-    
-                            if (fileName) {
-                                return fileName
-                            }
+        if (isDeepLink) {
+            // before returning deep link we traverse the current  aqua tree 
+            const aquaTreeFiles = fileObject.filter(file => isAquaTree(file.fileContent));
+            console.log(`👁️‍🗨️ aquaTreeFiles ${aquaTreeFiles.length} --  `)
+            if (aquaTreeFiles.length > 0) {
+                let aquaTreePick = aquaTreeFiles.find((e) => {
+                    let tree: AquaTree = e.fileContent as AquaTree
+                    let allHashes = Object.keys(tree.revisions);
+
+
+                    console.log(`👁️‍🗨️ aquaTreeFiles ${allHashes.toString()} == ${revisionHash} `)
+                    return allHashes.includes(revision.link_verification_hashes![0]!)
+                })
+
+                console.log(`👁️‍🗨️ aquaTreePick ${JSON.stringify(aquaTreePick, null, 4)} `)
+                if (aquaTreePick) {
+                    let tree: AquaTree = aquaTreePick.fileContent as AquaTree
+                    let genesisHash = getGenesisHash(tree)
+
+                    console.log(`👁️‍🗨️  genesisHash ${genesisHash}`)
+                    if (genesisHash) {
+
+                        let fileName = tree.file_index[genesisHash]
+                        console.log(`👁️‍🗨️ fileName ${fileName}`)
+
+                        if (fileName) {
+                            return fileName
                         }
-    
                     }
+
                 }
-    
-                return ERROR_TEXT
-            } else {
-                return fetchLinkedFileName(aquaTree, revision)
-                
             }
+
+            return ERROR_TEXT
+        } else {
+            return fetchLinkedFileName(aquaTree, revision)
+
         }
-    
-        return  ERROR_TEXT
-    
+    }
+
+    return ERROR_TEXT
+
 }
 export function isDeepLinkRevision(aquaTree: AquaTree, revisionHash: string): boolean | null {
 
@@ -1416,10 +1424,18 @@ export const isJSONKeyValueStringContent = (fileContent: string): boolean => {
         if (typeof parsedContent !== 'object' || parsedContent === null || Array.isArray(parsedContent)) {
             return false;
         }
+        let isKeyValueString = true
+        let values = Object.values(parsedContent)
+        for (let item of values) {
+
+            if (typeof item == 'object' || item === null || Array.isArray(parsedContent)) {
+                isKeyValueString = false
+            }
+        }
 
         // Check if all keys map to string values
         // return Object.entries(parsedContent).every(([_, value]) => typeof value === 'string');
-        return true
+        return isKeyValueString
     } catch (error) {
         // If JSON.parse throws an error, it's not valid JSON
         return false;
@@ -1724,7 +1740,7 @@ export function ensureDomainUrlHasSSL(actualUrlToFetch: string): string {
 
     // Check if we're on inblock.io domain but URL contains localhost IP addresses
     const currentDomain = typeof window !== 'undefined' ? window.location.hostname : '';
-    console.log(`ensureDomainUrlHasSSL currentDomain ${currentDomain}`)
+    // console.log(`ensureDomainUrlHasSSL currentDomain ${currentDomain}`)
     if (currentDomain === "inblock.io" || currentDomain === "dev.inblock.io" || currentDomain == "aquafier.inblock.io" || currentDomain.includes("inblock.io")) {
         if (url.includes("127.0.0.1") || url.includes("0.0.0.0") || url.includes("localhost")) {
 
@@ -1812,4 +1828,82 @@ export const getHighestFormIndex = (obj: Record<string, any>): number => {
     }
 
     return highestIndex;
+};
+
+
+export function getLatestApiFileInfObject(jsonArray: ApiFileInfo[]): ApiFileInfo | null {
+    if (!Array.isArray(jsonArray) || jsonArray.length === 0) {
+        return null;
+    }
+
+    let latestObject: ApiFileInfo | null = null;
+    let latestTimestamp = '';
+
+    jsonArray.forEach(obj => {
+        // Navigate through the nested structure to find revisions
+        const aquaTree = obj.aquaTree;
+        if (aquaTree && aquaTree.revisions) {
+            // Get all revision keys and check their timestamps
+            Object.keys(aquaTree.revisions).forEach(revisionKey => {
+                const revision = aquaTree.revisions[revisionKey];
+                const timestamp = revision.local_timestamp;
+
+                // Compare timestamps (they're in YYYYMMDDHHMMSS format, so string comparison works)
+                if (timestamp > latestTimestamp) {
+                    latestTimestamp = timestamp;
+                    latestObject = obj;
+                }
+            });
+        }
+    });
+
+    return latestObject;
+}
+
+export async function handleLoadFromUrl(pdfUrlInput: string, fileName: string, toaster: any) {
+    if (!pdfUrlInput.trim()) {
+        toaster.create({ title: "Invalid URL", description: "Please enter a valid PDF URL.", type: "error" });
+        return {
+            file: null,
+            error: "Invalid URL"
+        }
+    }
+    try {
+        const response = await fetch(pdfUrlInput);
+        if (!response.ok) {
+            // throw new Error(`Failed to fetch PDF: ${response.status} ${response.statusText}`);
+            return {
+                file: null,
+                error: `Failed to fetch PDF: ${response.status} ${response.statusText}`
+            }
+        }
+        const contentType = response.headers.get('content-type');
+        if (!contentType || !contentType.includes('application/pdf')) {
+            console.warn(`Content-Type is not application/pdf: ${contentType}. Attempting to load anyway.`);
+            // Potentially toast a warning here, but proceed for now
+        }
+
+        const arrayBuffer = await response.arrayBuffer();
+        const filename = fileName;
+        const blob = new Blob([arrayBuffer], { type: 'application/pdf' });
+        const newFile = new File([blob], filename, { type: 'application/pdf' });
+
+        //   resetPdfStateAndLoad(newFile);
+        //   if (fileInputRef.current) { // Clear file input if URL is loaded
+        //     fileInputRef.current.value = "";
+        //   }
+
+        return {
+            file: newFile,
+            error: null
+        }
+    } catch (error) {
+        console.error("Error loading PDF from URL:", error);
+        const errorMessage = error instanceof Error ? error.message : "An unknown error occurred.";
+        //   toast({ title: "Load from URL Failed", description: `Could not load PDF from URL. ${errorMessage}`, variant: "destructive" });
+        return {
+            file: null,
+            error: errorMessage
+        }
+    }
 };

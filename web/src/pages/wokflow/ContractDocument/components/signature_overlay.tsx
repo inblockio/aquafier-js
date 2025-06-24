@@ -1,22 +1,25 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
     Box,
     Text,
     Stack,
-    Center} from '@chakra-ui/react';
+} from '@chakra-ui/react';
 // import { PDFDocument, rgb, StandardFonts } from 'pdf-lib';
-import { PDFJSViewer } from 'pdfjs-react-viewer';
-import { useColorMode } from '../../../components/chakra-ui/color-mode';
-import { SignaturePosition, SignatureRichData } from "../../../types/types"
+// import { PDFJSViewer } from 'pdfjs-react-viewer';
+import { useColorMode } from '../../../../components/chakra-ui/color-mode';
+import { SignatureData } from "../../../../types/types"
+import { EasyPDFRenderer } from '../signer/SignerPage';
+import { handleLoadFromUrl } from '../../../../utils/functions';
+import { toaster } from '../../../../components/chakra-ui/toaster';
 
 
-export const SignatureOverlay = ({ position, currentPage, signatures, pdfMainContainerRef, handleDragStart }: { position: SignaturePosition, currentPage: number, signatures: SignatureRichData[], pdfMainContainerRef: React.RefObject<HTMLDivElement>, handleDragStart?: (e: React.MouseEvent | React.TouchEvent, id: string) => void }) => {
+export const SignatureOverlay = ({ signature, currentPage, pdfMainContainerRef, handleDragStart }: { signature: SignatureData, currentPage: number, pdfMainContainerRef: React.RefObject<HTMLDivElement>, handleDragStart?: (e: React.MouseEvent | React.TouchEvent, id: string) => void }) => {
     if (!pdfMainContainerRef) return null;
-    if (position.pageIndex !== currentPage - 1 || !position.signatureId) return null;
+    if (signature.page !== currentPage || !signature.signatureId) return null;
 
-    console.log(`Signature overlay ${JSON.stringify(position, null, 2)} ---- ${JSON.stringify(signatures, null, 2)}`);
-    const signature = signatures.find(sig => sig.id === position.signatureId);
-    if (!signature) return <></>;
+    // console.log(`Signature overlay ${JSON.stringify(position, null, 2)} ---- ${JSON.stringify(signatures, null, 2)}`);
+    // const signature = signatures.find(sig => sig.id === position.signatureId);
+    // if (!signature) return <></>;
 
     // return <Text>{JSON.stringify(position, null, 4)}</Text>
     // Find the actual PDF element for proper positioning
@@ -28,18 +31,18 @@ export const SignatureOverlay = ({ position, currentPage, signatures, pdfMainCon
     return (
         <Box
             position="absolute"
-            left={`calc(${Number(position.x) * 100}% - 40px)`} // Adjusted for better visibility
-            top={`calc(${(1 - Number(position.y)) * 100}% )`} // Adjusted for better visibility
+            left={`calc(${Number(signature.x) * 100}% - 40px)`} // Adjusted for better visibility
+            top={`calc(${(1 - Number(signature.y)) * 100}% )`} // Adjusted for better visibility
             transform="translate(-50%, -50%)"
             backgroundSize="contain"
             backgroundRepeat="no-repeat"
             backgroundPosition="center"
             pointerEvents="auto"
-            cursor={position.isDragging ? "grabbing" : "grab"}
-            zIndex={position.isDragging ? 20 : 10}
-            onMouseDown={(e) => handleDragStart?.(e, position.id)}
-            onTouchStart={(e) => handleDragStart?.(e, position.id)}
-            border={position.isDragging ? "2px dashed blue" : "none"}
+            cursor={signature.isDragging ? "grabbing" : "grab"}
+            zIndex={signature.isDragging ? 20 : 10}
+            onMouseDown={(e) => handleDragStart?.(e, signature.id)}
+            onTouchStart={(e) => handleDragStart?.(e, signature.id)}
+            border={signature.isDragging ? "2px dashed blue" : "none"}
             transition="border 0.2s ease"
             overflow={"hidden"}
             _hover={{ boxShadow: "0 0 0 1px blue" }}
@@ -83,7 +86,7 @@ export const SignatureOverlay = ({ position, currentPage, signatures, pdfMainCon
 };
 
 
-export const SimpleSignatureOverlay = ({ signature, currentPage }: { signature: SignatureRichData, currentPage: number }) => {
+export const SimpleSignatureOverlay = ({ signature, currentPage }: { signature: SignatureData, currentPage: number }) => {
     // const { colorMode } = useColorMode();
     // const isDarkMode = colorMode === "dark";
     return (
@@ -116,7 +119,7 @@ export const SimpleSignatureOverlay = ({ signature, currentPage }: { signature: 
             }}>
                 <Box
                     flex="1"
-                    backgroundImage={`url(${signature.image})`}
+                    backgroundImage={`url(${signature.dataUrl})`}
                     backgroundSize="contain"
                     backgroundRepeat="no-repeat"
                     backgroundPosition="left"
@@ -133,9 +136,26 @@ export const SimpleSignatureOverlay = ({ signature, currentPage }: { signature: 
 }
 
 
-export const PDFDisplayWithJustSimpleOverlay = ({ pdfUrl, signatures }: { pdfUrl: string, signatures: SignatureRichData[] }) => {
+export const PDFDisplayWithJustSimpleOverlay = ({ pdfUrl, signatures }: { pdfUrl: string, signatures: SignatureData[], annotationsInDocument :SignatureData[]  }) => {
     const { colorMode } = useColorMode();
-    const [currentPage, setCurrentPage] = useState<number>(1);
+    const [pdfFile, setPdfFile] = useState<File | null>(null);
+
+    useEffect(() => {
+        const loadPdf = async () => {
+            try {
+                const result = await handleLoadFromUrl(pdfUrl, "Contract document.pdf", toaster);
+                if (!result.error) {
+                    setPdfFile(result.file);
+                }
+            } catch (error) {
+                console.error("Error loading PDF:", error);
+            }
+        };
+        loadPdf();
+
+    }, [pdfUrl]);
+
+    if (!pdfFile) return <p>Loading PDF...</p>;
 
     return (
         <Box
@@ -145,28 +165,27 @@ export const PDFDisplayWithJustSimpleOverlay = ({ pdfUrl, signatures }: { pdfUrl
             borderRadius="md"
             py={"4"}
         >
-            <Center>
-                <Box w={'fit-content'}>
-                    <PDFJSViewer
-                        pdfUrl={pdfUrl}
-                        onPageChange={(page) => {
-                            setCurrentPage(page)
-                        }}
-                    />
-                </Box>
-            </Center>
+            <EasyPDFRenderer
+                pdfFile={pdfFile}
+                annotationsInDocument={signatures}
+                annotations={signatures.map((signature) => ({
+                    // ...signature,
+                    type: "profile" as const,
+                    imageAlt: signature.name,
+                    rotation: 0,
+                    imageSrc: signature.dataUrl,
+                    imageWidth: "140px",
+                    imageHeight: "80px",
+                    page: parseInt(signature.page.toString()),
+                    "id": signature.id,
+                    "x": signature.x,
+                    "y": signature.y,
+                    "name": signature.name,
+                    "walletAddress": signature.walletAddress,
 
-            {/* Signature overlays */}
-            {signatures.map((signature, index) => (
-                <>
-                    {
-                        Number(currentPage) === Number(signature.page) ? (
-                            <SimpleSignatureOverlay key={index} signature={signature} currentPage={currentPage}
-                            />
-                        ) : null
-                    }
-                </>
-            ))}
+                }))}
+            />
         </Box>
     )
 }
+

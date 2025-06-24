@@ -2,18 +2,12 @@ import { canDeleteRevision, deleteRevisionAndChildren } from '../utils/quick_rev
 import { prisma } from '../database/db';
 import { DeleteRevision, FetchAquaTreeRequest, SaveRevision, SaveRevisionForUser } from '../models/request_models';
 import { getHost, getPort } from '../utils/api_utils';
-import { createAquaTreeFromRevisions, deleteAquaTree, fetchAquatreeFoUser, FetchRevisionInfo, findAquaTreeRevision, getSignatureAquaTrees, getUserApiFileInfo, removeFilePathFromFileIndex, saveAquaTree, saveARevisionInAquaTree, validateAquaTree } from '../utils/revisions_utils';
-// import { formatTimestamp } from '../utils/time_utils';
-// import { AquaForms, FileIndex, Signature, WitnessEvent, Revision as RevisonDB } from 'prisma/client';
-import Aquafier, { AquaTree, FileObject, getAquaTreeFileName, getGenesisHash, OrderRevisionInAquaTree, Revision } from 'aqua-js-sdk';
+import {  deleteAquaTree, fetchAquatreeFoUser, getSignatureAquaTrees, saveARevisionInAquaTree } from '../utils/revisions_utils';
+import { AquaTree, FileObject, OrderRevisionInAquaTree, Revision } from 'aqua-js-sdk';
 import { FastifyInstance } from 'fastify';
-import * as fs from "fs"
-import path from 'path';
-import { SYSTEM_WALLET_ADDRESS } from '..//models/constants';
-import { getFileUploadDirectory, streamToBuffer } from '../utils/file_utils';
-import { randomUUID } from 'crypto';
 import { sendToUserWebsockerAMessage } from './websocketController';
 import WebSocketActions from '../constants/constants';
+import { createAquaTreeFromRevisions } from '../utils/revisions_operations_utils';
 
 export default async function revisionsController(fastify: FastifyInstance) {
     // fetch aqua tree from a revision hash
@@ -52,26 +46,12 @@ export default async function revisionsController(fastify: FastifyInstance) {
         // Construct the full URL
         const url = `${protocol}://${host}`;
 
-        // // Get the host from the request headers, with more robust fallback
-        // const host = request.headers.host ||
-        //     request.headers['x-forwarded-host'] ||
-        //     `${getHost()}:${getPort()}`;
-
-        // // Get the protocol with more robust detection
-        // const protocol = Array.isArray(request.headers['x-forwarded-proto']) 
-        //     ? request.headers['x-forwarded-proto'][0] 
-        //     : (request.headers['x-forwarded-proto'] as string | undefined) ||
-        //       request.protocol ||
-        //       'https';  // Default to https
-
-        // // Construct the full URL
-        // const url = `${protocol}://${host}`;
+     
 
         try {
 
             const [anAquaTree, fileObject] = await createAquaTreeFromRevisions(latestRevisionHash, url)
 
-            ////  console.log(`----> ${JSON.stringify(anAquaTree, null, 4)}`)
             let sortedAquaTree = OrderRevisionInAquaTree(anAquaTree)
             displayData.push({
                 aquaTree: sortedAquaTree,
@@ -128,11 +108,32 @@ export default async function revisionsController(fastify: FastifyInstance) {
 
             if (revisionData.address === session.address) {
                 return reply.code(202).send({ success: false, message: "use /tree to save revision for a specific user /tree/user is for different address" });
-
             }
 
+            if(!revisionData.orginAddress){
+                 return reply.code(400).send({ success: false, message: "origin address not defined" });
+            }
 
-            const [_httpCode, _message] = await saveARevisionInAquaTree(revisionData, revisionData.address);
+            //  if(revisionData.orginAddress == revisionData.address    ){
+            //      return reply.code(400).send({ success: false, message: "origin address cannot be the same as address " });
+            // }
+
+            //   if(revisionData.orginAddress == session.address    ){
+            //      return reply.code(400).send({ success: false, message: "origin address cannot be the same as session address " });
+            // }
+
+
+
+// Get the host from the request headers
+            const host = request.headers.host || `${getHost()}:${getPort()}`;
+
+            // Get the protocol (http or https)
+            const protocol = request.protocol || 'https'
+
+            // Construct the full URL
+            const url = `${protocol}://${host}`;
+
+            const [_httpCode, _message] = await saveARevisionInAquaTree(revisionData, revisionData.address, url);
 
             // if (httpCode != 200 && httpCode !== 407) {
             //     return reply.code(httpCode).send({ success: false, message: message });
@@ -149,10 +150,9 @@ export default async function revisionsController(fastify: FastifyInstance) {
 
         } catch (error) {
             request.log.error(error);
-            return reply.code(500).send({ error: "Failed to process revisions" });
+            return reply.code(500).send({ error: `Failed to process revisions other user ${error}` });
         }
     });
-
 
     // save revision for the user in the session
     fastify.post('/tree', async (request, reply) => {
@@ -173,7 +173,7 @@ export default async function revisionsController(fastify: FastifyInstance) {
                 return reply.code(403).send({ success: false, message: "Nounce  is invalid" });
             }
 
-            const revisionData = request.body as SaveRevision
+            const revisionData = request.body as SaveRevisionForUser
 
             if (!revisionData.revision) {
                 return reply.code(400).send({ success: false, message: "revision Data is required" });
@@ -195,8 +195,20 @@ export default async function revisionsController(fastify: FastifyInstance) {
             }
 
 
+            if(!revisionData.orginAddress){
+                 return reply.code(400).send({ success: false, message: "origin address not defined.." });
+            }
 
-            const [httpCode, message] = await saveARevisionInAquaTree(revisionData, session.address);
+// Get the host from the request headers
+            const host = request.headers.host || `${getHost()}:${getPort()}`;
+
+            // Get the protocol (http or https)
+            const protocol = request.protocol || 'https'
+
+            // Construct the full URL
+            const url = `${protocol}://${host}`;
+
+            const [httpCode, message] = await saveARevisionInAquaTree(revisionData, session.address, url);
 
             if (httpCode != 200) {
                 return reply.code(httpCode).send({ success: false, message: message });
@@ -216,14 +228,6 @@ export default async function revisionsController(fastify: FastifyInstance) {
             }
 
 
-            // Get the host from the request headers
-            const host = request.headers.host || `${getHost()}:${getPort()}`;
-
-            // Get the protocol (http or https)
-            const protocol = request.protocol || 'https'
-
-            // Construct the full URL
-            const url = `${protocol}://${host}`;
 
             let displayData = await fetchAquatreeFoUser(url, latest)
 
@@ -236,7 +240,7 @@ export default async function revisionsController(fastify: FastifyInstance) {
 
         } catch (error) {
             request.log.error(error);
-            return reply.code(500).send({ error: "Failed to process revisions" });
+            return reply.code(500).send({ error: `Failed to process revisions ${error}` });
         }
     });
 

@@ -6,7 +6,8 @@ import { SettingsRequest, UserAttestationAddressesRequest } from '../models/requ
 // import { verifySiweMessage } from '../utils/auth_utils';
 import { fetchEnsName } from '../utils/api_utils';
 import { authenticate, AuthenticatedRequest } from '../middleware/auth_middleware';
-import { UserAttestationAddresses } from '@prisma/client';
+import { Prisma, PrismaClient, UserAttestationAddresses } from '@prisma/client';
+import { DefaultArgs } from '@prisma/client/runtime/library';
 
 export default async function userController(fastify: FastifyInstance) {
 
@@ -368,6 +369,7 @@ export default async function userController(fastify: FastifyInstance) {
         }
     });
 
+
     // Clear all user data
     fastify.delete('/user_data', async (request, reply) => {
         const nonce = request.headers['nonce'];
@@ -395,13 +397,19 @@ export default async function userController(fastify: FastifyInstance) {
 
             // Start a transaction to ensure all operations succeed or fail together
             await prisma.$transaction(async (tx) => {
-                console.log('Starting user data deletion transaction');
+                console.log('Starting user data deletion transaction for user:', userAddress);
 
-                // First, identify all revisions associated with this user
+                // Step 1: Delete all Latest records associated with user address
+                const deletedLatest = await tx.latest.deleteMany({
+                    where: { user: userAddress }
+                });
+                console.log(`Deleted ${deletedLatest.count} latest records`);
+
+                // Step 2: Get all revisions associated with this user
                 const userRevisions = await tx.revision.findMany({
                     where: {
                         pubkey_hash: {
-                            contains: session.address,
+                            contains: userAddress,
                             mode: 'insensitive'
                         }
                     },
@@ -413,293 +421,112 @@ export default async function userController(fastify: FastifyInstance) {
                 const revisionHashes = userRevisions.map(rev => rev.pubkey_hash);
                 console.log(`Found ${revisionHashes.length} revisions to process`);
 
-                // Step 1: Delete dependent records in the correct order to respect foreign key constraints
-
-                // 1a. Delete latest entries (no foreign key dependencies)
-                await tx.latest.deleteMany({
-                    where: { user: userAddress }
-                });
-                console.log('Deleted latest entries');
-
-                // 1b. Delete AquaForms (depends on Revision)
                 if (revisionHashes.length > 0) {
-                    await tx.aquaForms.deleteMany({
+                    // Step 3: Delete dependent records in order
+
+                    // 3a. Delete Link records
+                    const deletedLinks = await tx.link.deleteMany({
                         where: {
                             hash: {
                                 in: revisionHashes
                             }
                         }
                     });
-                    console.log('Deleted aqua forms');
-                }
+                    console.log(`Deleted ${deletedLinks.count} link records`);
 
-                // 1c. Delete Witness records (depends on Revision)
-                // We need to handle this first because Witness has a foreign key to Revision
-                if (revisionHashes.length > 0) {
-
-                    let res = await tx.witness.findMany({
-                        where: {
-                            hash: {
-                                in: revisionHashes
-                            }
-                        }
-                    })
-                    if (res) {
-
-                        let roots = res.map((e) => e.Witness_merkle_root ?? "")
-                        await tx.witnessEvent.deleteMany({
-                            where: {
-                                Witness_merkle_root: {
-                                    in: roots,
-                                    mode: 'insensitive'
-                                }
-                            }
-                        });
-
-                    }
-                    await tx.witness.deleteMany({
+                    // 3b. Delete Signature records
+                    const deletedSignatures = await tx.signature.deleteMany({
                         where: {
                             hash: {
                                 in: revisionHashes
                             }
                         }
                     });
-                    console.log('Deleted witness records');
-                }
+                    console.log(`Deleted ${deletedSignatures.count} signature records`);
 
-                // 1d. Delete Link records (depends on Revision)
-                if (revisionHashes.length > 0) {
-                    await tx.link.deleteMany({
+                    // 3c. Delete Witness records and associated WitnessEvent records
+                    const witnessRecords = await tx.witness.findMany({
                         where: {
                             hash: {
                                 in: revisionHashes
-                            }
-                        }
-                    });
-                    console.log('Deleted link records');
-                }
-
-                // 1e. Delete Signature records (depends on Revision)
-                if (revisionHashes.length > 0) {
-                    await tx.signature.deleteMany({
-                        where: {
-                            hash: {
-                                in: revisionHashes
-                            }
-                        }
-                    });
-                    console.log('Deleted signature records');
-                }
-
-                // First, get the list of files to be deleted
-                // This works only if the file is uploaded by the user
-                // const filesToDelete = await tx.file.findMany({
-                //     where: {
-                //         hash: {
-                //             contains: session.address,
-                //             mode: 'insensitive' // Case-insensitive matching
-                //         }
-                //     },
-                //     select: {
-                //         hash: true
-                //     }
-                // });
-
-                // Start from file index to find files associated with this user
-                // The hash array in FileIndex contains strings that might include the user's address
-                const filesToDelete = await tx.fileIndex.findMany({
-                    where: {
-                        hash: {
-                            hasSome: [session.address] // Look for exact match of address in the array
-                        }
-                    },
-                    select: {
-                        id: true
-                    }
-                });
-
-                // If no exact matches, try a more flexible search with case-insensitive partial matching
-                if (filesToDelete.length === 0) {
-                    console.log('No exact matches found, trying partial matching');
-                    // This is a more complex query to find any FileIndex where any element in the hash array
-                    // contains the user's address as a substring
-                    const rawQuery = await prisma.$queryRaw`
-                        SELECT id FROM file_index 
-                        WHERE EXISTS (
-                            SELECT 1 FROM unnest(hash) AS h 
-                            WHERE LOWER(h) LIKE LOWER('%' || ${session.address} || '%')
-                        )
-                    `;
-
-                    // Convert raw query results to the same format as our previous query
-                    const rawResults = rawQuery as { id: string }[];
-                    filesToDelete.push(...rawResults);
-                    console.log(`Found ${rawResults.length} matches with partial matching`);
-                }
-
-                // Extract the file hashes
-                const fileHashes = filesToDelete.map(file => file.id);
-
-                // Delete file indexes associated with the deleted files
-                if (fileHashes.length > 0) {
-
-                    // First, get all file indexes that need to be processed
-                    const allFileIndexes = await tx.fileIndex.findMany({
-                        where: {
-                            id: {
-                                in: fileHashes
                             }
                         },
                         select: {
-                            id: true,
-                            file_hash: true,
-                            reference_count: true
+                            hash: true,
+                            Witness_merkle_root: true
                         }
                     });
 
-                    console.log(`All file indexes to process: ${JSON.stringify(allFileIndexes, null, 4)}`);
+                    if (witnessRecords.length > 0) {
+                        // Get unique merkle roots for WitnessEvent deletion
+                        const merkleRoots = witnessRecords
+                            .map(w => w.Witness_merkle_root)
+                            .filter(Boolean) as string[];
 
-                    // Track which file indexes to delete and which to update
-                    const fileIndexesToDelete = [];
-                    const fileIndexesToUpdate = [];
-                    const fileHashesToUpdate = new Set();
-                    const fileHashesToDelete = new Set();
-
-                    // Process each file index based on its reference count
-                    for (const fileIndex of allFileIndexes) {
-                        const refCount = fileIndex.reference_count;
-
-                        if (refCount === null || refCount <= 1) {
-                            // If reference count is null or ≤ 1, mark for deletion
-                            fileIndexesToDelete.push(fileIndex.id);
-                            if (fileIndex.file_hash) {
-                                fileHashesToDelete.add(fileIndex.file_hash);
-                            }
-                        } else if (refCount >= 2) {
-                            // If reference count is exactly 2, it will become 1 after decrementing
-                            // So we'll mark it for both update AND deletion
-                            fileIndexesToUpdate.push(fileIndex.id);
-                            // fileIndexesToDelete.push(fileIndex.id); // Will be deleted after update
-                            if (fileIndex.file_hash) {
-                                fileHashesToUpdate.add(fileIndex.file_hash);
-                                // fileHashesToDelete.add(fileIndex.file_hash);
-                            }
-                        }
-                        // else if (refCount > 2) {
-                        //     // If reference count > 2, just decrement it
-                        //     fileIndexesToUpdate.push(fileIndex.id);
-                        //     if (fileIndex.file_hash) {
-                        //         fileHashesToUpdate.add(fileIndex.file_hash);
-                        //     }
-                        // }
-                    }
-
-                    console.log(`File indexes to update: ${JSON.stringify(fileIndexesToUpdate, null, 4)}`);
-                    console.log(`File indexes to delete: ${JSON.stringify(fileIndexesToDelete, null, 4)}`);
-
-                    // Step 1: Update reference counts for files that need updating
-                    if (fileIndexesToUpdate.length > 0) {
-                        // Decrement reference count for file indexes
-                        await tx.fileIndex.updateMany({
-                            where: {
-                                id: {
-                                    in: fileIndexesToUpdate
-                                }
-                            },
-                            data: {
-                                reference_count: {
-                                    decrement: 1
-                                }
-                            }
-                        });
-
-                        // Update files linked to these file indexes
-                        if (fileHashesToUpdate.size > 0) {
-                            await tx.file.updateMany({
+                        // Delete WitnessEvent records first
+                        if (merkleRoots.length > 0) {
+                            const deletedWitnessEvents = await tx.witnessEvent.deleteMany({
                                 where: {
-                                    file_hash: {
-                                        in: Array.from(fileHashesToUpdate) as string[]
-                                    }
-                                },
-                                data: {
-                                    reference_count: {
-                                        decrement: 1
+                                    Witness_merkle_root: {
+                                        in: merkleRoots
                                     }
                                 }
                             });
+                            console.log(`Deleted ${deletedWitnessEvents.count} witness event records`);
                         }
+
+                        // Delete Witness records
+                        const deletedWitness = await tx.witness.deleteMany({
+                            where: {
+                                hash: {
+                                    in: revisionHashes
+                                }
+                            }
+                        });
+                        console.log(`Deleted ${deletedWitness.count} witness records`);
                     }
 
-                    
-                    // Step 2: Delete file indexes with reference count <= 1 (including those we just decremented from 2 to 1)
-                    if (fileIndexesToDelete.length > 0) {
-                        console.log(`File indexes to delete after processing: ${JSON.stringify(fileIndexesToDelete, null, 4)}`);
-
-                        // FIRST: Delete the file indexes (they reference File records)
-                        // await tx.fileIndex.deleteMany({
-                        //     where: {
-                        //         id: {
-                        //             in: fileIndexesToDelete
-                        //         }
-                        //     }
-                        // });
-                        console.log('Deleted file indexes');
-
-                        // SECOND: Delete the files (now that nothing references them)
-                        if (fileHashesToDelete.size > 0) {
-                            const uniqueFileHashes = Array.from(fileHashesToDelete).filter(Boolean);
-                            console.log(`File hashes to delete: ${JSON.stringify(uniqueFileHashes, null, 4)}`);
-
-                            // await tx.file.deleteMany({
-                            //     where: {
-                            //         file_hash: {
-                            //             in: uniqueFileHashes as string[]
-                            //         }
-                            //     }
-                            // });
-                            console.log('Deleted files');
+                    // 3d. Delete AquaForms records
+                    const deletedAquaForms = await tx.aquaForms.deleteMany({
+                        where: {
+                            hash: {
+                                in: revisionHashes
+                            }
                         }
+                    });
+                    console.log(`Deleted ${deletedAquaForms.count} aqua forms records`);
+
+                    // Step 4: Handle Files and FileIndex records
+                    for (const hash of revisionHashes) {
+                        // Use deleteMany instead of delete to avoid errors when records don't exist
+                        await prisma.fileName.deleteMany({
+                            where: {
+                                pubkey_hash: hash
+                            }
+                        });
+                        
+                        console.log(`Processing files for revision hash: ${hash}`);
+                        await handleFilesDeletion(tx, hash);
                     }
 
-                }
-                // 1f. Now that all dependent records are deleted, we can delete the Revision records
-                if (revisionHashes.length > 0) {
-                    await tx.revision.deleteMany({
+                    // Step 5: Finally delete Revision records
+                    const deletedRevisions = await tx.revision.deleteMany({
                         where: {
                             pubkey_hash: {
                                 in: revisionHashes
                             }
                         }
                     });
-                    console.log('Deleted revision records');
+                    console.log(`Deleted ${deletedRevisions.count} revision records`);
                 }
 
-                // Keep the user record but delete related data
-                // This is to maintain the user's account while clearing their data
                 console.log('User data deletion completed successfully');
             });
 
+            // Step 6: Delete user templates (outside transaction for better error handling)
+            await deleteUserTemplates(userAddress);
 
-            // get all user tmplates
-            let allTemplates = await prisma.aquaTemplate.findMany({
-                where: {
-                    owner: userAddress
-                }
-            })
-            for (let templateItem of allTemplates) {
-                await prisma.aquaTemplateFields.deleteMany({
-                    where: {
-                        aqua_form_id: templateItem.id
-                    }
-                })
-                await prisma.aquaTemplate.delete({
-                    where: {
-                        id: templateItem.id
-                    }
-                })
-
-            }
-            // Delete the session as well (similar to logout)
+            // Step 7: Delete the session
             await prisma.siweSession.delete({
                 where: { nonce }
             });
@@ -708,6 +535,7 @@ export default async function userController(fastify: FastifyInstance) {
                 success: true,
                 message: 'All user data has been cleared successfully'
             });
+
         } catch (error) {
             console.error('Error clearing user data:', error);
             return reply.code(500).send({
@@ -717,4 +545,143 @@ export default async function userController(fastify: FastifyInstance) {
             });
         }
     });
+
+
+
+    // Helper function to handle files deletion
+    async function handleFilesDeletion(
+        tx: Omit<PrismaClient<Prisma.PrismaClientOptions, never, DefaultArgs>, "$connect" | "$disconnect" | "$on" | "$transaction" | "$use" | "$extends">,
+        pubKey: string) {
+        console.log('Starting files deletion process');
+
+        // Find FileIndex records associated with this user
+        let filesToDelete = await tx.fileIndex.findMany({
+            where: {
+                pubkey_hash: {
+                    hasSome: [pubKey]
+                }
+            },
+            select: {
+                file_hash: true,
+                pubkey_hash: true,
+            }
+        });
+
+        // If no exact matches, try partial matching
+        if (filesToDelete.length === 0) {
+            console.log('No exact matches found, trying partial matching');
+            const rawQuery = await tx.$queryRaw`
+            SELECT file_hash, pubkey_hash FROM file_index 
+            WHERE EXISTS (
+                SELECT 1 FROM unnest(pubkey_hash) AS h 
+                WHERE LOWER(h) LIKE LOWER('%' || ${pubKey} || '%')
+            )
+        `;
+            filesToDelete = rawQuery as { file_hash: string; pubkey_hash: string[]; }[];
+            console.log(`Found ${filesToDelete.length} matches with partial matching`);
+        }
+
+        if (filesToDelete.length > 0) {
+            // Group files by reference count for processing
+            const fileHashesToRemoveUser = new Set<string>();
+            const fileHashesToDeleteCompletely = new Set<string>();
+
+            for (const fileIndex of filesToDelete) {
+                const refCount = fileIndex.pubkey_hash.length;
+                fileHashesToRemoveUser.add(fileIndex.file_hash);
+
+                if (refCount <= 1) {
+                    // If this is the only reference, mark for complete deletion
+                    fileHashesToDeleteCompletely.add(fileIndex.file_hash);
+                }
+            }
+
+            // First, remove the user from pubkey_hash arrays for files with multiple references
+            for (const fileHash of fileHashesToRemoveUser) {
+                if (!fileHashesToDeleteCompletely.has(fileHash)) {
+                    // Update the pubkey_hash array to remove the user
+                    const currentFileIndex = await tx.fileIndex.findUnique({
+                        where: { file_hash: fileHash },
+                        select: { pubkey_hash: true }
+                    });
+
+                    if (currentFileIndex) {
+                        const updatedPubkeyHash = currentFileIndex.pubkey_hash.filter(
+                            hash => hash !== pubKey
+                        );
+
+                        if (updatedPubkeyHash.length === 0) {
+                            // If no references left after removal, mark for complete deletion
+                            fileHashesToDeleteCompletely.add(fileHash);
+                        } else {
+                            // Update with filtered array
+                            await tx.fileIndex.update({
+                                where: { file_hash: fileHash },
+                                data: { pubkey_hash: updatedPubkeyHash }
+                            });
+                        }
+                    }
+                }
+            }
+
+            // Delete FileIndex records that have no remaining references
+            if (fileHashesToDeleteCompletely.size > 0) {
+                const deletedFileIndexes = await tx.fileIndex.deleteMany({
+                    where: {
+                        file_hash: {
+                            in: Array.from(fileHashesToDeleteCompletely)
+                        }
+                    }
+                });
+                console.log(`Deleted ${deletedFileIndexes.count} file index records`);
+
+                // Now delete corresponding File records
+                const deletedFiles = await tx.file.deleteMany({
+                    where: {
+                        file_hash: {
+                            in: Array.from(fileHashesToDeleteCompletely)
+                        }
+                    }
+                });
+                console.log(`Deleted ${deletedFiles.count} file records`);
+            }
+
+            console.log(`Processed ${filesToDelete.length} file associations for user ${pubKey}`);
+        } else {
+            console.log(`No files found for user ${pubKey}`);
+        }
+    }
+
+    // Helper function to delete user templates
+    async function deleteUserTemplates(userAddress: string) {
+        console.log('Starting template deletion process');
+
+        const userTemplates = await prisma.aquaTemplate.findMany({
+            where: {
+                owner: userAddress
+            },
+            select: {
+                id: true
+            }
+        });
+
+        for (const template of userTemplates) {
+            // Delete template fields first
+            await prisma.aquaTemplateFields.deleteMany({
+                where: {
+                    aqua_form_id: template.id
+                }
+            });
+
+            // Delete template
+            await prisma.aquaTemplate.delete({
+                where: {
+                    id: template.id
+                }
+            });
+        }
+
+        console.log(`Deleted ${userTemplates.length} user templates`);
+    }
+
 }

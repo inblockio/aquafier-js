@@ -11,7 +11,7 @@ import { Button } from "./chakra-ui/button";
 import { HiOutlineClipboardDocument } from "react-icons/hi2";
 import { Link } from "react-router-dom";
 import Settings from "./chakra-ui/settings";
-import AccountContracts from "./AccountContracts";
+import AccountContracts from "./navbar/AccountContracts";
 import VersionAndDisclaimer from "./VersionAndDisclaimer";
 import { GrHomeOption } from "react-icons/gr";
 import { useColorMode } from "./chakra-ui/color-mode";

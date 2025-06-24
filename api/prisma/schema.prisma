@@ -93,6 +93,7 @@ model Latest {
 model Revision {
   pubkey_hash     String   @id
   nonce           String?
+  file_hash       String?
   shared          String[]
   contract        String[]
   previous        String?
@@ -115,30 +116,28 @@ model Revision {
 }
 
 model File {
-  hash            String      @id // pub_key_revision_hash 
-  content         String?
-  file_hash       String?
-  reference_count Int?
-  // Revision         Revision      @relation(fields: [hash], references: [pubkey_hash])
-  FileIndex       FileIndex[]
-
+  file_hash            String      @id 
+  file_location         String
+         
   @@map("file")
 }
 
 model FileIndex {
-  id              String   @id @default(uuid())
-  hash            String[]
-  file_hash       String
-  uri             String?
-  reference_count Int?
-  File            File     @relation(fields: [id], references: [hash])
-  // Revision         Revision        @relation(fields: [file_hash], references: [pubkey_hash])
-  // Link             Link[]
-
-  // @@id([hash, file_hash])
+  file_hash              String   @id 
+  pubkey_hash            String[] 
+  
 
   @@map("file_index")
 }
+
+model FileName {
+   
+   pubkey_hash String @id 
+   file_name   String
+
+  @@map("file_name")
+}
+
 
 model Link {
   hash                              String   @id

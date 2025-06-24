@@ -5,7 +5,7 @@ import { Box, Card, Collapsible, For, GridItem, SimpleGrid, VStack } from "@chak
 import { TimelineRoot } from "./chakra-ui/timeline"
 import { ensureDomainUrlHasSSL, getAquaTreeFileName, getAquaTreeFileObject, getFileName, isArrayBufferText, isWorkFlowData } from "../utils/functions"
 import { Alert } from "./chakra-ui/alert"
-import Aquafier, { FileObject } from "aqua-js-sdk"
+import Aquafier, { FileObject, LogData } from "aqua-js-sdk"
 import FilePreview from "./FilePreview"
 import { IChainDetailsBtn, ICompleteChainView, IDrawerStatus, VerificationHashAndResult, } from "../models/AquaTreeDetails"
 import { RevisionDetailsSummary, RevisionDisplay } from "./aquaTreeRevisionDetails"
@@ -13,6 +13,8 @@ import { useStore } from "zustand"
 import appStore from "../store"
 import { getFileHashFromUrl } from "../utils/functions";
 import { ApiFileInfo } from "../models/FileInfo"
+import { toaster } from "./chakra-ui/toaster"
+import { LogViewer } from "./logs/LogViewer"
 // import { toaster } from "./chakra-ui/toaster"
 
 
@@ -34,6 +36,7 @@ export const CompleteChainView = ({ callBack, selectedFileInfo }: ICompleteChain
     const { session, setApiFileData, apiFileData, systemFileInfo, user_profile } = useStore(appStore)
     const [deletedRevisions, setDeletedRevisions] = useState<string[]>([])
     const [verificationResults, setVerificationResults] = useState<VerificationHashAndResult[]>([])
+    const [allLogs, setAllLogs] = useState<LogData[]>([])
     const [isProcessing, setIsProcessing] = useState(false)
 
     // Memoized fetch function to prevent recreation on each render
@@ -187,7 +190,7 @@ export const CompleteChainView = ({ callBack, selectedFileInfo }: ICompleteChain
 
                         if (data instanceof ArrayBuffer) {
                             if (isArrayBufferText(data)) {
-                                console.log("is array buffr text .....")
+                                // console.log("is array buffr text .....")
                                 fileItem.fileContent = new TextDecoder().decode(data);
                             } else {
                                 fileItem.fileContent = new Uint8Array(data);
@@ -201,18 +204,32 @@ export const CompleteChainView = ({ callBack, selectedFileInfo }: ICompleteChain
                 }
             }
 
-            // Toast to warn the user if they are using default alchemykey
-            // if (user_profile?.alchemy_key == "") {
-            //     toaster.create({
-            //         description: `Please add your alchemy key to continue`,
-            //         type: "warning"
-            //     })
-            // }else if(user_profile?.alchemy_key == "ZaQtnup49WhU7fxrujVpkFdRz4JaFRtZ"){
-            //     toaster.create({
-            //         description: `You are using default alchemy key. Please update it in settings to get better results`,
-            //         type: "warning"
-            //     })
-            // }
+            let containsWitness= false
+            for(let item of revisionHashes){
+                let revisionItem = fileInfo.aquaTree.revisions[item]
+                if(revisionItem.revision_type=="witness"){
+                    containsWitness= true
+                    break;
+                }
+            }
+
+            if(containsWitness){
+// Toast to warn the user if they are using default alchemykey
+            if (user_profile?.alchemy_key == "") {
+                toaster.create({
+                    description: `Please add your alchemy key to avoid rate limiting`,
+                    type: "warning"
+                })
+            }else if(user_profile?.alchemy_key == "ZaQtnup49WhU7fxrujVpkFdRz4JaFRtZ"){
+                toaster.create({
+                    description: `You are using default alchemy key. Please update it in settings to get better results`,
+                    type: "warning"
+                })
+            }
+            }
+
+
+            
 
             // Process revisions in parallel where possible
             const verificationPromises = revisionHashes.map(async revisionHash => {
@@ -233,19 +250,21 @@ export const CompleteChainView = ({ callBack, selectedFileInfo }: ICompleteChain
                         witness_method: "metamask",
                     }
                 )
-                console.log("Hash: ", revisionHash, "\nResult", result)
+                // console.log("Hash: ", revisionHash, "\nResult", result)
                 return ({
                     hash: revisionHash,
-                    isSuccessful: result.isOk()
+                    isSuccessful: result.isOk(),
+                    logs: result.isOk() ? result.data.logData : result.data
                 })
             });
 
             // Wait for all verifications to complete
             const allRevisionsVerificationsStatus = await Promise.all(verificationPromises);
-            console.log("allRevisionsVerificationsStatus", allRevisionsVerificationsStatus)
+            // console.log("allRevisionsVerificationsStatus", allRevisionsVerificationsStatus)
 
             // Update state and callback
             setVerificationResults(allRevisionsVerificationsStatus);
+            setAllLogs(allRevisionsVerificationsStatus.map(item => item.logs).flat());
             const _isVerificationSuccessful = isVerificationSuccessful(allRevisionsVerificationsStatus);
             _drawerStatus.isVerificationSuccessful = _isVerificationSuccessful;
             _drawerStatus.colorDark = displayColorBasedOnVerificationStatusDark(allRevisionsVerificationsStatus);
@@ -283,18 +302,19 @@ export const CompleteChainView = ({ callBack, selectedFileInfo }: ICompleteChain
     // Optimized useEffect with proper dependencies
     useEffect(() => {
         if (selectedFileInfo) {
+            setAllLogs([])
             verifyAquaTreeRevisions(selectedFileInfo);
 
             let someData = systemFileInfo.map((e) => {
                 try {
                     return getAquaTreeFileName(e.aquaTree!!)
                 } catch (e) {
-                    console.log("Error")
+                    // console.log("Error")
                     return ""
                 }
             })
-            let { isWorkFlow, workFlow } = isWorkFlowData(selectedFileInfo.aquaTree!!, someData);
-            console.log(`Drawer selected file aqua tree is workflow ${isWorkFlow} -- workflow name ${workFlow}`)
+            let { isWorkFlow } = isWorkFlowData(selectedFileInfo.aquaTree!!, someData);
+            // console.log(`Drawer selected file aqua tree is workflow ${isWorkFlow} -- workflow name ${workFlow}`)
             if (isWorkFlow) {
                 setSelectedFileAWorkFlow(true)
             }
@@ -318,7 +338,7 @@ export const CompleteChainView = ({ callBack, selectedFileInfo }: ICompleteChain
                 <SimpleGrid columns={{ base: 1, md: 5 }}>
                     <GridItem colSpan={{ base: 1, md: 3 }}>
                         <Card.Root border={'none'} shadow={'none'} borderRadius={'xl'}>
-                            <Card.Body>
+                            <Card.Body overflow={"hidden"}>
                                 <FilePreview fileInfo={getAquaTreeFileObject(selectedFileInfo!!)!!} />
                             </Card.Body>
                         </Card.Root>
@@ -328,7 +348,7 @@ export const CompleteChainView = ({ callBack, selectedFileInfo }: ICompleteChain
                             <Card.Body>
                                 <VStack gap={'4'}>
                                     <Alert status={displayColorBasedOnVerificationAlert(verificationResults)} title={displayBasedOnVerificationStatusText(verificationResults)} />
-
+                                    
                                     <RevisionDetailsSummary  isWorkFlow={isSelectedFileAWorkFlow} isVerificationComplete={isVerificationComplete(verificationResults)} isVerificationSuccess={isVerificationSuccessful(verificationResults)} fileInfo={selectedFileInfo!!} />
 
                                     <Box w={'100%'}>
@@ -365,6 +385,7 @@ export const CompleteChainView = ({ callBack, selectedFileInfo }: ICompleteChain
                                         </Collapsible.Root>
                                     </Box>
                                     {/* <Box minH={'400px'} /> */}
+                                    <LogViewer logs={allLogs as any} title="Verification Logs" />
                                 </VStack>
                             </Card.Body>
                         </Card.Root>

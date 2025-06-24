@@ -1,7 +1,8 @@
 import { Box, HStack, Stack, Text } from '@chakra-ui/react';
+import { SignatureData } from '../../types/types';
 
 interface ISignatureItem {
-    signature: any
+    signature: SignatureData
 }
 
 const SignatureItem: React.FC<ISignatureItem> = ({ signature }) => {
@@ -18,7 +19,7 @@ const SignatureItem: React.FC<ISignatureItem> = ({ signature }) => {
                     <Box
                         width="60px"
                         height="40px"
-                        backgroundImage={`url(${signature.image})`}
+                        backgroundImage={`url(${signature.dataUrl})`}
                         backgroundSize="contain"
                         backgroundRepeat="no-repeat"
                         backgroundPosition="center"

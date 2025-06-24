@@ -53,7 +53,13 @@ const viewLinkedFile = (selectedApiFileInfo: ApiFileInfo, revisionHash: string, 
                         }
                     }
                     if (fileInfoFound) {
-                        updateSelectedFile(fileInfoFound)
+                        updateSelectedFile({
+                            aquaTree: fileInfoFound.aquaTree,
+                            fileObject:[...fileInfoFound.fileObject, ...allFileObjects],
+                            linkedFileObjects:[],
+                            mode:"",
+                            owner:""
+                        })
                     } else {
 
                         for (let fileObject of allFileObjects) {
@@ -64,8 +70,8 @@ const viewLinkedFile = (selectedApiFileInfo: ApiFileInfo, revisionHash: string, 
                                     aquaTree = fileObject.fileContent as AquaTree
                                 } else {
                                     let fileObjCtItem = allFileObjects.find((e) => e.fileName == `${linkedFileName}.aqua.json`)
-                                    if(fileObjCtItem){
-                                    aquaTree = fileObjCtItem.fileContent as AquaTree
+                                    if (fileObjCtItem) {
+                                        aquaTree = fileObjCtItem.fileContent as AquaTree
                                     }
                                 }
 
@@ -78,7 +84,7 @@ const viewLinkedFile = (selectedApiFileInfo: ApiFileInfo, revisionHash: string, 
                                 } else {
                                     updateSelectedFile({
                                         aquaTree: aquaTree,
-                                        fileObject: [fileObject],
+                                        fileObject: allFileObjects,
                                         linkedFileObjects: [],
                                         mode: "",
                                         owner: ""
@@ -490,27 +496,39 @@ export const RevisionDisplay = ({ fileInfo, revision, revisionHash, isVerificati
                                                             </Span>
                                                         </TimelineTitle>
 
-                                                        <ItemDetail label="Network:"
-                                                            displayValue={formatCryptoAddress(revision.witness_network, 4, 6)}
-                                                            value={revision.witness_network!!} showCopyIcon={false}
-                                                        />
-                                                        <ItemDetail label="Witness Account:"
-                                                            displayValue={formatCryptoAddress(revision.witness_sender_account_address, 4, 6)}
-                                                            value={revision.witness_sender_account_address!} showCopyIcon={true}
-                                                        />
-                                                        <Group>
-                                                            <ItemDetail label="Transaction Hash:"
-                                                                displayValue={formatCryptoAddress(revision.witness_transaction_hash!.startsWith('0x') ? revision.witness_transaction_hash : `0x${revision.witness_transaction_hash}`, 4, 6)}
-                                                                value={`0x${revision.witness_transaction_hash}`} showCopyIcon={true}
-                                                            />
-                                                            <Link outline={'none'} href={`${WITNESS_NETWORK_MAP[revision.witness_network!!]}/${revision.witness_transaction_hash}`} target="_blank">
-                                                                <Icon size={'lg'} color={'blue.500'}>
-                                                                    <Box>
-                                                                        <LuExternalLink />
-                                                                    </Box>
-                                                                </Icon>
-                                                            </Link>
-                                                        </Group>
+                                                        {
+                                                            revision.witness_sender_account_address ?
+                                                                <ItemDetail label="Network:"
+                                                                    displayValue={formatCryptoAddress(revision.witness_network, 4, 6)}
+                                                                    value={revision.witness_network!!} showCopyIcon={false}
+                                                                />
+                                                                : null}
+                                                        {
+                                                            revision.witness_sender_account_address ?
+                                                                <ItemDetail label="Witness Account:"
+                                                                    displayValue={formatCryptoAddress(revision.witness_sender_account_address, 4, 6)}
+                                                                    value={revision.witness_sender_account_address!} showCopyIcon={true}
+                                                                /> : null
+
+                                                        }
+                                                        {
+                                                            revision.witness_transaction_hash ?
+                                                                <Group>
+                                                                    <ItemDetail label="Transaction Hash:"
+                                                                        displayValue={formatCryptoAddress(revision.witness_transaction_hash!.startsWith('0x') ? revision.witness_transaction_hash : `0x${revision.witness_transaction_hash}`, 4, 6)}
+                                                                        value={`0x${revision.witness_transaction_hash}`} showCopyIcon={true}
+                                                                    />
+                                                                    <Link outline={'none'} href={`${WITNESS_NETWORK_MAP[revision.witness_network!!]}/${revision.witness_transaction_hash}`} target="_blank">
+                                                                        <Icon size={'lg'} color={'blue.500'}>
+                                                                            <Box>
+                                                                                <LuExternalLink />
+                                                                            </Box>
+                                                                        </Icon>
+                                                                    </Link>
+                                                                </Group>
+                                                                : null
+                                                        }
+
                                                         <ItemDetail label="Contract address:"
                                                             displayValue={formatCryptoAddress(revision.witness_smart_contract_address, 4, 6)}
                                                             value={revision.witness_smart_contract_address!} showCopyIcon={true}

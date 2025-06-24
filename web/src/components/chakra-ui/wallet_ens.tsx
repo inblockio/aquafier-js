@@ -1,107 +1,92 @@
-import { useEffect, useState } from "react"
+import { useCallback, useEffect, useState } from "react"
 import { useStore } from "zustand"
 import { ClipboardIconButton, ClipboardRoot } from "./clipboard"
-import { Group, Text, Spinner } from "@chakra-ui/react"
-import { ensureDomainUrlHasSSL } from "../../utils/functions"
+import { Group, Text, Spinner, Span } from "@chakra-ui/react"
+import { ensureDomainUrlHasSSL, formatCryptoAddress } from "../../utils/functions"
 
 import appStore from "../../store"
+import { Tooltip } from "./tooltip"
 
 export interface WalletEnsViewData {
     walletAddress: string
+    inline?: boolean
 }
 
-export const WalletEnsView = ({ walletAddress }: WalletEnsViewData) => {
-    const [ensName, setEnsName] = useState("")
-    const [isLoading, setIsLoading] = useState(false)
-    const { session, backend_url } = useStore(appStore)
-    
+export const WalletEnsView = ({ walletAddress, inline = false }: WalletEnsViewData) => {
+    const [ensName, setEnsName] = useState("");
+    const [isLoading, setIsLoading] = useState(false);
+    const { session, backend_url } = useStore(appStore);
 
-
-    const fetchData = async () =>{
+    const fetchData = useCallback(async () => {
         const controller = new AbortController();
-        const signal = controller.signal;
-        
-        const fetchEnsName = async () => {
-            try {
-                let actualUrlToFetch = ensureDomainUrlHasSSL(`${backend_url}/user_ens/${walletAddress}`)
-                setIsLoading(true)
+        try {
+            setIsLoading(true);
+            const url = ensureDomainUrlHasSSL(`${backend_url}/user_ens/${walletAddress}`);
+            const response = await fetch(url, {
+                headers: { 'Nonce': session?.nonce ?? "--error--" },
+                signal: controller.signal,
+            });
 
-                // Fetch the file from the URL with the abort signal
-                const response = await fetch(actualUrlToFetch, {
-                    method: 'GET',
-                    headers: {
-                        'Nonce': session?.nonce ?? "--error--"
-                    },
-                    signal: signal // Pass the abort signal to fetch
-                });
-
-                setIsLoading(false)
-                if (response.status == 200) {
-                    const data = await response.json();
-
-                    if (data.success) {
-                        setEnsName(data.ens);
-                    } else {
-                        setEnsName(walletAddress);
-                    }
-                } else {
-                    setEnsName(walletAddress)
-                }
-            } catch (e) {
-                // Check if this was an abort error
-                if ((e as Error).name === 'AbortError') {
-                    console.log('Fetch request was aborted due to timeout');
-                } else {
-                    console.log(`Error fetching ens ${e}`)
-                }
-                setIsLoading(false);
+            if (response.ok) {
+                const data = await response.json();
+                setEnsName(data.success ? data.ens : walletAddress);
+            } else {
                 setEnsName(walletAddress);
             }
-        }
-        
-        fetchEnsName();
-
-        // Set up the timeout to abort the request after 5 seconds
-        const timeoutId = setTimeout(() => {
-            controller.abort(); // This will cancel the fetch request
+        } catch (e) {
+            if ((e as Error).name !== 'AbortError') {
+                console.error(`Error fetching ENS: ${e}`);
+                setEnsName(walletAddress);
+            }
+        } finally {
             setIsLoading(false);
-            setEnsName(walletAddress);
-        }, 9000);
+        }
 
-        // Clean up function
+        const timeoutId = setTimeout(() => controller.abort(), 9000);
         return () => {
             clearTimeout(timeoutId);
-            controller.abort(); // Also cancel the request if component unmounts
+            controller.abort();
         };
-    }
-    useEffect(() => {
-       
-        fetchData()
-    }, [walletAddress, backend_url, session]); // Added missing dependencies
+    }, [walletAddress, backend_url, session?.nonce]);
 
     useEffect(() => {
-        fetchData()
-    }, []);
+        fetchData();
+    }, [fetchData]);
 
     return (
-        <Group textAlign={'start'} w={'100%'}>
-            <Text>Wallet Address:</Text>
+        <>
+            {
+                inline ? (
+                    <>
+                        <Tooltip content={walletAddress} openDelay={200} closeDelay={100}>
+                            <Span>
+                                {ensName ? ensName.length > 35 ? formatCryptoAddress(walletAddress, 10, 4) : ensName : formatCryptoAddress(walletAddress, 10, 4)}
+                            </Span>
+                        </Tooltip>
+                    </>
+                ) : (
+                    <Group textAlign={'start'} w={'100%'}>
+                        <Text>Wallet Address :</Text >
 
-            {isLoading ? (
-                <>
-                    <Spinner size="sm" color="blue.500" />
-                    <Text fontSize={8}>Checking ENS</Text>
-                </>
-            ) : (
-                <>
-                    <Group>
-                        <Text fontFamily={"monospace"} textWrap={'wrap'} wordBreak={'break-word'}>{ensName}</Text>
-                        <ClipboardRoot value={walletAddress} hidden={false}>
-                            <ClipboardIconButton size={'2xs'} />
-                        </ClipboardRoot>
-                    </Group>
-                </>
-            )}
-        </Group>
+                        {
+                            isLoading ? (
+                                <>
+                                    <Spinner size="sm" color="blue.500" />
+                                    <Text fontSize={8}>Checking ENS</Text>
+                                </>
+                            ) : (
+                                <>
+                                    <Group>
+                                        <Text fontFamily={"monospace"} textWrap={'wrap'} wordBreak={'break-word'}>{ensName}</Text>
+                                        <ClipboardRoot value={walletAddress} hidden={false}>
+                                            <ClipboardIconButton size={'2xs'} />
+                                        </ClipboardRoot>
+                                    </Group>
+                                </>
+                            )}
+                    </Group >
+                )
+            }
+        </>
     )
 }

@@ -249,7 +249,7 @@ const FormTemplateEditor = ({ initialTemplate, onSave, updating }: FormTemplateE
     setValue('name', name);
   }, [watch('title')]);
 
-  console.log("Form fields: ", formTemplates)
+  console.log("Form fields: ", formFields)
 
   return (
     <Box borderRadius="lg">

@@ -8,9 +8,6 @@ import {ConnectWallet} from "../components/ConnectWallet"
 
 const Home = () => {
     const { session } = useStore(appStore)
-
-   
-
  
     return (
         <>
@@ -51,14 +48,12 @@ const Home = () => {
                         <Center h={'100%'}>
                             <Stack>
                                 <Text>Connect wallet to upload files</Text>
-                                <ConnectWallet  disConnectWebsocket={()=>{console.log('ws need global storage')}}/>
+                                <ConnectWallet />
                             </Stack>
                         </Center>
                     </Container>
                 )
             }
-
-          
         </>
     )
 }

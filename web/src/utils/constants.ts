@@ -65,11 +65,11 @@ export const initializeBackendUrl = async (): Promise<string> => {
       BACKEND_URL = "http://127.0.0.1:3000";
     }
 
-    console.log("Config Backend URL", BACKEND_URL);
+    // console.log("Config Backend URL", BACKEND_URL);
     if (BACKEND_URL.includes("inblock.io")) {
       BACKEND_URL = BACKEND_URL.replace("http:", "https:")
     }
-    console.log("Config Backend URL Replaced http with https", BACKEND_URL);
+    // console.log("Config Backend URL Replaced http with https", BACKEND_URL);
   } catch (err) {
     // If there's an error, it will use the default URL
     console.error('Error reading config:', err);

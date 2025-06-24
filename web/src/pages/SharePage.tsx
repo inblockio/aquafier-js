@@ -7,10 +7,10 @@ import { ApiFileInfo } from '../models/FileInfo'
 import { toaster } from '../components/chakra-ui/toaster'
 import Loading from 'react-loading'
 import { Box, Center, Container, Group, VStack } from '@chakra-ui/react'
-import { ImportAquaChainFromChain } from '../components/dropzone_file_actions'
 import { Alert } from '../components/chakra-ui/alert'
 import { IDrawerStatus } from '../models/AquaTreeDetails'
 import { CompleteChainView } from '../components/CustomDrawer'
+import { ImportAquaChainFromChain } from '../components/dropzone_file_actions/import_aqua_tree_from_aqua_tree'
 
 const SharePage = () => {
     const { backend_url, metamaskAddress, session } = useStore(appStore)

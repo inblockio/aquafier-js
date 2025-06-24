@@ -5,7 +5,9 @@ import { FastifyInstance } from "fastify";
 import { ChequeRegisterRequest, SaveRevision, VerifyRequestBody } from "../models/request_models";
 import { prisma } from "../database/db";
 import { getHost, getPort } from "../utils/api_utils";
-import { createAquaTreeFromRevisions, estimateStringFileSize, saveARevisionInAquaTree } from "../utils/revisions_utils";
+import { saveARevisionInAquaTree } from "../utils/revisions_utils";
+import { estimateStringFileSize } from "../utils/file_utils";
+import { createAquaTreeFromRevisions } from "../utils/revisions_operations_utils";
 
 export default async function chequeApiController(fastify: FastifyInstance) {
 
@@ -147,14 +149,14 @@ export default async function chequeApiController(fastify: FastifyInstance) {
       revision: lastRevision,
       revisionHash: lastHash
     }
-    const [httpCode, message] = await saveARevisionInAquaTree(saveRevision, wallet_address);
+    // const [httpCode, message] = await saveARevisionInAquaTree(saveRevision, wallet_address, "eror");
 
-    if (httpCode != 200) {
-      return reply.code(httpCode).send({ success: false, message: message });
-    }
+    // if (httpCode != 200) {
+    //   return reply.code(httpCode).send({ success: false, message: message });
+    // }
 
 
-    return { message: 'creat a new revision' };
+    return { message: 'created a new revision' };
   });
 
 

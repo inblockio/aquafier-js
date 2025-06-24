@@ -3,7 +3,7 @@
     {
       "name": "identity_claim_id",
       "label": "Identity Claim Id",
-      "type": "wallet_address",
+      "type": "string",
       "required": true,
       "isArray": false
     },
@@ -12,7 +12,7 @@
       "label": "Name",
       "type": "string",
       "required": true,
-      "isArray": true
+      "isArray": false
     },
     {
       "name": "surname",

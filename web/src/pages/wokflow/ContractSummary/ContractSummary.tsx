@@ -6,36 +6,29 @@ import {
     Text,
     VStack,
     Heading,
-    Stack,
     Spinner,
-    Button
+    Span,
+    Container
 } from '@chakra-ui/react';
-import { Timeline } from "@chakra-ui/react"
-// import { Card } from '@chakra-ui/react';
-// import { FaCheck, FaQuestionCircle, FaBriefcase, FaBook, FaCoffee, FaAward, FaUser } from 'react-icons/fa';
-import { Alert } from "../../../components/chakra-ui/alert"
 import appStore from '../../../store';
 import { useStore } from "zustand"
 import { ContractDocumentViewProps, SummaryDetailsDisplayData } from '../../../types/types';
-import Aquafier, { AquaTree, FileObject, OrderRevisionInAquaTree, Revision } from 'aqua-js-sdk';
+import Aquafier, { AquaTree, FileObject, OrderRevisionInAquaTree, Revision } from 'aqua-js-sdk/web';
 import { isAquaTree, timeToHumanFriendly, getHighestFormIndex, getFileName, getFileHashFromUrl, fetchFileData, isArrayBufferText } from '../../../utils/functions';
 
 import { ApiFileInfo } from '../../../models/FileInfo';
-// import { file } from 'jszip';
-import { LuCheck, LuFile, LuPackage, LuShip } from 'react-icons/lu';
 import { IDrawerStatus, VerificationHashAndResult } from '../../../models/AquaTreeDetails';
-import { ItemDetail } from '../../../components/ItemDetails';
+import ContractSummaryDetails from './ContractSummaryDetails';
 
 
 
 
-export const ContractInformationView: React.FC<ContractDocumentViewProps> = ({ setActiveStep, updateDocumentIconInWorkflowTabs }) => {
-
-
+export const ContractSummaryView: React.FC<ContractDocumentViewProps> = ({ setActiveStep }) => {
 
     const [isLoading, setIsLoading] = useState(true);
     const [signatureRevionHashesData, setSignatureRevionHashes] = useState<SummaryDetailsDisplayData[]>([])
-    const [creatorEthreiumSignatureRevisionData, setCreatorEthreiumSignatureRevisionData] = useState<Revision | undefined>(undefined)
+    const [isWorkFlowComplete, setIsWorkFlowComplete] = useState<string[]>([])
+    const [_creatorEthreiumSignatureRevisionData, setCreatorEthreiumSignatureRevisionData] = useState<Revision | undefined>(undefined)
     const [firstRevisionData, setFirstRevisionData] = useState<Revision | undefined>(undefined);
     const [fileNameData, setFileNameData] = useState<string>("");
     const [contractCreatorAddress, setContractCreatorAddress] = useState<string>("")
@@ -55,7 +48,7 @@ export const ContractInformationView: React.FC<ContractDocumentViewProps> = ({ s
 
 
             const batch = hashesToLoopPar.slice(i, i + 3);
-            console.log(`Processing batch ${i / 3 + 1}:`, batch);
+            // console.log(`Processing batch ${i / 3 + 1}:`, batch);
 
 
             let signaturePositionCount = 0
@@ -68,17 +61,26 @@ export const ContractInformationView: React.FC<ContractDocumentViewProps> = ({ s
                 let allAquaTrees = selectedFileInfo?.fileObject.filter((e) => isAquaTree(e.fileContent))
 
                 let hashSigPositionHashString = selectedFileInfo!.aquaTree!.revisions[hashSigPosition].link_verification_hashes![0];
+console.log(`Hash with positions ${hashSigPosition}`)
+console.log(`Revision Hash with positions ${hashSigPositionHashString}`)
 
                 if (allAquaTrees) {
-                    for (let anAquaTree of allAquaTrees) {
-                        let allHashes = Object.keys(anAquaTree)
+                    console.log(`All aqua trees valid`)
+                    for (let anAquaTreeFileObject of allAquaTrees) {
+                        let anAquaTree : AquaTree =  anAquaTreeFileObject.fileContent as AquaTree
+                        let allHashes = Object.keys(anAquaTree.revisions)
                         if (allHashes.includes(hashSigPositionHashString)) {
 
-                            let aquaTreeData = anAquaTree.fileContent as AquaTree
-                            let revData = aquaTreeData.revisions[hashSigPositionHashString]
-                            signaturePositionCount = getHighestFormIndex(revData)
+                            console.log(`Item found in all hashes `)
+                            // let aquaTreeData = anAquaTree.fileContent as AquaTree
+                            let revData = anAquaTree.revisions[hashSigPositionHashString]
+                            console.log(`Item found in all hashes  ${JSON.stringify(revData, null, 4)}`)
+                            signaturePositionCount = getHighestFormIndex(revData) + 1 // sinature count is 0 based
+                            console.log(`signaturePositionCount  ${signaturePositionCount}`)
 
                             break
+                        }else{
+                            console.log(`allHashes ${allHashes} does not incude ${hashSigPositionHashString} `)
                         }
                     }
 
@@ -108,24 +110,24 @@ export const ContractInformationView: React.FC<ContractDocumentViewProps> = ({ s
     }
 
     // Memoized display text function
-    const displayBasedOnWorkflowStatusText = (isComplete: boolean) => {
-        return isComplete ? "This work flow  is complete. " : "This workflow  is incomplete";
-    }
+    // const displayBasedOnWorkflowStatusText = (isComplete: boolean) => {
+    //     return isComplete ? "This work flow  is complete. " : "This workflow  is incomplete";
+    // }
 
-    const displayBasedOnVerificationStatusText = (verificationResults: any) => {
-        if (!isVerificationComplete(verificationResults)) {
-            return "Verifying Aqua tree";
-        }
-        return isVerificationSuccessful(verificationResults) ? "This work flow  is valid. " : "This workflow  is invalid. It cannot be trusted";
-    }
+    // const displayBasedOnVerificationStatusText = (verificationResults: any) => {
+    //     if (!isVerificationComplete(verificationResults)) {
+    //         return "Verifying Aqua tree";
+    //     }
+    //     return isVerificationSuccessful(verificationResults) ? "This work flow  is valid. " : "This workflow  is invalid. It cannot be trusted";
+    // }
 
-    // Memoized alert color function
-    const displayColorBasedOnVerificationAlert = (verificationResults: any): "info" | "success" | "error" => {
-        if (!isVerificationComplete(verificationResults)) {
-            return "info";
-        }
-        return isVerificationSuccessful(verificationResults) ? 'success' : 'error';
-    }
+    // // Memoized alert color function
+    // const displayColorBasedOnVerificationAlert = (verificationResults: any): "info" | "success" | "error" => {
+    //     if (!isVerificationComplete(verificationResults)) {
+    //         return "info";
+    //     }
+    //     return isVerificationSuccessful(verificationResults) ? 'success' : 'error';
+    // }
 
     // Memoized verification completion check
     const isVerificationComplete = useCallback((_verificationResults: VerificationHashAndResult[]): boolean => {
@@ -268,7 +270,7 @@ export const ContractInformationView: React.FC<ContractDocumentViewProps> = ({ s
             }
 
 
-            console.log(`---< fileobject ${fileObjectVerifier.map((e) => e.fileName).toString()} ll file names`)
+            // console.log(`---< fileobject ${fileObjectVerifier.map((e) => e.fileName).toString()} ll file names`)
 
             // Process revisions in parallel where possible
             const verificationPromises = revisionHashes.map(async revisionHash => {
@@ -279,7 +281,7 @@ export const ContractInformationView: React.FC<ContractDocumentViewProps> = ({ s
                     revisionHash,
                     fileObjectVerifier
                 )
-                console.log("Hash: ", revisionHash, "\nResult", result)
+                // console.log("Hash: ", revisionHash, "\nResult", result)
                 return ({
                     hash: revisionHash,
                     isSuccessful: result.isOk()
@@ -288,7 +290,7 @@ export const ContractInformationView: React.FC<ContractDocumentViewProps> = ({ s
 
             // Wait for all verifications to complete
             const allRevisionsVerificationsStatus = await Promise.all(verificationPromises);
-            console.log("allRevisionsVerificationsStatus", allRevisionsVerificationsStatus)
+            // console.log("allRevisionsVerificationsStatus", allRevisionsVerificationsStatus)
 
             // Update state and callback
             setVerificationResults(allRevisionsVerificationsStatus);
@@ -353,8 +355,18 @@ export const ContractInformationView: React.FC<ContractDocumentViewProps> = ({ s
                 // console.log(`revisionHashes  ${revisionHashes} --  ${typeof revisionHashes}`)
                 // console.log(`fourthItmeHashOnwards  ${fourthItmeHashOnwards}`)
                 signatureRevionHashes = getSignatureRevionHashes(fourthItmeHashOnwards)
-                // console.log(`signatureRevionHashes  ${JSON.stringify(signatureRevionHashes, null, 4)}`)
+                console.log(`signatureRevionHashes  ${JSON.stringify(signatureRevionHashes, null, 4)}`)
 
+
+                    let signers: string[] = firstRevision.forms_signers.split(",")
+                    let signatureRevionHashesDataAddress = signatureRevionHashes.map((e) => e.walletAddress);
+                    console.log(`signatureRevionHashesDataAddress ${signatureRevionHashesDataAddress} from signatureRevionHashes `)
+                    let remainSigners = signers.filter((item) => !signatureRevionHashesDataAddress.includes(item))
+                    console.log(`remainSigners ${remainSigners} from signers ${signers} `)
+                     if(remainSigners.length == 0){
+                        setIsWorkFlowComplete(remainSigners)
+                     }
+                
                 setSignatureRevionHashes(signatureRevionHashes)
             }
 
@@ -370,101 +382,28 @@ export const ContractInformationView: React.FC<ContractDocumentViewProps> = ({ s
         intializeContractInformation()
     }, [JSON.stringify(selectedFileInfo), selectedFileInfo])
 
-
-    const genesisContent = () => {
-
-        return (
-            <Stack>
-                {contractCreatorAddress == session?.address ?
-                    <Text>Your wallet address created this workflow </Text> : <>
-
-                        <ItemDetail label="Wallet address:"
-                            displayValue={contractCreatorAddress}
-                            value={contractCreatorAddress} showCopyIcon={true}
-                        />
-                        <Text>{contractCreatorAddress} created the workflow</Text>
-                    </>
-                }
-                <Text>Creation date {timeToHumanFriendly(firstRevisionData?.local_timestamp, true)}</Text>
-                <Text>Contract Name: {fileNameData}</Text>
-
-                <Heading size="md" fontWeight={700}>All signers</Heading>
-                {
-                    firstRevisionData?.forms_signers.split(",").map((signer: string, index: number) => {
-                        let item = signatureRevionHashesData.find((e) => e.walletAddress == signer)
-                        if (item) {
-                            return <Alert status="success" key={index} title={signer} />
-                        } else {
-                            return <Alert status="info" key={index} title={signer} />
-                        }
-                    })
-                }
-            </Stack>
-        )
-    }
-
-    const OpenDocumentButton = () => {
-        return <Button size={'lg'}  colorPalette={'green'} variant={'subtle'} w={'200px'} onClick={() => {
-            setActiveStep(2) // Open the contract document
-        }} >
-            <LuFile />
-            Open  Document
-        </Button>
-    }
-    const isWorkFLowCompleted = () => {
-        let signers: string[] = firstRevisionData?.forms_signers.split(",")
-
-        let signatureRevionHashesDataAddress = signatureRevionHashesData.map((e) => e.walletAddress)
-        let remainSigners = signers.filter((item) => !signatureRevionHashesDataAddress.includes(item))
+   
 
 
+    // const isWorkflowComplete = () => {
+    //     let signers: string[] = firstRevisionData?.forms_signers.split(",")
+    //     let signatureRevionHashesDataAddress = signatureRevionHashesData.map((e) => e.walletAddress)
+    //     let remainSigners = signers.filter((item) => !signatureRevionHashesDataAddress.includes(item))
+    //     return remainSigners
+    // }
 
-        if (remainSigners.length > 0) {
-
-            return <>
-                <Box
-                    maxW="60%"
-                    borderWidth="1px"
-                    borderStyle="dotted"
-                    borderColor="gray.300"
-                    p={4}
-                    marginLeft={10}
-                    marginTop={4}
-                    borderRadius="md"
-                    alignContent={"center"}
-                    display="flex" flexDirection="column" justifyContent="center" alignItems="center"
-                >
-                    <Text textAlign="center" my={3} >{remainSigners.length} {remainSigners.length > 1 ? <>signatures</> : <>signature</>} pending for workflow to be completed</Text>
-
-                    <>{OpenDocumentButton()}</>
-                </Box>
-
-            </>
+    const getActualState = () => {
+        let status = "pending"
+        if(isVerificationComplete(verificationResults)){
+            if(isVerificationSuccessful(verificationResults)){
+                status = "successful"
+            }
+            else{ 
+                status = "failed"
+            }
         }
 
-
-
-
-        if (isVerificationComplete(verificationResults) && isVerificationSuccessful(verificationResults)) {
-            updateDocumentIconInWorkflowTabs(true)
-        }
-
-        return <Timeline.Item>
-            <Timeline.Connector>
-                <Timeline.Separator />
-                <Timeline.Indicator>
-                    <LuPackage />
-                </Timeline.Indicator>
-            </Timeline.Connector>
-            <Timeline.Content>
-                <Timeline.Title textStyle="sm">Workflow Completed </Timeline.Title>
-                <Timeline.Description>
-                    <Alert status={remainSigners.length > 0 ? "info" : "success"} title={displayBasedOnWorkflowStatusText(remainSigners.length == 0)} />
-                    <Box my={3}></Box>
-                    <Alert status={displayColorBasedOnVerificationAlert(verificationResults)} title={displayBasedOnVerificationStatusText(verificationResults)} />
-                </Timeline.Description>
-            </Timeline.Content>
-        </Timeline.Item>
+        return status
     }
 
     const displayData = () => {
@@ -495,95 +434,66 @@ export const ContractInformationView: React.FC<ContractDocumentViewProps> = ({ s
 
 
 
-        return <Box>
-            {genesisContent()}
-
-
-            <Text mt={15} mb={10} fontSize={"3xl"}>Workflow activity timeline </Text>
-            <Timeline.Root >
-                <Timeline.Item>
-                    <Timeline.Connector>
-                        <Timeline.Separator />
-                        <Timeline.Indicator>
-                            <LuShip />
-                        </Timeline.Indicator>
-                    </Timeline.Connector>
-                    <Timeline.Content>
-                        <Timeline.Title><Text textStyle="lg">Work flow created</Text></Timeline.Title>
-                        <Timeline.Description>
-
-                            {creatorEthreiumSignatureRevisionData ?
-                                <Text textStyle="md">
-                                    User with address {creatorEthreiumSignatureRevisionData.signature_wallet_address} , created the workflow at &nbsp;{timeToHumanFriendly(firstRevisionData?.local_timestamp, true)}
-                                </Text>
-                                : <Alert status="error" title="" variant="solid"   >
-                                    Creator Signature not detected
-                                </Alert>}
-                        </Timeline.Description>
-                        <Text textStyle="sm">
-                            Document <strong>{fileNameData}</strong>  was selected for signing
-                        </Text>
-                    </Timeline.Content>
-                </Timeline.Item>
-
-
-                {
-                    signatureRevionHashesData.length == 0 ? <Box
-                        maxW="60%"
-                        borderWidth="1px"
-                        borderStyle="dotted"
-                        borderColor="gray.300"
-                        p={4}
-                        marginTop={4}
-                        borderRadius="md"
-                        alignContent={"center"}
-                        display="flex" flexDirection="column" justifyContent="center" alignItems="center" marginLeft={10}
-                    >
-
-                        <Text textAlign="center" my={3}>No signatures detected</Text>
-                        {OpenDocumentButton()}
-                    </Box> : <>
-
-                        {
-
-
-                            signatureRevionHashesData.map((signatureRevionHasheItem) => {
-
-
-                                let singatureRevisionItem = selectedFileInfo!.aquaTree!.revisions[signatureRevionHasheItem.revisionHashMetamask]
-                                if (!singatureRevisionItem) {
-                                    return <Alert status="error" title="Signature revision not found" key={signatureRevionHasheItem.revisionHashMetamask} />
-                                }
-                                return <Timeline.Item>
-                                    <Timeline.Connector>
-                                        <Timeline.Separator minH="160px" />
-                                        <Timeline.Indicator>
-                                            <LuCheck />
-                                        </Timeline.Indicator>
-                                    </Timeline.Connector>
-                                    <Timeline.Content>
-                                        <Timeline.Title textStyle="sm"><Text textStyle="lg">Signature detected</Text></Timeline.Title>
-                                        <Timeline.Description> <Text textStyle="md"> User with address {singatureRevisionItem.signature_wallet_address} &nbsp;
-                                            signed the document , &nbsp;
-                                            {signatureRevionHasheItem.revisionHashWithSignaturePositionCount > 1 ? <span>{signatureRevionHasheItem.revisionHashWithSignaturePositionCount} times</span> : <span>Once</span>}
-                                            &nbsp;  at   {timeToHumanFriendly(singatureRevisionItem.local_timestamp, true)} </Text>
-                                        </Timeline.Description>
-                                    </Timeline.Content>
-                                </Timeline.Item>
+        return <Container maxWidth={"8xl"}>
+            <ContractSummaryDetails data={{
+                name: fileNameData,
+                creationDate: timeToHumanFriendly(firstRevisionData?.local_timestamp, true),
+                creatorAddress: contractCreatorAddress,
+                documentUrl: "#",
+                status: isWorkFlowComplete.length === 0 ? "completed" : "pending",
+                pendingSignatures: 0,
+                signers: [
+                    ...firstRevisionData?.forms_signers.split(",").map((signer: string) => {
+                        console.log(`signers  ${signer}  signatureRevionHashesData  ${JSON.stringify(signatureRevionHashesData, null, 4)}`)
+                        let item = signatureRevionHashesData.find((e) => e.walletAddress.toLowerCase().trim() == signer.toLowerCase().trim())
+                        
+                        if (item) {
+                            return ({
+                                address: signer,
+                                status: "signed"
                             })
-
+                        } else {
+                            return ({
+                                address: signer,
+                                status: "pending"
+                            })
                         }
-
-
-
+                    })
+                ],
+                activities: [
+                    {
+                        type: "created",
+                        address: contractCreatorAddress,
+                        timestamp: timeToHumanFriendly(firstRevisionData?.local_timestamp, true),
+                        details: <>Document <Span fontWeight={600}>{fileNameData}</Span> was selected for signing</>,
+                    },
+                    ...signatureRevionHashesData.map((_signatureRevionHasheItem) => {
+                        const singatureRevisionItem = selectedFileInfo!.aquaTree!.revisions[_signatureRevionHasheItem.revisionHashMetamask]
+                        return ({
+                            type: "signed" as any,
+                            address: singatureRevisionItem && singatureRevisionItem.signature_wallet_address ?  singatureRevisionItem.signature_wallet_address  : "",
+                            timestamp:singatureRevisionItem && singatureRevisionItem.local_timestamp ? timeToHumanFriendly(singatureRevisionItem.local_timestamp, true) : "time   error",
+                            // details: "Document sample-local-pdf.pdf was selected for signing",
+                        })
+                    }),
+                    ...(isWorkFlowComplete.length === 0 ? [
                         {
-                            isWorkFLowCompleted()
+                            type: "completed" as const,
+                            timestamp: "N/A"
                         }
-                    </>
-                }
+                    ] : [])
+                ],
+                footerMsg: isWorkFlowComplete.length === 0 ? "" : `${isWorkFlowComplete.length} ${isWorkFlowComplete.length > 1 ? "signatures" : "Signature"} pending for workflow to be completed`
+            }}
+                goToSecondPage={() => {
+                    setActiveStep(2) // Open the contract document
+                }}
+                enableNameResolution={true}
+                isValidTree={getActualState() as "pending" | "successful" | "failed"}
+            />
 
-            </Timeline.Root>
-        </Box>
+           
+        </Container>
     }
 
     return <>{displayData()}</>
