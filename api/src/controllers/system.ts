@@ -11,8 +11,8 @@ import { fetchAquatreeFoUser, fetchAquaTreeWithForwardRevisions, saveAquaTree } 
 import { SYSTEM_WALLET_ADDRESS } from '../models/constants';
 import path from 'path';
 import * as fs from "fs"
-import { getGenesisHash } from 'src/utils/aqua_tree_utils';
-import { getAquaAssetDirectory } from 'src/utils/file_utils';
+import { getGenesisHash } from '../utils/aqua_tree_utils';
+import { getAquaAssetDirectory } from '../utils/file_utils';
 
 export default async function systemController(fastify: FastifyInstance) {
 
