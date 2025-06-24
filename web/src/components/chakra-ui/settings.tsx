@@ -1,4 +1,4 @@
-import { Card, createListCollection, Group, HStack, IconButton, Input, Text, VStack } from "@chakra-ui/react"
+import { Box, Card, Container, createListCollection, Group, HStack, IconButton, Input, Text, VStack } from "@chakra-ui/react"
 import { LuSettings } from "react-icons/lu"
 import { DialogActionTrigger, DialogBody, DialogCloseTrigger, DialogContent, DialogFooter, DialogHeader, DialogRoot, DialogTitle, DialogTrigger } from "./dialog"
 import { Field } from "./field"
@@ -10,6 +10,8 @@ import { useStore } from "zustand"
 import appStore from "../../store"
 import { toaster } from "./toaster"
 import { Button } from "./button"
+import { IDialogSettings } from "../../types/index"
+import { useNavigate } from "react-router-dom"
 // import { useNavigate } from "react-router-dom"
 
 const networks = createListCollection({
@@ -20,14 +22,94 @@ const networks = createListCollection({
     ],
 })
 
-const SettingsForm = () => {
+
+
+
+const Settings = ({ inline, open, updateOpenStatus }: IDialogSettings) => {
+
     const { setUserProfile, user_profile, backend_url, metamaskAddress, session } = useStore(appStore)
     const { colorMode } = useColorMode()
     const [activeNetwork, setActiveNetwork] = useState<string>(user_profile.witness_network)
-    const [cliPubKey, setCliPubKey] = useState<string>(user_profile.cli_pub_key)
-    const [cliPrivKey, setCliPrivKey] = useState<string>(user_profile.cli_priv_key)
+    const [cliPubKey, _setCliPubKey] = useState<string>(user_profile.cli_pub_key)
+    const [cliPrivKey, _setCliPrivKey] = useState<string>(user_profile.cli_priv_key)
     const [ensName, setEnsName] = useState<string>(user_profile.ens_name)
     const [contract, setContract] = useState<string>(user_profile.witness_contract_address ?? "0x45f59310ADD88E6d23ca58A0Fa7A55BEE6d2a611")
+    const [alchemyKey, setAlchemyKey] = useState<string>(user_profile.alchemy_key ?? "ZaQtnup49WhU7fxrujVpkFdRz4JaFRtZ")
+
+
+    const DeleteUserData = () => {
+        const [deleting, setDeleting] = useState(false)
+        const { setUserProfile, setFiles, setSession, setMetamaskAddress, setAvatar, backend_url, session } = useStore(appStore)
+
+
+        let navigate = useNavigate()
+        const deleteUserData = async () => {
+            try {
+                if (!session?.nonce) {
+                    toaster.create({
+                        description: "You must be logged in to clear user data",
+                        type: "error"
+                    })
+                    return
+                }
+
+                setDeleting(true)
+                const url = `${backend_url}/user_data`;
+                const response = await axios.delete(url, {
+                    headers: {
+                        'nonce': session.nonce
+                    }
+                });
+
+                if (response.status === 200) {
+                    // Clear local state
+                    setUserProfile({
+                        user_pub_key: "",
+                        cli_pub_key: "",
+                        cli_priv_key: "",
+                        witness_network: "",
+                        alchemy_key: "",
+                        theme: "light",
+                        ens_name: "",
+                        witness_contract_address: '0x45f59310ADD88E6d23ca58A0Fa7A55BEE6d2a611',
+                    })
+                    setFiles([])
+                    setSession(null)
+                    setMetamaskAddress(null)
+                    setAvatar(undefined)
+
+                    // Remove cookie
+                    document.cookie = "pkc_nonce=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;"
+
+                    toaster.create({
+                        description: "User data cleared successfully. You have been logged out.",
+                        type: "success"
+                    })
+
+                    updateOpenStatus?.(false)
+
+                    if (window.location.pathname == "/") {
+                        window.location.reload();
+                    } else {
+                        navigate("/")
+                    }
+                }
+
+                setDeleting(false)
+            }
+            catch (e: any) {
+                toaster.create({
+                    description: `Failed to clear user data: ${e instanceof Error ? e.message : String(e)}`,
+                    type: "error"
+                })
+                setDeleting(false)
+            }
+        }
+
+        return (
+            <Button loading={deleting} colorPalette={'red'} borderRadius={'md'} variant={'outline'} onClick={deleteUserData}>Clear Account Data</Button>
+        )
+    }
 
 
     const updateUserProfile = async () => {
@@ -47,6 +129,7 @@ const SettingsForm = () => {
             'cli_priv_key': cliPrivKey,
             'cli_pub_key': cliPubKey,
             'witness_contract_address': contract,
+            'alchemy_key': alchemyKey,
             'witness_network': activeNetwork,
             'user_pub_key': metamaskAddress ?? user_profile.user_pub_key,
             'theme': colorMode ?? "light",
@@ -65,6 +148,7 @@ const SettingsForm = () => {
                 ens_name: ensName,
                 cli_priv_key: cliPrivKey,
                 witness_network: activeNetwork,
+                alchemy_key: alchemyKey,
                 theme: colorMode ?? "light",
                 witness_contract_address: contract ?? '0x45f59310ADD88E6d23ca58A0Fa7A55BEE6d2a611',
 
@@ -78,143 +162,105 @@ const SettingsForm = () => {
         }
     }
 
-    return (
-        <VStack alignItems={'start'} gapY={'6'}>
-            <Card.Root w={'100%'} shadow={'sm'} borderRadius={'SM'}>
-                <Card.Body p={'4px'} px={'20px'}>
-                    <Group justifyContent={'space-between'} w="100%">
-                        <Text>Themes</Text>
-                        <ColorModeButton />
-                    </Group>
-                </Card.Body>
-            </Card.Root>
-            <Field invalid={false} label="Alias Name" errorText="This field is required" >
-                <Input placeholder="Alias" value={ensName} onChange={e => setEnsName(e.currentTarget.value)} />
-            </Field>
-            <Field invalid={false} label="Public address" helperText="self-issued identity claim used for generating/verifying aqua chain" errorText="This field is required">
-                <Input placeholder="User Public address" disabled={true} value={user_profile.user_pub_key} autoComplete="off" />
-            </Field>
-            <Field invalid={false} label="CLI public key " helperText="self-issued identity claim used for generating/verifying aqua chain" errorText="This field is required">
-                <Input placeholder="XXXXXXX" value={cliPubKey} type="text" onChange={e => setCliPubKey(e.currentTarget.value)} autoComplete="off" />
-            </Field>
-            <Field invalid={false} label="CLI private key " helperText="self-issued identity claim used for generating/verifying aqua chain" errorText="This field is required">
-                <Input placeholder="XXXXXXXXX" value={cliPrivKey} type={"password"} onChange={e => setCliPrivKey(e.currentTarget.value)} autoComplete="off" />
-            </Field>
-            <Field invalid={false} label="Contract Address" errorText="This field is required" >
-                <Input placeholder="Contract Address" value={contract} onChange={e => setContract(e.currentTarget.value)} />
-            </Field>
-            <Field invalid={false} label={"Select Network " + activeNetwork} errorText="This field is required" >
-                <RadioCardRoot value={activeNetwork} onValueChange={e => setActiveNetwork(e.value)}>
-                    <HStack align="stretch">
-                        {networks.items.map((item) => (
-                            <RadioCardItem
-                                borderRadius={'xl'}
-                                label={item.label}
-                                key={item.value}
-                                value={item.value}
-                            />
-                        ))}
-                    </HStack>
-                </RadioCardRoot>
-            </Field>
-            {/* <Field invalid={false} label="Default File Mode" helperText="Is a file public or private" errorText="This field is required"> */}
-            {/* <Field invalid={false} label="Default File Mode" helperText="Any one can view the file or the file should be visible only to you." errorText="This field is required">
-                <RadioCardRoot defaultValue="public" value={mode} onValueChange={e => setMode(e.value)}>
-                    <HStack align="stretch">
-                        {fileModes.items.map((item) => (
-                            <RadioCardItem
-                                borderRadius={'xl'}
-                                label={item.label}
-                                key={item.value}
-                                value={item.value}
-                            />
-                        ))}
-                    </HStack>
-                </RadioCardRoot>
-            </Field> */}
-            <Group>
-                <Button onClick={updateUserProfile}>Save</Button>
-            </Group>
-        </VStack>
-    )
-}
 
-const DeleteUserData = () => {
-    const [deleting, setDeleting] = useState(false)
-    const { setUserProfile, setFiles, setSession, setMetamaskAddress, setAvatar, backend_url, session } = useStore(appStore)
+    const SettingsForm = () => {
 
-    const deleteUserData = async () => {
-        try {
-            if (!session?.nonce) {
-                toaster.create({
-                    description: "You must be logged in to clear user data",
-                    type: "error"
-                })
-                return
-            }
+        return (
+            <VStack alignItems={'start'} gapY={'6'}>
+                <Card.Root w={'100%'} shadow={'sm'} borderRadius={'SM'}>
+                    <Card.Body p={'4px'} px={'20px'}>
+                        <Group justifyContent={'space-between'} w="100%">
+                            <Text>Themes</Text>
+                            <ColorModeButton />
+                        </Group>
+                    </Card.Body>
+                </Card.Root>
+                <Field invalid={false} label="Alias Name" errorText="This field is required" >
+                    <Input placeholder="Alias" value={ensName} onChange={e => setEnsName(e.currentTarget.value)} />
+                </Field>
 
-            setDeleting(true)
-            const url = `${backend_url}/user_data`;
-            const response = await axios.delete(url, {
-                headers: {
-                    'nonce': session.nonce
-                }
-            });
+                {/* <Divider my={4} borderColor="gray.300" /> */}
 
-            if (response.status === 200) {
-                // Clear local state
-                setUserProfile({
-                    user_pub_key: "",
-                    cli_pub_key: "",
-                    cli_priv_key: "",
-                    witness_network: "",
-                    theme: "light",
-                    ens_name: "",
-                    witness_contract_address: '0x45f59310ADD88E6d23ca58A0Fa7A55BEE6d2a611',
-                })
-                setFiles([])
-                setSession(null)
-                setMetamaskAddress(null)
-                setAvatar(undefined)
+                {/* Custom Divider */}
+                <Box
+                    width="100%"
+                    height="1px"
+                    bg="gray.200"
+                    my={2}
+                />
+                <Text fontSize={'lg'}>Etherium Settings</Text>
 
-                // Remove cookie
-                document.cookie = "pkc_nonce=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;"
 
-                toaster.create({
-                    description: "User data cleared successfully. You have been logged out.",
-                    type: "success"
-                })
-            }
-            setDeleting(false)
-        }
-        catch (e: any) {
-            toaster.create({
-                description: `Failed to clear user data: ${e instanceof Error ? e.message : String(e)}`,
-                type: "error"
-            })
-            setDeleting(false)
-        }
+                <Container
+                    p={0}
+                    alignItems="start"
+                    fluid >
+
+                    <Field invalid={false} label="Public address" helperText="self-issued identity claim used for generating/verifying aqua chain" errorText="This field is required">
+                        <Input placeholder="User Public address" disabled={true} value={user_profile.user_pub_key} autoComplete="off" />
+                    </Field>
+                    {/* <Field invalid={false} label="CLI public key " helperText="self-issued identity claim used for generating/verifying aqua chain" errorText="This field is required">
+                    <Input placeholder="XXXXXXX" value={cliPubKey} type="text" onChange={e => setCliPubKey(e.currentTarget.value)} autoComplete="off" />
+                </Field> */}
+                    {/* <Field invalid={false} label="CLI private key " helperText="self-issued identity claim used for generating/verifying aqua chain" errorText="This field is required">
+                    <Input placeholder="XXXXXXXXX" value={cliPrivKey} type={"password"} onChange={e => setCliPrivKey(e.currentTarget.value)} autoComplete="off" />
+                </Field> */}
+                    <Field invalid={false} label="Alchemy Key" errorText="This field is required" >
+                        <Input placeholder="Alchemy Key" value={alchemyKey} onChange={e => setAlchemyKey(e.currentTarget.value)} />
+                    </Field>
+                    <Field invalid={false} label="Contract Address" errorText="This field is required" >
+                        <Input placeholder="Contract Address" value={contract} disabled={true} onChange={e => setContract(e.currentTarget.value)} />
+                    </Field>
+                    <Field invalid={false} label={"Select Network " + activeNetwork} errorText="This field is required" >
+                        <RadioCardRoot value={activeNetwork} onValueChange={e => setActiveNetwork(`${e.value}`)}>
+                            <HStack align="stretch">
+                                {networks.items.map((item) => (
+                                    <RadioCardItem
+                                        borderRadius={'xl'}
+                                        label={item.label}
+                                        key={item.value}
+                                        value={item.value}
+                                    />
+                                ))}
+                            </HStack>
+                        </RadioCardRoot>
+                    </Field>
+
+                </Container>
+                {/* <Field invalid={false} label="Default File Mode" helperText="Is a file public or private" errorText="This field is required"> */}
+                {/* <Field invalid={false} label="Default File Mode" helperText="Any one can view the file or the file should be visible only to you." errorText="This field is required">
+                    <RadioCardRoot defaultValue="public" value={mode} onValueChange={e => setMode(e.value)}>
+                        <HStack align="stretch">
+                            {fileModes.items.map((item) => (
+                                <RadioCardItem
+                                    borderRadius={'xl'}
+                                    label={item.label}
+                                    key={item.value}
+                                    value={item.value}
+                                />
+                            ))}
+                        </HStack>
+                    </RadioCardRoot>
+                </Field> */}
+                {/* <Group> */}
+                {/* <Button onClick={updateUserProfile}>Save</Button> */}
+                {/* </Group> */}
+            </VStack>
+        )
     }
 
     return (
-        <Button loading={deleting} colorPalette={'red'} borderRadius={'md'} variant={'outline'} onClick={deleteUserData}>Clear Account Data</Button>
-    )
-}
-
-const Settings = () => {
-
-
-    // let navigate = useNavigate();
-
-    return (
-        <div>
-            <DialogRoot size={{ md: 'md', smDown: 'full' }} placement={'top'}>
+        <>
+            <DialogRoot size={{ md: 'md', smDown: 'full' }} placement={'top'} open={open}
+            // onOpenChange={(e) => updateOpenStatus?.(e.open)}
+            >
                 <DialogTrigger asChild>
                     <IconButton
-                        onClick={() => { }}
+                        onClick={() => updateOpenStatus?.(true)}
                         variant="ghost"
                         aria-label="Toggle color mode"
                         size="sm"
+                        hidden={inline}
                         css={{
                             _icon: {
                                 width: "5",
@@ -226,16 +272,16 @@ const Settings = () => {
                     </IconButton>
                 </DialogTrigger>
                 <DialogContent borderRadius={{ base: 0, md: 'xl' }}>
-                    <DialogHeader>
+                    <DialogHeader py={"3"} px={"5"}>
                         <DialogTitle>Settings</DialogTitle>
                     </DialogHeader>
                     <DialogBody >
-                        <SettingsForm />
+                        {SettingsForm()}
                     </DialogBody>
                     <DialogFooter>
                         <HStack w={'100%'} justifyContent={'space-between'}>
                             <VStack alignItems={'flex-start'} gap={2}>
-                                <DeleteUserData />
+                                {DeleteUserData()}
                             </VStack>
                             {/* <DialogActionTrigger asChild>
 
@@ -245,16 +291,17 @@ const Settings = () => {
 
                             </DialogActionTrigger> */}
                             <HStack>
+                                <Button variant="solid" bg={'green'} onClick={updateUserProfile}>Save</Button>
                                 <DialogActionTrigger asChild>
-                                    <Button variant="outline">Cancel</Button>
+                                    <Button variant="outline" onClick={() => updateOpenStatus?.(false)}>Cancel</Button>
                                 </DialogActionTrigger>
                             </HStack>
                         </HStack>
                     </DialogFooter>
-                    <DialogCloseTrigger />
+                    <DialogCloseTrigger onClick={() => updateOpenStatus?.(false)} />
                 </DialogContent>
             </DialogRoot>
-        </div>
+        </>
     )
 }
 

@@ -14,6 +14,7 @@ export interface RevisionDetailsSummaryData {
     fileInfo: ApiFileInfo,
     isVerificationComplete: boolean,
     isVerificationSuccess: boolean,
+    isWorkFlow :  boolean,
     callBack?: (res: boolean) => void,
 }
 

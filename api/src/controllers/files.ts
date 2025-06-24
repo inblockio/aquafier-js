@@ -1,10 +1,12 @@
 import { prisma } from '../database/db';
-import { isTextFile, isTextFileProbability, streamToBuffer } from '../utils/file_utils.js';
+import { getFileUploadDirectory, isTextFile, isTextFileProbability, streamToBuffer } from '../utils/file_utils.js';
 import Aquafier, { AquaTree, FileObject, LogType } from 'aqua-js-sdk';
 import { FastifyInstance } from 'fastify';
 import path from 'path';
 
 import * as fs from "fs"
+// import { getHost, getPort } from 'src/utils/api_utils';
+// import { randomUUID } from 'crypto';
 
 export default async function filesController(fastify: FastifyInstance) {
     // get file using file hash
@@ -95,7 +97,7 @@ export default async function filesController(fastify: FastifyInstance) {
                 'Content-Disposition',
                 `attachment; filename="${encodedFilename}"; filename*=UTF-8''${encodedFilename}`
             );
-            
+
             // Send the file content as a response
             return reply.send(fileContent);
         } catch (error) {
@@ -103,6 +105,8 @@ export default async function filesController(fastify: FastifyInstance) {
             return reply.code(500).send({ success: false, message: 'Error reading file content' });
         }
     });
+
+ 
 
     fastify.post('/file/object', async (request, reply) => {
         let aquafier = new Aquafier();
@@ -168,9 +172,6 @@ export default async function filesController(fastify: FastifyInstance) {
             return reply.code(500).send({ error: 'File upload failed' });
         }
 
-
-
-        return { success: true };
     });
 
 

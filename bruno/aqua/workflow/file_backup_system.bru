@@ -1,0 +1,15 @@
+meta {
+  name: file_backup_system
+  type: http
+  seq: 2
+}
+
+post {
+  url: http://127.0.0.1:3000/file
+  body: multipartForm
+  auth: inherit
+}
+
+body:multipart-form {
+  file: @file(/home/kamau/Pictures/tree2.jpeg)
+}

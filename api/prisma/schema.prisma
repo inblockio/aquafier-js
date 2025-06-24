@@ -9,7 +9,7 @@ generator client {
 }
 
 model Users {
-  address       String          @id
+  address       String                     @id
   ens_name      String?
   email         String?
   Latest        Latest[]
@@ -19,11 +19,37 @@ model Users {
   @@map("users")
 }
 
-model UserAttestationAddresses { 
-  id              String   @id @default(uuid())
-  owner     String  
-  address     String  
-  trust_level Int  
+model AquaTemplate {
+  id          String               @id
+  owner       String
+  title       String
+  name        String
+  created_at  String
+  public      Boolean
+  form_fields AquaTemplateFields[]
+
+  @@map("aqua_templates")
+}
+
+model AquaTemplateFields {
+  id           String  @id @default(uuid())
+  aqua_form_id String
+  name         String
+  label        String
+  type         String
+  required     Boolean
+  is_array     Boolean @default(false)
+
+  AquaForm AquaTemplate @relation(fields: [aqua_form_id], references: [id])
+
+  @@map("aqua_templates_fields")
+}
+
+model UserAttestationAddresses {
+  id          String @id @default(uuid())
+  owner       String
+  address     String
+  trust_level Int
   User        Users  @relation(fields: [owner], references: [address])
 
   @@map("user_attestation_addresses")
@@ -54,24 +80,27 @@ model Contract {
 }
 
 model Latest {
-  hash String @id
-  user String
-  User Users  @relation(fields: [user], references: [address])
+  hash        String  @id
+  user        String
+  template_id String?
+  is_workflow Boolean @default(false)
+  User        Users   @relation(fields: [user], references: [address])
   // Revision         Revision[]
 
   @@map("latest")
 }
 
 model Revision {
-  pubkey_hash         String      @id
-  nonce               String?
-  shared              String[]
-  contract            String[]
-  previous            String?
-  children            String?
-  local_timestamp     String?
-  revision_type       String?
-  has_content         Boolean     @default(false)
+  pubkey_hash     String   @id
+  nonce           String?
+  shared          String[]
+  contract        String[]
+  previous        String?
+  children        String?
+  local_timestamp String?
+  revision_type   String?
+  has_content     Boolean  @default(false)
+
   verification_leaves String[]
   // Latest           Latest        @relation(fields: [pubkey_hash], references: [hash])
   // File             File[]
@@ -160,6 +189,18 @@ model WitnessEvent {
   @@map("witness_event")
 }
 
+model AquaForms {
+  id              String   @id @default(uuid())
+  hash            String
+  key             String?
+  value           Json?
+  type            String?
+  reference_count Int?
+  Revision        Revision @relation(fields: [hash], references: [pubkey_hash])
+
+  @@map("aqua_forms")
+}
+
 model MerkleNodes {
   node_hash        String   @id
   parent_hash      String?
@@ -176,21 +217,11 @@ model MerkleNodes {
   @@map("merkle_nodes")
 }
 
-model AquaForms {
-  hash            String   @id
-  key             String?
-  value           Json?
-  type            String?
-  reference_count Int?
-  Revision        Revision @relation(fields: [hash], references: [pubkey_hash])
-
-  @@map("aqua_forms")
-}
-
 model Settings {
   user_pub_key             String  @id
   cli_pub_key              String?
   cli_priv_key             String?
+  alchemy_key              String  @default("ZaQtnup49WhU7fxrujVpkFdRz4JaFRtZ")
   witness_network          String?
   witness_contract_address String?
   theme                    String?

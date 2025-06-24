@@ -9,6 +9,7 @@ import fastifyStatic from '@fastify/static';
 import * as fs from "fs"
 
 // Import controllers
+import chequeApiController from './controllers/chequeApi';
 import userController from './controllers/user';
 import authController from './controllers/auth';
 import indexController from './controllers/index';
@@ -20,6 +21,13 @@ import { getFileUploadDirectory } from './utils/file_utils';
 import revisionsController from './controllers/revisions';
 import shareController from './controllers/share';
 import fetchChainController from './controllers/fetch-chain';
+import templatesController from './controllers/templates';
+import { setUpSystemTemplates } from './utils/api_utils';
+import systemController from './controllers/system';
+import webSocketController, {broadcastToAllClients} from './controllers/websocketController';
+
+
+
 
 
 function buildServer() {
@@ -39,6 +47,9 @@ function buildServer() {
     // Create a Fastify instance
     const fastify = Fastify({ logger: true });
 
+
+    // reister system templates ie cheque, identity and attestation
+    setUpSystemTemplates();
 
     // Register the CORS plugin
     fastify.register(cors, {
@@ -78,7 +89,14 @@ function buildServer() {
         }
     });
 
+    fastify.register(import('@fastify/websocket'));
 
+
+    // setInterval(() => {
+
+    //     console.log(`Ping all websockets`);
+    //     broadcastToAllClients("ping all conections ")
+    // }, 1000)
 
     // Register controllers
     fastify.register(authController);
@@ -91,6 +109,10 @@ function buildServer() {
     fastify.register(revisionsController);
     fastify.register(shareController);
     fastify.register(fetchChainController);
+    fastify.register(templatesController);
+    fastify.register(chequeApiController);
+    fastify.register(systemController);
+    fastify.register(webSocketController);
 
     return fastify
 

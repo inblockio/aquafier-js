@@ -3,7 +3,8 @@ import { openDB } from 'idb';
 import { createStore } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
 import { ApiFileInfo } from './models/FileInfo';
-import { ApiFileData, Session } from './types';
+import { ApiFileData, Session } from './types/types';
+import { FormTemplate } from './components/aqua_forms/types';
 
 type AppStoreState = {
     user_profile: {
@@ -11,17 +12,21 @@ type AppStoreState = {
         cli_pub_key: string,
         cli_priv_key: string,
         witness_network: string,
+        alchemy_key: string,
         theme: string,
         ens_name: string,
         witness_contract_address: string | null
     },
     session: Session | null,
     files: ApiFileInfo[],
-    apiFileData : ApiFileData[],
+    apiFileData: ApiFileData[],
+    systemFileInfo :  ApiFileInfo[],
+    formTemplates: FormTemplate[],
     selectedFileInfo: ApiFileInfo | null,
-    metamaskAddress: string | null
-    avatar: string | undefined
-    backend_url: string
+    metamaskAddress: string | null,
+    avatar: string | undefined,
+    backend_url: string,
+    contracts : any[]
 }
 
 type AppStoreActions = {
@@ -47,11 +52,21 @@ type AppStoreActions = {
         file: ApiFileInfo,
     ) => void,
     setApiFileData: (
-        apiFileData : ApiFileData[],
+        apiFileData: ApiFileData[],
+    ) => void,
+    setSystemFileInfo: (
+        systemFileInfo: ApiFileInfo[],
+    ) => void,
+    setFormTemplate: (
+        apiFileData: FormTemplate[],
+    ) => void,
+    setContracts: (
+        contracts: any[],
     ) => void,
     setBackEndUrl: (
         backend_url: AppStoreState['backend_url'],
     ) => void
+
 
 }
 
@@ -86,11 +101,12 @@ const appStore = createStore<TAppStore>()(
         (set) => ({
             // Initial state
             user_profile: {
-                ens_name:"",
+                ens_name: "",
                 user_pub_key: "",
                 cli_pub_key: "",
                 cli_priv_key: "",
                 witness_network: "",
+                alchemy_key: "",
                 theme: "light",
                 witness_contract_address: '0x45f59310ADD88E6d23ca58A0Fa7A55BEE6d2a611',
             },
@@ -100,7 +116,11 @@ const appStore = createStore<TAppStore>()(
             metamaskAddress: '',
             avatar: "",
             apiFileData: [],
-            backend_url: "http://0.0.0.0:0",
+            systemFileInfo:[],
+            formTemplates: [],
+            backend_url: "http://0.0.0.0:3000",
+            contracts: [],
+
             // Actions
             setUserProfile: (config) => set({ user_profile: config }),
             setSession: (session) => set({ session: session }),
@@ -116,9 +136,18 @@ const appStore = createStore<TAppStore>()(
             setSelectedFileInfo: (
                 file: ApiFileInfo
             ) => set({ selectedFileInfo: file }),
-            setApiFileData:(
+            setApiFileData: (
                 apiFileData: ApiFileData[]
-            )=>set({apiFileData : apiFileData}),
+            ) => set({ apiFileData: apiFileData }),
+            setSystemFileInfo: (
+                systemFileInfo: ApiFileInfo[]
+            ) => set({ systemFileInfo: systemFileInfo }),
+            setFormTemplate: (
+                apiFormTemplate: FormTemplate[]
+            ) => set({ formTemplates: apiFormTemplate }),
+            setContracts: (
+                contractData: any[]
+            ) => set({ contracts: contractData }),
             addFile: (
                 file: ApiFileInfo,
             ) => {
@@ -136,7 +165,7 @@ const appStore = createStore<TAppStore>()(
                 // List all state properties you want to persist EXCEPT selectedFileInfo
                 user_profile: state.user_profile,
                 session: state.session,
-                files: state.files,
+                // files: state.files,
                 apiFileData: state.apiFileData,
                 metamaskAddress: state.metamaskAddress,
                 avatar: state.avatar,

@@ -4,11 +4,7 @@
     "module": "ESNext",
     "moduleResolution": "Node",
     "baseUrl": ".",
-    "paths": {
-      "@/*": [
-        "src/*"
-      ]
-    },
+   
     "esModuleInterop": true,
     "strict": true,
     "outDir": "dist",

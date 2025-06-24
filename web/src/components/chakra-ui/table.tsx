@@ -12,7 +12,7 @@ import { Checkbox } from "./checkbox"
 import { SetStateAction, useEffect, useState } from "react"
 import { useStore } from "zustand"
 import appStore from "../../store"
-import { displayTime, getAquaTreeFileObject, getFileCategory, getFileExtension } from "../../utils/functions"
+import { displayTime, getAquaTreeFileObject, getFileCategory, getFileExtension, getAquaTreeFileName, isWorkFlowData } from "../../utils/functions"
 
 import { DeleteAquaChain, LinkButton, DownloadAquaChain, SignAquaChain, WitnessAquaChain } from "../aqua_chain_actions"
 import { ChainDetailsBtn, CompleteChainView } from "../CustomDrawer"
@@ -23,18 +23,23 @@ import { DrawerActionTrigger, DrawerBackdrop, DrawerBody, DrawerContent, DrawerF
 import { LuX } from "react-icons/lu"
 import { IDrawerStatus } from "../../models/AquaTreeDetails"
 import { FileObject } from "aqua-js-sdk"
+import { useNavigate } from "react-router-dom"
+import { FaFileExport } from "react-icons/fa6"
 
 
 const FilesTable = () => {
     const [filesToDisplay, setFilesToDisplay] = useState<ApiFileInfo[]>([])
-    const { files, backend_url, session, setSelectedFileInfo, selectedFileInfo } = useStore(appStore)
+    const { files, backend_url, session, setSelectedFileInfo, selectedFileInfo, systemFileInfo } = useStore(appStore)
     const [selection, setSelection] = useState<string[]>([])
 
+    const [disableDrawerAction, setDisableDrawerActions] = useState(false)
     const [isOpen, setIsOpen] = useState(false)
     // const [fileInfo, setFileInfo] = useState<ApiFileInfo | null>(null)
     const [drawerStatus, setDrawerStatus] = useState<IDrawerStatus | null>(null)
 
+    let navigate = useNavigate();
 
+    // const aquafier = new Aquafier();
     const hasSelection = selection.length > 0
     const indeterminate = hasSelection && selection.length < files.length
 
@@ -48,7 +53,70 @@ const FilesTable = () => {
     }
 
 
+
+    const showActionButtons = (isWorkFlow: boolean, workFlow: string, item: ApiFileInfo) => {
+
+        if (isWorkFlow) {
+            if (workFlow == "aqua_sign.json" || workFlow == "aqua_sign") {
+                return <>
+                    <Button size={'xs'} colorPalette={'cyan'} variant={'subtle'} w={'208px'} onClick={(e) => {
+                        e.preventDefault();
+                        setSelectedFileInfo(item)
+                        navigate("/workflow")
+                    }} >
+                        <FaFileExport />
+                        Open Workflow
+                    </Button>
+                    <ShareButtonAction nonce={session?.nonce ?? ""} item={item} />
+                    <ChainDetailsBtn callBack={() => {
+                        setDisableDrawerActions(true)
+                        openChainDetailsView(item)
+                    }} />
+                    <DeleteAquaChain apiFileInfo={item} backendUrl={backend_url} nonce={session?.nonce ?? ""} revision="" />
+                    <DownloadAquaChain file={item} />
+                </>
+            }
+
+            return <>{isWorkFlow ? "true" : "False"} {workFlow}</>
+        }
+
+
+        return <>
+            <ChainDetailsBtn callBack={() => {
+                setDisableDrawerActions(false)
+                openChainDetailsView(item)
+            }} />
+            <SignAquaChain apiFileInfo={item} backendUrl={backend_url} nonce={session?.nonce ?? ""} revision="" />
+            <WitnessAquaChain apiFileInfo={item} backendUrl={backend_url} nonce={session?.nonce ?? ""} revision="" />
+            <LinkButton item={item} nonce={session?.nonce ?? ""} />
+
+            {/* <ShareButton nonce={session?.nonce ?? ""} item={item} /> */}
+            <ShareButtonAction nonce={session?.nonce ?? ""} item={item} />
+            <DeleteAquaChain apiFileInfo={item} backendUrl={backend_url} nonce={session?.nonce ?? ""} revision="" />
+            <DownloadAquaChain file={item} />
+        </>
+
+
+    }
+
+
+    console.log("System file info: ", JSON.stringify(systemFileInfo, null, 4))
     const tableItem = (fileObject: FileObject, item: ApiFileInfo, index: number) => {
+        console.log("Item: ", item.aquaTree)
+        let { isWorkFlow, workFlow } = isWorkFlowData(item.aquaTree!!, systemFileInfo.map((e) => {
+            try {
+                return getAquaTreeFileName(e.aquaTree!!)
+            } catch (e) {
+                console.log("Error")
+                return ""
+            }
+        }));
+
+        // { isWorkFlow : false  , workFlow: ''}
+        // let isWorkFlow = true;
+        // let workFlow = "aqua_sign";
+
+
         return <Table.Row
             key={index}
         // data-selected={selection.includes(item.fileObject[0].fileName)?? "--" ? "" : undefined}
@@ -83,15 +151,7 @@ const FilesTable = () => {
             <Table.Cell minW={'220px'} maxW={'220px'} textWrap={'wrap'}>
                 <Group alignItems={'space-between'} flexWrap={'wrap'} position={"relative"}>
 
-                    <ChainDetailsBtn callBack={() => openChainDetailsView(item)} />
-                    <SignAquaChain apiFileInfo={item} backendUrl={backend_url} nonce={session?.nonce ?? ""} revision="" />
-                    <WitnessAquaChain apiFileInfo={item} backendUrl={backend_url} nonce={session?.nonce ?? ""} revision="" />
-                    <LinkButton item={item} nonce={session?.nonce ?? ""} />
-
-                    {/* <ShareButton nonce={session?.nonce ?? ""} item={item} /> */}
-                    <ShareButtonAction nonce={session?.nonce ?? ""} item={item} />
-                    <DeleteAquaChain apiFileInfo={item} backendUrl={backend_url} nonce={session?.nonce ?? ""} revision="" />
-                    <DownloadAquaChain file={item} />
+                    {showActionButtons(isWorkFlow, workFlow, item)}
 
                 </Group>
             </Table.Cell>
@@ -99,23 +159,27 @@ const FilesTable = () => {
     }
 
     const tableItems = () => {
-        return files?.map((item: ApiFileInfo, index: number) => {
+        return files?.sort((a, b) => {
+            const filenameA = getAquaTreeFileName(a.aquaTree!!);
+            const filenameB = getAquaTreeFileName(b.aquaTree!!);
+            return filenameA.localeCompare(filenameB);
+        }).map((item: ApiFileInfo, index: number) => {
             // console.log("Item: ", item.aquaTree)
             // return <Text>{JSON.stringify(item, null, 4)}</Text>
 
             let fileObject = getAquaTreeFileObject(item)
-
             if (fileObject) {
                 return tableItem(fileObject, item, index)
             } else {
-                return <></>
+                console.log(`@@--@@--${JSON.stringify(item, null, 4)}`)
+                return <>Error</>
             }
 
         })
     }
 
 
-    const smallTableItem = (fileObject: FileObject, item: ApiFileInfo, _index: number) => {
+    const smallTableItem = (fileObject: FileObject, item: ApiFileInfo, _index: number, isWorkFlow: boolean, workFlow: string) => {
 
         return <Box key={`sm_${Object.keys(item.aquaTree?.revisions! ?? {})[0]}`} bg={'gray.100'} _dark={{
             bg: 'blackAlpha.950'
@@ -123,14 +187,16 @@ const FilesTable = () => {
             <VStack textAlign={'start'}>
                 <Text textAlign={'start'} w={'100%'}>{fileObject.fileName}</Text>
                 <Group alignItems={'start'} flexWrap={'wrap'}>
-                    <ChainDetailsBtn callBack={() => openChainDetailsView(item)} />
+
+                    {showActionButtons(isWorkFlow, workFlow, item)}
+                    {/* <ChainDetailsBtn callBack={() => openChainDetailsView(item)} />
                     <SignAquaChain apiFileInfo={item} backendUrl={backend_url} nonce={session?.nonce ?? ""} revision="" />
                     <WitnessAquaChain apiFileInfo={item} backendUrl={backend_url} nonce={session?.nonce ?? ""} revision="" />
                     <LinkButton item={item} nonce={session?.nonce ?? ""} />
-                    {/* <ShareButton nonce={session?.nonce ?? ""} item={item} /> */}
+                  
                     <ShareButtonAction item={item} nonce={session?.nonce ?? ""} />
                     <DeleteAquaChain apiFileInfo={item} backendUrl={backend_url} nonce={session?.nonce ?? ""} revision="" />
-                    <DownloadAquaChain file={item} />
+                    <DownloadAquaChain file={item} /> */}
                 </Group>
             </VStack>
         </Box>
@@ -143,172 +209,189 @@ const FilesTable = () => {
 
             let fileObject = getAquaTreeFileObject(item)
 
+            // console.log(`Daata ${JSON.stringify(item.aquaTree, null, 4)}`)
+            // TODO: Fix this; type overloads here, `someData` can't be used in `isWorkflow` function. Type mismatch
+            let someData = systemFileInfo.map((e) => {
+                try {
+                    return getAquaTreeFileName(e.aquaTree!!)
+                } catch (e) {
+                    console.log("Error")
+                    return ""
+                }
+            })
+            let { isWorkFlow, workFlow } = isWorkFlowData(item.aquaTree!!, someData);
+
+
             if (fileObject) {
-                return smallTableItem(fileObject, item, index)
+                return smallTableItem(fileObject, item, index, isWorkFlow, workFlow)
             } else {
                 return <></>
             }
 
         })
-        
+
     }
 
-useEffect(() => {
-    if (files) {
-        setFilesToDisplay(files)
-    }
-}, [files])
+    useEffect(() => {
+        if (files) {
+            setFilesToDisplay(files)
+        }
+    }, [files])
 
-useEffect(() => {
-    if (files) {
-        const processFiles = (chunkSize = 1) => {
-            let currentIndex = 0;
-            const chunkedFiles: SetStateAction<ApiFileInfo[]> = [];
+    useEffect(() => {
+        if (files) {
+            const processFiles = (chunkSize = 1) => {
+                let currentIndex = 0;
+                const chunkedFiles: SetStateAction<ApiFileInfo[]> = [];
 
-            const processChunk = () => {
-                const chunk = files.slice(currentIndex, currentIndex + chunkSize);
-                chunkedFiles.push(...chunk);
-                currentIndex += chunkSize;
+                const processChunk = () => {
+                    const chunk = files.slice(currentIndex, currentIndex + chunkSize);
+                    chunkedFiles.push(...chunk);
+                    currentIndex += chunkSize;
 
-                if (currentIndex < files.length) {
-                    setTimeout(processChunk, 0); // Process the next chunk
-                } else {
-                    setFilesToDisplay(chunkedFiles); // Update state after all chunks are processed
-                }
+                    if (currentIndex < files.length) {
+                        setTimeout(processChunk, 0); // Process the next chunk
+                    } else {
+                        setFilesToDisplay(chunkedFiles); // Update state after all chunks are processed
+                    }
+                };
+
+                processChunk();
             };
 
-            processChunk();
-        };
-
-        processFiles();
-    }
-}, [files]);
+            processFiles();
+        }
+    }, [files]);
 
 
-return (
-    <Card.Root px={1} borderRadius={'2xl'}>
-        <Card.Header>
-            <Text fontWeight={500} fontSize={'2xl'}>Files</Text>
-        </Card.Header>
-        <CardBody px={0}>
-            <Box hideFrom={'md'}>
-                <VStack gap={4}>
-                    {smallTableItems()}
-                </VStack>
-            </Box>
-            <Table.ScrollArea hideBelow={'md'}>
-                <Table.Root borderRadius={'2xl'} borderCollapse={'collapse'} borderSpacing={'4'}>
-                    <Table.Header>
-                        <Table.Row>
-                            <Table.ColumnHeader w="6">
-                                <Checkbox
-                                    top="1"
-                                    aria-label="Select all rows"
-                                    checked={indeterminate ? "indeterminate" : selection.length > 0}
-                                    onCheckedChange={(_changes) => {
-                                        //todo fix me
-                                        // let genesis =  Object.values(files.)
-                                        // let fileHash =   getFileHashFromUrl()
-                                        // setSelection(
-                                        //     changes.checked ? files.map((item: ApiFileInfo) => item.id.toString()) : [],
-                                        // )
-                                    }}
-                                />
-                            </Table.ColumnHeader>
-                            <Table.ColumnHeader fontWeight={600} fontSize={{ base: 'sm', md: 'md' }}>File Name</Table.ColumnHeader>
-                            <Table.ColumnHeader fontWeight={600} fontSize={{ base: 'sm', md: 'md' }}>Type</Table.ColumnHeader>
-                            <Table.ColumnHeader fontWeight={600} fontSize={{ base: 'sm', md: 'md' }}>Uploaded At</Table.ColumnHeader>
-                            <Table.ColumnHeader fontWeight={600} fontSize={{ base: 'sm', md: 'md' }}>File Size</Table.ColumnHeader>
-                            <Table.ColumnHeader fontWeight={600} fontSize={{ base: 'sm', md: 'md' }}>Action</Table.ColumnHeader>
-                        </Table.Row>
-                    </Table.Header>
-                    <Table.Body>
-                        {tableItems()}
-                        {filesToDisplay.length === 0 ?
+    return (
+        <Card.Root px={1} borderRadius={'2xl'}>
+            <Card.Header>
+                <Text fontWeight={500} fontSize={'2xl'}>Files</Text>
+            </Card.Header>
+            <CardBody px={0}>
+                <Box hideFrom={'md'}>
+                    <VStack gap={4}>
+                        {smallTableItems()}
+                    </VStack>
+                </Box>
+                <Table.ScrollArea hideBelow={'md'}>
+                    <Table.Root borderRadius={'2xl'} borderCollapse={'collapse'} borderSpacing={'4'}>
+                        <Table.Header>
                             <Table.Row>
-                                <Table.Cell colSpan={6}>
-                                    <Alert title="No Data">
-                                        Please upload some files or import an Aqua Chain
-                                    </Alert>
-                                </Table.Cell>
+                                <Table.ColumnHeader w="6">
+                                    <Checkbox
+                                        top="1"
+                                        aria-label="Select all rows"
+                                        checked={indeterminate ? "indeterminate" : selection.length > 0}
+                                        onCheckedChange={(_changes) => {
+                                            //todo fix me
+                                            // let genesis =  Object.values(files.)
+                                            // let fileHash =   getFileHashFromUrl()
+                                            // setSelection(
+                                            //     changes.checked ? files.map((item: ApiFileInfo) => item.id.toString()) : [],
+                                            // )
+                                        }}
+                                    />
+                                </Table.ColumnHeader>
+                                <Table.ColumnHeader fontWeight={600} fontSize={{ base: 'sm', md: 'md' }}>File Name</Table.ColumnHeader>
+                                <Table.ColumnHeader fontWeight={600} fontSize={{ base: 'sm', md: 'md' }}>Type</Table.ColumnHeader>
+                                <Table.ColumnHeader fontWeight={600} fontSize={{ base: 'sm', md: 'md' }}>Uploaded At</Table.ColumnHeader>
+                                <Table.ColumnHeader fontWeight={600} fontSize={{ base: 'sm', md: 'md' }}>File Size</Table.ColumnHeader>
+                                <Table.ColumnHeader fontWeight={600} fontSize={{ base: 'sm', md: 'md' }}>Action</Table.ColumnHeader>
                             </Table.Row>
-                            :
-                            <>
+                        </Table.Header>
+                        <Table.Body>
+                            {tableItems()}
+                            {filesToDisplay.length === 0 ?
+                                <Table.Row>
+                                    <Table.Cell colSpan={6}>
+                                        <Alert title="No Data">
+                                            Please upload some files or import an Aqua Chain
+                                        </Alert>
+                                    </Table.Cell>
+                                </Table.Row>
+                                :
+                                <>
 
 
-                            </>
-                        }
-                    </Table.Body>
-                </Table.Root>
-            </Table.ScrollArea>
+                                </>
+                            }
+                        </Table.Body>
+                    </Table.Root>
+                </Table.ScrollArea>
 
-            <ActionBarRoot open={hasSelection}>
-                <ActionBarContent>
-                    <ActionBarSelectionTrigger>
-                        {selection.length} selected
-                    </ActionBarSelectionTrigger>
-                    <ActionBarSeparator />
-                    <Button variant="outline" size="sm">
-                        Delete <Kbd>⌫</Kbd>
-                    </Button>
-                    <Button variant="outline" size="sm">
-                        Share <Kbd>T</Kbd>
-                    </Button>
-                </ActionBarContent>
-            </ActionBarRoot>
+                <ActionBarRoot open={hasSelection}>
+                    <ActionBarContent>
+                        <ActionBarSelectionTrigger>
+                            {selection.length} selected
+                        </ActionBarSelectionTrigger>
+                        <ActionBarSeparator />
+                        <Button variant="outline" size="sm">
+                            Delete <Kbd>⌫</Kbd>
+                        </Button>
+                        <Button variant="outline" size="sm">
+                            Share <Kbd>T</Kbd>
+                        </Button>
+                    </ActionBarContent>
+                </ActionBarRoot>
 
-            <DrawerRoot open={isOpen} size={{ base: 'full', mdToXl: "xl" }} id="aqua-chain-details-modal"
-                onOpenChange={(e) => setIsOpen(e.open)} closeOnEscape={true} >
+                <DrawerRoot open={isOpen} size={{ base: 'full', mdToXl: "xl" }} id="aqua-chain-details-modal"
+                    onOpenChange={(e) => setIsOpen(e.open)} closeOnEscape={true} >
 
-                <Portal>
-                    <DrawerBackdrop />
-                    <Drawer.Positioner>
-                        <DrawerContent borderLeftRadius={'xl'} overflow={'hidden'}>
-                            <Drawer.Header bg={{ base: drawerStatus?.colorLight, _dark: drawerStatus?.colorDark }}>
-                                <DrawerTitle flex="1">{drawerStatus?.fileName}</DrawerTitle>
-                                <Button
-                                    position="absolute"
-                                    right="8px"
-                                    top="8px"
-                                    colorPalette="whitesmoke"
-                                    variant="solid"
-                                    size="md"
-                                    onClick={() => setIsOpen(false)}
-                                    aria-label="Close drawer"
-                                >
-                                    <LuX />
-                                </Button>
-                            </Drawer.Header>
-                            <DrawerBody py={'lg'} px={1}>
+                    <Portal>
+                        <DrawerBackdrop />
+                        <Drawer.Positioner>
+                            <DrawerContent borderLeftRadius={'xl'} overflow={'hidden'}>
+                                <Drawer.Header bg={{ base: drawerStatus?.colorLight, _dark: drawerStatus?.colorDark }}>
+                                    <DrawerTitle flex="1">{drawerStatus?.fileName}</DrawerTitle>
+                                    <Button
+                                        position="absolute"
+                                        right="8px"
+                                        top="8px"
+                                        colorPalette="whitesmoke"
+                                        variant="solid"
+                                        size="md"
+                                        onClick={() => setIsOpen(false)}
+                                        aria-label="Close drawer"
+                                    >
+                                        <LuX />
+                                    </Button>
+                                </Drawer.Header>
+                                <DrawerBody py={'lg'} px={1}>
 
-                                <CompleteChainView callBack={updateDrawerStatus} selectedFileInfo={selectedFileInfo} />
+                                    <CompleteChainView callBack={updateDrawerStatus} selectedFileInfo={selectedFileInfo} />
 
-                            </DrawerBody>
-                            <DrawerFooter flexWrap={'wrap'}>
-                                <DrawerActionTrigger asChild>
-                                    <Button variant="outline" size={'sm'}>Close</Button>
-                                </DrawerActionTrigger>
-                                {
-                                    selectedFileInfo ? (
-                                        <>
-                                            <ShareButtonAction nonce={session?.nonce ?? ""} item={selectedFileInfo} />
-                                            <WitnessAquaChain apiFileInfo={selectedFileInfo} backendUrl={backend_url} nonce={session?.nonce ?? ""} revision="" />
-                                            <SignAquaChain apiFileInfo={selectedFileInfo} backendUrl={backend_url} nonce={session?.nonce ?? ""} revision="" />
-                                            <DeleteAquaChain apiFileInfo={selectedFileInfo} backendUrl={backend_url} nonce={session?.nonce ?? ""} revision="" />
-                                        </>
-                                    ) : null
-                                }
-                            </DrawerFooter>
+                                </DrawerBody>
+                                <DrawerFooter flexWrap={'wrap'}>
+                                    <DrawerActionTrigger asChild>
+                                        <Button variant="outline" size={'sm'}>Close</Button>
+                                    </DrawerActionTrigger>
+                                    {
+                                        selectedFileInfo ? (
 
-                        </DrawerContent>
-                    </Drawer.Positioner>
-                </Portal>
+                                            <>
+                                                {disableDrawerAction ? <></> : <>
+                                                    <ShareButtonAction nonce={session?.nonce ?? ""} item={selectedFileInfo} />
+                                                    <WitnessAquaChain apiFileInfo={selectedFileInfo} backendUrl={backend_url} nonce={session?.nonce ?? ""} revision="" />
+                                                    <SignAquaChain apiFileInfo={selectedFileInfo} backendUrl={backend_url} nonce={session?.nonce ?? ""} revision="" />
+                                                    <DeleteAquaChain apiFileInfo={selectedFileInfo} backendUrl={backend_url} nonce={session?.nonce ?? ""} revision="" />
+                                                </>
+                                                }
+                                            </>
+                                        ) : null
+                                    }
+                                </DrawerFooter>
 
-            </DrawerRoot>
+                            </DrawerContent>
+                        </Drawer.Positioner>
+                    </Portal>
 
-        </CardBody>
-    </Card.Root>
-)
+                </DrawerRoot>
+
+            </CardBody>
+        </Card.Root>
+    )
 }
 
 

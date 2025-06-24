@@ -19,6 +19,7 @@ const start = async () => {
     console.log("====================================");
     console.log("🚀  AquaFier JS is running!");
     console.log("🌊  Website: https://aqua-protocol.org/");
+    console.log("🌐  Check it out here: https://aquafier.inblock.io | https://dev.inblock.io");
     console.log(`📡  Listening on: http://${HOST}:${PORT}`);
     console.log("====================================");
     console.log("\n");

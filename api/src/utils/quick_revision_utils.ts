@@ -573,12 +573,26 @@ export async function transferRevisionChain(
             
             if (latestHashValue) {
                 const targetLatestHash = `${targetUserAddress}_${latestHashValue}`;
+                let latestRevision = await prisma.latest.findFirst({
+                    where: {
+                        hash: {
+                            contains: latestHashValue,
+                            mode: "insensitive"
+                        }
+                    }
+                })
+
+                if(!latestRevision){
+                    throw Error("Latest revision not found")
+                }
                 
                 // Add to latest table for the target user
                 await prisma.latest.create({
                     data: {
                         hash: targetLatestHash,
-                        user: targetUserAddress
+                        user: targetUserAddress,
+                        is_workflow: latestRevision.is_workflow,
+                        template_id: latestRevision.template_id,
                     }
                 });
                 

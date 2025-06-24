@@ -1,6 +1,6 @@
-import { LuDelete, LuDownload, LuGlasses, LuLink2, LuShare2, LuSignature, LuX } from "react-icons/lu"
+import { LuDelete, LuDownload, LuGlasses, LuLink2, LuShare2, LuSignature, LuTrash } from "react-icons/lu"
 import { Button } from "./chakra-ui/button"
-import { areArraysEqual, dummyCredential, ensureDomainUrlHasSSL, extractFileHash, fetchFiles, getAquaTreeFileObject, getFileName, getGenesisHash, isAquaTree } from "../utils/functions"
+import { areArraysEqual, dummyCredential, ensureDomainUrlHasSSL, extractFileHash, fetchFiles, getAquaTreeFileObject, getFileName, getGenesisHash, isAquaTree, isWorkFlowData, getAquaTreeFileName } from "../utils/functions"
 import { useStore } from "zustand"
 import appStore from "../store"
 import axios from "axios"
@@ -12,69 +12,24 @@ import { DialogActionTrigger, DialogBody, DialogCloseTrigger, DialogContent, Dia
 import { generateNonce } from "siwe"
 import Loading from "react-loading"
 import { Checkbox } from "./chakra-ui/checkbox"
-import { Box, Center, Input, HStack, Text, VStack, Portal, Dialog, List } from "@chakra-ui/react"
+import { Box, Center, Input, HStack, Text, VStack, Portal, Dialog, List, Loader, Stack, Group } from "@chakra-ui/react"
 import { ClipboardButton, ClipboardIconButton, ClipboardInput, ClipboardLabel, ClipboardRoot } from "./chakra-ui/clipboard"
 import { InputGroup } from "./chakra-ui/input-group"
-import Aquafier, { AquaTree, AquaTreeWrapper, Revision } from "aqua-js-sdk"
+import Aquafier, { AquaTree, AquaTreeWrapper, Revision, WitnessNetwork } from "aqua-js-sdk"
 import { RevionOperation } from "../models/RevisionOperation"
 import JSZip from "jszip";
 import { AquaJsonInZip, AquaNameWithHash } from "../models/Aqua"
 
-// async function storeWitnessTx(file_id: number, filename: string, txhash: string, ownerAddress: string, network: string, files: ApiFileInfo[], setFiles: any, backend_url: string) {
-
-//     const formData = new URLSearchParams();
-
-//     formData.append('file_id', file_id.toString());
-//     formData.append('filename', filename);
-//     formData.append('tx_hash', txhash);
-//     formData.append('wallet_address', ownerAddress);
-//     formData.append('network', network);
-
-//     const url = `${backend_url}/explorer_witness_file`
-
-//     const response = await axios.post(url, formData, {
-//         headers: {
-//             'Content-Type': 'application/x-www-form-urlencoded'
-//         }
-//     })
-
-//     const res = await response.data;
-//     // let logs: Array<string> = res.logs
-//     // // logs.forEach((item) => {
-//     // //    //  console.log("**>" + item + "\n.")
-//     // // })
-
-//     if (response.status === 200) {
-//        //  console.log(res)
-//         const resp: ApiFileInfo = res.file
-//         const array: ApiFileInfo[] = [];
-//         for (let index = 0; index < files.length; index++) {
-//             const element = files[index];
-//             if (element.id === file_id) {
-//                 array.push(resp)
-//             } else {
-//                 array.push(element)
-//             }
-//         }
-//         setFiles(array)
-//         toaster.create({
-//             description: "Witnessing successful",
-//             type: "success"
-//         })
-//     }
-
-// }
 
 
 
 
 export const WitnessAquaChain = ({ apiFileInfo, backendUrl, nonce }: RevionOperation) => {
-    const { files, setFiles, metamaskAddress, selectedFileInfo, setSelectedFileInfo } = useStore(appStore)
+    const { setFiles, metamaskAddress, selectedFileInfo, setSelectedFileInfo, user_profile } = useStore(appStore)
     const [witnessing, setWitnessing] = useState(false)
 
 
     const witnessFileHandler = async () => {
-        // const witness_event_verification_hash = sha3.sha3_512("a69f73cca23a9ac5c8b567dc185a756e97c982164fe25859e0d1dcc1475c80a615b2123af1f5f94c11e3e9402c3ac558f500199d95b6d3e301758586281dcd26" + lastRevisionVerificationHash)
         if (window.ethereum) {
             setWitnessing(true)
             try {
@@ -96,7 +51,10 @@ export const WitnessAquaChain = ({ apiFileInfo, backendUrl, nonce }: RevionOpera
                     revision: "",
                     fileObject: undefined
                 }
-                const result = await aquafier.witnessAquaTree(aquaTreeWrapper, "eth", "sepolia", "metamask", dummyCredential())
+                let xCredentials = dummyCredential()
+                xCredentials.alchemy_key = user_profile?.alchemy_key ?? ""
+                xCredentials.witness_eth_network = user_profile?.witness_network ?? "sepolia"
+                const result = await aquafier.witnessAquaTree(aquaTreeWrapper, "eth", xCredentials.witness_eth_network as WitnessNetwork, "metamask", xCredentials)
                 if (result.isErr()) {
                     toaster.create({
                         description: `Error witnessing failed`,
@@ -128,24 +86,20 @@ export const WitnessAquaChain = ({ apiFileInfo, backendUrl, nonce }: RevionOpera
                     });
 
                     if (response.status === 200 || response.status === 201) {
-                        //  console.log("update state ...")
-                        const newFiles: ApiFileInfo[] = [];
-                        const keysPar = Object.keys(apiFileInfo.aquaTree!.revisions!)
-                        files.forEach((item) => {
-                            const keys = Object.keys(item.aquaTree!.revisions!)
-                            if (areArraysEqual(keys, keysPar)) {
-                                newFiles.push({
-                                    ...apiFileInfo,
-                                    aquaTree: result.data.aquaTree!,
-                                })
-                            } else {
-                                newFiles.push(item)
-                            }
-                        })
-                        let _selectFileInfo = selectedFileInfo!!
-                        _selectFileInfo.aquaTree = result.data.aquaTree!
-                        setSelectedFileInfo(_selectFileInfo)
+                        let newFiles: ApiFileInfo[] = response.data.data
                         setFiles(newFiles)
+
+                        if (selectedFileInfo) {
+                            let genesisHash = getGenesisHash(selectedFileInfo.aquaTree!)
+                            for (let i = 0; i < newFiles.length; i++) {
+                                const newFile = newFiles[i];
+                                let newGenesisHash = getGenesisHash(newFile.aquaTree!)
+                                if (newGenesisHash == genesisHash) {
+                                    setSelectedFileInfo(newFile)
+                                }
+                            }
+                        }
+
                     }
 
                     toaster.create({
@@ -157,7 +111,7 @@ export const WitnessAquaChain = ({ apiFileInfo, backendUrl, nonce }: RevionOpera
                 setWitnessing(false)
 
             } catch (error) {
-                //  console.log("Error  ", error)
+                console.log("Error  ", error)
                 setWitnessing(false)
                 toaster.create({
                     description: `Error during witnessing`,
@@ -185,8 +139,9 @@ export const WitnessAquaChain = ({ apiFileInfo, backendUrl, nonce }: RevionOpera
     )
 }
 
+
 export const SignAquaChain = ({ apiFileInfo, backendUrl, nonce }: RevionOperation) => {
-    const { files, setFiles, setSelectedFileInfo, selectedFileInfo } = useStore(appStore)
+    const { files, setFiles, setSelectedFileInfo, selectedFileInfo, user_profile, session, backend_url } = useStore(appStore)
     const [signing, setSigning] = useState(false)
 
     const signFileHandler = async () => {
@@ -202,7 +157,11 @@ export const SignAquaChain = ({ apiFileInfo, backendUrl, nonce }: RevionOperatio
                     fileObject: undefined
                 }
 
-                const result = await aquafier.signAquaTree(aquaTreeWrapper, "metamask", dummyCredential())
+                let xCredentials = dummyCredential()
+                xCredentials.witness_eth_network = user_profile?.witness_network ?? "sepolia"
+
+
+                const result = await aquafier.signAquaTree(aquaTreeWrapper, "metamask", xCredentials)
                 if (result.isErr()) {
                     toaster.create({
                         description: `Error signing failed`,
@@ -234,7 +193,46 @@ export const SignAquaChain = ({ apiFileInfo, backendUrl, nonce }: RevionOperatio
                     });
 
                     if (response.status === 200 || response.status === 201) {
-                        if (response.status === 200 || response.status === 201) {
+                        if (response.data.data) {
+
+                            let newFiles: ApiFileInfo[] = response.data.data
+
+                            // let data = {
+                            //     ...selectedFileInfo!!,
+                            //     aquaTree: result.data.aquaTree!!
+                            // }
+                            // if (data) {
+                            //     setSelectedFileInfo(data)
+                            // }
+                            // setFiles(newFiles)
+
+                            try {
+                                let url = ensureDomainUrlHasSSL(`${backend_url}/explorer_files`)
+                                const files = await fetchFiles(session!.address!, url, session!.nonce);
+                                setFiles(files);
+
+                                if (selectedFileInfo) {
+                                    let genesisHash = getGenesisHash(selectedFileInfo.aquaTree!)
+                                    for (let i = 0; i < newFiles.length; i++) {
+                                        const newFile = newFiles[i];
+                                        let newGenesisHash = getGenesisHash(newFile.aquaTree!)
+                                        if (newGenesisHash == genesisHash) {
+                                            setSelectedFileInfo(newFile)
+                                        }
+                                    }
+                                }
+
+
+                            } catch (e) {
+                                //  console.log(`Error ${e}`)
+                                toaster.create({
+                                    description: "Error updating files",
+                                    type: "error"
+                                })
+                                // document.location.reload()
+                            }
+
+                        } else {
                             //  console.log("update state ...")
                             const newFiles: ApiFileInfo[] = [];
                             const keysPar = Object.keys(apiFileInfo.aquaTree!.revisions!)
@@ -291,12 +289,22 @@ export const SignAquaChain = ({ apiFileInfo, backendUrl, nonce }: RevionOperatio
 
 
 export const DeleteAquaChain = ({ apiFileInfo, backendUrl, nonce }: RevionOperation) => {
-    const { files, setFiles, session, backend_url } = useStore(appStore)
+    const { files, setFiles, session, backend_url, systemFileInfo } = useStore(appStore)
     const [deleting, setDeleting] = useState(false)
     const [open, setOpen] = useState(false)
+    const [isLoading, setIsloading] = useState(false)
     const [aquaTreesAffected, setAquaTreesAffected] = useState<ApiFileInfo[]>([])
 
     const deleteFileApi = async () => {
+        if (isLoading) {
+            toaster.create({
+                description: "File deletion in progress",
+                type: "info"
+            })
+            return
+        }
+        setIsloading(true)
+        setDeleting(true)
         try {
             const allRevisionHashes = Object.keys(apiFileInfo.aquaTree!.revisions!);
             const lastRevisionHash = allRevisionHashes[allRevisionHashes.length - 1]
@@ -323,6 +331,9 @@ export const DeleteAquaChain = ({ apiFileInfo, backendUrl, nonce }: RevionOperat
                 // })
 
                 // setFiles(newFiles)
+                setOpen(!open)
+
+                setIsloading(false)
                 toaster.create({
                     description: "File deleted successfully",
                     type: "success"
@@ -356,8 +367,9 @@ export const DeleteAquaChain = ({ apiFileInfo, backendUrl, nonce }: RevionOperat
             document.location.reload()
         }
     }
+
     const deleteFileAction = async () => {
-        setDeleting(true)
+
 
         let allFilesAffected: ApiFileInfo[] = []
         let genesisOfFileBeingDeleted = getGenesisHash(apiFileInfo.aquaTree!)
@@ -369,25 +381,37 @@ export const DeleteAquaChain = ({ apiFileInfo, backendUrl, nonce }: RevionOperat
             if (genesisHash == genesisOfFileBeingDeleted) {
                 console.log(`skipping  ${fileNameBeingDeleted} the file is being deleted`)
             } else {
-                let indexValues = Object.values(anAquaTree.aquaTree!.file_index)
-                for (let fileName of indexValues) {
-                    if (fileNameBeingDeleted == fileName) {
-                        allFilesAffected.push(anAquaTree)
+
+
+                let { isWorkFlow } = isWorkFlowData(anAquaTree.aquaTree!, systemFileInfo.map((e) => {
+                    try {
+                        return getAquaTreeFileName(e.aquaTree!!)
+                    } catch (e) {
+                        console.log("Error")
+                        return ""
+                    }
+                }));
+
+                if (!isWorkFlow) {
+                    let indexValues = Object.values(anAquaTree.aquaTree!.file_index)
+                    for (let fileName of indexValues) {
+                        if (fileNameBeingDeleted == fileName) {
+                            allFilesAffected.push(anAquaTree)
+                        }
                     }
                 }
             }
         }
-        setAquaTreesAffected(allFilesAffected)
+
 
         if (allFilesAffected.length == 0) {
             await deleteFileApi()
+        } else {
+            setAquaTreesAffected(allFilesAffected)
+            setOpen(true)
         }
 
-        setOpen(true)
 
-
-
-        setDeleting(false)
     }
 
 
@@ -404,43 +428,45 @@ export const DeleteAquaChain = ({ apiFileInfo, backendUrl, nonce }: RevionOperat
             <Dialog.Root lazyMount open={open} onOpenChange={(e) => {
                 setOpen(e.open)
             }}>
-                {/* <Dialog.Trigger asChild>
-        <Button variant="outline">Open</Button>
-      </Dialog.Trigger> */}
                 <Portal>
                     <Dialog.Backdrop />
                     <Dialog.Positioner>
                         <Dialog.Content>
                             <Dialog.Header>
-                                <Dialog.Title> This action will corrupt your some file(s)</Dialog.Title>
+                                <Dialog.Title>This action will corrupt your some  file(s)</Dialog.Title>
                             </Dialog.Header>
                             <Dialog.Body>
                                 <Text>The following aqua trees will become corrupt, as they reference the file you are about to delete</Text>
-                                <List.Root as="ol">
-
-                                    {aquaTreesAffected.map((apiFileInfoItem) => {
-                                        return <List.Item>
+                                <List.Root as="ol" ml={5} mt={5} alignItems={'start'}>
+                                    {aquaTreesAffected.map((apiFileInfoItem, index) => {
+                                        return <List.Item key={index}>
                                             {getFileName(apiFileInfoItem.aquaTree!) ?? "--error--"}
                                         </List.Item>
                                     })}
                                 </List.Root>
-
                             </Dialog.Body>
-                            {/* 
-                                <Dialog.ActionTrigger asChild>
-                                    <Button variant="outline">Cancel</Button>
-                                </Dialog.ActionTrigger>
-                                <Button>Save</Button>
-                            </Dialog.Footer> */}
                             <Dialog.Footer>
-
-                                <Dialog.CloseTrigger asChild>
-                                    <Button onClick={() => {
-                                        deleteFileApi()
-                                    }} size="sm" colorPalette={'red'} >
-                                        Proceed to delete &nbsp;<LuX />
+                                <HStack>
+                                    {/* <Dialog.CloseTrigger asChild> */}
+                                    <Button variant="outline" size="sm" onClick={() => {
+                                        setOpen(!open)
+                                    }}>
+                                        Cancel
                                     </Button>
-                                </Dialog.CloseTrigger>
+                                    {/* </Dialog.CloseTrigger> */}
+                                    {/* <Dialog.CloseTrigger asChild> */}
+                                    <Button
+                                        onClick={() => {
+                                            deleteFileApi()
+                                        }}
+
+                                        size="sm"
+                                        colorPalette={'red'}
+                                    >
+                                        Proceed to delete &nbsp;<LuTrash />
+                                    </Button>
+                                    {/* </Dialog.CloseTrigger> */}
+                                </HStack>
                             </Dialog.Footer>
                         </Dialog.Content>
                     </Dialog.Positioner>
@@ -533,7 +559,7 @@ export const DownloadAquaChain = ({ file }: { file: ApiFileInfo }) => {
             // Create a download link
             const link = document.createElement("a");
             link.href = URL.createObjectURL(blob);
-            link.download = "aqua_chain.zip";
+            link.download = "aqua_tree.zip";
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
@@ -868,7 +894,7 @@ export const ShareButton = ({ item, nonce }: IShareButton) => {
 
 
 export const LinkButton = ({ item, nonce }: IShareButton) => {
-    const { backend_url, setFiles, files, session } = useStore(appStore)
+    const { backend_url, setFiles, files, session, systemFileInfo } = useStore(appStore)
     const [isOpen, setIsOpen] = useState(false)
     const [linking, setLinking] = useState(false)
     const [linkItem, setLinkItem] = useState<ApiFileInfo | null>(null)
@@ -926,37 +952,7 @@ export const LinkButton = ({ item, nonce }: IShareButton) => {
             });
 
             if (response.status === 200 || response.status === 201) {
-                //  console.log("update state ...")
-                // const newFiles: ApiFileInfo[] = [];
-                // const keysPar = Object.keys(item.aquaTree!.revisions!)
-                // files.forEach((itemFile) => {
-                //     const keys = Object.keys(itemFile.aquaTree!.revisions!)
-                //     if (areArraysEqual(keys, keysPar)) {
-                //         let newData = {
-                //             ...itemFile,
-                //             aquaTree: result.data.aquaTree!,
-                //         }
 
-                //         let name = getFileName(result.data.aquaTree!)
-
-                //         newData.fileObject.push({
-                //             fileContent: linkItem!.aquaTree!,
-                //             path: "",
-                //             fileName: `${name}.aqua.json`,
-                //             fileSize: estimateStringFileSize(JSON.stringify(linkItem!.aquaTree!, null, 4))
-                //         })
-
-                //         newData.fileObject.push(...linkItem.fileObject)
-
-                //         newFiles.push(newData)
-
-                //     } else {
-                //         newFiles.push(itemFile)
-                //     }
-                // })
-
-                // //  console.log(`new file ${JSON.stringify(newFiles, null, 4)}`)
-                // setFiles(newFiles)
 
                 await refetchAllUserFiles();
 
@@ -1016,10 +1012,13 @@ export const LinkButton = ({ item, nonce }: IShareButton) => {
                         {files?.length <= 1 ? <VStack>
                             <Alert status="warning" title={"For linking to work you need multiple files, curently you only have " + files?.length} />
                         </VStack> :
-                            <VStack textAlign={'start'}>
-                                <p>
+                            <Stack textAlign={'start'}>
+                                <Text>
                                     {`You are about to link ${item.fileObject[0].fileName}. Once a file is linked, don't delete it otherwise it will be broken if one tries to use the Aqua tree.`}
-                                </p>
+                                </Text>
+                                <Text>
+                                    Select the file you want to link to.
+                                </Text>
 
 
 
@@ -1037,32 +1036,43 @@ export const LinkButton = ({ item, nonce }: IShareButton) => {
                                         const keys = Object.keys(itemLoop.aquaTree!.revisions!)
                                         const keysPar = Object.keys(item.aquaTree!.revisions!)
                                         const res = areArraysEqual(keys, keysPar)
+                                        const { isWorkFlow } = isWorkFlowData(itemLoop.aquaTree!, systemFileInfo.map((e) => getFileName(e.aquaTree!!)))
                                         //  console.log(`res ${res} ${JSON.stringify(itemLoop.fileObject)}`)
                                         if (res) {
                                             return <div key={index}> </div>
+                                        }
+                                        if (isWorkFlow) {
+                                            let fileName = getFileName(itemLoop.aquaTree!!)
+                                            return <div key={index}>
+                                                <Text>
+                                                    {index + 1}. {`${fileName} - This is a workflow file. You can't link to it.`}
+                                                </Text>
+                                            </div>
                                         }
 
                                         let fileObject = getAquaTreeFileObject(itemLoop)
 
                                         if (fileObject) {
 
-                                            return <Checkbox
-                                                key={index}
-                                                aria-label="Select File"
-                                                checked={linkItem == null ? false :
-                                                    Object.keys(linkItem?.aquaTree?.revisions!)[0] === Object.keys(itemLoop.aquaTree?.revisions!)[0]}
-                                                onCheckedChange={(changes) => {
-                                                    if (changes.checked) {
-                                                        setLinkItem(itemLoop)
-                                                    } else {
-                                                        setLinkItem(null)
-                                                    }
+                                            return <Group key={index}>
+                                                <Text>{index + 1}.</Text>
+                                                <Checkbox
+                                                    aria-label="Select File"
+                                                    checked={linkItem == null ? false :
+                                                        Object.keys(linkItem?.aquaTree?.revisions!)[0] === Object.keys(itemLoop.aquaTree?.revisions!)[0]}
+                                                    onCheckedChange={(changes) => {
+                                                        if (changes.checked) {
+                                                            setLinkItem(itemLoop)
+                                                        } else {
+                                                            setLinkItem(null)
+                                                        }
 
-                                                }}
-                                                value={index.toString()}
-                                            >
-                                                {itemLoop.fileObject[0].fileName}
-                                            </Checkbox>
+                                                    }}
+                                                    value={index.toString()}
+                                                >
+                                                    {itemLoop.fileObject[0].fileName}
+                                                </Checkbox>
+                                            </Group>
                                         } else {
                                             return <Text>Error</Text>
                                         }
@@ -1072,12 +1082,12 @@ export const LinkButton = ({ item, nonce }: IShareButton) => {
                                 {
                                     linking ?
                                         <Center>
-                                            <Loading />
+                                            <Loader />
                                         </Center>
                                         : null
                                 }
 
-                            </VStack>
+                            </Stack>
                         }
                     </DialogBody>
                     <DialogFooter>

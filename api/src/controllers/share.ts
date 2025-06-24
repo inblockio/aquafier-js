@@ -7,10 +7,11 @@ import { SessionQuery, ShareRequest, SiweRequest } from '../models/request_model
 import { AquaTree, FileObject, OrderRevisionInAquaTree, reorderAquaTreeRevisionsProperties } from 'aqua-js-sdk';
 import { getHost, getPort } from '../utils/api_utils';
 import { createAquaTreeFromRevisions, fetchAquaTreeWithForwardRevisions, saveAquaTree } from '../utils/revisions_utils';
+import { SYSTEM_WALLET_ADDRESS } from '../models/constants';
+import { sendToUserWebsockerAMessage } from './websocketController';
+import WebSocketActions from '..//constants/constants';
 
 export default async function shareController(fastify: FastifyInstance) {
-    // get current session
-    // Can session be used as a middleware?
 
     fastify.get('/share_data/:hash', async (request, reply) => {
 
@@ -52,7 +53,7 @@ export default async function shareController(fastify: FastifyInstance) {
 
             }
 
-            if (contractData?.receiver?.toLowerCase() != "0xfabacc150f2a0000000000000000000000000000" && contractData?.receiver != session.address) {
+            if (contractData?.receiver?.toLowerCase() != SYSTEM_WALLET_ADDRESS && contractData?.receiver != session.address) {
                 return reply.code(401).send({ success: false, message: "The aqua tree is not shared with you" });
             }
 
@@ -80,10 +81,10 @@ export default async function shareController(fastify: FastifyInstance) {
 
             if (contractData.option == "latest") {
                 let [_anAquaTree, _fileObject] = await fetchAquaTreeWithForwardRevisions(revision_pubkey_hash, url)
-                
+
                 let orderRevisionPrpoerties = reorderAquaTreeRevisionsProperties(_anAquaTree)
                 let sortedAquaTree = OrderRevisionInAquaTree(orderRevisionPrpoerties)
-                
+
                 anAquaTree = sortedAquaTree
                 fileObject = _fileObject
 
@@ -107,10 +108,12 @@ export default async function shareController(fastify: FastifyInstance) {
 
             // return aqua tree
             // return displayData
-            return reply.code(200).send({ success: true, data: {
-                displayData: displayData,
-                contractData: contractData
-            } });
+            return reply.code(200).send({
+                success: true, data: {
+                    displayData: displayData,
+                    contractData: contractData
+                }
+            });
 
         } catch (error) {
             console.error("Error fetching session:", error);
@@ -170,6 +173,10 @@ export default async function shareController(fastify: FastifyInstance) {
                 reference_count: 1
             }
         });
+
+
+        //trigger the other party to refetch explorer files
+        sendToUserWebsockerAMessage(recipient, WebSocketActions.REFETCH_SHARE_CONTRACTS)
 
         return reply.code(200).send({ success: true, message: "share contract created successfully." });
 

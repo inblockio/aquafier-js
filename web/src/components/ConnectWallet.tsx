@@ -26,7 +26,13 @@ const CustomCopyButton = ({ value }: { value: string }) => {
   )
 }
 
-export default function ConnectWallet() {
+
+interface ConnectWalletProps {
+    disConnectWebsocket: () => void
+}
+
+
+export const  ConnectWallet: React.FC<ConnectWalletProps> = ({ disConnectWebsocket }) => {
   const { setMetamaskAddress, session, setFiles, avatar, setAvatar, setUserProfile, backend_url, setSession } = useStore(appStore);
 
   const [isOpen, setIsOpen] = useState(false);
@@ -213,14 +219,16 @@ export default function ConnectWallet() {
         setAvatar(undefined);
         setSession(null)
         setFiles([]);
+        disConnectWebsocket()
       }
     } catch (error: any) {
-      if (error?.response?.status === 404) {
+      console.log("error", error)
+      // if (error?.response?.status === 404 || error?.response?.status === 401) {
         setMetamaskAddress(null);
         setAvatar(undefined);
         setSession(null)
         setFiles([]);
-      }
+      // }
     }
     setLoading(false);
     setIsOpen(false);

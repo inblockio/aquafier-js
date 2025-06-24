@@ -316,7 +316,6 @@ export const ImportAquaTree = ({ file, uploadedIndexes, fileIndex, updateUploade
             // return all user files
             const res = response.data
 
-
             setFiles([...res.files])
             setUploaded(true)
             setUploading(false)
@@ -347,8 +346,9 @@ export const ImportAquaTree = ({ file, uploadedIndexes, fileIndex, updateUploade
             //check if the file is a valid aqua tree 
             let fileContent = await readFileAsText(file)
             let aquaTree: AquaTree = JSON.parse(fileContent)
+
             let [isValidAquaTree, failureReason] = validateAquaTree(aquaTree)
-            console.log(`is aqua tree valid ${isValidAquaTree} failure reason ${failureReason}`)
+            
             if (!isValidAquaTree) {
                 setUploading(false)
                 toaster.create({
@@ -361,7 +361,7 @@ export const ImportAquaTree = ({ file, uploadedIndexes, fileIndex, updateUploade
             // Find file hash from aqua tree
             let fileHash = ""
             for (let item of Object.values(aquaTree.revisions)) {
-                if (item.revision_type === "file" && item.file_hash) {
+                if ((item.revision_type === "file" || item.revision_type === "form") && item.file_hash) {
                     fileHash = item.file_hash
                     break
                 }

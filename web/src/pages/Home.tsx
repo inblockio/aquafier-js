@@ -1,19 +1,24 @@
-import { Box, Center, Container, Stack, Text, VStack } from "@chakra-ui/react"
+import { Box, Center, Container, Stack, Text, VStack,   } from "@chakra-ui/react"
 import { FileUploadDropzone, FileUploadList, FileUploadRoot } from "../components/chakra-ui/file-button"
 import FilesTable from "../components/chakra-ui/table"
 import { useStore } from "zustand"
 import appStore from "../store"
-import ConnectWallet from "../components/ConnectWallet"
+import {ConnectWallet} from "../components/ConnectWallet"
+
 
 const Home = () => {
     const { session } = useStore(appStore)
 
+   
+
+ 
     return (
         <>
             {
                 session ? (
                     <Container fluid maxWidth={{ base: 'vw', md: '10/12' }} py={'14'} px={{ base: 1, md: 10 }}>
                         <VStack alignItems={'start'} gap={'10'}>
+
                             <FileUploadRoot borderRadius={'2xl'} alignItems="stretch" maxFiles={10} cursor={'pointer'}>
                                 <FileUploadDropzone
                                     borderRadius={'2xl'}
@@ -46,12 +51,14 @@ const Home = () => {
                         <Center h={'100%'}>
                             <Stack>
                                 <Text>Connect wallet to upload files</Text>
-                                <ConnectWallet />
+                                <ConnectWallet  disConnectWebsocket={()=>{console.log('ws need global storage')}}/>
                             </Stack>
                         </Center>
                     </Container>
                 )
             }
+
+          
         </>
     )
 }

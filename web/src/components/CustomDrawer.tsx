@@ -3,7 +3,7 @@ import { Button } from "./chakra-ui/button"
 import { LuChevronDown, LuChevronUp, LuEye } from "react-icons/lu"
 import { Box, Card, Collapsible, For, GridItem, SimpleGrid, VStack } from "@chakra-ui/react"
 import { TimelineRoot } from "./chakra-ui/timeline"
-import { ensureDomainUrlHasSSL, getAquaTreeFileObject, getFileName, isArrayBufferText } from "../utils/functions"
+import { ensureDomainUrlHasSSL, getAquaTreeFileName, getAquaTreeFileObject, getFileName, isArrayBufferText, isWorkFlowData } from "../utils/functions"
 import { Alert } from "./chakra-ui/alert"
 import Aquafier, { FileObject } from "aqua-js-sdk"
 import FilePreview from "./FilePreview"
@@ -13,6 +13,7 @@ import { useStore } from "zustand"
 import appStore from "../store"
 import { getFileHashFromUrl } from "../utils/functions";
 import { ApiFileInfo } from "../models/FileInfo"
+// import { toaster } from "./chakra-ui/toaster"
 
 
 export const ChainDetailsBtn = ({ callBack }: IChainDetailsBtn) => {
@@ -28,7 +29,9 @@ export const ChainDetailsBtn = ({ callBack }: IChainDetailsBtn) => {
 export const CompleteChainView = ({ callBack, selectedFileInfo }: ICompleteChainView) => {
 
     const [showMoreDetails, setShowMoreDetails] = useState(false)
-    const { session, setApiFileData, apiFileData } = useStore(appStore)
+
+    const [isSelectedFileAWorkFlow, setSelectedFileAWorkFlow] = useState(false)
+    const { session, setApiFileData, apiFileData, systemFileInfo, user_profile } = useStore(appStore)
     const [deletedRevisions, setDeletedRevisions] = useState<string[]>([])
     const [verificationResults, setVerificationResults] = useState<VerificationHashAndResult[]>([])
     const [isProcessing, setIsProcessing] = useState(false)
@@ -137,6 +140,7 @@ export const CompleteChainView = ({ callBack, selectedFileInfo }: ICompleteChain
                     if (!fileData) {
                         // If not in cache, create a promise to fetch it
                         const fetchPromise = fetchFileData(fileContentUrl).then(data => {
+
                             if (data && fileHash.length > 0) {
                                 // Update cache
                                 // setApiFileData((prev: any) => {
@@ -183,6 +187,7 @@ export const CompleteChainView = ({ callBack, selectedFileInfo }: ICompleteChain
 
                         if (data instanceof ArrayBuffer) {
                             if (isArrayBufferText(data)) {
+                                console.log("is array buffr text .....")
                                 fileItem.fileContent = new TextDecoder().decode(data);
                             } else {
                                 fileItem.fileContent = new Uint8Array(data);
@@ -196,14 +201,37 @@ export const CompleteChainView = ({ callBack, selectedFileInfo }: ICompleteChain
                 }
             }
 
+            // Toast to warn the user if they are using default alchemykey
+            // if (user_profile?.alchemy_key == "") {
+            //     toaster.create({
+            //         description: `Please add your alchemy key to continue`,
+            //         type: "warning"
+            //     })
+            // }else if(user_profile?.alchemy_key == "ZaQtnup49WhU7fxrujVpkFdRz4JaFRtZ"){
+            //     toaster.create({
+            //         description: `You are using default alchemy key. Please update it in settings to get better results`,
+            //         type: "warning"
+            //     })
+            // }
+
             // Process revisions in parallel where possible
             const verificationPromises = revisionHashes.map(async revisionHash => {
+                
                 const revision = fileInfo.aquaTree!.revisions[revisionHash];
+
                 const result = await aquafier.verifyAquaTreeRevision(
                     fileInfo.aquaTree!,
                     revision,
                     revisionHash,
-                    fileObjectVerifier
+                    fileObjectVerifier,
+                    {
+                        mnemonic: "",
+                        nostr_sk: "",
+                        did_key: "",
+                        alchemy_key: user_profile?.alchemy_key ?? "",
+                        witness_eth_network: user_profile?.witness_network ?? "sepolia",
+                        witness_method: "metamask",
+                    }
                 )
                 console.log("Hash: ", revisionHash, "\nResult", result)
                 return ({
@@ -256,10 +284,25 @@ export const CompleteChainView = ({ callBack, selectedFileInfo }: ICompleteChain
     useEffect(() => {
         if (selectedFileInfo) {
             verifyAquaTreeRevisions(selectedFileInfo);
+
+            let someData = systemFileInfo.map((e) => {
+                try {
+                    return getAquaTreeFileName(e.aquaTree!!)
+                } catch (e) {
+                    console.log("Error")
+                    return ""
+                }
+            })
+            let { isWorkFlow, workFlow } = isWorkFlowData(selectedFileInfo.aquaTree!!, someData);
+            console.log(`Drawer selected file aqua tree is workflow ${isWorkFlow} -- workflow name ${workFlow}`)
+            if (isWorkFlow) {
+                setSelectedFileAWorkFlow(true)
+            }
+
         }
     }, [
         // Only re-run when the number of revisions changes or when deletions happen
-        selectedFileInfo,
+        JSON.stringify(selectedFileInfo),
         Object.keys(selectedFileInfo?.aquaTree?.revisions ?? {}).length,
         deletedRevisions.length
     ]);
@@ -286,7 +329,7 @@ export const CompleteChainView = ({ callBack, selectedFileInfo }: ICompleteChain
                                 <VStack gap={'4'}>
                                     <Alert status={displayColorBasedOnVerificationAlert(verificationResults)} title={displayBasedOnVerificationStatusText(verificationResults)} />
 
-                                    <RevisionDetailsSummary isVerificationComplete={isVerificationComplete(verificationResults)} isVerificationSuccess={isVerificationSuccessful(verificationResults)} fileInfo={selectedFileInfo!!} />
+                                    <RevisionDetailsSummary  isWorkFlow={isSelectedFileAWorkFlow} isVerificationComplete={isVerificationComplete(verificationResults)} isVerificationSuccess={isVerificationSuccessful(verificationResults)} fileInfo={selectedFileInfo!!} />
 
                                     <Box w={'100%'}>
                                         <Collapsible.Root open={showMoreDetails}>

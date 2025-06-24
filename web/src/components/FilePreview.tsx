@@ -2,10 +2,11 @@ import { FileObject } from "aqua-js-sdk";
 import { useEffect, useRef, useState } from "react";
 import { useStore } from "zustand";
 import appStore from "../store";
-import { ensureDomainUrlHasSSL } from "../utils/functions";
+import { ensureDomainUrlHasSSL, isJSONKeyValueStringContent } from "../utils/functions";
 import { PDFJSViewer, PDFControlsProps } from "pdfjs-react-viewer";
 import { Group, IconButton, Text } from "@chakra-ui/react";
 import { LuChevronLeft, LuChevronRight } from "react-icons/lu";
+import  {FilePreviewAquaTreeFromTemplate} from "./FilePreviewAquaTreeFromTemplate"
 
 // Define file extensions to content type mappings
 const fileExtensionMap: { [key: string]: string } = {
@@ -40,6 +41,22 @@ const fileExtensionMap: { [key: string]: string } = {
 
 interface IFilePreview {
     fileInfo: FileObject;
+}
+
+export const PdfControls = ({ currentPage, isNextDisabled, isPrevDisabled, onNextPage, onPrevPage, totalPages }: PDFControlsProps) => {
+    return (
+        <Group mb={"4"}>
+            <IconButton disabled={isPrevDisabled} onClick={onPrevPage} size={"xs"} borderRadius={"full"}>
+                <LuChevronLeft />
+            </IconButton>
+            <Text>
+                {`Page ${currentPage} / ${totalPages}`}
+            </Text>
+            <IconButton disabled={isNextDisabled} onClick={onNextPage} size={"xs"} borderRadius={"full"}>
+                <LuChevronRight />
+            </IconButton>
+        </Group>
+    )
 }
 
 // Add declaration for docx-preview global type
@@ -189,7 +206,7 @@ const FilePreview: React.FC<IFilePreview> = ({ fileInfo }) => {
             }
         }
     };
-    
+
     useEffect(() => {
         const fetchFile = async () => {
             setIsLoading(true);
@@ -213,7 +230,7 @@ const FilePreview: React.FC<IFilePreview> = ({ fileInfo }) => {
                     // If content type is missing or generic, try to detect from filename
                     if (contentType === "application/octet-stream" || contentType === "") {
                         contentType = getContentTypeFromFileName(fileInfo.fileName || "");
-                      //  console.log("Determined content type from filename:", contentType);
+                        //  console.log("Determined content type from filename:", contentType);
                     }
 
                     // Clone response and get data
@@ -234,7 +251,7 @@ const FilePreview: React.FC<IFilePreview> = ({ fileInfo }) => {
 
                     // Create blob with correct content type
                     const blob = new Blob([arrayBuffer], { type: contentType });
-                  //  console.log("Created blob with type:", contentType, "size:", blob.size);
+                    //  console.log("Created blob with type:", contentType, "size:", blob.size);
 
                     setFileType(contentType);
 
@@ -253,7 +270,7 @@ const FilePreview: React.FC<IFilePreview> = ({ fileInfo }) => {
                 else if (fileInfo.fileContent && typeof fileInfo.fileContent !== 'string') {
                     // Determine content type from filename
                     let contentType = getContentTypeFromFileName(fileInfo.fileName || "");
-                  //  console.log("Determined content type for binary data:", contentType);
+                    //  console.log("Determined content type for binary data:", contentType);
 
                     // Create blob with detected content type
                     const blob = new Blob([fileInfo.fileContent as Uint8Array], { type: contentType });
@@ -271,8 +288,11 @@ const FilePreview: React.FC<IFilePreview> = ({ fileInfo }) => {
                 }
                 // Handle if fileContent is plain text
                 else if (typeof fileInfo.fileContent === 'string') {
+
+
                     setTextContent(fileInfo.fileContent);
                     setFileType("text/plain");
+
                 }
             } catch (error) {
                 console.error("Error processing file:", error);
@@ -289,7 +309,7 @@ const FilePreview: React.FC<IFilePreview> = ({ fileInfo }) => {
         };
     }, [JSON.stringify(fileInfo), session?.nonce]);
 
-    
+
     if (isLoading) return <p>Loading...</p>;
 
     // Render based on file type
@@ -298,23 +318,11 @@ const FilePreview: React.FC<IFilePreview> = ({ fileInfo }) => {
         return <img src={fileURL} alt="File preview" style={{ maxWidth: "100%", height: "auto" }} />;
     }
 
+
+
     // PDF files
     if (fileType === "application/pdf") {
-        const PdfControls = ({ currentPage, isNextDisabled, isPrevDisabled, onNextPage, onPrevPage, totalPages }: PDFControlsProps) => {
-            return (
-                <Group mb={"4"}>
-                    <IconButton disabled={isPrevDisabled} onClick={onPrevPage} size={"xs"} borderRadius={"full"}>
-                        <LuChevronLeft />
-                    </IconButton>
-                    <Text>
-                        {`Page ${currentPage} / ${totalPages}`}
-                    </Text>
-                    <IconButton disabled={isNextDisabled} onClick={onNextPage} size={"xs"} borderRadius={"full"}>
-                        <LuChevronRight />
-                    </IconButton>
-                </Group>
-            )
-        }
+        console.log("File url: ", fileURL)
         return <PDFJSViewer pdfUrl={fileURL} renderControls={PdfControls} />;
     }
 
@@ -322,6 +330,15 @@ const FilePreview: React.FC<IFilePreview> = ({ fileInfo }) => {
     if (fileType.startsWith("text/") ||
         fileType === "application/json" ||
         fileType === "application/xml") {
+        let newTxtContent = textContent;
+
+        if (fileType === "application/json") {
+            let isForm = isJSONKeyValueStringContent(newTxtContent)
+            console.log(`is this ${newTxtContent} is form ${isForm}-----`)
+            if (isForm) {
+                return <FilePreviewAquaTreeFromTemplate formData={JSON.parse(newTxtContent)} />
+            }
+        }
         return (
             <div style={{
                 whiteSpace: "pre-wrap",
@@ -333,7 +350,7 @@ const FilePreview: React.FC<IFilePreview> = ({ fileInfo }) => {
                 maxHeight: "600px",
                 overflow: "auto"
             }}>
-                {textContent}
+                {newTxtContent}
             </div>
         );
     }
@@ -387,7 +404,7 @@ const FilePreview: React.FC<IFilePreview> = ({ fileInfo }) => {
     // Word documents
     if (fileType === "application/msword" ||
         fileType === "application/vnd.openxmlformats-officedocument.wordprocessingml.document") {
-        
+
         // Create a component for word documents
         const WordDocumentComponent = () => {
             // Use effect to render the document after component mounts
