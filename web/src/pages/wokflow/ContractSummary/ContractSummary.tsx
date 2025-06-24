@@ -453,6 +453,14 @@ export const ContractSummaryView: React.FC<ContractDocumentViewProps> = ({ setAc
                                 status: "signed"
                             })
                         } else {
+                            // if isWorkFlowComplete is empty show green check mark
+                            // this experiemntal,
+                            if (isWorkFlowComplete.length === 0) {
+                                return ({
+                                    address: signer,
+                                    status: "signed"
+                                })
+                            }
                             return ({
                                 address: signer,
                                 status: "pending"
