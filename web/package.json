@@ -16,7 +16,7 @@
     "@emotion/react": "^11.13.3",
     "@react-pdf/renderer": "^4.3.0",
     "@types/react-signature-canvas": "^1.0.7",
-    "aqua-js-sdk": "^3.2.1-32",
+       "aqua-js-sdk": "^3.2.1-41",
     "axios": "^1.7.7",
     "date-fns": "^4.1.0",
     "docx-preview": "^0.3.5",
