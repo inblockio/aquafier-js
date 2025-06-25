@@ -309,23 +309,14 @@ export const ContractSummaryView: React.FC<ContractDocumentViewProps> = ({ setAc
 
     const intializeContractInformation = () => {
 
+        console.log("Selected file info", selectedFileInfo)
         if (selectedFileInfo) {
 
 
             const orderedTree = OrderRevisionInAquaTree(selectedFileInfo!.aquaTree!)
 
 
-            // const orderedTree = OrderRevisionInAquaTree(selectedFileInfo!.aquaTree!)
-            // const revisions = orderedTree.revisions
-            // const revisionHashes = Object.keys(revisions)
-            // const revision = revisions[revisionHashes[0]]
-            // let contractCreatorAddress = "";
-            // let creatorSignatureRevision = revisions[revisionHashes[3]] // fourth revision
-            // if (creatorSignatureRevision.revision_type == "signature") {
-            //     contractCreatorAddress = creatorSignatureRevision.signature_wallet_address ?? ""
-            // }
-
-
+    
             // console.log("File objects", orderedTree.file_index)
             const revisions = orderedTree.revisions
             const revisionHashes = Object.keys(revisions)
@@ -349,6 +340,9 @@ export const ContractSummaryView: React.FC<ContractDocumentViewProps> = ({ setAc
             let fourthItmeHashOnwards: string[] = [];
             let signatureRevionHashes: Array<SummaryDetailsDisplayData> = []
 
+            let signers: string[] = firstRevision.forms_signers.split(",").map((e: string) => e.trim())
+            console.log(`signers ${signers} from firstRevision.forms_signers ${firstRevision.forms_signers}  revisionHashes.length ${revisionHashes.length} `)
+
             if (revisionHashes.length > 4) {
                 // remove the first 4 elements from the revision list 
                 fourthItmeHashOnwards = revisionHashes.slice(4);
@@ -358,16 +352,18 @@ export const ContractSummaryView: React.FC<ContractDocumentViewProps> = ({ setAc
                 console.log(`signatureRevionHashes  ${JSON.stringify(signatureRevionHashes, null, 4)}`)
 
 
-                let signers: string[] = firstRevision.forms_signers.split(",")
+                
                 let signatureRevionHashesDataAddress = signatureRevionHashes.map((e) => e.walletAddress);
                 console.log(`signatureRevionHashesDataAddress ${signatureRevionHashesDataAddress} from signatureRevionHashes `)
                 let remainSigners = signers.filter((item) => !signatureRevionHashesDataAddress.includes(item))
                 console.log(`remainSigners ${remainSigners} from signers ${signers} `)
-                if (remainSigners.length == 0) {
+                // if (remainSigners.length == 0) {
                     setIsWorkFlowComplete(remainSigners)
-                }
+                // }
 
                 setSignatureRevionHashes(signatureRevionHashes)
+            }else{
+                setIsWorkFlowComplete(signers)
             }
 
             verifyAquaTreeRevisions(selectedFileInfo)
@@ -394,7 +390,8 @@ export const ContractSummaryView: React.FC<ContractDocumentViewProps> = ({ setAc
 
     const getActualState = () => {
         let status = "pending"
-        if (isVerificationComplete(verificationResults)) {
+        // if (isVerificationComplete(verificationResults)) {
+        if (isWorkFlowComplete.length === 0 ) {
             if (isVerificationSuccessful(verificationResults)) {
                 status = "successful"
             }
@@ -435,6 +432,7 @@ export const ContractSummaryView: React.FC<ContractDocumentViewProps> = ({ setAc
 
 
         return <Container maxWidth={"8xl"}>
+
             <ContractSummaryDetails data={{
                 name: fileNameData,
                 creationDate: timeToHumanFriendly(firstRevisionData?.local_timestamp, true),
