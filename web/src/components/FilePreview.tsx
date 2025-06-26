@@ -2,7 +2,7 @@ import { FileObject } from "aqua-js-sdk";
 import { useEffect, useRef, useState } from "react";
 import { useStore } from "zustand";
 import appStore from "../store";
-import { ensureDomainUrlHasSSL, handleLoadFromUrl, isJSONKeyValueStringContent } from "../utils/functions";
+import { ensureDomainUrlHasSSL, handleLoadFromUrl } from "../utils/functions";
 import  {FilePreviewAquaTreeFromTemplate} from "./FilePreviewAquaTreeFromTemplate"
 import { EasyPDFRenderer } from "../pages/wokflow/ContractDocument/signer/SignerPage";
 import { toaster } from "./chakra-ui/toaster";
@@ -226,6 +226,7 @@ const FilePreview: React.FC<IFilePreview> = ({ fileInfo }) => {
             try {
                 // Handle if fileContent is a URL
                 if (typeof fileInfo.fileContent === 'string' && fileInfo.fileContent.startsWith('http')) {
+                    // Ensure the URL has SSL
                     const fileContentUrl = fileInfo.fileContent;
                     const actualUrlToFetch = ensureDomainUrlHasSSL(fileContentUrl);
 
@@ -346,11 +347,11 @@ const FilePreview: React.FC<IFilePreview> = ({ fileInfo }) => {
         let newTxtContent = textContent;
 
         if (fileType === "application/json") {
-            let isForm = isJSONKeyValueStringContent(newTxtContent)
+            // let isForm = isJSONKeyValueStringContent(newTxtContent)
             // console.log(`is this ${newTxtContent} is form ${isForm}-----`)
-            if (isForm) {
+            // if (isForm) {
                 return <FilePreviewAquaTreeFromTemplate formData={JSON.parse(newTxtContent)} />
-            }
+            // }
         }
         return (
             <div style={{
@@ -363,6 +364,7 @@ const FilePreview: React.FC<IFilePreview> = ({ fileInfo }) => {
                 maxHeight: "600px",
                 overflow: "auto"
             }}>
+                
                 {newTxtContent}
             </div>
         );

@@ -15,13 +15,14 @@ import {
     GridItem,
     Card,
     Group,
-    List} from '@chakra-ui/react';
+    List
+} from '@chakra-ui/react';
 import { Alert } from '../../../components/chakra-ui/alert';
 import { useBoolean } from '@chakra-ui/hooks';
 // import { PDFDocument, rgb, StandardFonts } from 'pdf-lib';
 import { PDFDocument } from 'pdf-lib';
 import SignatureCanvas from 'react-signature-canvas';
-import { FaUndo, FaPlus } from 'react-icons/fa';
+import {  FaPlus } from 'react-icons/fa';
 import appStore from '../../../store';
 import { useStore } from "zustand";
 import { toaster } from '../../../components/chakra-ui/toaster';
@@ -1254,7 +1255,7 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ fileData, setActiveStep, document
     // const renderProfileAnnotationEditor = (_anno: SignatureData) => {
     const renderProfileAnnotationEditor = () => {
         {/* Signatures placed on document */ }
-        console.log(`renderProfileAnnotationEditor called with annotation: ${JSON.stringify(signaturePositions, null,  4)}`)
+        console.log(`renderProfileAnnotationEditor called with annotation: ${JSON.stringify(signaturePositions, null, 4)}`)
         return <>
             {signaturePositions.length > 0 && (
                 <>
@@ -1308,7 +1309,7 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ fileData, setActiveStep, document
             )}
         </>
     }
-   
+
 
 
     const annotationSidebar = () => {
@@ -1434,10 +1435,10 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ fileData, setActiveStep, document
                                                 // bg={selectedSignatureId === signature.id ? "blue.50" : "transparent"}
                                                 bg={"blue.50"}
                                                 _hover={{ bg: "gray.50" }}
-                                                // onClick={() => {
-                                                //     console.log(`Signature clicked ${JSON.stringify(signature, null, 4)} -- ${signature.hash} -- ${signature.id}`)
+                                            // onClick={() => {
+                                            //     console.log(`Signature clicked ${JSON.stringify(signature, null, 4)} -- ${signature.hash} -- ${signature.id}`)
 
-                                                // }}
+                                            // }}
                                             >
                                                 <HStack>
 
@@ -1474,7 +1475,7 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ fileData, setActiveStep, document
                             <Box maxH="200px" overflowY="auto" border="1px solid" borderColor="gray.200" borderRadius="md">
                                 <Stack gap={0}>
                                     {documentSignatures ?
-                                        
+
                                         documentSignatures.map((signature) => (
                                             <Box
                                                 key={signature.id}
@@ -1482,11 +1483,11 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ fileData, setActiveStep, document
                                                 cursor="pointer"
                                                 bg={selectedSignatureId === signature.id ? "blue.50" : "transparent"}
                                                 _hover={{ bg: "gray.50" }}
-                                                // onClick={() => {
-                                                //     if (session?.address === signature.walletAddress) {
-                                                //         setSelectedSignatureId(signature.id);
-                                                //     }
-                                                // }}
+                                            // onClick={() => {
+                                            //     if (session?.address === signature.walletAddress) {
+                                            //         setSelectedSignatureId(signature.id);
+                                            //     }
+                                            // }}
                                             >
                                                 <HStack>
                                                     <Box
@@ -1573,7 +1574,7 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ fileData, setActiveStep, document
 
 
     const addAnnotation = useCallback((newAnnotationData: Annotation) => {
-       console.log(`addAnnotation called with data: ${JSON.stringify(newAnnotationData, null, 4)}`)
+        console.log(`addAnnotation called with data: ${JSON.stringify(newAnnotationData, null, 4)}`)
         const id = Date.now().toString() + Math.random().toString(36).substring(2, 9);
         const selectedSignatureInfo = mySignatureData.find(signature => signature.hash === selectedSignatureId)
 
@@ -1586,11 +1587,11 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ fileData, setActiveStep, document
         const newAnnotation: SignatureData = {
             ...newAnnotationData as SignatureData,
             id,
-            name:selectedSignatureInfo.name,
+            name: selectedSignatureInfo.name,
             walletAddress: selectedSignatureInfo.walletAddress,
             dataUrl: selectedSignatureInfo.dataUrl
         }
-       
+
         // };
 
         let data = signaturePositions.find((anno: SignatureData) => anno.id === newAnnotation.id)
@@ -1608,11 +1609,11 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ fileData, setActiveStep, document
             );
             return newData;
         });
-        
+
         setSelectedTool(null);
         setCanPlaceSignature(false)
-       
-   
+
+
     }, [mySignatureData, selectedSignatureId]);
 
     const updateAnnotation = useCallback((updatedAnnotation: Annotation) => {
@@ -1869,10 +1870,12 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ fileData, setActiveStep, document
 
                             <HStack>
                                 <IconButton
+                                    colorPalette={'red'}
+                                    variant="outline"
                                     aria-label="Clear signature"
                                     onClick={clearSignature}
                                 >
-                                    <FaUndo />
+                                    <LuTrash />
                                 </IconButton>
                                 <Button disabled={creatingUserSignature} colorScheme="blue" onClick={saveSignature}>
 

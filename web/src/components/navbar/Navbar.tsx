@@ -235,9 +235,22 @@ const Navbar = () => {
                 return
             }
             setSubmittingTemplateData(true);
+
+            // Ensure all fields have values before validation
+        const completeFormData = { ...formData };
+        selectedTemplate!.fields.forEach(field => {
+            if (!field.is_array && !(field.name in completeFormData)) {
+                completeFormData[field.name] = getFieldDefaultValue(field, undefined);
+            }
+        });
+
+
+         // Update formData with complete data
+        setFormData(completeFormData);
+
             for (let fieldItem of selectedTemplate!.fields) {
-                let valueInput = formData[fieldItem.name]
-                console.log(`fieldItem ${JSON.stringify(fieldItem)} \n formData ${JSON.stringify(formData)} valueInput ${valueInput} `)
+                let valueInput = completeFormData[fieldItem.name]
+                console.log(`fieldItem ${JSON.stringify(fieldItem)} \n completeFormData ${JSON.stringify(completeFormData)} valueInput ${valueInput} `)
                 if (fieldItem.required && valueInput == undefined) {
                     setSubmittingTemplateData(false);
                     setModalFormErorMessae(`${fieldItem.name} is mandatory`)
@@ -315,14 +328,14 @@ const Navbar = () => {
             let aquafier = new Aquafier();
             const filteredData: Record<string, string | number> = {};
 
-            const jsonString = JSON.stringify(formData, null, 4);
+            const jsonString = JSON.stringify(completeFormData, null, 4);
             const randomNumber = getRandomNumber(100, 1000);
 
 
             let fileName = `${selectedTemplate?.name ?? "template"}-${randomNumber}.json`;
 
             if (selectedTemplate?.name == "aqua_sign") {
-                const theFile = formData['document'] as File
+                const theFile = completeFormData['document'] as File
 
                 // Get filename without extension and the extension separately
                 const fileNameWithoutExt = theFile.name.substring(0, theFile.name.lastIndexOf('.'));
@@ -338,7 +351,7 @@ const Navbar = () => {
 
             const epochTimeInSeconds = Math.floor(Date.now() / 1000);
             // console.log(epochTimeInSeconds);
-            Object.entries(formData).forEach(([key, value]) => {
+            Object.entries(completeFormData).forEach(([key, value]) => {
                 // Only include values that are not File objects
                 if (!(value instanceof File)) {
                     filteredData[key] = value;
@@ -348,9 +361,9 @@ const Navbar = () => {
             });
 
             //for uniquness of the form
-            formData['created_at'] = epochTimeInSeconds;
+            completeFormData['created_at'] = epochTimeInSeconds;
 
-            let estimateize = estimateFileSize(JSON.stringify(formData));
+            let estimateize = estimateFileSize(JSON.stringify(completeFormData));
 
 
 
@@ -409,7 +422,7 @@ const Navbar = () => {
 
                     // Create an array to store all file processing promises
                     const fileProcessingPromises = containsFileData.map(async (element) => {
-                        const file: File = formData[element.name] as File;
+                        const file: File = completeFormData[element.name] as File;
 
                         // Check if file exists
                         if (!file) {
@@ -534,15 +547,15 @@ const Navbar = () => {
                     return
                 } else {
                     console.log("signRes.data", signRes.data)
-                    fileObject.fileContent = formData
+                    fileObject.fileContent = completeFormData
                     await saveAquaTree(signRes.data.aquaTree!!, fileObject, true)
 
 
                     //check if aqua sign 
                     if (selectedTemplate && selectedTemplate.name === "aqua_sign" && session?.address) {
-                        if (formData['signers'] != session?.address) {
+                        if (completeFormData['signers'] != session?.address) {
 
-                            await shareAquaTree(signRes.data.aquaTree!!, formData['signers'] as string)
+                            await shareAquaTree(signRes.data.aquaTree!!, completeFormData['signers'] as string)
 
                         }
                     }
@@ -668,6 +681,7 @@ const Navbar = () => {
             return currentState ?? 0
         }
         if (field.type === "date") {
+
             return new Date().toISOString()
         }
         if (field.type === "text") {
@@ -677,6 +691,7 @@ const Navbar = () => {
             return currentState ?? null
         }
         if (field.type === "wallet_address") {
+            
             return currentState ?? session?.address ?? ""
         }
         return ""
