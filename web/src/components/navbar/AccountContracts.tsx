@@ -8,12 +8,14 @@ import { LuCopy, LuExternalLink, LuShare2 } from "react-icons/lu";
 import { useStore } from 'zustand'
 import appStore from '../../store'
 import axios from "axios";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { IAccountContracts } from "../../types/index";
 
 export default function AccountContracts({ inline, open, updateOpenStatus }: IAccountContracts) {
     // const [contracts, setContracts] = useState<any[]>([])
     const { backend_url, session, setContracts, contracts } = useStore(appStore)
+
+        let navigate= useNavigate();
 
     const loadAccountSharedContracts = async () => {
         if (!session) {
@@ -72,7 +74,11 @@ export default function AccountContracts({ inline, open, updateOpenStatus }: IAc
                         <Stack>
                             {contracts?.map((contract, i: number) => (
                                 <HStack key={`${contract.hash}-${i}`}>
-                                    <IconButton>
+                                    <IconButton onClick={() => {
+                                        // to navigate  to={`/share/${contract.hash}`
+                                     updateOpenStatus?.(false)
+                                        navigate(`/share/${contract.hash}`, { replace: true });
+                                    }}>
                                         {i + 1}
                                     </IconButton>
                                     <Text flex={1} wordBreak={'break-word'}>{contract.sender}</Text>

@@ -152,6 +152,8 @@ export default async function systemController(fastify: FastifyInstance) {
             }
         });
 
+        
+
         const metamaskAddress = request.headers['metamask_address'];
         if (!metamaskAddress || typeof metamaskAddress !== 'string' || metamaskAddress.trim() === '') {
             return reply.code(500).send({ data: [] });
@@ -163,7 +165,7 @@ export default async function systemController(fastify: FastifyInstance) {
                 where: {
                     AND: {
                         user: {
-                            contains: SYSTEM_WALLET_ADDRESS,
+                            contains: metamaskAddress,
                             mode: 'insensitive'
                         },
                         template_id: {
