@@ -3,11 +3,10 @@ import * as React from "react"
 
 export interface NumberInputProps extends ChakraNumberInput.RootProps {}
 
-export const NumberInputRoot = React.forwardRef<
-  HTMLDivElement,
-  NumberInputProps
->(function NumberInput(props, ref) {
-  const { children, ...rest } = props
+export const NumberInputRoot = (
+  props: NumberInputProps & { ref?: React.Ref<HTMLDivElement> },
+) => {
+  const { children, ref, ...rest } = props
   return (
     <ChakraNumberInput.Root ref={ref} variant="outline" {...rest}>
       {children}
@@ -17,7 +16,7 @@ export const NumberInputRoot = React.forwardRef<
       </ChakraNumberInput.Control>
     </ChakraNumberInput.Root>
   )
-})
+}
 
 export const NumberInputField = ChakraNumberInput.Input
 export const NumberInputScrubber = ChakraNumberInput.Scrubber

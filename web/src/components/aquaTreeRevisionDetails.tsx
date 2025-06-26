@@ -16,8 +16,9 @@ import { useStore } from "zustand"
 import axios from "axios"
 import { toaster } from "./chakra-ui/toaster";
 import { ApiFileInfo } from "../models/FileInfo";
+import React from "react";
 
-const viewLinkedFile = (selectedApiFileInfo: ApiFileInfo, revisionHash: string, revision: Revision, apiFileInfo: ApiFileInfo[], updateSelectedFile: (fileInfo: ApiFileInfo) => void, isWorkflow: boolean): JSX.Element => {
+const viewLinkedFile = (selectedApiFileInfo: ApiFileInfo, revisionHash: string, revision: Revision, apiFileInfo: ApiFileInfo[], updateSelectedFile: (fileInfo: ApiFileInfo) => void, isWorkflow: boolean): React.JSX.Element => {
 
     if (revision.revision_type == "link") {
 
@@ -112,7 +113,7 @@ const viewLinkedFile = (selectedApiFileInfo: ApiFileInfo, revisionHash: string, 
 }
 
 
-const revisionDataHeader = (aquaTree: AquaTree, revisionHash: string, fileObject: FileObject[]): JSX.Element => {
+const revisionDataHeader = (aquaTree: AquaTree, revisionHash: string, fileObject: FileObject[]): React.JSX.Element => {
 
     const revision = aquaTree.revisions[revisionHash]
 
@@ -235,7 +236,7 @@ export const RevisionDisplay = ({ fileInfo, revision, revisionHash, isVerificati
     }, [isRevisionVerificationSuccessful]);
 
     // Memoize alert component to prevent recreation
-    const displayAlert = useMemo((): JSX.Element => {
+    const displayAlert = useMemo((): React.JSX.Element => {
         let status: "info" | "warning" | "success" | "error" | "neutral" = "info";
         let title = "This revision is being verified";
 
@@ -253,7 +254,7 @@ export const RevisionDisplay = ({ fileInfo, revision, revisionHash, isVerificati
     }, [isRevisionVerificationSuccessful]);
 
     // Memoize verification icon to prevent recreation
-    const verificationStatusIcon = useMemo((): JSX.Element => {
+    const verificationStatusIcon = useMemo((): React.JSX.Element => {
         if (isRevisionVerificationSuccessful === null) {
             return <ReactLoading type={'spin'} color={'blue'} height={loaderSize} width={loaderSize} />;
         }
@@ -331,7 +332,7 @@ export const RevisionDisplay = ({ fileInfo, revision, revisionHash, isVerificati
         }
     }, [backend_url, revisionHash, session?.address, session?.nonce, index, deleteRevision, isDeleting, setFiles]);
 
-    const displayDeleteButton = (): JSX.Element => {
+    const displayDeleteButton = (): React.JSX.Element => {
         if (isDeletable) {
             return (
                 <IconButton size={'xs'} borderRadius={"full"} onClick={handleDelete} disabled={isDeleting} colorPalette={"red"}>
