@@ -245,6 +245,7 @@ const Navbar = () => {
         });
 
 
+
          // Update formData with complete data
         setFormData(completeFormData);
 
@@ -328,14 +329,17 @@ const Navbar = () => {
             let aquafier = new Aquafier();
             const filteredData: Record<string, string | number> = {};
 
+            console.log(`completeFormData ${JSON.stringify(completeFormData, null, 4)}`)
             const jsonString = JSON.stringify(completeFormData, null, 4);
             const randomNumber = getRandomNumber(100, 1000);
+            console.log(`completeFormData -- jsonString-- ${jsonString}`)
 
 
             let fileName = `${selectedTemplate?.name ?? "template"}-${randomNumber}.json`;
 
             if (selectedTemplate?.name == "aqua_sign") {
                 const theFile = completeFormData['document'] as File
+
 
                 // Get filename without extension and the extension separately
                 const fileNameWithoutExt = theFile.name.substring(0, theFile.name.lastIndexOf('.'));
@@ -377,6 +381,7 @@ const Navbar = () => {
 
             if (genesisAquaTree.isOk()) {
 
+                console.log(`genesis ${JSON.stringify(genesisAquaTree.data.aquaTree!!, null, 4)}`)
                 // create a link revision with the systems aqua tree 
                 let mainAquaTreeWrapper: AquaTreeWrapper = {
                     aquaTree: genesisAquaTree.data.aquaTree!!,
@@ -413,7 +418,7 @@ const Navbar = () => {
 
                 let aquaTreeData = linkedAquaTreeResponse.data.aquaTree!!
 
-                let containsFileData = selectedTemplate?.fields.filter((e) => e.type == "file" || e.type == "image")
+                let containsFileData = selectedTemplate?.fields.filter((e) => e.type == "file" || e.type == "image" || e.type == "document")
                 if (containsFileData && containsFileData.length > 0) {
 
                     // for (let index = 0; index < containsFileData.length; index++) {
@@ -830,7 +835,7 @@ const Navbar = () => {
                                     <Stack marginBottom={10}>
                                         {selectedTemplate ? reorderInputFields(selectedTemplate.fields).map((field) => {
 
-                                            const isFileInput = field.type === 'file' || field.type === 'image';
+                                            const isFileInput = field.type === 'file' || field.type === 'image' || field.type === 'document';
 
                                             if (field.is_array) {
 
@@ -883,7 +888,7 @@ const Navbar = () => {
                                                     // value={formData[field.name]}
                                                     // Only set value for non-file inputs
                                                     {...(!isFileInput ? { defaultValue: getFieldDefaultValue(field, formData[field.name]) } : {})}
-                                                    type={field.type == 'image' ? 'file' : field.type}
+                                                    type={field.type == 'image' ||  field.type == 'document' ? 'file' : field.type}
                                                     onChange={(e) => {
                                                         // setFormData({
                                                         //     ...formData,
@@ -911,6 +916,25 @@ const Navbar = () => {
                                                             } else {
                                                                 // Invalid file type
                                                                 alert('Please select an image file');
+                                                                e.target.value = ''; // Clear the input
+                                                                return
+                                                            }
+                                                        }
+
+                                                        if (field.type == 'document') {
+                                                            const files: File | FileList | null = e?.target?.files;
+                                                        
+                                                            if (!files || files.length === 0) {
+                                                                return;
+                                                            }
+                                                        
+                                                            const file = files[0]
+                                                            if (file && file.type === 'application/pdf') {
+                                                                // Valid PDF file
+                                                                console.log("Valid PDF")
+                                                            } else {
+                                                                // Invalid file type
+                                                                alert('Please select a PDF file');
                                                                 e.target.value = ''; // Clear the input
                                                                 return
                                                             }
