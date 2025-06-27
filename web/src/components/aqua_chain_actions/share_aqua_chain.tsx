@@ -8,7 +8,8 @@ import { toaster } from "../chakra-ui/toaster"
 import { useEffect, useState } from "react"
 import { DialogActionTrigger, DialogBody, DialogCloseTrigger, DialogContent, DialogFooter, DialogHeader, DialogRoot, DialogTitle } from "../chakra-ui/dialog"
 import { generateNonce } from "siwe"
-import Loading from "react-loading"
+// import Loading from "react-loading"
+import { ClipLoader } from "react-spinners";
 import { Checkbox } from "../chakra-ui/checkbox"
 import { Box, Center, Input, HStack, Text, VStack } from "@chakra-ui/react"
 import { ClipboardButton, ClipboardIconButton, ClipboardInput, ClipboardLabel, ClipboardRoot } from "../chakra-ui/clipboard"
@@ -176,7 +177,13 @@ export const ShareButton = ({ item, nonce }: IShareButton) => {
                             {
                                 sharing ?
                                     <Center>
-                                        <Loading />
+                                        <ClipLoader
+                                                           color={"blue"}
+                                                           loading={true}
+                                                           size={150}
+                                                           aria-label="Loading Spinner"
+                                                           data-testid="loader"
+                                                       />
                                     </Center>
                                     : null
                             }

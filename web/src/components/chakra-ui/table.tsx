@@ -86,8 +86,6 @@ const FilesTable = () => {
                     <DownloadAquaChain file={item} />
                 </>
             }
-
-            // return <>{isWorkFlow ? "true" : "False"} {workFlow}</>
         }
 
 

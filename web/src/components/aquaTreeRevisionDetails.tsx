@@ -5,7 +5,8 @@ import { TimelineConnector, TimelineContent, TimelineDescription, TimelineItem, 
 import { displayTime, formatCryptoAddress, fetchLinkedFileName, getFileNameWithDeepLinking, fetchFiles, getAquaTreeFileObject, isDeepLinkRevision, isAquaTree, getGenesisHash } from "../utils/functions"
 import { Alert } from "./chakra-ui/alert"
 import { AquaTree, FileObject, LogTypeEmojis, Revision } from "aqua-js-sdk";
-import ReactLoading from "react-loading"
+// import ReactLoading from "react-loading"
+import { ClipLoader } from "react-spinners";
 import { ERROR_TEXT, WITNESS_NETWORK_MAP, ERROR_UKNOWN } from "../utils/constants"
 import { WalletEnsView } from "./chakra-ui/wallet_ens"
 import { AquaTreeDetailsData, RevisionDetailsSummaryData } from "../models/AquaTreeDetails"
@@ -256,7 +257,14 @@ export const RevisionDisplay = ({ fileInfo, revision, revisionHash, isVerificati
     // Memoize verification icon to prevent recreation
     const verificationStatusIcon = useMemo((): React.JSX.Element => {
         if (isRevisionVerificationSuccessful === null) {
-            return <ReactLoading type={'spin'} color={'blue'} height={loaderSize} width={loaderSize} />;
+            return  <ClipLoader
+                              color={"blue"}
+                              loading={true}
+                              size={loaderSize}
+                              aria-label="Loading Spinner"
+                              data-testid="loader"
+                          />
+            // return <ReactLoading type={'spin'} color={'blue'} height={loaderSize} width={loaderSize} />;
         }
 
         return isRevisionVerificationSuccessful ?

@@ -3,7 +3,8 @@ import { Button } from "./chakra-ui/button";
 import { DialogBody, DialogCloseTrigger, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "./chakra-ui/dialog";
 import { Center, Dialog, Text, VStack } from "@chakra-ui/react";
 import { LuCircleCheck, LuCircleX, LuCopy, LuLogOut, LuWallet } from "react-icons/lu";
-import ReactLoading from "react-loading";
+// import ReactLoading from "react-loading";
+import { ClipLoader } from "react-spinners";
 import { fetchFiles, formatCryptoAddress, generateAvatar, getCookie, setCookie } from "../utils/functions";
 import { SiweMessage, generateNonce } from "siwe";
 import { SESSION_COOKIE_NAME } from "../utils/constants";
@@ -268,7 +269,14 @@ export const  ConnectWallet: React.FC = () => {
             <VStack gap={"10"}>
               {connectionState === "connecting" && (
                 <>
-                  <ReactLoading type={"spin"} color={"blue"} height={iconSize} width={iconSize} />
+                  {/* <ReactLoading type={"spin"} color={"blue"} height={iconSize} width={iconSize} /> */}
+                  <ClipLoader
+        color={"blue"}
+        loading={loading}
+        size={150}
+        aria-label="Loading Spinner"
+        data-testid="loader"
+      />
                   <Text fontSize={"md"}>Connecting to wallet...</Text>
                 </>
               )}

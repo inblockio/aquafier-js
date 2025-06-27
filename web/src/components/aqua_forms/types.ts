@@ -11,7 +11,7 @@ export interface FormField {
   id: string;
   label: string;
   name: string;
-  type: 'text' | 'number' | 'date' | 'file'| 'image' | 'wallet_address';
+  type: 'text' | 'number' | 'date' | 'file'| 'image' |  'document' | 'wallet_address';
   required: boolean;
   is_array :  boolean;
 }

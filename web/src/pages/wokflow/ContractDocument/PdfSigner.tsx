@@ -14,7 +14,6 @@ import {
     Grid,
     GridItem,
     Card,
-    Group,
     List
 } from '@chakra-ui/react';
 import { Alert } from '../../../components/chakra-ui/alert';
@@ -1341,27 +1340,37 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ fileData, setActiveStep, document
 
     const signatureSideBar = () => {
 
-
+let isInSinatures = signers.find((e)=>{
+    const res = e.toLowerCase().trim() == session!.address.toLowerCase().trim()
+    console.log(`Comparing iten ${e.toLowerCase()} to  ${session!.address.toLowerCase()} res ${res}`)
+    return res
+})
         if (signers.length == 0) {
             return <Text>Signers for  document workflow not found</Text>
         }
 
 
-        if (!signers.includes(session!.address)) {
-            return <Group>
-                <Text>Signers</Text>
+        if (isInSinatures == undefined) {
+            return <Stack>
+                <Text fontSize={'md'}>Signers</Text>
                 <List.Root>
                     {
-                        signers.map((e) => {
-                            return <HStack key={e} p={2} justify="space-between">
-                                <HStack>
-                                    <Text fontSize="xs">{e}</Text>
-                                </HStack>
+                        signers.map((e, index) => {
+                            return <Box bg="bg" shadow="xsm" padding={2} borderRadius="sm">
+                            <HStack>
+                                <Text key={e} fontSize="xs">{index + 1}</Text>.
+                                <Text key={e} fontSize="xs"> {e}</Text>
                             </HStack>
+                        </Box>
+                            // return <HStack key={e} p={2} justify="space-between">
+                            
+                            //         <Text fontSize="xs">{index+1}.&nbsp;{e.replace("\"","")}</Text>
+                               
+                            // </HStack>
                         })
                     }
                 </List.Root>
-            </Group>
+            </Stack>
         }
 
 
@@ -1665,9 +1674,9 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ fileData, setActiveStep, document
 
         if (firstRevision?.forms_signers) {
             if (firstRevision.forms_signers.includes(",")) {
-                signers = firstRevision.forms_signers.split(",").map((e: string) => e.trim())
+                signers = firstRevision.forms_signers.split(",").map((e: string) => e.trim().replace("\"",""))
             } else {
-                signers.push(firstRevision?.forms_signers)
+                signers.push(firstRevision?.forms_signers.replace("\"",""))
             }
         }
 
