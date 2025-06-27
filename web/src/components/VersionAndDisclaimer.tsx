@@ -56,6 +56,7 @@ export default function VersionAndDisclaimer({ inline, open, updateOpenStatus }:
         <Dialog.Root placement={"center"} size={"sm"} open={inline ? open : isOpen} onOpenChange={(details) => setIsOpen(details.open)}>
             <DialogTrigger asChild>
                 <Button
+                data-testid="info-button"
                     colorPalette={'black'}
                     size={"sm"}
                     borderRadius={"md"}
@@ -100,7 +101,7 @@ export default function VersionAndDisclaimer({ inline, open, updateOpenStatus }:
                             The source code can be found:  <Link href="https://github.com/inblockio" target="_blank" style={{ "color": "blue" }}>Inblock</Link>
 
                         </Text>
-                        <Button borderRadius={"md"} onClick={() => {
+                        <Button data-testid="close-info-button" borderRadius={"md"} onClick={() => {
                             inline ? updateOpenStatus?.(false) : setIsOpen(false);
                         }}>
                             close

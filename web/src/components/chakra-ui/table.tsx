@@ -65,7 +65,7 @@ const FilesTable = () => {
         if (isWorkFlow) {
             if (workFlow == "aqua_sign.json" || workFlow == "aqua_sign") {
                 return <>
-                    <Button size={'xs'} colorPalette={'cyan'} variant={'subtle'} w={'208px'} onClick={(e) => {
+                    <Button data-testid="open-workflow-button"  size={'xs'} colorPalette={'cyan'} variant={'subtle'} w={'208px'} onClick={(e) => {
                         e.preventDefault();
                         setSelectedFileInfo(item)
                         navigate("/workflow")
@@ -362,10 +362,10 @@ const FilesTable = () => {
                             {selection.length} selected
                         </ActionBarSelectionTrigger>
                         <ActionBarSeparator />
-                        <Button variant="outline" size="sm">
+                        <Button data-testid="delete-11-button" variant="outline" size="sm">
                             Delete <Kbd>⌫</Kbd>
                         </Button>
-                        <Button variant="outline" size="sm">
+                        <Button data-testid="share-23-button" variant="outline" size="sm">
                             Share <Kbd>T</Kbd>
                         </Button>
                     </ActionBarContent>
@@ -386,6 +386,7 @@ const FilesTable = () => {
                                 <Drawer.Header bg={{ base: drawerStatus?.colorLight, _dark: drawerStatus?.colorDark }}>
                                     <DrawerTitle flex="1">{drawerStatus?.fileName}</DrawerTitle>
                                     <Button
+                                    data-testid="close-drawer-button"
                                         position="absolute"
                                         right="8px"
                                         top="8px"
@@ -405,7 +406,7 @@ const FilesTable = () => {
                                 </DrawerBody>
                                 <DrawerFooter flexWrap={'wrap'}>
                                     <DrawerActionTrigger asChild>
-                                        <Button variant="outline" size={'sm'}>Close</Button>
+                                        <Button data-testid="close-43-button" variant="outline" size={'sm'}>Close</Button>
                                     </DrawerActionTrigger>
                                     {
                                         selectedFileInfo ? (

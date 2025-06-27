@@ -83,6 +83,7 @@ const AttestationAddresses = () => {
                     <Box display="flex" justifyContent="space-between" alignItems="center">
                         <Heading size="lg">AquaForms</Heading>
                         <Button
+                         data-testid="action-create-attestation-address-button"
                             colorScheme="blue"
                             onClick={handleCreateAttestationAddresses}
                         >

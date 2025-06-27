@@ -107,7 +107,7 @@ const Settings = ({ inline, open, updateOpenStatus }: IDialogSettings) => {
         }
 
         return (
-            <Button loading={deleting} colorPalette={'red'} borderRadius={'md'} variant={'outline'} onClick={deleteUserData}>Clear Account Data</Button>
+            <Button data-testid="delete-user-data-button"  loading={deleting} colorPalette={'red'} borderRadius={'md'} variant={'outline'} onClick={deleteUserData}>Clear Account Data</Button>
         )
     }
 
@@ -227,24 +227,7 @@ const Settings = ({ inline, open, updateOpenStatus }: IDialogSettings) => {
                     </Field>
 
                 </Container>
-                {/* <Field invalid={false} label="Default File Mode" helperText="Is a file public or private" errorText="This field is required"> */}
-                {/* <Field invalid={false} label="Default File Mode" helperText="Any one can view the file or the file should be visible only to you." errorText="This field is required">
-                    <RadioCardRoot defaultValue="public" value={mode} onValueChange={e => setMode(e.value)}>
-                        <HStack align="stretch">
-                            {fileModes.items.map((item) => (
-                                <RadioCardItem
-                                    borderRadius={'xl'}
-                                    label={item.label}
-                                    key={item.value}
-                                    value={item.value}
-                                />
-                            ))}
-                        </HStack>
-                    </RadioCardRoot>
-                </Field> */}
-                {/* <Group> */}
-                {/* <Button onClick={updateUserProfile}>Save</Button> */}
-                {/* </Group> */}
+                
             </VStack>
         )
     }
@@ -283,17 +266,11 @@ const Settings = ({ inline, open, updateOpenStatus }: IDialogSettings) => {
                             <VStack alignItems={'flex-start'} gap={2}>
                                 {DeleteUserData()}
                             </VStack>
-                            {/* <DialogActionTrigger asChild>
-
-                                <Button loading={false} colorPalette={'blue'} borderRadius={'md'} variant={'outline'} onClick={() => {
-                                    navigate("/attestation_addresses");
-                                }}>Attestation Addresses</Button>
-
-                            </DialogActionTrigger> */}
+                           
                             <HStack>
-                                <Button variant="solid" bg={'green'} onClick={updateUserProfile}>Save</Button>
+                                <Button data-testid="settings-save-button" variant="solid" bg={'green'} onClick={updateUserProfile}>Save</Button>
                                 <DialogActionTrigger asChild>
-                                    <Button variant="outline" onClick={() => updateOpenStatus?.(false)}>Cancel</Button>
+                                    <Button data-testid="settings-cancel-button" variant="outline" onClick={() => updateOpenStatus?.(false)}>Cancel</Button>
                                 </DialogActionTrigger>
                             </HStack>
                         </HStack>

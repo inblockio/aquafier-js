@@ -19,8 +19,6 @@ To create a database use the `create_db.sh`. Update the file with the config to 
 chmod +x ./create_db.sh
 ```
 
-....
-
 
 ## Deployment
 check out [docker.md](./docker.md) 

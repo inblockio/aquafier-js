@@ -752,7 +752,7 @@ const Navbar = () => {
                                     <Menu.Root onOpenChange={(open: MenuOpenChangeDetails) => setIsDropDownOpen(open.open)}  >
                                         <Menu.Trigger asChild >
 
-                                            <Button variant="solid" size="sm" bg="blue.500">
+                                            <Button data-testid="action-form-63-button" variant="solid" size="sm" bg="blue.500">
                                                 <Group>
                                                     <Text>Form</Text>
                                                     <LuSquareChartGantt />
@@ -961,7 +961,7 @@ const Navbar = () => {
                         <HStack w={'100%'} justifyContent={'end'}>
                             <HStack>
                                 {selectedTemplate ?
-                                    <Button type="submit" ml={3} mr={3} colorPalette={'green'} ref={cancelRef} onClick={createWorkflowFromTemplate} form="create-aqua-tree-form">
+                                    <Button data-testid="action-loading-create-button" type="submit" ml={3} mr={3} colorPalette={'green'} ref={cancelRef} onClick={createWorkflowFromTemplate} form="create-aqua-tree-form">
 
 
                                         {submittingTemplateData ? <>

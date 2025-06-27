@@ -209,9 +209,7 @@ const FileUploadItem = (props: FileUploadItemProps) => {
         {(clearable || isJson || isZIp) && (
           <ChakraFileUpload.ItemDeleteTrigger asChild >
 
-
-
-            <Button size={'xs'} h={"32px"} colorPalette={'red'} variant={'subtle'} w={'80px'}>
+            <Button data-testid="delete-file-for-upload-button" size={'xs'} h={"32px"} colorPalette={'red'} variant={'subtle'} w={'80px'}>
               Delete
               <LuX />
             </Button>
@@ -300,6 +298,7 @@ export const FileInput = forwardRef<HTMLButtonElement, FileInputProps>(
     return (
       <ChakraFileUpload.Trigger asChild>
         <Button
+          data-testid="file-input-button"
           unstyled
           py="0"
           ref={ref}

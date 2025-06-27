@@ -323,6 +323,7 @@ const FormTemplateEditor = ({ initialTemplate, onSave, updating }: FormTemplateE
           </Stack>
           <Group>
             <Button
+              data-testid="add-form-action-button"
               onClick={addFormField}
               colorPalette="blue"
               size={"sm"}
@@ -330,6 +331,7 @@ const FormTemplateEditor = ({ initialTemplate, onSave, updating }: FormTemplateE
               Add Form Field
             </Button>
             <Button
+            data-testid="save-form-action-button"
               type="submit"
               colorPalette="green"
             >

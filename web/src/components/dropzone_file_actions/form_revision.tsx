@@ -118,7 +118,7 @@ export const FormRevisionFile = ({ file, uploadedIndexes, fileIndex, updateUploa
     };
 
     return (
-        <Button size={'xs'} colorPalette={'yellow'} variant={'subtle'} w={'120px'} onClick={uploadFile} disabled={uploadedIndexes.includes(fileIndex) || uploaded} loading={uploading}>
+        <Button data-testid="close-form-3-button" size={'xs'} colorPalette={'yellow'} variant={'subtle'} w={'120px'} onClick={uploadFile} disabled={uploadedIndexes.includes(fileIndex) || uploaded} loading={uploading}>
             <LuDock />
             Create Form.
         </Button>

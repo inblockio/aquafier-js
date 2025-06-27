@@ -221,28 +221,17 @@ export const ImportAquaChainFromChain = ({ fileInfo, isVerificationSuccessful, c
                     <Text>
                         Do you want to import this Aqua Chain?
                     </Text>
-                    <Button size={'lg'} colorPalette={'blue'} variant={'solid'} onClick={importAquaChain}
-                    // disabled={!isVerificationSuccessful} loading={uploading}
+                    <Button data-testid="import-aqua-chain-1-button" size={'lg'} colorPalette={'blue'} variant={'solid'} onClick={importAquaChain}
+                   
                     >
                         <LuImport />
                         Import
                     </Button>
                 </Group>
             </Alert>
-            {/* <Alert.Root colorPalette={'orange'}>
-                Would you like to import the file?
-                <Button size={'lg'} colorPalette={'blue'} variant={'subtle'} onClick={importAquaChain} disabled={!isVerificationSuccessful} loading={uploading}>
-                    <LuImport />
-                    Import
-                </Button>
-            </Alert.Root> */}
-
+           
             <DialogRoot open={modalOpen} onOpenChange={e => setModalOpen(e.open)}>
-                {/* <DialogTrigger asChild>
-                    <Button variant="outline" size="sm">
-                        Open Dialog
-                    </Button>
-                </DialogTrigger> */}
+               
                 <DialogContent borderRadius={'lg'}>
                     <DialogHeader>
                         <DialogTitle>Aqua Chain Import</DialogTitle>
@@ -362,7 +351,7 @@ export const ImportAquaChainFromChain = ({ fileInfo, isVerificationSuccessful, c
                                                     {updateMessage}
                                                 </Alert>
                                                 <Group>
-                                                    <Button size={'xs'} borderRadius={'md'} colorPalette={btnText.color} onClick={handleMergeRevisions} loading={uploading}>{btnText.text}</Button>
+                                                    <Button  data-testid="action-32-button" size={'xs'} borderRadius={'md'} colorPalette={btnText.color} onClick={handleMergeRevisions} loading={uploading}>{btnText.text}</Button>
                                                 </Group>
                                             </TimelineContent>
                                         </TimelineItem>
@@ -424,7 +413,7 @@ export const ImportAquaChainFromChain = ({ fileInfo, isVerificationSuccessful, c
                                                     {updateMessage}
                                                 </Alert>
                                                 <Group>
-                                                    <Button size={'xs'} borderRadius={'md'} colorPalette={btnText.color} onClick={handleMergeRevisions} loading={uploading}>{btnText.text}</Button>
+                                                    <Button  data-testid="action-67-button" size={'xs'} borderRadius={'md'} colorPalette={btnText.color} onClick={handleMergeRevisions} loading={uploading}>{btnText.text}</Button>
                                                 </Group>
                                             </TimelineContent>
                                         </TimelineItem>
@@ -453,9 +442,9 @@ export const ImportAquaChainFromChain = ({ fileInfo, isVerificationSuccessful, c
                     </DialogBody>
                     <DialogFooter>
                         <DialogActionTrigger asChild>
-                            <Button variant="outline" borderRadius={'md'}>Cancel</Button>
+                            <Button data-testid="action-cancel-button" variant="outline" borderRadius={'md'}>Cancel</Button>
                         </DialogActionTrigger>
-                        {/* <Button>Save</Button> */}
+                        
                     </DialogFooter>
                     <DialogCloseTrigger />
                 </DialogContent>

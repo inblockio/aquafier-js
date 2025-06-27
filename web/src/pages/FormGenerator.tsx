@@ -238,6 +238,7 @@ const FormGenerator = () => {
 
                 <Group mt={6} justifyContent="space-between">
                   <Button
+                   data-testid="action-reset-4-button"
                     colorScheme="gray"
                     onClick={handleReset}
                     disabled={isSubmitted}
@@ -245,6 +246,7 @@ const FormGenerator = () => {
                     Reset
                   </Button>
                   <Button
+                  data-testid="action-submit-4-button"
                     colorScheme="blue"
                     type="submit"
                     disabled={isSubmitted}
@@ -260,6 +262,7 @@ const FormGenerator = () => {
                 <Heading size="sm" mb={2}>Form Submitted Successfully</Heading>
                 <Text>Thank you for your submission!</Text>
                 <Button
+                  data-testid="action-create-another-4-button"
                   mt={4}
                   size="sm"
                   colorScheme="blue"

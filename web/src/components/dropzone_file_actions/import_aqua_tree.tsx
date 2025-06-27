@@ -546,7 +546,7 @@ export const ImportAquaTree = ({ aquaFile, uploadedIndexes, fileIndex, updateUpl
 
     return (
         <>
-            <Button size={'xs'} colorPalette={'green'} variant={'subtle'} w={'100px'} onClick={importFile} disabled={uploadedIndexes.includes(fileIndex) || uploaded} loading={uploading}>
+            <Button data-testid="action-import-93-button" size={'xs'} colorPalette={'green'} variant={'subtle'} w={'100px'} onClick={importFile} disabled={uploadedIndexes.includes(fileIndex) || uploaded} loading={uploading}>
                 <LuImport />
                 Import
             </Button>
@@ -612,6 +612,7 @@ export const ImportAquaTree = ({ aquaFile, uploadedIndexes, fileIndex, updateUpl
                                 <Text mb={2} color={'black'} fontSize="14px">Drag and drop file here</Text>
                                 <Text fontSize="14px" color={'black'} >or</Text>
                                 <Button
+                                    data-testid="action-select-file-06-button"
                                     mt={2}
                                     onClick={() => fileInputRef.current?.click()}
                                     bg="black"
@@ -643,6 +644,7 @@ export const ImportAquaTree = ({ aquaFile, uploadedIndexes, fileIndex, updateUpl
                         justifyContent="flex-end"
                     >
                         <Button
+                        data-testid="action-cancel-77-button"
                             bg="black"
                             color="white"
                             mr={3}

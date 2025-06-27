@@ -219,7 +219,7 @@ export const DownloadAquaChain = ({ file }: { file: ApiFileInfo }) => {
 
 
     return (
-        <Button size={'xs'} colorPalette={'purple'} variant={'subtle'} w={'100px'} onClick={downloadAquaJson} loading={downloading}>
+        <Button  data-testid="download-aqua-tree-button" size={'xs'} colorPalette={'purple'} variant={'subtle'} w={'100px'} onClick={downloadAquaJson} loading={downloading}>
             <LuDownload />
             Download
         </Button>

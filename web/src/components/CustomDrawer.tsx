@@ -21,7 +21,7 @@ import { LogViewer } from "./logs/LogViewer"
 export const ChainDetailsBtn = ({ callBack }: IChainDetailsBtn) => {
 
     return (
-        <Button size={'xs'} colorPalette={'green'} variant={'subtle'} w={'100px'} onClick={callBack}>
+        <Button  data-testid="chain-details-0-button" size={'xs'} colorPalette={'green'} variant={'subtle'} w={'100px'} onClick={callBack}>
             <LuEye />
             Details
         </Button>

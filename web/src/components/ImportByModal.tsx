@@ -50,7 +50,7 @@ const ImportByModal = () => {
         <>
             <DialogRoot size={'xl'}>
                 <DialogTrigger asChild>
-                    <Button variant="outline" size="sm">
+                    <Button data-testid="import-7-button" variant="outline" size="sm">
                         Import
                     </Button>
                 </DialogTrigger>

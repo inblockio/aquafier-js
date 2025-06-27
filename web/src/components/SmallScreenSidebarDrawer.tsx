@@ -109,7 +109,7 @@ const SmallScreenSidebarDrawer = ({ openCreateForm }: ISmallScreenSidebarDrawer)
                             </DrawerBody>
                             <DrawerFooter>
                                 <DrawerCloseTrigger>
-                                    <Button variant="solid" size="sm" bg="blue.500">
+                                    <Button data-testid="close-2-button" variant="solid" size="sm" bg="blue.500">
                                         Close
                                     </Button>
                                 </DrawerCloseTrigger>

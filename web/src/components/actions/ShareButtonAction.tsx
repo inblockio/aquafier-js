@@ -165,6 +165,7 @@ const CreateContractForm = ({ mutate, contract, updating, genesis_hash, latest_h
             }
             <SharingOptions value={option} onChange={setOption} />
             <Button
+                data-testid="share-document-button"
                 onClick={handleShare}
                 className="w-full"
                 borderRadius={"md"}
@@ -435,17 +436,9 @@ export const SharingActionContent = ({ item, nonce, isOpen, setIsOpen }: IShareB
                     </DialogBody>
                     <DialogFooter>
                         <DialogActionTrigger asChild>
-                            <Button variant="outline" borderRadius={'md'}>Cancel</Button>
+                            <Button  data-testid="sharing-action-cancel-button" variant="outline" borderRadius={'md'}>Cancel</Button>
                         </DialogActionTrigger>
-                        {/* {
-                            shared ? (
-                                <ClipboardRoot value={shared}>
-                                    <ClipboardButton borderRadius={'md'} variant={'solid'} />
-                                </ClipboardRoot>
-                            ) : (
-                                <Button onClick={handleShare} borderRadius={'md'}>Share</Button>
-                            )
-                        } */}
+                        
                     </DialogFooter>
                     <DialogCloseTrigger />
                 </DialogContent>

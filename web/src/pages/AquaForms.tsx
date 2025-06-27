@@ -61,6 +61,7 @@ const AquaForms = () => {
           <Box display="flex" justifyContent="space-between" alignItems="center">
             <Heading size="lg">AquaForms</Heading>
             <Button
+            data-testid="action-create-form-template-button"
               colorScheme="blue"
               onClick={handleCreateTemplate}
             >

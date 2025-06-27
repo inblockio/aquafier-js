@@ -151,7 +151,7 @@ export const SignAquaChain = ({ apiFileInfo, backendUrl, nonce }: RevionOperatio
         }
     };
     return (
-        <Button size={'xs'} colorPalette={'blue'} variant={'subtle'} w={'100px'} onClick={signFileHandler} loading={signing}>
+        <Button data-testid="sign-action-button" size={'xs'} colorPalette={'blue'} variant={'subtle'} w={'100px'} onClick={signFileHandler} loading={signing}>
             <LuSignature />
             Sign
         </Button>

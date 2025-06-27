@@ -113,17 +113,13 @@ export const LinkButton = ({ item, nonce }: IShareButton) => {
     }
     return (
         <>
-            <Button size={'xs'} colorPalette={'yellow'} variant={'subtle'} w={'100px'} onClick={() => setIsOpen(true)}>
+            <Button  data-testid="link-action-button" size={'xs'} colorPalette={'yellow'} variant={'subtle'} w={'100px'} onClick={() => setIsOpen(true)}>
                 <LuLink2 />
                 Link
             </Button>
 
             <DialogRoot open={isOpen} onOpenChange={e => setIsOpen(e.open)}>
-                {/* <DialogTrigger asChild>
-                    <Button variant="outline" size="sm">
-                        Open Dialog
-                    </Button>
-                </DialogTrigger> */}
+               
                 <DialogContent>
                     <DialogHeader>
                         <DialogTitle>{`Link ${item.fileObject[0].fileName} To another file (Aquatree)`}</DialogTitle>
@@ -213,13 +209,13 @@ export const LinkButton = ({ item, nonce }: IShareButton) => {
                     </DialogBody>
                     <DialogFooter>
                         <DialogActionTrigger asChild>
-                            <Button variant="outline" onClick={cancelClick} borderRadius={'md'}>Cancel</Button>
+                            <Button data-testid="link-cancel-action-button"  variant="outline" onClick={cancelClick} borderRadius={'md'}>Cancel</Button>
                         </DialogActionTrigger>
 
 
                         {files?.length <= 1 ? <></>
                             : <>
-                                <Button onClick={handleLink} borderRadius={'md'}>Link</Button>
+                                <Button data-testid="link-modal-action-button" onClick={handleLink} borderRadius={'md'}>Link</Button>
 
                             </>}
                     </DialogFooter>

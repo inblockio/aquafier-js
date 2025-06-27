@@ -20,7 +20,7 @@ import { useClipboard } from "@chakra-ui/react"
 const CustomCopyButton = ({ value }: { value: string }) => {
   const clipboard = useClipboard({ value: value })
   return (
-    <Button variant="surface" size="sm" onClick={clipboard.copy} borderRadius={"md"}>
+    <Button  data-testid="custom-copy-button" variant="surface" size="sm" onClick={clipboard.copy} borderRadius={"md"}>
       {clipboard.copied ? "Copied" : "Copy Address"}
       <LuCopy />
     </Button>
@@ -234,7 +234,7 @@ export const  ConnectWallet: React.FC = () => {
   return (
     <Dialog.Root placement={"center"} size={"sm"} open={isOpen} onOpenChange={(details) => setIsOpen(details.open)}>
       <DialogTrigger asChild>
-        <Button
+        <Button data-testid="sign-in-button"
           size={"sm"}
           borderRadius={"md"}
           onClick={() => {
@@ -260,7 +260,7 @@ export const  ConnectWallet: React.FC = () => {
               </Center>
               <Text fontFamily={"monospace"}>{formatCryptoAddress(session?.address, 10, 10)}</Text>
               <CustomCopyButton value={`${session?.address}`} />
-              <Button borderRadius={"md"} loading={loading} onClick={signOutFromSiweSession}>
+              <Button data-testid="sign-out-button" borderRadius={"md"} loading={loading} onClick={signOutFromSiweSession}>
                 Sign Out
                 <LuLogOut />
               </Button>
