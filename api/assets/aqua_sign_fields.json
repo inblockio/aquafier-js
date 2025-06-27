@@ -2,7 +2,7 @@
     {
       "name": "document",
       "label": "Document",
-      "type": "file",
+      "type": "document",
       "required": true,
       "isArray": false
     },

@@ -5,7 +5,8 @@ import appStore from '../store'
 import axios from 'axios'
 import { ApiFileInfo } from '../models/FileInfo'
 import { toaster } from '../components/chakra-ui/toaster'
-import Loading from 'react-loading'
+// import Loading from 'react-loading'
+import { ClipLoader } from "react-spinners";
 import { Box, Center, Container, Group, VStack } from '@chakra-ui/react'
 import { Alert } from '../components/chakra-ui/alert'
 import { IDrawerStatus } from '../models/AquaTreeDetails'
@@ -87,7 +88,13 @@ const SharePage = () => {
         }
         if (loading) {
             return <Center>
-                <Loading type='spin' width={'80px'} />
+                <ClipLoader
+                    color={"blue"}
+                    loading={loading}
+                    size={150}
+                    aria-label="Loading Spinner"
+                    data-testid="loader"
+                />
             </Center>
         }
         return <div />

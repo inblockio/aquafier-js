@@ -51,7 +51,7 @@ export interface WorkFlowTimeLine {
   title: string,
   icon: IconType,
   completed: boolean,
-  content: JSX.Element,
+  content: React.JSX.Element,
   revisionHash: string,
 
 }

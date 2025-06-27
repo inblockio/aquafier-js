@@ -14,7 +14,7 @@ import {
 } from "@chakra-ui/react"
 import { forwardRef, useEffect, useState } from "react"
 import { LuFile, LuUpload, LuX } from "react-icons/lu"
-import { determineFileType, getFileName, isJSONFile, isJSONKeyValueStringContent, isZipFile, readFileContent } from "../../utils/functions"
+import { determineFileType, getFileName, isAquaTree, isJSONFile, isJSONKeyValueStringContent, isZipFile, readFileContent } from "../../utils/functions"
 import React from "react"
 import appStore from "../../store"
 import { useStore } from "zustand"
@@ -87,16 +87,30 @@ const FileUploadItem = (props: FileUploadItemProps) => {
 
   const isZIp = isZipFile(file.name)
   const [isJsonForm, setIsJsonForm] = useState<boolean>(false)
+  const [isJsonAquaTreeData, setIsJsonAquaTreeData] = useState<boolean>(false)
   const { files } = useStore(appStore);
   useEffect(() => {
     const checkFileContent = async () => {
       if (isJson) {
         try {
           let content = await readFileContent(file);
-          let isForm = isJSONKeyValueStringContent(content as string);
+          let contentStr = content as string
+          let isForm = isJSONKeyValueStringContent(contentStr);
           if (isForm) {
             setIsJsonForm(true);
           }
+
+          let jsonData = JSON.parse(contentStr);
+            let isAquaTreeData = isAquaTree(jsonData);
+            let r = typeof jsonData === 'object'
+            let r2 = 'revisions' in jsonData
+            let r3 = 'file_index' in jsonData
+            console.log(`isAquaTreeData  ${isAquaTreeData} contentStr ${contentStr} r ${r} r2 ${r2} r3 ${r3}`)
+            if (isAquaTreeData) {
+              setIsJsonAquaTreeData(isAquaTreeData)
+            }
+
+
         } catch (error) {
           console.error("Error reading file content:", error);
         }
@@ -122,7 +136,7 @@ const FileUploadItem = (props: FileUploadItemProps) => {
       }
     }
 
-    totoalSize = totoalSize +  file.size
+    totoalSize = totoalSize + file.size
 
     // console.log(`totoalSize ${totoalSize} -- maxUserFileSizeForUpload ${maxUserFileSizeForUpload}`)
     if (totoalSize >= maxUserFileSizeForUpload) {
@@ -134,18 +148,26 @@ const FileUploadItem = (props: FileUploadItemProps) => {
     }
 
     if (isJson) {
-      console.log("isJson: ", file)
+      console.log(`isJson: ${isJsonForm}  99  isJsonAquaTreeData ${isJsonAquaTreeData}`)
       return <>
+
+
 
         <>
           {isJsonForm ? <FormRevisionFile file={file} fileIndex={fileIndex} uploadedIndexes={uploadedIndexes} updateUploadedIndex={updateUploadedIndex} autoUpload={false} /> : <></>}
         </>
-        <ImportAquaTree aquaFile={file} fileIndex={fileIndex} uploadedIndexes={uploadedIndexes} updateUploadedIndex={updateUploadedIndex} autoUpload={false} />
+        <>
+          {isJsonAquaTreeData ? <ImportAquaTree aquaFile={file} fileIndex={fileIndex} uploadedIndexes={uploadedIndexes} updateUploadedIndex={updateUploadedIndex} autoUpload={false} /> : <></>}
 
-        {/* <ImportByModal file={file} fileIndex={fileIndex} uploadedIndexes={uploadedIndexes} updateUploadedIndex={updateUploadedIndex} /> */}
-        {/* <ImportAquaChainFromFile file={file} fileIndex={fileIndex} uploadedIndexes={uploadedIndexes} updateUploadedIndex={zupdateUploadedIndex} /> */}
-        {/* <VerifyFile file={file} fileIndex={fileIndex} uploadedIndexes={uploadedIndexes} updateUploadedIndex={updateUploadedIndex} /> */}
-        {/* <ChainDetails pageData={JSON.parse(item.page_data)} /> */}
+        </>
+
+        <>
+          {isJsonForm == false && isJsonAquaTreeData == false ?
+            <UploadFile file={file} fileIndex={fileIndex} uploadedIndexes={uploadedIndexes} updateUploadedIndex={updateUploadedIndex} autoUpload={false} />
+            : <></>
+          }
+        </>
+
       </>
     }
 
@@ -189,7 +211,7 @@ const FileUploadItem = (props: FileUploadItemProps) => {
 
 
 
-            <Button  size={'xs'} h={"32px"} colorPalette={'red'} variant={'subtle'} w={'80px'}>
+            <Button size={'xs'} h={"32px"} colorPalette={'red'} variant={'subtle'} w={'80px'}>
               Delete
               <LuX />
             </Button>
