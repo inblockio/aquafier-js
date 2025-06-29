@@ -10,7 +10,6 @@ on:
       - main
       - dev
       - playwright
-      - fix-gh-commit-hash-and-maybe-date
 
 jobs:
   build:
