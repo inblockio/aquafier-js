@@ -12,7 +12,7 @@ export function generatePassword(length: number): string {
 }
 
 
-export async function registerNewMetaMaskWallet(): Promise<BrowserContext>{
+export async function registerNewMetaMaskWallet(): Promise<RegisterMetaMaskResponse>{
     const metamaskPath = path.join(__dirname, 'metamask-extension');
 
     const context = await chromium.launchPersistentContext('', {
@@ -63,16 +63,30 @@ export async function registerNewMetaMaskWallet(): Promise<BrowserContext>{
     await metaMaskPage.click('[data-testid="pin-extension-done"]')
 
     await metaMaskPage.waitForSelector('[data-testid="network-display"]', {state: 'visible'});
+    await metaMaskPage.waitForSelector('[data-testid="not-now-button"]', {state: 'visible', timeout: 100000});
+    await metaMaskPage.click('[data-testid="not-now-button"]')
+
+    await metaMaskPage.waitForSelector('[data-testid="account-menu-icon"]')
+    await metaMaskPage.click('[data-testid="account-menu-icon"]')
+    await metaMaskPage.waitForSelector('[data-testid="account-list-item-menu-button"]')
+    await metaMaskPage.click('[data-testid="account-list-item-menu-button"]')
+    await metaMaskPage.waitForSelector('[data-testid="account-list-menu-details"]')
+    await metaMaskPage.click('[data-testid="account-list-menu-details"]')
+    await metaMaskPage.getByText("Details").waitFor({state: 'visible'})
+    await metaMaskPage.getByText("Details").click()
+    await metaMaskPage.waitForSelector('[class="mm-box mm-text qr-code__address-segments mm-text--body-md mm-box--margin-bottom-4 mm-box--color-text-default"]')
+    const address = await metaMaskPage.locator('[class="mm-box mm-text qr-code__address-segments mm-text--body-md mm-box--margin-bottom-4 mm-box--color-text-default"]').textContent()
+
     await metaMaskPage.close()
 
-    console.log("Wallet finished!!!")
+    console.log("Wallet finished!!! Adr: " + address)
 
-    return context
+    return new RegisterMetaMaskResponse(context, address);
 }
 
-export async function registerNewMetaMaskWalletAndLogin(){
-
-    const context = await registerNewMetaMaskWallet();
+export async function registerNewMetaMaskWalletAndLogin(): Promise<RegisterMetaMaskResponse>{
+    const response = await registerNewMetaMaskWallet();
+    const context = response.context;
     const testPage = context.pages()[0];
     await testPage.waitForLoadState("load")
     await testPage.goto("/")
@@ -88,5 +102,17 @@ export async function registerNewMetaMaskWalletAndLogin(){
     await metamaskPage.waitForSelector('[data-testid="confirm-footer-button"]', {state: 'visible'})
     await metamaskPage.click('[data-testid="confirm-footer-button"]')
 
-    return context;
+    return response;
+}
+
+class RegisterMetaMaskResponse{
+
+
+    constructor(context: BrowserContext, walletAddress: string) {
+        this.context = context;
+        this.walletAddress = walletAddress;
+    }
+
+    context: BrowserContext;
+    walletAddress: string;
 }
