@@ -16,6 +16,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: set build info
+        shell: bash
+        run: |
+          echo "{ \
+          \"commitHash\": \"${{ github.sha }}\", \
+           \"buildDate\": \"$(git log -1 --format=%cd --date=format:%Y-%m-%d_%H:%M:%S)\" \
+           }" > ./web/src/version-info.json
       - name: build
         uses: ./.github/actions/build_container
         with:
