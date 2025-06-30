@@ -34,6 +34,18 @@ jobs:
             -o /usr/local/bin/docker-compose
           sudo chmod +x /usr/local/bin/docker-compose
 
+      - name: Create .env file for e2e tests
+        run: |
+          cat > e2e/.env << EOL
+          LETSENCRYPT_EMAIL=test@example.com
+          VITE_INFURA_PROJECT_ID=your_infura_project_id
+          FRONTEND_URL=https://dev.inblock.io
+          BACKEND_URL=https://dev-api.inblock.io
+          DB_USER=aquafier
+          DB_PASSWORD=changeme
+          BASE_URL=https://dev.inblock.io
+          EOL
+          
       - name: Prepare Test-Env
         run: cd e2e && docker compose up -d
 
@@ -58,18 +70,7 @@ jobs:
 
       - name: Prepare MetaMask
         run: ./e2e/script/prepare_browser.sh
-      
-      - name: Create .env file for e2e tests
-        run: |
-          cat > e2e/.env << EOL
-          LETSENCRYPT_EMAIL=test@example.com
-          VITE_INFURA_PROJECT_ID=your_infura_project_id
-          FRONTEND_URL=https://dev.inblock.io
-          BACKEND_URL=https://dev-api.inblock.io
-          DB_USER=aquafier
-          DB_PASSWORD=changeme
-          BASE_URL=https://dev.inblock.io
-          EOL
+    
 
       - name: Run Playwright tests
         env:
