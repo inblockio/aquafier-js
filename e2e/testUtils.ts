@@ -136,7 +136,7 @@ export async function registerNewMetaMaskWalletAndLogin(): Promise<RegisterMetaM
     await testPage.waitForLoadState("load")
     
     // Get the BASE_URL from environment variables and navigate to it
-    const baseUrl = process.env.BASE_URL || "http://localhost:5173/";
+    const baseUrl = process.env.BASE_URL ||  "https://dev.inblock.io";
     console.log(`Navigating to: ${baseUrl}`);
     await testPage.goto(baseUrl, { waitUntil: 'networkidle' })
     

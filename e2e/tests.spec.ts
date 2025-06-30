@@ -10,7 +10,7 @@ dotenv.config({ path: path.resolve(__dirname, '../.env') });
 
 //prepare metamask
 test.beforeAll(async () => {
-    let url = process.env.BASE_URL
+    let url = process.env.BASE_URL || "https://dev.inblock.io";
     console.log(`Base URL: ${url}`);
 })
 
