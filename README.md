@@ -22,3 +22,13 @@ chmod +x ./create_db.sh
 
 ## Deployment
 check out [docker.md](./docker.md) 
+
+## PlayWright tests
+At the root of the project
+- `npm i` to install dependancies
+- visit `https://github.com/metamask/metamask-extension/releases` download metamsk browser extsion and extract  it to `/e2e/metamask-extension/` 
+- `npx playwright test e2e/tests.spec.ts` to run tests
+
+
+## Windows deeveloment
+- `git config core.filemode false` to prevent git from tracking file permissions(bash scripts file permissions change in windows)
