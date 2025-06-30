@@ -1,12 +1,16 @@
 import {test} from '@playwright/test';
-
-import {registerNewMetaMaskWallet, registerNewMetaMaskWalletAndLogin} from './testUtils'
+import dotenv from 'dotenv';
 import path from "path";
+import {registerNewMetaMaskWallet, registerNewMetaMaskWalletAndLogin} from './testUtils';
+
+// Load environment variables from .env file
+dotenv.config({ path: path.resolve(__dirname, '../.env') });
 
 
 //prepare metamask
 test.beforeAll(async () => {
-
+    let url = process.env.BASE_URL
+    console.log(`Base URL: ${url}`);
 })
 
 test("create new wallet test", async () => {
@@ -51,8 +55,10 @@ test("upload, sign, download", async () => {
     await metaMaskPage.click('[data-testid="confirm-footer-button"]')
 
     //download
-    await testPage.getByText("Download").waitFor({state: 'visible'})
-    await testPage.getByText("Download").click()
+    // await testPage.getByText("Download").waitFor({state: 'visible'})
+    // await testPage.getByText("Download").click()
+    await testPage.waitForSelector('[data-testid="download-aqua-tree-button"]', {state: 'visible'})
+    await testPage.click('[data-testid="download-aqua-tree-button"]')
 
     console.log("upload, sign, download finished!")
 })
@@ -70,17 +76,37 @@ test("single user aqua-sign", async () => {
     await testPage.click('[id=":rh:/new-file"]')
 
     //select aqua-sign template
-    await testPage.getByText("Aqua Sign").waitFor({state: 'visible'});
-    await testPage.getByText("Aqua Sign").click()
+    // await testPage.getByText("Aqua Sign").waitFor({state: 'visible'});
+    // await testPage.getByText("Aqua Sign").click()
+    
+// click navbar button
+    await testPage.waitForSelector('[data-testid="action-form-63-button"]', {state: 'visible'});
+    await testPage.click('[data-testid="action-form-63-button"]')
+
+    // click create form from template dropwdown element
+    await testPage.click('[data-testid="create-form-from-template"]')
+    await testPage.click('[data-testid="aqua_sign"]')
+
 
     //create aqua tree template
-    await testPage.waitForSelector('[id=":rk:"]', {state: 'visible'});
+    // await testPage.waitForSelector('[id=":rk:"]', {state: 'visible'});
+    // const fileChooserPromise = testPage.waitForEvent('filechooser');
+    // await testPage.click('[id=":rk:"]')
+    // const fileChooser = await fileChooserPromise;
+    // await fileChooser.setFiles(path.join(__dirname, 'resources/exampleFile.pdf'));
+    // const metaMaskAdr = await testPage.locator('[id=":rl:"]').inputValue();
+    // await testPage.fill('[id=":rm:"]', metaMaskAdr);
+
+    await testPage.waitForSelector('[data-testid="input-document"]', {state: 'visible'});
     const fileChooserPromise = testPage.waitForEvent('filechooser');
-    await testPage.click('[id=":rk:"]')
+    await testPage.click('[data-testid="input-document"]')
     const fileChooser = await fileChooserPromise;
     await fileChooser.setFiles(path.join(__dirname, 'resources/exampleFile.pdf'));
-    const metaMaskAdr = await testPage.locator('[id=":rl:"]').inputValue();
-    await testPage.fill('[id=":rm:"]', metaMaskAdr);
+
+    const metaMaskAdr = await testPage.locator('[data-testid="input-signers-0"]').inputValue();
+    await testPage.fill('[data-testid="input-signers-0"]', metaMaskAdr);
+
+
 
     let metamaskPromise = context.waitForEvent("page")
     await testPage.click('[type="submit"]');
@@ -134,6 +160,7 @@ test("single user aqua-sign", async () => {
 })
 
 test("two user aqua-sign", async () => {
+    
     test.setTimeout(60000)
     const secondWalletResponsePromise = registerNewMetaMaskWalletAndLogin();
     test.setTimeout(60000)
