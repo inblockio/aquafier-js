@@ -1,6 +1,7 @@
 import {test} from '@playwright/test';
 import dotenv from 'dotenv';
 import path from "path";
+import * as fs from 'fs/promises';
 import {registerNewMetaMaskWallet, registerNewMetaMaskWalletAndLogin} from './testUtils';
 
 // Load environment variables from .env file
@@ -24,22 +25,49 @@ test("login test", async () => {
 
 
 test("upload, sign, download", async () => {
+    test.setTimeout(80000) // Increase timeout to 60 seconds
     const registerResponse = await registerNewMetaMaskWalletAndLogin();
     const context = registerResponse.context;
 
     const testPage = context.pages()[0];
 
+    console.log("upload, sign, download started!")
+
     //upload
-    await testPage.waitForSelector('[id="file::rc::dropzone"]', {state: 'visible'})
+    console.log("Waiting for file upload dropzone to be visible...")
+    
+    // Wait for the dropzone using the correct data-testid
+    await testPage.waitForSelector('[data-testid="file-upload-dropzone"]', {state: 'visible', timeout: 10000})
+    console.log("File upload dropzone is visible")
+    
+
+    await testPage.waitForSelector('[data-part="dropzone"]', {state: 'visible'})
     const fileChooserPromise = testPage.waitForEvent('filechooser');
-    await testPage.click('[id="file::rc::dropzone"]')
+    await testPage.click('[data-part="dropzone"]');
     const fileChooser = await fileChooserPromise;
     await fileChooser.setFiles(path.join(__dirname, 'resources/exampleFile.pdf'));
 
+    console.log("File dropped on dropzone");
+    
+    // Wait a moment for the file to be processed
+    await testPage.waitForTimeout(2000);
+    
+
     //sign
-    await testPage.getByText("Sign").waitFor({state: 'visible'})
+    console.log("Waiting for sign button to appear...")
+    
+    // Wait for the table to load and show the file
+    await testPage.waitForSelector('table', { state: 'visible', timeout: 10000 })
+    console.log("Table is visible")
+
+   
+    // Wait for the sign button using its data-testid
+    await testPage.waitForSelector('[data-testid="sign-action-button"]', { state: 'visible', timeout: 10000 })
+    console.log("Sign button is visible")
+    
     let metaMaskPromise = context.waitForEvent("page");
-    await testPage.getByText("Sign").click()
+    await testPage.click('[data-testid="sign-action-button"]')
+    console.log("Clicked sign button, waiting for MetaMask popup...")
 
     //wait for metamask
     await metaMaskPromise;

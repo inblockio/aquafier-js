@@ -29,7 +29,7 @@ const CustomCopyButton = ({ value }: { value: string }) => {
 
 
 
-export const  ConnectWallet: React.FC = () => {
+export const  ConnectWallet: React.FC<{dataTestId: string}> = ({dataTestId}) => {
   const { setMetamaskAddress, session, setFiles, avatar, setAvatar, setUserProfile, backend_url, setSession } = useStore(appStore);
 
   const [isOpen, setIsOpen] = useState(false);
@@ -234,7 +234,7 @@ export const  ConnectWallet: React.FC = () => {
   return (
     <Dialog.Root placement={"center"} size={"sm"} open={isOpen} onOpenChange={(details) => setIsOpen(details.open)}>
       <DialogTrigger asChild>
-        <Button data-testid="sign-in-button"
+        <Button data-testid={dataTestId}
           size={"sm"}
           borderRadius={"md"}
           onClick={() => {

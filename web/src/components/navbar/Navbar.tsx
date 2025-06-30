@@ -741,7 +741,7 @@ const Navbar = () => {
                         <Image src={colorMode === 'light' ? "/images/logo.png" : "/images/logo-dark.png"} maxH={'60%'} />
                     </Link>
                     <HStack display={{ base: 'flex', md: 'none' }} gap={"2"}>
-                        <ConnectWallet />
+                        <ConnectWallet dataTestId="sign-in-button-navbar"/>
                         <SmallScreenSidebarDrawer openCreateForm={() => setOpen(true)} />
                     </HStack>
 
@@ -774,7 +774,7 @@ const Navbar = () => {
                                                     }} cursor={"pointer"}>
                                                         Manage templates
                                                     </Menu.Item>
-                                                    <Menu.Item value="new-file" onClick={() => {
+                                                    <Menu.Item data-testid="create-form-from-template" value="new-file" onClick={() => {
                                                         setOpen(true)
                                                     }} cursor={"pointer"}>
                                                         Create Form from template
@@ -851,11 +851,12 @@ const Navbar = () => {
                                                     {
                                                         multipleAddresses.map((address, index) => {
                                                             return <HStack alignItems={'flex-end'}>
-                                                                <Field>
+                                                                <Field >
                                                                     <HStack w={"full"}>
                                                                         <Text fontSize={"lg"}>{index + 1}. </Text>
                                                                         <Box flex={1}>
                                                                             <Input
+                                                                                data-testid={`input-${field.name}-${index}`}
                                                                                 // disabled={session?.address === address}
                                                                                 borderRadius={"lg"} value={address} onChange={(ev) => {
                                                                                     let newData = multipleAddresses.map((e, i) => {
@@ -880,9 +881,10 @@ const Navbar = () => {
 
                                             }
 
-                                            // For file inputs, we don't want to set the value prop
+                                            // For file inputs, we don't want to set the value prop --
                                             return <Field label={field.label} errorText={''}>
                                                 <Input
+                                                    data-testid={`input-${field.name}`}
                                                     borderRadius={"md"}
                                                     size={"sm"}
                                                     // value={formData[field.name]}

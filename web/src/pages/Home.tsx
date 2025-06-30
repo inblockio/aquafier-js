@@ -18,6 +18,7 @@ const Home = () => {
 
                             <FileUploadRoot borderRadius={'2xl'} alignItems="stretch" maxFiles={10} cursor={'pointer'}>
                                 <FileUploadDropzone
+                                    data-testid="file-upload-dropzone"
                                     borderRadius={'2xl'}
                                     label="Drag and drop here to upload"
                                     description="Any file up to 200MB"
@@ -48,7 +49,7 @@ const Home = () => {
                         <Center h={'100%'}>
                             <Stack>
                                 <Text>Connect wallet to upload files</Text>
-                                <ConnectWallet />
+                                <ConnectWallet dataTestId="sign-in-button-dialog"/>
                             </Stack>
                         </Center>
                     </Container>

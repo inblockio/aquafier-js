@@ -31,7 +31,7 @@ const ImportPage = ({ incomingFileInfo }: IImportPage) => {
                             <Group justifyContent={'center'} w={'100%'}>
                                 {
                                     !metamaskAddress ? (
-                                        // <ConnectWallet />
+                                       
                                         <Box />
                                     ) : (
                                         drawerStatus ?
