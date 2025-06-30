@@ -10,12 +10,20 @@ on:
       - main
       - dev
       - playwright
+      - add-additional-tags
 
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: set build info
+        shell: bash
+        run: |
+          echo "{ \
+          \"commitHash\": \"$(git rev-parse --short HEAD)\", \
+           \"buildDate\": \"$(git log -1 --format='%cd' --date=local)\" \
+           }" > ./web/src/version-info.json
       - name: build
         uses: ./.github/actions/build_container
         with:
