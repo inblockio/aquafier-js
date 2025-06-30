@@ -144,8 +144,8 @@ export async function registerNewMetaMaskWalletAndLogin(): Promise<RegisterMetaM
     
     try {
         // Take a screenshot to help debug
-        await testPage.screenshot({ path: 'page-before-login.png' });
-        console.log("Screenshot saved as page-before-login.png");
+        // await testPage.screenshot({ path: 'page-before-login.png' });
+        // console.log("Screenshot saved as page-before-login.png");
         
         // Look for any sign-in button with a more flexible approach
         console.log("Looking for any sign-in button...");
