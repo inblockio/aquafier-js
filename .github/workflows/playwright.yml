@@ -1,6 +1,9 @@
 name: Playwright Tests
 on:
   push:
+  #   branches: [ main, dev ]
+  # pull_request:
+    # branches: [ main, dev ]
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref_name }}
@@ -55,6 +58,18 @@ jobs:
 
       - name: Prepare MetaMask
         run: ./e2e/script/prepare_browser.sh
+      
+      - name: Create .env file for e2e tests
+        run: |
+          cat > .env << EOL
+          LETSENCRYPT_EMAIL=test@example.com
+          VITE_INFURA_PROJECT_ID=your_infura_project_id
+          FRONTEND_URL=https://dev.inblock.io
+          BACKEND_URL=https://dev-api.inblock.io
+          DB_USER=aquafier
+          DB_PASSWORD=changeme
+          BASE_URL=https://dev.inblock.io
+          EOL
 
       - name: Run Playwright tests
         env:
