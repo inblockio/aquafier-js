@@ -798,7 +798,7 @@ const Navbar = () => {
                             </>
                             ) : null
                         }
-                        <ConnectWallet />
+                        <ConnectWallet dataTestId="sign-in-button-navbar-2" />
                     </HStack>
                 </HStack>
             </Box>
