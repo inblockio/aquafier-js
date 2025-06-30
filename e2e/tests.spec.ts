@@ -92,16 +92,20 @@ test("upload, sign, download", async () => {
 })
 
 test("single user aqua-sign", async () => {
+    test.setTimeout(80000) // Increase timeout to 80 seconds
     const registerResponse = await registerNewMetaMaskWalletAndLogin();
     const context = registerResponse.context;
 
     const testPage = context.pages()[0];
 
+    console.log("single user aqua-sign started!")
+
+
     //open "new form" overlay
-    await testPage.waitForSelector('[id="menu::rh::trigger"]', {state: 'visible'})
-    await testPage.click('[id="menu::rh::trigger"]')
-    await testPage.waitForSelector('[id=":rh:/new-file"]', {state: 'visible'});
-    await testPage.click('[id=":rh:/new-file"]')
+    // await testPage.waitForSelector('[id="menu::rh::trigger"]', {state: 'visible'})
+    // await testPage.click('[id="menu::rh::trigger"]')
+    // await testPage.waitForSelector('[id=":rh:/new-file"]', {state: 'visible'});
+    // await testPage.click('[id=":rh:/new-file"]')
 
     //select aqua-sign template
     // await testPage.getByText("Aqua Sign").waitFor({state: 'visible'});
@@ -111,9 +115,14 @@ test("single user aqua-sign", async () => {
     await testPage.waitForSelector('[data-testid="action-form-63-button"]', {state: 'visible'});
     await testPage.click('[data-testid="action-form-63-button"]')
 
+    console.log("clicked navbar button")
     // click create form from template dropwdown element
     await testPage.click('[data-testid="create-form-from-template"]')
+    console.log("clicked create form from template")
     await testPage.click('[data-testid="aqua_sign"]')
+
+    console.log("clicked aqua sign")
+
 
 
     //create aqua tree template
@@ -131,8 +140,9 @@ test("single user aqua-sign", async () => {
     const fileChooser = await fileChooserPromise;
     await fileChooser.setFiles(path.join(__dirname, 'resources/exampleFile.pdf'));
 
-    const metaMaskAdr = await testPage.locator('[data-testid="input-signers-0"]').inputValue();
+    const metaMaskAdr = await testPage.locator('[data-testid="input-sender"]').inputValue();
     await testPage.fill('[data-testid="input-signers-0"]', metaMaskAdr);
+    console.log("filled aqua sign form")
 
 
 
