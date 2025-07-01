@@ -27,6 +27,7 @@ check out [docker.md](./docker.md)
 At the root of the project
 - `npm i` to install dependancies
 - visit `https://github.com/metamask/metamask-extension/releases` download metamsk browser extsion and extract  it to `/e2e/metamask-extension/` 
+- Install playwright browsers `npx playwright install`
 - `npx playwright test e2e/tests.spec.ts` to run tests 
 - `npx playwright test e2e/tests.spec.ts --headed` to run specific tests in headed mode
 
