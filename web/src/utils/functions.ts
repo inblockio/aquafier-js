@@ -1256,12 +1256,12 @@ export function displayTime(input: number | string): string {
                     parseInt(second)
                 );
 
-                return date.toDateString(); // Returns format like "Thu Mar 20 2025"
+                return date.toLocaleString(); // Returns format like "Thu Mar 20 2025"
             }
             // Regular Unix timestamp (seconds since epoch)
             else {
                 const date = new Date(parseInt(input, 10) * 1000); // Convert seconds to milliseconds
-                return date.toDateString();
+                return date.toLocaleString();
             }
         } else {
             // String contains non-numeric characters, just display it

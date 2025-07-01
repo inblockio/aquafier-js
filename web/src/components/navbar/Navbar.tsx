@@ -852,7 +852,7 @@ const Navbar = () => {
                                                     <HStack alignItems={'flex-end'} justify={'space-between'}>
                                                         <Text fontSize={"lg"}>{field.label}</Text>
                                                         {/* Add a new address input */}
-                                                        <IconButton aria-label="Add Address" size={"sm"} borderRadius={"lg"} onClick={addAddress}>
+                                                        <IconButton aria-label="Add Address" data-testid={`multiple_values_${field.name}`} size={"sm"} borderRadius={"lg"} onClick={addAddress}>
                                                             <LuPlus />
                                                         </IconButton>
                                                     </HStack>

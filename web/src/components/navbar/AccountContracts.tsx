@@ -51,6 +51,8 @@ export default function AccountContracts({ inline, open, updateOpenStatus }: IAc
             >
                 <DialogTrigger asChild >
                     <IconButton
+                    id="contracts-shared-button-id"
+                     data-testid="contracts-shared-button"
                         size={"sm"}
                         borderRadius={"md"}
                         hidden={inline}
@@ -78,7 +80,7 @@ export default function AccountContracts({ inline, open, updateOpenStatus }: IAc
                                 ) : (
                                     contracts?.map((contract, i: number) => (
                                         <HStack key={`${contract.hash}-${i}`}>
-                                            <IconButton onClick={() => {
+                                            <IconButton data-testid={"shared-button-count-" + i} onClick={() => {
                                                 // to navigate  to={`/share/${contract.hash}`
                                                 updateOpenStatus?.(false)
                                                 navigate(`/share/${contract.hash}`, { replace: true });
@@ -92,7 +94,7 @@ export default function AccountContracts({ inline, open, updateOpenStatus }: IAc
                                                     <LuExternalLink />
                                                 </IconButton>
                                             </Link>
-                                            <IconButton onClick={async () => {
+                                            <IconButton data-testid={"shared-button-copy-" + i} onClick={async () => {
                                                 let res = await copyToClipboardModern(`${window.location.href}/share/${contract.hash}`)
                                                 if (res) {
 
