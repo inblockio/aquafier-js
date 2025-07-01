@@ -461,8 +461,8 @@ try {
 
     console.log("Clicked contract item  button with index: " + number);
 
-    await secondTestPage.pause();
-    await testPage.pause();
+    // await secondTestPage.pause();
+    // await testPage.pause();
     await secondTestPage.waitForSelector('[data-testid="import-aqua-chain-1-button"]', { state: 'visible', timeout: 10000 });
     await secondTestPage.click('[data-testid="import-aqua-chain-1-button"]')
     console.log("Clicked import aqua chain button");

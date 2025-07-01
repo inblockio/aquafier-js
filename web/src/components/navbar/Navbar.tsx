@@ -779,6 +779,15 @@ const Navbar = () => {
                                                     }} cursor={"pointer"}>
                                                         Create Form from template
                                                     </Menu.Item>
+                                                    <Menu.Item data-testid="create-aqua-sign-from-template" value="new-aqua-sign" onClick={() => {
+                                                        setOpen(true)
+                                                        const aquaSignTemplate = formTemplates.find(template => template.name === 'aqua_sign')
+                                                        if (aquaSignTemplate) {
+                                                            selectTemplateCallBack(aquaSignTemplate)
+                                                        }
+                                                    }} cursor={"pointer"}>
+                                                        Create Aqua Sign
+                                                    </Menu.Item>
                                                 </Menu.Content>
                                             </Menu.Positioner>
                                         </Portal>
