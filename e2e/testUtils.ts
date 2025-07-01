@@ -1,5 +1,5 @@
 import path from "path";
-import {BrowserContext, chromium} from "playwright";
+import {BrowserContext, chromium, Page} from "playwright";
 
 export function generatePassword(length: number): string {
     let result = '';
@@ -214,6 +214,40 @@ export async function registerNewMetaMaskWalletAndLogin(): Promise<RegisterMetaM
     return response;
 }
 
+
+export async function findAndClickHighestSharedButton(page : Page): Promise<number | null> {
+  let highestCount = -1;
+  let currentCount = 0;
+  
+  // Keep checking for higher numbered buttons until we don't find any
+  while (true) {
+    const selector = `[data-testid="shared-button-count-${currentCount}"]`;
+    
+    try {
+      // Check if the element exists (with a short timeout to avoid long waits)
+      await page.waitForSelector(selector, { state: 'attached', timeout: 1000 });
+      highestCount = currentCount;
+      currentCount++;
+    } catch (error) {
+      // Element doesn't exist, break the loop
+      break;
+    }
+  }
+
+  return highestCount
+  
+  // If we found at least one button with count > 0, click the highest one
+//   if (highestCount > 0) {
+//     const highestSelector = `[data-testid="shared-button-count-${highestCount}"]`;
+//     await page.waitForSelector(highestSelector, { state: 'visible', timeout: 10000 });
+//     await page.click(highestSelector);
+//     console.log(`Clicked button with highest count: ${highestCount}`);
+//     return highestCount;
+//   } else {
+//     console.log('No shared-button-count elements with value > 0 found');
+//     return null;
+//   }
+}
 class RegisterMetaMaskResponse{
 
 
