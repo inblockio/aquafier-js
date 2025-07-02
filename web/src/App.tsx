@@ -1,5 +1,5 @@
 import { ethers } from 'ethers';
-import MainLayout, { MainLayoutHolder } from './layouts/MainLayout'
+import { MainLayoutHolder } from './layouts/MainLayout'
 import Home from './pages/home/Home'
 import LoadConfiguration from './components/config';
 import { initializeBackendUrl } from './utils/constants';
@@ -18,6 +18,8 @@ import FilesPage from './pages/files/files';
 import HomeV2 from './pages/home/HomeV2';
 import TailwindLayout from './layouts/TailwindLayout';
 import FilesSettings from './pages/files/files_settings';
+import TailwindMainLayout from './layouts/TailwindMainLayout';
+import PageNotFound from './pages/PageNotFound';
 
 declare global {
   interface Window {
@@ -47,7 +49,10 @@ function App() {
       <LoadConfiguration />
       <Routes>
         {/* Routes with Tailwind UI (no MainLayout wrapper) */}
-        <Route path="/home" element={<HomeV2 />} />
+
+        <Route path="/" element={<TailwindMainLayout />}>
+          <Route path="/home" element={<HomeV2 />} />
+        </Route>
 
         {/* All file routes using Tailwind */}
         <Route path="/files" element={<TailwindLayout />}>
@@ -75,7 +80,7 @@ function App() {
           <Route path="/form-generator" element={<FormGenerator />} />
           <Route path="/attestation_addresses" element={<AttestationAddresses />} />
         </Route>
-        <Route path="*" element={<>404 page not found</>} />
+        <Route path="*" element={<PageNotFound />} />
       </Routes>
     </BrowserRouter>
   )
