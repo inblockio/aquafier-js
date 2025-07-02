@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react';
 import {
-    Search,
     Upload,
     Plus,
     FolderPlus,
@@ -10,7 +9,6 @@ import {
     Grid3X3,
     List,
     Star,
-    Clock,
     CopyrightIcon,
     FileText,
     Users,
@@ -128,9 +126,25 @@ const FilesPage = () => {
                                 key={index}
                                 href="#"
                                 className={`flex items-center space-x-3 px-3 py-2 rounded-md text-sm ${item.id.trim() == activeTab.trim()
-                                    ? 'bg-blue-50 text-blue-700 font-medium'   // Light orange background + darker text
+                                    ? 'text-white font-medium'   // White text for better contrast
                                     : 'text-gray-700 hover:bg-gray-100'          // Default state (unchanged)
                                     }`}
+                                style={item.id.trim() == activeTab.trim() ? { backgroundColor: '#E55B1F' } : {}}
+                                onMouseEnter={(e) => {
+                                    if (item.id.trim() == activeTab.trim()) {
+                                        // (e.target as HTMLElement).style.backgroundColor = '#f3f4f6'; // Default hover color
+                                    }else{
+                                        (e.target as HTMLElement).style.backgroundColor = '#f59367'; // Lighter orange on hover 
+                                    }
+                                }}
+                                onMouseLeave={(e) => {
+                                    if (item.id.trim() == activeTab.trim()) {
+                                        (e.target as HTMLElement).style.backgroundColor = '#E55B1F'; // Back to original orange
+                                    }else{
+                                        (e.target as HTMLElement).style.backgroundColor = ''; // Back to grey
+
+                                    }
+                                }}
                             >
                                 <item.icon className="w-4 h-4" />
                                 <span>{item.label} </span>
@@ -233,14 +247,14 @@ const FilesPage = () => {
                     <div className="flex items-center justify-between">
                         <div className="flex items-center space-x-4">
                             {/* Search */}
-                            <div className="relative">
+                            {/* <div className="relative">
                                 <Search className="w-4 h-4 absolute left-3 top-3 text-gray-400" />
                                 <input
                                     type="text"
                                     placeholder="Search"
                                     className="pl-10 pr-4 py-2 w-64 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                                 />
-                            </div>
+                            </div> */}
                         </div>
 
                         <div className="flex items-center space-x-4">
@@ -265,17 +279,22 @@ const FilesPage = () => {
                 <div className="bg-white border-b border-gray-200 px-6 py-4">
                     <div className="flex items-center justify-between">
                         <div className="flex items-center space-x-4">
-                            <button className="flex items-center space-x-2 bg-blue-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-blue-700">
+                            <button
+                                className="flex items-center space-x-2 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-blue-700"
+                                style={{ backgroundColor: '#E55B1F' }}
+                            >
                                 <Upload className="w-4 h-4" />
                                 <span>Upload or drop</span>
                             </button>
-                            <button className="flex items-center space-x-2 text-gray-700 px-4 py-2 rounded-md text-sm font-medium hover:bg-gray-100">
+                            <button className="flex items-center space-x-2 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-gray-100"
+                                style={{ backgroundColor: '#394150' }}
+                            >
                                 <Plus className="w-4 h-4" />
-                                <span>Create</span>
+                                <span>Create Document Signature </span>
                             </button>
                             <button className="flex items-center space-x-2 text-gray-700 px-4 py-2 rounded-md text-sm font-medium hover:bg-gray-100">
                                 <FolderPlus className="w-4 h-4" />
-                                <span>Create folder</span>
+                                <span>Create Template</span>
                             </button>
                             <button className="flex items-center space-x-2 text-gray-700 px-4 py-2 rounded-md text-sm font-medium hover:bg-gray-100">
                                 <Download className="w-4 h-4" />
@@ -323,7 +342,7 @@ const FilesPage = () => {
                     </div>
 
                     {/* Tabs */}
-                    <div className="flex space-x-6 mb-6 border-b">
+                    {/* <div className="flex space-x-6 mb-6 border-b">
                         <button
                             onClick={() => setActiveTab('recents')}
                             className={`pb-3 px-1 border-b-2 font-medium text-sm ${activeTab === 'recents'
@@ -344,7 +363,7 @@ const FilesPage = () => {
                             <Star className="w-4 h-4 inline mr-2" />
                             Starred
                         </button>
-                    </div>
+                    </div> */}
 
                     {/* File List Header */}
                     <div className="flex items-center py-3 border-b border-gray-200 text-sm font-medium text-gray-700">
@@ -365,9 +384,9 @@ const FilesPage = () => {
                             >
                                 <div className="flex-1 flex items-center space-x-3">
                                     <div className="w-6 h-6 bg-red-100 rounded flex items-center justify-center">
-                                        <FileText className="w-4 h-4 text-red-600" />
+                                        <FileText className="w-5 h-5 text-red-600" />
                                     </div>
-                                    <span className="text-sm text-gray-900">{file.name}</span>
+                                    <span className="text-md text-gray-900">{file.name}</span>
                                 </div>
 
                                 {/* Type Column */}
@@ -384,53 +403,57 @@ const FilesPage = () => {
                                     {/* First row - 3 buttons */}
                                     <div className="flex gap-1">
                                         {/* Details Button */}
-                                        <button className="flex items-center space-x-1 bg-green-100 text-green-700 px-2 py-1.8 rounded-md hover:bg-green-200 transition-colors text-xs">
+                                        <button className="flex items-center space-x-1 bg-green-100 text-green-700 px-3 py-2 rounded-md hover:bg-green-200 transition-colors text-xs">
                                             <LuEye className="w-3 h-3" />
                                             <span>Details</span>
                                         </button>
 
                                         {/* Sign Button */}
-                                        <button className="flex items-center space-x-1 bg-blue-100 text-blue-700 px-2 py-1 rounded-md hover:bg-blue-200 transition-colors text-xs">
+                                        <button className="flex items-center space-x-1 bg-blue-100 text-blue-700  px-3 py-2 rounded-md hover:bg-blue-200 transition-colors text-xs">
                                             <LuSignature className="w-3 h-3" />
                                             <span>Sign</span>
                                         </button>
 
                                         {/* Witness Button */}
-                                        <button className="flex items-center space-x-1 bg-gray-800 text-white px-2 py-1 rounded-md hover:bg-gray-900 transition-colors text-xs">
+                                        <button className="flex items-center space-x-1 bg-gray-800 text-white  px-3 py-2 rounded-md hover:bg-gray-900 transition-colors text-xs">
                                             <LuGlasses className="w-3 h-3" />
                                             <span>Witness</span>
+                                        </button>
+
+                                        {/* Link Button */}
+                                        <button className="flex items-center space-x-1 bg-yellow-100 text-yellow-700  px-3 py-2 rounded-md hover:bg-yellow-200 transition-colors text-xs">
+                                            <LuLink2 className="w-3 h-3" />
+                                            <span>Link</span>
                                         </button>
                                     </div>
 
                                     {/* Second row - 3 buttons */}
                                     <div className="flex gap-1">
-                                        {/* Link Button */}
-                                        <button className="flex items-center space-x-1 bg-yellow-100 text-yellow-700 px-2 py-1 rounded-md hover:bg-yellow-200 transition-colors text-xs">
-                                            <LuLink2 className="w-3 h-3" />
-                                            <span>Link</span>
-                                        </button>
+                                        
 
                                         {/* Share Button */}
-                                        <button className="flex items-center space-x-1 bg-red-100 text-red-700 px-2 py-1 rounded-md hover:bg-red-200 transition-colors text-xs">
+                                        <button className="flex items-center space-x-1 bg-red-100 text-red-700  px-3 py-2 rounded-md hover:bg-red-200 transition-colors text-xs">
                                             <LuShare2 className="w-3 h-3" />
                                             <span>Share</span>
                                         </button>
 
                                         {/* Delete Button */}
-                                        <button className="flex items-center space-x-1 bg-pink-100 text-pink-700 px-2 py-1 rounded-md hover:bg-pink-200 transition-colors text-xs">
+                                        <button className="flex items-center space-x-1 bg-pink-100 text-pink-700  px-3 py-2 rounded-md hover:bg-pink-200 transition-colors text-xs">
                                             <LuDelete className="w-3 h-3" />
                                             <span>Delete</span>
                                         </button>
-                                    </div>
 
-                                    {/* Third row - 1 smaller button */}
-                                    <div className="flex">
                                         {/* Download Button - Smaller width */}
-                                        <button className="flex items-center justify-center space-x-1 bg-purple-100 text-purple-700 px-2 py-1 rounded-md hover:bg-purple-200 transition-colors text-xs w-20">
+                                        <button className="flex items-center justify-center space-x-1 bg-purple-100 text-purple-700  px-3 py-2 rounded-md hover:bg-purple-200 transition-colors text-xs w-20">
                                             <LuDownload className="w-3 h-3" />
                                             <span>Download</span>
                                         </button>
                                     </div>
+
+                                    {/* Third row - 1 smaller button */}
+                                    {/* <div className="flex">
+                                        
+                                    </div> */}
                                 </div>
                             </div>
                         ))}
