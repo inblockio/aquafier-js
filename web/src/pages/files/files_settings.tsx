@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { X, Sun } from 'lucide-react';
+import { useState } from 'react';
+import { Sun } from 'lucide-react';
 
 export default function FilesSettings() {
     const [aliasName, setAliasName] = useState('Alias');

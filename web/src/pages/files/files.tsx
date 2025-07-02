@@ -136,7 +136,7 @@ const FilesPage = () => {
                                     : 'text-gray-700 hover:bg-gray-100'          // Default state (unchanged)
                                     }`}
                                 style={item.id.trim() == activeTab.trim() ? { backgroundColor: '#E55B1F' } : {}}
-                                onMouseEnter={(e) => {
+                                onMouseEnter={(_e) => {
                                     // let element = 
                                     if (item.id.trim() == activeTab.trim()) {
                                         // (e.target as HTMLElement).style.backgroundColor = '#f3f4f6'; // Default hover color
@@ -144,7 +144,7 @@ const FilesPage = () => {
                                         // (e.target as HTMLElement).style.backgroundColor = '#f59367'; // Lighter orange on hover 
                                     }
                                 }}
-                                onMouseLeave={(e) => {
+                                onMouseLeave={(_e) => {
                                     if (item.id.trim() == activeTab.trim()) {
                                         // (e.target as HTMLElement).style.backgroundColor = '#E55B1F'; // Back to original orange
                                     } else {
