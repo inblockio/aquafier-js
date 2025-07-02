@@ -1,9 +1,9 @@
 import { Box, Center, Container, Stack, Text, VStack,   } from "@chakra-ui/react"
-import { FileUploadDropzone, FileUploadList, FileUploadRoot } from "../components/chakra-ui/file-button"
-import FilesTable from "../components/chakra-ui/table"
+import { FileUploadDropzone, FileUploadList, FileUploadRoot } from "../../components/chakra-ui/file-button"
+import FilesTable from "../../components/chakra-ui/table"
 import { useStore } from "zustand"
-import appStore from "../store"
-import {ConnectWallet} from "../components/ConnectWallet"
+import appStore from "../../store"
+import {ConnectWallet} from "../../components/ConnectWallet"
 
 
 const Home = () => {
