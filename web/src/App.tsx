@@ -14,6 +14,7 @@ import FormGenerator from './pages/FormGenerator';
 import AttestationAddresses from './pages/AttestationAddresses';
 import PdfSigner from './pages/wokflow/ContractDocument/PdfSigner';
 import WorkFlowPage from './pages/wokflow/WorkFlow';
+import FilesPage from './pages/files/files';
 
 declare global {
   interface Window {
@@ -42,6 +43,15 @@ function App() {
       <MainLayout>
         <Routes>
           <Route path="" element={<Home />} />
+      <Route path="/files" element={<FilesPage />} />
+      <Route path="/files_all" element={<FilesPage />} />
+      <Route path="/files_workflow" element={<FilesPage />} />
+      <Route path="/files_templates" element={<FilesPage />} />
+      <Route path="/files_docs" element={<FilesPage />} />
+      <Route path="/files_attestation" element={<FilesPage />} />
+      <Route path="/files_info" element={<FilesPage />} />
+      <Route path="/files_settings" element={<FilesPage />} />
+          
           
           <Route path="/loading" element={<Loading />} />
           <Route path="/share/:identifier" element={<SharePage />} />
