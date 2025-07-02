@@ -9,10 +9,12 @@ import {
     Signature,
     Link,
     Bell,
-    Users
+    Users,
+    CopyrightIcon
 } from 'lucide-react';
 import { Outlet } from 'react-router-dom';
 import CustomNavLink from '@/components/shadcn/common/CustomNavLink';
+import { Link as RouterLink } from 'react-router-dom';
 
 const TailwindLayout = () => {
     const usedStorage = 3.3; // GB
@@ -124,7 +126,7 @@ const TailwindLayout = () => {
                 </div>
             </div>
 
-            <div className="flex-1 flex flex-col">
+            <div className="flex-1 flex flex-col min-h-screen bg-white relative">
                 {/* Header */}
                 <div className="bg-white border-b border-gray-200 h-[70px] min-h-[70px] max-h-[70px] overflow-hidden">
                     <div className="h-full flex items-center justify-between">
@@ -158,8 +160,19 @@ const TailwindLayout = () => {
                         </div>
                     </div>
                 </div>
-                {/* Main Content */}
-                <Outlet />
+                {/* Main Content - with flex-grow to push footer down */}
+                <div className="flex-grow" style={{ height: '100000px' }}>
+                    <Outlet />
+                </div>
+
+                {/* Footer - fixed at bottom */}
+                <div className="bg-gray-50 px-6 py-3 border-t border-gray-200 text-right w-full">
+                    <div className="text-sm text-gray-500">
+                        <span className="font-medium">
+                            {new Date().getFullYear()} <CopyrightIcon className="inline w-4 h-4 align-text-bottom" /> <RouterLink to={"https://inblock.io/"} >Inblock.io</RouterLink>
+                        </span>
+                    </div>
+                </div>
             </div>
 
         </div>

@@ -8,11 +8,10 @@ import {
     Copy,
     Grid3X3,
     List,
-    CopyrightIcon,
     FileText,
     
 } from 'lucide-react';
-import { Link as RouterLink } from 'react-router-dom';
+
 import { LuDelete, LuDownload, LuEye, LuGlasses, LuLink2, LuShare2, LuSignature } from 'react-icons/lu';
 
 
@@ -22,16 +21,14 @@ export default function FilesList() {
     const [_selectedFiles, setSelectedFiles] = useState<number[]>([]);
 
 
-    const files = [
-        {
-            id: 1,
-            name: 'dummy.pdf',
-            type: 'pdf',
-            modified: '1/7/2025 12:00 pm',
-            //   access: 'Only you',
-            starred: false
-        }
-    ];
+    const files = Array(1000).fill(0).map((_, index) => ({
+        id: index,
+        name: `File ${index}`,
+        type: 'pdf',
+        modified: '1/7/2025 12:00 pm',
+        //   access: 'Only you',
+        starred: false
+    }));
 
     const handleFileSelect = (fileId: number) => {
         setSelectedFiles(prev =>
@@ -229,16 +226,6 @@ export default function FilesList() {
                 </div>
             </div>
 
-            {/* Footer */}
-            <div className="bg-gray-50 px-6 py-3 border-t border-gray-200 text-right">
-                <div className="text-sm text-gray-500">
-                    <span className="font-medium">
-                        {new Date().getFullYear()} <CopyrightIcon className="inline w-4 h-4 align-text-bottom" /> <RouterLink to={"https://inblock.io/"} >Inblock.io</RouterLink>
-                    </span>
-                    {/* <br />
-        Go to Settings to activate Windows. */}
-                </div>
-            </div>
         </div>
     )
 }

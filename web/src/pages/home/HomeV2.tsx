@@ -39,8 +39,8 @@ const Header = () => (
     <div className="container flex h-16 max-w-screen-2xl items-center mx-auto">
       <nav className="hidden flex-1 md:flex items-center space-x-4 lg:space-x-6 justify-between">
         <Link to="/" className="mr-6 flex items-center space-x-2 group">
-          <div className="relative overflow-hidden rounded-full p-1 bg-gradient-to-r from-orange-500 to-primary group-hover:from-primary group-hover:to-orange-500 transition-all duration-300">
-            <img className="h-[32px] w-[32px] rounded-full" src="/images/logo.png" />
+          <div className="relative overflow-hidden p-1 ">
+            <img className="h-[40px]" src="/images/logo.png" />
           </div>
         </Link>
         <div className="flex items-center space-x-6 lg:space-x-8">
