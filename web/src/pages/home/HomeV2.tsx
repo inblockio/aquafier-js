@@ -1,17 +1,15 @@
-
 import {
   ArrowRight,
   Check,
   Linkedin,
-  Mail,
-  ShieldCheck,
   Twitter,
+  Chrome,
+  Mail,
   FileCheck,
+  ShieldCheck,
   UserCheck,
   Stamp,
-  Github,
   BookOpen,
-  Chrome,
   Server,
   PenSquare,
   Fingerprint,
@@ -19,6 +17,10 @@ import {
   LockKeyhole,
   ArrowUpRight,
   Clock,
+  Sparkles,
+  Rocket,
+  Zap,
+  Github,
 } from "lucide-react";
 
 import { Button } from "@/components/shadcn/ui/button";
@@ -453,6 +455,143 @@ const VisionSection = () => (
   </section>
 );
 
+const pricingPlans = [
+  {
+    name: "Free",
+    description: "Perfect for exploring Aqua's capabilities",
+    price: "$0",
+    duration: "forever",
+    icon: <Sparkles className="h-8 w-8 text-orange-500" />,
+    features: [
+      "Basic document notarization",
+      "Up to 5 AquaTrees",
+      "Public verification",
+      "Community support"
+    ],
+    cta: "Get Started",
+    popular: false
+  },
+  {
+    name: "Pro",
+    description: "For individuals and small teams",
+    price: "$19",
+    duration: "per month",
+    icon: <Rocket className="h-8 w-8 text-orange-500" />,
+    features: [
+      "Unlimited document notarization",
+      "Up to 100 AquaTrees",
+      "Private verification",
+      "Priority support",
+      "API access",
+      "Custom branding"
+    ],
+    cta: "Start Free Trial",
+    popular: true
+  },
+  {
+    name: "Enterprise",
+    description: "For organizations with advanced needs",
+    price: "Custom",
+    duration: "",
+    icon: <Zap className="h-8 w-8 text-orange-500" />,
+    features: [
+      "Unlimited everything",
+      "Dedicated infrastructure",
+      "Advanced security features",
+      "SLA guarantees",
+      "Dedicated account manager",
+      "Custom integrations"
+    ],
+    cta: "Contact Sales",
+    popular: false
+  }
+];
+
+const PricingSection = () => (
+  <section id="pricing" className="py-20 md:py-28 bg-background relative overflow-hidden">
+    {/* Decorative elements */}
+    <div className="absolute top-20 left-0 w-72 h-72 bg-orange-500/5 rounded-full filter blur-3xl"></div>
+    <div className="absolute bottom-40 right-0 w-64 h-64 bg-orange-400/5 rounded-full filter blur-3xl"></div>
+    
+    <div className="container mx-auto px-4 relative z-10">
+      <div className="text-center max-w-3xl mx-auto">
+        <h2 className="text-3xl font-bold font-headline sm:text-4xl md:text-5xl">
+          Simple, Transparent <span className="bg-gradient-to-r from-orange-600 to-orange-400 bg-clip-text text-transparent">Pricing</span>
+        </h2>
+        <div className="h-1 w-20 bg-gradient-to-r from-orange-600 to-orange-400 mx-auto my-6"></div>
+        <p className="mt-4 text-lg text-muted-foreground">
+          Choose the plan that's right for you and start building with Aqua Protocol today.
+        </p>
+      </div>
+      
+      <div className="mt-16 grid grid-cols-1 md:grid-cols-3 gap-8">
+        {pricingPlans.map((plan) => (
+          <Card 
+            key={plan.name} 
+            className={`flex flex-col h-full border ${plan.popular ? 'border-orange-500 shadow-lg shadow-orange-500/20' : 'border-border'} relative overflow-hidden`}
+          >
+            {plan.popular && (
+              <div className="absolute top-0 right-0">
+                <div className="bg-orange-500 text-white text-xs font-semibold px-3 py-1 rounded-bl-lg">
+                  Popular
+                </div>
+              </div>
+            )}
+            <CardHeader>
+              <div className="mb-4 rounded-full bg-orange-500/10 p-3 w-fit">
+                {plan.icon}
+              </div>
+              <CardTitle className="text-2xl font-headline">{plan.name}</CardTitle>
+              <div className="mt-2">
+                <span className="text-3xl font-bold">{plan.price}</span>
+                {plan.duration && <span className="text-muted-foreground"> {plan.duration}</span>}
+              </div>
+              <p className="text-muted-foreground mt-2">{plan.description}</p>
+            </CardHeader>
+            <CardContent className="flex-grow">
+              <ul className="space-y-3">
+                {plan.features.map((feature, i) => (
+                  <li key={i} className="flex items-start">
+                    <Check className="h-5 w-5 text-orange-500 mr-2 flex-shrink-0 mt-0.5" />
+                    <span>{feature}</span>
+                  </li>
+                ))}
+              </ul>
+            </CardContent>
+            <CardFooter>
+              <Button 
+                className={`w-full ${plan.popular ? 'bg-gradient-to-r from-orange-600 to-orange-500 hover:from-orange-500 hover:to-orange-600 text-white' : 'border-orange-500/50 hover:border-orange-500 hover:bg-orange-500/5'}`}
+                variant={plan.popular ? "default" : "outline"}
+                asChild
+              >
+                <Link to={plan.name === "Enterprise" ? "#contact" : "/signup"}>
+                  {plan.cta}
+                  <ArrowRight className="ml-2 h-4 w-4" />
+                </Link>
+              </Button>
+            </CardFooter>
+          </Card>
+        ))}
+      </div>
+      
+      <div className="mt-16 bg-orange-50/50 dark:bg-orange-900/10 border border-orange-200/50 dark:border-orange-800/30 rounded-xl p-8 text-center">
+        <h3 className="text-xl font-semibold mb-2">Need a custom solution?</h3>
+        <p className="text-muted-foreground max-w-2xl mx-auto">
+          We offer tailored solutions for organizations with specific requirements. Contact our sales team to discuss your needs.
+        </p>
+        <Button asChild variant="outline" className="mt-6 border-orange-500/30 hover:border-orange-500 hover:bg-orange-500/5">
+          <Link to="#contact">
+            <span className="flex items-center">
+              Contact Sales
+              <ArrowUpRight className="ml-2 h-4 w-4 text-orange-500" />
+            </span>
+          </Link>
+        </Button>
+      </div>
+    </div>
+  </section>
+);
+
 const ContactSection = () => (
   <section
     id="contact"
@@ -599,6 +738,7 @@ export default function HomeV2() {
         <HowItWorksSection />
         <PrototypesSection />
         <VisionSection />
+        <PricingSection />
         <ContactSection />
       </main>
       <Footer />
