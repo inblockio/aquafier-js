@@ -16,7 +16,7 @@ import {
 const FilesPage = () => {
 
 
-    //  const { files , setFiles} = useStore(appStore)
+    const { files, setFiles } = useStore(appStore)
 
     useEffect(() => {
         // This effect runs once when the component mounts
@@ -71,10 +71,9 @@ const FilesPage = () => {
                 </div>
             </div>
 
-            {/* TODO: FIX- I have commented this out because the app breaks since chakra provider is not in path */}
-            {/* {
-            files.length == 0 ? <FileDropZone/> :   <FilesList />
-        } */}
+            {
+                files.length == 0 ? <FileDropZone /> : <FilesList />
+            }
 
 
 
