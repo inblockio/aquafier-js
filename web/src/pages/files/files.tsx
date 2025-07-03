@@ -1,5 +1,4 @@
-import { use, useEffect, useState } from 'react';
-import { useLocation, Link as RouterLink } from 'react-router-dom';
+import { useEffect } from 'react';
 import FileDropZone from './components/dropzone_file_actions/dropzone_file_actions';
 import appStore from "../../store"
 import { useStore } from "zustand"
@@ -11,25 +10,22 @@ import {
     Download,
     Share2,
     Copy,
-    Grid3X3,
-    List,
-    FileText,
-    
+
 } from 'lucide-react';
 
 const FilesPage = () => {
 
 
-     const { files , setFiles} = useStore(appStore)
-   
-     useEffect(() => {
+    //  const { files , setFiles} = useStore(appStore)
+
+    useEffect(() => {
         // This effect runs once when the component mounts
         // You can perform any necessary setup here, like fetching initial data
         console.log("FilesPage mounted");
 
 
-        
-        
+
+
         // Cleanup function if needed
         return () => {
             console.log("FilesPage unmounted");
@@ -38,48 +34,49 @@ const FilesPage = () => {
 
     return (
         <>
-           {/* Action Bar */}
-                    <div className="bg-white border-b border-gray-200 px-6 py-4">
-                        <div className="flex items-center justify-between">
-                            <div className="flex items-center space-x-4">
-                                <button
-                                    className="flex items-center space-x-2 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-blue-700"
-                                    style={{ backgroundColor: '#E55B1F' }}
-                                >
-                                    <Upload className="w-4 h-4" />
-                                    <span>Upload or drop</span>
-                                </button>
-                                <button className="flex items-center space-x-2 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-gray-100"
-                                    style={{ backgroundColor: '#394150' }}
-                                >
-                                    <Plus className="w-4 h-4" />
-                                    <span>Create Document Signature </span>
-                                </button>
-                                <button className="flex items-center space-x-2 text-gray-700 px-4 py-2 rounded-md text-sm font-medium hover:bg-gray-100">
-                                    <FolderPlus className="w-4 h-4" />
-                                    <span>Create Template</span>
-                                </button>
-                                <button className="flex items-center space-x-2 text-gray-700 px-4 py-2 rounded-md text-sm font-medium hover:bg-gray-100">
-                                    <Download className="w-4 h-4" />
-                                    <span>Get the app</span>
-                                </button>
-                                <button className="flex items-center space-x-2 text-gray-700 px-4 py-2 rounded-md text-sm font-medium hover:bg-gray-100">
-                                    <Copy className="w-4 h-4" />
-                                    <span>Transfer a copy</span>
-                                </button>
-                                <button className="flex items-center space-x-2 text-gray-700 px-4 py-2 rounded-md text-sm font-medium hover:bg-gray-100">
-                                    <Share2 className="w-4 h-4" />
-                                    <span>Share</span>
-                                </button>
-                            </div>
-                        </div>
+            {/* Action Bar */}
+            <div className="bg-white border-b border-gray-200 px-6 py-4">
+                <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-4">
+                        <button
+                            className="flex items-center space-x-2 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-blue-700"
+                            style={{ backgroundColor: '#E55B1F' }}
+                        >
+                            <Upload className="w-4 h-4" />
+                            <span>Upload or drop</span>
+                        </button>
+                        <button className="flex items-center space-x-2 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-gray-100"
+                            style={{ backgroundColor: '#394150' }}
+                        >
+                            <Plus className="w-4 h-4" />
+                            <span>Create Document Signature </span>
+                        </button>
+                        <button className="flex items-center space-x-2 text-gray-700 px-4 py-2 rounded-md text-sm font-medium hover:bg-gray-100">
+                            <FolderPlus className="w-4 h-4" />
+                            <span>Create Template</span>
+                        </button>
+                        <button className="flex items-center space-x-2 text-gray-700 px-4 py-2 rounded-md text-sm font-medium hover:bg-gray-100">
+                            <Download className="w-4 h-4" />
+                            <span>Get the app</span>
+                        </button>
+                        <button className="flex items-center space-x-2 text-gray-700 px-4 py-2 rounded-md text-sm font-medium hover:bg-gray-100">
+                            <Copy className="w-4 h-4" />
+                            <span>Transfer a copy</span>
+                        </button>
+                        <button className="flex items-center space-x-2 text-gray-700 px-4 py-2 rounded-md text-sm font-medium hover:bg-gray-100">
+                            <Share2 className="w-4 h-4" />
+                            <span>Share</span>
+                        </button>
                     </div>
+                </div>
+            </div>
 
-        {
+            {/* TODO: FIX- I have commented this out because the app breaks since chakra provider is not in path */}
+            {/* {
             files.length == 0 ? <FileDropZone/> :   <FilesList />
-        }
+        } */}
 
-        
+
 
         </>
     );
