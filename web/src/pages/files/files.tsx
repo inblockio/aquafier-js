@@ -1,114 +1,72 @@
 import { useEffect, useState } from 'react';
-import {
-    Plus,
-    Share2,
-    Star,
-    FileText,
-    Settings,
-    LayoutTemplate,
-    Workflow,
-    Signature,
-    Link,
-    Bell,
-    Users
-} from 'lucide-react';
 import { useLocation, Link as RouterLink } from 'react-router-dom';
+import FileDropZone from './components/dropzone_file_actions/dropzone_file_actions';
+import appStore from "../../store"
+import { useStore } from "zustand"
 import FilesList from './files_list';
-import FilesSettings from './files_settings';
+import {
+    Upload,
+    Plus,
+    FolderPlus,
+    Download,
+    Share2,
+    Copy,
+    Grid3X3,
+    List,
+    FileText,
+    
+} from 'lucide-react';
 
 const FilesPage = () => {
 
-    const [activeTab, setActiveTab] = useState('all_files');
 
-    const location = useLocation();
-    const usedStorage = 3.3; // GB
-    const totalStorage = 5; // GB
-    const usagePercentage = (usedStorage / totalStorage) * 100;
-
-    let pathname = location.pathname.replace('/', '');
-    const activeTabCheck = () => {
-        let activeTab = "all_files";
-
-
-        // Determine the active tab based on the pathname
-        if (pathname === 'files_all' || pathname === 'files') {
-            activeTab = "files";
-        } else if (pathname === "files_workflows") {
-            activeTab = "files_workflows";
-        } else if (pathname === "files_templates") {
-            activeTab = "files_templates";
-        } else if (pathname === "files_shared") {
-            activeTab = "files_shared";
-        } else if (pathname === "files_info") {
-            activeTab = "files_info";
-        } else if (pathname === "files_settings") {
-            activeTab = "files_settings";
-        } else if (pathname === "files_document_signature") {
-            activeTab = "files_document_signature";
-        } else if (pathname === "files_domain_attestation") {
-            activeTab = "files_domain_attestation";
-        }
-
-        console.log("pathname is", pathname);
-        console.log("activeTab is", activeTab);
-        setActiveTab(activeTab);
-    }
-
-    useEffect(() => {
-        activeTabCheck()
-    }, [location]);
-
-
-    // useEffect(() => {
-    //     // Check if Tailwind is already loaded
-    //     if (!document.querySelector('link[href*="tailwind"]')) {
-    //         const link = document.createElement('link');
-    //         link.href = "https://cdnjs.cloudflare.com/ajax/libs/tailwindcss/2.2.19/tailwind.min.css";
-    //         link.rel = "stylesheet";
-    //         document.head.appendChild(link);
-    //     }
-
-    //     activeTabCheck()
-
-    //     return () => {
-    //         // Remove the stylesheet when component unmounts (optional)
-    //         const link = document.querySelector('link[href*="tailwind"]');
-    //         if (link) document.head.removeChild(link);
-    //     };
-    // }, []);
-
-    const sidebarItems = [
-        { icon: FileText, label: 'All files', id: "files" },
-        { icon: Workflow, label: 'Workflows', id: "files_workflows" },
-        { icon: LayoutTemplate, label: 'Templates', id: "files_templates" },
-        { icon: Share2, label: 'Shared files', id: "files_shared" },
-    ];
-
-    const quickAccessItems = [
-        { label: 'Info', icon: Star, id: "files_info" },
-        { label: 'Settings', icon: Settings, id: "files_settings" }
-    ];
-
-    const applicationsItems = [
-        { label: 'Document Signature', icon: Signature, id: "files_document_signature" },
-        { label: 'Domain Attestation', icon: Link, id: "files_domain_attestation" }
-    ];
-
-
-
-    const mainContent = () => {
-        if (pathname == "files") {
-            return <FilesList />
-        } else if (pathname == "files_settings") {
-            return <FilesSettings />
-        } else {
-            return <>404</>
-        }
-    }
-
+     const { files, backend_url, session, setSelectedFileInfo, selectedFileInfo, systemFileInfo } = useStore(appStore)
+   
     return (
         <>
-        <FilesList />
+           {/* Action Bar */}
+                    <div className="bg-white border-b border-gray-200 px-6 py-4">
+                        <div className="flex items-center justify-between">
+                            <div className="flex items-center space-x-4">
+                                <button
+                                    className="flex items-center space-x-2 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-blue-700"
+                                    style={{ backgroundColor: '#E55B1F' }}
+                                >
+                                    <Upload className="w-4 h-4" />
+                                    <span>Upload or drop</span>
+                                </button>
+                                <button className="flex items-center space-x-2 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-gray-100"
+                                    style={{ backgroundColor: '#394150' }}
+                                >
+                                    <Plus className="w-4 h-4" />
+                                    <span>Create Document Signature </span>
+                                </button>
+                                <button className="flex items-center space-x-2 text-gray-700 px-4 py-2 rounded-md text-sm font-medium hover:bg-gray-100">
+                                    <FolderPlus className="w-4 h-4" />
+                                    <span>Create Template</span>
+                                </button>
+                                <button className="flex items-center space-x-2 text-gray-700 px-4 py-2 rounded-md text-sm font-medium hover:bg-gray-100">
+                                    <Download className="w-4 h-4" />
+                                    <span>Get the app</span>
+                                </button>
+                                <button className="flex items-center space-x-2 text-gray-700 px-4 py-2 rounded-md text-sm font-medium hover:bg-gray-100">
+                                    <Copy className="w-4 h-4" />
+                                    <span>Transfer a copy</span>
+                                </button>
+                                <button className="flex items-center space-x-2 text-gray-700 px-4 py-2 rounded-md text-sm font-medium hover:bg-gray-100">
+                                    <Share2 className="w-4 h-4" />
+                                    <span>Share</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+        {
+            files.length == 0 ? <FileDropZone/> :   <FilesList />
+        }
+
+        
+
         </>
     );
 };
