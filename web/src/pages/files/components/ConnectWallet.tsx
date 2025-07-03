@@ -19,7 +19,7 @@ import { useStore } from "zustand";
 import { BrowserProvider, ethers } from "ethers";
 
 import { fetchFiles, formatCryptoAddress, generateAvatar, getCookie, setCookie } from "../../../utils/functions";
-import { Dialog } from "@/components/shadcn/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/shadcn/ui/dialog";
 import { Button } from "@/components/chakra-ui/button";
 
 const CustomCopyButton = ({ value }: { value: string }) => {
@@ -248,12 +248,13 @@ export const ConnectWallet: React.FC<{dataTestId: string}> = ({dataTestId}) => {
           {session ? (
             <div className="flex flex-col items-center gap-5">
               <div className="flex justify-center">
-                <Avatar className="h-20 w-20">
+                Avatar Placeholder
+                {/* <Avatar className="h-20 w-20">
                   <AvatarImage src={avatar} alt="Avatar" />
                   <AvatarFallback>
                     {session?.address?.slice(0, 2).toUpperCase()}
                   </AvatarFallback>
-                </Avatar>
+                </Avatar> */}
               </div>
               <p className="font-mono text-sm">
                 {formatCryptoAddress(session?.address, 10, 10)}

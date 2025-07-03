@@ -1907,3 +1907,32 @@ export async function handleLoadFromUrl(pdfUrlInput: string, fileName: string, t
         }
     }
 };
+
+
+
+/**
+ * Converts bytes to human readable file size
+ * @param {number} bytes - The number of bytes
+ * @param {number} decimals - Number of decimal places to show (default: 2)
+ * @param {boolean} binary - Use binary (1024) or decimal (1000) units (default: false for decimal)
+ * @returns {string} Human readable file size
+ */
+export  function formatBytes(bytes: number, decimals = 2, binary = false) {
+  // Handle edge cases
+  if (bytes === 0) return '0 Bytes';
+  if (bytes < 0) return 'Invalid size';
+  if (typeof bytes !== 'number' || !isFinite(bytes)) return 'Invalid input';
+
+  const k = binary ? 1024 : 1000;
+  const dm = decimals < 0 ? 0 : decimals;
+  
+  // Units for decimal (SI) and binary systems
+  const sizes = binary 
+    ? ['Bytes', 'KiB', 'MiB', 'GiB', 'TiB', 'PiB', 'EiB', 'ZiB', 'YiB']
+    : ['Bytes', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB'];
+
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  const size = parseFloat((bytes / Math.pow(k, i)).toFixed(dm));
+
+  return `${size} ${sizes[i]}`;
+}

@@ -3,27 +3,24 @@ import {
     Grid3X3,
     List,
     FileText,
-    
+
 } from 'lucide-react';
 
 
 import { useStore } from 'zustand';
 import appStore from '../../store';
-
+import FileListItem from './files_list_item';
 
 export default function FilesList() {
 
     const [view, setView] = useState('list');
 
- const { files } = useStore(appStore)
+    const { files, systemFileInfo } = useStore(appStore)
 
 
 
     return (
         <div>
-
-         
-
             {/* File Content */}
             <div className="flex-1 bg-white px-6 py-4">
                 {/* File Header */}
@@ -31,7 +28,7 @@ export default function FilesList() {
                     <div className="flex items-center space-x-4">
                         <h1 className="text-xl font-semibold text-gray-900">All files</h1>
                         <div className="w-4 h-4 bg-gray-300 rounded-full flex items-center justify-center">
-                            <span className="text-xs text-gray-600">8</span>
+                            <span className="text-xs text-gray-600">{files.length}</span>
                         </div>
                     </div>
                     <div className="flex items-center space-x-2">
@@ -81,14 +78,14 @@ export default function FilesList() {
                 <div className="flex items-center py-3 border-b border-gray-200 text-sm font-medium text-gray-700">
                     <div className="flex-1">Name</div>
                     <div className="w-24">Type</div>
-                    <div className="w-32">Uploaded At</div>
+                    <div className="w-50">Uploaded At</div>
                     <div className="w-24">Files Size</div>
-                    <div className="w-96">Actions</div> {/* Fixed width for actions column */}
+                    <div className="w-120">Actions</div> {/* Fixed width for actions column */}
                 </div>
 
                 {/* File List */}
                 <div className="space-y-1">
-                    {files.map((file) => <FileListItem key={file.id} />)}
+                    {files.map((file, index) => <FileListItem key={index} index={index} file={file} systemFileInfo={systemFileInfo} />)}
                 </div>
             </div>
 

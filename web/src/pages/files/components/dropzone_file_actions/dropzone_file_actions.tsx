@@ -8,19 +8,10 @@ import { useStore } from 'zustand';
 import appStore from '../../../../store';
 import axios from 'axios';
 import { ApiFileInfo } from '../../../../models/FileInfo';
-import { set } from 'react-hook-form';
+import { DropEvent, FileItemWrapper } from '@/types/types';
 
-interface DropEvent extends React.DragEvent<HTMLDivElement> { }
-// interface ChangeEvent extends React.ChangeEvent<HTMLInputElement> {}
 
-interface FileItemWrapper {
-  file: File;
-  isJson: boolean;
-  isLoading: boolean;
-  isZip: boolean;
-  isJsonForm: boolean;
-  isJsonAquaTreeData: boolean;
-}
+
 const FileDropZone = () => {
   const [isDragOver, setIsDragOver] = useState(false);
   const [filesList, setFilesList] = useState<FileItemWrapper[]>([]);
@@ -60,10 +51,6 @@ const FileDropZone = () => {
 
       return
     }
-
-
-
-
 
     if (fileData.file.size > maxFileSizeForUpload) {
       toaster.create({

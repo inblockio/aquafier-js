@@ -32,6 +32,18 @@ export interface SummaryDetailsDisplayData {
 }
 
 
+export interface DropEvent extends React.DragEvent<HTMLDivElement> { }
+// interface ChangeEvent extends React.ChangeEvent<HTMLInputElement> {}
+
+export interface FileItemWrapper {
+  file: File;
+  isJson: boolean;
+  isLoading: boolean;
+  isZip: boolean;
+  isJsonForm: boolean;
+  isJsonAquaTreeData: boolean;
+}
+
 export interface WebSocketMessage {
   action: string;
   type: string;
