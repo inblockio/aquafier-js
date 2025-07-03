@@ -15,7 +15,7 @@ export default function FilesList() {
 
     const [view, setView] = useState('list');
 
-    const { files, systemFileInfo } = useStore(appStore)
+    const { files, systemFileInfo, backend_url , session } = useStore(appStore)
 
 
 
@@ -85,7 +85,7 @@ export default function FilesList() {
 
                 {/* File List */}
                 <div className="space-y-1">
-                    {files.map((file, index) => <FileListItem key={index} index={index} file={file} systemFileInfo={systemFileInfo} />)}
+                    {files.map((file, index) => <FileListItem  key={index} index={index} file={file} systemFileInfo={systemFileInfo} backendUrl={backend_url}  nonce={session?.nonce ?? ""}/>)}
                 </div>
             </div>
 

@@ -256,14 +256,7 @@ const FilesPage = () => {
         // ... existing logic
     }, [filesList]);
 
-    // Legacy functions (keeping for compatibility)
-    const checkFileContent = async (file: File, isJson: boolean, isZip: boolean) => {
-        // ... existing logic
-    };
-
-    const uploadFile = async (fileData: FileItemWrapper) => {
-        // ... existing logic
-    };
+    
 
     return (
         <>

@@ -5,9 +5,13 @@ import { FileText } from "lucide-react";
 import { useEffect, useState } from "react";
 
 import { LuDelete, LuDownload, LuEye, LuGlasses, LuLink2, LuShare2, LuSignature } from 'react-icons/lu';
+import { SignAquaChain } from "./components/aqua_chain_actions/sign_aqua_chain";
+import { WitnessAquaChain } from "./components/aqua_chain_actions/witness_aqua_chain";
+import { DownloadAquaChain } from "./components/aqua_chain_actions/download_aqua_chain";
+import { DeleteAquaChain } from "./components/aqua_chain_actions/delete_aqua_chain";
 
 
-export default function FilesListItem({ file, index, systemFileInfo }: { file: ApiFileInfo, index: number, systemFileInfo: ApiFileInfo[] }) {
+export default function FilesListItem({ file, index, systemFileInfo, backendUrl, nonce }: { file: ApiFileInfo, index: number, systemFileInfo: ApiFileInfo[], backendUrl: string, nonce: string }) {
 
 
 
@@ -100,17 +104,10 @@ export default function FilesListItem({ file, index, systemFileInfo }: { file: A
                         <span>Details</span>
                     </button>
 
-                    {/* Sign Button */}
-                    <button className="flex items-center space-x-1 bg-blue-100 text-blue-700  px-3 py-2 rounded-md hover:bg-blue-200 transition-colors text-xs">
-                        <LuSignature className="w-3 h-3" />
-                        <span>Sign</span>
-                    </button>
+                    <SignAquaChain apiFileInfo={file} backendUrl={backendUrl} nonce={nonce} revision="" />
 
-                    {/* Witness Button */}
-                    <button className="flex items-center space-x-1 bg-gray-800 text-white  px-3 py-2 rounded-md hover:bg-gray-900 transition-colors text-xs">
-                        <LuGlasses className="w-3 h-3" />
-                        <span>Witness</span>
-                    </button>
+                    <WitnessAquaChain apiFileInfo={file} backendUrl={backendUrl} nonce={nonce} revision="" />
+
 
                     {/* Link Button */}
                     <button className="flex items-center space-x-1 bg-yellow-100 text-yellow-700  px-3 py-2 rounded-md hover:bg-yellow-200 transition-colors text-xs">
@@ -130,16 +127,10 @@ export default function FilesListItem({ file, index, systemFileInfo }: { file: A
                     </button>
 
                     {/* Delete Button */}
-                    <button className="flex items-center space-x-1 bg-pink-100 text-pink-700  px-3 py-2 rounded-md hover:bg-pink-200 transition-colors text-xs">
-                        <LuDelete className="w-3 h-3" />
-                        <span>Delete</span>
-                    </button>
+                    <DeleteAquaChain apiFileInfo={file} backendUrl={backendUrl} nonce={nonce} revision="" />
 
                     {/* Download Button - Smaller width */}
-                    <button className="flex items-center justify-center space-x-1 bg-purple-100 text-purple-700  px-3 py-2 rounded-md hover:bg-purple-200 transition-colors text-xs w-20">
-                        <LuDownload className="w-3 h-3" />
-                        <span>Download</span>
-                    </button>
+                    <DownloadAquaChain file={file} />
                 </div>
 
                 {/* Third row - 1 smaller button */}

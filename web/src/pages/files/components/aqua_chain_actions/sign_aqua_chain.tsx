@@ -1,15 +1,15 @@
-
 import { LuSignature } from "react-icons/lu"
-import { Button } from "../../../../components/chakra-ui/button"
+// import { Button } from "../../../../components/chakra-ui/button"
 import { areArraysEqual, dummyCredential, ensureDomainUrlHasSSL, fetchFiles, getGenesisHash } from "../../../../utils/functions"
 import { useStore } from "zustand"
 import appStore from "../../../../store"
 import axios from "axios"
 import { ApiFileInfo } from "../../../../models/FileInfo"
-import { toaster } from "../../../../components/chakra-ui/toaster"
+// import { toaster } from "../../../../components/chakra-ui/toaster"
 import { useState } from "react"
 import Aquafier, { AquaTreeWrapper } from "aqua-js-sdk"
 import { RevionOperation } from "../../../../models/RevisionOperation"
+import { toaster } from "@/components/shadcn/ui/use-toast"
 
 
 
@@ -150,12 +150,45 @@ export const SignAquaChain = ({ apiFileInfo, backendUrl, nonce }: RevionOperatio
             })
         }
     };
-    return (
-        <Button data-testid="sign-action-button" size={'xs'} colorPalette={'blue'} variant={'subtle'} w={'100px'} onClick={signFileHandler} loading={signing}>
-            <LuSignature />
-            Sign
-        </Button>
+    return ( 
+        <>
+        {/* Sign Button */}
+        <button 
+            data-testid="sign-action-button"
+            onClick={()=>{
+                if (!signing) {
+                    signFileHandler();
+                }else{
+                    toaster.create({
+                        description: "Signing is already in progress",
+                        type: "info"
+                    })
+                }
+            }} 
+            className={`flex items-center space-x-1 bg-blue-100 text-blue-700 px-3 py-2 rounded-md transition-colors text-xs ${signing ? 'opacity-60 cursor-not-allowed' : 'hover:bg-blue-200'}`}
+            disabled={signing}
+        >
+            {signing ? (
+                <>
+                    <svg className="animate-spin h-3 w-3 mr-1 text-blue-700" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
+                    </svg>
+                    <span>Signing...</span>
+                </>
+            ) : (
+                <>
+                    <LuSignature className="w-3 h-3" />
+                    <span>Sign</span>
+                </>
+            )}
+        </button>
+        </>
     )
 
 
 }
+ // <Button  size={'xs'} colorPalette={'blue'} variant={'subtle'} w={'100px'}  loading={signing}>
+        //     <LuSignature />
+        //     Sign
+        // </Button>
