@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import FormTemplateEditorShadcn from "@/components/aqua_forms/FormTemplateEditorShadcn";
 import FormTemplateListShadcn from "@/components/aqua_forms/FormTemplateListShadcn";
 import { FormTemplate } from "@/components/aqua_forms/types";
@@ -19,6 +19,7 @@ const TemplatesPage = () => {
 
   const handleViewTemplate = (template: FormTemplate) => {
     setSelectedTemplate(template);
+    setActiveTab("editor");
     // Could implement a view-only mode here
   };
 
@@ -68,6 +69,7 @@ const TemplatesPage = () => {
             <FormTemplateEditorShadcn 
               initialTemplate={selectedTemplate || undefined} 
               onSave={handleSave} 
+              updating={!isCreating && selectedTemplate !== undefined || selectedTemplate !== null}
             />
           )}
         </TabsContent>

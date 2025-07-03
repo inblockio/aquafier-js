@@ -107,6 +107,11 @@ const FormTemplateEditorShadcn = ({ initialTemplate, onSave, updating }: FormTem
       const formValues = getValues();
       formValues.fields = formFields;
 
+      if(formFields.length === 0) {
+        toast.error("Form must have at least one field");
+        return;
+      }
+
       // send to server
       let url = `${backend_url}/templates`;
       let method = 'post';
@@ -136,8 +141,12 @@ const FormTemplateEditorShadcn = ({ initialTemplate, onSave, updating }: FormTem
           let templateTree: ApiFileInfo = response.data.data;
           setSystemFileInfo([...systemFileInfo, templateTree])
         }
-        
-        toast.success("Form template created successfully");
+        if(updating) {
+          toast.success("Form template updated successfully");
+        }
+        else {
+          toast.success("Form template created successfully");
+        }
         onSave();
       }
     } catch (error: any) {
@@ -150,7 +159,7 @@ const FormTemplateEditorShadcn = ({ initialTemplate, onSave, updating }: FormTem
         }
       }
 
-      toast.error("Failed to create form template");
+      toast.error("Failed to " + (updating ? "update" : "create") + " form template");
     } finally {
       setIsSubmitting(false);
     }

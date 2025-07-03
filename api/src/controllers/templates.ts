@@ -125,7 +125,7 @@ export default async function templatesController(fastify: FastifyInstance) {
 
 
                 let response = await deleteAquaTreeFromSystem(request.user?.address ?? "-", results.hash)
-
+                
                 if (response[0] != 200) {
                     return reply.code(response[0]).send({ success: response[0] == 200 ? true : false, message: response[1] });
 
@@ -285,6 +285,8 @@ export default async function templatesController(fastify: FastifyInstance) {
 
     fastify.put('/templates/:templateId', { preHandler: authenticate }, async (request: AuthenticatedRequest, reply) => {
         const aquaFormdata = request.body as AquaFormRequest;
+
+        console.log("Update: ", aquaFormdata)
 
         let [isValid, reason] = validateAquaModel(aquaFormdata);
 

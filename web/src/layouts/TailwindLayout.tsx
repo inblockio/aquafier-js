@@ -18,7 +18,7 @@ import { Link as RouterLink } from 'react-router-dom';
 import { useStore } from 'zustand';
 import appStore from '@/store';
 import { ConnectWallet } from '@/components/ConnectWallet';
-import { Toaster } from '@/components/shadcn/ui/toaster';
+import { Toaster } from 'sonner';
 
 const TailwindLayout = () => {
 
@@ -189,11 +189,11 @@ const TailwindLayout = () => {
     return (
 
         <>
-        <Toaster />
+            <Toaster position="top-right" richColors />
             {session?.address != undefined ?
                 uiView()
-                : <div className="flex items-center justify-center h-screen">  
-                <ConnectWallet dataTestId="sign-in-button-files-list" />
+                : <div className="flex items-center justify-center h-screen">
+                    <ConnectWallet dataTestId="sign-in-button-files-list" />
                 </div>}
         </>
 
