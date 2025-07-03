@@ -143,7 +143,8 @@ const FormTemplateListShadcn = ({ onEdit, onView }: FormTemplateListShadcnProps)
                           variant="ghost"
                           size="icon"
                           onClick={() => onView(template)}
-                          title="View template"
+                          // title="View template"
+                          className="cursor-pointer"
                         >
                           <LuEye className="h-4 w-4" />
                         </Button>
@@ -154,16 +155,17 @@ const FormTemplateListShadcn = ({ onEdit, onView }: FormTemplateListShadcnProps)
                               variant="ghost"
                               size="icon"
                               onClick={() => onEdit(template)}
-                              title="Edit template"
+                              // title="Edit template"
+                             className="cursor-pointer"
                             >
                               <LuPen className="h-4 w-4" />
                             </Button>
                             <Button
                               variant="ghost"
                               size="icon"
-                              className="text-red-500 hover:text-red-700 hover:bg-red-50"
+                              className="text-red-500 hover:text-red-700 hover:bg-red-50 cursor-pointer"
                               onClick={() => handleDeleteClick(template)}
-                              title="Delete template"
+                              // title="Delete template"
                             >
                               <LuTrash className="h-4 w-4" />
                             </Button>
