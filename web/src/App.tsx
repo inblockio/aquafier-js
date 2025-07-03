@@ -21,6 +21,7 @@ import TailwindMainLayout from './layouts/TailwindMainLayout';
 import PageNotFound from './pages/PageNotFound';
 import InfoPage from './pages/files/InfoPage';
 import SettingsPage from './pages/files/SettingsPage';
+import TemplatesPage from './pages/files/TemplatesPage';
 
 declare global {
   interface Window {
@@ -60,7 +61,7 @@ function App() {
           <Route index element={<FilesPage />} />
           <Route path="files_shared" element={<FilesPage />} />
           <Route path="files_workflows" element={<FilesPage />} />
-          <Route path="files_templates" element={<FilesPage />} />
+          <Route path="files_templates" element={<TemplatesPage />} />
           <Route path="files_docs" element={<FilesPage />} />
           <Route path="files_attestation" element={<FilesPage />} />
           <Route path="files_info" element={<InfoPage />} />
