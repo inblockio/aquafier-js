@@ -1,5 +1,4 @@
-import { use, useEffect, useState } from 'react';
-import { useLocation, Link as RouterLink } from 'react-router-dom';
+import { useEffect } from 'react';
 import FileDropZone from './components/dropzone_file_actions/dropzone_file_actions';
 import appStore from "../../store"
 import { useStore } from "zustand"
@@ -11,16 +10,13 @@ import {
     Download,
     Share2,
     Copy,
-    Grid3X3,
-    List,
-    FileText,
     
 } from 'lucide-react';
 
 const FilesPage = () => {
 
 
-     const { files , setFiles} = useStore(appStore)
+    //  const { files , setFiles} = useStore(appStore)
    
      useEffect(() => {
         // This effect runs once when the component mounts
@@ -75,9 +71,9 @@ const FilesPage = () => {
                         </div>
                     </div>
 
-        {
+        {/* {
             files.length == 0 ? <FileDropZone/> :   <FilesList />
-        }
+        } */}
 
         
 

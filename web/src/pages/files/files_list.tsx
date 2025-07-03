@@ -1,11 +1,5 @@
 import { useState } from 'react';
 import {
-    Upload,
-    Plus,
-    FolderPlus,
-    Download,
-    Share2,
-    Copy,
     Grid3X3,
     List,
     FileText,

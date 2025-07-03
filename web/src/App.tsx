@@ -17,9 +17,10 @@ import WorkFlowPage from './pages/wokflow/WorkFlow';
 import FilesPage from './pages/files/files';
 import HomeV2 from './pages/home/HomeV2';
 import TailwindLayout from './layouts/TailwindLayout';
-import FilesSettings from './pages/files/files_settings';
 import TailwindMainLayout from './layouts/TailwindMainLayout';
 import PageNotFound from './pages/PageNotFound';
+import InfoPage from './pages/files/InfoPage';
+import SettingsPage from './pages/files/SettingsPage';
 
 declare global {
   interface Window {
@@ -62,8 +63,8 @@ function App() {
           <Route path="files_templates" element={<FilesPage />} />
           <Route path="files_docs" element={<FilesPage />} />
           <Route path="files_attestation" element={<FilesPage />} />
-          <Route path="files_info" element={<FilesPage />} />
-          <Route path="files_settings" element={<FilesSettings />} />
+          <Route path="files_info" element={<InfoPage />} />
+          <Route path="files_settings" element={<SettingsPage />} />
           <Route path="files_document_signature" element={<FilesPage />} />
           <Route path="files_domain_attestation" element={<FilesPage />} />
         </Route>

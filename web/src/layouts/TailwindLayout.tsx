@@ -18,11 +18,12 @@ import { Link as RouterLink } from 'react-router-dom';
 import { useStore } from 'zustand';
 import appStore from '@/store';
 import { ConnectWallet } from '@/components/ConnectWallet';
+import { Toaster } from '@/components/shadcn/ui/toaster';
 
 const TailwindLayout = () => {
 
 
- const { session } = useStore(appStore)
+    const { session } = useStore(appStore)
 
     const usedStorage = 3.3; // GB
     const totalStorage = 5; // GB
@@ -46,8 +47,8 @@ const TailwindLayout = () => {
     ];
 
 
-const uiView = ()=>{
- return       <div className="flex h-screen bg-white">
+    const uiView = () => {
+        return <div className="flex h-screen bg-white">
             {/* Sidebar */}
             <div className="w-64 bg-gray-50 border-r border-gray-200 flex flex-col">
                 {/* Logo */}
@@ -134,7 +135,7 @@ const uiView = ()=>{
 
             <div className="flex-1 flex flex-col min-h-screen bg-white relative">
                 {/* Header */}
-                <div className="bg-white border-b border-gray-200 h-[70px] min-h-[70px] max-h-[70px] overflow-hidden">
+                <div className="bg-white border-b px-2 border-gray-200 h-[70px] min-h-[70px] max-h-[70px] overflow-hidden">
                     <div className="h-full flex items-center justify-between">
                         <div className="flex items-center space-x-4">
                             {/* Search */}
@@ -160,9 +161,10 @@ const uiView = ()=>{
                             <button className="bg-blue-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-blue-700">
                                 Start free trial
                             </button>
-                            <div className="w-8 h-8 bg-red-500 rounded-full flex items-center justify-center text-white text-sm font-medium">
+                            {/* <div className="w-8 h-8 bg-red-500 rounded-full flex items-center justify-center text-white text-sm font-medium">
                                 A
-                            </div>
+                            </div> */}
+                            <ConnectWallet dataTestId="sign-in-button-files-list" />
                         </div>
                     </div>
                 </div>
@@ -182,16 +184,22 @@ const uiView = ()=>{
             </div>
 
         </div>
-}
+    }
+
     return (
 
-<>
-        { session?.address != undefined ?  
-            uiView()
-         : <>  <ConnectWallet dataTestId="sign-in-button-files-list"/></>}
-</>
-       
+        <>
+        <Toaster />
+            {session?.address != undefined ?
+                uiView()
+                : <div className="flex items-center justify-center h-screen">  
+                <ConnectWallet dataTestId="sign-in-button-files-list" />
+                </div>}
+        </>
+
     );
 };
 
 export default TailwindLayout;
+
+
