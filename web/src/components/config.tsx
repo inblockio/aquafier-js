@@ -118,10 +118,7 @@ const LoadConfiguration = () => {
         }
     }, [backend_url]);
 
-    // useEffect(() => {
-    //     //fetch user profile
-    //     fetchUserProfile()
-    // }, [metamaskAddress])
+   
 
     return (
         <></>

@@ -15,8 +15,15 @@ import {
 import { Outlet } from 'react-router-dom';
 import CustomNavLink from '@/components/shadcn/common/CustomNavLink';
 import { Link as RouterLink } from 'react-router-dom';
+import { useStore } from 'zustand';
+import appStore from '@/store';
+import { ConnectWallet } from '@/components/ConnectWallet';
 
 const TailwindLayout = () => {
+
+
+ const { session } = useStore(appStore)
+
     const usedStorage = 3.3; // GB
     const totalStorage = 5; // GB
     const usagePercentage = (usedStorage / totalStorage) * 100;
@@ -39,9 +46,8 @@ const TailwindLayout = () => {
     ];
 
 
-
-    return (
-        <div className="flex h-screen bg-white">
+const uiView = ()=>{
+ return       <div className="flex h-screen bg-white">
             {/* Sidebar */}
             <div className="w-64 bg-gray-50 border-r border-gray-200 flex flex-col">
                 {/* Logo */}
@@ -176,6 +182,15 @@ const TailwindLayout = () => {
             </div>
 
         </div>
+}
+    return (
+
+<>
+        { session?.address != undefined ?  
+            uiView()
+         : <>  <ConnectWallet dataTestId="sign-in-button-files-list"/></>}
+</>
+       
     );
 };
 

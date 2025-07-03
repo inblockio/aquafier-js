@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { use, useEffect, useState } from 'react';
 import { useLocation, Link as RouterLink } from 'react-router-dom';
 import FileDropZone from './components/dropzone_file_actions/dropzone_file_actions';
 import appStore from "../../store"
@@ -20,8 +20,22 @@ import {
 const FilesPage = () => {
 
 
-     const { files, backend_url, session, setSelectedFileInfo, selectedFileInfo, systemFileInfo } = useStore(appStore)
+     const { files , setFiles} = useStore(appStore)
    
+     useEffect(() => {
+        // This effect runs once when the component mounts
+        // You can perform any necessary setup here, like fetching initial data
+        console.log("FilesPage mounted");
+
+
+        
+        
+        // Cleanup function if needed
+        return () => {
+            console.log("FilesPage unmounted");
+        };
+    }, []);
+
     return (
         <>
            {/* Action Bar */}
