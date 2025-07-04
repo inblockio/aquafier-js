@@ -22,6 +22,8 @@ import PageNotFound from './pages/PageNotFound';
 import InfoPage from './pages/files/InfoPage';
 import SettingsPage from './pages/files/SettingsPage';
 import TemplatesPage from './pages/files/TemplatesPage';
+import CreateFormInstance from './pages/files/CreateFormInstance';
+import NewShadcnLayoutWithSidebar from './layouts/NewShadcnLayoutWithSidebar';
 
 declare global {
   interface Window {
@@ -57,7 +59,7 @@ function App() {
         </Route>
 
         {/* All file routes using Tailwind */}
-        <Route path="/files" element={<TailwindLayout />}>
+        <Route path="/files" element={<NewShadcnLayoutWithSidebar />}>
           <Route index element={<FilesPage />} />
           <Route path="files_shared" element={<FilesPage />} />
           <Route path="files_workflows" element={<FilesPage />} />
@@ -67,6 +69,7 @@ function App() {
           <Route path="files_info" element={<InfoPage />} />
           <Route path="files_settings" element={<SettingsPage />} />
           <Route path="files_document_signature" element={<FilesPage />} />
+          <Route path="form-instance/:templateName" element={<CreateFormInstance />} />
           <Route path="files_domain_attestation" element={<FilesPage />} />
         </Route>
 

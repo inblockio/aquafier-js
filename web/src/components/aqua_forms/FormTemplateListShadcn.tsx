@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { FormTemplate } from './types';
 import { useStore } from "zustand";
 import appStore from "../../store";
@@ -17,16 +17,12 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/shadcn/ui/table";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/shadcn/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/shadcn/ui/alert-dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogClose } from "@/components/shadcn/ui/dialog";
+import FormTemplateViewer from './FormTemplateViewer';
+import CreateFormFromTemplate from './CreateFormFromTemplate';
+import { MdFormatListBulletedAdd } from "react-icons/md";
+import CustomTooltip from '../shadcn/common/CustomTooltip';
 
 interface FormTemplateListShadcnProps {
   onEdit: (template: FormTemplate) => void;
@@ -34,11 +30,14 @@ interface FormTemplateListShadcnProps {
   onRefresh: () => void;
 }
 
-const FormTemplateListShadcn = ({ onEdit, onView }: FormTemplateListShadcnProps) => {
+const FormTemplateListShadcn = ({ onEdit }: FormTemplateListShadcnProps) => {
   const { formTemplates, backend_url, setFormTemplate, session } = useStore(appStore);
-  
+
   const [templateToDelete, setTemplateToDelete] = useState<FormTemplate | null>(null);
+  const [templateToView, setTemplateToView] = useState<FormTemplate | null>(null);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
+  const [viewType, setViewType] = useState<'template_view' | 'create_instance'>("template_view");
   const [isLoading, setIsLoading] = useState(false);
 
   const handleDeleteClick = (template: FormTemplate) => {
@@ -46,9 +45,15 @@ const FormTemplateListShadcn = ({ onEdit, onView }: FormTemplateListShadcnProps)
     setIsDeleteDialogOpen(true);
   };
 
+  const handleViewClick = (template: FormTemplate, viewType: 'template_view' | 'create_instance') => {
+    setTemplateToView(template);
+    setViewType(viewType);
+    setIsViewDialogOpen(true);
+  };
+
   const confirmDelete = async () => {
     if (!templateToDelete) return;
-    
+
     if (templateToDelete.public) {
       toast.info('Public template cannot be deleted');
       setIsDeleteDialogOpen(false);
@@ -56,7 +61,7 @@ const FormTemplateListShadcn = ({ onEdit, onView }: FormTemplateListShadcnProps)
     }
 
     setIsLoading(true);
-    
+
     try {
       const res = await axios.delete(`${backend_url}/templates/${templateToDelete.id}`, {
         headers: {
@@ -71,7 +76,7 @@ const FormTemplateListShadcn = ({ onEdit, onView }: FormTemplateListShadcnProps)
       }
     } catch (error) {
       toast.error(
-        'Error deleting template', 
+        'Error deleting template',
         { description: error instanceof Error ? error.message : 'Unknown error' }
       );
     } finally {
@@ -82,7 +87,7 @@ const FormTemplateListShadcn = ({ onEdit, onView }: FormTemplateListShadcnProps)
 
   const loadTemplates = async () => {
     setIsLoading(true);
-    
+
     try {
       const url = `${backend_url}/templates`;
       const response = await axios.get(url, {
@@ -97,7 +102,7 @@ const FormTemplateListShadcn = ({ onEdit, onView }: FormTemplateListShadcnProps)
       }
     } catch (error) {
       toast.error(
-        'Error loading templates', 
+        'Error loading templates',
         { description: error instanceof Error ? error.message : 'Unknown error' }
       );
     } finally {
@@ -132,43 +137,59 @@ const FormTemplateListShadcn = ({ onEdit, onView }: FormTemplateListShadcnProps)
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {formTemplates.map((template) => (
+                {formTemplates.sort((a, b) => a.title.localeCompare(b.title)).map((template) => (
                   <TableRow key={template.id}>
                     <TableCell>{template.title}</TableCell>
                     <TableCell>{template.name}</TableCell>
                     <TableCell>{template.fields.length}</TableCell>
                     <TableCell>
                       <div className="flex items-center gap-2">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => onView(template)}
-                          // title="View template"
-                          className="cursor-pointer"
-                        >
-                          <LuEye className="h-4 w-4" />
-                        </Button>
-                        
+                        <CustomTooltip content="Create form instance">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => handleViewClick(template, "create_instance")}
+                            // title="View template"
+                            className="cursor-pointer"
+                          >
+                            <MdFormatListBulletedAdd className="h-4 w-4" />
+                          </Button>
+                        </CustomTooltip>
+                        <CustomTooltip content="View template">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => handleViewClick(template, "template_view")}
+                            // title="View template"
+                            className="cursor-pointer"
+                          >
+                            <LuEye className="h-4 w-4" />
+                          </Button>
+                        </CustomTooltip>
                         {!template.public && (
                           <>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => onEdit(template)}
-                              // title="Edit template"
-                             className="cursor-pointer"
-                            >
-                              <LuPen className="h-4 w-4" />
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="text-red-500 hover:text-red-700 hover:bg-red-50 cursor-pointer"
-                              onClick={() => handleDeleteClick(template)}
+                            <CustomTooltip content="Edit template">
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => onEdit(template)}
+                                // title="Edit template"
+                                className="cursor-pointer"
+                              >
+                                <LuPen className="h-4 w-4" />
+                              </Button>
+                            </CustomTooltip>
+                            <CustomTooltip content="Delete template">
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="text-red-500 hover:text-red-700 hover:bg-red-50 cursor-pointer"
+                                onClick={() => handleDeleteClick(template)}
                               // title="Delete template"
-                            >
-                              <LuTrash className="h-4 w-4" />
-                            </Button>
+                              >
+                                <LuTrash className="h-4 w-4" />
+                              </Button>
+                            </CustomTooltip>
                           </>
                         )}
                       </div>
@@ -179,7 +200,31 @@ const FormTemplateListShadcn = ({ onEdit, onView }: FormTemplateListShadcnProps)
             </Table>
           </div>
         )}
-        
+
+        <Dialog open={isViewDialogOpen} onOpenChange={setIsViewDialogOpen}>
+          <DialogContent className="sm:max-w-[700px] max-h-[90vh] flex flex-col">
+            <DialogHeader className="flex-shrink-0">
+              <DialogTitle>
+                {viewType === "template_view" ? "Template Details" : "Create Form Instance"}
+              </DialogTitle>
+            </DialogHeader>
+
+            <div className="flex-grow overflow-y-auto py-4">
+              {viewType === "template_view" && templateToView && <FormTemplateViewer template={templateToView} />}
+
+              {viewType === "create_instance" && templateToView && <CreateFormFromTemplate selectedTemplate={templateToView} callBack={() => {
+                setIsViewDialogOpen(false)
+              }} />}
+            </div>
+
+            <DialogFooter className="flex-shrink-0 mt-2">
+              <DialogClose asChild>
+                <Button variant="outline">Close</Button>
+              </DialogClose>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
         <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
           <AlertDialogContent>
             <AlertDialogHeader>
@@ -190,13 +235,13 @@ const FormTemplateListShadcn = ({ onEdit, onView }: FormTemplateListShadcnProps)
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
-              <AlertDialogCancel 
+              <AlertDialogCancel
                 data-testid="cancel-delete-form-action-button"
                 disabled={isLoading}
               >
                 Cancel
               </AlertDialogCancel>
-              <AlertDialogAction 
+              <AlertDialogAction
                 data-testid="delete-form-action-button"
                 onClick={confirmDelete}
                 className="bg-red-500 hover:bg-red-600 focus:ring-red-500"
