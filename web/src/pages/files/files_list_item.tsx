@@ -120,11 +120,8 @@ export default function FilesListItem({ file, index, systemFileInfo, backendUrl,
                         <>
 
 
-                            <OpenWorkflowButton item={file} nonce={nonce} />
                             <div className="flex gap-1">
-
-
-
+                                <OpenWorkflowButton item={file} nonce={nonce} />
 
                                 <ShareButton item={file} nonce={nonce} />
 

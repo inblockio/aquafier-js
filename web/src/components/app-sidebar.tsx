@@ -19,12 +19,45 @@ import {
   Signature,
   Link
 } from 'lucide-react';
+import { maxUserFileSizeForUpload } from "@/utils/constants";
+import { formatBytes, getAquaTreeFileObject } from "@/utils/functions";
+import { useStore } from "zustand";
+import appStore from "@/store";
+import { useState } from "react";
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 
-  const usedStorage = 3.3; // GB
-  const totalStorage = 5; // GB
-  const usagePercentage = (usedStorage / totalStorage) * 100;
+  const { files } = useStore(appStore)
+
+  const [usedStorage, setUsedStorage] = useState<number>(0)
+  const [totalStorage, _setTotalStorage] = useState<number>(maxUserFileSizeForUpload)
+  const [usagePercentage, setUsagePercentage] = useState<number>(0)
+  // let usedStorage =0; // GB
+  // const totalStorage = maxUserFileSizeForUpload //5; // GB
+  // const usagePercentage = (usedStorage / totalStorage) * 100;
+
+  const calcukateStorage = () => {
+    if (files.length == 0) {
+      return
+    }
+    let usedStorageByUser = 0
+    for (let item of files) {
+      let mainFileObject = getAquaTreeFileObject(item)
+      usedStorageByUser += mainFileObject?.fileSize ?? 0
+    }
+    setUsedStorage(usedStorageByUser)
+
+     const usagePercentage = (usedStorageByUser / totalStorage) * 100;
+     setUsagePercentage(usagePercentage)
+  }
+  React.useEffect(() => {
+    calcukateStorage()
+  }, [])
+
+
+  React.useEffect(() => {
+    calcukateStorage()
+  }, [files])
 
   const sidebarItems = [
     { icon: FileText, label: 'All files', id: "/files" },
@@ -91,28 +124,34 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           </div>
         </div>
       </SidebarContent>
-      
+
       {/* Bottom section */}
       <SidebarFooter>
         <div className="p-4 border-t border-gray-200">
 
-          <div className="bg-gray-50 p-4 rounded-lg">
-            {/* Storage Header */}
-            <h3 className="text-sm font-medium text-gray-900 mb-3">Storage</h3>
+          {
+            files.length > 0 ? <>
 
-            {/* Progress Bar */}
-            <div className="w-full bg-gray-200 rounded-full h-2 mb-2">
-              <div
-                className="bg-blue-500 h-2 rounded-full transition-all duration-300"
-                style={{ width: `${usagePercentage}%` }}
-              ></div>
-            </div>
+              <div className="bg-gray-50 p-4 rounded-lg">
+                {/* Storage Header */}
+                <h3 className="text-sm font-medium text-gray-900 mb-3">Storage</h3>
 
-            {/* Storage Details */}
-            <div className="text-sm text-gray-600">
-              <span className="text-blue-600 underline">{usedStorage} GB</span> used of {totalStorage} GB ({Math.round(usagePercentage)}%)
-            </div>
-          </div>
+                {/* Progress Bar */}
+                <div className="w-full bg-gray-200 rounded-full h-2 mb-2">
+                  <div
+                    className="bg-blue-500 h-2 rounded-full transition-all duration-300"
+                    style={{ width: `${usagePercentage}%` }}
+                  ></div>
+                </div>
+
+                {/* Storage Details */}
+                <div className="text-sm text-gray-600">
+                  <span className="text-blue-600 underline">{formatBytes(usedStorage)} </span> used of {formatBytes(totalStorage)}  ({Math.round(usagePercentage)}%)
+                </div>
+              </div>
+            </> : <></>
+          }
+
 
           <div className="bg-gray-900 text-white p-3 rounded-md">
             <div className="flex items-center justify-between mb-2">
