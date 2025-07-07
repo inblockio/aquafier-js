@@ -46,7 +46,7 @@ type AppStoreActions = {
         files: AppStoreState['files'],
     ) => void,
     setSelectedFileInfo: (
-        file: ApiFileInfo,
+        file: ApiFileInfo | null ,
     ) => void,
     addFile: (
         file: ApiFileInfo,
@@ -206,7 +206,7 @@ const appStore = createStore<TAppStore>()(
                 files: AppStoreState['files'],
             ) => set({ files: files }),
             setSelectedFileInfo: (
-                file: ApiFileInfo
+                file: ApiFileInfo | null
             ) => set({ selectedFileInfo: file }),
             setApiFileData: (
                 apiFileData: ApiFileData[]

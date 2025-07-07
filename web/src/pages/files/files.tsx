@@ -24,11 +24,21 @@ import axios from 'axios';
 import { ApiFileInfo } from '@/models/FileInfo';
 
 // shadcn/ui components
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/shadcn/ui/dialog";
+import { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/shadcn/ui/dialog";
 import { Progress } from '@/components/shadcn/ui/progress';
 import { Button } from '@/components/shadcn/ui/button';
 import { Badge } from '@/components/shadcn/ui/badge';
 import { Card, CardContent } from '@/components/shadcn/ui/card';
+import {
+    Drawer,
+    DrawerClose,
+    DrawerContent,
+    DrawerDescription,
+    DrawerFooter,
+    DrawerHeader,
+    DrawerTitle,
+    DrawerTrigger
+} from '@/components/shadcn/ui/drawer';
 
 interface UploadStatus {
     file: File;
@@ -42,14 +52,17 @@ interface UploadStatus {
 }
 
 const FilesPage = () => {
-    const { files, setFiles, session, backend_url } = useStore(appStore)
+    const { files, setFiles, session, backend_url, selectedFileInfo, setSelectedFileInfo } = useStore(appStore)
     const fileInputRef = React.useRef<HTMLInputElement>(null);
     const [filesList, setFilesList] = useState<FileItemWrapper[]>([]);
-    
+
     // Upload popup state
     const [uploadQueue, setUploadQueue] = useState<UploadStatus[]>([]);
     const [isUploadDialogOpen, setIsUploadDialogOpen] = useState(false);
     const [isMinimized, setIsMinimized] = useState(false);
+
+
+    const [isSelectedFileDialogOpen, setIsSelectedFileDialogOpen] = useState(false);
 
     useEffect(() => {
         console.log("FilesPage mounted");
@@ -58,6 +71,17 @@ const FilesPage = () => {
         };
     }, []);
 
+
+    useEffect(() => {
+
+        if (selectedFileInfo) {
+            setIsSelectedFileDialogOpen(true)
+        } else {
+            setIsSelectedFileDialogOpen(false)
+
+        }
+    }, [selectedFileInfo]);
+
     const handleUploadClick = () => {
         fileInputRef.current?.click();
     };
@@ -65,7 +89,7 @@ const FilesPage = () => {
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const selectedFiles = Array.from(e.target.files ?? []);
         if (selectedFiles.length === 0) return;
-        
+
         // Create upload queue with initial status
         const newUploads: UploadStatus[] = selectedFiles.map(file => ({
             file,
@@ -74,11 +98,11 @@ const FilesPage = () => {
             isJson: isJSONFile(file.name),
             isZip: isZipFile(file.name)
         }));
-        
+
         setUploadQueue(newUploads);
         setIsUploadDialogOpen(true);
         setIsMinimized(false);
-        
+
         // Start processing files
         processUploadQueue(newUploads);
     };
@@ -86,39 +110,39 @@ const FilesPage = () => {
     const processUploadQueue = async (uploads: UploadStatus[]) => {
         for (let i = 0; i < uploads.length; i++) {
             const upload = uploads[i];
-            
+
             // Update status to uploading
-            setUploadQueue(prev => prev.map((item, index) => 
+            setUploadQueue(prev => prev.map((item, index) =>
                 index === i ? { ...item, status: 'uploading', progress: 10 } : item
             ));
-            
+
             try {
                 // Check file content first
                 await checkFileContentForUpload(upload, i);
-                
+
                 // Simulate progress
                 for (let progress = 20; progress <= 80; progress += 20) {
-                    setUploadQueue(prev => prev.map((item, index) => 
+                    setUploadQueue(prev => prev.map((item, index) =>
                         index === i ? { ...item, progress } : item
                     ));
                     await new Promise(resolve => setTimeout(resolve, 200));
                 }
-                
+
                 // Upload the file
                 await uploadFileFromQueue(upload, i);
-                
+
                 // Mark as success
-                setUploadQueue(prev => prev.map((item, index) => 
+                setUploadQueue(prev => prev.map((item, index) =>
                     index === i ? { ...item, status: 'success', progress: 100 } : item
                 ));
-                
+
             } catch (error) {
                 // Mark as error
-                setUploadQueue(prev => prev.map((item, index) => 
-                    index === i ? { 
-                        ...item, 
-                        status: 'error', 
-                        progress: 0, 
+                setUploadQueue(prev => prev.map((item, index) =>
+                    index === i ? {
+                        ...item,
+                        status: 'error',
+                        progress: 0,
                         error: error instanceof Error ? error.message : 'Upload failed'
                     } : item
                 ));
@@ -132,9 +156,9 @@ const FilesPage = () => {
                 let content = await readFileContent(upload.file);
                 let contentStr = content as string;
                 let isForm = isJSONKeyValueStringContent(contentStr);
-                
+
                 if (isForm) {
-                    setUploadQueue(prev => prev.map((item, i) => 
+                    setUploadQueue(prev => prev.map((item, i) =>
                         i === index ? { ...item, isJsonForm: true, isJsonAquaTreeData: false } : item
                     ));
                     return;
@@ -142,9 +166,9 @@ const FilesPage = () => {
 
                 let jsonData = JSON.parse(contentStr);
                 let isAquaTreeData = isAquaTree(jsonData);
-                
+
                 if (isAquaTreeData) {
-                    setUploadQueue(prev => prev.map((item, i) => 
+                    setUploadQueue(prev => prev.map((item, i) =>
                         i === index ? { ...item, isJsonForm: false, isJsonAquaTreeData: true } : item
                     ));
                     return;
@@ -255,7 +279,7 @@ const FilesPage = () => {
         // ... existing logic
     }, [filesList]);
 
-    
+
 
     return (
         <>
@@ -305,6 +329,48 @@ const FilesPage = () => {
             </div>
 
             {files.length == 0 ? <FileDropZone /> : <FilesList />}
+
+            <Dialog open={isSelectedFileDialogOpen} onOpenChange={setIsUploadDialogOpen} >
+                {/* <DialogTrigger asChild>
+                    <Button variant="outline">Open Dialog</Button>
+                </DialogTrigger> */}
+                {/* <DialogContent className="max-w-[95vw] w-[95vw] h-[95vh] max-h-[95vh]"> */}
+
+               
+                <DialogContent className="[&>button]:hidden !max-w-[95vw] !w-[95vw] h-[95vh] max-h-[95vh] flex flex-col">
+                     <div className="absolute top-4 right-4">
+                    {/* <DialogClose asChild> */}
+                        <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-6 w-6"
+                            onClick={() => setSelectedFileInfo(null)}
+                        >
+                            <X className="h-4 w-4" />
+                        </Button>
+                    {/* </DialogClose> */}
+                </div>
+                    <DialogHeader>
+                        <DialogTitle>Edit profile</DialogTitle>
+                        <DialogDescription>
+                            Make changes to your profile here. Click save when you&apos;re
+                            done.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <div className="grid gap-4 flex-1 overflow-auto">
+                        form
+                    </div>
+                    <DialogFooter className="mt-auto">
+                        {/* <DialogClose asChild> */}
+                            <Button variant="outline" onClick={() => {
+                                setSelectedFileInfo(null)
+                            }}>Cancel</Button>
+                        {/* </DialogClose> */}
+                        <Button type="submit">Save changes</Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
 
             {/* Upload Progress Dialog */}
             <Dialog open={isUploadDialogOpen} onOpenChange={setIsUploadDialogOpen}>
@@ -374,7 +440,7 @@ const FilesPage = () => {
                                                 </Button>
                                             </div>
                                         </div>
-                                        
+
                                         {upload.status === 'uploading' && (
                                             <div className="space-y-1">
                                                 <Progress value={upload.progress} className="h-2" />
@@ -383,13 +449,13 @@ const FilesPage = () => {
                                                 </p>
                                             </div>
                                         )}
-                                        
+
                                         {upload.status === 'error' && upload.error && (
                                             <p className="text-xs text-red-600 mt-1">
                                                 {upload.error}
                                             </p>
                                         )}
-                                        
+
                                         {upload.status === 'success' && (
                                             <p className="text-xs text-green-600 mt-1">
                                                 Upload completed successfully
@@ -398,7 +464,7 @@ const FilesPage = () => {
                                     </CardContent>
                                 </Card>
                             ))}
-                            
+
                             {uploadQueue.some(upload => upload.status === 'success') && (
                                 <div className="flex justify-end pt-2">
                                     <Button

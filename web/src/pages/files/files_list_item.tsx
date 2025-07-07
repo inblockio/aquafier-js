@@ -12,11 +12,14 @@ import { DeleteAquaChain } from "./components/aqua_chain_actions/delete_aqua_cha
 import { ShareButton } from "./components/aqua_chain_actions/share_aqua_chain";
 import { OpenWorkflowButton } from "./components/aqua_chain_actions/open_aqua_sign_workflow";
 import { LinkButton } from "./components/aqua_chain_actions/link_aqua_chain";
+import appStore from "@/store";
+import { useStore } from "zustand";
 
 
 export default function FilesListItem({ file, index, systemFileInfo, backendUrl, nonce }: { file: ApiFileInfo, index: number, systemFileInfo: ApiFileInfo[], backendUrl: string, nonce: string }) {
 
 
+    const { setSelectedFileInfo } = useStore(appStore)
 
     // const [_selectedFiles, setSelectedFiles] = useState<number[]>([]);
     const [currentFileObject, setCurrentFileObject] = useState<FileObject | undefined>(undefined);
@@ -137,7 +140,10 @@ export default function FilesListItem({ file, index, systemFileInfo, backendUrl,
                             {/* First row - 3 buttons */}
                             <div className="flex gap-1">
                                 {/* Details Button */}
-                                <button className="flex items-center space-x-1 bg-green-100 text-green-700 px-3 py-2 rounded hover:bg-green-200 transition-colors text-xs">
+                                <button onClick={() => {
+                                    setSelectedFileInfo(file)
+
+                                }} className="flex items-center space-x-1 bg-green-100 text-green-700 px-3 py-2 rounded hover:bg-green-200 transition-colors text-xs">
                                     <LuEye className="w-3 h-3" />
                                     <span>Details</span>
                                 </button>

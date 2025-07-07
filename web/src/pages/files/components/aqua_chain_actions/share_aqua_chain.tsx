@@ -18,10 +18,11 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "
 import { IShareButton } from "../../../../types/types"
 import ClipboardButton from "@/components/shadcn/ui/clipboard"
 import { Label } from "@/components/shadcn/ui/label"
-import { Checkbox } from "@/components/chakra-ui/checkbox"
+// import { Checkbox } from "@/components/chakra-ui/checkbox"
 import { Input } from "@/components/shadcn/ui/input"
 import { ClipboardIcon } from "lucide-react"
 import { toaster } from "@/components/shadcn/ui/use-toast"
+import { Checkbox } from "@/components/shadcn/ui/checkbox"
 
 export const ShareButton = ({ item, nonce }: IShareButton) => {
     const { backend_url } = useStore(appStore)
