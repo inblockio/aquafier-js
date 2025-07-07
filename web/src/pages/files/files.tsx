@@ -17,7 +17,6 @@ import {
     FileText,
     Minimize2
 } from 'lucide-react';
-import { toaster } from '@/components/shadcn/ui/use-toast';
 import { FileItemWrapper } from '@/types/types';
 import { checkIfFileExistInUserFiles, isAquaTree, isJSONFile, isJSONKeyValueStringContent, isZipFile, readFileContent } from '@/utils/functions';
 import { maxFileSizeForUpload } from '@/utils/constants';
@@ -25,7 +24,7 @@ import axios from 'axios';
 import { ApiFileInfo } from '@/models/FileInfo';
 
 // shadcn/ui components
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/shadcn/ui/dialog";;
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/shadcn/ui/dialog";
 import { Progress } from '@/components/shadcn/ui/progress';
 import { Button } from '@/components/shadcn/ui/button';
 import { Badge } from '@/components/shadcn/ui/badge';

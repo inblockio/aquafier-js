@@ -1,6 +1,5 @@
 
 import { LuDownload } from "react-icons/lu"
-import { Button } from "../../../../components/chakra-ui/button"
 import { ensureDomainUrlHasSSL, extractFileHash, isAquaTree } from "../../../../utils/functions"
 import { useStore } from "zustand"
 import appStore from "../../../../store"
@@ -17,7 +16,6 @@ import { AquaJsonInZip, AquaNameWithHash } from "../../../../models/Aqua"
 export const DownloadAquaChain = ({ file }: { file: ApiFileInfo }) => {
     const { session } = useStore(appStore)
     const [downloading, setDownloading] = useState(false)
-
 
 
     const downloadLinkAquaJson = async () => {

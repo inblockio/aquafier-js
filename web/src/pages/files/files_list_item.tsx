@@ -3,12 +3,14 @@ import { displayTime, formatBytes, getAquaTreeFileName, getAquaTreeFileObject, g
 import { FileObject } from "aqua-js-sdk";
 import { FileText } from "lucide-react";
 import { useEffect, useState } from "react";
-
-import { LuDelete, LuDownload, LuEye, LuGlasses, LuLink2, LuShare2, LuSignature } from 'react-icons/lu';
+import { FaFileExport } from "react-icons/fa6"
+import { LuEye, LuLink2, LuShare2 } from 'react-icons/lu';
 import { SignAquaChain } from "./components/aqua_chain_actions/sign_aqua_chain";
 import { WitnessAquaChain } from "./components/aqua_chain_actions/witness_aqua_chain";
 import { DownloadAquaChain } from "./components/aqua_chain_actions/download_aqua_chain";
 import { DeleteAquaChain } from "./components/aqua_chain_actions/delete_aqua_chain";
+import { ShareButton } from "./components/aqua_chain_actions/share_aqua_chain";
+import { OpenWorkflowButton } from "./components/aqua_chain_actions/open_aqua_sign_workflow";
 
 
 export default function FilesListItem({ file, index, systemFileInfo, backendUrl, nonce }: { file: ApiFileInfo, index: number, systemFileInfo: ApiFileInfo[], backendUrl: string, nonce: string }) {
@@ -36,6 +38,21 @@ export default function FilesListItem({ file, index, systemFileInfo, backendUrl,
         setWorkFlowInfo(workFlow)
     }, []);
 
+    useEffect(() => {
+        const someData = systemFileInfo.map((e) => {
+            try {
+                return getAquaTreeFileName(e.aquaTree!!);
+            } catch (e) {
+                console.log("Error processing system file");
+                return "";
+            }
+        });
+
+        const fileObject = getAquaTreeFileObject(file);
+        setCurrentFileObject(fileObject);
+        const workFlow = isWorkFlowData(file.aquaTree!!, someData);
+        setWorkFlowInfo(workFlow)
+    }, [file, systemFileInfo]);
 
     // const handleFileSelect = (fileId: number) => {
     //     setSelectedFiles((prev: number[]) =>
@@ -96,47 +113,73 @@ export default function FilesListItem({ file, index, systemFileInfo, backendUrl,
 
             {/* Actions Column - 3-3-1 Layout */}
             <div className="w-120 flex flex-col gap-1">
-                {/* First row - 3 buttons */}
-                <div className="flex gap-1">
-                    {/* Details Button */}
-                    <button className="flex items-center space-x-1 bg-green-100 text-green-700 px-3 py-2 rounded-md hover:bg-green-200 transition-colors text-xs">
-                        <LuEye className="w-3 h-3" />
-                        <span>Details</span>
-                    </button>
 
-                    <SignAquaChain apiFileInfo={file} backendUrl={backendUrl} nonce={nonce} revision="" />
-
-                    <WitnessAquaChain apiFileInfo={file} backendUrl={backendUrl} nonce={nonce} revision="" />
+                {
+                    workflowInfo && workflowInfo.workFlow == "aqua_sign" ?
+                        <>
 
 
-                    {/* Link Button */}
-                    <button className="flex items-center space-x-1 bg-yellow-100 text-yellow-700  px-3 py-2 rounded-md hover:bg-yellow-200 transition-colors text-xs">
-                        <LuLink2 className="w-3 h-3" />
-                        <span>Link</span>
-                    </button>
-                </div>
-
-                {/* Second row - 3 buttons */}
-                <div className="flex gap-1">
+                          <OpenWorkflowButton  item={file} nonce={nonce} />
+                            <div className="flex gap-1">
 
 
-                    {/* Share Button */}
-                    <button className="flex items-center space-x-1 bg-red-100 text-red-700  px-3 py-2 rounded-md hover:bg-red-200 transition-colors text-xs">
-                        <LuShare2 className="w-3 h-3" />
-                        <span>Share</span>
-                    </button>
+                                {/* Share Button */}
+                                {/* <button className="flex items-center space-x-1 bg-sky-300 text-red-700  px-3 py-2 rounded hover:bg-red-200 transition-colors text-xs">
+                                    <LuShare2 className="w-3 h-3" />
+                                    <span>Share</span>
+                                </button> */}
 
-                    {/* Delete Button */}
-                    <DeleteAquaChain apiFileInfo={file} backendUrl={backendUrl} nonce={nonce} revision="" />
+                                <ShareButton item={file} nonce={nonce} />
 
-                    {/* Download Button - Smaller width */}
-                    <DownloadAquaChain file={file} />
-                </div>
+                                {/* Delete Button */}
+                                <DeleteAquaChain apiFileInfo={file} backendUrl={backendUrl} nonce={nonce} revision="" />
 
-                {/* Third row - 1 smaller button */}
-                {/* <div className="flex">
+                                {/* Download Button - Smaller width */}
+                                <DownloadAquaChain file={file} />
+                            </div>
+
+                        </> :
+                        <>
+                            {/* First row - 3 buttons */}
+                            <div className="flex gap-1">
+                                {/* Details Button */}
+                                <button className="flex items-center space-x-1 bg-green-100 text-green-700 px-3 py-2 rounded hover:bg-green-200 transition-colors text-xs">
+                                    <LuEye className="w-3 h-3" />
+                                    <span>Details</span>
+                                </button>
+
+                                <SignAquaChain apiFileInfo={file} backendUrl={backendUrl} nonce={nonce} revision="" />
+
+                                <WitnessAquaChain apiFileInfo={file} backendUrl={backendUrl} nonce={nonce} revision="" />
+
+
+                                {/* Link Button */}
+                                <button className="flex items-center space-x-1 bg-yellow-100 text-yellow-700  px-3 py-2 rounded hover:bg-yellow-200 transition-colors text-xs">
+                                    <LuLink2 className="w-3 h-3" />
+                                    <span>Link</span>
+                                </button>
+                            </div>
+
+                            {/* Second row - 3 buttons */}
+                            <div className="flex gap-1">
+
+
+                                <ShareButton item={file} nonce={nonce} />
+
+                                {/* Delete Button */}
+                                <DeleteAquaChain apiFileInfo={file} backendUrl={backendUrl} nonce={nonce} revision="" />
+
+                                {/* Download Button - Smaller width */}
+                                <DownloadAquaChain file={file} />
+                            </div>
+
+                            {/* Third row - 1 smaller button */}
+                            {/* <div className="flex">
                         
                     </div> */}
+                        </>
+                }
+
             </div>
         </div>
     );

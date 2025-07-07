@@ -138,7 +138,7 @@ export const DeleteAquaChain = ({ apiFileInfo, backendUrl, nonce }: RevionOperat
                                   })
                               }
                           }}
-                          className={`flex items-center space-x-1 bg-pink-100 text-pink-700 px-3 py-2 rounded-md transition-colors text-xs ${deleting ? 'opacity-60 cursor-not-allowed' : 'hover:bg-blue-200'}`}
+                          className={`flex items-center space-x-1 bg-pink-100 text-pink-700 px-3 py-2 rounded transition-colors text-xs ${deleting ? 'opacity-60 cursor-not-allowed' : 'hover:bg-blue-200'}`}
                           disabled={deleting}
                       >
                           {deleting ? (

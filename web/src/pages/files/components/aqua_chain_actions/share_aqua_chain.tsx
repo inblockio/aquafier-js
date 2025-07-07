@@ -1,19 +1,26 @@
 
 import { LuShare2 } from "react-icons/lu"
-import { Button } from "../../../../components/chakra-ui/button"
+// import { Button } from "../../../../components/chakra-ui/button"
 import { useStore } from "zustand"
 import appStore from "../../../../store"
 import axios from "axios"
-import { toaster } from "../../../../components/chakra-ui/toaster"
+// import { toaster } from "../../../../components/chakra-ui/toaster"
 import { useEffect, useState } from "react"
-import { DialogActionTrigger, DialogBody, DialogCloseTrigger, DialogContent, DialogFooter, DialogHeader, DialogRoot, DialogTitle } from "../../../../components/chakra-ui/dialog"
+// import { DialogActionTrigger, DialogBody, DialogCloseTrigger, DialogContent, DialogFooter, DialogHeader, DialogRoot, DialogTitle } from "../../../../components/chakra-ui/dialog"
 import { generateNonce } from "siwe"
 import { ClipLoader } from "react-spinners";
-import { Checkbox } from "../../../../components/chakra-ui/checkbox"
-import { Box, Center, Input, HStack, Text, VStack } from "@chakra-ui/react"
-import { ClipboardButton, ClipboardIconButton, ClipboardInput, ClipboardLabel, ClipboardRoot } from "../../../../components/chakra-ui/clipboard"
-import { InputGroup } from "../../../../components/chakra-ui/input-group"
-import  {IShareButton} from "../../../../types/types"
+// import { Checkbox } from "../../../../components/chakra-ui/checkbox"
+// import { Box, Center, Input, HStack, Text, VStack } from "@chakra-ui/react"
+// import { ClipboardButton, ClipboardIconButton, ClipboardInput, ClipboardLabel, ClipboardRoot } from "../../../../components/chakra-ui/clipboard"
+// import { InputGroup } from "../../../../components/chakra-ui/input-group"
+
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/shadcn/ui/dialog";
+import { IShareButton } from "../../../../types/types"
+import ClipboardButton from "@/components/shadcn/ui/clipboard"
+import { Label } from "@/components/shadcn/ui/label"
+import { Checkbox } from "@/components/chakra-ui/checkbox"
+import { Input } from "@/components/shadcn/ui/input"
+import { ClipboardIcon } from "lucide-react"
 
 export const ShareButton = ({ item, nonce }: IShareButton) => {
     const { backend_url } = useStore(appStore)
@@ -96,117 +103,127 @@ export const ShareButton = ({ item, nonce }: IShareButton) => {
 
     return (
         <>
-            <Button data-testid="share-action-button" size={'xs'} colorPalette={'orange'} variant={'subtle'} w={'100px'} onClick={() => setIsOpen(true)}>
-                <LuShare2 />
-                Share
-            </Button>
-            <DialogRoot open={isOpen} onOpenChange={e => setIsOpen(e.open)}>
-               
+
+
+            {/* Share Button */}
+            <button data-testid="share-action-button" onClick={() => setIsOpen(true)} className="flex items-center space-x-1 bg-[#FDEDD6] text-red-700  px-3 py-2 rounded hover:bg-[#FAD8AD] transition-colors text-xs">
+                <LuShare2 className="w-3 h-3" />
+                <span>Share</span>
+            </button>
+
+
+            <Dialog open={isOpen} onOpenChange={e => {
+                // setIsOpen(e.open)
+            }}>
+
                 <DialogContent>
                     <DialogHeader>
                         <DialogTitle>{`Sharing ${fileName}`}</DialogTitle>
                     </DialogHeader>
-                    <DialogBody>
-                        <VStack textAlign={'start'}>
+                    <div>
+                        <div className="flex flex-col items-start space-y-4 text-left">
                             <p>
                                 {`You are about to share ${fileName}. Once a file is shared, don't delete it otherwise it will be broken if one tries to import it.`}
                             </p>
 
-
                             {/* Recipient Toggle */}
-                            <Box width="100%">
-                                <HStack justifyContent="space-between" width="100%">
-                                    <Text>Share with specific wallet</Text>
+                            <div className="w-full space-y-2">
+                                <div className="flex items-center justify-between w-full">
+                                    <Label>Share with specific wallet</Label>
                                     <Checkbox
                                         checked={recipientType === "specific"}
-                                        onCheckedChange={(changes) => setRecipientType(changes.checked ? "specific" : "0xfabacc150f2a0000000000000000000000000000")}
+                                        onCheckedChange={(checked) =>
+                                            setRecipientType(checked ? "specific" : "0xfabacc150f2a0000000000000000000000000000")
+                                        }
                                     />
-                                </HStack>
+                                </div>
 
                                 {recipientType === "specific" && (
                                     <Input
-                                        mt={2}
+                                        className="mt-2"
                                         placeholder="Enter wallet address"
                                         value={walletAddress}
                                         onChange={(e) => setWalletAddress(e.target.value)}
                                     />
                                 )}
-                            </Box>
-                            {/* Custom Divider */}
-                            <Box
-                                width="100%"
-                                height="1px"
-                                bg="gray.200"
-                                my={3}
-                            />
+                            </div>
+
+                            {/* Divider */}
+                            <div className="w-full h-px bg-gray-200 my-3" />
 
                             {/* Version Toggle */}
-                            <Box width="100%">
-                                <Text>Would the recipient to get the the  Aqua Tree as is Or receive the tree with any new revisins you will add </Text>
+                            <div className="w-full space-y-2">
+                                <p>
+                                    Would the recipient get the Aqua Tree as is, or receive the tree with any new revisions you add?
+                                </p>
 
-                                <HStack justifyContent="space-between" width="80%" style={{ marginLeft: "30px", marginTop: "10px" }}>
-                                    <Text>1. Share latest revision in tree</Text>
+                                <div className="flex items-center justify-between w-4/5 ml-8 mt-2">
+                                    <span>1. Share latest revision in tree</span>
                                     <Checkbox
                                         checked={optionType === "latest"}
-                                        onCheckedChange={(e) => setOptionType(e.checked ? "latest" : "current")}
+                                        onCheckedChange={(checked) =>
+                                            setOptionType(checked ? "latest" : "current")
+                                        }
                                     />
-                                </HStack>
-                                <HStack justifyContent="space-between" width="80%" style={{ marginLeft: "30px", marginTop: "10px" }}>
-                                    <Text>2. share current  tree</Text>
+                                </div>
+
+                                <div className="flex items-center justify-between w-4/5 ml-8 mt-2">
+                                    <span>2. Share current tree</span>
                                     <Checkbox
                                         checked={optionType === "current"}
-                                        onCheckedChange={(e) => setOptionType(e.checked ? "current" : "latest")}
+                                        onCheckedChange={(checked) =>
+                                            setOptionType(checked ? "current" : "latest")
+                                        }
                                     />
-                                </HStack>
-                            </Box>
+                                </div>
+                            </div>
 
+                            {/* Loader */}
+                            {sharing && (
+                                <div className="flex justify-center w-full">
+                                    <ClipLoader
+                                        color="blue"
+                                        loading={true}
+                                        size={50}
+                                        aria-label="Loading Spinner"
+                                    />
+                                </div>
+                            )}
 
-
-                            {
-                                sharing ?
-                                    <Center>
-                                        <ClipLoader
-                                                           color={"blue"}
-                                                           loading={true}
-                                                           size={150}
-                                                           aria-label="Loading Spinner"
-                                                           data-testid="loader"
-                                                       />
-                                    </Center>
-                                    : null
-                            }
-                            {
-                                shared ?
-                                    <Box w={'100%'}>
-                                        <ClipboardRoot value={shared}>
-                                            <ClipboardLabel>Shared Document Link</ClipboardLabel>
-                                            <InputGroup width="full" endElement={<ClipboardIconButton me="-2" />}>
-                                                <ClipboardInput />
-                                            </InputGroup>
-                                            <Text fontSize={'sm'} mt={'2'}>Copy the link above and share</Text>
-                                        </ClipboardRoot>
-                                    </Box>
-                                    : null
-                            }
-                        </VStack>
-                    </DialogBody>
+                            {/* Clipboard */}
+                            {shared && (
+                                <div className="w-full">
+                                    <div onClick={async () => {
+                                        try {
+                                            await navigator.clipboard.writeText(shared);
+                                        } catch (err) {
+                                            console.error("Failed to copy text: ", err);
+                                        }
+                                    }}>
+                                        <Label>Shared Document Link</Label>
+                                        <ClipboardIcon className="w-4 h-4" />
+                                        <p className="text-sm mt-2">Copy the link above and share</p>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    </div>
                     <DialogFooter>
-                        <DialogActionTrigger asChild>
-                            <Button  data-testid="share-cancel-action-button" variant="outline" borderRadius={'md'}>Cancel</Button>
-                        </DialogActionTrigger>
+                        {/* <DialogActionTrigger asChild> */}
+                        <button data-testid="share-cancel-action-button" className='rounded'>Cancel</button>
+                        {/* </DialogActionTrigger> */}
                         {
                             shared ? (
-                                <ClipboardRoot value={shared}>
-                                    <ClipboardButton borderRadius={'md'} variant={'solid'} />
-                                </ClipboardRoot>
+                                <ClipboardButton value={shared} />
+
                             ) : (
-                                <Button data-testid="share-modal-action-button" onClick={handleShare} borderRadius={'md'}>Share</Button>
+                                <button data-testid="share-modal-action-button" onClick={handleShare} className='rounded'>Share</button>
                             )
                         }
                     </DialogFooter>
-                    <DialogCloseTrigger />
+                    {/* <DialogCloseTrigger /> */}
                 </DialogContent>
-            </DialogRoot>
+            </Dialog>
         </>
     )
 }
