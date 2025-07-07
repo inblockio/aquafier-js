@@ -24,6 +24,7 @@ import { formatBytes, getAquaTreeFileObject } from "@/utils/functions";
 import { useStore } from "zustand";
 import appStore from "@/store";
 import { useState } from "react";
+import { FaHome } from "react-icons/fa";
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 
@@ -60,6 +61,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   }, [files])
 
   const sidebarItems = [
+    { icon: FaHome, label: 'Home', id: "/home" },
     { icon: FileText, label: 'All files', id: "/files" },
     { icon: Workflow, label: 'Workflows', id: "/files/files_workflows" },
     { icon: LayoutTemplate, label: 'Templates', id: "/files/files_templates" },

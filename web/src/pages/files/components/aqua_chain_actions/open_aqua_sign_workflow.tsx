@@ -1,23 +1,24 @@
+import { Button } from "@/components/shadcn/ui/button";
+import appStore from "@/store";
 import { IShareButton } from "@/types/types";
 import { FaFileExport } from "react-icons/fa6";
+import { useNavigate } from "react-router-dom";
+import { useStore } from "zustand";
 
 
 
-export const OpenWorkflowButton = ({ item, nonce }: IShareButton) => {
-
+export const OpenWorkflowButton = ({ item }: IShareButton) => {
+    const { setSelectedFileInfo } = useStore(appStore)
+    const navigate = useNavigate()
 
     return (
-          <div className="flex gap-1">
-                                        <button data-testid="open-workflow-button" className="flex items-center space-x-1 bg-[#D4F9FD] text-[#225B71]  px-3 py-2 rounded hover:bg-[#AFF2FB] transition-colors text-xs" onClick={(e) => {
-                                            e.preventDefault();
-                                            // setSelectedFileInfo(item)
-                                            // navigate("/workflow")
-                                        }} >
-                                            <FaFileExport /> &nbsp;
-                                            Open Workflow
-                                        </button>
-        
-        
-                                    </div>
+        <Button data-testid="open-workflow-button" className="cursor-pointer rounded-sm bg-cyan-500/10 text-cyan-600 text-xs hover:bg-cyan-500/20" onClick={(e) => {
+            e.preventDefault();
+            setSelectedFileInfo(item)
+            navigate("/files/pdf/workflow")
+        }} >
+            <FaFileExport /> &nbsp;
+            Open Workflow
+        </Button>
     )
 }
