@@ -124,7 +124,7 @@ const TailwindLayout = () => {
                     <div className="bg-gray-900 text-white p-3 rounded-md">
                         <div className="flex items-center justify-between mb-2">
                             <span className="text-sm font-medium">Get started</span>
-                            <span className="text-xs bg-gray-700 px-2 py-1 rounded">25%</span>
+                            <span className="text-xs bg-gray-700 px-2 py-1 rounded">25% off</span>
                         </div>
                         <p className="text-xs text-gray-300">
                             Give it a try today

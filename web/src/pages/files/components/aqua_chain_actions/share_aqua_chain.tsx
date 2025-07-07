@@ -1,28 +1,20 @@
-
 import { LuShare2 } from "react-icons/lu"
-// import { Button } from "../../../../components/chakra-ui/button"
 import { useStore } from "zustand"
 import appStore from "../../../../store"
 import axios from "axios"
-// import { toaster } from "../../../../components/chakra-ui/toaster"
 import { useEffect, useState } from "react"
-// import { DialogActionTrigger, DialogBody, DialogCloseTrigger, DialogContent, DialogFooter, DialogHeader, DialogRoot, DialogTitle } from "../../../../components/chakra-ui/dialog"
 import { generateNonce } from "siwe"
-import { ClipLoader } from "react-spinners";
-// import { Checkbox } from "../../../../components/chakra-ui/checkbox"
-// import { Box, Center, Input, HStack, Text, VStack } from "@chakra-ui/react"
-// import { ClipboardButton, ClipboardIconButton, ClipboardInput, ClipboardLabel, ClipboardRoot } from "../../../../components/chakra-ui/clipboard"
-// import { InputGroup } from "../../../../components/chakra-ui/input-group"
+import { ClipLoader } from "react-spinners"
 
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/shadcn/ui/dialog";
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/shadcn/ui/dialog"
 import { IShareButton } from "../../../../types/types"
 import ClipboardButton from "@/components/shadcn/ui/clipboard"
 import { Label } from "@/components/shadcn/ui/label"
-// import { Checkbox } from "@/components/chakra-ui/checkbox"
 import { Input } from "@/components/shadcn/ui/input"
 import { ClipboardIcon } from "lucide-react"
 import { toaster } from "@/components/shadcn/ui/use-toast"
-import { Checkbox } from "@/components/shadcn/ui/checkbox"
+import { Switch } from "@/components/shadcn/ui/switch"
+import { Button } from "@/components/shadcn/ui/button"
 
 export const ShareButton = ({ item, nonce }: IShareButton) => {
     const { backend_url } = useStore(appStore)
@@ -35,39 +27,28 @@ export const ShareButton = ({ item, nonce }: IShareButton) => {
     const [walletAddress, setWalletAddress] = useState("")
     const [optionType, setOptionType] = useState<"latest" | "current">("latest")
 
-    // const hashToShare = optionType === "latest" ? latest : item.aquaTree!.currentHash
     const recipient = recipientType === "0xfabacc150f2a0000000000000000000000000000" ? "0xfabacc150f2a0000000000000000000000000000" : walletAddress
 
     useEffect(() => {
-
         if (item) {
             const name = item.fileObject[0].fileName;
             setFileName(name)
         }
     })
 
-
-
     const handleShare = async () => {
-
         if (recipientType == "specific" && (walletAddress == "")) {
             toaster.create({
-                description: `If recipient is specific a wallet address has to be sepcified.`,
+                description: `If recipient is specific a wallet address has to be specified.`,
                 type: "error"
             })
             return
         }
         setSharing(true)
-        // let id_to_share = id;
+        
         const unique_identifier = `${Date.now()}_${generateNonce()}`
-
         const url = `${backend_url}/share_data`;
-        // const formData = new URLSearchParams();
-        // formData.append('file_id', file_id.toString());
-        // formData.append('filename', filename ?? "");
-        // formData.append('identifier', unique_identifier);
-
-        // 
+        
         const allHashes = Object.keys(item.aquaTree!.revisions!);
         const latest = allHashes[allHashes.length - 1]
         let recepientWalletData = recipient;
@@ -86,8 +67,6 @@ export const ShareButton = ({ item, nonce }: IShareButton) => {
             }
         });
 
-        //  console.log(response)
-
         if (response.status === 200) {
             setSharing(false)
             const domain = window.location.origin;
@@ -99,131 +78,169 @@ export const ShareButton = ({ item, nonce }: IShareButton) => {
                 type: "error"
             })
         }
-
     }
-
 
     return (
         <>
-
-
             {/* Share Button */}
-            <button data-testid="share-action-button" onClick={() => setIsOpen(true)} className="flex items-center space-x-1 bg-[#FDEDD6] text-red-700  px-3 py-2 rounded hover:bg-[#FAD8AD] transition-colors text-xs">
+            <button 
+                data-testid="share-action-button" 
+                onClick={() => setIsOpen(true)} 
+                className="flex items-center space-x-1 bg-[#FDEDD6] text-red-700 px-3 py-2 rounded hover:bg-[#FAD8AD] transition-colors text-xs"
+            >
                 <LuShare2 className="w-3 h-3" />
                 <span>Share</span>
             </button>
 
-
-            <Dialog open={isOpen} onOpenChange={e => {
-                // setIsOpen(e.open)
-            }}>
-
-                <DialogContent>
+            <Dialog open={isOpen} onOpenChange={setIsOpen}>
+                <DialogContent className="max-w-md">
                     <DialogHeader>
-                        <DialogTitle>{`Sharing ${fileName}`}</DialogTitle>
+                        <DialogTitle className="text-lg font-semibold">
+                            Sharing {fileName}
+                        </DialogTitle>
                     </DialogHeader>
-                    <div>
-                        <div className="flex flex-col items-start space-y-4 text-left">
-                            <p>
-                                {`You are about to share ${fileName}. Once a file is shared, don't delete it otherwise it will be broken if one tries to import it.`}
-                            </p>
+                    
+                    <div className="space-y-4">
+                        {/* Warning Message */}
+                        <p className="text-sm text-gray-600">
+                            You are about to share {fileName}. Once a file is shared, don't delete it otherwise it will be broken if one tries to import it.
+                        </p>
 
-                            {/* Recipient Toggle */}
-                            <div className="w-full space-y-2">
-                                <div className="flex items-center justify-between w-full">
-                                    <Label>Share with specific wallet</Label>
-                                    <Checkbox
-                                        checked={recipientType === "specific"}
-                                        onCheckedChange={(checked) =>
-                                            setRecipientType(checked ? "specific" : "0xfabacc150f2a0000000000000000000000000000")
-                                        }
-                                    />
-                                </div>
+                        {/* Share with specific wallet toggle */}
+                        <div className="flex items-center justify-between py-2">
+                            <Label className="text-sm font-medium">
+                                Share with specific wallet
+                            </Label>
+                            <Switch
+                                checked={recipientType === "specific"}
+                                onCheckedChange={(checked) =>
+                                    setRecipientType(checked ? "specific" : "0xfabacc150f2a0000000000000000000000000000")
+                                }
+                            />
+                        </div>
 
-                                {recipientType === "specific" && (
-                                    <Input
-                                        className="mt-2"
-                                        placeholder="Enter wallet address"
-                                        value={walletAddress}
-                                        onChange={(e) => setWalletAddress(e.target.value)}
-                                    />
-                                )}
+                        {/* Wallet Address Input */}
+                        {recipientType === "specific" && (
+                            <div className="space-y-2">
+                                <Input
+                                    placeholder="Enter wallet address"
+                                    value={walletAddress}
+                                    onChange={(e) => setWalletAddress(e.target.value)}
+                                    className="w-full"
+                                />
                             </div>
+                        )}
 
-                            {/* Divider */}
-                            <div className="w-full h-px bg-gray-200 my-3" />
-
-                            {/* Version Toggle */}
-                            <div className="w-full space-y-2">
-                                <p>
-                                    Would the recipient get the Aqua Tree as is, or receive the tree with any new revisions you add?
-                                </p>
-
-                                <div className="flex items-center justify-between w-4/5 ml-8 mt-2">
-                                    <span>1. Share latest revision in tree</span>
-                                    <Checkbox
-                                        checked={optionType === "latest"}
-                                        onCheckedChange={(checked) =>
-                                            setOptionType(checked ? "latest" : "current")
-                                        }
-                                    />
-                                </div>
-
-                                <div className="flex items-center justify-between w-4/5 ml-8 mt-2">
-                                    <span>2. Share current tree</span>
-                                    <Checkbox
-                                        checked={optionType === "current"}
-                                        onCheckedChange={(checked) =>
-                                            setOptionType(checked ? "current" : "latest")
-                                        }
-                                    />
-                                </div>
-                            </div>
-
-                            {/* Loader */}
-                            {sharing && (
-                                <div className="flex justify-center w-full">
-                                    <ClipLoader
-                                        color="blue"
-                                        loading={true}
-                                        size={50}
-                                        aria-label="Loading Spinner"
-                                    />
-                                </div>
-                            )}
-
-                            {/* Clipboard */}
-                            {shared && (
-                                <div className="w-full">
-                                    <div onClick={async () => {
-                                        try {
-                                            await navigator.clipboard.writeText(shared);
-                                        } catch (err) {
-                                            console.error("Failed to copy text: ", err);
-                                        }
-                                    }}>
-                                        <Label>Shared Document Link</Label>
-                                        <ClipboardIcon className="w-4 h-4" />
-                                        <p className="text-sm mt-2">Copy the link above and share</p>
+                        {/* Sharing Options */}
+                        <div className="space-y-3">
+                            <Label className="text-sm font-medium">
+                                Sharing Option (Would the recipient to get the the Aqua Tree as is Or receive the tree with any new revisions you will add?)
+                            </Label>
+                            
+                            <div className="space-y-2">
+                                {/* Latest Option */}
+                                <div 
+                                    className={`flex items-center justify-between p-3 rounded-lg border cursor-pointer transition-colors ${
+                                        optionType === "latest" 
+                                            ? "border-blue-500 bg-orange-100/80" 
+                                            : "border-gray-200 hover:border-gray-300"
+                                    }`}
+                                    onClick={() => setOptionType("latest")}
+                                >
+                                    <div className="flex-1">
+                                        <div className="font-medium text-sm">Latest</div>
+                                        <div className="text-xs text-gray-500">Share latest revision in tree</div>
+                                    </div>
+                                    <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${
+                                        optionType === "latest" 
+                                            ? "border-blue-500 bg-blue-500" 
+                                            : "border-gray-300"
+                                    }`}>
+                                        {optionType === "latest" && (
+                                            <div className="w-2 h-2 bg-white rounded-full"></div>
+                                        )}
                                     </div>
                                 </div>
-                            )}
+
+                                {/* Current Option */}
+                                <div 
+                                    className={`flex items-center justify-between p-3 rounded-lg border cursor-pointer transition-colors ${
+                                        optionType === "current" 
+                                            ? "border-blue-500 bg-orange-100/80" 
+                                            : "border-gray-200 hover:border-gray-300"
+                                    }`}
+                                    onClick={() => setOptionType("current")}
+                                >
+                                    <div className="flex-1">
+                                        <div className="font-medium text-sm">Current</div>
+                                        <div className="text-xs text-gray-500">Share current tree</div>
+                                    </div>
+                                    <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${
+                                        optionType === "current" 
+                                            ? "border-blue-500 bg-blue-500" 
+                                            : "border-gray-300"
+                                    }`}>
+                                        {optionType === "current" && (
+                                            <div className="w-2 h-2 bg-white rounded-full"></div>
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Loading Spinner */}
+                        {sharing && (
+                            <div className="flex justify-center py-4">
+                                <ClipLoader
+                                    color="#3B82F6"
+                                    loading={true}
+                                    size={30}
+                                    aria-label="Loading Spinner"
+                                />
+                            </div>
+                        )}
+
+                        {/* Shared Link */}
+                        {shared && (
+                            <div className="space-y-2">
+                                <Label className="text-sm font-medium">Shared Document Link</Label>
+                                <div className="flex items-center space-x-2 p-2 bg-gray-50 rounded border">
+                                    <ClipboardIcon className="w-4 h-4 text-gray-500" />
+                                    <span className="text-sm text-gray-700 flex-1 truncate">{shared}</span>
+                                </div>
+                                <p className="text-xs text-gray-500">Copy the link above and share</p>
+                            </div>
+                        )}
+
+                        {/* Existing sharing contracts section */}
+                        <div className="border-t pt-4">
+                            <h3 className="font-medium text-sm mb-2">Existing sharing contracts</h3>
+                            {/* This section appears empty in the design, so leaving it as placeholder */}
                         </div>
                     </div>
-                    <DialogFooter>
-                        {/* <DialogActionTrigger asChild> */}
-                        <button data-testid="share-cancel-action-button" className='rounded'>Cancel</button>
-                        {/* </DialogActionTrigger> */}
-                        {
-                            shared ? (
-                                <ClipboardButton value={shared} />
 
-                            ) : (
-                                <button data-testid="share-modal-action-button" onClick={handleShare} className='rounded'>Share</button>
-                            )
-                        }
+                    <DialogFooter className="flex justify-between">
+                        <Button 
+                            variant="outline" 
+                            onClick={() => setIsOpen(false)}
+                            data-testid="share-cancel-action-button"
+                        >
+                            Cancel
+                        </Button>
+                        
+                        {shared ? (
+                            <ClipboardButton value={shared} />
+                        ) : (
+                            <Button 
+                                onClick={handleShare}
+                                disabled={sharing}
+                                data-testid="share-modal-action-button"
+                                className="bg-black text-white hover:bg-gray-800"
+                            >
+                                Share
+                            </Button>
+                        )}
                     </DialogFooter>
-                    {/* <DialogCloseTrigger /> */}
                 </DialogContent>
             </Dialog>
         </>

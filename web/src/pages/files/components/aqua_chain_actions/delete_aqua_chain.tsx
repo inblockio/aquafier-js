@@ -158,7 +158,7 @@ export const DeleteAquaChain = ({ apiFileInfo, backendUrl, nonce }: RevionOperat
                       </button>
 
             <Dialog open={open} onOpenChange={setOpen}>
-                <DialogContent className="sm:max-w-[425px]">
+                <DialogContent className="sm:max-w-[425px] ">
                     <DialogHeader>
                         <DialogTitle>This action will corrupt some file(s)</DialogTitle>
                         <DialogDescription>

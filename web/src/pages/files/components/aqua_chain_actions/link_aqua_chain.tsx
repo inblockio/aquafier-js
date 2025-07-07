@@ -5,20 +5,15 @@ import { useStore } from "zustand"
 import appStore from "../../../../store"
 import axios from "axios"
 import { ApiFileInfo } from "../../../../models/FileInfo"
-// import { toaster } from "../../../../components/chakra-ui/toaster"
-// import { Button } from "../../../../components/chakra-ui/button"
-// import { Alert } from "../../../../components/chakra-ui/alert"
-// import { DialogActionTrigger, DialogBody, DialogCloseTrigger, DialogContent, DialogFooter, DialogHeader, DialogRoot, DialogTitle } from "../../../../components/chakra-ui/dialog"
-// import { Checkbox } from "../../../../components/chakra-ui/checkbox"
-// import { Box, Center, Text, VStack, Loader, Stack, Group } from "@chakra-ui/react"
 import Aquafier, { AquaTreeWrapper } from "aqua-js-sdk"
 import { IShareButton } from "../../../../types/types"
-import { Dialog, DialogClose, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/shadcn/ui/dialog"
-import { toaster } from "@/components/shadcn/ui/use-toast"
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/shadcn/ui/dialog"
+import { toast } from "@/components/shadcn/ui/use-toast"
 import { Label } from "@/components/shadcn/ui/label"
 import { Alert, AlertDescription, AlertTitle } from "@/components/shadcn/ui/alert"
-import { AlertCircle, Loader } from "lucide-react"
+import { AlertCircle, Loader2 } from "lucide-react"
 import { Checkbox } from "@/components/shadcn/ui/checkbox"
+import { Button } from "@/components/shadcn/ui/button"
 
 export const LinkButton = ({ item, nonce }: IShareButton) => {
     const { backend_url, setFiles, files, session, systemFileInfo } = useStore(appStore)
@@ -30,11 +25,12 @@ export const LinkButton = ({ item, nonce }: IShareButton) => {
         setLinkItem(null)
         setIsOpen(false)
     }
+
     const handleLink = async () => {
         if (linkItem == null) {
-            toaster.create({
+            toast({
                 description: `Please select an AquaTree to link`,
-                type: "error"
+                variant: "destructive"
             });
             return;
         }
@@ -54,9 +50,9 @@ export const LinkButton = ({ item, nonce }: IShareButton) => {
             let result = await aquafier.linkAquaTree(aquaTreeWrapper, linkAquaTreeWrapper)
 
             if (result.isErr()) {
-                toaster.create({
+                toast({
                     description: `An error occurred when linking`,
-                    type: "error"
+                    variant: "destructive"
                 });
                 return;
             }
@@ -79,165 +75,184 @@ export const LinkButton = ({ item, nonce }: IShareButton) => {
             });
 
             if (response.status === 200 || response.status === 201) {
-
-
                 await refetchAllUserFiles();
-
             }
 
-            toaster.create({
-                description: `Linking successfull`,
-                type: "success"
+            toast({
+                description: `Linking successful`,
+                variant: "default"
             })
             setLinkItem(null)
             setIsOpen(false)
 
         } catch (error) {
-            toaster.create({
+            toast({
                 description: `An error occurred`,
-                type: "error"
+                variant: "destructive"
             });
         }
         setLinking(false)
     }
 
-
     const refetchAllUserFiles = async () => {
-
-        // refetch all the files to enure the front end  state is the same as the backend 
+        // refetch all the files to ensure the front end state is the same as the backend 
         try {
             const files = await fetchFiles(session!.address!, `${backend_url}/explorer_files`, session!.nonce);
             setFiles(files);
         } catch (e) {
-            //  console.log(`Error ${e}`)
-            toaster.create({
+            toast({
                 description: "Error updating files",
-                type: "error"
+                variant: "destructive"
             })
             document.location.reload()
         }
     }
+
     return (
         <>
-            {/* <Button  data-testid="link-action-button" size={'xs'} colorPalette={'yellow'} variant={'subtle'} w={'100px'} onClick={() => setIsOpen(true)}>
-                <LuLink2 />
-                Link
-            </Button> */}
-
-            <button onClick={() => setIsOpen(true)} className="flex items-center space-x-1 bg-yellow-100 text-yellow-700  px-3 py-2 rounded hover:bg-yellow-200 transition-colors text-xs">
+            {/* Link Button */}
+            <button 
+                data-testid="link-action-button" 
+                onClick={() => setIsOpen(true)} 
+                className="flex items-center space-x-1 bg-yellow-100 text-yellow-700 px-3 py-2 rounded hover:bg-yellow-200 transition-colors text-xs w-[100px] justify-center"
+            >
                 <LuLink2 className="w-3 h-3" />
                 <span>Link</span>
             </button>
 
-            <Dialog open={isOpen} onOpenChange={e => {
-                // setIsOpen(e.open)
-            }}>
-
-                <DialogContent>
+            <Dialog open={isOpen} onOpenChange={setIsOpen}>
+                <DialogContent className="max-w-lg">
                     <DialogHeader>
-                        <DialogTitle>{`Link ${item.fileObject[0].fileName} To another file (Aquatree)`}</DialogTitle>
+                        <DialogTitle className="text-lg">
+                            {`Link ${item.fileObject[0].fileName} To another file (Aquatree)`}
+                        </DialogTitle>
                     </DialogHeader>
-                    <div>
-
-                        {files?.length <= 1 ? <div>
-                            {/* <Alert status="warning" title={"For linking to work you need multiple files, curently you only have " + files?.length} /> */}
-                            <Alert>
-                                <AlertCircle />
-                                <AlertTitle>multiple files </AlertTitle>
-                                <AlertDescription>
-                                    {"For linking to work you need multiple files, curently you only have " + files?.length}.
+                    
+                    <div className="space-y-4">
+                        {files?.length <= 1 ? (
+                            <Alert className="border-orange-200 bg-orange-50">
+                                <AlertCircle className="h-4 w-4 text-orange-600" />
+                                <AlertTitle className="text-orange-800">Multiple files needed</AlertTitle>
+                                <AlertDescription className="text-orange-700">
+                                    For linking to work you need multiple files, currently you only have {files?.length}.
                                 </AlertDescription>
                             </Alert>
-                        </div> :
-                            <div className="flex flex-col text-left">
-                                <span>
+                        ) : (
+                            <div className="space-y-4 text-left">
+                                <p className="text-sm text-gray-600">
                                     {`You are about to link ${item.fileObject[0].fileName}. Once a file is linked, don't delete it otherwise it will be broken if one tries to use the Aqua tree.`}
-                                </span>
-                                <span>
+                                </p>
+                                
+                                <p className="text-sm font-medium">
                                     Select the file you want to link to.
-                                </span>
+                                </p>
 
-
-
-                                {/* Custom Divider */}
+                                {/* Divider */}
                                 <div className="w-full h-px bg-gray-200 my-3" />
 
-
-                                {
-                                    files?.map((itemLoop: ApiFileInfo, index: number) => {
+                                {/* File List */}
+                                <div className="space-y-3 max-h-60 overflow-y-auto">
+                                    {files?.map((itemLoop: ApiFileInfo, index: number) => {
                                         const keys = Object.keys(itemLoop.aquaTree!.revisions!)
                                         const keysPar = Object.keys(item.aquaTree!.revisions!)
                                         const res = areArraysEqual(keys, keysPar)
                                         const { isWorkFlow, workFlow } = isWorkFlowData(itemLoop.aquaTree!, systemFileInfo.map((e) => getFileName(e.aquaTree!!)))
-                                        //  console.log(`res ${res} ${JSON.stringify(itemLoop.fileObject)}`)
+                                        
                                         if (res) {
-                                            return <div key={index}> </div>
+                                            return <div key={index}></div>
                                         }
+                                        
                                         if (isWorkFlow && workFlow == "aqua_sign") {
                                             let fileName = getFileName(itemLoop.aquaTree!!)
-                                            return <div key={index}>
-                                                <Label>
-                                                    {index}. {`${fileName} - This is a workflow file (${workFlow}). You can't link to it. `}
-                                                </Label>
-                                            </div>
+                                            return (
+                                                <div key={index} className="text-sm text-gray-500">
+                                                    {index + 1}. {`${fileName} - This is a workflow file (${workFlow}). You can't link to it.`}
+                                                </div>
+                                            )
                                         }
 
                                         let fileObject = getAquaTreeFileObject(itemLoop)
-
+                                        
                                         if (fileObject) {
-
-                                            return <div key={index} className="flex items-center space-x-2">
-                                                <span>{index}.</span>
-                                                <Checkbox
-                                                    aria-label="Select File"
-                                                    checked={linkItem == null ? false :
-                                                        Object.keys(linkItem?.aquaTree?.revisions!)[0] === Object.keys(itemLoop.aquaTree?.revisions!)[0]}
-                                                    onCheckedChange={(checked) => {
-                                                        if (checked === true) {
-                                                            setLinkItem(itemLoop)
-                                                        } else {
-                                                            setLinkItem(null)
-                                                        }
-
-                                                    }}
-                                                    value={index.toString()}
-                                                >
-                                                    {itemLoop.fileObject[0].fileName} {isWorkFlow ? `- This is a workflow file (${workFlow}).` : ""}
-                                                </Checkbox>
-                                            </div>
+                                            return (
+                                                <div key={index} className="flex items-center space-x-3 p-2 hover:bg-gray-50 rounded">
+                                                    <span className="text-sm text-gray-500 min-w-[20px]">{index + 1}.</span>
+                                                    <div className="flex items-center space-x-2 flex-1">
+                                                        <Checkbox
+                                                            id={`file-${index}`}
+                                                            checked={linkItem == null ? false :
+                                                                Object.keys(linkItem?.aquaTree?.revisions!)[0] === Object.keys(itemLoop.aquaTree?.revisions!)[0]}
+                                                            onCheckedChange={(checked) => {
+                                                                if (checked === true) {
+                                                                    setLinkItem(itemLoop)
+                                                                } else {
+                                                                    setLinkItem(null)
+                                                                }
+                                                            }}
+                                                        />
+                                                        <Label 
+                                                            htmlFor={`file-${index}`}
+                                                            className="text-sm cursor-pointer flex-1"
+                                                        >
+                                                            {itemLoop.fileObject[0].fileName} 
+                                                            {isWorkFlow ? (
+                                                                <span className="text-orange-600 text-xs ml-1">
+                                                                    - This is a workflow file ({workFlow}).
+                                                                </span>
+                                                            ) : ""}
+                                                        </Label>
+                                                    </div>
+                                                </div>
+                                            )
                                         } else {
-                                            return <Label>Error</Label>
+                                            return (
+                                                <div key={index} className="text-sm text-red-500">
+                                                    Error loading file
+                                                </div>
+                                            )
                                         }
-                                    })
-                                }
+                                    })}
+                                </div>
 
-                                {
-                                    linking ?
-                                        <div className="flex justify-center items-center">
-                                            <Loader />
-                                        </div>
-                                        : null
-                                }
-
+                                {/* Loading State */}
+                                {linking && (
+                                    <div className="flex justify-center items-center py-4">
+                                        <Loader2 className="h-6 w-6 animate-spin text-blue-500" />
+                                        <span className="ml-2 text-sm text-gray-600">Linking files...</span>
+                                    </div>
+                                )}
                             </div>
-                        }
+                        )}
                     </div>
-                    <DialogFooter>
-                        <DialogClose asChild>
-                            <button data-testid="link-cancel-action-button" onClick={cancelClick}>Cancel</button>
-                        </DialogClose>
 
-
-                        {files?.length <= 1 ? <></>
-                            : <>
-                                <button data-testid="link-modal-action-button" onClick={handleLink}>Link</button>
-
-                            </>}
+                    <DialogFooter className="flex justify-between">
+                        <Button 
+                            variant="outline" 
+                            onClick={cancelClick}
+                            data-testid="link-cancel-action-button"
+                        >
+                            Cancel
+                        </Button>
+                        
+                        {files?.length > 1 && (
+                            <Button 
+                                onClick={handleLink}
+                                disabled={linking || linkItem === null}
+                                data-testid="link-modal-action-button"
+                            >
+                                {linking ? (
+                                    <>
+                                        <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                                        Linking...
+                                    </>
+                                ) : (
+                                    'Link'
+                                )}
+                            </Button>
+                        )}
                     </DialogFooter>
-
                 </DialogContent>
             </Dialog>
-
         </>
     )
 }
