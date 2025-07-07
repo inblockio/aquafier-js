@@ -374,7 +374,7 @@ const FilesPage = () => {
 
             {/* Upload Progress Dialog */}
             <Dialog open={isUploadDialogOpen} onOpenChange={setIsUploadDialogOpen}>
-                <DialogContent className="sm:max-w-md">
+                <DialogContent className="sm:max-w-md  [&>button]:hidden">
                     <DialogHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                         <DialogTitle className="text-lg font-semibold">
                             {isMinimized ? 'Upload Progress' : `Uploading ${uploadQueue.length} file${uploadQueue.length > 1 ? 's' : ''}`}
