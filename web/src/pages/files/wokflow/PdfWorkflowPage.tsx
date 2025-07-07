@@ -23,7 +23,7 @@ export default function PdfWorkflowPage() {
     const [timeLineTitle, setTimeLineTitle] = useState("");
     const [error, setError] = useState("");
     const [timeLineItems, setTimeLineItems] = useState<Array<WorkFlowTimeLine>>([]);
-    const { selectedFileInfo, systemFileInfo } = useStore(appStore);
+    const { selectedFileInfo, systemFileInfo, setSelectedFileInfo } = useStore(appStore);
 
     const navigate = useNavigate()
 
@@ -217,7 +217,10 @@ export default function PdfWorkflowPage() {
                         <div className="flex items-center justify-between">
                             <div></div>
                             <h1 className="text-center text-2xl font-bold">{timeLineTitle}</h1>
-                            <Button variant="outline" onClick={() => navigate("/files")} className='cursor-pointer'>
+                            <Button variant="outline" onClick={() => {
+                                setSelectedFileInfo(null)
+                                navigate("/files", {replace: true})
+                            }} className='cursor-pointer'>
                                 <LuArrowLeft className="mr-2 h-4 w-4" /> Go Home
                             </Button>
                         </div>

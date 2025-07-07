@@ -1,5 +1,3 @@
-// Imports rewritten or removed from Chakra UI
-// import { RevisionDetailsSummary, RevisionDisplay } from ""
 
 import FilePreview from "@/components/FilePreview"
 import { LogViewer } from "@/components/logs/LogViewer"
@@ -11,8 +9,6 @@ import { ChevronUp, ChevronDown } from "lucide-react"
 import { useCallback, useEffect, useState } from "react"
 import { useStore } from "zustand"
 
-// UI components from shadcn/ui
-// @/components/shadcn/ui/drawer
 import { Card, CardContent } from "@/components/shadcn/ui/card"
 import { Button } from "@/components/shadcn/ui/button"
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/shadcn/ui/collapsible"
@@ -20,8 +16,6 @@ import { ApiFileData } from "@/types"
 import { CustomAlert } from "@/components/shadcn/ui/alert-custom"
 import { RevisionDetailsSummary } from "./files_revision_details"
 import { RevisionDisplay } from "./files_revision_display"
-// import { Timeline } from "@/components/shadcn/ui/timeline"
-// import { toaster } from "@/components/shadcn/ui/toaster"
 
 export const CompleteChainView = ({ callBack, selectedFileInfo }: ICompleteChainView) => {
   const [showMoreDetails, setShowMoreDetails] = useState(false)
@@ -90,7 +84,7 @@ export const CompleteChainView = ({ callBack, selectedFileInfo }: ICompleteChain
             const hash = getFileHashFromUrl(file.fileContent)
             let data = hash ? cacheMap.get(hash) : null
             if (!data) data = await fetchFileData(file.fileContent)
-            if (data && hash) setApiFileData((prev: ApiFileData[] = []) => [...prev, { fileHash: hash, fileData: data }])
+            if (data && hash) setApiFileData((prev: ApiFileData[]) => [...prev, { fileHash: hash, fileData: data }])
             if (data instanceof ArrayBuffer) {
               file.fileContent = isArrayBufferText(data) ? new TextDecoder().decode(data) : new Uint8Array(data)
             } else if (typeof data === 'string') file.fileContent = data

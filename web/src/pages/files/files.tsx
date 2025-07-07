@@ -18,13 +18,13 @@ import {
     Minimize2
 } from 'lucide-react';
 import { FileItemWrapper } from '@/types/types';
-import { checkIfFileExistInUserFiles, isAquaTree, isJSONFile, isJSONKeyValueStringContent, isZipFile, readFileContent } from '@/utils/functions';
+import { checkIfFileExistInUserFiles, getAquaTreeFileName, isAquaTree, isJSONFile, isJSONKeyValueStringContent, isZipFile, readFileContent } from '@/utils/functions';
 import { maxFileSizeForUpload } from '@/utils/constants';
 import axios from 'axios';
 import { ApiFileInfo } from '@/models/FileInfo';
 
 // shadcn/ui components
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/shadcn/ui/dialog";
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/shadcn/ui/dialog";
 import { Progress } from '@/components/shadcn/ui/progress';
 import { Button } from '@/components/shadcn/ui/button';
 import { Badge } from '@/components/shadcn/ui/badge';
@@ -323,16 +323,10 @@ const FilesPage = () => {
 
             {files.length == 0 ? <FileDropZone /> : <FilesList />}
 
-            <Dialog open={isSelectedFileDialogOpen} onOpenChange={setIsUploadDialogOpen} >
-                {/* <DialogTrigger asChild>
-                    <Button variant="outline">Open Dialog</Button>
-                </DialogTrigger> */}
-                {/* <DialogContent className="max-w-[95vw] w-[95vw] h-[95vh] max-h-[95vh]"> */}
+            <Dialog open={isSelectedFileDialogOpen} onOpenChange={setIsSelectedFileDialogOpen} >
 
-               
                 <DialogContent className="[&>button]:hidden !max-w-[95vw] !w-[95vw] h-[95vh] max-h-[95vh] flex flex-col">
-                     <div className="absolute top-4 right-4">
-                    {/* <DialogClose asChild> */}
+                    <div className="absolute top-4 right-4">
                         <Button
                             variant="ghost"
                             size="icon"
@@ -341,25 +335,23 @@ const FilesPage = () => {
                         >
                             <X className="h-4 w-4" />
                         </Button>
-                    {/* </DialogClose> */}
-                </div>
-                    <DialogHeader>
-                        <DialogTitle>Edit profile</DialogTitle>
-                        <DialogDescription>
-                            Make changes to your profile here. Click save when you&apos;re
-                            done.
-                        </DialogDescription>
-                    </DialogHeader>
-                    <CompleteChainView callBack={function (_drawerStatus: IDrawerStatus): void {
-                        // throw new Error('Function not implemented.');
-                         setDrawerStatus(_drawerStatus)
-                    } } selectedFileInfo={selectedFileInfo} />
+                    </div>
+                    {
+                        selectedFileInfo ? (
+                            <>
+                                <DialogHeader>
+                                    <DialogTitle>{getAquaTreeFileName(selectedFileInfo.aquaTree!!)}</DialogTitle>
+                                </DialogHeader>
+                                <CompleteChainView callBack={function (_drawerStatus: IDrawerStatus): void {
+                                    setDrawerStatus(_drawerStatus)
+                                }} selectedFileInfo={selectedFileInfo} />
+                            </>
+                        ) : null
+                    }
                     <DialogFooter className="mt-auto">
-                        {/* <DialogClose asChild> */}
-                            <Button variant="outline" onClick={() => {
-                                setSelectedFileInfo(null)
-                            }}>Cancel</Button>
-                        {/* </DialogClose> */}
+                        <Button variant="outline" onClick={() => {
+                            setSelectedFileInfo(null)
+                        }}>Cancel</Button>
                         <Button type="submit">Save changes</Button>
                     </DialogFooter>
                 </DialogContent>

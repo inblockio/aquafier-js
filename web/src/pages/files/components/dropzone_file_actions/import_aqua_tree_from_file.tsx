@@ -82,7 +82,7 @@ export const ImportAquaChainFromFile = ({ file, uploadedIndexes, fileIndex, upda
     return (
         <Button
             data-testid="import-action-42-button"
-            size="sm" // closest to Chakra's 'xs'
+            size="sm"
             className="w-[80px] flex items-center gap-1 text-muted-foreground"
             onClick={importAquaChain}
             disabled={uploadedIndexes.includes(fileIndex) || uploaded}
