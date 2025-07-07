@@ -1,16 +1,6 @@
 import { useState } from "react";
-// import { Button } from "@/components/ui/button";
-// import {
-//   Dialog,
-//   DialogContent,
-//   DialogHeader,
-//   DialogTitle,
-//   DialogTrigger,
-// } from "@/components/ui/dialog";
-// import { Avatar, AvatarFallback, AvatarImage } from "../../../../../components/ui/avatar";
 import { LuCircleCheck, LuCircleX, LuCopy, LuLogOut, LuWallet } from "react-icons/lu";
 import { ClipLoader } from "react-spinners";
-// import { fetchFiles, formatCryptoAddress, generateAvatar, getCookie, setCookie } from "../utils/functions";
 import { SiweMessage, generateNonce } from "siwe";
 import { SESSION_COOKIE_NAME } from "../../../utils/constants";
 import axios from "axios";
@@ -20,7 +10,8 @@ import { BrowserProvider, ethers } from "ethers";
 
 import { fetchFiles, formatCryptoAddress, generateAvatar, getCookie, setCookie } from "../../../utils/functions";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/shadcn/ui/dialog";
-import { Button } from "@/components/chakra-ui/button";
+import { Button } from "@/components/shadcn/ui/button";
+import appStore from "@/store";
 
 const CustomCopyButton = ({ value }: { value: string }) => {
   const [copied, setCopied] = useState(false);

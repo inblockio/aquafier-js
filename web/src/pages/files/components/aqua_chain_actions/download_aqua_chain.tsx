@@ -4,11 +4,12 @@ import { ensureDomainUrlHasSSL, extractFileHash, isAquaTree } from "../../../../
 import { useStore } from "zustand"
 import appStore from "../../../../store"
 import { ApiFileInfo } from "../../../../models/FileInfo"
-import { toaster } from "../../../../components/chakra-ui/toaster"
+
 import { useState } from "react"
 import Aquafier, { AquaTree, Revision } from "aqua-js-sdk"
 import JSZip from "jszip";
 import { AquaJsonInZip, AquaNameWithHash } from "../../../../models/Aqua"
+import { toaster } from "@/components/shadcn/ui/use-toast"
 
 
 

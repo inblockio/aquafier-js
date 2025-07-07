@@ -39,6 +39,8 @@ import {
     DrawerTitle,
     DrawerTrigger
 } from '@/components/shadcn/ui/drawer';
+import { CompleteChainView } from './components/files_chain_details';
+import { IDrawerStatus } from '@/models/AquaTreeDetails';
 
 interface UploadStatus {
     file: File;
@@ -61,7 +63,7 @@ const FilesPage = () => {
     const [isUploadDialogOpen, setIsUploadDialogOpen] = useState(false);
     const [isMinimized, setIsMinimized] = useState(false);
 
-
+    const [drawerStatus, setDrawerStatus] = useState<IDrawerStatus | null>(null)
     const [isSelectedFileDialogOpen, setIsSelectedFileDialogOpen] = useState(false);
 
     useEffect(() => {
@@ -357,9 +359,10 @@ const FilesPage = () => {
                             done.
                         </DialogDescription>
                     </DialogHeader>
-                    <div className="grid gap-4 flex-1 overflow-auto">
-                        form
-                    </div>
+                    <CompleteChainView callBack={function (_drawerStatus: IDrawerStatus): void {
+                        // throw new Error('Function not implemented.');
+                         setDrawerStatus(_drawerStatus)
+                    } } selectedFileInfo={selectedFileInfo} />
                     <DialogFooter className="mt-auto">
                         {/* <DialogClose asChild> */}
                             <Button variant="outline" onClick={() => {

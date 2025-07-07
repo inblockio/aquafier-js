@@ -1,15 +1,16 @@
 
 import { LuDock } from "react-icons/lu";
-import { Button } from "../../../../components/chakra-ui/button";
 import axios from "axios";
 import { useStore } from "zustand";
 import appStore from "../../../../store";
 import { useState } from "react";
 import { ApiFileInfo } from "../../../../models/FileInfo";
-import { toaster } from "../../../../components/chakra-ui/toaster";
 import { checkIfFileExistInUserFiles } from "../../../../utils/functions";
 import { maxFileSizeForUpload } from "../../../../utils/constants";
 import { IDropzoneAction } from "../../../../types/types";
+import { toaster } from "@/components/shadcn/ui/use-toast";
+import { Button } from "@/components/shadcn/ui/button";
+import { Loader2 } from "lucide-react";
 
 
 
@@ -117,9 +118,20 @@ export const FormRevisionFile = ({ file, uploadedIndexes, fileIndex, updateUploa
     };
 
     return (
-        <Button data-testid="close-form-3-button" size={'xs'} colorPalette={'yellow'} variant={'subtle'} w={'120px'} onClick={uploadFile} disabled={uploadedIndexes.includes(fileIndex) || uploaded} loading={uploading}>
-            <LuDock />
-            Create Form.
-        </Button>
+        <Button 
+  data-testid="close-form-3-button" 
+  size="sm" 
+  variant="secondary" 
+  className="w-[120px] bg-yellow-100 hover:bg-yellow-200 text-yellow-800 border-yellow-300"
+  onClick={uploadFile} 
+  disabled={uploadedIndexes.includes(fileIndex) || uploaded}
+>
+  {uploading ? (
+    <Loader2 className="h-4 w-4 animate-spin mr-2" />
+  ) : (
+    <LuDock className="h-4 w-4 mr-2" />
+  )}
+  Create Form.
+</Button>
     )
 }

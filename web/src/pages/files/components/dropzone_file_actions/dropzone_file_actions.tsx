@@ -1,7 +1,7 @@
 import React, { useState, useCallback, useEffect } from 'react';
 import { Upload, FileText, Folder } from 'lucide-react';
 import { checkIfFileExistInUserFiles, isAquaTree, isJSONFile, isJSONKeyValueStringContent, isZipFile, readFileContent } from '@/utils/functions';
-import { toaster } from '../../../../components/chakra-ui/toaster';
+
 import { LuTrash2, LuUpload } from 'react-icons/lu';
 import { maxFileSizeForUpload } from '../../../../utils/constants';
 import { useStore } from 'zustand';
@@ -9,6 +9,7 @@ import appStore from '../../../../store';
 import axios from 'axios';
 import { ApiFileInfo } from '../../../../models/FileInfo';
 import { DropEvent, FileItemWrapper } from '@/types/types';
+import { toaster } from '@/components/shadcn/ui/use-toast';
 
 
 

@@ -4,10 +4,10 @@ import { useStore } from "zustand"
 import appStore from "../../../../store"
 import axios from "axios"
 import { ApiFileInfo } from "../../../../models/FileInfo"
-import { toaster } from "../../../../components/chakra-ui/toaster"
 import { useState } from "react"
 import Aquafier, { AquaTreeWrapper, WitnessNetwork } from "aqua-js-sdk"
 import { RevionOperation } from "../../../../models/RevisionOperation"
+import { toaster } from "@/components/shadcn/ui/use-toast"
 
 
 

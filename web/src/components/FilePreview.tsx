@@ -5,7 +5,7 @@ import appStore from "../store";
 import { ensureDomainUrlHasSSL, handleLoadFromUrl } from "../utils/functions";
 import  {FilePreviewAquaTreeFromTemplate} from "./FilePreviewAquaTreeFromTemplate"
 import { EasyPDFRenderer } from "../pages/wokflow/ContractDocument/signer/SignerPage";
-import { toaster } from "./chakra-ui/toaster";
+// import { toaster } from "./chakra-ui/toaster";
 
 // Define file extensions to content type mappings
 const fileExtensionMap: { [key: string]: string } = {
@@ -55,7 +55,8 @@ function PdfViewerComponent({ fileType, fileURL, fileInfo }: IPdfViewerComponent
         if (fileType === "application/pdf") {
             const loadPdf = async () => {
                 try {
-                    const result = await handleLoadFromUrl(fileURL, fileInfo.fileName || "", toaster);
+                    // todo fix me @kenn or @Dalmas
+                    const result = await handleLoadFromUrl(fileURL, fileInfo.fileName || "", {});
                     if (!result.error) {
                         setPdfFile(result.file);
                     }
