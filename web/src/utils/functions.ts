@@ -1862,7 +1862,7 @@ export function getLatestApiFileInfObject(jsonArray: ApiFileInfo[]): ApiFileInfo
 
 export async function handleLoadFromUrl(pdfUrlInput: string, fileName: string, toaster: any) {
     if (!pdfUrlInput.trim()) {
-        toaster.create({ title: "Invalid URL", description: "Please enter a valid PDF URL.", type: "error" });
+        toaster.error("Invalid URL", {description: "Please enter a valid PDF URL.", type: "error" });
         return {
             file: null,
             error: "Invalid URL"

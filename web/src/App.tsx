@@ -16,7 +16,7 @@ import PdfSigner from './pages/wokflow/ContractDocument/PdfSigner';
 import WorkFlowPage from './pages/wokflow/WorkFlow';
 import FilesPage from './pages/files/files';
 import HomeV2 from './pages/home/HomeV2';
-import TailwindLayout from './layouts/TailwindLayout';
+// import TailwindLayout from './layouts/TailwindLayout';
 import TailwindMainLayout from './layouts/TailwindMainLayout';
 import PageNotFound from './pages/PageNotFound';
 import InfoPage from './pages/files/InfoPage';
@@ -24,6 +24,7 @@ import SettingsPage from './pages/files/SettingsPage';
 import TemplatesPage from './pages/files/TemplatesPage';
 import CreateFormInstance from './pages/files/CreateFormInstance';
 import NewShadcnLayoutWithSidebar from './layouts/NewShadcnLayoutWithSidebar';
+import PdfWorkflowPage from './pages/files/wokflow/PdfWorkflowPage';
 
 declare global {
   interface Window {
@@ -62,6 +63,7 @@ function App() {
         <Route path="/files" element={<NewShadcnLayoutWithSidebar />}>
           <Route index element={<FilesPage />} />
           <Route path="files_shared" element={<FilesPage />} />
+          <Route path="pdf/workflow" element={<PdfWorkflowPage />} />
           <Route path="files_workflows" element={<FilesPage />} />
           <Route path="files_templates" element={<TemplatesPage />} />
           <Route path="files_docs" element={<FilesPage />} />

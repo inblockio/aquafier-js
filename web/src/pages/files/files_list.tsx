@@ -1,8 +1,7 @@
 import { useState } from 'react';
 import {
     Grid3X3,
-    List,
-    FileText,
+    List
 
 } from 'lucide-react';
 

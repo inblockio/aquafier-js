@@ -1,14 +1,16 @@
 import { LuUpload } from "react-icons/lu";
-import { Button } from "../../../../components/chakra-ui/button";
 import axios from "axios";
 import { useStore } from "zustand";
 import appStore from "../../../../store";
 import { useEffect, useRef, useState } from "react";
 import { ApiFileInfo } from "../../../../models/FileInfo";
-import { toaster } from "../../../../components/chakra-ui/toaster";
 import { checkIfFileExistInUserFiles } from "../../../../utils/functions";
 import { maxFileSizeForUpload } from "../../../../utils/constants";
 import { IDropzoneAction } from "../../../../types/types";
+import { toast } from "sonner";
+import { toaster } from "@/components/shadcn/ui/use-toast";
+import { Button } from "@/components/shadcn/ui/button";
+import { Loader2 } from "lucide-react";
 
 
 export const UploadFile = ({ file, uploadedIndexes, fileIndex, updateUploadedIndex, autoUpload }: IDropzoneAction) => {
@@ -26,10 +28,7 @@ export const UploadFile = ({ file, uploadedIndexes, fileIndex, updateUploadedInd
         // let fileContent = await  readFileContent()
         // const existingChainFile = files.find(_file => _file.fileObject.find((e) => e.fileName == file.name) != undefined)
         if (!file) {
-            toaster.create({
-                description: "No file selected!",
-                type: "info"
-            })
+            toast.info( "No file selected!")
             return;
         }
 
@@ -136,9 +135,20 @@ export const UploadFile = ({ file, uploadedIndexes, fileIndex, updateUploadedInd
     }, [])
 
     return (
-        <Button data-testid="action-upload-51-button" size={'xs'} colorPalette={'blackAlpha'} variant={'subtle'} w={'80px'} onClick={uploadFile} disabled={uploadedIndexes.includes(fileIndex) || uploaded} loading={uploading}>
-            <LuUpload />
-            Upload
-        </Button>
+       <Button 
+  data-testid="action-upload-51-button" 
+  size="sm" 
+  variant="secondary" 
+  className="w-[80px] bg-gray-100 hover:bg-gray-200 text-gray-700 border-gray-300"
+  onClick={uploadFile} 
+  disabled={uploadedIndexes.includes(fileIndex) || uploaded}
+>
+  {uploading ? (
+    <Loader2 className="h-4 w-4 animate-spin mr-2" />
+  ) : (
+    <LuUpload className="h-4 w-4 mr-2" />
+  )}
+  Upload
+</Button>
     )
 }

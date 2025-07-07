@@ -1,12 +1,12 @@
 import { LuImport } from "react-icons/lu";
-import { Button } from "../../../../components/chakra-ui/button";
 import axios from "axios";
 import { useStore } from "zustand";
 import appStore from "../../../../store";
 import { useState } from "react";
 import { ApiFileInfo } from "../../../../models/FileInfo";
-import { toaster } from "../../../../components/chakra-ui/toaster";
 import { IDropzoneAction } from "../../../../types/types";
+import { Button } from "@/components/shadcn/ui/button";
+import { toaster } from "@/components/shadcn/ui/use-toast";
 
 
 
@@ -80,8 +80,18 @@ export const ImportAquaChainFromFile = ({ file, uploadedIndexes, fileIndex, upda
     };
 
     return (
-        <Button data-testid="import-action-42-button" size={'xs'} colorPalette={'blackAlpha'} variant={'subtle'} w={'80px'} onClick={importAquaChain} disabled={uploadedIndexes.includes(fileIndex) || uploaded} loading={uploading}>
-            <LuImport />
+        <Button
+            data-testid="import-action-42-button"
+            size="sm" // closest to Chakra's 'xs'
+            className="w-[80px] flex items-center gap-1 text-muted-foreground"
+            onClick={importAquaChain}
+            disabled={uploadedIndexes.includes(fileIndex) || uploaded}
+        >
+            {uploading ? (
+                <span className="w-4 h-4 animate-spin border-2 border-muted-foreground border-t-transparent rounded-full" />
+            ) : (
+                <LuImport className="w-4 h-4" />
+            )}
             Import
         </Button>
     )

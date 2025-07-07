@@ -1,4 +1,3 @@
-import { Box, HStack, Stack, Text } from '@chakra-ui/react';
 import { SignatureData } from '../../types/types';
 
 interface ISignatureItem {
@@ -8,36 +7,26 @@ interface ISignatureItem {
 const SignatureItem: React.FC<ISignatureItem> = ({ signature }) => {
     return (
         <div>
-            <Box
+            <div
                 key={signature.id}
-                p={2}
-                cursor="pointer"
-                bg="blue.50"
-                _hover={{ bg: "gray.50" }}
+                className="p-2 cursor-pointer bg-blue-50 hover:bg-gray-50 transition-colors"
             >
-                <HStack>
-                    <Box
-                        width="60px"
-                        height="40px"
-                        backgroundImage={`url(${signature.dataUrl})`}
-                        backgroundSize="contain"
-                        backgroundRepeat="no-repeat"
-                        backgroundPosition="center"
-                        border="1px solid"
-                        borderColor="gray.200"
-                        borderRadius="sm"
+                <div className="flex flex-row items-center space-x-3">
+                    <div
+                        className="w-[60px] h-[40px] bg-no-repeat bg-center bg-contain border border-gray-200 rounded-sm"
+                        style={{ backgroundImage: `url(${signature.dataUrl})` }}
                     />
-                    <Stack gap={0}>
-                        <Text fontSize="sm" fontWeight="medium">{signature.name}</Text>
-                        <Text fontSize="xs" color="gray.600">
+                    <div className="flex flex-col space-y-0">
+                        <p className="text-sm font-medium">{signature.name}</p>
+                        <p className="text-xs text-gray-600">
                             {signature.walletAddress.length > 10
                                 ? `${signature.walletAddress.substring(0, 6)}...${signature.walletAddress.substring(signature.walletAddress.length - 4)}`
                                 : signature.walletAddress
                             }
-                        </Text>
-                    </Stack>
-                </HStack>
-            </Box>
+                        </p>
+                    </div>
+                </div>
+            </div>
         </div>
     )
 }

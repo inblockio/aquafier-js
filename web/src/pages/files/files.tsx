@@ -24,21 +24,12 @@ import axios from 'axios';
 import { ApiFileInfo } from '@/models/FileInfo';
 
 // shadcn/ui components
-import { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/shadcn/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/shadcn/ui/dialog";
 import { Progress } from '@/components/shadcn/ui/progress';
 import { Button } from '@/components/shadcn/ui/button';
 import { Badge } from '@/components/shadcn/ui/badge';
 import { Card, CardContent } from '@/components/shadcn/ui/card';
-import {
-    Drawer,
-    DrawerClose,
-    DrawerContent,
-    DrawerDescription,
-    DrawerFooter,
-    DrawerHeader,
-    DrawerTitle,
-    DrawerTrigger
-} from '@/components/shadcn/ui/drawer';
+
 import { CompleteChainView } from './components/files_chain_details';
 import { IDrawerStatus } from '@/models/AquaTreeDetails';
 
@@ -56,7 +47,7 @@ interface UploadStatus {
 const FilesPage = () => {
     const { files, setFiles, session, backend_url, selectedFileInfo, setSelectedFileInfo } = useStore(appStore)
     const fileInputRef = React.useRef<HTMLInputElement>(null);
-    const [filesList, setFilesList] = useState<FileItemWrapper[]>([]);
+    const [filesList, _setFilesList] = useState<FileItemWrapper[]>([]);
 
     // Upload popup state
     const [uploadQueue, setUploadQueue] = useState<UploadStatus[]>([]);
@@ -182,7 +173,7 @@ const FilesPage = () => {
         }
     };
 
-    const uploadFileFromQueue = async (upload: UploadStatus, index: number) => {
+    const uploadFileFromQueue = async (upload: UploadStatus, _index: number) => {
         if (!upload.file) {
             throw new Error("No file selected");
         }
