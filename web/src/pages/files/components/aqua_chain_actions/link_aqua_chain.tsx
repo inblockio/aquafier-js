@@ -1,18 +1,24 @@
 import { LuLink2 } from "react-icons/lu"
-import { Button } from "../../../../components/chakra-ui/button"
+import { useState } from "react"
 import { areArraysEqual, fetchFiles, getAquaTreeFileObject, getFileName, isWorkFlowData } from "../../../../utils/functions"
 import { useStore } from "zustand"
 import appStore from "../../../../store"
 import axios from "axios"
 import { ApiFileInfo } from "../../../../models/FileInfo"
-import { toaster } from "../../../../components/chakra-ui/toaster"
-import { useState } from "react"
-import { Alert } from "../../../../components/chakra-ui/alert"
-import { DialogActionTrigger, DialogBody, DialogCloseTrigger, DialogContent, DialogFooter, DialogHeader, DialogRoot, DialogTitle } from "../../../../components/chakra-ui/dialog"
-import { Checkbox } from "../../../../components/chakra-ui/checkbox"
-import { Box, Center, Text, VStack, Loader, Stack, Group } from "@chakra-ui/react"
+// import { toaster } from "../../../../components/chakra-ui/toaster"
+// import { Button } from "../../../../components/chakra-ui/button"
+// import { Alert } from "../../../../components/chakra-ui/alert"
+// import { DialogActionTrigger, DialogBody, DialogCloseTrigger, DialogContent, DialogFooter, DialogHeader, DialogRoot, DialogTitle } from "../../../../components/chakra-ui/dialog"
+// import { Checkbox } from "../../../../components/chakra-ui/checkbox"
+// import { Box, Center, Text, VStack, Loader, Stack, Group } from "@chakra-ui/react"
 import Aquafier, { AquaTreeWrapper } from "aqua-js-sdk"
-import  {IShareButton} from "../../../../types/types"
+import { IShareButton } from "../../../../types/types"
+import { Dialog, DialogClose, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/shadcn/ui/dialog"
+import { toaster } from "@/components/shadcn/ui/use-toast"
+import { Label } from "@/components/shadcn/ui/label"
+import { Alert, AlertDescription, AlertTitle } from "@/components/shadcn/ui/alert"
+import { AlertCircle, Loader } from "lucide-react"
+import { Checkbox } from "@/components/shadcn/ui/checkbox"
 
 export const LinkButton = ({ item, nonce }: IShareButton) => {
     const { backend_url, setFiles, files, session, systemFileInfo } = useStore(appStore)
@@ -113,39 +119,48 @@ export const LinkButton = ({ item, nonce }: IShareButton) => {
     }
     return (
         <>
-            <Button  data-testid="link-action-button" size={'xs'} colorPalette={'yellow'} variant={'subtle'} w={'100px'} onClick={() => setIsOpen(true)}>
+            {/* <Button  data-testid="link-action-button" size={'xs'} colorPalette={'yellow'} variant={'subtle'} w={'100px'} onClick={() => setIsOpen(true)}>
                 <LuLink2 />
                 Link
-            </Button>
+            </Button> */}
 
-            <DialogRoot open={isOpen} onOpenChange={e => setIsOpen(e.open)}>
-               
+            <button onClick={() => setIsOpen(true)} className="flex items-center space-x-1 bg-yellow-100 text-yellow-700  px-3 py-2 rounded hover:bg-yellow-200 transition-colors text-xs">
+                <LuLink2 className="w-3 h-3" />
+                <span>Link</span>
+            </button>
+
+            <Dialog open={isOpen} onOpenChange={e => {
+                // setIsOpen(e.open)
+            }}>
+
                 <DialogContent>
                     <DialogHeader>
                         <DialogTitle>{`Link ${item.fileObject[0].fileName} To another file (Aquatree)`}</DialogTitle>
                     </DialogHeader>
-                    <DialogBody>
+                    <div>
 
-                        {files?.length <= 1 ? <VStack>
-                            <Alert status="warning" title={"For linking to work you need multiple files, curently you only have " + files?.length} />
-                        </VStack> :
-                            <Stack textAlign={'start'}>
-                                <Text>
+                        {files?.length <= 1 ? <div>
+                            {/* <Alert status="warning" title={"For linking to work you need multiple files, curently you only have " + files?.length} /> */}
+                            <Alert>
+                                <AlertCircle />
+                                <AlertTitle>multiple files </AlertTitle>
+                                <AlertDescription>
+                                    {"For linking to work you need multiple files, curently you only have " + files?.length}.
+                                </AlertDescription>
+                            </Alert>
+                        </div> :
+                            <div className="flex flex-col text-left">
+                                <span>
                                     {`You are about to link ${item.fileObject[0].fileName}. Once a file is linked, don't delete it otherwise it will be broken if one tries to use the Aqua tree.`}
-                                </Text>
-                                <Text>
+                                </span>
+                                <span>
                                     Select the file you want to link to.
-                                </Text>
+                                </span>
 
 
 
                                 {/* Custom Divider */}
-                                <Box
-                                    width="100%"
-                                    height="1px"
-                                    bg="gray.200"
-                                    my={3}
-                                />
+                                <div className="w-full h-px bg-gray-200 my-3" />
 
 
                                 {
@@ -158,12 +173,12 @@ export const LinkButton = ({ item, nonce }: IShareButton) => {
                                         if (res) {
                                             return <div key={index}> </div>
                                         }
-                                        if (isWorkFlow  && workFlow=="aqua_sign") {
+                                        if (isWorkFlow && workFlow == "aqua_sign") {
                                             let fileName = getFileName(itemLoop.aquaTree!!)
                                             return <div key={index}>
-                                                <Text>
-                                                    {index }. {`${fileName} - This is a workflow file (${workFlow}). You can't link to it. `}
-                                                </Text>
+                                                <Label>
+                                                    {index}. {`${fileName} - This is a workflow file (${workFlow}). You can't link to it. `}
+                                                </Label>
                                             </div>
                                         }
 
@@ -171,14 +186,14 @@ export const LinkButton = ({ item, nonce }: IShareButton) => {
 
                                         if (fileObject) {
 
-                                            return <Group key={index}>
-                                                <Text>{index }.</Text>
+                                            return <div key={index} className="flex items-center space-x-2">
+                                                <span>{index}.</span>
                                                 <Checkbox
                                                     aria-label="Select File"
                                                     checked={linkItem == null ? false :
                                                         Object.keys(linkItem?.aquaTree?.revisions!)[0] === Object.keys(itemLoop.aquaTree?.revisions!)[0]}
-                                                    onCheckedChange={(changes) => {
-                                                        if (changes.checked) {
+                                                    onCheckedChange={(checked) => {
+                                                        if (checked === true) {
                                                             setLinkItem(itemLoop)
                                                         } else {
                                                             setLinkItem(null)
@@ -189,39 +204,39 @@ export const LinkButton = ({ item, nonce }: IShareButton) => {
                                                 >
                                                     {itemLoop.fileObject[0].fileName} {isWorkFlow ? `- This is a workflow file (${workFlow}).` : ""}
                                                 </Checkbox>
-                                            </Group>
+                                            </div>
                                         } else {
-                                            return <Text>Error</Text>
+                                            return <Label>Error</Label>
                                         }
                                     })
                                 }
 
                                 {
                                     linking ?
-                                        <Center>
+                                        <div className="flex justify-center items-center">
                                             <Loader />
-                                        </Center>
+                                        </div>
                                         : null
                                 }
 
-                            </Stack>
+                            </div>
                         }
-                    </DialogBody>
+                    </div>
                     <DialogFooter>
-                        <DialogActionTrigger asChild>
-                            <Button data-testid="link-cancel-action-button"  variant="outline" onClick={cancelClick} borderRadius={'md'}>Cancel</Button>
-                        </DialogActionTrigger>
+                        <DialogClose asChild>
+                            <button data-testid="link-cancel-action-button" onClick={cancelClick}>Cancel</button>
+                        </DialogClose>
 
 
                         {files?.length <= 1 ? <></>
                             : <>
-                                <Button data-testid="link-modal-action-button" onClick={handleLink} borderRadius={'md'}>Link</Button>
+                                <button data-testid="link-modal-action-button" onClick={handleLink}>Link</button>
 
                             </>}
                     </DialogFooter>
-                    <DialogCloseTrigger />
+
                 </DialogContent>
-            </DialogRoot>
+            </Dialog>
 
         </>
     )

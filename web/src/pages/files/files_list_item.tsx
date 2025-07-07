@@ -11,6 +11,7 @@ import { DownloadAquaChain } from "./components/aqua_chain_actions/download_aqua
 import { DeleteAquaChain } from "./components/aqua_chain_actions/delete_aqua_chain";
 import { ShareButton } from "./components/aqua_chain_actions/share_aqua_chain";
 import { OpenWorkflowButton } from "./components/aqua_chain_actions/open_aqua_sign_workflow";
+import { LinkButton } from "./components/aqua_chain_actions/link_aqua_chain";
 
 
 export default function FilesListItem({ file, index, systemFileInfo, backendUrl, nonce }: { file: ApiFileInfo, index: number, systemFileInfo: ApiFileInfo[], backendUrl: string, nonce: string }) {
@@ -119,15 +120,11 @@ export default function FilesListItem({ file, index, systemFileInfo, backendUrl,
                         <>
 
 
-                          <OpenWorkflowButton  item={file} nonce={nonce} />
+                            <OpenWorkflowButton item={file} nonce={nonce} />
                             <div className="flex gap-1">
 
 
-                                {/* Share Button */}
-                                {/* <button className="flex items-center space-x-1 bg-sky-300 text-red-700  px-3 py-2 rounded hover:bg-red-200 transition-colors text-xs">
-                                    <LuShare2 className="w-3 h-3" />
-                                    <span>Share</span>
-                                </button> */}
+
 
                                 <ShareButton item={file} nonce={nonce} />
 
@@ -153,11 +150,13 @@ export default function FilesListItem({ file, index, systemFileInfo, backendUrl,
                                 <WitnessAquaChain apiFileInfo={file} backendUrl={backendUrl} nonce={nonce} revision="" />
 
 
+                                <LinkButton item={file} nonce={nonce} />
+
                                 {/* Link Button */}
-                                <button className="flex items-center space-x-1 bg-yellow-100 text-yellow-700  px-3 py-2 rounded hover:bg-yellow-200 transition-colors text-xs">
+                                {/* <button className="flex items-center space-x-1 bg-yellow-100 text-yellow-700  px-3 py-2 rounded hover:bg-yellow-200 transition-colors text-xs">
                                     <LuLink2 className="w-3 h-3" />
                                     <span>Link</span>
-                                </button>
+                                </button> */}
                             </div>
 
                             {/* Second row - 3 buttons */}

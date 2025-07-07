@@ -229,7 +229,7 @@ export const DownloadAquaChain = ({ file }: { file: ApiFileInfo }) => {
                         })
                     }
                 }}
-                className={`flex items-center space-x-1 bg-purple-100 text-purple-700 px-3 py-2 rounded-md transition-colors text-xs ${downloading ? 'opacity-60 cursor-not-allowed' : 'hover:bg-blue-200'}`}
+                className={`flex items-center space-x-1 bg-[#F3E8FE] text-purple-700 px-3 py-2 rounded transition-colors text-xs ${downloading ? 'opacity-60 cursor-not-allowed' : 'hover:bg-[#E8D5FE]'}`}
                 disabled={downloading}
             >
                 {downloading ? (
