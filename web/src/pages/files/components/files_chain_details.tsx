@@ -7,11 +7,8 @@ import Aquafier, { LogData, FileObject, getAquaTreeFileName, getAquaTreeFileObje
 import { ChevronUp, ChevronDown } from "lucide-react"
 import { useCallback, useEffect, useState } from "react"
 import { useStore } from "zustand"
-
-import { Card, CardContent } from "@/components/shadcn/ui/card"
 import { Button } from "@/components/shadcn/ui/button"
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/shadcn/ui/collapsible"
-import { ApiFileData } from "@/types"
 import { CustomAlert } from "@/components/shadcn/ui/alert-custom"
 import { RevisionDetailsSummary } from "./files_revision_details"
 import { RevisionDisplay } from "./files_revision_display"
@@ -142,16 +139,16 @@ export const CompleteChainView = ({ callBack, selectedFileInfo }: ICompleteChain
   }, [selectedFileInfo, deletedRevisions.length])
 
   return (
-    <div className="flex flex-col" style={{ height: "calc(100vh - 200px)" }}>
-      <div className="grid grid-cols-1 md:grid-cols-5 gap-4 h-full">
-        <div className="md:col-span-3 flex flex-col min-h-0 h-full">
+    <div className=" h-full">
+      <div className="grid grid-cols-1 md:grid-cols-12 gap-4 h-full">
+        <div className="md:col-span-8 flex flex-col min-h-0 h-full">
           <div className="h-full rounded-2xl bg-gray-100">
-          <ScrollArea className="h-full">
+          {/* <ScrollArea className="h-full w-full"> */}
               <FilePreview fileInfo={getAquaTreeFileObject(selectedFileInfo!!)!!} />
-          </ScrollArea>
+          {/* </ScrollArea> */}
           </div>
         </div>
-        <div className="md:col-span-2 flex flex-col min-h-0 border-l border-gray-300 overflow-y-auto">
+        <div className="md:col-span-4 flex flex-col min-h-0 border-l border-gray-300 overflow-y-auto">
           <div className="flex flex-col h-full px-4 pb-5">
             <div className="space-y-4 mb-4">
               <CustomAlert

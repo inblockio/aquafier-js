@@ -103,6 +103,7 @@ const FormTemplateEditorShadcn = ({ initialTemplate, onSave, updating }: FormTem
 
   const handleFormSubmit = async () => {
     try {
+      console.log("Initial template: ", initialTemplate)
       setIsSubmitting(true);
       const formValues = getValues();
       formValues.fields = formFields;
@@ -115,7 +116,7 @@ const FormTemplateEditorShadcn = ({ initialTemplate, onSave, updating }: FormTem
       // send to server
       let url = `${backend_url}/templates`;
       let method = 'post';
-      if (updating) {
+      if (updating || initialTemplate) {
         url += `/${initialTemplate?.id}`;
         method = 'put';
       }

@@ -334,8 +334,9 @@ const FilesPage = () => {
                 }
             }} >
 
-                <DialogContent className="[&>button]:hidden !max-w-[99vw] !w-[99vw] h-[99vh] max-h-[99vh]">
-                    <div className="absolute top-4 right-4">
+                <DialogContent showCloseButton={false} className="!max-w-[90vw] !w-[90vw] !h-[95vh] max-h-[95vh] !p-0 gap-0 flex flex-col"> 
+                    {/* Close button */}
+                    <div className="absolute top-4 right-4 z-10">
                         <Button
                             variant="ghost"
                             size="icon"
@@ -351,17 +352,22 @@ const FilesPage = () => {
                     </div>
                     {
                         selectedFileInfo ? (
-                            <>
-                                <DialogHeader>
+                            <div className='flex flex-col flex-1 h-[calc(100%-60px)]'>
+                                {/* Header - fixed height */}
+                                <DialogHeader className='!h-[60px] !min-h-[60px] !max-h-[60px] flex justify-center px-6'>
                                     <DialogTitle>{getAquaTreeFileName(selectedFileInfo.aquaTree!!)}</DialogTitle>
                                 </DialogHeader>
-                                <CompleteChainView callBack={function (_drawerStatus: IDrawerStatus): void {
+                                {/* Content - takes all available space */}
+                                <div className=' h-[calc(100%-60px)]'>
+                                   <CompleteChainView callBack={function (_drawerStatus: IDrawerStatus): void {
                                     setDrawerStatus(_drawerStatus)
                                 }} selectedFileInfo={selectedFileInfo} />
-                            </>
+                                </div>
+                            </div>
                         ) : null
                     }
-                    <DialogFooter className="mt-auto h-[60px]">
+                    {/* Footer - fixed height */}
+                    <DialogFooter className="!h-[60px] !min-h-[60px] !max-h-[60px] !p-0 flex items-center justify-center !px-6 ">
                         <Button variant="outline" onClick={() => {
                             setSelectedFileInfo(null)
                             setOpenFileDetailsPopUp(false)

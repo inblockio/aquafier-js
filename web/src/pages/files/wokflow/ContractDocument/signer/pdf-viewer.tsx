@@ -4,6 +4,7 @@ import type React from 'react';
 import { useEffect, useRef, useState, useCallback } from 'react';
 import type { Annotation, TextAnnotation, ImageAnnotation, ProfileAnnotation } from './types';
 import { SignatureData } from '../../../../../types/types';
+import { ScrollArea } from '@radix-ui/react-scroll-area';
 
 interface PdfViewerProps {
   file: File | null;
@@ -632,7 +633,7 @@ const PdfViewer: React.FC<PdfViewerProps> = ({
   }
 
   return (
-    <div className="py-4 px-2 w-full max-w-full overflow-x-auto" ref={viewerRef} onClick={handleViewerClick}>
+    <div className="py-4 px-2 h-full" ref={viewerRef} onClick={handleViewerClick}>
       {!file && <p className="text-gray-700 dark:text-gray-400">Upload a PDF to start annotating.</p>}
       {file && !isPdfjsLibLoaded && !pdfLoadingError && <p className="text-gray-700 dark:text-gray-400">Initializing PDF viewer...</p>}
       {pdfLoadingError && <p className="text-center px-4">{pdfLoadingError}</p>}
@@ -647,13 +648,14 @@ const PdfViewer: React.FC<PdfViewerProps> = ({
               className="mx-auto relative flex flex-col justify-start items-center w-fit"
             >
               <div
-                className="relative w-fit shadow-lg bg-white"
+                className="relative h-full shadow-lg bg-white"
                 style={
                   pageDimensions.width > 0 && pageDimensions.height > 0
                     ? { width: pageDimensions.width, height: pageDimensions.height }
                     : { width: 1, height: 1, visibility: 'hidden' }
                 }
               >
+                {/* <ScrollArea className="w-full h-full"> */}
                 <canvas ref={canvasRef} />
                 {pageDimensions.width > 0 && cleanSignatureToAvoidRepeating().map((anno) => {
                   const isSelected = selectedAnnotationId === anno.id || draggingAnnotationId === anno.id || resizeState?.annotationId === anno.id;
@@ -906,7 +908,7 @@ const PdfViewer: React.FC<PdfViewerProps> = ({
                     </div>
                   );
                 })}
-
+{/* </ScrollArea> */}
               </div>
               {pdfDoc && pageDimensions.width === 0 && currentPage > 0 && currentPage <= numPages && !pdfLoadingError && (
                 <p className='absolute' style={{ color: "gray.700" }}>Rendering page {currentPage}...</p>

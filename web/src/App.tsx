@@ -81,7 +81,7 @@ function App() {
 
 
         {/* Routes with Chakra UI (wrapped in MainLayout) */}
-        <Route path="/" element={<MainLayoutHolder />} >
+        {/* <Route path="/" element={<MainLayoutHolder />} >
           <Route index element={<Home />} />
           <Route path="/loading" element={<Loading />} />
           <Route path="/share/:identifier" element={<SharePage />} />
@@ -91,7 +91,7 @@ function App() {
           <Route path="/form-generator" element={<FormGenerator />} />
           <Route path="/attestation_addresses" element={<AttestationAddresses />} />
         </Route>
-        <Route path="*" element={<PageNotFound />} />
+        <Route path="*" element={<PageNotFound />} /> */}
       </Routes>
     </BrowserRouter>
   )

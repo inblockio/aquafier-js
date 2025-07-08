@@ -7,6 +7,7 @@ import { SignatureData } from '../../../../../types/types';
 import { LuInfo } from 'react-icons/lu';
 import { Button } from '../../../../../components/shadcn/ui/button';
 import { Slider } from '../../../../../components/shadcn/ui/slider';
+import { ScrollArea } from '@/components/shadcn/ui/scroll-area';
 
 // const parseFontSizeToPoints = (fontSizeString: string, defaultSize: number = 12): number => {
 //   if (!fontSizeString || typeof fontSizeString !== 'string') return defaultSize;
@@ -57,9 +58,9 @@ function PdfRendererComponent({
   const [scale, setScale] = useState(1.15);
 
   return (
-    <div >
+    <div className="h-full w-full max-h-full max-w-full">
       {pdfFile && (
-        <div className="flex items-center justify-center gap-2 p-2 bg-gray-100 border-b border-gray-300">
+        <div className="!h-[60px] !max-h-[60px] w-full flex items-center justify-center gap-2 p-2 bg-gray-100 border-b border-gray-300">
           <Button 
             onClick={() => setCurrentPage(p => Math.max(1, p - 1))} 
             disabled={currentPage <= 1} 
@@ -102,7 +103,8 @@ function PdfRendererComponent({
           </Button>
         </div>
       )}
-      <div className={"bg-gray-100"}>
+      <div className={"h-[calc(100%-60px)] w-full"}>
+        <ScrollArea className='h-full'>
         <PdfViewer
           file={pdfFile}
           annotations={annotations}
@@ -120,6 +122,7 @@ function PdfRendererComponent({
           selectedAnnotationId={selectedAnnotationId}
           onAnnotationSelect={onAnnotationSelect}
         />
+        </ScrollArea>
       </div>
     </div>
   );

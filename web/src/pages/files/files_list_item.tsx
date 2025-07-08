@@ -19,7 +19,7 @@ import { useStore } from "zustand";
 export default function FilesListItem({ showWorkFlowsOnly, file, index, systemFileInfo, backendUrl, nonce }: { showWorkFlowsOnly: boolean, file: ApiFileInfo, index: number, systemFileInfo: ApiFileInfo[], backendUrl: string, nonce: string }) {
 
 
-    const { setSelectedFileInfo , setOpenDetailsPopUp} = useStore(appStore)
+    const { setSelectedFileInfo , setOpenFileDetailsPopUp} = useStore(appStore)
 
     // const [_selectedFiles, setSelectedFiles] = useState<number[]>([]);
     const [currentFileObject, setCurrentFileObject] = useState<FileObject | undefined>(undefined);
@@ -86,7 +86,7 @@ export default function FilesListItem({ showWorkFlowsOnly, file, index, systemFi
             <div className="flex gap-1">
                 {/* Details Button */}
                 <button onClick={() => {
-                    setOpenDetailsPopUp(true)
+                    setOpenFileDetailsPopUp(true)
                     setSelectedFileInfo(file)
 
                 }} className="flex items-center space-x-1 bg-green-100 text-green-700 px-3 py-2 rounded hover:bg-green-200 transition-colors text-xs">

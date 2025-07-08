@@ -69,7 +69,7 @@ const TemplatesPage = () => {
             <FormTemplateEditorShadcn 
               initialTemplate={selectedTemplate || undefined} 
               onSave={handleSave} 
-              updating={!isCreating && selectedTemplate !== undefined || selectedTemplate !== null}
+              updating={!isCreating && (selectedTemplate !== undefined || selectedTemplate !== null)}
             />
           )}
         </TabsContent>
