@@ -16,7 +16,7 @@ import appStore from "@/store";
 import { useStore } from "zustand";
 
 
-export default function FilesListItem({ file, index, systemFileInfo, backendUrl, nonce }: { file: ApiFileInfo, index: number, systemFileInfo: ApiFileInfo[], backendUrl: string, nonce: string }) {
+export default function FilesListItem({ showWorkFlowsOnly, file, index, systemFileInfo, backendUrl, nonce }: { showWorkFlowsOnly: boolean, file: ApiFileInfo, index: number, systemFileInfo: ApiFileInfo[], backendUrl: string, nonce: string }) {
 
 
     const { setSelectedFileInfo } = useStore(appStore)
@@ -58,14 +58,6 @@ export default function FilesListItem({ file, index, systemFileInfo, backendUrl,
         setWorkFlowInfo(workFlow)
     }, [file, systemFileInfo]);
 
-    // const handleFileSelect = (fileId: number) => {
-    //     setSelectedFiles((prev: number[]) =>
-    //         prev.includes(fileId)
-    //         ? prev.filter((id: number) => id !== fileId)
-    //         : [...prev, fileId]
-    //     );
-    // };
-
 
     const getFileInfo = () => {
         if (currentFileObject) {
@@ -86,14 +78,97 @@ export default function FilesListItem({ file, index, systemFileInfo, backendUrl,
         } else {
             return "Not available";
         }
+    }
+
+    const workFileActions = () => {
+        return <>
+            {/* First row - 3 buttons */}
+            <div className="flex gap-1">
+                {/* Details Button */}
+                <button onClick={() => {
+                    setSelectedFileInfo(file)
+
+                }} className="flex items-center space-x-1 bg-green-100 text-green-700 px-3 py-2 rounded hover:bg-green-200 transition-colors text-xs">
+                    <LuEye className="w-3 h-3" />
+                    <span>Details</span>
+                </button>
+
+                <SignAquaChain apiFileInfo={file} backendUrl={backendUrl} nonce={nonce} revision="" />
+
+                <WitnessAquaChain apiFileInfo={file} backendUrl={backendUrl} nonce={nonce} revision="" />
+
+
+                <LinkButton item={file} nonce={nonce} />
+
+                {/* Link Button */}
+                {/* <button className="flex items-center space-x-1 bg-yellow-100 text-yellow-700  px-3 py-2 rounded hover:bg-yellow-200 transition-colors text-xs">
+                                    <LuLink2 className="w-3 h-3" />
+                                    <span>Link</span>
+                                </button> */}
+            </div>
+
+            {/* Second row - 3 buttons */}
+            <div className="flex gap-1">
+
+
+                <ShareButton item={file} nonce={nonce} />
+
+                {/* Delete Button */}
+                <DeleteAquaChain apiFileInfo={file} backendUrl={backendUrl} nonce={nonce} revision="" />
+
+                {/* Download Button - Smaller width */}
+                <DownloadAquaChain file={file} />
+            </div>
+
+            {/* Third row - 1 smaller button */}
+            {/* <div className="flex">
+                        
+                    </div> */}
+        </>
+    }
+    const workFlowActions = () => {
+        return <>
+            <div className="flex gap-1">
+                <OpenWorkflowButton item={file} nonce={nonce} />
+
+                <ShareButton item={file} nonce={nonce} />
+
+                {/* Delete Button */}
+                <DeleteAquaChain apiFileInfo={file} backendUrl={backendUrl} nonce={nonce} revision="" />
+
+                {/* Download Button - Smaller width */}
+                <DownloadAquaChain file={file} />
+            </div>
+
+        </>
 
     }
 
-    return (
-        <div
+    const showActionsButton = () => {
+        if (workflowInfo?.isWorkFlow == true) { //&& workflowInfo.workFlow == "aqua_sign"
+            return workFlowActions()
+        }
+        return workFileActions()
+    }
+
+
+    const showListItemData = () => {
+        if (showWorkFlowsOnly) {
+            if (workflowInfo?.isWorkFlow == true) { //&& workflowInfo.workFlow == "aqua_sign"
+                return listItem()
+            }
+            return <></>
+        } else {
+            return listItem()
+        }
+    }
+
+    const listItem = () => {
+
+        return <div
             key={index}
             className="flex items-center py-3 hover:bg-gray-50 rounded-md cursor-pointer group"
-        // onClick={() => handleFileSelect(file.id)}
+
         >
             <div className="flex-1 flex items-center space-x-3">
                 <div className="w-6 h-6 bg-red-100 rounded flex items-center justify-center">
@@ -118,71 +193,22 @@ export default function FilesListItem({ file, index, systemFileInfo, backendUrl,
             {/* Actions Column - 3-3-1 Layout */}
             <div className="w-120 flex flex-col gap-1">
 
-                {
-                    workflowInfo && workflowInfo.workFlow == "aqua_sign" ?
-                        <>
-
-
-                            <div className="flex gap-1">
-                                <OpenWorkflowButton item={file} nonce={nonce} />
-
-                                <ShareButton item={file} nonce={nonce} />
-
-                                {/* Delete Button */}
-                                <DeleteAquaChain apiFileInfo={file} backendUrl={backendUrl} nonce={nonce} revision="" />
-
-                                {/* Download Button - Smaller width */}
-                                <DownloadAquaChain file={file} />
-                            </div>
-
-                        </> :
-                        <>
-                            {/* First row - 3 buttons */}
-                            <div className="flex gap-1">
-                                {/* Details Button */}
-                                <button onClick={() => {
-                                    setSelectedFileInfo(file)
-
-                                }} className="flex items-center space-x-1 bg-green-100 text-green-700 px-3 py-2 rounded hover:bg-green-200 transition-colors text-xs">
-                                    <LuEye className="w-3 h-3" />
-                                    <span>Details</span>
-                                </button>
-
-                                <SignAquaChain apiFileInfo={file} backendUrl={backendUrl} nonce={nonce} revision="" />
-
-                                <WitnessAquaChain apiFileInfo={file} backendUrl={backendUrl} nonce={nonce} revision="" />
-
-
-                                <LinkButton item={file} nonce={nonce} />
-
-                                {/* Link Button */}
-                                {/* <button className="flex items-center space-x-1 bg-yellow-100 text-yellow-700  px-3 py-2 rounded hover:bg-yellow-200 transition-colors text-xs">
-                                    <LuLink2 className="w-3 h-3" />
-                                    <span>Link</span>
-                                </button> */}
-                            </div>
-
-                            {/* Second row - 3 buttons */}
-                            <div className="flex gap-1">
-
-
-                                <ShareButton item={file} nonce={nonce} />
-
-                                {/* Delete Button */}
-                                <DeleteAquaChain apiFileInfo={file} backendUrl={backendUrl} nonce={nonce} revision="" />
-
-                                {/* Download Button - Smaller width */}
-                                <DownloadAquaChain file={file} />
-                            </div>
-
-                            {/* Third row - 1 smaller button */}
-                            {/* <div className="flex">
-                        
-                    </div> */}
-                        </>
-                }
+                {showActionsButton()}
 
             </div>
         </div>
+    }
+
+
+
+    return (
+
+        <>
+            {
+                showListItemData()
+            }
+        </>
+
+
     );
 }

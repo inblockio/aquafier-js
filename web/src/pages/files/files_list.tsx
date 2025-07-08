@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
     Grid3X3,
     List
@@ -12,9 +12,34 @@ import FileListItem from './files_list_item';
 
 export default function FilesList() {
 
+
+    const [showWorkFlowsOnly, setShowWorkFlowsOnly] = useState(false);
     const [view, setView] = useState('list');
 
-    const { files, systemFileInfo, backend_url , session } = useStore(appStore)
+    const { files, systemFileInfo, backend_url, session } = useStore(appStore)
+
+
+    useEffect(() => {
+        if (location.pathname.endsWith('files_workflows')) {
+            // Add your logic here
+            console.log('URL ends with files_workflows');
+            setShowWorkFlowsOnly(true)
+        }
+    }, []);
+
+    useEffect(() => {
+        console.log("FilesPage mounted");
+        // Check if the url ends with files_workflows
+        if (location.pathname.endsWith('files_workflows')) {
+            // Add your logic here
+            console.log('URL ends with files_workflows');
+            setShowWorkFlowsOnly(true)
+        }
+        return () => {
+            console.log("FilesPage unmounted");
+            setShowWorkFlowsOnly(false)
+        };
+    }, [location.pathname]);
 
 
 
@@ -84,7 +109,7 @@ export default function FilesList() {
 
                 {/* File List */}
                 <div className="space-y-1">
-                    {files.map((file, index) => <FileListItem  key={index} index={index} file={file} systemFileInfo={systemFileInfo} backendUrl={backend_url}  nonce={session?.nonce ?? ""}/>)}
+                    {files.map((file, index) => <FileListItem showWorkFlowsOnly={showWorkFlowsOnly} key={index} index={index} file={file} systemFileInfo={systemFileInfo} backendUrl={backend_url} nonce={session?.nonce ?? ""} />)}
                 </div>
             </div>
 

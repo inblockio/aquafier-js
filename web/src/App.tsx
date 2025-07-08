@@ -67,7 +67,6 @@ function App() {
           <Route path="files_shared" element={<FilesPage />} />
           <Route path="pdf/workflow" element={<PdfWorkflowPage />} />
           <Route path="files_workflows" element={<FilesPage />} />
-          <Route path="files_workflows" element={<FilesPage />} />
           <Route path="domain_attestation" element={<DomainAttestationPage />} />
           <Route path="files_templates" element={<FileTemplatesPage />} />
           <Route path="files_docs" element={<FilesPage />} />

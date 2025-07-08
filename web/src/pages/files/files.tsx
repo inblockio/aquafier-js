@@ -57,12 +57,7 @@ const FilesPage = () => {
     const [drawerStatus, setDrawerStatus] = useState<IDrawerStatus | null>(null)
     const [isSelectedFileDialogOpen, setIsSelectedFileDialogOpen] = useState(false);
 
-    useEffect(() => {
-        console.log("FilesPage mounted");
-        return () => {
-            console.log("FilesPage unmounted");
-        };
-    }, []);
+ 
 
 
     useEffect(() => {
@@ -336,7 +331,7 @@ const FilesPage = () => {
                             <X className="h-4 w-4" />
                         </Button>
                     </div>
-                    { 
+                    {
                         selectedFileInfo ? (
                             <>
                                 <DialogHeader>
