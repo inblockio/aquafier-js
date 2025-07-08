@@ -75,7 +75,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 
   const applicationsItems = [
     { label: 'Document Signature', icon: Signature, id: "/files/form-instance/aqua_sign" },
-    { label: 'Domain Attestation', icon: Link, id: "/files/domain_attestation/aqua_attest" }
+    { label: 'Domain Attestation', icon: Link, id: "/files/domain_attestation" }
   ];
 
   return (

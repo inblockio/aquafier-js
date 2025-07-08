@@ -25,6 +25,7 @@ import TemplatesPage from './pages/files/TemplatesPage';
 import CreateFormInstance from './pages/files/CreateFormInstance';
 import NewShadcnLayoutWithSidebar from './layouts/NewShadcnLayoutWithSidebar';
 import PdfWorkflowPage from './pages/files/wokflow/PdfWorkflowPage';
+import DomainAttestationPage from './pages/files/domain_attestation';
 
 declare global {
   interface Window {
@@ -65,7 +66,8 @@ function App() {
           <Route path="files_shared" element={<FilesPage />} />
           <Route path="pdf/workflow" element={<PdfWorkflowPage />} />
           <Route path="files_workflows" element={<FilesPage />} />
-          <Route path="files_templates" element={<TemplatesPage />} />
+          <Route path="files_workflows" element={<FilesPage />} />
+          <Route path="domain_attestation" element={<DomainAttestationPage />} />
           <Route path="files_docs" element={<FilesPage />} />
           <Route path="files_attestation" element={<FilesPage />} />
           <Route path="files_info" element={<InfoPage />} />
