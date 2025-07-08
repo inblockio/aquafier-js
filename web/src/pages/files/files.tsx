@@ -45,7 +45,7 @@ interface UploadStatus {
 }
 
 const FilesPage = () => {
-    const { files, setFiles, session, backend_url, selectedFileInfo, setSelectedFileInfo, setOpenDetailsPopUp ,openDetailsPopUp } = useStore(appStore)
+    const { files, setFiles, session, backend_url, selectedFileInfo, setSelectedFileInfo, setOpenFileDetailsPopUp, openFilesDetailsPopUp, setOpenCreateAquaSignPopUp, setOpenCreateTemplatePopUp } = useStore(appStore)
     const fileInputRef = React.useRef<HTMLInputElement>(null);
     const [filesList, _setFilesList] = useState<FileItemWrapper[]>([]);
 
@@ -57,18 +57,18 @@ const FilesPage = () => {
     const [drawerStatus, setDrawerStatus] = useState<IDrawerStatus | null>(null)
     const [isSelectedFileDialogOpen, setIsSelectedFileDialogOpen] = useState(false);
 
- 
+
 
 
     useEffect(() => {
 
-        if (openDetailsPopUp) {
+        if (openFilesDetailsPopUp) {
             setIsSelectedFileDialogOpen(true)
         } else {
             setIsSelectedFileDialogOpen(false)
 
         }
-    }, [openDetailsPopUp]);
+    }, [openFilesDetailsPopUp]);
 
     const handleUploadClick = () => {
         fileInputRef.current?.click();
@@ -292,11 +292,19 @@ const FilesPage = () => {
                         />
                         <button className="flex items-center space-x-2 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-gray-100"
                             style={{ backgroundColor: '#394150' }}
+                            onClick={() => {
+                                //, 
+                                setOpenCreateAquaSignPopUp(true)
+                            }}
                         >
                             <Plus className="w-4 h-4" />
                             <span>Create Document Signature </span>
                         </button>
-                        <button className="flex items-center space-x-2 text-gray-700 px-4 py-2 rounded-md text-sm font-medium hover:bg-gray-100">
+                        <button className="flex items-center space-x-2 text-gray-700 px-4 py-2 rounded-md text-sm font-medium hover:bg-gray-100"
+                            onClick={() => {
+                                setOpenCreateTemplatePopUp(true)
+                            }}
+                        >
                             <FolderPlus className="w-4 h-4" />
                             <span>Create Template</span>
                         </button>
@@ -320,9 +328,9 @@ const FilesPage = () => {
 
             <Dialog open={isSelectedFileDialogOpen} onOpenChange={(openState) => {
                 setIsSelectedFileDialogOpen(openState)
-                if(!openState){
+                if (!openState) {
                     setSelectedFileInfo(null)
-                    setOpenDetailsPopUp(false)
+                    setOpenFileDetailsPopUp(false)
                 }
             }} >
 
@@ -335,7 +343,7 @@ const FilesPage = () => {
                             onClick={() => {
                                 setIsSelectedFileDialogOpen(false)
                                 setSelectedFileInfo(null)
-                                setOpenDetailsPopUp(false)
+                                setOpenFileDetailsPopUp(false)
                             }}
                         >
                             <X className="h-4 w-4" />
@@ -356,7 +364,7 @@ const FilesPage = () => {
                     <DialogFooter className="mt-auto">
                         <Button variant="outline" onClick={() => {
                             setSelectedFileInfo(null)
-                            setOpenDetailsPopUp(false)
+                            setOpenFileDetailsPopUp(false)
                         }}>Cancel</Button>
                         <Button type="submit">Save changes</Button>
                     </DialogFooter>
