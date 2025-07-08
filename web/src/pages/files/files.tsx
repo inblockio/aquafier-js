@@ -318,15 +318,22 @@ const FilesPage = () => {
 
             {files.length == 0 ? <FileDropZone /> : <FilesList />}
 
-            <Dialog open={isSelectedFileDialogOpen} onOpenChange={setIsSelectedFileDialogOpen} >
+            <Dialog open={isSelectedFileDialogOpen} onOpenChange={(openState) => {
+                setIsSelectedFileDialogOpen(openState)
+                if(!openState){
+                    setSelectedFileInfo(null)
+                    setOpenDetailsPopUp(false)
+                }
+            }} >
 
                 <DialogContent className="[&>button]:hidden !max-w-[95vw] !w-[95vw] h-[95vh] max-h-[95vh] flex flex-col">
                     <div className="absolute top-4 right-4">
                         <Button
                             variant="ghost"
                             size="icon"
-                            className="h-6 w-6"
+                            className="h-6 w-6 bg-red-500 text-white"
                             onClick={() => {
+                                setIsSelectedFileDialogOpen(false)
                                 setSelectedFileInfo(null)
                                 setOpenDetailsPopUp(false)
                             }}

@@ -23,8 +23,6 @@ export default function NewShadcnLayoutWithSidebar() {
                     <ConnectWalletPage dataTestId="sign-in-pages" />
                 </>
                     :
-
-
                     <SidebarProvider>
                         <AppSidebar />
                         <SidebarInset>
