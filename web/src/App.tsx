@@ -27,6 +27,7 @@ import NewShadcnLayoutWithSidebar from './layouts/NewShadcnLayoutWithSidebar';
 import PdfWorkflowPage from './pages/files/wokflow/PdfWorkflowPage';
 import DomainAttestationPage from './pages/files/domain_attestation';
 import FileTemplatesPage from './pages/files/files_templates';
+import FilesSharedContracts from './pages/files/files_shared_contracts';
 
 declare global {
   interface Window {
@@ -64,7 +65,7 @@ function App() {
         {/* All file routes using Tailwind */}
         <Route path="/files" element={<NewShadcnLayoutWithSidebar />}>
           <Route index element={<FilesPage />} />
-          <Route path="files_shared" element={<FilesPage />} />
+          <Route path="files_shared" element={<FilesSharedContracts />} />
           <Route path="pdf/workflow" element={<PdfWorkflowPage />} />
           <Route path="files_workflows" element={<FilesPage />} />
           <Route path="domain_attestation" element={<DomainAttestationPage />} />

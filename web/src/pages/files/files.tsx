@@ -45,7 +45,7 @@ interface UploadStatus {
 }
 
 const FilesPage = () => {
-    const { files, setFiles, session, backend_url, selectedFileInfo, setSelectedFileInfo } = useStore(appStore)
+    const { files, setFiles, session, backend_url, selectedFileInfo, setSelectedFileInfo, setOpenDetailsPopUp ,openDetailsPopUp } = useStore(appStore)
     const fileInputRef = React.useRef<HTMLInputElement>(null);
     const [filesList, _setFilesList] = useState<FileItemWrapper[]>([]);
 
@@ -62,13 +62,13 @@ const FilesPage = () => {
 
     useEffect(() => {
 
-        if (selectedFileInfo) {
+        if (openDetailsPopUp) {
             setIsSelectedFileDialogOpen(true)
         } else {
             setIsSelectedFileDialogOpen(false)
 
         }
-    }, [selectedFileInfo]);
+    }, [openDetailsPopUp]);
 
     const handleUploadClick = () => {
         fileInputRef.current?.click();
@@ -326,7 +326,10 @@ const FilesPage = () => {
                             variant="ghost"
                             size="icon"
                             className="h-6 w-6"
-                            onClick={() => setSelectedFileInfo(null)}
+                            onClick={() => {
+                                setSelectedFileInfo(null)
+                                setOpenDetailsPopUp(false)
+                            }}
                         >
                             <X className="h-4 w-4" />
                         </Button>
@@ -346,6 +349,7 @@ const FilesPage = () => {
                     <DialogFooter className="mt-auto">
                         <Button variant="outline" onClick={() => {
                             setSelectedFileInfo(null)
+                            setOpenDetailsPopUp(false)
                         }}>Cancel</Button>
                         <Button type="submit">Save changes</Button>
                     </DialogFooter>

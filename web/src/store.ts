@@ -23,6 +23,7 @@ type AppStoreState = {
     systemFileInfo :  ApiFileInfo[],
     formTemplates: FormTemplate[],
     selectedFileInfo: ApiFileInfo | null,
+    openDetailsPopUp: boolean | null,
     metamaskAddress: string | null,
     avatar: string | undefined,
     backend_url: string,
@@ -47,6 +48,9 @@ type AppStoreActions = {
     ) => void,
     setSelectedFileInfo: (
         file: ApiFileInfo | null ,
+    ) => void,
+    setOpenDetailsPopUp: (
+        state: boolean | null ,
     ) => void,
     addFile: (
         file: ApiFileInfo,
@@ -185,6 +189,7 @@ const appStore = createStore<TAppStore>()(
             session: null,
             files: [],
             selectedFileInfo: null,
+            openDetailsPopUp: false,
             metamaskAddress: '',
             avatar: "",
             apiFileData: [],
@@ -208,6 +213,9 @@ const appStore = createStore<TAppStore>()(
             setSelectedFileInfo: (
                 file: ApiFileInfo | null
             ) => set({ selectedFileInfo: file }),
+            setOpenDetailsPopUp: (
+                state: boolean | null
+            ) => set({ openDetailsPopUp: state }),
             setApiFileData: (
                 apiFileData: ApiFileData[]
             ) => set({ apiFileData: apiFileData }),
