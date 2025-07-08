@@ -69,7 +69,7 @@ function App() {
           <Route path="pdf/workflow" element={<PdfWorkflowPage />} />
           <Route path="files_workflows" element={<FilesPage />} />
           <Route path="domain_attestation" element={<DomainAttestationPage />} />
-          <Route path="files_templates" element={<FileTemplatesPage />} />
+          <Route path="files_templates" element={<TemplatesPage />} />
           <Route path="files_docs" element={<FilesPage />} />
           <Route path="files_attestation" element={<FilesPage />} />
           <Route path="files_info" element={<InfoPage />} />

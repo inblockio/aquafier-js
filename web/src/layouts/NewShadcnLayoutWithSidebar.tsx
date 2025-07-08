@@ -8,13 +8,82 @@ import {
     SidebarTrigger,
 } from "@/components/shadcn/ui/sidebar"
 import appStore from "@/store"
-import { Bell, Users } from "lucide-react"
+import { Bell, Users, X } from "lucide-react"
+import { useEffect, useState } from "react"
 import { Outlet } from "react-router-dom"
+import { ClipLoader } from "react-spinners"
 import { Toaster } from "sonner"
 import { useStore } from "zustand"
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/shadcn/ui/dialog";
+import { Button } from "@/components/shadcn/ui/button"
+import CreateFormFromTemplate from "@/components/aqua_forms/CreateFormFromTemplate";
 
 export default function NewShadcnLayoutWithSidebar() {
-    const { session } = useStore(appStore);
+    const { session, openCreateAquaSignPopUp, setOpenCreateAquaSignPopUp, openCreateTemplatePopUp, setOpenCreateTemplatePopUp, formTemplates } = useStore(appStore);
+
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            setLoading(false);
+        }, 1000);
+        return () => clearTimeout(timer);
+    }, []);
+
+
+    const [isOpenCreateAquaSignPopUp, setIsOpenCreateAquaSignPopUp] = useState(false);
+    const [isOpenCreateTemplatePopUp, setIsOpenCreateTemplatePopUp] = useState(false);
+
+
+
+
+    useEffect(() => {
+        console.log(`one`)
+        if (openCreateAquaSignPopUp) {
+            setIsOpenCreateAquaSignPopUp(true)
+        } else {
+            setIsOpenCreateAquaSignPopUp(false)
+
+        }
+    }, [openCreateAquaSignPopUp]);
+
+
+
+    useEffect(() => {
+        console.log(`two`)
+        if (openCreateTemplatePopUp) {
+            setIsOpenCreateTemplatePopUp(true)
+        } else {
+            setIsOpenCreateTemplatePopUp(false)
+
+        }
+    }, [openCreateTemplatePopUp]);
+
+
+
+    if (loading) {
+        return (
+            <div style={{
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                justifyContent: "center",
+                height: "100vh",
+                width: "100vw"
+            }}>
+
+                <ClipLoader
+                    color={"blue"}
+                    loading={loading}
+                    size={150}
+                    aria-label="Loading Spinner"
+                    data-testid="loader"
+                />
+                <span style={{ fontSize: 24, fontWeight: 500 }}>Loading...</span>
+            </div>
+        );
+    }
+
 
     return (
         <>
@@ -55,6 +124,77 @@ export default function NewShadcnLayoutWithSidebar() {
                         </SidebarInset>
                     </SidebarProvider>
             }
+
+
+
+            {/* create template dialog */}
+            <Dialog open={isOpenCreateTemplatePopUp} onOpenChange={(openState) => {
+                setOpenCreateTemplatePopUp(openState)
+                // if(!openState){
+                //     setSelectedFileInfo(null)
+                //     setOpenDetailsPopUp(false)
+                // }
+            }} >
+
+                <DialogContent className="[&>button]:hidden !max-w-[95vw] !w-[95vw] h-[95vh] max-h-[95vh] flex flex-col">
+                    <div className="absolute top-4 right-4">
+                        <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-6 w-6 bg-red-500 text-white hover:bg-red-500"
+                            onClick={() => {
+                                setOpenCreateTemplatePopUp(false)
+                            }}
+                        >
+                            <X className="h-4 w-4" />
+                        </Button>
+                    </div>
+                    te,plate
+                    {/* <DialogFooter className="mt-auto">
+                        <Button variant="outline" onClick={() => {
+                           setOpenCreateAquaSignPopUp(false)
+                        }}>Cancel</Button>
+                        <Button type="submit">Save changes</Button>
+                    </DialogFooter> */}
+                </DialogContent>
+            </Dialog>
+
+
+            {/* create aqua sign  */}
+
+            <Dialog open={isOpenCreateAquaSignPopUp} onOpenChange={(openState) => {
+                setOpenCreateAquaSignPopUp(openState)
+                // if(!openState){
+                //     setSelectedFileInfo(null)
+                //     setOpenDetailsPopUp(false)
+                // }
+            }} >
+
+                <DialogContent className="[&>button]:hidden !max-w-[95vw] !w-[95vw] h-[95vh] max-h-[95vh] flex flex-col">
+                    <div className="absolute top-4 right-4">
+                        <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-6 w-6 bg-red-500 text-white hover:bg-red-500"
+                            onClick={() => {
+                                setOpenCreateAquaSignPopUp(false)
+                            }}
+                        >
+                            <X className="h-4 w-4" />
+                        </Button>
+                    </div>
+                    <CreateFormFromTemplate selectedTemplate={formTemplates.find((template) => template.name === "aqua_sign")!!} callBack={function (): void {
+                        // throw new Error("Function not implemented.")
+                        setOpenCreateAquaSignPopUp(false)
+                    }} />
+                    {/* <DialogFooter className="mt-auto">
+                        <Button variant="outline" onClick={() => {
+                           setOpenCreateAquaSignPopUp(false)
+                        }}>Cancel</Button>
+                        <Button type="submit">Save changes</Button>
+                    </DialogFooter> */}
+                </DialogContent>
+            </Dialog>
         </>
     )
 }
