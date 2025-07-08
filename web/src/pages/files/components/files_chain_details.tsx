@@ -1,4 +1,3 @@
-
 import FilePreview from "@/components/FilePreview"
 import { LogViewer } from "@/components/logs/LogViewer"
 import { ICompleteChainView, VerificationHashAndResult } from "@/models/AquaTreeDetails"
@@ -16,6 +15,7 @@ import { ApiFileData } from "@/types"
 import { CustomAlert } from "@/components/shadcn/ui/alert-custom"
 import { RevisionDetailsSummary } from "./files_revision_details"
 import { RevisionDisplay } from "./files_revision_display"
+import { ScrollArea } from "@/components/shadcn/ui/scroll-area"
 
 export const CompleteChainView = ({ callBack, selectedFileInfo }: ICompleteChainView) => {
   const [showMoreDetails, setShowMoreDetails] = useState(false)
@@ -39,8 +39,6 @@ export const CompleteChainView = ({ callBack, selectedFileInfo }: ICompleteChain
     if (!isVerificationComplete(results)) return "Verifying Aqua tree"
     return isVerificationSuccessful(results) ? "This aqua tree is valid" : "This aqua tree is invalid"
   }
-
-
 
   const displayColorBasedOnVerificationAlert = (results: VerificationHashAndResult[]) => {
     if (!isVerificationComplete(results)) return "info"
@@ -84,7 +82,6 @@ export const CompleteChainView = ({ callBack, selectedFileInfo }: ICompleteChain
             const hash = getFileHashFromUrl(file.fileContent)
             let data = hash ? cacheMap.get(hash) : null
             if (!data) data = await fetchFileData(file.fileContent)
-            // if (data && hash) setApiFileData((prev: ApiFileData[]) => [...prev, { fileHash: hash, fileData: data }])
             if (data && hash) setApiFileData(
               [...apiFileData, { fileHash: hash, fileData: data }]
             )
@@ -145,20 +142,18 @@ export const CompleteChainView = ({ callBack, selectedFileInfo }: ICompleteChain
   }, [selectedFileInfo, deletedRevisions.length])
 
   return (
-    <div className="space-y-4">
-      <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
-        <div className="md:col-span-3">
-          <Card className="shadow-none border-none">
-            <CardContent>
+    <div className="flex flex-col h-full">
+      <div className="grid grid-cols-1 md:grid-cols-5 gap-4 h-full">
+        <div className="md:col-span-3 flex flex-col min-h-0">
+          <ScrollArea className="flex-1">
+            <div className="p-4">
               <FilePreview fileInfo={getAquaTreeFileObject(selectedFileInfo!!)!!} />
-            </CardContent>
-          </Card>
+            </div>
+          </ScrollArea>
         </div>
-        <div className="md:col-span-2">
-          <Card>
-            <CardContent className="space-y-4">
-             
-
+        <div className="md:col-span-2 flex flex-col min-h-0 border-l border-gray-300">
+          <div className="p-5 flex flex-col h-full">
+            <div className="space-y-4 mb-4">
               <CustomAlert
                 type={displayColorBasedOnVerificationAlert(verificationResults)}
                 title={displayBasedOnVerificationStatusText(verificationResults)}
@@ -170,41 +165,42 @@ export const CompleteChainView = ({ callBack, selectedFileInfo }: ICompleteChain
                 isVerificationSuccess={isVerificationSuccessful(verificationResults)}
                 fileInfo={selectedFileInfo!!}
               />
-              <Collapsible open={showMoreDetails}>
-                <CollapsibleTrigger asChild>
-                  <Button variant="outline" className="w-full" onClick={() => setShowMoreDetails(prev => !prev)}>
-                    {showMoreDetails ? <ChevronUp className="mr-2 h-4 w-4" /> : <ChevronDown className="mr-2 h-4 w-4" />}
-                    {showMoreDetails ? "Show Less Details" : "Show More Details"}
-                  </Button>
-                </CollapsibleTrigger>
-                <CollapsibleContent>
-                  {selectedFileInfo?.aquaTree && (
-                    // <Timeline size="lg" variant="subtle">
-                    <>
-
-                      {Object.keys(selectedFileInfo.aquaTree.revisions)
-                        .filter(hash => !deletedRevisions.includes(hash))
-                        .map((revisionHash, index) => (
-                          <RevisionDisplay
-                            key={`revision_${index}`}
-                            fileInfo={selectedFileInfo!!}
-                            revision={selectedFileInfo.aquaTree!.revisions[revisionHash]!!}
-                            revisionHash={revisionHash}
-                            isVerificationComplete={isVerificationComplete(verificationResults)}
-                            verificationResults={verificationResults}
-                            isDeletable={index === Object.keys(selectedFileInfo.aquaTree!.revisions).length - 1}
-                            deleteRevision={deleteRevision}
-                            index={index}
-                          />
-                        ))}
-                    </>
-                    // </Timeline>
-                  )}
-                </CollapsibleContent>
-              </Collapsible>
-              {/* <LogViewer logs={allLogs as any} title="Verification Logs" /> */}
-            </CardContent>
-          </Card>
+            </div>
+            
+            <Collapsible open={showMoreDetails} className="flex flex-col flex-1 min-h-0">
+              <CollapsibleTrigger asChild>
+                <Button variant="outline" className="w-full mb-4" onClick={() => setShowMoreDetails(prev => !prev)}>
+                  {showMoreDetails ? <ChevronUp className="mr-2 h-4 w-4" /> : <ChevronDown className="mr-2 h-4 w-4" />}
+                  {showMoreDetails ? "Show Less Details" : "Show More Details"}
+                </Button>
+              </CollapsibleTrigger>
+              <CollapsibleContent className="flex-1 min-h-0">
+                <ScrollArea className="h-full">
+                  <div className="space-y-4 pr-4">
+                    {selectedFileInfo?.aquaTree && (
+                      <>
+                        {Object.keys(selectedFileInfo.aquaTree.revisions)
+                          .filter(hash => !deletedRevisions.includes(hash))
+                          .map((revisionHash, index) => (
+                            <RevisionDisplay
+                              key={`revision_${index}`}
+                              fileInfo={selectedFileInfo!!}
+                              revision={selectedFileInfo.aquaTree!.revisions[revisionHash]!!}
+                              revisionHash={revisionHash}
+                              isVerificationComplete={isVerificationComplete(verificationResults)}
+                              verificationResults={verificationResults}
+                              isDeletable={index === Object.keys(selectedFileInfo.aquaTree!.revisions).length - 1}
+                              deleteRevision={deleteRevision}
+                              index={index}
+                            />
+                          ))}
+                      </>
+                    )}
+                  </div>
+                </ScrollArea>
+              </CollapsibleContent>
+            </Collapsible>
+          </div>
         </div>
       </div>
     </div>

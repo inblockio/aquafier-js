@@ -14,7 +14,7 @@ export const ItemDetail = ({ label, value, displayValue, showCopyIcon }: IItemDe
   };
 
   return (
-    <div className="flex flex-col items-start w-full gap-2">
+    <div className="flex flex-col items-start w-full gap-1">
       <span className="text-sm font-medium">{label}</span>
       <div className="flex items-center gap-2">
         <span className="font-mono text-sm break-words break-all">

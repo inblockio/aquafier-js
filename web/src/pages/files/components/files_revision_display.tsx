@@ -11,7 +11,7 @@ import { LuCheck, LuTrash, LuX } from "react-icons/lu"
 import { ClipLoader } from "react-spinners"
 import { useStore } from "zustand"
 import { revisionDataHeader, viewLinkedFile } from "./files_revision_details"
-import { ItemDetail } from "@/components/ItemDetails"
+import { ItemDetail } from "./ItemDetails"
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/shadcn/ui/collapsible"
 import { Card, CardContent, CardFooter } from "@/components/shadcn/ui/card"
 
@@ -97,13 +97,13 @@ export const RevisionDisplay = ({ fileInfo, revision, revisionHash, isVerificati
     // Memoize verification icon to prevent recreation
     const verificationStatusIcon = useMemo((): React.JSX.Element => {
         if (isRevisionVerificationSuccessful === null) {
-            return  <ClipLoader
-                              color={"blue"}
-                              loading={true}
-                              size={loaderSize}
-                              aria-label="Loading Spinner"
-                              data-testid="loader"
-                          />
+            return <ClipLoader
+                color={"blue"}
+                loading={true}
+                size={loaderSize}
+                aria-label="Loading Spinner"
+                data-testid="loader"
+            />
             // return <ReactLoading type={'spin'} color={'blue'} height={loaderSize} width={loaderSize} />;
         }
 
@@ -183,15 +183,15 @@ export const RevisionDisplay = ({ fileInfo, revision, revisionHash, isVerificati
     const displayDeleteButton = (): React.JSX.Element => {
         if (isDeletable) {
             return (
-               <Button 
-  className="rounded-full border-red-500 text-red-500 hover:bg-red-50 hover:text-red-600" 
-  size="sm" 
-  variant="outline" 
-  onClick={handleDelete} 
-  disabled={isDeleting}
->
-  <LuTrash />
-</Button>
+                <Button
+                    className="rounded-full border-red-500 text-red-500 hover:bg-red-50 hover:text-red-600"
+                    size="sm"
+                    variant="outline"
+                    onClick={handleDelete}
+                    disabled={isDeleting}
+                >
+                    <LuTrash />
+                </Button>
             )
         }
         return <></>
@@ -203,198 +203,198 @@ export const RevisionDisplay = ({ fileInfo, revision, revisionHash, isVerificati
 
     return (
         <div>
-        <div className="relative">
-            {/* Timeline Item */}
-            <div className="flex">
-                {/* Timeline Connector */}
-                <div className="flex flex-col items-center">
-                    <div 
-                        className="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs"
-                        style={{ backgroundColor: returnBgColor }}
-                    >
-                        {verificationStatusIcon}
+            <div className="relative">
+                {/* Timeline Item */}
+                <div className="flex">
+                    {/* Timeline Connector */}
+                    <div className="flex flex-col items-center mt-3">
+                        <div
+                            className="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs "
+                            style={{ backgroundColor: returnBgColor }}
+                        >
+                            {verificationStatusIcon}
+                        </div>
+                        <div className="w-0.5 h-full bg-gray-200 dark:bg-gray-700 mt-2"></div>
                     </div>
-                    <div className="w-0.5 h-full bg-gray-200 dark:bg-gray-700 mt-2"></div>
-                </div>
-                
-                {/* Timeline Content */}
-                <div className="flex-1 ml-4 pb-8">
-                    <Collapsible open={showRevisionDetails} onOpenChange={setShowRevisionDetails}>
-                        <CollapsibleTrigger asChild>
-                            <div className="cursor-pointer">
-                                <div className="flex items-center justify-between flex-nowrap">
-                                    <div className="flex items-center gap-2">
-                                        <span className="capitalize w-48 truncate">
-                                            {`${revisionTypeEmoji ? revisionTypeEmoji : ''} ${revision?.revision_type} Revision`}
-                                        </span>
-                                        <span className="text-gray-500 dark:text-gray-400 font-mono text-sm break-all">
-                                            {revisionHash}
-                                        </span>
-                                    </div>
-                                    <div className="flex items-center gap-2">
-                                        {displayDeleteButton()}
+
+                    {/* Timeline Content */}
+                    <div className="flex-1 ml-4 pb-8">
+                        <Collapsible open={showRevisionDetails} onOpenChange={setShowRevisionDetails}>
+                            <CollapsibleTrigger asChild>
+                                <div className="cursor-pointer">
+                                    <div className="flex items-center justify-between flex-nowrap">
+                                        <div className="flex items-center gap-2 ">
+                                            <span className="capitalize w-48 truncate">
+                                                {`${revisionTypeEmoji ? revisionTypeEmoji : ''} ${revision?.revision_type} Revision`}
+                                            </span>
+                                            <span className="text-gray-500 dark:text-gray-400 font-mono text-sm break-all">
+                                                {revisionHash}
+                                            </span>
+                                        </div>
+                                        <div className="flex items-center gap-2">
+                                            {displayDeleteButton()}
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
-                        </CollapsibleTrigger>
-                        
-                        <CollapsibleContent>
-                            <Card className="mt-4">
-                                <CardContent className="p-4 text-sm leading-relaxed">
-                                    <div className="space-y-6 max-w-md">
-                                        {/* File/Form/Link Revision */}
-                                        {(revision.revision_type === "file" || revision.revision_type === "form" || revision.revision_type === "link") && (
-                                            <div className="flex">
-                                                <div className="flex flex-col items-center">
-                                                    <div 
-                                                        className="w-6 h-6 rounded-full flex items-center justify-center text-white text-xs"
-                                                        style={{ backgroundColor: returnBgColor }}
-                                                    >
-                                                        {verificationStatusIcon}
+                            </CollapsibleTrigger>
+
+                            <CollapsibleContent>
+                                <Card className="mt-4">
+                                    <CardContent className="p-4 text-sm leading-relaxed">
+                                        <div className="space-y-6 max-w-md">
+                                            {/* File/Form/Link Revision */}
+                                            {(revision.revision_type === "file" || revision.revision_type === "form" || revision.revision_type === "link") && (
+                                                <div className="flex">
+                                                    <div className="flex flex-col items-center">
+                                                        <div
+                                                            className="w-6 h-6 rounded-full flex items-center justify-center text-white text-xs"
+                                                            style={{ backgroundColor: returnBgColor }}
+                                                        >
+                                                            {verificationStatusIcon}
+                                                        </div>
                                                     </div>
-                                                </div>
-                                                <div className="flex-1 ml-4 space-y-2">
-                                                    <h4 className="font-semibold">
-                                                        {revisionDataHeader(fileInfo!.aquaTree!, revisionHash, fileInfo.fileObject)}
-                                                    </h4>
-                                                    <p className="text-gray-600 dark:text-gray-400">
-                                                        {displayTime(revision.local_timestamp)}&nbsp;(UTC)
-                                                    </p>
-                                                    {revision.revision_type === "file" && (
-                                                        <ItemDetail 
-                                                            label="File Hash:"
-                                                            displayValue={formatCryptoAddress(revision.file_hash!, 10, 15)}
-                                                            value={revision.file_hash!} 
-                                                            showCopyIcon={true}
-                                                        />
-                                                    )}
-                                                    {viewLinkedFile(fileInfo!, revisionHash, revision, files, setSelectedFileInfo, false)}
-                                                </div>
-                                            </div>
-                                        )}
-
-                                        {/* Signature Revision */}
-                                        {revision.revision_type === "signature" && (
-                                            <div className="flex">
-                                                <div className="flex flex-col items-center">
-                                                    <div 
-                                                        className="w-6 h-6 rounded-full flex items-center justify-center text-white text-xs"
-                                                        style={{ backgroundColor: returnBgColor }}
-                                                    >
-                                                        {verificationStatusIcon}
-                                                    </div>
-                                                </div>
-                                                <div className="flex-1 ml-4 space-y-2">
-                                                    <h4 className="font-semibold">
-                                                        <span>
-                                                            Revision signature is
-                                                            {verificationStatusText}
-                                                        </span>
-                                                    </h4>
-                                                    <ItemDetail 
-                                                        label="Signature:"
-                                                        displayValue={formatCryptoAddress(revision.signature, 4, 6)}
-                                                        value={revision.signature} 
-                                                        showCopyIcon={true}
-                                                    />
-                                                    <ItemDetail 
-                                                        label="Signature Type:"
-                                                        displayValue={revision.signature_type!}
-                                                        value={revision.signature_type!} 
-                                                        showCopyIcon={true}
-                                                    />
-                                                    <WalletEnsView walletAddress={revision.signature_wallet_address!} />
-                                                    <ItemDetail 
-                                                        label="Public Key:"
-                                                        displayValue={formatCryptoAddress(revision.signature_public_key, 4, 6)}
-                                                        value={revision.signature_public_key!} 
-                                                        showCopyIcon={true}
-                                                    />
-                                                </div>
-                                            </div>
-                                        )}
-
-                                        {/* Witness Revision */}
-                                        {revision.revision_type === "witness" && (
-                                            <div className="flex">
-                                                <div className="flex flex-col items-center">
-                                                    <div 
-                                                        className="w-6 h-6 rounded-full flex items-center justify-center text-white text-xs"
-                                                        style={{ backgroundColor: returnBgColor }}
-                                                    >
-                                                        {verificationStatusIcon}
-                                                    </div>
-                                                </div>
-                                                <div className="flex-1 ml-4 space-y-2">
-                                                    <h4 className="font-semibold">
-                                                        <span>
-                                                            Revision witness is &nbsp;
-                                                            {verificationStatusText}
-                                                        </span>
-                                                    </h4>
-
-                                                    {revision.witness_sender_account_address && (
-                                                        <ItemDetail 
-                                                            label="Network:"
-                                                            displayValue={formatCryptoAddress(revision.witness_network, 4, 6)}
-                                                            value={revision.witness_network!!} 
-                                                            showCopyIcon={false}
-                                                        />
-                                                    )}
-
-                                                    {revision.witness_sender_account_address && (
-                                                        <ItemDetail 
-                                                            label="Witness Account:"
-                                                            displayValue={formatCryptoAddress(revision.witness_sender_account_address, 4, 6)}
-                                                            value={revision.witness_sender_account_address!} 
-                                                            showCopyIcon={true}
-                                                        />
-                                                    )}
-
-                                                    {revision.witness_transaction_hash && (
-                                                        <div className="flex items-center gap-2">
-                                                            <ItemDetail 
-                                                                label="Transaction Hash:"
-                                                                displayValue={formatCryptoAddress(
-                                                                    revision.witness_transaction_hash!.startsWith('0x') 
-                                                                        ? revision.witness_transaction_hash 
-                                                                        : `0x${revision.witness_transaction_hash}`, 
-                                                                    4, 6
-                                                                )}
-                                                                value={`0x${revision.witness_transaction_hash}`} 
+                                                    <div className="flex-1 ml-4 space-y-2">
+                                                        <h4 className="font-semibold">
+                                                            {revisionDataHeader(fileInfo!.aquaTree!, revisionHash, fileInfo.fileObject)}
+                                                        </h4>
+                                                        <p className="text-gray-600 dark:text-gray-400">
+                                                            {displayTime(revision.local_timestamp)}&nbsp;(UTC)
+                                                        </p>
+                                                        {revision.revision_type === "file" && (
+                                                            <ItemDetail
+                                                                label="File Hash:"
+                                                                displayValue={formatCryptoAddress(revision.file_hash!, 10, 15)}
+                                                                value={revision.file_hash!}
                                                                 showCopyIcon={true}
                                                             />
-                                                            <a 
-                                                                href={`${WITNESS_NETWORK_MAP[revision.witness_network!!]}/${revision.witness_transaction_hash}`} 
-                                                                target="_blank" 
-                                                                rel="noopener noreferrer"
-                                                                className="inline-flex items-center justify-center text-blue-500 hover:text-blue-600 transition-colors"
-                                                            >
-                                                                <ExternalLink size={20} />
-                                                            </a>
-                                                        </div>
-                                                    )}
-
-                                                    <ItemDetail 
-                                                        label="Contract address:"
-                                                        displayValue={formatCryptoAddress(revision.witness_smart_contract_address, 4, 6)}
-                                                        value={revision.witness_smart_contract_address!} 
-                                                        showCopyIcon={true}
-                                                    />
+                                                        )}
+                                                        {viewLinkedFile(fileInfo!, revisionHash, revision, files, setSelectedFileInfo, false)}
+                                                    </div>
                                                 </div>
-                                            </div>
-                                        )}
-                                    </div>
-                                </CardContent>
-                                <CardFooter className="p-4 pt-0">
-                                    {displayAlert}
-                                </CardFooter>
-                            </Card>
-                        </CollapsibleContent>
-                    </Collapsible>
+                                            )}
+
+                                            {/* Signature Revision */}
+                                            {revision.revision_type === "signature" && (
+                                                <div className="flex">
+                                                    <div className="flex flex-col items-center">
+                                                        <div
+                                                            className="w-6 h-6 rounded-full flex items-center justify-center text-white text-xs"
+                                                            style={{ backgroundColor: returnBgColor }}
+                                                        >
+                                                            {verificationStatusIcon}
+                                                        </div>
+                                                    </div>
+                                                    <div className="flex-1 ml-4 space-y-2">
+                                                        <h4 className="font-semibold">
+                                                            <span>
+                                                                Revision signature is
+                                                                {verificationStatusText}
+                                                            </span>
+                                                        </h4>
+                                                        <ItemDetail
+                                                            label="Signature:"
+                                                            displayValue={formatCryptoAddress(revision.signature, 4, 6)}
+                                                            value={revision.signature}
+                                                            showCopyIcon={true}
+                                                        />
+                                                        <ItemDetail
+                                                            label="Signature Type:"
+                                                            displayValue={revision.signature_type!}
+                                                            value={revision.signature_type!}
+                                                            showCopyIcon={true}
+                                                        />
+                                                        <WalletEnsView walletAddress={revision.signature_wallet_address!} />
+                                                        <ItemDetail
+                                                            label="Public Key:"
+                                                            displayValue={formatCryptoAddress(revision.signature_public_key, 4, 6)}
+                                                            value={revision.signature_public_key!}
+                                                            showCopyIcon={true}
+                                                        />
+                                                    </div>
+                                                </div>
+                                            )}
+
+                                            {/* Witness Revision */}
+                                            {revision.revision_type === "witness" && (
+                                                <div className="flex">
+                                                    <div className="flex flex-col items-center">
+                                                        <div
+                                                            className="w-6 h-6 rounded-full flex items-center justify-center text-white text-xs"
+                                                            style={{ backgroundColor: returnBgColor }}
+                                                        >
+                                                            {verificationStatusIcon}
+                                                        </div>
+                                                    </div>
+                                                    <div className="flex-1 ml-4 space-y-2">
+                                                        <h4 className="font-semibold">
+                                                            <span>
+                                                                Revision witness is &nbsp;
+                                                                {verificationStatusText}
+                                                            </span>
+                                                        </h4>
+
+                                                        {revision.witness_sender_account_address && (
+                                                            <ItemDetail
+                                                                label="Network:"
+                                                                displayValue={formatCryptoAddress(revision.witness_network, 4, 6)}
+                                                                value={revision.witness_network!!}
+                                                                showCopyIcon={false}
+                                                            />
+                                                        )}
+
+                                                        {revision.witness_sender_account_address && (
+                                                            <ItemDetail
+                                                                label="Witness Account:"
+                                                                displayValue={formatCryptoAddress(revision.witness_sender_account_address, 4, 6)}
+                                                                value={revision.witness_sender_account_address!}
+                                                                showCopyIcon={true}
+                                                            />
+                                                        )}
+
+                                                        {revision.witness_transaction_hash && (
+                                                            <div className="flex items-center gap-2">
+                                                                <ItemDetail
+                                                                    label="Transaction Hash:"
+                                                                    displayValue={formatCryptoAddress(
+                                                                        revision.witness_transaction_hash!.startsWith('0x')
+                                                                            ? revision.witness_transaction_hash
+                                                                            : `0x${revision.witness_transaction_hash}`,
+                                                                        4, 6
+                                                                    )}
+                                                                    value={`0x${revision.witness_transaction_hash}`}
+                                                                    showCopyIcon={true}
+                                                                />
+                                                                <a
+                                                                    href={`${WITNESS_NETWORK_MAP[revision.witness_network!!]}/${revision.witness_transaction_hash}`}
+                                                                    target="_blank"
+                                                                    rel="noopener noreferrer"
+                                                                    className="inline-flex items-center justify-center text-blue-500 hover:text-blue-600 transition-colors"
+                                                                >
+                                                                    <ExternalLink size={20} />
+                                                                </a>
+                                                            </div>
+                                                        )}
+
+                                                        <ItemDetail
+                                                            label="Contract address:"
+                                                            displayValue={formatCryptoAddress(revision.witness_smart_contract_address, 4, 6)}
+                                                            value={revision.witness_smart_contract_address!}
+                                                            showCopyIcon={true}
+                                                        />
+                                                    </div>
+                                                </div>
+                                            )}
+                                        </div>
+                                    </CardContent>
+                                    <CardFooter className="p-4 pt-0">
+                                        {displayAlert}
+                                    </CardFooter>
+                                </Card>
+                            </CollapsibleContent>
+                        </Collapsible>
+                    </div>
                 </div>
             </div>
         </div>
-    </div>
     )
 }
