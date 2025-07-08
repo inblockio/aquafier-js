@@ -26,6 +26,7 @@ import CreateFormInstance from './pages/files/CreateFormInstance';
 import NewShadcnLayoutWithSidebar from './layouts/NewShadcnLayoutWithSidebar';
 import PdfWorkflowPage from './pages/files/wokflow/PdfWorkflowPage';
 import DomainAttestationPage from './pages/files/domain_attestation';
+import FileTemplatesPage from './pages/files/files_templates';
 
 declare global {
   interface Window {
@@ -68,6 +69,7 @@ function App() {
           <Route path="files_workflows" element={<FilesPage />} />
           <Route path="files_workflows" element={<FilesPage />} />
           <Route path="domain_attestation" element={<DomainAttestationPage />} />
+          <Route path="files_templates" element={<FileTemplatesPage />} />
           <Route path="files_docs" element={<FilesPage />} />
           <Route path="files_attestation" element={<FilesPage />} />
           <Route path="files_info" element={<InfoPage />} />
