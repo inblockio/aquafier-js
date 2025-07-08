@@ -142,17 +142,17 @@ export const CompleteChainView = ({ callBack, selectedFileInfo }: ICompleteChain
   }, [selectedFileInfo, deletedRevisions.length])
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col" style={{ height: "calc(100vh - 200px)" }}>
       <div className="grid grid-cols-1 md:grid-cols-5 gap-4 h-full">
-        <div className="md:col-span-3 flex flex-col min-h-0">
-          <ScrollArea className="flex-1">
-            <div className="p-4">
+        <div className="md:col-span-3 flex flex-col min-h-0 h-full">
+          <div className="h-full rounded-2xl bg-gray-100">
+          <ScrollArea className="h-full">
               <FilePreview fileInfo={getAquaTreeFileObject(selectedFileInfo!!)!!} />
-            </div>
           </ScrollArea>
+          </div>
         </div>
-        <div className="md:col-span-2 flex flex-col min-h-0 border-l border-gray-300">
-          <div className="p-5 flex flex-col h-full">
+        <div className="md:col-span-2 flex flex-col min-h-0 border-l border-gray-300 overflow-y-auto">
+          <div className="flex flex-col h-full px-4 pb-5">
             <div className="space-y-4 mb-4">
               <CustomAlert
                 type={displayColorBasedOnVerificationAlert(verificationResults)}
@@ -167,15 +167,14 @@ export const CompleteChainView = ({ callBack, selectedFileInfo }: ICompleteChain
               />
             </div>
             
-            <Collapsible open={showMoreDetails} className="flex flex-col flex-1 min-h-0">
+            <Collapsible open={showMoreDetails}>
               <CollapsibleTrigger asChild>
-                <Button variant="outline" className="w-full mb-4" onClick={() => setShowMoreDetails(prev => !prev)}>
+                <Button variant="outline" size={"lg"} className="w-full mb-4 cursor-pointer" onClick={() => setShowMoreDetails(prev => !prev)}>
                   {showMoreDetails ? <ChevronUp className="mr-2 h-4 w-4" /> : <ChevronDown className="mr-2 h-4 w-4" />}
                   {showMoreDetails ? "Show Less Details" : "Show More Details"}
                 </Button>
               </CollapsibleTrigger>
-              <CollapsibleContent className="flex-1 min-h-0">
-                <ScrollArea className="h-full">
+              <CollapsibleContent className="flex-1 min-h-0 mb-6">
                   <div className="space-y-4 pr-4">
                     {selectedFileInfo?.aquaTree && (
                       <>
@@ -197,9 +196,10 @@ export const CompleteChainView = ({ callBack, selectedFileInfo }: ICompleteChain
                       </>
                     )}
                   </div>
-                </ScrollArea>
               </CollapsibleContent>
             </Collapsible>
+            <LogViewer logs={allLogs} className="mt-4" />
+            <div className="!h-[40px] !min-h-[40px]" />
           </div>
         </div>
       </div>

@@ -54,14 +54,14 @@ const LogLine: React.FC<{ entry: LogData; index: number }> = ({ entry, index }) 
   const { log, logType, ident = '' } = entry;
   const emoji = LogTypeEmojis[logType];
   const styles = getLogTypeStyles(logType);
-  
+
   // Handle empty logs
   if (logType === LogType.EMPTY) {
-    return <div key={index} className="h-2" />;
+    return <div key={index} className="h-[10px]" />;
   }
 
   // Calculate indentation level
-  const indentLevel = (ident??'').length / 4; // Assuming 4 spaces per indent level
+  const indentLevel = (ident ?? '').length / 4; // Assuming 4 spaces per indent level
   const paddingLeft = Math.max(12 + indentLevel * 16, 12);
 
   return (
@@ -77,34 +77,35 @@ const LogLine: React.FC<{ entry: LogData; index: number }> = ({ entry, index }) 
           </span>
         )}
         <span className="whitespace-pre-wrap break-words flex-1">
-          {log}
+          {log} {index}
         </span>
       </div>
     </div>
   );
 };
 
-export const LogViewer: React.FC<LogViewerProps> = ({ 
-  logs, 
+export const LogViewer: React.FC<LogViewerProps> = ({
+  logs,
   title = "Execution Logs",
   className
 }) => {
+
   return (
-    <Card className={cn("w-full shadow-lg overflow-hidden", className)}>
+    <Card className={cn("w-full shadow-lg py-0 rounded-2xl", className)}>
       {/* Header */}
-      <CardHeader className="px-6 py-4 border-b">
+      <CardHeader className="!px-6 !py-2 border-b bg-gray-50 dark:bg-gray-900 rounded-t-2xl">
         <div className="flex items-center gap-2">
           <span className="text-blue-600">📋</span>
           <h3 className="text-lg font-semibold">{title}</h3>
         </div>
-        <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+        <p className="text-sm text-gray-600 dark:text-gray-400">
           {logs.length} log {logs.length === 1 ? 'entry' : 'entries'}
         </p>
       </CardHeader>
 
       {/* Log Content */}
-      <ScrollArea className="h-96 bg-gray-50 dark:bg-gray-900">
-        <CardContent className="p-4">
+      <CardContent className="h-[350px] py-0">
+        <ScrollArea className="h-full bg-gray-50 dark:bg-gray-900 py-0">
           {logs.length === 0 ? (
             <div className="text-center py-8 text-gray-500">
               <div className="text-4xl mb-2">📝</div>
@@ -115,11 +116,11 @@ export const LogViewer: React.FC<LogViewerProps> = ({
               <LogLine key={index} entry={entry} index={index} />
             ))
           )}
-        </CardContent>
-      </ScrollArea>
+        </ScrollArea>
+      </CardContent>
 
       {/* Footer */}
-      <CardFooter className="px-6 py-3 border-t bg-gray-50 dark:bg-gray-900">
+      <CardFooter className="!px-6 !py-3 border-t bg-gray-50 dark:bg-gray-900 h-[50px] rounded-b-2xl">
         <div className="flex justify-between items-center text-xs text-gray-500 dark:text-gray-400 w-full">
           <span>Execution completed</span>
           <span>{new Date().toLocaleTimeString()}</span>

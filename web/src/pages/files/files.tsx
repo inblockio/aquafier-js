@@ -326,7 +326,7 @@ const FilesPage = () => {
                 }
             }} >
 
-                <DialogContent className="[&>button]:hidden !max-w-[95vw] !w-[95vw] h-[95vh] max-h-[95vh] flex flex-col">
+                <DialogContent className="[&>button]:hidden !max-w-[99vw] !w-[99vw] h-[99vh] max-h-[99vh]">
                     <div className="absolute top-4 right-4">
                         <Button
                             variant="ghost"
@@ -353,12 +353,11 @@ const FilesPage = () => {
                             </>
                         ) : null
                     }
-                    <DialogFooter className="mt-auto">
+                    <DialogFooter className="mt-auto h-[60px]">
                         <Button variant="outline" onClick={() => {
                             setSelectedFileInfo(null)
                             setOpenDetailsPopUp(false)
-                        }}>Cancel</Button>
-                        <Button type="submit">Save changes</Button>
+                        }}>Close</Button>
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
