@@ -9,12 +9,47 @@ import {
 } from "@/components/shadcn/ui/sidebar"
 import appStore from "@/store"
 import { Bell, Users } from "lucide-react"
+import { useEffect, useState } from "react"
 import { Outlet } from "react-router-dom"
+import { ClipLoader } from "react-spinners"
 import { Toaster } from "sonner"
 import { useStore } from "zustand"
 
 export default function NewShadcnLayoutWithSidebar() {
     const { session } = useStore(appStore);
+
+     const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            setLoading(false);
+        }, 1000);
+        return () => clearTimeout(timer);
+    }, []);
+
+    if (loading) {
+        return (
+            <div style={{
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                justifyContent: "center",
+                height: "100vh",
+                width: "100vw"
+            }}>
+
+                <ClipLoader
+                    color={"blue"}
+                    loading={loading}
+                    size={150}
+                    aria-label="Loading Spinner"
+                    data-testid="loader"
+                />
+                <span style={{ fontSize: 24, fontWeight: 500 }}>Loading...</span>
+            </div>
+        );
+    }
+
 
     return (
         <>

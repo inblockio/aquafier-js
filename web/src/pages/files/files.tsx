@@ -331,7 +331,7 @@ const FilesPage = () => {
                         <Button
                             variant="ghost"
                             size="icon"
-                            className="h-6 w-6 bg-red-500 text-white"
+                            className="h-6 w-6 bg-red-500 text-white hover:bg-red-500"
                             onClick={() => {
                                 setIsSelectedFileDialogOpen(false)
                                 setSelectedFileInfo(null)
