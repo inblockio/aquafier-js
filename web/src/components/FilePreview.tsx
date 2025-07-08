@@ -4,7 +4,8 @@ import { useStore } from "zustand";
 import appStore from "../store";
 import { ensureDomainUrlHasSSL, handleLoadFromUrl } from "../utils/functions";
 import  {FilePreviewAquaTreeFromTemplate} from "./FilePreviewAquaTreeFromTemplate"
-import { EasyPDFRenderer } from "../pages/wokflow/ContractDocument/signer/SignerPage";
+import { EasyPDFRenderer } from "../pages/files/wokflow/ContractDocument/signer/SignerPage";
+// import { EasyPDFRenderer } from "../pages/wokflow/ContractDocument/signer/SignerPage";
 // import { toaster } from "./chakra-ui/toaster";
 
 // Define file extensions to content type mappings

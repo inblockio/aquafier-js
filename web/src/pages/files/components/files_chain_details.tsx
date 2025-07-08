@@ -84,7 +84,10 @@ export const CompleteChainView = ({ callBack, selectedFileInfo }: ICompleteChain
             const hash = getFileHashFromUrl(file.fileContent)
             let data = hash ? cacheMap.get(hash) : null
             if (!data) data = await fetchFileData(file.fileContent)
-            if (data && hash) setApiFileData((prev: ApiFileData[]) => [...prev, { fileHash: hash, fileData: data }])
+            // if (data && hash) setApiFileData((prev: ApiFileData[]) => [...prev, { fileHash: hash, fileData: data }])
+            if (data && hash) setApiFileData(
+              [...apiFileData, { fileHash: hash, fileData: data }]
+            )
             if (data instanceof ArrayBuffer) {
               file.fileContent = isArrayBufferText(data) ? new TextDecoder().decode(data) : new Uint8Array(data)
             } else if (typeof data === 'string') file.fileContent = data
@@ -154,12 +157,10 @@ export const CompleteChainView = ({ callBack, selectedFileInfo }: ICompleteChain
         <div className="md:col-span-2">
           <Card>
             <CardContent className="space-y-4">
-              {/* <Alert variant={displayColorBasedOnVerificationAlert(verificationResults)}>
-                <AlertTitle>{displayBasedOnVerificationStatusText(verificationResults)}</AlertTitle>
-              </Alert> */}
+             
 
               <CustomAlert
-                type="info"
+                type={displayColorBasedOnVerificationAlert(verificationResults)}
                 title={displayBasedOnVerificationStatusText(verificationResults)}
                 description={displayBasedOnVerificationStatusText(verificationResults)}
               />
@@ -201,7 +202,7 @@ export const CompleteChainView = ({ callBack, selectedFileInfo }: ICompleteChain
                   )}
                 </CollapsibleContent>
               </Collapsible>
-              <LogViewer logs={allLogs as any} title="Verification Logs" />
+              {/* <LogViewer logs={allLogs as any} title="Verification Logs" /> */}
             </CardContent>
           </Card>
         </div>
