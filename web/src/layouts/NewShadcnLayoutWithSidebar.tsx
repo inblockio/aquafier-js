@@ -150,7 +150,7 @@ export default function NewShadcnLayoutWithSidebar() {
                         </Button>
                     </div>
                     <FormTemplateEditorShadcn onSave={function (): void {
-                        throw new Error("Function not implemented.")
+                       setOpenCreateTemplatePopUp(false)
                     } } />
                     {/* <DialogFooter className="mt-auto">
                         <Button variant="outline" onClick={() => {

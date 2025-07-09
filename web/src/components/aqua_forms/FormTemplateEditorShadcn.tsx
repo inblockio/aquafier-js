@@ -161,6 +161,7 @@ const FormTemplateEditorShadcn = ({ initialTemplate, onSave, updating }: FormTem
       }
 
       toast.error("Failed to " + (updating ? "update" : "create") + " form template");
+      console.log(`Error ${error} occured`)
     } finally {
       setIsSubmitting(false);
     }
