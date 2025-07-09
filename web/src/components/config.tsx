@@ -5,10 +5,12 @@ import { useStore } from "zustand";
 import appStore from "../store";
 // import { toaster } from "./chakra-ui/toaster";
 import { ethers } from "ethers";
+import { toast } from "sonner";
+import { FormTemplate } from "./aqua_forms";
 
 
 const LoadConfiguration = () => {
-    const { setMetamaskAddress, setUserProfile, setFiles, setAvatar, setSystemFileInfo, backend_url, setSession } = useStore(appStore)
+    const { setMetamaskAddress, setUserProfile, setFiles, setAvatar, setSystemFileInfo, backend_url, setSession, setFormTemplate, session } = useStore(appStore)
 
     const fetchAddressGivenANonce = async (nonce: string) => {
         if (!backend_url.includes('0.0.0.0')) {
@@ -118,7 +120,36 @@ const LoadConfiguration = () => {
         }
     }, [backend_url]);
 
-   
+    const loadTemplates = async () => {
+        // setIsLoading(true);
+    
+        try {
+          const url = `${backend_url}/templates`;
+          const response = await axios.get(url, {
+            headers: {
+              "nonce": session?.nonce
+            }
+          });
+    
+          if (response.status === 200 || response.status === 201) {
+            const loadedTemplates: FormTemplate[] = response.data.data;
+            setFormTemplate(loadedTemplates);
+          }
+        } catch (error) {
+          toast.error(
+            'Error loading templates',
+            { description: error instanceof Error ? error.message : 'Unknown error' }
+          );
+        } finally {
+         // setIsLoading(false);
+        }
+      };
+    
+      useEffect(() => {
+        if(session){
+            loadTemplates();
+        }
+      }, [session]);
 
     return (
         <></>

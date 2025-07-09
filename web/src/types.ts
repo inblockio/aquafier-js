@@ -11,3 +11,5 @@ export interface Session {
     fileHash : string,
     fileData :  string | ArrayBuffer
   }
+
+  

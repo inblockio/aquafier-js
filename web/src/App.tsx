@@ -7,6 +7,7 @@ import { useEffect } from 'react'
 import appStore from './store';
 import { useStore } from "zustand"
 import { BrowserRouter, Route, Routes } from 'react-router-dom'
+import ErrorBoundary from "./components/ErrorBoundary";
 import SharePage from './pages/SharePage';
 import Loading from './pages/Loading';
 import AquaForms from './pages/AquaForms';
@@ -55,6 +56,7 @@ function App() {
   return (
     <BrowserRouter>
       <LoadConfiguration />
+      <ErrorBoundary>
       <Routes>
         {/* Routes with Tailwind UI (no MainLayout wrapper) */}
 
@@ -65,19 +67,21 @@ function App() {
         {/* All file routes using Tailwind */}
         <Route path="/files" element={<NewShadcnLayoutWithSidebar />}>
           <Route index element={<FilesPage />} />
-          <Route path="files_shared" element={<FilesSharedContracts />} />
           <Route path="pdf/workflow" element={<PdfWorkflowPage />} />
           <Route path="files_workflows" element={<FilesPage />} />
           <Route path="domain_attestation" element={<DomainAttestationPage />} />
           <Route path="templates" element={<TemplatesPage />} />
           <Route path="files_docs" element={<FilesPage />} />
           <Route path="files_attestation" element={<FilesPage />} />
-          <Route path="files_info" element={<InfoPage />} />
-          <Route path="files_settings" element={<SettingsPage />} />
           <Route path="files_document_signature" element={<FilesPage />} />
+          <Route path="files_domain_attestation" element={<FilesPage />} />
+
+          <Route path="shared-contracts" element={<FilesSharedContracts />} />
+
+          <Route path="settings" element={<SettingsPage />} />
+          <Route path="info" element={<InfoPage />} />
           <Route path="workflows" element={<WorkflowsTablePage />} />
           <Route path="form-instance/:templateName" element={<CreateFormInstance />} />
-          <Route path="files_domain_attestation" element={<FilesPage />} />
         </Route>
 
 
@@ -94,6 +98,7 @@ function App() {
         </Route>
         <Route path="*" element={<PageNotFound />} />
       </Routes>
+      </ErrorBoundary>
     </BrowserRouter>
   )
 }

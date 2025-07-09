@@ -460,7 +460,7 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack, openCreateTemplate
                                 return
                             }
                             // upload the single aqua tree 
-                            await saveAquaTree(aquaTreeResponse.data.aquaTree!!, item, false, false)
+                            await saveAquaTree(aquaTreeResponse.data.aquaTree!!, item, false, true)
 
                             // linke it to main aqua tree
                             const aquaTreeWrapper: AquaTreeWrapper = {
@@ -512,7 +512,7 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack, openCreateTemplate
                 } else {
                     console.log("signRes.data", signRes.data)
                     fileObject.fileContent = completeFormData
-                    await saveAquaTree(signRes.data.aquaTree!!, fileObject, false)
+                    await saveAquaTree(signRes.data.aquaTree!!, fileObject, true)
 
 
                     //check if aqua sign 

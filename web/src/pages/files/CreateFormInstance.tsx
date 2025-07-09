@@ -12,15 +12,17 @@ const CreateFormInstance = () => {
     const [selectedTemplate, setSelectedTemplate] = useState<FormTemplate | null>(null);
     
     const { templateName } = useParams();
-
+    
     useEffect(() =>{
-        if(templateName){
-            const template = formTemplates.find((template) => template.name === templateName);
-            if(template){
-                setSelectedTemplate(template);
+        if(formTemplates.length !== 0){
+            if(templateName){
+                const template = formTemplates.find((template) => template.name === templateName);
+                if(template){
+                    setSelectedTemplate(template);
+                }
             }
         }
-    }, [templateName])
+    }, [templateName, formTemplates])
 
     
   return (

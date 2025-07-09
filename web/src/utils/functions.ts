@@ -6,6 +6,8 @@ import { documentTypes, ERROR_TEXT, ERROR_UKNOWN, imageTypes, musicTypes, videoT
 // import { AvatarGenerator } from 'random-avatar-generator';
 import Aquafier, { AquaTree, CredentialsData, FileObject, OrderRevisionInAquaTree, Revision } from "aqua-js-sdk";
 import jdenticon from "jdenticon/standalone";
+import { IContractInformation } from '@/types/contract_workflow';
+import { SummaryDetailsDisplayData } from '@/types/types';
 
 export function formatDate(date: Date) {
     const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
@@ -1862,7 +1864,7 @@ export function getLatestApiFileInfObject(jsonArray: ApiFileInfo[]): ApiFileInfo
 
 export async function handleLoadFromUrl(pdfUrlInput: string, fileName: string, toaster: any) {
     if (!pdfUrlInput.trim()) {
-        toaster.error("Invalid URL", {description: "Please enter a valid PDF URL.", type: "error" });
+        toaster.error("Invalid URL", { description: "Please enter a valid PDF URL.", type: "error" });
         return {
             file: null,
             error: "Invalid URL"
@@ -1917,22 +1919,149 @@ export async function handleLoadFromUrl(pdfUrlInput: string, fileName: string, t
  * @param {boolean} binary - Use binary (1024) or decimal (1000) units (default: false for decimal)
  * @returns {string} Human readable file size
  */
-export  function formatBytes(bytes: number, decimals = 2, binary = false) {
-  // Handle edge cases
-  if (bytes === 0) return '0 Bytes';
-  if (bytes < 0) return 'Invalid size';
-  if (typeof bytes !== 'number' || !isFinite(bytes)) return 'Invalid input';
+export function formatBytes(bytes: number, decimals = 2, binary = false) {
+    // Handle edge cases
+    if (bytes === 0) return '0 Bytes';
+    if (bytes < 0) return 'Invalid size';
+    if (typeof bytes !== 'number' || !isFinite(bytes)) return 'Invalid input';
 
-  const k = binary ? 1024 : 1000;
-  const dm = decimals < 0 ? 0 : decimals;
-  
-  // Units for decimal (SI) and binary systems
-  const sizes = binary 
-    ? ['Bytes', 'KiB', 'MiB', 'GiB', 'TiB', 'PiB', 'EiB', 'ZiB', 'YiB']
-    : ['Bytes', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB'];
+    const k = binary ? 1024 : 1000;
+    const dm = decimals < 0 ? 0 : decimals;
 
-  const i = Math.floor(Math.log(bytes) / Math.log(k));
-  const size = parseFloat((bytes / Math.pow(k, i)).toFixed(dm));
+    // Units for decimal (SI) and binary systems
+    const sizes = binary
+        ? ['Bytes', 'KiB', 'MiB', 'GiB', 'TiB', 'PiB', 'EiB', 'ZiB', 'YiB']
+        : ['Bytes', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB'];
 
-  return `${size} ${sizes[i]}`;
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    const size = parseFloat((bytes / Math.pow(k, i)).toFixed(dm));
+
+    return `${size} ${sizes[i]}`;
 }
+
+const getSignatureRevionHashes = (hashesToLoopPar: Array<string>, selectedFileInfo: ApiFileInfo): Array<SummaryDetailsDisplayData> => {
+
+    const signatureRevionHashes: Array<SummaryDetailsDisplayData> = []
+
+
+    for (let i = 0; i < hashesToLoopPar.length; i += 3) {
+
+
+        const batch = hashesToLoopPar.slice(i, i + 3);
+        // console.log(`Processing batch ${i / 3 + 1}:`, batch);
+
+
+        let signaturePositionCount = 0
+        let hashSigPosition = batch[0] ?? ""
+        let hashSigRev = batch[1] ?? ""
+        let hashSigMetamak = batch[2] ?? ""
+        let walletAddress = "";
+
+        if (hashSigPosition.length > 0) {
+            let allAquaTrees = selectedFileInfo?.fileObject.filter((e) => isAquaTree(e.fileContent))
+
+            let hashSigPositionHashString = selectedFileInfo!.aquaTree!.revisions[hashSigPosition].link_verification_hashes![0]
+            if (allAquaTrees) {
+                for (let anAquaTreeFileObject of allAquaTrees) {
+                    let anAquaTree: AquaTree = anAquaTreeFileObject.fileContent as AquaTree
+                    let allHashes = Object.keys(anAquaTree.revisions)
+                    if (allHashes.includes(hashSigPositionHashString)) {
+                        let revData = anAquaTree.revisions[hashSigPositionHashString]
+                        signaturePositionCount = getHighestFormIndex(revData) + 1 // sinature count is 0 base
+
+                        break
+                    } else {
+                        // console.log(`allHashes ${allHashes} does not incude ${hashSigPositionHashString} `)
+                    }
+                }
+
+
+            }
+
+        }
+
+        let metaMaskRevision = selectedFileInfo!.aquaTree!.revisions[hashSigMetamak];
+        if (metaMaskRevision) {
+            walletAddress = metaMaskRevision.signature_wallet_address ?? ""
+        }
+        let data: SummaryDetailsDisplayData = {
+            revisionHashWithSignaturePositionCount: signaturePositionCount,
+            revisionHashWithSignaturePosition: hashSigPosition,
+            revisionHashWithSinatureRevision: hashSigRev,
+            revisionHashMetamask: hashSigMetamak,
+            walletAddress: walletAddress
+        }
+
+        signatureRevionHashes.push(data)
+
+    }
+
+
+    return signatureRevionHashes
+}
+
+export const processContractInformation = (selectedFileInfo: ApiFileInfo): IContractInformation => {
+    if (!selectedFileInfo) {
+        // Return default values if no file info is provided
+        return {
+            firstRevisionData: {} as Revision,
+            fileNameData: '',
+            creatorEthereumSignatureRevisionData: undefined,
+            contractCreatorAddress: '--error--',
+            isWorkFlowComplete: [],
+            signatureRevisionHashes: []
+        };
+    }
+
+    const orderedTree = OrderRevisionInAquaTree(selectedFileInfo.aquaTree!);
+    const revisions = orderedTree.revisions;
+    const revisionHashes = Object.keys(revisions);
+
+    const firstHash: string = revisionHashes[0];
+    const firstRevision: Revision = selectedFileInfo.aquaTree!.revisions[firstHash];
+
+    const pdfHash = revisionHashes[2];
+    const thirdRevision: Revision = selectedFileInfo.aquaTree!.revisions[pdfHash];
+    const hashOfLinkedDocument = thirdRevision.link_verification_hashes![0]!;
+    const fileName = selectedFileInfo.aquaTree!.file_index[hashOfLinkedDocument];
+
+    const creatorSignatureHash = revisionHashes[3];
+    const signatureRevision: Revision | undefined = selectedFileInfo.aquaTree!.revisions[creatorSignatureHash];
+    const contractCreatorAddress = signatureRevision?.revision_type === "signature"
+        ? (signatureRevision.signature_wallet_address ?? "--error--")
+        : "--error--";
+
+    let fourthItemHashOnwards: string[] = [];
+    let signatureRevisionHashes: SummaryDetailsDisplayData[] = [];
+    const signers: string[] = firstRevision.forms_signers.split(",").map((e: string) => e.trim());
+
+    if (revisionHashes.length > 4) {
+        fourthItemHashOnwards = revisionHashes.slice(4);
+        signatureRevisionHashes = getSignatureRevionHashes(fourthItemHashOnwards, selectedFileInfo);
+
+        const signatureRevisionHashesDataAddress = signatureRevisionHashes.map((e) => e.walletAddress);
+        const remainingSigners = signers.filter((item) => !signatureRevisionHashesDataAddress.includes(item));
+
+        // verifyAquaTreeRevisions(selectedFileInfo);
+
+        return {
+            firstRevisionData: firstRevision,
+            fileNameData: fileName,
+            creatorEthereumSignatureRevisionData: signatureRevision,
+            contractCreatorAddress,
+            isWorkFlowComplete: remainingSigners,
+            signatureRevisionHashes
+        };
+    }
+
+    // verifyAquaTreeRevisions(selectedFileInfo);
+
+    return {
+        firstRevisionData: firstRevision,
+        fileNameData: fileName,
+        creatorEthereumSignatureRevisionData: signatureRevision,
+        contractCreatorAddress,
+        isWorkFlowComplete: signers,
+        signatureRevisionHashes
+    };
+};

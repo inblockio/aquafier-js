@@ -85,35 +85,6 @@ const FormTemplateListShadcn = ({ onEdit }: FormTemplateListShadcnProps) => {
     }
   };
 
-  const loadTemplates = async () => {
-    setIsLoading(true);
-
-    try {
-      const url = `${backend_url}/templates`;
-      const response = await axios.get(url, {
-        headers: {
-          "nonce": session?.nonce
-        }
-      });
-
-      if (response.status === 200 || response.status === 201) {
-        const loadedTemplates: FormTemplate[] = response.data.data;
-        setFormTemplate(loadedTemplates);
-      }
-    } catch (error) {
-      toast.error(
-        'Error loading templates',
-        { description: error instanceof Error ? error.message : 'Unknown error' }
-      );
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    loadTemplates();
-  }, []);
-
 
   return (
     <Card className="w-full shadow-sm">

@@ -65,12 +65,12 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     { icon: FileText, label: 'All files', id: "/files" },
     { icon: Workflow, label: 'Workflows', id: "/files/files_workflows" },
     { icon: LayoutTemplate, label: 'Templates', id: "/files/templates" },
-    { icon: Share2, label: 'Shared files', id: "/files/files_shared" },
+    { icon: Share2, label: 'Shared files', id: "/files/shared-contracts" },
   ];
 
   const quickAccessItems = [
-    { label: 'Info', icon: Star, id: "/files/files_info" },
-    { label: 'Settings', icon: Settings, id: "/files/files_settings" }
+    { label: 'Info', icon: Star, id: "/files/info" },
+    { label: 'Settings', icon: Settings, id: "/files/settings" }
   ];
 
   const applicationsItems = [

@@ -29,7 +29,7 @@ const PageNotFound = () => {
               asChild 
               className="bg-gradient-to-r from-orange-600 to-orange-500 hover:from-orange-500 hover:to-orange-600 text-white transition-all duration-300 shadow-md hover:shadow-lg"
             >
-              <Link to="/">
+              <Link to="/home">
                 <ArrowLeft className="mr-2 h-4 w-4" />
                 Back to Home
               </Link>

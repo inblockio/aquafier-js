@@ -10,7 +10,7 @@ import {
 import { Badge } from '@/components/shadcn/ui/badge';
 import { Button } from '@/components/shadcn/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/shadcn/ui/card';
-import { Avatar, AvatarFallback } from '@/components/shadcn/ui/avatar';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/shadcn/ui/avatar';
 import { Progress } from '@/components/shadcn/ui/progress';
 import {
   DropdownMenu,
@@ -28,106 +28,17 @@ import {
   AlertCircle,
   MoreHorizontal,
   Eye,
-  Edit,
   Trash2,
   Download,
   Send,
 } from 'lucide-react';
 import appStore from '@/store';
 import { useStore } from 'zustand';
-import { displayTime, getAquaTreeFileName, getAquaTreeFileObject, getGenesisHash, isWorkFlowData } from '@/utils/functions';
-import { file } from 'jszip';
+import { displayTime, generateAvatar, getAquaTreeFileName, getAquaTreeFileObject, getGenesisHash, isWorkFlowData, processContractInformation } from '@/utils/functions';
 import { ApiFileInfo } from '@/models/FileInfo';
 import { FileObject } from 'aqua-js-sdk';
-
-interface DocumentWorkflow {
-  id: string;
-  documentName: string;
-  totalSigners: number;
-  remainingSigners: number;
-  status: 'pending' | 'completed' | 'overdue' | 'draft';
-  createdDate: string;
-  dueDate: string;
-  signers: Array<{
-    name: string;
-    email: string;
-    status: 'signed' | 'pending' | 'viewed';
-  }>;
-}
-
-const mockWorkflows: DocumentWorkflow[] = [
-  {
-    id: '1',
-    documentName: 'Employment Agreement - John Smith',
-    totalSigners: 3,
-    remainingSigners: 1,
-    status: 'pending',
-    createdDate: '2024-01-15',
-    dueDate: '2024-01-25',
-    signers: [
-      { name: 'John Smith', email: 'john@example.com', status: 'signed' },
-      { name: 'HR Manager', email: 'hr@company.com', status: 'signed' },
-      { name: 'Legal Team', email: 'legal@company.com', status: 'pending' },
-    ],
-  },
-  {
-    id: '2',
-    documentName: 'NDA - Project Phoenix',
-    totalSigners: 5,
-    remainingSigners: 0,
-    status: 'completed',
-    createdDate: '2024-01-10',
-    dueDate: '2024-01-20',
-    signers: [
-      { name: 'Alice Johnson', email: 'alice@example.com', status: 'signed' },
-      { name: 'Bob Wilson', email: 'bob@example.com', status: 'signed' },
-      { name: 'Carol Davis', email: 'carol@example.com', status: 'signed' },
-      { name: 'David Brown', email: 'david@example.com', status: 'signed' },
-      { name: 'Eve Miller', email: 'eve@example.com', status: 'signed' },
-    ],
-  },
-  // {
-  //   id: '3',
-  //   documentName: 'Vendor Agreement - TechCorp Solutions',
-  //   totalSigners: 2,
-  //   remainingSigners: 2,
-  //   status: 'overdue',
-  //   createdDate: '2024-01-05',
-  //   dueDate: '2024-01-15',
-  //   signers: [
-  //     { name: 'TechCorp CEO', email: 'ceo@techcorp.com', status: 'viewed' },
-  //     { name: 'Legal Advisor', email: 'legal@techcorp.com', status: 'pending' },
-  //   ],
-  // },
-  {
-    id: '4',
-    documentName: 'Partnership Agreement - StartupXYZ',
-    totalSigners: 4,
-    remainingSigners: 4,
-    status: 'draft',
-    createdDate: '2024-01-18',
-    dueDate: '2024-01-28',
-    signers: [
-      { name: 'CEO StartupXYZ', email: 'ceo@startupxyz.com', status: 'pending' },
-      { name: 'CTO StartupXYZ', email: 'cto@startupxyz.com', status: 'pending' },
-      { name: 'Legal Team', email: 'legal@ourcompany.com', status: 'pending' },
-      { name: 'Business Dev', email: 'bizdev@ourcompany.com', status: 'pending' },
-    ],
-  },
-  {
-    id: '5',
-    documentName: 'Service Agreement - ClientCorp',
-    totalSigners: 2,
-    remainingSigners: 1,
-    status: 'pending',
-    createdDate: '2024-01-12',
-    dueDate: '2024-01-22',
-    signers: [
-      { name: 'Client Manager', email: 'manager@clientcorp.com', status: 'signed' },
-      { name: 'Project Lead', email: 'lead@ourcompany.com', status: 'pending' },
-    ],
-  },
-];
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/shadcn/ui/tooltip';
+import { IContractInformation } from '@/types/contract_workflow';
 
 const getStatusIcon = (status: string) => {
   switch (status) {
@@ -163,14 +74,6 @@ const getProgressPercentage = (total: number, remaining: number) => {
   return ((total - remaining) / total) * 100;
 };
 
-const formatDate = (dateString: string) => {
-  return new Date(dateString).toLocaleDateString('en-US', {
-    month: 'short',
-    day: 'numeric',
-    year: 'numeric',
-  });
-};
-
 const getInitials = (name: string) => {
   return name
     .split(' ')
@@ -183,6 +86,7 @@ interface IWorkflowItem { workflowName: string, apiFileInfo: ApiFileInfo, index?
 
 const WorkflowTableItem = ({ workflowName, apiFileInfo, index = 0 }: IWorkflowItem) => {
   const [currentFileObject, setCurrentFileObject] = useState<FileObject | undefined>(undefined);
+  const [contractInformation, setContractInformation] = useState<IContractInformation | undefined>(undefined);
 
   const getCurrentFileObject = () => {
     const fileObject = getAquaTreeFileObject(apiFileInfo);
@@ -214,15 +118,45 @@ const WorkflowTableItem = ({ workflowName, apiFileInfo, index = 0 }: IWorkflowIt
     }
   }
 
-  const getRemainingSigners = () => {
-    return 0
+  const getSignersStatus = () => {
+    let signersStatus: Array<{ address: string; status: string }> = []
+    if (contractInformation) {
+      signersStatus = contractInformation.firstRevisionData?.forms_signers.split(",").map((signer: string) => {
+
+        let item = contractInformation.signatureRevisionHashes.find((e) => e.walletAddress.toLowerCase().trim() == signer.toLowerCase().trim())
+
+        if (item) {
+          return ({
+            address: signer,
+            status: "signed"
+          })
+        } else {
+          // if isWorkFlowComplete is empty show green check mark
+          // this experiemntal,
+          if (contractInformation.isWorkFlowComplete.length === 0) {
+            return ({
+              address: signer,
+              status: "signed"
+            })
+          }
+          return ({
+            address: signer,
+            status: "pending"
+          })
+        }
+      })
+    }
+    return signersStatus
   }
 
+
   const signers = getSigners();
-  const remainingSigners = getRemainingSigners();
+  const signersStatus = getSignersStatus();
 
   useEffect(() => {
     getCurrentFileObject();
+    const contractInformation = processContractInformation(apiFileInfo);
+    setContractInformation(contractInformation);
   }, [apiFileInfo]);
 
   return (
@@ -245,18 +179,31 @@ const WorkflowTableItem = ({ workflowName, apiFileInfo, index = 0 }: IWorkflowIt
           </div>
         </div>
       </TableCell>
-      <TableCell>
+      <TableCell className="w-[200px]">
+        <p className="text-sm capitalize">{workflowName.split("_").join(" ").trim()}</p>
+      </TableCell>
+      <TableCell className="w-[200px]">
         <div className="flex items-center gap-2">
           <div className="flex -space-x-2">
             {signers?.slice(0, 3).map((signer: string, index: number) => (
-              <Avatar
+              <Tooltip
                 key={index}
-                className="h-8 w-8 border-2 border-background"
               >
-                <AvatarFallback className="text-xs">
-                  {getInitials(signer)}
-                </AvatarFallback>
-              </Avatar>
+                <TooltipTrigger asChild>
+                  <Avatar
+                    key={index}
+                    className="h-8 w-8 border-2 rounded-full border-blue-500"
+                  >
+                    <AvatarImage src={generateAvatar(signer)} alt="Avatar" />
+                    <AvatarFallback className="text-xs">
+                      {getInitials(signer)}
+                    </AvatarFallback>
+                  </Avatar>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>{signer}</p>
+                </TooltipContent>
+              </Tooltip>
             ))}
             {signers?.length > 3 && (
               <Avatar className="h-8 w-8 border-2 border-background">
@@ -272,40 +219,40 @@ const WorkflowTableItem = ({ workflowName, apiFileInfo, index = 0 }: IWorkflowIt
           </div>
         </div>
       </TableCell>
-      <TableCell>
+      <TableCell className='w-[150px]'>
         <div className="space-y-1">
           <div className="flex items-center justify-between text-sm">
             <span>
-              {signers?.length - remainingSigners}/{signers?.length}
+              {signersStatus.filter((e) => e.status == "signed").length}/{signers?.length}
             </span>
             <span className="text-muted-foreground">
-              {Math.round(getProgressPercentage(signers?.length, remainingSigners))}%
+              {Math.round(getProgressPercentage(signersStatus.filter((e) => e.status == "signed").length, signersStatus.filter((e) => e.status == "pending").length))}%
             </span>
           </div>
           <Progress
-            value={getProgressPercentage(signers?.length, remainingSigners)}
+            value={getProgressPercentage(signersStatus.filter((e) => e.status == "signed").length, signersStatus.filter((e) => e.status == "pending").length)}
             className="h-2"
           />
-          {remainingSigners > 0 && (
+          {signersStatus.filter((e) => e.status == "pending").length > 0 && (
             <div className="text-xs text-muted-foreground">
-              {remainingSigners} remaining
+              {signersStatus.filter((e) => e.status == "pending").length} remaining
             </div>
           )}
         </div>
       </TableCell>
-      <TableCell>
+      <TableCell className='w-[100px]'>
         <Badge
           variant="outline"
-          className={`${getStatusColor("pending")} capitalize`}
+          className={`${getStatusColor(signersStatus.filter((e) => e.status == "pending").length > 0 ? "pending" : "completed")} capitalize`}
         >
-          {getStatusIcon("pending")}
-          <span className="ml-1">{"pending"}</span>
+          {getStatusIcon(signersStatus.filter((e) => e.status == "pending").length > 0 ? "pending" : "completed")}
+          <span className="ml-1">{signersStatus.filter((e) => e.status == "pending").length > 0 ? "pending" : "completed"}</span>
         </Badge>
       </TableCell>
-      <TableCell className="text-right">
+      <TableCell className="text-right w-[100px]">
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" className="h-8 w-8 p-0 cursor-pointer">
+            <Button variant="outline" className="h-8 w-8 p-0 cursor-pointer">
               <MoreHorizontal className="h-4 w-4" />
             </Button>
           </DropdownMenuTrigger>
@@ -315,10 +262,6 @@ const WorkflowTableItem = ({ workflowName, apiFileInfo, index = 0 }: IWorkflowIt
             <DropdownMenuItem>
               <Eye className="mr-2 h-4 w-4" />
               View Document
-            </DropdownMenuItem>
-            <DropdownMenuItem>
-              <Edit className="mr-2 h-4 w-4" />
-              Edit
             </DropdownMenuItem>
             <DropdownMenuItem>
               <Send className="mr-2 h-4 w-4" />
@@ -343,11 +286,9 @@ const WorkflowTableItem = ({ workflowName, apiFileInfo, index = 0 }: IWorkflowIt
 export default function WorkflowsTablePage() {
   const { files, systemFileInfo } = useStore(appStore)
 
-  const [workflows] = useState<DocumentWorkflow[]>(mockWorkflows);
+  // const [workflows] = useState<DocumentWorkflow[]>(mockWorkflows);
 
   const [_workflows, setWorkflows] = useState<IWorkflowItem[]>([])
-
-
 
   const processFilesToGetWorkflows = () => {
     const someData = systemFileInfo.map((e) => {
@@ -361,8 +302,7 @@ export default function WorkflowsTablePage() {
     files.forEach(file => {
       // const fileObject = getAquaTreeFileObject(file);
       const { workFlow, isWorkFlow } = isWorkFlowData(file.aquaTree!!, someData);
-      if (isWorkFlow) {
-        console.log(isWorkFlow, workFlow);
+      if (isWorkFlow && workFlow === "aqua_sign") {
         setWorkflows((prev) => [...prev, { workflowName: workFlow, apiFileInfo: file }])
       }
     })
@@ -379,7 +319,7 @@ export default function WorkflowsTablePage() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <FileText className="h-5 w-5" />
-            Document Workflow Management
+            Aqua Sign Workflows
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -388,141 +328,19 @@ export default function WorkflowsTablePage() {
               <TableHeader>
                 <TableRow>
                   <TableHead className="w-[300px] max-w-[300px] min-w-[300px] break-words overflow-hidden">Document</TableHead>
+                  <TableHead>Workflow Type</TableHead>
                   <TableHead>Signers</TableHead>
                   <TableHead>Progress</TableHead>
                   <TableHead>Status</TableHead>
-                  {/* <TableHead>Due Date</TableHead> */}
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {
-                  _workflows.map((workflow) => (
-                    <WorkflowTableItem key={workflow.index} workflowName={workflow.workflowName} apiFileInfo={workflow.apiFileInfo} index={workflow.index} />
+                  _workflows.map((workflow, index: number) => (
+                    <WorkflowTableItem key={`${index}-workflow`} workflowName={workflow.workflowName} apiFileInfo={workflow.apiFileInfo} index={index} />
                   ))
                 }
-                {/* {workflows.map((workflow) => (
-                  <TableRow key={workflow.id} className="hover:bg-muted/50">
-                    <TableCell className="font-medium">
-                      <div className="flex items-center gap-3">
-                        <div className="flex-shrink-0">
-                          <div className="h-10 w-10 rounded-lg bg-blue-100 flex items-center justify-center">
-                            <FileText className="h-5 w-5 text-blue-600" />
-                          </div>
-                        </div>
-                        <div>
-                          <div className="font-medium text-sm">
-                            {workflow.documentName}
-                          </div>
-                          <div className="text-xs text-muted-foreground">
-                            Created {formatDate(workflow.createdDate)}
-                          </div>
-                        </div>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-2">
-                        <div className="flex -space-x-2">
-                          {workflow.signers.slice(0, 3).map((signer, index) => (
-                            <Avatar
-                              key={index}
-                              className="h-8 w-8 border-2 border-background"
-                            >
-                              <AvatarFallback className="text-xs">
-                                {getInitials(signer.name)}
-                              </AvatarFallback>
-                            </Avatar>
-                          ))}
-                          {workflow.signers.length > 3 && (
-                            <Avatar className="h-8 w-8 border-2 border-background">
-                              <AvatarFallback className="text-xs">
-                                +{workflow.signers.length - 3}
-                              </AvatarFallback>
-                            </Avatar>
-                          )}
-                        </div>
-                        <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                          <Users className="h-3 w-3" />
-                          {workflow.totalSigners}
-                        </div>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="space-y-1">
-                        <div className="flex items-center justify-between text-sm">
-                          <span>
-                            {workflow.totalSigners - workflow.remainingSigners}/{workflow.totalSigners}
-                          </span>
-                          <span className="text-muted-foreground">
-                            {Math.round(getProgressPercentage(workflow.totalSigners, workflow.remainingSigners))}%
-                          </span>
-                        </div>
-                        <Progress
-                          value={getProgressPercentage(workflow.totalSigners, workflow.remainingSigners)}
-                          className="h-2"
-                        />
-                        {workflow.remainingSigners > 0 && (
-                          <div className="text-xs text-muted-foreground">
-                            {workflow.remainingSigners} remaining
-                          </div>
-                        )}
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <Badge
-                        variant="outline"
-                        className={`${getStatusColor(workflow.status)} capitalize`}
-                      >
-                        {getStatusIcon(workflow.status)}
-                        <span className="ml-1">{workflow.status}</span>
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      <div className="text-sm">
-                        {formatDate(workflow.dueDate)}
-                      </div>
-                      {workflow.status === 'overdue' && (
-                        <div className="text-xs text-red-600 font-medium">
-                          Overdue
-                        </div>
-                      )}
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" className="h-8 w-8 p-0 cursor-pointer">
-                            <MoreHorizontal className="h-4 w-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                          <DropdownMenuSeparator />
-                          <DropdownMenuItem>
-                            <Eye className="mr-2 h-4 w-4" />
-                            View Document
-                          </DropdownMenuItem>
-                          <DropdownMenuItem>
-                            <Edit className="mr-2 h-4 w-4" />
-                            Edit
-                          </DropdownMenuItem>
-                          <DropdownMenuItem>
-                            <Send className="mr-2 h-4 w-4" />
-                            Send Reminder
-                          </DropdownMenuItem>
-                          <DropdownMenuItem>
-                            <Download className="mr-2 h-4 w-4" />
-                            Download
-                          </DropdownMenuItem>
-                          <DropdownMenuSeparator />
-                          <DropdownMenuItem className="text-red-600">
-                            <Trash2 className="mr-2 h-4 w-4" />
-                            Delete
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </TableCell>
-                  </TableRow>
-                ))} */}
               </TableBody>
             </Table>
           </div>
