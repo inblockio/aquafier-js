@@ -26,8 +26,8 @@ import CreateFormInstance from './pages/files/CreateFormInstance';
 import NewShadcnLayoutWithSidebar from './layouts/NewShadcnLayoutWithSidebar';
 import PdfWorkflowPage from './pages/files/wokflow/PdfWorkflowPage';
 import DomainAttestationPage from './pages/files/domain_attestation';
-import FileTemplatesPage from './pages/files/files_templates';
 import FilesSharedContracts from './pages/files/files_shared_contracts';
+import WorkflowsTablePage from './pages/files/wokflow/WorkflowsTablePage';
 
 declare global {
   interface Window {
@@ -69,19 +69,20 @@ function App() {
           <Route path="pdf/workflow" element={<PdfWorkflowPage />} />
           <Route path="files_workflows" element={<FilesPage />} />
           <Route path="domain_attestation" element={<DomainAttestationPage />} />
-          <Route path="files_templates" element={<TemplatesPage />} />
+          <Route path="templates" element={<TemplatesPage />} />
           <Route path="files_docs" element={<FilesPage />} />
           <Route path="files_attestation" element={<FilesPage />} />
           <Route path="files_info" element={<InfoPage />} />
           <Route path="files_settings" element={<SettingsPage />} />
           <Route path="files_document_signature" element={<FilesPage />} />
+          <Route path="workflows" element={<WorkflowsTablePage />} />
           <Route path="form-instance/:templateName" element={<CreateFormInstance />} />
           <Route path="files_domain_attestation" element={<FilesPage />} />
         </Route>
 
 
         {/* Routes with Chakra UI (wrapped in MainLayout) */}
-        {/* <Route path="/" element={<MainLayoutHolder />} >
+        <Route path="/" element={<MainLayoutHolder />} >
           <Route index element={<Home />} />
           <Route path="/loading" element={<Loading />} />
           <Route path="/share/:identifier" element={<SharePage />} />
@@ -91,7 +92,7 @@ function App() {
           <Route path="/form-generator" element={<FormGenerator />} />
           <Route path="/attestation_addresses" element={<AttestationAddresses />} />
         </Route>
-        <Route path="*" element={<PageNotFound />} /> */}
+        <Route path="*" element={<PageNotFound />} />
       </Routes>
     </BrowserRouter>
   )

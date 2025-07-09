@@ -14,9 +14,10 @@ import { Outlet } from "react-router-dom"
 import { ClipLoader } from "react-spinners"
 import { Toaster } from "sonner"
 import { useStore } from "zustand"
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/shadcn/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/shadcn/ui/dialog";
 import { Button } from "@/components/shadcn/ui/button"
 import CreateFormFromTemplate from "@/components/aqua_forms/CreateFormFromTemplate";
+import { ScrollArea } from "@/components/shadcn/ui/scroll-area"
 
 export default function NewShadcnLayoutWithSidebar() {
     const { session, openCreateAquaSignPopUp, setOpenCreateAquaSignPopUp, openCreateTemplatePopUp, setOpenCreateTemplatePopUp, formTemplates } = useStore(appStore);
@@ -38,7 +39,6 @@ export default function NewShadcnLayoutWithSidebar() {
 
 
     useEffect(() => {
-        console.log(`one`)
         if (openCreateAquaSignPopUp) {
             setIsOpenCreateAquaSignPopUp(true)
         } else {
@@ -50,7 +50,6 @@ export default function NewShadcnLayoutWithSidebar() {
 
 
     useEffect(() => {
-        console.log(`two`)
         if (openCreateTemplatePopUp) {
             setIsOpenCreateTemplatePopUp(true)
         } else {
@@ -170,7 +169,7 @@ export default function NewShadcnLayoutWithSidebar() {
                 // }
             }} >
 
-                <DialogContent className="[&>button]:hidden !max-w-[95vw] !w-[95vw] h-[95vh] max-h-[95vh] flex flex-col">
+                <DialogContent className="[&>button]:hidden !max-w-[95vw] !w-[95vw] h-[95vh] max-h-[95vh] flex flex-col p-0 gap-0">
                     <div className="absolute top-4 right-4">
                         <Button
                             variant="ghost"
@@ -183,10 +182,16 @@ export default function NewShadcnLayoutWithSidebar() {
                             <X className="h-4 w-4" />
                         </Button>
                     </div>
-                    <CreateFormFromTemplate selectedTemplate={formTemplates.find((template) => template.name === "aqua_sign")!!} callBack={function (): void {
-                        // throw new Error("Function not implemented.")
-                        setOpenCreateAquaSignPopUp(false)
-                    }} />
+                    <DialogHeader className="!h-[60px] !min-h-[60px] !max-h-[60px] flex justify-center px-6">
+                        <DialogTitle>Create Aqua Sign</DialogTitle>
+                    </DialogHeader>
+                    <div className=' h-[calc(100%-60px)] pb-1'>
+                    <ScrollArea className="h-full">
+                        <CreateFormFromTemplate selectedTemplate={formTemplates.find((template) => template.name === "aqua_sign")!!} callBack={function (): void {
+                            setOpenCreateAquaSignPopUp(false)
+                        }} openCreateTemplatePopUp={false} />
+                    </ScrollArea>
+                    </div>
                     {/* <DialogFooter className="mt-auto">
                         <Button variant="outline" onClick={() => {
                            setOpenCreateAquaSignPopUp(false)

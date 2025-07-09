@@ -1,4 +1,5 @@
 import { FormTemplate } from "@/components/aqua_forms";
+import CreateFormFromTemplate from "@/components/aqua_forms/CreateFormFromTemplate";
 
 import appStore from "@/store";
 import { useEffect, useState } from "react";
@@ -25,8 +26,7 @@ const CreateFormInstance = () => {
   return (
     <div className="container mx-auto max-w-5xl py-8">
         <div className="bg-gray-100 p-4 rounded-lg">
-            list items
-            {/* {selectedTemplate && <CreateFormFromTemplate selectedTemplate={selectedTemplate} callBack={() => setSelectedTemplate(null)} />} */}
+            {selectedTemplate && <CreateFormFromTemplate selectedTemplate={selectedTemplate} callBack={() => setSelectedTemplate(null)} openCreateTemplatePopUp={false} />}
         </div>
     </div>
   )

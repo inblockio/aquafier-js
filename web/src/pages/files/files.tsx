@@ -54,7 +54,7 @@ const FilesPage = () => {
     const [isUploadDialogOpen, setIsUploadDialogOpen] = useState(false);
     const [isMinimized, setIsMinimized] = useState(false);
 
-    const [drawerStatus, setDrawerStatus] = useState<IDrawerStatus | null>(null)
+    const [_drawerStatus, setDrawerStatus] = useState<IDrawerStatus | null>(null)
     const [isSelectedFileDialogOpen, setIsSelectedFileDialogOpen] = useState(false);
 
 
@@ -276,7 +276,7 @@ const FilesPage = () => {
                 <div className="flex items-center justify-between">
                     <div className="flex items-center space-x-4">
                         <button
-                            className="flex items-center space-x-2 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-blue-700"
+                            className="flex items-center space-x-2 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-blue-700 cursor-pointer"
                             style={{ backgroundColor: '#E55B1F' }}
                             onClick={handleUploadClick}
                         >
@@ -290,7 +290,7 @@ const FilesPage = () => {
                             className="hidden"
                             onChange={handleFileChange}
                         />
-                        <button className="flex items-center space-x-2 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-gray-100"
+                        <button className="flex items-center space-x-2 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-gray-100 cursor-pointer"
                             style={{ backgroundColor: '#394150' }}
                             onClick={() => {
                                 //, 
@@ -300,7 +300,7 @@ const FilesPage = () => {
                             <Plus className="w-4 h-4" />
                             <span>Create Document Signature </span>
                         </button>
-                        <button className="flex items-center space-x-2 text-gray-700 px-4 py-2 rounded-md text-sm font-medium hover:bg-gray-100"
+                        <button className="flex items-center space-x-2 text-gray-700 px-4 py-2 rounded-md text-sm font-medium hover:bg-gray-100 cursor-pointer"
                             onClick={() => {
                                 setOpenCreateTemplatePopUp(true)
                             }}
@@ -308,15 +308,15 @@ const FilesPage = () => {
                             <FolderPlus className="w-4 h-4" />
                             <span>Create Template</span>
                         </button>
-                        <button className="flex items-center space-x-2 text-gray-700 px-4 py-2 rounded-md text-sm font-medium hover:bg-gray-100">
+                        <button className="flex items-center space-x-2 text-gray-700 px-4 py-2 rounded-md text-sm font-medium hover:bg-gray-100 cursor-pointer">
                             <Download className="w-4 h-4" />
                             <span>Get the app</span>
                         </button>
-                        <button className="flex items-center space-x-2 text-gray-700 px-4 py-2 rounded-md text-sm font-medium hover:bg-gray-100">
+                        <button className="flex items-center space-x-2 text-gray-700 px-4 py-2 rounded-md text-sm font-medium hover:bg-gray-100 cursor-pointer">
                             <Copy className="w-4 h-4" />
                             <span>Transfer a copy</span>
                         </button>
-                        <button className="flex items-center space-x-2 text-gray-700 px-4 py-2 rounded-md text-sm font-medium hover:bg-gray-100">
+                        <button className="flex items-center space-x-2 text-gray-700 px-4 py-2 rounded-md text-sm font-medium hover:bg-gray-100 cursor-pointer">
                             <Share2 className="w-4 h-4" />
                             <span>Share</span>
                         </button>

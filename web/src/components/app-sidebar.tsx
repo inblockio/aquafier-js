@@ -64,7 +64,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     { icon: FaHome, label: 'Home', id: "/home" },
     { icon: FileText, label: 'All files', id: "/files" },
     { icon: Workflow, label: 'Workflows', id: "/files/files_workflows" },
-    { icon: LayoutTemplate, label: 'Templates', id: "/files/files_templates" },
+    { icon: LayoutTemplate, label: 'Templates', id: "/files/templates" },
     { icon: Share2, label: 'Shared files', id: "/files/files_shared" },
   ];
 
@@ -74,7 +74,8 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   ];
 
   const applicationsItems = [
-    { label: 'Document Signature', icon: Signature, id: "/files/form-instance/aqua_sign" },
+    { label: 'Create AquaSign', icon: Signature, id: "/files/form-instance/aqua_sign" },
+    { label: 'Aquasign Workflows', icon: Workflow, id: "/files/workflows" },
     { label: 'Domain Attestation', icon: Link, id: "/files/domain_attestation" }
   ];
 

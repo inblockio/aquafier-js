@@ -214,7 +214,7 @@ const FormTemplateListShadcn = ({ onEdit }: FormTemplateListShadcnProps) => {
 
               {viewType === "create_instance" && templateToView && <CreateFormFromTemplate selectedTemplate={templateToView} callBack={() => {
                 setIsViewDialogOpen(false)
-              }} />}
+              }} openCreateTemplatePopUp={true} />}
             </div>
 
             <DialogFooter className="flex-shrink-0 mt-2">
