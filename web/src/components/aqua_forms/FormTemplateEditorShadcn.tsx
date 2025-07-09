@@ -8,7 +8,7 @@ import appStore from "../../store";
 import { toast } from "sonner";
 import { LuPlus, LuTrash } from 'react-icons/lu';
 import { ApiFileInfo } from '../../models/FileInfo';
-
+ 
 // shadcn/ui components
 import { Input } from "@/components/shadcn/ui/input";
 import { Button } from "@/components/shadcn/ui/button";
@@ -212,13 +212,19 @@ const FormTemplateEditorShadcn = ({ initialTemplate, onSave, updating }: FormTem
   }, [watch('title'), setValue, getValues]);
 
   return (
-    <Card className="w-full shadow-sm">
-      <CardHeader>
-        <CardTitle>
+  
+    // <Card className="w-full shadow-sm">
+    //   <CardHeader>
+    //     <CardTitle>
+    //       {initialTemplate ? 'Edit Form Template' : 'Create Form Template'}
+    //     </CardTitle>
+    //   </CardHeader>
+    //   <CardContent>
+      <div>
+
+        <div className='text-lg mb-5'>
           {initialTemplate ? 'Edit Form Template' : 'Create Form Template'}
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
+        </div>
         {apiError && (
           <Alert variant="destructive" className="mb-6">
             <AlertCircle className="h-4 w-4" />
@@ -328,8 +334,9 @@ const FormTemplateEditorShadcn = ({ initialTemplate, onSave, updating }: FormTem
             </Button>
           </div>
         </form>
-      </CardContent>
-    </Card>
+        </div>
+    //   </CardContent>
+    // </Card>
   );
 }
 

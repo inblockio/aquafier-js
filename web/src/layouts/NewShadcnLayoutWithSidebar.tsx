@@ -18,6 +18,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/s
 import { Button } from "@/components/shadcn/ui/button"
 import CreateFormFromTemplate from "@/components/aqua_forms/CreateFormFromTemplate";
 import { ScrollArea } from "@/components/shadcn/ui/scroll-area"
+import FormTemplateEditorShadcn from "@/components/aqua_forms/FormTemplateEditorShadcn"
 
 export default function NewShadcnLayoutWithSidebar() {
     const { session, openCreateAquaSignPopUp, setOpenCreateAquaSignPopUp, openCreateTemplatePopUp, setOpenCreateTemplatePopUp, formTemplates } = useStore(appStore);
@@ -148,7 +149,9 @@ export default function NewShadcnLayoutWithSidebar() {
                             <X className="h-4 w-4" />
                         </Button>
                     </div>
-                    te,plate
+                    <FormTemplateEditorShadcn onSave={function (): void {
+                        throw new Error("Function not implemented.")
+                    } } />
                     {/* <DialogFooter className="mt-auto">
                         <Button variant="outline" onClick={() => {
                            setOpenCreateAquaSignPopUp(false)

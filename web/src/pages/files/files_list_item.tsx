@@ -146,7 +146,7 @@ export default function FilesListItem({ showWorkFlowsOnly, file, index, systemFi
     }
 
     const showActionsButton = () => {
-        if (workflowInfo?.isWorkFlow == true) { //&& workflowInfo.workFlow == "aqua_sign"
+        if (workflowInfo?.isWorkFlow == true && workflowInfo.workFlow == "aqua_sign" ) {
             return workFlowActions()
         }
         return workFileActions()
