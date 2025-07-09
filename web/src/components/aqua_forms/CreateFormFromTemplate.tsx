@@ -731,18 +731,19 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack, openCreateTemplate
                 </div>
             </form>
         </div> */}
-            <div className="min-h-[100%] bg-gradient-to-br from-blue-50 via-white to-indigo-50 px-4">
+            {/* <div className="min-h-[100%] bg-gradient-to-br from-blue-50 via-white to-indigo-50 px-4"> */}
+            <div className="min-h-[100%]  px-4">
                 <div className="max-w-4xl mx-auto py-6">
                     {/* Header */}
                     <div className="mb-8">
-                        <Button
+                        {/* <Button
                             variant="ghost"
                             onClick={onBack}
                             className={cn("mb-4 hover:bg-blue-50 cursor-pointer", openCreateTemplatePopUp ? "hidden" : "")}
                         >
                             <ArrowLeft className="h-4 w-4 mr-2" />
                             Back to Templates
-                        </Button>
+                        </Button> */}
 
                         <div className="flex items-center gap-3 mb-2">
                             <div className="h-10 w-10 rounded-lg bg-blue-100 flex items-center justify-center">
@@ -762,9 +763,11 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack, openCreateTemplate
                             Template: {selectedTemplate?.name}
                         </Badge>
                     </div>
+<div className='pt-10'>
+
 
                     {/* Main Form Card */}
-                    <Card className="shadow-md border-0 bg-white/80 backdrop-blur-sm">
+                    {/* <Card className="shadow-md border-0 bg-white/80 backdrop-blur-sm">
                         <CardHeader className="pb-6">
                             <CardTitle className="flex items-center gap-2 text-xl">
                                 <FileText className="h-5 w-5 text-blue-600" />
@@ -772,7 +775,7 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack, openCreateTemplate
                             </CardTitle>
                         </CardHeader>
 
-                        <CardContent>
+                        <CardContent> */}
                             <form onSubmit={createWorkflowFromTemplate} id="create-aqua-tree-form" className="space-y-8">
                                 {modalFormErorMessae.length > 0 && (
                                     <Alert variant="destructive" className="border-red-200 bg-red-50">
@@ -854,7 +857,7 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack, openCreateTemplate
                                         }
 
                                         return (
-                                            <div key={`field-${fieldIndex}`} className="space-y-1">
+                                            <div key={`field-${fieldIndex}`} className="space-y-3">
                                                 <div className="flex items-center gap-2">
                                                     {getFieldIcon(field.type)}
                                                     <Label htmlFor={`input-${field.name}`} className="text-base font-medium text-gray-900">
@@ -986,8 +989,9 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack, openCreateTemplate
                                     )}
                                 </div>
                             </form>
-                        </CardContent>
-                    </Card>
+                        {/* </CardContent>
+                    </Card> */}
+</div>
 
                     {/* Help Section */}
                     {/* <Card className="mt-6 bg-blue-50/50 border-blue-200">

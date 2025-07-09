@@ -169,7 +169,7 @@ export default function NewShadcnLayoutWithSidebar() {
                 // }
             }} >
 
-                <DialogContent className="[&>button]:hidden !max-w-[95vw] !w-[95vw] h-[95vh] max-h-[95vh] flex flex-col p-0 gap-0">
+                <DialogContent className="[&>button]:hidden !max-w-[65vw] !w-[65vw] h-[65vh] max-h-[65vh] flex flex-col p-0 gap-0">
                     <div className="absolute top-4 right-4">
                         <Button
                             variant="ghost"
@@ -183,7 +183,7 @@ export default function NewShadcnLayoutWithSidebar() {
                         </Button>
                     </div>
                     <DialogHeader className="!h-[60px] !min-h-[60px] !max-h-[60px] flex justify-center px-6">
-                        <DialogTitle>Create Aqua Sign</DialogTitle>
+                        {/* <DialogTitle>Create Aqua Sign</DialogTitle> */}
                     </DialogHeader>
                     <div className=' h-[calc(100%-60px)] pb-1'>
                     <ScrollArea className="h-full">

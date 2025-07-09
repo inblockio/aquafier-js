@@ -74,7 +74,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   ];
 
   const applicationsItems = [
-    { label: 'Create AquaSign', icon: Signature, id: "/files/form-instance/aqua_sign" },
+    // { label: 'Create AquaSign', icon: Signature, id: "/files/form-instance/aqua_sign" },
     { label: 'Aquasign Workflows', icon: Workflow, id: "/files/workflows" },
     { label: 'Domain Attestation', icon: Link, id: "/files/domain_attestation" }
   ];

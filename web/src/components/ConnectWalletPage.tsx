@@ -523,7 +523,7 @@ export const ConnectWalletPage: React.FC<{ dataTestId: string }> = ({ dataTestId
           // Wallet selection UI - only show detected wallets
           <div className="space-y-3">
             <h3 className="text-lg font-semibold text-gray-900 mb-4 text-center">
-              Detected Wallets ({detectedWallets.length}), click on any below
+              Detected Wallets ({detectedWallets.length})  {detectedWallets.length == 0 ? <></>: <>, click on any below</> }
             </h3>
 
             {detectedWallets.length === 0 ? (
