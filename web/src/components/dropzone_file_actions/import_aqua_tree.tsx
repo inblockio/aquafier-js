@@ -1,25 +1,26 @@
 import { LuImport } from "react-icons/lu";
-import { Button } from "../chakra-ui/button";
 import axios from "axios";
 import { useStore } from "zustand";
 import appStore from "../../store";
 import { useRef, useState } from "react";
-import { toaster } from "../chakra-ui/toaster";
 import { readFileAsText, validateAquaTree, getFileName, readFileContent, getGenesisHash, ensureDomainUrlHasSSL, isAquaTree, allLinkRevisionHashes, getAquaTreeFileName } from "../../utils/functions";
-import { Box, Input, Text, VStack } from "@chakra-ui/react";
-import {
-    Modal,
-    ModalBody,
-    ModalCloseButton,
-    ModalContent,
-    ModalFooter,
-    ModalHeader,
-    ModalOverlay,
-} from '@chakra-ui/modal'
+import { toast } from "sonner";
 
 import Aquafier, { AquaTree, FileObject } from "aqua-js-sdk";
-import { useDisclosure } from '@chakra-ui/hooks'
 import { IDropzoneAction2, UploadLinkAquaTreeExpectedData } from "../../types/types";
+
+// Import shadcn UI components
+import { Button } from "@/components/shadcn/ui/button";
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+    DialogClose,
+} from "@/components/shadcn/ui/dialog";
+import { Input } from "@/components/shadcn/ui/input";
 
 export const ImportAquaTree = ({ aquaFile, uploadedIndexes, fileIndex, updateUploadedIndex }: IDropzoneAction2) => {
 
@@ -30,7 +31,9 @@ export const ImportAquaTree = ({ aquaFile, uploadedIndexes, fileIndex, updateUpl
     const [requiredFileHash, setRequiredFileHash] = useState<string | null>(null)
     const fileInputRef = useRef<HTMLInputElement>(null)
     const [selectedFileName, setSelectedFileName] = useState<string>("")
-    const { isOpen, onOpen, onClose } = useDisclosure()
+    const [isOpen, setIsOpen] = useState(false)
+    const onOpen = () => setIsOpen(true)
+    const onClose = () => setIsOpen(false)
 
     const [allFileObjectWrapper, setAllFileObjectsWrapper] = useState<Array<{
         file: File,
@@ -63,19 +66,13 @@ export const ImportAquaTree = ({ aquaFile, uploadedIndexes, fileIndex, updateUpl
             setUploaded(true)
             setUploading(false)
             setSelectedFileName("")
-            toaster.create({
-                description: "File uploaded successfuly",
-                type: "success"
-            })
+            toast.success("File uploaded successfully")
             updateUploadedIndex(fileIndex)
             return;
         } catch (error) {
             setUploading(false)
             setSelectedFileName("")
-            toaster.create({
-                description: `Failed to upload file: ${error}`,
-                type: "error"
-            })
+            toast.error(`Failed to upload file: ${error}`)
         }
     }
 
@@ -93,10 +90,7 @@ export const ImportAquaTree = ({ aquaFile, uploadedIndexes, fileIndex, updateUpl
 
         let genHash = getGenesisHash(aquaTree);
         if (genHash == null) {
-            toaster.create({
-                description: `Genesis Revision not found`,
-                type: "error"
-            })
+            toast.error(`Genesis Revision not found`)
             return
         }
 
@@ -178,10 +172,7 @@ export const ImportAquaTree = ({ aquaFile, uploadedIndexes, fileIndex, updateUpl
             console.log(`is aqua tree valid ${isValidAquaTree} failure reason ${failureReason}`)
             if (!isValidAquaTree) {
                 setUploading(false)
-                toaster.create({
-                    description: `Aqua tree has an error: ${failureReason}`,
-                    type: "error"
-                })
+                toast.error(`Aqua tree has an error: ${failureReason}`)
                 return;
             }
 
@@ -202,10 +193,7 @@ export const ImportAquaTree = ({ aquaFile, uploadedIndexes, fileIndex, updateUpl
                     return
                 } else {
                     setUploading(false)
-                    toaster.create({
-                        description: `Could not determine required file hash from AquaTree`,
-                        type: "error"
-                    })
+                    toast.error(`Could not determine required file hash from AquaTree`)
                     return
                 }
             }
@@ -225,10 +213,7 @@ export const ImportAquaTree = ({ aquaFile, uploadedIndexes, fileIndex, updateUpl
             // Check if aqua tree has link revisions
             if (hasLinkRevisions(aquaTree)) {
                 setUploading(false)
-                toaster.create({
-                    description: `Aqua tree has a link revision please import the Aquatree using the zip format`,
-                    type: "error"
-                })
+                toast.error(`Aqua tree has a link revision please import the Aquatree using the zip format`)
                 return
             }
 
@@ -236,10 +221,7 @@ export const ImportAquaTree = ({ aquaFile, uploadedIndexes, fileIndex, updateUpl
 
             if (result.isErr()) {
                 setUploading(false)
-                toaster.create({
-                    description: `Aqua tree is not valid: ${JSON.stringify(result)}`,
-                    type: "error"
-                })
+                toast.error(`Aqua tree is not valid: ${JSON.stringify(result)}`)
                 return;
             }
 
@@ -247,10 +229,7 @@ export const ImportAquaTree = ({ aquaFile, uploadedIndexes, fileIndex, updateUpl
 
             if (userHasAquaTreeByGenesis(importedAquaTreeGenesisHash!)) {
                 setUploading(false)
-                toaster.create({
-                    description: `Aqua tree exists already in your files`,
-                    type: "error"
-                })
+                toast.error(`Aqua tree exists already in your files`)
                 return;
             }
 
@@ -258,10 +237,7 @@ export const ImportAquaTree = ({ aquaFile, uploadedIndexes, fileIndex, updateUpl
 
         } catch (e) {
             setUploading(false)
-            toaster.create({
-                description: `Failed to import aqua tree file: ${e}`,
-                type: "error"
-            })
+            toast.error(`Failed to import aqua tree file: ${e}`)
         }
     }
 
@@ -358,10 +334,7 @@ export const ImportAquaTree = ({ aquaFile, uploadedIndexes, fileIndex, updateUpl
 
     const inspectMultiFileUpload = async (filePar: File) => {
         if (!expectedFile) {
-            toaster.create({
-                description: "An internal error occured",
-                type: "error"
-            });
+            toast.error("An internal error occurred");
             return;
         }
 
@@ -374,10 +347,7 @@ export const ImportAquaTree = ({ aquaFile, uploadedIndexes, fileIndex, updateUpl
 
             console.log(`calculated fileHash ${fileHash} and from chain ${expectedFile.exectedFileHash} file name ${filePar.name}`);
             if (fileHash.trim() != expectedFile.exectedFileHash.trim()) {
-                toaster.create({
-                    description: "Dropped file hash doesn't match the required hash in the AquaTree..",
-                    type: "error"
-                });
+                toast.error("Dropped file hash doesn't match the required hash in the AquaTree..");
                 return;
             }
         } else {
@@ -387,20 +357,14 @@ export const ImportAquaTree = ({ aquaFile, uploadedIndexes, fileIndex, updateUpl
             if (allHashes.includes(expectedFile.itemRevisionHash)) {
                 console.log(`Its okay continue ......`)
             } else {
-                toaster.create({
-                    description: "Aqua file does not contain " + expectedFile.itemRevisionHash,
-                    type: "error"
-                });
+                toast.error("Aqua file does not contain " + expectedFile.itemRevisionHash);
                 return;
             }
 
         }
 
         if (filePar.name != expectedFile.expectedFileName) {
-            toaster.create({
-                description: "Please rename the file to " + expectedFile.expectedFileName,
-                type: "error"
-            });
+            toast.error("Please rename the file to " + expectedFile.expectedFileName);
             return;
         }
 
@@ -455,10 +419,7 @@ export const ImportAquaTree = ({ aquaFile, uploadedIndexes, fileIndex, updateUpl
                 const fileObjWrapper = newFileObjects.find((e) => e.fileObject.fileName === fileName);
 
                 if (!fileObjWrapper) {
-                    toaster.create({
-                        description: `An internal error occured , cannot find file ${fileName}`,
-                        type: "error"
-                    });
+                    toast.error(`An internal error occurred, cannot find file ${fileName}`);
                     return false;
                 }
 
@@ -495,10 +456,7 @@ export const ImportAquaTree = ({ aquaFile, uploadedIndexes, fileIndex, updateUpl
             const fileHash = aquafier.getFileHash(fileDataContent)
             console.log(`calculated fileHash ${fileHash} and from chain ${requiredFileHash} file name ${selectedFile.name}`)
             if (fileHash !== requiredFileHash) {
-                toaster.create({
-                    description: "Dropped file hash doesn't match the required hash in the AquaTree..",
-                    type: "error"
-                })
+                toast.error("Dropped file hash doesn't match the required hash in the AquaTree..")
             } else {
 
 
@@ -508,10 +466,7 @@ export const ImportAquaTree = ({ aquaFile, uploadedIndexes, fileIndex, updateUpl
                 try {
                     await uploadFileData(aquaFile, selectedFile, false)
                 } catch (error) {
-                    toaster.create({
-                        description: `Error processing: ${error instanceof Error ? error.message : String(error)}`,
-                        type: "error"
-                    })
+                    toast.error(`Error processing: ${error instanceof Error ? error.message : String(error)}`)
                     setUploading(false)
                 }
             }
@@ -546,121 +501,84 @@ export const ImportAquaTree = ({ aquaFile, uploadedIndexes, fileIndex, updateUpl
 
     return (
         <>
-            <Button data-testid="action-import-93-button" size={'xs'} colorPalette={'green'} variant={'subtle'} w={'100px'} onClick={importFile} disabled={uploadedIndexes.includes(fileIndex) || uploaded} loading={uploading}>
-                <LuImport />
+            <Button 
+                data-testid="action-import-93-button" 
+                size="sm" 
+                variant="outline" 
+                className="w-[100px] bg-green-50 hover:bg-green-100 text-green-700" 
+                onClick={importFile} 
+                disabled={uploadedIndexes.includes(fileIndex) || uploaded}
+            >
+                {uploading ? (
+                    <span className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-green-700 border-t-transparent"></span>
+                ) : (
+                    <LuImport className="mr-2 h-4 w-4" />
+                )}
                 Import
             </Button>
-            <Modal isOpen={isOpen} onClose={() => {
-                setUploading(false)
-                onClose()
-            }} isCentered>
-                <ModalOverlay
-                    backgroundColor="rgba(0, 0, 0, 0.5)"
-                    backdropFilter="blur(2px)"
-                />
-                <ModalContent
-                    maxW="650px"
-                    w="90%"
-                    mx="auto"
-                    mt="50px"
-                    borderRadius="16px"
-                    boxShadow="0 5px 15px rgba(0, 0, 0, 0.5)"
-                    bg="white"
-                    border="1px solid rgba(0, 0, 0, 0.2)"
-                    p={25}
-                    overflow="hidden"
-                >
-                    <ModalHeader
-                        borderBottom="1px solid #e9ecef"
-                        py={3}
-                        px={4}
-                        fontSize="16px"
-                        fontWeight="500"
-                    >
-                        Please provide the required file
-                    </ModalHeader>
-                    <ModalCloseButton
-                        position="absolute"
-                        right="10px"
-                        top="10px"
-                        size="sm"
-                        borderRadius="50%"
-                        bg="transparent"
-                        border="none"
-                        _hover={{ bg: "gray.100" }}
-                    />
-                    <ModalBody py={4} px={4}>
-                        <VStack gap={3} alignItems={'center'} flex={1}>
-                            <Text fontSize="14px" color={'black'} >
-                                {
-                                    expectedFile == null ? <span> We couldn't fetch the file associated with this AquaTree. Please select or drop the file:</span>
-                                        : <span>{expectedFile.displayText}</span>
-                                }
-                            </Text>
+            
+            <Dialog open={isOpen} onOpenChange={(open) => {
+                if (!open) {
+                    setUploading(false);
+                }
+                setIsOpen(open);
+            }}>
+                <DialogContent className="sm:max-w-[650px] p-6 bg-white rounded-lg border shadow-lg">
+                    <DialogHeader>
+                        <DialogTitle className="text-base font-medium border-b pb-3">Please provide the required file</DialogTitle>
+                    </DialogHeader>
+                    
+                    <div className="flex flex-col items-center gap-3 py-4">
+                        <p className="text-sm text-black">
+                            {expectedFile == null ? 
+                                <span>We couldn't fetch the file associated with this AquaTree. Please select or drop the file:</span> : 
+                                <span>{expectedFile.displayText}</span>
+                            }
+                        </p>
 
-                            <Box
-                                border="1px dashed"
-                                borderColor="gray.300"
-                                borderRadius="md"
-                                p={4}
-                                w="100%"
-                                textAlign="center"
-                                onDrop={handleDrop}
-                                onDragOver={handleDragOver}
-                                bg="gray.50"
+                        <div 
+                            className="border border-dashed border-gray-300 rounded-md p-4 w-full text-center bg-gray-50"
+                            onDrop={handleDrop}
+                            onDragOver={handleDragOver}
+                        >
+                            <p className="mb-2 text-sm text-black">Drag and drop file here</p>
+                            <p className="text-sm text-black">or</p>
+                            <Button
+                                data-testid="action-select-file-06-button"
+                                className="mt-2 bg-black text-white hover:bg-gray-800"
+                                size="sm"
+                                onClick={() => fileInputRef.current?.click()}
                             >
-                                <Text mb={2} color={'black'} fontSize="14px">Drag and drop file here</Text>
-                                <Text fontSize="14px" color={'black'} >or</Text>
-                                <Button
-                                    data-testid="action-select-file-06-button"
-                                    mt={2}
-                                    onClick={() => fileInputRef.current?.click()}
-                                    bg="black"
-                                    color="white"
-                                    _hover={{ bg: "gray.800" }}
-                                    size="sm"
-                                    borderRadius="sm"
-                                >
-                                    Select File
-                                </Button>
-                                <Input
-                                    type="file"
-                                    hidden
-                                    ref={fileInputRef}
-                                    onChange={handleFileSelect}
-                                />
-                            </Box>
+                                Select File
+                            </Button>
+                            <Input
+                                type="file"
+                                className="hidden"
+                                ref={fileInputRef}
+                                onChange={handleFileSelect}
+                            />
+                        </div>
 
-                            {selectedFileName.length > 0 ?
-                                <Text fontSize="14px">Selected: {selectedFileName}</Text>
-                                : <></>}
-                        </VStack>
-                    </ModalBody>
+                        {selectedFileName.length > 0 && (
+                            <p className="text-sm">Selected: {selectedFileName}</p>
+                        )}
+                    </div>
 
-                    <ModalFooter
-                        borderTop="1px solid #e9ecef"
-                        py={3}
-                        px={4}
-                        justifyContent="flex-end"
-                    >
+                    <DialogFooter className="border-t pt-3">
                         <Button
-                        data-testid="action-cancel-77-button"
-                            bg="black"
-                            color="white"
-                            mr={3}
-                            onClick={() => {
-                                setUploading(false)
-                                onClose()
-                            }}
+                            data-testid="action-cancel-77-button"
+                            className="bg-black text-white hover:bg-gray-800"
                             size="sm"
-                            borderRadius="sm"
-                            _hover={{ bg: "gray.800" }}
+                            onClick={() => {
+                                setUploading(false);
+                                onClose();
+                            }}
                         >
                             Cancel
                         </Button>
-                    </ModalFooter>
-                </ModalContent>
-            </Modal>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
         </>
     )
 }

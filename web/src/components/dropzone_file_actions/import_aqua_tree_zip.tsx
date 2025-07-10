@@ -1,13 +1,13 @@
-import {  LuSave } from "react-icons/lu";
-import { Button } from "../chakra-ui/button";
+import { LuSave } from "react-icons/lu";
 import axios from "axios";
 import { useStore } from "zustand";
 import appStore from "../../store";
 import { useState } from "react";
-import { toaster } from "../chakra-ui/toaster";
+import { toast } from "sonner";
 
 import JSZip from "jszip";
 import { IDropzoneAction } from "../../types/types";
+import { Button } from "@/components/shadcn/ui/button";
 
 
 
@@ -28,10 +28,7 @@ export const ImportAquaTreeZip = ({ file, uploadedIndexes, fileIndex, updateUplo
 
 
         if (!file) {
-            toaster.create({
-                description: "No file selected!",
-                type: "info"
-            })
+            toast.info("No file selected!");
             return;
         }
 
@@ -57,18 +54,12 @@ export const ImportAquaTreeZip = ({ file, uploadedIndexes, fileIndex, updateUplo
             setFiles([...res.data])
             setUploaded(true)
             setUploading(false)
-            toaster.create({
-                description: "File uploaded successfuly",
-                type: "success"
-            })
+            toast.success("File uploaded successfully");
             updateUploadedIndex(fileIndex)
             return;
         } catch (error) {
             setUploading(false)
-            toaster.create({
-                description: `Failed to upload file: ${error}`,
-                type: "error"
-            })
+            toast.error(`Failed to upload file: ${error}`);
         }
     }
 
@@ -91,11 +82,8 @@ export const ImportAquaTreeZip = ({ file, uploadedIndexes, fileIndex, updateUplo
                     }
                 }
                 if (!hasAquaJson) {
-                    toaster.create({
-                        description: "Aqua Json not found.",
-                        type: "info"
-                    })
-                    return
+                    toast.info("Aqua Json not found.");
+                    return;
                 }
 
                 await uploadFileData()
@@ -103,7 +91,7 @@ export const ImportAquaTreeZip = ({ file, uploadedIndexes, fileIndex, updateUplo
 
             } catch (error) {
                 console.error("Error reading ZIP file:", error);
-                alert("Failed to read ZIP file.");
+                toast.error("Failed to read ZIP file.");
             }
         };
 
@@ -112,8 +100,19 @@ export const ImportAquaTreeZip = ({ file, uploadedIndexes, fileIndex, updateUplo
     };
 
     return (
-        <Button data-testid="action-import-82-button" size={'xs'} colorPalette={'green'} variant={'subtle'} w={'80px'} onClick={importFile} disabled={uploadedIndexes.includes(fileIndex) || uploaded} loading={uploading}>
-            <LuSave />
+        <Button 
+            data-testid="action-import-82-button" 
+            size="sm" 
+            variant="outline" 
+            className="w-20 bg-green-50 hover:bg-green-100 text-green-700" 
+            onClick={importFile} 
+            disabled={uploadedIndexes.includes(fileIndex) || uploaded}
+        >
+            {uploading ? (
+                <span className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-green-700 border-t-transparent"></span>
+            ) : (
+                <LuSave className="mr-2 h-4 w-4" />
+            )}
             Import
         </Button>
     )

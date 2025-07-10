@@ -1,12 +1,12 @@
 import { LuImport } from "react-icons/lu";
-import { Button } from "../chakra-ui/button";
 import axios from "axios";
 import { useStore } from "zustand";
 import appStore from "../../store";
 import { useState } from "react";
 import { ApiFileInfo } from "../../models/FileInfo";
-import { toaster } from "../chakra-ui/toaster";
 import { IDropzoneAction } from "../../types/types";
+import { toast } from "sonner";
+import { Button } from "@/components/shadcn/ui/button";
 
 
 
@@ -21,10 +21,7 @@ export const ImportAquaChainFromFile = ({ file, uploadedIndexes, fileIndex, upda
     const importAquaChain = async () => {
 
         if (!file) {
-            toaster.create({
-                description: "No file selected!",
-                type: "error"
-            })
+            toast.error("No file selected!");
             return;
         }
 
@@ -62,26 +59,31 @@ export const ImportAquaChainFromFile = ({ file, uploadedIndexes, fileIndex, upda
             const file: ApiFileInfo = res
             setFiles([...files, file])
             // setUploadedFilesIndexes(value => [...value, fileIndex])
-            toaster.create({
-                description: "Aqua Chain imported successfully",
-                type: "success"
-            })
+            toast.success("Aqua Chain imported successfully");
             setUploading(false)
             setUploaded(true)
             updateUploadedIndex(fileIndex)
             return;
         } catch (error) {
             setUploading(false)
-            toaster.create({
-                description: `Failed to import chain: ${error}`,
-                type: "error"
-            })
+            toast.error(`Failed to import chain: ${error}`);
         }
     };
 
     return (
-        <Button data-testid="import-action-42-button" size={'xs'} colorPalette={'blackAlpha'} variant={'subtle'} w={'80px'} onClick={importAquaChain} disabled={uploadedIndexes.includes(fileIndex) || uploaded} loading={uploading}>
-            <LuImport />
+        <Button 
+            data-testid="import-action-42-button" 
+            size="sm" 
+            variant="outline" 
+            className="w-20 bg-gray-100 hover:bg-gray-200 text-gray-800" 
+            onClick={importAquaChain} 
+            disabled={uploadedIndexes.includes(fileIndex) || uploaded}
+        >
+            {uploading ? (
+                <span className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-gray-800 border-t-transparent"></span>
+            ) : (
+                <LuImport className="mr-2 h-4 w-4" />
+            )}
             Import
         </Button>
     )

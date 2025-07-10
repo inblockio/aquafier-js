@@ -361,6 +361,15 @@ export default function WorkflowsTablePage() {
                 </TableHeader>
                 <TableBody>
                   {
+                    _workflows.length  === 0 && (
+                      <TableRow>
+                        <TableCell colSpan={6} className="h-24 text-center">
+                          No workflows found
+                        </TableCell>
+                      </TableRow>
+                    )
+                  }
+                  {
                     _workflows.map((workflow, index: number) => (
                       <WorkflowTableItem key={`${index}-workflow`} workflowName={workflow.workflowName} apiFileInfo={workflow.apiFileInfo} index={index} />
                     ))

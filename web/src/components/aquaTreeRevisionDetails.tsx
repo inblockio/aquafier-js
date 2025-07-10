@@ -1,23 +1,112 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { LuCheck, LuExternalLink, LuTrash, LuX } from "react-icons/lu"
-import { Box, Button, Card, Collapsible, For, Group, Icon, IconButton, Link, Span, Stack, Text } from "@chakra-ui/react"
-import { TimelineConnector, TimelineContent, TimelineDescription, TimelineItem, TimelineRoot, TimelineTitle } from "./chakra-ui/timeline"
 import { displayTime, formatCryptoAddress, fetchLinkedFileName, getFileNameWithDeepLinking, fetchFiles, getAquaTreeFileObject, isDeepLinkRevision, isAquaTree, getGenesisHash } from "../utils/functions"
-import { Alert } from "./chakra-ui/alert"
 import { AquaTree, FileObject, LogTypeEmojis, Revision } from "aqua-js-sdk";
-// import ReactLoading from "react-loading"
 import { ClipLoader } from "react-spinners";
 import { ERROR_TEXT, WITNESS_NETWORK_MAP, ERROR_UKNOWN } from "../utils/constants"
-import { WalletEnsView } from "./chakra-ui/wallet_ens"
 import { AquaTreeDetailsData, RevisionDetailsSummaryData } from "../models/AquaTreeDetails"
 
 import { ItemDetail } from "./ItemDetails";
 import appStore from "../store"
 import { useStore } from "zustand"
 import axios from "axios"
-import { toaster } from "./chakra-ui/toaster";
+import { toast } from "sonner";
 import { ApiFileInfo } from "../models/FileInfo";
 import React from "react";
+
+// Import shadcn UI components
+import { Button } from "@/components/shadcn/ui/button"
+import { Alert, AlertTitle, AlertDescription } from "@/components/shadcn/ui/alert"
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/shadcn/ui/collapsible"
+import { cn } from "@/lib/utils"
+
+// Custom Timeline components using Tailwind
+const TimelineRoot = ({ children, className, size = "md", variant = "default" }: { children: React.ReactNode, className?: string, size?: "sm" | "md" | "lg", variant?: "default" | "subtle" }) => {
+    const sizeClasses = {
+        sm: "space-y-2 pl-4 before:left-1.5",
+        md: "space-y-3 pl-5 before:left-2",
+        lg: "space-y-4 pl-6 before:left-2.5"
+    };
+    
+    const variantClasses = {
+        default: "before:bg-gray-300",
+        subtle: "before:bg-gray-200"
+    };
+    
+    return (
+        <div className={cn(
+            "relative before:absolute before:top-2 before:h-[calc(100%-16px)] before:w-0.5", 
+            sizeClasses[size], 
+            variantClasses[variant],
+            className
+        )}>
+            {children}
+        </div>
+    );
+};
+
+const TimelineItem = ({ children }: { children: React.ReactNode }) => {
+    return <div className="relative mb-4">{children}</div>;
+};
+
+const TimelineConnector = ({ children, bg, color }: { children: React.ReactNode, bg: string, color: string }) => {
+    const bgColorMap: Record<string, string> = {
+        "gray.400": "bg-gray-400",
+        "green": "bg-green-500",
+        "red": "bg-red-500",
+        "yellow": "bg-yellow-500"
+    };
+    
+    return (
+        <div className={cn(
+            "absolute left-[-8px] top-0 flex h-4 w-4 items-center justify-center rounded-full",
+            bgColorMap[bg] || "bg-blue-500"
+        )}>
+            {children}
+        </div>
+    );
+};
+
+const TimelineContent = ({ children, gap }: { children: React.ReactNode, gap?: string }) => {
+    const gapMap: Record<string, string> = {
+        "2": "space-y-2",
+        "4": "space-y-4"
+    };
+    
+    return <div className={cn("ml-6", gapMap[gap || "2"])}>{children}</div>;
+};
+
+const TimelineTitle = ({ children, onClick, cursor }: { children: React.ReactNode, onClick?: () => void, cursor?: string }) => {
+    return (
+        <div 
+            className={cn("font-medium text-gray-900 dark:text-gray-100", cursor === "pointer" && "cursor-pointer")} 
+            onClick={onClick}
+        >
+            {children}
+        </div>
+    );
+};
+
+const TimelineDescription = ({ children }: { children: React.ReactNode }) => {
+    return <div className="text-sm text-gray-500 dark:text-gray-400">{children}</div>;
+};
+
+// Custom For component replacement
+const For = <T extends any>({ each, children }: { each: T[], children: (item: T, index: number) => React.ReactNode }) => {
+    return <>{each.map((item, index) => children(item, index))}</>;
+};
+
+// Custom WalletEnsView component
+const WalletEnsView = ({ walletAddress }: { walletAddress: string }) => {
+    return (
+        <div className="flex items-center space-x-2 font-mono text-sm">
+            <span className="text-gray-700 dark:text-gray-300">Wallet:</span>
+            <span className="text-blue-600 dark:text-blue-400">
+                {formatCryptoAddress(walletAddress, 4, 6)}
+            </span>
+        </div>
+    );
+};
 
 const viewLinkedFile = (selectedApiFileInfo: ApiFileInfo, revisionHash: string, revision: Revision, apiFileInfo: ApiFileInfo[], updateSelectedFile: (fileInfo: ApiFileInfo) => void, isWorkflow: boolean): React.JSX.Element => {
 
@@ -27,7 +116,7 @@ const viewLinkedFile = (selectedApiFileInfo: ApiFileInfo, revisionHash: string, 
             return <></>
         }
 
-        return <Button  data-testid="view-linked-file" onClick={
+        return <Button data-testid="view-linked-file" variant="outline" size="sm" onClick={
             () => {
                 let linkedFileName = fetchLinkedFileName(selectedApiFileInfo.aquaTree!!, revision);
                 let allFileObjects = [...selectedApiFileInfo.fileObject]
@@ -35,11 +124,7 @@ const viewLinkedFile = (selectedApiFileInfo: ApiFileInfo, revisionHash: string, 
                     allFileObjects = [...allFileObjects, ...e.fileObject];
                 })
                 if (isWorkflow || linkedFileName == ERROR_TEXT) {
-
-
-
                     linkedFileName = getFileNameWithDeepLinking(selectedApiFileInfo.aquaTree!!, revisionHash, allFileObjects)
-
                 }
 
                 let fileInfoFound: ApiFileInfo | undefined = undefined
@@ -48,7 +133,6 @@ const viewLinkedFile = (selectedApiFileInfo: ApiFileInfo, revisionHash: string, 
                         let fileObject = getAquaTreeFileObject(fileInfo);
                         if (fileObject) {
                             if (linkedFileName == fileObject.fileName) {
-
                                 fileInfoFound = fileInfo
                                 break
                             }
@@ -63,9 +147,7 @@ const viewLinkedFile = (selectedApiFileInfo: ApiFileInfo, revisionHash: string, 
                             owner:""
                         })
                     } else {
-
                         for (let fileObject of allFileObjects) {
-
                             if (linkedFileName == fileObject.fileName) {
                                 let aquaTree: AquaTree | undefined = undefined;
                                 if (linkedFileName.endsWith(".aqua.json")) {
@@ -79,10 +161,7 @@ const viewLinkedFile = (selectedApiFileInfo: ApiFileInfo, revisionHash: string, 
 
                                 if (aquaTree == undefined) {
                                     console.log(`show  ${linkedFileName}  filw object ${JSON.stringify(fileObject, null, 4)}`)
-                                    toaster.create({
-                                        title: "View not available",
-                                        type: 'info'
-                                    })
+                                    toast.info("View not available");
                                 } else {
                                     updateSelectedFile({
                                         aquaTree: aquaTree,
@@ -95,18 +174,13 @@ const viewLinkedFile = (selectedApiFileInfo: ApiFileInfo, revisionHash: string, 
 
                                 break
                             }
-
                         }
-
                     }
                 } else {
-                    toaster.create({
-                        title: "Link file not found , possibly a deep link ?",
-                        type: 'info'
-                    })
+                    toast.info("Link file not found, possibly a deep link?");
                 }
             }
-        }>View File </Button>
+        }>View File</Button>
 
     } else {
         return <></>
@@ -119,25 +193,24 @@ const revisionDataHeader = (aquaTree: AquaTree, revisionHash: string, fileObject
     const revision = aquaTree.revisions[revisionHash]
 
     if (revision.previous_verification_hash.length == 0) {
-
-        <Span >
+        return <span className="font-medium">
             Genesis Revision
-        </Span>
+        </span>
     }
+    
     if (revision.revision_type == "link") {
         let isDeepLink = isDeepLinkRevision(aquaTree, revisionHash)
         if (isDeepLink == null) {
-            return <Span>{ERROR_TEXT}</Span>
+            return <span>{ERROR_TEXT}</span>
         }
         if (isDeepLink) {
-            // before returning deep link we traverse the current  aqua tree 
+            // before returning deep link we traverse the current aqua tree 
             const aquaTreeFiles = fileObject.filter(file => isAquaTree(file.fileContent));
             console.log(`👁️‍🗨️ aquaTreeFiles ${aquaTreeFiles.length} --  `)
             if (aquaTreeFiles.length > 0) {
                 let aquaTreePick = aquaTreeFiles.find((e) => {
                     let tree: AquaTree = e.fileContent as AquaTree
                     let allHashes = Object.keys(tree.revisions);
-
 
                     console.log(`👁️‍🗨️ aquaTreeFiles ${allHashes.toString()} == ${revisionHash} `)
                     return allHashes.includes(revision.link_verification_hashes![0]!)
@@ -150,33 +223,31 @@ const revisionDataHeader = (aquaTree: AquaTree, revisionHash: string, fileObject
 
                     console.log(`👁️‍🗨️  genesisHash ${genesisHash}`)
                     if (genesisHash) {
-
                         let fileName = tree.file_index[genesisHash]
                         console.log(`👁️‍🗨️ fileName ${fileName}`)
 
                         if (fileName) {
-                            return <Span fontSize={"md"}>
+                            return <span className="text-md">
                                 Linked to {fileName}
-                            </Span>
+                            </span>
                         }
                     }
-
                 }
             }
 
-            return <Span>
+            return <span className="text-sm">
                 Deep Link previous {revision.previous_verification_hash} revisionHash {revisionHash}
-            </Span>
+            </span>
         } else {
-            return <Span fontSize={"md"}>
+            return <span className="text-md">
                 linked to {fetchLinkedFileName(aquaTree, revision)}
-            </Span>
+            </span>
         }
     }
 
-    return <Span>
+    return <span className="text-sm">
         {revision.revision_type}
-    </Span >
+    </span>
 }
 
 export const RevisionDisplay = ({ fileInfo, revision, revisionHash, isVerificationComplete, verificationResults, isDeletable, deleteRevision, index }: AquaTreeDetailsData) => {
@@ -238,38 +309,47 @@ export const RevisionDisplay = ({ fileInfo, revision, revisionHash, isVerificati
 
     // Memoize alert component to prevent recreation
     const displayAlert = useMemo((): React.JSX.Element => {
-        let status: "info" | "warning" | "success" | "error" | "neutral" = "info";
+        let alertVariant = "bg-blue-50 border-blue-200 text-blue-700";
         let title = "This revision is being verified";
 
         if (isRevisionVerificationSuccessful !== null) {
             if (isRevisionVerificationSuccessful) {
-                status = "success";
+                alertVariant = "bg-green-50 border-green-200 text-green-700";
                 title = "This revision is valid";
             } else {
-                status = "error";
+                alertVariant = "bg-red-50 border-red-200 text-red-700";
                 title = "This revision is invalid";
             }
         }
 
-        return <Alert status={status} title={title} />;
+        return (
+            <Alert className={alertVariant}>
+                <AlertTitle>{title}</AlertTitle>
+            </Alert>
+        );
     }, [isRevisionVerificationSuccessful]);
 
     // Memoize verification icon to prevent recreation
     const verificationStatusIcon = useMemo((): React.JSX.Element => {
         if (isRevisionVerificationSuccessful === null) {
-            return  <ClipLoader
-                              color={"blue"}
-                              loading={true}
-                              size={loaderSize}
-                              aria-label="Loading Spinner"
-                              data-testid="loader"
-                          />
-            // return <ReactLoading type={'spin'} color={'blue'} height={loaderSize} width={loaderSize} />;
+            return (
+                <div className="flex items-center justify-center w-full h-full">
+                    <ClipLoader
+                        color={"blue"}
+                        loading={true}
+                        size={loaderSize}
+                        aria-label="Loading Spinner"
+                        data-testid="loader"
+                    />
+                </div>
+            );
         }
 
-        return isRevisionVerificationSuccessful ?
-            <Box><LuCheck /></Box> :
-            <Box><LuX /></Box>;
+        return isRevisionVerificationSuccessful ? (
+            <div className="text-white"><LuCheck className="h-3 w-3" /></div>
+        ) : (
+            <div className="text-white"><LuX className="h-3 w-3" /></div>
+        );
     }, [isRevisionVerificationSuccessful, loaderSize]);
 
     // Memoize delete handler to prevent recreation on each render
@@ -290,12 +370,9 @@ export const RevisionDisplay = ({ fileInfo, revision, revisionHash, isVerificati
             });
 
             if (response.status === 200) {
-                toaster.create({
-                    title: "Revision deleted",
+                toast.success("Revision deleted", {
                     description: "The revision has been deleted",
-                    type: "success",
-                    duration: 3000,
-                    // placement: "bottom-end"
+                    duration: 3000
                 });
 
                 // Reload files for the current user
@@ -319,19 +396,15 @@ export const RevisionDisplay = ({ fileInfo, revision, revisionHash, isVerificati
                     deleteRevision(revisionHash);
                 }
             } else {
-                toaster.create({
-                    title: "Revision not deleted",
+                toast.error("Revision not deleted", {
                     description: "The revision has not been deleted",
-                    type: "error",
                     duration: 3000,
                     // placement: "bottom-end"
                 });
             }
         } catch (error) {
-            toaster.create({
-                title: "Revision not deleted",
+            toast.error("Revision not deleted", {
                 description: "The revision has not been deleted",
-                type: "error",
                 duration: 3000,
                 // placement: "bottom-end"
             });
@@ -343,9 +416,15 @@ export const RevisionDisplay = ({ fileInfo, revision, revisionHash, isVerificati
     const displayDeleteButton = (): React.JSX.Element => {
         if (isDeletable) {
             return (
-                <IconButton size={'xs'} borderRadius={"full"} onClick={handleDelete} disabled={isDeleting} colorPalette={"red"}>
-                    <LuTrash />
-                </IconButton>
+                <Button 
+                    variant="destructive" 
+                    size="icon" 
+                    className="h-6 w-6 rounded-full" 
+                    onClick={handleDelete} 
+                    disabled={isDeleting}
+                >
+                    <LuTrash className="h-3 w-3" />
+                </Button>
             )
         }
         return <></>
@@ -361,59 +440,42 @@ export const RevisionDisplay = ({ fileInfo, revision, revisionHash, isVerificati
                 <TimelineConnector
                     bg={returnBgColor}
                     color={"white"}
-
                 >
-                    <Icon fontSize="xs" color={'white'} border={'none'}>
-                        {
-                            verificationStatusIcon
-                        }
-                    </Icon>
+                    {verificationStatusIcon}
                 </TimelineConnector>
                 <TimelineContent gap="4">
-
                     <TimelineTitle onClick={() => setShowRevisionDetails(prev => !prev)} cursor={"pointer"}>
-                        <Group justifyContent={"space-between"} wrap={"nowrap"}>
-                            <Group>
-                                <Span textTransform={"capitalize"} w={"200px"}>{`${revisionTypeEmoji ? revisionTypeEmoji : ''} ${revision?.revision_type} Revision`}</Span>
-                                <Span color="fg.muted" fontFamily={'monospace'} wordBreak={"break-all"}>{revisionHash}</Span>
-                            </Group>
-                            <Group>
+                        <div className="flex justify-between items-center flex-nowrap">
+                            <div className="flex items-center space-x-2">
+                                <span className="capitalize w-[200px]">{`${revisionTypeEmoji ? revisionTypeEmoji : ''} ${revision?.revision_type} Revision`}</span>
+                                <span className="text-gray-500 font-mono break-all">{revisionHash}</span>
+                            </div>
+                            <div>
                                 {displayDeleteButton()}
-                            </Group>
-                        </Group>
+                            </div>
+                        </div>
                     </TimelineTitle>
-                    <Collapsible.Root open={showRevisionDetails}>
-                        <Collapsible.Content>
-                            <Card.Root size="sm">
-                                <Card.Body textStyle="sm" lineHeight="tall">
-                                    <TimelineRoot size="lg" variant="subtle" maxW="md">
+                    <Collapsible open={showRevisionDetails}>
+                        <CollapsibleContent>
+                            <div className="border rounded-md shadow-sm">
+                                <div className="p-4 text-sm leading-relaxed">
+                                    <TimelineRoot size="lg" variant="subtle" className="max-w-md">
                                         {
                                             revision.revision_type == "file" || revision.revision_type == "form" || revision.revision_type == "link" ?
                                                 <>
                                                     <TimelineItem>
-                                                        <TimelineConnector
-                                                            bg={
-                                                                returnBgColor
-                                                            }
-                                                        >
-                                                            <Icon fontSize="xs" color={'white'}>
-                                                                {
-                                                                    verificationStatusIcon
-
-                                                                }
-                                                            </Icon>
+                                                        <TimelineConnector bg={returnBgColor} color={"white"}>
+                                                            {verificationStatusIcon}
                                                         </TimelineConnector>
 
                                                         <TimelineContent gap="2">
                                                             <TimelineTitle>
                                                                 {revisionDataHeader(fileInfo!.aquaTree!, revisionHash, fileInfo.fileObject)}
-
                                                             </TimelineTitle>
                                                             <TimelineDescription>{displayTime(revision.local_timestamp)}&nbsp;(UTC)</TimelineDescription>
                                                             {
                                                                 revision.revision_type === "file" ? (
                                                                     <ItemDetail label="File Hash:"
-                                                                        // displayValue={formatCryptoAddress(revision.signature.signature_wallet_address, 4, 6)}
                                                                         displayValue={formatCryptoAddress(revision.file_hash!, 10, 15)}
                                                                         value={revision.file_hash!} showCopyIcon={true}
                                                                     />
@@ -421,7 +483,6 @@ export const RevisionDisplay = ({ fileInfo, revision, revisionHash, isVerificati
                                                             }
                                                             {viewLinkedFile(fileInfo!, revisionHash, revision, files, setSelectedFileInfo, false)}
                                                         </TimelineContent>
-
                                                     </TimelineItem>
                                                 </> : null
                                         }
@@ -429,29 +490,14 @@ export const RevisionDisplay = ({ fileInfo, revision, revisionHash, isVerificati
                                         {
                                             revision.revision_type == "signature" ? (
                                                 <TimelineItem>
-                                                    <TimelineConnector
-                                                        bg={
-                                                            returnBgColor
-                                                            // verificationResult?.signature_verification.successful ? "green" : "red"
-                                                        }
-                                                    >
-                                                        <Icon fontSize="xs" color={'white'}>
-                                                            {
-                                                                verificationStatusIcon
-                                                                // verificationResult?.signature_verification.successful ? <LuCheck /> :
-                                                                //     <LuX />
-                                                            }
-                                                        </Icon>
+                                                    <TimelineConnector bg={returnBgColor} color={"white"}>
+                                                        {verificationStatusIcon}
                                                     </TimelineConnector>
                                                     <TimelineContent gap="2">
                                                         <TimelineTitle>
-                                                            <Span>
-                                                                Revision signature is
-                                                                {
-                                                                    // verificationResult?.signature_verification.successful ? ' valid' : ' invalid'
-                                                                    verificationStatusText
-                                                                }
-                                                            </Span>
+                                                            <span>
+                                                                Revision signature is {verificationStatusText}
+                                                            </span>
                                                         </TimelineTitle>
                                                         <ItemDetail label="Signature:"
                                                             displayValue={formatCryptoAddress(revision.signature, 4, 6)}
@@ -462,12 +508,6 @@ export const RevisionDisplay = ({ fileInfo, revision, revisionHash, isVerificati
                                                             value={revision.signature_type!} showCopyIcon={true}
                                                         />
                                                         <WalletEnsView walletAddress={revision.signature_wallet_address!} />
-
-                                                        {/* <ItemDetail label="Wallet Address:"
-                                                            // displayValue={formatCryptoAddress(revision.signature.signature_wallet_address, 4, 6)}
-                                                            displayValue={revision.signature_wallet_address!}
-                                                            value={revision.signature_wallet_address!} showCopyIcon={true}
-                                                        /> */}
                                                         <ItemDetail label="Public Key:"
                                                             displayValue={formatCryptoAddress(revision.signature_public_key, 4, 6)}
                                                             value={revision.signature_public_key!} showCopyIcon={true}
@@ -480,29 +520,14 @@ export const RevisionDisplay = ({ fileInfo, revision, revisionHash, isVerificati
                                         {
                                             revision.revision_type == "witness" ? (
                                                 <TimelineItem>
-                                                    <TimelineConnector
-                                                        bg={
-                                                            returnBgColor
-                                                            // verificationResult?.witness_verification.successful ? "green" : "red"
-                                                        }
-                                                    >
-                                                        <Icon fontSize="xs" color={'white'}>
-                                                            {
-                                                                verificationStatusIcon
-                                                                // verificationResult?.witness_verification.successful ? <LuCheck /> :
-                                                                //     <LuX />
-                                                            }
-                                                        </Icon>
+                                                    <TimelineConnector bg={returnBgColor} color={"white"}>
+                                                        {verificationStatusIcon}
                                                     </TimelineConnector>
                                                     <TimelineContent gap="2">
                                                         <TimelineTitle>
-                                                            <Span>
-                                                                Revision witness is &nbsp;
-                                                                {
-                                                                    verificationStatusText
-                                                                    // verificationResult?.witness_verification.successful ? ' valid' : ' invalid'
-                                                                }
-                                                            </Span>
+                                                            <span>
+                                                                Revision witness is &nbsp;{verificationStatusText}
+                                                            </span>
                                                         </TimelineTitle>
 
                                                         {
@@ -518,23 +543,24 @@ export const RevisionDisplay = ({ fileInfo, revision, revisionHash, isVerificati
                                                                     displayValue={formatCryptoAddress(revision.witness_sender_account_address, 4, 6)}
                                                                     value={revision.witness_sender_account_address!} showCopyIcon={true}
                                                                 /> : null
-
                                                         }
                                                         {
                                                             revision.witness_transaction_hash ?
-                                                                <Group>
+                                                                <div className="flex items-center space-x-2">
                                                                     <ItemDetail label="Transaction Hash:"
                                                                         displayValue={formatCryptoAddress(revision.witness_transaction_hash!.startsWith('0x') ? revision.witness_transaction_hash : `0x${revision.witness_transaction_hash}`, 4, 6)}
                                                                         value={`0x${revision.witness_transaction_hash}`} showCopyIcon={true}
                                                                     />
-                                                                    <Link outline={'none'} href={`${WITNESS_NETWORK_MAP[revision.witness_network!!]}/${revision.witness_transaction_hash}`} target="_blank">
-                                                                        <Icon size={'lg'} color={'blue.500'}>
-                                                                            <Box>
-                                                                                <LuExternalLink />
-                                                                            </Box>
-                                                                        </Icon>
-                                                                    </Link>
-                                                                </Group>
+                                                                    <a 
+                                                                        className="outline-none" 
+                                                                        href={`${WITNESS_NETWORK_MAP[revision.witness_network!!]}/${revision.witness_transaction_hash}`} 
+                                                                        target="_blank"
+                                                                    >
+                                                                        <div className="text-blue-500">
+                                                                            <LuExternalLink className="h-5 w-5" />
+                                                                        </div>
+                                                                    </a>
+                                                                </div>
                                                                 : null
                                                         }
 
@@ -547,13 +573,13 @@ export const RevisionDisplay = ({ fileInfo, revision, revisionHash, isVerificati
                                             ) : null
                                         }
                                     </TimelineRoot>
-                                </Card.Body>
-                                <Card.Footer>
+                                </div>
+                                <div className="p-4 border-t">
                                     {displayAlert}
-                                </Card.Footer>
-                            </Card.Root>
-                        </Collapsible.Content>
-                    </Collapsible.Root>
+                                </div>
+                            </div>
+                        </CollapsibleContent>
+                    </Collapsible>
                 </TimelineContent>
             </TimelineItem>
         </div>
@@ -565,18 +591,15 @@ export const RevisionDisplay = ({ fileInfo, revision, revisionHash, isVerificati
 export const RevisionDetailsSummary = ({ fileInfo, isWorkFlow }: RevisionDetailsSummaryData) => {
 
     const { files, setSelectedFileInfo } = useStore(appStore)
-    // const pageData: PageData = JSON.parse(fileInfo.page_data);
-    // const revisionHashes = Object.keys(pageData.pages[0].revisions)
     const revisionHashes = Object.keys(fileInfo!.aquaTree!.revisions)
 
-    //  
     const revisionsWithSignatures: Array<Revision> = [];
     const revisionsWithWitness: Array<Revision> = [];
     const revisionHashesWithLinks: Array<string> = [];
 
     for (let i = 0; i < revisionHashes.length; i++) {
         const currentRevision: string = revisionHashes[i];
-        const revision: Revision = fileInfo.aquaTree!.revisions[currentRevision]; //pageData.pages[0].revisions[currentRevision];
+        const revision: Revision = fileInfo.aquaTree!.revisions[currentRevision];
 
         if (revision.revision_type == "signature") {
             revisionsWithSignatures.push(revision)
@@ -590,146 +613,122 @@ export const RevisionDetailsSummary = ({ fileInfo, isWorkFlow }: RevisionDetails
         }
     }
 
+    return (
+        <div className="flex flex-col items-start w-full space-y-4">
+            <p className="text-base">Revisions count: {revisionHashes.length}</p>
 
-    return (<Stack textAlign="start" w={"100%"}>
-
-
-        <Text>Revisions count : {revisionHashes.length}</Text>
-
-        <Box w={'100%'} bg={'gray.100'} _dark={{
-            bg: "blackAlpha.900"
-        }} borderRadius={'lg'} p={{ base: '4', md: 'lg' }}>
-            <Text mb={'2'} fontWeight={600} fontSize={'lg'}>Signatures ({revisionsWithSignatures.length})</Text>
-            <For
-                each={revisionsWithSignatures}
-            >
-                {(revision, index) => (
-                    <Group key={`hash_${index}`} pb={'2'} mb={'4'} borderBottom={'1px solid'} borderColor={'gray.200'} _dark={{
-                        borderColor: "gray.50"
-                    }}>
-                        <IconButton size={'xs'}>
+            <div className="w-full bg-gray-100 dark:bg-gray-900 rounded-lg p-4 md:p-6">
+                <h3 className="mb-2 font-semibold text-lg">Signatures ({revisionsWithSignatures.length})</h3>
+                {revisionsWithSignatures.map((revision, index) => (
+                    <div 
+                        key={`hash_${index}`} 
+                        className="flex items-start pb-2 mb-4 border-b border-gray-200 dark:border-gray-700"
+                    >
+                        <Button 
+                            variant="outline" 
+                            size="icon" 
+                            className="h-6 w-6 mr-2 flex-shrink-0"
+                        >
                             {index + 1}
-                        </IconButton>
+                        </Button>
 
-                        <Box>
-                            {/* <Text style={{ whiteSpace: "pre-wrap" }}>{JSON.stringify(revision, null, 4)}</Text> */}
-
-                            {/* <Text>{index}. {revision.signature?.signature} </Text> */}
-                            <ItemDetail label="Signature Hash:"
+                        <div>
+                            <ItemDetail 
+                                label="Signature Hash:"
                                 displayValue={formatCryptoAddress(revision.signature, 4, 6)}
-                                value={revision.signature ?? ""} showCopyIcon={true}
+                                value={revision.signature ?? ""} 
+                                showCopyIcon={true}
                             />
-                            <WalletEnsView walletAddress={revision.signature_wallet_address!}></WalletEnsView>
-                            <ItemDetail label="Timestamp (UTC) : "
-                                // displayValue={formatCryptoAddress(revision.signature.signature_wallet_address, 4, 6)}
+                            <WalletEnsView walletAddress={revision.signature_wallet_address!} />
+                            <ItemDetail 
+                                label="Timestamp (UTC) : "
                                 displayValue={displayTime(revision.local_timestamp)}
-                                value={revision.local_timestamp ?? ""} showCopyIcon={false}
+                                value={revision.local_timestamp ?? ""} 
+                                showCopyIcon={false}
                             />
-                        </Box>
-                    </Group>
-                )}
-            </For>
-        </Box>
+                        </div>
+                    </div>
+                ))}
+            </div>
 
-        <Box w={'100%'} bg={'gray.100'} _dark={{
-            bg: "blackAlpha.900"
-        }} borderRadius={'lg'} p={{ base: '4', md: 'lg' }}>
-            <Text mb={'2'} fontWeight={600} fontSize={'lg'}>Witnesses ({revisionsWithWitness.length})</Text>
-            <For
-                each={revisionsWithWitness}
-            >
-                {(revision, index) => (
-                    <Group key={`witness_${index}`} pb={'2'} mb={'4'} borderBottom={'1px solid'} borderColor={'gray.200'} _dark={{
-                        borderColor: "gray.50"
-                    }}>
-                        <IconButton size={'xs'}>
+            <div className="w-full bg-gray-100 dark:bg-gray-900 rounded-lg p-4 md:p-6">
+                <h3 className="mb-2 font-semibold text-lg">Witnesses ({revisionsWithWitness.length})</h3>
+                {revisionsWithWitness.map((revision, index) => (
+                    <div 
+                        key={`witness_${index}`} 
+                        className="flex items-start pb-2 mb-4 border-b border-gray-200 dark:border-gray-700"
+                    >
+                        <Button 
+                            variant="outline" 
+                            size="icon" 
+                            className="h-6 w-6 mr-2 flex-shrink-0"
+                        >
                             {index + 1}
-                        </IconButton>
-                        {/* <Text>{index}. {revision.signature?.signature} </Text> */}
-                        <Box>
-                            <ItemDetail label="Network:"
+                        </Button>
+                        <div>
+                            <ItemDetail 
+                                label="Network:"
                                 displayValue={formatCryptoAddress(revision.witness_network ?? "", 4, 6)}
-                                value={revision.witness_network ?? " "} showCopyIcon={false}
+                                value={revision.witness_network ?? " "} 
+                                showCopyIcon={false}
                             />
-                            <br />
-                            <ItemDetail label="Timestamp (UTC) : "
+                            <div className="my-2"></div>
+                            <ItemDetail 
+                                label="Timestamp (UTC) : "
                                 displayValue={displayTime(revision.witness_timestamp?.toString() ?? "")}
-                                value={revision.witness_timestamp?.toString() ?? ""} showCopyIcon={false}
+                                value={revision.witness_timestamp?.toString() ?? ""} 
+                                showCopyIcon={false}
                             />
-                            <br />
+                            <div className="my-2"></div>
 
-                            <Group>
-                                <ItemDetail label="Transaction Hash:"
+                            <div className="flex items-center space-x-2">
+                                <ItemDetail 
+                                    label="Transaction Hash:"
                                     displayValue={formatCryptoAddress(revision.witness_transaction_hash?.startsWith('0x') ? revision.witness_transaction_hash ?? "" : `0x${revision.witness_transaction_hash ?? ""}`, 4, 6)}
-                                    value={`0x${revision.witness_transaction_hash ?? ""}`} showCopyIcon={true}
+                                    value={`0x${revision.witness_transaction_hash ?? ""}`} 
+                                    showCopyIcon={true}
                                 />
-                                <Link outline={'none'} href={`${WITNESS_NETWORK_MAP[revision.witness_network ?? ""]}/${revision.witness_transaction_hash}`} target="_blank">
-                                    <Icon size={'sm'} color={'blue.500'}>
-                                        <Box>
-                                            <LuExternalLink />
-                                        </Box>
-                                    </Icon>
-                                </Link>
-                            </Group>
-                        </Box>
-                    </Group>
-                )}
-            </For>
-        </Box>
+                                <a 
+                                    className="outline-none" 
+                                    href={`${WITNESS_NETWORK_MAP[revision.witness_network ?? ""]}/${revision.witness_transaction_hash}`} 
+                                    target="_blank"
+                                >
+                                    <div className="text-blue-500">
+                                        <LuExternalLink className="h-4 w-4" />
+                                    </div>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                ))}
+            </div>
 
-        <Box w={'100%'} bg={'gray.100'} _dark={{
-            bg: "blackAlpha.900"
-        }} borderRadius={'lg'} p={{ base: '4', md: 'lg' }}>
-            <Text mb={'2'} fontWeight={600} fontSize={'lg'}>Links ({revisionHashesWithLinks.length})</Text>
-            <For
-                each={revisionHashesWithLinks}
-            >
-                {(revisionHash, index) => {
+            <div className="w-full bg-gray-100 dark:bg-gray-900 rounded-lg p-4 md:p-6">
+                <h3 className="mb-2 font-semibold text-lg">Links ({revisionHashesWithLinks.length})</h3>
+                {revisionHashesWithLinks.map((revisionHash, index) => {
                     const revision = fileInfo!.aquaTree?.revisions[revisionHash]
                     return (
-                        <Group key={`witness_${index}`} pb={'2'} mb={'4'} borderBottom={'1px solid'} borderColor={'gray.200'} _dark={{
-                            borderColor: "gray.50"
-                        }} w={'100%'}>
-                            <IconButton size={'xs'}>
+                        <div 
+                            key={`link_${index}`} 
+                            className="flex items-start pb-2 mb-4 border-b border-gray-200 dark:border-gray-700 w-full"
+                        >
+                            <Button 
+                                variant="outline" 
+                                size="icon" 
+                                className="h-6 w-6 mr-2 flex-shrink-0"
+                            >
                                 {index + 1}
-                            </IconButton>
-                            {/* <Text>{index}. {revision.signature?.signature} </Text> */}
-                            <Stack flex={1}>
-                                {/* <ItemDetail label="F:"
-                                displayValue={formatCryptoAddress(revision.witness_network ?? "", 4, 6)}
-                                value={revision.witness_network ?? " "} showCopyIcon={false}
-                            /> */}
+                            </Button>
+                            <div className="flex-1 flex flex-col">
                                 {revisionDataHeader(fileInfo!.aquaTree!, revisionHash, fileInfo!.fileObject)}
-                                <Box />
+                                <div className="my-2"></div>
                                 {viewLinkedFile(fileInfo!, revisionHash, revision!!, files, setSelectedFileInfo, isWorkFlow)}
-                                {/* <br />
-                            <ItemDetail label="Timestamp (UTC) : "
-                                displayValue={displayTime(revision.witness_timestamp?.toString() ?? "")}
-                                value={revision.witness_timestamp?.toString() ?? ""} showCopyIcon={false}
-                            />
-                            <br />
-
-                            <Group>
-                                <ItemDetail label="Transaction Hash:"
-                                    displayValue={formatCryptoAddress(revision.witness_transaction_hash?.startsWith('0x') ? revision.witness_transaction_hash ?? "" : `0x${revision.witness_transaction_hash ?? ""}`, 4, 6)}
-                                    value={`0x${revision.witness_transaction_hash ?? ""}`} showCopyIcon={true}
-                                />
-                                <Link outline={'none'} href={`${WITNESS_NETWORK_MAP[revision.witness_network ?? ""]}/${revision.witness_transaction_hash}`} target="_blank">
-                                    <Icon size={'sm'} color={'blue.500'}>
-                                        <Box>
-                                            <LuExternalLink />
-                                        </Box>
-                                    </Icon>
-                                </Link>
-                            </Group> */}
-                            </Stack>
-                        </Group>
+                            </div>
+                        </div>
                     )
-                }}
-            </For>
-        </Box>
-
-    </Stack>
+                })}
+            </div>
+        </div>
     )
 }
 

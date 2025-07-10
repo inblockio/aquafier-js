@@ -1,24 +1,97 @@
 import { LuCheck, LuChevronRight, LuImport, LuMinus, LuX } from "react-icons/lu";
-import { Button } from "../chakra-ui/button";
 import axios from "axios";
 import { useStore } from "zustand";
 import appStore from "../../store";
 import { useEffect, useState } from "react";
 import { ApiFileInfo } from "../../models/FileInfo";
-import { toaster } from "../chakra-ui/toaster";
 import { formatCryptoAddress } from "../../utils/functions";
-import { Container, DialogCloseTrigger, Group, List, Text } from "@chakra-ui/react";
-
-import { Alert } from "../chakra-ui/alert";
 import { useNavigate } from "react-router-dom";
 import { analyzeAndMergeRevisions } from "../../utils/aqua_funcs";
-import { DialogActionTrigger, DialogBody, DialogContent, DialogFooter, DialogHeader, DialogRoot, DialogTitle } from "../chakra-ui/dialog";
-import { TimelineConnector, TimelineContent, TimelineDescription, TimelineItem, TimelineRoot, TimelineTitle } from "../chakra-ui/timeline";
 import { RevisionsComparisonResult } from "../../models/revision_merge";
 import { OrderRevisionInAquaTree, Revision } from "aqua-js-sdk";
 import { BtnContent, ImportChainFromChainProps } from "../../types/types";
+import { toast } from "sonner";
 
+// Shadcn UI components
+import { Button } from "@/components/shadcn/ui/button";
+import { Alert, AlertTitle, AlertDescription } from "@/components/shadcn/ui/alert";
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+    DialogTrigger,
+    DialogClose,
+} from "@/components/shadcn/ui/dialog";
 
+// We'll create a simplified timeline component using Tailwind
+import { cn } from "@/lib/utils";
+
+// Custom Timeline components using Tailwind
+const TimelineRoot = ({ children, className }: { children: React.ReactNode, className?: string }) => {
+    return (
+        <div className={cn("relative space-y-4 pl-6 before:absolute before:left-2 before:top-2 before:h-[calc(100%-16px)] before:w-0.5 before:bg-gray-200", className)}>
+            {children}
+        </div>
+    );
+};
+
+type TimelineItemProps = {
+    children: React.ReactNode;
+    className?: string;
+    colorPalette?: 'green' | 'red' | 'blue' | 'gray' | 'info';
+};
+
+const TimelineItem = ({ children, className, colorPalette = 'gray' }: TimelineItemProps) => {
+    const colorMap = {
+        green: "bg-green-100 text-green-700 border-green-200",
+        red: "bg-red-100 text-red-700 border-red-200",
+        blue: "bg-blue-100 text-blue-700 border-blue-200",
+        gray: "bg-gray-100 text-gray-700 border-gray-200",
+        info: "bg-blue-100 text-blue-700 border-blue-200",
+    };
+
+    return (
+        <div className={cn("relative pl-6", className)}>
+            {children}
+        </div>
+    );
+};
+
+const TimelineConnector = ({ children, className }: { children: React.ReactNode, className?: string }) => {
+    return (
+        <div className={cn("absolute -left-3 flex h-6 w-6 items-center justify-center rounded-full border bg-white", className)}>
+            {children}
+        </div>
+    );
+};
+
+const TimelineContent = ({ children, className, colorPalette = 'gray' }: TimelineItemProps) => {
+    return (
+        <div className={cn("rounded-lg border p-3", className)}>
+            {children}
+        </div>
+    );
+};
+
+const TimelineTitle = ({ children, className, textStyle }: { children: React.ReactNode, className?: string, textStyle?: string }) => {
+    const textStyleClass = textStyle === "sm" ? "text-sm" : "text-base";
+    return (
+        <h4 className={cn("font-medium", textStyleClass, className)}>
+            {children}
+        </h4>
+    );
+};
+
+const TimelineDescription = ({ children, className }: { children: React.ReactNode, className?: string }) => {
+    return (
+        <p className={cn("text-sm text-gray-600", className)}>
+            {children}
+        </p>
+    );
+};
 
 export const ImportAquaChainFromChain = ({ fileInfo, isVerificationSuccessful, contractData }: ImportChainFromChainProps) => {
 
@@ -32,25 +105,21 @@ export const ImportAquaChainFromChain = ({ fileInfo, isVerificationSuccessful, c
     const [_lastIdenticalRevisionHash, setLastIdenticalRevisionHash] = useState<string | null>(null)
     const [_revisionsToImport, setRevisionsToImport] = useState<Revision[]>([])
     const [updateMessage, setUpdateMessage] = useState<string | null>(null)
+    
     const [btnText, setBtnText] = useState<BtnContent>({
         text: "Submit chain",
         color: "blue"
     })
 
-    //  console.log(revisionsToImport)
-
     const { files, backend_url, session } = useStore(appStore)
 
     let navigate = useNavigate();
-
-    //  console.log("Chain to import: ", fileInfo)
-    //  console.log("My db files: ", dbFiles)
 
     const importAquaChain = async () => {
         // Early check to prevent recursion if already processing
         if (uploading) return;
 
-        const existingChainFile = dbFiles.find(file => Object.keys(file?.aquaTree?.revisions ?? {})[0] === Object.keys(fileInfo?.aquaTree?.revisions ?? {})[0])
+        const existingChainFile = files.find(file => Object.keys(file?.aquaTree?.revisions ?? {})[0] === Object.keys(fileInfo?.aquaTree?.revisions ?? {})[0])
 
         // 1. update local chain with new revisions. (importing chain is bigger)
         // 2. delete revsiion in local chain if the locl one has more revision than the importing one (ie remote has less and theyare the same revision)
@@ -125,20 +194,14 @@ export const ImportAquaChainFromChain = ({ fileInfo, isVerificationSuccessful, c
 
             console.log("Transfer chain res: ", res)
             if (res.status === 200) {
-                toaster.create({
-                    description: "Aqua Chain imported successfully",
-                    type: "success"
-                })
+                toast.success("Aqua Chain imported successfully")
 
                 // Use setTimeout to ensure state is updated before navigation
                 setTimeout(() => {
                     navigate("/loading?reload=true");
                 }, 500);
             } else {
-                toaster.create({
-                    description: "Failed to import chain",
-                    type: "error"
-                })
+                toast.error("Failed to import chain")
             }
 
             setUploading(false)
@@ -146,24 +209,21 @@ export const ImportAquaChainFromChain = ({ fileInfo, isVerificationSuccessful, c
             return;
         } catch (error) {
             setUploading(false)
-            toaster.create({
-                description: `Failed to import chain: ${error}`,
-                type: "error"
-            })
+            toast.error(`Failed to import chain: ${error}`)
         }
     };
 
     const handleMergeRevisions = async () => {
-
-
         try {
+            setUploading(true)
+            // setDrawerStatus(false)
+            
             const url = `${backend_url}/merge_chain`
             const reorderedRevisions = OrderRevisionInAquaTree(fileInfo.aquaTree!!)
             const revisions = reorderedRevisions.revisions
             const revisionHashes = Object.keys(revisions)
             const latestRevisionHash = revisionHashes[revisionHashes.length - 1]
-            // console.log("Latest revision hash: ", latestRevisionHash)
-
+            
             const res = await axios.post(url, {
                 latestRevisionHash: latestRevisionHash,
                 userAddress: contractData.sender,
@@ -176,20 +236,14 @@ export const ImportAquaChainFromChain = ({ fileInfo, isVerificationSuccessful, c
 
             // console.log("Transfer chain res: ", res)
             if (res.status === 200) {
-                toaster.create({
-                    description: "Aqua Chain imported successfully",
-                    type: "success"
-                })
+                toast.success("Aqua Chain imported successfully")
 
                 // Use setTimeout to ensure state is updated before navigation
                 setTimeout(() => {
                     navigate("/loading?reload=true");
                 }, 500);
             } else {
-                toaster.create({
-                    description: "Failed to import chain",
-                    type: "error"
-                })
+                toast.error("Failed to import chain")
             }
 
             setUploading(false)
@@ -197,10 +251,7 @@ export const ImportAquaChainFromChain = ({ fileInfo, isVerificationSuccessful, c
             return;
         } catch (error) {
             setUploading(false)
-            toaster.create({
-                description: `Failed to import chain: ${error}`,
-                type: "error"
-            })
+            toast.error(`Failed to import chain: ${error}`)
         }
     }
 
@@ -215,34 +266,41 @@ export const ImportAquaChainFromChain = ({ fileInfo, isVerificationSuccessful, c
     }, [files]);
 
     return (
-        <Container maxW={'xl'}>
-            <Alert title="Import Aqua Chain" icon={<LuImport />}>
-                <Group gap={"10"}>
-                    <Text>
+        <div className="container max-w-xl mx-auto bg-gray-100">
+            <Alert className="flex flex-col space-y-4">
+                <div className="flex items-center space-x-2">
+                    <LuImport className="h-5 w-5" />
+                    <AlertTitle>Import Aqua Chain</AlertTitle>
+                </div>
+                <div className="flex items-center justify-between w-full">
+                    <AlertDescription>
                         Do you want to import this Aqua Chain?
-                    </Text>
-                    <Button data-testid="import-aqua-chain-1-button" size={'lg'} colorPalette={'blue'} variant={'solid'} onClick={importAquaChain}
-                   
+                    </AlertDescription>
+                    <Button 
+                        data-testid="import-aqua-chain-1-button" 
+                        size="lg" 
+                        variant="default" 
+                        className="bg-blue-600 hover:bg-blue-700 text-white" 
+                        onClick={importAquaChain}
                     >
-                        <LuImport />
+                        <LuImport className="mr-2 h-4 w-4" />
                         Import
                     </Button>
-                </Group>
+                </div>
             </Alert>
            
-            <DialogRoot open={modalOpen} onOpenChange={e => setModalOpen(e.open)}>
-               
-                <DialogContent borderRadius={'lg'}>
+            <Dialog open={modalOpen} onOpenChange={(open) => setModalOpen(open)}>
+                <DialogContent className="rounded-lg max-w-md">
                     <DialogHeader>
                         <DialogTitle>Aqua Chain Import</DialogTitle>
                     </DialogHeader>
-                    <DialogBody>
+                    <div className="py-4">
                         <TimelineRoot>
                             <TimelineItem colorPalette={isVerificationSuccessful ? 'green' : 'red'}>
-                                <TimelineConnector>
-                                    <LuCheck />
+                                <TimelineConnector className={isVerificationSuccessful ? "border-green-200 text-green-600" : "border-red-200 text-red-600"}>
+                                    <LuCheck className="h-4 w-4" />
                                 </TimelineConnector>
-                                <TimelineContent colorPalette={'gray'}>
+                                <TimelineContent className="border-gray-200">
                                     <TimelineTitle>Verification status</TimelineTitle>
                                     <TimelineDescription>Verification successful</TimelineDescription>
                                 </TimelineContent>
@@ -251,11 +309,11 @@ export const ImportAquaChainFromChain = ({ fileInfo, isVerificationSuccessful, c
                             {
                                 comparisonResult?.identical ? (
                                     <>
-                                        <TimelineItem colorPalette={'green'}>
-                                            <TimelineConnector>
-                                                <LuCheck />
+                                        <TimelineItem>
+                                            <TimelineConnector className="border-green-200 text-green-600">
+                                                <LuCheck className="h-4 w-4" />
                                             </TimelineConnector>
-                                            <TimelineContent>
+                                            <TimelineContent className="border-green-200">
                                                 <TimelineTitle textStyle="sm">Chains Identical</TimelineTitle>
                                                 <TimelineDescription>Chains are identical</TimelineDescription>
                                             </TimelineContent>
@@ -267,11 +325,11 @@ export const ImportAquaChainFromChain = ({ fileInfo, isVerificationSuccessful, c
                             {
                                 (comparisonResult?.existingRevisionsLength ?? 0) > (comparisonResult?.upcomingRevisionsLength ?? 0) ? (
                                     <>
-                                        <TimelineItem colorPalette={'green'}>
-                                            <TimelineConnector>
-                                                <LuCheck />
+                                        <TimelineItem>
+                                            <TimelineConnector className="border-green-200 text-green-600">
+                                                <LuCheck className="h-4 w-4" />
                                             </TimelineConnector>
-                                            <TimelineContent>
+                                            <TimelineContent className="border-green-200">
                                                 <TimelineTitle textStyle="sm">Chain Difference</TimelineTitle>
                                                 <TimelineDescription>Existing Chain is Longer than Upcoming Chain</TimelineDescription>
                                             </TimelineContent>
@@ -283,11 +341,11 @@ export const ImportAquaChainFromChain = ({ fileInfo, isVerificationSuccessful, c
                             {
                                 comparisonResult?.sameLength ? (
                                     <>
-                                        <TimelineItem colorPalette={'green'}>
-                                            <TimelineConnector>
-                                                <LuCheck />
+                                        <TimelineItem>
+                                            <TimelineConnector className="border-green-200 text-green-600">
+                                                <LuCheck className="h-4 w-4" />
                                             </TimelineConnector>
-                                            <TimelineContent>
+                                            <TimelineContent className="border-green-200">
                                                 <TimelineTitle textStyle="sm">Chains Length</TimelineTitle>
                                                 <TimelineDescription>Chains are of same Length</TimelineDescription>
                                             </TimelineContent>
@@ -304,55 +362,65 @@ export const ImportAquaChainFromChain = ({ fileInfo, isVerificationSuccessful, c
                                     // && isVerificationSuccessful // We won't reach here since by then the import button will be disabled
                                 ) ? (
                                     <>
-                                        <TimelineItem colorPalette={'gray'}>
-                                            <TimelineConnector>
-                                                <LuX />
+                                        <TimelineItem>
+                                            <TimelineConnector className="border-gray-200 text-gray-600">
+                                                <LuX className="h-4 w-4" />
                                             </TimelineConnector>
-                                            <TimelineContent>
+                                            <TimelineContent className="border-gray-200">
                                                 <TimelineTitle textStyle="sm">Chains are Different</TimelineTitle>
-                                                {/* <TimelineDescription>Chains have divergencies</TimelineDescription> */}
-                                                <List.Root>
+                                                <ul className="space-y-2 mt-2">
                                                     {
                                                         comparisonResult?.divergences.map((diff, i: number) => (
-                                                            <List.Item key={`diff_${i}`} fontSize={'sm'}>
+                                                            <li key={`diff_${i}`} className="text-sm">
                                                                 {
                                                                     diff.existingRevisionHash ? (
-                                                                        <Group>
-                                                                            <Text textDecoration={'line-through'} style={{ textDecorationColor: 'red', color: "red" }}>
+                                                                        <div className="flex items-center space-x-2">
+                                                                            <span className="line-through text-red-500">
                                                                                 {formatCryptoAddress(diff.existingRevisionHash ?? "", 15, 4)}
-                                                                            </Text>
-                                                                            <LuChevronRight />
-                                                                            <Text>
+                                                                            </span>
+                                                                            <LuChevronRight className="h-4 w-4" />
+                                                                            <span>
                                                                                 {formatCryptoAddress(diff.upcomingRevisionHash ?? "", 15, 4)}
-                                                                            </Text>
-                                                                        </Group>
+                                                                            </span>
+                                                                        </div>
                                                                     ) : (
                                                                         <>
                                                                             {formatCryptoAddress(diff.upcomingRevisionHash ?? "", 20, 4)}
                                                                         </>
                                                                     )
                                                                 }
-                                                            </List.Item>
+                                                            </li>
                                                         ))
                                                     }
-                                                </List.Root>
+                                                </ul>
                                             </TimelineContent>
                                         </TimelineItem>
 
-                                        <TimelineItem colorPalette={'info'}>
-                                            <TimelineConnector>
-                                                <LuCheck />
+                                        <TimelineItem>
+                                            <TimelineConnector className="border-blue-200 text-blue-600">
+                                                <LuCheck className="h-4 w-4" />
                                             </TimelineConnector>
-                                            <TimelineContent>
+                                            <TimelineContent className="border-blue-200">
                                                 <TimelineTitle textStyle="sm">Action</TimelineTitle>
                                                 <TimelineDescription>{btnText.text}</TimelineDescription>
-                                                <Alert title="Action Not reversible!" status={'warning'}>
-                                                    {/* This action will delete some revision(s) in your local Aqua Chain */}
-                                                    {updateMessage}
+                                                <Alert className="mt-2 bg-yellow-50 border-yellow-200">
+                                                    <AlertTitle>Action Not reversible!</AlertTitle>
+                                                    <AlertDescription>
+                                                        {updateMessage}
+                                                    </AlertDescription>
                                                 </Alert>
-                                                <Group>
-                                                    <Button  data-testid="action-32-button" size={'xs'} borderRadius={'md'} colorPalette={btnText.color} onClick={handleMergeRevisions} loading={uploading}>{btnText.text}</Button>
-                                                </Group>
+                                                <div className="mt-3">
+                                                    <Button 
+                                                        data-testid="action-32-button" 
+                                                        size="sm" 
+                                                        className={`rounded-md ${btnText.color === 'blue' ? 'bg-blue-600 hover:bg-blue-700' : 'bg-yellow-600 hover:bg-yellow-700'} text-white`}
+                                                        onClick={handleMergeRevisions}
+                                                        disabled={uploading}
+                                                    >
+                                                        {uploading && <span className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent"></span>}
+                                                        {btnText.text}
+                                                    </Button>
+                                                </div>
                                             </TimelineContent>
                                         </TimelineItem>
                                     </>
@@ -366,55 +434,65 @@ export const ImportAquaChainFromChain = ({ fileInfo, isVerificationSuccessful, c
                                     // && isVerificationSuccessful // We won't reach here since by then the import button will be disabled
                                 ) ? (
                                     <>
-                                        <TimelineItem colorPalette={'gray'}>
-                                            <TimelineConnector>
-                                                <LuX />
+                                        <TimelineItem>
+                                            <TimelineConnector className="border-gray-200 text-gray-600">
+                                                <LuX className="h-4 w-4" />
                                             </TimelineConnector>
-                                            <TimelineContent>
+                                            <TimelineContent className="border-gray-200">
                                                 <TimelineTitle textStyle="sm">Chains are Different</TimelineTitle>
-                                                {/* <TimelineDescription>Chains have divergencies</TimelineDescription> */}
-                                                <List.Root>
+                                                <ul className="space-y-2 mt-2">
                                                     {
                                                         comparisonResult?.divergences.map((diff, i: number) => (
-                                                            <List.Item key={`diff_${i}`} fontSize={'sm'}>
+                                                            <li key={`diff_${i}`} className="text-sm">
                                                                 {
                                                                     diff.existingRevisionHash ? (
-                                                                        <Group>
-                                                                            <Text textDecoration={'line-through'} style={{ textDecorationColor: 'red', color: "red" }}>
+                                                                        <div className="flex items-center space-x-2">
+                                                                            <span className="line-through text-red-500">
                                                                                 {formatCryptoAddress(diff.existingRevisionHash ?? "", 15, 4)}
-                                                                            </Text>
-                                                                            <LuChevronRight />
-                                                                            <Text>
+                                                                            </span>
+                                                                            <LuChevronRight className="h-4 w-4" />
+                                                                            <span>
                                                                                 {formatCryptoAddress(diff.upcomingRevisionHash ?? "", 15, 4, "Revision will be deleted")}
-                                                                            </Text>
-                                                                        </Group>
+                                                                            </span>
+                                                                        </div>
                                                                     ) : (
                                                                         <>
                                                                             {formatCryptoAddress(diff.upcomingRevisionHash ?? "", 20, 4)}
                                                                         </>
                                                                     )
                                                                 }
-                                                            </List.Item>
+                                                            </li>
                                                         ))
                                                     }
-                                                </List.Root>
+                                                </ul>
                                             </TimelineContent>
                                         </TimelineItem>
 
-                                        <TimelineItem colorPalette={'info'}>
-                                            <TimelineConnector>
-                                                <LuCheck />
+                                        <TimelineItem>
+                                            <TimelineConnector className="border-blue-200 text-blue-600">
+                                                <LuCheck className="h-4 w-4" />
                                             </TimelineConnector>
-                                            <TimelineContent>
+                                            <TimelineContent className="border-blue-200">
                                                 <TimelineTitle textStyle="sm">Action</TimelineTitle>
                                                 <TimelineDescription>{btnText.text}</TimelineDescription>
-                                                <Alert title="Action Not reversible!" status={'warning'}>
-                                                    {/* This action will delete some revision(s) in your local Aqua Chain */}
-                                                    {updateMessage}
+                                                <Alert className="mt-2 bg-yellow-50 border-yellow-200">
+                                                    <AlertTitle>Action Not reversible!</AlertTitle>
+                                                    <AlertDescription>
+                                                        {updateMessage}
+                                                    </AlertDescription>
                                                 </Alert>
-                                                <Group>
-                                                    <Button  data-testid="action-67-button" size={'xs'} borderRadius={'md'} colorPalette={btnText.color} onClick={handleMergeRevisions} loading={uploading}>{btnText.text}</Button>
-                                                </Group>
+                                                <div className="mt-3">
+                                                    <Button 
+                                                        data-testid="action-67-button" 
+                                                        size="sm" 
+                                                        className={`rounded-md ${btnText.color === 'blue' ? 'bg-blue-600 hover:bg-blue-700' : 'bg-yellow-600 hover:bg-yellow-700'} text-white`}
+                                                        onClick={handleMergeRevisions}
+                                                        disabled={uploading}
+                                                    >
+                                                        {uploading && <span className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent"></span>}
+                                                        {btnText.text}
+                                                    </Button>
+                                                </div>
                                             </TimelineContent>
                                         </TimelineItem>
                                     </>
@@ -426,11 +504,11 @@ export const ImportAquaChainFromChain = ({ fileInfo, isVerificationSuccessful, c
                                     (comparisonResult?.identical && (comparisonResult?.sameLength && comparisonResult?.divergences.length === 0))
                                     // || !isVerificationSuccessful // Import button will be disabled, no reaching this point
                                 ) ? (
-                                    <TimelineItem colorPalette={'blue'}>
-                                        <TimelineConnector>
-                                            <LuMinus />
+                                    <TimelineItem>
+                                        <TimelineConnector className="border-blue-200 text-blue-600">
+                                            <LuMinus className="h-4 w-4" />
                                         </TimelineConnector>
-                                        <TimelineContent>
+                                        <TimelineContent className="border-blue-200">
                                             <TimelineTitle textStyle="sm">Action</TimelineTitle>
                                             <TimelineDescription>No Action</TimelineDescription>
                                         </TimelineContent>
@@ -439,17 +517,14 @@ export const ImportAquaChainFromChain = ({ fileInfo, isVerificationSuccessful, c
                             }
 
                         </TimelineRoot>
-                    </DialogBody>
+                    </div>
                     <DialogFooter>
-                        <DialogActionTrigger asChild>
-                            <Button data-testid="action-cancel-button" variant="outline" borderRadius={'md'}>Cancel</Button>
-                        </DialogActionTrigger>
-                        
+                        <DialogClose asChild>
+                            <Button data-testid="action-cancel-button" variant="outline" className="rounded-md">Cancel</Button>
+                        </DialogClose>
                     </DialogFooter>
-                    <DialogCloseTrigger />
                 </DialogContent>
-            </DialogRoot>
-
-        </Container >
+            </Dialog>
+        </div>
     )
 }

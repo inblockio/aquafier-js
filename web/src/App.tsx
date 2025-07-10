@@ -22,6 +22,7 @@ import PdfWorkflowPage from './pages/wokflow/PdfWorkflowPage';
 import DomainAttestationPage from './pages/domain_attestation';
 import FilesSharedContracts from './pages/files_shared_contracts';
 import WorkflowsTablePage from './pages/wokflow/WorkflowsTablePage';
+import SharePage from './pages/SharePage';
 
 declare global {
   interface Window {
@@ -50,38 +51,39 @@ function App() {
     <BrowserRouter>
       <LoadConfiguration />
       <ErrorBoundary>
-      <Routes>
-        {/* Routes with Tailwind UI (no MainLayout wrapper) */}
+        <Routes>
+          {/* Routes with Tailwind UI (no MainLayout wrapper) */}
 
-        <Route path="/home" element={<TailwindMainLayout />}>
-          <Route index element={<Home />} />
-        </Route>
+          <Route path="/home" element={<TailwindMainLayout />}>
+            <Route index element={<Home />} />
+          </Route>
 
-        {/* All file routes using Tailwind */}
-        <Route path="/" element={<NewShadcnLayoutWithSidebar />}>
-          <Route index element={<FilesPage />} />
-          <Route path="pdf/workflow" element={<PdfWorkflowPage />} />
-          <Route path="files_workflows" element={<FilesPage />} />
-          <Route path="domain_attestation" element={<DomainAttestationPage />} />
-          <Route path="templates" element={<TemplatesPage />} />
-          <Route path="files_docs" element={<FilesPage />} />
-          <Route path="files_attestation" element={<FilesPage />} />
-          <Route path="files_document_signature" element={<FilesPage />} />
-          <Route path="files_domain_attestation" element={<FilesPage />} />
+          {/* All file routes using Tailwind */}
+          <Route path="/" element={<NewShadcnLayoutWithSidebar />}>
+            <Route index element={<FilesPage />} />
+            <Route path="pdf/workflow" element={<PdfWorkflowPage />} />
+            <Route path="files_workflows" element={<FilesPage />} />
+            <Route path="domain_attestation" element={<DomainAttestationPage />} />
+            <Route path="templates" element={<TemplatesPage />} />
+            <Route path="files_docs" element={<FilesPage />} />
+            <Route path="files_attestation" element={<FilesPage />} />
+            <Route path="files_document_signature" element={<FilesPage />} />
+            <Route path="files_domain_attestation" element={<FilesPage />} />
 
-          <Route path="shared-contracts" element={<FilesSharedContracts />} />
+            <Route path="shared-contracts" element={<FilesSharedContracts />} />
+            <Route path="shared-contracts/:identifier" element={<SharePage />} />
 
-          <Route path="settings" element={<SettingsPage />} />
-          <Route path="info" element={<InfoPage />} />
-          <Route path="workflows" element={<WorkflowsTablePage />} />
-          <Route path="form-instance/:templateName" element={<CreateFormInstance />} />
-             <Route path="/loading" element={<Loading />} />
-              <Route path="/pdf-signer" element={<PdfSigner fileData={null} setActiveStep={(_one) => { }} />} />
-        </Route>
+            <Route path="settings" element={<SettingsPage />} />
+            <Route path="info" element={<InfoPage />} />
+            <Route path="workflows" element={<WorkflowsTablePage />} />
+            <Route path="form-instance/:templateName" element={<CreateFormInstance />} />
+            <Route path="/loading" element={<Loading />} />
+            <Route path="/pdf-signer" element={<PdfSigner fileData={null} setActiveStep={(_one) => { }} />} />
+          </Route>
 
 
-        {/* Routes with Chakra UI (wrapped in MainLayout) */}
-        {/* <Route path="/" element={<MainLayoutHolder />} >
+          {/* Routes with Chakra UI (wrapped in MainLayout) */}
+          {/* <Route path="/" element={<MainLayoutHolder />} >
           <Route index element={<Home />} />
        
           <Route path="/share/:identifier" element={<SharePage />} />
@@ -91,8 +93,8 @@ function App() {
           <Route path="/form-generator" element={<FormGenerator />} />
           <Route path="/attestation_addresses" element={<AttestationAddresses />} />
         </Route> */}
-        <Route path="*" element={<PageNotFound />} />
-      </Routes>
+          <Route path="*" element={<PageNotFound />} />
+        </Routes>
       </ErrorBoundary>
     </BrowserRouter>
   )
