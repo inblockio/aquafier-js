@@ -42,24 +42,40 @@ test("upload, sign, download", async () => {
     console.log("File upload dropzone is visible")
 
 
-    await testPage.waitForSelector('[data-part="dropzone"]', { state: 'visible' })
+    // First wait for the file upload button to be visible and clickable
+    await testPage.waitForSelector('[data-testid="file-upload-dropzone"]', { state: 'visible', timeout: 10000 });
+    
+    // Create the file chooser promise before clicking the button
     const fileChooserPromise = testPage.waitForEvent('filechooser');
-    await testPage.click('[data-part="dropzone"]');
+    
+    // Click the upload button using the correct data-testid
+    await testPage.click('[data-testid="file-upload-dropzone"]');
     const fileChooser = await fileChooserPromise;
     await fileChooser.setFiles(path.join(__dirname, 'resources/exampleFile.pdf'));
 
-    console.log("File dropped on dropzone");
+    console.log("File dropped on file-upload-dropzone");
 
     // Wait a moment for the file to be processed
     await testPage.waitForTimeout(2000);
+
+    console.log("Waiting for clear completed button to appear...")
+    await testPage.waitForSelector('[data-testid="clear-completed-button"]', { state: 'visible', timeout: 10000 });
+    await testPage.click('[data-testid="clear-completed-button"]');
+
+
+    console.log("Waiting for close upload dialog to appear ")
+    await testPage.waitForSelector('[data-testid="close-upload-dialog-button"]', { state: 'visible', timeout: 10000 });
+    await testPage.click('[data-testid="close-upload-dialog-button"]');
+
+    console.log("Clicked close upload dialog button")
 
 
     //sign
     console.log("Waiting for sign button to appear...")
 
     // Wait for the table to load and show the file
-    await testPage.waitForSelector('table', { state: 'visible', timeout: 10000 })
-    console.log("Table is visible")
+    // await testPage.waitForSelector('table', { state: 'visible', timeout: 10000 })
+    // console.log("Table is visible")
 
 
     // Wait for the sign button using its data-testid
@@ -103,22 +119,30 @@ test("single user aqua-sign", async () => {
 
 
     // click navbar button
-    await testPage.waitForSelector('[data-testid="action-form-63-button"]', { state: 'visible' });
-    await testPage.click('[data-testid="action-form-63-button"]')
+    // await testPage.waitForSelector('[data-testid="action-form-63-button"]', { state: 'visible' });
+    // await testPage.click('[data-testid="action-form-63-button"]')
 
-    console.log("clicked navbar button")
+    // console.log("clicked navbar button")
     // click create form from template dropwdown element
-    await testPage.click('[data-testid="create-form-from-template"]')
-    console.log("clicked create form from template")
-    await testPage.click('[data-testid="aqua_sign"]')
+    // await testPage.click('[data-testid="create-form-from-template"]')
+    // console.log("clicked create form from template")
 
+    
+    await testPage.click('[data-testid="create-document-signature"]')
+
+
+    
     console.log("clicked aqua sign")
 
-    await testPage.waitForSelector('[data-testid="input-document"]', { state: 'visible' });
+    // await testPage.waitForSelector('[data-testid="input-document"]', { state: 'visible' });
     const fileChooserPromise = testPage.waitForEvent('filechooser');
     await testPage.click('[data-testid="input-document"]')
     const fileChooser = await fileChooserPromise;
     await fileChooser.setFiles(path.join(__dirname, 'resources/exampleFile.pdf'));
+
+
+    await testPage.click('[data-testid="multiple_values_signers"]')
+    console.log("clicked multiple values signers")
 
     const metaMaskAdr = await testPage.locator('[data-testid="input-sender"]').inputValue();
     await testPage.fill('[data-testid="input-signers-0"]', metaMaskAdr);

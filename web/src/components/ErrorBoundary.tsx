@@ -88,7 +88,7 @@ const ErrorFallback = ({ error, resetErrorBoundary }: ErrorFallbackProps) => {
   const handleGoHome = () => {
     resetErrorBoundary();
     setOpen(false);
-    navigate('/files');
+    navigate('/');
   };
 
   const handleReload = () => {

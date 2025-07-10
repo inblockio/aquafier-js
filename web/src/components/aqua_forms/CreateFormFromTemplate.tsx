@@ -2,7 +2,7 @@ import React, { useState } from 'react'
 import { FormField, FormTemplate } from './types'
 import { useStore } from 'zustand'
 import appStore from '@/store'
-import { isValidEthereumAddress, getRandomNumber, formatDate, estimateFileSize, dummyCredential } from '@/utils/functions'
+import { isValidEthereumAddress, getRandomNumber, formatDate, estimateFileSize, dummyCredential, fetchSystemFiles } from '@/utils/functions'
 import Aquafier, { AquaTree, FileObject, getAquaTreeFileName, AquaTreeWrapper, getAquaTreeFileObject } from 'aqua-js-sdk'
 import axios from 'axios'
 import { generateNonce } from 'siwe'
@@ -20,10 +20,10 @@ import { Card, CardContent, CardHeader, CardTitle } from '../shadcn/ui/card'
 import { Separator } from '../shadcn/ui/separator'
 import { cn } from '@/lib/utils'
 
-const CreateFormFromTemplate = ({ selectedTemplate, callBack, openCreateTemplatePopUp=false }: { selectedTemplate: FormTemplate, callBack: () => void, openCreateTemplatePopUp: boolean }) => {
+const CreateFormFromTemplate = ({ selectedTemplate, callBack, openCreateTemplatePopUp = false }: { selectedTemplate: FormTemplate, callBack: () => void, openCreateTemplatePopUp: boolean }) => {
     const [submittingTemplateData, setSubmittingTemplateData] = useState(false)
     const [modalFormErorMessae, setModalFormErorMessae] = useState("");
-    const { session, backend_url, systemFileInfo, setFiles } = useStore(appStore)
+    const { session, backend_url, systemFileInfo, setSystemFileInfo, setFiles } = useStore(appStore)
     const [formData, setFormData] = useState<Record<string, string | File | number>>({});
     const [multipleAddresses, setMultipleAddresses] = useState<string[]>([])
 
@@ -201,7 +201,7 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack, openCreateTemplate
                     setFiles(response.data.files);
                     toast.success("Aqua tree created successfully");
                     callBack && callBack()
-                    navigate("/files")
+                    navigate("/")
                     setModalFormErorMessae("")
                     setFormData({})
                     setSubmittingTemplateData(false);
@@ -291,15 +291,24 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack, openCreateTemplate
             }
 
 
+            let allSystemFiles = systemFileInfo
             if (systemFileInfo.length == 0) {
+                
+                const url3 = `${backend_url}/system/aqua_tree`;
+                const systemFiles = await fetchSystemFiles(url3, session?.address || '')
+                setSystemFileInfo(systemFiles)
+                allSystemFiles = systemFiles
 
+            }
+
+            if (allSystemFiles.length == 0) {
                 setSubmittingTemplateData(false);
                 toast.error("Aqua tree for templates not found")
                 return
             }
 
 
-            let templateApiFileInfo = systemFileInfo.find((e) => {
+            let templateApiFileInfo = allSystemFiles.find((e) => {
                 let nameExtract = getAquaTreeFileName(e!.aquaTree!);
                 let selectedName = `${selectedTemplate?.name}.json`
                 console.log(`nameExtract ${nameExtract} == selectedName ${selectedName}`)
@@ -547,21 +556,21 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack, openCreateTemplate
 
     const getFieldIcon = (type: string) => {
         switch (type) {
-          case 'document':
-            return <FileText className="h-4 w-4" />;
-          case 'image':
-            return <Image className="h-4 w-4" />;
-          case 'file':
-            return <Upload className="h-4 w-4" />;
-          default:
-            return null;
+            case 'document':
+                return <FileText className="h-4 w-4" />;
+            case 'image':
+                return <Image className="h-4 w-4" />;
+            case 'file':
+                return <Upload className="h-4 w-4" />;
+            default:
+                return null;
         }
-      };
+    };
 
-      const onBack = () => {
+    const onBack = () => {
         navigate("/templates")
         callBack && callBack()
-      }
+    }
 
     return (
         <>
@@ -763,11 +772,11 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack, openCreateTemplate
                             Template: {selectedTemplate?.name}
                         </Badge>
                     </div>
-<div className='pt-10'>
+                    <div className='pt-10'>
 
 
-                    {/* Main Form Card */}
-                    {/* <Card className="shadow-md border-0 bg-white/80 backdrop-blur-sm">
+                        {/* Main Form Card */}
+                        {/* <Card className="shadow-md border-0 bg-white/80 backdrop-blur-sm">
                         <CardHeader className="pb-6">
                             <CardTitle className="flex items-center gap-2 text-xl">
                                 <FileText className="h-5 w-5 text-blue-600" />
@@ -776,222 +785,223 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack, openCreateTemplate
                         </CardHeader>
 
                         <CardContent> */}
-                            <form onSubmit={createWorkflowFromTemplate} id="create-aqua-tree-form" className="space-y-8">
-                                {modalFormErorMessae.length > 0 && (
-                                    <Alert variant="destructive" className="border-red-200 bg-red-50">
-                                        <AlertCircle className="h-4 w-4" />
-                                        <AlertDescription>{modalFormErorMessae}</AlertDescription>
-                                    </Alert>
-                                )}
+                        <form onSubmit={createWorkflowFromTemplate} id="create-aqua-tree-form" className="space-y-8">
+                            {modalFormErorMessae.length > 0 && (
+                                <Alert variant="destructive" className="border-red-200 bg-red-50">
+                                    <AlertCircle className="h-4 w-4" />
+                                    <AlertDescription>{modalFormErorMessae}</AlertDescription>
+                                </Alert>
+                            )}
 
-                                <div className="space-y-2">
-                                    {selectedTemplate ? reorderInputFields(selectedTemplate.fields).map((field, fieldIndex) => {
-                                        const isFileInput = field.type === 'file' || field.type === 'image' || field.type === 'document';
+                            <div className="space-y-2">
+                                {selectedTemplate ? reorderInputFields(selectedTemplate.fields).map((field, fieldIndex) => {
+                                    const isFileInput = field.type === 'file' || field.type === 'image' || field.type === 'document';
 
-                                        if (field.is_array) {
-                                            return (
-                                                <div key={`field-${fieldIndex}`} className="space-y-4">
-                                                    <div className="flex items-center justify-between">
-                                                        <div>
-                                                            <Label className="text-lg font-medium text-gray-900">
-                                                                {field.label}
-                                                                {field.required && <span className="text-red-500 ml-1">*</span>}
-                                                            </Label>
-                                                            <p className="text-sm text-gray-500 mt-1">
-                                                                Add multiple wallet addresses for document signers
-                                                            </p>
-                                                        </div>
-                                                        <Button
-                                                            variant="outline"
-                                                            size="sm"
-                                                            type="button"
-                                                            className="rounded-lg hover:bg-blue-50 hover:border-blue-300"
-                                                            onClick={addAddress}
-                                                            data-testid={`multiple_values_${field.name}`}
-                                                        >
-                                                            <Plus className="h-4 w-4 mr-1" />
-                                                            Add Signer
-                                                        </Button>
-                                                    </div>
-
-                                                    <div className="space-y-3">
-                                                        {multipleAddresses.map((address, index) => (
-                                                            <div key={`address-${index}`} className="flex items-center space-x-3 p-4 bg-gray-50 rounded-lg border">
-                                                                <div className="flex items-center justify-center w-8 h-8 bg-blue-100 rounded-full text-blue-600 font-medium text-sm">
-                                                                    {index + 1}
-                                                                </div>
-                                                                <div className="flex-1">
-                                                                    <Input
-                                                                        data-testid={`input-${field.name}-${index}`}
-                                                                        className="rounded-lg border-gray-200 focus:border-blue-500 focus:ring-blue-500"
-                                                                        placeholder="Enter signer wallet address"
-                                                                        type="text"
-                                                                        value={address}
-                                                                        onChange={(ev) => {
-                                                                            const newData = multipleAddresses.map((e, i) => {
-                                                                                if (i === index) {
-                                                                                    return ev.target.value;
-                                                                                }
-                                                                                return e;
-                                                                            });
-                                                                            setMultipleAddresses(newData);
-                                                                        }}
-                                                                    />
-                                                                </div>
-                                                                {multipleAddresses.length > 1 && (
-                                                                    <Button
-                                                                        variant="outline"
-                                                                        size="sm"
-                                                                        type="button"
-                                                                        className="rounded-lg text-red-500 hover:text-red-700 hover:bg-red-50 hover:border-red-300"
-                                                                        onClick={() => removeAddress(index)}
-                                                                    >
-                                                                        <Trash2 className="h-4 w-4" />
-                                                                    </Button>
-                                                                )}
-                                                            </div>
-                                                        ))}
-                                                    </div>
-                                                </div>
-                                            );
-                                        }
-
+                                    if (field.is_array) {
                                         return (
-                                            <div key={`field-${fieldIndex}`} className="space-y-3">
-                                                <div className="flex items-center gap-2">
-                                                    {getFieldIcon(field.type)}
-                                                    <Label htmlFor={`input-${field.name}`} className="text-base font-medium text-gray-900">
-                                                        {field.label}
-                                                        {field.required && <span className="text-red-500">*</span>}
-                                                    </Label>
+                                            <div key={`field-${fieldIndex}`} className="space-y-4">
+                                                <div className="flex items-center justify-between">
+                                                    <div>
+                                                        <Label className="text-lg font-medium text-gray-900">
+                                                            {field.label}
+                                                            {field.required && <span className="text-red-500 ml-1">*</span>}
+                                                        </Label>
+                                                        <p className="text-sm text-gray-500 mt-1">
+                                                            Add multiple wallet addresses for document signers
+                                                        </p>
+                                                    </div>
+                                                    <Button
+
+                                                        variant="outline"
+                                                        size="sm"
+                                                        type="button"
+                                                        className="rounded-lg hover:bg-blue-50 hover:border-blue-300"
+                                                        onClick={addAddress}
+                                                        data-testid={`multiple_values_${field.name}`}
+                                                    >
+                                                        <Plus className="h-4 w-4 mr-1" />
+                                                        Add Signer
+                                                    </Button>
                                                 </div>
 
-                                                {field.type === 'text' ? (
+                                                <div className="space-y-3">
+                                                    {multipleAddresses.map((address, index) => (
+                                                        <div key={`address-${index}`} className="flex items-center space-x-3 p-4 bg-gray-50 rounded-lg border">
+                                                            <div className="flex items-center justify-center w-8 h-8 bg-blue-100 rounded-full text-blue-600 font-medium text-sm">
+                                                                {index + 1}
+                                                            </div>
+                                                            <div className="flex-1">
+                                                                <Input
+                                                                    data-testid={`input-${field.name}-${index}`}
+                                                                    className="rounded-lg border-gray-200 focus:border-blue-500 focus:ring-blue-500"
+                                                                    placeholder="Enter signer wallet address"
+                                                                    type="text"
+                                                                    value={address}
+                                                                    onChange={(ev) => {
+                                                                        const newData = multipleAddresses.map((e, i) => {
+                                                                            if (i === index) {
+                                                                                return ev.target.value;
+                                                                            }
+                                                                            return e;
+                                                                        });
+                                                                        setMultipleAddresses(newData);
+                                                                    }}
+                                                                />
+                                                            </div>
+                                                            {multipleAddresses.length > 1 && (
+                                                                <Button
+                                                                    variant="outline"
+                                                                    size="sm"
+                                                                    type="button"
+                                                                    className="rounded-lg text-red-500 hover:text-red-700 hover:bg-red-50 hover:border-red-300"
+                                                                    onClick={() => removeAddress(index)}
+                                                                >
+                                                                    <Trash2 className="h-4 w-4" />
+                                                                </Button>
+                                                            )}
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        );
+                                    }
+
+                                    return (
+                                        <div key={`field-${fieldIndex}`} className="space-y-3">
+                                            <div className="flex items-center gap-2">
+                                                {getFieldIcon(field.type)}
+                                                <Label htmlFor={`input-${field.name}`} className="text-base font-medium text-gray-900">
+                                                    {field.label}
+                                                    {field.required && <span className="text-red-500">*</span>}
+                                                </Label>
+                                            </div>
+
+                                            {field.type === 'text' ? (
+                                                <Input
+                                                    id={`input-${field.name}`}
+                                                    data-testid={`input-${field.name}`}
+                                                    className="w-full px-3 py-2 border border-gray-200 rounded-md focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
+                                                    placeholder="Type here..."
+                                                    defaultValue={getFieldDefaultValue(field, formData[field.name])}
+                                                    onChange={(e) => {
+                                                        setFormData({
+                                                            ...formData,
+                                                            [field.name]: e.target.value
+                                                        });
+                                                    }}
+                                                />
+                                            ) : (
+                                                <div className="relative">
                                                     <Input
                                                         id={`input-${field.name}`}
                                                         data-testid={`input-${field.name}`}
-                                                        className="w-full px-3 py-2 border border-gray-200 rounded-md focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
-                                                        placeholder="Type here..."
-                                                        defaultValue={getFieldDefaultValue(field, formData[field.name])}
+                                                        className="rounded-md border-gray-200 focus:border-blue-500 focus:ring-blue-500"
+                                                        {...(!isFileInput ? { defaultValue: getFieldDefaultValue(field, formData[field.name]) } : {})}
+                                                        type={field.type === 'image' || field.type === 'document' ? 'file' : field.type}
+                                                        required={field.required}
+                                                        accept={field.type === 'document' ? '.pdf' : field.type === 'image' ? 'image/*' : undefined}
+                                                        placeholder={
+                                                            field.type === 'wallet_address' ? 'Enter wallet address' :
+                                                                field.type === 'date' ? 'Select due date' :
+                                                                    field.type === 'document' ? 'Upload PDF document' :
+                                                                        `Enter ${field.label.toLowerCase()}`
+                                                        }
                                                         onChange={(e) => {
+                                                            if (selectedTemplate?.name === "aqua_sign" && field.name.toLowerCase() === "sender") {
+                                                                // Show toast notification (would need toast implementation)
+                                                                console.log("Aqua Sign sender cannot be changed");
+                                                                return;
+                                                            }
+
+                                                            if (field.type === 'image') {
+                                                                const files = e?.target?.files;
+                                                                if (files && files.length > 0) {
+                                                                    const file = files[0];
+                                                                    if (!file.type.startsWith('image/')) {
+                                                                        alert('Please select an image file');
+                                                                        e.target.value = '';
+                                                                        return;
+                                                                    }
+                                                                }
+                                                            }
+
+                                                            if (field.type === 'document') {
+                                                                const files = e?.target?.files;
+                                                                if (files && files.length > 0) {
+                                                                    const file = files[0];
+                                                                    if (file.type !== 'application/pdf') {
+                                                                        alert('Please select a PDF file');
+                                                                        e.target.value = '';
+                                                                        return;
+                                                                    }
+                                                                }
+                                                            }
+
+                                                            const value = isFileInput && e.target.files
+                                                                ? e.target.files[0]
+                                                                : e.target.value;
+
                                                             setFormData({
                                                                 ...formData,
-                                                                [field.name]: e.target.value
+                                                                [field.name]: value
                                                             });
                                                         }}
                                                     />
-                                                ) : (
-                                                    <div className="relative">
-                                                        <Input
-                                                            id={`input-${field.name}`}
-                                                            data-testid={`input-${field.name}`}
-                                                            className="rounded-md border-gray-200 focus:border-blue-500 focus:ring-blue-500"
-                                                            {...(!isFileInput ? { defaultValue: getFieldDefaultValue(field, formData[field.name]) } : {})}
-                                                            type={field.type === 'image' || field.type === 'document' ? 'file' : field.type}
-                                                            required={field.required}
-                                                            accept={field.type === 'document' ? '.pdf' : field.type === 'image' ? 'image/*' : undefined}
-                                                            placeholder={
-                                                                field.type === 'wallet_address' ? 'Enter wallet address' :
-                                                                    field.type === 'date' ? 'Select due date' :
-                                                                        field.type === 'document' ? 'Upload PDF document' :
-                                                                            `Enter ${field.label.toLowerCase()}`
-                                                            }
-                                                            onChange={(e) => {
-                                                                if (selectedTemplate?.name === "aqua_sign" && field.name.toLowerCase() === "sender") {
-                                                                    // Show toast notification (would need toast implementation)
-                                                                    console.log("Aqua Sign sender cannot be changed");
-                                                                    return;
-                                                                }
-
-                                                                if (field.type === 'image') {
-                                                                    const files = e?.target?.files;
-                                                                    if (files && files.length > 0) {
-                                                                        const file = files[0];
-                                                                        if (!file.type.startsWith('image/')) {
-                                                                            alert('Please select an image file');
-                                                                            e.target.value = '';
-                                                                            return;
-                                                                        }
-                                                                    }
-                                                                }
-
-                                                                if (field.type === 'document') {
-                                                                    const files = e?.target?.files;
-                                                                    if (files && files.length > 0) {
-                                                                        const file = files[0];
-                                                                        if (file.type !== 'application/pdf') {
-                                                                            alert('Please select a PDF file');
-                                                                            e.target.value = '';
-                                                                            return;
-                                                                        }
-                                                                    }
-                                                                }
-
-                                                                const value = isFileInput && e.target.files
-                                                                    ? e.target.files[0]
-                                                                    : e.target.value;
-
-                                                                setFormData({
-                                                                    ...formData,
-                                                                    [field.name]: value
-                                                                });
-                                                            }}
-                                                        />
-                                                        {isFileInput && (
-                                                            <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
-                                                                <Upload className="h-4 w-4 text-gray-400" />
-                                                            </div>
-                                                        )}
-                                                    </div>
-                                                )}
-
-                                                {field.name === 'sender' && (
-                                                    <p className="text-xs text-gray-500">
-                                                        This will be used as the sender email for the document workflow
-                                                    </p>
-                                                )}
-                                            </div>
-                                        );
-                                    }) : null}
-                                </div>
-
-                                <Separator className="my-8" />
-
-                                {/* Action Buttons */}
-                                <div className="flex justify-end space-x-4 pt-4">
-                                    <Button
-                                        type="button"
-                                        variant="outline"
-                                        onClick={onBack}
-                                        className="px-6"
-                                    >
-                                        Cancel
-                                    </Button>
-                                    {selectedTemplate && (
-                                        <Button
-                                            data-testid="action-loading-create-button"
-                                            type="submit"
-                                            className="bg-blue-600 hover:bg-blue-700 text-white px-8"
-                                            disabled={submittingTemplateData}
-                                        >
-                                            {submittingTemplateData ? (
-                                                <>
-                                                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                                    Creating Workflow...
-                                                </>
-                                            ) : (
-                                                <>
-                                                    <FileText className="mr-2 h-4 w-4" />
-                                                    Create Workflow
-                                                </>
+                                                    {isFileInput && (
+                                                        <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+                                                            <Upload className="h-4 w-4 text-gray-400" />
+                                                        </div>
+                                                    )}
+                                                </div>
                                             )}
-                                        </Button>
-                                    )}
-                                </div>
-                            </form>
+
+                                            {field.name === 'sender' && (
+                                                <p className="text-xs text-gray-500">
+                                                    This will be used as the sender email for the document workflow
+                                                </p>
+                                            )}
+                                        </div>
+                                    );
+                                }) : null}
+                            </div>
+
+                            <Separator className="my-8" />
+
+                            {/* Action Buttons */}
+                            <div className="flex justify-end space-x-4 pt-4">
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    onClick={onBack}
+                                    className="px-6"
+                                >
+                                    Cancel
+                                </Button>
+                                {selectedTemplate && (
+                                    <Button
+                                        data-testid="action-loading-create-button"
+                                        type="submit"
+                                        className="bg-blue-600 hover:bg-blue-700 text-white px-8"
+                                        disabled={submittingTemplateData}
+                                    >
+                                        {submittingTemplateData ? (
+                                            <>
+                                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                                Creating Workflow...
+                                            </>
+                                        ) : (
+                                            <>
+                                                <FileText className="mr-2 h-4 w-4" />
+                                                Create Workflow
+                                            </>
+                                        )}
+                                    </Button>
+                                )}
+                            </div>
+                        </form>
                         {/* </CardContent>
                     </Card> */}
-</div>
+                    </div>
 
                     {/* Help Section */}
                     {/* <Card className="mt-6 bg-blue-50/50 border-blue-200">

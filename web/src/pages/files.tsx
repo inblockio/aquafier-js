@@ -276,6 +276,7 @@ const FilesPage = () => {
                 <div className="flex items-center justify-between">
                     <div className="flex items-center space-x-4">
                         <button
+                        data-testid="file-upload-dropzone"
                             className="flex items-center space-x-2 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-blue-700 cursor-pointer"
                             style={{ backgroundColor: '#E55B1F' }}
                             onClick={handleUploadClick}
@@ -290,7 +291,9 @@ const FilesPage = () => {
                             className="hidden"
                             onChange={handleFileChange}
                         />
-                        <button className="flex items-center space-x-2 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-gray-100 cursor-pointer"
+                        <button 
+                            data-testid="create-document-signature"
+                        className="flex items-center space-x-2 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-gray-100 cursor-pointer"
                             style={{ backgroundColor: '#394150' }}
                             onClick={() => {
                                 //, 
@@ -395,6 +398,7 @@ const FilesPage = () => {
                                 <Minimize2 className="h-4 w-4" />
                             </Button>
                             <Button
+                             data-testid="close-upload-dialog-button"
                                 variant="ghost"
                                 size="icon"
                                 onClick={() => setIsUploadDialogOpen(false)}
@@ -474,6 +478,7 @@ const FilesPage = () => {
                             {uploadQueue.some(upload => upload.status === 'success') && (
                                 <div className="flex justify-end pt-2">
                                     <Button
+                                        data-testid="clear-completed-button"
                                         variant="outline"
                                         size="sm"
                                         onClick={clearCompletedUploads}
