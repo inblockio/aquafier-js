@@ -30,7 +30,7 @@ const TailwindLayout = () => {
     const usagePercentage = (usedStorage / totalStorage) * 100;
 
     const sidebarItems = [
-        { icon: FileText, label: 'All files', id: "/files" },
+        { icon: FileText, label: 'All files', id: "/" },
         { icon: Workflow, label: 'Workflows', id: "/files_workflows" },
         { icon: LayoutTemplate, label: 'Templates', id: "/files_templates" },
         { icon: Share2, label: 'Shared files', id: "/files_shared" },

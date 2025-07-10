@@ -219,7 +219,7 @@ export default function PdfWorkflowPage() {
                             <h1 className="text-center text-2xl font-bold">{timeLineTitle}</h1>
                             <Button variant="outline" onClick={() => {
                                 setSelectedFileInfo(null)
-                                navigate("/files", {replace: true})
+                                navigate("/", {replace: true})
                             }} className='cursor-pointer'>
                                 <LuArrowLeft className="mr-2 h-4 w-4" /> Go Home
                             </Button>

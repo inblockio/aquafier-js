@@ -258,6 +258,7 @@ export const ConnectWalletPage: React.FC<{ dataTestId: string }> = ({ dataTestId
             setIsOpen(true);
             !session && signAndConnect();
           }}
+          data-testid="sign-in-button-page"
           disabled={isConnecting}
           className="w-full bg-black hover:bg-gray-800 disabled:bg-gray-400 text-white font-medium py-3 px-4 rounded-lg transition-colors duration-200 flex items-center justify-center gap-2"
         >

@@ -155,9 +155,7 @@ export async function registerNewMetaMaskWalletAndLogin(): Promise<RegisterMetaM
             //  console.log("Sign-in button found, clicking it...");
         // Try different possible selectors for the sign-in button
         const signInButtonSelectors = [
-            '[data-testid="sign-in-button-dialog"]',
-            '[data-testid="sign-in-button-navbar"]',
-            '[data-testid="sign-in-button"]',
+            '[data-testid="sign-in-button-page"]',
             'button:has-text("Sign In")',
             'button:has-text("Connect")',
             'button:has-text("Login")'
