@@ -358,48 +358,6 @@ export default function WorkflowsTablePage() {
 
 
       <div className="space-y-6">
-        {
-          _workflows.length == 0 ? <>
-
-
-          </> :
-
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <FileText className="h-5 w-5" />
-                  Aqua Sign Workflows
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-
-
-
-                <div className="rounded-md border">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead className="w-[300px] max-w-[300px] min-w-[300px] break-words overflow-hidden">Document</TableHead>
-                        <TableHead>Workflow Type</TableHead>
-                        <TableHead>Signers</TableHead>
-                        <TableHead>Progress</TableHead>
-                        <TableHead>Status</TableHead>
-                        <TableHead className="text-right">Actions</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {
-                        _workflows.map((workflow, index: number) => (
-                          <WorkflowTableItem key={`${index}-workflow`} workflowName={workflow.workflowName} apiFileInfo={workflow.apiFileInfo} index={index} />
-                        ))
-                      }
-                    </TableBody>
-                  </Table>
-                </div>
-              </CardContent>
-            </Card>
-
-        }
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -408,7 +366,7 @@ export default function WorkflowsTablePage() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="rounded-md border">
+            <div className="rounded-md border"> 
               <Table>
                 <TableHeader>
                   <TableRow>
