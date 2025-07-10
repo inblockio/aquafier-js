@@ -1,6 +1,4 @@
 import { ethers } from 'ethers';
-import { MainLayoutHolder } from './layouts/MainLayout'
-import Home from './pages/home/Home'
 import LoadConfiguration from './components/config';
 import { initializeBackendUrl } from './utils/constants';
 import { useEffect } from 'react'
@@ -8,27 +6,22 @@ import appStore from './store';
 import { useStore } from "zustand"
 import { BrowserRouter, Route, Routes } from 'react-router-dom'
 import ErrorBoundary from "./components/ErrorBoundary";
-import SharePage from './pages/SharePage';
 import Loading from './pages/Loading';
-import AquaForms from './pages/AquaForms';
-import FormGenerator from './pages/FormGenerator';
-import AttestationAddresses from './pages/AttestationAddresses';
 import PdfSigner from './pages/wokflow/ContractDocument/PdfSigner';
-import WorkFlowPage from './pages/wokflow/WorkFlow';
-import FilesPage from './pages/files/files';
-import HomeV2 from './pages/home/HomeV2';
+import FilesPage from './pages/files';
+import Home from './pages/Home';
 // import TailwindLayout from './layouts/TailwindLayout';
 import TailwindMainLayout from './layouts/TailwindMainLayout';
 import PageNotFound from './pages/PageNotFound';
-import InfoPage from './pages/files/InfoPage';
-import SettingsPage from './pages/files/SettingsPage';
-import TemplatesPage from './pages/files/TemplatesPage';
-import CreateFormInstance from './pages/files/CreateFormInstance';
+import InfoPage from './pages/InfoPage';
+import SettingsPage from './pages/SettingsPage';
+import TemplatesPage from './pages/TemplatesPage';
+import CreateFormInstance from './pages/CreateFormInstance';
 import NewShadcnLayoutWithSidebar from './layouts/NewShadcnLayoutWithSidebar';
-import PdfWorkflowPage from './pages/files/wokflow/PdfWorkflowPage';
-import DomainAttestationPage from './pages/files/domain_attestation';
-import FilesSharedContracts from './pages/files/files_shared_contracts';
-import WorkflowsTablePage from './pages/files/wokflow/WorkflowsTablePage';
+import PdfWorkflowPage from './pages/wokflow/PdfWorkflowPage';
+import DomainAttestationPage from './pages/domain_attestation';
+import FilesSharedContracts from './pages/files_shared_contracts';
+import WorkflowsTablePage from './pages/wokflow/WorkflowsTablePage';
 
 declare global {
   interface Window {
@@ -60,12 +53,12 @@ function App() {
       <Routes>
         {/* Routes with Tailwind UI (no MainLayout wrapper) */}
 
-        <Route path="/" element={<TailwindMainLayout />}>
-          <Route path="/home" element={<HomeV2 />} />
+        <Route path="/home" element={<TailwindMainLayout />}>
+          <Route index element={<Home />} />
         </Route>
 
         {/* All file routes using Tailwind */}
-        <Route path="/files" element={<NewShadcnLayoutWithSidebar />}>
+        <Route path="/" element={<NewShadcnLayoutWithSidebar />}>
           <Route index element={<FilesPage />} />
           <Route path="pdf/workflow" element={<PdfWorkflowPage />} />
           <Route path="files_workflows" element={<FilesPage />} />
@@ -82,20 +75,22 @@ function App() {
           <Route path="info" element={<InfoPage />} />
           <Route path="workflows" element={<WorkflowsTablePage />} />
           <Route path="form-instance/:templateName" element={<CreateFormInstance />} />
+             <Route path="/loading" element={<Loading />} />
+              <Route path="/pdf-signer" element={<PdfSigner fileData={null} setActiveStep={(_one) => { }} />} />
         </Route>
 
 
         {/* Routes with Chakra UI (wrapped in MainLayout) */}
-        <Route path="/" element={<MainLayoutHolder />} >
+        {/* <Route path="/" element={<MainLayoutHolder />} >
           <Route index element={<Home />} />
-          <Route path="/loading" element={<Loading />} />
+       
           <Route path="/share/:identifier" element={<SharePage />} />
           <Route path="/aqua-forms" element={<AquaForms />} />
-          <Route path="/pdf-signer" element={<PdfSigner fileData={null} setActiveStep={(_one) => { }} />} />
+         
           <Route path="/workflow" element={<WorkFlowPage />} />
           <Route path="/form-generator" element={<FormGenerator />} />
           <Route path="/attestation_addresses" element={<AttestationAddresses />} />
-        </Route>
+        </Route> */}
         <Route path="*" element={<PageNotFound />} />
       </Routes>
       </ErrorBoundary>

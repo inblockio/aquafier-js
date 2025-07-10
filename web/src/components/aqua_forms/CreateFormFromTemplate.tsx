@@ -559,7 +559,7 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack, openCreateTemplate
       };
 
       const onBack = () => {
-        navigate("/files/templates")
+        navigate("/templates")
         callBack && callBack()
       }
 

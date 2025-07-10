@@ -61,22 +61,22 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   }, [files])
 
   const sidebarItems = [
-    { icon: FaHome, label: 'Home', id: "/home" },
-    { icon: FileText, label: 'All files', id: "/files" },
-    { icon: Workflow, label: 'Workflows', id: "/files/files_workflows" },
-    { icon: LayoutTemplate, label: 'Templates', id: "/files/templates" },
-    { icon: Share2, label: 'Shared files', id: "/files/shared-contracts" },
+    // { icon: FaHome, label: 'Home', id: "/home" },
+    { icon: FileText, label: 'All files', id: "/" },
+    { icon: Workflow, label: 'Workflows', id: "/files_workflows" },
+    { icon: LayoutTemplate, label: 'Templates', id: "/templates" },
+    { icon: Share2, label: 'Shared files', id: "/shared-contracts" },
   ];
 
   const quickAccessItems = [
-    { label: 'Info', icon: Star, id: "/files/info" },
-    { label: 'Settings', icon: Settings, id: "/files/settings" }
+    { label: 'Info', icon: Star, id: "/info" },
+    { label: 'Settings', icon: Settings, id: "/settings" }
   ];
 
   const applicationsItems = [
-    // { label: 'Create AquaSign', icon: Signature, id: "/files/form-instance/aqua_sign" },
-    { label: 'Aquasign Workflows', icon: Workflow, id: "/files/workflows" },
-    { label: 'Domain Attestation', icon: Link, id: "/files/domain_attestation" }
+    // { label: 'Create AquaSign', icon: Signature, id: "/form-instance/aqua_sign" },
+    { label: 'Aquasign Workflows', icon: Workflow, id: "/workflows" },
+    { label: 'Domain Attestation', icon: Link, id: "/domain_attestation" }
   ];
 
   return (
