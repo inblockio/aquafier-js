@@ -5,4 +5,5 @@ export interface RevionOperation {
     backendUrl : string,
     revision : string,
     nonce : string
+    children?: React.ReactNode
 }

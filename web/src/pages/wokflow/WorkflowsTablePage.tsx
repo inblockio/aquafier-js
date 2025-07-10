@@ -40,6 +40,9 @@ import { ApiFileInfo } from '@/models/FileInfo';
 import { FileObject } from 'aqua-js-sdk';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/shadcn/ui/tooltip';
 import { IContractInformation } from '@/types/contract_workflow';
+import { DownloadAquaChain } from '../components/aqua_chain_actions/download_aqua_chain';
+import { OpenWorkflowButton } from '../components/aqua_chain_actions/open_aqua_sign_workflow';
+import { DeleteAquaChain } from '../components/aqua_chain_actions/delete_aqua_chain';
 
 const getStatusIcon = (status: string) => {
   switch (status) {
@@ -88,6 +91,7 @@ interface IWorkflowItem { workflowName: string, apiFileInfo: ApiFileInfo, index?
 const WorkflowTableItem = ({ workflowName, apiFileInfo, index = 0 }: IWorkflowItem) => {
   const [currentFileObject, setCurrentFileObject] = useState<FileObject | undefined>(undefined);
   const [contractInformation, setContractInformation] = useState<IContractInformation | undefined>(undefined);
+  const { session, backend_url } = useStore(appStore)
 
   const getCurrentFileObject = () => {
     const fileObject = getAquaTreeFileObject(apiFileInfo);
@@ -260,23 +264,29 @@ const WorkflowTableItem = ({ workflowName, apiFileInfo, index = 0 }: IWorkflowIt
           <DropdownMenuContent align="end">
             <DropdownMenuLabel>Actions</DropdownMenuLabel>
             <DropdownMenuSeparator />
-            <DropdownMenuItem>
-              <Eye className="mr-2 h-4 w-4" />
-              View Document
-            </DropdownMenuItem>
-            <DropdownMenuItem>
+            <OpenWorkflowButton item={apiFileInfo} nonce={session?.nonce ?? ""}>
+              <DropdownMenuItem>
+                <Eye className="mr-2 h-4 w-4" />
+                View Document
+              </DropdownMenuItem>
+            </OpenWorkflowButton>
+            <DropdownMenuItem disabled>
               <Send className="mr-2 h-4 w-4" />
               Send Reminder
             </DropdownMenuItem>
-            <DropdownMenuItem>
-              <Download className="mr-2 h-4 w-4" />
-              Download
-            </DropdownMenuItem>
+            <DownloadAquaChain file={apiFileInfo}>
+              <DropdownMenuItem>
+                <Download className="mr-2 h-4 w-4" />
+                Download
+              </DropdownMenuItem>
+            </DownloadAquaChain>
             <DropdownMenuSeparator />
-            <DropdownMenuItem className="text-red-600">
-              <Trash2 className="mr-2 h-4 w-4" />
-              Delete
-            </DropdownMenuItem>
+            <DeleteAquaChain apiFileInfo={apiFileInfo} backendUrl={backend_url} nonce={session?.nonce ?? ""} revision="">
+              <DropdownMenuItem className="text-red-600">
+                <Trash2 className="mr-2 h-4 w-4" />
+                Delete
+              </DropdownMenuItem>
+            </DeleteAquaChain>
           </DropdownMenuContent>
         </DropdownMenu>
       </TableCell>
@@ -331,7 +341,7 @@ export default function WorkflowsTablePage() {
 
   useEffect(() => {
     processFilesToGetWorkflows();
-  }, []);
+  }, [JSON.stringify(files)]);
 
   return (
     <>
@@ -366,7 +376,7 @@ export default function WorkflowsTablePage() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="rounded-md border"> 
+            <div className="rounded-md border">
               <Table>
                 <TableHeader>
                   <TableRow>
@@ -380,7 +390,7 @@ export default function WorkflowsTablePage() {
                 </TableHeader>
                 <TableBody>
                   {
-                    _workflows.length  === 0 && (
+                    _workflows.length === 0 && (
                       <TableRow>
                         <TableCell colSpan={6} className="h-24 text-center">
                           No workflows found

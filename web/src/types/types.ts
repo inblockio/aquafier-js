@@ -13,7 +13,7 @@ export interface Session {
 export interface IShareButton {
     item: ApiFileInfo
     nonce: string
-
+    children?: React.ReactNode
 }
 
 export interface ApiFileData {

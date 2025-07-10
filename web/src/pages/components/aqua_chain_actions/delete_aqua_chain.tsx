@@ -1,14 +1,13 @@
 import { LuDelete, LuTrash } from "react-icons/lu"
 import { Button } from "@/components/shadcn/ui/button"
-import { 
-  Dialog, 
-  DialogContent, 
-  DialogHeader, 
-  DialogTitle, 
-  DialogFooter,
-  DialogDescription 
+import {
+    Dialog,
+    DialogContent,
+    DialogHeader,
+    DialogTitle,
+    DialogFooter,
+    DialogDescription
 } from "@/components/shadcn/ui//dialog"
-import { useToast } from "@/components/shadcn/ui/use-toast"
 import { fetchFiles, getFileName, getGenesisHash, isWorkFlowData, getAquaTreeFileName } from "../../../utils/functions"
 import { useStore } from "zustand"
 import appStore from "../../../store"
@@ -16,21 +15,18 @@ import axios from "axios"
 import { ApiFileInfo } from "../../../models/FileInfo"
 import { useState } from "react"
 import { RevionOperation } from "../../../models/RevisionOperation"
+import { toast } from "sonner"
 
-export const DeleteAquaChain = ({ apiFileInfo, backendUrl, nonce }: RevionOperation) => {
+export const DeleteAquaChain = ({ apiFileInfo, backendUrl, nonce, children }: RevionOperation) => {
     const { files, setFiles, session, backend_url, systemFileInfo } = useStore(appStore)
     const [deleting, setDeleting] = useState(false)
     const [open, setOpen] = useState(false)
     const [isLoading, setIsloading] = useState(false)
     const [aquaTreesAffected, setAquaTreesAffected] = useState<ApiFileInfo[]>([])
-    const { toast } = useToast()
 
     const deleteFileApi = async () => {
         if (isLoading) {
-            toast({
-                description: "File deletion in progress",
-                variant: "default"
-            })
+            toast("File deletion in progress")
             return
         }
         setIsloading(true)
@@ -51,18 +47,12 @@ export const DeleteAquaChain = ({ apiFileInfo, backendUrl, nonce }: RevionOperat
                 // Close the dialog explicitly
                 setOpen(false)
                 setIsloading(false)
-                toast({
-                    description: "File deleted successfully",
-                    variant: "default"
-                })
+                toast("File deleted successfully")
                 await refetchAllUserFiles()
             }
         } catch (e) {
             //  console.log(`Error ${e}`)
-            toast({
-                description: "File deletion error",
-                variant: "destructive"
-            })
+            toast.error("File deletion error")
             setIsloading(false) // Add this to ensure loading state is cleared on error
         }
 
@@ -76,10 +66,7 @@ export const DeleteAquaChain = ({ apiFileInfo, backendUrl, nonce }: RevionOperat
             setFiles(files);
         } catch (e) {
             //  console.log(`Error ${e}`)
-            toast({
-                description: "Error updating files",
-                variant: "destructive"
-            })
+            toast.error("Error updating files")
             document.location.reload()
         }
     }
@@ -126,36 +113,47 @@ export const DeleteAquaChain = ({ apiFileInfo, backendUrl, nonce }: RevionOperat
 
     return (
         <>
-           <button
-                          data-testid="download-aqua-tree-button"
-                          onClick={() => {
-                              if (!deleting) {
-                                  deleteFileAction();
-                              } else {
-                                  toast({
-                                      description: "Signing is already in progress",
-                                      variant: "default"
-                                  })
-                              }
-                          }}
-                          className={`flex items-center  space-x-1 bg-[#FBE3E2] text-pink-700 px-3 py-2 rounded transition-colors text-xs ${deleting ? 'opacity-60 cursor-not-allowed' : 'hover:bg-[#FACBCB]'}`}
-                          disabled={deleting}
-                      >
-                          {deleting ? (
-                              <>
-                                  <svg className="animate-spin h-3 w-3 mr-1 text-pink-700" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
-                                  </svg>
-                                  <span>Deleting...</span>
-                              </>
-                          ) : (
-                              <>
-                                   <LuDelete className="w-3 h-3" />
-                                  <span>Delete</span>
-                              </>
-                          )}
-                      </button>
+            {
+                children ? (
+                    <div data-testid="download-aqua-tree-button" onClick={() => {
+                        if (!deleting) {
+                            deleteFileAction();
+                        } else {
+                            toast("Signing is already in progress")
+                        }
+                    }}>
+                        {children}
+                    </div>
+                ) : (
+                    <button
+                        data-testid="download-aqua-tree-button"
+                        onClick={() => {
+                            if (!deleting) {
+                                deleteFileAction();
+                            } else {
+                                toast("Signing is already in progress")
+                            }
+                        }}
+                        className={`flex items-center  space-x-1 bg-[#FBE3E2] text-pink-700 px-3 py-2 rounded transition-colors text-xs ${deleting ? 'opacity-60 cursor-not-allowed' : 'hover:bg-[#FACBCB]'}`}
+                        disabled={deleting}
+                    >
+                        {deleting ? (
+                            <>
+                                <svg className="animate-spin h-3 w-3 mr-1 text-pink-700" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
+                                </svg>
+                                <span>Deleting...</span>
+                            </>
+                        ) : (
+                            <>
+                                <LuDelete className="w-3 h-3" />
+                                <span>Delete</span>
+                            </>
+                        )}
+                    </button>
+                )
+            }
 
             <Dialog open={open} onOpenChange={setOpen}>
                 <DialogContent className="sm:max-w-[425px] ">
@@ -175,10 +173,10 @@ export const DeleteAquaChain = ({ apiFileInfo, backendUrl, nonce }: RevionOperat
                         </ol>
                     </div>
                     <DialogFooter className="flex flex-row justify-end space-x-2">
-                        <Button 
-                            data-testid="cancel-delete-file-action-button" 
-                            variant="outline" 
-                            size="sm" 
+                        <Button
+                            data-testid="cancel-delete-file-action-button"
+                            variant="outline"
+                            size="sm"
                             onClick={() => setOpen(false)}
                         >
                             Cancel

@@ -77,8 +77,8 @@ function App() {
             <Route path="info" element={<InfoPage />} />
             <Route path="workflows" element={<WorkflowsTablePage />} />
             <Route path="form-instance/:templateName" element={<CreateFormInstance />} />
-            <Route path="/loading" element={<Loading />} />
-            <Route path="/pdf-signer" element={<PdfSigner fileData={null} setActiveStep={(_one) => { }} />} />
+            <Route path="loading" element={<Loading />} />
+            <Route path="pdf-signer" element={<PdfSigner fileData={null} setActiveStep={(_one) => { }} />} />
           </Route>
 
 

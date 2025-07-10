@@ -14,7 +14,7 @@ import { toaster } from "@/components/shadcn/ui/use-toast"
 
 
 
-export const DownloadAquaChain = ({ file }: { file: ApiFileInfo }) => {
+export const DownloadAquaChain = ({ file, children }: { file: ApiFileInfo, children?: React.ReactNode }) => {
     const { session } = useStore(appStore)
     const [downloading, setDownloading] = useState(false)
 
@@ -218,36 +218,53 @@ export const DownloadAquaChain = ({ file }: { file: ApiFileInfo }) => {
     return (
         <>
             {/* Sign Button */}
-            <button
-                data-testid="download-aqua-tree-button"
-                onClick={() => {
-                    if (!downloading) {
-                        downloadAquaJson();
-                    } else {
-                        toaster.create({
-                            description: "Signing is already in progress",
-                            type: "info"
-                        })
-                    }
-                }}
-                className={`flex items-center space-x-1 bg-[#F3E8FE] text-purple-700 px-3 py-2 rounded transition-colors text-xs ${downloading ? 'opacity-60 cursor-not-allowed' : 'hover:bg-[#E8D5FE]'}`}
-                disabled={downloading}
-            >
-                {downloading ? (
-                    <>
-                        <svg className="animate-spin h-3 w-3 mr-1 text-purple-700" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
-                        </svg>
-                        <span>Download...</span>
-                    </>
+            {
+                children ? (
+                    <div onClick={() => {
+                        if (!downloading) {
+                            downloadAquaJson();
+                        } else {
+                            toaster.create({
+                                description: "Signing is already in progress",
+                                type: "info"
+                            })
+                        }
+                    }}>
+                        {children}
+                    </div>
                 ) : (
-                    <>
-                        <LuDownload className="w-3 h-3" />
-                        <span>Download</span>
-                    </>
-                )}
-            </button>
+                    <button
+                        data-testid="download-aqua-tree-button"
+                        onClick={() => {
+                            if (!downloading) {
+                                downloadAquaJson();
+                            } else {
+                                toaster.create({
+                                    description: "Signing is already in progress",
+                                    type: "info"
+                                })
+                            }
+                        }}
+                        className={`flex items-center space-x-1 bg-[#F3E8FE] text-purple-700 px-3 py-2 rounded transition-colors text-xs ${downloading ? 'opacity-60 cursor-not-allowed' : 'hover:bg-[#E8D5FE]'}`}
+                        disabled={downloading}
+                    >
+                        {downloading ? (
+                            <>
+                                <svg className="animate-spin h-3 w-3 mr-1 text-purple-700" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
+                                </svg>
+                                <span>Download...</span>
+                            </>
+                        ) : (
+                            <>
+                                <LuDownload className="w-3 h-3" />
+                                <span>Download</span>
+                            </>
+                        )}
+                    </button>
+                )
+            }
         </>
     )
 }
