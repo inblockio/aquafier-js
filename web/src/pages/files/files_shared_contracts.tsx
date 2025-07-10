@@ -4,6 +4,7 @@ import { Card, CardContent } from '@/components/shadcn/ui/card';
 import { Badge } from '@/components/shadcn/ui/badge';
 import { Input } from '@/components/shadcn/ui/input';
 import { Avatar, AvatarFallback } from '@/components/shadcn/ui/avatar';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/shadcn/ui/tooltip';
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -23,6 +24,7 @@ import {
     Share2,
     Filter,
     ArrowUpDown,
+    Wallet,
 } from 'lucide-react';
 
 interface Contract {
@@ -41,8 +43,8 @@ const mockContracts: Contract[] = [
         hash: '0x254B0D7b63342Fcb8955DB82e95C21d72EFdB6f7',
         genesis_hash: '0x123...abc',
         latest: '{"status": "active", "version": "1.2"}',
-        sender: 'alice@company.com',
-        receiver: 'bob@partner.com',
+        sender: '0x71C7656EC7ab88b098defB751B7401B5f6d8976F',
+        receiver: '0x2546BcD3c84621e976D8185a91A922aE77ECEc30',
         option: 'standard',
         reference_count: 3,
     },
@@ -50,8 +52,8 @@ const mockContracts: Contract[] = [
         hash: '0x789C1E2f94567Ghi1234JK56e78L90m34EfgH8i9',
         genesis_hash: '0x456...def',
         latest: '{"status": "pending", "version": "2.1"}',
-        sender: 'carol@startup.io',
-        receiver: 'david@enterprise.com',
+        sender: '0xBcd4042DE499D14e55001CcbB24a551F3b954096',
+        receiver: '0xa0Ee7A142d267C1f36714E4a8F75612F20a79720',
         option: 'premium',
         reference_count: 7,
     },
@@ -59,8 +61,8 @@ const mockContracts: Contract[] = [
         hash: '0xABC3F4g56789Hij2345KL67f89M01n45GhiJ9k0',
         genesis_hash: '0x789...ghi',
         latest: '{"status": "completed", "version": "1.0"}',
-        sender: 'eve@tech.org',
-        receiver: 'frank@solutions.net',
+        sender: '0x23618e81E3f5cdF7f54C3d65f7FBc0aBf5B21E8f',
+        receiver: '0x14dC79964da2C08b23698B3D3cc7Ca32193d9955',
         option: 'basic',
         reference_count: 1,
     },
@@ -80,6 +82,14 @@ export function SharedContracts() {
     const truncateHash = (hash: string, length: number = 8) => {
         return `${hash.slice(0, length)}...${hash.slice(-6)}`;
     };
+    
+    const formatEthAddress = (address?: string) => {
+        if (!address) return 'Unknown Address';
+        if (!address.startsWith('0x')) return address; // Not an ETH address
+        
+        // Format as 0x1234...5678
+        return `${address.slice(0, 6)}...${address.slice(-4)}`;
+    };
 
     const copyToClipboard = async (text: string) => {
         try {
@@ -88,12 +98,7 @@ export function SharedContracts() {
             console.error('Failed to copy:', err);
         }
     };
-
-    const getInitials = (email?: string) => {
-        if (!email) return '?';
-        return email.charAt(0).toUpperCase();
-    };
-
+    
     const getStatusFromLatest = (latest?: string) => {
         if (!latest) return 'unknown';
         try {
@@ -103,6 +108,164 @@ export function SharedContracts() {
             return 'unknown';
         }
     };
+
+    const SharedContract = ({contract}: {contract: Contract}) => {
+        return (
+            <Card
+                key={contract.hash}
+                className="hover:shadow-md transition-shadow cursor-pointer border border-gray-200"
+                onClick={() => setSelectedContract(contract)}
+            >
+                <CardContent className="p-6">
+                    <div className="flex items-start justify-between">
+                        <div className="flex-1 space-y-4">
+                            {/* Contract Hash */}
+                            <div className="flex items-center gap-3">
+                                <div className="w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center">
+                                    <Hash className="w-4 h-4 text-gray-600" />
+                                </div>
+                                <div className="flex-1">
+                                    <div className="flex items-center gap-2">
+                                        <code className="text-sm font-mono bg-gray-100 px-2 py-1 rounded">
+                                            {truncateHash(contract.hash)}
+                                        </code>
+                                        <Button
+                                            variant="ghost"
+                                            size="sm"
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                copyToClipboard(contract.hash);
+                                            }}
+                                            className="h-6 w-6 p-0"
+                                        >
+                                            <Copy className="w-3 h-3" />
+                                        </Button>
+                                    </div>
+                                    <p className="text-xs text-gray-500 mt-1">Contract Hash</p>
+                                </div>
+                            </div>
+
+                            {/* Participants */}
+                            <div className="flex items-center gap-6">
+                                <TooltipProvider>
+                                    <Tooltip>
+                                        <TooltipTrigger asChild>
+                                            <div className="flex items-center gap-2">
+                                                <Avatar className="w-6 h-6">
+                                                    <AvatarFallback className="text-xs bg-blue-100 text-blue-600">
+                                                        <Wallet className="w-3 h-3" />
+                                                    </AvatarFallback>
+                                                </Avatar>
+                                                <div>
+                                                    <p className="text-sm font-medium text-gray-900 font-mono">
+                                                        {formatEthAddress(contract.sender)}
+                                                    </p>
+                                                    <p className="text-xs text-gray-500">Sender</p>
+                                                </div>
+                                            </div>
+                                        </TooltipTrigger>
+                                        <TooltipContent>
+                                            <p className="font-mono text-xs">{contract.sender}</p>
+                                        </TooltipContent>
+                                    </Tooltip>
+                                </TooltipProvider>
+
+                                <div className="flex items-center text-gray-400">
+                                    <div className="w-8 border-t border-dashed border-gray-300"></div>
+                                    <div className="w-2 h-2 rounded-full bg-gray-300 mx-1"></div>
+                                    <div className="w-8 border-t border-dashed border-gray-300"></div>
+                                </div>
+
+                                <TooltipProvider>
+                                    <Tooltip>
+                                        <TooltipTrigger asChild>
+                                            <div className="flex items-center gap-2">
+                                                <Avatar className="w-6 h-6">
+                                                    <AvatarFallback className="text-xs bg-green-100 text-green-600">
+                                                        <Wallet className="w-3 h-3" />
+                                                    </AvatarFallback>
+                                                </Avatar>
+                                                <div>
+                                                    <p className="text-sm font-medium text-gray-900 font-mono">
+                                                        {formatEthAddress(contract.receiver)}
+                                                    </p>
+                                                    <p className="text-xs text-gray-500">Receiver</p>
+                                                </div>
+                                            </div>
+                                        </TooltipTrigger>
+                                        <TooltipContent>
+                                            <p className="font-mono text-xs">{contract.receiver}</p>
+                                        </TooltipContent>
+                                    </Tooltip>
+                                </TooltipProvider>
+                            </div>
+
+                            {/* Status and Details */}
+                            <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-4">
+                                    <Badge
+                                        variant="outline"
+                                        className={`${getStatusColor(getStatusFromLatest(contract.latest))} capitalize`}
+                                    >
+                                        {getStatusFromLatest(contract.latest)}
+                                    </Badge>
+
+                                    {contract.option && (
+                                        <div className="flex items-center gap-1 text-sm text-gray-600">
+                                            <span className="w-2 h-2 rounded-full bg-gray-400"></span>
+                                            <span className="capitalize">{contract.option}</span>
+                                        </div>
+                                    )}
+
+                                    {contract.reference_count !== undefined && (
+                                        <div className="flex items-center gap-1 text-sm text-gray-600">
+                                            <Users className="w-3 h-3" />
+                                            <span>{contract.reference_count} refs</span>
+                                        </div>
+                                    )}
+                                </div>
+
+                                <DropdownMenu>
+                                    <DropdownMenuTrigger asChild>
+                                        <Button
+                                            variant="ghost"
+                                            size="sm"
+                                            onClick={(e) => e.stopPropagation()}
+                                            className="h-8 w-8 p-0"
+                                        >
+                                            <MoreHorizontal className="w-4 h-4" />
+                                        </Button>
+                                    </DropdownMenuTrigger>
+                                    <DropdownMenuContent align="end">
+                                        <DropdownMenuItem>
+                                            <Eye className="w-4 h-4 mr-2" />
+                                            View Details
+                                        </DropdownMenuItem>
+                                        <DropdownMenuItem>
+                                            <Copy className="w-4 h-4 mr-2" />
+                                            Copy Hash
+                                        </DropdownMenuItem>
+                                        <DropdownMenuItem>
+                                            <ExternalLink className="w-4 h-4 mr-2" />
+                                            Open in Explorer
+                                        </DropdownMenuItem>
+                                        <DropdownMenuItem>
+                                            <Download className="w-4 h-4 mr-2" />
+                                            Export
+                                        </DropdownMenuItem>
+                                        <DropdownMenuItem>
+                                            <Share2 className="w-4 h-4 mr-2" />
+                                            Share
+                                        </DropdownMenuItem>
+                                    </DropdownMenuContent>
+                                </DropdownMenu>
+                            </div>
+                        </div>
+                    </div>
+                </CardContent>
+            </Card>
+        )
+    }
 
     const getStatusColor = (status: string) => {
         switch (status) {
@@ -162,141 +325,7 @@ export function SharedContracts() {
                     <div className="flex-1 overflow-auto p-6">
                         <div className="space-y-4">
                             {filteredContracts.map((contract) => (
-                                <Card
-                                    key={contract.hash}
-                                    className="hover:shadow-md transition-shadow cursor-pointer border border-gray-200"
-                                    onClick={() => setSelectedContract(contract)}
-                                >
-                                    <CardContent className="p-6">
-                                        <div className="flex items-start justify-between">
-                                            <div className="flex-1 space-y-4">
-                                                {/* Contract Hash */}
-                                                <div className="flex items-center gap-3">
-                                                    <div className="w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center">
-                                                        <Hash className="w-4 h-4 text-gray-600" />
-                                                    </div>
-                                                    <div className="flex-1">
-                                                        <div className="flex items-center gap-2">
-                                                            <code className="text-sm font-mono bg-gray-100 px-2 py-1 rounded">
-                                                                {truncateHash(contract.hash)}
-                                                            </code>
-                                                            <Button
-                                                                variant="ghost"
-                                                                size="sm"
-                                                                onClick={(e) => {
-                                                                    e.stopPropagation();
-                                                                    copyToClipboard(contract.hash);
-                                                                }}
-                                                                className="h-6 w-6 p-0"
-                                                            >
-                                                                <Copy className="w-3 h-3" />
-                                                            </Button>
-                                                        </div>
-                                                        <p className="text-xs text-gray-500 mt-1">Contract Hash</p>
-                                                    </div>
-                                                </div>
-
-                                                {/* Participants */}
-                                                <div className="flex items-center gap-6">
-                                                    <div className="flex items-center gap-2">
-                                                        <Avatar className="w-6 h-6">
-                                                            <AvatarFallback className="text-xs bg-blue-100 text-blue-600">
-                                                                {getInitials(contract.sender)}
-                                                            </AvatarFallback>
-                                                        </Avatar>
-                                                        <div>
-                                                            <p className="text-sm font-medium text-gray-900">
-                                                                {contract.sender || 'Unknown Sender'}
-                                                            </p>
-                                                            <p className="text-xs text-gray-500">Sender</p>
-                                                        </div>
-                                                    </div>
-
-                                                    <div className="flex items-center text-gray-400">
-                                                        <div className="w-8 border-t border-dashed border-gray-300"></div>
-                                                        <div className="w-2 h-2 rounded-full bg-gray-300 mx-1"></div>
-                                                        <div className="w-8 border-t border-dashed border-gray-300"></div>
-                                                    </div>
-
-                                                    <div className="flex items-center gap-2">
-                                                        <Avatar className="w-6 h-6">
-                                                            <AvatarFallback className="text-xs bg-green-100 text-green-600">
-                                                                {getInitials(contract.receiver)}
-                                                            </AvatarFallback>
-                                                        </Avatar>
-                                                        <div>
-                                                            <p className="text-sm font-medium text-gray-900">
-                                                                {contract.receiver || 'Unknown Receiver'}
-                                                            </p>
-                                                            <p className="text-xs text-gray-500">Receiver</p>
-                                                        </div>
-                                                    </div>
-                                                </div>
-
-                                                {/* Status and Details */}
-                                                <div className="flex items-center justify-between">
-                                                    <div className="flex items-center gap-4">
-                                                        <Badge
-                                                            variant="outline"
-                                                            className={`${getStatusColor(getStatusFromLatest(contract.latest))} capitalize`}
-                                                        >
-                                                            {getStatusFromLatest(contract.latest)}
-                                                        </Badge>
-
-                                                        {contract.option && (
-                                                            <div className="flex items-center gap-1 text-sm text-gray-600">
-                                                                <span className="w-2 h-2 rounded-full bg-gray-400"></span>
-                                                                <span className="capitalize">{contract.option}</span>
-                                                            </div>
-                                                        )}
-
-                                                        {contract.reference_count !== undefined && (
-                                                            <div className="flex items-center gap-1 text-sm text-gray-600">
-                                                                <Users className="w-3 h-3" />
-                                                                <span>{contract.reference_count} refs</span>
-                                                            </div>
-                                                        )}
-                                                    </div>
-
-                                                    <DropdownMenu>
-                                                        <DropdownMenuTrigger asChild>
-                                                            <Button
-                                                                variant="ghost"
-                                                                size="sm"
-                                                                onClick={(e) => e.stopPropagation()}
-                                                                className="h-8 w-8 p-0"
-                                                            >
-                                                                <MoreHorizontal className="w-4 h-4" />
-                                                            </Button>
-                                                        </DropdownMenuTrigger>
-                                                        <DropdownMenuContent align="end">
-                                                            <DropdownMenuItem>
-                                                                <Eye className="w-4 h-4 mr-2" />
-                                                                View Details
-                                                            </DropdownMenuItem>
-                                                            <DropdownMenuItem>
-                                                                <Copy className="w-4 h-4 mr-2" />
-                                                                Copy Hash
-                                                            </DropdownMenuItem>
-                                                            <DropdownMenuItem>
-                                                                <ExternalLink className="w-4 h-4 mr-2" />
-                                                                Open in Explorer
-                                                            </DropdownMenuItem>
-                                                            <DropdownMenuItem>
-                                                                <Download className="w-4 h-4 mr-2" />
-                                                                Export
-                                                            </DropdownMenuItem>
-                                                            <DropdownMenuItem>
-                                                                <Share2 className="w-4 h-4 mr-2" />
-                                                                Share
-                                                            </DropdownMenuItem>
-                                                        </DropdownMenuContent>
-                                                    </DropdownMenu>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </CardContent>
-                                </Card>
+                                <SharedContract key={`${contract.hash}`} contract={contract} />
                             ))}
 
                             {filteredContracts.length === 0 && (
