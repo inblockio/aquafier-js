@@ -39,7 +39,6 @@ export const ContractSummaryView: React.FC<ContractDocumentViewProps> = ({ setAc
 
 
             const batch = hashesToLoopPar.slice(i, i + 3);
-            // console.log(`Processing batch ${i / 3 + 1}:`, batch);
 
 
             let signaturePositionCount = 0
@@ -52,26 +51,19 @@ export const ContractSummaryView: React.FC<ContractDocumentViewProps> = ({ setAc
                 let allAquaTrees = selectedFileInfo?.fileObject.filter((e) => isAquaTree(e.fileContent))
 
                 let hashSigPositionHashString = selectedFileInfo!.aquaTree!.revisions[hashSigPosition].link_verification_hashes![0];
-                console.log(`Hash with positions ${hashSigPosition}`)
-                console.log(`Revision Hash with positions ${hashSigPositionHashString}`)
+
 
                 if (allAquaTrees) {
-                    console.log(`All aqua trees valid`)
                     for (let anAquaTreeFileObject of allAquaTrees) {
                         let anAquaTree: AquaTree = anAquaTreeFileObject.fileContent as AquaTree
                         let allHashes = Object.keys(anAquaTree.revisions)
                         if (allHashes.includes(hashSigPositionHashString)) {
 
-                            console.log(`Item found in all hashes `)
                             // let aquaTreeData = anAquaTree.fileContent as AquaTree
                             let revData = anAquaTree.revisions[hashSigPositionHashString]
-                            console.log(`Item found in all hashes  ${JSON.stringify(revData, null, 4)}`)
                             signaturePositionCount = getHighestFormIndex(revData) + 1 // sinature count is 0 based
-                            console.log(`signaturePositionCount  ${signaturePositionCount}`)
 
                             break
-                        } else {
-                            console.log(`allHashes ${allHashes} does not incude ${hashSigPositionHashString} `)
                         }
                     }
 
@@ -174,94 +166,123 @@ export const ContractSummaryView: React.FC<ContractDocumentViewProps> = ({ setAc
 
             // Create a map for quick cache lookup
             const cacheMap = new Map();
-            if (Array.isArray(apiFileData)) {
-                apiFileData.forEach(item => {
-                    if (item && item.fileHash) {
-                        cacheMap.set(item.fileHash, item.fileData);
-                    }
-                });
-            }
+            // if (Array.isArray(apiFileData)) {
+            //     apiFileData.forEach(item => {
+            //         if (item && item.fileHash) {
+            //             cacheMap.set(item.fileHash, item.fileData);
+            //         }
+            //     });
+            // }
 
             // Process files in parallel
-            const filePromises = [];
-            const fileObjectVerifier: FileObject[] = [];
+            // const filePromises = [];
+            // const fileObjectVerifier: FileObject[] = [];
 
-            for (const file of fileInfo.fileObject) {
-                if (typeof file.fileContent === 'string' &&
-                    (file.fileContent.startsWith("http://") || file.fileContent.startsWith("https://"))) {
+            // for (const file of fileInfo.fileObject) {
+            //     if (typeof file.fileContent === 'string' &&
+            //         (file.fileContent.startsWith("http://") || file.fileContent.startsWith("https://"))) {
 
-                    const fileContentUrl = file.fileContent;
-                    const fileHash = getFileHashFromUrl(fileContentUrl);
+            //         const fileContentUrl = file.fileContent;
+            //         const fileHash = getFileHashFromUrl(fileContentUrl);
 
-                    // Check cache first
-                    let fileData = fileHash.length > 0 ? cacheMap.get(fileHash) : null;
+            //         // Check cache first
+            //         let fileData = fileHash.length > 0 ? cacheMap.get(fileHash) : null;
 
-                    if (!fileData) {
-                        // If not in cache, create a promise to fetch it
-                        const fetchPromise = fetchFileData(fileContentUrl, session!.nonce).then(data => {
+            //         if (!fileData) {
+            //             // If not in cache, create a promise to fetch it
+            //             const fetchPromise = fetchFileData(fileContentUrl, session!.nonce).then(data => {
 
-                            if (data && fileHash.length > 0) {
-                                // Update cache
-                                // setApiFileData((prev: any) => {
-                                //     const prevArray = Array.isArray(prev) ? prev : [];
-                                //     return [...prevArray, { fileHash, fileData: data }];
-                                // });
-                                let dd = Array.isArray(apiFileData) ? [...apiFileData] : [];
-                                dd.push({ fileHash, fileData })
-                                setApiFileData(dd)
-                                return { file, data };
-                            }
-                            return null;
-                        });
-                        filePromises.push(fetchPromise);
-                    } else {
-                        // If in cache, process immediately
-                        const fileItem = { ...file };
-                        if (fileData instanceof ArrayBuffer) {
-                            if (isArrayBufferText(fileData)) {
-                                fileItem.fileContent = new TextDecoder().decode(fileData);
-                            } else {
-                                fileItem.fileContent = new Uint8Array(fileData);
-                            }
-                        } else if (typeof fileData === 'string') {
-                            fileItem.fileContent = fileData;
-                        }
-                        fileObjectVerifier.push(fileItem);
+            //                 if (data && fileHash.length > 0) {
+            //                     // Update cache
+            //                     // setApiFileData((prev: any) => {
+            //                     //     const prevArray = Array.isArray(prev) ? prev : [];
+            //                     //     return [...prevArray, { fileHash, fileData: data }];
+            //                     // });
+            //                     let dd = Array.isArray(apiFileData) ? [...apiFileData] : [];
+            //                     dd.push({ fileHash, fileData })
+            //                     setApiFileData(dd)
+            //                     return { file, data };
+            //                 }
+            //                 return null;
+            //             });
+            //             filePromises.push(fetchPromise);
+            //         } else {
+            //             // If in cache, process immediately
+            //             const fileItem = { ...file };
+            //             if (fileData instanceof ArrayBuffer) {
+            //                 if (isArrayBufferText(fileData)) {
+            //                     fileItem.fileContent = new TextDecoder().decode(fileData);
+            //                 } else {
+            //                     fileItem.fileContent = new Uint8Array(fileData);
+            //                 }
+            //             } else if (typeof fileData === 'string') {
+            //                 fileItem.fileContent = fileData;
+            //             }
+            //             // fileObjectVerifier.push(fileItem);
+            //             return fileItem
+            //         }
+            //     } else {
+            //         // Non-URL files can be added directly
+            //         // fileObjectVerifier.push(file);
+            //         return file
+            //     }
+            // }
+
+            // // Wait for all file fetches to complete
+            // if (filePromises.length > 0) {
+            //     const fetchedFiles = await Promise.all(filePromises);
+
+            //     // Process fetched files
+            //     for (const result of fetchedFiles) {
+            //         if (result) {
+            //             const { file, data } = result;
+            //             const fileItem = { ...file };
+
+            //             if (data instanceof ArrayBuffer) {
+            //                 if (isArrayBufferText(data)) {
+            //                     fileItem.fileContent = new TextDecoder().decode(data);
+            //                 } else {
+            //                     fileItem.fileContent = new Uint8Array(data);
+            //                 }
+            //             } else if (typeof data === 'string') {
+            //                 fileItem.fileContent = data;
+            //             }
+
+            //             fileObjectVerifier.push(fileItem);
+            //             // return fileItem
+            //         }
+            //     }
+            // }
+
+            // UPDATE: Removed fileObjectVerifier to track the fileobjects because pushing in promises is not ideal
+            // const fileObjectVerifier: FileObject[] = []
+            const filePromises = fileInfo.fileObject.map(async file => {
+                if (typeof file.fileContent === 'string' && file.fileContent.startsWith('http')) {
+                    const hash = getFileHashFromUrl(file.fileContent)
+
+                    // TODO: FIX ME - Here we check if the file is already in the cache
+                    // let _data = hash ? cacheMap.get(hash) : null
+
+                    let fetchedData = await fetchFileData(file.fileContent, session!.nonce)
+                    if (fetchedData && hash) {
+                        cacheMap.set(hash, fetchedData)
+                        setApiFileData(
+                            [...apiFileData, { fileHash: hash, fileData: fetchedData }]
+                        )
                     }
-                } else {
-                    // Non-URL files can be added directly
-                    fileObjectVerifier.push(file);
-                }
-            }
-
-            // Wait for all file fetches to complete
-            if (filePromises.length > 0) {
-                const fetchedFiles = await Promise.all(filePromises);
-
-                // Process fetched files
-                for (const result of fetchedFiles) {
-                    if (result) {
-                        const { file, data } = result;
-                        const fileItem = { ...file };
-
-                        if (data instanceof ArrayBuffer) {
-                            if (isArrayBufferText(data)) {
-                                // console.log("is array buffr text .....")
-                                fileItem.fileContent = new TextDecoder().decode(data);
-                            } else {
-                                fileItem.fileContent = new Uint8Array(data);
-                            }
-                        } else if (typeof data === 'string') {
-                            fileItem.fileContent = data;
-                        }
-
-                        fileObjectVerifier.push(fileItem);
+                    if (fetchedData instanceof ArrayBuffer) {
+                        file.fileContent = isArrayBufferText(fetchedData) ? new TextDecoder().decode(fetchedData) : new Uint8Array(fetchedData)
+                    } else if (typeof fetchedData === 'string') {
+                        file.fileContent = fetchedData
                     }
+                    return file
                 }
-            }
+                return file
+                // fileObjectVerifier.push(file)
+            })
 
-
-            // console.log(`---< fileobject ${fileObjectVerifier.map((e) => e.fileName).toString()} ll file names`)
+            // We wait for all the file promises to resolve and get the file objects to use
+            const filesResult = await Promise.all(filePromises)
 
             // Process revisions in parallel where possible
             const verificationPromises = revisionHashes.map(async revisionHash => {
@@ -270,9 +291,8 @@ export const ContractSummaryView: React.FC<ContractDocumentViewProps> = ({ setAc
                     fileInfo.aquaTree!,
                     revision,
                     revisionHash,
-                    fileObjectVerifier
+                    filesResult
                 )
-                // console.log("Hash: ", revisionHash, "\nResult", result)
                 return ({
                     hash: revisionHash,
                     isSuccessful: result.isOk()
@@ -281,7 +301,6 @@ export const ContractSummaryView: React.FC<ContractDocumentViewProps> = ({ setAc
 
             // Wait for all verifications to complete
             const allRevisionsVerificationsStatus = await Promise.all(verificationPromises);
-            // console.log("allRevisionsVerificationsStatus", allRevisionsVerificationsStatus)
 
             // Update state and callback
             setVerificationResults(allRevisionsVerificationsStatus);
@@ -300,15 +319,11 @@ export const ContractSummaryView: React.FC<ContractDocumentViewProps> = ({ setAc
 
     const intializeContractInformation = () => {
 
-        console.log("Selected file info", selectedFileInfo)
         if (selectedFileInfo) {
 
 
             const orderedTree = OrderRevisionInAquaTree(selectedFileInfo!.aquaTree!)
 
-
-    
-            // console.log("File objects", orderedTree.file_index)
             const revisions = orderedTree.revisions
             const revisionHashes = Object.keys(revisions)
 
@@ -332,28 +347,20 @@ export const ContractSummaryView: React.FC<ContractDocumentViewProps> = ({ setAc
             let signatureRevionHashes: Array<SummaryDetailsDisplayData> = []
 
             let signers: string[] = firstRevision.forms_signers.split(",").map((e: string) => e.trim())
-            console.log(`signers ${signers} from firstRevision.forms_signers ${firstRevision.forms_signers}  revisionHashes.length ${revisionHashes.length} `)
 
             if (revisionHashes.length > 4) {
                 // remove the first 4 elements from the revision list 
                 fourthItmeHashOnwards = revisionHashes.slice(4);
-                // console.log(`revisionHashes  ${revisionHashes} --  ${typeof revisionHashes}`)
-                // console.log(`fourthItmeHashOnwards  ${fourthItmeHashOnwards}`)
                 signatureRevionHashes = getSignatureRevionHashes(fourthItmeHashOnwards)
-                console.log(`signatureRevionHashes  ${JSON.stringify(signatureRevionHashes, null, 4)}`)
 
 
-                
+
                 let signatureRevionHashesDataAddress = signatureRevionHashes.map((e) => e.walletAddress);
-                console.log(`signatureRevionHashesDataAddress ${signatureRevionHashesDataAddress} from signatureRevionHashes `)
                 let remainSigners = signers.filter((item) => !signatureRevionHashesDataAddress.includes(item))
-                console.log(`remainSigners ${remainSigners} from signers ${signers} `)
-                // if (remainSigners.length == 0) {
-                    setIsWorkFlowComplete(remainSigners)
-                // }
+                setIsWorkFlowComplete(remainSigners)
 
                 setSignatureRevionHashes(signatureRevionHashes)
-            }else{
+            } else {
                 setIsWorkFlowComplete(signers)
             }
 
@@ -382,7 +389,7 @@ export const ContractSummaryView: React.FC<ContractDocumentViewProps> = ({ setAc
     const getActualState = () => {
         let status = "pending"
         // if (isVerificationComplete(verificationResults)) {
-        if (isWorkFlowComplete.length === 0 ) {
+        if (isWorkFlowComplete.length === 0) {
             if (isVerificationSuccessful(verificationResults)) {
                 status = "successful"
             }
@@ -398,21 +405,21 @@ export const ContractSummaryView: React.FC<ContractDocumentViewProps> = ({ setAc
 
         if (isLoading) {
             return (
-            <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-                <div className="flex flex-col items-center space-y-4">
-                    {/* Loading Spinner */}
-                    <div className="h-12 w-12 border-4 border-t-blue-500 border-blue-200 rounded-full animate-spin"></div>
+                <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+                    <div className="flex flex-col items-center space-y-4">
+                        {/* Loading Spinner */}
+                        <div className="h-12 w-12 border-4 border-t-blue-500 border-blue-200 rounded-full animate-spin"></div>
 
-                    {/* Loading Text */}
-                    <h2 className="text-xl font-semibold text-gray-700">
-                        Loading...
-                    </h2>
-                    <p className="text-gray-500">
-                        Please wait while we prepare your content
-                    </p>
+                        {/* Loading Text */}
+                        <h2 className="text-xl font-semibold text-gray-700">
+                            Loading...
+                        </h2>
+                        <p className="text-gray-500">
+                            Please wait while we prepare your content
+                        </p>
+                    </div>
                 </div>
-            </div>
-        )
+            )
         }
 
 
@@ -429,7 +436,6 @@ export const ContractSummaryView: React.FC<ContractDocumentViewProps> = ({ setAc
                 pendingSignatures: 0,
                 signers: [
                     ...firstRevisionData?.forms_signers.split(",").map((signer: string) => {
-                        console.log(`signers  ${signer}  signatureRevionHashesData  ${JSON.stringify(signatureRevionHashesData, null, 4)}`)
                         let item = signatureRevionHashesData.find((e) => e.walletAddress.toLowerCase().trim() == signer.toLowerCase().trim())
 
                         if (item) {

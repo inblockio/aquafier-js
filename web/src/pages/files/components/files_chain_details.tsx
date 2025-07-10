@@ -3,7 +3,7 @@ import { LogViewer } from "@/components/logs/LogViewer"
 import { ICompleteChainView, VerificationHashAndResult } from "@/models/AquaTreeDetails"
 import appStore from "@/store"
 import { ensureDomainUrlHasSSL, getFileName, getFileHashFromUrl, isArrayBufferText, isWorkFlowData } from "@/utils/functions"
-import Aquafier, { LogData, FileObject, getAquaTreeFileName, getAquaTreeFileObject } from "aqua-js-sdk"
+import Aquafier, { LogData, getAquaTreeFileName, getAquaTreeFileObject, OrderRevisionInAquaTree } from "aqua-js-sdk"
 import { ChevronUp, ChevronDown } from "lucide-react"
 import { useCallback, useEffect, useState } from "react"
 import { useStore } from "zustand"
@@ -12,7 +12,6 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { CustomAlert } from "@/components/shadcn/ui/alert-custom"
 import { RevisionDetailsSummary } from "./files_revision_details"
 import { RevisionDisplay } from "./files_revision_display"
-import { ScrollArea } from "@/components/shadcn/ui/scroll-area"
 
 export const CompleteChainView = ({ callBack, selectedFileInfo }: ICompleteChainView) => {
   const [showMoreDetails, setShowMoreDetails] = useState(false)
@@ -49,6 +48,7 @@ export const CompleteChainView = ({ callBack, selectedFileInfo }: ICompleteChain
       })
       if (!response.ok) throw new Error("Failed to fetch file")
       const contentType = response.headers.get("Content-Type") || ""
+      console.log("Content type: ", contentType)
       if (contentType.startsWith("text/") ||
         ["application/json", "application/xml", "application/javascript"].includes(contentType)) {
         return await response.text()
@@ -73,31 +73,46 @@ export const CompleteChainView = ({ callBack, selectedFileInfo }: ICompleteChain
         const fileName = getFileName(selectedFileInfo.aquaTree)
         const cacheMap = new Map(apiFileData?.map(item => [item.fileHash, item.fileData]))
 
-        const fileObjectVerifier: FileObject[] = []
+        // UPDATE: Removed fileObjectVerifier to track the fileobjects because pushing in promises is not ideal
+        // const fileObjectVerifier: FileObject[] = []
         const filePromises = selectedFileInfo.fileObject.map(async file => {
           if (typeof file.fileContent === 'string' && file.fileContent.startsWith('http')) {
             const hash = getFileHashFromUrl(file.fileContent)
-            let data = hash ? cacheMap.get(hash) : null
-            if (!data) data = await fetchFileData(file.fileContent)
-            if (data && hash) setApiFileData(
-              [...apiFileData, { fileHash: hash, fileData: data }]
-            )
-            if (data instanceof ArrayBuffer) {
-              file.fileContent = isArrayBufferText(data) ? new TextDecoder().decode(data) : new Uint8Array(data)
-            } else if (typeof data === 'string') file.fileContent = data
+            
+            // TODO: FIX ME - Here we check if the file is already in the cache
+            // let _data = hash ? cacheMap.get(hash) : null
+
+            let fetchedData = await fetchFileData(file.fileContent)
+            if (fetchedData && hash) {
+                cacheMap.set(hash, fetchedData)
+                setApiFileData(
+                [...apiFileData, { fileHash: hash, fileData: fetchedData }]
+              )
+            }
+            if (fetchedData instanceof ArrayBuffer) {
+              file.fileContent = isArrayBufferText(fetchedData) ? new TextDecoder().decode(fetchedData) : new Uint8Array(fetchedData)
+            } else if (typeof fetchedData === 'string') {
+              file.fileContent = fetchedData
+            }
+            return file
           }
-          fileObjectVerifier.push(file)
+          return file
+          // fileObjectVerifier.push(file)
         })
-        await Promise.all(filePromises)
+
+        // We wait for all the file promises to resolve and get the file objects to use
+        const filesResult = await Promise.all(filePromises)
 
         const revisionHashes = Object.keys(selectedFileInfo.aquaTree.revisions || {})
+
         const verificationResults = await Promise.all(revisionHashes.map(async hash => {
           const revision = selectedFileInfo.aquaTree!.revisions[hash]
+          const reorderedAquaTree = OrderRevisionInAquaTree(selectedFileInfo.aquaTree!)
           const result = await aquafier.verifyAquaTreeRevision(
-            selectedFileInfo.aquaTree!,
+            reorderedAquaTree,
             revision,
             hash,
-            fileObjectVerifier,
+            filesResult,
             {
               mnemonic: "",
               nostr_sk: "",
