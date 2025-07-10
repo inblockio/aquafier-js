@@ -1,16 +1,5 @@
 
 import React, { useEffect, useState } from 'react';
-import {
-    Text,
-    Heading,
-    Stack,
-    Grid,
-    GridItem,
-    Spinner,
-} from '@chakra-ui/react';
-// import { Card } from '@chakra-ui/react';
-// import { FaCheck, FaQuestionCircle, FaBriefcase, FaBook, FaCoffee, FaAward, FaUser } from 'react-icons/fa';
-import { Alert } from "../../../components/chakra-ui/alert"
 import appStore from '../../../store';
 import { useStore } from "zustand"
 import { ContractDocumentViewProps, SignatureData, SummaryDetailsDisplayData } from '../../../types/types';
@@ -18,8 +7,8 @@ import { AquaTree, getGenesisHash, OrderRevisionInAquaTree, reorderAquaTreeRevis
 import { ensureDomainUrlHasSSL, getHighestFormIndex, isAquaTree } from '../../../utils/functions';
 
 import { PDFDisplayWithJustSimpleOverlay } from './components/signature_overlay';
+import { toast } from 'sonner';
 import PdfSigner from './PdfSigner';
-import { toaster } from '../../../components/chakra-ui/toaster';
 import SignatureItem from '../../../components/pdf/SignatureItem';
 
 
@@ -416,10 +405,7 @@ export const ContractDocumentView: React.FC<ContractDocumentViewProps> = ({ setA
         });
 
         if (!response.ok) {
-            toaster.create({
-                description: `${fileName} not found in system`,
-                type: "error"
-            });
+            toast.error(`${fileName} not found in system`);
             throw new Error(`Failed to fetch file: ${response.status}`);
         }
 
@@ -456,49 +442,48 @@ export const ContractDocumentView: React.FC<ContractDocumentViewProps> = ({ setA
     const renderContent = () => {
         if (pdfLoadingFile) {
             return (
-                <Stack>
-                    <Spinner size="xl" color="blue.500" />
-                    <Heading size="lg" color="gray.700">
+                <div className="flex flex-col items-center space-y-4">
+                    <div className="h-10 w-10 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+                    <h2 className="text-2xl font-bold text-gray-700">
                         Loading PDF
-                    </Heading>
-                </Stack>
+                    </h2>
+                </div>
             );
         }
 
 
         if (signaturesLoading) {
             return (
-                <Stack>
-                    <Spinner size="lg" color="blue.500" />
-                    <Heading size="md" color="gray.700">
+                <div className="flex flex-col items-center space-y-4">
+                    <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+                    <h3 className="text-xl font-bold text-gray-700">
                         Loading signatures...
-                    </Heading>
-                </Stack>
+                    </h3>
+                </div>
             );
         }
 
         const isUserSignatureIncluded = signatures.some((sig) => sig.walletAddress === session?.address);
-        // return <Text style={{whiteSpace: "pre-wrap", wordBreak: "break-all"}}>{JSON.stringify(signatures, null, 4)}</Text>
+        // return <p className="whitespace-pre-wrap break-all">{JSON.stringify(signatures, null, 4)}</p>
         if (isUserSignatureIncluded) {
             return (
-                <Grid templateColumns="repeat(4, 1fr)">
-                    <GridItem colSpan={{ base: 12, md: 3 }}>
+                <div className="grid grid-cols-4">
+                    <div className="col-span-12 md:col-span-3">
                         <PDFDisplayWithJustSimpleOverlay
                             pdfUrl={pdfURLObject!}
                             annotationsInDocument={signatures}
                             signatures={signatures}
                         />
-                    </GridItem>
-                    <GridItem colSpan={{ base: 12, md: 1 }} m={5}>
-                        <Stack>
-                            <Text fontWeight={700}>Signatures in document</Text>
+                    </div>
+                    <div className="col-span-12 md:col-span-1 m-5">
+                        <div className="flex flex-col space-y-2">
+                            <p className="font-bold">Signatures in document</p>
                             {signatures.map((signature: SignatureData, index: number) => (
-
                                 <SignatureItem signature={signature} key={index} />
                             ))}
-                        </Stack>
-                    </GridItem>
-                </Grid>
+                        </div>
+                    </div>
+                </div>
             );
         }
 
@@ -514,14 +499,18 @@ export const ContractDocumentView: React.FC<ContractDocumentViewProps> = ({ setA
     // Error boundary for the component
     if (!selectedFileInfo?.aquaTree?.revisions) {
         return (
-            <Alert status="error" variant="solid" title="Error: Document data not found" />
+            <div className="bg-destructive/15 text-destructive p-4 rounded-md">
+                <p className="font-semibold">Error: Document data not found</p>
+            </div>
         );
     }
 
     const firstRevision = selectedFileInfo.aquaTree.revisions[Object.keys(selectedFileInfo.aquaTree.revisions)[0]];
     if (!firstRevision?.forms_signers) {
         return (
-            <Alert status="error" variant="solid" title="Error: Signers not found" />
+            <div className="bg-destructive/15 text-destructive p-4 rounded-md">
+                <p className="font-semibold">Error: Signers not found</p>
+            </div>
         );
     }
 

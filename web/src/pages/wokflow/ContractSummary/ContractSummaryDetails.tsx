@@ -1,30 +1,15 @@
-import {
-  Box,
-  Flex,
-  Text,
-  Button,
-  VStack,
-  HStack,
-  Icon,
-  Heading,
-  Stack,
-  TimelineSeparator,
-  Span,
-  Card,
-  Badge,
-} from "@chakra-ui/react";
 import { FiAlertCircle, FiCalendar, FiCheck, FiCheckCircle, FiCheckSquare, FiCopy, FiFileText, FiInfo } from "react-icons/fi";
 import { BsCheckCircleFill } from "react-icons/bs";
 import { IContractWorkFlowFirstPage } from "../../../types/contract_workflow";
-import { TimelineConnector, TimelineContent, TimelineIndicator, TimelineItem, TimelineRoot, TimelineTitle } from "../../../components/chakra-ui/timeline";
-// import { WalletEnsView } from "../../../components/chakra-ui/wallet_ens";
-// import { formatCryptoAddress } from "../../../utils/functions";
+import { Button } from "../../../components/shadcn/ui/button";
+import { Badge } from "../../../components/shadcn/ui/badge";
+import { Card, CardContent } from "../../../components/shadcn/ui/card";
+import { cn } from "../../../lib/utils";
 
 const DisplayWalletAddress = ({ walletAddress, }: { walletAddress: string, enableNameResolution: boolean }) => {
-
   return (
     <>
-    {/* If we enable name resolution, we can easily do it here without any chaos */}
+      {/* If we enable name resolution, we can easily do it here without any chaos */}
       {/* {
         enableNameResolution ?
           <WalletEnsView walletAddress={walletAddress} inline={true} />
@@ -74,219 +59,225 @@ const ContractSummaryDetails = ({ data, goToSecondPage, enableNameResolution = f
   }
 
   const CustomDivider = ({ mb, mt }: { mb: string | number, mt: string | number }) => {
-
     return (
-      <Box bg={"gray.200"} style={{
-        width: "100%",
-        height: "1px",
-      }} _dark={{
-        background: "gray.800"
-      }} mt={mt} mb={mb} />
+      <div
+        className="w-full h-px bg-gray-200 dark:bg-gray-800"
+        style={{ marginTop: mt, marginBottom: mb }}
+      />
     )
   }
 
   const getBgColorBasedOnVerificationStatus = () => {
-    if(isValidTree === "pending"){
-      return "gray.50"
+    if (isValidTree === "pending") {
+      return "bg-gray-50"
     }
-    else if(isValidTree === "successful"){
-      return "green.50"
+    else if (isValidTree === "successful") {
+      return "bg-green-50"
     }
-    else if(isValidTree === "failed"){
-      return "red.50"
+    else if (isValidTree === "failed") {
+      return "bg-red-50"
     }
+    return "bg-gray-50"
   }
 
   return (
-    <Stack borderRadius="lg" shadow="md" pt={8} overflow={"hidden"}>
+    <div className="flex flex-col rounded-lg shadow-lg pt-8 overflow-hidden gap-1">
 
-      <Flex px={{ base: 2, md: 8 }} justify="space-between" align="center">
-        <HStack>
-          <Heading size="xl" fontWeight={600}>{mockContractData.name}</Heading>
-          <Badge colorPalette={mockContractData.status === "pending" ? "yellow" : "green"} variant="subtle" borderRadius={"full"} fontSize="sm">
+      <div className="px-2 md:px-8 flex justify-between items-center">
+        <div className="flex items-center space-x-2">
+          <h2 className="text-xl font-semibold">{mockContractData.name}</h2>
+          <Badge variant={mockContractData.status === "pending" ? "outline" : "default"} className={cn("rounded-full", mockContractData.status === "pending" ? "text-yellow-600 border-yellow-400" : "bg-green-100 text-green-800 hover:bg-green-100")}>
             {
-              mockContractData.status === "pending" ?
-                <Icon as={FiInfo} />
-                :
-                null
+              mockContractData.status === "pending" &&
+              <FiInfo className="mr-1 h-3 w-3" />
             }
             {
-              mockContractData.status === "completed" ?
-                <Icon as={FiCheck} />
-                :
-                null
+              mockContractData.status === "completed" &&
+              <FiCheck className="mr-1 h-3 w-3" />
             }
             {mockContractData.status}
           </Badge>
-        </HStack>
-        <Button data-testid="action-contract-summary-button"   variant="outline" colorPalette="blue">
+        </div>
+        <Button data-testid="action-contract-summary-button" variant="outline" className="text-blue-600 border-blue-600 hover:bg-blue-50">
           Contract
         </Button>
-      </Flex>
+      </div>
 
-      <HStack align={"center"} px={{ base: 2, md: 8 }}>
-        <Icon as={FiCalendar} color={'gray.500'} />
-        <Text color="gray.500" fontSize={"sm"}>
+      <div className="flex items-center px-2 md:px-8">
+        <FiCalendar className="text-gray-500 mr-2" />
+        <p className="text-gray-500 text-xs">
           Created on {mockContractData.creationDate}
-        </Text>
-      </HStack>
+        </p>
+      </div>
 
-      <HStack px={{ base: 2, md: 8 }}>
-        <Text color="gray.600" _dark={{ color: "gray.300" }} fontSize={"sm"} wordBreak={"break-word"} style={{
-          translate: "all 0.5s linear"
-        }}>
+      <div className="flex items-center px-2 md:px-8">
+        <p className="text-gray-600 dark:text-gray-300 text-sm break-words transition-all duration-500">
           Wallet address: <DisplayWalletAddress walletAddress={mockContractData.creatorAddress} enableNameResolution={enableNameResolution} />
-        </Text>
-        <Icon as={FiCopy} cursor="pointer" />
-      </HStack>
+        </p>
+        <FiCopy className="ml-2 cursor-pointer" />
+      </div>
 
-      {/* <Divider my={6} /> */}
       <CustomDivider mt={2} mb={2} />
 
-      <Stack mb={8} px={{ base: 2, md: 8 }}>
-        <Heading size="xl" fontWeight={"600"}>
+      <div className="mb-8 px-2 md:px-8 flex flex-col">
+        <h3 className="text-lg font-semibold">
           All signers
-        </Heading>
-        <VStack align="stretch" gap={3}>
+        </h3>
+        <div className="flex flex-col space-y-3 mt-2">
           {mockContractData.signers.map((signer, index) => {
             return (
-              <Flex
+              <div
                 key={index}
-                justify="space-between"
-                align="center"
-                bg={signer.status === "pending" ? "yellow.50" : "green.50"}
-                p={3}
-                borderRadius="md"
-                borderColor={signer.status === "pending" ? "yellow.200" : "green.200"}
-                // border={`1px solid`}
-                borderWidth={"1px"}
-                borderStyle={"solid"}
-                gap={4}
+                className={cn(
+                  "flex justify-between items-center p-3 rounded-md border gap-4",
+                  signer.status === "pending"
+                    ? "bg-yellow-50 border-yellow-200"
+                    : "bg-green-50 border-green-200"
+                )}
               >
-                <HStack>
-                  <Icon size={"md"} as={signer.status === "pending" ? FiAlertCircle : FiCheckCircle} color={signer.status === "pending" ? "yellow.500" : "green.500"} />
-                  <Text color={"blackAlpha.900"} fontFamily={"monospace"} fontSize={"sm"} wordBreak={"break-all"}>
+                <div className="flex items-center">
+                  {signer.status === "pending"
+                    ? <FiAlertCircle className="text-yellow-500 mr-2" />
+                    : <FiCheckCircle className="text-green-500 mr-2" />}
+                  <p className="text-black/90 font-mono text-sm break-all">
                     <DisplayWalletAddress walletAddress={signer.address} enableNameResolution={enableNameResolution} />
-                    </Text>
-                </HStack>
-                <Text fontSize={"xs"} color={signer.status === "pending" ? "yellow.600" : "green.600"} fontWeight="medium">
+                  </p>
+                </div>
+                <p className={cn(
+                  "text-xs font-medium",
+                  signer.status === "pending" ? "text-yellow-600" : "text-green-600"
+                )}>
                   {signer.status === "pending" ? "Pending" : "Signed"}
-                </Text>
-              </Flex>
+                </p>
+              </div>
             )
           })}
-        </VStack>
-      </Stack>
+        </div>
+      </div>
 
-      {/* Divider */}
       <CustomDivider mt={2} mb={2} />
 
-      <Stack px={{ base: 2, md: 8 }}>
-        <Heading size="xl" fontWeight={"600"}>
+      <div className="px-2 md:px-8 flex flex-col gap-2">
+        <h3 className="text-lg font-semibold">
           Workflow activity timeline
-        </Heading>
+        </h3>
+        <div>
+          <div className="w-full flex flex-col gap-5 py-6">
+            {mockContractData.activities.map((activity, index) => {
+              let info = getInformation(activity.type as any)
+              return (
+                <div key={`activity_item_${index}`} className="relative last:pb-0">
+                  {/* Timeline connector */}
+                  <div className="absolute left-0 top-0 bottom-0 w-px bg-blue-200"></div>
 
-        <TimelineRoot w={"100%"}>
+                  {/* Timeline indicator */}
+                  <div className={cn(
+                    "absolute left-0 -translate-x-1/2 w-6 h-6 rounded-full flex items-center justify-center",
+                    info.color === "blue" ? "bg-blue-100 text-blue-600" :
+                      info.color === "green" ? "bg-green-100 text-green-600" :
+                        "bg-gray-100 text-gray-600"
+                  )}>
+                    <info.icon className="h-3 w-3" />
+                  </div>
 
-          {mockContractData.activities.map((activity, index) => {
-            let info = getInformation(activity.type as any)
-            return (
-              <TimelineItem key={`activity_item_${index}`}>
-                <TimelineConnector bg={"blue.200"}>
-                  <TimelineSeparator />
-                  <TimelineIndicator boxSize={"26px"} bg={`${info.color}.100`} color={`${info.color}.600`}>
-                    <Icon as={info.icon} size={"sm"} />
-                  </TimelineIndicator>
-                </TimelineConnector>
-                <TimelineContent textStyle="xs" >
-                  <TimelineTitle fontWeight={500}>
-                    {info.title}
-                  </TimelineTitle>
-                  {
-                    activity.type === "signed" ?
-                      <Text opacity={"0.8"} fontSize={"sm"} wordBreak={"break-all"}>
+                  {/* Timeline content */}
+                  <div className="ml-4">
+                    <h4 className="font-medium">
+                      {info.title}
+                    </h4>
+
+                    {activity.type === "signed" && (
+                      <p className="opacity-80 text-sm break-all">
                         User with address {" "}
-                        <Span fontWeight={600} fontFamily={"monospace"}>
+                        <span className="font-semibold font-mono">
                           <DisplayWalletAddress walletAddress={activity.address ?? ""} enableNameResolution={enableNameResolution} />
-                        </Span> {" "}
+                        </span> {" "}
                         signed the document at {" "}
-                        <Span fontWeight={600}>
+                        <span className="font-semibold">
                           {formatDateTime(activity.timestamp)}
-                        </Span>
-                      </Text> :
-                      null
-                  }
-                  {
-                    activity.type === "created" ? (
-                      <Card.Root size="sm" bg={"gray.50"} borderColor={"gray.100"}>
-                        <Card.Body textStyle="sm" lineHeight="tall">
-                          <Text opacity={"0.9"} fontSize={"sm"} color={"blackAlpha.900"} wordBreak={"break-all"}>
-                            User with address {" "}
-                            <Span fontWeight={600} fontFamily={"monospace"}>
-                              <DisplayWalletAddress walletAddress={activity.address ?? ""} enableNameResolution={enableNameResolution} />
-                            </Span> {" "}
-                            Created the contract workflow at {" "}
-                            <Span fontWeight={600}>
-                              {formatDateTime(activity.timestamp)}
-                            </Span>
-                          </Text>
-                          <Text opacity={"0.9"} fontSize={"sm"} color={"blackAlpha.900"}>
-                            {activity.details}
-                          </Text>
-                        </Card.Body>
-                      </Card.Root>
-                    ) : null
-                  }
-                  {
-                    activity.type === "completed" ? (
-                      <Card.Root size="sm" bg={"green.50"} borderColor={"green.200"}>
-                        <Card.Body textStyle="sm" lineHeight="tall">
-                          <Text opacity={"0.9"} fontSize={"sm"} color={"blackAlpha.900"}>
-                            <Icon as={FiCheck} color={"green.600"} /> {" "}
-                            Workflow completed and validated
-                          </Text>
-                          <Text opacity={"0.9"} fontSize={"sm"} color={"blackAlpha.900"}>
-                            {activity.details}
-                          </Text>
-                        </Card.Body>
-                      </Card.Root>
-                    ) : null
-                  }
-                </TimelineContent>
-              </TimelineItem>
-            )
-          }
-          )}
-        </TimelineRoot>
-      </Stack>
+                        </span>
+                      </p>
+                    )}
 
-      <Box>
-        {/* <Divider my={6} /> */}
+                    {activity.type === "created" && (
+                      <Card className="bg-gray-50/50 border-gray-100 mt-2 shadow-none">
+                        <CardContent className="px-2 py-0">
+                          <p className="opacity-90 text-sm text-black/90 break-all">
+                            User with address {" "}
+                            <span className="font-semibold font-mono">
+                              <DisplayWalletAddress walletAddress={activity.address ?? ""} enableNameResolution={enableNameResolution} />
+                            </span> {" "}
+                            Created the contract workflow at {" "}
+                            <span className="font-semibold">
+                              {formatDateTime(activity.timestamp)}
+                            </span>
+                          </p>
+                          <p className="opacity-90 text-sm text-black/90">
+                            {activity.details}
+                          </p>
+                        </CardContent>
+                      </Card>
+                    )}
+
+                    {activity.type === "completed" && (
+                      <Card className="bg-green-50 border-green-200 mt-4">
+                        <CardContent className="px-3 py-0">
+                          <p className="opacity-90 text-sm text-black/90">
+                            <FiCheck className="inline text-green-600 mr-1" />
+                            Workflow completed and validated
+                          </p>
+                          <p className="opacity-90 text-sm text-black/90">
+                            {activity.details}
+                          </p>
+                        </CardContent>
+                      </Card>
+                    )}
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        </div>
+      </div>
+
+      <div>
         <CustomDivider mt={2} mb={0} />
 
-        <Box bg={getBgColorBasedOnVerificationStatus()} _dark={{ bg: "blackAlpha.800" }} pt={8} pb={8}>
-          <Flex px={{ base: 2, md: 8 }} justify="space-between" align="center">
+        <div className={cn(
+          "pt-8 pb-8 dark:bg-black/80",
+          getBgColorBasedOnVerificationStatus()
+        )}>
+          <div className="px-2 md:px-8 flex justify-between items-center">
             {
-              mockContractData.status === "completed" ? (
-                <HStack>
-                  <Icon as={BsCheckCircleFill} color="green.500" />
-                  <Text>All signatures have been collected</Text>
-                </HStack>
-              ) : null
+              mockContractData.status === "completed" && (
+                <div className="flex items-center">
+                  <BsCheckCircleFill className="text-green-500 mr-2" />
+                  <p>All signatures have been collected</p>
+                </div>
+              )
             }
             {
-              mockContractData.status === "pending" ? (
-                <Text fontSize={"sm"} opacity={0.9}>{mockContractData?.footerMsg}</Text>
-              ) : null
+              mockContractData.status === "pending" && (
+                <p className="text-sm opacity-90">{mockContractData?.footerMsg}</p>
+              )
             }
-            <Button data-testid="action-view-contract-button" colorPalette={mockContractData?.status === "pending" ? "blue" : "blackAlpha"} borderRadius={"lg"} onClick={goToSecondPage}>
-              <Icon as={FiFileText} />
+            <Button
+              data-testid="action-view-contract-button"
+              className={cn(
+                "rounded-sm cursor-pointer",
+                mockContractData?.status === "pending"
+                  ? "bg-blue-600/80 text-white hover:bg-blue-700"
+                  : "bg-black/80 text-white hover:bg-black/70"
+              )}
+              onClick={goToSecondPage}
+            >
+              <FiFileText className="mr-2 h-4 w-4" />
               View Contract Document
             </Button>
-          </Flex>
-        </Box>
-      </Box>
-    </Stack>
+          </div>
+        </div>
+      </div>
+    </div>
   );
 };
 

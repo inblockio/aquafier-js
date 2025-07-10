@@ -1,16 +1,10 @@
 import { useEffect, useState } from 'react';
-import {
-    Box,
-    Text,
-    Stack,
-} from '@chakra-ui/react';
 // import { PDFDocument, rgb, StandardFonts } from 'pdf-lib';
 // import { PDFJSViewer } from 'pdfjs-react-viewer';
-import { useColorMode } from '../../../../components/chakra-ui/color-mode';
 import { SignatureData } from "../../../../types/types"
 import { EasyPDFRenderer } from '../signer/SignerPage';
 import { handleLoadFromUrl } from '../../../../utils/functions';
-import { toaster } from '../../../../components/chakra-ui/toaster';
+import { toast } from 'sonner';
 
 
 export const SignatureOverlay = ({ signature, currentPage, pdfMainContainerRef, handleDragStart }: { signature: SignatureData, currentPage: number, pdfMainContainerRef: React.RefObject<HTMLDivElement>, handleDragStart?: (e: React.MouseEvent | React.TouchEvent, id: string) => void }) => {
@@ -29,59 +23,47 @@ export const SignatureOverlay = ({ signature, currentPage, pdfMainContainerRef, 
     // if (!pdfElement || !pdfRect) return null;
     console.log("PDF rect", pdfRect)
     return (
-        <Box
-            position="absolute"
-            left={`calc(${Number(signature.x) * 100}% - 40px)`} // Adjusted for better visibility
-            top={`calc(${(1 - Number(signature.y)) * 100}% )`} // Adjusted for better visibility
-            transform="translate(-50%, -50%)"
-            backgroundSize="contain"
-            backgroundRepeat="no-repeat"
-            backgroundPosition="center"
-            pointerEvents="auto"
-            cursor={signature.isDragging ? "grabbing" : "grab"}
-            zIndex={signature.isDragging ? 20 : 10}
-            onMouseDown={(e) => handleDragStart?.(e, signature.id)}
-            onTouchStart={(e) => handleDragStart?.(e, signature.id)}
-            border={signature.isDragging ? "2px dashed blue" : "none"}
-            transition="border 0.2s ease"
-            overflow={"hidden"}
-            _hover={{ boxShadow: "0 0 0 1px blue" }}
+        <div
+            className="absolute overflow-hidden hover:shadow-[0_0_0_1px_blue] transition-[border] duration-200 ease-in-out"
             style={{
-                // width: `${position.width * 100}%`,
+                left: `calc(${Number(signature.x) * 100}% - 40px)`, // Adjusted for better visibility
+                top: `calc(${(1 - Number(signature.y)) * 100}%)`, // Adjusted for better visibility
+                transform: "translate(-50%, -50%)",
+                backgroundSize: "contain",
+                backgroundRepeat: "no-repeat",
+                backgroundPosition: "center",
+                pointerEvents: "auto",
+                cursor: signature.isDragging ? "grabbing" : "grab",
+                zIndex: signature.isDragging ? 20 : 10,
+                border: signature.isDragging ? "2px dashed blue" : "none",
                 maxWidth: "250px",
-                // height: `${position.height * 100}%`,
-                // backgroundColor: 'rgba(255, 255, 255, 0.9)',
                 padding: '4px',
                 borderRadius: '4px',
-                border: "1px solid rgb(216, 216, 216)"
+                borderColor: "rgb(216, 216, 216)"
             }}
+            onMouseDown={(e) => handleDragStart?.(e, signature.id)}
+            onTouchStart={(e) => handleDragStart?.(e, signature.id)}
         >
-            <Stack gap={1} justifyContent={"flex-start"} height="100%">
-                {/* <Text fontSize="xs" color="gray.600" style={{ overflow: 'auto', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{signature.name}</Text>
-                <Box
-                    flex="1"
-                    backgroundImage={`url(${signature.dataUrl})`}
-                    backgroundSize="contain"
-                    backgroundRepeat="no-repeat"
-                    backgroundPosition="left"
-                    minHeight="40px"
+            <div className="flex flex-col gap-1 justify-start h-full">
+                {/* Commented out section preserved
+                <p className="text-xs text-gray-600 overflow-auto text-ellipsis whitespace-nowrap">{signature.name}</p>
+                <div
+                    className="flex-1 bg-contain bg-no-repeat bg-left min-h-[40px]"
+                    style={{ backgroundImage: `url(${signature.dataUrl})` }}
                 />
-                <Text fontSize="xs" color="gray.600" style={{ overflow: 'auto', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{signature.walletAddress}</Text> */}
-                <Box
-                    flex="1"
-                    backgroundImage={`url(${signature.dataUrl})`}
-                    backgroundSize="contain"
-                    backgroundRepeat="no-repeat"
-                    backgroundPosition="left"
-                    width={"240px"}
-                    height={"290px"}
-                    minHeight="40px"
-                    minWidth={"150px"}
+                <p className="text-xs text-gray-600 overflow-auto text-ellipsis whitespace-nowrap">{signature.walletAddress}</p> */}
+                <div
+                    className="flex-1 bg-contain bg-no-repeat bg-left min-h-[40px] min-w-[150px]"
+                    style={{
+                        backgroundImage: `url(${signature.dataUrl})`,
+                        width: "240px",
+                        height: "290px"
+                    }}
                 />
-                <Text fontSize="xs" color="gray.600">{signature.name}</Text>
-                <Text fontSize="xs" overflow={'hidden'} color="gray.600">{signature.walletAddress}</Text>
-            </Stack>
-        </Box>
+                <p className="text-xs text-gray-600">{signature.name}</p>
+                <p className="text-xs text-gray-600 overflow-hidden">{signature.walletAddress}</p>
+            </div>
+        </div>
     );
 };
 
@@ -90,21 +72,16 @@ export const SimpleSignatureOverlay = ({ signature, currentPage }: { signature: 
     // const { colorMode } = useColorMode();
     // const isDarkMode = colorMode === "dark";
     return (
-        <Box
-            display={Number(currentPage) === Number(signature.page) ? "block" : "none"}
-            position="absolute"
-            left={`calc(${Number(signature.x) * 100}% - 40px)`} // Adjusted for better visibility
-            top={`calc(${(1 - Number(signature.y)) * 100}% - 40px)`} // Adjusted for better visibility
-            transform={`translate(-${Number(signature.width) * 50}%, -${Number(signature.height) * 50}%)`}
-            backgroundSize="contain"
-            backgroundRepeat="no-repeat"
-            backgroundPosition="center"
-            pointerEvents="auto"
-            transition="border 0.2s ease"
-            overflow={"hidden"}
-            // border={"2px solid red"}
-            // _hover={{ boxShadow: "0 0 0 1px rgba(255, 255, 255, 0.9)" }}
+        <div
+            className="absolute overflow-hidden transition-[border] duration-200 ease-in-out pointer-events-auto"
             style={{
+                display: Number(currentPage) === Number(signature.page) ? "block" : "none",
+                left: `calc(${Number(signature.x) * 100}% - 40px)`, // Adjusted for better visibility
+                top: `calc(${(1 - Number(signature.y)) * 100}% - 40px)`, // Adjusted for better visibility
+                transform: `translate(-${Number(signature.width) * 50}%, -${Number(signature.height) * 50}%)`,
+                backgroundSize: "contain",
+                backgroundRepeat: "no-repeat",
+                backgroundPosition: "center",
                 // width: `${Number(signature.width) * 100}%`,
                 maxWidth: "250px",
                 // height: `${Number(signature.height) * 100}%`,
@@ -112,38 +89,37 @@ export const SimpleSignatureOverlay = ({ signature, currentPage }: { signature: 
                 padding: '4px',
                 borderRadius: '4px',
                 border: "1px solid rgb(216, 216, 216)"
+                // border: "2px solid red"
+                // boxShadow: "0 0 0 1px rgba(255, 255, 255, 0.9)"
             }}
         >
-            <Stack gap={1} justifyContent={"flex-start"} height="100%" borderRadius={"lg"} style={{
-                padding: "6px"
-            }}>
-                <Box
-                    flex="1"
-                    backgroundImage={`url(${signature.dataUrl})`}
-                    backgroundSize="contain"
-                    backgroundRepeat="no-repeat"
-                    backgroundPosition="left"
-                    width={"240px"}
-                    height={"290px"}
-                    minHeight="40px"
-                    minWidth={"150px"}
+            <div 
+                className="flex flex-col gap-1 justify-start h-full rounded-lg" 
+                style={{ padding: "6px" }}
+            >
+                <div
+                    className="flex-1 bg-contain bg-no-repeat bg-left min-h-[40px] min-w-[150px]"
+                    style={{
+                        backgroundImage: `url(${signature.dataUrl})`,
+                        width: "240px",
+                        height: "290px"
+                    }}
                 />
-                <Text fontSize="xs" color="gray.600">{signature.name}</Text>
-                <Text fontSize="xs" overflow={'hidden'} color="gray.600">{signature.walletAddress}</Text>
-            </Stack>
-        </Box>
+                <p className="text-xs text-gray-600">{signature.name}</p>
+                <p className="text-xs text-gray-600 overflow-hidden">{signature.walletAddress}</p>
+            </div>
+        </div>
     )
 }
 
 
 export const PDFDisplayWithJustSimpleOverlay = ({ pdfUrl, signatures }: { pdfUrl: string, signatures: SignatureData[], annotationsInDocument :SignatureData[]  }) => {
-    const { colorMode } = useColorMode();
     const [pdfFile, setPdfFile] = useState<File | null>(null);
 
     useEffect(() => {
         const loadPdf = async () => {
             try {
-                const result = await handleLoadFromUrl(pdfUrl, "Contract document.pdf", toaster);
+                const result = await handleLoadFromUrl(pdfUrl, "Contract document.pdf", toast);
                 if (!result.error) {
                     setPdfFile(result.file);
                 }
@@ -158,12 +134,8 @@ export const PDFDisplayWithJustSimpleOverlay = ({ pdfUrl, signatures }: { pdfUrl
     if (!pdfFile) return <p>Loading PDF...</p>;
 
     return (
-        <Box
-            position="relative"
-            border="1px solid"
-            borderColor={colorMode === "dark" ? "gray.800" : "gray.100"}
-            borderRadius="md"
-            py={"4"}
+        <div
+            className='relative border-1 border-gray-200 radius-md py-4'
         >
             <EasyPDFRenderer
                 pdfFile={pdfFile}
@@ -185,7 +157,7 @@ export const PDFDisplayWithJustSimpleOverlay = ({ pdfUrl, signatures }: { pdfUrl
 
                 }))}
             />
-        </Box>
+        </div>
     )
 }
 

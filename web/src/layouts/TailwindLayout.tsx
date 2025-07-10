@@ -31,19 +31,19 @@ const TailwindLayout = () => {
 
     const sidebarItems = [
         { icon: FileText, label: 'All files', id: "/files" },
-        { icon: Workflow, label: 'Workflows', id: "/files/files_workflows" },
-        { icon: LayoutTemplate, label: 'Templates', id: "/files/files_templates" },
-        { icon: Share2, label: 'Shared files', id: "/files/files_shared" },
+        { icon: Workflow, label: 'Workflows', id: "/files_workflows" },
+        { icon: LayoutTemplate, label: 'Templates', id: "/files_templates" },
+        { icon: Share2, label: 'Shared files', id: "/files_shared" },
     ];
 
     const quickAccessItems = [
-        { label: 'Info', icon: Star, id: "/files/files_info" },
-        { label: 'Settings', icon: Settings, id: "/files/files_settings" }
+        { label: 'Info', icon: Star, id: "/files_info" },
+        { label: 'Settings', icon: Settings, id: "/files_settings" }
     ];
 
     const applicationsItems = [
-        { label: 'Document Signature', icon: Signature, id: "/files/form-instance/aqua_sign" },
-        { label: 'Domain Attestation', icon: Link, id: "/files/domain_attestation" }
+        { label: 'Document Signature', icon: Signature, id: "/form-instance/aqua_sign" },
+        { label: 'Domain Attestation', icon: Link, id: "/domain_attestation" }
     ];
 
 

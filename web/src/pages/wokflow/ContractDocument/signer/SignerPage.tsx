@@ -1,15 +1,13 @@
-
 import  { useState, useCallback, useEffect } from 'react';
 import type { Annotation } from './types';
 import PdfViewer from './pdf-viewer';
 import AnnotationSidebar from './annotation-sidebar';
 import { ZoomIn, ZoomOut, ArrowLeft, ArrowRight } from 'lucide-react';
-import { Grid, GridItem, HStack, IconButton, Stack, Box, Text, Heading } from '@chakra-ui/react';
-import { Button } from '../../../../components/chakra-ui/button';
-import { Slider } from '../../../../components/ui/slider';
 import { SignatureData } from '../../../../types/types';
-import { Alert } from '../../../../components/chakra-ui/alert';
 import { LuInfo } from 'react-icons/lu';
+import { Button } from '../../../../components/shadcn/ui/button';
+import { Slider } from '../../../../components/shadcn/ui/slider';
+import { ScrollArea } from '@/components/shadcn/ui/scroll-area';
 
 // const parseFontSizeToPoints = (fontSizeString: string, defaultSize: number = 12): number => {
 //   if (!fontSizeString || typeof fontSizeString !== 'string') return defaultSize;
@@ -57,26 +55,56 @@ function PdfRendererComponent({
 }: PdfRendererProps) {
   const [currentPage, setCurrentPage] = useState(1);
   const [numPages, setNumPages] = useState(0);
-  const [scale, setScale] = useState(1.5);
+  const [scale, setScale] = useState(1.15);
 
   return (
-    <Box >
+    <div className="h-full w-full max-h-full max-w-full">
       {pdfFile && (
-        <HStack gap={2} borderBottom={`1px solid`} borderColor={"gray.300"} p={2} justify={'center'} align={"center"} bg={"gray.100"}>
-          <Button onClick={() => setCurrentPage(p => Math.max(1, p - 1))} disabled={currentPage <= 1} variant="ghost" size="md"><ArrowLeft /></Button>
-          <Text fontSize={"sm"} fontWeight={400} color={"gray.700"} className="text-sm font-medium">Page {currentPage} of {numPages}</Text>
-          <IconButton onClick={() => setCurrentPage(p => Math.min(numPages, p + 1))} disabled={currentPage >= numPages || numPages === 0} variant="subtle" size="md"><ArrowRight /></IconButton>
-          <IconButton onClick={() => setScale(s => Math.max(0.25, s - 0.25))} variant="subtle" size="md"><ZoomOut /></IconButton>
-          <Slider
-            value={[scale]}
-            min={0.25} max={3} step={0.01}
-            onValueChange={(value) => setScale(value.value[0])}
-            w={{ base: "210%", md: "20%" }}
-          />
-          <IconButton onClick={() => setScale(s => Math.min(3, s + 0.25))} variant="ghost" size="md"><ZoomIn /></IconButton>
-        </HStack>
+        <div className="!h-[60px] !max-h-[60px] w-full flex items-center justify-center gap-2 p-2 bg-gray-100 border-b border-gray-300">
+          <Button 
+            onClick={() => setCurrentPage(p => Math.max(1, p - 1))} 
+            disabled={currentPage <= 1} 
+            variant="ghost" 
+            size="icon"
+          >
+            <ArrowLeft className="h-4 w-4" />
+          </Button>
+          <p className="text-sm font-medium text-gray-700">Page {currentPage} of {numPages}</p>
+          <Button 
+            onClick={() => setCurrentPage(p => Math.min(numPages, p + 1))} 
+            disabled={currentPage >= numPages || numPages === 0} 
+            variant="ghost" 
+            size="icon"
+          >
+            <ArrowRight className="h-4 w-4" />
+          </Button>
+          <Button 
+            onClick={() => setScale(s => Math.max(0.25, s - 0.25))} 
+            variant="ghost" 
+            size="icon"
+          >
+            <ZoomOut className="h-4 w-4" />
+          </Button>
+          <div className="w-full md:w-1/5">
+            <Slider
+              value={[scale]}
+              min={0.25} 
+              max={3} 
+              step={0.01}
+              onValueChange={(value) => setScale(value[0])}
+            />
+          </div>
+          <Button 
+            onClick={() => setScale(s => Math.min(3, s + 0.25))} 
+            variant="ghost" 
+            size="icon"
+          >
+            <ZoomIn className="h-4 w-4" />
+          </Button>
+        </div>
       )}
-      <Box bg={"gray.100"}>
+      <div className={"h-[calc(100%-60px)] w-full"}>
+        <ScrollArea className='h-full'>
         <PdfViewer
           file={pdfFile}
           annotations={annotations}
@@ -94,8 +122,9 @@ function PdfRendererComponent({
           selectedAnnotationId={selectedAnnotationId}
           onAnnotationSelect={onAnnotationSelect}
         />
-      </Box>
-    </Box>
+        </ScrollArea>
+      </div>
+    </div>
   );
 }
 
@@ -462,18 +491,11 @@ export default function SignerPage({ file, mySignatures, annotationsInDocument, 
   }, [signaturesInDocument])
 
   return (
-    <Box h={"100%"}>
-      
-      <Box h={"100%"}>
-        <Grid
-          // templateRows="repeat(2, 1fr)"
-          templateColumns="repeat(12, 1fr)"
-          gap={0}
-          h={"100%"}
-        >
-          <GridItem bg={"gray.100"} colSpan={{ base: 12, md: 9 }} overflowX={"auto"} overflowY={"scroll"} height={"100%"}>
-            <Box h={"100%"} p={0} m={0} >
-             
+    <div className="h-full">
+      <div className="h-full">
+        <div className="grid grid-cols-12 gap-0 h-full">
+          <div className="bg-gray-100 col-span-12 md:col-span-9 overflow-x-auto overflow-y-scroll h-full">
+            <div className="h-full p-0 m-0">
               <PdfRenderer
                 pdfFile={pdfFile}
                 annotations={annotations}
@@ -492,27 +514,20 @@ export default function SignerPage({ file, mySignatures, annotationsInDocument, 
                 onAnnotationSelect={setSelectedAnnotationId}
                 onAnnotationRotate={handleAnnotationRotation}
               />
-            </Box>
-          </GridItem>
-          <GridItem colSpan={{ base: 12, md: 3 }} bg={"gray.100"} overflow={"hidden"}>
-            <Box p={4} h={"100%"} overflowY={"scroll"} overflowX={"hidden"} wordBreak={"break-word"}>
-              <Stack>
+            </div>
+          </div>
+          <div className="col-span-12 md:col-span-3 bg-gray-100 overflow-hidden">
+            <div className="p-4 h-full overflow-y-scroll overflow-x-hidden break-words">
+              <div className="flex flex-col space-y-4">
                 {
                   mySignatures.length > 0 ? (
-                    <Stack bg={"white"} p={2}>
-                      <Heading fontWeight={500}>My Signature(s)</Heading>
+                    <div className="flex flex-col space-y-2 bg-white p-2">
+                      <h2 className="font-medium text-lg">My Signature(s)</h2>
                       {
                         mySignatures.map((signature) => (
-                          <Box
+                          <div
                             key={signature.hash}
-                            p={2}
-                            cursor="pointer"
-                            borderRadius={"md"}
-                            borderEndRadius={"md"}
-                            bg={selectedSignatureHash === signature.hash ? "blue.50" : "gray.100"}
-                            _hover={{ bg: "blue.50" }}
-                            border={"2px solid"}
-                            borderColor={selectedSignatureHash === signature.hash ? "blue.600" : "transparent"}
+                            className={`p-2 cursor-pointer rounded-md ${selectedSignatureHash === signature.hash ? 'bg-blue-50 border-blue-600' : 'bg-gray-100 border-transparent'} hover:bg-blue-50 border-2`}
                             onClick={() => {
                               console.log(`Signature clicked ${JSON.stringify(signature, null, 4)} -- ${signature.hash} -- ${signature.id}`)
                               setSelectedTool("profile");
@@ -520,33 +535,25 @@ export default function SignerPage({ file, mySignatures, annotationsInDocument, 
                               setSelectedSignatureHash(signature.hash)
                             }}
                           >
-                            <HStack>
-
-                              <Box
-                                width="60px"
-                                height="40px"
-                                backgroundImage={`url(${signature.dataUrl})`}
-                                backgroundSize="contain"
-                                backgroundRepeat="no-repeat"
-                                backgroundPosition="center"
-                                border="1px solid"
-                                borderColor="gray.200"
-                                borderRadius="sm"
+                            <div className="flex items-center space-x-3">
+                              <div
+                                className="w-[60px] h-[40px] bg-contain bg-no-repeat bg-center border border-gray-200 rounded-sm"
+                                style={{ backgroundImage: `url(${signature.dataUrl})` }}
                               />
-                              <Stack gap={0}>
-                                <Text fontSize="sm" fontWeight="medium">{signature.name}</Text>
-                                <Text fontSize="xs" color="gray.600">
+                              <div className="flex flex-col space-y-0">
+                                <p className="text-sm font-medium">{signature.name}</p>
+                                <p className="text-xs text-gray-600">
                                   {signature.walletAddress.length > 10
                                     ? `${signature.walletAddress.substring(0, 6)}...${signature.walletAddress.substring(signature.walletAddress.length - 4)}`
                                     : signature.walletAddress
                                   }
-                                </Text>
-                              </Stack>
-                            </HStack>
-                          </Box>
+                                </p>
+                              </div>
+                            </div>
+                          </div>
                         ))
                       }
-                    </Stack>
+                    </div>
                   ) : (
                     <>
                       {displayUserSignatures ? displayUserSignatures() : null}
@@ -555,15 +562,22 @@ export default function SignerPage({ file, mySignatures, annotationsInDocument, 
                 }
 
                 {canPlaceSignature ? (
-                  <Alert colorPalette={"blue"} variant={"subtle"} title="Click on the document to place your signature" icon={<LuInfo />} />
+                  <div className="bg-blue-50 border border-blue-200 text-blue-800 rounded-lg p-3 flex items-start space-x-3">
+                    <LuInfo className="h-5 w-5 mt-0.5" />
+                    <div>
+                      <p className="font-medium">Click on the document to place your signature</p>
+                    </div>
+                  </div>
                 ) : null}
 
-                <Button data-testid="action-add-signature-11-button"  onClick={() => {
-                  
-                  setSelectedTool("profile");
-                  setSelectedSignatureHash(selectedSignatureHash as any)
-                  setCanPlaceSignature(true)
-                }}>
+                <Button 
+                  data-testid="action-add-signature-11-button"  
+                  onClick={() => {
+                    setSelectedTool("profile");
+                    setSelectedSignatureHash(selectedSignatureHash as any)
+                    setCanPlaceSignature(true)
+                  }}
+                >
                   Add Signature
                 </Button>
 
@@ -574,25 +588,29 @@ export default function SignerPage({ file, mySignatures, annotationsInDocument, 
                   selectedAnnotationId={selectedAnnotationId}
                   onAnnotationSelect={setSelectedAnnotationId}
                 />
-                <Box>
+                <div>
                   <Button
-                  data-testid="action-sign-signature-111-button"  
-                    colorPalette={'green'} variant={'solid'}
-                    colorScheme="white"
+                    data-testid="action-sign-signature-111-button"
+                    className="bg-green-600 hover:bg-green-700 text-white"
                     disabled={annotations.length === 0}
                     // disabled={!pdfDoc || !signatureDataUrl || signaturePositions.length === 0}
                     onClick={handleSignatureSubmission}
-                    loading={submittingSignatureData}
                   >
-                    Sign document
+                    {submittingSignatureData ? (
+                      <>
+                        <span className="mr-2 inline-block h-4 w-4 animate-spin rounded-full border-2 border-solid border-current border-r-transparent align-[-0.125em]"></span>
+                        Processing...
+                      </>
+                    ) : (
+                      'Sign document'
+                    )}
                   </Button>
-                </Box>
-              </Stack>
-            </Box>
-          </GridItem>
-          {/* </div> */}
-        </Grid>
-      </Box>
-    </Box>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
   );
 }
