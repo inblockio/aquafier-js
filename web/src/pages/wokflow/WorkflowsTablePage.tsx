@@ -300,32 +300,51 @@ export default function WorkflowsTablePage() {
         return "";
       }
     });
+
+    let newData: IWorkflowItem[] = [];
     files.forEach(file => {
       // const fileObject = getAquaTreeFileObject(file);
       const { workFlow, isWorkFlow } = isWorkFlowData(file.aquaTree!!, someData);
       if (isWorkFlow && workFlow === "aqua_sign") {
-        setWorkflows((prev) => [...prev, { workflowName: workFlow, apiFileInfo: file }])
+        // setWorkflows((prev : IWorkflowItem[]) => {
+
+
+        let currentName = getAquaTreeFileName(file.aquaTree!!);
+        let containsCurrentName: IWorkflowItem | undefined = newData.find((e: IWorkflowItem) => {
+          if (e && e.apiFileInfo && e.apiFileInfo.aquaTree) {
+            let nameItem: string = getAquaTreeFileName(e.apiFileInfo.aquaTree);
+            return nameItem === currentName
+          }
+        });
+        if (!containsCurrentName) {
+          newData.push({ workflowName: workFlow, apiFileInfo: file })
+        }
+
+        //   [...prev, { workflowName: workFlow, apiFileInfo: file }]
+        // })
       }
     })
+
+    setWorkflows(newData)
 
   }
 
   useEffect(() => {
     processFilesToGetWorkflows();
-  }, [files]);
+  }, []);
 
   return (
     <>
       {/* Action Bar */}
       <div className="bg-white border-b border-gray-200 px-6 py-4">
         <div className="flex items-center justify-between">
-          <div/> {/* Empty div to push the button right */}
+          <div /> {/* Empty div to push the button right */}
           <div className="flex items-center space-x-4">
 
             <button className="flex items-center space-x-2 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-gray-100 cursor-pointer"
               style={{ backgroundColor: '#394150' }}
               onClick={() => {
-         
+
                 setOpenCreateAquaSignPopUp(true)
               }}
             >
@@ -339,37 +358,48 @@ export default function WorkflowsTablePage() {
 
 
       <div className="space-y-6">
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <FileText className="h-5 w-5" />
-              Aqua Sign Workflows
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="rounded-md border">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead className="w-[300px] max-w-[300px] min-w-[300px] break-words overflow-hidden">Document</TableHead>
-                    <TableHead>Workflow Type</TableHead>
-                    <TableHead>Signers</TableHead>
-                    <TableHead>Progress</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {
-                    _workflows.map((workflow, index: number) => (
-                      <WorkflowTableItem key={`${index}-workflow`} workflowName={workflow.workflowName} apiFileInfo={workflow.apiFileInfo} index={index} />
-                    ))
-                  }
-                </TableBody>
-              </Table>
-            </div>
-          </CardContent>
-        </Card>
+        {
+          _workflows.length == 0 ? <>
+
+
+          </> :
+
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <FileText className="h-5 w-5" />
+                  Aqua Sign Workflows
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+
+
+
+                <div className="rounded-md border">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead className="w-[300px] max-w-[300px] min-w-[300px] break-words overflow-hidden">Document</TableHead>
+                        <TableHead>Workflow Type</TableHead>
+                        <TableHead>Signers</TableHead>
+                        <TableHead>Progress</TableHead>
+                        <TableHead>Status</TableHead>
+                        <TableHead className="text-right">Actions</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {
+                        _workflows.map((workflow, index: number) => (
+                          <WorkflowTableItem key={`${index}-workflow`} workflowName={workflow.workflowName} apiFileInfo={workflow.apiFileInfo} index={index} />
+                        ))
+                      }
+                    </TableBody>
+                  </Table>
+                </div>
+              </CardContent>
+            </Card>
+
+        }
       </div>
 
     </>

@@ -252,7 +252,7 @@ export const ConnectWalletPage: React.FC<{ dataTestId: string }> = ({ dataTestId
           setFiles(files);
 
 
-          navigate("/files")
+          navigate("/")
         }
 
         setLoading(false);
