@@ -1389,10 +1389,11 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ fileData, setActiveStep, document
 
 
                     {canPlaceSignature ? (
-                        <Alert className='bg-blue-500 text-blue-600'>
+                        // <Alert className='bg-blue-500 text-blue-600'>
+                        <Alert className=''>
                             <LuInfo />
                             <AlertDescription>
-                                Click on the document to place your signature
+                                Click on the document to place your signature.
                             </AlertDescription>
                         </Alert>
                     ) : null}

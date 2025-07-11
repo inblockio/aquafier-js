@@ -274,6 +274,7 @@ const PdfViewer: React.FC<PdfViewerProps> = ({
     });
     setDraggingAnnotationId(annotation.id);
   }, [onAnnotationSelect, canvasRef]);
+
   const handleDragMove = useCallback((event: MouseEvent) => {
     if (!draggingAnnotationId || !dragStartOffset || !canvasRef.current || !viewerRef.current) return;
 
@@ -655,7 +656,7 @@ const PdfViewer: React.FC<PdfViewerProps> = ({
                 }
               >
                 {/* <ScrollArea className="w-full h-full"> */}
-                <canvas ref={canvasRef} />
+                <canvas data-testid="pdf-canvas" ref={canvasRef} />
                 {pageDimensions.width > 0 && cleanSignatureToAvoidRepeating().map((anno) => {
                   const isSelected = selectedAnnotationId === anno.id || draggingAnnotationId === anno.id || resizeState?.annotationId === anno.id;
                   let baseStyle: React.CSSProperties = {

@@ -148,9 +148,8 @@ export const ContractDocumentView: React.FC<ContractDocumentViewProps> = ({ setA
             }
         }
 
-           let actualUrlToFetch = ensureDomainUrlHasSSL(backend_url);
-        //    "fileContent": "http://127.0.0.1:3000/files/277599bef251362560dcf4c3ec95eccb046b029bf2439c9fbbbf0b4f3051a06b",
-        // return null;
+        let actualUrlToFetch = ensureDomainUrlHasSSL(backend_url);
+
 
         return `${actualUrlToFetch}/files/${fileHash}`;
     };

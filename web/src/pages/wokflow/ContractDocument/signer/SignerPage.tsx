@@ -562,10 +562,10 @@ export default function SignerPage({ file, mySignatures, annotationsInDocument, 
                 }
 
                 {canPlaceSignature ? (
-                  <div className="bg-blue-50 border border-blue-200 text-blue-800 rounded-lg p-3 flex items-start space-x-3">
+                  <div className="bg-blue-50 border border-blue-200  rounded-lg p-3 flex items-start space-x-3">
                     <LuInfo className="h-5 w-5 mt-0.5" />
                     <div>
-                      <p className="font-medium">Click on the document to place your signature</p>
+                      <p className="font-medium">Click on the document to place your signature.</p>
                     </div>
                   </div>
                 ) : null}
