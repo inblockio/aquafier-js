@@ -1,9 +1,9 @@
 import { FiAlertCircle, FiCalendar, FiCheck, FiCheckCircle, FiCheckSquare, FiCopy, FiFileText, FiInfo } from "react-icons/fi";
 import { BsCheckCircleFill } from "react-icons/bs";
 import { IContractWorkFlowFirstPage } from "../../../types/contract_workflow";
-import { Button } from "../../../components/shadcn/ui/button";
-import { Badge } from "../../../components/shadcn/ui/badge";
-import { Card, CardContent } from "../../../components/shadcn/ui/card";
+import { Button } from "../../../components/ui/button";
+import { Badge } from "../../../components/ui/badge";
+import { Card, CardContent } from "../../../components/ui/card";
 import { cn } from "../../../lib/utils";
 
 const DisplayWalletAddress = ({ walletAddress, }: { walletAddress: string, enableNameResolution: boolean }) => {

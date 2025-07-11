@@ -9,16 +9,15 @@ import { generateNonce } from 'siwe'
 import { toast } from 'sonner'
 
 // Shadcn UI components
-import { Button } from '@/components/shadcn/ui/button'
-import { Input } from '@/components/shadcn/ui/input'
-import { Label } from '@/components/shadcn/ui/label'
-import { Alert, AlertDescription } from '@/components/shadcn/ui/alert'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Alert, AlertDescription } from '@/components/ui/alert'
 import { useNavigate } from 'react-router-dom'
 import { AlertCircle, ArrowLeft, FileText, Image, Loader2, Plus, Trash2, Upload } from 'lucide-react'
-import { Badge } from '../shadcn/ui/badge'
-import { Card, CardContent, CardHeader, CardTitle } from '../shadcn/ui/card'
-import { Separator } from '../shadcn/ui/separator'
 import { cn } from '@/lib/utils'
+import { Badge } from '../ui/badge'
+import { Separator } from '../ui/separator'
 
 const CreateFormFromTemplate = ({ selectedTemplate, callBack, openCreateTemplatePopUp = false }: { selectedTemplate: FormTemplate, callBack: () => void, openCreateTemplatePopUp: boolean }) => {
     const [submittingTemplateData, setSubmittingTemplateData] = useState(false)

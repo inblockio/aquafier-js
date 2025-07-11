@@ -1,14 +1,16 @@
 import { LuUpload } from "react-icons/lu";
-import { Button } from "@/components/shadcn/ui/button";
 import axios from "axios";
 import { useStore } from "zustand";
-import appStore from "../../store";
+import appStore from "../../../store";
 import { useEffect, useRef, useState } from "react";
-import { ApiFileInfo } from "../../models/FileInfo";
+import { ApiFileInfo } from "../../../models/FileInfo";
+import { checkIfFileExistInUserFiles } from "../../../utils/functions";
+import { maxFileSizeForUpload } from "../../../utils/constants";
+import { IDropzoneAction } from "../../../types/types";
 import { toast } from "sonner";
-import { checkIfFileExistInUserFiles } from "../../utils/functions";
-import { maxFileSizeForUpload } from "../../utils/constants";
-import { IDropzoneAction } from "../../types/types";
+import { toaster } from "@/components/ui/use-toast";
+import { Button } from "@/components/ui/button";
+import { Loader2 } from "lucide-react";
 
 
 export const UploadFile = ({ file, uploadedIndexes, fileIndex, updateUploadedIndex, autoUpload }: IDropzoneAction) => {
@@ -26,20 +28,31 @@ export const UploadFile = ({ file, uploadedIndexes, fileIndex, updateUploadedInd
         // let fileContent = await  readFileContent()
         // const existingChainFile = files.find(_file => _file.fileObject.find((e) => e.fileName == file.name) != undefined)
         if (!file) {
-            toast.info("No file selected!")
+            toast.info( "No file selected!")
             return;
         }
 
         let fileExist = await checkIfFileExistInUserFiles(file, files)
 
         if (fileExist) {
-            toast.info("You already have the file. Delete before importing this")
+            toaster.create({
+                description: "You already have the file. Delete before importing this",
+                type: "info"
+            })
             updateUploadedIndex(fileIndex)
+
             return
         }
 
+
+
+
+
         if (file.size > maxFileSizeForUpload) {
-            toast.error("File size exceeds 200MB limit. Please upload a smaller file.")
+            toaster.create({
+                description: "File size exceeds 200MB limit. Please upload a smaller file.",
+                type: "error"
+            })
             return;
         }
 
@@ -92,12 +105,18 @@ export const UploadFile = ({ file, uploadedIndexes, fileIndex, updateUploadedInd
 
             setUploaded(true)
             setUploading(false)
-            toast.success("File uploaded successfully")
+            toaster.create({
+                description: "File uploaded successfuly",
+                type: "success"
+            })
             updateUploadedIndex(fileIndex)
             return;
         } catch (error) {
             setUploading(false)
-            toast.error(`Failed to upload file: ${error}`)
+            toaster.create({
+                description: `Failed to upload file: ${error}`,
+                type: "error"
+            })
         }
     };
 
@@ -116,25 +135,20 @@ export const UploadFile = ({ file, uploadedIndexes, fileIndex, updateUploadedInd
     }, [])
 
     return (
-        <Button 
-            data-testid="action-upload-51-button" 
-            size="sm" 
-            variant="outline" 
-            className="w-[80px] bg-gray-50 hover:bg-gray-100 text-gray-700"
-            onClick={uploadFile} 
-            disabled={uploadedIndexes.includes(fileIndex) || uploaded}
-        >
-            {uploading ? (
-                <>
-                    <span className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-gray-500 border-t-transparent"></span>
-                    <span>Upload</span>
-                </>
-            ) : (
-                <>
-                    <LuUpload className="mr-1" />
-                    <span>Upload</span>
-                </>
-            )}
-        </Button>
+       <Button 
+  data-testid="action-upload-51-button" 
+  size="sm" 
+  variant="secondary" 
+  className="w-[80px] bg-gray-100 hover:bg-gray-200 text-gray-700 border-gray-300"
+  onClick={uploadFile} 
+  disabled={uploadedIndexes.includes(fileIndex) || uploaded}
+>
+  {uploading ? (
+    <Loader2 className="h-4 w-4 animate-spin mr-2" />
+  ) : (
+    <LuUpload className="h-4 w-4 mr-2" />
+  )}
+  Upload
+</Button>
     )
 }

@@ -1,12 +1,12 @@
-import { AppSidebar } from "@/components/app-sidebar"
-import { ConnectWallet } from "@/components/ConnectWallet"
-import { ConnectWalletPage } from "@/components/ConnectWalletPage"
-import { Separator } from "@/components/shadcn/ui/separator"
+import { AppSidebar } from "@/components/app_sidebar"
+import { ConnectWallet } from "@/components/connect_wallet"
+import { ConnectWalletPage } from "@/components/connect_wallet_page"
+import { Separator } from "@/components/ui/separator"
 import {
     SidebarInset,
     SidebarProvider,
     SidebarTrigger,
-} from "@/components/shadcn/ui/sidebar"
+} from "@/components/ui/sidebar"
 import appStore from "@/store"
 import { Bell, Users, X } from "lucide-react"
 import { useEffect, useState } from "react"
@@ -14,10 +14,10 @@ import { Outlet } from "react-router-dom"
 import { ClipLoader } from "react-spinners"
 import { Toaster } from "sonner"
 import { useStore } from "zustand"
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/shadcn/ui/dialog";
-import { Button } from "@/components/shadcn/ui/button"
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button"
 import CreateFormFromTemplate from "@/components/aqua_forms/CreateFormFromTemplate";
-import { ScrollArea } from "@/components/shadcn/ui/scroll-area"
+import { ScrollArea } from "@/components/ui/scroll-area"
 import FormTemplateEditorShadcn from "@/components/aqua_forms/FormTemplateEditorShadcn"
 
 export default function NewShadcnLayoutWithSidebar() {

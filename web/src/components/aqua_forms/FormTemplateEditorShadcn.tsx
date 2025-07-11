@@ -9,14 +9,14 @@ import { toast } from "sonner";
 import { LuPlus, LuTrash } from 'react-icons/lu';
 import { ApiFileInfo } from '../../models/FileInfo';
  
-// shadcn/ui components
-import { Input } from "@/components/shadcn/ui/input";
-import { Button } from "@/components/shadcn/ui/button";
-import { Label } from "@/components/shadcn/ui/label";
-import { Switch } from "@/components/shadcn/ui/switch";
-import { Alert, AlertDescription, AlertTitle } from "@/components/shadcn/ui/alert";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/shadcn/ui/select";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/shadcn/ui/card";
+// /components//ui components
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { AlertCircle } from 'lucide-react';
 
 const fieldTypes = [

@@ -1,7 +1,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { FaCheck, FaQuestionCircle } from 'react-icons/fa';
-import { Alert, AlertDescription } from "../../components/shadcn/ui/alert";
+import { Alert, AlertDescription } from "../../components/ui/alert";
 import appStore from '../../store';
 import { useStore } from "zustand";
 import { SummaryDetailsDisplayData, WorkFlowTimeLine } from '../../types/types';
@@ -9,7 +9,7 @@ import { convertTemplateNameToTitle, getAquaTreeFileName, getHighestFormIndex, i
 import { ContractDocumentView } from './ContractDocument/ContractDocument';
 import { ContractSummaryView } from './ContractSummary/ContractSummary';
 import { AquaTree, OrderRevisionInAquaTree, Revision } from 'aqua-js-sdk/web';
-import { Button } from "../../components/shadcn/ui/button";
+import { Button } from "../../components/ui/button";
 import { LuArrowLeft } from 'react-icons/lu';
 import { useNavigate } from 'react-router-dom';
 import { HiDocumentText } from 'react-icons/hi';

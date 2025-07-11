@@ -2,16 +2,15 @@ import { ApiFileInfo } from "@/models/FileInfo";
 import { displayTime, formatBytes, getAquaTreeFileName, getAquaTreeFileObject, getFileCategory, getFileExtension, getGenesisHash, isWorkFlowData } from "@/utils/functions";
 import { FileObject } from "aqua-js-sdk";
 import { FileText } from "lucide-react";
-import { useEffect, useState } from "react";
-import { FaFileExport } from "react-icons/fa6"
-import { LuEye, LuLink2, LuShare2 } from 'react-icons/lu';
-import { SignAquaChain } from "./components/aqua_chain_actions/sign_aqua_chain";
-import { WitnessAquaChain } from "./components/aqua_chain_actions/witness_aqua_chain";
-import { DownloadAquaChain } from "./components/aqua_chain_actions/download_aqua_chain";
-import { DeleteAquaChain } from "./components/aqua_chain_actions/delete_aqua_chain";
-import { ShareButton } from "./components/aqua_chain_actions/share_aqua_chain";
-import { OpenWorkflowButton } from "./components/aqua_chain_actions/open_aqua_sign_workflow";
-import { LinkButton } from "./components/aqua_chain_actions/link_aqua_chain";
+import { useEffect, useState } from "react"
+import { LuEye } from 'react-icons/lu';
+import { SignAquaChain } from "../components/aqua_chain_actions/sign_aqua_chain";
+import { WitnessAquaChain } from "../components/aqua_chain_actions/witness_aqua_chain";
+import { DownloadAquaChain } from "../components/aqua_chain_actions/download_aqua_chain";
+import { DeleteAquaChain } from "../components/aqua_chain_actions/delete_aqua_chain";
+import { ShareButton } from "../components/aqua_chain_actions/share_aqua_chain";
+import { OpenWorkflowButton } from "../components/aqua_chain_actions/open_aqua_sign_workflow";
+import { LinkButton } from "../components/aqua_chain_actions/link_aqua_chain";
 import appStore from "@/store";
 import { useStore } from "zustand";
 

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import FileDropZone from './components/dropzone_file_actions/dropzone_file_actions';
+// import FileDropZone from './components/dropzone_file_actions/dropzone_file_actions';
 import appStore from "../store"
 import { useStore } from "zustand"
 import FilesList from './files_list';
@@ -23,15 +23,17 @@ import { maxFileSizeForUpload } from '@/utils/constants';
 import axios from 'axios';
 import { ApiFileInfo } from '@/models/FileInfo';
 
-// shadcn/ui components
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/shadcn/ui/dialog";
-import { Progress } from '@/components/shadcn/ui/progress';
-import { Button } from '@/components/shadcn/ui/button';
-import { Badge } from '@/components/shadcn/ui/badge';
-import { Card, CardContent } from '@/components/shadcn/ui/card';
+// /components//ui components
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Progress } from '@/components/ui/progress';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Card, CardContent } from '@/components/ui/card';
 
-import { CompleteChainView } from './components/files_chain_details';
+// import { CompleteChainView } from './components/files_chain_details';
 import { IDrawerStatus } from '@/models/AquaTreeDetails';
+import { CompleteChainView } from '@/components/files_chain_details';
+import FileDropZone from '@/components/dropzone_file_actions';
 
 interface UploadStatus {
     file: File;

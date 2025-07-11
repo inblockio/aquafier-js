@@ -1,7 +1,7 @@
 import React from 'react';
 import { FormTemplate } from './types';
-import { Card, CardContent, CardHeader } from "@/components/shadcn/ui/card";
-import { Badge } from "@/components/shadcn/ui/badge";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import {
   Table,
   TableBody,
@@ -9,7 +9,7 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/shadcn/ui/table";
+} from "@/components/ui/table";
 
 interface FormTemplateViewerProps {
   template: FormTemplate;

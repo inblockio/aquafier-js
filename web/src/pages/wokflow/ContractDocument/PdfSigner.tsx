@@ -1,15 +1,15 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 
-// Import shadcn/ui components
-import { Button } from '../../../components/shadcn/ui/button';
-import { Input } from '../../../components/shadcn/ui/input';
-import { Label } from '../../../components/shadcn/ui/label';
+// Import /components//ui components
+import { Button } from '../../../components/ui/button';
+import { Input } from '../../../components/ui/input';
+import { Label } from '../../../components/ui/label';
 import {
     Dialog,
     DialogContent,
     DialogHeader,
     DialogTitle,
-} from '../../../components/shadcn/ui/dialog';
+} from '../../../components/ui/dialog';
 // import { PDFDocument, rgb, StandardFonts } from 'pdf-lib';
 import { PDFDocument } from 'pdf-lib';
 import SignatureCanvas from 'react-signature-canvas';
@@ -29,7 +29,7 @@ import { useNavigate } from 'react-router-dom';
 import { Annotation } from './signer/types';
 import { PdfRenderer } from './signer/SignerPage';
 import React from 'react';
-import { Alert, AlertDescription } from '@/components/shadcn/ui/alert';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { toast } from 'sonner';
 
 

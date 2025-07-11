@@ -1,4 +1,4 @@
-import { Button } from "@/components/shadcn/ui/button";
+import { Button } from "@/components/ui/button";
 import { Github } from "lucide-react";
 import { BsTwitterX } from "react-icons/bs";
 import { FaFacebook, FaLinkedin } from "react-icons/fa6";

@@ -1,7 +1,7 @@
 import React from 'react';
 import { LogData, LogType, LogTypeEmojis } from 'aqua-js-sdk/web';
-import { Card, CardContent, CardFooter, CardHeader } from "@/components/shadcn/ui/card";
-import { ScrollArea } from "@/components/shadcn/ui/scroll-area";
+import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
 
 interface LogViewerProps {

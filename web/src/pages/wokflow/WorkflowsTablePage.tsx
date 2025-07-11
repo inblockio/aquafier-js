@@ -6,12 +6,12 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '@/components/shadcn/ui/table';
-import { Badge } from '@/components/shadcn/ui/badge';
-import { Button } from '@/components/shadcn/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/shadcn/ui/card';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/shadcn/ui/avatar';
-import { Progress } from '@/components/shadcn/ui/progress';
+} from '@/components/ui/table';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Progress } from '@/components/ui/progress';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -19,7 +19,7 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from '@/components/shadcn/ui/dropdown-menu';
+} from '@/components/ui/dropdown-menu';
 import {
   FileText,
   Users,
@@ -38,11 +38,11 @@ import { useStore } from 'zustand';
 import { displayTime, generateAvatar, getAquaTreeFileName, getAquaTreeFileObject, getGenesisHash, isWorkFlowData, processContractInformation } from '@/utils/functions';
 import { ApiFileInfo } from '@/models/FileInfo';
 import { FileObject } from 'aqua-js-sdk';
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/shadcn/ui/tooltip';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { IContractInformation } from '@/types/contract_workflow';
-import { DownloadAquaChain } from '../components/aqua_chain_actions/download_aqua_chain';
-import { OpenWorkflowButton } from '../components/aqua_chain_actions/open_aqua_sign_workflow';
-import { DeleteAquaChain } from '../components/aqua_chain_actions/delete_aqua_chain';
+import { DownloadAquaChain } from '../../components/aqua_chain_actions/download_aqua_chain';
+import { OpenWorkflowButton } from '../../components/aqua_chain_actions/open_aqua_sign_workflow';
+import { DeleteAquaChain } from '../../components/aqua_chain_actions/delete_aqua_chain';
 
 const getStatusIcon = (status: string) => {
   switch (status) {

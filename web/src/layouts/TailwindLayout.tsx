@@ -13,11 +13,11 @@ import {
     CopyrightIcon
 } from 'lucide-react';
 import { Outlet } from 'react-router-dom';
-import CustomNavLink from '@/components/shadcn/common/CustomNavLink';
+import CustomNavLink from '@/components/ui/CustomNavLink';
 import { Link as RouterLink } from 'react-router-dom';
 import { useStore } from 'zustand';
 import appStore from '@/store';
-import { ConnectWallet } from '@/components/ConnectWallet';
+import { ConnectWallet } from '@/components/connect_wallet';
 import { Toaster } from 'sonner';
 
 const TailwindLayout = () => {

@@ -6,9 +6,9 @@ import { toast } from "sonner";
 import { LuEye, LuPen, LuTrash } from 'react-icons/lu';
 import axios from 'axios';
 
-// shadcn/ui components
-import { Button } from "@/components/shadcn/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/shadcn/ui/card";
+// /components//ui components
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Table,
   TableBody,
@@ -16,13 +16,13 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/shadcn/ui/table";
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/shadcn/ui/alert-dialog";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogClose } from "@/components/shadcn/ui/dialog";
+} from "@/components/ui/table";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogClose } from "@/components/ui/dialog";
 import FormTemplateViewer from './FormTemplateViewer';
 import CreateFormFromTemplate from './CreateFormFromTemplate';
 import { MdFormatListBulletedAdd } from "react-icons/md";
-import CustomTooltip from '../shadcn/common/CustomTooltip';
+import CustomTooltip from '../ui/CustomTooltip';
 
 interface FormTemplateListShadcnProps {
   onEdit: (template: FormTemplate) => void;

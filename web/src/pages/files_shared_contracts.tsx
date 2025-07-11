@@ -1,10 +1,10 @@
 import { useEffect, useState } from 'react';
-import { Button } from '@/components/shadcn/ui/button';
-import { Card, CardContent } from '@/components/shadcn/ui/card';
-import { Badge } from '@/components/shadcn/ui/badge';
-import { Input } from '@/components/shadcn/ui/input';
-import { Avatar, AvatarFallback } from '@/components/shadcn/ui/avatar';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/shadcn/ui/tooltip';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import {
     Search,
     FileText,

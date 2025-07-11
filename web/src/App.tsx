@@ -5,24 +5,24 @@ import { useEffect } from 'react'
 import appStore from './store';
 import { useStore } from "zustand"
 import { BrowserRouter, Route, Routes } from 'react-router-dom'
-import ErrorBoundary from "./components/ErrorBoundary";
-import Loading from './pages/Loading';
+import ErrorBoundary from "./components/error_boundary";
+import Loading from './pages/loading';
 import PdfSigner from './pages/wokflow/ContractDocument/PdfSigner';
 import FilesPage from './pages/files';
-import Home from './pages/Home';
+import Home from './pages/home';
 // import TailwindLayout from './layouts/TailwindLayout';
 import TailwindMainLayout from './layouts/TailwindMainLayout';
-import PageNotFound from './pages/PageNotFound';
-import InfoPage from './pages/InfoPage';
-import SettingsPage from './pages/SettingsPage';
-import TemplatesPage from './pages/TemplatesPage';
-import CreateFormInstance from './pages/CreateFormInstance';
+import PageNotFound from './pages/page_not_found';
+import InfoPage from './pages/info_page';
+import SettingsPage from './pages/settings_page';
+import TemplatesPage from './pages/templates_page';
+import CreateFormInstance from './pages/create_form_instance';
 import NewShadcnLayoutWithSidebar from './layouts/NewShadcnLayoutWithSidebar';
 import PdfWorkflowPage from './pages/wokflow/PdfWorkflowPage';
 import DomainAttestationPage from './pages/domain_attestation';
 import FilesSharedContracts from './pages/files_shared_contracts';
 import WorkflowsTablePage from './pages/wokflow/WorkflowsTablePage';
-import SharePage from './pages/SharePage';
+import SharePage from './pages/share_page';
 
 declare global {
   interface Window {
