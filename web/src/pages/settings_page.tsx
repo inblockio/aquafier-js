@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { LuSettings, LuSun, LuUser, LuWallet, LuKey, LuNetwork, LuSave, LuTrash2, LuX } from 'react-icons/lu';
+import { LuSettings, LuSun, LuUser, LuWallet, LuKey, LuNetwork, LuSave } from 'react-icons/lu';
 import { FaEthereum, FaFileContract } from 'react-icons/fa6';
 import appStore from '@/store';
 import { useStore } from 'zustand';
@@ -9,7 +9,7 @@ import axios from 'axios';
 import { Button } from '@/components/ui/button';
 
 const DeleteUserData = () => {
-    const [deleting, setDeleting] = useState(false)
+    const [_deleting, setDeleting] = useState(false)
 
     let navigate = useNavigate()
 
@@ -85,7 +85,7 @@ export default function SettingsPage() {
         const [cliPubKey, _setCliPubKey] = useState<string>(user_profile.cli_pub_key)
         const [cliPrivKey, _setCliPrivKey] = useState<string>(user_profile.cli_priv_key)
         const [ensName, setEnsName] = useState<string>(user_profile.ens_name)
-        const [contract, setContract] = useState<string>(user_profile.witness_contract_address ?? "0x45f59310ADD88E6d23ca58A0Fa7A55BEE6d2a611")
+        const [contract, _setContract] = useState<string>(user_profile.witness_contract_address ?? "0x45f59310ADD88E6d23ca58A0Fa7A55BEE6d2a611")
         const [alchemyKey, setAlchemyKey] = useState<string>(user_profile.alchemy_key ?? "ZaQtnup49WhU7fxrujVpkFdRz4JaFRtZ")
     
 

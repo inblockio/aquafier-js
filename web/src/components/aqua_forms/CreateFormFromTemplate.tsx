@@ -14,12 +14,12 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { useNavigate } from 'react-router-dom'
-import { AlertCircle, ArrowLeft, FileText, Image, Loader2, Plus, Trash2, Upload } from 'lucide-react'
-import { cn } from '@/lib/utils'
+import { AlertCircle, FileText, Image, Loader2, Plus, Trash2, Upload } from 'lucide-react'
 import { Badge } from '../ui/badge'
 import { Separator } from '../ui/separator'
 
-const CreateFormFromTemplate = ({ selectedTemplate, callBack, openCreateTemplatePopUp = false }: { selectedTemplate: FormTemplate, callBack: () => void, openCreateTemplatePopUp: boolean }) => {
+// const CreateFormFromTemplate = ({ selectedTemplate, callBack, openCreateTemplatePopUp = false }: { selectedTemplate: FormTemplate, callBack: () => void, openCreateTemplatePopUp: boolean }) => {
+const CreateFormFromTemplate = ({ selectedTemplate, callBack }: { selectedTemplate: FormTemplate, callBack: () => void, openCreateTemplatePopUp: boolean }) => {
     const [submittingTemplateData, setSubmittingTemplateData] = useState(false)
     const [modalFormErorMessae, setModalFormErorMessae] = useState("");
     const { session, backend_url, systemFileInfo, setSystemFileInfo, setFiles } = useStore(appStore)

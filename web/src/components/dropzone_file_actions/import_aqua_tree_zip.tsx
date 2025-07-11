@@ -1,11 +1,11 @@
 import {  LuSave } from "react-icons/lu";
 import axios from "axios";
 import { useStore } from "zustand";
-import appStore from "../../../store";
+import appStore from "../../store";
 import { useState } from "react";
 
 import JSZip from "jszip";
-import { IDropzoneAction } from "../../../types/types";
+import { IDropzoneAction } from "../../types/types";
 import { toaster } from "@/components/ui/use-toast";
 import { Button } from "@/components/ui/button";
 

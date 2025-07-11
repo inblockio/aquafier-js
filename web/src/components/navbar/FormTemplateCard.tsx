@@ -1,7 +1,8 @@
 import { Box, Center, Flex, Text } from "@chakra-ui/react"
 import { FormTemplate } from "../aqua_forms"
-import { useColorMode } from "../chakra-ui/color-mode"
+// import { useColorMode } from "../chakra-ui/color-mode"
 import { HiDocumentPlus } from "react-icons/hi2";
+import { useColorMode } from "../ui/color-mode";
 
 
 const FormTemplateCard = ({ template, selectTemplateCallBack }: { template: FormTemplate, selectTemplateCallBack: (template: FormTemplate) => void }) => {

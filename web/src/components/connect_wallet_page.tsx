@@ -2,10 +2,9 @@ import { useState } from "react";
 // import { Button } from "./chakra-ui/button";
 // import { DialogBody, DialogCloseTrigger, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "./chakra-ui/dialog";
 // import { Center, Dialog, Text, VStack } from "@chakra-ui/react";
-import { LuCircleCheck, LuCircleX, LuCopy, LuLogOut, LuWallet } from "react-icons/lu";
+import { LuCopy } from "react-icons/lu";
 // import ReactLoading from "react-loading";
-import { ClipLoader } from "react-spinners";
-import { fetchFiles, formatCryptoAddress, generateAvatar, getCookie, setCookie } from "../utils/functions";
+import { fetchFiles, generateAvatar,  setCookie } from "../utils/functions";
 import { SiweMessage, generateNonce } from "siwe";
 import { SESSION_COOKIE_NAME } from "../utils/constants";
 import axios from "axios";
@@ -21,7 +20,7 @@ import { Button } from "./ui/button";
 import { Alert, AlertDescription } from "./ui/alert";
 // import { Alert, AlertDescription } from ".//components//ui/alert";
 
-const CustomCopyButton = ({ value }: { value: string }) => {
+export const CustomCopyButton = ({ value }: { value: string }) => {
   // const clipboard = useClipboard({ value: value })
   return (
     <Button data-testid="custom-copy-button" variant="default" size="sm" onClick={() => navigator.clipboard.writeText(value)} className="flex items-center gap-2 rounded-md">
@@ -33,19 +32,19 @@ const CustomCopyButton = ({ value }: { value: string }) => {
 
 
 
-export const ConnectWalletPage: React.FC<{ dataTestId: string }> = ({ dataTestId }) => {
-  const { setMetamaskAddress, session, setFiles, avatar, setAvatar, setUserProfile, backend_url, setSession } = useStore(appStore);
+export const ConnectWalletPage = ( ) => {
+  const { setMetamaskAddress, session, setFiles, setAvatar, setUserProfile, backend_url, setSession } = useStore(appStore);
 
-  const [isConnecting, setIsConnecting] = useState(false);
-  const [isOpen, setIsOpen] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [connectionState, setConnectionState] = useState<"idle" | "connecting" | "success" | "error">("idle");
-  const [message, setMessage] = useState<string | null>(null);
+  const [isConnecting, _setIsConnecting] = useState(false);
+  const [_isOpen, setIsOpen] = useState(false);
+  const [_loading, setLoading] = useState(false);
+  const [_connectionState, setConnectionState] = useState<"idle" | "connecting" | "success" | "error">("idle");
+  const [_message, setMessage] = useState<string | null>(null);
   // const [avatar, setAvatar] = useState("")
   const [_progress, setProgress] = useState(0);
-  const [error, setError] = useState('');
+  const [error, _setError] = useState('');
 
-  const iconSize = "120px";
+  // const _iconSize = "120px";
 
   const resetState = () => {
     setConnectionState("idle");
@@ -181,52 +180,52 @@ export const ConnectWalletPage: React.FC<{ dataTestId: string }> = ({ dataTestId
   };
 
 
-  const signOut = () => {
-    setLoading(true);
-    setCookie(SESSION_COOKIE_NAME, "", new Date("1970-01-01T00:00:00Z"));
-    setMetamaskAddress(null);
-    setAvatar(undefined);
-    setLoading(false);
-    setIsOpen(false);
-    toast("Signed out successfully");
-  };
+  // const signOut = () => {
+  //   setLoading(true);
+  //   setCookie(SESSION_COOKIE_NAME, "", new Date("1970-01-01T00:00:00Z"));
+  //   setMetamaskAddress(null);
+  //   setAvatar(undefined);
+  //   setLoading(false);
+  //   setIsOpen(false);
+  //   toast("Signed out successfully");
+  // };
 
-  const signOutFromSiweSession = async () => {
-    setLoading(true);
-    try {
-      // const formData = new URLSearchParams();
-      const nonce = getCookie("pkc_nonce");
-      // formData.append("nonce", nonce);
+  // const _signOutFromSiweSession = async () => {
+  //   setLoading(true);
+  //   try {
+  //     // const formData = new URLSearchParams();
+  //     const nonce = getCookie("pkc_nonce");
+  //     // formData.append("nonce", nonce);
 
-      const url = `${backend_url}/session`;
-      //  console.log("url is ", url);
-      const response = await axios.delete(url, {
-        params: {
-          nonce
-        }
-      });
+  //     const url = `${backend_url}/session`;
+  //     //  console.log("url is ", url);
+  //     const response = await axios.delete(url, {
+  //       params: {
+  //         nonce
+  //       }
+  //     });
 
-      if (response.status === 200) {
-        signOut();
-        setMetamaskAddress(null);
-        setAvatar(undefined);
-        setSession(null)
-        setFiles([]);
-        // disConnectWebsocket()
-      }
-    } catch (error: any) {
-      console.log("error", error)
-      // if (error?.response?.status === 404 || error?.response?.status === 401) {
-      setMetamaskAddress(null);
-      setAvatar(undefined);
-      setSession(null)
-      setFiles([]);
-      // }
-    }
-    setLoading(false);
-    setIsOpen(false);
-    toast("Signed out successfully");
-  };
+  //     if (response.status === 200) {
+  //       signOut();
+  //       setMetamaskAddress(null);
+  //       setAvatar(undefined);
+  //       setSession(null)
+  //       setFiles([]);
+  //       // disConnectWebsocket()
+  //     }
+  //   } catch (error: any) {
+  //     console.log("error", error)
+  //     // if (error?.response?.status === 404 || error?.response?.status === 401) {
+  //     setMetamaskAddress(null);
+  //     setAvatar(undefined);
+  //     setSession(null)
+  //     setFiles([]);
+  //     // }
+  //   }
+  //   setLoading(false);
+  //   setIsOpen(false);
+  //   toast("Signed out successfully");
+  // };
 
 
   return (

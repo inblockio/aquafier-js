@@ -1,15 +1,14 @@
 import { useEffect } from "react";
 import { copyToClipboardModern } from "../../utils/functions";
-
-import { toaster } from "../chakra-ui/toaster";
-import { DialogBody, DialogCloseTrigger, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "../chakra-ui/dialog";
-import { Circle, Dialog, Float, HStack, IconButton, Stack, Text } from "@chakra-ui/react";
+import { Dialog, DialogBody, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogCloseTrigger } from "@chakra-ui/react";
+import { Circle, Float, HStack, IconButton, Stack, Text } from "@chakra-ui/react";
 import { LuCopy, LuExternalLink, LuShare2 } from "react-icons/lu";
 import { useStore } from 'zustand'
 import appStore from '../../store'
 import axios from "axios";
 import { Link, useNavigate } from "react-router-dom";
 import { IAccountContracts } from "../../types/index";
+import { toaster } from "../ui/use-toast";
 
 export default function AccountContracts({ inline, open, updateOpenStatus }: IAccountContracts) {
     // const [contracts, setContracts] = useState<any[]>([])
@@ -102,7 +101,7 @@ export default function AccountContracts({ inline, open, updateOpenStatus }: IAc
                                                         title: "Link copied ot clipoboard",
                                                         description: "",
                                                         type: "success",
-                                                        duration: 3000,
+                                                        // duration: 3000,
                                                         // placement: "bottom-end"
                                                     });
                                                 } else {

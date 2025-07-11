@@ -2,17 +2,13 @@ import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Input } from '@/components/ui/input';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import {
-    Search,
     FileText,
     Users,
     Hash,
     Copy,
-    Filter,
-    ArrowUpDown,
     Wallet,
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
@@ -225,7 +221,7 @@ const SharedContract = ({ contract }: { contract: Contract }) => {
 }
 
 export function SharedContracts() {
-    const [searchQuery, setSearchQuery] = useState('');
+    const [searchQuery, _setSearchQuery] = useState('');
     const { backend_url, session, setContracts, contracts } = useStore(appStore)
 
     const loadAccountSharedContracts = async () => {

@@ -91,7 +91,7 @@ function PdfRendererComponent({
               min={0.25} 
               max={3} 
               step={0.01}
-              onValueChange={(value) => setScale(value[0])}
+              onValueChange={(value: any) => setScale(value[0])}
             />
           </div>
           <Button 

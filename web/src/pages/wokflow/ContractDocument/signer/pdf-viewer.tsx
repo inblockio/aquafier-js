@@ -3,8 +3,7 @@
 import type React from 'react';
 import { useEffect, useRef, useState, useCallback } from 'react';
 import type { Annotation, TextAnnotation, ImageAnnotation, ProfileAnnotation } from './types';
-import { SignatureData } from '../../../../../types/types';
-import { ScrollArea } from '@radix-ui/react-scroll-area';
+import { SignatureData } from '../../../../types/types';
 
 interface PdfViewerProps {
   file: File | null;

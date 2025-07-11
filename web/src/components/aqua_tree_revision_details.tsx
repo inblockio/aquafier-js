@@ -16,8 +16,8 @@ import React from "react";
 
 // Import /components/ UI components
 import { Button } from "@/components/ui/button"
-import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert"
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
+import { Alert, AlertTitle } from "@/components/ui/alert"
+import { Collapsible, CollapsibleContent } from "@/components/ui/collapsible"
 import { cn } from "@/lib/utils"
 
 // Custom Timeline components using Tailwind
@@ -49,7 +49,7 @@ const TimelineItem = ({ children }: { children: React.ReactNode }) => {
     return <div className="relative mb-4">{children}</div>;
 };
 
-const TimelineConnector = ({ children, bg, color }: { children: React.ReactNode, bg: string, color: string }) => {
+const TimelineConnector = ({ children, bg }: { children: React.ReactNode, bg: string, color: string }) => {
     const bgColorMap: Record<string, string> = {
         "gray.400": "bg-gray-400",
         "green": "bg-green-500",
@@ -92,7 +92,7 @@ const TimelineDescription = ({ children }: { children: React.ReactNode }) => {
 };
 
 // Custom For component replacement
-const For = <T extends any>({ each, children }: { each: T[], children: (item: T, index: number) => React.ReactNode }) => {
+export const For = <T extends any>({ each, children }: { each: T[], children: (item: T, index: number) => React.ReactNode }) => {
     return <>{each.map((item, index) => children(item, index))}</>;
 };
 

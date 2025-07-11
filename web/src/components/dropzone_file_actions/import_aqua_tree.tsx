@@ -1,7 +1,7 @@
 import React, { useRef, useState } from "react";
 import { LuImport } from "react-icons/lu";
 import { useStore } from "zustand";
-import appStore from "../../../store";
+import appStore from "../../store";
 import { 
     readFileAsText, 
     validateAquaTree, 
@@ -12,9 +12,9 @@ import {
     isAquaTree, 
     allLinkRevisionHashes, 
     getAquaTreeFileName 
-} from "../../../utils/functions";
+} from "../../utils/functions";
 import Aquafier, { AquaTree, FileObject } from "aqua-js-sdk";
-import { IDropzoneAction2, UploadLinkAquaTreeExpectedData } from "../../../types/types";
+import { IDropzoneAction2, UploadLinkAquaTreeExpectedData } from "../../types/types";
 import { Input } from "@/components/ui/input";
 import { toast } from "@/components/ui/use-toast";
 import {  Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
@@ -55,7 +55,8 @@ export const ImportAquaTree = ({ aquaFile, uploadedIndexes, fileIndex, updateUpl
                     "nonce": session?.nonce || ""
                 }});
 
-            setFiles([...response.files]);
+            const responseData = await response.json();
+            setFiles([...responseData.files]);
             setUploaded(true);
             setUploading(false);
             setSelectedFileName("");

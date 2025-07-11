@@ -2,12 +2,12 @@
 import { LuDock } from "react-icons/lu";
 import axios from "axios";
 import { useStore } from "zustand";
-import appStore from "../../../store";
+import appStore from "../../store";
 import { useState } from "react";
-import { ApiFileInfo } from "../../../models/FileInfo";
-import { checkIfFileExistInUserFiles } from "../../../utils/functions";
-import { maxFileSizeForUpload } from "../../../utils/constants";
-import { IDropzoneAction } from "../../../types/types";
+import { ApiFileInfo } from "../../models/FileInfo";
+import { checkIfFileExistInUserFiles } from "../../utils/functions";
+import { maxFileSizeForUpload } from "../../utils/constants";
+import { IDropzoneAction } from "../../types/types";
 import { toaster } from "@/components/ui/use-toast";
 import { Button } from "@/components/ui/button";
 import { Loader2 } from "lucide-react";

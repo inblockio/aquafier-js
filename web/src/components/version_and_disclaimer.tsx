@@ -1,16 +1,20 @@
 import { useEffect, useState } from "react";
-import { Button } from "./chakra-ui/button";
-import { DialogBody, DialogCloseTrigger, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "./chakra-ui/dialog";
-import { Center, Dialog, Link, Spacer, Text, VStack } from "@chakra-ui/react";
+// import { Button } from "./chakra-ui/button";
+// import { DialogBody, DialogCloseTrigger, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "./chakra-ui/dialog";
+import { Center, Link, Spacer, Text, VStack } from "@chakra-ui/react";
 import { LuMessageCircleWarning } from "react-icons/lu";
 import { useStore } from 'zustand'
 import appStore from '../store'
-import { Alert } from "./chakra-ui/alert";
+// import { Alert } from "./chakra-ui/alert";
 import axios from "axios";
-import { toaster } from "./chakra-ui/toaster";
+// import { toaster } from "./chakra-ui/toaster";
 import VersionDetails from "../models/VersionDetails";
 import { IVersionAndDisclaimer } from "../types/index";
 import versionInfo from '../version-info.json';
+import { toaster } from "./ui/use-toast";
+import { Dialog, DialogBody, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogCloseTrigger } from "@chakra-ui/react";
+import { Button } from "./ui/button";
+import { Alert } from "./ui/alert";
 
 export default function VersionAndDisclaimer({ inline, open, updateOpenStatus }: IVersionAndDisclaimer) {
     //   const {  es, avatar, setAvatar, setUserProfile, backend_url } = useStore(appStore);
@@ -57,9 +61,9 @@ export default function VersionAndDisclaimer({ inline, open, updateOpenStatus }:
             <DialogTrigger asChild>
                 <Button
                 data-testid="info-button"
-                    colorPalette={'black'}
+                    // colorPalette={'black'}
                     size={"sm"}
-                    borderRadius={"md"}
+                    // borderRadius={"md"}
                     onClick={() => {
                         inline ? updateOpenStatus?.(true) : setIsOpen(true);
                         // !metamaskAddress && signAndConnect();
@@ -70,9 +74,12 @@ export default function VersionAndDisclaimer({ inline, open, updateOpenStatus }:
                     Info
                 </Button>
             </DialogTrigger>
-            <DialogContent borderRadius={"2xl"} overflow={"hidden"}>
-                <DialogHeader py={"3"} px={"5"} bg={{ base: "rgb(188 220 255 / 22%)", _dark: "rgba(0, 0, 0, 0.3)" }}>
-                    <DialogTitle fontWeight={500} color={"gray.800"} _dark={{ color: "white" }}>
+            {/* <DialogContent borderRadius={"2xl"} overflow={"hidden"}> */}
+            <DialogContent >
+                {/* <DialogHeader py={"3"} px={"5"} bg={{ base: "rgb(188 220 255 / 22%)", _dark: "rgba(0, 0, 0, 0.3)" }}> */}
+                <DialogHeader >
+                    {/* <DialogTitle fon/tWeight={500} color={"gray.800"} _dark={{ color: "white" }}> */}
+                    <DialogTitle >
                         Product Infomation
                     </DialogTitle>
                 </DialogHeader>
@@ -91,7 +98,8 @@ export default function VersionAndDisclaimer({ inline, open, updateOpenStatus }:
 
                         <Spacer height={30} />
 
-                        <Alert status="error" title="" variant="solid"   >
+                        {/* <Alert status="error" title="" variant="solid"   > */}
+                        <Alert    >
                             This is prototype software,use it with caution.
                         </Alert>
 
@@ -101,7 +109,8 @@ export default function VersionAndDisclaimer({ inline, open, updateOpenStatus }:
                             The source code can be found:  <Link href="https://github.com/inblockio" target="_blank" style={{ "color": "blue" }}>Inblock</Link>
 
                         </Text>
-                        <Button data-testid="close-info-button" borderRadius={"md"} onClick={() => {
+                        {/* <Button data-testid="close-info-button" borderRadius={"md"} onClick={() => { */}
+                        <Button data-testid="close-info-button"  onClick={() => {
                             inline ? updateOpenStatus?.(false) : setIsOpen(false);
                         }}>
                             close

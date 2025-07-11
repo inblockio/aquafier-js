@@ -14,7 +14,7 @@ const InfoPage = () => {
 
   const { backend_url } = useStore(appStore)
 
-  const [isOpen, setIsOpen] = useState(false);
+  // const [isOpen, setIsOpen] = useState(false);
   const [versionDetails, setVersionDetails] = useState<VersionDetails>({
     backend: "1.2.X",
     frontend: "1.2.X",

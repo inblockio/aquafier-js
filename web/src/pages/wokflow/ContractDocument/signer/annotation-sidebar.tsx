@@ -1,7 +1,7 @@
 import type React from 'react';
 import type { Annotation, ProfileAnnotation } from "./types";
 import { Trash2 } from 'lucide-react';
-import { SignatureData } from '../../../../../types/types';
+import { SignatureData } from '../../../../types/types';
 
 interface AnnotationSidebarProps {
   annotations: Annotation[];

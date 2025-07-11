@@ -14,7 +14,7 @@ import { Outlet } from "react-router-dom"
 import { ClipLoader } from "react-spinners"
 import { Toaster } from "sonner"
 import { useStore } from "zustand"
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button"
 import CreateFormFromTemplate from "@/components/aqua_forms/CreateFormFromTemplate";
 import { ScrollArea } from "@/components/ui/scroll-area"
@@ -89,7 +89,7 @@ export default function NewShadcnLayoutWithSidebar() {
         <>
             {
                 session == null ? <>
-                    <ConnectWalletPage dataTestId="sign-in-pages" />
+                    <ConnectWalletPage  />
                 </>
                     :
                     <SidebarProvider>

@@ -16,7 +16,6 @@ import {
   Settings,
   LayoutTemplate,
   Workflow,
-  Signature,
   Link
 } from 'lucide-react';
 import { maxUserFileSizeForUpload } from "@/utils/constants";
@@ -24,7 +23,6 @@ import { formatBytes, getAquaTreeFileObject } from "@/utils/functions";
 import { useStore } from "zustand";
 import appStore from "@/store";
 import { useState } from "react";
-import { FaHome } from "react-icons/fa";
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 

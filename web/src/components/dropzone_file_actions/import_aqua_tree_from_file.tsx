@@ -1,10 +1,10 @@
 import { LuImport } from "react-icons/lu";
 import axios from "axios";
 import { useStore } from "zustand";
-import appStore from "../../../store";
+import appStore from "../../store";
 import { useState } from "react";
-import { ApiFileInfo } from "../../../models/FileInfo";
-import { IDropzoneAction } from "../../../types/types";
+import { ApiFileInfo } from "../../models/FileInfo";
+import { IDropzoneAction } from "../../types/types";
 import { Button } from "@/components/ui/button";
 import { toaster } from "@/components/ui/use-toast";
 

@@ -39,7 +39,7 @@ const CustomCopyButton = ({ value }: { value: string }) => {
 };
 
 export const ConnectWallet: React.FC<{dataTestId: string}> = ({dataTestId}) => {
-  const { setMetamaskAddress, session, setFiles, avatar, setAvatar, setUserProfile, backend_url, setSession } = useStore(appStore);
+  const { setMetamaskAddress, session, setFiles, setAvatar, setUserProfile, backend_url, setSession } = useStore(appStore);
 
   const [isOpen, setIsOpen] = useState(false);
   const [loading, setLoading] = useState(false);

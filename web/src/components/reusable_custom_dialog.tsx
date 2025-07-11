@@ -1,5 +1,5 @@
-import { Dialog } from "@chakra-ui/react";
-import { DialogBody, DialogCloseTrigger, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "./chakra-ui/dialog";
+import { Dialog, DialogBody, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogCloseTrigger } from "@chakra-ui/react";
+
 
 
 interface IReusableCustomDialog {

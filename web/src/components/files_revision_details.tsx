@@ -19,8 +19,6 @@ import {
 } from "lucide-react";
 import { ERROR_TEXT, ERROR_UKNOWN, WITNESS_NETWORK_MAP } from "@/utils/constants";
 import { displayTime, fetchLinkedFileName, formatCryptoAddress, getAquaTreeFileObject, getFileNameWithDeepLinking, isDeepLinkRevision } from "@/utils/functions";
-import { ItemDetail } from "./item_details";
-import { Label } from "@/components/ui/label";
 import { ApiFileInfo } from "@/models/FileInfo";
 import { toaster } from "@/components/ui/use-toast";
 import { WalletEnsView } from "@/components/ui/wallet_ens";

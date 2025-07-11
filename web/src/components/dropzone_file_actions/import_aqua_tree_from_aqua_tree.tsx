@@ -206,27 +206,27 @@ export const ImportAquaChainFromChain = ({ fileInfo, isVerificationSuccessful, c
         }
     };
 
-    const getTimelineItemColor = (color: string) => {
-        switch (color) {
-            case 'green': return 'text-green-600';
-            case 'red': return 'text-red-600';
-            case 'yellow': return 'text-yellow-600';
-            case 'blue': return 'text-blue-600';
-            case 'info': return 'text-blue-600';
-            default: return 'text-gray-600';
-        }
-    };
+    // const getTimelineItemColor = (color: string) => {
+    //     switch (color) {
+    //         case 'green': return 'text-green-600';
+    //         case 'red': return 'text-red-600';
+    //         case 'yellow': return 'text-yellow-600';
+    //         case 'blue': return 'text-blue-600';
+    //         case 'info': return 'text-blue-600';
+    //         default: return 'text-gray-600';
+    //     }
+    // };
 
-    const TimelineItem = ({ children, color = 'gray' }: { children: React.ReactNode, color?: string }) => (
-        <div className="flex gap-4 pb-6 last:pb-0">
-            <div className={`flex h-8 w-8 items-center justify-center rounded-full border-2 ${getTimelineItemColor(color)} bg-background`}>
-                {children}
-            </div>
-            <div className="flex-1 space-y-1">
-                <div className="text-sm font-medium">{children}</div>
-            </div>
-        </div>
-    );
+    // const TimelineItem = ({ children, color = 'gray' }: { children: React.ReactNode, color?: string }) => (
+    //     <div className="flex gap-4 pb-6 last:pb-0">
+    //         <div className={`flex h-8 w-8 items-center justify-center rounded-full border-2 ${getTimelineItemColor(color)} bg-background`}>
+    //             {children}
+    //         </div>
+    //         <div className="flex-1 space-y-1">
+    //             <div className="text-sm font-medium">{children}</div>
+    //         </div>
+    //     </div>
+    // );
 
     return (
         <div className="container mx-auto max-w-4xl px-4">
