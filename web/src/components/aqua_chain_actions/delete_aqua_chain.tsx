@@ -80,7 +80,7 @@ export const DeleteAquaChain = ({ apiFileInfo, backendUrl, nonce }: RevionOperat
         let allFilesAffected: ApiFileInfo[] = []
         let genesisOfFileBeingDeleted = getGenesisHash(apiFileInfo.aquaTree!)
         let fileNameBeingDeleted = getFileName(apiFileInfo.aquaTree!)
-        
+
         //check if the file is linked to any aqua chain by using the file index of an aqua tree
         for (let anAquaTree of files) {
             // skip the current file being deleted
@@ -118,7 +118,7 @@ export const DeleteAquaChain = ({ apiFileInfo, backendUrl, nonce }: RevionOperat
 
     return (
         <>
-            <Button size={'xs'} colorPalette={'red'} variant={'subtle'} w={'100px'} onClick={() => {
+            <Button data-testid="delete-file-action-button" size={'xs'} colorPalette={'red'} variant={'subtle'} w={'100px'} onClick={() => {
                 deleteFileAction()
             }} loading={deleting}>
                 <LuDelete />
@@ -147,12 +147,13 @@ export const DeleteAquaChain = ({ apiFileInfo, backendUrl, nonce }: RevionOperat
                             </Dialog.Body>
                             <Dialog.Footer>
                                 <HStack>
-                                    <Button variant="outline" size="sm" onClick={() => {
+                                    <Button data-testid="cancel-delete-file-action-button" variant="outline" size="sm" onClick={() => {
                                         setOpen(false)
                                     }}>
                                         Cancel
                                     </Button>
                                     <Button
+                                        data-testid="proceed-delete-file-action-button"
                                         onClick={() => {
                                             deleteFileApi()
                                         }}

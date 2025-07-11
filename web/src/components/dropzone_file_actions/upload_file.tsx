@@ -136,7 +136,7 @@ export const UploadFile = ({ file, uploadedIndexes, fileIndex, updateUploadedInd
     }, [])
 
     return (
-        <Button size={'xs'} colorPalette={'blackAlpha'} variant={'subtle'} w={'80px'} onClick={uploadFile} disabled={uploadedIndexes.includes(fileIndex) || uploaded} loading={uploading}>
+        <Button data-testid="action-upload-51-button" size={'xs'} colorPalette={'blackAlpha'} variant={'subtle'} w={'80px'} onClick={uploadFile} disabled={uploadedIndexes.includes(fileIndex) || uploaded} loading={uploading}>
             <LuUpload />
             Upload
         </Button>

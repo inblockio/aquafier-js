@@ -175,10 +175,10 @@ const FormTemplateList = ({ onEdit, onView }: FormTemplateListProps) => {
             </DialogBody>
 
             <DialogFooter>
-              <Button ref={cancelRef} onClick={onClose}>
+              <Button   data-testid="cancel-delete-form-action-button" ref={cancelRef} onClick={onClose}>
                 Cancel
               </Button>
-              <Button variant={'solid'} colorPalette="red" onClick={confirmDelete} ml={3}>
+              <Button  data-testid="delete-form-action-button"  variant={'solid'} colorPalette="red" onClick={confirmDelete} ml={3}>
                 Delete
               </Button>
             </DialogFooter>

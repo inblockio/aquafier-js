@@ -50,7 +50,7 @@ export const ClipboardButton = React.forwardRef<HTMLButtonElement, ButtonProps>(
   function ClipboardButton(props, ref) {
     return (
       <ChakraClipboard.Trigger asChild>
-        <Button ref={ref} size="sm" variant="surface" {...props}>
+        <Button  data-testid="copy-file-action-button" ref={ref} size="sm" variant="surface" {...props}>
           <ClipboardIcon />
           <ClipboardCopyText />
         </Button>

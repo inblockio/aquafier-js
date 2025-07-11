@@ -8,9 +8,10 @@ import {
     Icon,
     VStack,
     Container,
-    Heading
-} from '@chakra-ui/react';
-import { FaCheck, FaQuestionCircle, FaUser } from 'react-icons/fa';
+    Heading,
+    HStack,
+    Stack} from '@chakra-ui/react';
+import { FaCheck, FaQuestionCircle } from 'react-icons/fa';
 import { Alert } from "../../components/chakra-ui/alert"
 import appStore from '../../store';
 import { useStore } from "zustand"
@@ -19,6 +20,11 @@ import { convertTemplateNameToTitle, getHighestFormIndex, isAquaTree, isWorkFlow
 import { ContractDocumentView } from './ContractDocument/ContractDocument';
 import { ContractSummaryView } from './ContractSummary/ContractSummary';
 import { AquaTree, OrderRevisionInAquaTree, Revision } from 'aqua-js-sdk/web';
+import { Button } from '../../components/chakra-ui/button';
+import { LuArrowLeft } from 'react-icons/lu';
+import { useNavigate } from 'react-router-dom';
+import { HiDocumentText } from 'react-icons/hi';
+import { FaCircleInfo } from 'react-icons/fa6';
 
 
 export default function WorkFlowPage() {
@@ -28,6 +34,8 @@ export default function WorkFlowPage() {
     const [error, setError] = useState("");
     const [timeLineItems, setTimeLineItems] = useState<Array<WorkFlowTimeLine>>([]);
     const { selectedFileInfo, formTemplates } = useStore(appStore);
+
+    const navigate = useNavigate()
 
 
 
@@ -148,8 +156,8 @@ export default function WorkFlowPage() {
             completed: true,
             content: <ContractSummaryView setActiveStep={(index) => {
                 setActiveStep(index)
-            }}  />,
-            icon: FaUser,
+            }} />,
+            icon: FaCircleInfo,
             revisionHash: "",
             title: "Contract Information"
         })
@@ -159,8 +167,8 @@ export default function WorkFlowPage() {
             completed: computeIsWorkflowCOmplete(),
             content: <ContractDocumentView setActiveStep={(index) => {
                 setActiveStep(index)
-            }}  />,
-            icon: FaUser,
+            }} />,
+            icon: HiDocumentText,
             revisionHash: "",
             title: "Contract Document"
         })
@@ -203,85 +211,97 @@ export default function WorkFlowPage() {
 
 
     const aquaTreeTimeLine = () => {
-        return <Container fluid py={4} px={{ base: 1, md: 4 }} mx="auto">
-            <Heading textAlign="center" mb={10}>{timeLineTitle}</Heading>
+        return (
+            <>
+                <Container fluid py={4} px={{ base: 1, md: 4 }} mx="auto">
+                    <Stack gap={"10"}> 
+                        <Container>
+                            <HStack alignItems="center" justifyContent="space-between">
+                                <Box />
+                                <Heading textAlign="center">{timeLineTitle}</Heading>
+                                <Button borderRadius={"lg"} onClick={() => navigate("/")}> <LuArrowLeft /> Go Home</Button>
+                            </HStack>
+                        </Container>
 
-            {/* Horizontal Timeline */}
-            <Box w="full" overflowX="auto">
-                <Flex minW="max-content" px={4}>
-                    {timeLineItems.map((item, index) => (
-                        <React.Fragment key={item.id}>
-                            {/* Timeline Item */}
-                            <VStack
-                                cursor="pointer"
-                                mx={4}
-                                onClick={() => setActiveStep(item.id)}
-                            >
-                                <Circle
-                                    size="40px"
-                                    bg={
-                                        activeStep === item.id
-                                            ? 'blue.500'
-                                            : item.completed
-                                                ? 'green.100'
-                                                : 'gray.100'
-                                    }
-                                    color={
-                                        activeStep === item.id
-                                            ? 'white'
-                                            : item.completed
-                                                ? 'green.500'
-                                                : 'gray.400'
-                                    }
-                                >
-                                    <Icon as={item.icon} boxSize={4} />
-                                </Circle>
+                        {/* Horizontal Timeline */}
+                        <Container w="full" overflowX="auto">
+                            <Flex minW="max-content">
+                                {timeLineItems.map((item, index) => (
+                                    <React.Fragment key={item.id}>
+                                        {/* Timeline Item */}
+                                        <VStack
+                                            cursor="pointer"
+                                            mx={4}
+                                            onClick={() => setActiveStep(item.id)}
+                                        >
+                                            <Circle
+                                                size="40px"
+                                                bg={
+                                                    activeStep === item.id
+                                                        ? 'blue.500'
+                                                        : item.completed
+                                                            ? 'green.100'
+                                                            : 'gray.100'
+                                                }
+                                                color={
+                                                    activeStep === item.id
+                                                        ? 'white'
+                                                        : item.completed
+                                                            ? 'green.500'
+                                                            : 'gray.400'
+                                                }
+                                            >
+                                                <Icon as={item.icon} boxSize={4} />
+                                            </Circle>
 
-                                {/* Status indicator */}
-                                <Circle
-                                    size="20px"
-                                    bg={item.completed ? 'green.500' : 'gray.200'}
-                                    color={item.completed ? 'white' : 'gray.500'}
-                                    mt={2}
-                                >
-                                    <Icon as={item.completed ? FaCheck : FaQuestionCircle} boxSize={3} />
-                                </Circle>
+                                            {/* Status indicator */}
+                                            <Circle
+                                                size="20px"
+                                                bg={item.completed ? 'green.500' : 'gray.200'}
+                                                color={item.completed ? 'white' : 'gray.500'}
+                                                mt={2}
+                                            >
+                                                <Icon as={item.completed ? FaCheck : FaQuestionCircle} boxSize={3} />
+                                            </Circle>
 
-                                <Text
-                                    color={activeStep === item.id ? 'blue.500' : 'gray.600'}
-                                    fontWeight={activeStep === item.id ? 'medium' : 'normal'}
-                                    fontSize="sm"
-                                    mt={2}
-                                >
-                                    {item.title}
-                                </Text>
-                            </VStack>
+                                            <Text
+                                                color={activeStep === item.id ? 'blue.500' : 'gray.600'}
+                                                fontWeight={activeStep === item.id ? 'medium' : 'normal'}
+                                                fontSize="sm"
+                                                mt={2}
+                                            >
+                                                {item.title}
+                                            </Text>
+                                        </VStack>
 
-                            {/* Connector line between timeline items */}
-                            {index < timeLineItems.length - 1 && (
-                                <Flex alignItems="center" flex="1">
-                                    <hr
-                                        style={{
-                                            width: '100%',
-                                            height: '2px',
-                                            border: 'none',
-                                            backgroundColor: index < activeStep - 1 || (index === activeStep - 1 && timeLineItems[activeStep - 1].completed)
-                                                ? '#48BB78' // green.500 equivalent
-                                                : '#E2E8F0' // gray.200 equivalent
-                                        }}
-                                    />
-                                </Flex>
-                            )}
-                        </React.Fragment>
-                    ))}
-                </Flex>
-            </Box>
+                                        {/* Connector line between timeline items */}
+                                        {index < timeLineItems.length - 1 && (
+                                            <Flex alignItems="center" flex="1">
+                                                <hr
+                                                    style={{
+                                                        width: '100%',
+                                                        height: '2px',
+                                                        border: 'none',
+                                                        backgroundColor: index < activeStep - 1 || (index === activeStep - 1 && timeLineItems[activeStep - 1].completed)
+                                                            ? '#48BB78' // green.500 equivalent
+                                                            : '#E2E8F0' // gray.200 equivalent
+                                                    }}
+                                                />
+                                            </Flex>
+                                        )}
+                                    </React.Fragment>
+                                ))}
+                            </Flex>
+                        </Container>
 
-            {/* Content Area */}
-            <Box p={{ base: 0, md: 4 }}>
-                {activeContent()}
-            </Box>
-        </Container>
+                        {/* Content Area */}
+                        <Box p={{ base: 0, md: 4 }}>
+                            {activeContent()}
+                        </Box>
+                    </Stack>
+                </Container>
+            </>
+        )
     }
 
     const workFlowPageData = () => {

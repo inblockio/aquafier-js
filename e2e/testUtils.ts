@@ -1,5 +1,5 @@
 import path from "path";
-import {BrowserContext, chromium} from "playwright";
+import {BrowserContext, chromium, Page} from "playwright";
 
 export function generatePassword(length: number): string {
     let result = '';
@@ -9,6 +9,42 @@ export function generatePassword(length: number): string {
         result += characters.charAt(Math.floor(Math.random() * charactersLength));
     }
     return result;
+}
+
+// NEW FUNCTION ADDED - Helper function to switch to a test network
+async function switchToTestNetwork(metaMaskPage: any) {
+    try {
+        // Click on network dropdown
+        await metaMaskPage.click('[data-testid="network-display"]');
+        
+        // Wait for network list
+        await metaMaskPage.waitForSelector('[data-testid="network-list"]', {state: 'visible', timeout: 5000});
+        
+        // Try to select Sepolia testnet or localhost
+        const networkOptions = [
+            '[data-testid="Sepolia-list-item"]',
+            '[data-testid="Localhost 8545-list-item"]',
+            'button:has-text("Sepolia")',
+            'button:has-text("Localhost")'
+        ];
+        
+        for (const networkSelector of networkOptions) {
+            try {
+                await metaMaskPage.waitForSelector(networkSelector, {state: 'visible', timeout: 2000});
+                await metaMaskPage.click(networkSelector);
+                console.log(`Switched to test network: ${networkSelector}`);
+                return;
+            } catch {
+                continue;
+            }
+        }
+        
+        // If no test networks found, close the dropdown
+        await metaMaskPage.press('[data-testid="network-list"]', 'Escape');
+        
+    } catch (error) {
+        console.log("Could not switch network:", error.message);
+    }
 }
 
 
@@ -63,6 +99,15 @@ export async function registerNewMetaMaskWallet(): Promise<RegisterMetaMaskRespo
     await metaMaskPage.click('[data-testid="pin-extension-done"]')
 
     await metaMaskPage.waitForSelector('[data-testid="network-display"]', {state: 'visible'});
+
+    // CHANGE ADDED - Add network switching to localhost/testnet BEFORE proceeding
+    // try {
+    //     await switchToTestNetwork(metaMaskPage);
+    // } catch (error) {
+    //     console.log("Could not switch network, continuing with current network");
+    // }
+    
+
     await metaMaskPage.waitForSelector('[data-testid="not-now-button"]', {state: 'visible', timeout: 100000});
     await metaMaskPage.click('[data-testid="not-now-button"]')
 
@@ -89,11 +134,75 @@ export async function registerNewMetaMaskWalletAndLogin(): Promise<RegisterMetaM
     const context = response.context;
     const testPage = context.pages()[0];
     await testPage.waitForLoadState("load")
-    await testPage.goto("/")
-    await testPage.waitForSelector('[id="dialog::r7::trigger"]', {state: 'visible'})
-    const metamaskPromise = context.waitForEvent("page")
-    await testPage.click('[id="dialog::r7::trigger"]')
-    await metamaskPromise;
+    
+    // Get the BASE_URL from environment variables and navigate to it
+    const baseUrl = process.env.BASE_URL ||  "https://dev.inblock.io";
+    console.log(`Navigating to: ${baseUrl}`);
+    await testPage.goto(baseUrl, { waitUntil: 'networkidle' })
+    
+    console.log("Page loaded, looking for sign-in button...");
+    
+    try {
+        // Take a screenshot to help debug
+        // await testPage.screenshot({ path: 'page-before-login.png' });
+        // console.log("Screenshot saved as page-before-login.png");
+        
+        // Look for any sign-in button with a more flexible approach
+        console.log("Looking for any sign-in button...");
+        
+             // Wait for and click the sign-in button
+            //  await testPage.waitForSelector('[data-testid="sign-in-button-dialog"]', {state: 'visible', timeout: 60000})
+            //  console.log("Sign-in button found, clicking it...");
+        // Try different possible selectors for the sign-in button
+        const signInButtonSelectors = [
+            '[data-testid="sign-in-button-dialog"]',
+            '[data-testid="sign-in-button-navbar"]',
+            '[data-testid="sign-in-button"]',
+            'button:has-text("Sign In")',
+            'button:has-text("Connect")',
+            'button:has-text("Login")'
+        ];
+        
+        let buttonFound = false;
+        const metamaskPromise = context.waitForEvent("page");
+        
+         // Click the sign-in button using the data-testid attribute
+        //  await testPage.click('[data-testid="sign-in-button-dialog"]');
+        // Try each selector until we find a visible button
+        for (const selector of signInButtonSelectors) {
+            try {
+                const isVisible = await testPage.isVisible(selector, { timeout: 5000 });
+                if (isVisible) {
+                    console.log(`Found visible sign-in button with selector: ${selector}`);
+                    await testPage.click(selector);
+                    buttonFound = true;
+                    break;
+                }
+            } catch (e) {
+                console.log(`Selector ${selector} not found or not visible`);
+            }
+        }
+        
+        if (!buttonFound) {
+            // If no button found with specific selectors, try to find any button that might be a sign-in button
+            console.log("No specific sign-in button found, looking for any button that might be for sign-in...");
+            
+            // Take a screenshot to see what's on the page
+            await testPage.screenshot({ path: 'page-no-button-found.png' });
+            
+            // Force click the first button we find as a last resort
+            await testPage.click('button', { force: true });
+            console.log("Clicked first button found as fallback");
+        }
+        console.log("Clicked sign-in button, waiting for MetaMask popup...");
+        
+        await metamaskPromise;
+        console.log("MetaMask popup opened");
+    } catch (error) {
+        console.error("Error during login:", error);
+        await testPage.screenshot({ path: 'login-error.png' });
+        throw error;
+    }
 
     const metamaskPage = context.pages()[1]
     await metamaskPage.waitForSelector('[data-testid="confirm-btn"]', {state: 'visible'})
@@ -105,6 +214,40 @@ export async function registerNewMetaMaskWalletAndLogin(): Promise<RegisterMetaM
     return response;
 }
 
+
+export async function findAndClickHighestSharedButton(page : Page): Promise<number | null> {
+  let highestCount = -1;
+  let currentCount = 0;
+  
+  // Keep checking for higher numbered buttons until we don't find any
+  while (true) {
+    const selector = `[data-testid="shared-button-count-${currentCount}"]`;
+    
+    try {
+      // Check if the element exists (with a short timeout to avoid long waits)
+      await page.waitForSelector(selector, { state: 'attached', timeout: 1000 });
+      highestCount = currentCount;
+      currentCount++;
+    } catch (error) {
+      // Element doesn't exist, break the loop
+      break;
+    }
+  }
+
+  return highestCount
+  
+  // If we found at least one button with count > 0, click the highest one
+//   if (highestCount > 0) {
+//     const highestSelector = `[data-testid="shared-button-count-${highestCount}"]`;
+//     await page.waitForSelector(highestSelector, { state: 'visible', timeout: 10000 });
+//     await page.click(highestSelector);
+//     console.log(`Clicked button with highest count: ${highestCount}`);
+//     return highestCount;
+//   } else {
+//     console.log('No shared-button-count elements with value > 0 found');
+//     return null;
+//   }
+}
 class RegisterMetaMaskResponse{
 
 

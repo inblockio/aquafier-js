@@ -24,6 +24,7 @@ services:
       DATABASE_URL: postgresql://${DB_USER:-aquafier}:${DB_PASSWORD:-changeme}@postgres:5432/aquafier
       BACKEND_URL: ${BACKEND_URL:-localhost:3000}
       FRONTEND_URL: ${FRONTEND_URL:-localhost:3600}
+      BASE_URL: ${BASE_URL:-https://dev.inblock.io}
       VITE_INFURA_PROJECT_ID: ${VITE_INFURA_PROJECT_ID}
       LETSENCRYPT_HOST: ${FRONTEND_URL}, ${BACKEND_URL}
       LETSENCRYPT_EMAIL: ${LETSENCRYPT_EMAIL}

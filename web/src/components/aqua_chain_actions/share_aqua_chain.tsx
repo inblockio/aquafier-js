@@ -94,26 +94,15 @@ export const ShareButton = ({ item, nonce }: IShareButton) => {
 
     }
 
-    // const handleRecipientChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    //     setRecipientType(e.target.checked ? "specific" : "0xfabacc150f2a0000000000000000000000000000")
-    // }
-
-    // const handleVersionChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    //     setOptionType(e.target.checked ? "current" : "latest")
-    // }
 
     return (
         <>
-            <Button size={'xs'} colorPalette={'orange'} variant={'subtle'} w={'100px'} onClick={() => setIsOpen(true)}>
+            <Button data-testid="share-action-button" size={'xs'} colorPalette={'orange'} variant={'subtle'} w={'100px'} onClick={() => setIsOpen(true)}>
                 <LuShare2 />
                 Share
             </Button>
             <DialogRoot open={isOpen} onOpenChange={e => setIsOpen(e.open)}>
-                {/* <DialogTrigger asChild>
-                    <Button variant="outline" size="sm">
-                        Open Dialog
-                    </Button>
-                </DialogTrigger> */}
+               
                 <DialogContent>
                     <DialogHeader>
                         <DialogTitle>{`Sharing ${fileName}`}</DialogTitle>
@@ -204,7 +193,7 @@ export const ShareButton = ({ item, nonce }: IShareButton) => {
                     </DialogBody>
                     <DialogFooter>
                         <DialogActionTrigger asChild>
-                            <Button variant="outline" borderRadius={'md'}>Cancel</Button>
+                            <Button  data-testid="share-cancel-action-button" variant="outline" borderRadius={'md'}>Cancel</Button>
                         </DialogActionTrigger>
                         {
                             shared ? (
@@ -212,7 +201,7 @@ export const ShareButton = ({ item, nonce }: IShareButton) => {
                                     <ClipboardButton borderRadius={'md'} variant={'solid'} />
                                 </ClipboardRoot>
                             ) : (
-                                <Button onClick={handleShare} borderRadius={'md'}>Share</Button>
+                                <Button data-testid="share-modal-action-button" onClick={handleShare} borderRadius={'md'}>Share</Button>
                             )
                         }
                     </DialogFooter>

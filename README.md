@@ -19,8 +19,17 @@ To create a database use the `create_db.sh`. Update the file with the config to 
 chmod +x ./create_db.sh
 ```
 
-....
-
 
 ## Deployment
 check out [docker.md](./docker.md) 
+
+## PlayWright tests
+At the root of the project
+- `npm i` to install dependancies
+- visit `https://github.com/metamask/metamask-extension/releases` download metamsk browser extsion and extract  it to `/e2e/metamask-extension/` 
+- Install playwright browsers `npx playwright install`
+- `npx playwright test e2e/tests.spec.ts` to run tests 
+- `npx playwright test -g "single user aqua-sign" --headed --retries 3` to run specific tests in headed mode
+
+## Windows deeveloment
+- `git config core.filemode false` to prevent git from tracking file permissions(bash scripts file permissions change in windows)

@@ -10,6 +10,8 @@ const FormTemplateCard = ({ template, selectTemplateCallBack }: { template: Form
     
     return (
         <Box
+        id={template.name}
+        data-testid={template.name}
             borderWidth="2px"
             borderStyle="dashed"
             borderColor={colorMode === "light" ? "gray.300" : "gray.600"}

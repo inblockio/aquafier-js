@@ -463,49 +463,7 @@ export default function SignerPage({ file, mySignatures, annotationsInDocument, 
 
   return (
     <Box h={"100%"}>
-      {/* <Box h={"70px"} p={4}>
-        <Container>
-          <Stack gap={4} align={"center"}>
-            <HStack className="flex items-center gap-2 flex-wrap" gap={2}>
-              <Input
-                type="file"
-                accept="application/pdf"
-                onChange={handleFileChange}
-                className="hidden"
-                ref={fileInputRef}
-                id="pdf-upload"
-              />
-              <Button onClick={() => fileInputRef.current?.click()} variant="outline">
-                <FileUp className="mr-2 h-4 w-4" /> Upload PDF
-              </Button>
-              <Button
-                variant={selectedTool === 'text' ? 'ghost' : 'outline'}
-                onClick={() => setSelectedTool(selectedTool === 'text' ? null : 'text')}
-                disabled={!pdfFile}
-              >
-                <Type className="mr-2 h-4 w-4" /> Add Text
-              </Button>
-              <Button
-                variant={selectedTool === 'image' ? 'ghost' : 'outline'}
-                onClick={() => setSelectedTool(selectedTool === 'image' ? null : 'image')}
-                disabled={!pdfFile}
-              >
-                <ImagePlus className="mr-2 h-4 w-4" /> Add Image
-              </Button>
-              <Button
-                variant={selectedTool === 'profile' ? 'ghost' : 'outline'}
-                onClick={() => setSelectedTool(selectedTool === 'profile' ? null : 'profile')}
-                disabled={!pdfFile}
-              >
-                <UserCircle className="mr-2 h-4 w-4" /> Add Profile
-              </Button>
-              <Button onClick={handleDownload} disabled={!pdfFile}>
-                <Download className="mr-2 h-4 w-4" /> Download
-              </Button>
-            </HStack>
-          </Stack>
-        </Container>
-      </Box> */}
+      
       <Box h={"100%"}>
         <Grid
           // templateRows="repeat(2, 1fr)"
@@ -515,27 +473,7 @@ export default function SignerPage({ file, mySignatures, annotationsInDocument, 
         >
           <GridItem bg={"gray.100"} colSpan={{ base: 12, md: 9 }} overflowX={"auto"} overflowY={"scroll"} height={"100%"}>
             <Box h={"100%"} p={0} m={0} >
-              {/* {pdfFile && (
-                <HStack gap={6} borderBottom={`1px solid`} borderColor={"gray.300"} p={2} justify={'center'} align={"center"} className="bg-muted/30 p-2 border-b flex items-center justify-center gap-4 print:hidden">
-                  <Button onClick={() => setCurrentPage(p => Math.max(1, p - 1))} disabled={currentPage <= 1} variant="ghost" size="md"><ArrowLeft /></Button>
-                  <Text fontSize={"sm"} fontWeight={400} color={"gray.700"} className="text-sm font-medium">Page {currentPage} of {numPages}</Text>
-                  <IconButton onClick={() => setCurrentPage(p => Math.min(numPages, p + 1))} disabled={currentPage >= numPages || numPages === 0} variant="subtle" size="md"><ArrowRight /></IconButton>
-                  <IconButton onClick={() => setScale(s => Math.max(0.25, s - 0.25))} variant="subtle" size="md"><ZoomOut /></IconButton>
-                  <Slider
-                    value={[scale]}
-                    min={0.25} max={3} step={0.01}
-                    onValueChange={(value) => setScale(value.value[0])}
-                    w={{ base: "210%", md: "20%" }}
-                  />
-                  <IconButton onClick={() => setScale(s => Math.min(3, s + 0.25))} variant="ghost" size="md"><ZoomIn /></IconButton>
-                  {selectedAnnotationId && (
-                    <>
-                      <IconButton onClick={() => handleAnnotationRotation('ccw')} variant="ghost" size="md" title="Rotate Counter-Clockwise"><RotateCcw /></IconButton>
-                      <IconButton onClick={() => handleAnnotationRotation('cw')} variant="ghost" size="md" title="Rotate Clockwise"><RotateCw /></IconButton>
-                    </>
-                  )}
-                </HStack>
-              )} */}
+             
               <PdfRenderer
                 pdfFile={pdfFile}
                 annotations={annotations}
@@ -620,7 +558,8 @@ export default function SignerPage({ file, mySignatures, annotationsInDocument, 
                   <Alert colorPalette={"blue"} variant={"subtle"} title="Click on the document to place your signature" icon={<LuInfo />} />
                 ) : null}
 
-                <Button onClick={() => {
+                <Button data-testid="action-add-signature-11-button"  onClick={() => {
+                  
                   setSelectedTool("profile");
                   setSelectedSignatureHash(selectedSignatureHash as any)
                   setCanPlaceSignature(true)
@@ -637,6 +576,7 @@ export default function SignerPage({ file, mySignatures, annotationsInDocument, 
                 />
                 <Box>
                   <Button
+                  data-testid="action-sign-signature-111-button"  
                     colorPalette={'green'} variant={'solid'}
                     colorScheme="white"
                     disabled={annotations.length === 0}

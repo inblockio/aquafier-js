@@ -54,8 +54,8 @@ export default async function shareController(fastify: FastifyInstance) {
 
             }
 
-            if (contractData?.receiver?.toLowerCase() != SYSTEM_WALLET_ADDRESS && contractData?.receiver != session.address) {
-                return reply.code(401).send({ success: false, message: "The aqua tree is not shared with you" });
+            if (contractData?.receiver?.toLowerCase() != SYSTEM_WALLET_ADDRESS && contractData?.receiver?.trim().toLocaleLowerCase() != session.address.trim().toLowerCase()) {
+                return reply.code(401).send({ success: false, message: "The aqua tree is not shared with you receiver == "+contractData?.receiver +"=="+session.address });
             }
 
             // user has permission hence  fetch the enire aqua tree

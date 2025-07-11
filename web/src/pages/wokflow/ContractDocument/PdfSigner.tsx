@@ -1415,6 +1415,7 @@ let isInSinatures = signers.find((e)=>{
                 borderRadius="md"
             >
                 <Button
+                data-testid="action-create-signature-button"
                     colorScheme="blue"
                     onClick={() => setIsOpen(true)}
                 >
@@ -1536,7 +1537,7 @@ let isInSinatures = signers.find((e)=>{
                     <Alert colorPalette={"blue"} variant={"subtle"} title="Click on the document to place your signature" icon={<LuInfo />} />
                 ) : null}
 
-                <Button onClick={() => {
+                <Button data-testid="action-signature-to-document-button" onClick={() => {
                     setSelectedTool("signature");
                     //   setSelectedSignatureHash(selectedSignatureHash as any)
                     setCanPlaceSignature(true)
@@ -1549,6 +1550,7 @@ let isInSinatures = signers.find((e)=>{
                 {annotationSidebar()}
 
                 <Button
+                data-testid="action-sign-document-button" 
                     colorPalette={'green'} variant={'solid'}
                     colorScheme="white"
                     disabled={signaturePositions.length === 0}
@@ -1886,7 +1888,7 @@ let isInSinatures = signers.find((e)=>{
                                 >
                                     <LuTrash />
                                 </IconButton>
-                                <Button disabled={creatingUserSignature} colorScheme="blue" onClick={saveSignature}>
+                                <Button data-testid="action-loading-save-signature-button"  disabled={creatingUserSignature} colorScheme="blue" onClick={saveSignature}>
 
 
                                     {creatingUserSignature ? <>

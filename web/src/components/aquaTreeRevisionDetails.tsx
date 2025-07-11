@@ -27,7 +27,7 @@ const viewLinkedFile = (selectedApiFileInfo: ApiFileInfo, revisionHash: string, 
             return <></>
         }
 
-        return <Button onClick={
+        return <Button  data-testid="view-linked-file" onClick={
             () => {
                 let linkedFileName = fetchLinkedFileName(selectedApiFileInfo.aquaTree!!, revision);
                 let allFileObjects = [...selectedApiFileInfo.fileObject]

@@ -119,7 +119,7 @@ const ContractSummaryDetails = ({ data, goToSecondPage, enableNameResolution = f
             {mockContractData.status}
           </Badge>
         </HStack>
-        <Button variant="outline" colorPalette="blue">
+        <Button data-testid="action-contract-summary-button"   variant="outline" colorPalette="blue">
           Contract
         </Button>
       </Flex>
@@ -279,7 +279,7 @@ const ContractSummaryDetails = ({ data, goToSecondPage, enableNameResolution = f
                 <Text fontSize={"sm"} opacity={0.9}>{mockContractData?.footerMsg}</Text>
               ) : null
             }
-            <Button colorPalette={mockContractData?.status === "pending" ? "blue" : "blackAlpha"} borderRadius={"lg"} onClick={goToSecondPage}>
+            <Button data-testid="action-view-contract-button" colorPalette={mockContractData?.status === "pending" ? "blue" : "blackAlpha"} borderRadius={"lg"} onClick={goToSecondPage}>
               <Icon as={FiFileText} />
               View Contract Document
             </Button>

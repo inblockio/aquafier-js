@@ -139,7 +139,7 @@ export const FormRevisionFile = ({ file, uploadedIndexes, fileIndex, updateUploa
     };
 
     return (
-        <Button size={'xs'} colorPalette={'yellow'} variant={'subtle'} w={'120px'} onClick={uploadFile} disabled={uploadedIndexes.includes(fileIndex) || uploaded} loading={uploading}>
+        <Button data-testid="create-form-button" size={'xs'} colorPalette={'yellow'} variant={'subtle'} w={'120px'} onClick={uploadFile} disabled={uploadedIndexes.includes(fileIndex) || uploaded} loading={uploading}>
             <LuDock />
             Create Form
         </Button>
@@ -273,7 +273,7 @@ export const UploadFile = ({ file, uploadedIndexes, fileIndex, updateUploadedInd
     }, [])
 
     return (
-        <Button size={'xs'} colorPalette={'blackAlpha'} variant={'subtle'} w={'80px'} onClick={uploadFile} disabled={uploadedIndexes.includes(fileIndex) || uploaded} loading={uploading}>
+        <Button data-testid="upload-file-button" size={'xs'} colorPalette={'blackAlpha'} variant={'subtle'} w={'80px'} onClick={uploadFile} disabled={uploadedIndexes.includes(fileIndex) || uploaded} loading={uploading}>
             <LuUpload />
             Upload
         </Button>
@@ -553,7 +553,7 @@ export const ImportAquaTree = ({ file, uploadedIndexes, fileIndex, updateUploade
     return (
         <>
 
-            <Button size={'xs'} colorPalette={'green'} variant={'subtle'} w={'100px'} onClick={importFile} disabled={uploadedIndexes.includes(fileIndex) || uploaded} loading={uploading}>
+            <Button data-testid="import-aquatree-button" size={'xs'} colorPalette={'green'} variant={'subtle'} w={'100px'} onClick={importFile} disabled={uploadedIndexes.includes(fileIndex) || uploaded} loading={uploading}>
                 <LuImport />
                 Import
             </Button>
@@ -616,6 +616,7 @@ export const ImportAquaTree = ({ file, uploadedIndexes, fileIndex, updateUploade
                                 <Text mb={2} color={'black'} fontSize="14px">Drag and drop file here</Text>
                                 <Text fontSize="14px" color={'black'} >or</Text>
                                 <Button
+                                    data-testid="select-file-button" 
                                     mt={2}
                                     onClick={() => fileInputRef.current?.click()}
                                     bg="black"
@@ -647,6 +648,7 @@ export const ImportAquaTree = ({ file, uploadedIndexes, fileIndex, updateUploade
                         justifyContent="flex-end"
                     >
                         <Button
+                            data-testid="cancel-button"
                             bg="black"
                             color="white"
                             mr={3}
@@ -779,70 +781,12 @@ export const ImportAquaTreeZip = ({ file, uploadedIndexes, fileIndex, updateUplo
     };
 
     return (
-        <Button size={'xs'} colorPalette={'blackAlpha'} variant={'subtle'} w={'80px'} onClick={importFile} disabled={uploadedIndexes.includes(fileIndex) || uploaded} loading={uploading}>
+        <Button data-testid="import-file-1-button"  size={'xs'} colorPalette={'blackAlpha'} variant={'subtle'} w={'80px'} onClick={importFile} disabled={uploadedIndexes.includes(fileIndex) || uploaded} loading={uploading}>
             <LuScan />
             Import
         </Button>
     )
 }
-
-
-// export const VerifyFile = ({ file }: IDropzoneAction) => {
-
-// const [verifying, setVerifying] = useState(false)
-// const [hashChainForVerification, setHashChain] = useState<ApiFileInfo>()
-// const [_isVerificationSuccessful, setIsVerificationSuccessful] = useState(false)
-// const [uploaded, setUploaded] = useState(false)
-// const { session } = useStore(appStore)
-// const { metamaskAddress, setFiles, files } = useStore(appStore)
-
-// const handleVerifyAquaJsonFile = () => {
-//     setVerifying(true)
-//     readJsonFile(file)
-//         .then((jsonData) => {
-//             const hashChain: ApiFileInfo = {
-//                 id: 0,
-//                 name: '',
-//                 extension: '',
-//                 page_data: JSON.stringify(jsonData),
-//                 mode: '',
-//                 owner: ''
-//             }
-//             setHashChain(hashChain)
-//             // const hashChainString = JSON.stringify(hashChain)
-//             ////  console.log("JSON data:", hashChain);
-//             // setAppState("selectedFileFromApi", hashChain);
-//             // navigate("/details");
-//             // Handle the JSON data here
-//         })
-//         .catch(() => {
-//             // Handle the error here
-//         });
-//     setVerifying(false)
-// };
-
-// useEffect(() => {
-//     handleVerifyAquaJsonFile()
-// }, [])
-
-//     return (
-//         <>
-//             {
-//                 hashChainForVerification ? (
-//                     <ChainDetailsBtn session={session!!} fileInfo={hashChainForVerification} callBack={(res) => {
-//                         console.log(`ChainDetailsBtn Callback FIX me ${res}`);
-//                         setIsVerificationSuccessful(res[0])
-//                     }} />
-//                 ) : (
-//                     <Button size={'xs'} colorPalette={'blackAlpha'} variant={'subtle'} w={'80px'} loading={verifying} disabled>
-//                         <LuScan />
-//                         Loading Chain
-//                     </Button>
-//                 )
-//             }
-//         </>
-//     )
-// }
 
 
 export const ImportAquaChainFromFile = ({ file, uploadedIndexes, fileIndex, updateUploadedIndex }: IDropzoneAction) => {
@@ -914,7 +858,7 @@ export const ImportAquaChainFromFile = ({ file, uploadedIndexes, fileIndex, upda
     };
 
     return (
-        <Button size={'xs'} colorPalette={'blackAlpha'} variant={'subtle'} w={'80px'} onClick={importAquaChain} disabled={uploadedIndexes.includes(fileIndex) || uploaded} loading={uploading}>
+        <Button data-testid="import-file-2-button" size={'xs'} colorPalette={'blackAlpha'} variant={'subtle'} w={'80px'} onClick={importAquaChain} disabled={uploadedIndexes.includes(fileIndex) || uploaded} loading={uploading}>
             <LuImport />
             Import
         </Button>
@@ -1230,7 +1174,7 @@ export const ImportAquaChainFromChain = ({ fileInfo, isVerificationSuccessful, c
                     <Text>
                         Do you want to import this Aqua Chain?
                     </Text>
-                    <Button size={'lg'} colorPalette={'blue'} variant={'solid'} onClick={importAquaChain}
+                    <Button data-testid="import-file-3-button" size={'lg'} colorPalette={'blue'} variant={'solid'} onClick={importAquaChain}
                     // disabled={!isVerificationSuccessful} loading={uploading}
                     >
                         <LuImport />
@@ -1238,20 +1182,10 @@ export const ImportAquaChainFromChain = ({ fileInfo, isVerificationSuccessful, c
                     </Button>
                 </Group>
             </Alert>
-            {/* <Alert.Root colorPalette={'orange'}>
-                Would you like to import the file?
-                <Button size={'lg'} colorPalette={'blue'} variant={'subtle'} onClick={importAquaChain} disabled={!isVerificationSuccessful} loading={uploading}>
-                    <LuImport />
-                    Import
-                </Button>
-            </Alert.Root> */}
+           
 
             <DialogRoot open={modalOpen} onOpenChange={e => setModalOpen(e.open)}>
-                {/* <DialogTrigger asChild>
-                    <Button variant="outline" size="sm">
-                        Open Dialog
-                    </Button>
-                </DialogTrigger> */}
+               
                 <DialogContent borderRadius={'lg'}>
                     <DialogHeader>
                         <DialogTitle>Aqua Chain Import</DialogTitle>
@@ -1433,7 +1367,7 @@ export const ImportAquaChainFromChain = ({ fileInfo, isVerificationSuccessful, c
                                                     {updateMessage}
                                                 </Alert>
                                                 <Group>
-                                                    <Button size={'xs'} borderRadius={'md'} colorPalette={btnText.color} onClick={handleMergeRevisions} loading={uploading}>{btnText.text}</Button>
+                                                    <Button data-testid="merge-revision-action-button" size={'xs'} borderRadius={'md'} colorPalette={btnText.color} onClick={handleMergeRevisions} loading={uploading}>{btnText.text}</Button>
                                                 </Group>
                                             </TimelineContent>
                                         </TimelineItem>
@@ -1462,7 +1396,7 @@ export const ImportAquaChainFromChain = ({ fileInfo, isVerificationSuccessful, c
                     </DialogBody>
                     <DialogFooter>
                         <DialogActionTrigger asChild>
-                            <Button variant="outline" borderRadius={'md'}>Cancel</Button>
+                            <Button data-testid="merge-revision-action-cancel-button" variant="outline" borderRadius={'md'}>Cancel</Button>
                         </DialogActionTrigger>
                         {/* <Button>Save</Button> */}
                     </DialogFooter>

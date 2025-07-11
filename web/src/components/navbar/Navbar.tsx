@@ -741,7 +741,7 @@ const Navbar = () => {
                         <Image src={colorMode === 'light' ? "/images/logo.png" : "/images/logo-dark.png"} maxH={'60%'} />
                     </Link>
                     <HStack display={{ base: 'flex', md: 'none' }} gap={"2"}>
-                        <ConnectWallet />
+                        <ConnectWallet dataTestId="sign-in-button-navbar"/>
                         <SmallScreenSidebarDrawer openCreateForm={() => setOpen(true)} />
                     </HStack>
 
@@ -752,7 +752,7 @@ const Navbar = () => {
                                     <Menu.Root onOpenChange={(open: MenuOpenChangeDetails) => setIsDropDownOpen(open.open)}  >
                                         <Menu.Trigger asChild >
 
-                                            <Button variant="solid" size="sm" bg="blue.500">
+                                            <Button data-testid="action-form-63-button" variant="solid" size="sm" bg="blue.500">
                                                 <Group>
                                                     <Text>Form</Text>
                                                     <LuSquareChartGantt />
@@ -774,10 +774,19 @@ const Navbar = () => {
                                                     }} cursor={"pointer"}>
                                                         Manage templates
                                                     </Menu.Item>
-                                                    <Menu.Item value="new-file" onClick={() => {
+                                                    <Menu.Item data-testid="create-form-from-template" value="new-file" onClick={() => {
                                                         setOpen(true)
                                                     }} cursor={"pointer"}>
                                                         Create Form from template
+                                                    </Menu.Item>
+                                                    <Menu.Item data-testid="create-aqua-sign-from-template" value="new-aqua-sign" onClick={() => {
+                                                        setOpen(true)
+                                                        const aquaSignTemplate = formTemplates.find(template => template.name === 'aqua_sign')
+                                                        if (aquaSignTemplate) {
+                                                            selectTemplateCallBack(aquaSignTemplate)
+                                                        }
+                                                    }} cursor={"pointer"}>
+                                                        Create Aqua Sign
                                                     </Menu.Item>
                                                 </Menu.Content>
                                             </Menu.Positioner>
@@ -798,7 +807,7 @@ const Navbar = () => {
                             </>
                             ) : null
                         }
-                        <ConnectWallet />
+                        <ConnectWallet dataTestId="sign-in-button-navbar-2" />
                     </HStack>
                 </HStack>
             </Box>
@@ -843,7 +852,7 @@ const Navbar = () => {
                                                     <HStack alignItems={'flex-end'} justify={'space-between'}>
                                                         <Text fontSize={"lg"}>{field.label}</Text>
                                                         {/* Add a new address input */}
-                                                        <IconButton aria-label="Add Address" size={"sm"} borderRadius={"lg"} onClick={addAddress}>
+                                                        <IconButton aria-label="Add Address" data-testid={`multiple_values_${field.name}`} size={"sm"} borderRadius={"lg"} onClick={addAddress}>
                                                             <LuPlus />
                                                         </IconButton>
                                                     </HStack>
@@ -851,11 +860,12 @@ const Navbar = () => {
                                                     {
                                                         multipleAddresses.map((address, index) => {
                                                             return <HStack alignItems={'flex-end'}>
-                                                                <Field>
+                                                                <Field >
                                                                     <HStack w={"full"}>
                                                                         <Text fontSize={"lg"}>{index + 1}. </Text>
                                                                         <Box flex={1}>
                                                                             <Input
+                                                                                data-testid={`input-${field.name}-${index}`}
                                                                                 // disabled={session?.address === address}
                                                                                 borderRadius={"lg"} value={address} onChange={(ev) => {
                                                                                     let newData = multipleAddresses.map((e, i) => {
@@ -880,9 +890,10 @@ const Navbar = () => {
 
                                             }
 
-                                            // For file inputs, we don't want to set the value prop
+                                            // For file inputs, we don't want to set the value prop --
                                             return <Field label={field.label} errorText={''}>
                                                 <Input
+                                                    data-testid={`input-${field.name}`}
                                                     borderRadius={"md"}
                                                     size={"sm"}
                                                     // value={formData[field.name]}
@@ -961,7 +972,7 @@ const Navbar = () => {
                         <HStack w={'100%'} justifyContent={'end'}>
                             <HStack>
                                 {selectedTemplate ?
-                                    <Button type="submit" ml={3} mr={3} colorPalette={'green'} ref={cancelRef} onClick={createWorkflowFromTemplate} form="create-aqua-tree-form">
+                                    <Button data-testid="action-loading-create-button" type="submit" ml={3} mr={3} colorPalette={'green'} ref={cancelRef} onClick={createWorkflowFromTemplate} form="create-aqua-tree-form">
 
 
                                         {submittingTemplateData ? <>

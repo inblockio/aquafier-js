@@ -80,7 +80,7 @@ export const ImportAquaChainFromFile = ({ file, uploadedIndexes, fileIndex, upda
     };
 
     return (
-        <Button size={'xs'} colorPalette={'blackAlpha'} variant={'subtle'} w={'80px'} onClick={importAquaChain} disabled={uploadedIndexes.includes(fileIndex) || uploaded} loading={uploading}>
+        <Button data-testid="import-action-42-button" size={'xs'} colorPalette={'blackAlpha'} variant={'subtle'} w={'80px'} onClick={importAquaChain} disabled={uploadedIndexes.includes(fileIndex) || uploaded} loading={uploading}>
             <LuImport />
             Import
         </Button>

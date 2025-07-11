@@ -119,7 +119,7 @@ export const WitnessAquaChain = ({ apiFileInfo, backendUrl, nonce }: RevionOpera
     return (
         <>
 
-            <Button size={'xs'} w={'100px'} onClick={witnessFileHandler} loading={witnessing}>
+            <Button data-testid="witness-action-button" size={'xs'} w={'100px'} onClick={witnessFileHandler} loading={witnessing}>
                 <LuGlasses />
                 Witness
             </Button>
