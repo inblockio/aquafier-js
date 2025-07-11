@@ -1,26 +1,36 @@
 import { ethers } from 'ethers';
-import MainLayout from './layouts/MainLayout'
-import Home from './pages/Home'
 import LoadConfiguration from './components/config';
 import { initializeBackendUrl } from './utils/constants';
 import { useEffect } from 'react'
 import appStore from './store';
 import { useStore } from "zustand"
 import { BrowserRouter, Route, Routes } from 'react-router-dom'
-import SharePage from './pages/SharePage';
-import Loading from './pages/Loading';
-import AquaForms from './pages/AquaForms';
-import FormGenerator from './pages/FormGenerator';
-import AttestationAddresses from './pages/AttestationAddresses';
+import ErrorBoundary from "./components/error_boundary";
+import Loading from './pages/loading';
 import PdfSigner from './pages/wokflow/ContractDocument/PdfSigner';
-import WorkFlowPage from './pages/wokflow/WorkFlow';
-import FilesPage from './pages/files/files';
+import FilesPage from './pages/files';
+import Home from './pages/home';
+// import TailwindLayout from './layouts/TailwindLayout';
+import TailwindMainLayout from './layouts/TailwindMainLayout';
+import PageNotFound from './pages/page_not_found';
+import InfoPage from './pages/info_page';
+import SettingsPage from './pages/settings_page';
+import TemplatesPage from './pages/templates_page';
+import CreateFormInstance from './pages/create_form_instance';
+import NewShadcnLayoutWithSidebar from './layouts/NewShadcnLayoutWithSidebar';
+import PdfWorkflowPage from './pages/wokflow/PdfWorkflowPage';
+import DomainAttestationPage from './pages/domain_attestation';
+import FilesSharedContracts from './pages/files_shared_contracts';
+import WorkflowsTablePage from './pages/wokflow/WorkflowsTablePage';
+import SharePage from './pages/share_page';
 
 declare global {
   interface Window {
     ethereum?: ethers.Eip1193Provider;
   }
 }
+
+
 
 function App() {
   const { setBackEndUrl } = useStore(appStore)
@@ -40,32 +50,52 @@ function App() {
   return (
     <BrowserRouter>
       <LoadConfiguration />
-      <MainLayout>
+      <ErrorBoundary>
         <Routes>
-          <Route path="" element={<Home />} />
-          <Route path="/files" element={<FilesPage />} />
-          <Route path="/files_shared" element={<FilesPage />} />
-          <Route path="/files_workflows" element={<FilesPage />} />
-          <Route path="/files_templates" element={<FilesPage />} />
-          <Route path="/files_docs" element={<FilesPage />} />
-          <Route path="/files_attestation" element={<FilesPage />} />
-          <Route path="/files_info" element={<FilesPage />} />
-          <Route path="/files_settings" element={<FilesPage />} />
-          <Route path="/files_document_signature" element={<FilesPage />} />
-          <Route path="/files_domain_attestation" element={<FilesPage />} />
+          {/* Routes with Tailwind UI (no MainLayout wrapper) */}
+
+          <Route path="/home" element={<TailwindMainLayout />}>
+            <Route index element={<Home />} />
+          </Route>
+
+          {/* All file routes using Tailwind */}
+          <Route path="/" element={<NewShadcnLayoutWithSidebar />}>
+            <Route index element={<FilesPage />} />
+            <Route path="pdf/workflow" element={<PdfWorkflowPage />} />
+            <Route path="files_workflows" element={<FilesPage />} />
+            <Route path="domain_attestation" element={<DomainAttestationPage />} />
+            <Route path="templates" element={<TemplatesPage />} />
+            <Route path="files_docs" element={<FilesPage />} />
+            <Route path="files_attestation" element={<FilesPage />} />
+            <Route path="files_document_signature" element={<FilesPage />} />
+            <Route path="files_domain_attestation" element={<FilesPage />} />
+
+            <Route path="shared-contracts" element={<FilesSharedContracts />} />
+            <Route path="shared-contracts/:identifier" element={<SharePage />} />
+
+            <Route path="settings" element={<SettingsPage />} />
+            <Route path="info" element={<InfoPage />} />
+            <Route path="workflows" element={<WorkflowsTablePage />} />
+            <Route path="form-instance/:templateName" element={<CreateFormInstance />} />
+            <Route path="loading" element={<Loading />} />
+            <Route path="pdf-signer" element={<PdfSigner fileData={null} setActiveStep={(_one) => { }} />} />
+          </Route>
 
 
-          <Route path="/loading" element={<Loading />} />
+          {/* Routes with Chakra UI (wrapped in MainLayout) */}
+          {/* <Route path="/" element={<MainLayoutHolder />} >
+          <Route index element={<Home />} />
+       
           <Route path="/share/:identifier" element={<SharePage />} />
           <Route path="/aqua-forms" element={<AquaForms />} />
-          <Route path="/pdf-signer" element={<PdfSigner fileData={null} setActiveStep={(_one) => {
-
-          }} />} />
+         
           <Route path="/workflow" element={<WorkFlowPage />} />
           <Route path="/form-generator" element={<FormGenerator />} />
           <Route path="/attestation_addresses" element={<AttestationAddresses />} />
+        </Route> */}
+          <Route path="*" element={<PageNotFound />} />
         </Routes>
-      </MainLayout>
+      </ErrorBoundary>
     </BrowserRouter>
   )
 }

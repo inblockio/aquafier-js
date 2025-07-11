@@ -1,13 +1,15 @@
 import React from 'react';
-import {
-  Box,
-  Heading,
-  Text,
-  VStack,
-  Badge,
-  Table,
-} from '@chakra-ui/react';
 import { FormTemplate } from './types';
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 
 interface FormTemplateViewerProps {
   template: FormTemplate;
@@ -15,53 +17,63 @@ interface FormTemplateViewerProps {
 
 const FormTemplateViewer: React.FC<FormTemplateViewerProps> = ({ template }) => {
   return (
-    <Box p={4} borderWidth="1px" borderRadius="lg">
-      <VStack gap={4} align="stretch">
-        <Box>
-          <Heading size="md">{template.title}</Heading>
-          <Text color="gray.500">Name: {template.name}</Text>
-        </Box>
-        
-        <Box>
-          <Heading size="sm" mb={2}>Fields ({template.fields.length})</Heading>
-          
-          {template.fields.length === 0 ? (
-            <Text>No fields defined for this template.</Text>
-          ) : (
-            <Table.Root variant="line">
-              <Table.Header>
-                <Table.Row>
-                  <Table.ColumnHeader>Label</Table.ColumnHeader>
-                  <Table.ColumnHeader>Name</Table.ColumnHeader>
-                  <Table.ColumnHeader>Type</Table.ColumnHeader>
-                  <Table.ColumnHeader>Required</Table.ColumnHeader>
-                </Table.Row>
-              </Table.Header>
-              <Table.Body>
-                {template.fields.map((field) => (
-                  <Table.Row key={field.id}>
-                    <Table.Cell>{field.label}</Table.Cell>
-                    <Table.Cell>{field.name}</Table.Cell>
-                    <Table.Cell>
-                      <Badge colorScheme={field.type === 'text' ? 'blue' : 'purple'}>
-                        {field.type}
-                      </Badge>
-                    </Table.Cell>
-                    <Table.Cell>
-                      {field.required ? (
-                        <Badge colorScheme="green">Yes</Badge>
-                      ) : (
-                        <Badge colorScheme="gray">No</Badge>
-                      )}
-                    </Table.Cell>
-                  </Table.Row>
-                ))}
-              </Table.Body>
-            </Table.Root>
-          )}
-        </Box>
-      </VStack>
-    </Box>
+    <Card className="shadow-sm">
+      <CardHeader className="pb-2">
+        <div>
+          <h3 className="text-lg font-medium">{template.title}</h3>
+          <p className="text-sm text-muted-foreground">Name: {template.name}</p>
+        </div>
+      </CardHeader>
+      
+      <CardContent>
+        <div className="space-y-4">
+          <div>
+            <h4 className="text-sm font-medium mb-2">Fields ({template.fields.length})</h4>
+            
+            {template.fields.length === 0 ? (
+              <p className="text-muted-foreground">No fields defined for this template.</p>
+            ) : (
+              <div className="rounded-md border">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Label</TableHead>
+                      <TableHead>Name</TableHead>
+                      <TableHead>Type</TableHead>
+                      <TableHead>Required</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {template.fields.map((field) => (
+                      <TableRow key={field.id}>
+                        <TableCell>{field.label}</TableCell>
+                        <TableCell>{field.name}</TableCell>
+                        <TableCell>
+                          <Badge variant="outline" className={field.type === 'text' ? 'bg-blue-50 text-blue-600 hover:bg-blue-50' : 'bg-purple-50 text-purple-600 hover:bg-purple-50'}>
+                            {field.type}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          {field.required ? (
+                            <Badge variant="outline" className="bg-green-50 text-green-600 hover:bg-green-50">
+                              Yes
+                            </Badge>
+                          ) : (
+                            <Badge variant="outline" className="bg-gray-50 text-gray-600 hover:bg-gray-50">
+                              No
+                            </Badge>
+                          )}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            )}
+          </div>
+        </div>
+      </CardContent>
+    </Card>
   );
 };
 

@@ -3,7 +3,6 @@
 import type React from 'react';
 import { useEffect, useRef, useState, useCallback } from 'react';
 import type { Annotation, TextAnnotation, ImageAnnotation, ProfileAnnotation } from './types';
-import { Box, Text } from '@chakra-ui/react';
 import { SignatureData } from '../../../../types/types';
 
 interface PdfViewerProps {
@@ -275,6 +274,7 @@ const PdfViewer: React.FC<PdfViewerProps> = ({
     });
     setDraggingAnnotationId(annotation.id);
   }, [onAnnotationSelect, canvasRef]);
+
   const handleDragMove = useCallback((event: MouseEvent) => {
     if (!draggingAnnotationId || !dragStartOffset || !canvasRef.current || !viewerRef.current) return;
 
@@ -633,38 +633,30 @@ const PdfViewer: React.FC<PdfViewerProps> = ({
   }
 
   return (
-    <Box py={4} px={2} maxW={"100%"} w={"100%"} overflowX={"auto"} ref={viewerRef} onClick={handleViewerClick}>
-      {!file && <Text color={"gray.700"} _dark={{ color: "gray.900" }}>Upload a PDF to start annotating.</Text>}
-      {file && !isPdfjsLibLoaded && !pdfLoadingError && <Text color={"gray.700"} _dark={{ color: "gray.900" }}>Initializing PDF viewer...</Text>}
-      {pdfLoadingError && <Text textAlign={"center"} px={4}>{pdfLoadingError}</Text>}
+    <div className="py-4 px-2 h-full" ref={viewerRef} onClick={handleViewerClick}>
+      {!file && <p className="text-gray-700 dark:text-gray-400">Upload a PDF to start annotating.</p>}
+      {file && !isPdfjsLibLoaded && !pdfLoadingError && <p className="text-gray-700 dark:text-gray-400">Initializing PDF viewer...</p>}
+      {pdfLoadingError && <p className="text-center px-4">{pdfLoadingError}</p>}
 
       {file && isPdfjsLibLoaded && !pdfLoadingError && (
         <>
           {!pdfDoc && !pdfLoadingError && (
-            <Text color={"gray.700"} _dark={{ color: "gray.900" }}>Loading PDF document...</Text>
+            <p className="text-gray-700 dark:text-gray-400">Loading PDF document...</p>
           )}
           {pdfDoc && (
-            <Box
-              mx={"auto"}
-              position={"relative"}
-              display={"flex"}
-              flexDirection={"column"}
-              justifyContent={"start"}
-              alignItems={"center"}
-              w={"fit-content"}
+            <div
+              className="mx-auto relative flex flex-col justify-start items-center w-fit"
             >
-              <Box
-                pos={"relative"}
-                w={"fit-content"}
-                shadow={"lg"}
-                bg={"white"}
+              <div
+                className="relative h-full shadow-lg bg-white"
                 style={
                   pageDimensions.width > 0 && pageDimensions.height > 0
                     ? { width: pageDimensions.width, height: pageDimensions.height }
                     : { width: 1, height: 1, visibility: 'hidden' }
                 }
               >
-                <canvas ref={canvasRef} />
+                {/* <ScrollArea className="w-full h-full"> */}
+                <canvas data-testid="pdf-canvas" ref={canvasRef} />
                 {pageDimensions.width > 0 && cleanSignatureToAvoidRepeating().map((anno) => {
                   const isSelected = selectedAnnotationId === anno.id || draggingAnnotationId === anno.id || resizeState?.annotationId === anno.id;
                   let baseStyle: React.CSSProperties = {
@@ -796,7 +788,7 @@ const PdfViewer: React.FC<PdfViewerProps> = ({
                       padding: '5px',
                       backgroundColor: 'rgba(255, 255, 255, 0.7)',
                     };
-                    // return <Text>here</Text>
+                    
                     return (
                       <div key={anno.id} style={profileStyle} data-ai-hint="profile annotation" data-annotation-id={anno.id}
                         onMouseDown={(e) => handleAnnotationMouseDown(e, anno)}>
@@ -805,6 +797,7 @@ const PdfViewer: React.FC<PdfViewerProps> = ({
                           // style={{ width: profileAnno.imageWidth, height: profileAnno.imageHeight }}
                           data-annotation-id={`${anno.id}-image`}
                         >
+                          
                           <img
                             src={profileAnno.dataUrl}
                             alt={profileAnno.imageAlt}
@@ -883,18 +876,16 @@ const PdfViewer: React.FC<PdfViewerProps> = ({
                         data-annotation-id={`${profileAnno.id}-image`}
                       >
 
-                        <Box
-                          width="100%"
-                          height="100%"
-                          backgroundImage={`url(${profileAnno.dataUrl})`}
-                          backgroundSize="contain"
-                          backgroundRepeat="no-repeat"
-                          backgroundPosition="center"
-                          minWidth="200px"  // Ensure minimum size
-                          minHeight="100px"
-                        // border="1px solid"
-                        // borderColor="gray.200"
-                        // borderRadius="sm"
+                        <div
+                        className='relative w-full h-full'
+                          style={{
+                            backgroundImage: `url(${profileAnno.dataUrl})`,
+                            backgroundSize: "contain",
+                            backgroundRepeat: "no-repeat",
+                            backgroundPosition: "center",
+                            minWidth: "200px",  // Ensure minimum size
+                            minHeight: "100px"
+                        }}
                         />
 
 
@@ -918,16 +909,16 @@ const PdfViewer: React.FC<PdfViewerProps> = ({
                     </div>
                   );
                 })}
-
-              </Box>
+{/* </ScrollArea> */}
+              </div>
               {pdfDoc && pageDimensions.width === 0 && currentPage > 0 && currentPage <= numPages && !pdfLoadingError && (
-                <Text position={"absolute"} color={"gray.700"}>Rendering page {currentPage}...</Text>
+                <p className='absolute' style={{ color: "gray.700" }}>Rendering page {currentPage}...</p>
               )}
-            </Box>
+            </div>
           )}
         </>
       )}
-    </Box>
+    </div>
   );
 };
 

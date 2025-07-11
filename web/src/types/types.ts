@@ -13,7 +13,7 @@ export interface Session {
 export interface IShareButton {
     item: ApiFileInfo
     nonce: string
-
+    children?: React.ReactNode
 }
 
 export interface ApiFileData {
@@ -31,6 +31,18 @@ export interface SummaryDetailsDisplayData {
   walletAddress : string
 }
 
+
+export interface DropEvent extends React.DragEvent<HTMLDivElement> { }
+// interface ChangeEvent extends React.ChangeEvent<HTMLInputElement> {}
+
+export interface FileItemWrapper {
+  file: File;
+  isJson: boolean;
+  isLoading: boolean;
+  isZip: boolean;
+  isJsonForm: boolean;
+  isJsonAquaTreeData: boolean;
+}
 
 export interface WebSocketMessage {
   action: string;

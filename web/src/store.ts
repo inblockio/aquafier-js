@@ -23,6 +23,9 @@ type AppStoreState = {
     systemFileInfo :  ApiFileInfo[],
     formTemplates: FormTemplate[],
     selectedFileInfo: ApiFileInfo | null,
+    openFilesDetailsPopUp: boolean | null,
+    openCreateTemplatePopUp: boolean | null,
+    openCreateAquaSignPopUp: boolean | null,
     metamaskAddress: string | null,
     avatar: string | undefined,
     backend_url: string,
@@ -46,7 +49,16 @@ type AppStoreActions = {
         files: AppStoreState['files'],
     ) => void,
     setSelectedFileInfo: (
-        file: ApiFileInfo,
+        file: ApiFileInfo | null ,
+    ) => void,
+    setOpenFileDetailsPopUp: (
+        state: boolean | null ,
+    ) => void,
+    setOpenCreateTemplatePopUp: (
+        state: boolean | null ,
+    ) => void,
+    setOpenCreateAquaSignPopUp: (
+        state: boolean | null ,
     ) => void,
     addFile: (
         file: ApiFileInfo,
@@ -185,6 +197,9 @@ const appStore = createStore<TAppStore>()(
             session: null,
             files: [],
             selectedFileInfo: null,
+            openFilesDetailsPopUp: false,
+            openCreateTemplatePopUp: false,
+            openCreateAquaSignPopUp: false,
             metamaskAddress: '',
             avatar: "",
             apiFileData: [],
@@ -206,8 +221,19 @@ const appStore = createStore<TAppStore>()(
                 files: AppStoreState['files'],
             ) => set({ files: files }),
             setSelectedFileInfo: (
-                file: ApiFileInfo
+                file: ApiFileInfo | null
             ) => set({ selectedFileInfo: file }),
+
+            setOpenFileDetailsPopUp: (
+                state: boolean | null
+            ) => set({ openFilesDetailsPopUp: state }),
+            setOpenCreateTemplatePopUp: (
+                state: boolean | null
+            ) => set({ openCreateTemplatePopUp: state }),
+             setOpenCreateAquaSignPopUp: (
+                state: boolean | null
+            ) => set({ openCreateAquaSignPopUp: state }),
+            
             setApiFileData: (
                 apiFileData: ApiFileData[]
             ) => set({ apiFileData: apiFileData }),

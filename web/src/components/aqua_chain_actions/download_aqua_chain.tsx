@@ -1,23 +1,22 @@
 
 import { LuDownload } from "react-icons/lu"
-import { Button } from "../chakra-ui/button"
 import { ensureDomainUrlHasSSL, extractFileHash, isAquaTree } from "../../utils/functions"
 import { useStore } from "zustand"
 import appStore from "../../store"
 import { ApiFileInfo } from "../../models/FileInfo"
-import { toaster } from "../chakra-ui/toaster"
+
 import { useState } from "react"
 import Aquafier, { AquaTree, Revision } from "aqua-js-sdk"
 import JSZip from "jszip";
 import { AquaJsonInZip, AquaNameWithHash } from "../../models/Aqua"
+import { toaster } from "@/components/ui/use-toast"
 
 
 
 
-export const DownloadAquaChain = ({ file }: { file: ApiFileInfo }) => {
+export const DownloadAquaChain = ({ file, children }: { file: ApiFileInfo, children?: React.ReactNode }) => {
     const { session } = useStore(appStore)
     const [downloading, setDownloading] = useState(false)
-
 
 
     const downloadLinkAquaJson = async () => {
@@ -93,13 +92,13 @@ export const DownloadAquaChain = ({ file }: { file: ApiFileInfo }) => {
         };
         zip.file('aqua.json', JSON.stringify(aquaObject))
 
-        let nameWithoutExtension =   mainAquaFileName.replace(/\.[^/.]+$/, "");
+        let nameWithoutExtension = mainAquaFileName.replace(/\.[^/.]+$/, "");
         // Generate the zip file
         zip.generateAsync({ type: "blob" }).then((blob) => {
             // Create a download link
             const link = document.createElement("a");
             link.href = URL.createObjectURL(blob);
-           
+
             link.download = `${nameWithoutExtension}.zip`;
             document.body.appendChild(link);
             link.click();
@@ -216,12 +215,57 @@ export const DownloadAquaChain = ({ file }: { file: ApiFileInfo }) => {
 
     }
 
-
-
     return (
-        <Button  data-testid="download-aqua-tree-button" size={'xs'} colorPalette={'purple'} variant={'subtle'} w={'100px'} onClick={downloadAquaJson} loading={downloading}>
-            <LuDownload />
-            Download
-        </Button>
+        <>
+            {/* Sign Button */}
+            {
+                children ? (
+                    <div onClick={() => {
+                        if (!downloading) {
+                            downloadAquaJson();
+                        } else {
+                            toaster.create({
+                                description: "Signing is already in progress",
+                                type: "info"
+                            })
+                        }
+                    }}>
+                        {children}
+                    </div>
+                ) : (
+                    <button
+                        data-testid="download-aqua-tree-button"
+                        onClick={() => {
+                            if (!downloading) {
+                                downloadAquaJson();
+                            } else {
+                                toaster.create({
+                                    description: "Signing is already in progress",
+                                    type: "info"
+                                })
+                            }
+                        }}
+                        className={`flex items-center space-x-1 bg-[#F3E8FE] text-purple-700 px-3 py-2 rounded transition-colors text-xs ${downloading ? 'opacity-60 cursor-not-allowed' : 'hover:bg-[#E8D5FE]'}`}
+                        disabled={downloading}
+                    >
+                        {downloading ? (
+                            <>
+                                <svg className="animate-spin h-3 w-3 mr-1 text-purple-700" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
+                                </svg>
+                                <span>Download...</span>
+                            </>
+                        ) : (
+                            <>
+                                <LuDownload className="w-3 h-3" />
+                                <span>Download</span>
+                            </>
+                        )}
+                    </button>
+                )
+            }
+        </>
     )
 }
+

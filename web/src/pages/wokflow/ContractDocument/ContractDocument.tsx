@@ -1,16 +1,5 @@
 
 import React, { useEffect, useState } from 'react';
-import {
-    Text,
-    Heading,
-    Stack,
-    Grid,
-    GridItem,
-    Spinner,
-} from '@chakra-ui/react';
-// import { Card } from '@chakra-ui/react';
-// import { FaCheck, FaQuestionCircle, FaBriefcase, FaBook, FaCoffee, FaAward, FaUser } from 'react-icons/fa';
-import { Alert } from "../../../components/chakra-ui/alert"
 import appStore from '../../../store';
 import { useStore } from "zustand"
 import { ContractDocumentViewProps, SignatureData, SummaryDetailsDisplayData } from '../../../types/types';
@@ -18,8 +7,8 @@ import { AquaTree, getGenesisHash, OrderRevisionInAquaTree, reorderAquaTreeRevis
 import { ensureDomainUrlHasSSL, getHighestFormIndex, isAquaTree } from '../../../utils/functions';
 
 import { PDFDisplayWithJustSimpleOverlay } from './components/signature_overlay';
+import { toast } from 'sonner';
 import PdfSigner from './PdfSigner';
-import { toaster } from '../../../components/chakra-ui/toaster';
 import SignatureItem from '../../../components/pdf/SignatureItem';
 
 
@@ -36,7 +25,7 @@ export const ContractDocumentView: React.FC<ContractDocumentViewProps> = ({ setA
     const [signaturesLoading, setSignaturesLoading] = useState<boolean>(false);
     // const [userCanSign, setUserCanSign] = useState<boolean>(false);
     // const [authorizedSigners, setAuthorizedSigners] = useState<string[]>([]);
-    const { selectedFileInfo, session } = useStore(appStore);
+    const { selectedFileInfo, session, backend_url } = useStore(appStore);
 
 
 
@@ -159,7 +148,10 @@ export const ContractDocumentView: React.FC<ContractDocumentViewProps> = ({ setA
             }
         }
 
-        return null;
+        let actualUrlToFetch = ensureDomainUrlHasSSL(backend_url);
+
+
+        return `${actualUrlToFetch}/files/${fileHash}`;
     };
     const loadSignatures = async (): Promise<SignatureData[]> => {
         let sigData: SignatureData[] = []
@@ -222,9 +214,9 @@ export const ContractDocumentView: React.FC<ContractDocumentViewProps> = ({ setA
                         }
                         let imgFileHash = signatureRevision.link_file_hashes![0];
                         let imageUrl = findImageUrl(imgFileHash)
-
+                        console.log(`findImageUrl ${imgFileHash} ==  ${imageUrl}`)
                         if (imageUrl) {
-                            // console.log(` imageUrl ==  ${imageUrl}`)
+                            console.log(` imageUrl ==  ${imageUrl}`)
                             const image = await fetchImage(imageUrl);
                             if (image) {
                                 imageDataUrl = image
@@ -271,7 +263,7 @@ export const ContractDocumentView: React.FC<ContractDocumentViewProps> = ({ setA
             }
 
             if (revisionSigPosition != null) {
-                console.log(`revisionSigPosition ===== ${JSON.stringify(revisionSigPosition, null, 4)}`)
+                console.log(`revisionSigPosition ==  sigHash.revisionHashWithSignaturePositionCount == > ${sigHash.revisionHashWithSignaturePositionCount}=== ${JSON.stringify(revisionSigPosition, null, 4)}`)
                 if (sigHash.revisionHashWithSignaturePositionCount == 0) {
 
                     let signatureDetails: SignatureData = {
@@ -344,9 +336,13 @@ export const ContractDocumentView: React.FC<ContractDocumentViewProps> = ({ setA
 
     const initializeComponent = async () => {
         try {
+            console.log(`initializeComponent ...`)
             if (pdfFile == null) {
+                console.log(`null......`)
                 // Load PDF first
                 const pdfFile = await fetchPDFfile();
+
+                console.log(`pdfFile ......${pdfFile}`)
                 setPdfFile(pdfFile);
                 setLoadingPdfFile(false);
 
@@ -371,10 +367,12 @@ export const ContractDocumentView: React.FC<ContractDocumentViewProps> = ({ setA
 
     const fetchPDFfile = async (): Promise<File | null> => {
         try {
+            console.log(`fetchPDFfile......1`)
             if (!selectedFileInfo?.aquaTree?.revisions) {
                 throw new Error("Selected file info or revisions not found");
             }
 
+            console.log(`fetchPDFfile......2`)
             const allHashes = Object.keys(selectedFileInfo.aquaTree.revisions);
             const pdfLinkRevision = selectedFileInfo.aquaTree.revisions[allHashes[2]];
 
@@ -382,6 +380,7 @@ export const ContractDocumentView: React.FC<ContractDocumentViewProps> = ({ setA
                 throw new Error("PDF link revision not found");
             }
 
+            console.log(`fetchPDFfile......3`)
             const pdfHash = pdfLinkRevision.link_verification_hashes[0];
             const pdfName = selectedFileInfo.aquaTree.file_index?.[pdfHash];
 
@@ -393,14 +392,48 @@ export const ContractDocumentView: React.FC<ContractDocumentViewProps> = ({ setA
                 (e) => e.fileName === pdfName
             );
 
+            console.log(`fetchPDFfile......4`)
             if (!pdfFileObject) {
                 throw new Error("PDF file object not found");
             }
 
             const fileContentUrl = pdfFileObject.fileContent;
+            console.log(`fetchPDFfile......4.5 ${typeof fileContentUrl} --  ${JSON.stringify(fileContentUrl, null, 4)}`)
             if (typeof fileContentUrl === 'string' && fileContentUrl.startsWith('http')) {
                 return await fetchFileFromUrl(fileContentUrl, pdfName);
             }
+
+            // Handle object that might be binary data (like PDF bytes)
+            if (typeof fileContentUrl === 'object' && fileContentUrl !== null) {
+                console.log(`fetchPDFfile......4.6 handling object data`);
+
+                // Check if it's an array-like object with numeric indices (like your example)
+                if (Object.keys(fileContentUrl).every(key => !isNaN(Number(key)))) {
+                    // Convert the object to a Uint8Array
+                    const bytes = new Uint8Array(Object.values(fileContentUrl) as number[]);
+
+                    // Create a blob from the bytes
+                    const blob = new Blob([bytes], { type: 'application/pdf' });
+                    const urlObject = URL.createObjectURL(blob);
+
+                    // Set the PDF URL object for display
+                    setPdfURLObject(urlObject);
+
+                    // Return as a File object
+                    return new File([blob], pdfName, {
+                        type: 'application/pdf',
+                        lastModified: Date.now(),
+                    });
+                }
+
+                // Also kept the URL property handling as a fallback
+                // const objUrl = fileContentUrl as any;
+                // if (objUrl.url && typeof objUrl.url === 'string' && objUrl.url.startsWith('http')) {
+                //     return await fetchFileFromUrl(objUrl.url, pdfName);
+                // }
+            }
+
+            console.log(`fetchPDFfile......5`)
 
             return null;
         } catch (error) {
@@ -416,10 +449,7 @@ export const ContractDocumentView: React.FC<ContractDocumentViewProps> = ({ setA
         });
 
         if (!response.ok) {
-            toaster.create({
-                description: `${fileName} not found in system`,
-                type: "error"
-            });
+            toast.error(`${fileName} not found in system`);
             throw new Error(`Failed to fetch file: ${response.status}`);
         }
 
@@ -456,49 +486,48 @@ export const ContractDocumentView: React.FC<ContractDocumentViewProps> = ({ setA
     const renderContent = () => {
         if (pdfLoadingFile) {
             return (
-                <Stack>
-                    <Spinner size="xl" color="blue.500" />
-                    <Heading size="lg" color="gray.700">
+                <div className="flex flex-col items-center space-y-4">
+                    <div className="h-10 w-10 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+                    <h2 className="text-2xl font-bold text-gray-700">
                         Loading PDF
-                    </Heading>
-                </Stack>
+                    </h2>
+                </div>
             );
         }
 
 
         if (signaturesLoading) {
             return (
-                <Stack>
-                    <Spinner size="lg" color="blue.500" />
-                    <Heading size="md" color="gray.700">
+                <div className="flex flex-col items-center space-y-4">
+                    <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+                    <h3 className="text-xl font-bold text-gray-700">
                         Loading signatures...
-                    </Heading>
-                </Stack>
+                    </h3>
+                </div>
             );
         }
 
         const isUserSignatureIncluded = signatures.some((sig) => sig.walletAddress === session?.address);
-        // return <Text style={{whiteSpace: "pre-wrap", wordBreak: "break-all"}}>{JSON.stringify(signatures, null, 4)}</Text>
+        // return <p className="whitespace-pre-wrap break-all">{JSON.stringify(signatures, null, 4)}</p>
         if (isUserSignatureIncluded) {
             return (
-                <Grid templateColumns="repeat(4, 1fr)">
-                    <GridItem colSpan={{ base: 12, md: 3 }}>
+                <div className="grid grid-cols-4">
+                    <div className="col-span-12 md:col-span-3">
                         <PDFDisplayWithJustSimpleOverlay
                             pdfUrl={pdfURLObject!}
                             annotationsInDocument={signatures}
                             signatures={signatures}
                         />
-                    </GridItem>
-                    <GridItem colSpan={{ base: 12, md: 1 }} m={5}>
-                        <Stack>
-                            <Text fontWeight={700}>Signatures in document</Text>
+                    </div>
+                    <div className="col-span-12 md:col-span-1 m-5">
+                        <div className="flex flex-col space-y-2">
+                            <p className="font-bold">Signatures in document</p>
                             {signatures.map((signature: SignatureData, index: number) => (
-
                                 <SignatureItem signature={signature} key={index} />
                             ))}
-                        </Stack>
-                    </GridItem>
-                </Grid>
+                        </div>
+                    </div>
+                </div>
             );
         }
 
@@ -514,14 +543,18 @@ export const ContractDocumentView: React.FC<ContractDocumentViewProps> = ({ setA
     // Error boundary for the component
     if (!selectedFileInfo?.aquaTree?.revisions) {
         return (
-            <Alert status="error" variant="solid" title="Error: Document data not found" />
+            <div className="bg-destructive/15 text-destructive p-4 rounded-md">
+                <p className="font-semibold">Error: Document data not found</p>
+            </div>
         );
     }
 
     const firstRevision = selectedFileInfo.aquaTree.revisions[Object.keys(selectedFileInfo.aquaTree.revisions)[0]];
     if (!firstRevision?.forms_signers) {
         return (
-            <Alert status="error" variant="solid" title="Error: Signers not found" />
+            <div className="bg-destructive/15 text-destructive p-4 rounded-md">
+                <p className="font-semibold">Error: Signers not found</p>
+            </div>
         );
     }
 

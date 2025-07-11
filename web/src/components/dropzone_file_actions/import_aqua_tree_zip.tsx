@@ -1,13 +1,13 @@
 import {  LuSave } from "react-icons/lu";
-import { Button } from "../chakra-ui/button";
 import axios from "axios";
 import { useStore } from "zustand";
 import appStore from "../../store";
 import { useState } from "react";
-import { toaster } from "../chakra-ui/toaster";
 
 import JSZip from "jszip";
 import { IDropzoneAction } from "../../types/types";
+import { toaster } from "@/components/ui/use-toast";
+import { Button } from "@/components/ui/button";
 
 
 
@@ -112,10 +112,20 @@ export const ImportAquaTreeZip = ({ file, uploadedIndexes, fileIndex, updateUplo
     };
 
     return (
-        <Button data-testid="action-import-82-button" size={'xs'} colorPalette={'green'} variant={'subtle'} w={'80px'} onClick={importFile} disabled={uploadedIndexes.includes(fileIndex) || uploaded} loading={uploading}>
-            <LuSave />
-            Import
-        </Button>
+  <Button
+  data-testid="action-import-82-button"
+  size="sm"
+  className="w-[80px] flex items-center gap-1 text-green-600 hover:text-green-700"
+  onClick={importFile}
+  disabled={uploadedIndexes.includes(fileIndex) || uploaded}
+>
+  {uploading ? (
+    <span className="w-4 h-4 animate-spin border-2 border-green-600 border-t-transparent rounded-full" />
+  ) : (
+    <LuSave className="w-4 h-4" />
+  )}
+  Import
+</Button>
     )
 }
 

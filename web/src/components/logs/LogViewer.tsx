@@ -1,152 +1,52 @@
 import React from 'react';
-import {
-  Box,
-  Flex,
-  Heading,
-  Text,
-  VStack,
-//   Badge,
-//   HStack,
-  StackProps
-} from '@chakra-ui/react';
 import { LogData, LogType, LogTypeEmojis } from 'aqua-js-sdk/web';
-import { useColorModeValue } from '../chakra-ui/color-mode';
-// import { LogEntry, LogType, LogTypeEmojis } from '../types/LogTypes';
+import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { cn } from "@/lib/utils";
 
 interface LogViewerProps {
   logs: LogData[];
   title?: string;
-  containerProps?: StackProps;
+  className?: string;
 }
 
 const getLogTypeStyles = (logType: LogType) => {
-  const baseStyles = {
-    transition: 'all 0.2s ease-in-out',
-    pl: 4,
-    pr: 4,
-    py: 2,
-    mb: 1,
-    borderLeftWidth: '4px',
-    roundedRight: 'lg',
-    fontFamily: 'mono',
-    fontSize: 'sm',
-    lineHeight: 'relaxed',
-    _hover: { shadow: 'sm' }
-  };
+  const baseStyles = "px-4 py-2 mb-1 border-l-4 rounded-r-lg font-mono text-sm leading-relaxed transition-all hover:shadow-sm";
 
   switch (logType) {
     case LogType.SUCCESS:
-      return {
-        ...baseStyles,
-        color: 'green.700',
-        bg: 'green.50',
-        borderLeftColor: 'green.400'
-      };
+      return `${baseStyles} text-green-700 bg-green-50 border-green-400 dark:bg-green-950/30 dark:text-green-300`;
     case LogType.ERROR:
     case LogType.FINAL_ERROR:
-      return {
-        ...baseStyles,
-        color: 'red.700',
-        bg: 'red.50',
-        borderLeftColor: 'red.400'
-      };
+      return `${baseStyles} text-red-700 bg-red-50 border-red-400 dark:bg-red-950/30 dark:text-red-300`;
     case LogType.WARNING:
-      return {
-        ...baseStyles,
-        color: 'orange.700',
-        bg: 'orange.50',
-        borderLeftColor: 'orange.400'
-      };
+      return `${baseStyles} text-orange-700 bg-orange-50 border-orange-400 dark:bg-orange-950/30 dark:text-orange-300`;
     case LogType.INFO:
-      return {
-        ...baseStyles,
-        color: 'blue.700',
-        bg: 'blue.50',
-        borderLeftColor: 'blue.400'
-      };
+      return `${baseStyles} text-blue-700 bg-blue-50 border-blue-400 dark:bg-blue-950/30 dark:text-blue-300`;
     case LogType.HINT:
-      return {
-        ...baseStyles,
-        color: 'purple.700',
-        bg: 'purple.50',
-        borderLeftColor: 'purple.400'
-      };
+      return `${baseStyles} text-purple-700 bg-purple-50 border-purple-400 dark:bg-purple-950/30 dark:text-purple-300`;
     case LogType.DEBUGDATA:
-      return {
-        ...baseStyles,
-        color: 'gray.600',
-        bg: 'gray.50',
-        borderLeftColor: 'gray.300'
-      };
+      return `${baseStyles} text-gray-600 bg-gray-50 border-gray-300 dark:bg-gray-800/50 dark:text-gray-300`;
     case LogType.ARROW:
-      return {
-        ...baseStyles,
-        color: 'indigo.700',
-        bg: 'indigo.50',
-        borderLeftColor: 'indigo.400'
-      };
+      return `${baseStyles} text-indigo-700 bg-indigo-50 border-indigo-400 dark:bg-indigo-950/30 dark:text-indigo-300`;
     case LogType.FILE:
-      return {
-        ...baseStyles,
-        color: 'teal.700',
-        bg: 'teal.50',
-        borderLeftColor: 'teal.400'
-      };
+      return `${baseStyles} text-teal-700 bg-teal-50 border-teal-400 dark:bg-teal-950/30 dark:text-teal-300`;
     case LogType.LINK:
-      return {
-        ...baseStyles,
-        color: 'cyan.700',
-        bg: 'cyan.50',
-        borderLeftColor: 'cyan.400'
-      };
+      return `${baseStyles} text-cyan-700 bg-cyan-50 border-cyan-400 dark:bg-cyan-950/30 dark:text-cyan-300`;
     case LogType.SIGNATURE:
-      return {
-        ...baseStyles,
-        color: 'violet.700',
-        bg: 'violet.50',
-        borderLeftColor: 'violet.400'
-      };
+      return `${baseStyles} text-violet-700 bg-violet-50 border-violet-400 dark:bg-violet-950/30 dark:text-violet-300`;
     case LogType.WITNESS:
-      return {
-        ...baseStyles,
-        color: 'pink.700',
-        bg: 'pink.50',
-        borderLeftColor: 'pink.400'
-      };
+      return `${baseStyles} text-pink-700 bg-pink-50 border-pink-400 dark:bg-pink-950/30 dark:text-pink-300`;
     case LogType.FORM:
-      return {
-        ...baseStyles,
-        color: 'orange.700',
-        bg: 'orange.50',
-        borderLeftColor: 'orange.400'
-      };
+      return `${baseStyles} text-orange-700 bg-orange-50 border-orange-400 dark:bg-orange-950/30 dark:text-orange-300`;
     case LogType.SCALAR:
-      return {
-        ...baseStyles,
-        color: 'gray.700',
-        bg: 'gray.50',
-        borderLeftColor: 'gray.400'
-      };
+      return `${baseStyles} text-gray-700 bg-gray-50 border-gray-400 dark:bg-gray-800/50 dark:text-gray-300`;
     case LogType.TREE:
-      return {
-        ...baseStyles,
-        color: 'green.700',
-        bg: 'green.50',
-        borderLeftColor: 'green.400'
-      };
+      return `${baseStyles} text-green-700 bg-green-50 border-green-400 dark:bg-green-950/30 dark:text-green-300`;
     case LogType.EMPTY:
-      return {
-        ...baseStyles,
-        color: 'transparent',
-        h: '8px'
-      };
+      return "h-2";
     default:
-      return {
-        ...baseStyles,
-        color: 'gray.700',
-        bg: 'gray.50',
-        borderLeftColor: 'gray.300'
-      };
+      return `${baseStyles} text-gray-700 bg-gray-50 border-gray-300 dark:bg-gray-800/50 dark:text-gray-300`;
   }
 };
 
@@ -154,107 +54,78 @@ const LogLine: React.FC<{ entry: LogData; index: number }> = ({ entry, index }) 
   const { log, logType, ident = '' } = entry;
   const emoji = LogTypeEmojis[logType];
   const styles = getLogTypeStyles(logType);
-  
+
   // Handle empty logs
   if (logType === LogType.EMPTY) {
-    return <Box key={index} h={2} />;
+    return <div key={index} className="h-[10px]" />;
   }
 
   // Calculate indentation level
-  const indentLevel = (ident??'').length / 4; // Assuming 4 spaces per indent level
+  const indentLevel = (ident ?? '').length / 4; // Assuming 4 spaces per indent level
   const paddingLeft = Math.max(12 + indentLevel * 16, 12);
 
   return (
-    <Box
+    <div
       key={index}
-      {...styles}
-      pl={`${paddingLeft}px`}
+      className={styles}
+      style={{ paddingLeft: `${paddingLeft}px` }}
     >
-      <Flex align="flex-start" gap={2}>
+      <div className="flex items-start gap-2">
         {emoji && (
-          <Text fontSize="md" flexShrink={0} mt={0.5}>
+          <span className="text-md flex-shrink-0 mt-0.5">
             {emoji}
-          </Text>
+          </span>
         )}
-        <Text whiteSpace="pre-wrap" wordBreak="break-word" flex={1}>
-          {log}
-        </Text>
-      </Flex>
-    </Box>
+        <span className="whitespace-pre-wrap break-words flex-1">
+          {log} {index}
+        </span>
+      </div>
+    </div>
   );
 };
 
-export const LogViewer: React.FC<LogViewerProps> = ({ 
-  logs, 
+export const LogViewer: React.FC<LogViewerProps> = ({
+  logs,
   title = "Execution Logs",
-  containerProps
+  className
 }) => {
-//   const headerBg = useColorModeValue('gray.50', 'gray.700');
-  const borderColor = useColorModeValue('gray.200', 'blackAlpha.300');
-  const footerBg = useColorModeValue('gray.50', 'blackAlpha.900');
 
   return (
-    <VStack
-      bg="white"
-      _dark={{
-        bg: 'blackAlpha.900'
-      }}
-      rounded="lg"
-      shadow="lg"
-      borderWidth="1px"
-      borderColor={borderColor}
-      overflow="hidden"
-      gap={0}
-      align="stretch"
-      {...containerProps}
-      w="100%"
-    >
+    <Card className={cn("w-full shadow-lg py-0 rounded-2xl", className)}>
       {/* Header */}
-      <Box
-        // bgGradient={`linear(to-r, gray.50, gray.100)`}
-        px={6}
-        py={4}
-        borderBottomWidth="1px"
-        borderColor={borderColor}
-      >
-        <Heading size="md" color="gray.800" _dark={{ color: 'white' }} display="flex" alignItems="center" gap={2}>
-          <Text color="blue.600">📋</Text>
-          {title}
-        </Heading>
-        <Text fontSize="sm" color="gray.600" _dark={{ color: 'gray.300' }} mt={1}>
+      <CardHeader className="!px-6 !py-2 border-b bg-gray-50 dark:bg-gray-900 rounded-t-2xl">
+        <div className="flex items-center gap-2">
+          <span className="text-blue-600">📋</span>
+          <h3 className="text-lg font-semibold">{title}</h3>
+        </div>
+        <p className="text-sm text-gray-600 dark:text-gray-400">
           {logs.length} log {logs.length === 1 ? 'entry' : 'entries'}
-        </Text>
-      </Box>
+        </p>
+      </CardHeader>
 
       {/* Log Content */}
-      <Box maxH="96" overflowY="auto" bg="gray.50">
-        <Box p={4} gap={0} _dark={{ bg: 'blackAlpha.900' }}>
+      <CardContent className="h-[350px] py-0">
+        <ScrollArea className="h-full bg-gray-50 dark:bg-gray-900 py-0">
           {logs.length === 0 ? (
-            <Box textAlign="center" py={8} color="gray.500">
-              <Text fontSize="4xl" mb={2}>📝</Text>
-              <Text>No logs to display</Text>
-            </Box>
+            <div className="text-center py-8 text-gray-500">
+              <div className="text-4xl mb-2">📝</div>
+              <div>No logs to display</div>
+            </div>
           ) : (
             logs.map((entry, index) => (
               <LogLine key={index} entry={entry} index={index} />
             ))
           )}
-        </Box>
-      </Box>
+        </ScrollArea>
+      </CardContent>
 
       {/* Footer */}
-      <Box
-        bg={footerBg}
-        px={6}
-        py={3}
-        borderTopWidth="1px"
-        borderColor={borderColor}
-      >
-        <Flex justify="space-between" align="center" fontSize="xs" color="gray.500" _dark={{ color: 'gray.300' }}>
-          <Text>Execution completed</Text>
-          <Text>{new Date().toLocaleTimeString()}</Text>
-        </Flex>
-      </Box>
-    </VStack>
+      <CardFooter className="!px-6 !py-3 border-t bg-gray-50 dark:bg-gray-900 h-[50px] rounded-b-2xl">
+        <div className="flex justify-between items-center text-xs text-gray-500 dark:text-gray-400 w-full">
+          <span>Execution completed</span>
+          <span>{new Date().toLocaleTimeString()}</span>
+        </div>
+      </CardFooter>
+    </Card>
   );
 };

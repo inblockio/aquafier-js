@@ -1,14 +1,13 @@
 import { LuGlasses } from "react-icons/lu"
-import { Button } from "../chakra-ui/button"
 import { dummyCredential, getGenesisHash } from "../../utils/functions"
 import { useStore } from "zustand"
 import appStore from "../../store"
 import axios from "axios"
 import { ApiFileInfo } from "../../models/FileInfo"
-import { toaster } from "../chakra-ui/toaster"
 import { useState } from "react"
 import Aquafier, { AquaTreeWrapper, WitnessNetwork } from "aqua-js-sdk"
 import { RevionOperation } from "../../models/RevisionOperation"
+import { toaster } from "@/components/ui/use-toast"
 
 
 
@@ -118,11 +117,37 @@ export const WitnessAquaChain = ({ apiFileInfo, backendUrl, nonce }: RevionOpera
 
     return (
         <>
-
-            <Button data-testid="witness-action-button" size={'xs'} w={'100px'} onClick={witnessFileHandler} loading={witnessing}>
-                <LuGlasses />
-                Witness
-            </Button>
+            {/* Sign Button */}
+            <button
+                data-testid="witness-action-button"
+                onClick={() => {
+                    if (!witnessing) {
+                        witnessFileHandler();
+                    } else {
+                        toaster.create({
+                            description: "Signing is already in progress",
+                            type: "info"
+                        })
+                    }
+                }}
+                className={`flex items-center space-x-1 bg-gray-800  text-white px-3 py-2 rounded-md transition-colors text-xs ${witnessing ? 'opacity-60 cursor-not-allowed' : 'hover:bg-gray-600'}`}
+                disabled={witnessing}
+            >
+                {witnessing ? (
+                    <>
+                        <svg className="animate-spin h-3 w-3 mr-1 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
+                        </svg>
+                        <span>Witnessing...</span>
+                    </>
+                ) : (
+                    <>
+                        <LuGlasses className="w-3 h-3" />
+                        <span>Witness</span>
+                    </>
+                )}
+            </button>
         </>
     )
 }
