@@ -787,7 +787,7 @@ const PdfViewer: React.FC<PdfViewerProps> = ({
                       padding: '5px',
                       backgroundColor: 'rgba(255, 255, 255, 0.7)',
                     };
-                    // return <Text>here</Text>
+                    
                     return (
                       <div key={anno.id} style={profileStyle} data-ai-hint="profile annotation" data-annotation-id={anno.id}
                         onMouseDown={(e) => handleAnnotationMouseDown(e, anno)}>
@@ -796,6 +796,7 @@ const PdfViewer: React.FC<PdfViewerProps> = ({
                           // style={{ width: profileAnno.imageWidth, height: profileAnno.imageHeight }}
                           data-annotation-id={`${anno.id}-image`}
                         >
+                          
                           <img
                             src={profileAnno.dataUrl}
                             alt={profileAnno.imageAlt}

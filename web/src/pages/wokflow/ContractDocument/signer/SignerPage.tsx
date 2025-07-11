@@ -6,7 +6,7 @@ import { ZoomIn, ZoomOut, ArrowLeft, ArrowRight } from 'lucide-react';
 import { SignatureData } from '../../../../types/types';
 import { LuInfo } from 'react-icons/lu';
 import { Button } from '../../../../components/ui/button';
-import { Slider1 as Slider } from '../../../../components/ui/slider';
+import {   Slider } from '../../../../components/ui/slider';
 import { ScrollArea } from '@/components/ui/scroll-area';
 
 // const parseFontSizeToPoints = (fontSizeString: string, defaultSize: number = 12): number => {

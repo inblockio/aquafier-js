@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import appStore from '../../../store';
 import { useStore } from "zustand"
@@ -25,7 +24,7 @@ export const ContractDocumentView: React.FC<ContractDocumentViewProps> = ({ setA
     const [signaturesLoading, setSignaturesLoading] = useState<boolean>(false);
     // const [userCanSign, setUserCanSign] = useState<boolean>(false);
     // const [authorizedSigners, setAuthorizedSigners] = useState<string[]>([]);
-    const { selectedFileInfo, session, backend_url } = useStore(appStore);
+    const { selectedFileInfo, session } = useStore(appStore);
 
 
 
@@ -106,90 +105,60 @@ export const ContractDocumentView: React.FC<ContractDocumentViewProps> = ({ setA
         try {
             const actualUrlToFetch = ensureDomainUrlHasSSL(fileUrl);
             const response = await fetch(actualUrlToFetch, {
-                headers: {
-                    nonce: `${session?.nonce}`
-                }
+                headers: { nonce: `${session?.nonce}` }
             });
 
             if (!response.ok) {
-                console.error("FFFailed to fetch file:", response.status, response.statusText);
-                return null;
+                throw new Error(`Failed to fetch image: ${response.status}`);
             }
 
-            // Get content type from headers
-            let contentType = response.headers.get("Content-Type") || "";
-            // console.log("fetched: ", response, "content type:", contentType);
-
-            // If content type is missing or generic, try to detect from URL
-            if (contentType === "application/octet-stream" || contentType === "") {
-                contentType = "image/png";
-            }
-
-            if (contentType.startsWith("image")) {
-                const arrayBuffer = await response.arrayBuffer();
-                // Ensure we use the PDF content type
-                const blob = new Blob([arrayBuffer], { type: contentType });
-                return URL.createObjectURL(blob);
-            }
-
-            return null;
+            const blob = await response.blob();
+            return await new Promise<string>((resolve) => {
+                const reader = new FileReader();
+                reader.onloadend = () => resolve(reader.result as string);
+                reader.readAsDataURL(blob);
+            });
         } catch (error) {
-            console.error("Error fetching file:", error);
+            console.error("Error fetching image:", error);
             return null;
         }
-    }
+    };
 
     const findImageUrl = (fileHash: string): string | null => {
-        for (const fileObject of selectedFileInfo!.fileObject) {
-            const fileContent = fileObject.fileContent;
-
-            if (typeof fileContent === 'string' && fileContent.includes(fileHash)) {
-                return fileContent;
+        for (const file of selectedFileInfo?.fileObject || []) {
+            if (file.fileName === fileHash) {
+                return file.fileContent as string;
             }
         }
-
-           let actualUrlToFetch = ensureDomainUrlHasSSL(backend_url);
-        //    "fileContent": "http://127.0.0.1:3000/files/277599bef251362560dcf4c3ec95eccb046b029bf2439c9fbbbf0b4f3051a06b",
-        // return null;
-
-        return `${actualUrlToFetch}/files/${fileHash}`;
+        return null;
     };
+
     const loadSignatures = async (): Promise<SignatureData[]> => {
-        let sigData: SignatureData[] = []
-        const orderedTree = OrderRevisionInAquaTree(selectedFileInfo!.aquaTree!)
-        const revisions = orderedTree.revisions
-        const revisionHashes = Object.keys(revisions)
-        let fourthItmeHashOnwards: string[] = [];
-        let signatureRevionHashes: Array<SummaryDetailsDisplayData> = []
+        const sigData: SignatureData[] = [];
 
-        if (revisionHashes.length > 4) {
-            // remove the first 4 elements from the revision list 
-            fourthItmeHashOnwards = revisionHashes.slice(4);
-
-            console.log(`fourthItmeHashOnwards data 00 ${JSON.stringify(fourthItmeHashOnwards, null, 4)}`)
-            signatureRevionHashes = getSignatureRevionHashes(fourthItmeHashOnwards)
+        if (!selectedFileInfo?.aquaTree?.revisions) {
+            return sigData;
         }
 
-        console.log(`signatureRevionHashes data 00 ${JSON.stringify(signatureRevionHashes, null, 4)}`)
+        const revisionHashes = Object.keys(selectedFileInfo.aquaTree.revisions);
+        if (revisionHashes.length < 5) {
+            return sigData;
+        }
 
-        for (let sigHash of signatureRevionHashes) {
+        // Get all signature revision hashes
+        const signatureRevisionHashes = getSignatureRevionHashes(revisionHashes);
 
+        for (const sigHash of signatureRevisionHashes) {
+            let imageDataUrl = "";
+            let name = "";
+            let linkRevisionWithSignaturePositions = selectedFileInfo.aquaTree.revisions[sigHash.revisionHashWithSignaturePosition];
+            let revisionMetMask = selectedFileInfo.aquaTree.revisions[sigHash.revisionHashMetamask];
+            let referenceRevisin = revisionMetMask.link_verification_hashes?.[0];
 
-            let revisionSigImage = selectedFileInfo!.aquaTree!.revisions[sigHash.revisionHashWithSinatureRevision]
-            const linkRevisionWithSignaturePositions: Revision = selectedFileInfo!.aquaTree!.revisions[sigHash.revisionHashWithSignaturePosition];
-            const revisionMetMask: Revision = selectedFileInfo!.aquaTree!.revisions[sigHash.revisionHashMetamask];
+            if (!referenceRevisin) {
+                continue;
+            }
 
-            // const fileHash = revisionSigImage.link_file_hashes![0]!;
-            // console.log(`fileHash ${fileHash}`)
-
-
-
-
-
-            // get the name
-            let referenceRevisin: string = revisionSigImage.link_verification_hashes![0]
-            let name = "name-err"
-            let imageDataUrl = ""
             for (let item of selectedFileInfo?.fileObject ?? []) {
                 let isAquaTreeItem = isAquaTree(item.fileContent)
                 // console.log(`isAquaTreeItem ${isAquaTreeItem} loopin gfile objects ${JSON.stringify(item, null, 4)}`)
@@ -215,9 +184,9 @@ export const ContractDocumentView: React.FC<ContractDocumentViewProps> = ({ setA
                         }
                         let imgFileHash = signatureRevision.link_file_hashes![0];
                         let imageUrl = findImageUrl(imgFileHash)
-                        console.log(`findImageUrl ${imgFileHash} ==  ${imageUrl}`)
+
                         if (imageUrl) {
-                            console.log(` imageUrl ==  ${imageUrl}`)
+                            // console.log(` imageUrl ==  ${imageUrl}`)
                             const image = await fetchImage(imageUrl);
                             if (image) {
                                 imageDataUrl = image
@@ -264,7 +233,7 @@ export const ContractDocumentView: React.FC<ContractDocumentViewProps> = ({ setA
             }
 
             if (revisionSigPosition != null) {
-                console.log(`revisionSigPosition ==  sigHash.revisionHashWithSignaturePositionCount == > ${sigHash.revisionHashWithSignaturePositionCount}=== ${JSON.stringify(revisionSigPosition, null, 4)}`)
+                console.log(`revisionSigPosition ===== ${JSON.stringify(revisionSigPosition, null, 4)}`)
                 if (sigHash.revisionHashWithSignaturePositionCount == 0) {
 
                     let signatureDetails: SignatureData = {
@@ -400,38 +369,35 @@ export const ContractDocumentView: React.FC<ContractDocumentViewProps> = ({ setA
 
             const fileContentUrl = pdfFileObject.fileContent;
             console.log(`fetchPDFfile......4.5 ${typeof fileContentUrl} --  ${JSON.stringify(fileContentUrl, null, 4)}`)
+            
+            // Handle string URL
             if (typeof fileContentUrl === 'string' && fileContentUrl.startsWith('http')) {
                 return await fetchFileFromUrl(fileContentUrl, pdfName);
             }
-
-            // Handle object that might be binary data (like PDF bytes)
+            
+            // Handle object URL
             if (typeof fileContentUrl === 'object' && fileContentUrl !== null) {
-                console.log(`fetchPDFfile......4.6 handling object data`);
-
-                // Check if it's an array-like object with numeric indices (like your example)
-                if (Object.keys(fileContentUrl).every(key => !isNaN(Number(key)))) {
-                    // Convert the object to a Uint8Array
-                    const bytes = new Uint8Array(Object.values(fileContentUrl) as number[]);
-
-                    // Create a blob from the bytes
-                    const blob = new Blob([bytes], { type: 'application/pdf' });
-                    const urlObject = URL.createObjectURL(blob);
-
-                    // Set the PDF URL object for display
-                    setPdfURLObject(urlObject);
-
-                    // Return as a File object
-                    return new File([blob], pdfName, {
-                        type: 'application/pdf',
-                        lastModified: Date.now(),
-                    });
+                // Type assertion to access potential properties
+                const objUrl = fileContentUrl as any;
+                
+                // Check if the object has a url property
+                if (objUrl.url && typeof objUrl.url === 'string' && objUrl.url.startsWith('http')) {
+                    return await fetchFileFromUrl(objUrl.url, pdfName);
                 }
-
-                // Also kept the URL property handling as a fallback
-                // const objUrl = fileContentUrl as any;
-                // if (objUrl.url && typeof objUrl.url === 'string' && objUrl.url.startsWith('http')) {
-                //     return await fetchFileFromUrl(objUrl.url, pdfName);
-                // }
+                
+                // Check for other common URL properties if the first check fails
+                if (objUrl.link && typeof objUrl.link === 'string' && objUrl.link.startsWith('http')) {
+                    return await fetchFileFromUrl(objUrl.link, pdfName);
+                }
+                
+                if (objUrl.path && typeof objUrl.path === 'string' && objUrl.path.startsWith('http')) {
+                    return await fetchFileFromUrl(objUrl.path, pdfName);
+                }
+                
+                // If we have a uri property
+                if (objUrl.uri && typeof objUrl.uri === 'string' && objUrl.uri.startsWith('http')) {
+                    return await fetchFileFromUrl(objUrl.uri, pdfName);
+                }
             }
 
             console.log(`fetchPDFfile......5`)
@@ -561,4 +527,3 @@ export const ContractDocumentView: React.FC<ContractDocumentViewProps> = ({ setA
 
     return <>{renderContent()}</>;
 }
-

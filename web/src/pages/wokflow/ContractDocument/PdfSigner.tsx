@@ -1583,9 +1583,10 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ fileData, setActiveStep, document
         }
 
 
+        console.log(`file data ${fileData} .....`)
         if (fileData) {
             (async () => {
-                // console.log(`Fetch pdf file....`)
+                console.log(`Fetch pdf file....`)
                 setPdfFile(fileData);
 
                 // Create object URL for display
