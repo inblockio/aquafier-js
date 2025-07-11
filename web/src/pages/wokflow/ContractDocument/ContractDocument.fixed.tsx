@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import appStore from '../../../store';
 import { useStore } from "zustand"
 import { ContractDocumentViewProps, SignatureData, SummaryDetailsDisplayData } from '../../../types/types';
-import { AquaTree, getGenesisHash, OrderRevisionInAquaTree, reorderAquaTreeRevisionsProperties, Revision } from 'aqua-js-sdk/web';
+import { AquaTree, getGenesisHash, reorderAquaTreeRevisionsProperties, Revision } from 'aqua-js-sdk/web';
 import { ensureDomainUrlHasSSL, getHighestFormIndex, isAquaTree } from '../../../utils/functions';
 
 import { PDFDisplayWithJustSimpleOverlay } from './components/signature_overlay';
