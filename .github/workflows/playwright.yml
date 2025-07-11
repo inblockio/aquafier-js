@@ -55,12 +55,13 @@ jobs:
           sudo apt-get install -y xvfb
           Xvfb :99 -screen 0 1280x1024x24 &
           export DISPLAY=:99
+
       - uses: actions/setup-node@v4
         with:
           node-version: lts/*
 
       - name: Install dependencies
-        run: npm ci
+        run: pwd && cd e2e && npm ci
 
       - name: Install Playwright Browsers
         run: npx playwright install --with-deps chromium

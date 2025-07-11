@@ -20,7 +20,7 @@ services:
 
   aqua-container:
     build:
-      context: .
+      context: ./..
       dockerfile: actionfiles/aquafier-ts/dockerfile/Dockerfile
     ports:
      - 3000:3000
