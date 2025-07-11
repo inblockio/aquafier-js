@@ -230,17 +230,20 @@ test("two user aqua-sign", async () => {
 
 
   // click navbar button
-  await testPage.waitForSelector('[data-testid="action-form-63-button"]', { state: 'visible' });
-  await testPage.click('[data-testid="action-form-63-button"]')
+  // await testPage.waitForSelector('[data-testid="action-form-63-button"]', { state: 'visible' });
+  // await testPage.click('[data-testid="action-form-63-button"]')
 
-  console.log("clicked navbar button")
-  // click create form from template dropwdown element
-  await testPage.click('[data-testid="create-form-from-template"]')
-  console.log("clicked create form from template")
-  await testPage.click('[data-testid="aqua_sign"]')
+  // console.log("clicked navbar button")
+  // // click create form from template dropwdown element
+  // await testPage.click('[data-testid="create-form-from-template"]')
+  // console.log("clicked create form from template")
+  // await testPage.click('[data-testid="aqua_sign"]')
 
+  await testPage.click('[data-testid="create-document-signature"]')
   console.log("clicked aqua sign")
-
+  
+  
+  //
   await testPage.waitForSelector('[data-testid="input-document"]', { state: 'visible' });
   const fileChooserPromise = testPage.waitForEvent('filechooser');
   await testPage.click('[data-testid="input-document"]')
