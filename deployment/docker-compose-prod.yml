@@ -75,7 +75,17 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock
     restart: unless-stopped
 
+  s3:
+    image: minio/minio:latest
+    environment:
+      MINIO_ROOT_USER: ${MINIO_USER:-aquafier}
+      MINIO_ROOT_PASSWORD: ${MINIO_PASSWORD:-supersafepassword123}
+    command: [ "server", "/data" ]
+    volumes:
+      - s3_storage:/data
+
 volumes:
+  s3_storage:
   app_data:
   proxy_data_acme:
   proxy_data_conf_d:
