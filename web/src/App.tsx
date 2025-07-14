@@ -64,12 +64,13 @@ function App() {
             <Route path="pdf/workflow" element={<PdfWorkflowPage />} />
             <Route path="files_workflows" element={<FilesPage />} />
             <Route path="domain_attestation" element={<DomainAttestationPage />} />
-            <Route path="templates" element={<TemplatesPage />} />
-            <Route path="files_docs" element={<FilesPage />} />
+            {/* <Route path="files_docs" element={<FilesPage />} />
             <Route path="files_attestation" element={<FilesPage />} />
             <Route path="files_document_signature" element={<FilesPage />} />
-            <Route path="files_domain_attestation" element={<FilesPage />} />
+            <Route path="files_domain_attestation" element={<FilesPage />} /> */}
 
+            <Route path="templates" element={<TemplatesPage />} />
+            
             <Route path="shared-contracts" element={<FilesSharedContracts />} />
             <Route path="shared-contracts/:identifier" element={<SharePage />} />
 

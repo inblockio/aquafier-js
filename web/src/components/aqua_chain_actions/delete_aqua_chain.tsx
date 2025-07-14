@@ -134,7 +134,7 @@ export const DeleteAquaChain = ({ apiFileInfo, backendUrl, nonce, children }: Re
                                 toast("Signing is already in progress")
                             }
                         }}
-                        className={`flex items-center  space-x-1 bg-[#FBE3E2] text-pink-700 px-3 py-2 rounded transition-colors text-xs ${deleting ? 'opacity-60 cursor-not-allowed' : 'hover:bg-[#FACBCB]'}`}
+                        className={`w-full flex items-center justify-center space-x-1 bg-[#FBE3E2] text-pink-700 px-3 py-2 rounded transition-colors text-xs ${deleting ? 'opacity-60 cursor-not-allowed' : 'hover:bg-[#FACBCB]'}`}
                         disabled={deleting}
                     >
                         {deleting ? (

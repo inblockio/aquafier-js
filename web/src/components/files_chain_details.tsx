@@ -210,7 +210,7 @@ export const CompleteChainView = ({ callBack, selectedFileInfo }: ICompleteChain
                   </div>
               </CollapsibleContent>
             </Collapsible>
-            <LogViewer logs={allLogs} className="mt-4" />
+            {/* <LogViewer logs={allLogs} className="mt-4" /> */}
             <div className="!h-[40px] !min-h-[40px]" />
           </div>
         </div>

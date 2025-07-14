@@ -245,7 +245,7 @@ export const DownloadAquaChain = ({ file, children }: { file: ApiFileInfo, child
                                 })
                             }
                         }}
-                        className={`flex items-center space-x-1 bg-[#F3E8FE] text-purple-700 px-3 py-2 rounded transition-colors text-xs ${downloading ? 'opacity-60 cursor-not-allowed' : 'hover:bg-[#E8D5FE]'}`}
+                        className={`w-full flex items-center justify-center space-x-1 bg-[#F3E8FE] text-purple-700 px-3 py-2 rounded transition-colors text-xs ${downloading ? 'opacity-60 cursor-not-allowed' : 'hover:bg-[#E8D5FE]'}`}
                         disabled={downloading}
                     >
                         {downloading ? (

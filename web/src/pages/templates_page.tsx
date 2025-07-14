@@ -37,7 +37,7 @@ const TemplatesPage = () => {
   };
 
   return (
-    <div className="container mx-auto py-8">
+    <div className="container mx-auto py-4">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold">Form Templates</h1>
         {activeTab === "list" && (
@@ -45,7 +45,7 @@ const TemplatesPage = () => {
             onClick={handleCreateNew}
             className="flex items-center gap-2"
           >
-            <LuPlus className="h-4 w-4" /> Create New Template
+            <LuPlus className="h-4 w-4" /> New Template
           </Button>
         )}
       </div>

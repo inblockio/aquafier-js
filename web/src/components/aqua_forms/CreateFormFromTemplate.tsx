@@ -740,8 +740,8 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: { selectedTempla
             </form>
         </div> */}
             {/* <div className="min-h-[100%] bg-gradient-to-br from-blue-50 via-white to-indigo-50 px-4"> */}
-            <div className="min-h-[100%]  px-4">
-                <div className="max-w-4xl mx-auto py-6">
+            <div className="min-h-[100%] px-2 sm:px-4">
+                <div className="max-w-full sm:max-w-4xl mx-auto py-4 sm:py-6">
                     {/* Header */}
                     <div className="mb-8">
                         {/* <Button
@@ -753,12 +753,12 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: { selectedTempla
                             Back to Templates
                         </Button> */}
 
-                        <div className="flex items-center gap-3 mb-2">
+                        <div className="flex items-center gap-2 sm:gap-3 mb-2">
                             <div className="h-10 w-10 rounded-lg bg-blue-100 flex items-center justify-center">
                                 <FileText className="h-5 w-5 text-blue-600" />
                             </div>
                             <div>
-                                <h1 className="text-3xl font-bold text-gray-900">
+                                <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900">
                                     Create {selectedTemplate?.title} Workflow
                                 </h1>
                                 <p className="text-gray-600 mt-1">
@@ -792,7 +792,7 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: { selectedTempla
                                 </Alert>
                             )}
 
-                            <div className="space-y-2">
+                            <div className="space-y-4 sm:space-y-6">
                                 {selectedTemplate ? reorderInputFields(selectedTemplate.fields).map((field, fieldIndex) => {
                                     const isFileInput = field.type === 'file' || field.type === 'image' || field.type === 'document';
 
@@ -801,7 +801,7 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: { selectedTempla
                                             <div key={`field-${fieldIndex}`} className="space-y-4">
                                                 <div className="flex items-center justify-between">
                                                     <div>
-                                                        <Label className="text-lg font-medium text-gray-900">
+                                                        <Label className="text-base sm:text-lg font-medium text-gray-900">
                                                             {field.label}
                                                             {field.required && <span className="text-red-500 ml-1">*</span>}
                                                         </Label>
@@ -825,7 +825,7 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: { selectedTempla
 
                                                 <div className="space-y-3">
                                                     {multipleAddresses.map((address, index) => (
-                                                        <div key={`address-${index}`} className="flex items-center space-x-3 p-4 bg-gray-50 rounded-lg border">
+                                                        <div key={`address-${index}`} className="flex items-center space-x-2 sm:space-x-3 p-2 sm:p-4 bg-gray-50 rounded-lg border">
                                                             <div className="flex items-center justify-center w-8 h-8 bg-blue-100 rounded-full text-blue-600 font-medium text-sm">
                                                                 {index + 1}
                                                             </div>
@@ -866,7 +866,7 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: { selectedTempla
                                     }
 
                                     return (
-                                        <div key={`field-${fieldIndex}`} className="space-y-3">
+                                        <div key={`field-${fieldIndex}`} className="space-y-2 sm:space-y-3">
                                             <div className="flex items-center gap-2">
                                                 {getFieldIcon(field.type)}
                                                 <Label htmlFor={`input-${field.name}`} className="text-base font-medium text-gray-900">
@@ -879,7 +879,7 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: { selectedTempla
                                                 <Input
                                                     id={`input-${field.name}`}
                                                     data-testid={`input-${field.name}`}
-                                                    className="w-full px-3 py-2 border border-gray-200 rounded-md focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
+                                                    className="w-full px-2 sm:px-3 py-1 sm:py-2 border border-gray-200 rounded-md focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 text-sm sm:text-base"
                                                     placeholder="Type here..."
                                                     defaultValue={getFieldDefaultValue(field, formData[field.name])}
                                                     onChange={(e) => {
@@ -894,7 +894,7 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: { selectedTempla
                                                     <Input
                                                         id={`input-${field.name}`}
                                                         data-testid={`input-${field.name}`}
-                                                        className="rounded-md border-gray-200 focus:border-blue-500 focus:ring-blue-500"
+                                                        className="rounded-md border-gray-200 focus:border-blue-500 focus:ring-blue-500 text-sm sm:text-base h-9 sm:h-10"
                                                         {...(!isFileInput ? { defaultValue: getFieldDefaultValue(field, formData[field.name]) } : {})}
                                                         type={field.type === 'image' || field.type === 'document' ? 'file' : field.type}
                                                         required={field.required}
@@ -967,7 +967,7 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: { selectedTempla
                             <Separator className="my-8" />
 
                             {/* Action Buttons */}
-                            <div className="flex justify-end space-x-4 pt-4">
+                            <div className="flex justify-end space-x-2 sm:space-x-4 pt-4">
                                 <Button
                                     type="button"
                                     variant="outline"

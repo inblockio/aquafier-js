@@ -346,7 +346,7 @@ export default function WorkflowsTablePage() {
   return (
     <>
       {/* Action Bar */}
-      <div className="bg-white border-b border-gray-200 px-6 py-4">
+      <div className="bg-white border-b border-gray-200 px-6 py-4 hidden">
         <div className="flex items-center justify-between">
           <div /> {/* Empty div to push the button right */}
           <div className="flex items-center space-x-4">
@@ -368,14 +368,28 @@ export default function WorkflowsTablePage() {
 
 
       <div className="space-y-6">
-        <Card>
+        <Card className='py-6'>
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <FileText className="h-5 w-5" />
-              Aqua Sign Workflows
+            <CardTitle className="flex items-center gap-2 justify-between">
+              <div className="flex items-center gap-2">
+                <FileText className="h-5 w-5" />
+                <span>
+                  Workflows
+                </span>
+              </div>
+              <button className="flex items-center space-x-2 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-gray-100 cursor-pointer"
+                style={{ backgroundColor: '#394150' }}
+                onClick={() => {
+
+                  setOpenCreateAquaSignPopUp(true)
+                }}
+              >
+                <Plus className="w-4 h-4" />
+                <span>New</span>
+              </button>
             </CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className='px-1'>
             <div className="rounded-md border">
               <Table>
                 <TableHeader>

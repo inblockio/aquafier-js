@@ -6,6 +6,7 @@ import {
   SidebarFooter,
   SidebarHeader,
   SidebarRail,
+  useSidebar,
 } from "@/components/ui/sidebar"
 import CustomNavLink from "./ui/CustomNavLink"
 import {
@@ -34,6 +35,8 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   // let usedStorage =0; // GB
   // const totalStorage = maxUserFileSizeForUpload //5; // GB
   // const usagePercentage = (usedStorage / totalStorage) * 100;
+
+  const {toggleSidebar} = useSidebar()
 
   const calcukateStorage = () => {
     if (files.length == 0) {
@@ -90,7 +93,12 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         <div className="flex-1 p-4">
           <nav className="space-y-2">
             {sidebarItems.map((item, index) => (
-              <CustomNavLink key={`app_${index}`} item={{...item, id: `/app${item.id}`}} index={index} />
+              <CustomNavLink key={`app_${index}`} item={{...item, id: `/app${item.id}`}} index={index} callBack={() => {
+                const isMobileView = window.innerWidth < 768; // md breakpoint is 768px
+                if (isMobileView) {
+                  toggleSidebar();
+                }
+              }} />
             ))}
           </nav>
 
@@ -105,7 +113,12 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             </div>
             <div className="space-y-2">
               {applicationsItems.map((item, index) => (
-                <CustomNavLink key={`application_${index}`} item={{...item, id: `/app${item.id}`}} index={index} />
+                <CustomNavLink key={`application_${index}`} item={{...item, id: `/app${item.id}`}} index={index} callBack={() => {
+                const isMobileView = window.innerWidth < 768; // md breakpoint is 768px
+                if (isMobileView) {
+                  toggleSidebar();
+                }
+              }} />
               ))}
             </div>
           </div>
@@ -119,7 +132,12 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             </div>
             <div className="space-y-2">
               {quickAccessItems.map((item, index) => (
-                <CustomNavLink key={`general_${index}`} item={{...item, id: `/app${item.id}`}} index={index} />
+                <CustomNavLink key={`general_${index}`} item={{...item, id: `/app${item.id}`}} index={index} callBack={() => {
+                const isMobileView = window.innerWidth < 768; // md breakpoint is 768px
+                if (isMobileView) {
+                  toggleSidebar();
+                }
+              }} />
               ))}
             </div>
           </div>
