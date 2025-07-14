@@ -18,7 +18,7 @@ export const OpenWorkflowButton = ({ item, children }: IShareButton) => {
                     <div onClick={(e) => {
                         e.preventDefault();
                         setSelectedFileInfo(item)
-                        navigate("/pdf/workflow")
+                        navigate("/app/pdf/workflow")
                     }}>
                         {children}
                     </div>
@@ -26,7 +26,7 @@ export const OpenWorkflowButton = ({ item, children }: IShareButton) => {
                     <Button data-testid="open-workflow-button" className="cursor-pointer rounded-sm bg-cyan-500/10 text-cyan-600 text-xs hover:bg-cyan-500/20" onClick={(e) => {
                         e.preventDefault();
                         setSelectedFileInfo(item)
-                        navigate("/pdf/workflow")
+                        navigate("/app/pdf/workflow")
                     }} >
                         <FaFileExport /> &nbsp;
                         Open Workflow

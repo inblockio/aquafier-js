@@ -15,36 +15,36 @@ const Header = () => (
                     </div>
                 </Link>
                 <div className="flex items-center space-x-6 lg:space-x-8">
-                    <Link
-                        to="#features"
+                    <a
+                        href="/#features"
                         className="text-sm font-medium text-muted-foreground transition-all duration-300 hover:text-orange-500 relative after:absolute after:bottom-[-4px] after:left-0 after:h-[2px] after:w-0 after:bg-gradient-to-r after:from-primary after:to-orange-500 after:transition-all after:duration-300 hover:after:w-full"
                     >
                         Features
-                    </Link>
-                    <Link
-                        to="#how-it-works"
+                    </a>
+                    <a
+                        href="/#how-it-works"
                         className="text-sm font-medium text-muted-foreground transition-all duration-300 hover:text-orange-500 relative after:absolute after:bottom-[-4px] after:left-0 after:h-[2px] after:w-0 after:bg-gradient-to-r after:from-primary after:to-orange-500 after:transition-all after:duration-300 hover:after:w-full"
                     >
                         How It Works
-                    </Link>
-                    <Link
-                        to="#prototypes"
+                    </a>
+                    <a
+                        href="/#prototypes"
                         className="text-sm font-medium text-muted-foreground transition-all duration-300 hover:text-orange-500 relative after:absolute after:bottom-[-4px] after:left-0 after:h-[2px] after:w-0 after:bg-gradient-to-r after:from-primary after:to-orange-500 after:transition-all after:duration-300 hover:after:w-full"
                     >
                         Prototypes
-                    </Link>
-                    <Link
-                        to="#vision"
+                    </a>
+                    <a
+                        href="/#vision"
                         className="text-sm font-medium text-muted-foreground transition-all duration-300 hover:text-orange-500 relative after:absolute after:bottom-[-4px] after:left-0 after:h-[2px] after:w-0 after:bg-gradient-to-r after:from-primary after:to-orange-500 after:transition-all after:duration-300 hover:after:w-full"
                     >
                         Vision
-                    </Link>
-                    <Link
-                        to="#contact"
+                    </a>
+                    <a
+                        href="/#contact"
                         className="text-sm font-medium text-muted-foreground transition-all duration-300 hover:text-orange-500 relative after:absolute after:bottom-[-4px] after:left-0 after:h-[2px] after:w-0 after:bg-gradient-to-r after:from-primary after:to-orange-500 after:transition-all after:duration-300 hover:after:w-full"
                     >
                         Contact
-                    </Link>
+                    </a>
                 </div>
             </nav>
             <div className="flex flex-1 items-center justify-end space-x-3">
@@ -55,7 +55,7 @@ const Header = () => (
                     </Link>
                 </Button>
                 <Button asChild className="bg-gradient-to-r from-primary to-orange-600 hover:from-orange-600 hover:to-primary text-white transition-all duration-300 shadow-md hover:shadow-lg">
-                    <Link to="#contact">Request a Demo</Link>
+                    <Link to="/app">Go to App</Link>
                 </Button>
             </div>
         </div>
@@ -112,10 +112,10 @@ const Footer = () => (
                         Protocol
                     </h4>
                     <ul className="mt-4 space-y-2 text-sm">
-                        <li><Link to="#features" className="hover:text-orange-300 transition-colors">Features</Link></li>
-                        <li><Link to="#how-it-works" className="hover:text-orange-300 transition-colors">How It Works</Link></li>
-                        <li><Link to="#prototypes" className="hover:text-orange-300 transition-colors">Prototypes</Link></li>
-                        <li><Link to="#vision" className="hover:text-orange-300 transition-colors">Vision</Link></li>
+                        <li><a href="/#features" className="hover:text-orange-300 transition-colors">Features</a></li>
+                        <li><a href="/#how-it-works" className="hover:text-orange-300 transition-colors">How It Works</a></li>
+                        <li><a href="/#prototypes" className="hover:text-orange-300 transition-colors">Prototypes</a></li>
+                        <li><a href="/#vision" className="hover:text-orange-300 transition-colors">Vision</a></li>
                     </ul>
                 </div>
                 <div>

@@ -90,7 +90,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         <div className="flex-1 p-4">
           <nav className="space-y-2">
             {sidebarItems.map((item, index) => (
-              <CustomNavLink key={`app_${index}`} item={item} index={index} />
+              <CustomNavLink key={`app_${index}`} item={{...item, id: `/app${item.id}`}} index={index} />
             ))}
           </nav>
 
@@ -105,7 +105,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             </div>
             <div className="space-y-2">
               {applicationsItems.map((item, index) => (
-                <CustomNavLink key={`application_${index}`} item={item} index={index} />
+                <CustomNavLink key={`application_${index}`} item={{...item, id: `/app${item.id}`}} index={index} />
               ))}
             </div>
           </div>
@@ -119,7 +119,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             </div>
             <div className="space-y-2">
               {quickAccessItems.map((item, index) => (
-                <CustomNavLink key={`general_${index}`} item={item} index={index} />
+                <CustomNavLink key={`general_${index}`} item={{...item, id: `/app${item.id}`}} index={index} />
               ))}
             </div>
           </div>
