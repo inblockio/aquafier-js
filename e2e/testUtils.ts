@@ -60,10 +60,10 @@ async function switchToTestNetwork(metaMaskPage: any) {
 async function fundWallet(prefundedWallet : string , walletToFund : string ){
 
  // Create a wallet with a known mnemonic that you've pre-funded
-  const preFundedMnemonic = "night satoshi wonder twice nerve ability increase during ill swallow day naivee";
-  const preFundedAddress = "0x6c5544021930b7887455e21F00b157b2FA572667"; // The address of your pre-funded wallet
+  const preFundedMnemonic = "";
+  const preFundedAddress = ""; // The address of your pre-funded wallet
   
-  
+
 const INFURA_URL = 'https://sepolia.infura.io/v3/YOUR_INFURA_PROJECT_ID';
 const provider = new ethers.providers.JsonRpcProvider(INFURA_URL);
 
