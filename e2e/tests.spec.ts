@@ -671,22 +671,41 @@ test("linking 2 files test", async (): Promise<void> => {
   const registerResponse = await registerNewMetaMaskWalletAndLogin();
   const context: BrowserContext = registerResponse.context;
   const testPage: Page = context.pages()[0];
-  console.log("user setting test started!");
+  console.log("linking 2 files test started!");
 
   // Upload file
   const filePath: string = path.join(__dirname, 'resources/exampleFile.pdf');
   await uploadFile(testPage, filePath);
 
+  // close upload dialog
+  await closeUploadDialog(testPage);
+
     // Upload file
   const filePath2: string = path.join(__dirname, 'resources/logo.png');
   await uploadFile(testPage, filePath2);
 
- await testPage.waitForSelector('[data-testid="link-action-button"]', { state: 'visible', timeout: 10000 });
-  await testPage.click('[data-testid="link-action-button"]')
+  // close upload dialog
+  await closeUploadDialog(testPage);
 
+ await testPage.waitForSelector('[data-testid="link-action-button-1"]', { state: 'visible', timeout: 10000 });
+  await testPage.click('[data-testid="link-action-button-1"]');
+
+  // Wait for the dialog to appear
+  await testPage.waitForSelector('div[role="dialog"]', { state: 'visible', timeout: 5000 });
   
+  // Click on the checkbox with id 'file-0'
+  await testPage.waitForSelector('#file-0', { state: 'visible', timeout: 5000 });
+  await testPage.click('#file-0');
+  
+  // Click on the link button in the dialog
+  await testPage.waitForSelector('[data-testid="link-modal-action-button-dialog"]', { state: 'visible', timeout: 5000 });
+  await testPage.click('[data-testid="link-modal-action-button-dialog"]');
+  
+  // Wait for the linking process to complete
+  await testPage.waitForTimeout(2000);
 
-
+  // close link dialog
+  // await testPage.pause();
 });
 test("upload, sign, download", async (): Promise<void> => {
   test.setTimeout(80000); // Increase timeout to 80 seconds
