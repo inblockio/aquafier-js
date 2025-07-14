@@ -373,11 +373,13 @@ const FilesPage = () => {
                     }
                     {/* Footer - fixed height */}
                     <DialogFooter className="!h-[60px] !min-h-[60px] !max-h-[60px] !p-0 flex items-center justify-center !px-6 ">
-                        <Button variant="outline" onClick={() => {
+                        <Button variant="outline" 
+                         className="bg-black text-white-500 hover:bg-black-700 text-white cursor-pointer"
+                        style={{}} onClick={() => {
                             setSelectedFileInfo(null)
                             setOpenFileDetailsPopUp(false)
                         }}>Cancel</Button>
-                        <Button type="submit">Save changes</Button>
+                        {/* <Button type="submit">Save changes</Button> */}
                     </DialogFooter>
                 </DialogContent>
             </Dialog>

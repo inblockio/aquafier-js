@@ -1,5 +1,6 @@
 import path from "path";
 import {BrowserContext, chromium, Page} from "playwright";
+  import { ethers } from 'ethers';
 
 export function generatePassword(length: number): string {
     let result = '';
@@ -47,6 +48,43 @@ async function switchToTestNetwork(metaMaskPage: any) {
     }
 }
 
+// Solution 2: Use a pre-funded wallet for tests
+// async function createPreFundedWallet(): Promise<{mnemonic: string, address: string}> {
+ 
+//   return {
+//     mnemonic: preFundedMnemonic,
+//     address: preFundedAddress
+//   };
+// }
+
+async function fundWallet(prefundedWallet : string , walletToFund : string ){
+
+ // Create a wallet with a known mnemonic that you've pre-funded
+  const preFundedMnemonic = "night satoshi wonder twice nerve ability increase during ill swallow day naivee";
+  const preFundedAddress = "0x6c5544021930b7887455e21F00b157b2FA572667"; // The address of your pre-funded wallet
+  
+  
+const INFURA_URL = 'https://sepolia.infura.io/v3/YOUR_INFURA_PROJECT_ID';
+const provider = new ethers.providers.JsonRpcProvider(INFURA_URL);
+
+// Pre-funded wallet
+const funderPrivateKey = '0x...'; // Store securely!
+const funderWallet = new ethers.Wallet(funderPrivateKey, provider);
+
+// New wallet (test case)
+// const newWallet = ethers.Wallet.createRandom();
+// const newWalletAddress = newWallet.address;
+
+// Send ETH
+const tx = await funderWallet.sendTransaction({
+  to: newWalletAddress,
+  value: ethers.utils.parseEther('0.05'),
+});
+
+await tx.wait();
+console.log(`Funded ${newWalletAddress} in tx ${tx.hash}`);
+
+}
 
 export async function registerNewMetaMaskWallet(): Promise<RegisterMetaMaskResponse>{
     const metamaskPath = path.join(__dirname, 'metamask-extension');
