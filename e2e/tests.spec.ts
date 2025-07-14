@@ -707,6 +707,7 @@ test("linking 2 files test", async (): Promise<void> => {
   // close link dialog
   // await testPage.pause();
 });
+
 test("upload, sign, download", async (): Promise<void> => {
   test.setTimeout(80000); // Increase timeout to 80 seconds
   const registerResponse = await registerNewMetaMaskWalletAndLogin();
