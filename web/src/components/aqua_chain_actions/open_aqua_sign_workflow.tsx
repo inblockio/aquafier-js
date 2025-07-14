@@ -7,7 +7,7 @@ import { useStore } from "zustand";
 
 
 
-export const OpenWorkflowButton = ({ item, children }: IShareButton) => {
+export const OpenWorkflowButton = ({ item, children, index }: IShareButton) => {
     const { setSelectedFileInfo } = useStore(appStore)
     const navigate = useNavigate()
 
@@ -23,7 +23,7 @@ export const OpenWorkflowButton = ({ item, children }: IShareButton) => {
                         {children}
                     </div>
                 ) : (
-                    <Button data-testid="open-workflow-button" className="cursor-pointer rounded-sm bg-cyan-500/10 text-cyan-600 text-xs hover:bg-cyan-500/20 break-words break-all overflow-hidden" onClick={(e) => {
+                    <Button data-testid={"open-workflow-button-"+index} className="cursor-pointer rounded-sm bg-cyan-500/10 text-cyan-600 text-xs hover:bg-cyan-500/20 break-words break-all overflow-hidden" onClick={(e) => {
                         e.preventDefault();
                         setSelectedFileInfo(item)
                         navigate("/app/pdf/workflow")

@@ -14,7 +14,7 @@ import { toaster } from "@/components/ui/use-toast"
 
 
 
-export const DownloadAquaChain = ({ file, children }: { file: ApiFileInfo, children?: React.ReactNode }) => {
+export const DownloadAquaChain = ({ file, index , children  }: { file: ApiFileInfo, index: number,children?: React.ReactNode }) => {
     const { session } = useStore(appStore)
     const [downloading, setDownloading] = useState(false)
 
@@ -234,7 +234,7 @@ export const DownloadAquaChain = ({ file, children }: { file: ApiFileInfo, child
                     </div>
                 ) : (
                     <button
-                        data-testid="download-aqua-tree-button"
+                        data-testid={"download-aqua-tree-button-"+index}
                         onClick={() => {
                             if (!downloading) {
                                 downloadAquaJson();

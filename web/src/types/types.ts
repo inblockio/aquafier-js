@@ -14,6 +14,7 @@ export interface IShareButton {
     item: ApiFileInfo
     nonce: string
     children?: React.ReactNode
+    index?: number
 }
 
 export interface ApiFileData {

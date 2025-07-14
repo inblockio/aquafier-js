@@ -1,5 +1,4 @@
 import FilePreview from "@/components/file_preview"
-import { LogViewer } from "@/components/logs/LogViewer"
 import { ICompleteChainView, VerificationHashAndResult } from "@/models/AquaTreeDetails"
 import appStore from "@/store"
 import { ensureDomainUrlHasSSL, getFileName, getFileHashFromUrl, isArrayBufferText, isWorkFlowData } from "@/utils/functions"
@@ -19,7 +18,7 @@ export const CompleteChainView = ({ callBack, selectedFileInfo }: ICompleteChain
   const { session, setApiFileData, apiFileData, systemFileInfo, user_profile } = useStore(appStore)
   const [deletedRevisions, setDeletedRevisions] = useState<string[]>([])
   const [verificationResults, setVerificationResults] = useState<VerificationHashAndResult[]>([])
-  const [allLogs, setAllLogs] = useState<LogData[]>([])
+  const [_allLogs, setAllLogs] = useState<LogData[]>([])
   const [isProcessing, setIsProcessing] = useState(false)
 
   const isVerificationSuccessful = useCallback((results: VerificationHashAndResult[]) =>

@@ -15,7 +15,7 @@ import { AlertCircle, Loader2 } from "lucide-react"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Button } from "@/components/ui/button"
 
-export const LinkButton = ({ item, nonce }: IShareButton) => {
+export const LinkButton = ({ item, nonce, index }: IShareButton) => {
     const { backend_url, setFiles, files, session, systemFileInfo } = useStore(appStore)
     const [isOpen, setIsOpen] = useState(false)
     const [linking, setLinking] = useState(false)
@@ -112,7 +112,7 @@ export const LinkButton = ({ item, nonce }: IShareButton) => {
         <>
             {/* Link Button */}
             <button 
-                data-testid="link-action-button" 
+                data-testid={"link-action-button-"+index} 
                 onClick={() => setIsOpen(true)} 
                 className="flex items-center space-x-1 bg-yellow-100 text-yellow-700 px-3 py-2 rounded hover:bg-yellow-200 transition-colors text-xs w-full justify-center"
             >
@@ -238,7 +238,7 @@ export const LinkButton = ({ item, nonce }: IShareButton) => {
                             <Button 
                                 onClick={handleLink}
                                 disabled={linking || linkItem === null}
-                                data-testid="link-modal-action-button"
+                                data-testid="link-modal-action-button-dialog"
                             >
                                 {linking ? (
                                     <>

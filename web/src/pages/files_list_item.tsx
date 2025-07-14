@@ -94,32 +94,32 @@ export default function FilesListItem({ showWorkFlowsOnly, file, index, systemFi
 
                 {/* Sign Button */}
                 <div className="w-full">
-                    <SignAquaChain apiFileInfo={file} backendUrl={backendUrl} nonce={nonce} revision="" />
+                    <SignAquaChain apiFileInfo={file} backendUrl={backendUrl} nonce={nonce} revision="" index={index} />
                 </div>
 
                 {/* Witness Button */}
                 <div className="w-full">
-                    <WitnessAquaChain apiFileInfo={file} backendUrl={backendUrl} nonce={nonce} revision="" />
+                    <WitnessAquaChain apiFileInfo={file} backendUrl={backendUrl} nonce={nonce} revision="" index={index} />
                 </div>
 
                 {/* Link Button */}
                 <div className="w-full">
-                    <LinkButton item={file} nonce={nonce} />
+                    <LinkButton item={file} nonce={nonce} index={index} />
                 </div>
 
                 {/* Share Button */}
                 <div className="w-full">
-                    <ShareButton item={file} nonce={nonce} />
+                    <ShareButton item={file} nonce={nonce} index={index}/>
                 </div>
 
                 {/* Delete Button */}
                 <div className="w-full">
-                    <DeleteAquaChain apiFileInfo={file} backendUrl={backendUrl} nonce={nonce} revision="" />
+                    <DeleteAquaChain apiFileInfo={file} backendUrl={backendUrl} nonce={nonce} revision="" index={index} />
                 </div>
 
                 {/* Download Button */}
                 <div className="w-full">
-                    <DownloadAquaChain file={file} />
+                    <DownloadAquaChain file={file} index={index} />
                 </div>
             </div>
 
@@ -132,15 +132,15 @@ export default function FilesListItem({ showWorkFlowsOnly, file, index, systemFi
     const workFlowActions = () => {
         return <>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-2 w-full">
-                <OpenWorkflowButton item={file} nonce={nonce} />
+                <OpenWorkflowButton item={file} nonce={nonce} index={index}/>
 
-                <ShareButton item={file} nonce={nonce} />
+                <ShareButton item={file} nonce={nonce} index={index} />
 
                 {/* Delete Button */}
-                <DeleteAquaChain apiFileInfo={file} backendUrl={backendUrl} nonce={nonce} revision="" />
+                <DeleteAquaChain apiFileInfo={file} backendUrl={backendUrl} nonce={nonce} revision="" index={index} />
 
                 {/* Download Button - Smaller width */}
-                <DownloadAquaChain file={file} />
+                <DownloadAquaChain file={file} index={index}/>
             </div>
 
         </>

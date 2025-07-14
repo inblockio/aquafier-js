@@ -4,6 +4,7 @@ export interface RevionOperation {
     apiFileInfo:  ApiFileInfo 
     backendUrl : string,
     revision : string,
-    nonce : string
-    children?: React.ReactNode
+    nonce : string,
+    index : number
+    children?: React.ReactNode,
 }

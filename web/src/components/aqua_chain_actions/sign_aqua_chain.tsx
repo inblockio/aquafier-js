@@ -11,7 +11,7 @@ import { toaster } from "@/components/ui/use-toast"
 
 
 
-export const SignAquaChain = ({ apiFileInfo, backendUrl, nonce }: RevionOperation) => {
+export const SignAquaChain = ({ apiFileInfo, backendUrl, nonce, index }: RevionOperation) => {
     const { files, setFiles, setSelectedFileInfo, selectedFileInfo, user_profile, session, backend_url } = useStore(appStore)
     const [signing, setSigning] = useState(false)
 
@@ -152,7 +152,7 @@ export const SignAquaChain = ({ apiFileInfo, backendUrl, nonce }: RevionOperatio
         <>
         {/* Sign Button */}
         <button 
-            data-testid="sign-action-button"
+            data-testid={"sign-action-button-"+index}
             onClick={()=>{
                 if (!signing) {
                     signFileHandler();
