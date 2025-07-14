@@ -116,28 +116,25 @@ model Revision {
 }
 
 model File {
-  file_hash            String      @id 
-  file_location         String
-         
+  file_hash     String @id
+  file_location String
+
   @@map("file")
 }
 
 model FileIndex {
-  file_hash              String   @id 
-  pubkey_hash            String[] 
-  
+  file_hash   String   @id
+  pubkey_hash String[]
 
   @@map("file_index")
 }
 
 model FileName {
-   
-   pubkey_hash String @id 
-   file_name   String
+  pubkey_hash String @id
+  file_name   String
 
   @@map("file_name")
 }
-
 
 model Link {
   hash                              String   @id
@@ -227,4 +224,17 @@ model Settings {
   User                     Users   @relation(fields: [user_pub_key], references: [address])
 
   @@map("settings")
+}
+
+model Notifications {
+  id String @id @default(uuid())
+
+  sender   String
+  receiver String
+  content  String
+  is_read  Boolean @default(false)
+
+  created_on DateTime @default(now())
+
+  @@map("notifications")
 }

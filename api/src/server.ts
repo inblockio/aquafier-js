@@ -25,6 +25,7 @@ import templatesController from './controllers/templates';
 import { setUpSystemTemplates } from './utils/api_utils';
 import systemController from './controllers/system';
 import webSocketController, {broadcastToAllClients} from './controllers/websocketController';
+import notificationsController from './controllers/notifications';
 
 
 
@@ -113,6 +114,7 @@ function buildServer() {
     fastify.register(chequeApiController);
     fastify.register(systemController);
     fastify.register(webSocketController);
+    fastify.register(notificationsController);
 
     return fastify
 
