@@ -22,21 +22,21 @@ export default function FilesList() {
     useEffect(() => {
         if (location.pathname.endsWith('files_workflows')) {
             // Add your logic here
-            console.log('URL ends with files_workflows');
+            // console.log('URL ends with files_workflows');
             setShowWorkFlowsOnly(true)
         }
     }, []);
 
     useEffect(() => {
-        console.log("FilesPage mounted");
+        // console.log("FilesPage mounted");
         // Check if the url ends with files_workflows
         if (location.pathname.endsWith('files_workflows')) {
             // Add your logic here
-            console.log('URL ends with files_workflows');
+            // console.log('URL ends with files_workflows');
             setShowWorkFlowsOnly(true)
         }
         return () => {
-            console.log("FilesPage unmounted");
+            // console.log("FilesPage unmounted");
             setShowWorkFlowsOnly(false)
         };
     }, [location.pathname]);

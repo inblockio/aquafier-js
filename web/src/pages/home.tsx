@@ -62,7 +62,7 @@ const HeroSection = () => (
           asChild
           className="bg-gradient-to-r from-orange-600 to-orange-500 hover:from-orange-500 hover:to-orange-600 text-white transition-transform duration-300 ease-in-out hover:scale-105 shadow-lg shadow-orange-500/20"
         >
-          <Link to="/" rel="noopener noreferrer">
+          <Link to="/app" rel="noopener noreferrer">
             Get Started <ArrowRight className="ml-2 h-5 w-5" />
           </Link>
         </Button>

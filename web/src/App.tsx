@@ -54,12 +54,12 @@ function App() {
         <Routes>
           {/* Routes with Tailwind UI (no MainLayout wrapper) */}
 
-          <Route path="/home" element={<TailwindMainLayout />}>
+          <Route path="/" element={<TailwindMainLayout />}>
             <Route index element={<Home />} />
           </Route>
 
           {/* All file routes using Tailwind */}
-          <Route path="/" element={<NewShadcnLayoutWithSidebar />}>
+          <Route path="/app" element={<NewShadcnLayoutWithSidebar />}>
             <Route index element={<FilesPage />} />
             <Route path="pdf/workflow" element={<PdfWorkflowPage />} />
             <Route path="files_workflows" element={<FilesPage />} />
