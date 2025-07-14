@@ -16,7 +16,7 @@ import { toaster } from "@/components/ui/use-toast"
 import { Switch } from "@/components/ui/switch"
 import { Button } from "@/components/ui/button"
 
-export const ShareButton = ({ item, nonce }: IShareButton) => {
+export const ShareButton = ({ item, nonce   ,   index }: IShareButton) => {
     const { backend_url } = useStore(appStore)
     const [isOpen, setIsOpen] = useState(false)
     const [sharing, setSharing] = useState(false)
@@ -84,7 +84,7 @@ export const ShareButton = ({ item, nonce }: IShareButton) => {
         <>
             {/* Share Button */}
             <button 
-                data-testid="share-action-button" 
+                data-testid={"share-action-button"   +index}
                 onClick={() => setIsOpen(true)} 
                 className="w-full flex items-center justify-center space-x-1 bg-[#FDEDD6] text-red-700 px-3 py-2 rounded hover:bg-[#FAD8AD] transition-colors text-xs"
             >
@@ -234,7 +234,7 @@ export const ShareButton = ({ item, nonce }: IShareButton) => {
                             <Button 
                                 onClick={handleShare}
                                 disabled={sharing}
-                                data-testid="share-modal-action-button"
+                                data-testid="share-modal-action-button-dialog"
                                 className="bg-black text-white hover:bg-gray-800"
                             >
                                 Share

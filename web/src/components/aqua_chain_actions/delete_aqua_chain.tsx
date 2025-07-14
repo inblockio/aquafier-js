@@ -17,7 +17,7 @@ import { useState } from "react"
 import { RevionOperation } from "../../models/RevisionOperation"
 import { toast } from "sonner"
 
-export const DeleteAquaChain = ({ apiFileInfo, backendUrl, nonce, children }: RevionOperation) => {
+export const DeleteAquaChain = ({ apiFileInfo, backendUrl, nonce, children, index }: RevionOperation) => {
     const { files, setFiles, session, backend_url, systemFileInfo } = useStore(appStore)
     const [deleting, setDeleting] = useState(false)
     const [open, setOpen] = useState(false)
@@ -115,7 +115,7 @@ export const DeleteAquaChain = ({ apiFileInfo, backendUrl, nonce, children }: Re
         <>
             {
                 children ? (
-                    <div data-testid="download-aqua-tree-button" onClick={() => {
+                    <div data-testid={"delete-in-progress-aqua-tree-button-"+index} onClick={() => {
                         if (!deleting) {
                             deleteFileAction();
                         } else {
@@ -126,7 +126,7 @@ export const DeleteAquaChain = ({ apiFileInfo, backendUrl, nonce, children }: Re
                     </div>
                 ) : (
                     <button
-                        data-testid="download-aqua-tree-button"
+                        data-testid={"delete-aqua-tree-button-"+index}
                         onClick={() => {
                             if (!deleting) {
                                 deleteFileAction();

@@ -274,14 +274,14 @@ const WorkflowTableItem = ({ workflowName, apiFileInfo, index = 0 }: IWorkflowIt
               <Send className="mr-2 h-4 w-4" />
               Send Reminder
             </DropdownMenuItem>
-            <DownloadAquaChain file={apiFileInfo}>
+            <DownloadAquaChain file={apiFileInfo} index={index}>
               <DropdownMenuItem>
                 <Download className="mr-2 h-4 w-4" />
                 Download
               </DropdownMenuItem>
             </DownloadAquaChain>
             <DropdownMenuSeparator />
-            <DeleteAquaChain apiFileInfo={apiFileInfo} backendUrl={backend_url} nonce={session?.nonce ?? ""} revision="">
+            <DeleteAquaChain apiFileInfo={apiFileInfo} backendUrl={backend_url} nonce={session?.nonce ?? ""} revision="" index={index}>
               <DropdownMenuItem className="text-red-600">
                 <Trash2 className="mr-2 h-4 w-4" />
                 Delete
