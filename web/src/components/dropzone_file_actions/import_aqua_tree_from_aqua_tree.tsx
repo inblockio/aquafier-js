@@ -121,7 +121,7 @@ export const ImportAquaChainFromChain = ({ fileInfo, isVerificationSuccessful, c
 
                 // Use setTimeout to ensure state is updated before navigation
                 setTimeout(() => {
-                    navigate("/loading?reload=true");
+                    navigate("/app/loading?reload=true");
                 }, 500);
             } else {
                 toast({

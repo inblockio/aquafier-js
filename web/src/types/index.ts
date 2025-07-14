@@ -41,3 +41,11 @@ export interface ISidebarNavItem {
   href?: string
 }
 
+export interface INotification {
+  id: string
+  sender: string
+  receiver: string
+  content: string
+  is_read: boolean
+  created_on: string
+}

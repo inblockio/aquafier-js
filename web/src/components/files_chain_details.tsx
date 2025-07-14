@@ -129,7 +129,7 @@ export const CompleteChainView = ({ callBack, selectedFileInfo }: ICompleteChain
         }))
 
         setVerificationResults(verificationResults)
-        setAllLogs(verificationResults.flatMap(r => r.logs))
+        // setAllLogs(verificationResults.flatMap(r => r.logs))
 
         callBack({
           fileName,
@@ -150,7 +150,7 @@ export const CompleteChainView = ({ callBack, selectedFileInfo }: ICompleteChain
       const names = systemFileInfo.map(e => getAquaTreeFileName(e.aquaTree!!))
       setSelectedFileAWorkFlow(isWorkFlowData(selectedFileInfo.aquaTree!!, names).isWorkFlow)
     }
-  }, [selectedFileInfo, deletedRevisions.length])
+  }, [JSON.stringify(selectedFileInfo), deletedRevisions.length])
 
   return (
     <div className=" h-full">

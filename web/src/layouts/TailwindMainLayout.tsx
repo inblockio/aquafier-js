@@ -7,9 +7,9 @@ import { Link, Outlet } from "react-router-dom";
 
 const Header = () => (
     <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-        <div className="container flex h-16 max-w-screen-2xl items-center mx-auto">
+        <div className="container flex h-16 max-w-screen-2xl items-center mx-auto px-2">
             <nav className="hidden flex-1 md:flex items-center space-x-4 lg:space-x-6 justify-between">
-                <Link to="/" className="mr-6 flex items-center space-x-2 group">
+                <Link to="/" className="flex items-center space-x-2 group">
                     <div className="relative overflow-hidden p-1 ">
                         <img className="h-[40px]" src="/images/logo.png" />
                     </div>
@@ -46,6 +46,13 @@ const Header = () => (
                         Contact
                     </a>
                 </div>
+            </nav>
+            <nav className="flex items-center space-x-2 group md:hidden">
+                <Link to="/" className="flex items-center space-x-2 group">
+                    <div className="relative overflow-hidden">
+                        <img className="h-[34px]" src="/images/logo.png" />
+                    </div>
+                </Link>
             </nav>
             <div className="flex flex-1 items-center justify-end space-x-3">
                 <Button variant="outline" asChild className="border-orange-500/30 hover:border-orange-500 hover:bg-orange-500/5 transition-all duration-300">

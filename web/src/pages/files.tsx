@@ -361,7 +361,7 @@ const FilesPage = () => {
                                     <DialogTitle>{getAquaTreeFileName(selectedFileInfo.aquaTree!!)}</DialogTitle>
                                 </DialogHeader>
                                 {/* Content - takes all available space */}
-                                <div className=' h-[calc(100%-60px)]'>
+                                <div className='h-[calc(100%-60px)]'>
                                     <CompleteChainView callBack={function (_drawerStatus: IDrawerStatus): void {
                                         setDrawerStatus(_drawerStatus)
                                     }} selectedFileInfo={selectedFileInfo} />
