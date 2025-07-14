@@ -115,7 +115,7 @@ export const DeleteAquaChain = ({ apiFileInfo, backendUrl, nonce, children }: Re
         <>
             {
                 children ? (
-                    <div data-testid="download-aqua-tree-button" onClick={() => {
+                    <div data-testid="delete-in-progress-aqua-tree-button" onClick={() => {
                         if (!deleting) {
                             deleteFileAction();
                         } else {
@@ -126,7 +126,7 @@ export const DeleteAquaChain = ({ apiFileInfo, backendUrl, nonce, children }: Re
                     </div>
                 ) : (
                     <button
-                        data-testid="download-aqua-tree-button"
+                        data-testid="delete-aqua-tree-button"
                         onClick={() => {
                             if (!deleting) {
                                 deleteFileAction();
