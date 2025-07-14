@@ -1,0 +1,27 @@
+{
+  "revisions": {
+    "0xc4522df5926af81a93ee95a0301dc1436f88908363cc60ecaf6675f908a0d3ed": {
+      "file_hash": "7ea3b2ea416f2692551184ddf6254cde5b613189b17ce4ab94db1a97879a88ba",
+      "file_nonce": "2406ff9d5937b0f1e5711122cca205330f4d062a45c9ee4da68b40073f3a9517",
+      "local_timestamp": "20250714140927",
+      "previous_verification_hash": "",
+      "revision_type": "file",
+      "version": "https://aqua-protocol.org/docs/v3/schema_2 | SHA256 | Method: scalar"
+    }
+  },
+  "file_index": {
+    "0xc4522df5926af81a93ee95a0301dc1436f88908363cc60ecaf6675f908a0d3ed": "exampleFile.pdf"
+  },
+  "tree": {
+    "children": [],
+    "hash": "0xc4522df5926af81a93ee95a0301dc1436f88908363cc60ecaf6675f908a0d3ed"
+  },
+  "treeMapping": {
+    "paths": {
+      "0xc4522df5926af81a93ee95a0301dc1436f88908363cc60ecaf6675f908a0d3ed": [
+        "0xc4522df5926af81a93ee95a0301dc1436f88908363cc60ecaf6675f908a0d3ed"
+      ]
+    },
+    "latestHash": "0xc4522df5926af81a93ee95a0301dc1436f88908363cc60ecaf6675f908a0d3ed"
+  }
+}

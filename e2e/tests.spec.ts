@@ -665,6 +665,29 @@ test("user setting test", async (): Promise<void> => {
   console.log("Alias name updated successfully");
 });
 
+
+test("linking 2 files test", async (): Promise<void> => {
+  test.setTimeout(50000);
+  const registerResponse = await registerNewMetaMaskWalletAndLogin();
+  const context: BrowserContext = registerResponse.context;
+  const testPage: Page = context.pages()[0];
+  console.log("user setting test started!");
+
+  // Upload file
+  const filePath: string = path.join(__dirname, 'resources/exampleFile.pdf');
+  await uploadFile(testPage, filePath);
+
+    // Upload file
+  const filePath2: string = path.join(__dirname, 'resources/logo.png');
+  await uploadFile(testPage, filePath2);
+
+ await testPage.waitForSelector('[data-testid="link-action-button"]', { state: 'visible', timeout: 10000 });
+  await testPage.click('[data-testid="link-action-button"]')
+
+  
+
+
+});
 test("upload, sign, download", async (): Promise<void> => {
   test.setTimeout(80000); // Increase timeout to 80 seconds
   const registerResponse = await registerNewMetaMaskWalletAndLogin();
