@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from 'react';
-// import FileDropZone from './components/dropzone_file_actions/dropzone_file_actions';
 import appStore from "../store"
 import { useStore } from "zustand"
 import FilesList from './files_list';
@@ -7,9 +6,6 @@ import {
     Upload,
     Plus,
     FolderPlus,
-    Download,
-    Share2,
-    Copy,
     X,
     CheckCircle,
     AlertCircle,
@@ -269,23 +265,23 @@ const FilesPage = () => {
         // ... existing logic
     }, [filesList]);
 
- 
+
 
     return (
-        <>
+        <div className="w-full max-w-full box-border overflow-x-hidden"    >
             {/* Action Bar */}
-            <div className="bg-white border-b border-gray-200 px-6 py-4">
-                <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-4">
-                        <button
-                        data-testid="file-upload-dropzone"
-                            className="flex items-center space-x-2 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-blue-700 cursor-pointer"
+            <div className="border-b border-gray-100 px-2 sm:px-6 pt-2 overflow-hidden w-full max-w-full">
+                <div className="w-full overflow-x-auto pb-2">
+                    <div className="flex items-center gap-2 sm:gap-4 flex-nowrap min-w-max">
+                        <Button
+                            data-testid="file-upload-dropzone"
+                            className="flex items-center gap-1 sm:gap-2 text-white px-3 sm:px-5 py-2 sm:py-3 rounded-md text-xs sm:text-sm font-medium hover:brightness-90 transition-all cursor-pointer whitespace-nowrap shadow-sm"
                             style={{ backgroundColor: '#E55B1F' }}
                             onClick={handleUploadClick}
                         >
                             <Upload className="w-4 h-4" />
-                            <span>Upload or drop</span>
-                        </button>
+                            <span>Upload a File</span>
+                        </Button>
                         <input
                             ref={fileInputRef}
                             type="file"
@@ -293,9 +289,9 @@ const FilesPage = () => {
                             className="hidden"
                             onChange={handleFileChange}
                         />
-                        <button 
+                        <Button
                             data-testid="create-document-signature"
-                        className="flex items-center space-x-2 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-gray-100 cursor-pointer"
+                            className="flex items-center gap-1 sm:gap-2 text-white px-2 sm:px-4 py-1.5 sm:py-2.5 rounded-md text-xs sm:text-sm font-medium hover:bg-gray-700 transition-colors cursor-pointer whitespace-nowrap shadow-sm"
                             style={{ backgroundColor: '#394150' }}
                             onClick={() => {
                                 //, 
@@ -303,33 +299,35 @@ const FilesPage = () => {
                             }}
                         >
                             <Plus className="w-4 h-4" />
-                            <span>Create Document Signature </span>
-                        </button>
-                        <button className="flex items-center space-x-2 text-gray-700 px-4 py-2 rounded-md text-sm font-medium hover:bg-gray-100 cursor-pointer"
+                            <span>Document Signature </span>
+                        </Button>
+                        <Button className="flex items-center gap-1 sm:gap-2 text-gray-700 px-2 sm:px-4 py-1.5 sm:py-2.5 rounded-md text-xs sm:text-sm font-medium bg-white border border-gray-200 hover:bg-gray-50 transition-colors cursor-pointer whitespace-nowrap shadow-sm"
                             onClick={() => {
                                 setOpenCreateTemplatePopUp(true)
                             }}
                         >
                             <FolderPlus className="w-4 h-4" />
                             <span>Create Template</span>
-                        </button>
-                        <button className="flex items-center space-x-2 text-gray-700 px-4 py-2 rounded-md text-sm font-medium hover:bg-gray-100 cursor-pointer">
+                        </Button>
+                        {/* <Button className="flex items-center gap-1 sm:gap-2 text-gray-700 px-2 sm:px-4 py-1.5 sm:py-2.5 rounded-md text-xs sm:text-sm font-medium bg-white border border-gray-200 hover:bg-gray-50 transition-colors cursor-pointer whitespace-nowrap shadow-sm">
                             <Download className="w-4 h-4" />
                             <span>Get the app</span>
-                        </button>
-                        <button className="flex items-center space-x-2 text-gray-700 px-4 py-2 rounded-md text-sm font-medium hover:bg-gray-100 cursor-pointer">
+                        </Button>
+                        <Button className="flex items-center gap-1 sm:gap-2 text-gray-700 px-2 sm:px-4 py-1.5 sm:py-2.5 rounded-md text-xs sm:text-sm font-medium bg-white border border-gray-200 hover:bg-gray-50 transition-colors cursor-pointer whitespace-nowrap shadow-sm">
                             <Copy className="w-4 h-4" />
                             <span>Transfer a copy</span>
-                        </button>
-                        <button className="flex items-center space-x-2 text-gray-700 px-4 py-2 rounded-md text-sm font-medium hover:bg-gray-100 cursor-pointer">
+                        </Button>
+                        <Button className="hiden flex items-center gap-1 sm:gap-2 text-gray-700 px-2 sm:px-4 py-1.5 sm:py-2.5 rounded-md text-xs sm:text-sm font-medium bg-white border border-gray-200 hover:bg-gray-50 transition-colors cursor-pointer whitespace-nowrap shadow-sm">
                             <Share2 className="w-4 h-4" />
                             <span>Share</span>
-                        </button>
+                        </Button> */}
                     </div>
                 </div>
             </div>
 
-            {files.length == 0 ? <FileDropZone /> : <FilesList />}
+            <div className='w-full max-w-full box-border overflow-x-hidden bg-white p-6'>
+                {files.length == 0 ? <FileDropZone /> : <FilesList />}
+            </div>
 
             <Dialog open={isSelectedFileDialogOpen} onOpenChange={(openState) => {
                 setIsSelectedFileDialogOpen(openState)
@@ -339,8 +337,8 @@ const FilesPage = () => {
                 }
             }} >
 
-                <DialogContent showCloseButton={false} className="!max-w-[90vw] !w-[90vw] !h-[95vh] max-h-[95vh] !p-0 gap-0 flex flex-col"> 
-                    {/* Close button */}
+                <DialogContent showCloseButton={false} className="!max-w-[90vw] !w-[90vw] !h-[95vh] max-h-[95vh] !p-0 gap-0 flex flex-col">
+                    {/* Close Button */}
                     <div className="absolute top-4 right-4 z-10">
                         <Button
                             variant="ghost"
@@ -364,21 +362,21 @@ const FilesPage = () => {
                                 </DialogHeader>
                                 {/* Content - takes all available space */}
                                 <div className=' h-[calc(100%-60px)]'>
-                                   <CompleteChainView callBack={function (_drawerStatus: IDrawerStatus): void {
-                                    setDrawerStatus(_drawerStatus)
-                                }} selectedFileInfo={selectedFileInfo} />
+                                    <CompleteChainView callBack={function (_drawerStatus: IDrawerStatus): void {
+                                        setDrawerStatus(_drawerStatus)
+                                    }} selectedFileInfo={selectedFileInfo} />
                                 </div>
                             </div>
                         ) : null
                     }
                     {/* Footer - fixed height */}
                     <DialogFooter className="!h-[60px] !min-h-[60px] !max-h-[60px] !p-0 flex items-center justify-center !px-6 ">
-                        <Button variant="outline" 
-                         className="bg-black text-white-500 hover:bg-black-700 text-white cursor-pointer"
-                        style={{}} onClick={() => {
-                            setSelectedFileInfo(null)
-                            setOpenFileDetailsPopUp(false)
-                        }}>Cancel</Button>
+                        <Button variant="outline"
+                            className="bg-black text-white-500 hover:bg-black-700 text-white cursor-pointer"
+                            style={{}} onClick={() => {
+                                setSelectedFileInfo(null)
+                                setOpenFileDetailsPopUp(false)
+                            }}>Cancel</Button>
                         {/* <Button type="submit">Save changes</Button> */}
                     </DialogFooter>
                 </DialogContent>
@@ -402,7 +400,7 @@ const FilesPage = () => {
                                 <Minimize2 className="h-4 w-4" />
                             </Button>
                             <Button
-                             data-testid="close-upload-dialog-button"
+                                data-testid="close-upload-dialog-button"
                                 variant="ghost"
                                 size="icon"
                                 onClick={() => setIsUploadDialogOpen(false)}
@@ -495,7 +493,7 @@ const FilesPage = () => {
                     )}
                 </DialogContent>
             </Dialog>
-        </>
+        </div>
     );
 };
 

@@ -1,17 +1,12 @@
 import { useEffect, useState } from 'react';
-import {
-    Grid3X3,
-    List
-
-} from 'lucide-react';
-
+import { Grid3X3, List } from "lucide-react";
+import FileListItem from "./files_list_item";
+import { isWorkFlowData } from "@/utils/functions";
 
 import { useStore } from 'zustand';
 import appStore from '../store';
-import FileListItem from './files_list_item';
 
 export default function FilesList() {
-
 
     const [showWorkFlowsOnly, setShowWorkFlowsOnly] = useState(false);
     const [view, setView] = useState('list');
@@ -46,7 +41,7 @@ export default function FilesList() {
     return (
         <div>
             {/* File Content */}
-            <div className="flex-1 bg-white px-6 py-4">
+            <div className="flex-1">
                 {/* File Header */}
                 <div className="flex items-center justify-between mb-6">
                     <div className="flex items-center space-x-4">
@@ -74,42 +69,56 @@ export default function FilesList() {
                     </div>
                 </div>
 
-                {/* Tabs */}
-                {/* <div className="flex space-x-6 mb-6 border-b">
-        <button
-            onClick={() => setActiveTab('recents')}
-            className={`pb-3 px-1 border-b-2 font-medium text-sm ${activeTab === 'recents'
-                ? 'border-blue-500 text-blue-600'
-                : 'border-transparent text-gray-500 hover:text-gray-700'
-                }`}
-        >
-            <Clock className="w-4 h-4 inline mr-2" />
-            Recents
-        </button>
-        <button
-            onClick={() => setActiveTab('starred')}
-            className={`pb-3 px-1 border-b-2 font-medium text-sm ${activeTab === 'starred'
-                ? 'border-blue-500 text-blue-600'
-                : 'border-transparent text-gray-500 hover:text-gray-700'
-                }`}
-        >
-            <Star className="w-4 h-4 inline mr-2" />
-            Starred
-        </button>
-    </div> */}
-
-                {/* File List Header */}
-                <div className="flex items-center py-3 border-b border-gray-200 text-sm font-medium text-gray-700">
-                    <div className="flex-1">Name</div>
-                    <div className="w-24">Type</div>
-                    <div className="w-50">Uploaded At</div>
-                    <div className="w-24">Files Size</div>
-                    <div className="w-120">Actions</div> {/* Fixed width for actions column */}
+                {/* Responsive Table */}
+                <div className="hidden md:block"> {/* Table view for medium screens and up */}
+                    <table className="w-full border-collapse">
+                        <thead>
+                            <tr className="border-b border-gray-200">
+                                <th className="py-3 text-left text-sm font-medium text-gray-700 w-1/3">Name</th>
+                                <th className="py-3 text-left text-sm font-medium text-gray-700 w-24">Type</th>
+                                <th className="py-3 text-left text-sm font-medium text-gray-700 w-40">Uploaded At</th>
+                                <th className="py-3 text-left text-sm font-medium text-gray-700 w-24">File Size</th>
+                                <th className="py-3 text-left text-sm font-medium text-gray-700 w-1/4">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {files.map((file, index) => {
+                                if ((showWorkFlowsOnly && file.aquaTree && isWorkFlowData(file.aquaTree, [""])?.isWorkFlow) || !showWorkFlowsOnly) {
+                                    return (
+                                        <FileListItem
+                                            showWorkFlowsOnly={showWorkFlowsOnly}
+                                            key={index}
+                                            index={index}
+                                            file={file}
+                                            systemFileInfo={systemFileInfo}
+                                            backendUrl={backend_url}
+                                            nonce={session?.nonce ?? ""}
+                                            viewMode="table"
+                                        />
+                                    );
+                                }
+                                return null;
+                            })}
+                        </tbody>
+                    </table>
                 </div>
 
-                {/* File List */}
-                <div className="space-y-1">
-                    {files.map((file, index) => <FileListItem showWorkFlowsOnly={showWorkFlowsOnly} key={index} index={index} file={file} systemFileInfo={systemFileInfo} backendUrl={backend_url} nonce={session?.nonce ?? ""} />)}
+                {/* Card view for small screens */}
+                <div className="md:hidden space-y-4">
+                    {files.map((file, index) => (
+                        <div key={index} className="bg-white border border-gray-200 rounded-lg shadow-sm p-4">
+                            <FileListItem
+                                showWorkFlowsOnly={showWorkFlowsOnly}
+                                key={index}
+                                index={index}
+                                file={file}
+                                systemFileInfo={systemFileInfo}
+                                backendUrl={backend_url}
+                                nonce={session?.nonce ?? ""}
+                                viewMode="card"
+                            />
+                        </div>
+                    ))}
                 </div>
             </div>
 

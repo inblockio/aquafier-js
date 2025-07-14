@@ -67,18 +67,19 @@ const SharedContract = ({ contract }: { contract: Contract }) => {
             key={contract.hash}
             className="hover:shadow-md transition-shadow cursor-pointer border border-gray-200"
         >
-            <CardContent className="p-6">
+            <CardContent className="p-3 sm:p-6">
                 <div className="flex items-start justify-between">
                     <div className="flex-1 space-y-4">
                         {/* Contract Hash */}
-                        <div className="flex items-center gap-3">
+                        <div className="flex items-center gap-3 align-center">
                             <div className="w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center">
-                                <Hash className="w-4 h-4 text-gray-600" />
+                                <Hash className="h-3 text-gray-600" />
                             </div>
                             <div className="flex-1">
                                 <div className="flex items-center gap-2">
-                                    <code className="text-sm font-mono bg-gray-100 px-2 py-1 rounded">
-                                        {formatCryptoAddress(contract.hash, 10, 10)}
+                                    <code className="text-xs sm:text-sm font-mono bg-gray-100 px-1 sm:px-2 py-1 rounded break-all sm:break-words sm:max-w-none overflow-hidden text-ellipsis">
+                                        {/* {formatCryptoAddress(contract.hash, 10, 10)} */}
+                                        {contract.hash}
                                     </code>
                                     <Button
                                         variant="ghost"
@@ -92,12 +93,12 @@ const SharedContract = ({ contract }: { contract: Contract }) => {
                                         <Copy className="w-3 h-3" />
                                     </Button>
                                 </div>
-                                <p className="text-xs text-gray-500 mt-1">Contract Hash</p>
+                                <p className="text-xs text-gray-500 mt-1">{Date().toString()}</p>
                             </div>
                         </div>
 
                         {/* Participants */}
-                        <div className="flex items-center gap-6">
+                        <div className="flex items-center gap-2 sm:gap-6 flex-wrap">
                             <TooltipProvider>
                                 <Tooltip>
                                     <TooltipTrigger asChild>
@@ -108,7 +109,7 @@ const SharedContract = ({ contract }: { contract: Contract }) => {
                                                 </AvatarFallback>
                                             </Avatar>
                                             <div>
-                                                <p className="text-sm font-medium text-gray-900 font-mono">
+                                                <p className="text-xs sm:text-sm font-medium text-gray-900 font-mono max-w-[120px] sm:max-w-none truncate">
                                                     {formatCryptoAddress(contract.sender, 10, 10)}
                                                 </p>
                                                 <p className="text-xs text-gray-500">Sender</p>
@@ -121,7 +122,7 @@ const SharedContract = ({ contract }: { contract: Contract }) => {
                                 </Tooltip>
                             </TooltipProvider>
 
-                            <div className="flex items-center text-gray-400">
+                            <div className="hidden xs:flex items-center text-gray-400">
                                 <div className="w-8 border-t border-dashed border-gray-300"></div>
                                 <div className="w-2 h-2 rounded-full bg-gray-300 mx-1"></div>
                                 <div className="w-8 border-t border-dashed border-gray-300"></div>
@@ -137,10 +138,10 @@ const SharedContract = ({ contract }: { contract: Contract }) => {
                                                 </AvatarFallback>
                                             </Avatar>
                                             <div>
-                                                <p className="text-sm font-medium text-gray-900 font-mono">
+                                                <p className="text-xs sm:text-sm font-medium text-gray-900 font-mono max-w-[120px] sm:max-w-none truncate">
                                                     {formatCryptoAddress(contract.receiver)}
                                                 </p>
-                                                <p className="text-xs text-gray-500">Receiver</p>
+                                                <p className="text-xs text-gray-500 break-words">Receiver</p>
                                             </div>
                                         </div>
                                     </TooltipTrigger>
@@ -152,13 +153,13 @@ const SharedContract = ({ contract }: { contract: Contract }) => {
                         </div>
 
                         {/* Status and Details */}
-                        <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-4">
+                        <div className="flex flex-col xs:flex-row items-start xs:items-center justify-between gap-2">
+                            <div className="flex flex-wrap items-center gap-2 sm:gap-4">
                                 <Badge
                                     variant="outline"
-                                    className={`${getStatusColor(getStatusFromLatest(contract.latest))} capitalize`}
+                                    className={`${getStatusColor(getStatusFromLatest(contract.latest))} text-xs whitespace-normal max-w-[150px] sm:max-w-none px-2`}
                                 >
-                                    {contract.latest}
+                                    {formatCryptoAddress(contract.latest, 5, 6)}
                                 </Badge>
 
                                 {contract.option && (
@@ -176,7 +177,7 @@ const SharedContract = ({ contract }: { contract: Contract }) => {
                                 )}
                             </div>
 
-                            <Button variant="outline" onClick={() => navigate(`/shared-contracts/${contract.hash}`)}>Open</Button>
+                            <Button variant="outline" size="sm" className="w-full xs:w-auto" onClick={() => navigate(`/app/shared-contracts/${contract.hash}`)}>Open</Button>
 
                             {/* <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
@@ -300,7 +301,7 @@ export function SharedContracts() {
                     </div> */}
 
                     {/* Contracts List */}
-                    <div className="flex-1 overflow-auto p-6">
+                    <div className="flex-1 overflow-auto p-0">
                         <div className="space-y-4">
                             {filteredContracts.map((contract) => (
                                 <SharedContract key={`${contract.hash}`} contract={contract} />
@@ -327,7 +328,7 @@ export function SharedContracts() {
 
 const FilesSharedContracts = () => {
     return (
-        <div className='container mx-auto max-w-4xl'>
+        <div className='container mx-auto max-w-4xl px-0'>
             <SharedContracts />
         </div>
     )

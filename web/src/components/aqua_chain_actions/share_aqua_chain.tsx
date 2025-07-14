@@ -86,7 +86,7 @@ export const ShareButton = ({ item, nonce }: IShareButton) => {
             <button 
                 data-testid="share-action-button" 
                 onClick={() => setIsOpen(true)} 
-                className="flex items-center space-x-1 bg-[#FDEDD6] text-red-700 px-3 py-2 rounded hover:bg-[#FAD8AD] transition-colors text-xs"
+                className="w-full flex items-center justify-center space-x-1 bg-[#FDEDD6] text-red-700 px-3 py-2 rounded hover:bg-[#FAD8AD] transition-colors text-xs"
             >
                 <LuShare2 className="w-3 h-3" />
                 <span>Share</span>

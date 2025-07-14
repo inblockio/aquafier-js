@@ -8,13 +8,13 @@ import {
     SidebarTrigger,
 } from "@/components/ui/sidebar"
 import appStore from "@/store"
-import { Bell, Users, X } from "lucide-react"
+import { Bell, X } from "lucide-react"
 import { useEffect, useState } from "react"
 import { Outlet } from "react-router-dom"
 import { ClipLoader } from "react-spinners"
 import { Toaster } from "sonner"
 import { useStore } from "zustand"
-import { Dialog, DialogContent, DialogHeader } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button"
 import CreateFormFromTemplate from "@/components/aqua_forms/CreateFormFromTemplate";
 import { ScrollArea } from "@/components/ui/scroll-area"
@@ -89,35 +89,61 @@ export default function NewShadcnLayoutWithSidebar() {
         <>
             {
                 session == null ? <>
-                    <ConnectWalletPage  />
+                    <ConnectWalletPage />
                 </>
                     :
                     <SidebarProvider>
-                        <AppSidebar />
+                        <AppSidebar className="hidden md:block" />
                         <SidebarInset>
-                            <header className="flex h-16 shrink-0 items-center gap-2 border-b sticky top-0 z-50 bg-gray-50 w-full">
+                            <header className="flex h-16 shrink-0 items-center gap-2 border-b sticky top-0 z-50 bg-accent w-full">
                                 <div className="flex items-center gap-2 px-3 w-full">
                                     <SidebarTrigger />
                                     <Separator orientation="vertical" className="mr-2 h-4" />
-                                    <div className="flex items-center space-x-4 ms-auto">
+
+                                    {/* Desktop Navigation */}
+                                    <div className="hidden md:flex items-center space-x-4 ms-auto">
                                         <button className="p-2 text-gray-500 hover:text-gray-700">
                                             <Bell className="w-5 h-5" />
                                         </button>
-                                        <button className="p-2 text-gray-500 hover:text-gray-700">
-                                            <Users className="w-5 h-5" />
-                                            {/* <span className="ml-1 text-sm">Invite members</span> */}
-                                        </button>
-                                        <button className="bg-blue-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-blue-700">
+                                        <Button className="bg-blue-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-blue-700">
                                             Start free trial
-                                        </button>
-                                        {/* <div className="w-8 h-8 bg-red-500 rounded-full flex items-center justify-center text-white text-sm font-medium">
-                                A
-                            </div> */}
+                                        </Button>
                                         <ConnectWallet dataTestId="sign-in-button-files-list" />
+                                    </div>
+
+                                    {/* Mobile Navigation */}
+                                    <div className="flex md:hidden items-center space-x-1 ms-auto">
+                                        {/* Icon-only notification button */}
+                                        <button className="p-2 text-gray-500 hover:text-gray-700">
+                                            <Bell className="w-5 h-5" />
+                                        </button>
+
+                                        {/* Mobile dropdown menu */}
+                                        {/* <DropdownMenu>
+                                            <DropdownMenuTrigger asChild>
+                                                <Button variant="ghost" size="icon" className="h-9 w-9 p-0">
+                                                    <MoreVertical className="h-5 w-5" />
+                                                </Button>
+                                            </DropdownMenuTrigger>
+                                            <DropdownMenuContent align="end" className="w-[200px]">
+                                                <DropdownMenuItem>
+                                                    <span className="w-full text-center">Start free trial</span>
+                                                </DropdownMenuItem>
+                                            </DropdownMenuContent>
+                                        </DropdownMenu> */}
+
+                                        {/* Always show wallet connect button but with smaller padding */}
+                                        <div className="scale-90 origin-right">
+                                            <ConnectWallet dataTestId="sign-in-button-files-list" />
+                                        </div>
                                     </div>
                                 </div>
                             </header>
-                            <div className="flex flex-1 flex-col gap-4 p-4">
+                            {/* <div className="flex flex-1 flex-col gap-4 md:px-4 px-2">
+                                <Toaster position="top-right" richColors />
+                                <Outlet />
+                            </div> */}
+                            <div className="flex-1 w-full max-w-full overflow-hidden">
                                 <Toaster position="top-right" richColors />
                                 <Outlet />
                             </div>
@@ -130,13 +156,9 @@ export default function NewShadcnLayoutWithSidebar() {
             {/* create template dialog */}
             <Dialog open={isOpenCreateTemplatePopUp} onOpenChange={(openState) => {
                 setOpenCreateTemplatePopUp(openState)
-                // if(!openState){
-                //     setSelectedFileInfo(null)
-                //     setOpenDetailsPopUp(false)
-                // }
             }} >
 
-                <DialogContent className="[&>button]:hidden !max-w-[95vw] !w-[95vw] h-[95vh] max-h-[95vh] flex flex-col">
+                <DialogContent className="[&>button]:hidden !max-w-[95vw] !w-[95vw] h-[95vh] max-h-[95vh] sm:!max-w-[95vw] sm:!w-[95vw] sm:h-[95vh] sm:max-h-[95vh] flex flex-col">
                     <div className="absolute top-4 right-4">
                         <Button
                             variant="ghost"
@@ -150,8 +172,8 @@ export default function NewShadcnLayoutWithSidebar() {
                         </Button>
                     </div>
                     <FormTemplateEditorShadcn onSave={function (): void {
-                       setOpenCreateTemplatePopUp(false)
-                    } } />
+                        setOpenCreateTemplatePopUp(false)
+                    }} />
                     {/* <DialogFooter className="mt-auto">
                         <Button variant="outline" onClick={() => {
                            setOpenCreateAquaSignPopUp(false)
@@ -163,16 +185,11 @@ export default function NewShadcnLayoutWithSidebar() {
 
 
             {/* create aqua sign  */}
-
             <Dialog open={isOpenCreateAquaSignPopUp} onOpenChange={(openState) => {
                 setOpenCreateAquaSignPopUp(openState)
-                // if(!openState){
-                //     setSelectedFileInfo(null)
-                //     setOpenDetailsPopUp(false)
-                // }
             }} >
 
-                <DialogContent className="[&>button]:hidden !max-w-[65vw] !w-[65vw] h-[65vh] max-h-[65vh] flex flex-col p-0 gap-0">
+                <DialogContent className="[&>button]:hidden sm:!max-w-[65vw] sm:!w-[65vw] sm:h-[65vh] sm:max-h-[65vh] !max-w-[95vw] !w-[95vw] h-[95vh] max-h-[95vh] flex flex-col p-0 gap-0">
                     <div className="absolute top-4 right-4">
                         <Button
                             variant="ghost"
@@ -185,15 +202,15 @@ export default function NewShadcnLayoutWithSidebar() {
                             <X className="h-4 w-4" />
                         </Button>
                     </div>
-                    <DialogHeader className="!h-[60px] !min-h-[60px] !max-h-[60px] flex justify-center px-6">
-                        {/* <DialogTitle>Create Aqua Sign</DialogTitle> */}
+                    <DialogHeader className="!h-[60px] !min-h-[60px] !max-h-[60px] flex justify-center items-start px-6">
+                        <DialogTitle >Create Aqua Sign</DialogTitle>
                     </DialogHeader>
                     <div className=' h-[calc(100%-60px)] pb-1'>
-                    <ScrollArea className="h-full">
-                        <CreateFormFromTemplate selectedTemplate={formTemplates.find((template) => template.name === "aqua_sign")!!} callBack={function (): void {
-                            setOpenCreateAquaSignPopUp(false)
-                        }} openCreateTemplatePopUp={false} />
-                    </ScrollArea>
+                        <ScrollArea className="h-full">
+                            <CreateFormFromTemplate selectedTemplate={formTemplates.find((template) => template.name === "aqua_sign")!!} callBack={function (): void {
+                                setOpenCreateAquaSignPopUp(false)
+                            }} openCreateTemplatePopUp={false} />
+                        </ScrollArea>
                     </div>
                     {/* <DialogFooter className="mt-auto">
                         <Button variant="outline" onClick={() => {
