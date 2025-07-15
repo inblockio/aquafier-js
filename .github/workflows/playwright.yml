@@ -64,7 +64,7 @@ jobs:
         run: cd e2e && npm ci
 
       - name: Install Playwright Browsers
-        run: npx playwright install --with-deps chromium
+        run:  cd e2e && npx playwright install --with-deps chromium
 
       - name: Change MetaMask install-script permissions
         run: chmod +x ./e2e/script/prepare_browser.sh
