@@ -23,6 +23,8 @@ import DomainAttestationPage from './pages/domain_attestation';
 import FilesSharedContracts from './pages/files_shared_contracts';
 import WorkflowsTablePage from './pages/wokflow/WorkflowsTablePage';
 import SharePage from './pages/share_page';
+import TermsAndConditions from './pages/legal/TermsAndConditions';
+import PrivacyPolicy from './pages/legal/PrivacyPolicy';
 
 declare global {
   interface Window {
@@ -56,6 +58,8 @@ function App() {
 
           <Route path="/" element={<TailwindMainLayout />}>
             <Route index element={<Home />} />
+            <Route path="terms-and-conditions" element={<TermsAndConditions />} />
+            <Route path="privacy-policy" element={<PrivacyPolicy />} />
           </Route>
 
           {/* All file routes using Tailwind */}
