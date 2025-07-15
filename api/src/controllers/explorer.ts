@@ -461,13 +461,13 @@ export default async function explorerController(fastify: FastifyInstance) {
             }
 
 
+           
 
             const fileBuffer: Buffer<ArrayBufferLike> = await streamToBuffer(data.file);
             // const buffer = Buffer.from([1, 2, 3, 4]);
             const uint8Array = new Uint8Array(fileBuffer);
             // let fileContent = fileBuffer.toString('utf-8');
             const fileSizeInBytes = fileBuffer.length;
-            //  // console.log(`File size: ${fileSizeInBytes} bytes`);
 
 
             let fileObjectPar: FileObject = {
@@ -475,6 +475,12 @@ export default async function explorerController(fastify: FastifyInstance) {
                 fileName: data.filename,
                 path: "./",
                 fileSize: fileSizeInBytes
+            }
+
+            if(isForm){
+                let d = fileBuffer.toString('utf-8')
+                console.log(`fileBuffer as string: ${d}`)
+                fileObjectPar.fileContent = d     
             }
 
             // Get the host from the request headers
