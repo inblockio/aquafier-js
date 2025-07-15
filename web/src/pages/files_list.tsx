@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Grid3X3, List } from "lucide-react";
 import FileListItem from "./files_list_item";
-import { getAquaTreeFileName, isWorkFlowData } from "@/utils/functions";
+import { getAquaTreeFileName } from "@/utils/functions";
 
 import { useStore } from 'zustand';
 import appStore from '../store';

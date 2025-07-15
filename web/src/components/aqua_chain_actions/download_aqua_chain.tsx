@@ -9,8 +9,8 @@ import { useState } from "react"
 import Aquafier, { AquaTree, Revision } from "aqua-js-sdk"
 import JSZip from "jszip";
 import { AquaJsonInZip, AquaNameWithHash } from "../../models/Aqua"
-import { toaster } from "@/components/ui/use-toast"
-
+// import { toaster } from "@/components/ui/use-toast"
+import { toast } from "sonner";
 
 
 
@@ -65,10 +65,14 @@ export const DownloadAquaChain = ({ file, index , children  }: { file: ApiFileIn
                     zip.file(fileObj.fileName, blob, { binary: true })
                 } catch (error) {
                     console.error(`Error downloading ${fileObj.fileName}:`, error);
-                    toaster.create({
+                    toast("Error downloading file", {
                         description: `Error downloading ${fileObj.fileName}: ${error}`,
-                        type: "error"
-                    });
+                        // type: "error"
+                      });
+                    // toaster.create({
+                    //     description: `Error downloading ${fileObj.fileName}: ${error}`,
+                    //     type: "error"
+                    // });
                 }
             } else {
                 // Check if the file is an AquaTree (likely a JSON file) or a regular text file
@@ -127,10 +131,14 @@ export const DownloadAquaChain = ({ file, index , children  }: { file: ApiFileIn
         // Clean up
         document.body.removeChild(a);
         URL.revokeObjectURL(url);
-        toaster.create({
+        // toaster.create({
+        //     description: `Aqua Chain Downloaded successfully`,
+        //     type: "success"
+        // })
+        toast("Aqua Chain Downloaded successfully", {
             description: `Aqua Chain Downloaded successfully`,
-            type: "success"
-        })
+            // type: "error"
+          });
 
 
 
@@ -167,15 +175,69 @@ export const DownloadAquaChain = ({ file, index , children  }: { file: ApiFileIn
                     URL.revokeObjectURL(url);
                 } catch (error) {
                     console.error(`Error downloading ${fileObj.fileName}:`, error);
-                    toaster.create({
+                    toast("Error downloading file", {
                         description: `Error downloading ${fileObj.fileName}: ${error}`,
-                        type: "error"
-                    });
+                        // type: "error"
+                      });
+                }
+            }else{
+                try{
+                    let blob;
+                    
+                    // Handle different types of fileContent
+                    if (fileObj.fileContent instanceof Blob || fileObj.fileContent instanceof File) {
+                        // Already a Blob or File object
+                        blob = fileObj.fileContent;
+                    } else if (fileObj.fileContent instanceof Uint8Array) {
+                        // Convert Uint8Array to Blob
+                        blob = new Blob([fileObj.fileContent]);
+                    } else if (typeof fileObj.fileContent === 'string') {
+                        // Handle plain string content
+                        blob = new Blob([fileObj.fileContent], { type: 'text/plain' });
+                    } else if (isAquaTree(fileObj.fileContent)) {
+                        // Handle AquaTree object
+                        blob = new Blob([JSON.stringify(fileObj.fileContent)], { type: 'application/json' });
+                    } else if (typeof fileObj.fileContent === 'object') {
+                        // Handle other objects (including Record<string, string>)
+                        blob = new Blob([JSON.stringify(fileObj.fileContent)], { type: 'application/json' });
+                    } else {
+                        throw new Error(`Unsupported fileContent type for ${fileObj.fileName}`);
+                    }
+                    
+                    // Create URL from blob
+                    const url = URL.createObjectURL(blob);
+
+                    // Create temporary anchor and trigger download
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = fileObj.fileName;
+                    document.body.appendChild(a);
+                    a.click();
+ 
+                    // Clean up
+                    document.body.removeChild(a);
+                    URL.revokeObjectURL(url);
+                }catch(error){
+                    console.error(`Error downloading ${fileObj.fileName}:`, error);
+                    toast("Error downloading file", {
+                        description: `Error downloading ${fileObj.fileName}: ${error}`,
+                        // type: "error"
+                      });
                 }
             }
         }
 
+        // toaster.create({
+        //     description: `Files Downloaded successfully`,
+        //     type: "success"
+        // })
+        toast("Files Downloaded successfully", {
+            description: `Files Downloaded successfully`,
+            // type: "error"
+          });
+
     }
+    
     const downloadAquaJson = async () => {
         try {
 
@@ -199,16 +261,25 @@ export const DownloadAquaChain = ({ file, index , children  }: { file: ApiFileIn
             }
 
 
-            toaster.create({
+            // toaster.create({
+            //     description: `Files downloaded successfully`,
+            //     type: "success"
+            // });
+            toast("Files downloaded successfully", {
                 description: `Files downloaded successfully`,
-                type: "success"
-            });
+                // type: "error"
+              });
             setDownloading(false)
         } catch (error) {
-            toaster.create({
+            // toaster.create({
+            //     description: `Error downloading JSON: ${error}`,
+            //     type: "error"
+            // })
+
+            toast("Error downloading JSON", {
                 description: `Error downloading JSON: ${error}`,
-                type: "error"
-            })
+                // type: "error"
+              });
 
             setDownloading(false)
         }
@@ -224,10 +295,15 @@ export const DownloadAquaChain = ({ file, index , children  }: { file: ApiFileIn
                         if (!downloading) {
                             downloadAquaJson();
                         } else {
-                            toaster.create({
-                                description: "Signing is already in progress",
-                                type: "info"
-                            })
+                            // toaster.create({
+                            //     description: "Signing is already in progress",
+                            //     type: "info"
+                            // })
+
+                            toast("Download is already in progress", {
+                                description: "Download is already in progress",
+                                // type: "error"
+                              });
                         }
                     }}>
                         {children}
@@ -239,10 +315,14 @@ export const DownloadAquaChain = ({ file, index , children  }: { file: ApiFileIn
                             if (!downloading) {
                                 downloadAquaJson();
                             } else {
-                                toaster.create({
-                                    description: "Signing is already in progress",
-                                    type: "info"
-                                })
+                                // toaster.create({
+                                //     description: "Download is already in progress",
+                                //     type: "info"
+                                // })
+                                toast("Download is already in progress", {
+                                    description: "Download is already in progress",
+                                    // type: "error"
+                                  });
                             }
                         }}
                         className={`w-full flex items-center justify-center space-x-1 bg-[#F3E8FE] text-purple-700 px-3 py-2 rounded transition-colors text-xs ${downloading ? 'opacity-60 cursor-not-allowed' : 'hover:bg-[#E8D5FE]'}`}
