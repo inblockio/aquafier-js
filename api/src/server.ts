@@ -24,10 +24,66 @@ import fetchChainController from './controllers/fetch-chain';
 import templatesController from './controllers/templates';
 import { setUpSystemTemplates } from './utils/api_utils';
 import systemController from './controllers/system';
-import webSocketController, {broadcastToAllClients} from './controllers/websocketController';
+import webSocketController from './controllers/websocketController';
 import notificationsController from './controllers/notifications';
+import { prisma } from './database/db';
 
 
+
+export async function mockNotifications(){
+    // 0x254B0D7b63342Fcb8955DB82e95C21d72EFdB6f7 - This is the receiver and the sender is 'system'
+    
+    const receiverAddress = '0x254B0D7b63342Fcb8955DB82e95C21d72EFdB6f7';
+    const systemSender = 'system';
+    
+    // Check if notifications already exist for this user
+    const existingNotifications = await prisma.notifications.findMany({
+        where: { receiver: receiverAddress }
+    });
+    
+    if (existingNotifications.length > 0) {
+        console.log(`${existingNotifications.length} notifications already exist for ${receiverAddress}`);
+        return;
+    }
+    
+    // Sample notification messages
+    const notificationMessages = [
+        'Welcome to Aqua Protocol v2! Get started by creating your first document.',
+        'Your document "Introduction to Blockchain" has been successfully signed.',
+        'New feature alert: You can now share documents with multiple users at once.',
+        'Security update: We have enhanced our encryption protocols.',
+        'Reminder: You have 3 unsigned documents waiting for your attention.',
+        'User alex.eth has shared a document with you: "DeFi Research Paper".',
+        'Your storage usage is approaching 80% of your allocated space.',
+        'Maintenance notification: System updates scheduled for tomorrow at 2 AM UTC.',
+        'Congratulations! Your document has been viewed 50 times.',
+        'New template available: Legal Contract with Smart Contract Integration.'
+    ];
+    
+    try {
+        // Create notifications with different read statuses
+        const notifications = [];
+        
+        for (let i = 0; i < notificationMessages.length; i++) {
+            const notification = await prisma.notifications.create({
+                data: {
+                    sender: systemSender,
+                    receiver: receiverAddress,
+                    content: notificationMessages[i],
+                    is_read: i < 4, // First 4 will be read, rest unread
+                    created_on: new Date(Date.now() - (i * 3600000)) // Stagger creation times
+                }
+            });
+            notifications.push(notification);
+        }
+        
+        console.log(`Created ${notifications.length} mock notifications for ${receiverAddress}`);
+    } catch (error) {
+        console.error('Error creating mock notifications:', error);
+    } finally {
+        await prisma.$disconnect();
+    }
+}
 
 
 
@@ -69,7 +125,7 @@ function buildServer() {
             'https://dev.inblock.io',
             'http://dev.inblock.io',
         ], // Allow your React app origins
-        methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+        methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
         credentials: true, // Allow cookies if needed
         allowedHeaders: ['Content-Type', 'Authorization', 'nonce', 'metamask_address']
     });

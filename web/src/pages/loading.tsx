@@ -8,7 +8,7 @@ const Loading = () => {
         const urlParams = new URLSearchParams(window.location.search)
         const reload = urlParams.get('reload')
         if (reload) {
-            window.location.href = "/"
+            window.location.href = "/app"
         }
     }, [])
 

@@ -1,24 +1,26 @@
-import { AppSidebar } from "@/components/app_sidebar"
-import { ConnectWallet } from "@/components/connect_wallet"
-import { ConnectWalletPage } from "@/components/connect_wallet_page"
-import { Separator } from "@/components/ui/separator"
+
+import { ConnectWallet } from "../components/connect_wallet"
+import { ConnectWalletPage } from "../components/connect_wallet_page"
+import { Separator } from "../components/ui/separator"
+import NotificationsBell from "../pages/notifications/NotificationsBell"
 import {
     SidebarInset,
     SidebarProvider,
     SidebarTrigger,
-} from "@/components/ui/sidebar"
-import appStore from "@/store"
-import { Bell, X } from "lucide-react"
+} from "../components/ui/sidebar"
+import appStore from "../store"
+import { X } from "lucide-react"
 import { useEffect, useState } from "react"
 import { Outlet } from "react-router-dom"
 import { ClipLoader } from "react-spinners"
 import { Toaster } from "sonner"
 import { useStore } from "zustand"
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button"
-import CreateFormFromTemplate from "@/components/aqua_forms/CreateFormFromTemplate";
-import { ScrollArea } from "@/components/ui/scroll-area"
-import FormTemplateEditorShadcn from "@/components/aqua_forms/FormTemplateEditorShadcn"
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "../components/ui/dialog";
+import { Button } from "../components/ui/button"
+import CreateFormFromTemplate from "../components/aqua_forms/CreateFormFromTemplate";
+import { ScrollArea } from "../components/ui/scroll-area"
+import FormTemplateEditorShadcn from "../components/aqua_forms/FormTemplateEditorShadcn"
+import { AppSidebar } from "../components/app_sidebar"
 
 export default function NewShadcnLayoutWithSidebar() {
     const { session, openCreateAquaSignPopUp, setOpenCreateAquaSignPopUp, openCreateTemplatePopUp, setOpenCreateTemplatePopUp, formTemplates } = useStore(appStore);
@@ -102,9 +104,7 @@ export default function NewShadcnLayoutWithSidebar() {
 
                                     {/* Desktop Navigation */}
                                     <div className="hidden md:flex items-center space-x-4 ms-auto">
-                                        <button className="p-2 text-gray-500 hover:text-gray-700">
-                                            <Bell className="w-5 h-5" />
-                                        </button>
+                                        <NotificationsBell />
                                         <Button className="bg-blue-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-blue-700">
                                             Start free trial
                                         </Button>
@@ -113,10 +113,8 @@ export default function NewShadcnLayoutWithSidebar() {
 
                                     {/* Mobile Navigation */}
                                     <div className="flex md:hidden items-center space-x-1 ms-auto">
-                                        {/* Icon-only notification button */}
-                                        <button className="p-2 text-gray-500 hover:text-gray-700">
-                                            <Bell className="w-5 h-5" />
-                                        </button>
+                                        {/* Notification bell component */}
+                                        <NotificationsBell />
 
                                         {/* Mobile dropdown menu */}
                                         {/* <DropdownMenu>
@@ -143,7 +141,7 @@ export default function NewShadcnLayoutWithSidebar() {
                                 <Toaster position="top-right" richColors />
                                 <Outlet />
                             </div> */}
-                            <div className="flex-1 w-full max-w-full overflow-hidden">
+                            <div className="flex-1 w-full max-w-full overflow-hidden px-2">
                                 <Toaster position="top-right" richColors />
                                 <Outlet />
                             </div>

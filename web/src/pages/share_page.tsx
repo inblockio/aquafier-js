@@ -9,10 +9,8 @@ import { IDrawerStatus } from '../models/AquaTreeDetails'
 import { ImportAquaChainFromChain } from '../components/dropzone_file_actions/import_aqua_tree_from_aqua_tree'
 import { toast } from 'sonner'
 
-// Shadcn UI components
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
-import { CompleteChainView } from '@/components/files_chain_details'
-
+import { Alert, AlertDescription, AlertTitle } from '../components/ui/alert'
+import { CompleteChainView } from '../components/files_chain_details'
 
 const SharePage = () => {
     const { backend_url, metamaskAddress, session } = useStore(appStore)

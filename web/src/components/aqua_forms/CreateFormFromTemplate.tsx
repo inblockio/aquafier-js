@@ -200,7 +200,7 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: { selectedTempla
                     setFiles(response.data.files);
                     toast.success("Aqua tree created successfully");
                     callBack && callBack()
-                    navigate("/")
+                    navigate("/app")
                     setModalFormErorMessae("")
                     setFormData({})
                     setSubmittingTemplateData(false);

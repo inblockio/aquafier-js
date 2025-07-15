@@ -71,36 +71,40 @@ export default function FilesList() {
 
                 {/* Responsive Table */}
                 <div className="hidden md:block"> {/* Table view for medium screens and up */}
-                    <table className="w-full border-collapse">
-                        <thead>
-                            <tr className="border-b border-gray-200">
-                                <th className="py-3 text-left text-sm font-medium text-gray-700 w-1/3">Name</th>
-                                <th className="py-3 text-left text-sm font-medium text-gray-700 w-24">Type</th>
-                                <th className="py-3 text-left text-sm font-medium text-gray-700 w-40">Uploaded At</th>
-                                <th className="py-3 text-left text-sm font-medium text-gray-700 w-24">File Size</th>
-                                <th className="py-3 text-left text-sm font-medium text-gray-700 w-1/4">Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {files.map((file, index) => {
-                                if ((showWorkFlowsOnly && file.aquaTree && isWorkFlowData(file.aquaTree, [""])?.isWorkFlow) || !showWorkFlowsOnly) {
-                                    return (
-                                        <FileListItem
-                                            showWorkFlowsOnly={showWorkFlowsOnly}
-                                            key={index}
-                                            index={index}
-                                            file={file}
-                                            systemFileInfo={systemFileInfo}
-                                            backendUrl={backend_url}
-                                            nonce={session?.nonce ?? ""}
-                                            viewMode="table"
-                                        />
-                                    );
-                                }
-                                return null;
-                            })}
-                        </tbody>
-                    </table>
+                    <div className="bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden">
+                        <div className="p-1">
+                            <table className="w-full border-collapse">
+                                <thead>
+                                    <tr className="bg-gray-50">
+                                        <th className="py-3 px-4 text-left text-sm font-medium text-gray-700 w-1/3 rounded-tl-md">Name</th>
+                                        <th className="py-3 px-4 text-left text-sm font-medium text-gray-700 w-24">Type</th>
+                                        <th className="py-3 px-4 text-left text-sm font-medium text-gray-700 w-40">Uploaded At</th>
+                                        <th className="py-3 px-4 text-left text-sm font-medium text-gray-700 w-24">File Size</th>
+                                        <th className="py-3 px-4 text-left text-sm font-medium text-gray-700 w-1/4 rounded-tr-md">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {files.map((file, index) => {
+                                        if ((showWorkFlowsOnly && file.aquaTree && isWorkFlowData(file.aquaTree, [""])?.isWorkFlow) || !showWorkFlowsOnly) {
+                                            return (
+                                                <FileListItem
+                                                    showWorkFlowsOnly={showWorkFlowsOnly}
+                                                    key={index}
+                                                    index={index}
+                                                    file={file}
+                                                    systemFileInfo={systemFileInfo}
+                                                    backendUrl={backend_url}
+                                                    nonce={session?.nonce ?? ""}
+                                                    viewMode="table"
+                                                />
+                                            );
+                                        }
+                                        return null;
+                                    })}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
                 </div>
 
                 {/* Card view for small screens */}

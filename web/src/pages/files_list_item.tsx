@@ -158,9 +158,9 @@ export default function FilesListItem({ showWorkFlowsOnly, file, index, systemFi
 
         return (
             <tr key={index} className="border-b border-gray-100 hover:bg-gray-50">
-                <td className="py-3 flex items-center space-x-3">
-                    <FileText className="w-5 h-5 text-blue-500" />
-                    <span className="font-medium">{getAquaTreeFileName(file.aquaTree!!)}</span>
+                <td className="py-3 flex items-center space-x-3 px-4">
+                    {/* <FileText className="w-5 h-5 text-blue-500" /> */}
+                    <span className="font-medium text-sm">{getAquaTreeFileName(file.aquaTree!!)}</span>
                 </td>
                 <td className="py-3 text-sm text-gray-500">{getFileCategory(getFileExtension(getAquaTreeFileName(file.aquaTree!!)))}</td>
                 <td className="py-3 text-sm text-gray-500">
