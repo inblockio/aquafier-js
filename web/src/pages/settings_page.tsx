@@ -56,7 +56,7 @@ const DeleteUserData = () => {
                 if (window.location.pathname == "/") {
                     window.location.reload();
                 } else {
-                    navigate("/")
+                    navigate("/app")
                 }
             }
 

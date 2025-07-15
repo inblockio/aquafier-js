@@ -14,7 +14,7 @@ import {
     Minimize2
 } from 'lucide-react';
 import { FileItemWrapper } from '@/types/types';
-import { checkIfFileExistInUserFiles, getAquaTreeFileName, isAquaTree, isJSONFile, isJSONKeyValueStringContent, isZipFile, readFileContent } from '@/utils/functions';
+import { checkIfFileExistInUserFiles, fetchFiles, getAquaTreeFileName, isAquaTree, isJSONFile, isJSONKeyValueStringContent, isZipFile, readFileContent } from '@/utils/functions';
 import { maxFileSizeForUpload } from '@/utils/constants';
 import axios from 'axios';
 import { ApiFileInfo } from '@/models/FileInfo';
@@ -134,6 +134,11 @@ const FilesPage = () => {
                 ));
             }
         }
+
+        // fetch all files from the api
+        const url2 = `${backend_url}/explorer_files`;
+        const files = await fetchFiles(session?.address!, url2, session?.nonce!);
+        setFiles(files)
     };
 
     const checkFileContentForUpload = async (upload: UploadStatus, index: number) => {
@@ -186,24 +191,24 @@ const FilesPage = () => {
         formData.append('account', `${metamaskAddress}`);
 
         const url = `${backend_url}/explorer_files`;
-        const response = await axios.post(url, formData, {
+        const _response = await axios.post(url, formData, {
             headers: {
                 'Content-Type': 'multipart/form-data',
                 "nonce": session?.nonce
             },
         });
 
-        const res = response.data;
-        const fileInfo: ApiFileInfo = {
-            aquaTree: res.aquaTree,
-            fileObject: [res.fileObject],
-            linkedFileObjects: [],
-            mode: "private",
-            owner: metamaskAddress ?? ""
-        };
+        // const res = response.data;
+        // const fileInfo: ApiFileInfo = {
+        //     aquaTree: res.aquaTree,
+        //     fileObject: [res.fileObject],
+        //     linkedFileObjects: [],
+        //     mode: "private",
+        //     owner: metamaskAddress ?? ""
+        // };
 
-        let newFilesData = [...files, fileInfo];
-        setFiles(newFilesData);
+        // let newFilesData = [...files, fileInfo];
+        // setFiles((prev)=>{});
     };
 
     const retryUpload = (index: number) => {

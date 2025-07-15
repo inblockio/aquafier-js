@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Grid3X3, List } from "lucide-react";
 import FileListItem from "./files_list_item";
-import { isWorkFlowData } from "@/utils/functions";
+import { getAquaTreeFileName, isWorkFlowData } from "@/utils/functions";
 
 import { useStore } from 'zustand';
 import appStore from '../store';
@@ -9,9 +9,24 @@ import appStore from '../store';
 export default function FilesList() {
 
     const [showWorkFlowsOnly, setShowWorkFlowsOnly] = useState(false);
+    const [systemAndUserWorkFlow, setSystemAndUserWorkFlow] = useState<Array<string>>([]);
     const [view, setView] = useState('list');
 
     const { files, systemFileInfo, backend_url, session } = useStore(appStore)
+
+    const fetchSystemFileInfo = (): Array<string> => {
+        const someData = systemFileInfo.map((e) => {
+            try {
+                return getAquaTreeFileName(e.aquaTree!!);
+            } catch (e) {
+                console.log("Error processing system file"); // More descriptive
+                return "";
+            }
+        });
+
+        return someData
+    }
+
 
 
     useEffect(() => {
@@ -20,11 +35,18 @@ export default function FilesList() {
             // console.log('URL ends with files_workflows');
             setShowWorkFlowsOnly(true)
         }
+        let res = fetchSystemFileInfo();
+        setSystemAndUserWorkFlow(res)
+
     }, []);
 
     useEffect(() => {
         // console.log("FilesPage mounted");
         // Check if the url ends with files_workflows
+
+        let res = fetchSystemFileInfo();
+        setSystemAndUserWorkFlow(res)
+
         if (location.pathname.endsWith('files_workflows')) {
             // Add your logic here
             // console.log('URL ends with files_workflows');
@@ -85,21 +107,23 @@ export default function FilesList() {
                                 </thead>
                                 <tbody>
                                     {files.map((file, index) => {
-                                        if ((showWorkFlowsOnly && file.aquaTree && isWorkFlowData(file.aquaTree, [""])?.isWorkFlow) || !showWorkFlowsOnly) {
-                                            return (
-                                                <FileListItem
-                                                    showWorkFlowsOnly={showWorkFlowsOnly}
-                                                    key={index}
-                                                    index={index}
-                                                    file={file}
-                                                    systemFileInfo={systemFileInfo}
-                                                    backendUrl={backend_url}
-                                                    nonce={session?.nonce ?? ""}
-                                                    viewMode="table"
-                                                />
-                                            );
-                                        }
-                                        return null;
+
+                                        return <FileListItem
+                                            showWorkFlowsOnly={showWorkFlowsOnly}
+                                            key={index}
+                                            index={index}
+                                            file={file}
+                                            systemFileInfo={systemFileInfo}
+                                            backendUrl={backend_url}
+                                            nonce={session?.nonce ?? ""}
+                                            viewMode="table"
+                                        />
+                                        // if ((showWorkFlowsOnly && file.aquaTree && isWorkFlowData(file.aquaTree, systemAndUserWorkFlow)?.isWorkFlow) || !showWorkFlowsOnly) {
+                                        //     return (
+
+                                        //     );
+                                        // }
+                                        // return null;
                                     })}
                                 </tbody>
                             </table>
