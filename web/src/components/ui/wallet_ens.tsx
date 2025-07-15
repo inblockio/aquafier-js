@@ -80,7 +80,7 @@ export const WalletEnsView = ({ walletAddress, inline = false }: WalletEnsViewDa
                     </TooltipProvider>
                 ) : (
                     <div className="flex flex-col items-start w-full gap-2">
-                        <span className="text-sm font-medium">Wallet Address :</span>
+                        {/* <span className="text-sm font-medium">Wallet Address :</span> */}
 
                         {
                             isLoading ? (
