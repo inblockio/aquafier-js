@@ -20,6 +20,7 @@ import { useStore } from "zustand";
 import axios from 'axios';
 import { ApiFileInfo } from '../../../models/FileInfo';
 import { dataURLToFile, dummyCredential, ensureDomainUrlHasSSL, estimateFileSize, fetchFiles, getAquaTreeFileName, getGenesisHash, getRandomNumber, timeStampToDateObject } from '../../../utils/functions';
+import { API_ENDPOINTS } from '../../../utils/constants';
 import Aquafier, { AquaTree, AquaTreeWrapper, FileObject, getAquaTreeFileObject } from 'aqua-js-sdk/web';
 import { SignatureData } from "../../../types/types"
 import { LuInfo, LuTrash } from 'react-icons/lu';
@@ -332,6 +333,34 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ fileData, setActiveStep, document
 
 
 
+    // Function to create a notification for contract signing
+    const createSigningNotification = async (senderAddress: string, receiverAddress: string) => {
+        try {
+            // Don't create notification if sender and receiver are the same
+            if (senderAddress === receiverAddress) {
+                return;
+            }
+            
+            const url = `${backend_url}${API_ENDPOINTS.NOTIFICATIONS}`;
+            const actualUrlToFetch = ensureDomainUrlHasSSL(url);
+            
+            await axios.post(actualUrlToFetch, {
+                receiver: receiverAddress,
+                content: `${senderAddress} has signed the shared contract`
+            }, {
+                headers: {
+                    'Content-Type': 'application/json',
+                    'nonce': session?.nonce
+                }
+            });
+            
+            console.log('Signing notification created successfully');
+        } catch (error) {
+            console.error('Error creating signing notification:', error);
+            // Don't show error to user as this is not critical functionality
+        }
+    };
+
     // Helper function to save multiple revisions to server
     const saveRevisionsToServer = async (aquaTrees: AquaTree[]) => {
 
@@ -443,11 +472,23 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ fileData, setActiveStep, document
                 metaMaskSignedAquaTree
             ]);
 
+            // Step 7: Create notification for the contract sender
+            // Get the genesis hash to find the contract sender
+            const genesisHash = getGenesisHash(selectedFileInfo!.aquaTree!);
+            if (genesisHash) {
+                const revision = selectedFileInfo!.aquaTree!.revisions[genesisHash];
+                const sender = revision['forms_sender'];
+                
+                // Only create notification if the current user is not the sender
+                if (sender && session?.address && sender !== session.address) {
+                    await createSigningNotification(session.address, sender);
+                }
+            }
 
-            // Step 7: Update UI and refresh files
+            // Step 8: Update UI and refresh files
             await updateUIAfterSuccess();
 
-            // step 8 
+            // Step 9: 
             // check if the owner of the document is a different wallet address send him the above revsions
             // send the revision to the other wallet address if possible
             await shareRevisionsToOwnerAnOtherSignersOfDocument([
@@ -1129,7 +1170,6 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ fileData, setActiveStep, document
 
             // Update mySignatureData with the fetched signatures
             setMySignatureData(apiSigntures)
-
 
             if (selectSignature) {
                 let latestObject: SignatureData | null = null;

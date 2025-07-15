@@ -33,13 +33,9 @@ export default function PdfWorkflowPage() {
 
         const signatureRevionHashes: Array<SummaryDetailsDisplayData> = []
 
-
         for (let i = 0; i < hashesToLoopPar.length; i += 3) {
-
-
             const batch = hashesToLoopPar.slice(i, i + 3);
             console.log(`Processing batch ${i / 3 + 1}:`, batch);
-
 
             let signaturePositionCount = 0
             let hashSigPosition = batch[0] ?? ""

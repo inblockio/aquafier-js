@@ -75,8 +75,6 @@ export const ContractDocumentView: React.FC<ContractDocumentViewProps> = ({ setA
                             break
                         }
                     }
-
-
                 }
 
             }
@@ -180,11 +178,6 @@ export const ContractDocumentView: React.FC<ContractDocumentViewProps> = ({ setA
 
             // const fileHash = revisionSigImage.link_file_hashes![0]!;
             // console.log(`fileHash ${fileHash}`)
-
-
-
-
-
             // get the name
             let referenceRevisin: string = revisionSigImage.link_verification_hashes![0]
             let name = "name-err"

@@ -175,6 +175,16 @@ export default async function shareController(fastify: FastifyInstance) {
             }
         });
 
+        // Create notification for recipient about the shared document
+        await prisma.notifications.create({
+            data: {
+                sender: session.address,
+                receiver: recipient,
+                content: `A new document has been shared with you by ${session.address}`,
+                is_read: false,
+                created_on: new Date()
+            }
+        });
 
         //trigger the other party to refetch explorer files
         sendToUserWebsockerAMessage(recipient, WebSocketActions.REFETCH_SHARE_CONTRACTS)
@@ -221,6 +231,20 @@ export default async function shareController(fastify: FastifyInstance) {
                     receiver: recipient
                 }
             });
+
+            // Notify the recipient of the contract update
+            await prisma.notifications.create({
+                data: {
+                    sender: session.address,
+                    receiver: recipient,
+                    content: `A shared document contract has been updated by ${session.address}`,
+                    is_read: false,
+                    created_on: new Date()
+                }
+            });
+
+            // Trigger the other party to refetch explorer files
+            sendToUserWebsockerAMessage(recipient, WebSocketActions.REFETCH_SHARE_CONTRACTS);
 
             return reply.code(200).send({ success: true, message: "Share contract updated successfully." });
         } catch (error) {

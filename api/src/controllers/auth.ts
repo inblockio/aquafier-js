@@ -186,6 +186,16 @@ export default async function authController(fastify: FastifyInstance) {
 
         settingsData = defaultData
 
+        await prisma.notifications.create({
+          data: {
+            sender: "system",
+            receiver: siweData.address!!,
+            content: "Welcome to Aqua! Get started by creating your first document or uploading a file for notarization.",
+            is_read: false,
+            created_on: new Date()
+          }
+        })
+
         await prisma.settings.create({
           data: defaultData
         })

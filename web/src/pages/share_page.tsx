@@ -105,6 +105,8 @@ const SharePage = () => {
         setDrawerStatus(_drawerStatus)
     }
 
+    console.log("fileInfo", fileInfo)
+
     return (
         <div id='replace-here' className="container w-10xl mx-auto">
             <div className="w-full py-4">
