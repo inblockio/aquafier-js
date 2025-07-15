@@ -13,7 +13,7 @@ import {
     FileText,
     Minimize2
 } from 'lucide-react';
-import { FileItemWrapper } from '@/types/types';
+import { FileItemWrapper, UploadStatus } from '@/types/types';
 import { checkIfFileExistInUserFiles, fetchFiles, getAquaTreeFileName, isAquaTree, isJSONFile, isJSONKeyValueStringContent, isZipFile, readFileContent } from '@/utils/functions';
 import { maxFileSizeForUpload } from '@/utils/constants';
 import axios from 'axios';
@@ -29,22 +29,18 @@ import { Card, CardContent } from '@/components/ui/card';
 import { IDrawerStatus } from '@/models/AquaTreeDetails';
 import { CompleteChainView } from '@/components/files_chain_details';
 import FileDropZone from '@/components/dropzone_file_actions';
+import { LuTrash2, LuUpload } from 'react-icons/lu';
+import { toast } from 'sonner';
+import { ImportAquaTree } from '@/components/dropzone_file_actions/import_aqua_tree';
+import { ImportAquaTreeZip } from '@/components/dropzone_file_actions/import_aqua_tree_zip';
+import { FormRevisionFile } from '@/components/dropzone_file_actions/form_revision';
 
-interface UploadStatus {
-    file: File;
-    status: 'pending' | 'uploading' | 'success' | 'error';
-    progress: number;
-    error?: string;
-    isJson?: boolean;
-    isZip?: boolean;
-    isJsonForm?: boolean;
-    isJsonAquaTreeData?: boolean;
-}
+
 
 const FilesPage = () => {
     const { files, setFiles, session, backend_url, selectedFileInfo, setSelectedFileInfo, setOpenFileDetailsPopUp, openFilesDetailsPopUp, setOpenCreateAquaSignPopUp, setOpenCreateTemplatePopUp } = useStore(appStore)
     const fileInputRef = React.useRef<HTMLInputElement>(null);
-    const [filesList, _setFilesList] = useState<FileItemWrapper[]>([]);
+    const [filesListForUpload, setFilesListForUpload] = useState<FileItemWrapper[]>([]);
 
     // Upload popup state
     const [uploadQueue, setUploadQueue] = useState<UploadStatus[]>([]);
@@ -67,29 +63,87 @@ const FilesPage = () => {
         }
     }, [openFilesDetailsPopUp]);
 
+
     const handleUploadClick = () => {
         fileInputRef.current?.click();
     };
 
+    const filesForUpload = async (selectedFiles: File[]) => {
+
+        let newUploads: UploadStatus[] = [];
+        for (let file of selectedFiles) {
+            let isJson = isJSONFile(file.name);
+            let isZip = isZipFile(file.name);
+            if (isJson || isZip) {
+                let isJsonForm = false;
+                let isJsonAquaTreeData = false;
+                if (isJson) {
+
+                    try {
+                        let content = await readFileContent(file);
+                        let contentStr = content as string
+                        let isForm = isJSONKeyValueStringContent(contentStr);
+                        console.log(`isForm ${isForm}`)
+                        if (isForm) {
+                            isJsonForm = true;
+                        }
+
+                        let jsonData = JSON.parse(contentStr);
+                        let isAquaTreeData = isAquaTree(jsonData);
+                        let r = typeof jsonData === 'object'
+                        let r2 = 'revisions' in jsonData
+                        let r3 = 'file_index' in jsonData
+                        console.log(`isAquaTreeData  ${isAquaTreeData} contentStr ${contentStr} r ${r} r2 ${r2} r3 ${r3}`)
+                        if (isAquaTreeData) {
+                            isJsonAquaTreeData = isAquaTreeData
+                        }
+
+
+                    } catch (error) {
+                        console.error("Error reading file content:", error);
+                    }
+                }
+                let fileItemWrapper: FileItemWrapper = {
+                    file,
+                    isJson,
+                    isZip,
+                    isLoading: false,
+                    isJsonForm: isJsonForm,
+                    isJsonAquaTreeData: isJsonAquaTreeData
+                }
+
+                console.log(`fileItemWrapper ${JSON.stringify(fileItemWrapper, null, 4)}`)
+                setFilesListForUpload(prev => [...prev, fileItemWrapper])
+
+
+            } else {
+                newUploads.push({
+                    file,
+                    status: 'pending',
+                    progress: 0,
+                    isJson: isJson,
+                    isZip: isZip
+                })
+            }
+        }
+
+        if (filesListForUpload.length > 0) {
+            // Create upload queue with initial status
+
+            setUploadQueue(newUploads);
+            setIsUploadDialogOpen(true);
+            setIsMinimized(false);
+
+            // Start processing files
+            processUploadQueue(newUploads);
+        }
+    }
+
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const selectedFiles = Array.from(e.target.files ?? []);
         if (selectedFiles.length === 0) return;
+        filesForUpload(selectedFiles)
 
-        // Create upload queue with initial status
-        const newUploads: UploadStatus[] = selectedFiles.map(file => ({
-            file,
-            status: 'pending',
-            progress: 0,
-            isJson: isJSONFile(file.name),
-            isZip: isZipFile(file.name)
-        }));
-
-        setUploadQueue(newUploads);
-        setIsUploadDialogOpen(true);
-        setIsMinimized(false);
-
-        // Start processing files
-        processUploadQueue(newUploads);
     };
 
     const processUploadQueue = async (uploads: UploadStatus[]) => {
@@ -196,18 +250,6 @@ const FilesPage = () => {
                 "nonce": session?.nonce
             },
         });
-
-        // const res = response.data;
-        // const fileInfo: ApiFileInfo = {
-        //     aquaTree: res.aquaTree,
-        //     fileObject: [res.fileObject],
-        //     linkedFileObjects: [],
-        //     mode: "private",
-        //     owner: metamaskAddress ?? ""
-        // };
-
-        // let newFilesData = [...files, fileInfo];
-        // setFiles((prev)=>{});
     };
 
     const retryUpload = (index: number) => {
@@ -263,11 +305,7 @@ const FilesPage = () => {
         return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
     };
 
-    // Legacy effect for filesList (keeping for compatibility)
-    useEffect(() => {
-        console.log("Files updated:", filesList.length);
-        // ... existing logic
-    }, [filesList]);
+
 
 
 
@@ -329,8 +367,108 @@ const FilesPage = () => {
                 </div>
             </div>
 
+            <div>
+                {/* File List */}
+                {filesListForUpload.length > 0 && (
+                    <div className="mt-6 mb-6 pb-5 pt-4 border-b border-b-gray-200">
+                        <h3 className="text-lg font-medium text-gray-900 mb-3">Files  for upload</h3>
+                        <div className="space-y-2">
+                            {filesListForUpload.map((fileData, index) => (
+                                <div key={index} className="flex items-center justify-between p-3 bg-white border ">
+                                    <div className="flex items-center">
+                                        <FileText className="w-5 h-5 text-gray-400 mr-3" />
+                                        <div>
+                                            <p className="text-sm font-medium text-gray-900">{fileData.file.name}</p>
+                                            <p className="text-xs text-gray-500">{(fileData.file.size / 1024).toFixed(1)} KB</p>
+                                        </div>
+                                    </div>
+
+                                    <div className="flex gap-2">
+
+
+                                        {
+                                            fileData.isJsonForm ? <FormRevisionFile file={fileData.file} uploadedIndexes={[
+
+                                            ]} updateUploadedIndex={(index) => {
+                                                // if (fileData.isLoading) {
+                                                //     toast.info("File is uploading, please wait");
+                                                //     return
+                                                // }
+                                                setFilesListForUpload(prev => prev.filter((_, i) => i !== index));
+                                            }} fileIndex={index} autoUpload={false} /> : null
+                                        }
+
+                                        {
+                                            fileData.isJsonAquaTreeData ? <ImportAquaTree aquaFile={fileData.file} uploadedIndexes={[
+
+                                            ]} updateUploadedIndex={(index) => {
+                                                // if (fileData.isLoading) {
+                                                //     toast.info("File is uploading, please wait");
+                                                //     return
+                                                // }
+                                                setFilesListForUpload(prev => prev.filter((_, i) => i !== index));
+                                            }} fileIndex={index} autoUpload={false} /> : null
+                                        }
+
+
+                                        {
+                                            fileData.isZip ? <ImportAquaTreeZip file={fileData.file} uploadedIndexes={[
+
+                                            ]} updateUploadedIndex={(index) => {
+                                                if (fileData.isLoading) {
+                                                    toast.info("File is uploading, please wait");
+                                                    return
+                                                }
+                                                setFilesListForUpload(prev => prev.filter((_, i) => i !== index));
+                                            }} fileIndex={index} autoUpload={false} /> : null
+                                        }
+
+                                        {fileData.isLoading ? (
+                                            <button className="flex items-center gap-2 text-white text-sm font-medium bg-gray-800 w-[100px] px-2 py-1 rounded cursor-not-allowed" disabled>
+                                                <svg className="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
+                                                </svg>
+                                                Loading
+                                            </button>
+                                        ) : (
+                                            <button data-testid="action-upload-51-button" className="flex items-center gap-1 text-white hover:text-white-700 text-sm font-medium bg-gray-800 w-[80px] px-2 py-1 rounded" onClick={() => {
+                                                // uploadFile(fileData)
+
+                                            }}>
+                                                <LuUpload />
+                                                Upload
+                                            </button>
+                                        )}
+
+
+
+                                        <button data-testid="action-upload-51-button" className="flex items-center gap-1 text-white hover:text-white-700 text-sm font-medium bg-red-600 w-[80px] px-2 py-1 rounded"
+                                            onClick={() => {
+
+                                                if (fileData.isLoading) {
+                                                    toast.info("File is uploading, please wait");
+                                                    return
+                                                }
+                                                setFilesListForUpload(prev => prev.filter((_, i) => i !== index));
+
+                                            }}
+                                        >
+                                            <LuTrash2 />
+                                            Remove
+                                        </button>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                )}
+            </div>
+
             <div className='w-full max-w-full box-border overflow-x-hidden bg-white p-6'>
-                {files.length == 0 ? <FileDropZone /> : <FilesList />}
+                {files.length == 0 ? <FileDropZone setFiles={(files: File[]) => {
+                    filesForUpload(files)
+                }} /> : <FilesList />}
             </div>
 
             <Dialog open={isSelectedFileDialogOpen} onOpenChange={(openState) => {

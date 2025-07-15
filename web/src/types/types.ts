@@ -22,6 +22,16 @@ export interface ApiFileData {
   fileData: string | ArrayBuffer
 }
 
+export interface UploadStatus {
+  file: File;
+  status: 'pending' | 'uploading' | 'success' | 'error';
+  progress: number;
+  error?: string;
+  isJson?: boolean;
+  isZip?: boolean;
+  isJsonForm?: boolean;
+  isJsonAquaTreeData?: boolean;
+}
 
 export interface SummaryDetailsDisplayData {
 
@@ -32,7 +42,7 @@ export interface SummaryDetailsDisplayData {
   walletAddress : string
 }
 
-
+export interface FileSelectEvent extends React.ChangeEvent<HTMLInputElement> { }
 export interface DropEvent extends React.DragEvent<HTMLDivElement> { }
 // interface ChangeEvent extends React.ChangeEvent<HTMLInputElement> {}
 

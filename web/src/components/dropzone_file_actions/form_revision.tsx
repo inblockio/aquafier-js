@@ -118,20 +118,20 @@ export const FormRevisionFile = ({ file, uploadedIndexes, fileIndex, updateUploa
     };
 
     return (
-        <Button 
-  data-testid="close-form-3-button" 
-  size="sm" 
-  variant="secondary" 
-  className="w-[120px] bg-yellow-100 hover:bg-yellow-200 text-yellow-800 border-yellow-300"
-  onClick={uploadFile} 
-  disabled={uploadedIndexes.includes(fileIndex) || uploaded}
->
-  {uploading ? (
-    <Loader2 className="h-4 w-4 animate-spin mr-2" />
-  ) : (
-    <LuDock className="h-4 w-4 mr-2" />
-  )}
-  Create Form.
-</Button>
+        <Button
+            data-testid="close-form-3-button"
+            size="sm"
+            variant="secondary"
+            className="w-[130px] bg-yellow-100 hover:bg-yellow-200 text-yellow-800 border-yellow-300"
+            onClick={uploadFile}
+            disabled={uploadedIndexes.includes(fileIndex) || uploaded}
+        >
+            {uploading ? (
+                <Loader2 className="h-4 w-4 animate-spin mr-2" />
+            ) : (
+                <LuDock className="h-4 w-4 mr-2" />
+            )}
+            Create Form
+        </Button>
     )
 }
