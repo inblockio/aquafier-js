@@ -146,6 +146,10 @@ const Footer = () => (
                 </div>
             </div>
             <div className="mt-8 pt-8 border-t border-orange-800 text-center text-sm">
+                <div className="flex justify-center space-x-6 mb-4">
+                    <Link to="/terms-and-conditions" className="hover:text-orange-300 transition-colors">Terms & Conditions</Link>
+                    <Link to="/privacy-policy" className="hover:text-orange-300 transition-colors">Privacy Policy</Link>
+                </div>
                 <p>&copy; {new Date().getFullYear()} Aqua Protocol. All rights reserved.</p>
             </div>
         </div>
