@@ -17,7 +17,6 @@ import { FileItemWrapper } from '@/types/types';
 import { checkIfFileExistInUserFiles, fetchFiles, getAquaTreeFileName, isAquaTree, isJSONFile, isJSONKeyValueStringContent, isZipFile, readFileContent } from '@/utils/functions';
 import { maxFileSizeForUpload } from '@/utils/constants';
 import axios from 'axios';
-import { ApiFileInfo } from '@/models/FileInfo';
 
 // /components//ui components
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -191,7 +190,7 @@ const FilesPage = () => {
         formData.append('account', `${metamaskAddress}`);
 
         const url = `${backend_url}/explorer_files`;
-        const _response = await axios.post(url, formData, {
+        await axios.post(url, formData, {
             headers: {
                 'Content-Type': 'multipart/form-data',
                 "nonce": session?.nonce

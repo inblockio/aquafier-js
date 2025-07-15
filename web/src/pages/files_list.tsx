@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Grid3X3, List } from "lucide-react";
 import FileListItem from "./files_list_item";
-import { getAquaTreeFileName, isWorkFlowData } from "@/utils/functions";
+import { getAquaTreeFileName } from "@/utils/functions";
 
 import { useStore } from 'zustand';
 import appStore from '../store';
@@ -9,23 +9,11 @@ import appStore from '../store';
 export default function FilesList() {
 
     const [showWorkFlowsOnly, setShowWorkFlowsOnly] = useState(false);
-    const [systemAndUserWorkFlow, setSystemAndUserWorkFlow] = useState<Array<string>>([]);
+
     const [view, setView] = useState('list');
 
     const { files, systemFileInfo, backend_url, session } = useStore(appStore)
 
-    const fetchSystemFileInfo = (): Array<string> => {
-        const someData = systemFileInfo.map((e) => {
-            try {
-                return getAquaTreeFileName(e.aquaTree!!);
-            } catch (e) {
-                console.log("Error processing system file"); // More descriptive
-                return "";
-            }
-        });
-
-        return someData
-    }
 
 
 
@@ -35,8 +23,6 @@ export default function FilesList() {
             // console.log('URL ends with files_workflows');
             setShowWorkFlowsOnly(true)
         }
-        let res = fetchSystemFileInfo();
-        setSystemAndUserWorkFlow(res)
 
     }, []);
 
@@ -44,8 +30,7 @@ export default function FilesList() {
         // console.log("FilesPage mounted");
         // Check if the url ends with files_workflows
 
-        let res = fetchSystemFileInfo();
-        setSystemAndUserWorkFlow(res)
+
 
         if (location.pathname.endsWith('files_workflows')) {
             // Add your logic here
@@ -106,7 +91,11 @@ export default function FilesList() {
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {files.map((file, index) => {
+                                    {files.sort((a, b) => {
+                                        const filenameA = getAquaTreeFileName(a.aquaTree!!);
+                                        const filenameB = getAquaTreeFileName(b.aquaTree!!);
+                                        return filenameA.localeCompare(filenameB);
+                                    }).map((file, index) => {
 
                                         return <FileListItem
                                             showWorkFlowsOnly={showWorkFlowsOnly}
@@ -118,12 +107,7 @@ export default function FilesList() {
                                             nonce={session?.nonce ?? ""}
                                             viewMode="table"
                                         />
-                                        // if ((showWorkFlowsOnly && file.aquaTree && isWorkFlowData(file.aquaTree, systemAndUserWorkFlow)?.isWorkFlow) || !showWorkFlowsOnly) {
-                                        //     return (
 
-                                        //     );
-                                        // }
-                                        // return null;
                                     })}
                                 </tbody>
                             </table>
@@ -133,7 +117,11 @@ export default function FilesList() {
 
                 {/* Card view for small screens */}
                 <div className="md:hidden space-y-4">
-                    {files.map((file, index) => (
+                    {files.sort((a, b) => {
+                        const filenameA = getAquaTreeFileName(a.aquaTree!!);
+                        const filenameB = getAquaTreeFileName(b.aquaTree!!);
+                        return filenameA.localeCompare(filenameB);
+                    }).map((file, index) => (
                         <div key={index} className="bg-white border border-gray-200 rounded-lg shadow-sm p-4">
                             <FileListItem
                                 showWorkFlowsOnly={showWorkFlowsOnly}
