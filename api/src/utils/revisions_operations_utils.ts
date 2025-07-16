@@ -208,6 +208,7 @@ export async function FetchRevisionInfo(hash: string, revision: Revision): Promi
             }
         });
     } else if (revision.revision_type == "form") {
+        console.log(`form where hash is ${hash}`)
         return await prisma.aquaForms.findMany({
             where: {
                 hash: hash
@@ -433,7 +434,7 @@ async function processRevisionByType(
     }
 }
 
-async function processFileRevision(revision: Revision, revisionData: AquaRevision, revisionInfo: any): Promise<AquaRevision> {
+async function processFileRevision(revision: Revision, revisionData: AquaRevision, revisionInfo: RevisionInfo): Promise<AquaRevision> {
     const hashOnly = extractHashOnly(revision.pubkey_hash);
     const updatedRevisionData = {
         ...revisionData,
@@ -469,8 +470,10 @@ async function processFileRevision(revision: Revision, revisionData: AquaRevisio
         updatedRevisionData.file_hash = fileResult.file_hash ?? "**--error--***";
     }
 
+    // console.log(`before dummy dump `)
     // Process form data if it's a form revision
     if (revision.revision_type === "form" && revisionInfo) {
+        // console.log(`dummy dump  ${JSON.stringify(revisionInfo, null, 4)}`)
         const formData = revisionInfo as AquaForms[];
         const formFields: Record<string, any> = {};
         for (const formItem of formData) {

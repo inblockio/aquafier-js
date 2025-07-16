@@ -423,7 +423,7 @@ export async function saveARevisionInAquaTree(revisionData: SaveRevisionForUser,
     if (revisionData.revision.revision_type == "form") {
         let revisioValue = Object.keys(revisionData);
         for (let formItem in revisioValue) {
-            if (formItem.startsWith("form_")) {
+            if (formItem.startsWith("forms_")) {
                 await prisma.aquaForms.create({
                     data: {
                         hash: filePubKeyHash,

@@ -480,7 +480,11 @@ export default async function explorerController(fastify: FastifyInstance) {
             if(isForm){
                 let d = fileBuffer.toString('utf-8')
                 console.log(`fileBuffer as string: ${d}`)
-                fileObjectPar.fileContent = d     
+                // let one = JSON.parse(d)
+                // console.log(`one fileBuffer as string: ${one}`)
+                // let two = JSON.stringify(one, null, 2)
+                // console.log(`two fileBuffer as string: ${two}`)
+                fileObjectPar.fileContent = d
             }
 
             // Get the host from the request headers
@@ -496,6 +500,9 @@ export default async function explorerController(fastify: FastifyInstance) {
                 enableContent,
                 enableScalar
             )
+
+            // console.log(`Aqua tree ${JSON.stringify(res, null, 4)}`)
+            // throw Error(`check aqua tree above`)
 
             if (res.isErr()) {
 
@@ -583,19 +590,24 @@ export default async function explorerController(fastify: FastifyInstance) {
                     },
                 });
 
+                // console.log(`one`)
                 // if is form add the form elements 
                 if (isForm) {
+                    // console.log(`two`)
                     let revisioValue = Object.keys(revisionData);
-                    for (let formItem in revisioValue) {
-                        if (formItem.startsWith("form_")) {
-                            await prisma.aquaForms.create({
+                    for (let formItem of revisioValue) {
+                        // console.log(`three ${formItem}`)
+                        if (formItem.startsWith("forms_")) {
+                                // console.log(`four ${formItem}`)
+                           let res=  await prisma.aquaForms.create({
                                 data: {
                                     hash: filepubkeyhash,
                                     key: formItem,
-                                    value: revisioValue[formItem],
-                                    type: typeof revisioValue[formItem]
+                                    value: revisionData[formItem],
+                                    type: typeof revisionData[formItem]
                                 }
                             });
+                            console.log(`Res ${JSON.stringify(res, null, 2)}`)
                         }
                     }
                 }
