@@ -492,7 +492,7 @@ export function readFileAsText(file: File): Promise<string> {
             reject(error);
         };
 
-        reader.readAsText(file);
+        reader.readAsText(file, "utf-8");
     });
 }
 
