@@ -402,6 +402,18 @@ const FilesPage = () => {
                                             }} fileIndex={index} autoUpload={false} /> : null
                                         }
 
+                                        {/* {
+                                            fileData.isJson ? <FormRevisionFile file={fileData.file} uploadedIndexes={[
+
+                                            ]} updateUploadedIndex={(index) => {
+                                                // if (fileData.isLoading) {
+                                                //     toast.info("File is uploading, please wait");
+                                                //     return
+                                                // }
+                                                setFilesListForUpload(prev => prev.filter((_, i) => i !== index));
+                                            }} fileIndex={index} autoUpload={false} /> : null
+                                        } */}
+
                                         {
                                             fileData.isJsonAquaTreeData ? <ImportAquaTree aquaFile={fileData.file} uploadedIndexes={[
 

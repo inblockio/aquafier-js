@@ -1419,27 +1419,39 @@ export const isJSONFile = (fileName: string) => {
  * @param fileContent The content of the file to check
  * @returns boolean indicating if the content is a valid JSON with key-string/value-string structure
  */
+// export const isJSONKeyValueStringContent = (fileContent: string): boolean => {
+//     try {
+//         // First check if it's valid JSON
+//         const parsedContent = JSON.parse(fileContent);
+
+//         // Check if it's an object (not an array or primitive)
+//         if (typeof parsedContent !== 'object' || parsedContent === null || Array.isArray(parsedContent)) {
+//             return false;
+//         }
+//         let isKeyValueString = true
+//         let values = Object.values(parsedContent)
+//         for (let item of values) {
+
+//             if (typeof item == 'object' || item === null || Array.isArray(parsedContent)) {
+//                 isKeyValueString = false
+//             }
+//         }
+
+//         // Check if all keys map to string values
+//         // return Object.entries(parsedContent).every(([_, value]) => typeof value === 'string');
+//         return isKeyValueString
+//     } catch (error) {
+//         // If JSON.parse throws an error, it's not valid JSON
+//         return false;
+//     }
+// };
+
+// A simpler check if json parse succeeds we know its json
 export const isJSONKeyValueStringContent = (fileContent: string): boolean => {
     try {
         // First check if it's valid JSON
-        const parsedContent = JSON.parse(fileContent);
-
-        // Check if it's an object (not an array or primitive)
-        if (typeof parsedContent !== 'object' || parsedContent === null || Array.isArray(parsedContent)) {
-            return false;
-        }
-        let isKeyValueString = true
-        let values = Object.values(parsedContent)
-        for (let item of values) {
-
-            if (typeof item == 'object' || item === null || Array.isArray(parsedContent)) {
-                isKeyValueString = false
-            }
-        }
-
-        // Check if all keys map to string values
-        // return Object.entries(parsedContent).every(([_, value]) => typeof value === 'string');
-        return isKeyValueString
+        JSON.parse(fileContent);
+        return true
     } catch (error) {
         // If JSON.parse throws an error, it's not valid JSON
         return false;

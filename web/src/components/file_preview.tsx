@@ -2,7 +2,7 @@ import { FileObject } from "aqua-js-sdk";
 import { useEffect, useRef, useState } from "react";
 import { useStore } from "zustand";
 import appStore from "../store";
-import { ensureDomainUrlHasSSL, handleLoadFromUrl } from "../utils/functions";
+import { ensureDomainUrlHasSSL, handleLoadFromUrl, isJSONKeyValueStringContent } from "../utils/functions";
 import  {FilePreviewAquaTreeFromTemplate} from "./file_preview_aqua_tree_from_template"
 import { EasyPDFRenderer } from "@/pages/wokflow/ContractDocument/signer/SignerPage";
 // import { EasyPDFRenderer } from "../pages/files/wokflow/ContractDocument/signer/SignerPage";
@@ -348,9 +348,9 @@ const FilePreview: React.FC<IFilePreview> = ({ fileInfo }) => {
         fileType === "application/json" ||
         fileType === "application/xml") {
         let newTxtContent = textContent;
+        let isJson = isJSONKeyValueStringContent(newTxtContent)
 
-        if (fileType === "application/json") {
-            // let isForm = isJSONKeyValueStringContent(newTxtContent)
+        if (fileType === "application/json" || isJson) {
             // console.log(`is this ${newTxtContent} is form ${isForm}-----`)
             // if (isForm) {
                 return <div className="p-5 m-5">
