@@ -127,7 +127,7 @@ const FilesPage = () => {
             }
         }
 
-        if (filesListForUpload.length > 0) {
+        if (newUploads.length > 0) {
             // Create upload queue with initial status
 
             setUploadQueue(newUploads);
@@ -467,6 +467,7 @@ const FilesPage = () => {
 
             <div className='w-full max-w-full box-border overflow-x-hidden bg-white p-6'>
                 {files.length == 0 ? <FileDropZone setFiles={(files: File[]) => {
+                    console.log(`call back here `)
                     filesForUpload(files)
                 }} /> : <FilesList />}
             </div>
