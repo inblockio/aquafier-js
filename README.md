@@ -32,4 +32,4 @@ At the root of the project
 - `npx playwright test -g "single user aqua-sign" --headed --retries 3` to run specific tests in headed mode
 
 ## Windows deeveloment
-- `git config core.filemode false` to prevent git from tracking file permissions(bash scripts file permissions change in windows)
+- `git config core.filemode false` to prevent git from tracking file permissions(bash scripts file permissions change in windows) 
