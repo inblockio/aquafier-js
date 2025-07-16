@@ -2,7 +2,7 @@ import React, { useState } from 'react'
 import { FormField, FormTemplate } from './types'
 import { useStore } from 'zustand'
 import appStore from '@/store'
-import { isValidEthereumAddress, getRandomNumber, formatDate, estimateFileSize, dummyCredential, fetchSystemFiles } from '@/utils/functions'
+import { isValidEthereumAddress, getRandomNumber, formatDate, estimateFileSize, dummyCredential, fetchSystemFiles, getGenesisHash } from '@/utils/functions'
 import Aquafier, { AquaTree, FileObject, getAquaTreeFileName, AquaTreeWrapper, getAquaTreeFileObject } from 'aqua-js-sdk'
 import axios from 'axios'
 import { generateNonce } from 'siwe'
@@ -96,9 +96,10 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: { selectedTempla
                 // let genesisHash = getGenesisHash(aquaTree)
 
                 let allHashes = Object.keys(aquaTree.revisions);
-                let genesisHash = allHashes[0];
+                let genesisHash = getGenesisHash(aquaTree)?? "" ;//allHashes[0];
                 let latestHash = allHashes[allHashes.length - 1]
 
+                let name = aquaTree.file_index[genesisHash] ?? "workflow file"
                 let url = `${backend_url}/share_data`;
                 let method = "POST"
                 let data = {
@@ -106,7 +107,8 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: { selectedTempla
                     "genesis_hash": genesisHash,
                     "hash": unique_identifier,
                     "recipient": recipient,
-                    "option": "latest"
+                    "option": "latest",
+                      "file_name": name
                 }
 
 
