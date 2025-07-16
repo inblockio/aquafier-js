@@ -4,7 +4,7 @@ import { useStore } from 'zustand'
 import appStore from '../store'
 import axios from 'axios'
 import { ApiFileInfo } from '../models/FileInfo'
-import { ClipLoader } from "react-spinners";
+// import { ClipLoader } from "react-spinners";
 import { IDrawerStatus } from '../models/AquaTreeDetails'
 import { ImportAquaChainFromChain } from '../components/dropzone_file_actions/import_aqua_tree_from_aqua_tree'
 import { toast } from 'sonner'
@@ -16,7 +16,7 @@ const SharePage = () => {
     const { backend_url, metamaskAddress, session } = useStore(appStore)
     const [fileInfo, setFileInfo] = useState<ApiFileInfo | null>(null)
     const [contractData, setContractData] = useState<any | null>(null)
-    const [loading, setLoading] = useState(false)
+    const [_loading, setLoading] = useState(false)
     const [hasError, setHasError] = useState<string | null>(null);
     const [drawerStatus, setDrawerStatus] = useState<IDrawerStatus | null>(null)
 
