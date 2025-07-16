@@ -82,43 +82,45 @@ export default function FilesListItem({ showWorkFlowsOnly, file, index, systemFi
     const workFileActions = () => {
         return <>
             {/* Grid layout for action buttons with equal widths */}
-            <div className="grid grid-cols-3 md:grid-cols-5 gap-2 w-full">
+            <div className="flex flex-wrap gap-1">
                 {/* Details Button */}
+                <div className="w-[100px]">
                 <button onClick={() => {
                     setOpenFileDetailsPopUp(true)
                     setSelectedFileInfo(file)
-                }} className="flex items-center justify-center space-x-1 bg-green-100 text-green-700 px-2 py-2 rounded hover:bg-green-200 transition-colors text-xs w-full">
+                }} className="w-full flex items-center justify-center space-x-1 bg-green-100 text-green-700 px-2 py-2 rounded hover:bg-green-200 transition-colors text-xs">
                     <LuEye className="w-4 h-4" />
                     <span>Details</span>
                 </button>
+                </div>
 
                 {/* Sign Button */}
-                <div className="w-full">
+                <div className="w-[100px]">
                     <SignAquaChain apiFileInfo={file} backendUrl={backendUrl} nonce={nonce} revision="" index={index} />
                 </div>
 
                 {/* Witness Button */}
-                <div className="w-full">
+                <div className="w-[100px]">
                     <WitnessAquaChain apiFileInfo={file} backendUrl={backendUrl} nonce={nonce} revision="" index={index} />
                 </div>
 
                 {/* Link Button */}
-                <div className="w-full">
+                <div className="w-[100px]">
                     <LinkButton item={file} nonce={nonce} index={index} />
                 </div>
 
                 {/* Share Button */}
-                <div className="w-full">
+                <div className="w-[100px]">
                     <ShareButton item={file} nonce={nonce} index={index}/>
                 </div>
 
                 {/* Delete Button */}
-                <div className="w-full">
+                <div className="w-[100px]">
                     <DeleteAquaChain apiFileInfo={file} backendUrl={backendUrl} nonce={nonce} revision="" index={index} />
                 </div>
 
                 {/* Download Button */}
-                <div className="w-full">
+                <div className="w-[100px]">
                     <DownloadAquaChain file={file} index={index} />
                 </div>
             </div>
@@ -131,16 +133,24 @@ export default function FilesListItem({ showWorkFlowsOnly, file, index, systemFi
     }
     const workFlowActions = () => {
         return <>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-2 w-full">
-                <OpenWorkflowButton item={file} nonce={nonce} index={index}/>
+            <div className="flex flex-wrap gap-1">
+                <div className="w-[202px]">
+                    <OpenWorkflowButton item={file} nonce={nonce} index={index}/>
+                </div>
 
-                <ShareButton item={file} nonce={nonce} index={index} />
+                <div className="w-[100px]">
+                    <ShareButton item={file} nonce={nonce} index={index} />
+                </div>
 
                 {/* Delete Button */}
-                <DeleteAquaChain apiFileInfo={file} backendUrl={backendUrl} nonce={nonce} revision="" index={index} />
+                <div className="w-[100px]">
+                    <DeleteAquaChain apiFileInfo={file} backendUrl={backendUrl} nonce={nonce} revision="" index={index} />
+                </div>
 
                 {/* Download Button - Smaller width */}
-                <DownloadAquaChain file={file} index={index}/>
+                <div className="w-[100px]">
+                    <DownloadAquaChain file={file} index={index}/>
+                </div>
             </div>
 
         </>

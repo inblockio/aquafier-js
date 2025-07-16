@@ -23,7 +23,7 @@ export const OpenWorkflowButton = ({ item, children, index }: IShareButton) => {
                         {children}
                     </div>
                 ) : (
-                    <Button data-testid={"open-workflow-button-"+index} className="cursor-pointer rounded-sm bg-cyan-500/10 text-cyan-600 text-xs hover:bg-cyan-500/20 break-words break-all overflow-hidden" onClick={(e) => {
+                    <Button data-testid={"open-workflow-button-"+index} className="w-full cursor-pointer rounded-sm bg-cyan-500/10 text-cyan-600 text-xs hover:bg-cyan-500/20 break-words break-all overflow-hidden" onClick={(e) => {
                         e.preventDefault();
                         setSelectedFileInfo(item)
                         navigate("/app/pdf/workflow")

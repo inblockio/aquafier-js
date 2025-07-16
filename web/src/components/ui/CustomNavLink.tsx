@@ -9,6 +9,7 @@ const CustomNavLink = ({ item, index, callBack }: { item: any, index: number, ca
         <RouterLink
             key={index}
             to={item.id}
+            data-testid={"nav-link-"+index}
             className={`flex items-center space-x-3 px-3 py-3 rounded-md text-sm ${match
                 ? `text-gray-900 font-medium bg-orange-100/80 border-l-3 border-orange-500`   // Subtle active state
                 : 'text-gray-900 hover:bg-orange-100/80'          // Default state

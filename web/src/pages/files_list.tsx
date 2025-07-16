@@ -87,7 +87,7 @@ export default function FilesList() {
                                         <th className="py-3 px-4 text-left text-sm font-medium text-gray-700 w-24">Type</th>
                                         <th className="py-3 px-4 text-left text-sm font-medium text-gray-700 w-40">Uploaded At</th>
                                         <th className="py-3 px-4 text-left text-sm font-medium text-gray-700 w-24">File Size</th>
-                                        <th className="py-3 px-4 text-left text-sm font-medium text-gray-700 w-1/4 rounded-tr-md">Actions</th>
+                                        <th className="min-w-[370px] py-3 px-4 text-left text-sm font-medium text-gray-700 w-1/4 rounded-tr-md">Actions</th>
                                     </tr>
                                 </thead>
                                 <tbody>
