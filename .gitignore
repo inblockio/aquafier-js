@@ -12,3 +12,4 @@ android
 /playwright/.cache/
 /e2e/metamask-extension/
 /results.xml
+/.idea/
