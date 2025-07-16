@@ -1,27 +1,17 @@
 import { useState } from "react";
-// import { Button } from "./chakra-ui/button";
-// import { DialogBody, DialogCloseTrigger, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "./chakra-ui/dialog";
-// import { Center, Dialog, Text, VStack } from "@chakra-ui/react";
 import { LuCopy } from "react-icons/lu";
-// import ReactLoading from "react-loading";
-import { fetchFiles, generateAvatar,  setCookie } from "../utils/functions";
+import { fetchFiles, generateAvatar, setCookie } from "../utils/functions";
 import { SiweMessage, generateNonce } from "siwe";
 import { SESSION_COOKIE_NAME } from "../utils/constants";
 import axios from "axios";
 import { useStore } from "zustand";
 import appStore from "../store";
 import { BrowserProvider, ethers } from "ethers";
-
-// import { Button } from "./components//ui/button";
-// import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from ".//components//ui/dialog";
-// import { Avatar, AvatarFallback, AvatarImage } from ".//components//ui/avatar";
 import { toast } from "sonner";
 import { Button } from "./ui/button";
 import { Alert, AlertDescription } from "./ui/alert";
-// import { Alert, AlertDescription } from ".//components//ui/alert";
 
 export const CustomCopyButton = ({ value }: { value: string }) => {
-  // const clipboard = useClipboard({ value: value })
   return (
     <Button data-testid="custom-copy-button" variant="default" size="sm" onClick={() => navigator.clipboard.writeText(value)} className="flex items-center gap-2 rounded-md">
       {"Copy Address"}
@@ -30,21 +20,16 @@ export const CustomCopyButton = ({ value }: { value: string }) => {
   )
 }
 
-
-
-export const ConnectWalletPage = ( ) => {
+export const ConnectWalletPage = () => {
   const { setMetamaskAddress, session, setFiles, setAvatar, setUserProfile, backend_url, setSession } = useStore(appStore);
 
-  const [isConnecting, _setIsConnecting] = useState(false);
+  const [isConnecting, setIsConnecting] = useState(false);
   const [_isOpen, setIsOpen] = useState(false);
   const [_loading, setLoading] = useState(false);
   const [_connectionState, setConnectionState] = useState<"idle" | "connecting" | "success" | "error">("idle");
-  const [_message, setMessage] = useState<string | null>(null);
-  // const [avatar, setAvatar] = useState("")
+  const [_message, _setMessage] = useState<string | null>(null);
   const [_progress, setProgress] = useState(0);
-  const [error, _setError] = useState('');
-
-  // const _iconSize = "120px";
+  const [error, setError] = useState('');
 
   const resetState = () => {
     setConnectionState("idle");
@@ -52,13 +37,10 @@ export const ConnectWalletPage = ( ) => {
   };
 
   function createSiweMessage(address: string, statement: string) {
-    // const scheme = window.location.protocol.slice(0, -1);
     const domain = window.location.host;
     const origin = window.location.origin;
     const expiry = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
     const message = new SiweMessage({
-      // Setting scheme is giving out lots of headaches
-      // scheme: scheme,
       domain,
       address,
       statement,
@@ -72,161 +54,181 @@ export const ConnectWalletPage = ( ) => {
     return message.prepareMessage();
   }
 
+  // Improved mobile detection
+  const isMobile = () => {
+    return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || 
+           window.innerWidth <= 768;
+  };
+
+  // Better MetaMask detection for mobile
+  const isMetaMaskInstalled = () => {
+    const { ethereum } = window as any;
+    return !!(ethereum && ethereum.isMetaMask);
+  };
+
+  // Check if we're in MetaMask's in-app browser
+  const isMetaMaskBrowser = () => {
+    const { ethereum } = window as any;
+    return !!(ethereum && ethereum.isMetaMask && ethereum.selectedAddress);
+  };
+
+  const handleMobileConnection = async () => {
+    const currentUrl = window.location.href;
+    
+    // Try multiple approaches for mobile connection
+    const deepLinkUrls = [
+      `https://metamask.app.link/dapp/${window.location.host}${window.location.pathname}`,
+      `metamask://dapp/${window.location.host}${window.location.pathname}`,
+      `https://metamask.app.link/dapp/${currentUrl.replace(/^https?:\/\//, '')}`
+    ];
+
+    // First, try to detect if MetaMask mobile app is installed
+    // let appInstalled = false;
+    
+    try {
+      // Try to open MetaMask app
+      const link = document.createElement('a');
+      link.href = deepLinkUrls[1]; // metamask:// protocol
+      link.click();
+      
+      // Wait a bit to see if the app opens
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      
+      // If we're still here, try the https deep link
+      window.location.href = deepLinkUrls[0];
+      
+    } catch (e) {
+      console.error("Deep link failed:", e);
+      // Fallback to download page
+      toast("MetaMask not found. Redirecting to download page.");
+      window.open("https://metamask.io/download/", "_blank");
+    }
+  };
+
   const signAndConnect = async () => {
     console.log("Connecting to wallet");
+    setIsConnecting(true);
+    setError('');
 
-    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-
-    // Function to check if MetaMask is installed
-    const isMetaMaskInstalled = () => !!window.ethereum;
-
-    if (isMetaMaskInstalled()) {
-      setLoading(true);
-      setConnectionState("connecting");
-      const provider = new BrowserProvider(window.ethereum!);
-
-      try {
-        // Request connection
-        await window.ethereum!.request({ method: "eth_requestAccounts" });
-        const signer = await provider.getSigner();
-
-        // Generate SIWE message
-        const domain = window.location.host;
-        const message = createSiweMessage(signer.address, "Sign in with Ethereum to the app.");
-        const signature = await signer.signMessage(message);
-        // console.log("--Signature", signature)
-        // console.log("-- Adress", signer.address)
-        // Send session request
-        const response = await axios.post(`${backend_url}/session`, {
-          message,
-          signature,
-          domain
-        });
-
-        if (response.status === 200 || response.status === 201) {
-          const responseData = response.data;
-          const walletAddress = ethers.getAddress(responseData?.session?.address);
-          setMetamaskAddress(walletAddress);
-          setAvatar(generateAvatar(walletAddress));
-
-          setCookie(SESSION_COOKIE_NAME, `${responseData.session.nonce}`,
-            new Date(responseData?.session?.expiration_time));
-
-          setConnectionState("success");
-          setUserProfile({ ...response.data.user_settings });
-          setSession({ ...response.data.session });
-
-          const files = await fetchFiles(walletAddress, `${backend_url}/explorer_files`, responseData.session.nonce);
-          setFiles(files);
+    try {
+      // Mobile handling
+      if (isMobile()) {
+        if (!isMetaMaskInstalled()) {
+          await handleMobileConnection();
+          return;
         }
+        
+        // If MetaMask is installed on mobile, try to connect
+        if (isMetaMaskBrowser()) {
+          // We're in MetaMask's in-app browser, proceed normally
+          await connectWithMetaMask();
+        } else {
+          // MetaMask is installed but we're in external browser
+          const shouldOpenInApp = window.confirm(
+            "For the best experience, please open this page in MetaMask's built-in browser. Would you like to do that now?"
+          );
+          
+          if (shouldOpenInApp) {
+            await handleMobileConnection();
+            return;
+          } else {
+            // User wants to continue in current browser
+            await connectWithMetaMask();
+          }
+        }
+      } else {
+        // Desktop handling
+        if (!isMetaMaskInstalled()) {
+          toast("MetaMask is not installed. Please install it to connect.");
+          window.open("https://metamask.io/download/", "_blank");
+          return;
+        }
+        await connectWithMetaMask();
+      }
+    } catch (error: any) {
+      console.error("Connection error:", error);
+      setError(error.message || "Connection failed");
+      toast(error.message || "Connection failed");
+    } finally {
+      setIsConnecting(false);
+    }
+  };
 
-        setLoading(false);
-        setMessage(null);
-        toast("Sign In successful", {
-          description: "Sign In successful",
-        });
+  const connectWithMetaMask = async () => {
+    setLoading(true);
+    setConnectionState("connecting");
+    
+    const { ethereum } = window as any;
+    const provider = new BrowserProvider(ethereum);
+
+    try {
+      // Request account access
+      const accounts = await ethereum.request({ 
+        method: "eth_requestAccounts" 
+      });
+      
+      if (!accounts || accounts.length === 0) {
+        throw new Error("No accounts found");
+      }
+
+      const signer = await provider.getSigner();
+      const address = await signer.getAddress();
+
+      // Generate SIWE message
+      const message = createSiweMessage(address, "Sign in with Ethereum to the app.");
+      const signature = await signer.signMessage(message);
+
+      // Send session request
+      const response = await axios.post(`${backend_url}/session`, {
+        message,
+        signature,
+        domain: window.location.host
+      });
+
+      if (response.status === 200 || response.status === 201) {
+        const responseData = response.data;
+        const walletAddress = ethers.getAddress(responseData?.session?.address);
+        
+        setMetamaskAddress(walletAddress);
+        setAvatar(generateAvatar(walletAddress));
+        
+        setCookie(SESSION_COOKIE_NAME, `${responseData.session.nonce}`,
+          new Date(responseData?.session?.expiration_time));
+
+        setConnectionState("success");
+        setUserProfile({ ...response.data.user_settings });
+        setSession({ ...response.data.session });
+
+        const files = await fetchFiles(walletAddress, `${backend_url}/explorer_files`, responseData.session.nonce);
+        setFiles(files);
+
+        toast("Sign In successful");
 
         setTimeout(() => {
           setIsOpen(false);
           resetState();
-          setLoading(false);
-          setMessage(null);
         }, 2000);
-      } catch (error: any) {
-        console.error("Error connecting:", error);
-        setConnectionState("error");
-        setLoading(false);
-        setMessage(error.toString().includes("4001") ?
-          "You have rejected signing the message." :
-          "An error occurred while connecting.");
-        toast(error.toString().includes("4001") ?
-          "You have rejected signing the message." :
-          "An error occurred while connecting.");
       }
-    } else {
-      // Handle mobile deep linking if MetaMask is not installed
-      if (isMobile) {
-        const currentDomain = window.location.host;
-        const currentPath = window.location.pathname;
-
-        const metamaskDeepLink = `https://metamask.app.link/dapp/${currentDomain}${currentPath}`;
-        const metamaskAppLink = `metamask://dapp/${currentDomain}${currentPath}`;
-
-        try {
-          // Open MetaMask deep link in a new tab
-          window.open(metamaskDeepLink, "_self");
-
-          // If MetaMask doesn't open, fall back to alternative link
-          setTimeout(() => {
-            window.open(metamaskAppLink, "_self");
-
-            // If still no response, redirect to MetaMask download page
-            setTimeout(() => {
-              if (!isMetaMaskInstalled()) {
-                toast("MetaMask is not installed. Redirecting to download page.");
-                window.location.href = "https://metamask.io/download/";
-              }
-            }, 2000);
-          }, 1000);
-        } catch (e) {
-          console.error("Deep link error:", e);
-          toast("Failed to open MetaMask. You may need to install it first.");
-          window.location.href = "https://metamask.io/download/";
-        }
-      } else {
-        toast("MetaMask is not installed. Please install it to connect.");
+    } catch (error: any) {
+      console.error("MetaMask connection error:", error);
+      
+      let errorMessage = "An error occurred while connecting.";
+      
+      if (error.code === 4001) {
+        errorMessage = "You rejected the connection request.";
+      } else if (error.code === -32002) {
+        errorMessage = "MetaMask is already processing a request. Please check MetaMask.";
+      } else if (error.message?.includes("User rejected")) {
+        errorMessage = "You rejected signing the message.";
       }
+      
+      setConnectionState("error");
+      setError(errorMessage);
+      toast(errorMessage);
+    } finally {
+      setLoading(false);
     }
   };
-
-
-  // const signOut = () => {
-  //   setLoading(true);
-  //   setCookie(SESSION_COOKIE_NAME, "", new Date("1970-01-01T00:00:00Z"));
-  //   setMetamaskAddress(null);
-  //   setAvatar(undefined);
-  //   setLoading(false);
-  //   setIsOpen(false);
-  //   toast("Signed out successfully");
-  // };
-
-  // const _signOutFromSiweSession = async () => {
-  //   setLoading(true);
-  //   try {
-  //     // const formData = new URLSearchParams();
-  //     const nonce = getCookie("pkc_nonce");
-  //     // formData.append("nonce", nonce);
-
-  //     const url = `${backend_url}/session`;
-  //     //  console.log("url is ", url);
-  //     const response = await axios.delete(url, {
-  //       params: {
-  //         nonce
-  //       }
-  //     });
-
-  //     if (response.status === 200) {
-  //       signOut();
-  //       setMetamaskAddress(null);
-  //       setAvatar(undefined);
-  //       setSession(null)
-  //       setFiles([]);
-  //       // disConnectWebsocket()
-  //     }
-  //   } catch (error: any) {
-  //     console.log("error", error)
-  //     // if (error?.response?.status === 404 || error?.response?.status === 401) {
-  //     setMetamaskAddress(null);
-  //     setAvatar(undefined);
-  //     setSession(null)
-  //     setFiles([]);
-  //     // }
-  //   }
-  //   setLoading(false);
-  //   setIsOpen(false);
-  //   toast("Signed out successfully");
-  // };
-
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center p-4">
@@ -253,7 +255,6 @@ export const ConnectWalletPage = ( ) => {
           </Alert>
         )}
 
-
         <button
           onClick={() => {
             setIsOpen(true);
@@ -279,28 +280,6 @@ export const ConnectWalletPage = ( ) => {
           )}
         </button>
 
-        {/* {account ? (
-          <div className="text-center">
-            <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-4">
-              <p className="text-sm text-green-700 font-medium">Connected!</p>
-              <p className="text-xs text-green-600 mt-1 break-all">
-                {account}
-              </p>
-            </div>
-            <button
-              onClick={() => {
-                setAccount('');
-                setError('');
-              }}
-              className="text-sm text-gray-500 hover:text-gray-700 transition-colors"
-            >
-              Disconnect
-            </button>
-          </div>
-        ) : (
-          
-        )} */}
-
         <div className="mt-6 text-center">
           <p className="text-xs text-gray-500">
             By connecting, you agree to our Terms of Service and Privacy Policy
@@ -309,7 +288,4 @@ export const ConnectWalletPage = ( ) => {
       </div>
     </div>
   );
-
- 
 }
-

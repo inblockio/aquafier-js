@@ -72,6 +72,7 @@ const FilesPage = () => {
 
         let newUploads: UploadStatus[] = [];
         for (let file of selectedFiles) {
+            console.log(`Files for  upload ${file.name} .....`)
             let isJson = isJSONFile(file.name);
             let isZip = isZipFile(file.name);
             if (isJson || isZip) {
@@ -141,7 +142,10 @@ const FilesPage = () => {
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const selectedFiles = Array.from(e.target.files ?? []);
-        if (selectedFiles.length === 0) return;
+        if (selectedFiles.length === 0) {
+            console.log(`handleFileChange is zero `)
+            return;
+        }
         filesForUpload(selectedFiles)
 
     };
