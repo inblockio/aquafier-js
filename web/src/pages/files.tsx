@@ -50,26 +50,26 @@ const FilesPage = () => {
     const [_drawerStatus, setDrawerStatus] = useState<IDrawerStatus | null>(null)
     const [isSelectedFileDialogOpen, setIsSelectedFileDialogOpen] = useState(false);
 
-
-
+    // Helper function to clear file input
+    const clearFileInput = () => {
+        if (fileInputRef.current) {
+            fileInputRef.current.value = '';
+        }
+    };
 
     useEffect(() => {
-
         if (openFilesDetailsPopUp) {
             setIsSelectedFileDialogOpen(true)
         } else {
             setIsSelectedFileDialogOpen(false)
-
         }
     }, [openFilesDetailsPopUp]);
-
 
     const handleUploadClick = () => {
         fileInputRef.current?.click();
     };
 
     const filesForUpload = async (selectedFiles: File[]) => {
-
         let newUploads: UploadStatus[] = [];
         for (let file of selectedFiles) {
             console.log(`Files for  upload ${file.name} .....`)
@@ -79,7 +79,6 @@ const FilesPage = () => {
                 let isJsonForm = false;
                 let isJsonAquaTreeData = false;
                 if (isJson) {
-
                     try {
                         let content = await readFileContent(file);
                         let contentStr = content as string
@@ -98,8 +97,6 @@ const FilesPage = () => {
                         if (isAquaTreeData) {
                             isJsonAquaTreeData = isAquaTreeData
                         }
-
-
                     } catch (error) {
                         console.error("Error reading file content:", error);
                     }
@@ -115,8 +112,6 @@ const FilesPage = () => {
 
                 console.log(`fileItemWrapper ${JSON.stringify(fileItemWrapper, null, 4)}`)
                 setFilesListForUpload(prev => [...prev, fileItemWrapper])
-
-
             } else {
                 newUploads.push({
                     file,
@@ -130,7 +125,6 @@ const FilesPage = () => {
 
         if (newUploads.length > 0) {
             // Create upload queue with initial status
-
             setUploadQueue(newUploads);
             setIsUploadDialogOpen(true);
             setIsMinimized(false);
@@ -147,7 +141,6 @@ const FilesPage = () => {
             return;
         }
         filesForUpload(selectedFiles)
-
     };
 
     const processUploadQueue = async (uploads: UploadStatus[]) => {
@@ -309,10 +302,6 @@ const FilesPage = () => {
         return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
     };
 
-
-
-
-
     return (
         <div className="w-full max-w-full box-border overflow-x-hidden"    >
             {/* Action Bar */}
@@ -355,18 +344,6 @@ const FilesPage = () => {
                             <FolderPlus className="w-4 h-4" />
                             <span>Create Template</span>
                         </Button>
-                        {/* <Button className="flex items-center gap-1 sm:gap-2 text-gray-700 px-2 sm:px-4 py-1.5 sm:py-2.5 rounded-md text-xs sm:text-sm font-medium bg-white border border-gray-200 hover:bg-gray-50 transition-colors cursor-pointer whitespace-nowrap shadow-sm">
-                            <Download className="w-4 h-4" />
-                            <span>Get the app</span>
-                        </Button>
-                        <Button className="flex items-center gap-1 sm:gap-2 text-gray-700 px-2 sm:px-4 py-1.5 sm:py-2.5 rounded-md text-xs sm:text-sm font-medium bg-white border border-gray-200 hover:bg-gray-50 transition-colors cursor-pointer whitespace-nowrap shadow-sm">
-                            <Copy className="w-4 h-4" />
-                            <span>Transfer a copy</span>
-                        </Button>
-                        <Button className="hiden flex items-center gap-1 sm:gap-2 text-gray-700 px-2 sm:px-4 py-1.5 sm:py-2.5 rounded-md text-xs sm:text-sm font-medium bg-white border border-gray-200 hover:bg-gray-50 transition-colors cursor-pointer whitespace-nowrap shadow-sm">
-                            <Share2 className="w-4 h-4" />
-                            <span>Share</span>
-                        </Button> */}
                     </div>
                 </div>
             </div>
@@ -388,44 +365,23 @@ const FilesPage = () => {
                                     </div>
 
                                     <div className="flex gap-2">
-
-
                                         {
                                             fileData.isJsonForm ? <FormRevisionFile file={fileData.file} uploadedIndexes={[
 
                                             ]} updateUploadedIndex={(index) => {
-                                                // if (fileData.isLoading) {
-                                                //     toast.info("File is uploading, please wait");
-                                                //     return
-                                                // }
                                                 setFilesListForUpload(prev => prev.filter((_, i) => i !== index));
+                                                clearFileInput(); // Clear file input after removal
                                             }} fileIndex={index} autoUpload={false} /> : null
                                         }
-
-                                        {/* {
-                                            fileData.isJson ? <FormRevisionFile file={fileData.file} uploadedIndexes={[
-
-                                            ]} updateUploadedIndex={(index) => {
-                                                // if (fileData.isLoading) {
-                                                //     toast.info("File is uploading, please wait");
-                                                //     return
-                                                // }
-                                                setFilesListForUpload(prev => prev.filter((_, i) => i !== index));
-                                            }} fileIndex={index} autoUpload={false} /> : null
-                                        } */}
 
                                         {
                                             fileData.isJsonAquaTreeData ? <ImportAquaTree aquaFile={fileData.file} uploadedIndexes={[
 
                                             ]} updateUploadedIndex={(index) => {
-                                                // if (fileData.isLoading) {
-                                                //     toast.info("File is uploading, please wait");
-                                                //     return
-                                                // }
                                                 setFilesListForUpload(prev => prev.filter((_, i) => i !== index));
+                                                clearFileInput(); // Clear file input after removal
                                             }} fileIndex={index} autoUpload={false} /> : null
                                         }
-
 
                                         {
                                             fileData.isZip ? <ImportAquaTreeZip file={fileData.file} uploadedIndexes={[
@@ -436,6 +392,7 @@ const FilesPage = () => {
                                                     return
                                                 }
                                                 setFilesListForUpload(prev => prev.filter((_, i) => i !== index));
+                                                clearFileInput(); // Clear file input after removal
                                             }} fileIndex={index} autoUpload={false} /> : null
                                         }
 
@@ -450,24 +407,20 @@ const FilesPage = () => {
                                         ) : (
                                             <button data-testid="action-upload-51-button" className="flex items-center gap-1 text-white hover:text-white-700 text-sm font-medium bg-gray-800 w-[80px] px-2 py-1 rounded" onClick={() => {
                                                 // uploadFile(fileData)
-
                                             }}>
                                                 <LuUpload />
                                                 Upload
                                             </button>
                                         )}
 
-
-
                                         <button data-testid="action-upload-51-button" className="flex items-center gap-1 text-white hover:text-white-700 text-sm font-medium bg-red-600 w-[80px] px-2 py-1 rounded"
                                             onClick={() => {
-
                                                 if (fileData.isLoading) {
                                                     toast.info("File is uploading, please wait");
                                                     return
                                                 }
                                                 setFilesListForUpload(prev => prev.filter((_, i) => i !== index));
-
+                                                clearFileInput(); // Clear file input after removal
                                             }}
                                         >
                                             <LuTrash2 />
@@ -536,11 +489,9 @@ const FilesPage = () => {
                                 setSelectedFileInfo(null)
                                 setOpenFileDetailsPopUp(false)
                             }}>Cancel</Button>
-                        {/* <Button type="submit">Save changes</Button> */}
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
-
 
             {/* Upload Progress Dialog */}
             <Dialog open={isUploadDialogOpen} onOpenChange={setIsUploadDialogOpen}>

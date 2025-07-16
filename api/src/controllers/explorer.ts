@@ -498,7 +498,7 @@ export default async function explorerController(fastify: FastifyInstance) {
                 fileObjectPar,
                 isForm,
                 enableContent,
-                enableScalar
+               isForm ? false : enableScalar
             )
 
             // console.log(`Aqua tree ${JSON.stringify(res, null, 4)}`)
