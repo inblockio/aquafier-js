@@ -999,7 +999,6 @@ export const dataURLToUint8Array = (dataUrl: string): Uint8Array => {
     return bytes;
 };
 
-
 export function timeToHumanFriendly(
     timestamp: string | undefined,
     showFull: boolean = false,
@@ -1009,17 +1008,39 @@ export function timeToHumanFriendly(
         return '-';
     }
 
+    let date: Date;
 
-    // Extract the date components
-    const year = timestamp.substring(0, 4);
-    const month = Number(timestamp.substring(4, 6)) - 1; // Months are zero-indexed in JS
-    const day = timestamp.substring(6, 8);
-    const hours = timestamp.substring(8, 10);
-    const minutes = timestamp.substring(10, 12);
-    const seconds = timestamp.substring(12, 14);
+    // Check if timestamp is in ISO 8601 format (contains 'T' and 'Z' or timezone info)
+    if (timestamp.includes('T') || timestamp.includes('Z') || timestamp.includes('+') || timestamp.includes('-')) {
+        // Handle ISO 8601 format (e.g., "2025-07-16T11:54:15.216Z")
+        date = new Date(timestamp);
+        
+        // Check if the date is valid
+        if (isNaN(date.getTime())) {
+            return 'Invalid Date';
+        }
+    } else {
+        // Handle custom timestamp format (e.g., "20250716115415")
+        if (timestamp.length < 14) {
+            return 'Invalid Date';
+        }
 
-    // Create a new Date object in UTC
-    const date = new Date(Date.UTC(Number(year), month, Number(day), Number(hours), Number(minutes), Number(seconds)));
+        // Extract the date components
+        const year = timestamp.substring(0, 4);
+        const month = Number(timestamp.substring(4, 6)) - 1; // Months are zero-indexed in JS
+        const day = timestamp.substring(6, 8);
+        const hours = timestamp.substring(8, 10);
+        const minutes = timestamp.substring(10, 12);
+        const seconds = timestamp.substring(12, 14);
+
+        // Create a new Date object in UTC
+        date = new Date(Date.UTC(Number(year), month, Number(day), Number(hours), Number(minutes), Number(seconds)));
+        
+        // Check if the date is valid
+        if (isNaN(date.getTime())) {
+            return 'Invalid Date';
+        }
+    }
 
     // Auto-detect user's local timezone if none provided
     const defaultTimezone = timezone || Intl.DateTimeFormat().resolvedOptions().timeZone;

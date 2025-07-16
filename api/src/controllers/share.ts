@@ -125,7 +125,7 @@ export default async function shareController(fastify: FastifyInstance) {
     fastify.post('/share_data', async (request, reply) => {
 
 
-        const { hash, recipient, latest, option, genesis_hash } = request.body as ShareRequest;
+        const { hash, recipient, latest, option, genesis_hash, file_name } = request.body as ShareRequest;
 
         // Read `nonce` from headers
         const nonce = request.headers['nonce']; // Headers are case-insensitive
@@ -171,7 +171,8 @@ export default async function shareController(fastify: FastifyInstance) {
                 sender: session.address,
                 latest: latest,
                 option: option,
-                reference_count: 1
+                reference_count: 1,
+                file_name: file_name
             }
         });
 

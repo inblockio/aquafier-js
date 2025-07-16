@@ -11,14 +11,7 @@ import { toast } from "sonner";
 import { Button } from "./ui/button";
 import { Alert, AlertDescription } from "./ui/alert";
 
-export const CustomCopyButton = ({ value }: { value: string }) => {
-  return (
-    <Button data-testid="custom-copy-button" variant="default" size="sm" onClick={() => navigator.clipboard.writeText(value)} className="flex items-center gap-2 rounded-md">
-      {"Copy Address"}
-      <LuCopy />
-    </Button>
-  )
-}
+
 
 export const ConnectWalletPage = () => {
   const { setMetamaskAddress, session, setFiles, setAvatar, setUserProfile, backend_url, setSession } = useStore(appStore);

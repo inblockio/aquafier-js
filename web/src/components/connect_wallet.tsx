@@ -21,7 +21,10 @@ import { toast } from "sonner";
 const CustomCopyButton = ({ value }: { value: string }) => {
   // const clipboard = useClipboard({ value: value })
   return (
-    <Button data-testid="custom-copy-button" variant="default" size="sm" onClick={() => navigator.clipboard.writeText(value)} className="flex items-center gap-2 rounded-md">
+    <Button data-testid="custom-copy-button" variant="default" size="sm" onClick={() => {
+      navigator.clipboard.writeText(value)
+      toast.success(`Wallet Address copied to clipboard`)
+    }} className="flex items-center gap-2 rounded-md">
       {"Copy Address"}
       <LuCopy />
     </Button>

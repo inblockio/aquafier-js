@@ -66,8 +66,18 @@ export interface WebSocketMessage {
   // targetUserIds?: string[];
   // sender?: string;
 }
+export interface Contract {
+    hash: string;
+    genesis_hash?: string;
+    latest?: string;
+    sender?: string;
+    receiver?: string;
+    option?: string;
+    reference_count?: number;
+    file_name?: string
+    created_at?: string
+}
 
- 
 export interface WorkFlowTimeLine {
 
   id: number,

@@ -73,6 +73,8 @@ model Contract {
   receiver        String?
   option          String?
   reference_count Int?
+  file_name  String?
+  created_at DateTime  @default(now())
   // User             User?         @relation(fields: [hash], references: [user])
   // Revision         Revision?     @relation(fields: [hash], references: [pubkey_hash])
 

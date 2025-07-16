@@ -15,17 +15,10 @@ import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { useStore } from 'zustand';
 import appStore from '@/store';
-import { formatCryptoAddress } from '@/utils/functions';
+import { formatCryptoAddress, timeToHumanFriendly } from '@/utils/functions';
+import { Contract } from '@/types/types';
 
-interface Contract {
-    hash: string;
-    genesis_hash?: string;
-    latest?: string;
-    sender?: string;
-    receiver?: string;
-    option?: string;
-    reference_count?: number;
-}
+
 
 const SharedContract = ({ contract }: { contract: Contract }) => {
 
@@ -77,9 +70,10 @@ const SharedContract = ({ contract }: { contract: Contract }) => {
                             </div>
                             <div className="flex-1">
                                 <div className="flex items-center gap-2">
+                                    File Name : 
                                     <code className="text-xs sm:text-sm font-mono bg-gray-100 px-1 sm:px-2 py-1 rounded break-all sm:break-words sm:max-w-none overflow-hidden text-ellipsis">
                                         {/* {formatCryptoAddress(contract.hash, 10, 10)} */}
-                                        {contract.hash}
+                                        {contract.file_name}
                                     </code>
                                     <Button
                                         variant="ghost"
@@ -93,7 +87,12 @@ const SharedContract = ({ contract }: { contract: Contract }) => {
                                         <Copy className="w-3 h-3" />
                                     </Button>
                                 </div>
-                                <p className="text-xs text-gray-500 mt-1">{Date().toString()}</p>
+                                {
+                                    contract.created_at ? 
+                                    <p className="text-xs text-gray-500 mt-1">{timeToHumanFriendly(contract.created_at , true)}</p>
+                                    : null
+                                }
+                                
                             </div>
                         </div>
 
@@ -268,7 +267,7 @@ export function SharedContracts() {
                     </div>
                     <div>
                         <h2 className="text-xl font-semibold text-gray-900">
-                            Shared Contracts
+                            Shared Contracts.
                         </h2>
                         <p className="text-sm text-gray-500 mt-1">
                             {contracts.length} contracts available
@@ -277,28 +276,7 @@ export function SharedContracts() {
                 </div>
 
                 <div className="flex flex-col h-full">
-                    {/* Search and Filters */}
-                    {/* <div className="px-6 py-4 border-b border-gray-100">
-                        <div className="flex items-center gap-3">
-                            <div className="relative flex-1">
-                                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                                <Input
-                                    placeholder="Search contracts by hash, sender, or receiver..."
-                                    value={searchQuery}
-                                    onChange={(e) => setSearchQuery(e.target.value)}
-                                    className="pl-10"
-                                />
-                            </div>
-                            <Button variant="outline" size="sm">
-                                <Filter className="w-4 h-4 mr-2" />
-                                Filter
-                            </Button>
-                            <Button variant="outline" size="sm">
-                                <ArrowUpDown className="w-4 h-4 mr-2" />
-                                Sort
-                            </Button>
-                        </div>
-                    </div> */}
+                  
 
                     {/* Contracts List */}
                     <div className="flex-1 overflow-auto p-0">

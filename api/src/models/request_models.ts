@@ -69,6 +69,7 @@ export interface ShareRequest {
   option: string;
   hash: string;
   genesis_hash: string;
+  file_name: string
 }
 
 
