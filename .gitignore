@@ -12,3 +12,9 @@ android
 /playwright/.cache/
 /e2e/metamask-extension/
 /results.xml
+
+
+#dev
+deployment/dev_mount_points/
+
+/.idea/
