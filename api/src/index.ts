@@ -27,8 +27,10 @@ const start = async () => {
     
     // Create mock notifications for testing
     try {
-      await mockNotifications();
-      console.log("✅ Mock notifications created successfully");
+      if(process.env.NODE_ENV === "development" || process.env.NODE_ENV === "test"){
+        await mockNotifications();
+        console.log("✅ Mock notifications created successfully");
+      }
     } catch (error) {
       console.error("❌ Error creating mock notifications:", error);
     }

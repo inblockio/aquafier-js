@@ -279,11 +279,11 @@ const setUpSystemTemplates = async () => {
 
 
     //save aqua tree
-    let templateAquaTreeDataContent = fs.readFileSync(templateAquaTreeData, 'utf8')
+    let templateAquaTreeDataContent = fs.readFileSync(templateAquaTreeData, 'utf-8')
     let templateAquaTree: AquaTree = JSON.parse(templateAquaTreeDataContent)
 
 
-    let templateDataContent = fs.readFileSync(templateData, 'utf8')
+    let templateDataContent = fs.readFileSync(templateData, 'utf-8')
     await saveTemplateFileData(templateAquaTree, templateDataContent, SYSTEM_WALLET_ADDRESS)
     await saveAquaTree(templateAquaTree, SYSTEM_WALLET_ADDRESS);
 
