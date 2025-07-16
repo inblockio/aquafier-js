@@ -1,0 +1,60 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:17
+    container_name: aquafier-postgres
+    environment:
+      POSTGRES_DB: aquafier
+      POSTGRES_USER: ${DB_USER:-aquafier}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-changeme}
+    ports:
+     - 5432:5432
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U aquafier -d aquafier"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    volumes:
+      - ./dev_mount_points/postgres:/var/lib/postgresql/data
+
+  aqua-container:
+    build:
+      context: ./..
+      dockerfile: actionfiles/aquafier-ts/dockerfile/Dockerfile
+    env_file:
+      - .env
+    environment:
+      DATABASE_URL: postgresql://${DB_USER:-aquafier}:${DB_PASSWORD:-changeme}@postgres:5432/aquafier
+      BACKEND_URL: ${BACKEND_URL:-localhost:3000}
+      FRONTEND_URL: ${FRONTEND_URL:-localhost:3600}
+      VITE_INFURA_PROJECT_ID: ${VITE_INFURA_PROJECT_ID}
+      VIRTUAL_HOST_MULTIPORTS: |-
+        ${FRONTEND_URL}:
+          "/":
+              port: 3600
+        ${BACKEND_URL}:
+          "/":
+              port: 3000
+      LETSENCRYPT_HOST: ${FRONTEND_URL}, ${BACKEND_URL}
+      LETSENCRYPT_EMAIL: ${LETSENCRYPT_EMAIL}
+    ports:
+     - 3000:3000
+     - 3600:3600
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - ./dev_mount_points/aquafier:/app/data
+
+
+  s3:
+    image: minio/minio:latest
+    ports:
+      - 9000:9000
+    environment:
+      MINIO_ROOT_USER: ${MINIO_USER:-aquafier}
+      MINIO_ROOT_PASSWORD: ${MINIO_PASSWORD:-supersafepassword123}
+    command: ["server", "/data"]
+    volumes:
+      - ./dev_mount_points/storage:/data

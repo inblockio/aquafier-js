@@ -2,13 +2,13 @@ Here are the standard commands to run your Docker Compose configuration:
 
 1. Build the Docker images:
 ```bash
-docker-compose build
+docker compose -f deployment/docker-compose-local.yml build
 ```
 This will build the images for all services defined in your docker-compose.yml file.
 
 2. Start the containers:
 ```bash
-docker-compose up -d
+docker compose -f deployment/docker-compose-local.yml up -d
 ```
 The `-d` flag runs the containers in detached mode (in the background).
 
@@ -16,27 +16,27 @@ Additional useful commands:
 
 - To stop the containers:
 ```bash
-docker-compose down
+docker compose -f deployment/docker-compose-local.yml down
 ```
 
 - To view logs:
 ```bash
-docker-compose logs
+docker compose -f deployment/docker-compose-local.yml logs
 ```
 
 - To view logs of a specific service:
 ```bash
-docker-compose logs aqua-container
+docker compose -f deployment/docker-compose-local.yml logs aqua-container
 ```
 
 - To restart a specific service:
 ```bash
-docker-compose restart aqua-container
+docker compose -f deployment/docker-compose-local.yml restart aqua-container
 ```
 
 If you want to rebuild and restart:
 ```bash
-docker-compose up -d --build
+docker compose -f deployment/docker-compose-local.yml up -d --build
 ```
 
 A few tips:
