@@ -143,7 +143,7 @@ export const WitnessAquaChain = ({ apiFileInfo, backendUrl, nonce }: RevionOpera
                     </>
                 ) : (
                     <>
-                        <LuGlasses className="w-3 h-3" />
+                        <LuGlasses className="w-4 h-4" />
                         <span>Witness</span>
                     </>
                 )}

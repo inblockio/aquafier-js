@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { LuCopy } from "react-icons/lu";
 import { fetchFiles, generateAvatar, setCookie } from "../utils/functions";
 import { SiweMessage, generateNonce } from "siwe";
 import { SESSION_COOKIE_NAME } from "../utils/constants";
@@ -8,7 +7,6 @@ import { useStore } from "zustand";
 import appStore from "../store";
 import { BrowserProvider, ethers } from "ethers";
 import { toast } from "sonner";
-import { Button } from "./ui/button";
 import { Alert, AlertDescription } from "./ui/alert";
 
 

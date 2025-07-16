@@ -84,7 +84,7 @@ const SharedContract = ({ contract }: { contract: Contract }) => {
                                         }}
                                         className="h-6 w-6 p-0"
                                     >
-                                        <Copy className="w-3 h-3" />
+                                        <Copy className="w-4 h-4" />
                                     </Button>
                                 </div>
                                 {
@@ -104,7 +104,7 @@ const SharedContract = ({ contract }: { contract: Contract }) => {
                                         <div className="flex items-center gap-2">
                                             <Avatar className="w-6 h-6">
                                                 <AvatarFallback className="text-xs bg-blue-100 text-blue-600">
-                                                    <Wallet className="w-3 h-3" />
+                                                    <Wallet className="w-4 h-4" />
                                                 </AvatarFallback>
                                             </Avatar>
                                             <div>
@@ -133,7 +133,7 @@ const SharedContract = ({ contract }: { contract: Contract }) => {
                                         <div className="flex items-center gap-2">
                                             <Avatar className="w-6 h-6">
                                                 <AvatarFallback className="text-xs bg-green-100 text-green-600">
-                                                    <Wallet className="w-3 h-3" />
+                                                    <Wallet className="w-4 h-4" />
                                                 </AvatarFallback>
                                             </Avatar>
                                             <div>
@@ -170,7 +170,7 @@ const SharedContract = ({ contract }: { contract: Contract }) => {
 
                                 {contract.reference_count !== undefined && (
                                     <div className="flex items-center gap-1 text-sm text-gray-600">
-                                        <Users className="w-3 h-3" />
+                                        <Users className="w-4 h-4" />
                                         <span>{contract.reference_count} refs</span>
                                     </div>
                                 )}

@@ -338,7 +338,7 @@ export const DownloadAquaChain = ({ file, index , children  }: { file: ApiFileIn
                             </>
                         ) : (
                             <>
-                                <LuDownload className="w-3 h-3" />
+                                <LuDownload className="w-4 h-4" />
                                 <span>Download</span>
                             </>
                         )}

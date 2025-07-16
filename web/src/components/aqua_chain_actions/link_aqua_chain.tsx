@@ -116,7 +116,7 @@ export const LinkButton = ({ item, nonce, index }: IShareButton) => {
                 onClick={() => setIsOpen(true)} 
                 className="flex items-center space-x-1 bg-yellow-100 text-yellow-700 px-3 py-2 rounded hover:bg-yellow-200 transition-colors text-xs w-full justify-center"
             >
-                <LuLink2 className="w-3 h-3" />
+                <LuLink2 className="w-4 h-4" />
                 <span>Link</span>
             </button>
 

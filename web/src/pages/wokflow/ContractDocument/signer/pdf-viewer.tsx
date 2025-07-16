@@ -589,7 +589,7 @@ const PdfViewer: React.FC<PdfViewerProps> = ({
     return (
       <div
         data-resize-handle={handleType}
-        className="absolute w-3 h-3 bg-primary border border-primary-foreground rounded-full shadow-md"
+        className="absolute w-4 h-4 bg-primary border border-primary-foreground rounded-full shadow-md"
         style={{ ...positionStyle, cursor: cursorStyle, zIndex: 20 }}
         onMouseDown={(e) => handleResizeMouseDown(e, anno, handleType, targetPropertyPrefix)}
       />

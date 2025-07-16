@@ -124,7 +124,7 @@ export const DeleteAquaChain = ({ apiFileInfo, backendUrl, nonce, children, inde
                     }}>
                         {children}
                     </div>
-                ) : (
+                ) : ( 
                     <button
                         data-testid={"delete-aqua-tree-button-"+index}
                         onClick={() => {
@@ -147,7 +147,7 @@ export const DeleteAquaChain = ({ apiFileInfo, backendUrl, nonce, children, inde
                             </>
                         ) : (
                             <>
-                                <LuDelete className="w-3 h-3" />
+                                <LuDelete className="w-4 h-4" />
                                 <span>Delete</span>
                             </>
                         )}

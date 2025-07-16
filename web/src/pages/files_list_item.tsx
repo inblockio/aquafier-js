@@ -88,7 +88,7 @@ export default function FilesListItem({ showWorkFlowsOnly, file, index, systemFi
                     setOpenFileDetailsPopUp(true)
                     setSelectedFileInfo(file)
                 }} className="flex items-center justify-center space-x-1 bg-green-100 text-green-700 px-2 py-2 rounded hover:bg-green-200 transition-colors text-xs w-full">
-                    <LuEye className="w-3 h-3" />
+                    <LuEye className="w-4 h-4" />
                     <span>Details</span>
                 </button>
 

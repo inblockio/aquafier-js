@@ -144,7 +144,7 @@ const ErrorFallback = ({ error, resetErrorBoundary }: ErrorFallbackProps) => {
           {/* Error Type Badge */}
           <div className="flex items-center gap-2">
             <Badge variant="destructive" className="bg-red-50 text-red-700 border-red-200">
-              <Bug className="w-3 h-3 mr-1" />
+              <Bug className="w-4 h-4 mr-1" />
               {getErrorType(error)}
             </Badge>
             <span className="text-xs text-gray-500">
@@ -194,7 +194,7 @@ const ErrorFallback = ({ error, resetErrorBoundary }: ErrorFallbackProps) => {
                         onClick={copyErrorDetails}
                         className="h-6 px-2 text-xs cursor-pointer"
                       >
-                        <Copy className="w-3 h-3 mr-1" />
+                        <Copy className="w-4 h-4 mr-1" />
                         {copied ? 'Copied!' : 'Copy'}
                       </Button>
                     </div>

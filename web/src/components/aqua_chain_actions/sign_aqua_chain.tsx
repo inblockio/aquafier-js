@@ -176,7 +176,7 @@ export const SignAquaChain = ({ apiFileInfo, backendUrl, nonce, index }: RevionO
                 </>
             ) : (
                 <>
-                    <LuSignature className="w-3 h-3" />
+                    <LuSignature className="w-4 h-4" />
                     <span>Sign</span>
                 </>
             )}

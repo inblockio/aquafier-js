@@ -260,9 +260,9 @@ const HowItWorksSection = () => (
             <div className="bg-black/90 text-white h-[430px] font-mono text-sm overflow-hidden">
               <div className="p-6 flex justify-between items-center mb-3 h-[40px] box-border">
                 <div className="flex items-center">
-                  <div className="w-3 h-3 rounded-full bg-red-500 mr-2"></div>
-                  <div className="w-3 h-3 rounded-full bg-yellow-500 mr-2"></div>
-                  <div className="w-3 h-3 rounded-full bg-green-500"></div>
+                  <div className="w-4 h-4 rounded-full bg-red-500 mr-2"></div>
+                  <div className="w-4 h-4 rounded-full bg-yellow-500 mr-2"></div>
+                  <div className="w-4 h-4 rounded-full bg-green-500"></div>
                 </div>
                 <div className="text-orange-300 text-xs">aquatree.json</div>
               </div>
