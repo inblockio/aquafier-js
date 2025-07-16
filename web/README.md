@@ -21,5 +21,5 @@ npx @chakra-ui/cli snippet add select
 ## Shadcn add components
 
 ```bash
-npx shadcn@latest add button
+npx shadcn@latest add button 
 ```
