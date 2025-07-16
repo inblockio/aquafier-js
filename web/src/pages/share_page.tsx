@@ -84,19 +84,19 @@ const SharePage = () => {
                 </div>
             );
         }
-        if (loading) {
-            return (
-                <div className="flex justify-center items-center py-8">
-                    <ClipLoader
-                        color={"blue"}
-                        loading={loading}
-                        size={150}
-                        aria-label="Loading Spinner"
-                        data-testid="loader"
-                    />
-                </div>
-            );
-        }
+        // if (loading) {
+        //     return (
+        //         <div className="flex justify-center items-center py-8">
+        //             <ClipLoader
+        //                 color={"blue"}
+        //                 loading={loading}
+        //                 size={150}
+        //                 aria-label="Loading Spinner"
+        //                 data-testid="loader"
+        //             />
+        //         </div>
+        //     );
+        // }
         return <div />
     }
 

@@ -226,7 +226,7 @@ export const ImportAquaChainFromChain = ({ fileInfo, isVerificationSuccessful, c
     //             <div className="text-sm font-medium">{children}</div>
     //         </div>
     //     </div>
-    // );
+    // ); 
 
     return (
         <div className="container mx-auto max-w-4xl px-4">

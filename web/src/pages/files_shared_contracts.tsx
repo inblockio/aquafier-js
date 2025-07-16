@@ -306,7 +306,7 @@ export function SharedContracts() {
 
 const FilesSharedContracts = () => {
     return (
-        <div className='container mx-auto max-w-4xl px-0'>
+        <div className='container mx-auto max-w-4xl px-0 py-6'>
             <SharedContracts />
         </div>
     )

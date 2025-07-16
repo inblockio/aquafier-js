@@ -239,7 +239,7 @@ async function shareDocument(
   await page.getByTestId('share-modal-action-button-dialog').click();
   
   // Handle MetaMask confirmation if needed
-  await handleMetaMaskNetworkAndConfirm(context);
+  // await handleMetaMaskNetworkAndConfirm(context);
   
   // Wait for success message - look for the shared document link section
   await page.getByText('Shared Document Link').waitFor({ state: 'visible', timeout: 30000 });
