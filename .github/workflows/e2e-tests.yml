@@ -69,11 +69,11 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: '22'
-          cache: 'npm'
+          node-version: lts/*
 
       - name: Install dependencies
         run: |
+          echo "Current path: $(pwd)"
           cd e2e
           npm ci
           echo "Installed npm dependencies"
