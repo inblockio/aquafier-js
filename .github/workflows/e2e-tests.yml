@@ -62,6 +62,14 @@ jobs:
           sudo apt-get install -y xvfb libgtk-3-0 libnotify-dev libnss3 libxss1
           echo "Installed required system dependencies"
 
+      - name: build and load docker image
+        uses: ./.github/actions/build_container
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          push: 'false'
+          load: 'true'
+          tags: 'latest'
+
       - name: Set up Docker Compose
         run: |
           sudo curl -L "https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)" \
