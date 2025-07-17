@@ -50,11 +50,11 @@ jobs:
           cat > e2e/.env << EOL
           LETSENCRYPT_EMAIL=test@example.com
           VITE_INFURA_PROJECT_ID=${{ secrets.INFURA_PROJECT_ID }}
-          FRONTEND_URL=https://dev.inblock.io
-          BACKEND_URL=https://dev-api.inblock.io
+          FRONTEND_URL=http://localhost:5173
+          BACKEND_URL=http://localhost:3000
           DB_USER=aquafier
           DB_PASSWORD=changeme
-          BASE_URL=https://dev.inblock.io
+          BASE_URL=http://localhost:5173
           PREFUNDED_WALLET_PRIVATEKEY=${{ secrets.PREFUNDED_WALLET_PRIVATEKEY }}
           ALCHEMY_PROJECT_ID=${{ secrets.ALCHEMY_PROJECT_ID }}
           EOL
@@ -81,7 +81,7 @@ jobs:
           sudo chmod +x /usr/local/bin/docker-compose
 
       - name: Prepare local test environment
-        run: cd e2e && docker compose up -d
+        run: cd e2e && docker compose -f ../deployment/docker-compose-local.yml up -d
 
       - name: Start Xvfb
         run: |
