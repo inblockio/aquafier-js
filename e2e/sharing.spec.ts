@@ -337,9 +337,6 @@ test("share document with different permission levels", async (): Promise<void> 
   const recipientPage: Page = recipientContext.pages()[0];
   const recipientAddress = recipientResponse.walletAddress;
   
-  // Fund wallets if needed
-  // await fundWallet(ownerAddress);
-  // await fundWallet(recipientAddress);
   
   // Owner uploads a document
   const testFilePath = path.join(__dirname, 'resources', 'exampleFile.pdf');

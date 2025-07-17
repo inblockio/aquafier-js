@@ -48,14 +48,6 @@ async function switchToTestNetwork(metaMaskPage: any) {
     }
 }
 
-// Solution 2: Use a pre-funded wallet for tests
-// async function createPreFundedWallet(): Promise<{mnemonic: string, address: string}> {
-
-//   return {
-//     mnemonic: preFundedMnemonic,
-//     address: preFundedAddress
-//   };
-// }
 
 export async function fundWallet(walletToFund: string) {
 
@@ -102,7 +94,7 @@ export async function fundWallet(walletToFund: string) {
         console.log(`Funder wallet address: ${funderWallet.address} -- Balance: ${ethers.formatEther(funderBalance)} ETH`);
         
         // Ensure the wallet has enough funds
-        if (funderBalance < ethers.parseEther('0.006')) {
+        if (funderBalance < ethers.parseEther('0.0006')) {
             console.error('Insufficient funds in funder wallet');
             throw new Error(`Insufficient funds in funder wallet: ${ethers.formatEther(funderBalance)} ETH`);
         }
@@ -110,7 +102,7 @@ export async function fundWallet(walletToFund: string) {
         // Send ETH
         const tx = await funderWallet.sendTransaction({
                         to: walletToFund,
-                        value: ethers.parseEther('0.005'),
+                        value: ethers.parseEther('0.0005'),
                     });
                 
                 await tx.wait();
