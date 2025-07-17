@@ -633,7 +633,7 @@ const PdfViewer: React.FC<PdfViewerProps> = ({
   }
 
   return (
-    <div className="py-4 px-2 h-full" ref={viewerRef} onClick={handleViewerClick}>
+    <div className="py-4 px-2 h-auto md:h-full" ref={viewerRef} onClick={handleViewerClick}>
       {!file && <p className="text-gray-700 dark:text-gray-400">Upload a PDF to start annotating.</p>}
       {file && !isPdfjsLibLoaded && !pdfLoadingError && <p className="text-gray-700 dark:text-gray-400">Initializing PDF viewer...</p>}
       {pdfLoadingError && <p className="text-center px-4">{pdfLoadingError}</p>}
@@ -645,10 +645,10 @@ const PdfViewer: React.FC<PdfViewerProps> = ({
           )}
           {pdfDoc && (
             <div
-              className="mx-auto relative flex flex-col justify-start items-center w-fit"
+              className="relative flex flex-col justify-start overflow-x-auto"
             >
               <div
-                className="relative h-full shadow-lg bg-white"
+                className="relative h-auto md:h-full shadow-lg bg-white"
                 style={
                   pageDimensions.width > 0 && pageDimensions.height > 0
                     ? { width: pageDimensions.width, height: pageDimensions.height }
@@ -788,7 +788,7 @@ const PdfViewer: React.FC<PdfViewerProps> = ({
                       padding: '5px',
                       backgroundColor: 'rgba(255, 255, 255, 0.7)',
                     };
-                    
+
                     return (
                       <div key={anno.id} style={profileStyle} data-ai-hint="profile annotation" data-annotation-id={anno.id}
                         onMouseDown={(e) => handleAnnotationMouseDown(e, anno)}>
@@ -797,16 +797,16 @@ const PdfViewer: React.FC<PdfViewerProps> = ({
                           // style={{ width: profileAnno.imageWidth, height: profileAnno.imageHeight }}
                           data-annotation-id={`${anno.id}-image`}
                         >
-                          
+
                           <img
                             src={profileAnno.dataUrl}
                             alt={profileAnno.imageAlt}
-                            style={{ 
+                            style={{
                               // Fixed image width to avoid distorting the image with height
-                              width: "150px", 
+                              width: "150px",
                               // height: profileAnno.imageHeight,
-                               objectFit: 'cover', pointerEvents: 'none' 
-                              }}
+                              objectFit: 'cover', pointerEvents: 'none'
+                            }}
                           />
                           {isSelected && (
                             <>
@@ -877,7 +877,7 @@ const PdfViewer: React.FC<PdfViewerProps> = ({
                       >
 
                         <div
-                        className='relative w-full h-full'
+                          className='relative w-full h-auto md:h-full'
                           style={{
                             backgroundImage: `url(${profileAnno.dataUrl})`,
                             backgroundSize: "contain",
@@ -885,7 +885,7 @@ const PdfViewer: React.FC<PdfViewerProps> = ({
                             backgroundPosition: "center",
                             minWidth: "200px",  // Ensure minimum size
                             minHeight: "100px"
-                        }}
+                          }}
                         />
 
 
@@ -909,7 +909,7 @@ const PdfViewer: React.FC<PdfViewerProps> = ({
                     </div>
                   );
                 })}
-{/* </ScrollArea> */}
+                {/* </ScrollArea> */}
               </div>
               {pdfDoc && pageDimensions.width === 0 && currentPage > 0 && currentPage <= numPages && !pdfLoadingError && (
                 <p className='absolute' style={{ color: "gray.700" }}>Rendering page {currentPage}...</p>
