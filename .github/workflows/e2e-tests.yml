@@ -111,6 +111,13 @@ jobs:
 
       - name: Prepare local test environment
         run: cd e2e && docker compose -f ../deployment/docker-compose-local.yml up -d
+        
+      - name: Wait for services to be ready
+        run: |
+          echo "Waiting for services to be ready..."
+          sleep 30
+          docker ps
+          docker logs aquafier-postgres --tail 50
 
       - name: Start Xvfb
         run: |
@@ -148,7 +155,7 @@ jobs:
         run: |
           cd e2e
           echo "Running Playwright tests..."
-          npx playwright test --retries=3 --timeout=120000 --workers=1 --reporter=html,line
+          npx playwright test
           TEST_EXIT_CODE=$?
           echo "Test execution completed with exit code $TEST_EXIT_CODE"
           exit $TEST_EXIT_CODE
