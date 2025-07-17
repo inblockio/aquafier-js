@@ -35,6 +35,8 @@ test("user setting test", async (): Promise<void> => {
   console.log(`BASE URL: ${baseUrl}`);
   const url = `${baseUrl}/app/settings`
   console.log(`Navigating to: ${url}`);
+  // Await for 3 seconds then navigate
+  await testPage.waitForTimeout(3000);
   await testPage.goto(url, { waitUntil: 'networkidle' })
 
   // await testPage.reload(); // reload page
