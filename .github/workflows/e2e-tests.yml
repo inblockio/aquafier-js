@@ -84,12 +84,11 @@ jobs:
           npx playwright install --with-deps chromium
           echo "Installed Playwright browsers"
 
-      - name: Prepare test environment
-        run: |
-          cd e2e
-          chmod +x ./script/prepare_browser.sh
-          ./script/prepare_browser.sh
-          echo "Prepared browser environment"
+      - name: Change MetaMask install-script permissions
+        run: chmod +x ./e2e/script/prepare_browser.sh
+
+      - name: Prepare MetaMask
+        run: ./e2e/script/prepare_browser.sh
 
       - name: Run Playwright tests
         env:
