@@ -9,8 +9,8 @@ import appStore from '../store';
 export default function FilesList() {
 
     const [showWorkFlowsOnly, setShowWorkFlowsOnly] = useState(false);
-
     const [view, setView] = useState('list');
+    const [isSmallScreen, setIsSmallScreen] = useState(false);
 
     const { files, systemFileInfo, backend_url, session } = useStore(appStore)
 
@@ -30,8 +30,6 @@ export default function FilesList() {
         // console.log("FilesPage mounted");
         // Check if the url ends with files_workflows
 
-
-
         if (location.pathname.endsWith('files_workflows')) {
             // Add your logic here
             // console.log('URL ends with files_workflows');
@@ -42,6 +40,25 @@ export default function FilesList() {
             setShowWorkFlowsOnly(false)
         };
     }, [location.pathname]);
+    
+    // Add screen size detector
+    useEffect(() => {
+        // Function to check if screen is small
+        const checkScreenSize = () => {
+            setIsSmallScreen(window.matchMedia('(max-width: 768px)').matches);
+        };
+        
+        // Initial check
+        checkScreenSize();
+        
+        // Add event listener for window resize
+        window.addEventListener('resize', checkScreenSize);
+        
+        // Cleanup
+        return () => {
+            window.removeEventListener('resize', checkScreenSize);
+        };
+    }, []);
 
 
 
@@ -77,7 +94,7 @@ export default function FilesList() {
                 </div>
 
                 {/* Responsive Table */}
-                <div className="hidden md:block"> {/* Table view for medium screens and up */}
+                {!isSmallScreen ? (
                     <div className="bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden">
                         <div className="p-1">
                             <table className="w-full border-collapse">
@@ -113,29 +130,31 @@ export default function FilesList() {
                             </table>
                         </div>
                     </div>
-                </div>
+                ) : null}
 
                 {/* Card view for small screens */}
-                <div className="md:hidden space-y-4">
-                    {files.sort((a, b) => {
-                        const filenameA = getAquaTreeFileName(a.aquaTree!!);
-                        const filenameB = getAquaTreeFileName(b.aquaTree!!);
-                        return filenameA.localeCompare(filenameB);
-                    }).map((file, index) => (
-                        <div key={index} className="bg-white border border-gray-200 rounded-lg shadow-sm p-4">
-                            <FileListItem
-                                showWorkFlowsOnly={showWorkFlowsOnly}
-                                key={index}
-                                index={index}
-                                file={file}
-                                systemFileInfo={systemFileInfo}
-                                backendUrl={backend_url}
-                                nonce={session?.nonce ?? ""}
-                                viewMode="card"
-                            />
-                        </div>
-                    ))}
-                </div>
+                {isSmallScreen ? (
+                    <div className="space-y-4">
+                        {files.sort((a, b) => {
+                            const filenameA = getAquaTreeFileName(a.aquaTree!!);
+                            const filenameB = getAquaTreeFileName(b.aquaTree!!);
+                            return filenameA.localeCompare(filenameB);
+                        }).map((file, index) => (
+                            <div key={index} className="bg-white border border-gray-200 rounded-lg shadow-sm p-4">
+                                <FileListItem
+                                    showWorkFlowsOnly={showWorkFlowsOnly}
+                                    key={index}
+                                    index={index}
+                                    file={file}
+                                    systemFileInfo={systemFileInfo}
+                                    backendUrl={backend_url}
+                                    nonce={session?.nonce ?? ""}
+                                    viewMode="card"
+                                />
+                            </div>
+                        ))}
+                    </div>
+                ) : null}
             </div>
 
         </div>
