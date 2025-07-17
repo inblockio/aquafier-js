@@ -62,6 +62,9 @@ jobs:
           sudo apt-get install -y xvfb libgtk-3-0 libnotify-dev libnss3 libxss1
           echo "Installed required system dependencies"
 
+      - name: Prepare local test environment
+        run: cd e2e && docker compose up -d
+
       - name: Start Xvfb
         run: |
           Xvfb :99 -screen 0 1280x1024x24 > /dev/null 2>&1 &
