@@ -16,9 +16,9 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref_name }}
   cancel-in-progress: true
 
-env:
-  REGISTRY: ghcr.io
-  IMAGE_NAME: ${{ github.repository }}
+# env:
+#   REGISTRY: ghcr.io
+#   IMAGE_NAME: ${{ github.repository }}
 
 jobs:
   e2e-tests:
@@ -95,29 +95,29 @@ jobs:
       #       -o /usr/local/bin/docker-compose
       #     sudo chmod +x /usr/local/bin/docker-compose
 
-      - name: Set up docker environment
-        run: |
-          cat > deployment/.env << DEOL
-          # psql conn string for prisma 
-          DATABASE_URL="postgresql://${DB_USER}:${DB_PASSWORD}@localhost:5432/aquafier_js?schema=public"
+      # - name: Set up docker environment
+      #   run: |
+      #     cat > deployment/.env << DEOL
+      #     # psql conn string for prisma 
+      #     DATABASE_URL="postgresql://${DB_USER}:${DB_PASSWORD}@localhost:5432/aquafier_js?schema=public"
 
-          #letsencrypt
-          LETSENCRYPT_EMAIL=hello@inblock.io
+      #     #letsencrypt
+      #     LETSENCRYPT_EMAIL=hello@inblock.io
 
-          BASE_URL=https://dev.inblock.io
+      #     BASE_URL=https://dev.inblock.io
           
-          DEOL
-          echo "Created .env file with necessary environment variables"
+      #     DEOL
+      #     echo "Created .env file with necessary environment variables"
 
-      - name: Prepare local test environment
-        run: cd e2e && docker compose -f ../deployment/docker-compose-local.yml up -d
+      # - name: Prepare local test environment
+      #   run: cd e2e && docker compose -f ../deployment/docker-compose-local.yml up -d
         
-      - name: Wait for services to be ready
-        run: |
-          echo "Waiting for services to be ready..."
-          sleep 30
-          docker ps
-          docker logs aquafier-postgres --tail 50
+      # - name: Wait for services to be ready
+      #   run: |
+      #     echo "Waiting for services to be ready..."
+      #     sleep 30
+      #     docker ps
+      #     docker logs aquafier-postgres --tail 50
 
       - name: Start Xvfb
         run: |
@@ -152,24 +152,20 @@ jobs:
           DISPLAY: :99
           CI: true
           NODE_OPTIONS: --max_old_space_size=4096
-          DEBUG: pw:api,pw:browser*
-          PWDEBUG: console
         run: |
           cd e2e
           echo "Running Playwright tests..."
-          npx playwright test --reporter=list,github --workers=1
+          npx playwright test --reporter=list,github --workers=3
           TEST_EXIT_CODE=$?
           echo "Test execution completed with exit code $TEST_EXIT_CODE"
           exit $TEST_EXIT_CODE
 
       - name: Upload test artifacts
-        if: always()
+        if: ${{ !cancelled() }}
         uses: actions/upload-artifact@v4
         with:
           name: playwright-report
-          path: |
-            e2e/playwright-report/
-            e2e/test-results/
+          path: playwright-report/
           retention-days: 30
 
       - name: Upload test results
