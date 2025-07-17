@@ -972,8 +972,9 @@ export async function fundWallet(walletToFund: string) {
 export async function registerNewMetaMaskWallet(): Promise<RegisterMetaMaskResponse> {
   const metamaskPath = path.join(__dirname, 'metamask-extension');
 
+  const isCI = process.env.CI === 'true';
   const context = await chromium.launchPersistentContext('', {
-    headless: false,
+    headless: isCI,
     args: [
       `--disable-extensions-except=${metamaskPath}`,
       `--load-extension=${metamaskPath}`,
