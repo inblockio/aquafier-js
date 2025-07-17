@@ -14,7 +14,6 @@ npx playwright test [--retries 3]
 #### Run a specific test file
 ```bash
 npx playwright test e2e/tests.spec.ts --headed --retries 3
-npx playwright test e2e/sharing.spec.ts --headed --retries 3
 ```
 
 #### Run a specific test by title
