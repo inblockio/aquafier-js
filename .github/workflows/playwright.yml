@@ -36,7 +36,7 @@ jobs:
 
       - name: Create .env file for e2e tests
         run: |
-          cat > .env << EOL
+          cat > e2e/.env << EOL
           LETSENCRYPT_EMAIL=test@example.com
           VITE_INFURA_PROJECT_ID=your_infura_project_id
           FRONTEND_URL=https://dev.inblock.io
