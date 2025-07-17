@@ -131,7 +131,7 @@ jobs:
       - name: Install Playwright browsers
         run: |
           cd e2e
-          npx playwright install --with-deps chromium
+          npx playwright install --with-deps
           echo "Installed Playwright browsers"
 
       - name: Change MetaMask install-script permissions
