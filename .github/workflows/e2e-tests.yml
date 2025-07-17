@@ -60,6 +60,21 @@ jobs:
           EOL
           echo "Created .env file with necessary environment variables"
 
+      - name: Create .env file for aqua-container tests on the root directory
+        run: |
+          cat > .env << EOL
+          LETSENCRYPT_EMAIL=test@example.com
+          VITE_INFURA_PROJECT_ID=${{ secrets.INFURA_PROJECT_ID }}
+          FRONTEND_URL=http://localhost:5173
+          BACKEND_URL=http://localhost:3000
+          DB_USER=aquafier
+          DB_PASSWORD=changeme
+          BASE_URL=http://localhost:5173
+          PREFUNDED_WALLET_PRIVATEKEY=${{ secrets.PREFUNDED_WALLET_PRIVATEKEY }}
+          ALCHEMY_PROJECT_ID=${{ secrets.ALCHEMY_PROJECT_ID }}
+          EOL
+          echo "Created .env file with necessary environment variables"
+
       - name: Setup test environment
         run: |
           sudo apt-get update
