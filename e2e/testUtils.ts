@@ -749,20 +749,50 @@ export async function shareDocument(
   // Select the first file
   // await page.getByTestId('file-row').first().click();
   
-  await page.pause()
+  // await page.pause()
   // Click share button
-  await page.getByTestId('share-action-button-0').click();
+  // await page.getByTestId('share-action-button-0').click();
+  await page.waitForSelector('[data-testid="share-action-button-0"]', { state: 'visible', timeout: 10000 });
+  await page.click('[data-testid="share-action-button-0"]');
   
+  console.log(`Toggle specific wallet sharing`) 
   
-  console.log(`Toggle specific wallet sharing `) 
-  // Toggle specific wallet sharing
-  await page.locator('button[role="switch"]').click();
+  // Wait for the dialog to be fully loaded
+  await page.waitForSelector('text=Share with specific wallet', { state: 'visible', timeout: 5000 });
+  
+  // Toggle specific wallet sharing - try multiple selectors to find the switch
+  try {
+    // Method 1: Try to find the switch by its parent container
+    await page.locator('text=Share with specific wallet').locator('..').locator('button').click();
+  } catch (error) {
+    console.log('Method 1 failed, trying method 2...');
+    try {
+      // Method 2: Look for switch component directly
+      await page.locator('[role="switch"]').click();
+    } catch (error2) {
+      console.log('Method 2 failed, trying method 3...');
+      try {
+        // Method 3: Look for any button near the "Share with specific wallet" text
+        await page.locator('text=Share with specific wallet').locator('..//button').click();
+      } catch (error3) {
+        console.log('Method 3 failed, trying method 4...');
+        // Method 4: Use a more generic approach - find any clickable element in the switch container
+        const switchContainer = page.locator('text=Share with specific wallet').locator('..');
+        await switchContainer.locator('button, [role="switch"], [data-state]').first().click();
+      }
+    }
+  }
+  
+  // Wait for the wallet address input to appear
+  await page.waitForSelector('input[placeholder="Enter wallet address"]', { state: 'visible', timeout: 5000 });
   
   // Enter recipient address
   await page.locator('input[placeholder="Enter wallet address"]').fill(recipientAddress);
   
   // Confirm sharing
-  await page.getByTestId('share-modal-action-button-dialog').click();
+  // await page.getByTestId('share-modal-action-button-dialog').click();
+  await page.waitForSelector('[data-testid="share-modal-action-button-dialog"]', { state: 'visible', timeout: 10000 });
+  await page.click('[data-testid="share-modal-action-button-dialog"]');
   
   // Handle MetaMask confirmation if needed
   // await handleMetaMaskNetworkAndConfirm(context);
@@ -771,40 +801,48 @@ export async function shareDocument(
   await page.getByText('Shared Document Link').waitFor({ state: 'visible', timeout: 30000 });
   
   // Close the share dialog
-  await page.getByTestId('share-cancel-action-button').click();
+  // await page.getByTestId('share-cancel-action-button').click();
+  await page.waitForSelector('[data-testid="share-cancel-action-button"]', { state: 'visible', timeout: 10000 });
+  await page.click('[data-testid="share-cancel-action-button"]');
 }
 
 /**
  * Helper function to verify a shared document is accessible
  */
-export async function verifySharedDocumentAccess(
-  page: Page
-): Promise<void> {
-  // Navigate to shared with me page
-  const baseUrl = process.env.BASE_URL || "http://localhost:5173";
-  await page.goto(`${baseUrl}/app/shared-contracts`);
-  await page.waitForLoadState('networkidle');
+// export async function verifySharedDocumentAccess(
+//   page: Page
+// ): Promise<void> {
+//   // Navigate to shared with me page
+//   const baseUrl = process.env.BASE_URL || "http://localhost:5173";
+//   await page.goto(`${baseUrl}/app/shared-contracts`);
+//   await page.waitForLoadState('networkidle');
   
-  // Verify shared documents section is visible
-  await page.getByTestId('contracts-shared-button').waitFor({ state: 'visible' });
-  await page.getByTestId('contracts-shared-button').click();
+//   // Verify shared documents section is visible
+//   await page.getByTestId('contracts-shared-button').waitFor({ state: 'visible' });
+//   await page.getByTestId('contracts-shared-button').click();
   
-  // Wait for shared files to load
-  await page.waitForTimeout(2000);
+//   // Wait for shared files to load
+//   await page.waitForTimeout(2000);
   
+
+
+  
+
+  // await page.getByTestId('open-shared-contract-button-0').waitFor({ state: 'visible' });
+  // await page.getByTestId('open-shared-contract-button-0').click();
   // Look for any shared files
-  const sharedFilesCount = await page.locator('tr').count();
+  // const sharedFilesCount = await page.locator('tr').count();
   
-  // Verify at least one shared file exists (header row + at least one file)
-  if (sharedFilesCount > 1) {
-    console.log(`Found ${sharedFilesCount - 1} shared files`);
-  } else {
-    console.log('No shared files found');
-  }
+  // // Verify at least one shared file exists (header row + at least one file)
+  // if (sharedFilesCount > 1) {
+  //   console.log(`Found ${sharedFilesCount - 1} shared files`);
+  // } else {
+  //   console.log('No shared files found');
+  // }
   
   // Success if we can see the shared files page
-  await page.waitForTimeout(1000);
-}
+//   await page.waitForTimeout(1000);
+// }
 
 
 export function generatePassword(length: number): string {

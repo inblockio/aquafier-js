@@ -2,7 +2,7 @@ import { test, BrowserContext, Page, chromium } from '@playwright/test';
 import dotenv from 'dotenv';
 import path from "path";
 import fs from "fs";
-import { addSignatureToDocument, closeUploadDialog, createAndSaveSignature, createAquaSignForm, downloadAquaTree, findAndClickHighestSharedButton, fundWallet, importAquaChain, registerNewMetaMaskWallet, registerNewMetaMaskWalletAndLogin, shareDocument, signDocument, uploadFile, verifySharedDocumentAccess, witnessDocument } from './testUtils';
+import { addSignatureToDocument, closeUploadDialog, createAndSaveSignature, createAquaSignForm, downloadAquaTree, findAndClickHighestSharedButton, fundWallet, importAquaChain, registerNewMetaMaskWallet, registerNewMetaMaskWalletAndLogin, shareDocument, signDocument, uploadFile, witnessDocument } from './testUtils';
 
 // Load environment variables from .env file
 dotenv.config({ path: path.resolve(__dirname, '../.env') });
@@ -321,7 +321,7 @@ test("share document between two users", async (): Promise<void> => {
   await shareDocument(ownerPage, ownerContext, recipientAddress);
   
   // Recipient verifies they can access the shared document
-  await verifySharedDocumentAccess(recipientPage);
+  await importAquaChain(recipientPage, recipientContext);
   
   // Cleanup
   await ownerContext.close();
