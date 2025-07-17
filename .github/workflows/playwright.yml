@@ -77,7 +77,7 @@ jobs:
       - name: Run Playwright tests
         env:
           DISPLAY: :99
-        run: cd e2e && npx playwright test --retries=3 --workers=3
+        run: cd e2e && npx playwright test --retries=3 
 
       - uses: montudor/action-zip@v1
         with:
