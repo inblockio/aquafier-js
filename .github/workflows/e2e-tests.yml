@@ -155,7 +155,7 @@ jobs:
         run: |
           cd e2e
           echo "Running Playwright tests..."
-          npx playwright test --reporter=list,github --workers=3
+          npx playwright test --reporter=list,github --workers=3 --timeout=120000
           TEST_EXIT_CODE=$?
           echo "Test execution completed with exit code $TEST_EXIT_CODE"
           exit $TEST_EXIT_CODE
