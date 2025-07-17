@@ -148,7 +148,6 @@ export default async function authController(fastify: FastifyInstance) {
         });
 
       } else {
-        console.log("User address exist in system")
 
         if (userData.ens_name == null || userData.ens_name == undefined || userData.ens_name == "") {
           if (infuraProjectId) {
