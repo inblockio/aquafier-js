@@ -59,7 +59,7 @@ jobs:
       - name: Setup test environment
         run: |
           sudo apt-get update
-          sudo apt-get install -y xvfb libgtk-3-0 libnotify-dev libgconf-2-4 libnss3 libxss1 libasound2
+          sudo apt-get install -y xvfb libgtk-3-0 libnotify-dev libnss3 libxss1
           echo "Installed required system dependencies"
 
       - name: Start Xvfb
