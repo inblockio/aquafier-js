@@ -7,7 +7,7 @@ import { SignatureData } from '../../../../types/types';
 import { LuInfo } from 'react-icons/lu';
 import { Button } from '../../../../components/ui/button';
 import {   Slider } from '../../../../components/ui/slider';
-import { ScrollArea } from '@/components/ui/scroll-area';
+// import { ScrollArea } from '@/components/ui/scroll-area';
 
 // const parseFontSizeToPoints = (fontSizeString: string, defaultSize: number = 12): number => {
 //   if (!fontSizeString || typeof fontSizeString !== 'string') return defaultSize;
@@ -58,7 +58,7 @@ function PdfRendererComponent({
   const [scale, setScale] = useState(1.15);
 
   return (
-    <div className="h-full w-full max-h-full max-w-full">
+    <div className="h-auto md:h-full w-full max-h-auto md:max-h-full max-w-full">
       {pdfFile && (
         <div className="!h-[60px] !max-h-[60px] w-full flex items-center justify-center gap-2 p-2 bg-gray-100 border-b border-gray-300">
           <Button 
@@ -103,8 +103,8 @@ function PdfRendererComponent({
           </Button>
         </div>
       )}
-      <div className={"h-[calc(100%-60px)] w-full"}>
-        <ScrollArea className='h-full'>
+      <div className={"h-auto md:h-[calc(100%-60px)] w-full md:w-full max-h-auto md:max-h-full !max-w-full overflow-x-auto px-[10px]"}>
+        {/* <ScrollArea className='h-auto md:h-full'> */}
         <PdfViewer
           file={pdfFile}
           annotations={annotations}
@@ -122,7 +122,7 @@ function PdfRendererComponent({
           selectedAnnotationId={selectedAnnotationId}
           onAnnotationSelect={onAnnotationSelect}
         />
-        </ScrollArea>
+        {/* </ScrollArea> */}
       </div>
     </div>
   );
@@ -137,7 +137,7 @@ function PdfRendererComponent({
 //   );
 // });
 
-export const PdfRenderer =PdfRendererComponent
+export const PdfRenderer = PdfRendererComponent
 
 interface EasyPDFRendererProps {
   pdfFile: File | null;
@@ -491,11 +491,11 @@ export default function SignerPage({ file, mySignatures, annotationsInDocument, 
   }, [signaturesInDocument])
 
   return (
-    <div className="h-full">
-      <div className="h-full">
-        <div className="grid grid-cols-12 gap-0 h-full">
+    <div className="h-auto md:h-full">
+      <div className="h-auto md:h-full">
+        <div className="grid grid-cols-12 gap-0 h-auto md:h-full">
           <div className="bg-gray-100 col-span-12 md:col-span-9 overflow-x-auto overflow-y-scroll h-full">
-            <div className="h-full p-0 m-0">
+            <div className="h-auto md:h-full p-0 m-0">
               <PdfRenderer
                 pdfFile={pdfFile}
                 annotations={annotations}
@@ -517,7 +517,7 @@ export default function SignerPage({ file, mySignatures, annotationsInDocument, 
             </div>
           </div>
           <div className="col-span-12 md:col-span-3 bg-gray-100 overflow-hidden">
-            <div className="p-4 h-full overflow-y-scroll overflow-x-hidden break-words">
+            <div className="p-4 h-auto md:h-full overflow-y-scroll overflow-x-hidden break-words">
               <div className="flex flex-col space-y-4">
                 {
                   mySignatures.length > 0 ? (

@@ -449,7 +449,7 @@ const FilesPage = () => {
                 }
             }} >
 
-                <DialogContent showCloseButton={false} className="!max-w-[90vw] !w-[90vw] !h-[95vh] max-h-[95vh] !p-0 gap-0 flex flex-col">
+                <DialogContent showCloseButton={false} className="!max-w-[95vw] !w-[95vw] !h-auto md:!h-[95vh] max-h-[95vh] overflow-y-auto !p-0 gap-0 flex flex-col">
                     {/* Close Button */}
                     <div className="absolute top-4 right-4 z-10">
                         <Button
@@ -470,10 +470,10 @@ const FilesPage = () => {
                             <div className='flex flex-col flex-1 h-[calc(100%-60px)]'>
                                 {/* Header - fixed height */}
                                 <DialogHeader className='!h-[60px] !min-h-[60px] !max-h-[60px] flex justify-center px-6'>
-                                    <DialogTitle>{getAquaTreeFileName(selectedFileInfo.aquaTree!!)}</DialogTitle>
+                                    <DialogTitle style={{textAlign: "start"}}>{getAquaTreeFileName(selectedFileInfo.aquaTree!!)}</DialogTitle>
                                 </DialogHeader>
                                 {/* Content - takes all available space */}
-                                <div className='h-[calc(100%-60px)]'>
+                                <div className='h-auto md:h-[calc(100%-60px)]'>
                                     <CompleteChainView callBack={function (_drawerStatus: IDrawerStatus): void {
                                         setDrawerStatus(_drawerStatus)
                                     }} selectedFileInfo={selectedFileInfo} />

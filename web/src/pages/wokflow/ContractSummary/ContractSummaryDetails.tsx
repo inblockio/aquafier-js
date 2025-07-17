@@ -81,11 +81,11 @@ const ContractSummaryDetails = ({ data, goToSecondPage, enableNameResolution = f
   }
 
   return (
-    <div className="flex flex-col rounded-lg shadow-lg pt-8 overflow-hidden gap-1">
+    <div className="flex flex-col rounded-lg shadow-lg pt-8 overflow-hidden gap-2">
 
       <div className="px-2 md:px-8 flex justify-between items-center">
-        <div className="flex items-center space-x-2">
-          <h2 className="text-xl font-semibold">{mockContractData.name}</h2>
+        <div className="flex items-center space-x-2 flex-wrap">
+          <h2 className="text-sm md:text-xl font-semibold">{mockContractData.name}</h2>
           <Badge variant={mockContractData.status === "pending" ? "outline" : "default"} className={cn("rounded-full", mockContractData.status === "pending" ? "text-yellow-600 border-yellow-400" : "bg-green-100 text-green-800 hover:bg-green-100")}>
             {
               mockContractData.status === "pending" &&
@@ -157,7 +157,7 @@ const ContractSummaryDetails = ({ data, goToSecondPage, enableNameResolution = f
 
       <CustomDivider mt={2} mb={2} />
 
-      <div className="px-2 md:px-8 flex flex-col gap-2">
+      <div className="px-[20px] md:px-8 flex flex-col gap-2">
         <h3 className="text-lg font-semibold">
           Workflow activity timeline
         </h3>

@@ -23,7 +23,6 @@ export default function FilesList() {
             // console.log('URL ends with files_workflows');
             setShowWorkFlowsOnly(true)
         }
-
     }, []);
 
     useEffect(() => {

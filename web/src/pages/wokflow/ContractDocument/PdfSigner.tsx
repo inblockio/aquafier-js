@@ -1538,10 +1538,6 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ fileData, setActiveStep, document
         }
     }, [selectedSignatureId]);
 
-
-
-
-
     // Add event listeners for drag operations
     useEffect(() => {
         if (isDragging) {
@@ -1667,12 +1663,11 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ fileData, setActiveStep, document
                 {
                     pdfFile ? (
                         <>
-                            <div className="h-full">
-                                <div className="h-full">
-                                    <div className="grid grid-cols-12 gap-0 h-full">
+                            <div className="h-auto md:h-full">
+                                <div className="h-auto md:h-full">
+                                    <div className="grid grid-cols-12 gap-0 h-auto md:h-full">
                                         <div className="col-span-12 md:col-span-9 bg-gray-100 overflow-x-auto overflow-y-scroll h-full">
-                                            <div className="h-full p-0 m-0">
-
+                                            <div className="h-auto md:h-full p-0 m-0">
                                                 {/* This is a custom component do not convert to tailwind, we will convert it separately */}
                                                 <PdfRenderer
                                                     pdfFile={pdfFile}
@@ -1691,9 +1686,8 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ fileData, setActiveStep, document
                                             </div>
                                         </div>
                                         <div className="col-span-12 md:col-span-3 bg-gray-100 overflow-hidden">
-                                            <div className="p-4 h-full overflow-y-scroll overflow-x-hidden break-words">
+                                            <div className="p-4 h-auto md:h-full overflow-y-scroll overflow-x-hidden break-words">
                                                 {signatureSideBar()}
-
                                             </div>
                                         </div>
                                     </div>
