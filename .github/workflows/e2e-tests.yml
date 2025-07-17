@@ -1,6 +1,9 @@
 name: E2E Tests After Deployment
 
 on:
+  push:
+    branches:
+      - dev
   workflow_dispatch:
   workflow_call:
     secrets:
@@ -20,30 +23,29 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # Wait for the deployment to stabilize
+      # Wait for the deployment to stabilize with better health check
       - name: Wait for deployment to stabilize
         run: |
           echo "Waiting for deployment to stabilize..."
-          # Try to connect to the site and check if it's responding properly
-          for i in {1..5}; do
-            HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" https://dev.inblock.io)
-            if [[ $HTTP_STATUS -ge 200 && $HTTP_STATUS -lt 300 ]]; then
-              echo "Site is up and running with status code $HTTP_STATUS!"
-              break
+          MAX_ATTEMPTS=15
+          ATTEMPT=0
+          while [ $ATTEMPT -lt $MAX_ATTEMPTS ]; do
+            HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" https://dev.inblock.io/health)
+            if [[ $HTTP_STATUS -eq 200 ]]; then
+              echo "Site is healthy with status code $HTTP_STATUS!"
+              exit 0
             fi
-            echo "Attempt $i: Site not ready yet (status code $HTTP_STATUS), waiting..."
+            ATTEMPT=$((ATTEMPT+1))
+            echo "Attempt $ATTEMPT/$MAX_ATTEMPTS: Site not ready yet (status code $HTTP_STATUS), waiting..."
             sleep 10
           done
-          
-          # Continue regardless of status to avoid failing the workflow
-          # The tests will show if there are actual problems
-          echo "Proceeding with tests..."
+          echo "Warning: Site not fully healthy after $MAX_ATTEMPTS attempts, proceeding with tests anyway..."
 
       - name: Create .env file for e2e tests
         run: |
           cat > e2e/.env << EOL
           LETSENCRYPT_EMAIL=test@example.com
-          VITE_INFURA_PROJECT_ID=your_infura_project_id
+          VITE_INFURA_PROJECT_ID=${{ secrets.INFURA_PROJECT_ID }}
           FRONTEND_URL=https://dev.inblock.io
           BACKEND_URL=https://dev-api.inblock.io
           DB_USER=aquafier
@@ -52,48 +54,77 @@ jobs:
           PREFUNDED_WALLET_PRIVATEKEY=${{ secrets.PREFUNDED_WALLET_PRIVATEKEY }}
           ALCHEMY_PROJECT_ID=${{ secrets.ALCHEMY_PROJECT_ID }}
           EOL
+          echo "Created .env file with necessary environment variables"
+
+      - name: Setup test environment
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y xvfb libgtk-3-0 libnotify-dev libgconf-2-4 libnss3 libxss1 libasound2
+          echo "Installed required system dependencies"
 
       - name: Start Xvfb
         run: |
-          sudo apt-get update
-          sudo apt-get install -y xvfb
-          Xvfb :99 -screen 0 1280x1024x24 &
-          export DISPLAY=:99
+          Xvfb :99 -screen 0 1280x1024x24 > /dev/null 2>&1 &
+          echo "Started Xvfb display server"
 
       - uses: actions/setup-node@v4
         with:
-          node-version: lts/*
+          node-version: '20'
+          cache: 'npm'
 
       - name: Install dependencies
-        run: cd e2e && npm ci
+        run: |
+          cd e2e
+          npm ci
+          echo "Installed npm dependencies"
 
-      - name: Install Playwright Browsers
-        run: cd e2e && npx playwright install --with-deps chromium
+      - name: Install Playwright browsers
+        run: |
+          cd e2e
+          npx playwright install --with-deps chromium
+          echo "Installed Playwright browsers"
 
-      - name: Change MetaMask install-script permissions
-        run: chmod +x ./e2e/script/prepare_browser.sh
-
-      - name: Prepare MetaMask
-        run: ./e2e/script/prepare_browser.sh
+      - name: Prepare test environment
+        run: |
+          chmod +x ./e2e/script/prepare_browser.sh
+          ./e2e/script/prepare_browser.sh
+          echo "Prepared browser environment"
 
       - name: Run Playwright tests
         env:
           DISPLAY: :99
-        run: cd e2e && npx playwright test --retries=3 --timeout=120000
+          CI: true
+          NODE_OPTIONS: --max_old_space_size=4096
+        run: |
+          cd e2e
+          echo "Running Playwright tests..."
+          npx playwright test --retries=3 --timeout=120000 --workers=1 --reporter=html,line
+          TEST_EXIT_CODE=$?
+          echo "Test execution completed with exit code $TEST_EXIT_CODE"
+          exit $TEST_EXIT_CODE
 
-      - uses: montudor/action-zip@v1
-        with:
-          args: zip -qq -r test-results.zip test-results
-
-      - uses: actions/upload-artifact@v4
-        if: ${{ !cancelled() }}
+      - name: Upload test artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
         with:
           name: playwright-report
-          path: test-results.zip
+          path: |
+            e2e/playwright-report/
+            e2e/test-results/
+          retention-days: 30
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: e2e/test-results
           retention-days: 30
 
       - name: Publish Test Report
+        if: always()
         uses: mikepenz/action-junit-report@v5
-        if: success() || failure() # always run even if the previous step fails
         with:
-          report_paths: 'results.xml'
+          report_paths: 'e2e/test-results/*.xml'
+          check_name: Playwright Test Report
+          fail_on_failure: false
