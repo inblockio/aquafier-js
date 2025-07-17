@@ -84,7 +84,7 @@ export const ShareButton = ({ item, nonce, index }: IShareButton) => {
         if (response.status === 200) {
             setSharing(false)
             const domain = window.location.origin;
-            setShared(`${domain}/share/${unique_identifier}`)
+            setShared(`${domain}/app/shared-contracts/${unique_identifier}`)
         }
         else {
             toaster.create({
@@ -216,7 +216,7 @@ export const ShareButton = ({ item, nonce, index }: IShareButton) => {
                                 <Label className="text-sm font-medium">Shared Document Link</Label>
                                 <div className="flex items-center space-x-2 p-2 bg-gray-50 rounded border">
                                     <ClipboardIcon className="w-4 h-4 text-gray-500" />
-                                    <span className="text-sm text-gray-700 flex-1 truncate">{shared}</span>
+                                    <span className="text-sm text-gray-700 flex-1 truncate"  data-testid="share-url" >{shared}</span>
                                 </div>
                                 <p className="text-xs text-gray-500">Copy the link above and share</p>
                             </div>

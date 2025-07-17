@@ -329,7 +329,7 @@ test("share document between two users", async (): Promise<void> => {
 });
 
 // Test for sharing with different permission levels
-test("share document with different permission levels", async (): Promise<void> => {
+test("share document with everyone", async (): Promise<void> => {
   test.setTimeout(120000); // Increase timeout to 120 seconds
   
   // Setup first user (document owner)
@@ -352,14 +352,14 @@ test("share document with different permission levels", async (): Promise<void> 
   await uploadFile(ownerPage, testFilePath);
   await closeUploadDialog(ownerPage);
   
-  // Owner witnesses the document
-  await witnessDocument(ownerPage, ownerContext);
+  // Owner sign the document
+  await signDocument(ownerPage, ownerContext);
   
   // Owner shares the document with recipient (with edit permissions)
-  await shareDocument(ownerPage, ownerContext, recipientAddress);
+ let shareUlr =  await shareDocument(ownerPage, ownerContext, "");
   
   // Recipient verifies they can access and edit the shared document
-  await verifySharedDocumentAccess(recipientPage);
+  await importAquaChain(recipientPage, recipientContext,shareUlr );
   
   // Cleanup
   await ownerContext.close();

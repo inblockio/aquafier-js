@@ -479,17 +479,25 @@ export async function createAquaSignForm(page: Page, context: BrowserContext, fi
 }
 
 // Helper function to handle signature creation and saving
-export async function importAquaChain(secondTestPage: Page, context: BrowserContext): Promise<void> {
+export async function importAquaChain(secondTestPage: Page, context: BrowserContext, shareUrl = ""): Promise<void> {
 
-  const baseUrl = process.env.BASE_URL || "http://localhost:5173";
-  await secondTestPage.goto(`${baseUrl}/app/shared-contracts`);
+  let url = ""
+  if (shareUrl.length == 0) {
+    const baseUrl = process.env.BASE_URL || "http://localhost:5173";
+    url = `${baseUrl}/app/shared-contracts`
+  } else {
+    url = shareUrl
+  }
+
+  await secondTestPage.goto(url);
   await secondTestPage.waitForLoadState('networkidle');
 
-  await secondTestPage.waitForSelector('[data-testid="open-shared-contract-button-0"]', { state: 'visible', timeout: 10000 });
-  await secondTestPage.click('[data-testid="open-shared-contract-button-0"]')
+  if (shareUrl.length == 0) {
+    await secondTestPage.waitForSelector('[data-testid="open-shared-contract-button-0"]', { state: 'visible', timeout: 10000 });
+    await secondTestPage.click('[data-testid="open-shared-contract-button-0"]')
 
-  await secondTestPage.waitForTimeout(2000);
-
+    await secondTestPage.waitForTimeout(2000);
+  }
 
 
   await secondTestPage.waitForSelector('[data-testid="import-aqua-chain-1-button"]', { state: 'visible', timeout: 10000 });
@@ -665,17 +673,17 @@ export async function addSignatureToDocument(page: Page, context: BrowserContext
 //     await page.goto(`${baseUrl}/app`);
 //     await page.waitForLoadState('networkidle');
 //   }
-  
+
 //   // Click upload button on the files page
 //   // await page.getByTestId('file-upload-dropzone').click();
 //   await page.waitForTimeout(1000); // Wait for upload dialog to appear
-  
+
 //   // Upload file
 //   const fileChooserPromise = page.waitForEvent('filechooser');
 //   await page.locator(dropzoneSelector).click();
 //   const fileChooser = await fileChooserPromise;
 //   await fileChooser.setFiles(filePath);
-  
+
 //   // Wait for upload to complete
 //   await page.getByText('Upload Complete').waitFor({ state: 'visible', timeout: 30000 });
 // }
@@ -715,16 +723,16 @@ export async function addSignatureToDocument(page: Page, context: BrowserContext
 //     await page.goto(`${baseUrl}/app`);
 //     await page.waitForLoadState('networkidle');
 //   }
-  
+
 //   // Select the first file
 //   await page.getByTestId('file-row').first().click();
-  
+
 //   // Click witness button
 //   await page.getByTestId('witness-action-button').click();
-  
+
 //   // Handle MetaMask confirmation
 //   await handleMetaMaskNetworkAndConfirm(context);
-  
+
 //   // Wait for success message
 //   await page.getByText('Witnessing successfull').waitFor({ state: 'visible', timeout: 30000 });
 // }
@@ -733,77 +741,82 @@ export async function addSignatureToDocument(page: Page, context: BrowserContext
  * Helper function to share a document with another user
  */
 export async function shareDocument(
-  page: Page, 
-  context: BrowserContext, 
+  page: Page,
+  context: BrowserContext,
   recipientAddress: string
-): Promise<void> {
+): Promise<string> {
+  console.log(`Share document ....`)
+  let shareUrl = ""
 
-  // Navigate to files page
-  // const baseUrl = process.env.BASE_URL || "http://localhost:5173";
-  // await page.goto(`${baseUrl}/app`);
-  // await page.waitForLoadState('networkidle');
-
-  // Stall here for 3 seconds
-  // await page.waitForTimeout(3000);
-  
-  // Select the first file
-  // await page.getByTestId('file-row').first().click();
-  
-  // await page.pause()
-  // Click share button
-  // await page.getByTestId('share-action-button-0').click();
   await page.waitForSelector('[data-testid="share-action-button-0"]', { state: 'visible', timeout: 10000 });
   await page.click('[data-testid="share-action-button-0"]');
-  
-  console.log(`Toggle specific wallet sharing`) 
-  
-  // Wait for the dialog to be fully loaded
-  await page.waitForSelector('text=Share with specific wallet', { state: 'visible', timeout: 5000 });
-  
-  // Toggle specific wallet sharing - try multiple selectors to find the switch
-  try {
-    // Method 1: Try to find the switch by its parent container
-    await page.locator('text=Share with specific wallet').locator('..').locator('button').click();
-  } catch (error) {
-    console.log('Method 1 failed, trying method 2...');
+
+  if (recipientAddress.length > 0) {
+
+    console.log(`Toggle specific wallet sharing`)
+
+
+    // Wait for the dialog to be fully loaded
+    await page.waitForSelector('text=Share with specific wallet', { state: 'visible', timeout: 5000 });
+
+    // Toggle specific wallet sharing - try multiple selectors to find the switch
     try {
-      // Method 2: Look for switch component directly
-      await page.locator('[role="switch"]').click();
-    } catch (error2) {
-      console.log('Method 2 failed, trying method 3...');
+      // Method 1: Try to find the switch by its parent container
+      await page.locator('text=Share with specific wallet').locator('..').locator('button').click();
+    } catch (error) {
+      console.log('Method 1 failed, trying method 2...');
       try {
-        // Method 3: Look for any button near the "Share with specific wallet" text
-        await page.locator('text=Share with specific wallet').locator('..//button').click();
-      } catch (error3) {
-        console.log('Method 3 failed, trying method 4...');
-        // Method 4: Use a more generic approach - find any clickable element in the switch container
-        const switchContainer = page.locator('text=Share with specific wallet').locator('..');
-        await switchContainer.locator('button, [role="switch"], [data-state]').first().click();
+        // Method 2: Look for switch component directly
+        await page.locator('[role="switch"]').click();
+      } catch (error2) {
+        console.log('Method 2 failed, trying method 3...');
+        try {
+          // Method 3: Look for any button near the "Share with specific wallet" text
+          await page.locator('text=Share with specific wallet').locator('..//button').click();
+        } catch (error3) {
+          console.log('Method 3 failed, trying method 4...');
+          // Method 4: Use a more generic approach - find any clickable element in the switch container
+          const switchContainer = page.locator('text=Share with specific wallet').locator('..');
+          await switchContainer.locator('button, [role="switch"], [data-state]').first().click();
+        }
       }
     }
+
+    // Wait for the wallet address input to appear
+    await page.waitForSelector('input[placeholder="Enter wallet address"]', { state: 'visible', timeout: 5000 });
+
+    // Enter recipient address
+    await page.locator('input[placeholder="Enter wallet address"]').fill(recipientAddress);
+  } else {
+    console.log(` sharing to everyone `)
   }
-  
-  // Wait for the wallet address input to appear
-  await page.waitForSelector('input[placeholder="Enter wallet address"]', { state: 'visible', timeout: 5000 });
-  
-  // Enter recipient address
-  await page.locator('input[placeholder="Enter wallet address"]').fill(recipientAddress);
-  
+
   // Confirm sharing
   // await page.getByTestId('share-modal-action-button-dialog').click();
   await page.waitForSelector('[data-testid="share-modal-action-button-dialog"]', { state: 'visible', timeout: 10000 });
   await page.click('[data-testid="share-modal-action-button-dialog"]');
-  
+
   // Handle MetaMask confirmation if needed
   // await handleMetaMaskNetworkAndConfirm(context);
-  
+  console.log(` Shared Document Link to be visible `)
   // Wait for success message - look for the shared document link section
   await page.getByText('Shared Document Link').waitFor({ state: 'visible', timeout: 30000 });
-  
+
+  console.log(` copy share url logic  `)
+  // Method 1: Using getByTestId() and textContent() - Most common approach
+  shareUrl = await page.getByTestId('share-url').textContent() ?? "";
+  console.log('Share URL:', shareUrl);
+
+
   // Close the share dialog
   // await page.getByTestId('share-cancel-action-button').click();
   await page.waitForSelector('[data-testid="share-cancel-action-button"]', { state: 'visible', timeout: 10000 });
   await page.click('[data-testid="share-cancel-action-button"]');
+
+
+
+
+  return shareUrl;
 }
 
 /**
@@ -816,358 +829,358 @@ export async function shareDocument(
 //   const baseUrl = process.env.BASE_URL || "http://localhost:5173";
 //   await page.goto(`${baseUrl}/app/shared-contracts`);
 //   await page.waitForLoadState('networkidle');
-  
+
 //   // Verify shared documents section is visible
 //   await page.getByTestId('contracts-shared-button').waitFor({ state: 'visible' });
 //   await page.getByTestId('contracts-shared-button').click();
-  
+
 //   // Wait for shared files to load
 //   await page.waitForTimeout(2000);
-  
 
 
-  
 
-  // await page.getByTestId('open-shared-contract-button-0').waitFor({ state: 'visible' });
-  // await page.getByTestId('open-shared-contract-button-0').click();
-  // Look for any shared files
-  // const sharedFilesCount = await page.locator('tr').count();
-  
-  // // Verify at least one shared file exists (header row + at least one file)
-  // if (sharedFilesCount > 1) {
-  //   console.log(`Found ${sharedFilesCount - 1} shared files`);
-  // } else {
-  //   console.log('No shared files found');
-  // }
-  
-  // Success if we can see the shared files page
+
+
+// await page.getByTestId('open-shared-contract-button-0').waitFor({ state: 'visible' });
+// await page.getByTestId('open-shared-contract-button-0').click();
+// Look for any shared files
+// const sharedFilesCount = await page.locator('tr').count();
+
+// // Verify at least one shared file exists (header row + at least one file)
+// if (sharedFilesCount > 1) {
+//   console.log(`Found ${sharedFilesCount - 1} shared files`);
+// } else {
+//   console.log('No shared files found');
+// }
+
+// Success if we can see the shared files page
 //   await page.waitForTimeout(1000);
 // }
 
 
 export function generatePassword(length: number): string {
-    let result = '';
-    const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-    const charactersLength = characters.length;
-    for (let i = 0; i < length; i++) {
-        result += characters.charAt(Math.floor(Math.random() * charactersLength));
-    }
-    return result;
+  let result = '';
+  const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+  const charactersLength = characters.length;
+  for (let i = 0; i < length; i++) {
+    result += characters.charAt(Math.floor(Math.random() * charactersLength));
+  }
+  return result;
 }
 
 // NEW FUNCTION ADDED - Helper function to switch to a test network
 async function switchToTestNetwork(metaMaskPage: any) {
-    try {
-        // Click on network dropdown
-        await metaMaskPage.click('[data-testid="network-display"]');
+  try {
+    // Click on network dropdown
+    await metaMaskPage.click('[data-testid="network-display"]');
 
-        // Wait for network list
-        await metaMaskPage.waitForSelector('[data-testid="network-list"]', { state: 'visible', timeout: 5000 });
+    // Wait for network list
+    await metaMaskPage.waitForSelector('[data-testid="network-list"]', { state: 'visible', timeout: 5000 });
 
-        // Try to select Sepolia testnet or localhost
-        const networkOptions = [
-            '[data-testid="Sepolia-list-item"]',
-            '[data-testid="Localhost 8545-list-item"]',
-            'button:has-text("Sepolia")',
-            'button:has-text("Localhost")'
-        ];
+    // Try to select Sepolia testnet or localhost
+    const networkOptions = [
+      '[data-testid="Sepolia-list-item"]',
+      '[data-testid="Localhost 8545-list-item"]',
+      'button:has-text("Sepolia")',
+      'button:has-text("Localhost")'
+    ];
 
-        for (const networkSelector of networkOptions) {
-            try {
-                await metaMaskPage.waitForSelector(networkSelector, { state: 'visible', timeout: 2000 });
-                await metaMaskPage.click(networkSelector);
-                console.log(`Switched to test network: ${networkSelector}`);
-                return;
-            } catch {
-                continue;
-            }
-        }
-
-        // If no test networks found, close the dropdown
-        await metaMaskPage.press('[data-testid="network-list"]', 'Escape');
-
-    } catch (error) {
-        console.log("Could not switch network:", error);
+    for (const networkSelector of networkOptions) {
+      try {
+        await metaMaskPage.waitForSelector(networkSelector, { state: 'visible', timeout: 2000 });
+        await metaMaskPage.click(networkSelector);
+        console.log(`Switched to test network: ${networkSelector}`);
+        return;
+      } catch {
+        continue;
+      }
     }
+
+    // If no test networks found, close the dropdown
+    await metaMaskPage.press('[data-testid="network-list"]', 'Escape');
+
+  } catch (error) {
+    console.log("Could not switch network:", error);
+  }
 }
 
 
 export async function fundWallet(walletToFund: string) {
 
-    try {
-      
-        const funderPrivateKey = process.env.PREFUNDED_WALLET_PRIVATEKEY || "" //'0x...'; // Store securely!
-        const alchemyKey = process.env.ALCHEMY_PROJECT_ID
-        
-        // Debug environment variables
-        console.log(`PREFUNDED_WALLET_PRIVATEKEY set: ${!!process.env.PREFUNDED_WALLET_PRIVATEKEY}`);
-        console.log(`ALCHEMY_PROJECT_ID set: ${!!process.env.ALCHEMY_PROJECT_ID}`);
-        
-        // Define network configuration explicitly
-        const sepoliaNetwork = {
-            name: 'sepolia',
-            chainId: 11155111
-        };
-        
-        // Create provider with explicit network configuration
-        const alchemyURL = 'https://eth-sepolia.g.alchemy.com/v2/'+alchemyKey;
-        const provider = new ethers.JsonRpcProvider(alchemyURL, sepoliaNetwork);
-        
-        // Check if provider is connected and verify network
-        const network = await provider.getNetwork();
-        console.log(`Provider network: ${network.name}, chainId: ${network.chainId}`);
-        
-        // Verify we're on Sepolia (using Number() to avoid BigInt issues)
-        const sepoliaChainId = 11155111;
-        const currentChainId = Number(network.chainId);
-        
-        if (currentChainId !== sepoliaChainId) {
-            console.error(`Wrong network detected: ${currentChainId}. Expected Sepolia (${sepoliaChainId})`);
-            throw new Error(`Wrong network detected: ${currentChainId}. Expected Sepolia (${sepoliaChainId})`);
-        }
-        
-        const blockNumber = await provider.getBlockNumber();
-        console.log(`Provider connected: true, latest block: ${blockNumber}`);
-        
-        console.log(`funderPrivateKey ${funderPrivateKey ? '(set)' : '(empty)'} -- alchemyURL ${alchemyURL}`)
+  try {
 
-        // Check the balance of the funder wallet
-        const funderWallet = new ethers.Wallet(funderPrivateKey, provider);
-        const funderBalance = await provider.getBalance(funderWallet.address);
-        console.log(`Funder wallet address: ${funderWallet.address} -- Balance: ${ethers.formatEther(funderBalance)} ETH`);
-        
-        // Ensure the wallet has enough funds
-        if (funderBalance < ethers.parseEther('0.0006')) {
-            console.error('Insufficient funds in funder wallet');
-            throw new Error(`Insufficient funds in funder wallet: ${ethers.formatEther(funderBalance)} ETH`);
-        }
+    const funderPrivateKey = process.env.PREFUNDED_WALLET_PRIVATEKEY || "" //'0x...'; // Store securely!
+    const alchemyKey = process.env.ALCHEMY_PROJECT_ID
 
-        // Send ETH
-        const tx = await funderWallet.sendTransaction({
-                        to: walletToFund,
-                        value: ethers.parseEther('0.0005'),
-                    });
-                
-                await tx.wait();
-                console.log(`Funded ${walletToFund} in tx ${tx.hash}`);
-    } catch (e) {
-        console.log(`fundWallet Error ${e}`)
+    // Debug environment variables
+    console.log(`PREFUNDED_WALLET_PRIVATEKEY set: ${!!process.env.PREFUNDED_WALLET_PRIVATEKEY}`);
+    console.log(`ALCHEMY_PROJECT_ID set: ${!!process.env.ALCHEMY_PROJECT_ID}`);
+
+    // Define network configuration explicitly
+    const sepoliaNetwork = {
+      name: 'sepolia',
+      chainId: 11155111
+    };
+
+    // Create provider with explicit network configuration
+    const alchemyURL = 'https://eth-sepolia.g.alchemy.com/v2/' + alchemyKey;
+    const provider = new ethers.JsonRpcProvider(alchemyURL, sepoliaNetwork);
+
+    // Check if provider is connected and verify network
+    const network = await provider.getNetwork();
+    console.log(`Provider network: ${network.name}, chainId: ${network.chainId}`);
+
+    // Verify we're on Sepolia (using Number() to avoid BigInt issues)
+    const sepoliaChainId = 11155111;
+    const currentChainId = Number(network.chainId);
+
+    if (currentChainId !== sepoliaChainId) {
+      console.error(`Wrong network detected: ${currentChainId}. Expected Sepolia (${sepoliaChainId})`);
+      throw new Error(`Wrong network detected: ${currentChainId}. Expected Sepolia (${sepoliaChainId})`);
     }
+
+    const blockNumber = await provider.getBlockNumber();
+    console.log(`Provider connected: true, latest block: ${blockNumber}`);
+
+    console.log(`funderPrivateKey ${funderPrivateKey ? '(set)' : '(empty)'} -- alchemyURL ${alchemyURL}`)
+
+    // Check the balance of the funder wallet
+    const funderWallet = new ethers.Wallet(funderPrivateKey, provider);
+    const funderBalance = await provider.getBalance(funderWallet.address);
+    console.log(`Funder wallet address: ${funderWallet.address} -- Balance: ${ethers.formatEther(funderBalance)} ETH`);
+
+    // Ensure the wallet has enough funds
+    if (funderBalance < ethers.parseEther('0.0006')) {
+      console.error('Insufficient funds in funder wallet');
+      throw new Error(`Insufficient funds in funder wallet: ${ethers.formatEther(funderBalance)} ETH`);
+    }
+
+    // Send ETH
+    const tx = await funderWallet.sendTransaction({
+      to: walletToFund,
+      value: ethers.parseEther('0.0005'),
+    });
+
+    await tx.wait();
+    console.log(`Funded ${walletToFund} in tx ${tx.hash}`);
+  } catch (e) {
+    console.log(`fundWallet Error ${e}`)
+  }
 
 }
 
 export async function registerNewMetaMaskWallet(): Promise<RegisterMetaMaskResponse> {
-    const metamaskPath = path.join(__dirname, 'metamask-extension');
+  const metamaskPath = path.join(__dirname, 'metamask-extension');
 
-    const context = await chromium.launchPersistentContext('', {
-        headless: false,
-        args: [
-            `--disable-extensions-except=${metamaskPath}`,
-            `--load-extension=${metamaskPath}`,
-        ],
-    });
+  const context = await chromium.launchPersistentContext('', {
+    headless: false,
+    args: [
+      `--disable-extensions-except=${metamaskPath}`,
+      `--load-extension=${metamaskPath}`,
+    ],
+  });
 
-    await context.waitForEvent("page")
+  await context.waitForEvent("page")
 
-    const metaMaskPage = await context.pages()[1];
+  const metaMaskPage = await context.pages()[1];
 
-    await metaMaskPage.waitForLoadState("load");
+  await metaMaskPage.waitForLoadState("load");
 
-    //setup-page
-    await metaMaskPage.click('[data-testid="onboarding-terms-checkbox"]')
-    await metaMaskPage.click('[data-testid="onboarding-create-wallet"]')
+  //setup-page
+  await metaMaskPage.click('[data-testid="onboarding-terms-checkbox"]')
+  await metaMaskPage.click('[data-testid="onboarding-create-wallet"]')
 
-    //tele-data deny
-    await metaMaskPage.waitForSelector('[data-testid="metametrics-no-thanks"]', { state: 'visible' });
-    await metaMaskPage.click('[data-testid="metametrics-no-thanks"]')
+  //tele-data deny
+  await metaMaskPage.waitForSelector('[data-testid="metametrics-no-thanks"]', { state: 'visible' });
+  await metaMaskPage.click('[data-testid="metametrics-no-thanks"]')
 
-    //password setup
-    let myNewPassword = generatePassword(15)
-    await metaMaskPage.waitForSelector('[data-testid="create-password-new"]', { state: 'visible' })
-    await metaMaskPage.fill('[data-testid="create-password-new"]', myNewPassword)
-    await metaMaskPage.fill('[data-testid="create-password-confirm"]', myNewPassword)
-    await metaMaskPage.click('[data-testid="create-password-terms"]')
-    await metaMaskPage.click('[data-testid="create-password-wallet"]')
+  //password setup
+  let myNewPassword = generatePassword(15)
+  await metaMaskPage.waitForSelector('[data-testid="create-password-new"]', { state: 'visible' })
+  await metaMaskPage.fill('[data-testid="create-password-new"]', myNewPassword)
+  await metaMaskPage.fill('[data-testid="create-password-confirm"]', myNewPassword)
+  await metaMaskPage.click('[data-testid="create-password-terms"]')
+  await metaMaskPage.click('[data-testid="create-password-wallet"]')
 
-    //no i dont want to store my wallet
-    await metaMaskPage.waitForSelector('[data-testid="secure-wallet-later"]', { state: 'visible' });
-    await metaMaskPage.click('[data-testid="secure-wallet-later"]')
-    await metaMaskPage.waitForSelector('[data-testid="skip-srp-backup-popover-checkbox"]', { state: 'visible' });
-    await metaMaskPage.click('[data-testid="skip-srp-backup-popover-checkbox"]')
-    await metaMaskPage.click('[data-testid="skip-srp-backup"]')
+  //no i dont want to store my wallet
+  await metaMaskPage.waitForSelector('[data-testid="secure-wallet-later"]', { state: 'visible' });
+  await metaMaskPage.click('[data-testid="secure-wallet-later"]')
+  await metaMaskPage.waitForSelector('[data-testid="skip-srp-backup-popover-checkbox"]', { state: 'visible' });
+  await metaMaskPage.click('[data-testid="skip-srp-backup-popover-checkbox"]')
+  await metaMaskPage.click('[data-testid="skip-srp-backup"]')
 
-    //done
-    await metaMaskPage.waitForSelector('[data-testid="onboarding-complete-done"]', { state: 'visible' });
-    await metaMaskPage.click('[data-testid="onboarding-complete-done"]')
+  //done
+  await metaMaskPage.waitForSelector('[data-testid="onboarding-complete-done"]', { state: 'visible' });
+  await metaMaskPage.click('[data-testid="onboarding-complete-done"]')
 
-    //finish tutorial
-    await metaMaskPage.waitForSelector('[data-testid="pin-extension-next"]', { state: 'visible' });
-    await metaMaskPage.click('[data-testid="pin-extension-next"]')
-    await metaMaskPage.waitForSelector('[data-testid="pin-extension-done"]', { state: 'visible' });
-    await metaMaskPage.click('[data-testid="pin-extension-done"]')
+  //finish tutorial
+  await metaMaskPage.waitForSelector('[data-testid="pin-extension-next"]', { state: 'visible' });
+  await metaMaskPage.click('[data-testid="pin-extension-next"]')
+  await metaMaskPage.waitForSelector('[data-testid="pin-extension-done"]', { state: 'visible' });
+  await metaMaskPage.click('[data-testid="pin-extension-done"]')
 
-    await metaMaskPage.waitForSelector('[data-testid="network-display"]', { state: 'visible' });
+  await metaMaskPage.waitForSelector('[data-testid="network-display"]', { state: 'visible' });
 
-    // CHANGE ADDED - Add network switching to localhost/testnet BEFORE proceeding
-    // try {
-    //     await switchToTestNetwork(metaMaskPage);
-    // } catch (error) {
-    //     console.log("Could not switch network, continuing with current network");
-    // }
+  // CHANGE ADDED - Add network switching to localhost/testnet BEFORE proceeding
+  // try {
+  //     await switchToTestNetwork(metaMaskPage);
+  // } catch (error) {
+  //     console.log("Could not switch network, continuing with current network");
+  // }
 
 
-    await metaMaskPage.waitForSelector('[data-testid="not-now-button"]', { state: 'visible', timeout: 100000 });
-    await metaMaskPage.click('[data-testid="not-now-button"]')
+  await metaMaskPage.waitForSelector('[data-testid="not-now-button"]', { state: 'visible', timeout: 100000 });
+  await metaMaskPage.click('[data-testid="not-now-button"]')
 
-    await metaMaskPage.waitForSelector('[data-testid="account-menu-icon"]')
-    await metaMaskPage.click('[data-testid="account-menu-icon"]')
-    await metaMaskPage.waitForSelector('[data-testid="account-list-item-menu-button"]')
-    await metaMaskPage.click('[data-testid="account-list-item-menu-button"]')
-    await metaMaskPage.waitForSelector('[data-testid="account-list-menu-details"]')
-    await metaMaskPage.click('[data-testid="account-list-menu-details"]')
-    await metaMaskPage.getByText("Details").waitFor({ state: 'visible' })
-    await metaMaskPage.getByText("Details").click()
-    await metaMaskPage.waitForSelector('[class="mm-box mm-text qr-code__address-segments mm-text--body-md mm-box--margin-bottom-4 mm-box--color-text-default"]')
-    const address = await metaMaskPage.locator('[class="mm-box mm-text qr-code__address-segments mm-text--body-md mm-box--margin-bottom-4 mm-box--color-text-default"]').textContent()
+  await metaMaskPage.waitForSelector('[data-testid="account-menu-icon"]')
+  await metaMaskPage.click('[data-testid="account-menu-icon"]')
+  await metaMaskPage.waitForSelector('[data-testid="account-list-item-menu-button"]')
+  await metaMaskPage.click('[data-testid="account-list-item-menu-button"]')
+  await metaMaskPage.waitForSelector('[data-testid="account-list-menu-details"]')
+  await metaMaskPage.click('[data-testid="account-list-menu-details"]')
+  await metaMaskPage.getByText("Details").waitFor({ state: 'visible' })
+  await metaMaskPage.getByText("Details").click()
+  await metaMaskPage.waitForSelector('[class="mm-box mm-text qr-code__address-segments mm-text--body-md mm-box--margin-bottom-4 mm-box--color-text-default"]')
+  const address = await metaMaskPage.locator('[class="mm-box mm-text qr-code__address-segments mm-text--body-md mm-box--margin-bottom-4 mm-box--color-text-default"]').textContent()
 
-    await metaMaskPage.close()
+  await metaMaskPage.close()
 
-    console.log("Wallet finished!!! Adr: " + address)
+  console.log("Wallet finished!!! Adr: " + address)
 
-    if(address==null){
-        throw Error(`Wallet address cannot be null `)
-    }
-    return new RegisterMetaMaskResponse(context, address);
+  if (address == null) {
+    throw Error(`Wallet address cannot be null `)
+  }
+  return new RegisterMetaMaskResponse(context, address);
 }
 
 export async function registerNewMetaMaskWalletAndLogin(): Promise<RegisterMetaMaskResponse> {
-    const response = await registerNewMetaMaskWallet();
-    const context = response.context;
-    const testPage = context.pages()[0];
-    await testPage.waitForLoadState("load")
+  const response = await registerNewMetaMaskWallet();
+  const context = response.context;
+  const testPage = context.pages()[0];
+  await testPage.waitForLoadState("load")
 
-    // Get the BASE_URL from environment variables and navigate to it
-    const baseUrl = process.env.BASE_URL || "https://dev.inblock.io";
-    console.log(`BASE URL: ${baseUrl}`);
-    const url=`${baseUrl}/app`
-    console.log(`Navigating to: ${url}`);
-    await testPage.goto(url, { waitUntil: 'networkidle' })
+  // Get the BASE_URL from environment variables and navigate to it
+  const baseUrl = process.env.BASE_URL || "https://dev.inblock.io";
+  console.log(`BASE URL: ${baseUrl}`);
+  const url = `${baseUrl}/app`
+  console.log(`Navigating to: ${url}`);
+  await testPage.goto(url, { waitUntil: 'networkidle' })
 
-    console.log("Page loaded, looking for sign-in button...");
+  console.log("Page loaded, looking for sign-in button...");
 
-    try {
-        // Take a screenshot to help debug
-        // await testPage.screenshot({ path: 'page-before-login.png' });
-        // console.log("Screenshot saved as page-before-login.png");
+  try {
+    // Take a screenshot to help debug
+    // await testPage.screenshot({ path: 'page-before-login.png' });
+    // console.log("Screenshot saved as page-before-login.png");
 
-        // Look for any sign-in button with a more flexible approach
-        console.log("Looking for any sign-in button...");
+    // Look for any sign-in button with a more flexible approach
+    console.log("Looking for any sign-in button...");
 
-        // Wait for and click the sign-in button
-        //  await testPage.waitForSelector('[data-testid="sign-in-button-dialog"]', {state: 'visible', timeout: 60000})
-        //  console.log("Sign-in button found, clicking it...");
-        // Try different possible selectors for the sign-in button
-        const signInButtonSelectors = [
-            '[data-testid="sign-in-button-page"]',
-            'button:has-text("Sign In")',
-            'button:has-text("Connect")',
-            'button:has-text("Login")'
-        ];
+    // Wait for and click the sign-in button
+    //  await testPage.waitForSelector('[data-testid="sign-in-button-dialog"]', {state: 'visible', timeout: 60000})
+    //  console.log("Sign-in button found, clicking it...");
+    // Try different possible selectors for the sign-in button
+    const signInButtonSelectors = [
+      '[data-testid="sign-in-button-page"]',
+      'button:has-text("Sign In")',
+      'button:has-text("Connect")',
+      'button:has-text("Login")'
+    ];
 
-        let buttonFound = false;
-        const metamaskPromise = context.waitForEvent("page");
+    let buttonFound = false;
+    const metamaskPromise = context.waitForEvent("page");
 
-        // Click the sign-in button using the data-testid attribute
-        //  await testPage.click('[data-testid="sign-in-button-dialog"]');
-        // Try each selector until we find a visible button
-        for (const selector of signInButtonSelectors) {
-            try {
-                const isVisible = await testPage.isVisible(selector, { timeout: 5000 });
-                if (isVisible) {
-                    console.log(`Found visible sign-in button with selector: ${selector}`);
-                    await testPage.click(selector);
-                    buttonFound = true;
-                    break;
-                }
-            } catch (e) {
-                console.log(`Selector ${selector} not found or not visible`);
-            }
+    // Click the sign-in button using the data-testid attribute
+    //  await testPage.click('[data-testid="sign-in-button-dialog"]');
+    // Try each selector until we find a visible button
+    for (const selector of signInButtonSelectors) {
+      try {
+        const isVisible = await testPage.isVisible(selector, { timeout: 5000 });
+        if (isVisible) {
+          console.log(`Found visible sign-in button with selector: ${selector}`);
+          await testPage.click(selector);
+          buttonFound = true;
+          break;
         }
-
-        if (!buttonFound) {
-            // If no button found with specific selectors, try to find any button that might be a sign-in button
-            console.log("No specific sign-in button found, looking for any button that might be for sign-in...");
-
-            // Take a screenshot to see what's on the page
-            // await testPage.screenshot({ path: 'page-no-button-found.png' });
-
-            // Force click the first button we find as a last resort
-            await testPage.click('button', { force: true });
-            console.log("Clicked first button found as fallback");
-        }
-        console.log("Clicked sign-in button, waiting for MetaMask popup...");
-
-        await metamaskPromise;
-        console.log("MetaMask popup opened");
-    } catch (error) {
-        console.error("Error during login:", error);
-        await testPage.screenshot({ path: 'login-error.png' });
-        throw error;
+      } catch (e) {
+        console.log(`Selector ${selector} not found or not visible`);
+      }
     }
 
-    const metamaskPage = context.pages()[1]
-    await metamaskPage.waitForSelector('[data-testid="confirm-btn"]', { state: 'visible' })
-    await metamaskPage.click('[data-testid="confirm-btn"]')
+    if (!buttonFound) {
+      // If no button found with specific selectors, try to find any button that might be a sign-in button
+      console.log("No specific sign-in button found, looking for any button that might be for sign-in...");
 
-    await metamaskPage.waitForSelector('[data-testid="confirm-footer-button"]', { state: 'visible' })
-    await metamaskPage.click('[data-testid="confirm-footer-button"]')
+      // Take a screenshot to see what's on the page
+      // await testPage.screenshot({ path: 'page-no-button-found.png' });
 
-    return response;
+      // Force click the first button we find as a last resort
+      await testPage.click('button', { force: true });
+      console.log("Clicked first button found as fallback");
+    }
+    console.log("Clicked sign-in button, waiting for MetaMask popup...");
+
+    await metamaskPromise;
+    console.log("MetaMask popup opened");
+  } catch (error) {
+    console.error("Error during login:", error);
+    await testPage.screenshot({ path: 'login-error.png' });
+    throw error;
+  }
+
+  const metamaskPage = context.pages()[1]
+  await metamaskPage.waitForSelector('[data-testid="confirm-btn"]', { state: 'visible' })
+  await metamaskPage.click('[data-testid="confirm-btn"]')
+
+  await metamaskPage.waitForSelector('[data-testid="confirm-footer-button"]', { state: 'visible' })
+  await metamaskPage.click('[data-testid="confirm-footer-button"]')
+
+  return response;
 }
 
 
 export async function findAndClickHighestSharedButton(page: Page): Promise<number | null> {
-    let highestCount = -1;
-    let currentCount = 0;
+  let highestCount = -1;
+  let currentCount = 0;
 
-    // Keep checking for higher numbered buttons until we don't find any
-    while (true) {
-        const selector = `[data-testid="shared-button-count-${currentCount}"]`;
+  // Keep checking for higher numbered buttons until we don't find any
+  while (true) {
+    const selector = `[data-testid="shared-button-count-${currentCount}"]`;
 
-        try {
-            // Check if the element exists (with a short timeout to avoid long waits)
-            await page.waitForSelector(selector, { state: 'attached', timeout: 1000 });
-            highestCount = currentCount;
-            currentCount++;
-        } catch (error) {
-            // Element doesn't exist, break the loop
-            break;
-        }
+    try {
+      // Check if the element exists (with a short timeout to avoid long waits)
+      await page.waitForSelector(selector, { state: 'attached', timeout: 1000 });
+      highestCount = currentCount;
+      currentCount++;
+    } catch (error) {
+      // Element doesn't exist, break the loop
+      break;
     }
+  }
 
-    return highestCount
+  return highestCount
 
-    // If we found at least one button with count > 0, click the highest one
-    //   if (highestCount > 0) {
-    //     const highestSelector = `[data-testid="shared-button-count-${highestCount}"]`;
-    //     await page.waitForSelector(highestSelector, { state: 'visible', timeout: 10000 });
-    //     await page.click(highestSelector);
-    //     console.log(`Clicked button with highest count: ${highestCount}`);
-    //     return highestCount;
-    //   } else {
-    //     console.log('No shared-button-count elements with value > 0 found');
-    //     return null;
-    //   }
+  // If we found at least one button with count > 0, click the highest one
+  //   if (highestCount > 0) {
+  //     const highestSelector = `[data-testid="shared-button-count-${highestCount}"]`;
+  //     await page.waitForSelector(highestSelector, { state: 'visible', timeout: 10000 });
+  //     await page.click(highestSelector);
+  //     console.log(`Clicked button with highest count: ${highestCount}`);
+  //     return highestCount;
+  //   } else {
+  //     console.log('No shared-button-count elements with value > 0 found');
+  //     return null;
+  //   }
 }
 
 class RegisterMetaMaskResponse {
 
 
-    constructor(context: BrowserContext, walletAddress: string) {
-        this.context = context;
-        this.walletAddress = walletAddress;
-    }
+  constructor(context: BrowserContext, walletAddress: string) {
+    this.context = context;
+    this.walletAddress = walletAddress;
+  }
 
-    context: BrowserContext;
-    walletAddress: string;
+  context: BrowserContext;
+  walletAddress: string;
 }
