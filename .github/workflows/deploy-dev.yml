@@ -21,3 +21,11 @@ jobs:
           key: ${{ secrets.RUNNER_PRIVATE_KEY }}
           passphrase: ${{ secrets.PRIVATE_KEY_PASSWORD }}
           script: /home/dev/scripts/pull_latest_version_aquafier-js.sh
+
+  # Call the e2e tests workflow after deployment
+  run-e2e-tests:
+    needs: deploy
+    uses: ./.github/workflows/e2e-tests.yml
+    secrets:
+      RUNNER_PRIVATE_KEY: ${{ secrets.RUNNER_PRIVATE_KEY }}
+      PRIVATE_KEY_PASSWORD: ${{ secrets.PRIVATE_KEY_PASSWORD }}

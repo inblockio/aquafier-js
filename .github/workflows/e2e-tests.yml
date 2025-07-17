@@ -2,10 +2,12 @@ name: E2E Tests After Deployment
 
 on:
   workflow_dispatch:
-  workflow_run:
-    workflows: ["Deploy Dev-Environment"]
-    types:
-      - completed
+  workflow_call:
+    secrets:
+      RUNNER_PRIVATE_KEY:
+        required: true
+      PRIVATE_KEY_PASSWORD:
+        required: true
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref_name }}
@@ -17,8 +19,6 @@ env:
 
 jobs:
   e2e-tests:
-    # Only run if the deployment was successful
-    if: ${{ github.event.workflow_run.conclusion == 'success' }}
     timeout-minutes: 60
     runs-on: ubuntu-latest
     steps:

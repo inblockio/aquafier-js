@@ -1,12 +1,11 @@
-name: Playwright Tests (Disabled)
+name: Playwright Tests
 on:
-  # This workflow will now only run when manually triggered
   workflow_dispatch:
-    inputs:
-      reason:
-        description: 'Reason for running this workflow manually'
-        required: true
-        default: 'Manual test run'
+    
+  # push:
+  #   branches: [ main, dev ]
+  # pull_request:
+    # branches: [ main, dev ]
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref_name }}
