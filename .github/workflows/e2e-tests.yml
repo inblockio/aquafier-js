@@ -24,27 +24,24 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: build and load docker image
-        uses: ./.github/actions/build_container
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          push: 'false'
-          load: 'true'
-          tags: 'latest'
-
       # Wait for the deployment to stabilize
-      - name: Wait for deployment to be fully available
+      - name: Wait for deployment to stabilize
         run: |
           echo "Waiting for deployment to stabilize..."
           # Try to connect to the site and check if it's responding properly
-          for i in {1..30}; do
-            if curl -s --head https://dev.inblock.io | grep "200 OK"; then
-              echo "Site is up and running!"
+          for i in {1..5}; do
+            HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" https://dev.inblock.io)
+            if [[ $HTTP_STATUS -ge 200 && $HTTP_STATUS -lt 300 ]]; then
+              echo "Site is up and running with status code $HTTP_STATUS!"
               break
             fi
-            echo "Attempt $i: Site not ready yet, waiting..."
+            echo "Attempt $i: Site not ready yet (status code $HTTP_STATUS), waiting..."
             sleep 10
           done
+          
+          # Continue regardless of status to avoid failing the workflow
+          # The tests will show if there are actual problems
+          echo "Proceeding with tests..."
 
       - name: Create .env file for e2e tests
         run: |
