@@ -1,12 +1,11 @@
-name: Playwright Tests (Disabled)
+name: E2E Tests After Deployment
+
 on:
-  # This workflow will now only run when manually triggered
   workflow_dispatch:
-    inputs:
-      reason:
-        description: 'Reason for running this workflow manually'
-        required: true
-        default: 'Manual test run'
+  workflow_run:
+    workflows: ["Deploy Dev-Environment"]
+    types:
+      - completed
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref_name }}
@@ -17,7 +16,9 @@ env:
   IMAGE_NAME: ${{ github.repository }}
 
 jobs:
-  Playwright-Tests:
+  e2e-tests:
+    # Only run if the deployment was successful
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
     timeout-minutes: 60
     runs-on: ubuntu-latest
     steps:
@@ -31,11 +32,19 @@ jobs:
           load: 'true'
           tags: 'latest'
 
-      - name: Set up Docker Compose
+      # Wait for the deployment to stabilize
+      - name: Wait for deployment to be fully available
         run: |
-          sudo curl -L "https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)" \
-            -o /usr/local/bin/docker-compose
-          sudo chmod +x /usr/local/bin/docker-compose
+          echo "Waiting for deployment to stabilize..."
+          # Try to connect to the site and check if it's responding properly
+          for i in {1..30}; do
+            if curl -s --head https://dev.inblock.io | grep "200 OK"; then
+              echo "Site is up and running!"
+              break
+            fi
+            echo "Attempt $i: Site not ready yet, waiting..."
+            sleep 10
+          done
 
       - name: Create .env file for e2e tests
         run: |
@@ -69,7 +78,7 @@ jobs:
         run: cd e2e && npm ci
 
       - name: Install Playwright Browsers
-        run:  cd e2e && npx playwright install --with-deps chromium
+        run: cd e2e && npx playwright install --with-deps chromium
 
       - name: Change MetaMask install-script permissions
         run: chmod +x ./e2e/script/prepare_browser.sh
@@ -80,7 +89,7 @@ jobs:
       - name: Run Playwright tests
         env:
           DISPLAY: :99
-        run: cd e2e && npx playwright test --retries=3 
+        run: cd e2e && npx playwright test --retries=3 --timeout=120000
 
       - uses: montudor/action-zip@v1
         with:
