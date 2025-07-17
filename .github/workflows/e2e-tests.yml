@@ -74,13 +74,11 @@ jobs:
 
       - name: Install dependencies
         run: |
-          cd e2e
           npm ci
           echo "Installed npm dependencies"
 
       - name: Install Playwright browsers
         run: |
-          cd e2e
           npx playwright install --with-deps chromium
           echo "Installed Playwright browsers"
 
@@ -96,7 +94,6 @@ jobs:
           CI: true
           NODE_OPTIONS: --max_old_space_size=4096
         run: |
-          cd e2e
           echo "Running Playwright tests..."
           npx playwright test --retries=3 --timeout=120000 --workers=1 --reporter=html,line
           TEST_EXIT_CODE=$?
