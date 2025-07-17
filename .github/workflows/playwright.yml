@@ -38,14 +38,14 @@ jobs:
 
       - name: Create .env file for e2e tests
         run: |
-          cat > .env << EOL
+          cat > e2e/.env << EOL
           LETSENCRYPT_EMAIL=test@example.com
           VITE_INFURA_PROJECT_ID=your_infura_project_id
-          FRONTEND_URL=http://localhost:5173
-          BACKEND_URL=http://localhost:3000
+          FRONTEND_URL=https://dev.inblock.io
+          BACKEND_URL=https://dev-api.inblock.io
           DB_USER=aquafier
           DB_PASSWORD=changeme
-          BASE_URL=http://localhost:5173
+          BASE_URL=https://dev.inblock.io
           PREFUNDED_WALLET_PRIVATEKEY=${{ secrets.PREFUNDED_WALLET_PRIVATEKEY }}
           ALCHEMY_PROJECT_ID=${{ secrets.ALCHEMY_PROJECT_ID }}
           EOL

@@ -50,11 +50,11 @@ jobs:
           cat > e2e/.env << EOL
           LETSENCRYPT_EMAIL=test@example.com
           VITE_INFURA_PROJECT_ID=${{ secrets.INFURA_PROJECT_ID }}
-          FRONTEND_URL=http://localhost:5173
-          BACKEND_URL=http://localhost:3000
+          FRONTEND_URL=https://dev.inblock.io
+          BACKEND_URL=https://dev-api.inblock.io
           DB_USER=aquafier
           DB_PASSWORD=changeme
-          BASE_URL=http://localhost:5173
+          BASE_URL=https://dev.inblock.io
           PREFUNDED_WALLET_PRIVATEKEY=${{ secrets.PREFUNDED_WALLET_PRIVATEKEY }}
           ALCHEMY_PROJECT_ID=${{ secrets.ALCHEMY_PROJECT_ID }}
           EOL
@@ -65,11 +65,11 @@ jobs:
           cat > .env << EOL
           LETSENCRYPT_EMAIL=test@example.com
           VITE_INFURA_PROJECT_ID=${{ secrets.INFURA_PROJECT_ID }}
-          FRONTEND_URL=http://localhost:5173
-          BACKEND_URL=http://localhost:3000
+          FRONTEND_URL=https://dev.inblock.io
+          BACKEND_URL=https://dev-api.inblock.io
           DB_USER=aquafier
           DB_PASSWORD=changeme
-          BASE_URL=http://localhost:5173
+          BASE_URL=https://dev.inblock.io
           PREFUNDED_WALLET_PRIVATEKEY=${{ secrets.PREFUNDED_WALLET_PRIVATEKEY }}
           ALCHEMY_PROJECT_ID=${{ secrets.ALCHEMY_PROJECT_ID }}
           EOL
@@ -104,7 +104,7 @@ jobs:
           #letsencrypt
           LETSENCRYPT_EMAIL=hello@inblock.io
 
-          BASE_URL=http://localhost:3000
+          BASE_URL=https://dev.inblock.io
           
           DEOL
           echo "Created .env file with necessary environment variables"
