@@ -20,7 +20,7 @@ import { Contract } from '@/types/types';
 
 
 
-const SharedContract = ({ contract }: { contract: Contract }) => {
+const SharedContract = ({ contract, index }: { contract: Contract, index: number }) => {
 
     let navigate = useNavigate();
 
@@ -176,7 +176,7 @@ const SharedContract = ({ contract }: { contract: Contract }) => {
                                 )}
                             </div>
 
-                            <Button variant="outline" size="sm" className="w-full xs:w-auto" onClick={() => navigate(`/app/shared-contracts/${contract.hash}`)}>Open</Button>
+                            <Button data-testid={"open-shared-contract-button-"+index} variant="outline" size="sm" className="w-full xs:w-auto" onClick={() => navigate(`/app/shared-contracts/${contract.hash}`)}>Open</Button>
 
                             {/* <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
@@ -260,8 +260,8 @@ export function SharedContracts() {
 
     return (
         <div>
-            <div className="flex flex-col gap-2">
-                <div className="flex items-center gap-3">
+            <div className="flex flex-col gap-2 ">
+                <div className="flex items-center gap-3 mt-5">
                     <div className="w-10 h-10 rounded-lg bg-blue-100 flex items-center justify-center">
                         <FileText className="w-5 h-5 text-blue-600" />
                     </div>
@@ -281,8 +281,8 @@ export function SharedContracts() {
                     {/* Contracts List */}
                     <div className="flex-1 overflow-auto p-0">
                         <div className="space-y-4">
-                            {filteredContracts.map((contract) => (
-                                <SharedContract key={`${contract.hash}`} contract={contract} />
+                            {filteredContracts.map((contract, index) => (
+                                <SharedContract key={`${contract.hash}`} contract={contract} index={index} />
                             ))}
 
                             {filteredContracts.length === 0 && (

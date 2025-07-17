@@ -1270,7 +1270,7 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ fileData, setActiveStep, document
             <div className="w-full bg-card border-l rounded-xl p-4 h-full flex flex-col">
                 <div className="space-y-2">
                     <div className="flex items-center justify-between pb-2">
-                        <h3 className="text-base font-medium">Signatures in Document</h3>
+                        <h3 className="text-base font-medium">Signatures in Document..</h3>
                     </div>
                     <div>
                         {signaturePositions.length > 0 ? (
@@ -1361,7 +1361,7 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ fileData, setActiveStep, document
                     {mySignaturesAquaTree.length > 0 && (
                         <>
                             <div className="space-y-2">
-                                <h4 className="font-bold mt-2">Your Signatures:</h4>
+                                <h4 className="font-bold mt-2">Your Signatures: </h4>
                                 <div className="max-h-[200px] overflow-y-auto border border-gray-200 dark:border-gray-700 rounded-md">
                                     <div className="flex flex-col">
                                         {(() => {

@@ -170,7 +170,7 @@ export const ContractDocumentView: React.FC<ContractDocumentViewProps> = ({ setA
         console.log(`signatureRevionHashes data 00 ${JSON.stringify(signatureRevionHashes, null, 4)}`)
 
         for (let sigHash of signatureRevionHashes) {
-
+            console.log(`looping  ${JSON.stringify(sigHash, null, 2)}`)
 
             let revisionSigImage = selectedFileInfo!.aquaTree!.revisions[sigHash.revisionHashWithSinatureRevision]
             const linkRevisionWithSignaturePositions: Revision = selectedFileInfo!.aquaTree!.revisions[sigHash.revisionHashWithSignaturePosition];
@@ -341,12 +341,12 @@ export const ContractDocumentView: React.FC<ContractDocumentViewProps> = ({ setA
 
 
                 let shouldLoad = shouldLoadSignatures()
-                // console.log(`Should load ${shouldLoad + "="} ....`)
+                console.log(`Should load ${shouldLoad + "="} ....`)
 
                 if (shouldLoad) {
                     setSignaturesLoading(true);
                     const allSignatures: SignatureData[] = await loadSignatures();
-
+                    console.log(`allSignatures in pdf  ${JSON.stringify(allSignatures, null, 2)}`)
                     setSignatures(allSignatures);
                     setSignaturesLoading(false);
                 }
@@ -391,7 +391,8 @@ export const ContractDocumentView: React.FC<ContractDocumentViewProps> = ({ setA
             }
 
             const fileContentUrl = pdfFileObject.fileContent;
-            console.log(`fetchPDFfile......4.5 ${typeof fileContentUrl} --  ${JSON.stringify(fileContentUrl, null, 4)}`)
+            // console.log(`fetchPDFfile......4.5 ${typeof fileContentUrl} --  ${JSON.stringify(fileContentUrl, null, 4)}`)
+            console.log(`fetchPDFfile......4.5  ${typeof fileContentUrl}`)
             if (typeof fileContentUrl === 'string' && fileContentUrl.startsWith('http')) {
                 return await fetchFileFromUrl(fileContentUrl, pdfName);
             }
@@ -476,62 +477,62 @@ export const ContractDocumentView: React.FC<ContractDocumentViewProps> = ({ setA
         return revisionHashes.length >= 5; // Document has signatures
     };
 
-    const renderContent = () => {
-        if (pdfLoadingFile) {
-            return (
-                <div className="flex flex-col items-center space-y-4">
-                    <div className="h-10 w-10 animate-spin rounded-full border-4 border-primary border-t-transparent" />
-                    <h2 className="text-2xl font-bold text-gray-700">
-                        Loading PDF
-                    </h2>
-                </div>
-            );
-        }
+    // const renderContent = () => {
+    //     if (pdfLoadingFile) {
+    //         return (
+    //             <div className="flex flex-col items-center space-y-4">
+    //                 <div className="h-10 w-10 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+    //                 <h2 className="text-2xl font-bold text-gray-700">
+    //                     Loading PDF
+    //                 </h2>
+    //             </div>
+    //         );
+    //     }
 
 
-        if (signaturesLoading) {
-            return (
-                <div className="flex flex-col items-center space-y-4">
-                    <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
-                    <h3 className="text-xl font-bold text-gray-700">
-                        Loading signatures...
-                    </h3>
-                </div>
-            );
-        }
+    //     if (signaturesLoading) {
+    //         return (
+    //             <div className="flex flex-col items-center space-y-4">
+    //                 <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+    //                 <h3 className="text-xl font-bold text-gray-700">
+    //                     Loading signatures...
+    //                 </h3>
+    //             </div>
+    //         );
+    //     }
 
-        const isUserSignatureIncluded = signatures.some((sig) => sig.walletAddress === session?.address);
-        // return <p className="whitespace-pre-wrap break-all">{JSON.stringify(signatures, null, 4)}</p>
-        if (isUserSignatureIncluded) {
-            return (
-                <div className="grid grid-cols-4">
-                    <div className="col-span-12 md:col-span-3">
-                        <PDFDisplayWithJustSimpleOverlay
-                            pdfUrl={pdfURLObject!}
-                            annotationsInDocument={signatures}
-                            signatures={signatures}
-                        />
-                    </div>
-                    <div className="col-span-12 md:col-span-1 m-5">
-                        <div className="flex flex-col space-y-2">
-                            <p className="font-bold">Signatures in document</p>
-                            {signatures.map((signature: SignatureData, index: number) => (
-                                <SignatureItem signature={signature} key={index} />
-                            ))}
-                        </div>
-                    </div>
-                </div>
-            );
-        }
+    //     const isUserSignatureIncluded = signatures.some((sig) => sig.walletAddress === session?.address);
+    //     // return <p className="whitespace-pre-wrap break-all">{JSON.stringify(signatures, null, 4)}</p>
+    //     if (isUserSignatureIncluded) {
+    //         return (
+    //             <div className="grid grid-cols-4">
+    //                 <div className="col-span-12 md:col-span-3">
+    //                     <PDFDisplayWithJustSimpleOverlay
+    //                         pdfUrl={pdfURLObject!}
+    //                         annotationsInDocument={signatures}
+    //                         signatures={signatures}
+    //                     />
+    //                 </div>
+    //                 <div className="col-span-12 md:col-span-1 m-5">
+    //                     <div className="flex flex-col space-y-2">
+    //                         <p className="font-bold">Signatures in document.</p>
+    //                         {signatures.map((signature: SignatureData, index: number) => (
+    //                             <SignatureItem signature={signature} key={index} />
+    //                         ))}
+    //                     </div>
+    //                 </div>
+    //             </div>
+    //         );
+    //     }
 
-        return (
-            <PdfSigner
-                documentSignatures={signatures}
-                fileData={pdfFile}
-                setActiveStep={setActiveStep}
-            />
-        );
-    };
+    //     return (
+    //         <PdfSigner
+    //             documentSignatures={signatures}
+    //             fileData={pdfFile}
+    //             setActiveStep={setActiveStep}
+    //         />
+    //     );
+    // };
 
     // Error boundary for the component
     if (!selectedFileInfo?.aquaTree?.revisions) {
@@ -551,6 +552,61 @@ export const ContractDocumentView: React.FC<ContractDocumentViewProps> = ({ setA
         );
     }
 
-    return <>{renderContent()}</>;
+    // Loading states
+    if (pdfLoadingFile) {
+        return (
+            <div className="flex flex-col items-center space-y-4">
+                <div className="h-10 w-10 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+                <h2 className="text-2xl font-bold text-gray-700">
+                    Loading PDF
+                </h2>
+            </div>
+        );
+    }
+
+    if (signaturesLoading) {
+        return (
+            <div className="flex flex-col items-center space-y-4">
+                <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+                <h3 className="text-xl font-bold text-gray-700">
+                    Loading signatures...
+                </h3>
+            </div>
+        );
+    }
+
+    // Check if user has already signed
+    const isUserSignatureIncluded = signatures.some((sig) => sig.walletAddress === session?.address);
+
+    if (isUserSignatureIncluded) {
+        return (
+            <div className="grid grid-cols-4">
+                <div className="col-span-12 md:col-span-3">
+                    <PDFDisplayWithJustSimpleOverlay
+                        pdfUrl={pdfURLObject!}
+                        annotationsInDocument={signatures}
+                        signatures={signatures}
+                    />
+                </div>
+                <div className="col-span-12 md:col-span-1 m-5">
+                    <div className="flex flex-col space-y-2">
+                        <p className="font-bold">Signatures in document.</p>
+                        {signatures.map((signature: SignatureData, index: number) => (
+                            <SignatureItem signature={signature} key={index} />
+                        ))}
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
+    // Default case - show signing interface
+    return (
+        <PdfSigner
+            documentSignatures={signatures}
+            fileData={pdfFile}
+            setActiveStep={setActiveStep}
+        />
+    );
 }
 

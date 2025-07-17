@@ -349,6 +349,8 @@ export const ContractSummaryView: React.FC<ContractDocumentViewProps> = ({ setAc
             let signers: string[] = firstRevision.forms_signers.split(",").map((e: string) => e.trim())
 
             if (revisionHashes.length > 4) {
+                console.log(`length bigger than 4`)
+               
                 // remove the first 4 elements from the revision list 
                 fourthItmeHashOnwards = revisionHashes.slice(4);
                 signatureRevionHashes = getSignatureRevionHashes(fourthItmeHashOnwards)
@@ -357,10 +359,12 @@ export const ContractSummaryView: React.FC<ContractDocumentViewProps> = ({ setAc
 
                 let signatureRevionHashesDataAddress = signatureRevionHashes.map((e) => e.walletAddress);
                 let remainSigners = signers.filter((item) => !signatureRevionHashesDataAddress.includes(item))
+                 console.log(`signers remaining ${remainSigners.toString()}`)
                 setIsWorkFlowComplete(remainSigners)
 
                 setSignatureRevionHashes(signatureRevionHashes)
             } else {
+                 console.log(`length equal to 4`)
                 setIsWorkFlowComplete(signers)
             }
 

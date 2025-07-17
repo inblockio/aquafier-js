@@ -199,6 +199,9 @@ export async function registerNewMetaMaskWallet(): Promise<RegisterMetaMaskRespo
 
     console.log("Wallet finished!!! Adr: " + address)
 
+    if(address==null){
+        throw Error(`Wallet address cannot be null `)
+    }
     return new RegisterMetaMaskResponse(context, address);
 }
 
@@ -261,7 +264,7 @@ export async function registerNewMetaMaskWalletAndLogin(): Promise<RegisterMetaM
             console.log("No specific sign-in button found, looking for any button that might be for sign-in...");
 
             // Take a screenshot to see what's on the page
-            await testPage.screenshot({ path: 'page-no-button-found.png' });
+            // await testPage.screenshot({ path: 'page-no-button-found.png' });
 
             // Force click the first button we find as a last resort
             await testPage.click('button', { force: true });

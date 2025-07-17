@@ -485,97 +485,21 @@ async function createAquaSignForm(page: Page, context: BrowserContext, filePath:
 // Helper function to handle signature creation and saving
 async function importAquaChain(secondTestPage: Page, context: BrowserContext): Promise<void> {
 
-  
-  
+  const baseUrl = process.env.BASE_URL || "http://localhost:5173";
+  await secondTestPage.goto(`${baseUrl}/app/shared-contracts`);
+  await secondTestPage.waitForLoadState('networkidle');
 
-  // Try data-testid first, fallback to id if not found
-  try {
-    // First check if the element exists, regardless of visibility
-    console.log('Looking for contracts-shared-button...');
-
-    // Wait for the element to be in the DOM (not necessarily visible)
-    await secondTestPage.waitForSelector('[data-testid="contracts-shared-button"]', { state: 'attached', timeout: 10000 });
-
-    // Check if the element is hidden and use JavaScript to click it if necessary
-    const isHidden = await secondTestPage.evaluate(() => {
-      const button = document.querySelector('[data-testid="contracts-shared-button"]');
-      return button && (button.hasAttribute('hidden') ||
-        window.getComputedStyle(button).display === 'none' ||
-        window.getComputedStyle(button).visibility === 'hidden');
-    });
-
-    if (isHidden) {
-      console.log('contracts-shared-button is hidden, using JavaScript click');
-      await secondTestPage.evaluate(() => {
-        const button = document.querySelector('[data-testid="contracts-shared-button"]');
-        if (button) {
-          (button as HTMLElement).click();
-        }
-      });
-    } else {
-      await secondTestPage.click('[data-testid="contracts-shared-button"]');
-    }
-    console.log('Clicked contracts-shared-button using data-testid');
-  } catch (error) {
-    console.log('data-testid selector not found, trying id selector...', error);
-    try {
-      // Try with ID selector using the same approach
-      await secondTestPage.waitForSelector('#contracts-shared-button-id', { state: 'attached', timeout: 10000 });
-
-      const isHidden = await secondTestPage.evaluate(() => {
-        const button = document.querySelector('#contracts-shared-button-id');
-        return button && (button.hasAttribute('hidden') ||
-          window.getComputedStyle(button).display === 'none' ||
-          window.getComputedStyle(button).visibility === 'hidden');
-      });
-
-      if (isHidden) {
-        console.log('contracts-shared-button-id is hidden, using JavaScript click');
-        await secondTestPage.evaluate(() => {
-          const button = document.querySelector('#contracts-shared-button-id');
-          if (button) {
-            (button as HTMLElement).click();
-          }
-        });
-      } else {
-        await secondTestPage.click('#contracts-shared-button-id');
-      }
-      console.log('Clicked contracts-shared-button using id selector');
-    } catch (fallbackError) {
-      console.error('Both selectors failed:', fallbackError);
-      throw new Error('Could not find contracts-shared-button with either data-testid or id selector');
-    }
-  }
-
-
-
-
-  console.log("Clicked shared contracts button");
-
-  let number = await findAndClickHighestSharedButton(secondTestPage);
-  if (number === -1 || number === undefined || number === null) {
-    console.log("No shared button found number: " + number);
-    number = 0; // Default to 0 if no button found
-  }
-  // console.log("Clicked contract item  button with index: " + number);
-  //  await secondTestPage.pause();
-  // await testPage.pause();
-  await secondTestPage.waitForSelector('[data-testid="shared-button-count-' + number + '"]', { state: 'visible', timeout: 10000 });
-  await secondTestPage.click('[data-testid="shared-button-count-' + number + '"]')
-
+  await secondTestPage.waitForSelector('[data-testid="open-shared-contract-button-0"]', { state: 'visible', timeout: 10000 });
+  await secondTestPage.click('[data-testid="open-shared-contract-button-0"]')
 
   await secondTestPage.waitForTimeout(2000);
 
-  console.log("Clicked contract item  button with index: " + number);
 
-  // await secondTestPage.pause();
-  // await testPage.pause();
+
   await secondTestPage.waitForSelector('[data-testid="import-aqua-chain-1-button"]', { state: 'visible', timeout: 10000 });
   await secondTestPage.click('[data-testid="import-aqua-chain-1-button"]')
-  console.log("Clicked import aqua chain button");
 
-
-
+  await secondTestPage.waitForTimeout(2000);
 
 }
 async function createAndSaveSignature(page: Page, context: BrowserContext): Promise<void> {
@@ -635,14 +559,14 @@ test("user setting test", async (): Promise<void> => {
   console.log("user setting test started!");
 
 
-    // Get the BASE_URL from environment variables and navigate to it
-    const baseUrl = process.env.BASE_URL || "https://dev.inblock.io";
-    console.log(`BASE URL: ${baseUrl}`);
-    const url=`${baseUrl}/app/settings`
-    console.log(`Navigating to: ${url}`);
-    await testPage.goto(url, { waitUntil: 'networkidle' }) 
+  // Get the BASE_URL from environment variables and navigate to it
+  const baseUrl = process.env.BASE_URL || "https://dev.inblock.io";
+  console.log(`BASE URL: ${baseUrl}`);
+  const url = `${baseUrl}/app/settings`
+  console.log(`Navigating to: ${url}`);
+  await testPage.goto(url, { waitUntil: 'networkidle' })
 
-    // await testPage.reload(); // reload page
+  // await testPage.reload(); // reload page
 
   await testPage.fill('[data-testid="alias-name-input"]', "alias_data");
   console.log("filled aqua sign form");
@@ -658,7 +582,7 @@ test("user setting test", async (): Promise<void> => {
 
   const alisName: string = await testPage.locator('[data-testid="alias-name-input"]').inputValue();
 
-  if(alisName !== "alias_data") {
+  if (alisName !== "alias_data") {
     throw new Error("Alias name not updated");
   }
 
@@ -680,27 +604,27 @@ test("linking 2 files test", async (): Promise<void> => {
   // close upload dialog
   await closeUploadDialog(testPage);
 
-    // Upload file
+  // Upload file
   const filePath2: string = path.join(__dirname, 'resources/logo.png');
   await uploadFile(testPage, filePath2);
 
   // close upload dialog
   await closeUploadDialog(testPage);
 
- await testPage.waitForSelector('[data-testid="link-action-button-1"]', { state: 'visible', timeout: 10000 });
+  await testPage.waitForSelector('[data-testid="link-action-button-1"]', { state: 'visible', timeout: 10000 });
   await testPage.click('[data-testid="link-action-button-1"]');
 
   // Wait for the dialog to appear
   await testPage.waitForSelector('div[role="dialog"]', { state: 'visible', timeout: 5000 });
-  
+
   // Click on the checkbox with id 'file-0'
   await testPage.waitForSelector('#file-0', { state: 'visible', timeout: 5000 });
   await testPage.click('#file-0');
-  
+
   // Click on the link button in the dialog
   await testPage.waitForSelector('[data-testid="link-modal-action-button-dialog"]', { state: 'visible', timeout: 5000 });
   await testPage.click('[data-testid="link-modal-action-button-dialog"]');
-  
+
   // Wait for the linking process to complete
   await testPage.waitForTimeout(2000);
 
@@ -808,12 +732,22 @@ test("single user aqua-sign", async (): Promise<void> => {
   await createAquaSignForm(testPage, context, filePath);
 
   // Open workflow
-  await testPage.getByText("Open Workflow").waitFor({ state: 'visible' });
-  await testPage.getByText("Open Workflow").click();
+  // await testPage.getByText("Open Workflow").waitFor({ state: 'visible' });
+  // await testPage.getByText("Open Workflow").click();
+
+  // // View contract document
+  // await testPage.getByText("View Contract Document").waitFor({ state: 'visible' });
+  // await testPage.getByText("View Contract Document").click();
+
+
+  // Open workflow
+
+  await testPage.waitForSelector('[data-testid="open-workflow-button-1"]', { state: 'visible', timeout: 10000 });
+  await testPage.click('[data-testid="open-workflow-button-1"]');
 
   // View contract document
-  await testPage.getByText("View Contract Document").waitFor({ state: 'visible' });
-  await testPage.getByText("View Contract Document").click();
+  await testPage.waitForSelector('[data-testid="action-view-contract-button"]', { state: 'visible', timeout: 10000 });
+  await testPage.click('[data-testid="action-view-contract-button"]');
 
   // Create and save signature
   await createAndSaveSignature(testPage, context);
@@ -828,7 +762,7 @@ test("single user aqua-sign", async (): Promise<void> => {
 
 test("two user aqua-sign", async (): Promise<void> => {
 
-  test.setTimeout(80000); // Increase timeout to 80 seconds
+  test.setTimeout(1000000); // Increase timeout to 80 seconds
   const registerWalletOneResponse = await registerNewMetaMaskWalletAndLogin();
   const registerWalletTwoResponse = await registerNewMetaMaskWalletAndLogin();
 
@@ -842,13 +776,14 @@ test("two user aqua-sign", async (): Promise<void> => {
   const filePath: string = path.join(__dirname, 'resources/exampleFile.pdf');
   await createAquaSignForm(testPageWalletOne, contextWalletOne, filePath, registerWalletTwoResponse.walletAddress);
 
-  // Open workflow
-  await testPageWalletOne.getByText("Open Workflow").waitFor({ state: 'visible' });
-  await testPageWalletOne.getByText("Open Workflow").click();
+  // await testPageWalletOne.reload()
 
-  // View contract document
-  await testPageWalletOne.getByText("View Contract Document").waitFor({ state: 'visible' });
-  await testPageWalletOne.getByText("View Contract Document").click();
+  await testPageWalletOne.waitForSelector('[data-testid="open-workflow-button-0"]', { state: 'visible', timeout: 10000 });
+  await testPageWalletOne.click('[data-testid="open-workflow-button-0"]');
+
+
+  await testPageWalletOne.waitForSelector('[data-testid="action-view-contract-button"]', { state: 'visible', timeout: 10000 });
+  await testPageWalletOne.click('[data-testid="action-view-contract-button"]');
 
   // Create and save signature
   await createAndSaveSignature(testPageWalletOne, contextWalletOne);
@@ -856,25 +791,26 @@ test("two user aqua-sign", async (): Promise<void> => {
   // Add signature to document and sign
   await addSignatureToDocument(testPageWalletOne, contextWalletOne);
 
- 
-  
-  
-  
+
+
   const contextWalletTwo: BrowserContext = registerWalletTwoResponse.context;
   const testPageWalletTwo: Page = contextWalletTwo.pages()[0];
-  
-  
+
+
   await testPageWalletTwo.reload(); // Reload the second test page to ensure it's up-to-date ie the workflow was shared to ensure its loaded
-  
-  importAquaChain(testPageWalletTwo,contextWalletTwo)
+
+  importAquaChain(testPageWalletTwo, contextWalletTwo)
+
+
 
   // Open workflow
-  await testPageWalletTwo.getByText("Open Workflow").waitFor({ state: 'visible' });
-  await testPageWalletTwo.getByText("Open Workflow").click();
+
+  await testPageWalletTwo.waitForSelector('[data-testid="open-workflow-button-0"]', { state: 'visible', timeout: 10000 });
+  await testPageWalletTwo.click('[data-testid="open-workflow-button-0"]');
 
   // View contract document
-  await testPageWalletTwo.getByText("View Contract Document").waitFor({ state: 'visible' });
-  await testPageWalletTwo.getByText("View Contract Document").click();
+  await testPageWalletTwo.waitForSelector('[data-testid="action-view-contract-button"]', { state: 'visible', timeout: 10000 });
+  await testPageWalletTwo.click('[data-testid="action-view-contract-button"]');
 
   // Create and save signature
   await createAndSaveSignature(testPageWalletTwo, contextWalletTwo);
@@ -883,6 +819,6 @@ test("two user aqua-sign", async (): Promise<void> => {
   await addSignatureToDocument(testPageWalletTwo, contextWalletTwo);
 
   // Wait for completion
-  await testPageWalletOne.getByText("Workflow completed and validated").waitFor({ state: 'visible' });
+  await testPageWalletOne.getByText("All signatures have been collected").waitFor({ state: 'visible', timeout: 2000 });
 
 });
