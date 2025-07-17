@@ -99,7 +99,7 @@ jobs:
         run: |
           cat > deployment/.env << DEOL
           # psql conn string for prisma 
-          DATABASE_URL="postgresql://user:password@localhost:5432/aquafier_js?schema=public"
+          DATABASE_URL="postgresql://${DB_USER}:${DB_PASSWORD}@localhost:5432/aquafier_js?schema=public"
 
           #letsencrypt
           LETSENCRYPT_EMAIL=hello@inblock.io
@@ -152,10 +152,12 @@ jobs:
           DISPLAY: :99
           CI: true
           NODE_OPTIONS: --max_old_space_size=4096
+          DEBUG: pw:api,pw:browser*
+          PWDEBUG: console
         run: |
           cd e2e
           echo "Running Playwright tests..."
-          npx playwright test
+          npx playwright test --reporter=list,github --workers=1 --verbose
           TEST_EXIT_CODE=$?
           echo "Test execution completed with exit code $TEST_EXIT_CODE"
           exit $TEST_EXIT_CODE
