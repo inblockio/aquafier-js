@@ -1,6 +1,8 @@
 name: Playwright Tests
 on:
-  push:
+  workflow_dispatch:
+    
+  # push:
   #   branches: [ main, dev ]
   # pull_request:
     # branches: [ main, dev ]
@@ -48,8 +50,8 @@ jobs:
           ALCHEMY_PROJECT_ID=${{ secrets.ALCHEMY_PROJECT_ID }}
           EOL
           
-      - name: Prepare Test-Env
-        run: cd e2e && docker compose up -d
+      # - name: Prepare Test-Env
+      #   run: cd e2e && docker compose up -d
 
       - name: Start Xvfb
         run: |
