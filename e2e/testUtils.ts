@@ -1217,13 +1217,15 @@ console.log(`Found ${pages.length} pages in context`);
 
 if (pages.length > 1) {
   metamaskPage = pages[1];
+  console.log("MetaMask page found", metamaskPage.url());
   console.log("Using existing MetaMask page");
 } else {
   // Try to wait for MetaMask popup
   try {
     const metamaskPromise = context.waitForEvent("page", { timeout: 15000 });
     metamaskPage = await metamaskPromise;
-    console.log("MetaMask popup opened");
+    console.log("URL of the metamask page", metamaskPage.url());
+    console.log("MetaMask popup opened", metamaskPage.url());
   } catch (error) {
     console.error("Failed to detect MetaMask popup:", error);
     await testPage.screenshot({ path: 'metamask-popup-error.png' });
