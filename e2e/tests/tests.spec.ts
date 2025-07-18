@@ -4,10 +4,10 @@ import {registerNewMetaMaskWallet, registerNewMetaMaskWalletAndLogin} from './te
 import path from "path";
 
 
-//prepare metamask
-test.beforeAll(async () => {
-
-})
+// //prepare metamask
+// test.beforeAll(async () => {
+//
+// })
 
 test("create new wallet test", async () => {
   await registerNewMetaMaskWallet();

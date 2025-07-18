@@ -110,12 +110,12 @@ export async function handleMetaMaskNetworkAndConfirm(
           console.log(`Attempt ${currentAttempt + 1}: Transfer request dialog found`);
 
           // Take a screenshot for debugging
-          // try {
-          //   await metaMaskPage.screenshot({ path: 'metamask-transfer-request.png' }).catch(() => { });
-          //   console.log("Saved screenshot of transfer request dialog");
-          // } catch (e) {
-          //   console.log("Failed to take screenshot");
-          // }
+          try {
+            await metaMaskPage.screenshot({ path: 'metamask-transfer-request.png' }).catch(() => { });
+            console.log("Saved screenshot of transfer request dialog");
+          } catch (e) {
+            console.log("Failed to take screenshot");
+          }
 
           // Try multiple approaches to find and click the Review alert button
 
@@ -420,7 +420,7 @@ export async function signDocument(page: Page, context: BrowserContext): Promise
 }
 
 // Helper function to download aqua tree
-export async function downloadAquaTree(page: Page, saveToDownloads : boolean ): Promise<void> {
+export async function downloadAquaTree(page: Page): Promise<void> {
   // Create a downloads directory if it doesn't exist
   const downloadsPath = path.join(__dirname, 'downloads');
   if (!fs.existsSync(downloadsPath)) {
@@ -970,168 +970,91 @@ export async function fundWallet(walletToFund: string) {
 }
 
 export async function registerNewMetaMaskWallet(): Promise<RegisterMetaMaskResponse> {
-  const metamaskPath = path.join(__dirname, 'metamask-extension');
-  console.log(`metamaskPath: ${metamaskPath}`)
+  const metamaskPath = path.join(__dirname, '..' ,'metamask-extension');
 
-  // const isCI = process.env.CI === 'true';
-  const userDataDir = '';
-  const context = await chromium.launchPersistentContext(userDataDir, {
-    headless: false,//isCI,
-    channel: 'chromium',
+  const isCI = process.env.CI === 'true';
+  const context = await chromium.launchPersistentContext('', {
+    headless: isCI,
     args: [
       `--disable-extensions-except=${metamaskPath}`,
       `--load-extension=${metamaskPath}`,
     ],
-    // Increase timeouts for MetaMask operations
-    timeout: 60000
   });
 
-  try {
-    console.log(`context: ${JSON.stringify(context, null, 4)}`)
+  await context.waitForEvent("page")
+
+  const metaMaskPage = await context.pages()[1];
+
+  await metaMaskPage.waitForLoadState("load");
+
+  //setup-page
+  await metaMaskPage.click('[data-testid="onboarding-terms-checkbox"]')
+  await metaMaskPage.click('[data-testid="onboarding-create-wallet"]')
+
+  //tele-data deny
+  await metaMaskPage.waitForSelector('[data-testid="metametrics-no-thanks"]', { state: 'visible' });
+  await metaMaskPage.click('[data-testid="metametrics-no-thanks"]')
+
+  //password setup
+  let myNewPassword = generatePassword(15)
+  await metaMaskPage.waitForSelector('[data-testid="create-password-new"]', { state: 'visible' })
+  await metaMaskPage.fill('[data-testid="create-password-new"]', myNewPassword)
+  await metaMaskPage.fill('[data-testid="create-password-confirm"]', myNewPassword)
+  await metaMaskPage.click('[data-testid="create-password-terms"]')
+  await metaMaskPage.click('[data-testid="create-password-wallet"]')
+
+  //no i dont want to store my wallet
+  await metaMaskPage.waitForSelector('[data-testid="secure-wallet-later"]', { state: 'visible' });
+  await metaMaskPage.click('[data-testid="secure-wallet-later"]')
+  await metaMaskPage.waitForSelector('[data-testid="skip-srp-backup-popover-checkbox"]', { state: 'visible' });
+  await metaMaskPage.click('[data-testid="skip-srp-backup-popover-checkbox"]')
+  await metaMaskPage.click('[data-testid="skip-srp-backup"]')
+
+  //done
+  await metaMaskPage.waitForSelector('[data-testid="onboarding-complete-done"]', { state: 'visible' });
+  await metaMaskPage.click('[data-testid="onboarding-complete-done"]')
+
+  //finish tutorial
+  await metaMaskPage.waitForSelector('[data-testid="pin-extension-next"]', { state: 'visible' });
+  await metaMaskPage.click('[data-testid="pin-extension-next"]')
+  await metaMaskPage.waitForSelector('[data-testid="pin-extension-done"]', { state: 'visible' });
+  await metaMaskPage.click('[data-testid="pin-extension-done"]')
+
+  await metaMaskPage.waitForSelector('[data-testid="network-display"]', { state: 'visible' });
+
+  // CHANGE ADDED - Add network switching to localhost/testnet BEFORE proceeding
+  // try {
+  //     await switchToTestNetwork(metaMaskPage);
+  // } catch (error) {
+  //     console.log("Could not switch network, continuing with current network");
+  // }
 
 
-    // Wait for MetaMask page to open
-    await context.waitForEvent("page", { timeout: 30000 })
-    console.log(`context.waitForEvent("page")`)
+  await metaMaskPage.waitForSelector('[data-testid="not-now-button"]', { state: 'visible', timeout: 100000 });
+  await metaMaskPage.click('[data-testid="not-now-button"]')
 
-    // Get the MetaMask page - it should be the second page opened
-    const pages = context.pages();
-    if (pages.length < 2) {
-      throw new Error("MetaMask page not found");
-    }
+  await metaMaskPage.waitForSelector('[data-testid="account-menu-icon"]')
+  await metaMaskPage.click('[data-testid="account-menu-icon"]')
+  await metaMaskPage.waitForSelector('[data-testid="account-list-item-menu-button"]')
+  await metaMaskPage.click('[data-testid="account-list-item-menu-button"]')
+  await metaMaskPage.waitForSelector('[data-testid="account-list-menu-details"]')
+  await metaMaskPage.click('[data-testid="account-list-menu-details"]')
+  await metaMaskPage.getByText("Details").waitFor({ state: 'visible' })
+  await metaMaskPage.getByText("Details").click()
+  await metaMaskPage.waitForSelector('[class="mm-box mm-text qr-code__address-segments mm-text--body-md mm-box--margin-bottom-4 mm-box--color-text-default"]')
+  const address = await metaMaskPage.locator('[class="mm-box mm-text qr-code__address-segments mm-text--body-md mm-box--margin-bottom-4 mm-box--color-text-default"]').textContent()
 
-    const metaMaskPage = pages[1];
-    console.log(`metaMaskPage: ${JSON.stringify(metaMaskPage, null, 4)}`)
+  await metaMaskPage.close()
 
-    // Wait for page to load
-    await metaMaskPage.waitForLoadState("load", { timeout: 30000 });
+  console.log("Wallet finished!!! Adr: " + address)
 
-    // Setup page - accept terms and create wallet
-    console.log("Setting up MetaMask - accepting terms")
-    await metaMaskPage.waitForSelector('[data-testid="onboarding-terms-checkbox"]', { timeout: 30000 });
-    await metaMaskPage.click('[data-testid="onboarding-terms-checkbox"]')
-    await metaMaskPage.click('[data-testid="onboarding-create-wallet"]')
-
-    // Decline telemetry data collection
-    console.log("Declining telemetry data collection")
-    await metaMaskPage.waitForSelector('[data-testid="metametrics-no-thanks"]', { state: 'visible', timeout: 30000 });
-    await metaMaskPage.click('[data-testid="metametrics-no-thanks"]')
-
-    // Set up password
-    console.log("Setting up password")
-    let myNewPassword = generatePassword(15)
-    await metaMaskPage.waitForSelector('[data-testid="create-password-new"]', { state: 'visible', timeout: 30000 })
-    await metaMaskPage.fill('[data-testid="create-password-new"]', myNewPassword)
-    await metaMaskPage.fill('[data-testid="create-password-confirm"]', myNewPassword)
-    await metaMaskPage.click('[data-testid="create-password-terms"]')
-    await metaMaskPage.click('[data-testid="create-password-wallet"]')
-
-    // Skip wallet backup
-    console.log("Skipping wallet backup")
-    await metaMaskPage.waitForSelector('[data-testid="secure-wallet-later"]', { state: 'visible', timeout: 30000 });
-    await metaMaskPage.click('[data-testid="secure-wallet-later"]')
-    await metaMaskPage.waitForSelector('[data-testid="skip-srp-backup-popover-checkbox"]', { state: 'visible', timeout: 30000 });
-    await metaMaskPage.click('[data-testid="skip-srp-backup-popover-checkbox"]')
-    await metaMaskPage.click('[data-testid="skip-srp-backup"]')
-
-    // Complete onboarding
-    console.log("Completing onboarding")
-    await metaMaskPage.waitForSelector('[data-testid="onboarding-complete-done"]', { state: 'visible', timeout: 30000 });
-    await metaMaskPage.click('[data-testid="onboarding-complete-done"]')
-
-    // Complete tutorial
-    console.log("Completing tutorial")
-    await metaMaskPage.waitForSelector('[data-testid="pin-extension-next"]', { state: 'visible', timeout: 30000 });
-    await metaMaskPage.click('[data-testid="pin-extension-next"]')
-    await metaMaskPage.waitForSelector('[data-testid="pin-extension-done"]', { state: 'visible', timeout: 30000 });
-    await metaMaskPage.click('[data-testid="pin-extension-done"]')
-
-    // Wait for network display to be visible
-    console.log("Waiting for network display")
-    await metaMaskPage.waitForSelector('[data-testid="network-display"]', { state: 'visible', timeout: 30000 });
-
-    // Switch to a test network to avoid mainnet connection issues
-    console.log("Switching to test network")
-
-    
-    try {
-      
-      // Try stop the not now popup
-      try {
-        await metaMaskPage.waitForSelector('[data-testid="not-now-button"]', { state: 'visible', timeout: 30000 });
-        await metaMaskPage.click('[data-testid="not-now-button"]')
-      } catch (error) {
-        console.log("No not now popup appeared or it was already dismissed");
-      }
-      
-      // Click on network selector
-      await metaMaskPage.click('[data-testid="network-display"]');
-      
-      // Pause execution for 30 seconds, use promise
-      // await new Promise(resolve => setTimeout(resolve, 30000));
-
-      // I want you to click the show test networks here
-      // This is how it looks like class="toggle-button toggle-button--off"
-      await metaMaskPage.click('[class="toggle-button toggle-button--off"]');
-
-      // Look for Sepolia test network and click it
-      // data-testid="Sepolia" click on this element
-      await metaMaskPage.click('[data-testid="Sepolia"]');
-      // const sepoliaSelector = 'button:has-text("Sepolia")';
-      // await metaMaskPage.waitForSelector(sepoliaSelector, { timeout: 10000 });
-      // await metaMaskPage.click(sepoliaSelector);
-
-      console.log("Switched to Sepolia test network");
-    } catch (error) {
-      console.log("Could not switch network, continuing with current network", error);
-    }
-
-    // Handle the popup that might appear asking to connect
-    console.log("Handling connection popup")
-    try {
-      await metaMaskPage.waitForSelector('[data-testid="not-now-button"]', { state: 'visible', timeout: 10000 });
-      await metaMaskPage.click('[data-testid="not-now-button"]')
-    } catch (error) {
-      console.log("No connection popup appeared or it was already dismissed");
-    }
-
-    // Get wallet address
-    console.log("Getting wallet address")
-    await metaMaskPage.waitForSelector('[data-testid="account-menu-icon"]', { timeout: 30000 })
-    await metaMaskPage.click('[data-testid="account-menu-icon"]')
-    await metaMaskPage.waitForSelector('[data-testid="account-list-item-menu-button"]', { timeout: 30000 })
-    await metaMaskPage.click('[data-testid="account-list-item-menu-button"]')
-    await metaMaskPage.waitForSelector('[data-testid="account-list-menu-details"]', { timeout: 30000 })
-    await metaMaskPage.click('[data-testid="account-list-menu-details"]')
-    await metaMaskPage.getByText("Details").waitFor({ state: 'visible', timeout: 30000 })
-    await metaMaskPage.getByText("Details").click()
-
-    // Get the wallet address
-    await metaMaskPage.waitForSelector('[class="mm-box mm-text qr-code__address-segments mm-text--body-md mm-box--margin-bottom-4 mm-box--color-text-default"]', { timeout: 30000 })
-    const address = await metaMaskPage.locator('[class="mm-box mm-text qr-code__address-segments mm-text--body-md mm-box--margin-bottom-4 mm-box--color-text-default"]').textContent()
-
-    // Close the MetaMask page
-    await metaMaskPage.close()
-
-    console.log("Wallet finished!!! Adr: " + address)
-
-    if (address == null) {
-      throw Error(`Wallet address cannot be null`)
-    }
-    return new RegisterMetaMaskResponse(context, address);
-  } catch (error) {
-    console.error("Error in registerNewMetaMaskWallet:", error);
-    // Try to close the context to clean up resources
-    try {
-      await context.close();
-    } catch (closeError) {
-      console.error("Error closing context:", closeError);
-    }
-    throw error;
+  if (address == null) {
+    throw Error(`Wallet address cannot be null `)
   }
+  return new RegisterMetaMaskResponse(context, address);
 }
 
-export async function registerNewMetaMaskWalletAndLogin(pathname: string = "/app"): Promise<RegisterMetaMaskResponse> {
+export async function registerNewMetaMaskWalletAndLogin(): Promise<RegisterMetaMaskResponse> {
   const response = await registerNewMetaMaskWallet();
   const context = response.context;
   const testPage = context.pages()[0];
@@ -1140,7 +1063,7 @@ export async function registerNewMetaMaskWalletAndLogin(pathname: string = "/app
   // Get the BASE_URL from environment variables and navigate to it
   const baseUrl = process.env.BASE_URL || "https://dev.inblock.io";
   console.log(`BASE URL: ${baseUrl}`);
-  const url = `${baseUrl}/${pathname.startsWith('/') ? pathname.slice(1) : pathname}`;
+  const url = `${baseUrl}/app`
   console.log(`Navigating to: ${url}`);
   await testPage.goto(url, { waitUntil: 'networkidle' })
 
@@ -1165,14 +1088,8 @@ export async function registerNewMetaMaskWalletAndLogin(pathname: string = "/app
       'button:has-text("Login")'
     ];
 
-    // data-testid="unlock-submit" if this button is visible, fill in the password and click it, check the button first
-    // let isUnlockSubmitVisible = await testPage.waitForSelector('[data-testid="unlock-submit"]', { state: 'visible', timeout: 60000 })
-    // if (isUnlockSubmitVisible) {
-    //   await testPage.fill('[data-testid="password-input"]', process.env.METAMASK_PASSWORD || "")
-    //   await testPage.click('[data-testid="unlock-submit"]')
-    // }
-
     let buttonFound = false;
+    const metamaskPromise = context.waitForEvent("page");
 
     // Click the sign-in button using the data-testid attribute
     //  await testPage.click('[data-testid="sign-in-button-dialog"]');
@@ -1203,51 +1120,16 @@ export async function registerNewMetaMaskWalletAndLogin(pathname: string = "/app
       console.log("Clicked first button found as fallback");
     }
     console.log("Clicked sign-in button, waiting for MetaMask popup...");
+
+    await metamaskPromise;
+    console.log("MetaMask popup opened");
   } catch (error) {
     console.error("Error during login:", error);
     await testPage.screenshot({ path: 'login-error.png' });
     throw error;
   }
 
-
-  console.log("Starting metamask...");
-  
-  // Check if MetaMask page already exists
-  let metamaskPage;
-  const pages = context.pages();
-  console.log(`Found ${pages.length} pages in context`);
-
-  for (const page of pages) {
-    console.log("Page URL:", page.url());
-  }
-
-  // Always wait for MetaMask popup - it should appear after clicking the sign-in button
-  try {
-    console.log("Waiting for MetaMask popup to appear...");
-    const metamaskPromise = context.waitForEvent("page", { timeout: 30000 }); // Increased timeout
-    metamaskPage = await metamaskPromise;
-    console.log("MetaMask popup opened with URL:", metamaskPage.url());
-  } catch (error) {
-    console.error("Failed to detect MetaMask popup after 30 seconds:", error);
-    
-    // Take screenshot of current state
-    await testPage.screenshot({ path: 'metamask-popup-timeout.png' });
-    
-    // Check if MetaMask page appeared after timeout
-    const updatedPages = context.pages();
-    console.log(`After timeout: Found ${updatedPages.length} pages in context`);
-    
-    for (const page of updatedPages) {
-      console.log("After timeout - Page URL:", page.url());
-    }
-    
-    if (updatedPages.length > 1) {
-      console.log("MetaMask page found after timeout, continuing...");
-      metamaskPage = updatedPages[1];
-    } else {
-      throw new Error("MetaMask popup never appeared");
-    }
-  }
+  const metamaskPage = context.pages()[1]
   await metamaskPage.waitForSelector('[data-testid="confirm-btn"]', { state: 'visible' })
   await metamaskPage.click('[data-testid="confirm-btn"]')
 
@@ -1291,99 +1173,6 @@ export async function findAndClickHighestSharedButton(page: Page): Promise<numbe
   //     return null;
   //   }
 }
-
-
-
-export async function createTemplate(page: Page): Promise<void> {
-// Try to find the button by data-testid first, then fallback to text
-  try {
-    await page.waitForSelector('[data-testid="action-create-template-button"]', { state: 'visible', timeout: 10000 });
-    await page.click('[data-testid="action-create-template-button"]');
-    console.log("Clicked create template button using data-testid");
-  } catch (error) {
-    console.log("Failed to find button by data-testid, trying by text...");
-    await page.waitForSelector('button:has-text("New Template")', { state: 'visible', timeout: 10000 });
-    await page.click('button:has-text("New Template")');
-    console.log("Clicked create template button using text selector");
-  }
-
-  console.log("Clicked create template button");
-  await page.fill('#title', 'Test Template');
-
-  // Add two fields
-  try {
-    await page.click('[data-testid="action-add-form-field-button"]');
-    console.log("Clicked add form field button using data-testid");
-  } catch (error) {
-    console.log("Failed to find add form field button by data-testid, trying by text...");
-    await page.click('button:has-text("Add Form Field")');
-    console.log("Clicked add form field button using text selector");
-  }
-  let fields = [
-    {
-      label: 'Name',
-      type: 'text',
-      required: true,
-      is_array: false
-    },
-    {
-      label: 'Age',
-      type: 'number',
-      required: true,
-      is_array: false
-    }
-  ]
-
-  console.log("Adding fields to template form");
-  // Fill the template form
-  try {
-    await page.fill(`[data-testid="field-label-0"]`, fields[0].label);
-    console.log("Filled first field label using data-testid");
-  } catch (error) {
-    console.log("Failed to find first field label by data-testid, trying by id...");
-    await page.fill(`#field-label-0`, fields[0].label);
-    console.log("Filled first field label using id selector");
-  }
-  // await page.selectOption(`[data-testid="field-type-0"]`, fields[0].type);
-  // await page.click(`[data-testid="field-required-0"]`);
-
-  console.log("First field added to template form");
-  try {
-    await page.click('[data-testid="action-add-form-field-button"]');
-    console.log("Clicked second add form field button using data-testid");
-  } catch (error) {
-    console.log("Failed to find second add form field button by data-testid, trying by text...");
-    await page.click('button:has-text("Add Form Field")');
-    console.log("Clicked second add form field button using text selector");
-  }
-
-  // await page.waitForSelector('[data-testid="field-label-1"]', { state: 'visible', timeout: 10000 });
-  try {
-    await page.fill(`[data-testid="field-label-1"]`, fields[1].label);
-    console.log("Filled second field label using data-testid");
-  } catch (error) {
-    console.log("Failed to find second field label by data-testid, trying by id...");
-    await page.fill(`#field-label-1`, fields[1].label);
-    console.log("Filled second field label using id selector");
-  }
-  // await page.selectOption(`[data-testid="field-type-1"]`, fields[1].type);
-  // await page.click(`[data-testid="field-required-1"]`);
-  console.log("Second field added to template form");
-
-  // Save the form
-  try {
-    await page.click('[data-testid="save-form-action-button"]');
-    console.log("Clicked save form button using data-testid");
-  } catch (error) {
-    console.log("Failed to find save form button by data-testid, trying by text...");
-    await page.click('button:has-text("Save")');
-    console.log("Clicked save form button using text selector");
-  }
-  console.log("Template form saved");
-
-   
-}
-
 
 class RegisterMetaMaskResponse {
 
