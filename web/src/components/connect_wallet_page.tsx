@@ -67,11 +67,20 @@ export const ConnectWalletPage = () => {
     const currentUrl = window.location.href;
     
     // Try multiple approaches for mobile connection
-    const deepLinkUrls = [
-      `https://metamask.app.link/dapp/${window.location.host}${window.location.pathname}`,
-      `metamask://dapp/${window.location.host}${window.location.pathname}`,
-      `https://metamask.app.link/dapp/${currentUrl.replace(/^https?:\/\//, '')}`
-    ];
+    // const deepLinkUrls = [
+    //   `https://metamask.app.link/dapp/${window.location.host}${window.location.pathname}`,
+    //   `metamask://dapp/${window.location.host}${window.location.pathname}`,
+    //   `https://metamask.app.link/dapp/${currentUrl.replace(/^https?:\/\//, '')}`
+    // ];
+
+    const dappPath = `${window.location.host}${window.location.pathname}${window.location.search}`;
+const deepLinkUrls = [
+  `https://metamask.app.link/dapp/${dappPath}`,
+  `metamask://dapp/${dappPath}`,
+  `https://metamask.app.link/dapp/${currentUrl}`,
+    `https://metamask.app.link/browser?url=${currentUrl}`
+];
+
 
     // First, try to detect if MetaMask mobile app is installed
     // let appInstalled = false;
