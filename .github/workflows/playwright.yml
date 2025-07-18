@@ -83,11 +83,12 @@ jobs:
         run: cd e2e && npx playwright test --retries=3 --workers=4
 
       - uses: montudor/action-zip@v1
+        if: success() || failure() # always run even if the previous step fails
         with:
-          args: zip -qq -r test-results.zip test-results
+          args: zip -qq -r test-results.zip e2e/test-results
 
       - uses: actions/upload-artifact@v4
-        if: ${{ !cancelled() }}
+        if: success() || failure() # always run even if the previous step fails
         with:
           name: playwright-report
           path: test-results.zip
