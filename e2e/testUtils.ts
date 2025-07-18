@@ -1210,39 +1210,44 @@ export async function registerNewMetaMaskWalletAndLogin(): Promise<RegisterMetaM
   }
 
 
+  console.log("Starting metamask...");
+  
   // Check if MetaMask page already exists
-let metamaskPage;
-const pages = context.pages();
-console.log(`Found ${pages.length} pages in context`);
+  let metamaskPage;
+  const pages = context.pages();
+  console.log(`Found ${pages.length} pages in context`);
 
-for (const page of pages) {
-  console.log("Page URL:", page.url());
-}
-
-if (pages.length > 1) {
-  metamaskPage = pages[1];
-  console.log("MetaMask page found", metamaskPage.url());
-  console.log("Using existing MetaMask page");
-} else {
-  // Try to wait for MetaMask popup
-  try {
-    const metamaskPromise = context.waitForEvent("page", { timeout: 15000 });
-    metamaskPage = await metamaskPromise;
-    console.log("URL of the metamask page", metamaskPage.url());
-    console.log("MetaMask popup opened", metamaskPage.url());
-  } catch (error) {
-    console.error("Failed to detect MetaMask popup:", error);
-    await testPage.screenshot({ path: 'metamask-popup-error.png' });
-    throw error;
+  for (const page of pages) {
+    console.log("Page URL:", page.url());
   }
-}
 
-  console.log("Starting metamask...")
-  // const metamaskPromise = context.waitForEvent("page");
-  // console.log("Waiting for metamask...")
-  // await metamaskPromise;
-  // console.log("MetaMask popup opened");
-  // const metamaskPage = context.pages()[1]
+  // Always wait for MetaMask popup - it should appear after clicking the sign-in button
+  try {
+    console.log("Waiting for MetaMask popup to appear...");
+    const metamaskPromise = context.waitForEvent("page", { timeout: 30000 }); // Increased timeout
+    metamaskPage = await metamaskPromise;
+    console.log("MetaMask popup opened with URL:", metamaskPage.url());
+  } catch (error) {
+    console.error("Failed to detect MetaMask popup after 30 seconds:", error);
+    
+    // Take screenshot of current state
+    await testPage.screenshot({ path: 'metamask-popup-timeout.png' });
+    
+    // Check if MetaMask page appeared after timeout
+    const updatedPages = context.pages();
+    console.log(`After timeout: Found ${updatedPages.length} pages in context`);
+    
+    for (const page of updatedPages) {
+      console.log("After timeout - Page URL:", page.url());
+    }
+    
+    if (updatedPages.length > 1) {
+      console.log("MetaMask page found after timeout, continuing...");
+      metamaskPage = updatedPages[1];
+    } else {
+      throw new Error("MetaMask popup never appeared");
+    }
+  }
   await metamaskPage.waitForSelector('[data-testid="confirm-btn"]', { state: 'visible' })
   await metamaskPage.click('[data-testid="confirm-btn"]')
 
