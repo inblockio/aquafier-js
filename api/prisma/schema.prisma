@@ -66,15 +66,15 @@ model SiweSession {
 }
 
 model Contract {
-  hash            String  @id
+  hash            String   @id
   genesis_hash    String?
   latest          String? //Json?
   sender          String?
   receiver        String?
   option          String?
   reference_count Int?
-  file_name  String?
-  created_at DateTime  @default(now())
+  file_name       String?
+  created_at      DateTime @default(now())
   // User             User?         @relation(fields: [hash], references: [user])
   // Revision         Revision?     @relation(fields: [hash], references: [pubkey_hash])
 
@@ -237,6 +237,8 @@ model Notifications {
   is_read  Boolean @default(false)
 
   created_on DateTime @default(now())
+
+  navigate_to String?
 
   @@map("notifications")
 }

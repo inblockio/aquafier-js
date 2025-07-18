@@ -47,5 +47,13 @@ export interface INotification {
   receiver: string
   content: string
   is_read: boolean
+  navigate_to: string
   created_on: string
+}
+
+export interface NotificationsHolderProps {
+  notifications: INotification[]
+  isLoading: boolean
+  markAllAsRead: () => void
+  onNotificationRead: () => void
 }

@@ -1,4 +1,4 @@
-import { INotification } from "../../types/index"
+import { INotification, NotificationsHolderProps } from "../../types/index"
 import { useState } from "react"
 import { Button } from "../../components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "../../components/ui/card"
@@ -10,6 +10,8 @@ import appStore from "../../store"
 import { API_ENDPOINTS } from "../../utils/constants"
 import { formatCryptoAddress } from "../../utils/functions"
 import { Badge } from "../../components/ui/badge"
+import { useNavigate } from "react-router-dom"
+import { toast } from "sonner"
 
 interface NotificationItemProps {
   notification: INotification
@@ -19,10 +21,26 @@ interface NotificationItemProps {
 const NotificationItem = ({ notification, onRead }: NotificationItemProps) => {
   const [isMarking, setIsMarking] = useState(false)
   const { backend_url, session } = appStore.getState()
-
-  const markAsRead = async () => {
-    if (notification.is_read) return
+    let navigate = useNavigate();
     
+  const navigateToPage = () => {
+
+    if (notification.navigate_to) {
+      console.log("one..", notification.navigate_to)
+      if (notification.navigate_to.length > 0) {
+        console.log("two..", "navigating to:", notification.navigate_to)
+        navigate(notification.navigate_to);
+      }
+    } else {
+      console.log("no navigate_to found:", notification.navigate_to)
+    }
+  }
+  const markAsRead = async () => {
+    if (notification.is_read) {
+      navigateToPage()
+      return
+    }
+
     setIsMarking(true)
     try {
       await axios.patch(
@@ -37,25 +55,30 @@ const NotificationItem = ({ notification, onRead }: NotificationItemProps) => {
       onRead()
     } catch (error) {
       console.error('Failed to mark notification as read:', error)
+      toast.error(`an error occured.`)
     } finally {
       setIsMarking(false)
+      navigateToPage()
+
     }
+
   }
 
   // Format the date to be more readable
-  const formattedDate = notification.created_on 
+  const formattedDate = notification.created_on
     ? formatDistanceToNow(new Date(notification.created_on), { addSuffix: true })
     : ''
 
   return (
-    <div 
+    <div
       className={`p-4 border-b last:border-b-0 ${notification.is_read ? 'bg-white' : 'bg-blue-50'}`}
       onClick={markAsRead}
     >
+   
       <div className="flex justify-between items-start">
         <div className="flex-1">
           <div className="flex items-center gap-1 mb-1">
-            <Badge 
+            <Badge
               className={`text-xs px-2 py-0.5 ${notification.sender === 'system' ? 'bg-blue-100 text-blue-700 hover:bg-blue-100' : 'bg-gray-100 text-gray-700 hover:bg-gray-100'}`}
               variant="outline"
             >
@@ -67,10 +90,10 @@ const NotificationItem = ({ notification, onRead }: NotificationItemProps) => {
         </div>
         <div className="flex items-center space-x-2">
           {!notification.is_read && (
-            <Button 
-              variant="ghost" 
-              size="icon" 
-              className="h-6 w-6 cursor-pointer" 
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-6 w-6 cursor-pointer"
               onClick={(e) => {
                 e.stopPropagation()
                 markAsRead()
@@ -90,12 +113,7 @@ const NotificationItem = ({ notification, onRead }: NotificationItemProps) => {
   )
 }
 
-interface NotificationsHolderProps {
-  notifications: INotification[]
-  isLoading: boolean
-  markAllAsRead: () => void
-  onNotificationRead: () => void
-}
+
 
 const NotificaitonsHolder = ({
   notifications,
@@ -110,10 +128,10 @@ const NotificaitonsHolder = ({
       <CardHeader className="py-2 px-4 flex flex-row items-center justify-between">
         <CardTitle className="text-lg">Notifications</CardTitle>
         {hasUnread && (
-          <Button 
-            variant="ghost" 
-            size="sm" 
-            className="text-xs" 
+          <Button
+            variant="ghost"
+            size="sm"
+            className="text-xs"
             onClick={markAllAsRead}
           >
             Mark all as read
@@ -128,9 +146,9 @@ const NotificaitonsHolder = ({
             </div>
           ) : notifications.length > 0 ? (
             notifications.map(notification => (
-              <NotificationItem 
-                key={notification.id} 
-                notification={notification} 
+              <NotificationItem
+                key={notification.id}
+                notification={notification}
                 onRead={onNotificationRead}
               />
             ))

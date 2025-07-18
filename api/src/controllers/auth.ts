@@ -190,6 +190,7 @@ export default async function authController(fastify: FastifyInstance) {
             sender: "system",
             receiver: siweData.address!!,
             content: "Welcome to Aqua! Get started by creating your first document or uploading a file for notarization.",
+            navigate_to:"",
             is_read: false,
             created_on: new Date()
           }

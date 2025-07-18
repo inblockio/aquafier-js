@@ -44,7 +44,7 @@ export default async function notificationsController(fastify: FastifyInstance) 
         preHandler: authenticate 
     }, async (request: FastifyRequest & AuthenticatedRequest, reply) => {
         try {
-            const { receiver, content } = request.body as { receiver: string; content: string };
+            const { receiver, content, navigate_to } = request.body as { receiver: string; content: string, navigate_to : string | undefined };
             const sender = request.user?.address;
             
             if (!sender) {
@@ -54,12 +54,18 @@ export default async function notificationsController(fastify: FastifyInstance) 
             if (!receiver || !content) {
                 return reply.code(400).send({ error: 'Receiver and content are required' });
             }
+
+            let nav= navigate_to
+            if(navigate_to==undefined){
+                nav=""
+            }
             
             const notification = await prisma.notifications.create({
                 data: {
                     sender,
                     receiver,
                     content,
+                    navigate_to : nav ,
                     is_read: false
                 }
             });

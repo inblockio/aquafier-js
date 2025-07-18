@@ -182,6 +182,7 @@ export default async function shareController(fastify: FastifyInstance) {
                 sender: session.address,
                 receiver: recipient,
                 content: `A new document has been shared with you by ${session.address}`,
+                navigate_to: `/app/shared-contracts`,
                 is_read: false,
                 created_on: new Date()
             }
@@ -239,6 +240,7 @@ export default async function shareController(fastify: FastifyInstance) {
                     sender: session.address,
                     receiver: recipient,
                     content: `A shared document contract has been updated by ${session.address}`,
+                    navigate_to:"",
                     is_read: false,
                     created_on: new Date()
                 }
