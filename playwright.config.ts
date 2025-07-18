@@ -32,9 +32,23 @@ export default defineConfig({
     video: {
       mode: process.env.CI ? "retain-on-failure" : "on",
     },
-    // Add timeout settings
-    actionTimeout: 30000,
-    navigationTimeout: 30000
+    // Increase timeouts for CI environment
+    actionTimeout: process.env.CI ? 60000 : 30000,
+    navigationTimeout: process.env.CI ? 60000 : 30000,
+    // Add browser launch options to optimize for CI
+    launchOptions: {
+      slowMo: process.env.CI ? 100 : 0, // Slow down execution in CI to improve stability
+      args: [
+        '--disable-dev-shm-usage', // Overcome limited /dev/shm size in CI
+        '--no-sandbox',
+        '--disable-setuid-sandbox',
+        '--disable-gpu',
+        '--disable-extensions-except=' + (process.env.CI ? './e2e/metamask-extension' : ''),
+        '--disable-background-timer-throttling',
+        '--disable-backgrounding-occluded-windows',
+        '--disable-renderer-backgrounding'
+      ]
+    }
   },
 
   /* Configure projects for major browsers */

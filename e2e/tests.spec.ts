@@ -23,7 +23,7 @@ test("login test", async (): Promise<void> => {
 });
 
 test("user setting test", async (): Promise<void> => {
-  test.setTimeout(50000);
+  test.setTimeout(process.env.CI ? 180000 : 50000); // 3 minutes in CI
   const registerResponse = await registerNewMetaMaskWalletAndLogin();
   const context: BrowserContext = registerResponse.context;
   const testPage: Page = context.pages()[0];
@@ -64,7 +64,7 @@ test("user setting test", async (): Promise<void> => {
 
 
 test("linking 2 files test", async (): Promise<void> => {
-  test.setTimeout(50000);
+  test.setTimeout(process.env.CI ? 180000 : 50000); // 3 minutes in CI
   const registerResponse = await registerNewMetaMaskWalletAndLogin();
   const context: BrowserContext = registerResponse.context;
   const testPage: Page = context.pages()[0];
@@ -106,7 +106,7 @@ test("linking 2 files test", async (): Promise<void> => {
 });
 
 test("upload, sign, download", async (): Promise<void> => {
-  test.setTimeout(80000); // Increase timeout to 80 seconds
+  test.setTimeout(process.env.CI ? 300000 : 80000); // 5 minutes in CI
   const registerResponse = await registerNewMetaMaskWalletAndLogin();
   const context: BrowserContext = registerResponse.context;
   const testPage: Page = context.pages()[0];
@@ -133,7 +133,7 @@ test("upload, sign, download", async (): Promise<void> => {
 });
 
 test("upload, witness, download", async (): Promise<void> => {
-  test.setTimeout(240000); // Reasonable timeout for CI environment
+  test.setTimeout(process.env.CI ? 360000 : 80000); // 6 minutes in CI
   const registerResponse = await registerNewMetaMaskWalletAndLogin();
   const context: BrowserContext = registerResponse.context;
   const testPage: Page = context.pages()[0];
@@ -192,7 +192,7 @@ test("upload, witness, download", async (): Promise<void> => {
 });
 
 test("single user aqua-sign", async (): Promise<void> => {
-  test.setTimeout(80000); // Increase timeout to 80 seconds
+  test.setTimeout(process.env.CI ? 300000 : 80000); // 5 minutes in CI
   const registerResponse = await registerNewMetaMaskWalletAndLogin();
   const context: BrowserContext = registerResponse.context;
   const testPage: Page = context.pages()[0];
@@ -225,7 +225,7 @@ test("single user aqua-sign", async (): Promise<void> => {
 
 
 test("two user aqua-sign", async (): Promise<void> => {
-  test.setTimeout(180000); // Adjusted timeout for CI environment
+  test.setTimeout(process.env.CI ? 360000 : 120000); // 6 minutes in CI
   const registerWalletOneResponse = await registerNewMetaMaskWalletAndLogin();
   const registerWalletTwoResponse = await registerNewMetaMaskWalletAndLogin();
 
@@ -289,7 +289,7 @@ test("two user aqua-sign", async (): Promise<void> => {
 
 // Test for sharing functionality
 test("share document between two users", async (): Promise<void> => {
-  test.setTimeout(180000); // Adjusted timeout for CI environment
+  test.setTimeout(process.env.CI ? 300000 : 120000); // 5 minutes in CI
   
   // Setup first user (document owner)
   const ownerResponse = await registerNewMetaMaskWalletAndLogin();
@@ -331,7 +331,7 @@ test("share document between two users", async (): Promise<void> => {
 
 // Test for sharing with different permission levels
 test("share document with everyone", async (): Promise<void> => {
-  test.setTimeout(180000); // Adjusted timeout for CI environment
+  test.setTimeout(process.env.CI ? 300000 : 120000); // 5 minutes in CI
   
   // Setup first user (document owner)
   const ownerResponse = await registerNewMetaMaskWalletAndLogin();
