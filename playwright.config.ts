@@ -37,13 +37,13 @@ export default defineConfig({
     navigationTimeout: process.env.CI ? 60000 : 30000,
     // Add browser launch options to optimize for CI
     launchOptions: {
-      slowMo: process.env.CI ? 100 : 0, // Slow down execution in CI to improve stability
+      slowMo: process.env.CI ? 50 : 0, // Reduce slowMo to avoid excessive delays
       args: [
         '--disable-dev-shm-usage', // Overcome limited /dev/shm size in CI
         '--no-sandbox',
         '--disable-setuid-sandbox',
         '--disable-gpu',
-        '--disable-extensions-except=' + (process.env.CI ? './e2e/metamask-extension' : ''),
+        // Removed problematic extension path
         '--disable-background-timer-throttling',
         '--disable-backgrounding-occluded-windows',
         '--disable-renderer-backgrounding'

@@ -151,17 +151,24 @@ jobs:
         env:
           DISPLAY: :99
           CI: true
-          NODE_OPTIONS: --max_old_space_size=8192
+          NODE_OPTIONS: --max_old_space_size=4096
           WORKERS: 1
-          PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
         run: |
           cd e2e
           echo "Running Playwright tests..."
-          # Use single worker to avoid resource contention
-          # Run tests sequentially to avoid resource issues
-          # Increase global timeout to accommodate slower CI environment
-          # Disable retries as they're now handled in test timeouts
-          npx playwright test --reporter=list,github --workers=1 --timeout=600000 --max-failures=3
+          # Debug information
+          echo "Current directory: $(pwd)"
+          echo "MetaMask extension directory exists: $(test -d ../e2e/metamask-extension && echo 'Yes' || echo 'No')"
+          echo "Node version: $(node -v)"
+          echo "NPM version: $(npm -v)"
+          
+          # Run a single test first to verify setup
+          echo "Running a single test to verify setup..."
+          # npx playwright test tests.spec.ts:17 --reporter=list --workers=1 --timeout=180000 || true
+          
+          # Run all tests with more conservative settings
+          echo "Running all tests..."
+          npx playwright test --reporter=list,github --workers=1 --timeout=180000
           TEST_EXIT_CODE=$?
           echo "Test execution completed with exit code $TEST_EXIT_CODE"
           exit $TEST_EXIT_CODE
