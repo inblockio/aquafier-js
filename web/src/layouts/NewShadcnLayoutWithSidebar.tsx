@@ -21,6 +21,7 @@ import CreateFormFromTemplate from "../components/aqua_forms/CreateFormFromTempl
 import { ScrollArea } from "../components/ui/scroll-area"
 import FormTemplateEditorShadcn from "../components/aqua_forms/FormTemplateEditorShadcn"
 import { AppSidebar } from "../components/app_sidebar"
+import WebsocketFragment from "@/components/navbar/WebsocketFragment"
 
 export default function NewShadcnLayoutWithSidebar() {
     const { session, openCreateAquaSignPopUp, setOpenCreateAquaSignPopUp, openCreateTemplatePopUp, setOpenCreateTemplatePopUp, formTemplates } = useStore(appStore);
@@ -95,6 +96,7 @@ export default function NewShadcnLayoutWithSidebar() {
                 </>
                     :
                     <SidebarProvider>
+                        <WebsocketFragment/>
                         <AppSidebar className="hidden md:block" />
                         <SidebarInset>
                             <header className="flex h-16 shrink-0 items-center gap-2 border-b sticky top-0 z-50 bg-accent w-full">
