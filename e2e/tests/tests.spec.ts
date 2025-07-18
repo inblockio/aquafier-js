@@ -2,12 +2,14 @@ import {test} from '@playwright/test';
 
 import {registerNewMetaMaskWallet, registerNewMetaMaskWalletAndLogin} from './testUtils'
 import path from "path";
+import {chromium} from "playwright";
 
 
 // //prepare metamask
 // test.beforeAll(async () => {
 //
 // })
+
 
 test("create new wallet test", async () => {
   await registerNewMetaMaskWallet();

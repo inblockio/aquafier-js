@@ -983,6 +983,8 @@ export async function registerNewMetaMaskWallet(): Promise<RegisterMetaMaskRespo
 
   await context.waitForEvent("page")
 
+  await context.pages()[0].goto("/app")
+
   const metaMaskPage = await context.pages()[1];
 
   await metaMaskPage.waitForLoadState("load");
@@ -1060,12 +1062,7 @@ export async function registerNewMetaMaskWalletAndLogin(): Promise<RegisterMetaM
   const testPage = context.pages()[0];
   await testPage.waitForLoadState("load")
 
-  // Get the BASE_URL from environment variables and navigate to it
-  const baseUrl = process.env.BASE_URL || "https://dev.inblock.io";
-  console.log(`BASE URL: ${baseUrl}`);
-  const url = `${baseUrl}/app`
-  console.log(`Navigating to: ${url}`);
-  await testPage.goto(url, { waitUntil: 'networkidle' })
+  await testPage.goto('/app', { waitUntil: 'networkidle' })
 
   console.log("Page loaded, looking for sign-in button...");
 
