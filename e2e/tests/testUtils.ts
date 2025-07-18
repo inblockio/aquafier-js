@@ -983,8 +983,6 @@ export async function registerNewMetaMaskWallet(): Promise<RegisterMetaMaskRespo
 
   await context.waitForEvent("page")
 
-  await context.pages()[0].goto("/app")
-
   const metaMaskPage = await context.pages()[1];
 
   await metaMaskPage.waitForLoadState("load");
@@ -1059,6 +1057,7 @@ export async function registerNewMetaMaskWallet(): Promise<RegisterMetaMaskRespo
 export async function registerNewMetaMaskWalletAndLogin(): Promise<RegisterMetaMaskResponse> {
   const response = await registerNewMetaMaskWallet();
   const context = response.context;
+
   const testPage = context.pages()[0];
   await testPage.waitForLoadState("load")
 
