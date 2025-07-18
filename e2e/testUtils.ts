@@ -1215,6 +1215,10 @@ let metamaskPage;
 const pages = context.pages();
 console.log(`Found ${pages.length} pages in context`);
 
+for (const page of pages) {
+  console.log("Page URL:", page.url());
+}
+
 if (pages.length > 1) {
   metamaskPage = pages[1];
   console.log("MetaMask page found", metamaskPage.url());
