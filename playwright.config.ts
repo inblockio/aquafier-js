@@ -13,8 +13,8 @@ import { defineConfig, devices } from '@playwright/test';
  */
 export default defineConfig({
   testDir: './e2e',
-  /* Run tests in files in parallel */
-  fullyParallel: true,
+  /* Run tests in files in parallel - disabled in CI for blockchain tests */
+  fullyParallel: !process.env.CI,
   /* Fail the build on CI if you accidentally left test.only in the source code. */
   forbidOnly: !!process.env.CI,
   /* Opt out of parallel tests on CI. */
@@ -28,10 +28,13 @@ export default defineConfig({
     // baseURL: 'http://localhost:3000',
 
     /* Collect trace when retrying the failed test. See https://playwright.dev/docs/trace-viewer */
-    trace: 'on',
-    video:{
-      mode: "on",
-    }
+    trace: process.env.CI ? 'retain-on-failure' : 'on',
+    video: {
+      mode: process.env.CI ? "retain-on-failure" : "on",
+    },
+    // Add timeout settings
+    actionTimeout: 30000,
+    navigationTimeout: 30000
   },
 
   /* Configure projects for major browsers */

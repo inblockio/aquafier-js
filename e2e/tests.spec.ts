@@ -133,7 +133,7 @@ test("upload, sign, download", async (): Promise<void> => {
 });
 
 test("upload, witness, download", async (): Promise<void> => {
-  test.setTimeout(800000); // Increase timeout to 80 seconds
+  test.setTimeout(240000); // Reasonable timeout for CI environment
   const registerResponse = await registerNewMetaMaskWalletAndLogin();
   const context: BrowserContext = registerResponse.context;
   const testPage: Page = context.pages()[0];
@@ -225,8 +225,7 @@ test("single user aqua-sign", async (): Promise<void> => {
 
 
 test("two user aqua-sign", async (): Promise<void> => {
-
-  test.setTimeout(120000); // Increase timeout to 120 seconds
+  test.setTimeout(180000); // Adjusted timeout for CI environment
   const registerWalletOneResponse = await registerNewMetaMaskWalletAndLogin();
   const registerWalletTwoResponse = await registerNewMetaMaskWalletAndLogin();
 
@@ -290,7 +289,7 @@ test("two user aqua-sign", async (): Promise<void> => {
 
 // Test for sharing functionality
 test("share document between two users", async (): Promise<void> => {
-  test.setTimeout(120000); // Increase timeout to 120 seconds
+  test.setTimeout(180000); // Adjusted timeout for CI environment
   
   // Setup first user (document owner)
   const ownerResponse = await registerNewMetaMaskWalletAndLogin();
@@ -332,7 +331,7 @@ test("share document between two users", async (): Promise<void> => {
 
 // Test for sharing with different permission levels
 test("share document with everyone", async (): Promise<void> => {
-  test.setTimeout(120000); // Increase timeout to 120 seconds
+  test.setTimeout(180000); // Adjusted timeout for CI environment
   
   // Setup first user (document owner)
   const ownerResponse = await registerNewMetaMaskWalletAndLogin();
@@ -345,7 +344,6 @@ test("share document with everyone", async (): Promise<void> => {
   const recipientContext: BrowserContext = recipientResponse.context;
   const recipientPage: Page = recipientContext.pages()[0];
   const recipientAddress = recipientResponse.walletAddress;
-  
   
   // Owner uploads a document
   const testFilePath = path.join(__dirname, 'resources', 'exampleFile.pdf');

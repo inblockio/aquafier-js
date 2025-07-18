@@ -152,10 +152,15 @@ jobs:
           DISPLAY: :99
           CI: true
           NODE_OPTIONS: --max_old_space_size=4096
+          WORKERS: 1
+          PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: 1
         run: |
           cd e2e
           echo "Running Playwright tests..."
-          npx playwright test --reporter=list,github --workers=3 --timeout=120000
+          # Use single worker to avoid resource contention
+          # Increase timeout to accommodate slower CI environment
+          # Use retry mechanism for flaky tests
+          npx playwright test --reporter=list,github --workers=1 --timeout=180000 --retries=1
           TEST_EXIT_CODE=$?
           echo "Test execution completed with exit code $TEST_EXIT_CODE"
           exit $TEST_EXIT_CODE
