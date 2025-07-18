@@ -971,8 +971,10 @@ export async function fundWallet(walletToFund: string) {
 
 export async function registerNewMetaMaskWallet(): Promise<RegisterMetaMaskResponse> {
   const metamaskPath = path.join(__dirname, 'metamask-extension');
+  console.log(`metamaskPath: ${metamaskPath}`)
 
   const isCI = process.env.CI === 'true';
+  console.log(`isCI: ${isCI}`)
   const context = await chromium.launchPersistentContext('', {
     headless: isCI,
     args: [
@@ -980,10 +982,13 @@ export async function registerNewMetaMaskWallet(): Promise<RegisterMetaMaskRespo
       `--load-extension=${metamaskPath}`,
     ],
   });
+  console.log(`context: ${JSON.stringify(context, null, 4)}`)
 
   await context.waitForEvent("page")
+  console.log(`context.waitForEvent("page")`)
 
-  const metaMaskPage = await context.pages()[1];
+  const metaMaskPage = context.pages()[1];
+  console.log(`metaMaskPage: ${JSON.stringify(metaMaskPage, null, 4)}`)
 
   await metaMaskPage.waitForLoadState("load");
 
