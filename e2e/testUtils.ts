@@ -974,7 +974,7 @@ export async function registerNewMetaMaskWallet(): Promise<RegisterMetaMaskRespo
   console.log(`metamaskPath: ${metamaskPath}`)
 
   const isCI = process.env.CI === 'true';
-  const userDataDir = '/tmp/test-user-data-dir';
+  const userDataDir = '';
   const context = await chromium.launchPersistentContext(userDataDir, {
     headless: isCI,
     channel: 'chromium',
@@ -982,86 +982,153 @@ export async function registerNewMetaMaskWallet(): Promise<RegisterMetaMaskRespo
       `--disable-extensions-except=${metamaskPath}`,
       `--load-extension=${metamaskPath}`,
     ],
+    // Increase timeouts for MetaMask operations
+    timeout: 60000
   });
 
-  // Pause execution here
-  // await new Promise(resolve => setTimeout(resolve, 100000));
-
-  console.log(`context: ${JSON.stringify(context, null, 4)}`)
-
-  await context.waitForEvent("page")
-  console.log(`context.waitForEvent("page")`)
-
-  const metaMaskPage = context.pages()[1];
-  console.log(`metaMaskPage: ${JSON.stringify(metaMaskPage, null, 4)}`)
-
-  await metaMaskPage.waitForLoadState("load");
-
-  //setup-page
-  await metaMaskPage.click('[data-testid="onboarding-terms-checkbox"]')
-  await metaMaskPage.click('[data-testid="onboarding-create-wallet"]')
-
-  //tele-data deny
-  await metaMaskPage.waitForSelector('[data-testid="metametrics-no-thanks"]', { state: 'visible' });
-  await metaMaskPage.click('[data-testid="metametrics-no-thanks"]')
-
-  //password setup
-  let myNewPassword = generatePassword(15)
-  await metaMaskPage.waitForSelector('[data-testid="create-password-new"]', { state: 'visible' })
-  await metaMaskPage.fill('[data-testid="create-password-new"]', myNewPassword)
-  await metaMaskPage.fill('[data-testid="create-password-confirm"]', myNewPassword)
-  await metaMaskPage.click('[data-testid="create-password-terms"]')
-  await metaMaskPage.click('[data-testid="create-password-wallet"]')
-
-  //no i dont want to store my wallet
-  await metaMaskPage.waitForSelector('[data-testid="secure-wallet-later"]', { state: 'visible' });
-  await metaMaskPage.click('[data-testid="secure-wallet-later"]')
-  await metaMaskPage.waitForSelector('[data-testid="skip-srp-backup-popover-checkbox"]', { state: 'visible' });
-  await metaMaskPage.click('[data-testid="skip-srp-backup-popover-checkbox"]')
-  await metaMaskPage.click('[data-testid="skip-srp-backup"]')
-
-  //done
-  await metaMaskPage.waitForSelector('[data-testid="onboarding-complete-done"]', { state: 'visible' });
-  await metaMaskPage.click('[data-testid="onboarding-complete-done"]')
-
-  //finish tutorial
-  await metaMaskPage.waitForSelector('[data-testid="pin-extension-next"]', { state: 'visible' });
-  await metaMaskPage.click('[data-testid="pin-extension-next"]')
-  await metaMaskPage.waitForSelector('[data-testid="pin-extension-done"]', { state: 'visible' });
-  await metaMaskPage.click('[data-testid="pin-extension-done"]')
-
-  await metaMaskPage.waitForSelector('[data-testid="network-display"]', { state: 'visible' });
-
-  // CHANGE ADDED - Add network switching to localhost/testnet BEFORE proceeding
-  // try {
-  //     await switchToTestNetwork(metaMaskPage);
-  // } catch (error) {
-  //     console.log("Could not switch network, continuing with current network");
-  // }
+  try {
+    console.log(`context: ${JSON.stringify(context, null, 4)}`)
 
 
-  await metaMaskPage.waitForSelector('[data-testid="not-now-button"]', { state: 'visible', timeout: 100000 });
-  await metaMaskPage.click('[data-testid="not-now-button"]')
+    // Wait for MetaMask page to open
+    await context.waitForEvent("page", { timeout: 30000 })
+    console.log(`context.waitForEvent("page")`)
 
-  await metaMaskPage.waitForSelector('[data-testid="account-menu-icon"]')
-  await metaMaskPage.click('[data-testid="account-menu-icon"]')
-  await metaMaskPage.waitForSelector('[data-testid="account-list-item-menu-button"]')
-  await metaMaskPage.click('[data-testid="account-list-item-menu-button"]')
-  await metaMaskPage.waitForSelector('[data-testid="account-list-menu-details"]')
-  await metaMaskPage.click('[data-testid="account-list-menu-details"]')
-  await metaMaskPage.getByText("Details").waitFor({ state: 'visible' })
-  await metaMaskPage.getByText("Details").click()
-  await metaMaskPage.waitForSelector('[class="mm-box mm-text qr-code__address-segments mm-text--body-md mm-box--margin-bottom-4 mm-box--color-text-default"]')
-  const address = await metaMaskPage.locator('[class="mm-box mm-text qr-code__address-segments mm-text--body-md mm-box--margin-bottom-4 mm-box--color-text-default"]').textContent()
+    // Get the MetaMask page - it should be the second page opened
+    const pages = context.pages();
+    if (pages.length < 2) {
+      throw new Error("MetaMask page not found");
+    }
 
-  await metaMaskPage.close()
+    const metaMaskPage = pages[1];
+    console.log(`metaMaskPage: ${JSON.stringify(metaMaskPage, null, 4)}`)
 
-  console.log("Wallet finished!!! Adr: " + address)
+    // Wait for page to load
+    await metaMaskPage.waitForLoadState("load", { timeout: 30000 });
 
-  if (address == null) {
-    throw Error(`Wallet address cannot be null `)
+    // Setup page - accept terms and create wallet
+    console.log("Setting up MetaMask - accepting terms")
+    await metaMaskPage.waitForSelector('[data-testid="onboarding-terms-checkbox"]', { timeout: 30000 });
+    await metaMaskPage.click('[data-testid="onboarding-terms-checkbox"]')
+    await metaMaskPage.click('[data-testid="onboarding-create-wallet"]')
+
+    // Decline telemetry data collection
+    console.log("Declining telemetry data collection")
+    await metaMaskPage.waitForSelector('[data-testid="metametrics-no-thanks"]', { state: 'visible', timeout: 30000 });
+    await metaMaskPage.click('[data-testid="metametrics-no-thanks"]')
+
+    // Set up password
+    console.log("Setting up password")
+    let myNewPassword = generatePassword(15)
+    await metaMaskPage.waitForSelector('[data-testid="create-password-new"]', { state: 'visible', timeout: 30000 })
+    await metaMaskPage.fill('[data-testid="create-password-new"]', myNewPassword)
+    await metaMaskPage.fill('[data-testid="create-password-confirm"]', myNewPassword)
+    await metaMaskPage.click('[data-testid="create-password-terms"]')
+    await metaMaskPage.click('[data-testid="create-password-wallet"]')
+
+    // Skip wallet backup
+    console.log("Skipping wallet backup")
+    await metaMaskPage.waitForSelector('[data-testid="secure-wallet-later"]', { state: 'visible', timeout: 30000 });
+    await metaMaskPage.click('[data-testid="secure-wallet-later"]')
+    await metaMaskPage.waitForSelector('[data-testid="skip-srp-backup-popover-checkbox"]', { state: 'visible', timeout: 30000 });
+    await metaMaskPage.click('[data-testid="skip-srp-backup-popover-checkbox"]')
+    await metaMaskPage.click('[data-testid="skip-srp-backup"]')
+
+    // Complete onboarding
+    console.log("Completing onboarding")
+    await metaMaskPage.waitForSelector('[data-testid="onboarding-complete-done"]', { state: 'visible', timeout: 30000 });
+    await metaMaskPage.click('[data-testid="onboarding-complete-done"]')
+
+    // Complete tutorial
+    console.log("Completing tutorial")
+    await metaMaskPage.waitForSelector('[data-testid="pin-extension-next"]', { state: 'visible', timeout: 30000 });
+    await metaMaskPage.click('[data-testid="pin-extension-next"]')
+    await metaMaskPage.waitForSelector('[data-testid="pin-extension-done"]', { state: 'visible', timeout: 30000 });
+    await metaMaskPage.click('[data-testid="pin-extension-done"]')
+
+    // Wait for network display to be visible
+    console.log("Waiting for network display")
+    await metaMaskPage.waitForSelector('[data-testid="network-display"]', { state: 'visible', timeout: 30000 });
+
+    // Switch to a test network to avoid mainnet connection issues
+    console.log("Switching to test network")
+
+    
+    try {
+      
+      // Try stop the not now popup
+      try {
+        await metaMaskPage.waitForSelector('[data-testid="not-now-button"]', { state: 'visible', timeout: 30000 });
+        await metaMaskPage.click('[data-testid="not-now-button"]')
+      } catch (error) {
+        console.log("No not now popup appeared or it was already dismissed");
+      }
+      
+      // Click on network selector
+      await metaMaskPage.click('[data-testid="network-display"]');
+      
+      // Pause execution for 30 seconds, use promise
+      // await new Promise(resolve => setTimeout(resolve, 30000));
+
+      // I want you to click the show test networks here
+      // This is how it looks like class="toggle-button toggle-button--off"
+      await metaMaskPage.click('[class="toggle-button toggle-button--off"]');
+
+      // Look for Sepolia test network and click it
+      // data-testid="Sepolia" click on this element
+      await metaMaskPage.click('[data-testid="Sepolia"]');
+      // const sepoliaSelector = 'button:has-text("Sepolia")';
+      // await metaMaskPage.waitForSelector(sepoliaSelector, { timeout: 10000 });
+      // await metaMaskPage.click(sepoliaSelector);
+
+      console.log("Switched to Sepolia test network");
+    } catch (error) {
+      console.log("Could not switch network, continuing with current network", error);
+    }
+
+    // Handle the popup that might appear asking to connect
+    console.log("Handling connection popup")
+    try {
+      await metaMaskPage.waitForSelector('[data-testid="not-now-button"]', { state: 'visible', timeout: 10000 });
+      await metaMaskPage.click('[data-testid="not-now-button"]')
+    } catch (error) {
+      console.log("No connection popup appeared or it was already dismissed");
+    }
+
+    // Get wallet address
+    console.log("Getting wallet address")
+    await metaMaskPage.waitForSelector('[data-testid="account-menu-icon"]', { timeout: 30000 })
+    await metaMaskPage.click('[data-testid="account-menu-icon"]')
+    await metaMaskPage.waitForSelector('[data-testid="account-list-item-menu-button"]', { timeout: 30000 })
+    await metaMaskPage.click('[data-testid="account-list-item-menu-button"]')
+    await metaMaskPage.waitForSelector('[data-testid="account-list-menu-details"]', { timeout: 30000 })
+    await metaMaskPage.click('[data-testid="account-list-menu-details"]')
+    await metaMaskPage.getByText("Details").waitFor({ state: 'visible', timeout: 30000 })
+    await metaMaskPage.getByText("Details").click()
+
+    // Get the wallet address
+    await metaMaskPage.waitForSelector('[class="mm-box mm-text qr-code__address-segments mm-text--body-md mm-box--margin-bottom-4 mm-box--color-text-default"]', { timeout: 30000 })
+    const address = await metaMaskPage.locator('[class="mm-box mm-text qr-code__address-segments mm-text--body-md mm-box--margin-bottom-4 mm-box--color-text-default"]').textContent()
+
+    // Close the MetaMask page
+    await metaMaskPage.close()
+
+    console.log("Wallet finished!!! Adr: " + address)
+
+    if (address == null) {
+      throw Error(`Wallet address cannot be null`)
+    }
+    return new RegisterMetaMaskResponse(context, address);
+  } catch (error) {
+    console.error("Error in registerNewMetaMaskWallet:", error);
+    // Try to close the context to clean up resources
+    try {
+      await context.close();
+    } catch (closeError) {
+      console.error("Error closing context:", closeError);
+    }
+    throw error;
   }
-  return new RegisterMetaMaskResponse(context, address);
 }
 
 export async function registerNewMetaMaskWalletAndLogin(): Promise<RegisterMetaMaskResponse> {
