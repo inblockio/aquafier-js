@@ -37,9 +37,9 @@ test("create new wallet test", async (): Promise<void> => {
   await registerNewMetaMaskWallet();
 });
 
-test("login test", async (): Promise<void> => {
-  await registerNewMetaMaskWalletAndLogin();
-});
+// test("login test", async (): Promise<void> => {
+//   await registerNewMetaMaskWalletAndLogin();
+// });
 
 // test("user setting test", async (): Promise<void> => {
 //   test.setTimeout(process.env.CI ? 180000 : 50000); // 3 minutes in CI

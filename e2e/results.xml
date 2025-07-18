@@ -1,0 +1,42 @@
+<testsuites id="" name="" tests="3" failures="0" skipped="0" errors="0" time="36.500944">
+<testsuite name="tests.spec.ts" timestamp="2025-07-18T14:43:22.942Z" hostname="chromium" tests="3" failures="0" skipped="0" time="33.618" errors="0">
+<testcase name="basic site accessibility test" classname="tests.spec.ts" time="3.535">
+<system-out>
+<![CDATA[Base URL: https://dev.inblock.io
+Running basic site accessibility test
+Navigating to https://dev.inblock.io
+Page loaded
+Screenshot taken
+Page title: Aquafier
+
+[[ATTACHMENT|test-results/tests-basic-site-accessibility-test-chromium/video.webm]]
+
+[[ATTACHMENT|test-results/tests-basic-site-accessibility-test-chromium/trace.zip]]
+]]>
+</system-out>
+</testcase>
+<testcase name="create new wallet test" classname="tests.spec.ts" time="12.137">
+<system-out>
+<![CDATA[Wallet finished!!! Adr: 0xc85d6d87efca16945a37ae3b89c829ebc1b98c94
+
+[[ATTACHMENT|test-results/tests-create-new-wallet-test-chromium/trace.zip]]
+]]>
+</system-out>
+</testcase>
+<testcase name="login test" classname="tests.spec.ts" time="17.946">
+<system-out>
+<![CDATA[Wallet finished!!! Adr: 0xd4913233a1f47e91e040c4b61033244db6f939e9
+BASE URL: https://dev.inblock.io
+Navigating to: https://dev.inblock.io/app
+Page loaded, looking for sign-in button...
+Looking for any sign-in button...
+Found visible sign-in button with selector: [data-testid="sign-in-button-page"]
+Clicked sign-in button, waiting for MetaMask popup...
+MetaMask popup opened
+
+[[ATTACHMENT|test-results/tests-login-test-chromium/trace.zip]]
+]]>
+</system-out>
+</testcase>
+</testsuite>
+</testsuites>
