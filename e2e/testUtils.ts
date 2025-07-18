@@ -1173,7 +1173,6 @@ export async function registerNewMetaMaskWalletAndLogin(): Promise<RegisterMetaM
     // }
 
     let buttonFound = false;
-    const metamaskPromise = context.waitForEvent("page");
 
     // Click the sign-in button using the data-testid attribute
     //  await testPage.click('[data-testid="sign-in-button-dialog"]');
@@ -1204,15 +1203,14 @@ export async function registerNewMetaMaskWalletAndLogin(): Promise<RegisterMetaM
       console.log("Clicked first button found as fallback");
     }
     console.log("Clicked sign-in button, waiting for MetaMask popup...");
-
-    await metamaskPromise;
     console.log("MetaMask popup opened");
   } catch (error) {
     console.error("Error during login:", error);
     await testPage.screenshot({ path: 'login-error.png' });
     throw error;
   }
-
+  const metamaskPromise = context.waitForEvent("page");
+  await metamaskPromise;
   const metamaskPage = context.pages()[1]
   await metamaskPage.waitForSelector('[data-testid="confirm-btn"]', { state: 'visible' })
   await metamaskPage.click('[data-testid="confirm-btn"]')
