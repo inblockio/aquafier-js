@@ -23,7 +23,7 @@ export default defineConfig({
   reporter: [['junit', { outputFile: 'results.xml' }]],
   /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
   use: {
-    headless: true,
+    headless: false,
     permissions: ["clipboard-read"],
     /* Base URL to use in actions like `await page.goto('/')`. */
     // baseURL: 'http://localhost:3000',
@@ -34,11 +34,11 @@ export default defineConfig({
       mode: process.env.CI ? "retain-on-failure" : "on",
     },
     // Increase timeouts for CI environment
-    actionTimeout: process.env.CI ? 60000 : 30000,
-    navigationTimeout: process.env.CI ? 60000 : 30000,
+    actionTimeout: process.env.CI ? 30000 : 30000,
+    navigationTimeout: process.env.CI ? 30000 : 30000,
     // Add browser launch options to optimize for CI
     launchOptions: {
-      slowMo: process.env.CI ? 50 : 0, // Reduce slowMo to avoid excessive delays
+      slowMo: process.env.CI ? 5 : 0, // Reduce slowMo to avoid excessive delays
       args: [
         '--disable-dev-shm-usage', // Overcome limited /dev/shm size in CI
         '--no-sandbox',
