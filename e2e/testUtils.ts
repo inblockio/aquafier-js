@@ -1165,6 +1165,13 @@ export async function registerNewMetaMaskWalletAndLogin(): Promise<RegisterMetaM
       'button:has-text("Login")'
     ];
 
+    // data-testid="unlock-submit" if this button is visible, fill in the password and click it, check the button first
+    // let isUnlockSubmitVisible = await testPage.waitForSelector('[data-testid="unlock-submit"]', { state: 'visible', timeout: 60000 })
+    // if (isUnlockSubmitVisible) {
+    //   await testPage.fill('[data-testid="password-input"]', process.env.METAMASK_PASSWORD || "")
+    //   await testPage.click('[data-testid="unlock-submit"]')
+    // }
+
     let buttonFound = false;
     const metamaskPromise = context.waitForEvent("page");
 

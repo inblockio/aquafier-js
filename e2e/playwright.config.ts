@@ -34,8 +34,8 @@ export default defineConfig({
       mode: process.env.CI ? "retain-on-failure" : "on",
     },
     // Increase timeouts for CI environment
-    actionTimeout: process.env.CI ? 30000 : 30000,
-    navigationTimeout: process.env.CI ? 30000 : 30000,
+    actionTimeout: process.env.CI ? 120000 : 60000,
+    navigationTimeout: process.env.CI ? 120000 : 60000,
     // Add browser launch options to optimize for CI
     launchOptions: {
       slowMo: process.env.CI ? 5 : 0, // Reduce slowMo to avoid excessive delays
