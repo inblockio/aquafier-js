@@ -1208,12 +1208,35 @@ export async function registerNewMetaMaskWalletAndLogin(): Promise<RegisterMetaM
     await testPage.screenshot({ path: 'login-error.png' });
     throw error;
   }
+
+
+  // Check if MetaMask page already exists
+let metamaskPage;
+const pages = context.pages();
+console.log(`Found ${pages.length} pages in context`);
+
+if (pages.length > 1) {
+  metamaskPage = pages[1];
+  console.log("Using existing MetaMask page");
+} else {
+  // Try to wait for MetaMask popup
+  try {
+    const metamaskPromise = context.waitForEvent("page", { timeout: 15000 });
+    metamaskPage = await metamaskPromise;
+    console.log("MetaMask popup opened");
+  } catch (error) {
+    console.error("Failed to detect MetaMask popup:", error);
+    await testPage.screenshot({ path: 'metamask-popup-error.png' });
+    throw error;
+  }
+}
+
   console.log("Starting metamask...")
-  const metamaskPromise = context.waitForEvent("page");
-  console.log("Waiting for metamask...")
-  await metamaskPromise;
-  console.log("MetaMask popup opened");
-  const metamaskPage = context.pages()[1]
+  // const metamaskPromise = context.waitForEvent("page");
+  // console.log("Waiting for metamask...")
+  // await metamaskPromise;
+  // console.log("MetaMask popup opened");
+  // const metamaskPage = context.pages()[1]
   await metamaskPage.waitForSelector('[data-testid="confirm-btn"]', { state: 'visible' })
   await metamaskPage.click('[data-testid="confirm-btn"]')
 
