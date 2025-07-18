@@ -1208,7 +1208,9 @@ export async function registerNewMetaMaskWalletAndLogin(): Promise<RegisterMetaM
     await testPage.screenshot({ path: 'login-error.png' });
     throw error;
   }
+  console.log("Starting metamask...")
   const metamaskPromise = context.waitForEvent("page");
+  console.log("Waiting for metamask...")
   await metamaskPromise;
   console.log("MetaMask popup opened");
   const metamaskPage = context.pages()[1]
