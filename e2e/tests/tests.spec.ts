@@ -1,6 +1,6 @@
 import {test} from '@playwright/test';
 
-import {registerNewMetaMaskWallet, registerNewMetaMaskWalletAndLogin} from './testUtils'
+import {registerNewMetaMaskWallet, registerNewMetaMaskWalletAndLogin, waitAndClick} from './testUtils'
 import path from "path";
 
 test("create new wallet test", async () => {
@@ -19,110 +19,101 @@ test("upload, sign, download", async () => {
     const testPage = context.pages()[0];
 
     //upload
-    await testPage.waitForSelector('[id="file::rc::dropzone"]', {state: 'visible'})
+    await testPage.waitForSelector('[data-testid="file-upload-dropzone"]', {state: 'visible'})
     const fileChooserPromise = testPage.waitForEvent('filechooser');
-    await testPage.click('[id="file::rc::dropzone"]')
+    await testPage.click('[data-testid="file-upload-dropzone"]')
     const fileChooser = await fileChooserPromise;
-    await fileChooser.setFiles(path.join(__dirname, 'resources/exampleFile.pdf'));
+    await fileChooser.setFiles(path.join(__dirname, './../resources/exampleFile.pdf'));
 
     //sign
-    await testPage.getByText("Sign").waitFor({state: 'visible'})
+    await testPage.waitForSelector('[data-testid="sign-action-button"]', {state: 'visible'})
     let metaMaskPromise = context.waitForEvent("page");
-    await testPage.getByText("Sign").click()
+    await testPage.click('[data-testid="sign-action-button"]')
 
     //wait for metamask
     await metaMaskPromise;
 
-
     //switch network
     let metaMaskPage = context.pages()[1];
     await metaMaskPage.getByText("Sepolia").waitFor({state: 'visible'})
-    await metaMaskPage.waitForSelector('[data-testid="page-container-footer-next"]', {state: 'visible'});
-    await metaMaskPage.click('[data-testid="page-container-footer-next"]')
 
-    await metaMaskPage.waitForSelector('[data-testid="confirm-footer-button"]', {state: 'visible'})
-    await metaMaskPage.click('[data-testid="confirm-footer-button"]')
+    await waitAndClick(metaMaskPage,'[data-testid="page-container-footer-next"]')
+
+    await waitAndClick(metaMaskPage, '[data-testid="confirm-footer-button"]')
+
+    await metaMaskPage.close();
 
     //download
-    await testPage.getByText("Download").waitFor({state: 'visible'})
-    await testPage.getByText("Download").click()
+    await waitAndClick(testPage,'[data-testid="download-aqua-tree-button"]')
 
     console.log("upload, sign, download finished!")
 })
 
 test("single user aqua-sign", async () => {
-    test.setTimeout(100_000)
     const response = await registerNewMetaMaskWalletAndLogin();
 
     const context = response.context;
     const testPage = context.pages()[0];
 
     //open "new form" overlay
-    await testPage.waitForSelector('[id="menu::rh::trigger"]', {state: 'visible'})
-    await testPage.click('[id="menu::rh::trigger"]')
-    await testPage.waitForSelector('[id=":rh:/new-file"]', {state: 'visible'});
-    await testPage.click('[id=":rh:/new-file"]')
+    await testPage.waitForSelector('[data-testid="action-form-63-button"]', {state: 'visible'})
+    await testPage.click('[data-testid="action-form-63-button"]')
+    await testPage.waitForSelector('[data-testid="create-aqua-sign-from-template"]', {state: 'visible'});
+    await testPage.click('[data-testid="create-aqua-sign-from-template"]')
 
     //select aqua-sign template
-    await testPage.getByText("Aqua Sign").waitFor({state: 'visible'});
-    await testPage.getByText("Aqua Sign").click()
+    await testPage.waitForSelector('[data-testid="action-loading-create-button"]');
+    await testPage.click('[data-testid="action-loading-create-button"]')
 
     //create aqua tree template
-    await testPage.waitForSelector('[id=":rk:"]', {state: 'visible'});
+    await testPage.waitForSelector('[data-testid="input-document"]', {state: 'visible'});
     const fileChooserPromise = testPage.waitForEvent('filechooser');
-    await testPage.click('[id=":rk:"]')
+    await testPage.click('[data-testid="input-document"]')
     const fileChooser = await fileChooserPromise;
-    await fileChooser.setFiles(path.join(__dirname, 'resources/exampleFile.pdf'));
-    const metaMaskAdr = await testPage.locator('[id=":rl:"]').inputValue();
-    await testPage.fill('[id=":rm:"]', metaMaskAdr);
+    await fileChooser.setFiles(path.join(__dirname, './../resources/exampleFile.pdf'));
+    const metaMaskAdr = await testPage.locator('[data-testid="input-sender"]').inputValue();
+    await testPage.fill('[data-testid="input-signers-0"]', metaMaskAdr);
 
     let metamaskPromise = context.waitForEvent("page")
-    await testPage.click('[type="submit"]');
+    await testPage.click('[data-testid="action-loading-create-button"]');
     await metamaskPromise;
 
     let metamaskPage = context.pages()[1]
-    await metamaskPage.waitForSelector('[data-testid="page-container-footer-next"]', {state: 'visible'});
 
     //switch network and sign
-    await metamaskPage.click('[data-testid="page-container-footer-next"]');
-    await metamaskPage.click('[data-testid="confirm-footer-button"]');
+    await waitAndClick(metamaskPage, '[data-testid="page-container-footer-next"]')
 
-    await testPage.getByText("Open Workflow").waitFor({state: 'visible'});
-    await testPage.getByText("Open Workflow").click();
+    await waitAndClick(metamaskPage, '[data-testid="confirm-footer-button"]')
 
-    await testPage.getByText("View Contract Document").waitFor({state: 'visible'});
-    await testPage.getByText("View Contract Document").click();
+    await waitAndClick(testPage, '[data-testid="open-workflow-button"]')
 
-    await testPage.getByText("Create Signature").waitFor({state: 'visible'});
-    await testPage.getByText("Create Signature").click();
+    await waitAndClick(testPage, '[data-testid="action-view-contract-button"]')
 
-    await testPage.getByText("Save Signature").waitFor({state: 'visible'});
-    await testPage.waitForSelector('[class="signature-canvas"]', {state: 'visible'});
-    await testPage.click('[class="signature-canvas"]');
+    await waitAndClick(testPage, '[data-testid="action-create-signature-button"]')
+
+    await waitAndClick(testPage, '[class="signature-canvas"]')
 
     metamaskPromise = context.waitForEvent("page")
-    await testPage.getByText("Save Signature").click();
+    await waitAndClick(testPage, '[data-testid="action-loading-save-signature-button"]')
     await metamaskPromise;
 
     metamaskPage = context.pages()[1]
 
-    await metamaskPage.waitForSelector('[data-testid="confirm-footer-button"]', {state: 'visible'});
-    await metamaskPage.click('[data-testid="confirm-footer-button"]')
+    await waitAndClick(metamaskPage, '[data-testid="confirm-footer-button"]')
 
     await metamaskPage.waitForEvent("close");
-    await testPage.getByText("Add Signature to document").waitFor({state: 'visible'});
-    await testPage.getByText("Add Signature to document").click();
-    await testPage.click('[class="css-1exhycx"]')
 
+    await waitAndClick(testPage, '[data-testid="action-signature-to-document-button"]')
+
+    await waitAndClick(testPage, '[class="css-1exhycx"]')
 
     metamaskPromise = context.waitForEvent("page")
-    await testPage.getByText("Sign document").click();
+    await waitAndClick(testPage, '[data-testid="action-sign-document-button"]')
     await metamaskPromise;
 
     metamaskPage = context.pages()[1]
 
-    await metamaskPage.waitForSelector('[data-testid="confirm-footer-button"]', {state: 'visible', timeout: 10000});
-    await metamaskPage.click('[data-testid="confirm-footer-button"]')
+    waitAndClick(metamaskPage, '[data-testid="confirm-footer-button"]')
 
     await testPage.getByText("Workflow completed and validated").waitFor({state: 'visible'});
 })
