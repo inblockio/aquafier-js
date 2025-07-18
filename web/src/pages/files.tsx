@@ -441,6 +441,7 @@ const FilesPage = () => {
                 }} /> : <FilesList />}
             </div>
 
+{/* chain details dialog */}
             <Dialog open={isSelectedFileDialogOpen} onOpenChange={(openState) => {
                 setIsSelectedFileDialogOpen(openState)
                 if (!openState) {

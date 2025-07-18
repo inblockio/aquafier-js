@@ -1,4 +1,3 @@
-
 import { LuDownload } from "react-icons/lu"
 import { ensureDomainUrlHasSSL, extractFileHash, isAquaTree } from "../../utils/functions"
 import { useStore } from "zustand"
@@ -12,12 +11,24 @@ import { AquaJsonInZip, AquaNameWithHash } from "../../models/Aqua"
 // import { toaster } from "@/components/ui/use-toast"
 import { toast } from "sonner";
 
-
+// Helper function to determine if a file should be treated as binary based on extension
+const isBinaryFile = (filename: string): boolean => {
+    const binaryExtensions = [
+        '.pdf', '.doc', '.docx', '.xls', '.xlsx', '.ppt', '.pptx',
+        '.zip', '.rar', '.7z', '.tar', '.gz',
+        '.jpg', '.jpeg', '.png', '.gif', '.bmp', '.tiff', '.webp',
+        '.mp3', '.mp4', '.avi', '.mov', '.wmv', '.flv', '.mkv',
+        '.exe', '.dll', '.so', '.dylib',
+        '.bin', '.dat', '.iso'
+    ];
+    
+    const extension = filename.toLowerCase().substring(filename.lastIndexOf('.'));
+    return binaryExtensions.includes(extension);
+};
 
 export const DownloadAquaChain = ({ file, index , children  }: { file: ApiFileInfo, index: number,children?: React.ReactNode }) => {
     const { session } = useStore(appStore)
     const [downloading, setDownloading] = useState(false)
-
 
     const downloadLinkAquaJson = async () => {
         const zip = new JSZip();
@@ -39,6 +50,9 @@ export const DownloadAquaChain = ({ file, index , children  }: { file: ApiFileIn
 
         let nameWithHashes: Array<AquaNameWithHash> = []
         for (let fileObj of file.fileObject) {
+            console.log('Processing file:', fileObj.fileName, 'Content type:', typeof fileObj.fileContent);
+            
+            const isAquaTreeData = isAquaTree(fileObj.fileContent)
             if (typeof fileObj.fileContent === 'string' && fileObj.fileContent.startsWith('http')) {
                 try {
                     let actualUrlToFetch = ensureDomainUrlHasSSL(fileObj.fileContent)
@@ -54,7 +68,16 @@ export const DownloadAquaChain = ({ file, index , children  }: { file: ApiFileIn
 
                     let hashData = extractFileHash(fileObj.fileContent)
                     if (hashData == undefined) {
-                        hashData = aquafier.getFileHash(blob.toString())
+                        // Fix: Don't convert blob to string for binary files
+                        if (isBinaryFile(fileObj.fileName)) {
+                            // For binary files, use the blob directly or convert to ArrayBuffer
+                            const arrayBuffer = await blob.arrayBuffer();
+                            hashData = aquafier.getFileHash(new Uint8Array(arrayBuffer));
+                        } else {
+                            // For text files, convert to string
+                            const text = await blob.text();
+                            hashData = aquafier.getFileHash(text);
+                        }
                     }
 
                     nameWithHashes.push({
@@ -62,6 +85,7 @@ export const DownloadAquaChain = ({ file, index , children  }: { file: ApiFileIn
                         hash: hashData
                     })
 
+                    // Use the original filename, not with .json extension
                     zip.file(fileObj.fileName, blob, { binary: true })
                 } catch (error) {
                     console.error(`Error downloading ${fileObj.fileName}:`, error);
@@ -69,23 +93,47 @@ export const DownloadAquaChain = ({ file, index , children  }: { file: ApiFileIn
                         description: `Error downloading ${fileObj.fileName}: ${error}`,
                         // type: "error"
                       });
-                    // toaster.create({
-                    //     description: `Error downloading ${fileObj.fileName}: ${error}`,
-                    //     type: "error"
-                    // });
                 }
             } else {
-                // Check if the file is an AquaTree (likely a JSON file) or a regular text file
-                if (isAquaTree(fileObj.fileContent)) {
+                // Handle non-URL content
+                let hashData: string;
+                
+                if (isAquaTreeData) {
                     // It's an AquaTree, so stringify it as JSON
-                    zip.file(fileObj.fileName, JSON.stringify(fileObj.fileContent as AquaTree));
+                    const jsonContent = JSON.stringify(fileObj.fileContent as AquaTree);
+                    // Only add .json extension if it doesn't already have one
+                    const fileName = fileObj.fileName.endsWith('.json') ? fileObj.fileName : `${fileObj.fileName}.json`;
+                    zip.file(fileName, jsonContent);
+                    hashData = aquafier.getFileHash(jsonContent);
                 } else if (typeof fileObj.fileContent === 'string') {
                     // It's a plain text file, so add it directly without JSON.stringify
                     zip.file(fileObj.fileName, fileObj.fileContent);
+                    hashData = aquafier.getFileHash(fileObj.fileContent);
+                } else if (fileObj.fileContent instanceof Uint8Array || fileObj.fileContent instanceof ArrayBuffer) {
+                    // Handle binary data
+                    zip.file(fileObj.fileName, fileObj.fileContent, { binary: true });
+                    
+                    // Convert ArrayBuffer to Uint8Array for hashing if needed
+                    const dataForHash = fileObj.fileContent instanceof ArrayBuffer 
+                        ? new Uint8Array(fileObj.fileContent)
+                        : fileObj.fileContent;
+                    hashData = aquafier.getFileHash(dataForHash);
                 } else {
                     // For other types, use JSON.stringify (objects, etc.)
-                    zip.file(fileObj.fileName, JSON.stringify(fileObj.fileContent));
+                    const jsonContent = JSON.stringify(fileObj.fileContent);
+                    // Only add .json extension if it doesn't already have one and it's not a known binary file
+                    let fileName = fileObj.fileName;
+                    if (!fileName.endsWith('.json') && !isBinaryFile(fileName)) {
+                        fileName = `${fileName}.json`;
+                    }
+                    zip.file(fileName, jsonContent);
+                    hashData = aquafier.getFileHash(jsonContent);
                 }
+
+                nameWithHashes.push({
+                    name: fileObj.fileName, // Use original filename in the hash record
+                    hash: hashData
+                });
             }
         }
 
@@ -131,16 +179,10 @@ export const DownloadAquaChain = ({ file, index , children  }: { file: ApiFileIn
         // Clean up
         document.body.removeChild(a);
         URL.revokeObjectURL(url);
-        // toaster.create({
-        //     description: `Aqua Chain Downloaded successfully`,
-        //     type: "success"
-        // })
+        
         toast("Aqua Chain Downloaded successfully", {
             description: `Aqua Chain Downloaded successfully`,
-            // type: "error"
-          });
-
-
+        });
 
         // Loop through each file object and download the content
         for (const fileObj of file.fileObject) {
@@ -148,8 +190,6 @@ export const DownloadAquaChain = ({ file, index , children  }: { file: ApiFileIn
             if (typeof fileObj.fileContent === 'string' && fileObj.fileContent.startsWith('http')) {
                 try {
                     let actualUrlToFetch = ensureDomainUrlHasSSL(fileObj.fileContent)
-
-
 
                     // Fetch the file from the URL
                     const response = await fetch(actualUrlToFetch, {
@@ -177,29 +217,42 @@ export const DownloadAquaChain = ({ file, index , children  }: { file: ApiFileIn
                     console.error(`Error downloading ${fileObj.fileName}:`, error);
                     toast("Error downloading file", {
                         description: `Error downloading ${fileObj.fileName}: ${error}`,
-                        // type: "error"
-                      });
+                    });
                 }
-            }else{
-                try{
+            } else {
+                try {
                     let blob;
                     
-                    // Handle different types of fileContent
+                    // Handle different types of fileContent based on file extension
                     if (fileObj.fileContent instanceof Blob || fileObj.fileContent instanceof File) {
                         // Already a Blob or File object
                         blob = fileObj.fileContent;
-                    } else if (fileObj.fileContent instanceof Uint8Array) {
-                        // Convert Uint8Array to Blob
-                        blob = new Blob([fileObj.fileContent]);
+                    } else if (fileObj.fileContent instanceof Uint8Array || fileObj.fileContent instanceof ArrayBuffer) {
+                        // Binary data - determine MIME type based on extension
+                        const mimeType = getMimeType(fileObj.fileName);
+                        blob = new Blob([fileObj.fileContent], { type: mimeType });
                     } else if (typeof fileObj.fileContent === 'string') {
                         // Handle plain string content
+                        if (isBinaryFile(fileObj.fileName)) {
+                            // If it's supposed to be a binary file but we have a string,
+                            // it might be base64 encoded or corrupted
+                            console.warn(`Warning: ${fileObj.fileName} appears to be binary but stored as string`);
+                        }
                         blob = new Blob([fileObj.fileContent], { type: 'text/plain' });
                     } else if (isAquaTree(fileObj.fileContent)) {
                         // Handle AquaTree object
                         blob = new Blob([JSON.stringify(fileObj.fileContent)], { type: 'application/json' });
                     } else if (typeof fileObj.fileContent === 'object') {
-                        // Handle other objects (including Record<string, string>)
-                        blob = new Blob([JSON.stringify(fileObj.fileContent)], { type: 'application/json' });
+                        // Handle other objects - check if it looks like corrupted binary data
+                        if (isBinaryFile(fileObj.fileName) && isCorruptedBinaryData(fileObj.fileContent)) {
+                            // Try to reconstruct binary data from object
+                            const uint8Array = reconstructBinaryFromObject(fileObj.fileContent);
+                            const mimeType = getMimeType(fileObj.fileName);
+                            blob = new Blob([uint8Array], { type: mimeType });
+                        } else {
+                            // Regular object, serialize as JSON
+                            blob = new Blob([JSON.stringify(fileObj.fileContent)], { type: 'application/json' });
+                        }
                     } else {
                         throw new Error(`Unsupported fileContent type for ${fileObj.fileName}`);
                     }
@@ -217,31 +270,22 @@ export const DownloadAquaChain = ({ file, index , children  }: { file: ApiFileIn
                     // Clean up
                     document.body.removeChild(a);
                     URL.revokeObjectURL(url);
-                }catch(error){
+                } catch (error) {
                     console.error(`Error downloading ${fileObj.fileName}:`, error);
                     toast("Error downloading file", {
                         description: `Error downloading ${fileObj.fileName}: ${error}`,
-                        // type: "error"
-                      });
+                    });
                 }
             }
         }
 
-        // toaster.create({
-        //     description: `Files Downloaded successfully`,
-        //     type: "success"
-        // })
         toast("Files Downloaded successfully", {
             description: `Files Downloaded successfully`,
-            // type: "error"
-          });
-
+        });
     }
     
     const downloadAquaJson = async () => {
         try {
-
-
             setDownloading(true)
             let containsLink = false;
             //check if it contains a link revision
@@ -260,30 +304,16 @@ export const DownloadAquaChain = ({ file, index , children  }: { file: ApiFileIn
                 await downloadSimpleAquaJson()
             }
 
-
-            // toaster.create({
-            //     description: `Files downloaded successfully`,
-            //     type: "success"
-            // });
             toast("Files downloaded successfully", {
                 description: `Files downloaded successfully`,
-                // type: "error"
-              });
+            });
             setDownloading(false)
         } catch (error) {
-            // toaster.create({
-            //     description: `Error downloading JSON: ${error}`,
-            //     type: "error"
-            // })
-
             toast("Error downloading JSON", {
                 description: `Error downloading JSON: ${error}`,
-                // type: "error"
-              });
-
+            });
             setDownloading(false)
         }
-
     }
 
     return (
@@ -295,15 +325,9 @@ export const DownloadAquaChain = ({ file, index , children  }: { file: ApiFileIn
                         if (!downloading) {
                             downloadAquaJson();
                         } else {
-                            // toaster.create({
-                            //     description: "Signing is already in progress",
-                            //     type: "info"
-                            // })
-
                             toast("Download is already in progress", {
                                 description: "Download is already in progress",
-                                // type: "error"
-                              });
+                            });
                         }
                     }}>
                         {children}
@@ -315,14 +339,9 @@ export const DownloadAquaChain = ({ file, index , children  }: { file: ApiFileIn
                             if (!downloading) {
                                 downloadAquaJson();
                             } else {
-                                // toaster.create({
-                                //     description: "Download is already in progress",
-                                //     type: "info"
-                                // })
                                 toast("Download is already in progress", {
                                     description: "Download is already in progress",
-                                    // type: "error"
-                                  });
+                                });
                             }
                         }}
                         className={`w-full flex items-center justify-center space-x-1 bg-[#F3E8FE] text-purple-700 px-3 py-2 rounded transition-colors text-xs ${downloading ? 'opacity-60 cursor-not-allowed' : 'hover:bg-[#E8D5FE]'}`}
@@ -349,3 +368,65 @@ export const DownloadAquaChain = ({ file, index , children  }: { file: ApiFileIn
     )
 }
 
+// Helper function to get MIME type based on file extension
+const getMimeType = (filename: string): string => {
+    const extension = filename.toLowerCase().substring(filename.lastIndexOf('.'));
+    const mimeTypes: { [key: string]: string } = {
+        '.pdf': 'application/pdf',
+        '.doc': 'application/msword',
+        '.docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        '.xls': 'application/vnd.ms-excel',
+        '.xlsx': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        '.ppt': 'application/vnd.ms-powerpoint',
+        '.pptx': 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+        '.zip': 'application/zip',
+        '.rar': 'application/vnd.rar',
+        '.7z': 'application/x-7z-compressed',
+        '.jpg': 'image/jpeg',
+        '.jpeg': 'image/jpeg',
+        '.png': 'image/png',
+        '.gif': 'image/gif',
+        '.bmp': 'image/bmp',
+        '.tiff': 'image/tiff',
+        '.webp': 'image/webp',
+        '.mp3': 'audio/mpeg',
+        '.mp4': 'video/mp4',
+        '.avi': 'video/x-msvideo',
+        '.mov': 'video/quicktime',
+        '.wmv': 'video/x-ms-wmv',
+        '.txt': 'text/plain',
+        '.json': 'application/json',
+        '.html': 'text/html',
+        '.css': 'text/css',
+        '.js': 'text/javascript',
+    };
+    
+    return mimeTypes[extension] || 'application/octet-stream';
+};
+
+// Helper function to detect if object looks like corrupted binary data
+const isCorruptedBinaryData = (obj: any): boolean => {
+    if (typeof obj !== 'object' || obj === null) return false;
+    
+    // Check if it's an object with numeric keys (like the PDF example)
+    const keys = Object.keys(obj);
+    if (keys.length === 0) return false;
+    
+    // Check if all keys are numeric strings and values are numbers
+    return keys.every(key => {
+        const numKey = parseInt(key);
+        return !isNaN(numKey) && typeof obj[key] === 'number' && obj[key] >= 0 && obj[key] <= 255;
+    });
+};
+
+// Helper function to reconstruct binary data from object
+const reconstructBinaryFromObject = (obj: any): Uint8Array => {
+    const keys = Object.keys(obj).map(k => parseInt(k)).sort((a, b) => a - b);
+    const uint8Array = new Uint8Array(keys.length);
+    
+    keys.forEach((key, index) => {
+        uint8Array[index] = obj[key.toString()];
+    });
+    
+    return uint8Array;
+};

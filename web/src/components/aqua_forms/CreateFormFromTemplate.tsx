@@ -17,7 +17,7 @@ import { useNavigate } from 'react-router-dom'
 import { AlertCircle, FileText, Image, Loader2, Plus, Trash2, Upload } from 'lucide-react'
 import { Badge } from '../ui/badge'
 import { Separator } from '../ui/separator'
-
+ 
 // const CreateFormFromTemplate = ({ selectedTemplate, callBack, openCreateTemplatePopUp = false }: { selectedTemplate: FormTemplate, callBack: () => void, openCreateTemplatePopUp: boolean }) => {
 const CreateFormFromTemplate = ({ selectedTemplate, callBack }: { selectedTemplate: FormTemplate, callBack: () => void, openCreateTemplatePopUp: boolean }) => {
     const [submittingTemplateData, setSubmittingTemplateData] = useState(false)
@@ -339,11 +339,7 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: { selectedTempla
 
                 // Get filename without extension and the extension separately
                 const fileNameWithoutExt = theFile.name.substring(0, theFile.name.lastIndexOf('.'));
-                // console.log(`name ${fileNameWithoutExt}`)
-                // console.log(`===============================================`)
-                // throw Error(`fix me`)
-
-                // const fileExtension = theFile.name.substring(theFile.name.lastIndexOf('.'));
+                
 
                 fileName = fileNameWithoutExt + '-' + formatDate(new Date()) + '-' + randomNumber + ".json";
             }
@@ -575,186 +571,13 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: { selectedTempla
 
     return (
         <>
-            {/* <div className="w-full px-2">
-            <div className="mb-6">
-                <h2 className="text-2xl font-semibold mb-2">
-                    {selectedTemplate ? `Create ${selectedTemplate.title} Aqua Tree` : 'Create Form from template'}
-                </h2>
-            </div>
-            <form onSubmit={createWorkflowFromTemplate} id="create-aqua-tree-form" className="space-y-6">
-                {modalFormErorMessae.length > 0 && (
-                    <Alert variant="destructive" className="mb-4">
-                        <AlertDescription>{modalFormErorMessae}</AlertDescription>
-                    </Alert>
-                )}
-
-                <div className="space-y-4 mb-10">
-                    {selectedTemplate ? reorderInputFields(selectedTemplate.fields).map((field, fieldIndex) => {
-                        const isFileInput = field.type === 'file' || field.type === 'image' || field.type === 'document';
-
-                        if (field.is_array) {
-                            return (
-                                <div key={`field-${fieldIndex}`} className="space-y-2">
-                                    <div className="flex items-end justify-between">
-                                        <Label className="text-lg">{field.label}</Label>
-                                        <Button
-                                            variant="outline"
-                                            size="sm"
-                                            type='button'
-                                            className="rounded-lg"
-                                            onClick={addAddress}
-                                            data-testid={`multiple_values_${field.name}`}
-                                        >
-                                            <LuPlus className="h-4 w-4" />
-                                        </Button>
-                                    </div>
-
-                                    {multipleAddresses.map((address, index) => (
-                                        <div key={`address-${index}`} className="flex items-end space-x-2">
-                                            <div className="flex-1">
-                                                <div className="flex w-full items-center">
-                                                    <span className="text-lg mr-2">{index + 1}. </span>
-                                                    <div className="flex-1">
-                                                        <Input
-                                                            data-testid={`input-${field.name}-${index}`}
-                                                            className="rounded-lg"
-                                                            value={address}
-                                                            onChange={(ev) => {
-                                                                const newData = multipleAddresses.map((e, i) => {
-                                                                    if (i === index) {
-                                                                        return ev.target.value;
-                                                                    }
-                                                                    return e;
-                                                                });
-                                                                setMultipleAddresses(newData);
-                                                            }}
-                                                        />
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            <Button
-                                                variant="outline"
-                                                size="sm"
-                                                className="rounded-lg text-red-500 hover:text-red-700 hover:bg-red-50"
-                                                onClick={() => removeAddress(index)}
-                                            >
-                                                <LuTrash className="h-4 w-4" />
-                                            </Button>
-                                        </div>
-                                    ))}
-                                </div>
-                            );
-                        }
-
-                        return (
-                            <div key={`field-${fieldIndex}`} className="space-y-2">
-                                <Label htmlFor={`input-${field.name}`}>{field.label}</Label>
-                                <Input
-                                    id={`input-${field.name}`}
-                                    data-testid={`input-${field.name}`}
-                                    className="rounded-md"
-                                    {...(!isFileInput ? { defaultValue: getFieldDefaultValue(field, formData[field.name]) } : {})}
-                                    type={field.type === 'image' || field.type === 'document' ? 'file' : field.type}
-                                    required={field.required}
-                                    onChange={(e) => {
-                                        // setFormData({
-                                        //     ...formData,
-                                        //     [field.name]: e.target.value
-                                        // })
-
-                                        if (selectedTemplate?.name == "aqua_sign" && field.name.toLowerCase() == "sender") {
-                                            toast.info("Aqua Sign sender cannot be changed");
-                                            return
-                                        }
-                                        if (field.type == 'image') {
-                                            const files: File | FileList | null = e?.target?.files;
-
-                                            if (!files || files.length === 0) {
-                                                return;
-                                            }
-
-                                            const file = files[0]
-                                            if (file && file.type.startsWith('image/')) {
-                                                // Valid image file
-                                                console.log("Valid ")
-                                            } else {
-                                                // Invalid file type
-                                                alert('Please select an image file');
-                                                e.target.value = ''; // Clear the input
-                                                return
-                                            }
-                                        }
-
-                                        if (field.type == 'document') {
-                                            const files: File | FileList | null = e?.target?.files;
-
-                                            if (!files || files.length === 0) {
-                                                return;
-                                            }
-
-                                            const file = files[0]
-                                            if (file && file.type === 'application/pdf') {
-                                                // Valid PDF file
-                                                console.log("Valid PDF")
-                                            } else {
-                                                // Invalid file type
-                                                alert('Please select a PDF file');
-                                                e.target.value = ''; // Clear the input
-                                                return
-                                            }
-                                        }
-                                        const value = isFileInput && e.target.files
-                                            ? e.target.files[0] // Get the file object
-                                            : e.target.value;   // Get the input value
-
-                                        setFormData({
-                                            ...formData,
-                                            [field.name]: value
-                                        });
-                                    }}
-                                />
-                            </div>
-                        );
-                    }) : null}
-                </div>
-
-                <div className="flex justify-end space-x-4">
-                    {selectedTemplate && (
-                        <Button
-                            data-testid="action-loading-create-button"
-                            type="submit"
-                            className="bg-green-600 hover:bg-green-700 text-white"
-                            onClick={createWorkflowFromTemplate}
-                            form="create-aqua-tree-form"
-                            disabled={submittingTemplateData}
-                        >
-                            {submittingTemplateData ? (
-                                <>
-                                    <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent"></div>
-                                    Loading
-                                </>
-                            ) : (
-                                <span>Create</span>
-                            )}
-                        </Button>
-                    )}
-                </div>
-            </form>
-        </div> */}
+           
             {/* <div className="min-h-[100%] bg-gradient-to-br from-blue-50 via-white to-indigo-50 px-4"> */}
             <div className="min-h-[100%] px-2 sm:px-4">
                 <div className="max-w-full sm:max-w-4xl mx-auto py-4 sm:py-6">
                     {/* Header */}
                     <div className="mb-8">
-                        {/* <Button
-                            variant="ghost"
-                            onClick={onBack}
-                            className={cn("mb-4 hover:bg-blue-50 cursor-pointer", openCreateTemplatePopUp ? "hidden" : "")}
-                        >
-                            <ArrowLeft className="h-4 w-4 mr-2" />
-                            Back to Templates
-                        </Button> */}
-
+                       
                         <div className="flex items-center gap-2 sm:gap-3 mb-2">
                             <div className="h-10 w-10 rounded-lg bg-blue-100 flex items-center justify-center">
                                 <FileText className="h-5 w-5 text-blue-600" />
@@ -774,18 +597,6 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: { selectedTempla
                         </Badge>
                     </div>
                     <div className='pt-10'>
-
-
-                        {/* Main Form Card */}
-                        {/* <Card className="shadow-md border-0 bg-white/80 backdrop-blur-sm">
-                        <CardHeader className="pb-6">
-                            <CardTitle className="flex items-center gap-2 text-xl">
-                                <FileText className="h-5 w-5 text-blue-600" />
-                                Template Configuration
-                            </CardTitle>
-                        </CardHeader>
-
-                        <CardContent> */}
                         <form onSubmit={createWorkflowFromTemplate} id="create-aqua-tree-form" className="space-y-8">
                             {modalFormErorMessae.length > 0 && (
                                 <Alert variant="destructive" className="border-red-200 bg-red-50">
@@ -1000,29 +811,10 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: { selectedTempla
                                 )}
                             </div>
                         </form>
-                        {/* </CardContent>
-                    </Card> */}
+                  
                     </div>
 
-                    {/* Help Section */}
-                    {/* <Card className="mt-6 bg-blue-50/50 border-blue-200">
-                        <CardContent className="pt-6">
-                            <div className="flex items-start gap-3">
-                                <div className="h-8 w-8 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0">
-                                    <AlertCircle className="h-4 w-4 text-blue-600" />
-                                </div>
-                                <div>
-                                    <h3 className="font-medium text-blue-900 mb-1">Tips for creating workflows</h3>
-                                    <ul className="text-sm text-blue-700 space-y-1">
-                                        <li>• Ensure all signer email addresses are valid and accessible</li>
-                                        <li>• Upload documents in PDF format for best compatibility</li>
-                                        <li>• Set realistic due dates to allow sufficient time for signing</li>
-                                        <li>• Include a clear message to help signers understand the document</li>
-                                    </ul>
-                                </div>
-                            </div>
-                        </CardContent>
-                    </Card> */}
+                   
                 </div>
             </div>
         </>

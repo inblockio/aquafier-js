@@ -209,7 +209,7 @@ export default function NewShadcnLayoutWithSidebar() {
                                 setOpenCreateAquaSignPopUp(false)
                             }} openCreateTemplatePopUp={false} />
                         </ScrollArea>
-                    </div>
+                    </div> 
                     {/* <DialogFooter className="mt-auto">
                         <Button variant="outline" onClick={() => {
                            setOpenCreateAquaSignPopUp(false)
