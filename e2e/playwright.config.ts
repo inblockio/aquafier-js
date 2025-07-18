@@ -23,7 +23,7 @@ export default defineConfig({
   reporter: [['junit', { outputFile: 'results.xml' }]],
   /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
   use: {
-    headless: true,
+    headless: false,
     permissions: ["clipboard-read"],
     /* Base URL to use in actions like `await page.goto('/')`. */
     // baseURL: 'http://localhost:3000',
@@ -47,7 +47,14 @@ export default defineConfig({
         // Removed problematic extension path
         '--disable-background-timer-throttling',
         '--disable-backgrounding-occluded-windows',
-        '--disable-renderer-backgrounding'
+        '--disable-renderer-backgrounding',
+        // Add these for better extension support
+        '--disable-web-security',
+        '--disable-features=VizDisplayCompositor',
+        '--disable-extensions-except=./metamask-extension', // If you're loading MetaMask as unpacked extension
+        '--load-extension=./metamask-extension',
+        '--enable-automation',
+        '--disable-blink-features=AutomationControlled'
       ]
     }
   },
