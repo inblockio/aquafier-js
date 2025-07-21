@@ -7,12 +7,12 @@ env:
 on:
   workflow_dispatch:
     
-  # push:
-  #   branches:
-  #     - main
-  #     - dev
-  #     - playwright
-  #     - add-additional-tags
+  push:
+    branches:
+      - main
+      - dev
+      # - playwright
+      # - add-additional-tags
 
 jobs:
   build:

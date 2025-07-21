@@ -1,9 +1,9 @@
 name: E2E Tests After Deployment
 
 on:
-  push:
-    branches:
-      - dev
+  # push:
+  #   branches:
+  #     - dev
   workflow_dispatch:
   workflow_call:
     secrets:
