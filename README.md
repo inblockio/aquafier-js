@@ -25,6 +25,7 @@ check out [docker.md](./docker.md)
 
 ## PlayWright tests
 At the root of the project
+- `cd e2e`
 - `npm i` to install dependancies
 - visit `https://github.com/metamask/metamask-extension/releases` download metamsk browser extsion and extract  it to `/e2e/metamask-extension/` 
 - Install playwright browsers `npx playwright install`

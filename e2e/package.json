@@ -1,8 +1,8 @@
 {
-  "name": "aquafier",
+  "name": "aquafier-playwright-tests",
   "version": "1.0.0",
-  "description": "A tool that illustrates the capability & utility of Aqua protocol.",
-  "main": "index.js",
+  "description": "Playwright tests to ensure the functionality of the Aquafier application",
+  "main": "test.spec.ts`",
   "directories": {
     "test": "tests"
   },
@@ -17,7 +17,11 @@
     "@types/node": "^24.0.3",
     "dotenv": "^17.0.0"
   },
-  "scripts": {},
+  "scripts": {
+    "test": "playwright test",
+    "test:debug": "playwright test --debug",
+    "test:report": "playwright show-report"
+  },
   "keywords": [],
   "author": "",
   "license": "ISC"
