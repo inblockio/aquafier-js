@@ -1,4 +1,4 @@
-import { test, BrowserContext, Page, chromium } from '@playwright/test';
+import { test, BrowserContext, Page, chromium, expect } from '@playwright/test';
 import dotenv from 'dotenv';
 import path from "path";
 import fs from "fs";
@@ -143,26 +143,13 @@ test("upload, file form revision", async (): Promise<void> => {
 await testPage.waitForSelector('[data-testid="create-form-3-button"]', { state: 'visible', timeout: 10000 });
   await testPage.click('[data-testid="create-form-3-button"]');
 
- // Check if we need to download (might have already been done in witnessDocument)
-  try {
-    // Check if download button is still visible (meaning it wasn't clicked in witnessDocument)
-    const downloadButton = testPage.locator('[data-testid="download-aqua-tree-button"]');
-    const isDownloadButtonVisible = await downloadButton.isVisible().catch(() => false);
-
-    if (isDownloadButtonVisible) {
-      console.log("Download button still visible - downloading now");
-      await downloadAquaTree(testPage);
-      console.log("upload, witness, download - Download completed successfully");
-    } else {
-      console.log("Download button not visible - document was likely already downloaded during witness step");
-    }
-  } catch (error) {
-    console.log("upload, witness, download - Download verification failed, test will end here:", error);
-  }
+  // ✅ Wait for the table row that includes "aqua.json"
+  const row = testPage.locator('table >> text=aqua.json');
+  await expect(row).toBeVisible({ timeout: 10000 });
 
   });
 
-test("upload, file multiple revisions", async (): Promise<void> => {
+test("import, file multiple revisions", async (): Promise<void> => {
 
    test.setTimeout(process.env.CI ? 300000 : 80000); // 5 minutes in CI
   const registerResponse = await registerNewMetaMaskWalletAndLogin();
@@ -171,8 +158,20 @@ test("upload, file multiple revisions", async (): Promise<void> => {
 
   console.log("upload, file multiple revisions started!");
 
+ // Upload file
+  const filePath: string = path.join(__dirname, 'resources/aqua.json.aqua.json');
+  await uploadFile(testPage, filePath);
 
 
+    //import the aqua chain
+ 
+await testPage.waitForSelector('[data-testid="action-import-93-button"]', { state: 'visible', timeout: 10000 });
+  await testPage.click('[data-testid="action-import-93-button"]');
+
+  
+  // ✅ Wait for the table row that includes "aqua.json"
+  const row = testPage.locator('table >> text=aqua.json');
+  await expect(row).toBeVisible({ timeout: 10000 });
 
   });
 
@@ -213,7 +212,7 @@ test("upload, sign, download", async (): Promise<void> => {
   await signDocument(testPage, context);
 
   // Download
-  await downloadAquaTree(testPage);
+  await downloadAquaTree(testPage, false);
 
 });
 
@@ -263,7 +262,7 @@ test("upload, witness, download", async (): Promise<void> => {
 
     if (isDownloadButtonVisible) {
       console.log("Download button still visible - downloading now");
-      await downloadAquaTree(testPage);
+      await downloadAquaTree(testPage, false);
       console.log("upload, witness, download - Download completed successfully");
     } else {
       console.log("Download button not visible - document was likely already downloaded during witness step");

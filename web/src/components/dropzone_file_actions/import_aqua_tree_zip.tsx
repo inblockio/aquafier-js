@@ -25,7 +25,7 @@ export const ImportAquaTreeZip = ({ file, uploadedIndexes, fileIndex, updateUplo
 
     const uploadFileData = async () => {
 
-
+console.log("uploadFileData called...");
 
         if (!file) {
             toaster.create({
@@ -73,49 +73,55 @@ export const ImportAquaTreeZip = ({ file, uploadedIndexes, fileIndex, updateUplo
     }
 
     const importFile = async () => {
+    console.log("importFile called")
+    const reader = new FileReader();
 
-
-        const reader = new FileReader();
-
-        reader.onload = async function (_e) {
-
-            try {
-
-                let hasAquaJson = false
-                const zip = new JSZip();
-                const zipData = await zip.loadAsync(file);
-                for (const fileName in zipData.files) {
-                    if (fileName == 'aqua.json') {
-                        hasAquaJson = true
-                        break;
-                    }
+    reader.onload = async function (_e) {
+        try {
+            console.log("int try catch")
+            let hasAquaJson = false
+            const zip = new JSZip();
+            const zipData = await zip.loadAsync(file);
+            
+            const fileNames = Object.keys(zipData.files);
+            console.log("fileNames ", fileNames)
+            
+            for (const fileName in zipData.files) {
+                // Convert ASCII codes to string
+                const actualFileName = fileName.split(',').map(code => String.fromCharCode(parseInt(code))).join('');
+                console.log("fileName", actualFileName);
+                
+                if (actualFileName === 'aqua.json') {
+                    hasAquaJson = true;
+                    break;
                 }
-                if (!hasAquaJson) {
-                    toaster.create({
-                        description: "Aqua Json not found.",
-                        type: "info"
-                    })
-                    return
-                }
-
-                await uploadFileData()
-
-
-            } catch (error) {
-                console.error("Error reading ZIP file:", error);
-                alert("Failed to read ZIP file.");
             }
-        };
+            
+            if (!hasAquaJson) {
+                toaster.create({
+                    description: "Aqua Json not found.",
+                    type: "info"
+                })
+                return
+            }
 
-        reader.readAsArrayBuffer(file);
+            await uploadFileData()
 
+        } catch (error) {
+            console.error("Error reading ZIP file:", error);
+            alert("Failed to read ZIP file.");
+        }
     };
+
+    reader.readAsArrayBuffer(file);
+};
 
     return (
         <Button
             data-testid="action-import-82-button"
             size="sm"
-            className="w-[80px] flex items-center gap-1 text-green-600 hover:text-green-700"
+                  variant="outline"
+           className="w-24 bg-green-50 border-green-200 text-green-700 hover:bg-green-100"
             onClick={importFile}
             disabled={uploadedIndexes.includes(fileIndex) || uploaded}
         >

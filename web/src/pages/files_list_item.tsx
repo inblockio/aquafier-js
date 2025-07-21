@@ -12,7 +12,7 @@ import { ShareButton } from "../components/aqua_chain_actions/share_aqua_chain";
 import { OpenWorkflowButton } from "../components/aqua_chain_actions/open_aqua_sign_workflow";
 import { LinkButton } from "../components/aqua_chain_actions/link_aqua_chain";
 import appStore from "@/store";
-import { useStore } from "zustand";
+import { useStore } from "zustand"; 
 
 
 export default function FilesListItem({ showWorkFlowsOnly, file, index, systemFileInfo, backendUrl, nonce, viewMode = "table" }: { showWorkFlowsOnly: boolean, file: ApiFileInfo, index: number, systemFileInfo: ApiFileInfo[], backendUrl: string, nonce: string, viewMode?: "table" | "card" | "actions-only" }) {

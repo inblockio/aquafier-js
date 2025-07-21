@@ -1481,22 +1481,44 @@ export async function streamToBuffer(stream: any): Promise<Buffer> {
     }
     return Buffer.concat(chunks);
 }
-
 export async function processAquaMetadata(zipData: JSZip, userAddress: string) {
-    const aquaJsonFile = zipData.files['aqua.json'];
-    if (!aquaJsonFile) return;
+    // Helper function to decode filename if it's in ASCII format
+    const decodeFileName = (fileName: string): string => {
+        if (fileName.includes(',') && /^\d+,/.test(fileName)) {
+            return fileName.split(',').map(code => String.fromCharCode(parseInt(code))).join('');
+        }
+        return fileName;
+    };
 
+    // Create a map of decoded filenames to original keys
+    const fileMap = new Map();
+    for (const originalKey in zipData.files) {
+        const decodedKey = decodeFileName(originalKey);
+        console.log(`Decoded key: ${decodedKey} for original key: ${originalKey}`);
+        fileMap.set(decodedKey.trim(), originalKey.trim());
+    }
+
+    const aquaJsonOriginalKey = fileMap.get('aqua.json');
+    if (!aquaJsonOriginalKey) return;
+
+    const aquaJsonFile = zipData.files[aquaJsonOriginalKey];
     const fileContent = await aquaJsonFile.async('text');
     const aquaData: AquaJsonInZip = JSON.parse(fileContent);
 
     for (const nameHash of aquaData.name_with_hash) {
-        const aquaFileName = `${nameHash.name}.aqua.json`;
-        const aquaFile = zipData.files[aquaFileName];
+        let aquaFileName = "";
+        if (nameHash.name.endsWith('.aqua.json')) {
+            aquaFileName = nameHash.name;
+        } else {
+            aquaFileName = `${nameHash.name}.aqua.json`;
+        }
+        const aquaFileOriginalKey = fileMap.get(aquaFileName);
 
-        if (!aquaFile) {
+        if (!aquaFileOriginalKey) {
             throw new Error(`Expected to find ${aquaFileName} as defined in aqua.json but file not found`);
         }
 
+        const aquaFile = zipData.files[aquaFileOriginalKey];
         const aquaFileDataText = await aquaFile.async('text');
         const aquaTreeData: AquaTree = JSON.parse(aquaFileDataText);
 
@@ -1506,7 +1528,8 @@ export async function processAquaMetadata(zipData: JSZip, userAddress: string) {
         }
 
         const filePubKeyHash = `${userAddress}_${genesisHash}`;
-        const fileAsset = zipData.files[nameHash.name];
+        const fileAssetOriginalKey = fileMap.get(nameHash.name);
+        const fileAsset = zipData.files[fileAssetOriginalKey];
 
         await processFileData(
             nameHash.hash,
@@ -1517,7 +1540,6 @@ export async function processAquaMetadata(zipData: JSZip, userAddress: string) {
         );
     }
 }
-
 
 
 // read zip file and create AquaTree from revisions

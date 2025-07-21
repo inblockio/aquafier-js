@@ -11,16 +11,17 @@ import {
     ensureDomainUrlHasSSL, 
     isAquaTree, 
     allLinkRevisionHashes, 
-    getAquaTreeFileName 
+    getAquaTreeFileName, 
+    dummyCredential
 } from "../../utils/functions";
-import Aquafier, { AquaTree, FileObject } from "aqua-js-sdk";
+import Aquafier, { AquaTree, CredentialsData, FileObject } from "aqua-js-sdk";
 import { IDropzoneAction2, UploadLinkAquaTreeExpectedData } from "../../types/types";
 import { Input } from "@/components/ui/input";
 import { toast } from "@/components/ui/use-toast";
 import {  Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 
-
+ 
 export const ImportAquaTree = ({ aquaFile, uploadedIndexes, fileIndex, updateUploadedIndex }: IDropzoneAction2) => {
     let aquafier = new Aquafier();
     const [uploading, setUploading] = useState(false);
@@ -35,7 +36,7 @@ export const ImportAquaTree = ({ aquaFile, uploadedIndexes, fileIndex, updateUpl
     }>>([]);
     const [expectedFile, setExpectedFile] = useState<UploadLinkAquaTreeExpectedData | null>(null);
 
-    const { files, metamaskAddress, setFiles, backend_url, session } = useStore(appStore);
+    const { files, metamaskAddress, setFiles, backend_url, session, user_profile } = useStore(appStore);
 
     const uploadFileData = async (aquaFile: File, assetFile: File | null, isWorkflow: boolean = false) => {
         const formData = new FormData();
@@ -189,6 +190,7 @@ export const ImportAquaTree = ({ aquaFile, uploadedIndexes, fileIndex, updateUpl
                 }
             }
 
+            console.log(`Response ok, fetching file content for ${fileHash}`);
             const blob: Blob = await response.blob();
             let fileName = getFileName(aquaTree);
             const arrayBuffer = await blob.arrayBuffer();
@@ -201,7 +203,9 @@ export const ImportAquaTree = ({ aquaFile, uploadedIndexes, fileIndex, updateUpl
                 fileSize: blob.size
             };
 
+            console.log(`here fileObject ${JSON.stringify(fileObject, null, 2)}`);
             if (hasLinkRevisions(aquaTree)) {
+                console.log(`has link revisions`);
                 setUploading(false);
                 toast({
                     description: `Aqua tree has a link revision please import the Aquatree using the zip format`,
@@ -210,8 +214,11 @@ export const ImportAquaTree = ({ aquaFile, uploadedIndexes, fileIndex, updateUpl
                 return;
             }
 
-            let result = await aquafier.verifyAquaTree(aquaTree, [fileObject]);
-
+            let dummyCreds : CredentialsData= dummyCredential()
+            dummyCreds.alchemy_key = user_profile.alchemy_key; 
+            console.log(`dummyCreds ${JSON.stringify(dummyCreds, null, 2)}`);
+            let result = await aquafier.verifyAquaTree(aquaTree, [fileObject], dummyCreds);
+ console.log(`result of verifyAquaTree ${JSON.stringify(result, null, 2)}`);
             if (result.isErr()) {
                 setUploading(false);
                 toast({
@@ -231,6 +238,7 @@ export const ImportAquaTree = ({ aquaFile, uploadedIndexes, fileIndex, updateUpl
                 });
                 return;
             }
+            console.log(`importedAquaTreeGenesisHash ${importedAquaTreeGenesisHash}`);
 
             await uploadFileData(aquaFile, null, false);
 
