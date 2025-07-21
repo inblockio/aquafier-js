@@ -4,6 +4,7 @@ services:
   postgres:
     image: postgres:17
     container_name: aquafier-postgres
+    restart: always
     environment:
       POSTGRES_DB: aquafier
       POSTGRES_USER: ${DB_USER:-aquafier}
@@ -19,9 +20,11 @@ services:
       - ./dev_mount_points/postgres:/var/lib/postgresql/data
 
   aqua-container:
-    build:
-      context: ./..
-      dockerfile: actionfiles/aquafier-ts/dockerfile/Dockerfile
+#    build:
+#      context: ./..
+#      dockerfile: actionfiles/aquafier-ts/dockerfile/Dockerfile
+    image: ghcr.io/inblockio/aquafier-js:dev
+    restart: always
     env_file:
       - .env
     environment:
@@ -50,6 +53,7 @@ services:
 
   s3:
     image: minio/minio:latest
+    restart: always
     ports:
       - 9000:9000
     environment:

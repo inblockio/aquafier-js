@@ -3,6 +3,7 @@ version: '3.8'
 services:
   postgres:
     image: postgres:17
+    restart: always
     container_name: aquafier-postgres
     environment:
       POSTGRES_DB: aquafier
@@ -18,6 +19,7 @@ services:
 
   aqua-container:
     image: ghcr.io/inblockio/aquafier-js:main
+    restart: always
     depends_on:
       postgres:
         condition: service_healthy
@@ -59,7 +61,7 @@ services:
       - proxy_data_html:/usr/share/nginx/html
       - proxy_data_certs:/etc/nginx/certs
       - /var/run/docker.sock:/tmp/docker.sock
-    restart: unless-stopped
+    restart: always
 
   letsencrypt:
     image: nginxproxy/acme-companion:latest
@@ -73,10 +75,11 @@ services:
       - proxy_data_html:/usr/share/nginx/html
       - proxy_data_certs:/etc/nginx/certs
       - /var/run/docker.sock:/var/run/docker.sock
-    restart: unless-stopped
+    restart: always
 
   s3:
     image: minio/minio:latest
+    restart: always
     environment:
       MINIO_ROOT_USER: ${MINIO_USER:-aquafier}
       MINIO_ROOT_PASSWORD: ${MINIO_PASSWORD:-supersafepassword123}
