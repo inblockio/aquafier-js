@@ -3,28 +3,7 @@
     {
       "name": "identity_claim_id",
       "label": "Identity Claim Id",
-      "type": "string",
-      "required": true,
-      "isArray": false
-    },
-    {
-      "name": "name",
-      "label": "Name",
-      "type": "string",
-      "required": true,
-      "isArray": false
-    },
-    {
-      "name": "surname",
-      "label": "Surname",
-      "type": "string",
-      "required": true,
-      "isArray": false
-    },
-    {
-      "name": "email",
-      "label": "Email",
-      "type": "string",
+      "type": "identity_claim_id",
       "required": true,
       "isArray": false
     },
