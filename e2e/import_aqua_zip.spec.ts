@@ -37,22 +37,60 @@ test("import aqua zip test", async (): Promise<void> => {
 
     await testPage.waitForEvent('load');
     await testPage.reload();
+    await testPage.pause();
+});
+
+
+test("create a template", async (): Promise<void> => {
+  test.setTimeout(process.env.CI ? 180000 : 50000); // 3 minutes in CI
+    const registerResponse = await registerNewMetaMaskWalletAndLogin();
+    const context: BrowserContext = registerResponse.context;
+    const testPage: Page = context.pages()[0];
+    console.log("create aqua form template started!");
   
-    // Wait for the dialog to appear
-    // await testPage.waitForSelector('div[role="dialog"]', { state: 'visible', timeout: 5000 });
+    // Navigate to templates page
+    await testPage.goto(`${process.env.BASE_URL}/app/templates`);
+    // await testPage.reload()
+    await testPage.waitForLoadState('networkidle');
+    
   
-    // Click on the checkbox with id 'file-0'
-    // await testPage.waitForSelector('#file-0', { state: 'visible', timeout: 5000 });
-    // await testPage.click('#file-0');
-  
-    // Click on the link button in the dialog
-    // await testPage.waitForSelector('[data-testid="link-modal-action-button-dialog"]', { state: 'visible', timeout: 5000 });
-    // await testPage.click('[data-testid="link-modal-action-button-dialog"]');
-  
-    // // Wait for the linking process to complete
-    // await testPage.waitForTimeout(2000);
-  
-    // close link dialog
+    await testPage.waitForSelector('[data-testid="action-create-template-button"]', { state: 'visible', timeout: 10000 });
+    await testPage.click('[data-testid="action-create-template-button"]');
+    
+    await testPage.fill('#title', 'Test Template');
+
+    // Add two fields
+    await testPage.click('[data-testid="action-add-form-field-button"]');
+    let fields = [
+      {
+        label: 'Name',
+        type: 'text',
+        required: true,
+        is_array: false
+      },
+      {
+        label: 'Age',
+        type: 'number',
+        required: true,
+        is_array: false
+      }
+    ]
+    
+    // Fill the template form
+    await testPage.fill(`[data-testid="field-label-0"]`, fields[0].label);
+    await testPage.selectOption(`[data-testid="field-type-0"]`, fields[0].type);
+    await testPage.click(`[data-testid="field-required-0"]`);
+    
+    await testPage.click('[data-testid="action-add-form-field-button"]');
+
+    await testPage.waitForSelector('[data-testid="field-label-1"]', { state: 'visible', timeout: 10000 });
+    await testPage.fill(`[data-testid="field-label-1"]`, fields[1].label);
+    await testPage.selectOption(`[data-testid="field-type-1"]`, fields[1].type);
+    await testPage.click(`[data-testid="field-required-1"]`);
+
+    // Save the form
+    await testPage.click('[data-testid="save-form-action-button"]');
+
     await testPage.pause();
 });
 
