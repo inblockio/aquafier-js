@@ -6,16 +6,10 @@
         "required": true,
         "isArray": false
     },
+    
     {
-        "name": "surname",
-        "label": "Surname",
-        "type": "string",
-        "required": true,
-        "isArray": false
-    },
-    {
-        "name": "email",
-        "label": "Email",
+        "name": "claim_context",
+        "label": "context",
         "type": "string",
         "required": true,
         "isArray": false
