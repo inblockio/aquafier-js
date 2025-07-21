@@ -18,7 +18,7 @@
         "name": "wallet_address",
         "label": "Wallet Address",
         "type": "wallet_address",
-        "required": false,
-        "isArray": false
+        "required": true,
+        "isArray": true
       }
   ]
