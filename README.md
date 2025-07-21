@@ -16,12 +16,12 @@ To run the api, navigate to api directory.
 ## Database creation
 To create a database use the `create_db.sh`. Update the file with the config to use.
 ```bash
-chmod +x ./create_db.sh
+chmod +x ./api/create_db.sh
 ```
 
 
 ## Deployment
-check out [docker.md](./docker.md) 
+check out [docker.md](./docs/docker.md) 
 
 ## PlayWright tests
 At the root of the project

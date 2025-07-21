@@ -176,6 +176,21 @@ test("upload, file multiple revisions", async (): Promise<void> => {
 
   });
 
+
+  test("upload, delete file", async (): Promise<void> => {
+
+   test.setTimeout(process.env.CI ? 300000 : 80000); // 5 minutes in CI
+  const registerResponse = await registerNewMetaMaskWalletAndLogin();
+  const context: BrowserContext = registerResponse.context;
+  const testPage: Page = context.pages()[0];
+
+  console.log("upload, file multiple revisions started!");
+
+
+
+
+  });
+
 test("upload, sign, download", async (): Promise<void> => {
   test.setTimeout(process.env.CI ? 300000 : 80000); // 5 minutes in CI
   const registerResponse = await registerNewMetaMaskWalletAndLogin();
