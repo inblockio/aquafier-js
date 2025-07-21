@@ -4,6 +4,7 @@ services:
   postgres:
     image: postgres:17
     container_name: aquafier-postgres
+    restart: always
     environment:
       POSTGRES_DB: aquafier
       POSTGRES_USER: ${DB_USER:-aquafier}
@@ -21,6 +22,7 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+    restart: always
     environment:
       DATABASE_URL: postgresql://${DB_USER:-aquafier}:${DB_PASSWORD:-changeme}@postgres:5432/aquafier
       BACKEND_URL: ${BACKEND_URL:-localhost:3000}
@@ -43,6 +45,7 @@ services:
   proxy:
     image: ghcr.io/inblockio/ngnix-proxy:master
     container_name: proxy_server_proxy_1
+    restart: always
     labels:
       - "com.github.jrcs.letsencrypt_nginx_proxy_companion.nginx_proxy=true"
     environment:
@@ -73,10 +76,11 @@ services:
       - proxy_data_html:/usr/share/nginx/html
       - proxy_data_certs:/etc/nginx/certs
       - /var/run/docker.sock:/var/run/docker.sock
-    restart: unless-stopped
+    restart: always
 
   s3:
     image: minio/minio:latest
+    restart: always
     environment:
       MINIO_ROOT_USER: ${MINIO_USER:-aquafier}
       MINIO_ROOT_PASSWORD: ${MINIO_PASSWORD:-supersafepassword123}
