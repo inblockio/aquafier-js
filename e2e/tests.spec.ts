@@ -124,6 +124,58 @@ test("linking 2 files test", async (): Promise<void> => {
   // await testPage.pause();
 });
 
+
+test("upload, file form revision", async (): Promise<void> => {
+
+   test.setTimeout(process.env.CI ? 300000 : 80000); // 5 minutes in CI
+  const registerResponse = await registerNewMetaMaskWalletAndLogin();
+  const context: BrowserContext = registerResponse.context;
+  const testPage: Page = context.pages()[0];
+
+  console.log("upload, file form revisions started!");
+  
+ // Upload file
+  const filePath: string = path.join(__dirname, 'resources/aqua.json');
+  await uploadFile(testPage, filePath);
+
+  // close upload dialog
+ 
+await testPage.waitForSelector('[data-testid="create-form-3-button"]', { state: 'visible', timeout: 10000 });
+  await testPage.click('[data-testid="create-form-3-button"]');
+
+ // Check if we need to download (might have already been done in witnessDocument)
+  try {
+    // Check if download button is still visible (meaning it wasn't clicked in witnessDocument)
+    const downloadButton = testPage.locator('[data-testid="download-aqua-tree-button"]');
+    const isDownloadButtonVisible = await downloadButton.isVisible().catch(() => false);
+
+    if (isDownloadButtonVisible) {
+      console.log("Download button still visible - downloading now");
+      await downloadAquaTree(testPage);
+      console.log("upload, witness, download - Download completed successfully");
+    } else {
+      console.log("Download button not visible - document was likely already downloaded during witness step");
+    }
+  } catch (error) {
+    console.log("upload, witness, download - Download verification failed, test will end here:", error);
+  }
+
+  });
+
+test("upload, file multiple revisions", async (): Promise<void> => {
+
+   test.setTimeout(process.env.CI ? 300000 : 80000); // 5 minutes in CI
+  const registerResponse = await registerNewMetaMaskWalletAndLogin();
+  const context: BrowserContext = registerResponse.context;
+  const testPage: Page = context.pages()[0];
+
+  console.log("upload, file multiple revisions started!");
+
+
+
+
+  });
+
 test("upload, sign, download", async (): Promise<void> => {
   test.setTimeout(process.env.CI ? 300000 : 80000); // 5 minutes in CI
   const registerResponse = await registerNewMetaMaskWalletAndLogin();
@@ -146,9 +198,8 @@ test("upload, sign, download", async (): Promise<void> => {
   await signDocument(testPage, context);
 
   // Download
-  // await downloadAquaTree(testPage);
+  await downloadAquaTree(testPage);
 
-  console.log("upload, sign, download finished!");
 });
 
 test("upload, witness, download", async (): Promise<void> => {

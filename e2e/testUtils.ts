@@ -420,7 +420,7 @@ export async function signDocument(page: Page, context: BrowserContext): Promise
 }
 
 // Helper function to download aqua tree
-export async function downloadAquaTree(page: Page): Promise<void> {
+export async function downloadAquaTree(page: Page, saveToDownloads : boolean ): Promise<void> {
   // Create a downloads directory if it doesn't exist
   const downloadsPath = path.join(__dirname, 'downloads');
   if (!fs.existsSync(downloadsPath)) {
@@ -976,7 +976,7 @@ export async function registerNewMetaMaskWallet(): Promise<RegisterMetaMaskRespo
   // const isCI = process.env.CI === 'true';
   const userDataDir = '';
   const context = await chromium.launchPersistentContext(userDataDir, {
-    headless: true,//isCI,
+    headless: false,//isCI,
     channel: 'chromium',
     args: [
       `--disable-extensions-except=${metamaskPath}`,

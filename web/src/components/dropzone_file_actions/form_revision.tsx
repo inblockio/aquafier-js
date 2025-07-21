@@ -119,7 +119,7 @@ export const FormRevisionFile = ({ file, uploadedIndexes, fileIndex, updateUploa
 
     return (
         <Button
-            data-testid="close-form-3-button"
+            data-testid="create-form-3-button"
             size="sm"
             variant="secondary"
             className="w-[130px] bg-yellow-100 hover:bg-yellow-200 text-yellow-800 border-yellow-300"
