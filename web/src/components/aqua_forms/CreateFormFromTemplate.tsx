@@ -3,7 +3,7 @@ import { FormField, FormTemplate } from './types'
 import { useStore } from 'zustand'
 import appStore from '@/store'
 import { isValidEthereumAddress, getRandomNumber, formatDate, estimateFileSize, dummyCredential, fetchSystemFiles, getGenesisHash } from '@/utils/functions'
-import Aquafier, { AquaTree, FileObject, getAquaTreeFileName, AquaTreeWrapper, getAquaTreeFileObject } from 'aqua-js-sdk'
+import Aquafier, { AquaTree, FileObject, getAquaTreeFileName, AquaTreeWrapper, getAquaTreeFileObject, Revision } from 'aqua-js-sdk'
 import axios from 'axios'
 import { generateNonce } from 'siwe'
 import { toast } from 'sonner'
@@ -22,7 +22,7 @@ import { Separator } from '../ui/separator'
 const CreateFormFromTemplate = ({ selectedTemplate, callBack }: { selectedTemplate: FormTemplate, callBack: () => void, openCreateTemplatePopUp: boolean }) => {
     const [submittingTemplateData, setSubmittingTemplateData] = useState(false)
     const [modalFormErorMessae, setModalFormErorMessae] = useState("");
-    const { session, backend_url, systemFileInfo, setSystemFileInfo, setFiles } = useStore(appStore)
+    const { session, backend_url, systemFileInfo, setSystemFileInfo, setFiles, selectedFileInfo } = useStore(appStore)
     const [formData, setFormData] = useState<Record<string, string | File | number>>({});
     const [multipleAddresses, setMultipleAddresses] = useState<string[]>([])
 
@@ -96,7 +96,7 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: { selectedTempla
                 // let genesisHash = getGenesisHash(aquaTree)
 
                 let allHashes = Object.keys(aquaTree.revisions);
-                let genesisHash = getGenesisHash(aquaTree)?? "" ;//allHashes[0];
+                let genesisHash = getGenesisHash(aquaTree) ?? "";//allHashes[0];
                 let latestHash = allHashes[allHashes.length - 1]
 
                 let name = aquaTree.file_index[genesisHash] ?? "workflow file"
@@ -108,7 +108,7 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: { selectedTempla
                     "hash": unique_identifier,
                     "recipient": recipient,
                     "option": "latest",
-                      "file_name": name
+                    "file_name": name
                 }
 
 
@@ -294,7 +294,7 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: { selectedTempla
 
             let allSystemFiles = systemFileInfo
             if (systemFileInfo.length == 0) {
-                
+
                 const url3 = `${backend_url}/system/aqua_tree`;
                 const systemFiles = await fetchSystemFiles(url3, session?.address || '')
                 setSystemFileInfo(systemFiles)
@@ -339,10 +339,47 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: { selectedTempla
 
                 // Get filename without extension and the extension separately
                 const fileNameWithoutExt = theFile.name.substring(0, theFile.name.lastIndexOf('.'));
-                
+
 
                 fileName = fileNameWithoutExt + '-' + formatDate(new Date()) + '-' + randomNumber + ".json";
             }
+
+
+            if (selectedTemplate?.name == "identity_attestation") {
+                fileName = `identity_attestation-${randomNumber}.json`;
+
+                if (selectedFileInfo == null) {
+                    setSubmittingTemplateData(false);
+                    toast.error("No claim selected for identity attestation")
+                    return
+                }
+
+
+                // set into the geneisis form revision of identity attestation the forms values calims
+                let genRevision: Revision = Object.values(selectedFileInfo.aquaTree?.revisions!)[0]
+                if (genRevision) {
+                    let genKeys = Object.keys(genRevision)
+                    for (let key of genKeys) {
+                        if (key.startsWith("forms_")) {
+                            let keyWithoutFormWord = key.replace("forms_", "")
+                            completeFormData[`claim_${keyWithoutFormWord}`] = genRevision[key]
+                        }
+                    }
+                }
+
+                let genHash = getGenesisHash(selectedFileInfo.aquaTree!)
+                if (genHash) {
+                    completeFormData[`forms_identity_claim_id`] = genHash
+                } else {
+                    setSubmittingTemplateData(false);
+                    toast.error("Identity claim genesis id not found in selected file")
+                    return
+                }
+
+
+            }
+
+
 
 
             const epochTimeInSeconds = Math.floor(Date.now() / 1000);
@@ -530,6 +567,22 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: { selectedTempla
                         }
                     }
 
+                    if (selectedTemplate && selectedTemplate.name === "identity_attestation") {
+                        const allHashes = Object.keys(selectedFileInfo!.aquaTree!.revisions!);
+                        let secondRevision: Revision | null = null;
+                        if (allHashes.length >= 2) {
+                            secondRevision = selectedFileInfo!.aquaTree!.revisions![allHashes[2]];
+                        }
+
+                        if(secondRevision==null){
+                            setSubmittingTemplateData(false);
+                            toast.error("No second revision found in claim , unable to share with claim creator")
+                            return
+                        }
+
+                        await shareAquaTree(signRes.data.aquaTree!!, secondRevision.signature_wallet_address!);
+                    }
+
                 }
 
             } else {
@@ -571,13 +624,13 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: { selectedTempla
 
     return (
         <>
-           
+
             {/* <div className="min-h-[100%] bg-gradient-to-br from-blue-50 via-white to-indigo-50 px-4"> */}
             <div className="min-h-[100%] px-2 sm:px-4">
                 <div className="max-w-full sm:max-w-4xl mx-auto py-4 sm:py-6">
                     {/* Header */}
                     <div className="mb-8">
-                       
+
                         <div className="flex items-center gap-2 sm:gap-3 mb-2">
                             <div className="h-10 w-10 rounded-lg bg-blue-100 flex items-center justify-center">
                                 <FileText className="h-5 w-5 text-blue-600" />
@@ -609,6 +662,10 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: { selectedTempla
                                 {selectedTemplate ? reorderInputFields(selectedTemplate.fields).map((field, fieldIndex) => {
                                     const isFileInput = field.type === 'file' || field.type === 'image' || field.type === 'document';
 
+                                    if( field.is_hidden) {
+                                        return null; // Skip hidden fields
+                                    }
+                                    
                                     if (field.is_array) {
                                         return (
                                             <div key={`field-${fieldIndex}`} className="space-y-4">
@@ -618,9 +675,13 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: { selectedTempla
                                                             {field.label}
                                                             {field.required && <span className="text-red-500 ml-1">*</span>}
                                                         </Label>
-                                                        <p className="text-sm text-gray-500 mt-1">
-                                                            Add multiple wallet addresses for document signers
-                                                        </p>
+                                                        {/* Add multiple wallet addresses for document signers */}
+                                                        {
+                                                            field.description ?  <p className="text-sm text-gray-500 mt-1">
+                                                            {field.description}
+                                                        </p> : null
+                                                        }
+                                                        
                                                     </div>
                                                     <Button
 
@@ -711,6 +772,7 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: { selectedTempla
                                                         {...(!isFileInput ? { defaultValue: getFieldDefaultValue(field, formData[field.name]) } : {})}
                                                         type={field.type === 'image' || field.type === 'document' ? 'file' : field.type}
                                                         required={field.required}
+                                                        disabled={field.is_editable === false}
                                                         accept={field.type === 'document' ? '.pdf' : field.type === 'image' ? 'image/*' : undefined}
                                                         placeholder={
                                                             field.type === 'wallet_address' ? 'Enter wallet address' :
@@ -719,6 +781,7 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: { selectedTempla
                                                                         `Enter ${field.label.toLowerCase()}`
                                                         }
                                                         onChange={(e) => {
+
                                                             if (selectedTemplate?.name === "aqua_sign" && field.name.toLowerCase() === "sender") {
                                                                 // Show toast notification (would need toast implementation)
                                                                 console.log("Aqua Sign sender cannot be changed");
@@ -769,7 +832,7 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: { selectedTempla
 
                                             {field.name === 'sender' && (
                                                 <p className="text-xs text-gray-500">
-                                                    This will be used as the sender email for the document workflow
+                                                   {field.support_text ? field.support_text : "The sender is the person who initiates the document signing process. This field is auto-filled with your wallet address."}
                                                 </p>
                                             )}
                                         </div>
@@ -811,10 +874,10 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: { selectedTempla
                                 )}
                             </div>
                         </form>
-                  
+
                     </div>
 
-                   
+
                 </div>
             </div>
         </>

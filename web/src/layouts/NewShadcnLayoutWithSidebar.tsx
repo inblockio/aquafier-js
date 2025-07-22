@@ -280,7 +280,7 @@ export default function NewShadcnLayoutWithSidebar() {
                     </DialogFooter> */}
                 </DialogContent>
             </Dialog>
-
+ 
 
 
             {/* create claim  */}

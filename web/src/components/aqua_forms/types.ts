@@ -14,6 +14,10 @@ export interface FormField {
   type: 'text' | 'number' | 'date' | 'file'| 'image' |  'document' | 'wallet_address';
   required: boolean;
   is_array :  boolean;
+  is_hidden?: boolean;
+  is_editable?: boolean;
+  description?: string;
+  support_text?: string;
 }
 
 export interface FormTemplate {

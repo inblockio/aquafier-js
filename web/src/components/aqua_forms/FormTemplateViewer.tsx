@@ -41,6 +41,8 @@ const FormTemplateViewer: React.FC<FormTemplateViewerProps> = ({ template }) => 
                       <TableHead>Name</TableHead>
                       <TableHead>Type</TableHead>
                       <TableHead>Required</TableHead>
+                      <TableHead>is Hidden</TableHead>
+                      <TableHead>is Editable</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -64,6 +66,31 @@ const FormTemplateViewer: React.FC<FormTemplateViewerProps> = ({ template }) => 
                             </Badge>
                           )}
                         </TableCell>
+
+                        <TableCell>
+                          {field.is_hidden ? (
+                            <Badge variant="outline" className="bg-green-50 text-green-600 hover:bg-green-50">
+                              Yes
+                            </Badge>
+                          ) : (
+                            <Badge variant="outline" className="bg-gray-50 text-gray-600 hover:bg-gray-50">
+                              No
+                            </Badge>
+                          )}
+                        </TableCell>
+
+                         <TableCell>
+                          {field.is_editable ? (
+                            <Badge variant="outline" className="bg-green-50 text-green-600 hover:bg-green-50">
+                              Yes
+                            </Badge>
+                          ) : (
+                            <Badge variant="outline" className="bg-gray-50 text-gray-600 hover:bg-gray-50">
+                              No
+                            </Badge>
+                          )}
+                        </TableCell>
+
                       </TableRow>
                     ))}
                   </TableBody>
