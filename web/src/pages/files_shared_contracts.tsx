@@ -4,12 +4,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import {
-    FileText,
-    Users,
-    Hash,
-    Wallet,
-} from 'lucide-react';
+import { FileText, Users, Hash, Wallet } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { useStore } from 'zustand';
@@ -17,11 +12,8 @@ import appStore from '@/store';
 import { formatCryptoAddress, timeToHumanFriendly } from '@/utils/functions';
 import { Contract } from '@/types/types';
 
-
-
-export const SharedContract = ({ contract, index }: { contract: Contract, index: number }) => {
-
-    let navigate = useNavigate();
+export const SharedContract = ({ contract, index }: { contract: Contract; index: number }) => {
+    const navigate = useNavigate();
 
     const getStatusFromLatest = (latest?: string) => {
         if (!latest) return 'unknown';
@@ -61,7 +53,9 @@ export const SharedContract = ({ contract, index }: { contract: Contract, index:
                             </div>
                             <div className="flex-1">
                                 <div className="flex items-center gap-2">
-                                    <span className='text-xs sm:text-sm font-medium text-gray-900 font-mono max-w-[120px] sm:max-w-none truncate'>File Name: </span>
+                                    <span className="text-xs sm:text-sm font-medium text-gray-900 font-mono max-w-[120px] sm:max-w-none truncate">
+                                        File Name:{' '}
+                                    </span>
                                     <code className="text-xs sm:text-sm font-mono bg-gray-100 px-1 sm:px-2 py-1 rounded break-all sm:break-words sm:max-w-none overflow-hidden text-ellipsis">
                                         {/* {formatCryptoAddress(contract.hash, 10, 10)} */}
                                         {contract.file_name}
@@ -78,12 +72,11 @@ export const SharedContract = ({ contract, index }: { contract: Contract, index:
                                         <Copy className="w-4 h-4" />
                                     </Button> */}
                                 </div>
-                                {
-                                    contract.created_at ? 
-                                    <p className="text-xs text-gray-500 mt-1">{timeToHumanFriendly(contract.created_at , true)}</p>
-                                    : null
-                                }
-                                
+                                {contract.created_at ? (
+                                    <p className="text-xs text-gray-500 mt-1">
+                                        {timeToHumanFriendly(contract.created_at, true)}
+                                    </p>
+                                ) : null}
                             </div>
                         </div>
 
@@ -131,7 +124,9 @@ export const SharedContract = ({ contract, index }: { contract: Contract, index:
                                                 <p className="text-xs sm:text-sm font-medium text-gray-900 font-mono max-w-[120px] sm:max-w-none truncate">
                                                     {formatCryptoAddress(contract.receiver)}
                                                 </p>
-                                                <p className="text-xs text-gray-500 break-words">Receiver</p>
+                                                <p className="text-xs text-gray-500 break-words">
+                                                    Receiver
+                                                </p>
                                             </div>
                                         </div>
                                     </TooltipTrigger>
@@ -167,7 +162,15 @@ export const SharedContract = ({ contract, index }: { contract: Contract, index:
                                 )}
                             </div>
 
-                            <Button data-testid={"open-shared-contract-button-"+index} variant="outline" size="sm" className="w-full xs:w-auto" onClick={() => navigate(`/app/shared-contracts/${contract.hash}`)}>Open</Button>
+                            <Button
+                                data-testid={'open-shared-contract-button-' + index}
+                                variant="outline"
+                                size="sm"
+                                className="w-full xs:w-auto"
+                                onClick={() => navigate(`/app/shared-contracts/${contract.hash}`)}
+                            >
+                                Open
+                            </Button>
 
                             {/* <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
@@ -208,46 +211,46 @@ export const SharedContract = ({ contract, index }: { contract: Contract, index:
                 </div>
             </CardContent>
         </Card>
-    )
-}
+    );
+};
 
 export function SharedContracts() {
     const [searchQuery, _setSearchQuery] = useState('');
-    const { backend_url, session, setContracts, contracts } = useStore(appStore)
+    const { backend_url, session, setContracts, contracts } = useStore(appStore);
 
     const loadAccountSharedContracts = async () => {
         if (!session) {
-            return
+            return;
         }
         try {
             const url = `${backend_url}/contracts`;
             const response = await axios.get(url, {
                 params: {
-                    receiver: session?.address
+                    receiver: session?.address,
                 },
                 headers: {
-                    'nonce': session?.nonce
-                }
+                    nonce: session?.nonce,
+                },
             });
             if (response.status === 200) {
-                setContracts(response.data?.contracts)
+                setContracts(response.data?.contracts);
             }
         } catch (error) {
-            console.error(error)
+            console.error(error);
         }
-    }
+    };
     // console.log(contracts)
 
     useEffect(() => {
-        loadAccountSharedContracts()
-    }, [backend_url, session])
+        loadAccountSharedContracts();
+    }, [backend_url, session]);
 
-    const filteredContracts = contracts.filter(contract =>
-        contract.hash.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        contract.sender?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        contract.receiver?.toLowerCase().includes(searchQuery.toLowerCase())
+    const filteredContracts = contracts.filter(
+        contract =>
+            contract.hash.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            contract.sender?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            contract.receiver?.toLowerCase().includes(searchQuery.toLowerCase())
     );
-
 
     return (
         <div>
@@ -257,9 +260,7 @@ export function SharedContracts() {
                         <FileText className="w-5 h-5 text-blue-600" />
                     </div>
                     <div>
-                        <h2 className="text-xl font-semibold text-gray-900">
-                            Shared Contracts.
-                        </h2>
+                        <h2 className="text-xl font-semibold text-gray-900">Shared Contracts.</h2>
                         <p className="text-sm text-gray-500 mt-1">
                             {contracts.length} contracts available
                         </p>
@@ -267,13 +268,15 @@ export function SharedContracts() {
                 </div>
 
                 <div className="flex flex-col h-full">
-                  
-
                     {/* Contracts List */}
                     <div className="flex-1 overflow-auto p-0">
                         <div className="space-y-4">
                             {filteredContracts.map((contract, index) => (
-                                <SharedContract key={`${contract.hash}`} contract={contract} index={index} />
+                                <SharedContract
+                                    key={`${contract.hash}`}
+                                    contract={contract}
+                                    index={index}
+                                />
                             ))}
 
                             {filteredContracts.length === 0 && (
@@ -281,9 +284,13 @@ export function SharedContracts() {
                                     <div className="w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center mx-auto mb-4">
                                         <FileText className="w-8 h-8 text-gray-400" />
                                     </div>
-                                    <h3 className="text-lg font-medium text-gray-900 mb-2">No contracts found</h3>
+                                    <h3 className="text-lg font-medium text-gray-900 mb-2">
+                                        No contracts found
+                                    </h3>
                                     <p className="text-gray-500">
-                                        {searchQuery ? 'Try adjusting your search terms' : 'No shared contracts available'}
+                                        {searchQuery
+                                            ? 'Try adjusting your search terms'
+                                            : 'No shared contracts available'}
                                     </p>
                                 </div>
                             )}
@@ -297,10 +304,10 @@ export function SharedContracts() {
 
 const FilesSharedContracts = () => {
     return (
-        <div className='container mx-auto max-w-4xl px-0 py-6'>
+        <div className="container mx-auto max-w-4xl px-0 py-6">
             <SharedContracts />
         </div>
-    )
-}
+    );
+};
 
-export default FilesSharedContracts
+export default FilesSharedContracts;

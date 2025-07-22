@@ -1,59 +1,51 @@
+import { LuDock } from 'react-icons/lu';
+import axios from 'axios';
+import { useStore } from 'zustand';
+import appStore from '../../store';
+import { useState } from 'react';
+import { ApiFileInfo } from '../../models/FileInfo';
+import { checkIfFileExistInUserFiles } from '../../utils/functions';
+import { maxFileSizeForUpload } from '../../utils/constants';
+import { IDropzoneAction } from '../../types/types';
+import { toaster } from '@/components/ui/use-toast';
+import { Button } from '@/components/ui/button';
+import { Loader2 } from 'lucide-react';
 
-import { LuDock } from "react-icons/lu";
-import axios from "axios";
-import { useStore } from "zustand";
-import appStore from "../../store";
-import { useState } from "react";
-import { ApiFileInfo } from "../../models/FileInfo";
-import { checkIfFileExistInUserFiles } from "../../utils/functions";
-import { maxFileSizeForUpload } from "../../utils/constants";
-import { IDropzoneAction } from "../../types/types";
-import { toaster } from "@/components/ui/use-toast";
-import { Button } from "@/components/ui/button";
-import { Loader2 } from "lucide-react";
+export const FormRevisionFile = ({
+    file,
+    uploadedIndexes,
+    fileIndex,
+    updateUploadedIndex,
+}: IDropzoneAction) => {
+    const [uploading, setUploading] = useState(false);
+    const [uploaded, setUploaded] = useState(false);
 
-
-
-
-
-export const FormRevisionFile = ({ file, uploadedIndexes, fileIndex, updateUploadedIndex }: IDropzoneAction) => {
-
-    const [uploading, setUploading] = useState(false)
-    const [uploaded, setUploaded] = useState(false)
-
-    const { metamaskAddress, setFiles, files, backend_url, session } = useStore(appStore)
-
-
+    const { metamaskAddress, setFiles, files, backend_url, session } = useStore(appStore);
 
     const uploadFile = async () => {
-
-        let fileExist = await checkIfFileExistInUserFiles(file, files)
+        const fileExist = await checkIfFileExistInUserFiles(file, files);
 
         if (fileExist) {
             toaster.create({
-                description: "You already have the file. Delete before importing this",
-                type: "info"
-            })
-            return
-        }
-
-
-
-
-        if (!file) {
-            toaster.create({
-                description: "No file selected!",
-                type: "info"
-            })
+                description: 'You already have the file. Delete before importing this',
+                type: 'info',
+            });
             return;
         }
 
+        if (!file) {
+            toaster.create({
+                description: 'No file selected!',
+                type: 'info',
+            });
+            return;
+        }
 
         if (file.size > maxFileSizeForUpload) {
             toaster.create({
-                description: "File size exceeds 200MB limit. Please upload a smaller file.",
-                type: "error"
-            })
+                description: 'File size exceeds 200MB limit. Please upload a smaller file.',
+                type: 'error',
+            });
             return;
         }
 
@@ -62,26 +54,26 @@ export const FormRevisionFile = ({ file, uploadedIndexes, fileIndex, updateUploa
         formData.append('file', file);
         formData.append('account', `${metamaskAddress}`);
 
-        setUploading(true)
+        setUploading(true);
         try {
-            const url = `${backend_url}/explorer_files`
+            const url = `${backend_url}/explorer_files`;
             //  console.log("url ", url)
             const response = await axios.post(url, formData, {
                 headers: {
                     'Content-Type': 'multipart/form-data',
-                    "nonce": session?.nonce
+                    nonce: session?.nonce,
                 },
             });
 
-            const res = response.data
+            const res = response.data;
 
             const fileInfo: ApiFileInfo = {
                 aquaTree: res.aquaTree,
                 fileObject: [res.fileObject],
                 linkedFileObjects: [],
-                mode: "private",
-                owner: metamaskAddress ?? ""
-            }
+                mode: 'private',
+                owner: metamaskAddress ?? '',
+            };
             // const base64Content = await encodeFileToBase64(file);
             // Assuming the API returns an array of FileInfo objects
             // const fileInfo: ApiFileInfo = {
@@ -99,21 +91,21 @@ export const FormRevisionFile = ({ file, uploadedIndexes, fileIndex, updateUploa
             //     linkedFileObjects: []
             // };
 
-            setFiles([...files, fileInfo])
-            setUploaded(true)
-            setUploading(false)
+            setFiles([...files, fileInfo]);
+            setUploaded(true);
+            setUploading(false);
             toaster.create({
-                description: "File uploaded successfuly",
-                type: "success"
-            })
-            updateUploadedIndex(fileIndex)
+                description: 'File uploaded successfuly',
+                type: 'success',
+            });
+            updateUploadedIndex(fileIndex);
             return;
         } catch (error) {
-            setUploading(false)
+            setUploading(false);
             toaster.create({
                 description: `Failed to upload file: ${error}`,
-                type: "error"
-            })
+                type: 'error',
+            });
         }
     };
 
@@ -133,5 +125,5 @@ export const FormRevisionFile = ({ file, uploadedIndexes, fileIndex, updateUploa
             )}
             Create Form
         </Button>
-    )
-}
+    );
+};

@@ -1,44 +1,61 @@
-import React, { useRef, useState } from "react";
-import { LuImport } from "react-icons/lu";
-import { useStore } from "zustand";
-import appStore from "../../store";
-import { 
-    readFileAsText, 
-    validateAquaTree, 
-    getFileName, 
-    readFileContent, 
-    getGenesisHash, 
-    ensureDomainUrlHasSSL, 
-    isAquaTree, 
-    allLinkRevisionHashes, 
-    getAquaTreeFileName, 
-    dummyCredential
-} from "../../utils/functions";
-import Aquafier, { AquaTree, CredentialsData, FileObject } from "aqua-js-sdk";
-import { IDropzoneAction2, UploadLinkAquaTreeExpectedData } from "../../types/types";
-import { Input } from "@/components/ui/input";
-import { toast } from "@/components/ui/use-toast";
-import {  Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
+import React, { useRef, useState } from 'react';
+import { LuImport } from 'react-icons/lu';
+import { useStore } from 'zustand';
+import appStore from '../../store';
+import {
+    readFileAsText,
+    validateAquaTree,
+    getFileName,
+    readFileContent,
+    getGenesisHash,
+    ensureDomainUrlHasSSL,
+    isAquaTree,
+    allLinkRevisionHashes,
+    getAquaTreeFileName,
+    dummyCredential,
+} from '../../utils/functions';
+import Aquafier, { AquaTree, CredentialsData, FileObject } from 'aqua-js-sdk';
+import { IDropzoneAction2, UploadLinkAquaTreeExpectedData } from '../../types/types';
+import { Input } from '@/components/ui/input';
+import { toast } from '@/components/ui/use-toast';
+import {
+    Dialog,
+    DialogContent,
+    DialogHeader,
+    DialogTitle,
+    DialogFooter,
+} from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
 
- 
-export const ImportAquaTree = ({ aquaFile, uploadedIndexes, fileIndex, updateUploadedIndex }: IDropzoneAction2) => {
-    let aquafier = new Aquafier();
+export const ImportAquaTree = ({
+    aquaFile,
+    uploadedIndexes,
+    fileIndex,
+    updateUploadedIndex,
+}: IDropzoneAction2) => {
+    const aquafier = new Aquafier();
     const [uploading, setUploading] = useState(false);
     const [uploaded, setUploaded] = useState(false);
     const [requiredFileHash, setRequiredFileHash] = useState<string | null>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
-    const [selectedFileName, setSelectedFileName] = useState<string>("");
+    const [selectedFileName, setSelectedFileName] = useState<string>('');
     const [isOpen, setIsOpen] = useState(false);
-    const [allFileObjectWrapper, setAllFileObjectsWrapper] = useState<Array<{
-        file: File,
-        fileObject: FileObject
-    }>>([]);
+    const [allFileObjectWrapper, setAllFileObjectsWrapper] = useState<
+        Array<{
+            file: File;
+            fileObject: FileObject;
+        }>
+    >([]);
     const [expectedFile, setExpectedFile] = useState<UploadLinkAquaTreeExpectedData | null>(null);
 
-    const { files, metamaskAddress, setFiles, backend_url, session, user_profile } = useStore(appStore);
+    const { files, metamaskAddress, setFiles, backend_url, session, user_profile } =
+        useStore(appStore);
 
-    const uploadFileData = async (aquaFile: File, assetFile: File | null, isWorkflow: boolean = false) => {
+    const uploadFileData = async (
+        aquaFile: File,
+        assetFile: File | null,
+        isWorkflow: boolean = false
+    ) => {
         const formData = new FormData();
         formData.append('file', aquaFile);
         formData.append('has_asset', `${assetFile != null}`);
@@ -53,74 +70,75 @@ export const ImportAquaTree = ({ aquaFile, uploadedIndexes, fileIndex, updateUpl
                 method: 'POST',
                 body: formData,
                 headers: {
-                    "nonce": session?.nonce || ""
-                }});
+                    nonce: session?.nonce || '',
+                },
+            });
 
             const responseData = await response.json();
             setFiles([...responseData.files]);
             setUploaded(true);
             setUploading(false);
-            setSelectedFileName("");
+            setSelectedFileName('');
             toast({
-                description: "File uploaded successfully",
-                variant: "default"
+                description: 'File uploaded successfully',
+                variant: 'default',
             });
             updateUploadedIndex(fileIndex);
             return;
         } catch (error) {
             setUploading(false);
-            setSelectedFileName("");
+            setSelectedFileName('');
             toast({
                 description: `Failed to upload file: ${error}`,
-                variant: "destructive"
+                variant: 'destructive',
             });
         }
     };
 
     const importLinkedFile = async (aquaTree: AquaTree) => {
-        let mainAquaFileObject: FileObject = {
+        const mainAquaFileObject: FileObject = {
             fileContent: aquaTree,
             fileName: aquaFile.name,
             fileSize: aquaFile.size,
-            path: ""
+            path: '',
         };
 
         const newFileObjects = [{ fileObject: mainAquaFileObject, file: aquaFile }];
         setAllFileObjectsWrapper(newFileObjects);
 
-        let genHash = getGenesisHash(aquaTree);
+        const genHash = getGenesisHash(aquaTree);
         if (genHash == null) {
             toast({
                 description: `Genesis Revision not found`,
-                variant: "destructive"
+                variant: 'destructive',
             });
             return;
         }
 
         console.log(`genHash -- ${genHash}`);
-        let genRevision = aquaTree.revisions[genHash!!];
-        let actualUrlToFetch = ensureDomainUrlHasSSL(backend_url);
+        const genRevision = aquaTree.revisions[genHash!];
+        const actualUrlToFetch = ensureDomainUrlHasSSL(backend_url);
         console.log(`revision  ${JSON.stringify(genRevision, null, 2)}`);
         console.log(`file hash +++ ${genRevision.file_hash}`);
 
         const response = await fetch(`${actualUrlToFetch}/files/${genRevision.file_hash}`, {
             method: 'GET',
             headers: {
-                'Nonce': session?.nonce ?? "--error--"
-            }
+                Nonce: session?.nonce ?? '--error--',
+            },
         });
 
         if (!response.ok) {
             setExpectedFile({
                 displayText: `please upload ${aquaTree.file_index[genHash]}`,
-                exectedFileHash: genRevision.file_hash!!,
+                exectedFileHash: genRevision.file_hash!,
                 expectedFileName: aquaTree.file_index[genHash],
-                itemRevisionHash: "",
-                isAquaFile: false
+                itemRevisionHash: '',
+                isAquaFile: false,
             });
             setIsOpen(true);
         } else {
-            const allAquaTrees = newFileObjects.filter((e) => isAquaTree(e.fileObject.fileContent));
+            const allAquaTrees = newFileObjects.filter(e => isAquaTree(e.fileObject.fileContent));
             const missingFile = checkAllFilesAvailable(allAquaTrees, newFileObjects);
             if (missingFile) {
                 setExpectedFile(missingFile);
@@ -131,48 +149,48 @@ export const ImportAquaTree = ({ aquaFile, uploadedIndexes, fileIndex, updateUpl
     };
 
     const findFileRevision = (aquaTree: AquaTree): string => {
-        let genHash = getGenesisHash(aquaTree);
+        const genHash = getGenesisHash(aquaTree);
         if (genHash == null) {
-            return "";
+            return '';
         }
         const fileRevision = aquaTree.revisions[genHash];
-        return fileRevision?.file_hash ?? "";
+        return fileRevision?.file_hash ?? '';
     };
 
     const userHasAquaTreeByGenesis = (importedGenesisHash: string): boolean => {
         return files.some(userFile => {
-            const aquaTreeGenesisHash = getGenesisHash(userFile.aquaTree!!);
+            const aquaTreeGenesisHash = getGenesisHash(userFile.aquaTree!);
             return aquaTreeGenesisHash === importedGenesisHash;
         });
     };
 
     const hasLinkRevisions = (aquaTree: AquaTree): boolean => {
-        return Object.values(aquaTree.revisions).some(item => item.revision_type === "link");
+        return Object.values(aquaTree.revisions).some(item => item.revision_type === 'link');
     };
 
     const importSimpleAquaFileFile = async (aquaTree: AquaTree) => {
         try {
             setUploading(true);
 
-            let [isValidAquaTree, failureReason] = validateAquaTree(aquaTree);
+            const [isValidAquaTree, failureReason] = validateAquaTree(aquaTree);
             console.log(`is aqua tree valid ${isValidAquaTree} failure reason ${failureReason}`);
             if (!isValidAquaTree) {
                 setUploading(false);
                 toast({
                     description: `Aqua tree has an error: ${failureReason}`,
-                    variant: "destructive"
+                    variant: 'destructive',
                 });
                 return;
             }
 
             const fileHash = findFileRevision(aquaTree);
-            let actualUrlToFetch = ensureDomainUrlHasSSL(backend_url);
+            const actualUrlToFetch = ensureDomainUrlHasSSL(backend_url);
 
             const response = await fetch(`${actualUrlToFetch}/files/${fileHash}`, {
                 method: 'GET',
                 headers: {
-                    'Nonce': session?.nonce ?? "--error--"
-                }
+                    Nonce: session?.nonce ?? '--error--',
+                },
             });
 
             if (!response.ok) {
@@ -184,7 +202,7 @@ export const ImportAquaTree = ({ aquaFile, uploadedIndexes, fileIndex, updateUpl
                     setUploading(false);
                     toast({
                         description: `Could not determine required file hash from AquaTree`,
-                        variant: "destructive"
+                        variant: 'destructive',
                     });
                     return;
                 }
@@ -192,15 +210,15 @@ export const ImportAquaTree = ({ aquaFile, uploadedIndexes, fileIndex, updateUpl
 
             console.log(`Response ok, fetching file content for ${fileHash}`);
             const blob: Blob = await response.blob();
-            let fileName = getFileName(aquaTree);
+            const fileName = getFileName(aquaTree);
             const arrayBuffer = await blob.arrayBuffer();
             const uint8Array = new Uint8Array(arrayBuffer);
 
-            let fileObject: FileObject = {
+            const fileObject: FileObject = {
                 fileContent: uint8Array,
                 fileName: fileName,
-                path: "./",
-                fileSize: blob.size
+                path: './',
+                fileSize: blob.size,
             };
 
             console.log(`here fileObject ${JSON.stringify(fileObject, null, 2)}`);
@@ -209,44 +227,43 @@ export const ImportAquaTree = ({ aquaFile, uploadedIndexes, fileIndex, updateUpl
                 setUploading(false);
                 toast({
                     description: `Aqua tree has a link revision please import the Aquatree using the zip format`,
-                    variant: "destructive"
+                    variant: 'destructive',
                 });
                 return;
             }
 
-            let dummyCreds : CredentialsData= dummyCredential()
-            dummyCreds.alchemy_key = user_profile.alchemy_key; 
+            const dummyCreds: CredentialsData = dummyCredential();
+            dummyCreds.alchemy_key = user_profile.alchemy_key;
             console.log(`dummyCreds ${JSON.stringify(dummyCreds, null, 2)}`);
-            let result = await aquafier.verifyAquaTree(aquaTree, [fileObject], dummyCreds);
- console.log(`result of verifyAquaTree ${JSON.stringify(result, null, 2)}`);
+            const result = await aquafier.verifyAquaTree(aquaTree, [fileObject], dummyCreds);
+            console.log(`result of verifyAquaTree ${JSON.stringify(result, null, 2)}`);
             if (result.isErr()) {
                 setUploading(false);
                 toast({
                     description: `Aqua tree is not valid: ${JSON.stringify(result)}`,
-                    variant: "destructive"
+                    variant: 'destructive',
                 });
                 return;
             }
 
-            let importedAquaTreeGenesisHash = getGenesisHash(aquaTree);
+            const importedAquaTreeGenesisHash = getGenesisHash(aquaTree);
 
             if (userHasAquaTreeByGenesis(importedAquaTreeGenesisHash!)) {
                 setUploading(false);
                 toast({
                     description: `Aqua tree exists already in your files`,
-                    variant: "destructive"
+                    variant: 'destructive',
                 });
                 return;
             }
             console.log(`importedAquaTreeGenesisHash ${importedAquaTreeGenesisHash}`);
 
             await uploadFileData(aquaFile, null, false);
-
         } catch (e) {
             setUploading(false);
             toast({
                 description: `Failed to import aqua tree file: ${e}`,
-                variant: "destructive"
+                variant: 'destructive',
             });
         }
     };
@@ -254,39 +271,39 @@ export const ImportAquaTree = ({ aquaFile, uploadedIndexes, fileIndex, updateUpl
     const findMissingFileForLinkHash = (
         aquaTreeItem: AquaTree,
         linkHash: string,
-        newFileObjects: Array<{ file: File, fileObject: FileObject }>
+        newFileObjects: Array<{ file: File; fileObject: FileObject }>
     ): UploadLinkAquaTreeExpectedData | null => {
         const revisionItem = aquaTreeItem.revisions[linkHash];
         const fileRevisionHash = revisionItem.link_verification_hashes![0];
         const fileName = aquaTreeItem.file_index[fileRevisionHash];
         const aquaFile = `${fileName}.aqua.json`;
 
-        const aquaFileItemObject = newFileObjects.find((e) => e.fileObject.fileName === aquaFile);
+        const aquaFileItemObject = newFileObjects.find(e => e.fileObject.fileName === aquaFile);
         if (!aquaFileItemObject) {
             return {
                 displayText: `please upload ${aquaFile}.`,
-                exectedFileHash: "",
+                exectedFileHash: '',
                 itemRevisionHash: fileRevisionHash,
                 expectedFileName: aquaFile,
-                isAquaFile: true
+                isAquaFile: true,
             };
         }
 
-        const fileItemObject = newFileObjects.find((e) => e.fileObject.fileName === fileName);
+        const fileItemObject = newFileObjects.find(e => e.fileObject.fileName === fileName);
         if (!fileItemObject) {
-            const aquaFileItemObject = newFileObjects.find((e) => e.fileObject.fileName === aquaFile);
+            const aquaFileItemObject = newFileObjects.find(e => e.fileObject.fileName === aquaFile);
             if (!aquaFileItemObject) {
                 return {
                     displayText: `please upload ${aquaFile} .`,
-                    exectedFileHash: "",
+                    exectedFileHash: '',
                     itemRevisionHash: fileRevisionHash,
                     expectedFileName: aquaFile,
-                    isAquaFile: true
+                    isAquaFile: true,
                 };
             }
 
             let aquaTree: AquaTree;
-            let contentData = aquaFileItemObject.fileObject.fileContent;
+            const contentData = aquaFileItemObject.fileObject.fileContent;
             if (typeof contentData == 'string') {
                 aquaTree = JSON.parse(aquaFileItemObject.fileObject.fileContent as string);
             } else if (typeof contentData === 'object') {
@@ -294,19 +311,21 @@ export const ImportAquaTree = ({ aquaFile, uploadedIndexes, fileIndex, updateUpl
             } else {
                 throw Error(`An error occured. could not deduce aqua tree`);
             }
-            let genHash = getGenesisHash(aquaTree);
+            const genHash = getGenesisHash(aquaTree);
             if (genHash == null) {
-                throw Error(`Genesis hash cannot be null for ${aquaFileItemObject.fileObject.fileName}`);
+                throw Error(
+                    `Genesis hash cannot be null for ${aquaFileItemObject.fileObject.fileName}`
+                );
             }
-            let genRevision = aquaTree.revisions[genHash];
-            let fileHash = genRevision.file_hash;
+            const genRevision = aquaTree.revisions[genHash];
+            const fileHash = genRevision.file_hash;
 
             return {
                 displayText: `please upload ${fileName}`,
-                exectedFileHash: fileHash ?? "errors",
+                exectedFileHash: fileHash ?? 'errors',
                 expectedFileName: fileName,
                 itemRevisionHash: fileRevisionHash,
-                isAquaFile: false
+                isAquaFile: false,
             };
         }
 
@@ -314,8 +333,8 @@ export const ImportAquaTree = ({ aquaFile, uploadedIndexes, fileIndex, updateUpl
     };
 
     const checkAllFilesAvailable = (
-        allAquaTrees: Array<{ file: File, fileObject: FileObject }>,
-        newFileObjects: Array<{ file: File, fileObject: FileObject }>
+        allAquaTrees: Array<{ file: File; fileObject: FileObject }>,
+        newFileObjects: Array<{ file: File; fileObject: FileObject }>
     ): UploadLinkAquaTreeExpectedData | null => {
         for (const aFileObject of allAquaTrees) {
             const aquaTreeItem: AquaTree = aFileObject.fileObject.fileContent as AquaTree;
@@ -323,7 +342,11 @@ export const ImportAquaTree = ({ aquaFile, uploadedIndexes, fileIndex, updateUpl
 
             if (linkHashes.length > 0) {
                 for (const linkHash of linkHashes) {
-                    const missingFile = findMissingFileForLinkHash(aquaTreeItem, linkHash, newFileObjects);
+                    const missingFile = findMissingFileForLinkHash(
+                        aquaTreeItem,
+                        linkHash,
+                        newFileObjects
+                    );
                     if (missingFile) {
                         return missingFile;
                     }
@@ -336,8 +359,8 @@ export const ImportAquaTree = ({ aquaFile, uploadedIndexes, fileIndex, updateUpl
     const inspectMultiFileUpload = async (filePar: File) => {
         if (!expectedFile) {
             toast({
-                description: "An internal error occured",
-                variant: "destructive"
+                description: 'An internal error occured',
+                variant: 'destructive',
             });
             return;
         }
@@ -348,24 +371,27 @@ export const ImportAquaTree = ({ aquaFile, uploadedIndexes, fileIndex, updateUpl
         if (!expectedFile.expectedFileName.endsWith(`.aqua.json`)) {
             const fileHash = aquafier.getFileHash(fileDataContent);
 
-            console.log(`calculated fileHash ${fileHash} and from chain ${expectedFile.exectedFileHash} file name ${filePar.name}`);
+            console.log(
+                `calculated fileHash ${fileHash} and from chain ${expectedFile.exectedFileHash} file name ${filePar.name}`
+            );
             if (fileHash.trim() != expectedFile.exectedFileHash.trim()) {
                 toast({
-                    description: "Dropped file hash doesn't match the required hash in the AquaTree..",
-                    variant: "destructive"
+                    description:
+                        "Dropped file hash doesn't match the required hash in the AquaTree..",
+                    variant: 'destructive',
                 });
                 return;
             }
         } else {
-            let aquaTreeItem: AquaTree = JSON.parse(fileDataContent as string);
-            let allHashes = Object.keys(aquaTreeItem.revisions);
+            const aquaTreeItem: AquaTree = JSON.parse(fileDataContent as string);
+            const allHashes = Object.keys(aquaTreeItem.revisions);
             console.log(`All hashes ${allHashes} --`);
             if (allHashes.includes(expectedFile.itemRevisionHash)) {
                 console.log(`Its okay continue ......`);
             } else {
                 toast({
-                    description: "Aqua file does not contain " + expectedFile.itemRevisionHash,
-                    variant: "destructive"
+                    description: 'Aqua file does not contain ' + expectedFile.itemRevisionHash,
+                    variant: 'destructive',
                 });
                 return;
             }
@@ -373,8 +399,8 @@ export const ImportAquaTree = ({ aquaFile, uploadedIndexes, fileIndex, updateUpl
 
         if (filePar.name != expectedFile.expectedFileName) {
             toast({
-                description: "Please rename the file to " + expectedFile.expectedFileName,
-                variant: "destructive"
+                description: 'Please rename the file to ' + expectedFile.expectedFileName,
+                variant: 'destructive',
             });
             return;
         }
@@ -387,20 +413,23 @@ export const ImportAquaTree = ({ aquaFile, uploadedIndexes, fileIndex, updateUpl
             fileContent: fileData,
             fileName: filePar.name,
             fileSize: filePar.size,
-            path: ""
+            path: '',
         };
 
         console.log(`New file object ${JSON.stringify(fileObject, null, 4)}`);
 
         const newFileObjects = allFileObjectWrapper;
         newFileObjects.push({
-            file: filePar, fileObject: fileObject
+            file: filePar,
+            fileObject: fileObject,
         });
 
-        console.log(`--- inspectMultiFileUpload continue ${JSON.stringify(newFileObjects, null, 4)} `);
+        console.log(
+            `--- inspectMultiFileUpload continue ${JSON.stringify(newFileObjects, null, 4)} `
+        );
         setAllFileObjectsWrapper(newFileObjects);
 
-        const allAquaTrees = newFileObjects.filter((e) => isAquaTree(e.fileObject.fileContent));
+        const allAquaTrees = newFileObjects.filter(e => isAquaTree(e.fileObject.fileContent));
 
         const missingFile = checkAllFilesAvailable(allAquaTrees, newFileObjects);
         if (missingFile) {
@@ -409,7 +438,7 @@ export const ImportAquaTree = ({ aquaFile, uploadedIndexes, fileIndex, updateUpl
             setIsOpen(true);
             toast({
                 description: `Please upload ${missingFile.expectedFileName}`,
-                variant: "destructive"
+                variant: 'destructive',
             });
             return;
         }
@@ -422,12 +451,12 @@ export const ImportAquaTree = ({ aquaFile, uploadedIndexes, fileIndex, updateUpl
             } else {
                 const aquaTreeItem: AquaTree = item.fileObject.fileContent as AquaTree;
                 const fileName = getAquaTreeFileName(aquaTreeItem);
-                const fileObjWrapper = newFileObjects.find((e) => e.fileObject.fileName === fileName);
+                const fileObjWrapper = newFileObjects.find(e => e.fileObject.fileName === fileName);
 
                 if (!fileObjWrapper) {
                     toast({
                         description: `An internal error occured , cannot find file ${fileName}`,
-                        variant: "destructive"
+                        variant: 'destructive',
                     });
                     return false;
                 }
@@ -439,7 +468,7 @@ export const ImportAquaTree = ({ aquaFile, uploadedIndexes, fileIndex, updateUpl
         const fileContent = await readFileAsText(aquaFile);
         const aquaTree: AquaTree = JSON.parse(fileContent);
         const fileName = getAquaTreeFileName(aquaTree);
-        const fileObjWrapper = newFileObjects.find((e) => e.fileObject.fileName === fileName);
+        const fileObjWrapper = newFileObjects.find(e => e.fileObject.fileName === fileName);
 
         await uploadFileData(aquaFile, fileObjWrapper?.file!, false);
     };
@@ -458,13 +487,16 @@ export const ImportAquaTree = ({ aquaFile, uploadedIndexes, fileIndex, updateUpl
 
     const modalSelectedFile = async (selectedFile: File) => {
         if (requiredFileHash) {
-            let fileDataContent = await readFileContent(selectedFile);
+            const fileDataContent = await readFileContent(selectedFile);
             const fileHash = aquafier.getFileHash(fileDataContent);
-            console.log(`calculated fileHash ${fileHash} and from chain ${requiredFileHash} file name ${selectedFile.name}`);
+            console.log(
+                `calculated fileHash ${fileHash} and from chain ${requiredFileHash} file name ${selectedFile.name}`
+            );
             if (fileHash !== requiredFileHash) {
                 toast({
-                    description: "Dropped file hash doesn't match the required hash in the AquaTree..",
-                    variant: "destructive"
+                    description:
+                        "Dropped file hash doesn't match the required hash in the AquaTree..",
+                    variant: 'destructive',
                 });
             } else {
                 setSelectedFileName(selectedFile.name);
@@ -475,7 +507,7 @@ export const ImportAquaTree = ({ aquaFile, uploadedIndexes, fileIndex, updateUpl
                 } catch (error) {
                     toast({
                         description: `Error processing: ${error instanceof Error ? error.message : String(error)}`,
-                        variant: "destructive"
+                        variant: 'destructive',
                     });
                     setUploading(false);
                 }
@@ -514,12 +546,12 @@ export const ImportAquaTree = ({ aquaFile, uploadedIndexes, fileIndex, updateUpl
 
     return (
         <>
-            <Button 
-                data-testid="action-import-93-button" 
-                size="sm" 
+            <Button
+                data-testid="action-import-93-button"
+                size="sm"
                 variant="outline"
                 className="w-24 bg-green-50 border-green-200 text-green-700 hover:bg-green-100"
-                onClick={importFile} 
+                onClick={importFile}
                 disabled={uploadedIndexes.includes(fileIndex) || uploaded}
             >
                 {uploading ? (
@@ -542,7 +574,10 @@ export const ImportAquaTree = ({ aquaFile, uploadedIndexes, fileIndex, updateUpl
                         <div className="flex flex-col items-center space-y-4">
                             <p className="text-sm text-black text-center">
                                 {expectedFile == null ? (
-                                    <span>We couldn't fetch the file associated with this AquaTree. Please select or drop the file:</span>
+                                    <span>
+                                        We couldn't fetch the file associated with this AquaTree.
+                                        Please select or drop the file:
+                                    </span>
                                 ) : (
                                     <span>{expectedFile.displayText}</span>
                                 )}
@@ -572,7 +607,9 @@ export const ImportAquaTree = ({ aquaFile, uploadedIndexes, fileIndex, updateUpl
                             </div>
 
                             {selectedFileName.length > 0 && (
-                                <p className="text-sm text-gray-600">Selected: {selectedFileName}</p>
+                                <p className="text-sm text-gray-600">
+                                    Selected: {selectedFileName}
+                                </p>
                             )}
                         </div>
                     </div>

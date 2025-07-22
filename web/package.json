@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
-    "lint": "eslint .",
+    "lint": "eslint . --fix",
+    "format": "prettier --write 'src/**/*.{ts,tsx,js,jsx,json,css,scss}'",
     "preview": "vite preview"
   },
   "dependencies": {
@@ -83,6 +84,7 @@
     "eslint-plugin-react-hooks": "^5.0.0",
     "eslint-plugin-react-refresh": "^0.4.14",
     "globals": "^16.2.0",
+    "prettier": "^3.6.2",
     "tw-animate-css": "^1.3.4",
     "typescript": "~5.8.0",
     "typescript-eslint": "^8.11.0",

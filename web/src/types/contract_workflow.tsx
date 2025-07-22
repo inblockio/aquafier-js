@@ -1,6 +1,6 @@
-import { Revision } from "aqua-js-sdk";
-import { ReactNode } from "react";
-import { SummaryDetailsDisplayData } from "./types";
+import { Revision } from 'aqua-js-sdk';
+import { ReactNode } from 'react';
+import { SummaryDetailsDisplayData } from './types';
 
 export interface Signer {
     address: string;
@@ -24,21 +24,21 @@ export interface ContractWorkflowData {
     signers: Signer[];
     activities: Activity[];
     isValid?: boolean;
-    footerMsg?: string
+    footerMsg?: string;
 }
 
 export interface IContractWorkFlowFirstPage {
-    data: ContractWorkflowData,
-    goToSecondPage: () => void,
-    enableNameResolution: boolean,
-    isValidTree: "pending" | "successful" | "failed"
+    data: ContractWorkflowData;
+    goToSecondPage: () => void;
+    enableNameResolution: boolean;
+    isValidTree: 'pending' | 'successful' | 'failed';
 }
 
 export interface IContractInformation {
-    firstRevisionData: Revision
-    fileNameData: string
-    creatorEthereumSignatureRevisionData: Revision | undefined
-    contractCreatorAddress: string
-    isWorkFlowComplete: string[]
-    signatureRevisionHashes: SummaryDetailsDisplayData[]
+    firstRevisionData: Revision;
+    fileNameData: string;
+    creatorEthereumSignatureRevisionData: Revision | undefined;
+    contractCreatorAddress: string;
+    isWorkFlowComplete: string[];
+    signatureRevisionHashes: SummaryDetailsDisplayData[];
 }

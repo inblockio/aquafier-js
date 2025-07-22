@@ -4,12 +4,9 @@ export interface Session {
     nonce: string;
     issuedAt: string; // ISO 8601 string format
     expirationTime: string; // ISO 8601 string format
-  }
+}
 
-
-  export interface ApiFileData {
-    fileHash : string,
-    fileData :  string | ArrayBuffer
-  }
-
-  
+export interface ApiFileData {
+    fileHash: string;
+    fileData: string | ArrayBuffer;
+}

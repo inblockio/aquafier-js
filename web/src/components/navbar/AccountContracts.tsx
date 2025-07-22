@@ -1,48 +1,54 @@
-import { useEffect } from "react";
-import { copyToClipboardModern } from "../../utils/functions";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { LuCopy, LuExternalLink, LuShare2 } from "react-icons/lu";
-import { useStore } from 'zustand'
-import appStore from '../../store'
-import axios from "axios";
-import { Link, useNavigate } from "react-router-dom";
-import { IAccountContracts } from "../../types/index";
-import { toast } from "sonner";
+import { useEffect } from 'react';
+import { copyToClipboardModern } from '../../utils/functions';
+import {
+    Dialog,
+    DialogContent,
+    DialogHeader,
+    DialogTitle,
+    DialogTrigger,
+} from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { LuCopy, LuExternalLink, LuShare2 } from 'react-icons/lu';
+import { useStore } from 'zustand';
+import appStore from '../../store';
+import axios from 'axios';
+import { Link, useNavigate } from 'react-router-dom';
+import { IAccountContracts } from '../../types/index';
+import { toast } from 'sonner';
 
 export default function AccountContracts({ inline, open, updateOpenStatus }: IAccountContracts) {
-    const { backend_url, session, setContracts, contracts } = useStore(appStore)
-    let navigate = useNavigate();
+    const { backend_url, session, setContracts, contracts } = useStore(appStore);
+    const navigate = useNavigate();
 
     const loadAccountSharedContracts = async () => {
         if (!session) {
-            return
+            return;
         }
         try {
             const url = `${backend_url}/contracts`;
             const response = await axios.get(url, {
                 params: {
-                    receiver: session?.address
+                    receiver: session?.address,
                 },
                 headers: {
-                    'nonce': session?.nonce
-                }
+                    nonce: session?.nonce,
+                },
             });
             if (response.status === 200) {
-                setContracts(response.data?.contracts)
+                setContracts(response.data?.contracts);
             }
         } catch (error) {
-            console.error(error)
+            console.error(error);
         }
-    }
+    };
 
     useEffect(() => {
-        loadAccountSharedContracts()
-    }, [backend_url, session])
+        loadAccountSharedContracts();
+    }, [backend_url, session]);
 
     return (
-        <Dialog open={open} onOpenChange={(isOpen) => updateOpenStatus?.(isOpen)}>
+        <Dialog open={open} onOpenChange={isOpen => updateOpenStatus?.(isOpen)}>
             <DialogTrigger asChild>
                 <Button
                     id="contracts-shared-button-id"
@@ -53,8 +59,8 @@ export default function AccountContracts({ inline, open, updateOpenStatus }: IAc
                     onClick={() => updateOpenStatus?.(true)}
                 >
                     <LuShare2 />
-                    <Badge 
-                        variant="default" 
+                    <Badge
+                        variant="default"
                         className="absolute -top-2 -right-2 h-5 w-5 rounded-full p-0 flex items-center justify-center text-xs bg-black text-white"
                     >
                         {contracts?.length || 0}
@@ -73,13 +79,16 @@ export default function AccountContracts({ inline, open, updateOpenStatus }: IAc
                             <p className="text-muted-foreground">No shared contracts found</p>
                         ) : (
                             contracts?.map((contract, i: number) => (
-                                <div key={`${contract.hash}-${i}`} className="flex items-center gap-2">
+                                <div
+                                    key={`${contract.hash}-${i}`}
+                                    className="flex items-center gap-2"
+                                >
                                     <Button
-                                        data-testid={"shared-button-count-" + i}
+                                        data-testid={'shared-button-count-' + i}
                                         variant="outline"
                                         size="sm"
                                         onClick={() => {
-                                            updateOpenStatus?.(false)
+                                            updateOpenStatus?.(false);
                                             navigate(`/share/${contract.hash}`, { replace: true });
                                         }}
                                     >
@@ -98,13 +107,15 @@ export default function AccountContracts({ inline, open, updateOpenStatus }: IAc
                                         </Button>
                                     </Link>
                                     <Button
-                                        data-testid={"shared-button-copy-" + i}
+                                        data-testid={'shared-button-copy-' + i}
                                         variant="outline"
                                         size="sm"
                                         onClick={async () => {
-                                            let res = await copyToClipboardModern(`${window.location.href}/share/${contract.hash}`)
+                                            const res = await copyToClipboardModern(
+                                                `${window.location.href}/share/${contract.hash}`
+                                            );
                                             if (res) {
-                                                toast.success("Link copied to clipboard")
+                                                toast.success('Link copied to clipboard');
                                                 // toast({
 
                                                 //     title: "Link copied to clipboard",
@@ -112,7 +123,7 @@ export default function AccountContracts({ inline, open, updateOpenStatus }: IAc
                                                 //     variant: "default",
                                                 // });
                                             } else {
-                                                toast.error("Error witnessing failed")
+                                                toast.error('Error witnessing failed');
                                             }
                                         }}
                                     >

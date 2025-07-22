@@ -1,27 +1,23 @@
 import { useEffect, useState } from 'react';
-import { Grid3X3, List } from "lucide-react";
-import FileListItem from "./files_list_item";
-import { getAquaTreeFileName } from "@/utils/functions";
+import { Grid3X3, List } from 'lucide-react';
+import FileListItem from './files_list_item';
+import { getAquaTreeFileName } from '@/utils/functions';
 
 import { useStore } from 'zustand';
 import appStore from '../store';
 
 export default function FilesList() {
-
     const [showWorkFlowsOnly, setShowWorkFlowsOnly] = useState(false);
     const [view, setView] = useState('list');
     const [isSmallScreen, setIsSmallScreen] = useState(false);
 
-    const { files, systemFileInfo, backend_url, session } = useStore(appStore)
-
-
-
+    const { files, systemFileInfo, backend_url, session } = useStore(appStore);
 
     useEffect(() => {
         if (location.pathname.endsWith('files_workflows')) {
             // Add your logic here
             // console.log('URL ends with files_workflows');
-            setShowWorkFlowsOnly(true)
+            setShowWorkFlowsOnly(true);
         }
     }, []);
 
@@ -32,34 +28,32 @@ export default function FilesList() {
         if (location.pathname.endsWith('files_workflows')) {
             // Add your logic here
             // console.log('URL ends with files_workflows');
-            setShowWorkFlowsOnly(true)
+            setShowWorkFlowsOnly(true);
         }
         return () => {
             // console.log("FilesPage unmounted");
-            setShowWorkFlowsOnly(false)
+            setShowWorkFlowsOnly(false);
         };
     }, [location.pathname]);
-    
+
     // Add screen size detector
     useEffect(() => {
         // Function to check if screen is small
         const checkScreenSize = () => {
             setIsSmallScreen(window.matchMedia('(max-width: 768px)').matches);
         };
-        
+
         // Initial check
         checkScreenSize();
-        
+
         // Add event listener for window resize
         window.addEventListener('resize', checkScreenSize);
-        
+
         // Cleanup
         return () => {
             window.removeEventListener('resize', checkScreenSize);
         };
     }, []);
-
-
 
     return (
         <div>
@@ -99,32 +93,44 @@ export default function FilesList() {
                             <table className="w-full border-collapse">
                                 <thead>
                                     <tr className="bg-gray-50">
-                                        <th className="py-3 px-4 text-left text-sm font-medium text-gray-700 w-1/3 rounded-tl-md">Name</th>
-                                        <th className="py-3 px-4 text-left text-sm font-medium text-gray-700 w-24">Type</th>
-                                        <th className="py-3 px-4 text-left text-sm font-medium text-gray-700 w-40">Uploaded At</th>
-                                        <th className="py-3 px-4 text-left text-sm font-medium text-gray-700 w-24">File Size</th>
-                                        <th className="min-w-[370px] py-3 px-4 text-left text-sm font-medium text-gray-700 w-1/4 rounded-tr-md">Actions</th>
+                                        <th className="py-3 px-4 text-left text-sm font-medium text-gray-700 w-1/3 rounded-tl-md">
+                                            Name
+                                        </th>
+                                        <th className="py-3 px-4 text-left text-sm font-medium text-gray-700 w-24">
+                                            Type
+                                        </th>
+                                        <th className="py-3 px-4 text-left text-sm font-medium text-gray-700 w-40">
+                                            Uploaded At
+                                        </th>
+                                        <th className="py-3 px-4 text-left text-sm font-medium text-gray-700 w-24">
+                                            File Size
+                                        </th>
+                                        <th className="min-w-[370px] py-3 px-4 text-left text-sm font-medium text-gray-700 w-1/4 rounded-tr-md">
+                                            Actions
+                                        </th>
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {files.sort((a, b) => {
-                                        const filenameA = getAquaTreeFileName(a.aquaTree!!);
-                                        const filenameB = getAquaTreeFileName(b.aquaTree!!);
-                                        return filenameA.localeCompare(filenameB);
-                                    }).map((file, index) => {
-
-                                        return <FileListItem
-                                            showWorkFlowsOnly={showWorkFlowsOnly}
-                                            key={index}
-                                            index={index}
-                                            file={file}
-                                            systemFileInfo={systemFileInfo}
-                                            backendUrl={backend_url}
-                                            nonce={session?.nonce ?? ""}
-                                            viewMode="table"
-                                        />
-
-                                    })}
+                                    {files
+                                        .sort((a, b) => {
+                                            const filenameA = getAquaTreeFileName(a.aquaTree!);
+                                            const filenameB = getAquaTreeFileName(b.aquaTree!);
+                                            return filenameA.localeCompare(filenameB);
+                                        })
+                                        .map((file, index) => {
+                                            return (
+                                                <FileListItem
+                                                    showWorkFlowsOnly={showWorkFlowsOnly}
+                                                    key={index}
+                                                    index={index}
+                                                    file={file}
+                                                    systemFileInfo={systemFileInfo}
+                                                    backendUrl={backend_url}
+                                                    nonce={session?.nonce ?? ''}
+                                                    viewMode="table"
+                                                />
+                                            );
+                                        })}
                                 </tbody>
                             </table>
                         </div>
@@ -134,28 +140,32 @@ export default function FilesList() {
                 {/* Card view for small screens */}
                 {isSmallScreen ? (
                     <div className="space-y-4">
-                        {files.sort((a, b) => {
-                            const filenameA = getAquaTreeFileName(a.aquaTree!!);
-                            const filenameB = getAquaTreeFileName(b.aquaTree!!);
-                            return filenameA.localeCompare(filenameB);
-                        }).map((file, index) => (
-                            <div key={index} className="bg-white border border-gray-200 rounded-lg shadow-sm p-4">
-                                <FileListItem
-                                    showWorkFlowsOnly={showWorkFlowsOnly}
+                        {files
+                            .sort((a, b) => {
+                                const filenameA = getAquaTreeFileName(a.aquaTree!);
+                                const filenameB = getAquaTreeFileName(b.aquaTree!);
+                                return filenameA.localeCompare(filenameB);
+                            })
+                            .map((file, index) => (
+                                <div
                                     key={index}
-                                    index={index}
-                                    file={file}
-                                    systemFileInfo={systemFileInfo}
-                                    backendUrl={backend_url}
-                                    nonce={session?.nonce ?? ""}
-                                    viewMode="card"
-                                />
-                            </div>
-                        ))}
+                                    className="bg-white border border-gray-200 rounded-lg shadow-sm p-4"
+                                >
+                                    <FileListItem
+                                        showWorkFlowsOnly={showWorkFlowsOnly}
+                                        key={index}
+                                        index={index}
+                                        file={file}
+                                        systemFileInfo={systemFileInfo}
+                                        backendUrl={backend_url}
+                                        nonce={session?.nonce ?? ''}
+                                        viewMode="card"
+                                    />
+                                </div>
+                            ))}
                     </div>
                 ) : null}
             </div>
-
         </div>
-    )
+    );
 }

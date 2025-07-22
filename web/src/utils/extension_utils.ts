@@ -7,7 +7,7 @@ export function isExtensionInstalled(extensionId: string) {
         }
 
         try {
-            chrome.runtime.sendMessage(extensionId, { type: 'CHECK_INSTALLED' }, (_response) => {
+            chrome.runtime.sendMessage(extensionId, { type: 'CHECK_INSTALLED' }, _response => {
                 if (chrome.runtime.lastError) {
                     // Extension is not installed or cannot be contacted
                     resolve(false);
@@ -17,7 +17,7 @@ export function isExtensionInstalled(extensionId: string) {
                 }
             });
         } catch (error) {
-            console.error(error)
+            console.error(error);
             // Any error means the extension is not installed
             resolve(false);
         }
@@ -33,9 +33,11 @@ export function sendMessageToExtension(extensionId: string, message: any) {
         }
 
         try {
-            chrome.runtime.sendMessage(extensionId, message, (response) => {
+            chrome.runtime.sendMessage(extensionId, message, response => {
                 if (chrome.runtime.lastError) {
-                    reject(new Error('Failed to send message: ' + chrome.runtime.lastError.message));
+                    reject(
+                        new Error('Failed to send message: ' + chrome.runtime.lastError.message)
+                    );
                     return;
                 }
                 resolve(response);
@@ -55,7 +57,7 @@ export async function checkAndUseExtension() {
         const isInstalled = await isExtensionInstalled(EXTENSION_ID);
 
         if (isInstalled) {
-          //  console.log('Extension is installed!');
+            //  console.log('Extension is installed!');
 
             // Example: Call a specific function in the extension
             const result = await sendMessageToExtension(EXTENSION_ID, {
@@ -64,12 +66,12 @@ export async function checkAndUseExtension() {
                     functionName: 'exampleFunction',
                     params: {
                         arg1: 'value1',
-                        arg2: 'value2'
-                    }
-                }
+                        arg2: 'value2',
+                    },
+                },
             });
 
-           console.log('Function call result:', result);
+            console.log('Function call result:', result);
         } else {
             console.log('Extension is not installed.');
         }
@@ -104,11 +106,11 @@ export function setupExtensionListener() {
 
 // Example function that might be called from outside
 export function performExampleFunction(params: any) {
-   //  console.log('Example function called with params:', params);
+    //  console.log('Example function called with params:', params);
     return {
         success: true,
         message: 'Function executed successfully',
-        receivedParams: params
+        receivedParams: params,
     };
 }
 

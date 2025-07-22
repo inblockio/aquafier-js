@@ -55,7 +55,7 @@ export interface RevisionContent {
 }
 
 export interface FileContent {
-    data: string;  // Base64 encoded string
+    data: string; // Base64 encoded string
     filename: string;
     size: number;
     comment: string;
@@ -63,11 +63,11 @@ export interface FileContent {
 
 export interface RevisionMetadata {
     domain_id: string;
-    time_stamp: string,//Timestamp, //string;  // Changed from Timestamp object to string
+    time_stamp: string; //Timestamp, //string;  // Changed from Timestamp object to string
     previous_verification_hash: string | null;
     metadata_hash: string;
     verification_hash: string;
-    merge_hash: string | null
+    merge_hash: string | null;
 }
 
 export interface Timestamp {
@@ -78,7 +78,6 @@ export interface Timestamp {
 // export interface PageData {
 //     pages: HashChain[];
 // }
-
 
 // Method 1: Direct access when you're sure of the structure
 // export function getTimestampDirect(pageData: PageData): string | undefined {

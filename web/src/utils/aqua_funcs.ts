@@ -1,9 +1,12 @@
-import { Divergence, RevisionsComparisonResult } from "../models/revision_merge";
+import { Divergence, RevisionsComparisonResult } from '../models/revision_merge';
 
-export function analyzeAndMergeRevisions(existingRevisions: string[], upcomingRevisions: string[]): RevisionsComparisonResult {
+export function analyzeAndMergeRevisions(
+    existingRevisions: string[],
+    upcomingRevisions: string[]
+): RevisionsComparisonResult {
     // Sort the arrays
-    const sortedExistingRevisions = [...existingRevisions] //.sort();
-    const sortedUpcomingRevisions = [...upcomingRevisions] //.sort();
+    const sortedExistingRevisions = [...existingRevisions]; //.sort();
+    const sortedUpcomingRevisions = [...upcomingRevisions]; //.sort();
 
     // Check for divergence
     const divergences: Divergence[] = [];
@@ -22,7 +25,9 @@ export function analyzeAndMergeRevisions(existingRevisions: string[], upcomingRe
         }
     }
     // Merge arrays without duplicates
-    const mergedArray = Array.from(new Set([...sortedExistingRevisions, ...sortedUpcomingRevisions]));
+    const mergedArray = Array.from(
+        new Set([...sortedExistingRevisions, ...sortedUpcomingRevisions])
+    );
 
     // Properties to check
     const identical = divergences.length === 0; // True if no divergences

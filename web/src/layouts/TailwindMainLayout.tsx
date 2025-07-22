@@ -1,9 +1,8 @@
-import { Button } from "@/components/ui/button";
-import { Github } from "lucide-react";
-import { BsTwitterX } from "react-icons/bs";
-import { FaFacebook, FaLinkedin } from "react-icons/fa6";
-import { Link, Outlet } from "react-router-dom";
-
+import { Button } from '@/components/ui/button';
+import { Github } from 'lucide-react';
+import { BsTwitterX } from 'react-icons/bs';
+import { FaFacebook, FaLinkedin } from 'react-icons/fa6';
+import { Link, Outlet } from 'react-router-dom';
 
 const Header = () => (
     <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -55,13 +54,24 @@ const Header = () => (
                 </Link>
             </nav>
             <div className="flex flex-1 items-center justify-end space-x-3">
-                <Button variant="outline" asChild className="border-orange-500/30 hover:border-orange-500 hover:bg-orange-500/5 transition-all duration-300">
-                    <Link to="https://github.com/inblockio" target="_blank" rel="noopener noreferrer">
+                <Button
+                    variant="outline"
+                    asChild
+                    className="border-orange-500/30 hover:border-orange-500 hover:bg-orange-500/5 transition-all duration-300"
+                >
+                    <Link
+                        to="https://github.com/inblockio"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                    >
                         <Github className="mr-2 h-4 w-4 text-orange-500" />
                         GitHub
                     </Link>
                 </Button>
-                <Button asChild className="bg-gradient-to-r from-primary to-orange-600 hover:from-orange-600 hover:to-primary text-white transition-all duration-300 shadow-md hover:shadow-lg">
+                <Button
+                    asChild
+                    className="bg-gradient-to-r from-primary to-orange-600 hover:from-orange-600 hover:to-primary text-white transition-all duration-300 shadow-md hover:shadow-lg"
+                >
                     <Link to="/app">Go to App</Link>
                 </Button>
             </div>
@@ -115,40 +125,83 @@ const Footer = () => (
                     </p>
                 </div>
                 <div>
-                    <h4 className="font-headline font-semibold text-orange-100">
-                        Protocol
-                    </h4>
+                    <h4 className="font-headline font-semibold text-orange-100">Protocol</h4>
                     <ul className="mt-4 space-y-2 text-sm">
-                        <li><a href="/#features" className="hover:text-orange-300 transition-colors">Features</a></li>
-                        <li><a href="/#how-it-works" className="hover:text-orange-300 transition-colors">How It Works</a></li>
-                        <li><a href="/#prototypes" className="hover:text-orange-300 transition-colors">Prototypes</a></li>
-                        <li><a href="/#vision" className="hover:text-orange-300 transition-colors">Vision</a></li>
+                        <li>
+                            <a
+                                href="/#features"
+                                className="hover:text-orange-300 transition-colors"
+                            >
+                                Features
+                            </a>
+                        </li>
+                        <li>
+                            <a
+                                href="/#how-it-works"
+                                className="hover:text-orange-300 transition-colors"
+                            >
+                                How It Works
+                            </a>
+                        </li>
+                        <li>
+                            <a
+                                href="/#prototypes"
+                                className="hover:text-orange-300 transition-colors"
+                            >
+                                Prototypes
+                            </a>
+                        </li>
+                        <li>
+                            <a href="/#vision" className="hover:text-orange-300 transition-colors">
+                                Vision
+                            </a>
+                        </li>
                     </ul>
                 </div>
                 <div>
-                    <h4 className="font-headline font-semibold text-orange-100">
-                        Company
-                    </h4>
+                    <h4 className="font-headline font-semibold text-orange-100">Company</h4>
                     <ul className="mt-4 space-y-2 text-sm">
-                        <li><Link to="#" className="hover:text-orange-300 transition-colors">About Us</Link></li>
-                        <li><Link to="mailto:demo@inblock.io" className="hover:text-orange-300 transition-colors">Contact</Link></li>
+                        <li>
+                            <Link to="#" className="hover:text-orange-300 transition-colors">
+                                About Us
+                            </Link>
+                        </li>
+                        <li>
+                            <Link
+                                to="mailto:demo@inblock.io"
+                                className="hover:text-orange-300 transition-colors"
+                            >
+                                Contact
+                            </Link>
+                        </li>
                     </ul>
                 </div>
                 <div>
-                    <h4 className="font-headline font-semibold text-orange-100">
-                        Connect
-                    </h4>
+                    <h4 className="font-headline font-semibold text-orange-100">Connect</h4>
                     <div className="mt-4 flex space-x-4">
-                        <Link to="#" className="hover:text-orange-300 transition-colors"><BsTwitterX /></Link>
-                        <Link to="#" className="hover:text-orange-300 transition-colors"><FaFacebook /></Link>
-                        <Link to="#" className="hover:text-orange-300 transition-colors"><FaLinkedin /></Link>
+                        <Link to="#" className="hover:text-orange-300 transition-colors">
+                            <BsTwitterX />
+                        </Link>
+                        <Link to="#" className="hover:text-orange-300 transition-colors">
+                            <FaFacebook />
+                        </Link>
+                        <Link to="#" className="hover:text-orange-300 transition-colors">
+                            <FaLinkedin />
+                        </Link>
                     </div>
                 </div>
             </div>
             <div className="mt-8 pt-8 border-t border-orange-800 text-center text-sm">
                 <div className="flex justify-center space-x-6 mb-4">
-                    <Link to="/terms-and-conditions" className="hover:text-orange-300 transition-colors">Terms & Conditions</Link>
-                    <Link to="/privacy-policy" className="hover:text-orange-300 transition-colors">Privacy Policy</Link>
+                    <Link
+                        to="/terms-and-conditions"
+                        className="hover:text-orange-300 transition-colors"
+                    >
+                        Terms & Conditions
+                    </Link>
+                    <Link to="/privacy-policy" className="hover:text-orange-300 transition-colors">
+                        Privacy Policy
+                    </Link>
                 </div>
                 <p>&copy; {new Date().getFullYear()} Aqua Protocol. All rights reserved.</p>
             </div>
@@ -165,7 +218,7 @@ const TailwindMainLayout = () => {
             </main>
             <Footer />
         </div>
-    )
-}
+    );
+};
 
-export default TailwindMainLayout
+export default TailwindMainLayout;

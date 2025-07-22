@@ -1,22 +1,32 @@
-import { Box, GridItem, Group, Image, SimpleGrid, StatHelpText, StatLabel, StatRoot, Text, VStack } from "@chakra-ui/react";
+import {
+    Box,
+    GridItem,
+    Group,
+    Image,
+    SimpleGrid,
+    StatHelpText,
+    StatLabel,
+    StatRoot,
+    Text,
+    VStack,
+} from '@chakra-ui/react';
 // import { StatHelpText, StatLabel } from "./stat";
-import { LuDot } from "react-icons/lu";
-import { UiFileTypes } from "../models/UiFileTypes";
-import { ApiFileInfo } from "../models/FileInfo";
-import { filterFilesByType, humanReadableFileSize } from "../utils/functions";
-import { useStore } from "zustand";
-import appStore from "../store";
+import { LuDot } from 'react-icons/lu';
+import { UiFileTypes } from '../models/UiFileTypes';
+import { ApiFileInfo } from '../models/FileInfo';
+import { filterFilesByType, humanReadableFileSize } from '../utils/functions';
+import { useStore } from 'zustand';
+import appStore from '../store';
 
 interface IStatistic {
-    title: string
-    tagline: string
-    size: string
-    image: string
-    files: string
+    title: string;
+    tagline: string;
+    size: string;
+    image: string;
+    files: string;
 }
 
 const Statistic = (props: IStatistic) => {
-
     // <StatRoot shadow={'sm'} borderRadius={'xl'} px={'4'} py="6" h={'100%'}>
     //     <Group>
     //         <Box>
@@ -34,13 +44,7 @@ const Statistic = (props: IStatistic) => {
     //     </StatHelpText>
     // </StatRoot>
     return (
-        <StatRoot
-            shadow={'sm'}
-            borderRadius={'xl'}
-            px={'4'}
-            py="6"
-            h={'100%'}
-        >
+        <StatRoot shadow={'sm'} borderRadius={'xl'} px={'4'} py="6" h={'100%'}>
             <Group align="center" gap="md">
                 <Box
                     display="flex"
@@ -48,7 +52,7 @@ const Statistic = (props: IStatistic) => {
                     justifyContent="center"
                     w={{ base: '40px', md: '60px' }}
                     h={{ base: '40px', md: '60px' }}
-                    overflow={"hidden"}
+                    overflow={'hidden'}
                     borderRadius="md"
                 >
                     <Image
@@ -62,8 +66,12 @@ const Statistic = (props: IStatistic) => {
                     />
                 </Box>
                 <VStack gap={0} alignItems={'start'} flex={1}>
-                    <Text fontWeight={500} fontSize={'xl'}>{props.title}</Text>
-                    <StatLabel fontWeight={400} fontSize={'small'}>{props.tagline}</StatLabel>
+                    <Text fontWeight={500} fontSize={'xl'}>
+                        {props.title}
+                    </Text>
+                    <StatLabel fontWeight={400} fontSize={'small'}>
+                        {props.tagline}
+                    </StatLabel>
                 </VStack>
             </Group>
             <StatHelpText
@@ -78,32 +86,31 @@ const Statistic = (props: IStatistic) => {
                 {`${props.files} Files`}
             </StatHelpText>
         </StatRoot>
-
-    )
-}
+    );
+};
 
 // const calculateTotalFilesSize = (_files: ApiFileInfo[]) => {
 //     const size = -1;
-    // for (const element of files) {
-    //     const pageData: PageData = JSON.parse(element.page_data);
-    //     // Debug the structure
-    //     // debugPageDataStructure(pageData);
+// for (const element of files) {
+//     const pageData: PageData = JSON.parse(element.page_data);
+//     // Debug the structure
+//     // debugPageDataStructure(pageData);
 
-    //     const currentSize = sumFileContentSize(pageData)
-    //     size += currentSize
-    // }
+//     const currentSize = sumFileContentSize(pageData)
+//     size += currentSize
+// }
 //     return size
 // }
 
 const getFileTypeProportions = (files: ApiFileInfo[]) => {
-    const fileTypes = ["image", "document", "music", "video"];
+    const fileTypes = ['image', 'document', 'music', 'video'];
 
-    const filesUiState: Record<string, UiFileTypes> = {}
+    const filesUiState: Record<string, UiFileTypes> = {};
 
-    const totalFilesSize =  -1 //calculateTotalFilesSize(files)
+    const totalFilesSize = -1; //calculateTotalFilesSize(files)
 
     for (const element of fileTypes) {
-        const fileItemData = filterFilesByType(files, element)
+        const fileItemData = filterFilesByType(files, element);
 
         const size = 0;
         // for (const element of fileItemData) {
@@ -113,51 +120,69 @@ const getFileTypeProportions = (files: ApiFileInfo[]) => {
         // }
 
         // Handle potential division by zero or NaN scenarios
-        const percentage = totalFilesSize > 0
-            ? (size / totalFilesSize * 100)
-            : 0;
+        const percentage = totalFilesSize > 0 ? (size / totalFilesSize) * 100 : 0;
 
-        const usingText = `Using ${isNaN(percentage)
-                ? "0.00"
-                : percentage.toFixed(2)
-            }% of storage`
+        const usingText = `Using ${isNaN(percentage) ? '0.00' : percentage.toFixed(2)}% of storage`;
 
-        const hSize = humanReadableFileSize(size)
+        const hSize = humanReadableFileSize(size);
 
         const item: UiFileTypes = {
             name: element,
             usingText: usingText,
             size: hSize,
-            totalFiles: `${fileItemData.length}`
-        }
+            totalFiles: `${fileItemData.length}`,
+        };
 
-        filesUiState[element] = item
+        filesUiState[element] = item;
     }
-    return filesUiState
-}
-
+    return filesUiState;
+};
 
 export default function Statistics() {
-    const { files } = useStore(appStore)
-    const storageUsage = getFileTypeProportions(files)
+    const { files } = useStore(appStore);
+    const storageUsage = getFileTypeProportions(files);
 
     return (
         <SimpleGrid columns={{ base: 2, md: 2, lg: 4 }} gapX={'4'} gapY={'4'}>
             <GridItem>
-                <Statistic title="Documents" image="/images/stats/doc.png" files={storageUsage?.document?.totalFiles ?? "-"} size={storageUsage?.document?.size ?? "-"} tagline={storageUsage?.document?.usingText ?? "-"} />
+                <Statistic
+                    title="Documents"
+                    image="/images/stats/doc.png"
+                    files={storageUsage?.document?.totalFiles ?? '-'}
+                    size={storageUsage?.document?.size ?? '-'}
+                    tagline={storageUsage?.document?.usingText ?? '-'}
+                />
             </GridItem>
             <GridItem>
-                <Statistic title="Images" image="/images/stats/image.png" files={storageUsage?.image?.totalFiles ?? "-"} size={storageUsage?.image?.size ?? "-"} tagline={storageUsage?.image?.usingText ?? "-"} />
+                <Statistic
+                    title="Images"
+                    image="/images/stats/image.png"
+                    files={storageUsage?.image?.totalFiles ?? '-'}
+                    size={storageUsage?.image?.size ?? '-'}
+                    tagline={storageUsage?.image?.usingText ?? '-'}
+                />
             </GridItem>
             <GridItem>
-                <Statistic title="Music" image="/images/stats/music.png" files={storageUsage?.music?.totalFiles ?? "-"} size={storageUsage?.music?.size ?? "-"} tagline={storageUsage?.music?.usingText ?? "-"} />
+                <Statistic
+                    title="Music"
+                    image="/images/stats/music.png"
+                    files={storageUsage?.music?.totalFiles ?? '-'}
+                    size={storageUsage?.music?.size ?? '-'}
+                    tagline={storageUsage?.music?.usingText ?? '-'}
+                />
             </GridItem>
             <GridItem>
-                <Statistic title="Videos" image="/images/stats/video.png" files={storageUsage?.video?.totalFiles ?? "-"} size={storageUsage?.video?.size ?? "-"} tagline={storageUsage?.video?.usingText ?? "-"} />
+                <Statistic
+                    title="Videos"
+                    image="/images/stats/video.png"
+                    files={storageUsage?.video?.totalFiles ?? '-'}
+                    size={storageUsage?.video?.size ?? '-'}
+                    tagline={storageUsage?.video?.usingText ?? '-'}
+                />
             </GridItem>
             {/* <GridItem>
                 <Statistic title="Others" image="/images/stats/folder.png" files={storageUsage?.document?.totalFiles ?? "-"} size={storageUsage?.document?.size ?? "-"} tagline={storageUsage?.document?.usingText ?? "-"} />
             </GridItem> */}
         </SimpleGrid>
-    )
+    );
 }

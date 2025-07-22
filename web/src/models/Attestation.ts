@@ -3,4 +3,4 @@ export interface AttestationAddressData {
     id: string;
     owner: string;
     trust_level: number;
-  }
+}

@@ -1,4 +1,14 @@
-import { Button ,  DialogBody, DialogCloseTrigger, DialogContent, DialogHeader, DialogRoot, DialogTitle, DialogTrigger, Text} from '@chakra-ui/react'
+import {
+    Button,
+    DialogBody,
+    DialogCloseTrigger,
+    DialogContent,
+    DialogHeader,
+    DialogRoot,
+    DialogTitle,
+    DialogTrigger,
+    Text,
+} from '@chakra-ui/react';
 // import React, { useEffect } from 'react'
 // import { } from './chakra-ui/dialog'
 // import ImportPage from '../pages/ImportPage'
@@ -13,7 +23,6 @@ import { Button ,  DialogBody, DialogCloseTrigger, DialogContent, DialogHeader, 
 // }
 
 const ImportByModal = () => {
-
     // const [verifying, setVerifying] = React.useState(false)
     // const [apiFileInfo, setApiFileInfo] = React.useState<ApiFileInfo | undefined>(undefined)
 
@@ -41,7 +50,7 @@ const ImportByModal = () => {
     //             });
     //         // setVerifying(false)
     //     };
-    
+
     //     useEffect(() => {
     //         handleLoadFile()
     //     }, [])
@@ -69,9 +78,8 @@ const ImportByModal = () => {
                     <DialogCloseTrigger />
                 </DialogContent>
             </DialogRoot>
-
         </>
-    )
-}
+    );
+};
 
-export default ImportByModal
+export default ImportByModal;

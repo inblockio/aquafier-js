@@ -1,22 +1,20 @@
-import { ReactNode } from "react"
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
+import { ReactNode } from 'react';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 
 interface ICustomTooltip {
-    children: ReactNode,
-    content: string
+    children: ReactNode;
+    content: string;
 }
 
 const CustomTooltip = ({ children, content }: ICustomTooltip) => {
     return (
         <Tooltip>
-            <TooltipTrigger asChild>
-                {children}
-            </TooltipTrigger>
+            <TooltipTrigger asChild>{children}</TooltipTrigger>
             <TooltipContent>
                 <p>{content}</p>
             </TooltipContent>
         </Tooltip>
-    )
-}
+    );
+};
 
-export default CustomTooltip
+export default CustomTooltip;

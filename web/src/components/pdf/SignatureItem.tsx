@@ -1,7 +1,7 @@
 import { SignatureData } from '../../types/types';
 
 interface ISignatureItem {
-    signature: SignatureData
+    signature: SignatureData;
 }
 
 const SignatureItem: React.FC<ISignatureItem> = ({ signature }) => {
@@ -21,14 +21,13 @@ const SignatureItem: React.FC<ISignatureItem> = ({ signature }) => {
                         <p className="text-xs text-gray-600">
                             {signature.walletAddress.length > 10
                                 ? `${signature.walletAddress.substring(0, 6)}...${signature.walletAddress.substring(signature.walletAddress.length - 4)}`
-                                : signature.walletAddress
-                            }
+                                : signature.walletAddress}
                         </p>
                     </div>
                 </div>
             </div>
         </div>
-    )
-}
+    );
+};
 
-export default SignatureItem
+export default SignatureItem;

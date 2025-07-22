@@ -27,7 +27,6 @@
 
 //   const { formTemplates, backend_url, setFormTemplate, session } = useStore(appStore);
 
-
 //   const [templateToDelete, setTemplateToDelete] = useState<FormTemplate | null>(null);
 //   const { open, onOpen, onClose } = useDisclosure();
 //   const cancelRef = React.useRef<HTMLButtonElement>(null);
@@ -94,7 +93,6 @@
 //     loadTemplates()
 //   }, []);
 
-
 //   return (
 //     <Box>
 //       <Heading size="md" mb={4}>Form Templates</Heading>
@@ -128,7 +126,6 @@
 //                     >
 //                       <LuEye />
 //                     </IconButton>
-
 
 //                     {
 //                       !template.public ? (
