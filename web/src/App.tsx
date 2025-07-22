@@ -25,6 +25,7 @@ import WorkflowsTablePage from './pages/wokflow/WorkflowsTablePage';
 import SharePage from './pages/share_page';
 import TermsAndConditions from './pages/legal/TermsAndConditions';
 import PrivacyPolicy from './pages/legal/PrivacyPolicy';
+import ClaimsAndAttestationPage from './pages/claim_and_attestation';
 
 declare global {
   interface Window {
@@ -61,13 +62,14 @@ function App() {
             <Route path="terms-and-conditions" element={<TermsAndConditions />} />
             <Route path="privacy-policy" element={<PrivacyPolicy />} />
           </Route>
-
+ 
           {/* All file routes using Tailwind */}
           <Route path="/app" element={<NewShadcnLayoutWithSidebar />}>
             <Route index element={<FilesPage />} />
             <Route path="pdf/workflow" element={<PdfWorkflowPage />} />
             <Route path="files_workflows" element={<FilesPage />} />
             <Route path="domain_attestation" element={<DomainAttestationPage />} />
+            <Route path="claims_and_attestation" element={<ClaimsAndAttestationPage />} />
             {/* <Route path="files_docs" element={<FilesPage />} />
             <Route path="files_attestation" element={<FilesPage />} />
             <Route path="files_document_signature" element={<FilesPage />} />

@@ -43,7 +43,8 @@ const TailwindLayout = () => {
 
     const applicationsItems = [
         { label: 'Document Signature', icon: Signature, id: "/form-instance/aqua_sign" },
-        { label: 'Domain Attestation', icon: Link, id: "/domain_attestation" }
+        // { label: 'Domain Attestation', icon: Link, id: "/domain_attestation" }
+        { label: 'Claim & Attestation', icon: Link, id: "/claims_and_attestation" }
     ];
 
 

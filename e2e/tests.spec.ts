@@ -19,15 +19,15 @@ test("basic site accessibility test", async ({ page }) => {
   console.log("Running basic site accessibility test");
   const baseUrl = process.env.BASE_URL || "https://dev.inblock.io";
   console.log(`Navigating to ${baseUrl}`);
-  
+
   // Navigate to the site
   await page.goto(baseUrl, { timeout: 60000 });
   console.log("Page loaded");
-  
+
   // Take a screenshot for debugging
   await page.screenshot({ path: 'site-loaded.png' });
   console.log("Screenshot taken");
-  
+
   // Simple assertion to verify the page loaded
   const title = await page.title();
   console.log(`Page title: ${title}`);
@@ -127,68 +127,109 @@ test("linking 2 files test", async (): Promise<void> => {
 
 test("upload, file form revision", async (): Promise<void> => {
 
-   test.setTimeout(process.env.CI ? 300000 : 80000); // 5 minutes in CI
+  test.setTimeout(process.env.CI ? 300000 : 80000); // 5 minutes in CI
   const registerResponse = await registerNewMetaMaskWalletAndLogin();
   const context: BrowserContext = registerResponse.context;
   const testPage: Page = context.pages()[0];
 
   console.log("upload, file form revisions started!");
-  
- // Upload file
+
+  // Upload file
   const filePath: string = path.join(__dirname, 'resources/aqua.json');
   await uploadFile(testPage, filePath);
 
   // close upload dialog
- 
-await testPage.waitForSelector('[data-testid="create-form-3-button"]', { state: 'visible', timeout: 10000 });
+
+  await testPage.waitForSelector('[data-testid="create-form-3-button"]', { state: 'visible', timeout: 10000 });
   await testPage.click('[data-testid="create-form-3-button"]');
 
   // ✅ Wait for the table row that includes "aqua.json"
   const row = testPage.locator('table >> text=aqua.json');
   await expect(row).toBeVisible({ timeout: 10000 });
 
-  });
+});
 
 test("import, file multiple revisions", async (): Promise<void> => {
 
-   test.setTimeout(process.env.CI ? 300000 : 80000); // 5 minutes in CI
+  test.setTimeout(process.env.CI ? 300000 : 80000); // 5 minutes in CI
   const registerResponse = await registerNewMetaMaskWalletAndLogin();
   const context: BrowserContext = registerResponse.context;
   const testPage: Page = context.pages()[0];
 
   console.log("upload, file multiple revisions started!");
 
- // Upload file
+  // Upload file
   const filePath: string = path.join(__dirname, 'resources/aqua.json.aqua.json');
   await uploadFile(testPage, filePath);
 
 
-    //import the aqua chain
- 
-await testPage.waitForSelector('[data-testid="action-import-93-button"]', { state: 'visible', timeout: 10000 });
+  //import the aqua chain
+
+  await testPage.waitForSelector('[data-testid="action-import-93-button"]', { state: 'visible', timeout: 10000 });
   await testPage.click('[data-testid="action-import-93-button"]');
 
-  
+  // select file - only if button is visible
+  const selectFileButton = testPage.locator('[data-testid="action-select-file-06-button"]');
+
+  try {
+    await selectFileButton.waitFor({ state: 'visible', timeout: 5000 });
+    console.log("Select file button is visible, proceeding with file upload");
+
+    await selectFileButton.click();
+
+    const filePath2: string = path.join(__dirname, 'resources/aqua.json');
+    console.log("File upload dropzone is visible");
+
+    const fileChooserPromise = testPage.waitForEvent('filechooser');
+    // Trigger the file chooser (you might need to click a specific element here)
+    // await testPage.click('[data-testid="some-upload-trigger"]');
+    const fileChooser = await fileChooserPromise;
+    await fileChooser.setFiles(filePath2);
+    console.log("File selected in file chooser");
+
+
+    console.log("File uploaded successfully");
+  } catch (error) {
+    console.log("Select file button is not visible, skipping file upload");
+  }
+
   // ✅ Wait for the table row that includes "aqua.json"
   const row = testPage.locator('table >> text=aqua.json');
   await expect(row).toBeVisible({ timeout: 10000 });
 
-  });
+});
 
 
-  test("upload, delete file", async (): Promise<void> => {
+test("upload, delete file", async (): Promise<void> => {
 
-   test.setTimeout(process.env.CI ? 300000 : 80000); // 5 minutes in CI
+  test.setTimeout(process.env.CI ? 300000 : 80000); // 5 minutes in CI
   const registerResponse = await registerNewMetaMaskWalletAndLogin();
   const context: BrowserContext = registerResponse.context;
   const testPage: Page = context.pages()[0];
 
   console.log("upload, file multiple revisions started!");
 
+    // Upload file
+  const filePath: string = path.join(__dirname, 'resources/exampleFile.pdf');
+  await uploadFile(testPage, filePath);
 
 
+    await testPage.waitForSelector('[data-testid="delete-aqua-tree-button-1"]', { state: 'visible', timeout: 10000 });
+  await testPage.click('[data-testid="delete-aqua-tree-button-1"]');
 
-  });
+   // ✅ Wait for the table row with "aqua.json" to be removed (not visible)
+  const row = testPage.locator('table >> text=aqua.json');
+  await expect(row).not.toBeVisible({ timeout: 10000 });
+
+  // Reload the page and check again to ensure file is permanently deleted
+  console.log("Reloading page to verify file deletion persisted");
+  await testPage.reload();
+  
+  // Wait for page to load and check that aqua.json is still not visible
+  const rowAfterReload = testPage.locator('table >> text=aqua.json');
+  await expect(rowAfterReload).not.toBeVisible({ timeout: 10000 });
+
+});
 
 test("upload, sign, download", async (): Promise<void> => {
   test.setTimeout(process.env.CI ? 300000 : 80000); // 5 minutes in CI
@@ -374,21 +415,21 @@ test("two user aqua-sign", async (): Promise<void> => {
 // Test for sharing functionality
 test("share document between two users", async (): Promise<void> => {
   test.setTimeout(process.env.CI ? 300000 : 120000); // 5 minutes in CI
-  
+
   // Setup first user (document owner)
   const ownerResponse = await registerNewMetaMaskWalletAndLogin();
   const ownerContext: BrowserContext = ownerResponse.context;
   const ownerPage: Page = ownerContext.pages()[0];
-  
+
   // Setup second user (document recipient)
   const recipientResponse = await registerNewMetaMaskWalletAndLogin();
   const recipientContext: BrowserContext = recipientResponse.context;
   const recipientPage: Page = recipientContext.pages()[0];
   const recipientAddress = recipientResponse.walletAddress;
-  
-    console.log("share document between two users !");
-  
- 
+
+  console.log("share document between two users !");
+
+
   // Owner uploads a document
   const testFilePath = path.join(__dirname, 'resources', 'exampleFile.pdf');
   const baseUrl = process.env.BASE_URL || "http://localhost:5173";
@@ -396,7 +437,7 @@ test("share document between two users", async (): Promise<void> => {
 
   await uploadFile(ownerPage, testFilePath);
   await closeUploadDialog(ownerPage);
-  
+
   await signDocument(ownerPage, ownerContext)
 
 
@@ -404,10 +445,10 @@ test("share document between two users", async (): Promise<void> => {
 
   // Owner shares the document with recipient
   await shareDocument(ownerPage, ownerContext, recipientAddress);
-  
+
   // Recipient verifies they can access the shared document
   await importAquaChain(recipientPage, recipientContext);
-  
+
   // Cleanup
   await ownerContext.close();
   await recipientContext.close();
@@ -416,35 +457,35 @@ test("share document between two users", async (): Promise<void> => {
 // Test for sharing with different permission levels
 test("share document with everyone", async (): Promise<void> => {
   test.setTimeout(process.env.CI ? 300000 : 120000); // 5 minutes in CI
-  
+
   // Setup first user (document owner)
   const ownerResponse = await registerNewMetaMaskWalletAndLogin();
   const ownerContext: BrowserContext = ownerResponse.context;
   const ownerPage: Page = ownerContext.pages()[0];
   const ownerAddress = ownerResponse.walletAddress;
-  
+
   // Setup second user (document recipient)
   const recipientResponse = await registerNewMetaMaskWalletAndLogin();
   const recipientContext: BrowserContext = recipientResponse.context;
   const recipientPage: Page = recipientContext.pages()[0];
   const recipientAddress = recipientResponse.walletAddress;
-  
+
   // Owner uploads a document
   const testFilePath = path.join(__dirname, 'resources', 'exampleFile.pdf');
   const baseUrl = process.env.BASE_URL || "http://localhost:5173";
   await ownerPage.goto(`${baseUrl}/app`);
   await uploadFile(ownerPage, testFilePath);
   await closeUploadDialog(ownerPage);
-  
+
   // Owner sign the document
   await signDocument(ownerPage, ownerContext);
-  
+
   // Owner shares the document with recipient (with edit permissions)
- let shareUlr =  await shareDocument(ownerPage, ownerContext, "");
-  
+  let shareUlr = await shareDocument(ownerPage, ownerContext, "");
+
   // Recipient verifies they can access and edit the shared document
-  await importAquaChain(recipientPage, recipientContext,shareUlr );
-  
+  await importAquaChain(recipientPage, recipientContext, shareUlr);
+
   // Cleanup
   await ownerContext.close();
   await recipientContext.close();

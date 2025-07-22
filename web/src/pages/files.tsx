@@ -38,7 +38,7 @@ import { FormRevisionFile } from '@/components/dropzone_file_actions/form_revisi
 
 
 const FilesPage = () => {
-    const { files, setFiles, session, backend_url, selectedFileInfo, setSelectedFileInfo, setOpenFileDetailsPopUp, openFilesDetailsPopUp, setOpenCreateAquaSignPopUp, setOpenCreateTemplatePopUp } = useStore(appStore)
+    const { files, setFiles, session, backend_url, selectedFileInfo, setSelectedFileInfo, setOpenFileDetailsPopUp, openFilesDetailsPopUp, setOpenCreateAquaSignPopUp, setOpenCreateTemplatePopUp , setOpenCreateClaimPopUp} = useStore(appStore)
     const fileInputRef = React.useRef<HTMLInputElement>(null);
     const [filesListForUpload, setFilesListForUpload] = useState<FileItemWrapper[]>([]);
 
@@ -335,6 +335,19 @@ const FilesPage = () => {
                         >
                             <Plus className="w-4 h-4" />
                             <span>Document Signature </span>
+                        </Button>
+
+                         <Button
+                            data-testid="create-document-signature"
+                            className="flex items-center gap-1 sm:gap-2 text-white px-2 sm:px-4 py-1.5 sm:py-2.5 rounded-md text-xs sm:text-sm font-medium hover:bg-gray-700 transition-colors cursor-pointer whitespace-nowrap shadow-sm"
+                            style={{ backgroundColor: '#3A5BF8' }}
+                            onClick={() => {
+                                //, 
+                                setOpenCreateClaimPopUp(true)
+                            }}
+                        >
+                            <Plus className="w-4 h-4" />
+                            <span>Create claim </span>
                         </Button>
                         <Button className="flex items-center gap-1 sm:gap-2 text-gray-700 px-2 sm:px-4 py-1.5 sm:py-2.5 rounded-md text-xs sm:text-sm font-medium bg-white border border-gray-200 hover:bg-gray-50 transition-colors cursor-pointer whitespace-nowrap shadow-sm"
                             onClick={() => {

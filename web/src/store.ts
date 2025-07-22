@@ -20,16 +20,17 @@ type AppStoreState = {
     session: Session | null,
     files: ApiFileInfo[],
     apiFileData: ApiFileData[],
-    systemFileInfo :  ApiFileInfo[],
+    systemFileInfo: ApiFileInfo[],
     formTemplates: FormTemplate[],
     selectedFileInfo: ApiFileInfo | null,
     openFilesDetailsPopUp: boolean | null,
     openCreateTemplatePopUp: boolean | null,
     openCreateAquaSignPopUp: boolean | null,
+    openCreateClaimPopUp: boolean | null,
     metamaskAddress: string | null,
     avatar: string | undefined,
     backend_url: string,
-    contracts : any[]
+    contracts: any[]
 }
 
 type AppStoreActions = {
@@ -49,16 +50,19 @@ type AppStoreActions = {
         files: AppStoreState['files'],
     ) => void,
     setSelectedFileInfo: (
-        file: ApiFileInfo | null ,
+        file: ApiFileInfo | null,
     ) => void,
     setOpenFileDetailsPopUp: (
-        state: boolean | null ,
+        state: boolean | null,
     ) => void,
     setOpenCreateTemplatePopUp: (
-        state: boolean | null ,
+        state: boolean | null,
     ) => void,
     setOpenCreateAquaSignPopUp: (
-        state: boolean | null ,
+        state: boolean | null,
+    ) => void,
+    setOpenCreateClaimPopUp: (
+        state: boolean | null,
     ) => void,
     addFile: (
         file: ApiFileInfo,
@@ -116,25 +120,25 @@ const getDbPromise = () => {
         dbPromiseInstance = openDB('aquafier-db', 2, {
             upgrade(db, oldVersion, newVersion, _transaction) {
                 console.log(`Upgrading from version ${oldVersion} to ${newVersion}`);
-                
+
                 // Handle version upgrades properly
                 if (!db.objectStoreNames.contains('store')) {
                     db.createObjectStore('store');
                 }
-                
+
                 // Add more version upgrade logic here if needed
                 // Example for future versions:
                 // if (oldVersion < 2) {
                 //     // Migration logic for version 2
                 // }
             },
-            
+
             // Add blocking handler to prevent version conflicts
             blocked() {
                 console.warn('Database upgrade blocked by another connection');
                 // Optionally notify user or handle the blocking situation
             },
-            
+
             // Add blocking handler for close events
             blocking() {
                 console.warn('Database needs to close for upgrade');
@@ -200,10 +204,11 @@ const appStore = createStore<TAppStore>()(
             openFilesDetailsPopUp: false,
             openCreateTemplatePopUp: false,
             openCreateAquaSignPopUp: false,
+            openCreateClaimPopUp: false,
             metamaskAddress: '',
             avatar: "",
             apiFileData: [],
-            systemFileInfo:[],
+            systemFileInfo: [],
             formTemplates: [],
             backend_url: "http://0.0.0.0:3000",
             contracts: [],
@@ -230,10 +235,12 @@ const appStore = createStore<TAppStore>()(
             setOpenCreateTemplatePopUp: (
                 state: boolean | null
             ) => set({ openCreateTemplatePopUp: state }),
-             setOpenCreateAquaSignPopUp: (
+            setOpenCreateAquaSignPopUp: (
                 state: boolean | null
             ) => set({ openCreateAquaSignPopUp: state }),
-            
+            setOpenCreateClaimPopUp: (
+                state: boolean | null
+            ) => set({ openCreateClaimPopUp: state }),
             setApiFileData: (
                 apiFileData: ApiFileData[]
             ) => set({ apiFileData: apiFileData }),

@@ -407,6 +407,10 @@ export const ImportAquaTree = ({ aquaFile, uploadedIndexes, fileIndex, updateUpl
             console.log(`missingFile ${JSON.stringify(missingFile, null, 2)}`);
             setExpectedFile(missingFile);
             setIsOpen(true);
+            toast({
+                description: `Please upload ${missingFile.expectedFileName}`,
+                variant: "destructive"
+            });
             return;
         }
         console.log(`allAquaTrees contrinue to upload  ${JSON.stringify(allAquaTrees, null, 4)}`);
