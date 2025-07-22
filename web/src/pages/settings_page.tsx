@@ -1,17 +1,25 @@
-import { useState } from 'react';
-import { LuSettings, LuSun, LuUser, LuWallet, LuKey, LuNetwork, LuSave } from 'react-icons/lu';
-import { FaEthereum, FaFileContract } from 'react-icons/fa6';
-import appStore from '@/store';
-import { useStore } from 'zustand';
-import { useNavigate } from 'react-router-dom';
-import { toast } from 'sonner';
-import axios from 'axios';
-import { Button } from '@/components/ui/button';
+import { useState } from 'react'
+import {
+    LuSettings,
+    LuSun,
+    LuUser,
+    LuWallet,
+    LuKey,
+    LuNetwork,
+    LuSave,
+} from 'react-icons/lu'
+import { FaEthereum, FaFileContract } from 'react-icons/fa6'
+import appStore from '@/store'
+import { useStore } from 'zustand'
+import { useNavigate } from 'react-router-dom'
+import { toast } from 'sonner'
+import axios from 'axios'
+import { Button } from '@/components/ui/button'
 
 const DeleteUserData = () => {
-    const [_deleting, setDeleting] = useState(false);
+    const [_deleting, setDeleting] = useState(false)
 
-    const navigate = useNavigate();
+    const navigate = useNavigate()
 
     const {
         setUserProfile,
@@ -21,22 +29,22 @@ const DeleteUserData = () => {
         setAvatar,
         backend_url,
         session,
-    } = useStore(appStore);
+    } = useStore(appStore)
 
     const deleteUserData = async () => {
         try {
             if (!session?.nonce) {
-                toast('You must be logged in to clear user data');
-                return;
+                toast('You must be logged in to clear user data')
+                return
             }
 
-            setDeleting(true);
-            const url = `${backend_url}/user_data`;
+            setDeleting(true)
+            const url = `${backend_url}/user_data`
             const response = await axios.delete(url, {
                 headers: {
                     nonce: session.nonce,
                 },
-            });
+            })
 
             if (response.status === 200) {
                 // Clear local state
@@ -48,31 +56,37 @@ const DeleteUserData = () => {
                     alchemy_key: '',
                     theme: 'light',
                     ens_name: '',
-                    witness_contract_address: '0x45f59310ADD88E6d23ca58A0Fa7A55BEE6d2a611',
-                });
-                setFiles([]);
-                setSession(null);
-                setMetamaskAddress(null);
-                setAvatar(undefined);
+                    witness_contract_address:
+                        '0x45f59310ADD88E6d23ca58A0Fa7A55BEE6d2a611',
+                })
+                setFiles([])
+                setSession(null)
+                setMetamaskAddress(null)
+                setAvatar(undefined)
 
                 // Remove cookie
-                document.cookie = 'pkc_nonce=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+                document.cookie =
+                    'pkc_nonce=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;'
 
-                toast('User data cleared successfully. You have been logged out.');
+                toast(
+                    'User data cleared successfully. You have been logged out.'
+                )
 
                 if (window.location.pathname == '/') {
-                    window.location.reload();
+                    window.location.reload()
                 } else {
-                    navigate('/app');
+                    navigate('/app')
                 }
             }
 
-            setDeleting(false);
+            setDeleting(false)
         } catch (e: any) {
-            toast(`Failed to clear user data: ${e instanceof Error ? e.message : String(e)}`);
-            setDeleting(false);
+            toast(
+                `Failed to clear user data: ${e instanceof Error ? e.message : String(e)}`
+            )
+            setDeleting(false)
         }
-    };
+    }
 
     return (
         <Button
@@ -84,25 +98,37 @@ const DeleteUserData = () => {
         >
             Clear Account Data
         </Button>
-    );
-};
+    )
+}
 
 export default function SettingsPage() {
-    const { setUserProfile, user_profile, backend_url, metamaskAddress, session } =
-        useStore(appStore);
+    const {
+        setUserProfile,
+        user_profile,
+        backend_url,
+        metamaskAddress,
+        session,
+    } = useStore(appStore)
 
-    const [activeNetwork, setActiveNetwork] = useState<string>(user_profile.witness_network);
-    const [cliPubKey, _setCliPubKey] = useState<string>(user_profile.cli_pub_key);
-    const [cliPrivKey, _setCliPrivKey] = useState<string>(user_profile.cli_priv_key);
-    const [ensName, setEnsName] = useState<string>(user_profile.ens_name);
+    const [activeNetwork, setActiveNetwork] = useState<string>(
+        user_profile.witness_network
+    )
+    const [cliPubKey, _setCliPubKey] = useState<string>(
+        user_profile.cli_pub_key
+    )
+    const [cliPrivKey, _setCliPrivKey] = useState<string>(
+        user_profile.cli_priv_key
+    )
+    const [ensName, setEnsName] = useState<string>(user_profile.ens_name)
     const [contract, _setContract] = useState<string>(
-        user_profile.witness_contract_address ?? '0x45f59310ADD88E6d23ca58A0Fa7A55BEE6d2a611'
-    );
+        user_profile.witness_contract_address ??
+            '0x45f59310ADD88E6d23ca58A0Fa7A55BEE6d2a611'
+    )
     const [alchemyKey, setAlchemyKey] = useState<string>(
         user_profile.alchemy_key ?? 'ZaQtnup49WhU7fxrujVpkFdRz4JaFRtZ'
-    );
+    )
 
-    const networks = ['Mainnet', 'Sepolia', 'Holesky'];
+    const networks = ['Mainnet', 'Sepolia', 'Holesky']
 
     const updateUserProfile = async () => {
         // const formData = new URLSearchParams();
@@ -113,7 +139,7 @@ export default function SettingsPage() {
         // formData.append("user_pub_key", metamaskAddress ?? user_profile.user_pub_key)
         // formData.append('theme', colorMode ?? "light");
 
-        const url = `${backend_url}/explorer_update_user_settings`;
+        const url = `${backend_url}/explorer_update_user_settings`
 
         const response = await axios.post(
             url,
@@ -129,12 +155,13 @@ export default function SettingsPage() {
             },
             {
                 headers: {
-                    metamask_address: metamaskAddress ?? user_profile.user_pub_key,
+                    metamask_address:
+                        metamaskAddress ?? user_profile.user_pub_key,
                     nonce: session?.nonce,
                     // 'Content-Type': 'application/x-www-form-urlencoded'
                 },
             }
-        );
+        )
 
         if (response.status === 200) {
             setUserProfile({
@@ -145,12 +172,13 @@ export default function SettingsPage() {
                 witness_network: activeNetwork,
                 alchemy_key: alchemyKey,
                 theme: 'light',
-                witness_contract_address: contract ?? '0x45f59310ADD88E6d23ca58A0Fa7A55BEE6d2a611',
-            });
+                witness_contract_address:
+                    contract ?? '0x45f59310ADD88E6d23ca58A0Fa7A55BEE6d2a611',
+            })
 
-            toast('Settings saved successfully');
+            toast('Settings saved successfully')
         }
-    };
+    }
 
     return (
         <div className="container mx-auto py-3 xs:px-6">
@@ -159,7 +187,9 @@ export default function SettingsPage() {
                     <div className="bg-primary/10 p-2 rounded-lg">
                         <LuSettings className="h-6 w-6 text-primary" />
                     </div>
-                    <h1 className="text-3xl font-bold tracking-tight">Settings</h1>
+                    <h1 className="text-3xl font-bold tracking-tight">
+                        Settings
+                    </h1>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -175,7 +205,9 @@ export default function SettingsPage() {
                             <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-800/50 rounded-lg border border-gray-200 dark:border-gray-700">
                                 <span className="font-medium">Theme</span>
                                 <div className="flex items-center gap-2">
-                                    <span className="text-sm text-gray-500">Light</span>
+                                    <span className="text-sm text-gray-500">
+                                        Light
+                                    </span>
                                     <LuSun className="h-5 w-5 text-amber-500" />
                                 </div>
                             </div>
@@ -200,7 +232,9 @@ export default function SettingsPage() {
                                         data-testid="alias-name-input"
                                         type="text"
                                         value={ensName}
-                                        onChange={e => setEnsName(e.target.value)}
+                                        onChange={e =>
+                                            setEnsName(e.target.value)
+                                        }
                                         className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent dark:bg-gray-800/80"
                                         placeholder="Enter your alias name"
                                     />
@@ -228,8 +262,8 @@ export default function SettingsPage() {
                                     {metamaskAddress}
                                 </div>
                                 <p className="text-xs text-gray-500 dark:text-gray-400 ml-6">
-                                    Self-issued identity claim used for generating/verifying aqua
-                                    chain
+                                    Self-issued identity claim used for
+                                    generating/verifying aqua chain
                                 </p>
                             </div>
 
@@ -242,7 +276,9 @@ export default function SettingsPage() {
                                 <input
                                     type="text"
                                     value={alchemyKey}
-                                    onChange={e => setAlchemyKey(e.target.value)}
+                                    onChange={e =>
+                                        setAlchemyKey(e.target.value)
+                                    }
                                     className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent font-mono text-sm dark:bg-gray-800/80"
                                     placeholder="Enter your Alchemy API key"
                                 />
@@ -269,7 +305,9 @@ export default function SettingsPage() {
                                     {networks.map(network => (
                                         <button
                                             key={network}
-                                            onClick={() => setActiveNetwork(network)}
+                                            onClick={() =>
+                                                setActiveNetwork(network)
+                                            }
                                             className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
                                                 activeNetwork === network
                                                     ? 'bg-primary text-white'
@@ -299,5 +337,5 @@ export default function SettingsPage() {
                 </div>
             </div>
         </div>
-    );
+    )
 }

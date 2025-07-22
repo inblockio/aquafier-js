@@ -1,10 +1,10 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react'
 // import { PDFDocument, rgb, StandardFonts } from 'pdf-lib';
 // import { PDFJSViewer } from 'pdfjs-react-viewer';
-import { SignatureData } from '../../../../types/types';
-import { EasyPDFRenderer } from '../signer/SignerPage';
-import { handleLoadFromUrl } from '../../../../utils/functions';
-import { toast } from 'sonner';
+import { SignatureData } from '../../../../types/types'
+import { EasyPDFRenderer } from '../signer/SignerPage'
+import { handleLoadFromUrl } from '../../../../utils/functions'
+import { toast } from 'sonner'
 
 export const SignatureOverlay = ({
     signature,
@@ -12,13 +12,16 @@ export const SignatureOverlay = ({
     pdfMainContainerRef,
     handleDragStart,
 }: {
-    signature: SignatureData;
-    currentPage: number;
-    pdfMainContainerRef: React.RefObject<HTMLDivElement>;
-    handleDragStart?: (e: React.MouseEvent | React.TouchEvent, id: string) => void;
+    signature: SignatureData
+    currentPage: number
+    pdfMainContainerRef: React.RefObject<HTMLDivElement>
+    handleDragStart?: (
+        e: React.MouseEvent | React.TouchEvent,
+        id: string
+    ) => void
 }) => {
-    if (!pdfMainContainerRef) return null;
-    if (signature.page !== currentPage || !signature.signatureId) return null;
+    if (!pdfMainContainerRef) return null
+    if (signature.page !== currentPage || !signature.signatureId) return null
 
     // console.log(`Signature overlay ${JSON.stringify(position, null, 2)} ---- ${JSON.stringify(signatures, null, 2)}`);
     // const signature = signatures.find(sig => sig.id === position.signatureId);
@@ -26,11 +29,12 @@ export const SignatureOverlay = ({
 
     // return <Text>{JSON.stringify(position, null, 4)}</Text>
     // Find the actual PDF element for proper positioning
-    const pdfElement = pdfMainContainerRef.current?.querySelector('.react-pdf__Page');
-    const pdfRect = pdfElement?.getBoundingClientRect();
+    const pdfElement =
+        pdfMainContainerRef.current?.querySelector('.react-pdf__Page')
+    const pdfRect = pdfElement?.getBoundingClientRect()
 
     // if (!pdfElement || !pdfRect) return null;
-    console.log('PDF rect', pdfRect);
+    console.log('PDF rect', pdfRect)
     return (
         <div
             className="absolute overflow-hidden hover:shadow-[0_0_0_1px_blue] transition-[border] duration-200 ease-in-out"
@@ -70,18 +74,20 @@ export const SignatureOverlay = ({
                     }}
                 />
                 <p className="text-xs text-gray-600">{signature.name}</p>
-                <p className="text-xs text-gray-600 overflow-hidden">{signature.walletAddress}</p>
+                <p className="text-xs text-gray-600 overflow-hidden">
+                    {signature.walletAddress}
+                </p>
             </div>
         </div>
-    );
-};
+    )
+}
 
 export const SimpleSignatureOverlay = ({
     signature,
     currentPage,
 }: {
-    signature: SignatureData;
-    currentPage: number;
+    signature: SignatureData
+    currentPage: number
 }) => {
     // const { colorMode } = useColorMode();
     // const isDarkMode = colorMode === "dark";
@@ -89,7 +95,10 @@ export const SimpleSignatureOverlay = ({
         <div
             className="absolute overflow-hidden transition-[border] duration-200 ease-in-out pointer-events-auto"
             style={{
-                display: Number(currentPage) === Number(signature.page) ? 'block' : 'none',
+                display:
+                    Number(currentPage) === Number(signature.page)
+                        ? 'block'
+                        : 'none',
                 left: `calc(${Number(signature.x) * 100}% - 40px)`, // Adjusted for better visibility
                 top: `calc(${(1 - Number(signature.y)) * 100}% - 40px)`, // Adjusted for better visibility
                 transform: `translate(-${Number(signature.width) * 50}%, -${Number(signature.height) * 50}%)`,
@@ -120,37 +129,43 @@ export const SimpleSignatureOverlay = ({
                     }}
                 />
                 <p className="text-xs text-gray-600">{signature.name}</p>
-                <p className="text-xs text-gray-600 overflow-hidden">{signature.walletAddress}</p>
+                <p className="text-xs text-gray-600 overflow-hidden">
+                    {signature.walletAddress}
+                </p>
             </div>
         </div>
-    );
-};
+    )
+}
 
 export const PDFDisplayWithJustSimpleOverlay = ({
     pdfUrl,
     signatures,
 }: {
-    pdfUrl: string;
-    signatures: SignatureData[];
-    annotationsInDocument: SignatureData[];
+    pdfUrl: string
+    signatures: SignatureData[]
+    annotationsInDocument: SignatureData[]
 }) => {
-    const [pdfFile, setPdfFile] = useState<File | null>(null);
+    const [pdfFile, setPdfFile] = useState<File | null>(null)
 
     useEffect(() => {
         const loadPdf = async () => {
             try {
-                const result = await handleLoadFromUrl(pdfUrl, 'Contract document.pdf', toast);
+                const result = await handleLoadFromUrl(
+                    pdfUrl,
+                    'Contract document.pdf',
+                    toast
+                )
                 if (!result.error) {
-                    setPdfFile(result.file);
+                    setPdfFile(result.file)
                 }
             } catch (error) {
-                console.error('Error loading PDF:', error);
+                console.error('Error loading PDF:', error)
             }
-        };
-        loadPdf();
-    }, [pdfUrl]);
+        }
+        loadPdf()
+    }, [pdfUrl])
 
-    if (!pdfFile) return <p>Loading PDF...</p>;
+    if (!pdfFile) return <p>Loading PDF...</p>
 
     return (
         <div className="relative border-1 border-gray-200 radius-md py-4">
@@ -174,5 +189,5 @@ export const PDFDisplayWithJustSimpleOverlay = ({
                 }))}
             />
         </div>
-    );
-};
+    )
+}

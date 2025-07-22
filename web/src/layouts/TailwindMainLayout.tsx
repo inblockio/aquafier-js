@@ -1,8 +1,8 @@
-import { Button } from '@/components/ui/button';
-import { Github } from 'lucide-react';
-import { BsTwitterX } from 'react-icons/bs';
-import { FaFacebook, FaLinkedin } from 'react-icons/fa6';
-import { Link, Outlet } from 'react-router-dom';
+import { Button } from '@/components/ui/button'
+import { Github } from 'lucide-react'
+import { BsTwitterX } from 'react-icons/bs'
+import { FaFacebook, FaLinkedin } from 'react-icons/fa6'
+import { Link, Outlet } from 'react-router-dom'
 
 const Header = () => (
     <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -77,7 +77,7 @@ const Header = () => (
             </div>
         </div>
     </header>
-);
+)
 
 const Footer = () => (
     <footer className="bg-gradient-to-b from-orange-900 to-orange-950 text-orange-100/80">
@@ -121,11 +121,14 @@ const Footer = () => (
                         </span>
                     </div>
                     <p className="mt-4 text-sm">
-                        A Cryptographic Trust Protocol for Decentralized Data Integrity.
+                        A Cryptographic Trust Protocol for Decentralized Data
+                        Integrity.
                     </p>
                 </div>
                 <div>
-                    <h4 className="font-headline font-semibold text-orange-100">Protocol</h4>
+                    <h4 className="font-headline font-semibold text-orange-100">
+                        Protocol
+                    </h4>
                     <ul className="mt-4 space-y-2 text-sm">
                         <li>
                             <a
@@ -152,17 +155,25 @@ const Footer = () => (
                             </a>
                         </li>
                         <li>
-                            <a href="/#vision" className="hover:text-orange-300 transition-colors">
+                            <a
+                                href="/#vision"
+                                className="hover:text-orange-300 transition-colors"
+                            >
                                 Vision
                             </a>
                         </li>
                     </ul>
                 </div>
                 <div>
-                    <h4 className="font-headline font-semibold text-orange-100">Company</h4>
+                    <h4 className="font-headline font-semibold text-orange-100">
+                        Company
+                    </h4>
                     <ul className="mt-4 space-y-2 text-sm">
                         <li>
-                            <Link to="#" className="hover:text-orange-300 transition-colors">
+                            <Link
+                                to="#"
+                                className="hover:text-orange-300 transition-colors"
+                            >
                                 About Us
                             </Link>
                         </li>
@@ -177,15 +188,26 @@ const Footer = () => (
                     </ul>
                 </div>
                 <div>
-                    <h4 className="font-headline font-semibold text-orange-100">Connect</h4>
+                    <h4 className="font-headline font-semibold text-orange-100">
+                        Connect
+                    </h4>
                     <div className="mt-4 flex space-x-4">
-                        <Link to="#" className="hover:text-orange-300 transition-colors">
+                        <Link
+                            to="#"
+                            className="hover:text-orange-300 transition-colors"
+                        >
                             <BsTwitterX />
                         </Link>
-                        <Link to="#" className="hover:text-orange-300 transition-colors">
+                        <Link
+                            to="#"
+                            className="hover:text-orange-300 transition-colors"
+                        >
                             <FaFacebook />
                         </Link>
-                        <Link to="#" className="hover:text-orange-300 transition-colors">
+                        <Link
+                            to="#"
+                            className="hover:text-orange-300 transition-colors"
+                        >
                             <FaLinkedin />
                         </Link>
                     </div>
@@ -199,15 +221,21 @@ const Footer = () => (
                     >
                         Terms & Conditions
                     </Link>
-                    <Link to="/privacy-policy" className="hover:text-orange-300 transition-colors">
+                    <Link
+                        to="/privacy-policy"
+                        className="hover:text-orange-300 transition-colors"
+                    >
                         Privacy Policy
                     </Link>
                 </div>
-                <p>&copy; {new Date().getFullYear()} Aqua Protocol. All rights reserved.</p>
+                <p>
+                    &copy; {new Date().getFullYear()} Aqua Protocol. All rights
+                    reserved.
+                </p>
             </div>
         </div>
     </footer>
-);
+)
 
 const TailwindMainLayout = () => {
     return (
@@ -218,7 +246,7 @@ const TailwindMainLayout = () => {
             </main>
             <Footer />
         </div>
-    );
-};
+    )
+}
 
-export default TailwindMainLayout;
+export default TailwindMainLayout

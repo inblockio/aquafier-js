@@ -6,14 +6,14 @@ import {
     DialogTitle,
     DialogTrigger,
     DialogCloseTrigger,
-} from '@chakra-ui/react';
+} from '@chakra-ui/react'
 
 interface IReusableCustomDialog {
-    open: boolean;
-    setOpen: (open: boolean) => void;
-    title: string;
-    children: React.ReactNode;
-    trigger?: React.ReactNode;
+    open: boolean
+    setOpen: (open: boolean) => void
+    title: string
+    children: React.ReactNode
+    trigger?: React.ReactNode
 }
 
 const ReusableCustomDialog = ({
@@ -24,15 +24,27 @@ const ReusableCustomDialog = ({
     trigger,
 }: IReusableCustomDialog) => {
     return (
-        <Dialog.Root size={'md'} lazyMount open={open} onOpenChange={e => setOpen(e.open)}>
+        <Dialog.Root
+            size={'md'}
+            lazyMount
+            open={open}
+            onOpenChange={e => setOpen(e.open)}
+        >
             <DialogTrigger asChild>{trigger}</DialogTrigger>
             <DialogContent borderRadius={'2xl'} overflow={'hidden'}>
                 <DialogHeader
                     py={'3'}
                     px={'5'}
-                    bg={{ base: 'rgb(188 220 255 / 22%)', _dark: 'rgba(0, 0, 0, 0.3)' }}
+                    bg={{
+                        base: 'rgb(188 220 255 / 22%)',
+                        _dark: 'rgba(0, 0, 0, 0.3)',
+                    }}
                 >
-                    <DialogTitle fontWeight={500} color={'gray.800'} _dark={{ color: 'white' }}>
+                    <DialogTitle
+                        fontWeight={500}
+                        color={'gray.800'}
+                        _dark={{ color: 'white' }}
+                    >
                         {title}
                     </DialogTitle>
                 </DialogHeader>
@@ -42,7 +54,7 @@ const ReusableCustomDialog = ({
                 <DialogCloseTrigger />
             </DialogContent>
         </Dialog.Root>
-    );
-};
+    )
+}
 
-export default ReusableCustomDialog;
+export default ReusableCustomDialog

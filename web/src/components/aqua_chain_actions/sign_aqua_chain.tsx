@@ -1,21 +1,26 @@
-import { LuSignature } from 'react-icons/lu';
+import { LuSignature } from 'react-icons/lu'
 import {
     areArraysEqual,
     dummyCredential,
     ensureDomainUrlHasSSL,
     fetchFiles,
     getGenesisHash,
-} from '../../utils/functions';
-import { useStore } from 'zustand';
-import appStore from '../../store';
-import axios from 'axios';
-import { ApiFileInfo } from '../../models/FileInfo';
-import { useState } from 'react';
-import Aquafier, { AquaTreeWrapper } from 'aqua-js-sdk';
-import { RevionOperation } from '../../models/RevisionOperation';
-import { toaster } from '@/components/ui/use-toast';
+} from '../../utils/functions'
+import { useStore } from 'zustand'
+import appStore from '../../store'
+import axios from 'axios'
+import { ApiFileInfo } from '../../models/FileInfo'
+import { useState } from 'react'
+import Aquafier, { AquaTreeWrapper } from 'aqua-js-sdk'
+import { RevionOperation } from '../../models/RevisionOperation'
+import { toaster } from '@/components/ui/use-toast'
 
-export const SignAquaChain = ({ apiFileInfo, backendUrl, nonce, index }: RevionOperation) => {
+export const SignAquaChain = ({
+    apiFileInfo,
+    backendUrl,
+    nonce,
+    index,
+}: RevionOperation) => {
     const {
         files,
         setFiles,
@@ -24,50 +29,52 @@ export const SignAquaChain = ({ apiFileInfo, backendUrl, nonce, index }: RevionO
         user_profile,
         session,
         backend_url,
-    } = useStore(appStore);
-    const [signing, setSigning] = useState(false);
+    } = useStore(appStore)
+    const [signing, setSigning] = useState(false)
 
     const signFileHandler = async () => {
-        setSigning(true);
+        setSigning(true)
         if (window.ethereum) {
             try {
-                const aquafier = new Aquafier();
+                const aquafier = new Aquafier()
 
                 const aquaTreeWrapper: AquaTreeWrapper = {
                     aquaTree: apiFileInfo.aquaTree!,
                     revision: '',
                     fileObject: undefined,
-                };
+                }
 
-                const xCredentials = dummyCredential();
-                xCredentials.witness_eth_network = user_profile?.witness_network ?? 'sepolia';
+                const xCredentials = dummyCredential()
+                xCredentials.witness_eth_network =
+                    user_profile?.witness_network ?? 'sepolia'
 
                 const result = await aquafier.signAquaTree(
                     aquaTreeWrapper,
                     'metamask',
                     xCredentials
-                );
+                )
                 if (result.isErr()) {
                     toaster.create({
                         description: `Error signing failed`,
                         type: 'error',
-                    });
+                    })
                 } else {
                     const revisionHashes = result.data.aquaTree?.revisions
                         ? Object.keys(result.data.aquaTree.revisions)
-                        : [];
+                        : []
 
                     if (revisionHashes.length == 0) {
                         toaster.create({
                             description: `Error signing failed (aqua tree structure)`,
                             type: 'error',
-                        });
-                        return;
+                        })
+                        return
                     }
-                    const lastHash = revisionHashes[revisionHashes.length - 1];
-                    const lastRevision = result.data.aquaTree?.revisions[lastHash];
+                    const lastHash = revisionHashes[revisionHashes.length - 1]
+                    const lastRevision =
+                        result.data.aquaTree?.revisions[lastHash]
                     // send to server
-                    const url = `${backendUrl}/tree`;
+                    const url = `${backendUrl}/tree`
 
                     const response = await axios.post(
                         url,
@@ -81,11 +88,11 @@ export const SignAquaChain = ({ apiFileInfo, backendUrl, nonce, index }: RevionO
                                 nonce: nonce,
                             },
                         }
-                    );
+                    )
 
                     if (response.status === 200 || response.status === 201) {
                         if (response.data.data) {
-                            const newFiles: ApiFileInfo[] = response.data.data;
+                            const newFiles: ApiFileInfo[] = response.data.data
 
                             // let data = {
                             //     ...selectedFileInfo!!,
@@ -97,21 +104,27 @@ export const SignAquaChain = ({ apiFileInfo, backendUrl, nonce, index }: RevionO
                             // setFiles(newFiles)
 
                             try {
-                                const url = ensureDomainUrlHasSSL(`${backend_url}/explorer_files`);
+                                const url = ensureDomainUrlHasSSL(
+                                    `${backend_url}/explorer_files`
+                                )
                                 const files = await fetchFiles(
                                     session!.address!,
                                     url,
                                     session!.nonce
-                                );
-                                setFiles(files);
+                                )
+                                setFiles(files)
 
                                 if (selectedFileInfo) {
-                                    const genesisHash = getGenesisHash(selectedFileInfo.aquaTree!);
+                                    const genesisHash = getGenesisHash(
+                                        selectedFileInfo.aquaTree!
+                                    )
                                     for (let i = 0; i < newFiles.length; i++) {
-                                        const newFile = newFiles[i];
-                                        const newGenesisHash = getGenesisHash(newFile.aquaTree!);
+                                        const newFile = newFiles[i]
+                                        const newGenesisHash = getGenesisHash(
+                                            newFile.aquaTree!
+                                        )
                                         if (newGenesisHash == genesisHash) {
-                                            setSelectedFileInfo(newFile);
+                                            setSelectedFileInfo(newFile)
                                         }
                                     }
                                 }
@@ -120,54 +133,58 @@ export const SignAquaChain = ({ apiFileInfo, backendUrl, nonce, index }: RevionO
                                 toaster.create({
                                     description: 'Error updating files',
                                     type: 'error',
-                                });
+                                })
                                 // document.location.reload()
                             }
                         } else {
                             //  console.log("update state ...")
-                            const newFiles: ApiFileInfo[] = [];
-                            const keysPar = Object.keys(apiFileInfo.aquaTree!.revisions!);
+                            const newFiles: ApiFileInfo[] = []
+                            const keysPar = Object.keys(
+                                apiFileInfo.aquaTree!.revisions!
+                            )
                             files.forEach(item => {
-                                const keys = Object.keys(item.aquaTree!.revisions!);
+                                const keys = Object.keys(
+                                    item.aquaTree!.revisions!
+                                )
                                 if (areArraysEqual(keys, keysPar)) {
                                     newFiles.push({
                                         ...apiFileInfo,
                                         aquaTree: result.data.aquaTree!,
-                                    });
+                                    })
                                 } else {
-                                    newFiles.push(item);
+                                    newFiles.push(item)
                                 }
-                            });
-                            const _selectFileInfo = selectedFileInfo!;
-                            _selectFileInfo.aquaTree = result.data.aquaTree!;
-                            setSelectedFileInfo(_selectFileInfo);
-                            setFiles(newFiles);
+                            })
+                            const _selectFileInfo = selectedFileInfo!
+                            _selectFileInfo.aquaTree = result.data.aquaTree!
+                            setSelectedFileInfo(_selectFileInfo)
+                            setFiles(newFiles)
                         }
                     }
 
                     toaster.create({
                         description: `Signing successfull`,
                         type: 'success',
-                    });
+                    })
                 }
 
-                setSigning(false);
+                setSigning(false)
             } catch (error) {
-                console.error('An Error', error);
-                setSigning(false);
+                console.error('An Error', error)
+                setSigning(false)
                 toaster.create({
                     description: `Error during signing`,
                     type: 'error',
-                });
+                })
             }
         } else {
-            setSigning(false);
+            setSigning(false)
             toaster.create({
                 description: `MetaMask is not installed`,
                 type: 'info',
-            });
+            })
         }
-    };
+    }
     return (
         <>
             {/* Sign Button */}
@@ -175,12 +192,12 @@ export const SignAquaChain = ({ apiFileInfo, backendUrl, nonce, index }: RevionO
                 data-testid={'sign-action-button-' + index}
                 onClick={() => {
                     if (!signing) {
-                        signFileHandler();
+                        signFileHandler()
                     } else {
                         toaster.create({
                             description: 'Signing is already in progress',
                             type: 'info',
-                        });
+                        })
                     }
                 }}
                 className={`w-full flex items-center justify-center space-x-1 bg-blue-100 text-blue-700 px-3 py-2 rounded transition-colors text-xs ${signing ? 'opacity-60 cursor-not-allowed' : 'hover:bg-blue-200'}`}
@@ -218,5 +235,5 @@ export const SignAquaChain = ({ apiFileInfo, backendUrl, nonce, index }: RevionO
                 )}
             </button>
         </>
-    );
-};
+    )
+}

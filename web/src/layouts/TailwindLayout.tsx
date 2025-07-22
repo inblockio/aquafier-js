@@ -11,39 +11,47 @@ import {
     Bell,
     Users,
     CopyrightIcon,
-} from 'lucide-react';
-import { Outlet } from 'react-router-dom';
-import CustomNavLink from '@/components/ui/CustomNavLink';
-import { Link as RouterLink } from 'react-router-dom';
-import { useStore } from 'zustand';
-import appStore from '@/store';
-import { ConnectWallet } from '@/components/connect_wallet';
-import { Toaster } from 'sonner';
+} from 'lucide-react'
+import { Outlet } from 'react-router-dom'
+import CustomNavLink from '@/components/ui/CustomNavLink'
+import { Link as RouterLink } from 'react-router-dom'
+import { useStore } from 'zustand'
+import appStore from '@/store'
+import { ConnectWallet } from '@/components/connect_wallet'
+import { Toaster } from 'sonner'
 
 const TailwindLayout = () => {
-    const { session } = useStore(appStore);
+    const { session } = useStore(appStore)
 
-    const usedStorage = 3.3; // GB
-    const totalStorage = 5; // GB
-    const usagePercentage = (usedStorage / totalStorage) * 100;
+    const usedStorage = 3.3 // GB
+    const totalStorage = 5 // GB
+    const usagePercentage = (usedStorage / totalStorage) * 100
 
     const sidebarItems = [
         { icon: FileText, label: 'All files', id: '/' },
         { icon: Workflow, label: 'Workflows', id: '/files_workflows' },
         { icon: LayoutTemplate, label: 'Templates', id: '/files_templates' },
         { icon: Share2, label: 'Shared files', id: '/files_shared' },
-    ];
+    ]
 
     const quickAccessItems = [
         { label: 'Info', icon: Star, id: '/files_info' },
         { label: 'Settings', icon: Settings, id: '/files_settings' },
-    ];
+    ]
 
     const applicationsItems = [
-        { label: 'Document Signature', icon: Signature, id: '/form-instance/aqua_sign' },
+        {
+            label: 'Document Signature',
+            icon: Signature,
+            id: '/form-instance/aqua_sign',
+        },
         // { label: 'Domain Attestation', icon: Link, id: "/domain_attestation" }
-        { label: 'Claim & Attestation', icon: Link, id: '/claims_and_attestation' },
-    ];
+        {
+            label: 'Claim & Attestation',
+            icon: Link,
+            id: '/claims_and_attestation',
+        },
+    ]
 
     const uiView = () => {
         return (
@@ -63,7 +71,10 @@ const TailwindLayout = () => {
                                     textDecoration: 'none',
                                 }}
                             >
-                                <img className="h-[36px]" src="/images/logo.png" />
+                                <img
+                                    className="h-[36px]"
+                                    src="/images/logo.png"
+                                />
                             </a>
                         </div>
                     </div>
@@ -72,7 +83,11 @@ const TailwindLayout = () => {
                     <div className="flex-1 p-4">
                         <nav className="space-y-2">
                             {sidebarItems.map((item, index) => (
-                                <CustomNavLink key={`app_${index}`} item={item} index={index} />
+                                <CustomNavLink
+                                    key={`app_${index}`}
+                                    item={item}
+                                    index={index}
+                                />
                             ))}
                         </nav>
 
@@ -119,7 +134,9 @@ const TailwindLayout = () => {
                     <div className="p-4 border-t border-gray-200">
                         <div className="bg-gray-50 p-4 rounded-lg">
                             {/* Storage Header */}
-                            <h3 className="text-sm font-medium text-gray-900 mb-3">Storage</h3>
+                            <h3 className="text-sm font-medium text-gray-900 mb-3">
+                                Storage
+                            </h3>
 
                             {/* Progress Bar */}
                             <div className="w-full bg-gray-200 rounded-full h-2 mb-2">
@@ -131,19 +148,26 @@ const TailwindLayout = () => {
 
                             {/* Storage Details */}
                             <div className="text-sm text-gray-600">
-                                <span className="text-blue-600 underline">{usedStorage} GB</span>{' '}
-                                used of {totalStorage} GB ({Math.round(usagePercentage)}%)
+                                <span className="text-blue-600 underline">
+                                    {usedStorage} GB
+                                </span>{' '}
+                                used of {totalStorage} GB (
+                                {Math.round(usagePercentage)}%)
                             </div>
                         </div>
 
                         <div className="bg-gray-900 text-white p-3 rounded-md">
                             <div className="flex items-center justify-between mb-2">
-                                <span className="text-sm font-medium">Get started</span>
+                                <span className="text-sm font-medium">
+                                    Get started
+                                </span>
                                 <span className="text-xs bg-gray-700 px-2 py-1 rounded">
                                     25% off
                                 </span>
                             </div>
-                            <p className="text-xs text-gray-300">Give it a try today</p>
+                            <p className="text-xs text-gray-300">
+                                Give it a try today
+                            </p>
                         </div>
                     </div>
                 </div>
@@ -194,14 +218,16 @@ const TailwindLayout = () => {
                             <span className="font-medium">
                                 {new Date().getFullYear()}{' '}
                                 <CopyrightIcon className="inline w-4 h-4 align-text-bottom" />{' '}
-                                <RouterLink to={'https://inblock.io/'}>Inblock.io</RouterLink>
+                                <RouterLink to={'https://inblock.io/'}>
+                                    Inblock.io
+                                </RouterLink>
                             </span>
                         </div>
                     </div>
                 </div>
             </div>
-        );
-    };
+        )
+    }
 
     return (
         <>
@@ -214,7 +240,7 @@ const TailwindLayout = () => {
                 </div>
             )}
         </>
-    );
-};
+    )
+}
 
-export default TailwindLayout;
+export default TailwindLayout

@@ -1,46 +1,55 @@
-import { useState, useEffect } from 'react';
-import { Bell } from 'lucide-react';
+import { useState, useEffect } from 'react'
+import { Bell } from 'lucide-react'
 
-import NotificationsHolder from './NotificaitonsHolder';
-import axios from 'axios';
-import { INotification } from '../../types/index';
-import appStore from '../../store';
-import { API_ENDPOINTS } from '../../utils/constants';
-import { Popover, PopoverContent, PopoverTrigger } from '../../components/ui/popover';
-import { Badge } from '../../components/ui/badge';
-import { Button } from '../../components/ui/button';
+import NotificationsHolder from './NotificaitonsHolder'
+import axios from 'axios'
+import { INotification } from '../../types/index'
+import appStore from '../../store'
+import { API_ENDPOINTS } from '../../utils/constants'
+import {
+    Popover,
+    PopoverContent,
+    PopoverTrigger,
+} from '../../components/ui/popover'
+import { Badge } from '../../components/ui/badge'
+import { Button } from '../../components/ui/button'
 
 const NotificationsBell = () => {
-    const [notifications, setNotifications] = useState<INotification[]>([]);
-    const [unreadCount, setUnreadCount] = useState<number>(0);
-    const [isLoading, setIsLoading] = useState<boolean>(false);
-    const [isOpen, setIsOpen] = useState<boolean>(false);
-    const { backend_url, session } = appStore.getState();
+    const [notifications, setNotifications] = useState<INotification[]>([])
+    const [unreadCount, setUnreadCount] = useState<number>(0)
+    const [isLoading, setIsLoading] = useState<boolean>(false)
+    const [isOpen, setIsOpen] = useState<boolean>(false)
+    const { backend_url, session } = appStore.getState()
 
     const fetchNotifications = async () => {
-        if (!session?.address) return;
+        if (!session?.address) return
 
-        setIsLoading(true);
+        setIsLoading(true)
         try {
-            const response = await axios.get(`${backend_url}${API_ENDPOINTS.NOTIFICATIONS}`, {
-                headers: {
-                    nonce: session.nonce,
-                },
-            });
+            const response = await axios.get(
+                `${backend_url}${API_ENDPOINTS.NOTIFICATIONS}`,
+                {
+                    headers: {
+                        nonce: session.nonce,
+                    },
+                }
+            )
 
-            setNotifications(response.data);
+            setNotifications(response.data)
             setUnreadCount(
-                response.data.filter((notification: INotification) => !notification.is_read).length
-            );
+                response.data.filter(
+                    (notification: INotification) => !notification.is_read
+                ).length
+            )
         } catch (error) {
-            console.error('Failed to fetch notifications:', error);
+            console.error('Failed to fetch notifications:', error)
         } finally {
-            setIsLoading(false);
+            setIsLoading(false)
         }
-    };
+    }
 
     const markAllAsRead = async () => {
-        if (!session?.address) return;
+        if (!session?.address) return
 
         try {
             await axios.patch(
@@ -51,7 +60,7 @@ const NotificationsBell = () => {
                         nonce: session.nonce,
                     },
                 }
-            );
+            )
 
             // Update local state
             setNotifications(prevNotifications =>
@@ -59,41 +68,46 @@ const NotificationsBell = () => {
                     ...notification,
                     is_read: true,
                 }))
-            );
-            setUnreadCount(0);
+            )
+            setUnreadCount(0)
         } catch (error) {
-            console.error('Failed to mark notifications as read:', error);
+            console.error('Failed to mark notifications as read:', error)
         }
-    };
+    }
 
     useEffect(() => {
         if (isOpen) {
-            fetchNotifications();
+            fetchNotifications()
         }
-    }, [isOpen, session?.address]);
+    }, [isOpen, session?.address])
 
     // Poll for new notifications every minute
     useEffect(() => {
         const interval = setInterval(() => {
             if (session?.address) {
-                fetchNotifications();
+                fetchNotifications()
             }
-        }, 60000); // 1 minute
+        }, 60000) // 1 minute
 
-        return () => clearInterval(interval);
-    }, [session?.address]);
+        return () => clearInterval(interval)
+    }, [session?.address])
 
     // Initial fetch
     useEffect(() => {
         if (session?.address) {
-            fetchNotifications();
+            fetchNotifications()
         }
-    }, [session?.address]);
+    }, [session?.address])
 
     return (
         <Popover open={isOpen} onOpenChange={setIsOpen} modal>
             <PopoverTrigger asChild>
-                <Button variant="ghost" size="icon" className="relative" aria-label="Notifications">
+                <Button
+                    variant="ghost"
+                    size="icon"
+                    className="relative"
+                    aria-label="Notifications"
+                >
                     <Bell className="h-5 w-5" />
                     {unreadCount > 0 && (
                         <Badge
@@ -114,7 +128,7 @@ const NotificationsBell = () => {
                 />
             </PopoverContent>
         </Popover>
-    );
-};
+    )
+}
 
-export default NotificationsBell;
+export default NotificationsBell

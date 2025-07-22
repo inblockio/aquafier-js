@@ -1,5 +1,5 @@
 const DomainAttestationPage = () => {
-    return <>attestation page</>;
-};
+    return <>attestation page</>
+}
 
-export default DomainAttestationPage;
+export default DomainAttestationPage

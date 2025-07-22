@@ -7,19 +7,19 @@ import {
     FiCopy,
     FiFileText,
     FiInfo,
-} from 'react-icons/fi';
-import { BsCheckCircleFill } from 'react-icons/bs';
-import { IContractWorkFlowFirstPage } from '../../../types/contract_workflow';
-import { Button } from '../../../components/ui/button';
-import { Badge } from '../../../components/ui/badge';
-import { Card, CardContent } from '../../../components/ui/card';
-import { cn } from '../../../lib/utils';
+} from 'react-icons/fi'
+import { BsCheckCircleFill } from 'react-icons/bs'
+import { IContractWorkFlowFirstPage } from '../../../types/contract_workflow'
+import { Button } from '../../../components/ui/button'
+import { Badge } from '../../../components/ui/badge'
+import { Card, CardContent } from '../../../components/ui/card'
+import { cn } from '../../../lib/utils'
 
 const DisplayWalletAddress = ({
     walletAddress,
 }: {
-    walletAddress: string;
-    enableNameResolution: boolean;
+    walletAddress: string
+    enableNameResolution: boolean
 }) => {
     return (
         <>
@@ -31,8 +31,8 @@ const DisplayWalletAddress = ({
       } */}
             {walletAddress}
         </>
-    );
-};
+    )
+}
 
 const ContractSummaryDetails = ({
     data,
@@ -40,69 +40,83 @@ const ContractSummaryDetails = ({
     enableNameResolution = false,
     isValidTree,
 }: IContractWorkFlowFirstPage) => {
-    const mockContractData = data;
+    const mockContractData = data
 
     const formatDateTime = (dateString: string) => {
         // return format(new Date(dateString), "MMM d, yyyy, HH:mm:ss a");
-        return dateString;
-    };
+        return dateString
+    }
 
-    const getInformation = (activityType: 'created' | 'signed' | 'completed') => {
+    const getInformation = (
+        activityType: 'created' | 'signed' | 'completed'
+    ) => {
         switch (activityType) {
             case 'created':
                 return {
                     title: 'Workflow Created',
                     icon: FiFileText,
                     color: 'blue',
-                };
+                }
             case 'signed':
                 return {
                     title: 'Signature Detected',
                     icon: FiCheckCircle,
                     color: 'green',
-                };
+                }
             case 'completed':
                 return {
                     title: 'Workflow Completed',
                     icon: FiCheckSquare,
                     color: 'green',
-                };
+                }
             default:
                 return {
                     title: 'Default',
                     icon: FiInfo,
                     color: 'gray',
-                };
+                }
         }
-    };
+    }
 
-    const CustomDivider = ({ mb, mt }: { mb: string | number; mt: string | number }) => {
+    const CustomDivider = ({
+        mb,
+        mt,
+    }: {
+        mb: string | number
+        mt: string | number
+    }) => {
         return (
             <div
                 className="w-full h-px bg-gray-200 dark:bg-gray-800"
                 style={{ marginTop: mt, marginBottom: mb }}
             />
-        );
-    };
+        )
+    }
 
     const getBgColorBasedOnVerificationStatus = () => {
         if (isValidTree === 'pending') {
-            return 'bg-gray-50';
+            return 'bg-gray-50'
         } else if (isValidTree === 'successful') {
-            return 'bg-green-50';
+            return 'bg-green-50'
         } else if (isValidTree === 'failed') {
-            return 'bg-red-50';
+            return 'bg-red-50'
         }
-        return 'bg-gray-50';
-    };
+        return 'bg-gray-50'
+    }
 
     return (
         <div className="flex flex-col rounded-lg shadow-lg pt-8 overflow-hidden gap-2">
             <div className="px-2 md:px-8 flex justify-between items-center">
                 <div className="flex items-center space-x-2 flex-wrap">
-                    <h2 className="text-sm md:text-xl font-semibold">{mockContractData.name}</h2>
+                    <h2 className="text-sm md:text-xl font-semibold">
+                        {mockContractData.name}
+                    </h2>
                     <Badge
-                        variant={mockContractData.status === 'pending' ? 'outline' : 'default'}
+                        variant={
+                            mockContractData.status === 'pending'
+                                ? 'outline'
+                                : 'default'
+                        }
                         className={cn(
                             'rounded-full',
                             mockContractData.status === 'pending'
@@ -130,7 +144,9 @@ const ContractSummaryDetails = ({
 
             <div className="flex items-center px-2 md:px-8">
                 <FiCalendar className="text-gray-500 mr-2" />
-                <p className="text-gray-500 text-xs">Created on {mockContractData.creationDate}</p>
+                <p className="text-gray-500 text-xs">
+                    Created on {mockContractData.creationDate}
+                </p>
             </div>
 
             <div className="flex items-center px-2 md:px-8">
@@ -169,7 +185,9 @@ const ContractSummaryDetails = ({
                                     <p className="text-black/90 font-mono text-sm break-all">
                                         <DisplayWalletAddress
                                             walletAddress={signer.address}
-                                            enableNameResolution={enableNameResolution}
+                                            enableNameResolution={
+                                                enableNameResolution
+                                            }
                                         />
                                     </p>
                                 </div>
@@ -181,10 +199,12 @@ const ContractSummaryDetails = ({
                                             : 'text-green-600'
                                     )}
                                 >
-                                    {signer.status === 'pending' ? 'Pending' : 'Signed'}
+                                    {signer.status === 'pending'
+                                        ? 'Pending'
+                                        : 'Signed'}
                                 </p>
                             </div>
-                        );
+                        )
                     })}
                 </div>
             </div>
@@ -192,13 +212,18 @@ const ContractSummaryDetails = ({
             <CustomDivider mt={2} mb={2} />
 
             <div className="px-[20px] md:px-8 flex flex-col gap-2">
-                <h3 className="text-lg font-semibold">Workflow activity timeline</h3>
+                <h3 className="text-lg font-semibold">
+                    Workflow activity timeline
+                </h3>
                 <div>
                     <div className="w-full flex flex-col gap-5 py-6">
                         {mockContractData.activities.map((activity, index) => {
-                            const info = getInformation(activity.type as any);
+                            const info = getInformation(activity.type as any)
                             return (
-                                <div key={`activity_item_${index}`} className="relative last:pb-0">
+                                <div
+                                    key={`activity_item_${index}`}
+                                    className="relative last:pb-0"
+                                >
                                     {/* Timeline connector */}
                                     <div className="absolute left-0 top-0 bottom-0 w-px bg-blue-200"></div>
 
@@ -218,20 +243,29 @@ const ContractSummaryDetails = ({
 
                                     {/* Timeline content */}
                                     <div className="ml-4">
-                                        <h4 className="font-medium">{info.title}</h4>
+                                        <h4 className="font-medium">
+                                            {info.title}
+                                        </h4>
 
                                         {activity.type === 'signed' && (
                                             <p className="opacity-80 text-sm break-all">
                                                 User with address{' '}
                                                 <span className="font-semibold font-mono">
                                                     <DisplayWalletAddress
-                                                        walletAddress={activity.address ?? ''}
-                                                        enableNameResolution={enableNameResolution}
+                                                        walletAddress={
+                                                            activity.address ??
+                                                            ''
+                                                        }
+                                                        enableNameResolution={
+                                                            enableNameResolution
+                                                        }
                                                     />
                                                 </span>{' '}
                                                 signed the document at{' '}
                                                 <span className="font-semibold">
-                                                    {formatDateTime(activity.timestamp)}
+                                                    {formatDateTime(
+                                                        activity.timestamp
+                                                    )}
                                                 </span>
                                             </p>
                                         )}
@@ -244,16 +278,20 @@ const ContractSummaryDetails = ({
                                                         <span className="font-semibold font-mono">
                                                             <DisplayWalletAddress
                                                                 walletAddress={
-                                                                    activity.address ?? ''
+                                                                    activity.address ??
+                                                                    ''
                                                                 }
                                                                 enableNameResolution={
                                                                     enableNameResolution
                                                                 }
                                                             />
                                                         </span>{' '}
-                                                        Created the contract workflow at{' '}
+                                                        Created the contract
+                                                        workflow at{' '}
                                                         <span className="font-semibold">
-                                                            {formatDateTime(activity.timestamp)}
+                                                            {formatDateTime(
+                                                                activity.timestamp
+                                                            )}
                                                         </span>
                                                     </p>
                                                     <p className="opacity-90 text-sm text-black/90">
@@ -268,7 +306,8 @@ const ContractSummaryDetails = ({
                                                 <CardContent className="px-3 py-0">
                                                     <p className="opacity-90 text-sm text-black/90">
                                                         <FiCheck className="inline text-green-600 mr-1" />
-                                                        Workflow completed and validated
+                                                        Workflow completed and
+                                                        validated
                                                     </p>
                                                     <p className="opacity-90 text-sm text-black/90">
                                                         {activity.details}
@@ -278,7 +317,7 @@ const ContractSummaryDetails = ({
                                         )}
                                     </div>
                                 </div>
-                            );
+                            )
                         })}
                     </div>
                 </div>
@@ -301,7 +340,9 @@ const ContractSummaryDetails = ({
                             </div>
                         )}
                         {mockContractData.status === 'pending' && (
-                            <p className="text-sm opacity-90">{mockContractData?.footerMsg}</p>
+                            <p className="text-sm opacity-90">
+                                {mockContractData?.footerMsg}
+                            </p>
                         )}
                         <Button
                             data-testid="action-view-contract-button"
@@ -320,7 +361,7 @@ const ContractSummaryDetails = ({
                 </div>
             </div>
         </div>
-    );
-};
+    )
+}
 
-export default ContractSummaryDetails;
+export default ContractSummaryDetails

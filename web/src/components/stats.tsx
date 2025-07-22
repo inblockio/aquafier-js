@@ -9,21 +9,21 @@ import {
     StatRoot,
     Text,
     VStack,
-} from '@chakra-ui/react';
+} from '@chakra-ui/react'
 // import { StatHelpText, StatLabel } from "./stat";
-import { LuDot } from 'react-icons/lu';
-import { UiFileTypes } from '../models/UiFileTypes';
-import { ApiFileInfo } from '../models/FileInfo';
-import { filterFilesByType, humanReadableFileSize } from '../utils/functions';
-import { useStore } from 'zustand';
-import appStore from '../store';
+import { LuDot } from 'react-icons/lu'
+import { UiFileTypes } from '../models/UiFileTypes'
+import { ApiFileInfo } from '../models/FileInfo'
+import { filterFilesByType, humanReadableFileSize } from '../utils/functions'
+import { useStore } from 'zustand'
+import appStore from '../store'
 
 interface IStatistic {
-    title: string;
-    tagline: string;
-    size: string;
-    image: string;
-    files: string;
+    title: string
+    tagline: string
+    size: string
+    image: string
+    files: string
 }
 
 const Statistic = (props: IStatistic) => {
@@ -86,8 +86,8 @@ const Statistic = (props: IStatistic) => {
                 {`${props.files} Files`}
             </StatHelpText>
         </StatRoot>
-    );
-};
+    )
+}
 
 // const calculateTotalFilesSize = (_files: ApiFileInfo[]) => {
 //     const size = -1;
@@ -103,16 +103,16 @@ const Statistic = (props: IStatistic) => {
 // }
 
 const getFileTypeProportions = (files: ApiFileInfo[]) => {
-    const fileTypes = ['image', 'document', 'music', 'video'];
+    const fileTypes = ['image', 'document', 'music', 'video']
 
-    const filesUiState: Record<string, UiFileTypes> = {};
+    const filesUiState: Record<string, UiFileTypes> = {}
 
-    const totalFilesSize = -1; //calculateTotalFilesSize(files)
+    const totalFilesSize = -1 //calculateTotalFilesSize(files)
 
     for (const element of fileTypes) {
-        const fileItemData = filterFilesByType(files, element);
+        const fileItemData = filterFilesByType(files, element)
 
-        const size = 0;
+        const size = 0
         // for (const element of fileItemData) {
         //     // const pageData: PageData = JSON.parse(element.page_data);
         //     const currentSize = //sumFileContentSize(pageData)
@@ -120,27 +120,28 @@ const getFileTypeProportions = (files: ApiFileInfo[]) => {
         // }
 
         // Handle potential division by zero or NaN scenarios
-        const percentage = totalFilesSize > 0 ? (size / totalFilesSize) * 100 : 0;
+        const percentage =
+            totalFilesSize > 0 ? (size / totalFilesSize) * 100 : 0
 
-        const usingText = `Using ${isNaN(percentage) ? '0.00' : percentage.toFixed(2)}% of storage`;
+        const usingText = `Using ${isNaN(percentage) ? '0.00' : percentage.toFixed(2)}% of storage`
 
-        const hSize = humanReadableFileSize(size);
+        const hSize = humanReadableFileSize(size)
 
         const item: UiFileTypes = {
             name: element,
             usingText: usingText,
             size: hSize,
             totalFiles: `${fileItemData.length}`,
-        };
+        }
 
-        filesUiState[element] = item;
+        filesUiState[element] = item
     }
-    return filesUiState;
-};
+    return filesUiState
+}
 
 export default function Statistics() {
-    const { files } = useStore(appStore);
-    const storageUsage = getFileTypeProportions(files);
+    const { files } = useStore(appStore)
+    const storageUsage = getFileTypeProportions(files)
 
     return (
         <SimpleGrid columns={{ base: 2, md: 2, lg: 4 }} gapX={'4'} gapY={'4'}>
@@ -184,5 +185,5 @@ export default function Statistics() {
                 <Statistic title="Others" image="/images/stats/folder.png" files={storageUsage?.document?.totalFiles ?? "-"} size={storageUsage?.document?.size ?? "-"} tagline={storageUsage?.document?.usingText ?? "-"} />
             </GridItem> */}
         </SimpleGrid>
-    );
+    )
 }

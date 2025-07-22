@@ -1,16 +1,16 @@
-import { Link as RouterLink, useResolvedPath, useMatch } from 'react-router-dom';
+import { Link as RouterLink, useResolvedPath, useMatch } from 'react-router-dom'
 
 const CustomNavLink = ({
     item,
     index,
     callBack,
 }: {
-    item: any;
-    index: number;
-    callBack?: () => void;
+    item: any
+    index: number
+    callBack?: () => void
 }) => {
-    const resolved = useResolvedPath(item.id);
-    const match = useMatch({ path: resolved.pathname, end: true });
+    const resolved = useResolvedPath(item.id)
+    const match = useMatch({ path: resolved.pathname, end: true })
 
     return (
         <RouterLink
@@ -23,13 +23,13 @@ const CustomNavLink = ({
                     : 'text-gray-900 hover:bg-orange-100/80' // Default state
             }`}
             onClick={() => {
-                callBack?.();
+                callBack?.()
             }}
         >
             {item.icon && <item.icon className="w-4 h-4" />}
             <span>{item.label}</span>
         </RouterLink>
-    );
-};
+    )
+}
 
-export default CustomNavLink;
+export default CustomNavLink

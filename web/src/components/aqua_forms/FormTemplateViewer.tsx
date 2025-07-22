@@ -1,7 +1,7 @@
-import React from 'react';
-import { FormTemplate } from './types';
-import { Card, CardContent, CardHeader } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
+import React from 'react'
+import { FormTemplate } from './types'
+import { Card, CardContent, CardHeader } from '@/components/ui/card'
+import { Badge } from '@/components/ui/badge'
 import {
     Table,
     TableBody,
@@ -9,19 +9,23 @@ import {
     TableHead,
     TableHeader,
     TableRow,
-} from '@/components/ui/table';
+} from '@/components/ui/table'
 
 interface FormTemplateViewerProps {
-    template: FormTemplate;
+    template: FormTemplate
 }
 
-const FormTemplateViewer: React.FC<FormTemplateViewerProps> = ({ template }) => {
+const FormTemplateViewer: React.FC<FormTemplateViewerProps> = ({
+    template,
+}) => {
     return (
         <Card className="shadow-sm">
             <CardHeader className="pb-2">
                 <div>
                     <h3 className="text-lg font-medium">{template.title}</h3>
-                    <p className="text-sm text-muted-foreground">Name: {template.name}</p>
+                    <p className="text-sm text-muted-foreground">
+                        Name: {template.name}
+                    </p>
                 </div>
             </CardHeader>
 
@@ -52,13 +56,18 @@ const FormTemplateViewer: React.FC<FormTemplateViewerProps> = ({ template }) => 
                                     <TableBody>
                                         {template.fields.map(field => (
                                             <TableRow key={field.id}>
-                                                <TableCell>{field.label}</TableCell>
-                                                <TableCell>{field.name}</TableCell>
+                                                <TableCell>
+                                                    {field.label}
+                                                </TableCell>
+                                                <TableCell>
+                                                    {field.name}
+                                                </TableCell>
                                                 <TableCell>
                                                     <Badge
                                                         variant="outline"
                                                         className={
-                                                            field.type === 'text'
+                                                            field.type ===
+                                                            'text'
                                                                 ? 'bg-blue-50 text-blue-600 hover:bg-blue-50'
                                                                 : 'bg-purple-50 text-purple-600 hover:bg-purple-50'
                                                         }
@@ -129,7 +138,7 @@ const FormTemplateViewer: React.FC<FormTemplateViewerProps> = ({ template }) => 
                 </div>
             </CardContent>
         </Card>
-    );
-};
+    )
+}
 
-export default FormTemplateViewer;
+export default FormTemplateViewer

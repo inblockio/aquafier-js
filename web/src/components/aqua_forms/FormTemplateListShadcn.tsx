@@ -1,14 +1,14 @@
-import { useState } from 'react';
-import { FormTemplate } from './types';
-import { useStore } from 'zustand';
-import appStore from '../../store';
-import { toast } from 'sonner';
-import { LuEye, LuPen, LuTrash } from 'react-icons/lu';
-import axios from 'axios';
+import { useState } from 'react'
+import { FormTemplate } from './types'
+import { useStore } from 'zustand'
+import appStore from '../../store'
+import { toast } from 'sonner'
+import { LuEye, LuPen, LuTrash } from 'react-icons/lu'
+import axios from 'axios'
 
 // /components//ui components
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import {
     Table,
     TableBody,
@@ -16,7 +16,7 @@ import {
     TableHead,
     TableHeader,
     TableRow,
-} from '@/components/ui/table';
+} from '@/components/ui/table'
 import {
     AlertDialog,
     AlertDialogAction,
@@ -26,7 +26,7 @@ import {
     AlertDialogFooter,
     AlertDialogHeader,
     AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
+} from '@/components/ui/alert-dialog'
 import {
     Dialog,
     DialogContent,
@@ -34,74 +34,86 @@ import {
     DialogTitle,
     DialogFooter,
     DialogClose,
-} from '@/components/ui/dialog';
-import FormTemplateViewer from './FormTemplateViewer';
-import CreateFormFromTemplate from './CreateFormFromTemplate';
-import { MdFormatListBulletedAdd } from 'react-icons/md';
-import CustomTooltip from '../ui/CustomTooltip';
+} from '@/components/ui/dialog'
+import FormTemplateViewer from './FormTemplateViewer'
+import CreateFormFromTemplate from './CreateFormFromTemplate'
+import { MdFormatListBulletedAdd } from 'react-icons/md'
+import CustomTooltip from '../ui/CustomTooltip'
 
 interface FormTemplateListShadcnProps {
-    onEdit: (template: FormTemplate) => void;
-    onView: (template: FormTemplate) => void;
-    onRefresh: () => void;
+    onEdit: (template: FormTemplate) => void
+    onView: (template: FormTemplate) => void
+    onRefresh: () => void
 }
 
 const FormTemplateListShadcn = ({ onEdit }: FormTemplateListShadcnProps) => {
-    const { formTemplates, backend_url, setFormTemplate, session } = useStore(appStore);
+    const { formTemplates, backend_url, setFormTemplate, session } =
+        useStore(appStore)
 
-    const [templateToDelete, setTemplateToDelete] = useState<FormTemplate | null>(null);
-    const [templateToView, setTemplateToView] = useState<FormTemplate | null>(null);
-    const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-    const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
-    const [viewType, setViewType] = useState<'template_view' | 'create_instance'>('template_view');
-    const [isLoading, setIsLoading] = useState(false);
+    const [templateToDelete, setTemplateToDelete] =
+        useState<FormTemplate | null>(null)
+    const [templateToView, setTemplateToView] = useState<FormTemplate | null>(
+        null
+    )
+    const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false)
+    const [isViewDialogOpen, setIsViewDialogOpen] = useState(false)
+    const [viewType, setViewType] = useState<
+        'template_view' | 'create_instance'
+    >('template_view')
+    const [isLoading, setIsLoading] = useState(false)
 
     const handleDeleteClick = (template: FormTemplate) => {
-        setTemplateToDelete(template);
-        setIsDeleteDialogOpen(true);
-    };
+        setTemplateToDelete(template)
+        setIsDeleteDialogOpen(true)
+    }
 
     const handleViewClick = (
         template: FormTemplate,
         viewType: 'template_view' | 'create_instance'
     ) => {
-        setTemplateToView(template);
-        setViewType(viewType);
-        setIsViewDialogOpen(true);
-    };
+        setTemplateToView(template)
+        setViewType(viewType)
+        setIsViewDialogOpen(true)
+    }
 
     const confirmDelete = async () => {
-        if (!templateToDelete) return;
+        if (!templateToDelete) return
 
         if (templateToDelete.public) {
-            toast.info('Public template cannot be deleted');
-            setIsDeleteDialogOpen(false);
-            return;
+            toast.info('Public template cannot be deleted')
+            setIsDeleteDialogOpen(false)
+            return
         }
 
-        setIsLoading(true);
+        setIsLoading(true)
 
         try {
-            const res = await axios.delete(`${backend_url}/templates/${templateToDelete.id}`, {
-                headers: {
-                    nonce: session?.nonce,
-                },
-            });
+            const res = await axios.delete(
+                `${backend_url}/templates/${templateToDelete.id}`,
+                {
+                    headers: {
+                        nonce: session?.nonce,
+                    },
+                }
+            )
 
             if (res.status === 200 || res.status === 201) {
-                toast.success('Template deleted successfully');
+                toast.success('Template deleted successfully')
                 // Update the templates list by filtering out the deleted one
-                setFormTemplate(formTemplates.filter(t => t.id !== templateToDelete.id));
+                setFormTemplate(
+                    formTemplates.filter(t => t.id !== templateToDelete.id)
+                )
             }
         } catch (error) {
             toast.error('Error deleting template', {
-                description: error instanceof Error ? error.message : 'Unknown error',
-            });
+                description:
+                    error instanceof Error ? error.message : 'Unknown error',
+            })
         } finally {
-            setIsLoading(false);
-            setIsDeleteDialogOpen(false);
+            setIsLoading(false)
+            setIsDeleteDialogOpen(false)
         }
-    };
+    }
 
     return (
         <Card className="w-full shadow-sm m-5">
@@ -121,17 +133,27 @@ const FormTemplateListShadcn = ({ onEdit }: FormTemplateListShadcnProps) => {
                                     <TableHead>Title</TableHead>
                                     <TableHead>Name</TableHead>
                                     <TableHead>Fields</TableHead>
-                                    <TableHead className="w-[100px]">Actions</TableHead>
+                                    <TableHead className="w-[100px]">
+                                        Actions
+                                    </TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
                                 {formTemplates
-                                    .sort((a, b) => a.title.localeCompare(b.title))
+                                    .sort((a, b) =>
+                                        a.title.localeCompare(b.title)
+                                    )
                                     .map(template => (
                                         <TableRow key={template.id}>
-                                            <TableCell>{template.title}</TableCell>
-                                            <TableCell>{template.name}</TableCell>
-                                            <TableCell>{template.fields.length}</TableCell>
+                                            <TableCell>
+                                                {template.title}
+                                            </TableCell>
+                                            <TableCell>
+                                                {template.name}
+                                            </TableCell>
+                                            <TableCell>
+                                                {template.fields.length}
+                                            </TableCell>
                                             <TableCell>
                                                 <div className="flex items-center gap-2">
                                                     <CustomTooltip content="Create form instance">
@@ -172,7 +194,11 @@ const FormTemplateListShadcn = ({ onEdit }: FormTemplateListShadcnProps) => {
                                                                 <Button
                                                                     variant="ghost"
                                                                     size="icon"
-                                                                    onClick={() => onEdit(template)}
+                                                                    onClick={() =>
+                                                                        onEdit(
+                                                                            template
+                                                                        )
+                                                                    }
                                                                     // title="Edit template"
                                                                     className="cursor-pointer"
                                                                 >
@@ -185,7 +211,9 @@ const FormTemplateListShadcn = ({ onEdit }: FormTemplateListShadcnProps) => {
                                                                     size="icon"
                                                                     className="text-red-500 hover:text-red-700 hover:bg-red-50 cursor-pointer"
                                                                     onClick={() =>
-                                                                        handleDeleteClick(template)
+                                                                        handleDeleteClick(
+                                                                            template
+                                                                        )
                                                                     }
                                                                     // title="Delete template"
                                                                 >
@@ -203,7 +231,10 @@ const FormTemplateListShadcn = ({ onEdit }: FormTemplateListShadcnProps) => {
                     </div>
                 )}
 
-                <Dialog open={isViewDialogOpen} onOpenChange={setIsViewDialogOpen}>
+                <Dialog
+                    open={isViewDialogOpen}
+                    onOpenChange={setIsViewDialogOpen}
+                >
                     <DialogContent className="sm:max-w-[700px] max-h-[90vh] flex flex-col">
                         <DialogHeader className="flex-shrink-0">
                             <DialogTitle>
@@ -218,15 +249,16 @@ const FormTemplateListShadcn = ({ onEdit }: FormTemplateListShadcnProps) => {
                                 <FormTemplateViewer template={templateToView} />
                             )}
 
-                            {viewType === 'create_instance' && templateToView && (
-                                <CreateFormFromTemplate
-                                    selectedTemplate={templateToView}
-                                    callBack={() => {
-                                        setIsViewDialogOpen(false);
-                                    }}
-                                    openCreateTemplatePopUp={true}
-                                />
-                            )}
+                            {viewType === 'create_instance' &&
+                                templateToView && (
+                                    <CreateFormFromTemplate
+                                        selectedTemplate={templateToView}
+                                        callBack={() => {
+                                            setIsViewDialogOpen(false)
+                                        }}
+                                        openCreateTemplatePopUp={true}
+                                    />
+                                )}
                         </div>
 
                         <DialogFooter className="flex-shrink-0 mt-2">
@@ -237,13 +269,19 @@ const FormTemplateListShadcn = ({ onEdit }: FormTemplateListShadcnProps) => {
                     </DialogContent>
                 </Dialog>
 
-                <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+                <AlertDialog
+                    open={isDeleteDialogOpen}
+                    onOpenChange={setIsDeleteDialogOpen}
+                >
                     <AlertDialogContent>
                         <AlertDialogHeader>
-                            <AlertDialogTitle>Delete Form Template</AlertDialogTitle>
+                            <AlertDialogTitle>
+                                Delete Form Template
+                            </AlertDialogTitle>
                             <AlertDialogDescription>
-                                Are you sure you want to delete the "{templateToDelete?.title}"
-                                template? This action cannot be undone.
+                                Are you sure you want to delete the "
+                                {templateToDelete?.title}" template? This action
+                                cannot be undone.
                             </AlertDialogDescription>
                         </AlertDialogHeader>
                         <AlertDialogFooter>
@@ -266,7 +304,7 @@ const FormTemplateListShadcn = ({ onEdit }: FormTemplateListShadcnProps) => {
                 </AlertDialog>
             </CardContent>
         </Card>
-    );
-};
+    )
+}
 
-export default FormTemplateListShadcn;
+export default FormTemplateListShadcn

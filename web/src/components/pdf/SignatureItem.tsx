@@ -1,7 +1,7 @@
-import { SignatureData } from '../../types/types';
+import { SignatureData } from '../../types/types'
 
 interface ISignatureItem {
-    signature: SignatureData;
+    signature: SignatureData
 }
 
 const SignatureItem: React.FC<ISignatureItem> = ({ signature }) => {
@@ -27,7 +27,7 @@ const SignatureItem: React.FC<ISignatureItem> = ({ signature }) => {
                 </div>
             </div>
         </div>
-    );
-};
+    )
+}
 
-export default SignatureItem;
+export default SignatureItem

@@ -1,23 +1,30 @@
 // import { Button } from "@/components/ui/button";
-import { Button } from '@/components/ui/button';
-import { IItemDetailData } from '@/models/AquaTreeDetails';
-import { Copy } from 'lucide-react';
+import { Button } from '@/components/ui/button'
+import { IItemDetailData } from '@/models/AquaTreeDetails'
+import { Copy } from 'lucide-react'
 // import { IItemDetailData } from "../models/AquaTreeDetails";
 
-export const ItemDetail = ({ label, value, displayValue, showCopyIcon }: IItemDetailData) => {
+export const ItemDetail = ({
+    label,
+    value,
+    displayValue,
+    showCopyIcon,
+}: IItemDetailData) => {
     const copyToClipboard = async () => {
         try {
-            await navigator.clipboard.writeText(value);
+            await navigator.clipboard.writeText(value)
         } catch (err) {
-            console.error('Failed to copy text: ', err);
+            console.error('Failed to copy text: ', err)
         }
-    };
+    }
 
     return (
         <div className="flex flex-col items-start w-full gap-1">
             <span className="text-sm font-medium">{label}</span>
             <div className="flex items-center gap-2">
-                <span className="font-mono text-sm break-words break-all">{displayValue}</span>
+                <span className="font-mono text-sm break-words break-all">
+                    {displayValue}
+                </span>
                 {showCopyIcon && (
                     <Button
                         variant="ghost"
@@ -30,5 +37,5 @@ export const ItemDetail = ({ label, value, displayValue, showCopyIcon }: IItemDe
                 )}
             </div>
         </div>
-    );
-};
+    )
+}

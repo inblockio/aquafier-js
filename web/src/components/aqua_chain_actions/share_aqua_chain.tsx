@@ -1,10 +1,10 @@
-import { LuShare2 } from 'react-icons/lu';
-import { useStore } from 'zustand';
-import appStore from '../../store';
-import axios from 'axios';
-import { useEffect, useState } from 'react';
-import { generateNonce } from 'siwe';
-import { ClipLoader } from 'react-spinners';
+import { LuShare2 } from 'react-icons/lu'
+import { useStore } from 'zustand'
+import appStore from '../../store'
+import axios from 'axios'
+import { useEffect, useState } from 'react'
+import { generateNonce } from 'siwe'
+import { ClipLoader } from 'react-spinners'
 
 import {
     Dialog,
@@ -12,71 +12,71 @@ import {
     DialogFooter,
     DialogHeader,
     DialogTitle,
-} from '@/components/ui/dialog';
-import { IShareButton } from '../../types/types';
-import ClipboardButton from '@/components/ui/clipboard';
-import { Label } from '@/components/ui/label';
-import { Input } from '@/components/ui/input';
-import { ClipboardIcon } from 'lucide-react';
-import { toaster } from '@/components/ui/use-toast';
-import { Switch } from '@/components/ui/switch';
-import { Button } from '@/components/ui/button';
+} from '@/components/ui/dialog'
+import { IShareButton } from '../../types/types'
+import ClipboardButton from '@/components/ui/clipboard'
+import { Label } from '@/components/ui/label'
+import { Input } from '@/components/ui/input'
+import { ClipboardIcon } from 'lucide-react'
+import { toaster } from '@/components/ui/use-toast'
+import { Switch } from '@/components/ui/switch'
+import { Button } from '@/components/ui/button'
 
 export const ShareButton = ({ item, nonce, index }: IShareButton) => {
-    const { backend_url } = useStore(appStore);
-    const [isOpenState, setIsOpenState] = useState(false);
-    const [sharing, setSharing] = useState(false);
-    const [fileName, setFileName] = useState('');
-    const [shared, setShared] = useState<string | null>(null);
+    const { backend_url } = useStore(appStore)
+    const [isOpenState, setIsOpenState] = useState(false)
+    const [sharing, setSharing] = useState(false)
+    const [fileName, setFileName] = useState('')
+    const [shared, setShared] = useState<string | null>(null)
 
     const [recipientType, setRecipientType] = useState<
         '0xfabacc150f2a0000000000000000000000000000' | 'specific'
-    >('0xfabacc150f2a0000000000000000000000000000');
-    const [walletAddress, setWalletAddress] = useState('');
-    const [optionType, setOptionType] = useState<'latest' | 'current'>('latest');
+    >('0xfabacc150f2a0000000000000000000000000000')
+    const [walletAddress, setWalletAddress] = useState('')
+    const [optionType, setOptionType] = useState<'latest' | 'current'>('latest')
 
     const recipient =
         recipientType === '0xfabacc150f2a0000000000000000000000000000'
             ? '0xfabacc150f2a0000000000000000000000000000'
-            : walletAddress;
+            : walletAddress
 
     useEffect(() => {
         if (item) {
-            const name = item.fileObject[0].fileName;
-            setFileName(name);
+            const name = item.fileObject[0].fileName
+            setFileName(name)
         }
-    });
+    })
 
     const setIsOpenChange = (isOpen: boolean) => {
-        setIsOpenState(isOpen);
+        setIsOpenState(isOpen)
         // Reset state to default when closing the dialog
         if (!isOpen) {
-            setSharing(false);
-            setShared(null);
-            setRecipientType('0xfabacc150f2a0000000000000000000000000000');
-            setWalletAddress('');
-            setOptionType('latest');
+            setSharing(false)
+            setShared(null)
+            setRecipientType('0xfabacc150f2a0000000000000000000000000000')
+            setWalletAddress('')
+            setOptionType('latest')
         }
-    };
+    }
 
     const handleShare = async () => {
         if (recipientType == 'specific' && walletAddress == '') {
             toaster.create({
                 description: `If recipient is specific a wallet address has to be specified.`,
                 type: 'error',
-            });
-            return;
+            })
+            return
         }
-        setSharing(true);
+        setSharing(true)
 
-        const unique_identifier = `${Date.now()}_${generateNonce()}`;
-        const url = `${backend_url}/share_data`;
+        const unique_identifier = `${Date.now()}_${generateNonce()}`
+        const url = `${backend_url}/share_data`
 
-        const allHashes = Object.keys(item.aquaTree!.revisions!);
-        const latest = allHashes[allHashes.length - 1];
-        let recepientWalletData = recipient;
+        const allHashes = Object.keys(item.aquaTree!.revisions!)
+        const latest = allHashes[allHashes.length - 1]
+        let recepientWalletData = recipient
         if (recipient == '') {
-            recepientWalletData = '0xfabacc150f2a0000000000000000000000000000';
+            recepientWalletData = '0xfabacc150f2a0000000000000000000000000000'
         }
 
         const response = await axios.post(
@@ -93,19 +93,19 @@ export const ShareButton = ({ item, nonce, index }: IShareButton) => {
                     nonce: nonce,
                 },
             }
-        );
+        )
 
         if (response.status === 200) {
-            setSharing(false);
-            const domain = window.location.origin;
-            setShared(`${domain}/app/shared-contracts/${unique_identifier}`);
+            setSharing(false)
+            const domain = window.location.origin
+            setShared(`${domain}/app/shared-contracts/${unique_identifier}`)
         } else {
             toaster.create({
                 description: 'Error sharing',
                 type: 'error',
-            });
+            })
         }
-    };
+    }
 
     return (
         <>
@@ -130,8 +130,9 @@ export const ShareButton = ({ item, nonce, index }: IShareButton) => {
                     <div className="space-y-4">
                         {/* Warning Message */}
                         <p className="text-sm text-gray-600">
-                            You are about to share {fileName}. Once a file is shared, don't delete
-                            it otherwise it will be broken if one tries to import it.
+                            You are about to share {fileName}. Once a file is
+                            shared, don't delete it otherwise it will be broken
+                            if one tries to import it.
                         </p>
 
                         {/* Share with specific wallet toggle */}
@@ -157,7 +158,9 @@ export const ShareButton = ({ item, nonce, index }: IShareButton) => {
                                 <Input
                                     placeholder="Enter wallet address"
                                     value={walletAddress}
-                                    onChange={e => setWalletAddress(e.target.value)}
+                                    onChange={e =>
+                                        setWalletAddress(e.target.value)
+                                    }
                                     className="w-full"
                                 />
                             </div>
@@ -166,8 +169,9 @@ export const ShareButton = ({ item, nonce, index }: IShareButton) => {
                         {/* Sharing Options */}
                         <div className="space-y-3">
                             <Label className="text-sm font-medium">
-                                Sharing Option (Would the recipient to get the the Aqua Tree as is
-                                Or receive the tree with any new revisions you will add?)
+                                Sharing Option (Would the recipient to get the
+                                the Aqua Tree as is Or receive the tree with any
+                                new revisions you will add?)
                             </Label>
 
                             <div className="space-y-2">
@@ -181,7 +185,9 @@ export const ShareButton = ({ item, nonce, index }: IShareButton) => {
                                     onClick={() => setOptionType('latest')}
                                 >
                                     <div className="flex-1">
-                                        <div className="font-medium text-sm">Latest</div>
+                                        <div className="font-medium text-sm">
+                                            Latest
+                                        </div>
                                         <div className="text-xs text-gray-500">
                                             Share latest revision in tree
                                         </div>
@@ -209,7 +215,9 @@ export const ShareButton = ({ item, nonce, index }: IShareButton) => {
                                     onClick={() => setOptionType('current')}
                                 >
                                     <div className="flex-1">
-                                        <div className="font-medium text-sm">Latest</div>
+                                        <div className="font-medium text-sm">
+                                            Current
+                                        </div>
                                         <div className="text-xs text-gray-500">
                                             Share current tree
                                         </div>
@@ -244,7 +252,9 @@ export const ShareButton = ({ item, nonce, index }: IShareButton) => {
                         {/* Shared Link - FIXED OVERFLOW */}
                         {shared && (
                             <div className="space-y-2">
-                                <Label className="text-sm font-medium">Shared Document Link</Label>
+                                <Label className="text-sm font-medium">
+                                    Shared Document Link
+                                </Label>
                                 <div className="flex items-center space-x-2 p-2 bg-gray-50 rounded border min-w-0">
                                     <ClipboardIcon className="w-4 h-4 text-gray-500 flex-shrink-0" />
                                     <span
@@ -263,7 +273,9 @@ export const ShareButton = ({ item, nonce, index }: IShareButton) => {
 
                         {/* Existing sharing contracts section */}
                         <div className="border-t pt-4">
-                            <h3 className="font-medium text-sm mb-2">Existing sharing contracts</h3>
+                            <h3 className="font-medium text-sm mb-2">
+                                Existing sharing contracts
+                            </h3>
                             {/* This section appears empty in the design, so leaving it as placeholder */}
                         </div>
                     </div>
@@ -293,5 +305,5 @@ export const ShareButton = ({ item, nonce, index }: IShareButton) => {
                 </DialogContent>
             </Dialog>
         </>
-    );
-};
+    )
+}

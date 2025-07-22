@@ -1,36 +1,42 @@
-export const SEPOLIA_SMART_CONTRACT_ADDRESS = '0x45f59310ADD88E6d23ca58A0Fa7A55BEE6d2a611';
+export const SEPOLIA_SMART_CONTRACT_ADDRESS =
+    '0x45f59310ADD88E6d23ca58A0Fa7A55BEE6d2a611'
 
 // export const await API_ENDPOINT() =  //import.meta.env.VITE_API_ENDPOINT
 
 // export const await API_ENDPOINT() = `http://${import.meta.env.VITE_REMOTE || '127.0.0.1'}:${ import.meta.env.VITE_REMOTE_PORT || 3600}`;
 
-export const maxUserFileSizeForUpload = 1024 * 1024 * 1000; // 1 GB in bytes
-export const maxFileSizeForUpload = 200 * 1024 * 1024; // 200MB in bytes
+export const maxUserFileSizeForUpload = 1024 * 1024 * 1000 // 1 GB in bytes
+export const maxFileSizeForUpload = 200 * 1024 * 1024 // 200MB in bytes
 
-export const SESSION_COOKIE_NAME = 'pkc_nonce';
-export const ERROR_TEXT = '--error--';
-export const ERROR_UKNOWN = '--unknown--';
+export const SESSION_COOKIE_NAME = 'pkc_nonce'
+export const ERROR_TEXT = '--error--'
+export const ERROR_UKNOWN = '--unknown--'
 export const ETH_CHAINID_MAP: Record<string, string> = {
     mainnet: '0x1',
     sepolia: '0xaa36a7',
     holesky: '0x4268',
-};
+}
 
 export const ETH_CHAIN_ADDRESSES_MAP: Record<string, string> = {
     mainnet: '0x45f59310ADD88E6d23ca58A0Fa7A55BEE6d2a611',
     sepolia: '0x45f59310ADD88E6d23ca58A0Fa7A55BEE6d2a611',
     holesky: '0x45f59310ADD88E6d23ca58A0Fa7A55BEE6d2a611',
-};
+}
 
 export const WITNESS_NETWORK_MAP: Record<string, string> = {
     mainnet: 'https://etherscan.io/tx',
     sepolia: 'https://sepolia.etherscan.io/tx',
     holesky: 'https://holesky.etherscan.io/tx',
-};
+}
 
 // constants
 
-export const imageTypes = ['image/png', 'image/jpeg', 'image/gif', 'image/svg+xml'];
+export const imageTypes = [
+    'image/png',
+    'image/jpeg',
+    'image/gif',
+    'image/svg+xml',
+]
 export const documentTypes = [
     'application/pdf',
     'text/plain',
@@ -38,44 +44,44 @@ export const documentTypes = [
     'text/json',
     'application/msword',
     'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-];
-export const musicTypes = ['audio/mpeg', 'audio/wav'];
-export const videoTypes = ['video/mp4', 'video/mpeg', 'video/webm'];
+]
+export const musicTypes = ['audio/mpeg', 'audio/wav']
+export const videoTypes = ['video/mp4', 'video/mpeg', 'video/webm']
 
 // Function to initialize the backend URL
 export const initializeBackendUrl = async (): Promise<string> => {
-    let BACKEND_URL = 'http://127.0.0.1:3000';
+    let BACKEND_URL = 'http://127.0.0.1:3000'
     try {
         // Fetch the config.json file from the public folder
-        const response = await fetch('/config.json');
+        const response = await fetch('/config.json')
 
         // Check if the response is successful
         if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
+            throw new Error(`HTTP error! status: ${response.status}`)
         }
 
         // Parse the JSON
-        const configData = await response.json();
+        const configData = await response.json()
 
         //  console.log("Data from config ", configData);
         // Update the BACKEND_URL
-        BACKEND_URL = configData.BACKEND_URL || 'http://127.0.0.1:3000';
+        BACKEND_URL = configData.BACKEND_URL || 'http://127.0.0.1:3000'
         if (BACKEND_URL == 'BACKEND_URL_PLACEHOLDER') {
-            BACKEND_URL = 'http://127.0.0.1:3000';
+            BACKEND_URL = 'http://127.0.0.1:3000'
         }
 
         // console.log("Config Backend URL", BACKEND_URL);
         if (BACKEND_URL.includes('inblock.io')) {
-            BACKEND_URL = BACKEND_URL.replace('http:', 'https:');
+            BACKEND_URL = BACKEND_URL.replace('http:', 'https:')
         }
         // console.log("Config Backend URL Replaced http with https", BACKEND_URL);
     } catch (err) {
         // If there's an error, it will use the default URL
-        console.error('Error reading config:', err);
+        console.error('Error reading config:', err)
     }
 
-    return BACKEND_URL;
-};
+    return BACKEND_URL
+}
 
 export const testWitness = {
     previous_verification_hash:
@@ -83,12 +89,16 @@ export const testWitness = {
     nonce: 'AEkjaXCgfD2rP8ZGS-Xhl4eeksNRVOYlykWACBvVeXA',
     local_timestamp: '20250123170100',
     revision_type: 'witness',
-    witness_merkle_root: '0x8fe3842787eb5d37c2fb170906a3d4c73c32b9dab7aab4525a06199fe9b9c823',
+    witness_merkle_root:
+        '0x8fe3842787eb5d37c2fb170906a3d4c73c32b9dab7aab4525a06199fe9b9c823',
     witness_timestamp: 1737651670.714,
     witness_network: 'sepolia',
-    witness_smart_contract_address: '0x45f59310ADD88E6d23ca58A0Fa7A55BEE6d2a611',
-    witness_transaction_hash: '0x5e251cbb45b6d10967d62699c72cf4b2461a77c44328672ba1e4f89e5315ab06',
-    witness_sender_account_address: '0x254b0d7b63342fcb8955db82e95c21d72efdb6f7',
+    witness_smart_contract_address:
+        '0x45f59310ADD88E6d23ca58A0Fa7A55BEE6d2a611',
+    witness_transaction_hash:
+        '0x5e251cbb45b6d10967d62699c72cf4b2461a77c44328672ba1e4f89e5315ab06',
+    witness_sender_account_address:
+        '0x254b0d7b63342fcb8955db82e95c21d72efdb6f7',
     leaves: [
         '122094ad4bd3302e0938a87a23d9d225f7bf7962c47b3f2ca0734a30a357c8af581b',
         '122071e44dd2406c0cb8aa408bb100702e82bd6fd1374493c858cfbb19c19a19bc1a',
@@ -102,10 +112,10 @@ export const testWitness = {
         '1220a1b2e489fa5eece8dba25e3eddc67203da69c98559e4c964dbdd6d4da3095b62',
         '1220c828259c0c516bfe3bbf3d67027eae72ddd3cba24286a41db24c8a835b197e9c',
     ],
-};
+}
 
 export const API_ENDPOINTS = {
     NOTIFICATIONS: '/notifications',
     NOTIFICATIONS_READ_ALL: '/notifications/read-all',
     MARK_NOTIFICATION_AS_READ: '/notifications/:id/read',
-};
+}

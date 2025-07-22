@@ -1,12 +1,12 @@
-import { useState, useCallback, useEffect } from 'react';
-import type { Annotation } from './types';
-import PdfViewer from './pdf-viewer';
-import AnnotationSidebar from './annotation-sidebar';
-import { ZoomIn, ZoomOut, ArrowLeft, ArrowRight } from 'lucide-react';
-import { SignatureData } from '../../../../types/types';
-import { LuInfo } from 'react-icons/lu';
-import { Button } from '../../../../components/ui/button';
-import { Slider } from '../../../../components/ui/slider';
+import { useState, useCallback, useEffect } from 'react'
+import type { Annotation } from './types'
+import PdfViewer from './pdf-viewer'
+import AnnotationSidebar from './annotation-sidebar'
+import { ZoomIn, ZoomOut, ArrowLeft, ArrowRight } from 'lucide-react'
+import { SignatureData } from '../../../../types/types'
+import { LuInfo } from 'react-icons/lu'
+import { Button } from '../../../../components/ui/button'
+import { Slider } from '../../../../components/ui/slider'
 // import { ScrollArea } from '@/components/ui/scroll-area';
 
 // const parseFontSizeToPoints = (fontSizeString: string, defaultSize: number = 12): number => {
@@ -30,16 +30,16 @@ import { Slider } from '../../../../components/ui/slider';
 // };
 
 interface PdfRendererProps {
-    pdfFile: File | null;
-    annotations: Annotation[];
-    annotationsInDocument: SignatureData[];
-    onAnnotationAdd: (newAnnotationData: Annotation) => void;
-    onAnnotationUpdate: (updatedAnnotation: Annotation) => void;
-    onAnnotationDelete: (id: string) => void;
-    selectedTool: 'text' | 'image' | 'profile' | 'signature' | null;
-    selectedAnnotationId: string | null;
-    onAnnotationSelect: (id: string | null) => void;
-    onAnnotationRotate: (direction: 'cw' | 'ccw') => void;
+    pdfFile: File | null
+    annotations: Annotation[]
+    annotationsInDocument: SignatureData[]
+    onAnnotationAdd: (newAnnotationData: Annotation) => void
+    onAnnotationUpdate: (updatedAnnotation: Annotation) => void
+    onAnnotationDelete: (id: string) => void
+    selectedTool: 'text' | 'image' | 'profile' | 'signature' | null
+    selectedAnnotationId: string | null
+    onAnnotationSelect: (id: string | null) => void
+    onAnnotationRotate: (direction: 'cw' | 'ccw') => void
 }
 
 function PdfRendererComponent({
@@ -53,9 +53,9 @@ function PdfRendererComponent({
     selectedAnnotationId,
     onAnnotationSelect,
 }: PdfRendererProps) {
-    const [currentPage, setCurrentPage] = useState(1);
-    const [numPages, setNumPages] = useState(0);
-    const [scale, setScale] = useState(1.15);
+    const [currentPage, setCurrentPage] = useState(1)
+    const [numPages, setNumPages] = useState(0)
+    const [scale, setScale] = useState(1.15)
 
     return (
         <div className="h-auto md:h-full w-full max-h-auto md:max-h-full max-w-full">
@@ -73,7 +73,9 @@ function PdfRendererComponent({
                         Page {currentPage} of {numPages}
                     </p>
                     <Button
-                        onClick={() => setCurrentPage(p => Math.min(numPages, p + 1))}
+                        onClick={() =>
+                            setCurrentPage(p => Math.min(numPages, p + 1))
+                        }
                         disabled={currentPage >= numPages || numPages === 0}
                         variant="ghost"
                         size="icon"
@@ -131,7 +133,7 @@ function PdfRendererComponent({
                 {/* </ScrollArea> */}
             </div>
         </div>
-    );
+    )
 }
 
 // Memoize the PdfRenderer component to prevent unnecessary re-renders
@@ -143,12 +145,12 @@ function PdfRendererComponent({
 //   );
 // });
 
-export const PdfRenderer = PdfRendererComponent;
+export const PdfRenderer = PdfRendererComponent
 
 interface EasyPDFRendererProps {
-    pdfFile: File | null;
-    annotations: Annotation[];
-    annotationsInDocument: SignatureData[];
+    pdfFile: File | null
+    annotations: Annotation[]
+    annotationsInDocument: SignatureData[]
 }
 
 export const EasyPDFRenderer = ({
@@ -174,20 +176,20 @@ export const EasyPDFRenderer = ({
             onAnnotationSelect={(_annotatedid: string | null) => {}}
             onAnnotationRotate={(_direction: 'cw' | 'ccw') => {}}
         />
-    );
-};
+    )
+}
 
 interface PdfSignerProps {
-    file: File | null;
-    mySignatures: SignatureData[];
-    annotationsInDocument: SignatureData[];
-    displayUserSignatures?: () => void;
-    selectSignature: (id: string) => void;
-    selectedSignatureHash?: string | null;
-    onAnnotationUpdate: (positions: SignatureData[]) => void;
-    handleSignatureSubmission: () => void;
-    submittingSignatureData: boolean;
-    signaturesInDocument: SignatureData[];
+    file: File | null
+    mySignatures: SignatureData[]
+    annotationsInDocument: SignatureData[]
+    displayUserSignatures?: () => void
+    selectSignature: (id: string) => void
+    selectedSignatureHash?: string | null
+    onAnnotationUpdate: (positions: SignatureData[]) => void
+    handleSignatureSubmission: () => void
+    submittingSignatureData: boolean
+    signaturesInDocument: SignatureData[]
 }
 
 export default function SignerPage({
@@ -202,58 +204,69 @@ export default function SignerPage({
     submittingSignatureData,
     signaturesInDocument,
 }: PdfSignerProps) {
-    const pdfFile = file;
+    const pdfFile = file
     // const [pdfFile, setPdfFile] = useState<File | null>(null);
-    const [annotations, setAnnotations] = useState<Annotation[]>([]);
-    const [selectedTool, setSelectedTool] = useState<'text' | 'image' | 'profile' | null>(null);
-    const [_selectedSignatureHash, setSelectedSignatureHash] = useState<string | null>(null);
-    const [canPlaceSignature, setCanPlaceSignature] = useState(false);
+    const [annotations, setAnnotations] = useState<Annotation[]>([])
+    const [selectedTool, setSelectedTool] = useState<
+        'text' | 'image' | 'profile' | null
+    >(null)
+    const [_selectedSignatureHash, setSelectedSignatureHash] = useState<
+        string | null
+    >(null)
+    const [canPlaceSignature, setCanPlaceSignature] = useState(false)
     // const [currentPage, setCurrentPage] = useState(1);
     // const [numPages, setNumPages] = useState(0);
     // const [scale, setScale] = useState(1.0);
-    const [selectedAnnotationId, setSelectedAnnotationId] = useState<string | null>(null);
+    const [selectedAnnotationId, setSelectedAnnotationId] = useState<
+        string | null
+    >(null)
 
     const addAnnotation = useCallback(
         (newAnnotationData: Annotation) => {
-            const id = Date.now().toString() + Math.random().toString(36).substring(2, 9);
+            const id =
+                Date.now().toString() +
+                Math.random().toString(36).substring(2, 9)
             const selectedSignatureInfo = mySignatures.find(
                 signature => signature.hash === _selectedSignatureHash
-            );
-            console.log('Here', _selectedSignatureHash, mySignatures);
+            )
+            console.log('Here', _selectedSignatureHash, mySignatures)
             if (!selectedSignatureInfo) {
-                return;
+                return
             }
             const newAnnotation = {
                 ...newAnnotationData,
                 id,
-                imageSrc: selectedSignatureInfo.dataUrl ?? '/images/preview.jpg',
+                imageSrc:
+                    selectedSignatureInfo.dataUrl ?? '/images/preview.jpg',
                 name: selectedSignatureInfo.name,
                 walletAddress: selectedSignatureInfo.walletAddress,
-            };
-            setAnnotations((prev: any) => [...prev, newAnnotation]);
-            setSelectedTool(null);
-            setCanPlaceSignature(false);
-            setSelectedSignatureHash(null);
-            setSelectedAnnotationId(id);
+            }
+            setAnnotations((prev: any) => [...prev, newAnnotation])
+            setSelectedTool(null)
+            setCanPlaceSignature(false)
+            setSelectedSignatureHash(null)
+            setSelectedAnnotationId(id)
         },
         [mySignatures, _selectedSignatureHash]
-    );
+    )
 
     const updateAnnotation = useCallback((updatedAnnotation: Annotation) => {
         setAnnotations(prev =>
-            prev.map(anno => (anno.id === updatedAnnotation.id ? updatedAnnotation : anno))
-        );
-    }, []);
+            prev.map(anno =>
+                anno.id === updatedAnnotation.id ? updatedAnnotation : anno
+            )
+        )
+    }, [])
 
     const deleteAnnotation = useCallback(
         (id: string) => {
-            setAnnotations(prev => prev.filter(anno => anno.id !== id));
+            setAnnotations(prev => prev.filter(anno => anno.id !== id))
             if (selectedAnnotationId === id) {
-                setSelectedAnnotationId(null);
+                setSelectedAnnotationId(null)
             }
         },
         [selectedAnnotationId]
-    );
+    )
 
     // TIP: Do not remove
     // const parseDimension = (dimension: string, pageDimension: number, defaultPercentage: number): number => {
@@ -456,17 +469,17 @@ export default function SignerPage({
     // };
 
     const handleAnnotationRotation = (direction: 'cw' | 'ccw') => {
-        if (!selectedAnnotationId) return;
-        const annotation = annotations.find(a => a.id === selectedAnnotationId);
+        if (!selectedAnnotationId) return
+        const annotation = annotations.find(a => a.id === selectedAnnotationId)
         if (annotation) {
-            const currentRotation = annotation.rotation || 0;
+            const currentRotation = annotation.rotation || 0
             const newRotation =
                 direction === 'cw'
                     ? (currentRotation + 15) % 360
-                    : (currentRotation - 15 + 360) % 360;
-            updateAnnotation({ ...annotation, rotation: newRotation });
+                    : (currentRotation - 15 + 360) % 360
+            updateAnnotation({ ...annotation, rotation: newRotation })
         }
-    };
+    }
 
     useEffect(() => {
         if (onAnnotationUpdate) {
@@ -491,10 +504,10 @@ export default function SignerPage({
                     imageHeight: annotation.imageHeight ?? '80px',
                     imageAlt: annotation.imageAlt ?? annotation.name ?? '',
                 })
-            );
-            onAnnotationUpdate(newSignatureDataPositions);
+            )
+            onAnnotationUpdate(newSignatureDataPositions)
         }
-    }, [annotations]);
+    }, [annotations])
 
     useEffect(() => {
         if (signaturesInDocument) {
@@ -512,11 +525,11 @@ export default function SignerPage({
                 y: signature.y,
                 name: signature.name,
                 walletAddress: signature.walletAddress,
-            }));
-            console.log('Existing: ', existingAnnotations);
-            setAnnotations(prev => [...prev, ...existingAnnotations]);
+            }))
+            console.log('Existing: ', existingAnnotations)
+            setAnnotations(prev => [...prev, ...existingAnnotations])
         }
-    }, [signaturesInDocument]);
+    }, [signaturesInDocument])
 
     return (
         <div className="h-auto md:h-full">
@@ -549,7 +562,9 @@ export default function SignerPage({
                             <div className="flex flex-col space-y-4">
                                 {mySignatures.length > 0 ? (
                                     <div className="flex flex-col space-y-2 bg-white p-2">
-                                        <h2 className="font-medium text-lg">My Signature(s)</h2>
+                                        <h2 className="font-medium text-lg">
+                                            My Signature(s)
+                                        </h2>
                                         {mySignatures.map(signature => (
                                             <div
                                                 key={signature.hash}
@@ -557,10 +572,14 @@ export default function SignerPage({
                                                 onClick={() => {
                                                     console.log(
                                                         `Signature clicked ${JSON.stringify(signature, null, 4)} -- ${signature.hash} -- ${signature.id}`
-                                                    );
-                                                    setSelectedTool('profile');
-                                                    selectSignature(signature.hash);
-                                                    setSelectedSignatureHash(signature.hash);
+                                                    )
+                                                    setSelectedTool('profile')
+                                                    selectSignature(
+                                                        signature.hash
+                                                    )
+                                                    setSelectedSignatureHash(
+                                                        signature.hash
+                                                    )
                                                 }}
                                             >
                                                 <div className="flex items-center space-x-3">
@@ -575,7 +594,9 @@ export default function SignerPage({
                                                             {signature.name}
                                                         </p>
                                                         <p className="text-xs text-gray-600">
-                                                            {signature.walletAddress.length > 10
+                                                            {signature
+                                                                .walletAddress
+                                                                .length > 10
                                                                 ? `${signature.walletAddress.substring(0, 6)}...${signature.walletAddress.substring(signature.walletAddress.length - 4)}`
                                                                 : signature.walletAddress}
                                                         </p>
@@ -585,7 +606,11 @@ export default function SignerPage({
                                         ))}
                                     </div>
                                 ) : (
-                                    <>{displayUserSignatures ? displayUserSignatures() : null}</>
+                                    <>
+                                        {displayUserSignatures
+                                            ? displayUserSignatures()
+                                            : null}
+                                    </>
                                 )}
 
                                 {canPlaceSignature ? (
@@ -593,7 +618,8 @@ export default function SignerPage({
                                         <LuInfo className="h-5 w-5 mt-0.5" />
                                         <div>
                                             <p className="font-medium">
-                                                Click on the document to place your signature.
+                                                Click on the document to place
+                                                your signature.
                                             </p>
                                         </div>
                                     </div>
@@ -602,9 +628,11 @@ export default function SignerPage({
                                 <Button
                                     data-testid="action-add-signature-11-button"
                                     onClick={() => {
-                                        setSelectedTool('profile');
-                                        setSelectedSignatureHash(selectedSignatureHash as any);
-                                        setCanPlaceSignature(true);
+                                        setSelectedTool('profile')
+                                        setSelectedSignatureHash(
+                                            selectedSignatureHash as any
+                                        )
+                                        setCanPlaceSignature(true)
                                     }}
                                 >
                                     Add Signature
@@ -641,5 +669,5 @@ export default function SignerPage({
                 </div>
             </div>
         </div>
-    );
+    )
 }

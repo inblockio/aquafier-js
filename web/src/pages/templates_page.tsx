@@ -1,40 +1,42 @@
-import { useState } from 'react';
-import FormTemplateEditorShadcn from '@/components/aqua_forms/FormTemplateEditorShadcn';
-import FormTemplateListShadcn from '@/components/aqua_forms/FormTemplateListShadcn';
-import { FormTemplate } from '@/components/aqua_forms/types';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Button } from '@/components/ui/button';
-import { LuPlus } from 'react-icons/lu';
+import { useState } from 'react'
+import FormTemplateEditorShadcn from '@/components/aqua_forms/FormTemplateEditorShadcn'
+import FormTemplateListShadcn from '@/components/aqua_forms/FormTemplateListShadcn'
+import { FormTemplate } from '@/components/aqua_forms/types'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { Button } from '@/components/ui/button'
+import { LuPlus } from 'react-icons/lu'
 
 const TemplatesPage = () => {
-    const [activeTab, setActiveTab] = useState<string>('list');
-    const [selectedTemplate, setSelectedTemplate] = useState<FormTemplate | undefined>(undefined);
-    const [isCreating, setIsCreating] = useState<boolean>(false);
+    const [activeTab, setActiveTab] = useState<string>('list')
+    const [selectedTemplate, setSelectedTemplate] = useState<
+        FormTemplate | undefined
+    >(undefined)
+    const [isCreating, setIsCreating] = useState<boolean>(false)
 
     const handleEditTemplate = (template: FormTemplate) => {
-        setSelectedTemplate(template);
-        setIsCreating(false);
-        setActiveTab('editor');
-    };
+        setSelectedTemplate(template)
+        setIsCreating(false)
+        setActiveTab('editor')
+    }
 
     const handleViewTemplate = (template: FormTemplate) => {
-        setSelectedTemplate(template);
-        setActiveTab('editor');
+        setSelectedTemplate(template)
+        setActiveTab('editor')
         // Could implement a view-only mode here
-    };
+    }
 
     const handleCreateNew = () => {
-        setSelectedTemplate(undefined);
-        setIsCreating(true);
-        setActiveTab('editor');
-    };
+        setSelectedTemplate(undefined)
+        setIsCreating(true)
+        setActiveTab('editor')
+    }
 
     const handleSave = () => {
         // After saving, go back to the list view
-        setActiveTab('list');
-        setIsCreating(false);
-        setSelectedTemplate(undefined);
-    };
+        setActiveTab('list')
+        setIsCreating(false)
+        setSelectedTemplate(undefined)
+    }
 
     return (
         <div className="container mx-auto py-4">
@@ -51,7 +53,11 @@ const TemplatesPage = () => {
                 )}
             </div>
 
-            <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+            <Tabs
+                value={activeTab}
+                onValueChange={setActiveTab}
+                className="w-full"
+            >
                 <TabsList className="grid w-full max-w-md grid-cols-2">
                     <TabsTrigger data-testid="templates-list-tab" value="list">
                         Templates List
@@ -80,14 +86,15 @@ const TemplatesPage = () => {
                             onSave={handleSave}
                             updating={
                                 !isCreating &&
-                                (selectedTemplate !== undefined || selectedTemplate !== null)
+                                (selectedTemplate !== undefined ||
+                                    selectedTemplate !== null)
                             }
                         />
                     )}
                 </TabsContent>
             </Tabs>
         </div>
-    );
-};
+    )
+}
 
-export default TemplatesPage;
+export default TemplatesPage

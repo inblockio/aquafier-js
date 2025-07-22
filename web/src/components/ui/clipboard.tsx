@@ -1,19 +1,19 @@
-import { ClipboardIcon } from 'lucide-react';
-import React from 'react';
-import { Label } from './label';
+import { ClipboardIcon } from 'lucide-react'
+import React from 'react'
+import { Label } from './label'
 
 const ClipboardButton = ({ value }: { value: string }) => {
-    const [copied, setCopied] = React.useState(false);
+    const [copied, setCopied] = React.useState(false)
 
     const handleCopy = async () => {
         try {
-            await navigator.clipboard.writeText(value);
-            setCopied(true);
-            setTimeout(() => setCopied(false), 2000); // Reset after 2 seconds
+            await navigator.clipboard.writeText(value)
+            setCopied(true)
+            setTimeout(() => setCopied(false), 2000) // Reset after 2 seconds
         } catch (err) {
-            console.error('Failed to copy text: ', err);
+            console.error('Failed to copy text: ', err)
         }
-    };
+    }
 
     return (
         <button
@@ -24,7 +24,7 @@ const ClipboardButton = ({ value }: { value: string }) => {
             <ClipboardIcon className="w-4 h-4" />
             <Label>{copied ? 'Copied!' : 'Copy'}</Label>
         </button>
-    );
-};
+    )
+}
 
-export default ClipboardButton;
+export default ClipboardButton

@@ -1,10 +1,10 @@
-import { useStore } from 'zustand';
-import appStore from '../store';
-import { useState } from 'react';
-import { useEffect } from 'react';
-import axios from 'axios';
-import VersionDetails from '@/models/VersionDetails';
-import { toast } from 'sonner';
+import { useStore } from 'zustand'
+import appStore from '../store'
+import { useState } from 'react'
+import { useEffect } from 'react'
+import axios from 'axios'
+import VersionDetails from '@/models/VersionDetails'
+import { toast } from 'sonner'
 import {
     LuCalendarClock,
     LuCode,
@@ -13,13 +13,13 @@ import {
     LuGlobe,
     LuShieldCheck,
     LuTag,
-} from 'react-icons/lu';
-import { FaEthereum } from 'react-icons/fa6';
-import versionInfo from '../version-info.json';
-import { AlertTriangleIcon } from 'lucide-react';
+} from 'react-icons/lu'
+import { FaEthereum } from 'react-icons/fa6'
+import versionInfo from '../version-info.json'
+import { AlertTriangleIcon } from 'lucide-react'
 
 const InfoPage = () => {
-    const { backend_url } = useStore(appStore);
+    const { backend_url } = useStore(appStore)
 
     // const [isOpen, setIsOpen] = useState(false);
     const [versionDetails, setVersionDetails] = useState<VersionDetails>({
@@ -27,30 +27,30 @@ const InfoPage = () => {
         frontend: '1.2.X',
         aquifier: '1.2.X',
         protocol: '1.2.X',
-    });
+    })
 
     const fetchVersionDetails = async () => {
         try {
-            const url = `${backend_url}/version`;
+            const url = `${backend_url}/version`
 
-            const response = await axios.get(url);
+            const response = await axios.get(url)
 
-            const res: VersionDetails = await response.data;
+            const res: VersionDetails = await response.data
 
             if (response.status === 200) {
-                setVersionDetails(res);
+                setVersionDetails(res)
             }
         } catch (e: unknown) {
             //  console.log("Error fetching version ", e)
-            toast('Error fetching version details');
+            toast('Error fetching version details')
         }
-    };
+    }
 
     useEffect(() => {
         if (!backend_url.includes('0.0.0.0')) {
-            fetchVersionDetails();
+            fetchVersionDetails()
         }
-    }, [backend_url]);
+    }, [backend_url])
 
     return (
         <div className="container mx-auto py-3 px-2 sm:px-4">
@@ -79,7 +79,8 @@ const InfoPage = () => {
                                         <div className="flex items-center gap-2 font-mono bg-gray-50 dark:bg-gray-800/80 p-2 rounded-lg border border-gray-200 dark:border-gray-700">
                                             <LuShieldCheck className="h-4 w-4 text-green-500" />
                                             <span className="text-xs sm:text-sm">
-                                                {versionDetails.protocol || 'v1.0.0'}
+                                                {versionDetails.protocol ||
+                                                    'v1.0.0'}
                                             </span>
                                         </div>
                                     </div>
@@ -91,7 +92,8 @@ const InfoPage = () => {
                                         <div className="flex items-center gap-2 font-mono bg-gray-50 dark:bg-gray-800/80 p-2 rounded-lg border border-gray-200 dark:border-gray-700">
                                             <LuCalendarClock className="h-4 w-4 text-blue-500" />
                                             <span className="text-xs sm:text-sm">
-                                                {versionInfo.buildDate || '2025-07-01'}
+                                                {versionInfo.buildDate ||
+                                                    '2025-07-01'}
                                             </span>
                                         </div>
                                     </div>
@@ -128,7 +130,9 @@ const InfoPage = () => {
                                     </span>
                                     <div className="flex items-center gap-2 bg-gray-50 dark:bg-gray-800/80 p-2 rounded-lg border border-gray-200 dark:border-gray-700 text-sm sm:text-base">
                                         <div className="h-3 w-3 bg-green-500 rounded-full"></div>
-                                        <span className="font-medium">Ethereum Mainnet</span>
+                                        <span className="font-medium">
+                                            Ethereum Mainnet
+                                        </span>
                                     </div>
                                 </div>
 
@@ -153,8 +157,9 @@ const InfoPage = () => {
                                     Prototype Software
                                 </h3>
                                 <p className="text-xs sm:text-sm text-red-700 dark:text-red-400 mt-1 break-words">
-                                    This is prototype software. Please use it with caution as it may
-                                    contain bugs or security vulnerabilities.
+                                    This is prototype software. Please use it
+                                    with caution as it may contain bugs or
+                                    security vulnerabilities.
                                 </p>
                             </div>
                         </div>
@@ -177,7 +182,8 @@ const InfoPage = () => {
                                         rel="noopener noreferrer"
                                         className="text-primary hover:text-primary/80 font-medium inline-flex items-center"
                                     >
-                                        inblock.io <LuExternalLink className="ml-1 h-3 w-3" />
+                                        inblock.io{' '}
+                                        <LuExternalLink className="ml-1 h-3 w-3" />
                                     </a>{' '}
                                     assets GmbH.
                                 </p>
@@ -209,13 +215,13 @@ const InfoPage = () => {
 
                     {/* Footer */}
                     <div className="mt-6 sm:mt-8 text-center text-xs sm:text-sm text-gray-500 dark:text-gray-400">
-                        &copy; {new Date().getFullYear()} inblock.io assets GmbH. All rights
-                        reserved.
+                        &copy; {new Date().getFullYear()} inblock.io assets
+                        GmbH. All rights reserved.
                     </div>
                 </div>
             </div>
         </div>
-    );
-};
+    )
+}
 
-export default InfoPage;
+export default InfoPage

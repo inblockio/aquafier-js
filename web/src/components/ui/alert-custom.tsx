@@ -1,16 +1,21 @@
-import { Alert, AlertDescription, AlertTitle } from './alert';
-import { AlertCircleIcon, InfoIcon, CheckCircleIcon } from 'lucide-react';
+import { Alert, AlertDescription, AlertTitle } from './alert'
+import { AlertCircleIcon, InfoIcon, CheckCircleIcon } from 'lucide-react'
 
 type CustomAlertProps = {
-    type?: 'error' | 'info' | 'success';
-    title: React.ReactNode;
-    description: React.ReactNode;
-};
+    type?: 'error' | 'info' | 'success'
+    title: React.ReactNode
+    description: React.ReactNode
+}
 
-export const CustomAlert = ({ type = 'info', title, description }: CustomAlertProps) => {
+export const CustomAlert = ({
+    type = 'info',
+    title,
+    description,
+}: CustomAlertProps) => {
     const alertConfig = {
         error: {
-            className: 'border-red-500 bg-red-50 text-red-900 dark:bg-red-900/10 dark:text-red-400',
+            className:
+                'border-red-500 bg-red-50 text-red-900 dark:bg-red-900/10 dark:text-red-400',
             iconClassName: 'text-red-500',
             icon: AlertCircleIcon,
             variant: 'destructive',
@@ -29,10 +34,10 @@ export const CustomAlert = ({ type = 'info', title, description }: CustomAlertPr
             icon: CheckCircleIcon,
             variant: 'default',
         },
-    };
+    }
 
-    const config = alertConfig[type];
-    const IconComponent = config.icon;
+    const config = alertConfig[type]
+    const IconComponent = config.icon
 
     return (
         <Alert className={config.className}>
@@ -40,7 +45,7 @@ export const CustomAlert = ({ type = 'info', title, description }: CustomAlertPr
             <AlertTitle>{title}</AlertTitle>
             <AlertDescription>{description}</AlertDescription>
         </Alert>
-    );
-};
+    )
+}
 
 // Usage

@@ -1,4 +1,4 @@
-import * as React from 'react';
+import * as React from 'react'
 
 import {
     Sidebar,
@@ -7,8 +7,8 @@ import {
     SidebarHeader,
     SidebarRail,
     useSidebar,
-} from '@/components/ui/sidebar';
-import CustomNavLink from './ui/CustomNavLink';
+} from '@/components/ui/sidebar'
+import CustomNavLink from './ui/CustomNavLink'
 import {
     Plus,
     Share2,
@@ -18,46 +18,48 @@ import {
     LayoutTemplate,
     Workflow,
     Link,
-} from 'lucide-react';
-import { maxUserFileSizeForUpload } from '@/utils/constants';
-import { formatBytes, getAquaTreeFileObject } from '@/utils/functions';
-import { useStore } from 'zustand';
-import appStore from '@/store';
-import { useState } from 'react';
+} from 'lucide-react'
+import { maxUserFileSizeForUpload } from '@/utils/constants'
+import { formatBytes, getAquaTreeFileObject } from '@/utils/functions'
+import { useStore } from 'zustand'
+import appStore from '@/store'
+import { useState } from 'react'
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
-    const { files } = useStore(appStore);
+    const { files } = useStore(appStore)
 
-    const [usedStorage, setUsedStorage] = useState<number>(0);
-    const [totalStorage, _setTotalStorage] = useState<number>(maxUserFileSizeForUpload);
-    const [usagePercentage, setUsagePercentage] = useState<number>(0);
+    const [usedStorage, setUsedStorage] = useState<number>(0)
+    const [totalStorage, _setTotalStorage] = useState<number>(
+        maxUserFileSizeForUpload
+    )
+    const [usagePercentage, setUsagePercentage] = useState<number>(0)
     // let usedStorage =0; // GB
     // const totalStorage = maxUserFileSizeForUpload //5; // GB
     // const usagePercentage = (usedStorage / totalStorage) * 100;
 
-    const { toggleSidebar } = useSidebar();
+    const { toggleSidebar } = useSidebar()
 
     const calcukateStorage = () => {
         if (files.length == 0) {
-            return;
+            return
         }
-        let usedStorageByUser = 0;
+        let usedStorageByUser = 0
         for (const item of files) {
-            const mainFileObject = getAquaTreeFileObject(item);
-            usedStorageByUser += mainFileObject?.fileSize ?? 0;
+            const mainFileObject = getAquaTreeFileObject(item)
+            usedStorageByUser += mainFileObject?.fileSize ?? 0
         }
-        setUsedStorage(usedStorageByUser);
+        setUsedStorage(usedStorageByUser)
 
-        const usagePercentage = (usedStorageByUser / totalStorage) * 100;
-        setUsagePercentage(usagePercentage);
-    };
+        const usagePercentage = (usedStorageByUser / totalStorage) * 100
+        setUsagePercentage(usagePercentage)
+    }
     React.useEffect(() => {
-        calcukateStorage();
-    }, []);
+        calcukateStorage()
+    }, [])
 
     React.useEffect(() => {
-        calcukateStorage();
-    }, [files]);
+        calcukateStorage()
+    }, [files])
 
     const sidebarItems = [
         // { icon: FaHome, label: 'Home', id: "/home" },
@@ -65,18 +67,22 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         { icon: Workflow, label: 'Workflows', id: '/files_workflows' },
         { icon: LayoutTemplate, label: 'Templates', id: '/templates' },
         { icon: Share2, label: 'Shared files', id: '/shared-contracts' },
-    ];
+    ]
 
     const quickAccessItems = [
         { label: 'Info', icon: Star, id: '/info' },
         { label: 'Settings', icon: Settings, id: '/settings' },
-    ];
+    ]
 
     const applicationsItems = [
         // { label: 'Create AquaSign', icon: Signature, id: "/form-instance/aqua_sign" },
         { label: 'Aquasign Workflows', icon: Workflow, id: '/workflows' },
-        { label: 'Claim & Attestation', icon: Link, id: '/claims_and_attestation' },
-    ];
+        {
+            label: 'Claim & Attestation',
+            icon: Link,
+            id: '/claims_and_attestation',
+        },
+    ]
 
     return (
         <Sidebar {...props}>
@@ -105,9 +111,9 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                                 item={{ ...item, id: `/app${item.id}` }}
                                 index={index}
                                 callBack={() => {
-                                    const isMobileView = window.innerWidth < 768; // md breakpoint is 768px
+                                    const isMobileView = window.innerWidth < 768 // md breakpoint is 768px
                                     if (isMobileView) {
-                                        toggleSidebar();
+                                        toggleSidebar()
                                     }
                                 }}
                             />
@@ -129,9 +135,10 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                                     item={{ ...item, id: `/app${item.id}` }}
                                     index={index}
                                     callBack={() => {
-                                        const isMobileView = window.innerWidth < 768; // md breakpoint is 768px
+                                        const isMobileView =
+                                            window.innerWidth < 768 // md breakpoint is 768px
                                         if (isMobileView) {
-                                            toggleSidebar();
+                                            toggleSidebar()
                                         }
                                     }}
                                 />
@@ -153,9 +160,10 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                                     item={{ ...item, id: `/app${item.id}` }}
                                     index={index}
                                     callBack={() => {
-                                        const isMobileView = window.innerWidth < 768; // md breakpoint is 768px
+                                        const isMobileView =
+                                            window.innerWidth < 768 // md breakpoint is 768px
                                         if (isMobileView) {
-                                            toggleSidebar();
+                                            toggleSidebar()
                                         }
                                     }}
                                 />
@@ -172,7 +180,9 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                         <>
                             <div className="bg-gray-50 p-4 rounded-lg">
                                 {/* Storage Header */}
-                                <h3 className="text-sm font-medium text-gray-900 mb-3">Storage</h3>
+                                <h3 className="text-sm font-medium text-gray-900 mb-3">
+                                    Storage
+                                </h3>
 
                                 {/* Progress Bar */}
                                 <div className="w-full bg-gray-200 rounded-full h-2 mb-2">
@@ -198,15 +208,21 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 
                     <div className="bg-gray-900 text-white p-3 rounded-md">
                         <div className="flex items-center justify-between mb-2">
-                            <span className="text-sm font-medium">Get started</span>
-                            <span className="text-xs bg-gray-700 px-2 py-1 rounded">25% off</span>
+                            <span className="text-sm font-medium">
+                                Get started
+                            </span>
+                            <span className="text-xs bg-gray-700 px-2 py-1 rounded">
+                                25% off
+                            </span>
                         </div>
-                        <p className="text-xs text-gray-300">Give it a try today</p>
+                        <p className="text-xs text-gray-300">
+                            Give it a try today
+                        </p>
                     </div>
                 </div>
             </SidebarFooter>
 
             <SidebarRail />
         </Sidebar>
-    );
+    )
 }

@@ -2,59 +2,66 @@
 export function isExtensionInstalled(extensionId: string) {
     return new Promise((resolve, _reject) => {
         if (!chrome || !chrome.runtime) {
-            resolve(false);
-            return;
+            resolve(false)
+            return
         }
 
         try {
-            chrome.runtime.sendMessage(extensionId, { type: 'CHECK_INSTALLED' }, _response => {
-                if (chrome.runtime.lastError) {
-                    // Extension is not installed or cannot be contacted
-                    resolve(false);
-                } else {
-                    // Extension is installed and responded
-                    resolve(true);
+            chrome.runtime.sendMessage(
+                extensionId,
+                { type: 'CHECK_INSTALLED' },
+                _response => {
+                    if (chrome.runtime.lastError) {
+                        // Extension is not installed or cannot be contacted
+                        resolve(false)
+                    } else {
+                        // Extension is installed and responded
+                        resolve(true)
+                    }
                 }
-            });
+            )
         } catch (error) {
-            console.error(error);
+            console.error(error)
             // Any error means the extension is not installed
-            resolve(false);
+            resolve(false)
         }
-    });
+    })
 }
 
 // Function to send a message to a specific extension
 export function sendMessageToExtension(extensionId: string, message: any) {
     return new Promise((resolve, reject) => {
         if (!chrome || !chrome.runtime) {
-            reject(new Error('Chrome runtime not available'));
-            return;
+            reject(new Error('Chrome runtime not available'))
+            return
         }
 
         try {
             chrome.runtime.sendMessage(extensionId, message, response => {
                 if (chrome.runtime.lastError) {
                     reject(
-                        new Error('Failed to send message: ' + chrome.runtime.lastError.message)
-                    );
-                    return;
+                        new Error(
+                            'Failed to send message: ' +
+                                chrome.runtime.lastError.message
+                        )
+                    )
+                    return
                 }
-                resolve(response);
-            });
+                resolve(response)
+            })
         } catch (error) {
-            reject(error);
+            reject(error)
         }
-    });
+    })
 }
 
 // Example usage
 export async function checkAndUseExtension() {
-    const EXTENSION_ID = 'your-extension-id-here'; // Replace with actual extension ID
+    const EXTENSION_ID = 'your-extension-id-here' // Replace with actual extension ID
 
     try {
         // Check if extension is installed
-        const isInstalled = await isExtensionInstalled(EXTENSION_ID);
+        const isInstalled = await isExtensionInstalled(EXTENSION_ID)
 
         if (isInstalled) {
             //  console.log('Extension is installed!');
@@ -69,39 +76,43 @@ export async function checkAndUseExtension() {
                         arg2: 'value2',
                     },
                 },
-            });
+            })
 
-            console.log('Function call result:', result);
+            console.log('Function call result:', result)
         } else {
-            console.log('Extension is not installed.');
+            console.log('Extension is not installed.')
         }
     } catch (error) {
-        console.error('Error checking extension:', error);
+        console.error('Error checking extension:', error)
     }
 }
 
 // Companion extension background script (to be added to the extension's background.js)
 export function setupExtensionListener() {
-    chrome.runtime.onMessageExternal.addListener((message, _sender, sendResponse) => {
-        switch (message.type) {
-            case 'CHECK_INSTALLED':
-                // Simply respond to confirm the extension is available
-                sendResponse({ status: 'INSTALLED' });
-                break;
+    chrome.runtime.onMessageExternal.addListener(
+        (message, _sender, sendResponse) => {
+            switch (message.type) {
+                case 'CHECK_INSTALLED':
+                    // Simply respond to confirm the extension is available
+                    sendResponse({ status: 'INSTALLED' })
+                    break
 
-            case 'CALL_SPECIFIC_FUNCTION':
-                // Handle specific function calls
-                switch (message.data.functionName) {
-                    case 'exampleFunction':
-                        const result = performExampleFunction(message.data.params);
-                        sendResponse(result);
-                        break;
-                    default:
-                        sendResponse({ error: 'Unknown function' });
-                }
-                return true; // Indicates we wish to send a response asynchronously
+                case 'CALL_SPECIFIC_FUNCTION':
+                    // Handle specific function calls
+                    switch (message.data.functionName) {
+                        case 'exampleFunction':
+                            const result = performExampleFunction(
+                                message.data.params
+                            )
+                            sendResponse(result)
+                            break
+                        default:
+                            sendResponse({ error: 'Unknown function' })
+                    }
+                    return true // Indicates we wish to send a response asynchronously
+            }
         }
-    });
+    )
 }
 
 // Example function that might be called from outside
@@ -111,8 +122,8 @@ export function performExampleFunction(params: any) {
         success: true,
         message: 'Function executed successfully',
         receivedParams: params,
-    };
+    }
 }
 
 // Call the check function
-checkAndUseExtension();
+checkAndUseExtension()

@@ -1,4 +1,4 @@
-import { ApiFileInfo } from '@/models/FileInfo';
+import { ApiFileInfo } from '@/models/FileInfo'
 import {
     displayTime,
     formatBytes,
@@ -8,20 +8,20 @@ import {
     getFileExtension,
     getGenesisHash,
     isWorkFlowData,
-} from '@/utils/functions';
-import { FileObject } from 'aqua-js-sdk';
-import { FileText } from 'lucide-react';
-import { useEffect, useState } from 'react';
-import { SignAquaChain } from '../components/aqua_chain_actions/sign_aqua_chain';
-import { WitnessAquaChain } from '../components/aqua_chain_actions/witness_aqua_chain';
-import { DownloadAquaChain } from '../components/aqua_chain_actions/download_aqua_chain';
-import { DeleteAquaChain } from '../components/aqua_chain_actions/delete_aqua_chain';
-import { ShareButton } from '../components/aqua_chain_actions/share_aqua_chain';
-import { OpenAquaSignWorkFlowButton } from '../components/aqua_chain_actions/open_aqua_sign_workflow';
-import { LinkButton } from '../components/aqua_chain_actions/link_aqua_chain';
-import { OpenClaimsWorkFlowButton } from '@/components/aqua_chain_actions/open_identity_claim_workflow';
-import { AttestAquaClaim } from '@/components/aqua_chain_actions/attest_aqua_claim';
-import { OpenSelectedFileDetailsButton } from '@/components/aqua_chain_actions/details_button';
+} from '@/utils/functions'
+import { FileObject } from 'aqua-js-sdk'
+import { FileText } from 'lucide-react'
+import { useEffect, useState } from 'react'
+import { SignAquaChain } from '../components/aqua_chain_actions/sign_aqua_chain'
+import { WitnessAquaChain } from '../components/aqua_chain_actions/witness_aqua_chain'
+import { DownloadAquaChain } from '../components/aqua_chain_actions/download_aqua_chain'
+import { DeleteAquaChain } from '../components/aqua_chain_actions/delete_aqua_chain'
+import { ShareButton } from '../components/aqua_chain_actions/share_aqua_chain'
+import { OpenAquaSignWorkFlowButton } from '../components/aqua_chain_actions/open_aqua_sign_workflow'
+import { LinkButton } from '../components/aqua_chain_actions/link_aqua_chain'
+import { OpenClaimsWorkFlowButton } from '@/components/aqua_chain_actions/open_identity_claim_workflow'
+import { AttestAquaClaim } from '@/components/aqua_chain_actions/attest_aqua_claim'
+import { OpenSelectedFileDetailsButton } from '@/components/aqua_chain_actions/details_button'
 
 export default function FilesListItem({
     showWorkFlowsOnly,
@@ -32,73 +32,76 @@ export default function FilesListItem({
     nonce,
     viewMode = 'table',
 }: {
-    showWorkFlowsOnly: boolean;
-    file: ApiFileInfo;
-    index: number;
-    systemFileInfo: ApiFileInfo[];
-    backendUrl: string;
-    nonce: string;
-    viewMode?: 'table' | 'card' | 'actions-only';
+    showWorkFlowsOnly: boolean
+    file: ApiFileInfo
+    index: number
+    systemFileInfo: ApiFileInfo[]
+    backendUrl: string
+    nonce: string
+    viewMode?: 'table' | 'card' | 'actions-only'
 }) {
     // const [_selectedFiles, setSelectedFiles] = useState<number[]>([]);
-    const [currentFileObject, setCurrentFileObject] = useState<FileObject | undefined>(undefined);
+    const [currentFileObject, setCurrentFileObject] = useState<
+        FileObject | undefined
+    >(undefined)
     const [workflowInfo, setWorkFlowInfo] = useState<
         { isWorkFlow: boolean; workFlow: string } | undefined
-    >(undefined);
+    >(undefined)
 
     useEffect(() => {
         const someData = systemFileInfo.map(e => {
             try {
-                return getAquaTreeFileName(e.aquaTree!);
+                return getAquaTreeFileName(e.aquaTree!)
             } catch (e) {
-                console.log('Error processing system file'); // More descriptive
-                return '';
+                console.log('Error processing system file') // More descriptive
+                return ''
             }
-        });
+        })
 
-        const fileObject = getAquaTreeFileObject(file);
-        setCurrentFileObject(fileObject);
-        const workFlow = isWorkFlowData(file.aquaTree!, someData);
+        const fileObject = getAquaTreeFileObject(file)
+        setCurrentFileObject(fileObject)
+        const workFlow = isWorkFlowData(file.aquaTree!, someData)
         console.log(
             `Workflow info for file ${getAquaTreeFileName(file.aquaTree!)}: ${JSON.stringify(workFlow, null, 4)}`
-        );
-        setWorkFlowInfo(workFlow);
-    }, []);
+        )
+        setWorkFlowInfo(workFlow)
+    }, [])
 
     useEffect(() => {
         const someData = systemFileInfo.map(e => {
             try {
-                return getAquaTreeFileName(e.aquaTree!);
+                return getAquaTreeFileName(e.aquaTree!)
             } catch (e) {
-                console.log('Error processing system file');
-                return '';
+                console.log('Error processing system file')
+                return ''
             }
-        });
+        })
 
-        const fileObject = getAquaTreeFileObject(file);
-        setCurrentFileObject(fileObject);
-        const workFlow = isWorkFlowData(file.aquaTree!, someData);
-        setWorkFlowInfo(workFlow);
-    }, [file, systemFileInfo]);
+        const fileObject = getAquaTreeFileObject(file)
+        setCurrentFileObject(fileObject)
+        const workFlow = isWorkFlowData(file.aquaTree!, someData)
+        setWorkFlowInfo(workFlow)
+    }, [file, systemFileInfo])
 
     const getFileInfo = () => {
         if (currentFileObject) {
-            return formatBytes(currentFileObject.fileSize ?? 0);
+            return formatBytes(currentFileObject.fileSize ?? 0)
         } else {
-            return 'Not available';
+            return 'Not available'
         }
-    };
+    }
     const getTimeInfo = () => {
-        const genRevision = getGenesisHash(file.aquaTree!);
+        const genRevision = getGenesisHash(file.aquaTree!)
         if (genRevision) {
-            const timestamp = file.aquaTree?.revisions?.[genRevision]?.local_timestamp;
+            const timestamp =
+                file.aquaTree?.revisions?.[genRevision]?.local_timestamp
             if (timestamp) {
-                return displayTime(timestamp);
+                return displayTime(timestamp)
             }
         } else {
-            return 'Not available';
+            return 'Not available'
         }
-    };
+    }
 
     // const detailsButton = () =>{
     //         return <button onClick={() => {
@@ -116,7 +119,10 @@ export default function FilesListItem({
                 <div className="flex flex-wrap gap-1">
                     {/* Details Button */}
                     <div className="w-[100px]">
-                        <OpenSelectedFileDetailsButton file={file} index={index} />
+                        <OpenSelectedFileDetailsButton
+                            file={file}
+                            index={index}
+                        />
                     </div>
 
                     {/* Sign Button */}
@@ -173,14 +179,18 @@ export default function FilesListItem({
                         
                     </div> */}
             </>
-        );
-    };
+        )
+    }
     const workFlowAquaSignActions = () => {
         return (
             <>
                 <div className="flex flex-wrap gap-1">
                     <div className="w-[202px]">
-                        <OpenAquaSignWorkFlowButton item={file} nonce={nonce} index={index} />
+                        <OpenAquaSignWorkFlowButton
+                            item={file}
+                            nonce={nonce}
+                            index={index}
+                        />
                     </div>
 
                     <div className="w-[100px]">
@@ -204,19 +214,26 @@ export default function FilesListItem({
                     </div>
                 </div>
             </>
-        );
-    };
+        )
+    }
 
     const workFlowIdentityClaimAttestationActions = () => {
         return (
             <>
                 <div className="flex flex-wrap gap-1">
                     <div className="w-[202px]">
-                        <OpenClaimsWorkFlowButton item={file} nonce={nonce} index={index} />
+                        <OpenClaimsWorkFlowButton
+                            item={file}
+                            nonce={nonce}
+                            index={index}
+                        />
                     </div>
 
                     <div className="w-[100px]">
-                        <OpenSelectedFileDetailsButton file={file} index={index} />
+                        <OpenSelectedFileDetailsButton
+                            file={file}
+                            index={index}
+                        />
                     </div>
 
                     <div className="w-[100px]">
@@ -240,14 +257,18 @@ export default function FilesListItem({
                     </div>
                 </div>
             </>
-        );
-    };
+        )
+    }
     const workFlowIdentityClaimActions = () => {
         return (
             <>
                 <div className="flex flex-wrap gap-1">
                     <div className="w-[202px]">
-                        <OpenClaimsWorkFlowButton item={file} nonce={nonce} index={index} />
+                        <OpenClaimsWorkFlowButton
+                            item={file}
+                            nonce={nonce}
+                            index={index}
+                        />
                     </div>
 
                     <div className="w-[100px]">
@@ -255,7 +276,10 @@ export default function FilesListItem({
                     </div>
 
                     <div className="w-[100px]">
-                        <OpenSelectedFileDetailsButton file={file} index={index} />
+                        <OpenSelectedFileDetailsButton
+                            file={file}
+                            index={index}
+                        />
                     </div>
 
                     <div className="w-[100px]">
@@ -279,27 +303,41 @@ export default function FilesListItem({
                     </div>
                 </div>
             </>
-        );
-    };
+        )
+    }
 
     const showActionsButton = () => {
-        console.log(`workflowInfo data ${JSON.stringify(workflowInfo, null, 4)}`);
-        if (workflowInfo?.isWorkFlow == true && workflowInfo.workFlow == 'aqua_sign') {
-            return workFlowAquaSignActions();
+        console.log(
+            `workflowInfo data ${JSON.stringify(workflowInfo, null, 4)}`
+        )
+        if (
+            workflowInfo?.isWorkFlow == true &&
+            workflowInfo.workFlow == 'aqua_sign'
+        ) {
+            return workFlowAquaSignActions()
         }
-        if (workflowInfo?.isWorkFlow == true && workflowInfo.workFlow == 'identity_claim') {
-            return workFlowIdentityClaimActions();
+        if (
+            workflowInfo?.isWorkFlow == true &&
+            workflowInfo.workFlow == 'identity_claim'
+        ) {
+            return workFlowIdentityClaimActions()
         }
 
-        if (workflowInfo?.isWorkFlow == true && workflowInfo.workFlow == 'identity_attestation') {
-            return workFlowIdentityClaimAttestationActions();
+        if (
+            workflowInfo?.isWorkFlow == true &&
+            workflowInfo.workFlow == 'identity_attestation'
+        ) {
+            return workFlowIdentityClaimAttestationActions()
         }
-        return workFileActions();
-    };
+        return workFileActions()
+    }
 
     const renderTableView = () => {
         return (
-            <tr key={index} className="border-b border-gray-100 hover:bg-gray-50">
+            <tr
+                key={index}
+                className="border-b border-gray-100 hover:bg-gray-50"
+            >
                 <td className="py-3 flex items-center space-x-3 px-4">
                     {/* <FileText className="w-5 h-5 text-blue-500" /> */}
                     <span className="font-medium text-sm">
@@ -307,37 +345,43 @@ export default function FilesListItem({
                     </span>
                 </td>
                 <td className="py-3 text-sm text-gray-500">
-                    {getFileCategory(getFileExtension(getAquaTreeFileName(file.aquaTree!)))}
+                    {getFileCategory(
+                        getFileExtension(getAquaTreeFileName(file.aquaTree!))
+                    )}
                 </td>
                 <td className="py-3 text-sm text-gray-500">
                     {(() => {
-                        const genRevision = getGenesisHash(file.aquaTree!);
+                        const genRevision = getGenesisHash(file.aquaTree!)
                         if (genRevision) {
                             const timestamp =
-                                file.aquaTree?.revisions?.[genRevision]?.local_timestamp;
+                                file.aquaTree?.revisions?.[genRevision]
+                                    ?.local_timestamp
                             if (timestamp) {
-                                return displayTime(timestamp);
+                                return displayTime(timestamp)
                             }
                         }
-                        return 'Not available';
+                        return 'Not available'
                     })()}
                 </td>
                 <td className="py-3 text-sm text-gray-500">
                     {(() => {
-                        const fileObject = getAquaTreeFileObject(file);
+                        const fileObject = getAquaTreeFileObject(file)
                         if (fileObject) {
-                            return formatBytes(fileObject.fileSize ?? 0);
+                            return formatBytes(fileObject.fileSize ?? 0)
                         }
-                        return 'Not available';
+                        return 'Not available'
                     })()}
                 </td>
                 <td className="py-3">{showActionsButton()}</td>
             </tr>
-        );
-    };
+        )
+    }
 
     const renderCardView = () => {
-        if ((showWorkFlowsOnly && workflowInfo?.isWorkFlow) || !showWorkFlowsOnly) {
+        if (
+            (showWorkFlowsOnly && workflowInfo?.isWorkFlow) ||
+            !showWorkFlowsOnly
+        ) {
             return (
                 <div className="space-y-3">
                     <div className="flex items-center space-x-3">
@@ -351,7 +395,9 @@ export default function FilesListItem({
                         <div>
                             <p className="text-gray-500 font-medium">Type</p>
                             <p className="text-gray-700">
-                                {getFileExtension(getAquaTreeFileName(file.aquaTree!))}
+                                {getFileExtension(
+                                    getAquaTreeFileName(file.aquaTree!)
+                                )}
                             </p>
                         </div>
                         <div>
@@ -359,38 +405,44 @@ export default function FilesListItem({
                             <p className="text-gray-700">{getFileInfo()}</p>
                         </div>
                         <div className="col-span-2">
-                            <p className="text-gray-500 font-medium">Uploaded</p>
+                            <p className="text-gray-500 font-medium">
+                                Uploaded
+                            </p>
                             <p className="text-gray-700">{getTimeInfo()}</p>
                         </div>
                     </div>
 
                     <div className="pt-2 border-t border-gray-100">
-                        <p className="text-xs text-gray-500 font-medium mb-2">Actions</p>
-                        <div className="flex flex-wrap gap-2">{showActionsButton()}</div>
+                        <p className="text-xs text-gray-500 font-medium mb-2">
+                            Actions
+                        </p>
+                        <div className="flex flex-wrap gap-2">
+                            {showActionsButton()}
+                        </div>
                     </div>
                 </div>
-            );
+            )
         }
-        return null;
-    };
+        return null
+    }
 
     const showListItemData = () => {
         // First check if we should show this item based on workflow filter
         if (showWorkFlowsOnly && !workflowInfo?.isWorkFlow) {
-            return null;
+            return null
         }
 
         // Then handle different view modes
         if (viewMode === 'table') {
-            return renderTableView();
+            return renderTableView()
         } else if (viewMode === 'card') {
-            return renderCardView();
+            return renderCardView()
         } else if (viewMode === 'actions-only') {
-            return workFileActions();
+            return workFileActions()
         }
 
-        return null;
-    };
+        return null
+    }
 
-    return <>{showListItemData()}</>;
+    return <>{showListItemData()}</>
 }

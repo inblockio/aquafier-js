@@ -1,76 +1,85 @@
-import React, { useEffect, useState } from 'react';
-import { FaCheck, FaQuestionCircle } from 'react-icons/fa';
-import { Alert, AlertDescription } from '../../components/ui/alert';
-import appStore from '../../store';
-import { useStore } from 'zustand';
-import { SummaryDetailsDisplayData, WorkFlowTimeLine } from '../../types/types';
+import React, { useEffect, useState } from 'react'
+import { FaCheck, FaQuestionCircle } from 'react-icons/fa'
+import { Alert, AlertDescription } from '../../components/ui/alert'
+import appStore from '../../store'
+import { useStore } from 'zustand'
+import { SummaryDetailsDisplayData, WorkFlowTimeLine } from '../../types/types'
 import {
     convertTemplateNameToTitle,
     getAquaTreeFileName,
     getHighestFormIndex,
     isAquaTree,
     isWorkFlowData,
-} from '../../utils/functions';
-import { ContractDocumentView } from './ContractDocument/ContractDocument';
-import { ContractSummaryView } from './ContractSummary/ContractSummary';
-import { AquaTree, OrderRevisionInAquaTree, Revision } from 'aqua-js-sdk/web';
-import { Button } from '../../components/ui/button';
-import { LuArrowLeft } from 'react-icons/lu';
-import { useNavigate } from 'react-router-dom';
-import { HiDocumentText } from 'react-icons/hi';
-import { FaCircleInfo } from 'react-icons/fa6';
-import { cn } from '../../lib/utils';
+} from '../../utils/functions'
+import { ContractDocumentView } from './ContractDocument/ContractDocument'
+import { ContractSummaryView } from './ContractSummary/ContractSummary'
+import { AquaTree, OrderRevisionInAquaTree, Revision } from 'aqua-js-sdk/web'
+import { Button } from '../../components/ui/button'
+import { LuArrowLeft } from 'react-icons/lu'
+import { useNavigate } from 'react-router-dom'
+import { HiDocumentText } from 'react-icons/hi'
+import { FaCircleInfo } from 'react-icons/fa6'
+import { cn } from '../../lib/utils'
 
 export default function PdfWorkflowPage() {
-    const [activeStep, setActiveStep] = useState(1);
-    const [timeLineTitle, setTimeLineTitle] = useState('');
-    const [error, setError] = useState('');
-    const [timeLineItems, setTimeLineItems] = useState<Array<WorkFlowTimeLine>>([]);
-    const { selectedFileInfo, systemFileInfo, setSelectedFileInfo } = useStore(appStore);
+    const [activeStep, setActiveStep] = useState(1)
+    const [timeLineTitle, setTimeLineTitle] = useState('')
+    const [error, setError] = useState('')
+    const [timeLineItems, setTimeLineItems] = useState<Array<WorkFlowTimeLine>>(
+        []
+    )
+    const { selectedFileInfo, systemFileInfo, setSelectedFileInfo } =
+        useStore(appStore)
 
-    const navigate = useNavigate();
+    const navigate = useNavigate()
 
     const getSignatureRevionHashes = (
         hashesToLoopPar: Array<string>
     ): Array<SummaryDetailsDisplayData> => {
-        const signatureRevionHashes: Array<SummaryDetailsDisplayData> = [];
+        const signatureRevionHashes: Array<SummaryDetailsDisplayData> = []
 
         for (let i = 0; i < hashesToLoopPar.length; i += 3) {
-            const batch = hashesToLoopPar.slice(i, i + 3);
-            console.log(`Processing batch ${i / 3 + 1}:`, batch);
+            const batch = hashesToLoopPar.slice(i, i + 3)
+            console.log(`Processing batch ${i / 3 + 1}:`, batch)
 
-            let signaturePositionCount = 0;
-            const hashSigPosition = batch[0] ?? '';
-            const hashSigRev = batch[1] ?? '';
-            const hashSigMetamak = batch[2] ?? '';
-            let walletAddress = '';
+            let signaturePositionCount = 0
+            const hashSigPosition = batch[0] ?? ''
+            const hashSigRev = batch[1] ?? ''
+            const hashSigMetamak = batch[2] ?? ''
+            let walletAddress = ''
 
             if (hashSigPosition.length > 0) {
                 const allAquaTrees = selectedFileInfo?.fileObject.filter(e =>
                     isAquaTree(e.fileContent)
-                );
+                )
 
                 const hashSigPositionHashString =
                     selectedFileInfo!.aquaTree!.revisions[hashSigPosition]
-                        .link_verification_hashes![0];
+                        .link_verification_hashes![0]
 
                 if (allAquaTrees) {
                     for (const anAquaTree of allAquaTrees) {
-                        const allHashes = Object.keys(anAquaTree);
+                        const allHashes = Object.keys(anAquaTree)
                         if (allHashes.includes(hashSigPositionHashString)) {
-                            const aquaTreeData = anAquaTree.fileContent as AquaTree;
-                            const revData = aquaTreeData.revisions[hashSigPositionHashString];
-                            signaturePositionCount = getHighestFormIndex(revData);
+                            const aquaTreeData =
+                                anAquaTree.fileContent as AquaTree
+                            const revData =
+                                aquaTreeData.revisions[
+                                    hashSigPositionHashString
+                                ]
+                            signaturePositionCount =
+                                getHighestFormIndex(revData)
 
-                            break;
+                            break
                         }
                     }
                 }
             }
 
-            const metaMaskRevision = selectedFileInfo!.aquaTree!.revisions[hashSigMetamak];
+            const metaMaskRevision =
+                selectedFileInfo!.aquaTree!.revisions[hashSigMetamak]
             if (metaMaskRevision) {
-                walletAddress = metaMaskRevision.signature_wallet_address ?? '';
+                walletAddress = metaMaskRevision.signature_wallet_address ?? ''
             }
             const data: SummaryDetailsDisplayData = {
                 revisionHashWithSignaturePositionCount: signaturePositionCount,
@@ -78,60 +87,64 @@ export default function PdfWorkflowPage() {
                 revisionHashWithSinatureRevision: hashSigRev,
                 revisionHashMetamask: hashSigMetamak,
                 walletAddress: walletAddress,
-            };
+            }
 
-            signatureRevionHashes.push(data);
+            signatureRevionHashes.push(data)
         }
 
-        return signatureRevionHashes;
-    };
+        return signatureRevionHashes
+    }
 
     function computeIsWorkflowCOmplete(): boolean {
         if (selectedFileInfo) {
-            const orderedTree = OrderRevisionInAquaTree(selectedFileInfo!.aquaTree!);
+            const orderedTree = OrderRevisionInAquaTree(
+                selectedFileInfo!.aquaTree!
+            )
 
-            const revisions = orderedTree.revisions;
-            const revisionHashes = Object.keys(revisions);
+            const revisions = orderedTree.revisions
+            const revisionHashes = Object.keys(revisions)
 
-            const firstHash: string = revisionHashes[0];
-            const firstRevision: Revision = selectedFileInfo!.aquaTree!.revisions[firstHash];
+            const firstHash: string = revisionHashes[0]
+            const firstRevision: Revision =
+                selectedFileInfo!.aquaTree!.revisions[firstHash]
 
-            const signers: string[] = firstRevision?.forms_signers.split(',');
+            const signers: string[] = firstRevision?.forms_signers.split(',')
 
-            let signatureRevionHashesData: Array<SummaryDetailsDisplayData> = [];
-            let fourthItmeHashOnwards: string[] = [];
-            let signatureRevionHashes: Array<SummaryDetailsDisplayData> = [];
+            let signatureRevionHashesData: Array<SummaryDetailsDisplayData> = []
+            let fourthItmeHashOnwards: string[] = []
+            let signatureRevionHashes: Array<SummaryDetailsDisplayData> = []
 
             if (revisionHashes.length > 4) {
                 // remove the first 4 elements from the revision list
-                fourthItmeHashOnwards = revisionHashes.slice(4);
+                fourthItmeHashOnwards = revisionHashes.slice(4)
                 // console.log(`revisionHashes  ${revisionHashes} --  ${typeof revisionHashes}`)
                 // console.log(`fourthItmeHashOnwards  ${fourthItmeHashOnwards}`)
-                signatureRevionHashes = getSignatureRevionHashes(fourthItmeHashOnwards);
+                signatureRevionHashes = getSignatureRevionHashes(
+                    fourthItmeHashOnwards
+                )
                 // console.log(`signatureRevionHashes  ${JSON.stringify(signatureRevionHashes, null, 4)}`)
 
-                signatureRevionHashesData = signatureRevionHashes;
+                signatureRevionHashesData = signatureRevionHashes
             }
 
-            const signatureRevionHashesDataAddress = signatureRevionHashesData.map(
-                e => e.walletAddress
-            );
+            const signatureRevionHashesDataAddress =
+                signatureRevionHashesData.map(e => e.walletAddress)
             const remainSigners = signers.filter(
                 item => !signatureRevionHashesDataAddress.includes(item)
-            );
+            )
 
             if (remainSigners.length > 0) {
-                return false;
+                return false
             } else {
-                return true;
+                return true
             }
         } else {
-            return false;
+            return false
         }
     }
 
     function loadTimeline() {
-        const items: Array<WorkFlowTimeLine> = [];
+        const items: Array<WorkFlowTimeLine> = []
 
         items.push({
             id: 1,
@@ -139,14 +152,14 @@ export default function PdfWorkflowPage() {
             content: (
                 <ContractSummaryView
                     setActiveStep={(index: number) => {
-                        setActiveStep(index);
+                        setActiveStep(index)
                     }}
                 />
             ),
             icon: FaCircleInfo,
             revisionHash: '',
             title: 'Contract Information',
-        });
+        })
 
         items.push({
             id: 2,
@@ -154,55 +167,59 @@ export default function PdfWorkflowPage() {
             content: (
                 <ContractDocumentView
                     setActiveStep={(index: number) => {
-                        setActiveStep(index);
+                        setActiveStep(index)
                     }}
                 />
             ),
             icon: HiDocumentText,
             revisionHash: '',
             title: 'Contract Document',
-        });
+        })
 
-        setTimeLineItems(items);
+        setTimeLineItems(items)
     }
 
     const loadData = () => {
         if (selectedFileInfo) {
             const someData = systemFileInfo.map(e => {
                 try {
-                    return getAquaTreeFileName(e.aquaTree!);
+                    return getAquaTreeFileName(e.aquaTree!)
                 } catch (e) {
-                    console.log('Error processing system file');
-                    return '';
+                    console.log('Error processing system file')
+                    return ''
                 }
-            });
+            })
 
             // const templateNames = formTemplates.map((e) => e.name)
-            const { isWorkFlow, workFlow } = isWorkFlowData(selectedFileInfo.aquaTree!, someData);
+            const { isWorkFlow, workFlow } = isWorkFlowData(
+                selectedFileInfo.aquaTree!,
+                someData
+            )
 
             if (!isWorkFlow) {
-                setError('The selected Aqua - Tree is not workflow');
-                return;
+                setError('The selected Aqua - Tree is not workflow')
+                return
             }
 
-            setTimeLineTitle(convertTemplateNameToTitle(workFlow));
+            setTimeLineTitle(convertTemplateNameToTitle(workFlow))
 
-            computeIsWorkflowCOmplete();
+            computeIsWorkflowCOmplete()
 
-            loadTimeline();
+            loadTimeline()
         }
-    };
+    }
 
     useEffect(() => {
-        loadData();
-    }, []);
+        loadData()
+    }, [])
 
     useEffect(() => {
-        loadData();
-    }, [JSON.stringify(selectedFileInfo), selectedFileInfo]);
+        loadData()
+    }, [JSON.stringify(selectedFileInfo), selectedFileInfo])
 
     // Find the currently active content
-    const activeContent = () => timeLineItems.find(item => item.id === activeStep)?.content;
+    const activeContent = () =>
+        timeLineItems.find(item => item.id === activeStep)?.content
 
     const aquaTreeTimeLine = () => {
         return (
@@ -211,12 +228,14 @@ export default function PdfWorkflowPage() {
                     <div className="container">
                         <div className="flex items-center justify-between">
                             <div></div>
-                            <h1 className="text-center text-2xl font-bold">{timeLineTitle}</h1>
+                            <h1 className="text-center text-2xl font-bold">
+                                {timeLineTitle}
+                            </h1>
                             <Button
                                 variant="outline"
                                 onClick={() => {
-                                    setSelectedFileInfo(null);
-                                    navigate('/app', { replace: true });
+                                    setSelectedFileInfo(null)
+                                    navigate('/app', { replace: true })
                                 }}
                                 className="cursor-pointer"
                             >
@@ -283,8 +302,11 @@ export default function PdfWorkflowPage() {
                                                 className={cn(
                                                     'h-0.5 w-full',
                                                     index < activeStep - 1 ||
-                                                        (index === activeStep - 1 &&
-                                                            timeLineItems[activeStep - 1].completed)
+                                                        (index ===
+                                                            activeStep - 1 &&
+                                                            timeLineItems[
+                                                                activeStep - 1
+                                                            ].completed)
                                                         ? 'bg-green-500'
                                                         : 'bg-gray-200'
                                                 )}
@@ -300,8 +322,8 @@ export default function PdfWorkflowPage() {
                     <div className="p-0 md:p-4">{activeContent()}</div>
                 </div>
             </div>
-        );
-    };
+        )
+    }
 
     const workFlowPageData = () => {
         if (error.length > 0) {
@@ -309,18 +331,18 @@ export default function PdfWorkflowPage() {
                 <Alert variant="destructive">
                     <AlertDescription>{error}</AlertDescription>
                 </Alert>
-            );
+            )
         }
         if (selectedFileInfo == null) {
             return (
                 <Alert variant="destructive">
                     <AlertDescription>Selected file not found</AlertDescription>
                 </Alert>
-            );
+            )
         }
 
-        return aquaTreeTimeLine();
-    };
+        return aquaTreeTimeLine()
+    }
 
-    return <div className="w-full">{workFlowPageData()}</div>;
+    return <div className="w-full">{workFlowPageData()}</div>
 }

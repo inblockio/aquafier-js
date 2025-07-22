@@ -1,14 +1,18 @@
-import * as React from 'react';
-import * as SliderPrimitive from '@radix-ui/react-slider';
-import { cn } from '@/lib/utils';
+import * as React from 'react'
+import * as SliderPrimitive from '@radix-ui/react-slider'
+import { cn } from '@/lib/utils'
 
-export interface SliderProps extends React.ComponentProps<typeof SliderPrimitive.Root> {
-    marks?: Array<number | { value: number; label: React.ReactNode }>;
-    label?: React.ReactNode;
-    showValue?: boolean;
+export interface SliderProps
+    extends React.ComponentProps<typeof SliderPrimitive.Root> {
+    marks?: Array<number | { value: number; label: React.ReactNode }>
+    label?: React.ReactNode
+    showValue?: boolean
 }
 
-const Slider = React.forwardRef<React.ElementRef<typeof SliderPrimitive.Root>, SliderProps>(
+const Slider = React.forwardRef<
+    React.ElementRef<typeof SliderPrimitive.Root>,
+    SliderProps
+>(
     (
         {
             className,
@@ -23,19 +27,20 @@ const Slider = React.forwardRef<React.ElementRef<typeof SliderPrimitive.Root>, S
         },
         ref
     ) => {
-        const currentValue = value ?? defaultValue ?? [min];
+        const currentValue = value ?? defaultValue ?? [min]
 
         const marks = marksProp?.map(mark => {
-            if (typeof mark === 'number') return { value: mark, label: undefined };
-            return mark;
-        });
+            if (typeof mark === 'number')
+                return { value: mark, label: undefined }
+            return mark
+        })
 
-        const hasMarkLabel = !!marks?.some(mark => mark.label);
+        const hasMarkLabel = !!marks?.some(mark => mark.label)
 
         // Calculate position percentage for marks
         const getMarkPosition = (markValue: number) => {
-            return ((markValue - min) / (max - min)) * 100;
-        };
+            return ((markValue - min) / (max - min)) * 100
+        }
 
         return (
             <div className="w-full space-y-2">
@@ -51,7 +56,9 @@ const Slider = React.forwardRef<React.ElementRef<typeof SliderPrimitive.Root>, S
                             {label}
                         </label>
                         <span className="text-sm text-muted-foreground">
-                            {Array.isArray(currentValue) ? currentValue.join(' - ') : currentValue}
+                            {Array.isArray(currentValue)
+                                ? currentValue.join(' - ')
+                                : currentValue}
                         </span>
                     </div>
                 )}
@@ -77,7 +84,11 @@ const Slider = React.forwardRef<React.ElementRef<typeof SliderPrimitive.Root>, S
 
                         {/* Render thumbs based on value array length */}
                         {Array.from(
-                            { length: Array.isArray(currentValue) ? currentValue.length : 1 },
+                            {
+                                length: Array.isArray(currentValue)
+                                    ? currentValue.length
+                                    : 1,
+                            },
                             (_, index) => (
                                 <SliderPrimitive.Thumb
                                     key={index}
@@ -91,9 +102,13 @@ const Slider = React.forwardRef<React.ElementRef<typeof SliderPrimitive.Root>, S
                     {marks && marks.length > 0 && (
                         <div className="relative">
                             {marks.map((mark, index) => {
-                                const markValue = typeof mark === 'number' ? mark : mark.value;
-                                const markLabel = typeof mark === 'number' ? undefined : mark.label;
-                                const position = getMarkPosition(markValue);
+                                const markValue =
+                                    typeof mark === 'number' ? mark : mark.value
+                                const markLabel =
+                                    typeof mark === 'number'
+                                        ? undefined
+                                        : mark.label
+                                const position = getMarkPosition(markValue)
 
                                 return (
                                     <div
@@ -114,19 +129,19 @@ const Slider = React.forwardRef<React.ElementRef<typeof SliderPrimitive.Root>, S
                                             </div>
                                         )}
                                     </div>
-                                );
+                                )
                             })}
                         </div>
                     )}
                 </div>
             </div>
-        );
+        )
     }
-);
+)
 
-Slider.displayName = 'Slider';
+Slider.displayName = 'Slider'
 
-export { Slider };
+export { Slider }
 // import { Slider as ChakraSlider, For, HStack } from "@chakra-ui/react"
 // import * as React from "react"
 // import * as SliderPrimitive from "@radix-ui/react-slider"

@@ -1,8 +1,15 @@
-import { useCallback, useEffect, useState } from 'react';
-import appStore from '../../../store';
-import { useStore } from 'zustand';
-import { ContractDocumentViewProps, SummaryDetailsDisplayData } from '../../../types/types';
-import Aquafier, { AquaTree, OrderRevisionInAquaTree, Revision } from 'aqua-js-sdk/web';
+import { useCallback, useEffect, useState } from 'react'
+import appStore from '../../../store'
+import { useStore } from 'zustand'
+import {
+    ContractDocumentViewProps,
+    SummaryDetailsDisplayData,
+} from '../../../types/types'
+import Aquafier, {
+    AquaTree,
+    OrderRevisionInAquaTree,
+    Revision,
+} from 'aqua-js-sdk/web'
 import {
     isAquaTree,
     timeToHumanFriendly,
@@ -11,70 +18,87 @@ import {
     getFileHashFromUrl,
     fetchFileData,
     isArrayBufferText,
-} from '../../../utils/functions';
+} from '../../../utils/functions'
 
-import { ApiFileInfo } from '../../../models/FileInfo';
-import { IDrawerStatus, VerificationHashAndResult } from '../../../models/AquaTreeDetails';
-import ContractSummaryDetails from './ContractSummaryDetails';
+import { ApiFileInfo } from '../../../models/FileInfo'
+import {
+    IDrawerStatus,
+    VerificationHashAndResult,
+} from '../../../models/AquaTreeDetails'
+import ContractSummaryDetails from './ContractSummaryDetails'
 
-export const ContractSummaryView: React.FC<ContractDocumentViewProps> = ({ setActiveStep }) => {
-    const [isLoading, setIsLoading] = useState(true);
+export const ContractSummaryView: React.FC<ContractDocumentViewProps> = ({
+    setActiveStep,
+}) => {
+    const [isLoading, setIsLoading] = useState(true)
     const [signatureRevionHashesData, setSignatureRevionHashes] = useState<
         SummaryDetailsDisplayData[]
-    >([]);
-    const [isWorkFlowComplete, setIsWorkFlowComplete] = useState<string[]>([]);
-    const [_creatorEthreiumSignatureRevisionData, setCreatorEthreiumSignatureRevisionData] =
-        useState<Revision | undefined>(undefined);
-    const [firstRevisionData, setFirstRevisionData] = useState<Revision | undefined>(undefined);
-    const [fileNameData, setFileNameData] = useState<string>('');
-    const [contractCreatorAddress, setContractCreatorAddress] = useState<string>('');
-    const [isProcessing, setIsProcessing] = useState(false);
-    const [verificationResults, setVerificationResults] = useState<VerificationHashAndResult[]>([]);
+    >([])
+    const [isWorkFlowComplete, setIsWorkFlowComplete] = useState<string[]>([])
+    const [
+        _creatorEthreiumSignatureRevisionData,
+        setCreatorEthreiumSignatureRevisionData,
+    ] = useState<Revision | undefined>(undefined)
+    const [firstRevisionData, setFirstRevisionData] = useState<
+        Revision | undefined
+    >(undefined)
+    const [fileNameData, setFileNameData] = useState<string>('')
+    const [contractCreatorAddress, setContractCreatorAddress] =
+        useState<string>('')
+    const [isProcessing, setIsProcessing] = useState(false)
+    const [verificationResults, setVerificationResults] = useState<
+        VerificationHashAndResult[]
+    >([])
 
     // let firstRevisionHash = selectedFileInfo
-    const { selectedFileInfo, apiFileData, setApiFileData, session } = useStore(appStore);
+    const { selectedFileInfo, apiFileData, setApiFileData, session } =
+        useStore(appStore)
 
     const getSignatureRevionHashes = (
         hashesToLoopPar: Array<string>
     ): Array<SummaryDetailsDisplayData> => {
-        const signatureRevionHashes: Array<SummaryDetailsDisplayData> = [];
+        const signatureRevionHashes: Array<SummaryDetailsDisplayData> = []
 
         for (let i = 0; i < hashesToLoopPar.length; i += 3) {
-            const batch = hashesToLoopPar.slice(i, i + 3);
+            const batch = hashesToLoopPar.slice(i, i + 3)
 
-            let signaturePositionCount = 0;
-            const hashSigPosition = batch[0] ?? '';
-            const hashSigRev = batch[1] ?? '';
-            const hashSigMetamak = batch[2] ?? '';
-            let walletAddress = '';
+            let signaturePositionCount = 0
+            const hashSigPosition = batch[0] ?? ''
+            const hashSigRev = batch[1] ?? ''
+            const hashSigMetamak = batch[2] ?? ''
+            let walletAddress = ''
 
             if (hashSigPosition.length > 0) {
                 const allAquaTrees = selectedFileInfo?.fileObject.filter(e =>
                     isAquaTree(e.fileContent)
-                );
+                )
 
                 const hashSigPositionHashString =
                     selectedFileInfo!.aquaTree!.revisions[hashSigPosition]
-                        .link_verification_hashes![0];
+                        .link_verification_hashes![0]
 
                 if (allAquaTrees) {
                     for (const anAquaTreeFileObject of allAquaTrees) {
-                        const anAquaTree: AquaTree = anAquaTreeFileObject.fileContent as AquaTree;
-                        const allHashes = Object.keys(anAquaTree.revisions);
+                        const anAquaTree: AquaTree =
+                            anAquaTreeFileObject.fileContent as AquaTree
+                        const allHashes = Object.keys(anAquaTree.revisions)
                         if (allHashes.includes(hashSigPositionHashString)) {
                             // let aquaTreeData = anAquaTree.fileContent as AquaTree
-                            const revData = anAquaTree.revisions[hashSigPositionHashString];
-                            signaturePositionCount = getHighestFormIndex(revData) + 1; // sinature count is 0 based
+                            const revData =
+                                anAquaTree.revisions[hashSigPositionHashString]
+                            signaturePositionCount =
+                                getHighestFormIndex(revData) + 1 // sinature count is 0 based
 
-                            break;
+                            break
                         }
                     }
                 }
             }
 
-            const metaMaskRevision = selectedFileInfo!.aquaTree!.revisions[hashSigMetamak];
+            const metaMaskRevision =
+                selectedFileInfo!.aquaTree!.revisions[hashSigMetamak]
             if (metaMaskRevision) {
-                walletAddress = metaMaskRevision.signature_wallet_address ?? '';
+                walletAddress = metaMaskRevision.signature_wallet_address ?? ''
             }
             const data: SummaryDetailsDisplayData = {
                 revisionHashWithSignaturePositionCount: signaturePositionCount,
@@ -82,13 +106,13 @@ export const ContractSummaryView: React.FC<ContractDocumentViewProps> = ({ setAc
                 revisionHashWithSinatureRevision: hashSigRev,
                 revisionHashMetamask: hashSigMetamak,
                 walletAddress: walletAddress,
-            };
+            }
 
-            signatureRevionHashes.push(data);
+            signatureRevionHashes.push(data)
         }
 
-        return signatureRevionHashes;
-    };
+        return signatureRevionHashes
+    }
 
     // Memoized display text function
     // const displayBasedOnWorkflowStatusText = (isComplete: boolean) => {
@@ -116,68 +140,74 @@ export const ContractSummaryView: React.FC<ContractDocumentViewProps> = ({ setAc
             return selectedFileInfo?.aquaTree?.revisions
                 ? _verificationResults.length ===
                       Object.keys(selectedFileInfo.aquaTree.revisions).length
-                : false;
+                : false
         },
         [selectedFileInfo?.aquaTree?.revisions]
-    );
+    )
 
     // Memoized verification status check to prevent recalculation
     const isVerificationSuccessful = useCallback(
         (_verificationResults: VerificationHashAndResult[]): boolean => {
             for (const item of _verificationResults.values()) {
                 if (!item.isSuccessful) {
-                    return false;
+                    return false
                 }
             }
-            return true;
+            return true
         },
         []
-    );
+    )
 
     // Memoized color functions to prevent recalculation
     const displayColorBasedOnVerificationStatusLight = useCallback(
         (_verificationResults: VerificationHashAndResult[]) => {
             if (!isVerificationComplete(_verificationResults)) {
-                return 'grey';
+                return 'grey'
             }
-            return isVerificationSuccessful(_verificationResults) ? 'green.100' : 'red.100';
+            return isVerificationSuccessful(_verificationResults)
+                ? 'green.100'
+                : 'red.100'
         },
         []
-    );
+    )
 
     const displayColorBasedOnVerificationStatusDark = useCallback(
         (_verificationResults: VerificationHashAndResult[]) => {
             if (!isVerificationComplete(_verificationResults)) {
-                return 'whitesmoke';
+                return 'whitesmoke'
             }
-            return isVerificationSuccessful(_verificationResults) ? 'green.900' : 'red.900';
+            return isVerificationSuccessful(_verificationResults)
+                ? 'green.900'
+                : 'red.900'
         },
         []
-    );
+    )
 
     const verifyAquaTreeRevisions = async (fileInfo: ApiFileInfo) => {
-        if (!fileInfo?.aquaTree || !fileInfo?.fileObject || isProcessing) return;
+        if (!fileInfo?.aquaTree || !fileInfo?.fileObject || isProcessing) return
 
-        setIsProcessing(true);
+        setIsProcessing(true)
 
         try {
-            const aquafier = new Aquafier();
+            const aquafier = new Aquafier()
             const _drawerStatus: IDrawerStatus = {
                 colorLight: '',
                 colorDark: '',
                 fileName: '',
                 isVerificationSuccessful: false,
-            };
+            }
 
             // Set file name
-            const fileName = getFileName(fileInfo.aquaTree);
-            _drawerStatus.fileName = fileName;
+            const fileName = getFileName(fileInfo.aquaTree)
+            _drawerStatus.fileName = fileName
 
             // Get revision hashes
-            const revisionHashes = Object.keys(fileInfo.aquaTree.revisions || {});
+            const revisionHashes = Object.keys(
+                fileInfo.aquaTree.revisions || {}
+            )
 
             // Create a map for quick cache lookup
-            const cacheMap = new Map();
+            const cacheMap = new Map()
             // if (Array.isArray(apiFileData)) {
             //     apiFileData.forEach(item => {
             //         if (item && item.fileHash) {
@@ -269,135 +299,157 @@ export const ContractSummaryView: React.FC<ContractDocumentViewProps> = ({ setAc
             // UPDATE: Removed fileObjectVerifier to track the fileobjects because pushing in promises is not ideal
             // const fileObjectVerifier: FileObject[] = []
             const filePromises = fileInfo.fileObject.map(async file => {
-                if (typeof file.fileContent === 'string' && file.fileContent.startsWith('http')) {
-                    const hash = getFileHashFromUrl(file.fileContent);
+                if (
+                    typeof file.fileContent === 'string' &&
+                    file.fileContent.startsWith('http')
+                ) {
+                    const hash = getFileHashFromUrl(file.fileContent)
 
                     // TODO: FIX ME - Here we check if the file is already in the cache
                     // let _data = hash ? cacheMap.get(hash) : null
 
-                    const fetchedData = await fetchFileData(file.fileContent, session!.nonce);
+                    const fetchedData = await fetchFileData(
+                        file.fileContent,
+                        session!.nonce
+                    )
                     if (fetchedData && hash) {
-                        cacheMap.set(hash, fetchedData);
-                        setApiFileData([...apiFileData, { fileHash: hash, fileData: fetchedData }]);
+                        cacheMap.set(hash, fetchedData)
+                        setApiFileData([
+                            ...apiFileData,
+                            { fileHash: hash, fileData: fetchedData },
+                        ])
                     }
                     if (fetchedData instanceof ArrayBuffer) {
                         file.fileContent = isArrayBufferText(fetchedData)
                             ? new TextDecoder().decode(fetchedData)
-                            : new Uint8Array(fetchedData);
+                            : new Uint8Array(fetchedData)
                     } else if (typeof fetchedData === 'string') {
-                        file.fileContent = fetchedData;
+                        file.fileContent = fetchedData
                     }
-                    return file;
+                    return file
                 }
-                return file;
+                return file
                 // fileObjectVerifier.push(file)
-            });
+            })
 
             // We wait for all the file promises to resolve and get the file objects to use
-            const filesResult = await Promise.all(filePromises);
+            const filesResult = await Promise.all(filePromises)
 
             // Process revisions in parallel where possible
-            const verificationPromises = revisionHashes.map(async revisionHash => {
-                const revision = fileInfo.aquaTree!.revisions[revisionHash];
-                const result = await aquafier.verifyAquaTreeRevision(
-                    fileInfo.aquaTree!,
-                    revision,
-                    revisionHash,
-                    filesResult
-                );
-                return {
-                    hash: revisionHash,
-                    isSuccessful: result.isOk(),
-                };
-            });
+            const verificationPromises = revisionHashes.map(
+                async revisionHash => {
+                    const revision = fileInfo.aquaTree!.revisions[revisionHash]
+                    const result = await aquafier.verifyAquaTreeRevision(
+                        fileInfo.aquaTree!,
+                        revision,
+                        revisionHash,
+                        filesResult
+                    )
+                    return {
+                        hash: revisionHash,
+                        isSuccessful: result.isOk(),
+                    }
+                }
+            )
 
             // Wait for all verifications to complete
-            const allRevisionsVerificationsStatus = await Promise.all(verificationPromises);
+            const allRevisionsVerificationsStatus =
+                await Promise.all(verificationPromises)
 
             // Update state and callback
-            setVerificationResults(allRevisionsVerificationsStatus);
+            setVerificationResults(allRevisionsVerificationsStatus)
             const _isVerificationSuccessful = isVerificationSuccessful(
                 allRevisionsVerificationsStatus
-            );
-            _drawerStatus.isVerificationSuccessful = _isVerificationSuccessful;
+            )
+            _drawerStatus.isVerificationSuccessful = _isVerificationSuccessful
             _drawerStatus.colorDark = displayColorBasedOnVerificationStatusDark(
                 allRevisionsVerificationsStatus
-            );
-            _drawerStatus.colorLight = displayColorBasedOnVerificationStatusLight(
-                allRevisionsVerificationsStatus
-            );
+            )
+            _drawerStatus.colorLight =
+                displayColorBasedOnVerificationStatusLight(
+                    allRevisionsVerificationsStatus
+                )
             // callBack(_drawerStatus);
         } catch (error) {
-            console.error('Error verifying AquaTree revisions:', error);
+            console.error('Error verifying AquaTree revisions:', error)
         } finally {
-            setIsProcessing(false);
-            setIsLoading(false);
+            setIsProcessing(false)
+            setIsLoading(false)
         }
-    };
+    }
 
     const intializeContractInformation = () => {
         if (selectedFileInfo) {
-            const orderedTree = OrderRevisionInAquaTree(selectedFileInfo!.aquaTree!);
+            const orderedTree = OrderRevisionInAquaTree(
+                selectedFileInfo!.aquaTree!
+            )
 
-            const revisions = orderedTree.revisions;
-            const revisionHashes = Object.keys(revisions);
+            const revisions = orderedTree.revisions
+            const revisionHashes = Object.keys(revisions)
 
-            const firstHash: string = revisionHashes[0];
-            const firstRevision: Revision = selectedFileInfo!.aquaTree!.revisions[firstHash];
-            setFirstRevisionData(firstRevision);
+            const firstHash: string = revisionHashes[0]
+            const firstRevision: Revision =
+                selectedFileInfo!.aquaTree!.revisions[firstHash]
+            setFirstRevisionData(firstRevision)
 
-            const pdfHash = revisionHashes[2];
-            const thirdRevision: Revision = selectedFileInfo!.aquaTree!.revisions[pdfHash];
-            const hashOfLinkedDocument = thirdRevision.link_verification_hashes![0]!;
-            const fileName = selectedFileInfo!.aquaTree!.file_index[hashOfLinkedDocument];
-            setFileNameData(fileName);
-            const creatorSignatureHash = revisionHashes[3];
+            const pdfHash = revisionHashes[2]
+            const thirdRevision: Revision =
+                selectedFileInfo!.aquaTree!.revisions[pdfHash]
+            const hashOfLinkedDocument =
+                thirdRevision.link_verification_hashes![0]!
+            const fileName =
+                selectedFileInfo!.aquaTree!.file_index[hashOfLinkedDocument]
+            setFileNameData(fileName)
+            const creatorSignatureHash = revisionHashes[3]
             const signatureRevision: Revision | undefined =
-                selectedFileInfo!.aquaTree!.revisions[creatorSignatureHash];
-            setCreatorEthreiumSignatureRevisionData(signatureRevision);
+                selectedFileInfo!.aquaTree!.revisions[creatorSignatureHash]
+            setCreatorEthreiumSignatureRevisionData(signatureRevision)
             if (signatureRevision.revision_type == 'signature') {
-                setContractCreatorAddress(signatureRevision.signature_wallet_address ?? '--eror--');
+                setContractCreatorAddress(
+                    signatureRevision.signature_wallet_address ?? '--eror--'
+                )
             }
 
-            let fourthItmeHashOnwards: string[] = [];
-            let signatureRevionHashes: Array<SummaryDetailsDisplayData> = [];
+            let fourthItmeHashOnwards: string[] = []
+            let signatureRevionHashes: Array<SummaryDetailsDisplayData> = []
 
             const signers: string[] = firstRevision.forms_signers
                 .split(',')
-                .map((e: string) => e.trim());
+                .map((e: string) => e.trim())
 
             if (revisionHashes.length > 4) {
-                console.log(`length bigger than 4`);
+                console.log(`length bigger than 4`)
 
                 // remove the first 4 elements from the revision list
-                fourthItmeHashOnwards = revisionHashes.slice(4);
-                signatureRevionHashes = getSignatureRevionHashes(fourthItmeHashOnwards);
+                fourthItmeHashOnwards = revisionHashes.slice(4)
+                signatureRevionHashes = getSignatureRevionHashes(
+                    fourthItmeHashOnwards
+                )
 
-                const signatureRevionHashesDataAddress = signatureRevionHashes.map(
-                    e => e.walletAddress
-                );
+                const signatureRevionHashesDataAddress =
+                    signatureRevionHashes.map(e => e.walletAddress)
                 const remainSigners = signers.filter(
                     item => !signatureRevionHashesDataAddress.includes(item)
-                );
-                console.log(`signers remaining ${remainSigners.toString()}`);
-                setIsWorkFlowComplete(remainSigners);
+                )
+                console.log(`signers remaining ${remainSigners.toString()}`)
+                setIsWorkFlowComplete(remainSigners)
 
-                setSignatureRevionHashes(signatureRevionHashes);
+                setSignatureRevionHashes(signatureRevionHashes)
             } else {
-                console.log(`length equal to 4`);
-                setIsWorkFlowComplete(signers);
+                console.log(`length equal to 4`)
+                setIsWorkFlowComplete(signers)
             }
 
-            verifyAquaTreeRevisions(selectedFileInfo);
+            verifyAquaTreeRevisions(selectedFileInfo)
         }
-    };
+    }
     useEffect(() => {
-        intializeContractInformation();
-    }, []);
+        intializeContractInformation()
+    }, [])
 
     useEffect(() => {
-        intializeContractInformation();
-    }, [JSON.stringify(selectedFileInfo), selectedFileInfo]);
+        intializeContractInformation()
+    }, [JSON.stringify(selectedFileInfo), selectedFileInfo])
 
     // const isWorkflowComplete = () => {
     //     let signers: string[] = firstRevisionData?.forms_signers.split(",")
@@ -407,18 +459,18 @@ export const ContractSummaryView: React.FC<ContractDocumentViewProps> = ({ setAc
     // }
 
     const getActualState = () => {
-        let status = 'pending';
+        let status = 'pending'
         // if (isVerificationComplete(verificationResults)) {
         if (isWorkFlowComplete.length === 0) {
             if (isVerificationSuccessful(verificationResults)) {
-                status = 'successful';
+                status = 'successful'
             } else {
-                status = 'failed';
+                status = 'failed'
             }
         }
 
-        return status;
-    };
+        return status
+    }
 
     const displayData = () => {
         if (isLoading) {
@@ -429,11 +481,15 @@ export const ContractSummaryView: React.FC<ContractDocumentViewProps> = ({ setAc
                         <div className="h-12 w-12 border-4 border-t-blue-500 border-blue-200 rounded-full animate-spin"></div>
 
                         {/* Loading Text */}
-                        <h2 className="text-xl font-semibold text-gray-700">Loading...</h2>
-                        <p className="text-gray-500">Please wait while we prepare your content</p>
+                        <h2 className="text-xl font-semibold text-gray-700">
+                            Loading...
+                        </h2>
+                        <p className="text-gray-500">
+                            Please wait while we prepare your content
+                        </p>
                     </div>
                 </div>
-            );
+            )
         }
 
         return (
@@ -441,39 +497,49 @@ export const ContractSummaryView: React.FC<ContractDocumentViewProps> = ({ setAc
                 <ContractSummaryDetails
                     data={{
                         name: fileNameData,
-                        creationDate: timeToHumanFriendly(firstRevisionData?.local_timestamp, true),
+                        creationDate: timeToHumanFriendly(
+                            firstRevisionData?.local_timestamp,
+                            true
+                        ),
                         creatorAddress: contractCreatorAddress,
                         documentUrl: '#',
-                        status: isWorkFlowComplete.length === 0 ? 'completed' : 'pending',
+                        status:
+                            isWorkFlowComplete.length === 0
+                                ? 'completed'
+                                : 'pending',
                         pendingSignatures: 0,
                         signers: [
-                            ...firstRevisionData?.forms_signers.split(',').map((signer: string) => {
-                                const item = signatureRevionHashesData.find(
-                                    e =>
-                                        e.walletAddress.toLowerCase().trim() ==
-                                        signer.toLowerCase().trim()
-                                );
+                            ...firstRevisionData?.forms_signers
+                                .split(',')
+                                .map((signer: string) => {
+                                    const item = signatureRevionHashesData.find(
+                                        e =>
+                                            e.walletAddress
+                                                .toLowerCase()
+                                                .trim() ==
+                                            signer.toLowerCase().trim()
+                                    )
 
-                                if (item) {
-                                    return {
-                                        address: signer,
-                                        status: 'signed',
-                                    };
-                                } else {
-                                    // if isWorkFlowComplete is empty show green check mark
-                                    // this experiemntal,
-                                    if (isWorkFlowComplete.length === 0) {
+                                    if (item) {
                                         return {
                                             address: signer,
                                             status: 'signed',
-                                        };
+                                        }
+                                    } else {
+                                        // if isWorkFlowComplete is empty show green check mark
+                                        // this experiemntal,
+                                        if (isWorkFlowComplete.length === 0) {
+                                            return {
+                                                address: signer,
+                                                status: 'signed',
+                                            }
+                                        }
+                                        return {
+                                            address: signer,
+                                            status: 'pending',
+                                        }
                                     }
-                                    return {
-                                        address: signer,
-                                        status: 'pending',
-                                    };
-                                }
-                            }),
+                                }),
                         ],
                         activities: [
                             {
@@ -485,34 +551,40 @@ export const ContractSummaryView: React.FC<ContractDocumentViewProps> = ({ setAc
                                 ),
                                 details: (
                                     <>
-                                        Document <span className="font-bold">{fileNameData}</span>{' '}
+                                        Document{' '}
+                                        <span className="font-bold">
+                                            {fileNameData}
+                                        </span>{' '}
                                         was selected for signing
                                     </>
                                 ),
                             },
-                            ...signatureRevionHashesData.map(_signatureRevionHasheItem => {
-                                const singatureRevisionItem =
-                                    selectedFileInfo!.aquaTree!.revisions[
-                                        _signatureRevionHasheItem.revisionHashMetamask
-                                    ];
-                                return {
-                                    type: 'signed' as any,
-                                    address:
-                                        singatureRevisionItem &&
-                                        singatureRevisionItem.signature_wallet_address
-                                            ? singatureRevisionItem.signature_wallet_address
-                                            : '',
-                                    timestamp:
-                                        singatureRevisionItem &&
-                                        singatureRevisionItem.local_timestamp
-                                            ? timeToHumanFriendly(
-                                                  singatureRevisionItem.local_timestamp,
-                                                  true
-                                              )
-                                            : 'time   error',
-                                    // details: "Document sample-local-pdf.pdf was selected for signing",
-                                };
-                            }),
+                            ...signatureRevionHashesData.map(
+                                _signatureRevionHasheItem => {
+                                    const singatureRevisionItem =
+                                        selectedFileInfo!.aquaTree!.revisions[
+                                            _signatureRevionHasheItem
+                                                .revisionHashMetamask
+                                        ]
+                                    return {
+                                        type: 'signed' as any,
+                                        address:
+                                            singatureRevisionItem &&
+                                            singatureRevisionItem.signature_wallet_address
+                                                ? singatureRevisionItem.signature_wallet_address
+                                                : '',
+                                        timestamp:
+                                            singatureRevisionItem &&
+                                            singatureRevisionItem.local_timestamp
+                                                ? timeToHumanFriendly(
+                                                      singatureRevisionItem.local_timestamp,
+                                                      true
+                                                  )
+                                                : 'time   error',
+                                        // details: "Document sample-local-pdf.pdf was selected for signing",
+                                    }
+                                }
+                            ),
                             ...(isWorkFlowComplete.length === 0
                                 ? [
                                       {
@@ -528,14 +600,16 @@ export const ContractSummaryView: React.FC<ContractDocumentViewProps> = ({ setAc
                                 : `${isWorkFlowComplete.length} ${isWorkFlowComplete.length > 1 ? 'signatures' : 'Signature'} pending for workflow to be completed`,
                     }}
                     goToSecondPage={() => {
-                        setActiveStep(2); // Open the contract document
+                        setActiveStep(2) // Open the contract document
                     }}
                     enableNameResolution={true}
-                    isValidTree={getActualState() as 'pending' | 'successful' | 'failed'}
+                    isValidTree={
+                        getActualState() as 'pending' | 'successful' | 'failed'
+                    }
                 />
             </div>
-        );
-    };
+        )
+    }
 
-    return <>{displayData()}</>;
-};
+    return <>{displayData()}</>
+}

@@ -17,14 +17,20 @@ import {
     Sparkles,
     Rocket,
     Zap,
-} from 'lucide-react';
+} from 'lucide-react'
 
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { Link } from 'react-router-dom';
-import SyntaxHighlighter from 'react-syntax-highlighter';
+import { Button } from '@/components/ui/button'
+import {
+    Card,
+    CardContent,
+    CardFooter,
+    CardHeader,
+    CardTitle,
+} from '@/components/ui/card'
+import { Input } from '@/components/ui/input'
+import { Textarea } from '@/components/ui/textarea'
+import { Link } from 'react-router-dom'
+import SyntaxHighlighter from 'react-syntax-highlighter'
 
 const HeroSection = () => (
     <section
@@ -45,15 +51,17 @@ const HeroSection = () => (
                 </h1>
                 <div className="h-1 w-24 bg-gradient-to-r from-orange-600 to-orange-400 mx-auto my-6"></div>
                 <p className="mt-6 text-lg text-muted-foreground md:text-xl">
-                    The Aqua Protocol enables cryptographic document signing using wallet-based
-                    authentication, tamper-proof PDF verification, and immutable timestamping. Our
-                    solution provides enterprise-grade security with the convenience of
+                    The Aqua Protocol enables cryptographic document signing
+                    using wallet-based authentication, tamper-proof PDF
+                    verification, and immutable timestamping. Our solution
+                    provides enterprise-grade security with the convenience of
                     decentralized technology.
                 </p>
                 <p className="mt-4 text-md text-muted-foreground">
-                    Sign documents with your crypto wallet, verify authenticity instantly, and
-                    establish document provenance with cryptographic timestamps—all without
-                    requiring a blockchain or compromising privacy.
+                    Sign documents with your crypto wallet, verify authenticity
+                    instantly, and establish document provenance with
+                    cryptographic timestamps—all without requiring a blockchain
+                    or compromising privacy.
                 </p>
             </div>
             <div className="mt-10 flex flex-col sm:flex-row justify-center gap-4">
@@ -85,22 +93,24 @@ const HeroSection = () => (
                         height={400}
                         className=" h-[400px"
                         onError={e => {
-                            e.currentTarget.src = 'https://placehold.co/1200x600.png';
+                            e.currentTarget.src =
+                                'https://placehold.co/1200x600.png'
                             e.currentTarget.alt =
-                                'Aqua Protocol Document Signing Visualization (Placeholder)';
+                                'Aqua Protocol Document Signing Visualization (Placeholder)'
                         }}
                     />
                 </div>
             </div>
         </div>
     </section>
-);
+)
 
 const features = [
     {
         icon: <FileCheck className="h-8 w-8 text-orange-500" />,
         title: 'Data Accountability',
-        description: 'Track and verify the origin and history of data (data accounting).',
+        description:
+            'Track and verify the origin and history of data (data accounting).',
     },
     {
         icon: <ShieldCheck className="h-8 w-8 text-orange-500" />,
@@ -110,17 +120,22 @@ const features = [
     {
         icon: <UserCheck className="h-8 w-8 text-orange-500" />,
         title: 'Identity Claims and Attestations',
-        description: 'Certify identities and assertions without intermediaries.',
+        description:
+            'Certify identities and assertions without intermediaries.',
     },
     {
         icon: <Stamp className="h-8 w-8 text-orange-500" />,
         title: 'Notarization and Beyond',
-        description: 'Provide undeniable proof of data existence and authenticity.',
+        description:
+            'Provide undeniable proof of data existence and authenticity.',
     },
-];
+]
 
 const FeaturesSection = () => (
-    <section id="features" className="py-20 md:py-28 bg-background relative overflow-hidden">
+    <section
+        id="features"
+        className="py-20 md:py-28 bg-background relative overflow-hidden"
+    >
         {/* Decorative elements */}
         <div className="absolute top-40 right-0 w-80 h-80 bg-orange-500/5 rounded-full filter blur-3xl"></div>
         <div className="absolute bottom-20 left-10 w-60 h-60 bg-orange-400/5 rounded-full filter blur-3xl"></div>
@@ -136,7 +151,8 @@ const FeaturesSection = () => (
                 </h2>
                 <div className="h-1 w-20 bg-gradient-to-r from-orange-600 to-orange-400 mx-auto my-6"></div>
                 <p className="mt-4 text-lg text-muted-foreground">
-                    Aqua serves as a versatile building block for a wide range of applications.
+                    Aqua serves as a versatile building block for a wide range
+                    of applications.
                 </p>
             </div>
             <div className="mt-16 grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-4">
@@ -148,14 +164,18 @@ const FeaturesSection = () => (
                         <div className="mb-4 rounded-full bg-orange-500/10 p-3 shadow-inner">
                             {feature.icon}
                         </div>
-                        <h3 className="text-xl font-headline font-semibold">{feature.title}</h3>
-                        <p className="mt-2 text-muted-foreground">{feature.description}</p>
+                        <h3 className="text-xl font-headline font-semibold">
+                            {feature.title}
+                        </h3>
+                        <p className="mt-2 text-muted-foreground">
+                            {feature.description}
+                        </p>
                     </div>
                 ))}
             </div>
         </div>
     </section>
-);
+)
 
 const aquaTreeJSON = `{
   "revisions": {
@@ -199,7 +219,7 @@ const aquaTreeJSON = `{
     },
     "latestHash": "0x54be8a35206dea3cf153ee1152dfb258b4e6af5d30c68ad2f060b9ab275d3065"
   }
-}`;
+}`
 
 const HowItWorksSection = () => (
     <section
@@ -230,10 +250,13 @@ const HowItWorksSection = () => (
                                 <FileCheck className="h-6 w-6 text-orange-500" />
                             </div>
                             <div>
-                                <h3 className="text-xl font-semibold mb-2">Portable Hash-Chains</h3>
+                                <h3 className="text-xl font-semibold mb-2">
+                                    Portable Hash-Chains
+                                </h3>
                                 <p className="text-muted-foreground text-sm">
-                                    Aqua creates AquaTrees that record a complete history of data
-                                    revisions with cryptographic precision.
+                                    Aqua creates AquaTrees that record a
+                                    complete history of data revisions with
+                                    cryptographic precision.
                                 </p>
                             </div>
                         </div>
@@ -245,10 +268,12 @@ const HowItWorksSection = () => (
                                 <Clock className="h-6 w-6 text-orange-500" />
                             </div>
                             <div>
-                                <h3 className="text-xl font-semibold mb-2">Immutable Timestamps</h3>
+                                <h3 className="text-xl font-semibold mb-2">
+                                    Immutable Timestamps
+                                </h3>
                                 <p className="text-muted-foreground text-sm">
-                                    Optional Ethereum timestamping provides additional verification
-                                    and immutability.
+                                    Optional Ethereum timestamping provides
+                                    additional verification and immutability.
                                 </p>
                             </div>
                         </div>
@@ -260,10 +285,13 @@ const HowItWorksSection = () => (
                                 <LockKeyhole className="h-6 w-6 text-orange-500" />
                             </div>
                             <div>
-                                <h3 className="text-xl font-semibold mb-2">Decentralized Trust</h3>
+                                <h3 className="text-xl font-semibold mb-2">
+                                    Decentralized Trust
+                                </h3>
                                 <p className="text-muted-foreground text-sm">
-                                    Aqua liberates certification from institutional gatekeepers
-                                    through open cryptographic standards.
+                                    Aqua liberates certification from
+                                    institutional gatekeepers through open
+                                    cryptographic standards.
                                 </p>
                             </div>
                         </div>
@@ -282,7 +310,9 @@ const HowItWorksSection = () => (
                                     <div className="w-4 h-4 rounded-full bg-yellow-500 mr-2"></div>
                                     <div className="w-4 h-4 rounded-full bg-green-500"></div>
                                 </div>
-                                <div className="text-orange-300 text-xs">aquatree.json</div>
+                                <div className="text-orange-300 text-xs">
+                                    aquatree.json
+                                </div>
                             </div>
                             {/* <pre className="text-orange-100">
                 <code className="language-json">{aquaTreeJSON}</code>
@@ -290,7 +320,9 @@ const HowItWorksSection = () => (
                             <div className="box-border h-[380px] overflow-y-auto">
                                 <SyntaxHighlighter
                                     language="json"
-                                    customStyle={{ padding: 'calc(var(--spacing) * 6)' }}
+                                    customStyle={{
+                                        padding: 'calc(var(--spacing) * 6)',
+                                    }}
                                 >
                                     {aquaTreeJSON}
                                 </SyntaxHighlighter>
@@ -303,12 +335,13 @@ const HowItWorksSection = () => (
             </div>
         </div>
     </section>
-);
+)
 
 const prototypes = [
     {
         name: 'Federated Wiki Infrastructure',
-        description: 'A notarized wiki system with built-in trust (PKC, Protocol v1.2).',
+        description:
+            'A notarized wiki system with built-in trust (PKC, Protocol v1.2).',
         link: 'https://github.com/inblockio/aqua-pkc',
         icon: <BookOpen className="h-10 w-10 text-orange-500" />,
         cta: 'View on GitHub',
@@ -343,10 +376,13 @@ const prototypes = [
         icon: <Fingerprint className="h-10 w-10 text-orange-500" />,
         cta: 'View on GitHub',
     },
-];
+]
 
 const PrototypesSection = () => (
-    <section id="prototypes" className="py-20 md:py-28 bg-background relative overflow-hidden">
+    <section
+        id="prototypes"
+        className="py-20 md:py-28 bg-background relative overflow-hidden"
+    >
         {/* Decorative elements */}
         <div className="absolute top-20 right-20 w-72 h-72 bg-orange-500/5 rounded-full filter blur-3xl"></div>
         <div className="absolute bottom-40 left-20 w-64 h-64 bg-orange-400/5 rounded-full filter blur-3xl"></div>
@@ -361,7 +397,8 @@ const PrototypesSection = () => (
                 </h2>
                 <div className="h-1 w-20 bg-gradient-to-r from-orange-600 to-orange-400 mx-auto my-6"></div>
                 <p className="mt-4 text-lg text-muted-foreground">
-                    The potential of Aqua is being explored through practical implementations.
+                    The potential of Aqua is being explored through practical
+                    implementations.
                 </p>
             </div>
             <div className="mt-16 grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3">
@@ -374,10 +411,14 @@ const PrototypesSection = () => (
                             <div className="mb-4 rounded-full bg-orange-500/10 p-4 shadow-inner">
                                 {proto.icon}
                             </div>
-                            <CardTitle className="font-headline text-xl">{proto.name}</CardTitle>
+                            <CardTitle className="font-headline text-xl">
+                                {proto.name}
+                            </CardTitle>
                         </CardHeader>
                         <CardContent className="flex-1 py-4 px-0">
-                            <p className="text-muted-foreground">{proto.description}</p>
+                            <p className="text-muted-foreground">
+                                {proto.description}
+                            </p>
                         </CardContent>
                         <CardFooter className="p-0">
                             {proto.link && (
@@ -386,7 +427,11 @@ const PrototypesSection = () => (
                                     variant="outline"
                                     className="border-orange-500/30 hover:border-orange-500 hover:bg-orange-500/5 transition-all duration-300"
                                 >
-                                    <Link to={proto.link} target="_blank" rel="noopener noreferrer">
+                                    <Link
+                                        to={proto.link}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                    >
                                         <span className="flex items-center">
                                             {proto.cta}
                                             <ArrowUpRight className="ml-2 h-4 w-4 text-orange-500" />
@@ -400,7 +445,7 @@ const PrototypesSection = () => (
             </div>
         </div>
     </section>
-);
+)
 
 const visionPoints = [
     {
@@ -423,7 +468,7 @@ const visionPoints = [
         description:
             'Building the infrastructure for a new digital ecosystem where trust is inherent to the system, not dependent on institutional guarantees.',
     },
-];
+]
 
 const VisionSection = () => (
     <section
@@ -444,9 +489,10 @@ const VisionSection = () => (
                 </h2>
                 <div className="h-1 w-20 bg-gradient-to-r from-orange-600 to-orange-400 mx-auto my-6"></div>
                 <p className="mt-4 text-lg text-muted-foreground">
-                    Aqua represents a paradigm shift in how we establish trust in digital
-                    environments. Our vision extends beyond simple notarization to reimagine how
-                    data integrity can transform industries:
+                    Aqua represents a paradigm shift in how we establish trust
+                    in digital environments. Our vision extends beyond simple
+                    notarization to reimagine how data integrity can transform
+                    industries:
                 </p>
             </div>
             <div className="mt-16 grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -457,17 +503,22 @@ const VisionSection = () => (
                     >
                         <Check className="h-6 w-6 text-orange-500 mt-1 flex-shrink-0" />
                         <div>
-                            <h3 className="text-xl font-headline font-semibold">{point.title}</h3>
-                            <p className="text-muted-foreground mt-1">{point.description}</p>
+                            <h3 className="text-xl font-headline font-semibold">
+                                {point.title}
+                            </h3>
+                            <p className="text-muted-foreground mt-1">
+                                {point.description}
+                            </p>
                         </div>
                     </div>
                 ))}
             </div>
             <div className="text-center max-w-3xl mx-auto mt-16">
                 <p className="text-lg text-muted-foreground">
-                    We're building more than a protocol—we're creating the foundation for a new era
-                    of digital trust. Join us in shaping this future by exploring, building, and
-                    contributing to Aqua Protocol Version 3.
+                    We're building more than a protocol—we're creating the
+                    foundation for a new era of digital trust. Join us in
+                    shaping this future by exploring, building, and contributing
+                    to Aqua Protocol Version 3.
                 </p>
                 <div className="mt-8">
                     <Button
@@ -490,7 +541,7 @@ const VisionSection = () => (
             </div>
         </div>
     </section>
-);
+)
 
 const pricingPlans = [
     {
@@ -542,10 +593,13 @@ const pricingPlans = [
         cta: 'Contact Sales',
         popular: false,
     },
-];
+]
 
 const PricingSection = () => (
-    <section id="pricing" className="py-20 md:py-28 bg-background relative overflow-hidden">
+    <section
+        id="pricing"
+        className="py-20 md:py-28 bg-background relative overflow-hidden"
+    >
         {/* Decorative elements */}
         <div className="absolute top-20 left-0 w-72 h-72 bg-orange-500/5 rounded-full filter blur-3xl"></div>
         <div className="absolute bottom-40 right-0 w-64 h-64 bg-orange-400/5 rounded-full filter blur-3xl"></div>
@@ -560,8 +614,8 @@ const PricingSection = () => (
                 </h2>
                 <div className="h-1 w-20 bg-gradient-to-r from-orange-600 to-orange-400 mx-auto my-6"></div>
                 <p className="mt-4 text-lg text-muted-foreground">
-                    Choose the plan that's right for you and start building with Aqua Protocol
-                    today.
+                    Choose the plan that's right for you and start building with
+                    Aqua Protocol today.
                 </p>
             </div>
 
@@ -582,14 +636,23 @@ const PricingSection = () => (
                             <div className="mb-4 rounded-full bg-orange-500/10 p-3 w-fit">
                                 {plan.icon}
                             </div>
-                            <CardTitle className="text-2xl font-headline">{plan.name}</CardTitle>
+                            <CardTitle className="text-2xl font-headline">
+                                {plan.name}
+                            </CardTitle>
                             <div className="mt-2">
-                                <span className="text-3xl font-bold">{plan.price}</span>
+                                <span className="text-3xl font-bold">
+                                    {plan.price}
+                                </span>
                                 {plan.duration && (
-                                    <span className="text-muted-foreground"> {plan.duration}</span>
+                                    <span className="text-muted-foreground">
+                                        {' '}
+                                        {plan.duration}
+                                    </span>
                                 )}
                             </div>
-                            <p className="text-muted-foreground mt-2">{plan.description}</p>
+                            <p className="text-muted-foreground mt-2">
+                                {plan.description}
+                            </p>
                         </CardHeader>
                         <CardContent className="flex-grow">
                             <ul className="space-y-3">
@@ -607,7 +670,13 @@ const PricingSection = () => (
                                 variant={plan.popular ? 'default' : 'outline'}
                                 asChild
                             >
-                                <Link to={plan.name === 'Enterprise' ? '#contact' : '/signup'}>
+                                <Link
+                                    to={
+                                        plan.name === 'Enterprise'
+                                            ? '#contact'
+                                            : '/signup'
+                                    }
+                                >
                                     {plan.cta}
                                     <ArrowRight className="ml-2 h-4 w-4" />
                                 </Link>
@@ -618,10 +687,12 @@ const PricingSection = () => (
             </div>
 
             <div className="mt-16 bg-orange-50/50 dark:bg-orange-900/10 border border-orange-200/50 dark:border-orange-800/30 rounded-xl p-8 text-center">
-                <h3 className="text-xl font-semibold mb-2">Need a custom solution?</h3>
+                <h3 className="text-xl font-semibold mb-2">
+                    Need a custom solution?
+                </h3>
                 <p className="text-muted-foreground max-w-2xl mx-auto">
-                    We offer tailored solutions for organizations with specific requirements.
-                    Contact our sales team to discuss your needs.
+                    We offer tailored solutions for organizations with specific
+                    requirements. Contact our sales team to discuss your needs.
                 </p>
                 <Button
                     asChild
@@ -638,10 +709,13 @@ const PricingSection = () => (
             </div>
         </div>
     </section>
-);
+)
 
 const ContactSection = () => (
-    <section id="contact" className="py-20 md:py-28 bg-background relative overflow-hidden">
+    <section
+        id="contact"
+        className="py-20 md:py-28 bg-background relative overflow-hidden"
+    >
         {/* Decorative elements */}
         <div className="absolute top-40 left-0 w-72 h-72 bg-orange-500/5 rounded-full filter blur-3xl"></div>
         <div className="absolute bottom-20 right-0 w-80 h-80 bg-orange-400/5 rounded-full filter blur-3xl"></div>
@@ -658,8 +732,9 @@ const ContactSection = () => (
                     </h2>
                     <div className="h-1 w-20 bg-gradient-to-r from-orange-600 to-orange-400 my-6"></div>
                     <p className="mt-4 text-lg text-muted-foreground">
-                        Have a question or want a demo? Reach out to us via email or fill out the
-                        form and our team will get back to you shortly.
+                        Have a question or want a demo? Reach out to us via
+                        email or fill out the form and our team will get back to
+                        you shortly.
                     </p>
                     <div className="mt-8 space-y-4">
                         <a
@@ -693,7 +768,7 @@ const ContactSection = () => (
             </div>
         </div>
     </section>
-);
+)
 
 export default function HomeV2() {
     return (
@@ -706,5 +781,5 @@ export default function HomeV2() {
             <PricingSection />
             <ContactSection />
         </>
-    );
+    )
 }

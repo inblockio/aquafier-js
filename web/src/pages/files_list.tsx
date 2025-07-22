@@ -1,25 +1,25 @@
-import { useEffect, useState } from 'react';
-import { Grid3X3, List } from 'lucide-react';
-import FileListItem from './files_list_item';
-import { getAquaTreeFileName } from '@/utils/functions';
+import { useEffect, useState } from 'react'
+import { Grid3X3, List } from 'lucide-react'
+import FileListItem from './files_list_item'
+import { getAquaTreeFileName } from '@/utils/functions'
 
-import { useStore } from 'zustand';
-import appStore from '../store';
+import { useStore } from 'zustand'
+import appStore from '../store'
 
 export default function FilesList() {
-    const [showWorkFlowsOnly, setShowWorkFlowsOnly] = useState(false);
-    const [view, setView] = useState('list');
-    const [isSmallScreen, setIsSmallScreen] = useState(false);
+    const [showWorkFlowsOnly, setShowWorkFlowsOnly] = useState(false)
+    const [view, setView] = useState('list')
+    const [isSmallScreen, setIsSmallScreen] = useState(false)
 
-    const { files, systemFileInfo, backend_url, session } = useStore(appStore);
+    const { files, systemFileInfo, backend_url, session } = useStore(appStore)
 
     useEffect(() => {
         if (location.pathname.endsWith('files_workflows')) {
             // Add your logic here
             // console.log('URL ends with files_workflows');
-            setShowWorkFlowsOnly(true);
+            setShowWorkFlowsOnly(true)
         }
-    }, []);
+    }, [])
 
     useEffect(() => {
         // console.log("FilesPage mounted");
@@ -28,32 +28,32 @@ export default function FilesList() {
         if (location.pathname.endsWith('files_workflows')) {
             // Add your logic here
             // console.log('URL ends with files_workflows');
-            setShowWorkFlowsOnly(true);
+            setShowWorkFlowsOnly(true)
         }
         return () => {
             // console.log("FilesPage unmounted");
-            setShowWorkFlowsOnly(false);
-        };
-    }, [location.pathname]);
+            setShowWorkFlowsOnly(false)
+        }
+    }, [location.pathname])
 
     // Add screen size detector
     useEffect(() => {
         // Function to check if screen is small
         const checkScreenSize = () => {
-            setIsSmallScreen(window.matchMedia('(max-width: 768px)').matches);
-        };
+            setIsSmallScreen(window.matchMedia('(max-width: 768px)').matches)
+        }
 
         // Initial check
-        checkScreenSize();
+        checkScreenSize()
 
         // Add event listener for window resize
-        window.addEventListener('resize', checkScreenSize);
+        window.addEventListener('resize', checkScreenSize)
 
         // Cleanup
         return () => {
-            window.removeEventListener('resize', checkScreenSize);
-        };
-    }, []);
+            window.removeEventListener('resize', checkScreenSize)
+        }
+    }, [])
 
     return (
         <div>
@@ -62,9 +62,13 @@ export default function FilesList() {
                 {/* File Header */}
                 <div className="flex items-center justify-between mb-6">
                     <div className="flex items-center space-x-4">
-                        <h1 className="text-xl font-semibold text-gray-900">All files</h1>
+                        <h1 className="text-xl font-semibold text-gray-900">
+                            All files
+                        </h1>
                         <div className="w-4 h-4 bg-gray-300 rounded-full flex items-center justify-center">
-                            <span className="text-xs text-gray-600">{files.length}</span>
+                            <span className="text-xs text-gray-600">
+                                {files.length}
+                            </span>
                         </div>
                     </div>
                     <div className="flex items-center space-x-2">
@@ -113,23 +117,31 @@ export default function FilesList() {
                                 <tbody>
                                     {files
                                         .sort((a, b) => {
-                                            const filenameA = getAquaTreeFileName(a.aquaTree!);
-                                            const filenameB = getAquaTreeFileName(b.aquaTree!);
-                                            return filenameA.localeCompare(filenameB);
+                                            const filenameA =
+                                                getAquaTreeFileName(a.aquaTree!)
+                                            const filenameB =
+                                                getAquaTreeFileName(b.aquaTree!)
+                                            return filenameA.localeCompare(
+                                                filenameB
+                                            )
                                         })
                                         .map((file, index) => {
                                             return (
                                                 <FileListItem
-                                                    showWorkFlowsOnly={showWorkFlowsOnly}
+                                                    showWorkFlowsOnly={
+                                                        showWorkFlowsOnly
+                                                    }
                                                     key={index}
                                                     index={index}
                                                     file={file}
-                                                    systemFileInfo={systemFileInfo}
+                                                    systemFileInfo={
+                                                        systemFileInfo
+                                                    }
                                                     backendUrl={backend_url}
                                                     nonce={session?.nonce ?? ''}
                                                     viewMode="table"
                                                 />
-                                            );
+                                            )
                                         })}
                                 </tbody>
                             </table>
@@ -142,9 +154,13 @@ export default function FilesList() {
                     <div className="space-y-4">
                         {files
                             .sort((a, b) => {
-                                const filenameA = getAquaTreeFileName(a.aquaTree!);
-                                const filenameB = getAquaTreeFileName(b.aquaTree!);
-                                return filenameA.localeCompare(filenameB);
+                                const filenameA = getAquaTreeFileName(
+                                    a.aquaTree!
+                                )
+                                const filenameB = getAquaTreeFileName(
+                                    b.aquaTree!
+                                )
+                                return filenameA.localeCompare(filenameB)
                             })
                             .map((file, index) => (
                                 <div
@@ -167,5 +183,5 @@ export default function FilesList() {
                 ) : null}
             </div>
         </div>
-    );
+    )
 }

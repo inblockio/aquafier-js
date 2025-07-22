@@ -1,14 +1,14 @@
-import { FileObject } from 'aqua-js-sdk';
-import { useEffect, useRef, useState } from 'react';
-import { useStore } from 'zustand';
-import appStore from '../store';
+import { FileObject } from 'aqua-js-sdk'
+import { useEffect, useRef, useState } from 'react'
+import { useStore } from 'zustand'
+import appStore from '../store'
 import {
     ensureDomainUrlHasSSL,
     handleLoadFromUrl,
     isJSONKeyValueStringContent,
-} from '../utils/functions';
-import { FilePreviewAquaTreeFromTemplate } from './file_preview_aqua_tree_from_template';
-import { EasyPDFRenderer } from '@/pages/aqua_sign_wokflow/ContractDocument/signer/SignerPage';
+} from '../utils/functions'
+import { FilePreviewAquaTreeFromTemplate } from './file_preview_aqua_tree_from_template'
+import { EasyPDFRenderer } from '@/pages/aqua_sign_wokflow/ContractDocument/signer/SignerPage'
 // import { EasyPDFRenderer } from "../pages/files/wokflow/ContractDocument/signer/SignerPage";
 // import { EasyPDFRenderer } from "../pages/aqua_sign_wokflow/ContractDocument/signer/SignerPage";
 // import { toaster } from "./chakra-ui/toaster";
@@ -42,41 +42,55 @@ const fileExtensionMap: { [key: string]: string } = {
     ogg: 'audio/ogg',
     flac: 'audio/flac',
     m4a: 'audio/mp4',
-};
+}
 
 interface IFilePreview {
-    fileInfo: FileObject;
+    fileInfo: FileObject
 }
 
 interface IPdfViewerComponent {
-    fileType: string;
-    fileURL: string;
-    fileInfo: FileObject;
+    fileType: string
+    fileURL: string
+    fileInfo: FileObject
 }
 
-function PdfViewerComponent({ fileType, fileURL, fileInfo }: IPdfViewerComponent) {
-    const [pdfFile, setPdfFile] = useState<File | null>(null);
+function PdfViewerComponent({
+    fileType,
+    fileURL,
+    fileInfo,
+}: IPdfViewerComponent) {
+    const [pdfFile, setPdfFile] = useState<File | null>(null)
 
     useEffect(() => {
         if (fileType === 'application/pdf') {
             const loadPdf = async () => {
                 try {
                     // todo fix me @kenn or @Dalmas
-                    const result = await handleLoadFromUrl(fileURL, fileInfo.fileName || '', {});
+                    const result = await handleLoadFromUrl(
+                        fileURL,
+                        fileInfo.fileName || '',
+                        {}
+                    )
                     if (!result.error) {
-                        setPdfFile(result.file);
+                        setPdfFile(result.file)
                     }
                 } catch (error) {
-                    console.error('Error loading PDF:', error);
+                    console.error('Error loading PDF:', error)
                 }
-            };
-            loadPdf();
+            }
+            loadPdf()
         }
-    }, [fileType, fileURL, fileInfo.fileName]);
+    }, [fileType, fileURL, fileInfo.fileName])
 
-    if (!pdfFile) return <p>Loading PDF...</p>;
+    if (!pdfFile) return <p>Loading PDF...</p>
 
-    return <EasyPDFRenderer pdfFile={pdfFile} annotations={[]} annotationsInDocument={[]} />;
+    return (
+        <EasyPDFRenderer
+            pdfFile={pdfFile}
+            annotations={[]}
+            annotationsInDocument={[]}
+        />
+    )
 }
 
 // Add declaration for docx-preview global type
@@ -88,71 +102,72 @@ declare global {
                 container: HTMLElement,
                 viewerOptions: any,
                 renderOptions: any
-            ) => Promise<void>;
-        };
+            ) => Promise<void>
+        }
     }
 }
 
 const FilePreview: React.FC<IFilePreview> = ({ fileInfo }) => {
-    const { session } = useStore(appStore);
-    const [fileType, setFileType] = useState<string>('');
-    const [fileURL, setFileURL] = useState<string>('');
-    const [textContent, setTextContent] = useState<string>('');
-    const [isLoading, setIsLoading] = useState<boolean>(true);
-    const [_pdfBlob, setPdfBlob] = useState<Blob | null>(null);
-    const [wordBlob, setWordBlob] = useState<Blob | null>(null);
+    const { session } = useStore(appStore)
+    const [fileType, setFileType] = useState<string>('')
+    const [fileURL, setFileURL] = useState<string>('')
+    const [textContent, setTextContent] = useState<string>('')
+    const [isLoading, setIsLoading] = useState<boolean>(true)
+    const [_pdfBlob, setPdfBlob] = useState<Blob | null>(null)
+    const [wordBlob, setWordBlob] = useState<Blob | null>(null)
 
-    const wordContainerRef = useRef<HTMLDivElement>(null);
+    const wordContainerRef = useRef<HTMLDivElement>(null)
 
     // Helper function to get content type from file extension
     const getContentTypeFromFileName = (fileName: string): string => {
-        if (!fileName) return 'application/octet-stream';
+        if (!fileName) return 'application/octet-stream'
 
-        const extension = fileName.split('.').pop()?.toLowerCase() || '';
-        return fileExtensionMap[extension] || 'application/octet-stream';
-    };
+        const extension = fileName.split('.').pop()?.toLowerCase() || ''
+        return fileExtensionMap[extension] || 'application/octet-stream'
+    }
 
     // Function to load docx-preview script
     const loadDocxPreviewScript = () => {
         return new Promise<void>((resolve, reject) => {
             if (window.docx) {
-                resolve();
-                return;
+                resolve()
+                return
             }
 
             // Load JSZip first (required by docx-preview)
-            const jsZipScript = document.createElement('script');
-            jsZipScript.src = 'https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js';
-            jsZipScript.async = true;
+            const jsZipScript = document.createElement('script')
+            jsZipScript.src =
+                'https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js'
+            jsZipScript.async = true
 
             jsZipScript.onload = () => {
                 // Then load docx-preview
-                const docxScript = document.createElement('script');
+                const docxScript = document.createElement('script')
                 docxScript.src =
-                    'https://cdn.jsdelivr.net/npm/docx-preview@0.1.20/dist/docx-preview.min.js';
-                docxScript.async = true;
+                    'https://cdn.jsdelivr.net/npm/docx-preview@0.1.20/dist/docx-preview.min.js'
+                docxScript.async = true
 
                 docxScript.onload = () => {
                     // Small delay to ensure script is fully initialized
-                    setTimeout(() => resolve(), 100);
-                };
+                    setTimeout(() => resolve(), 100)
+                }
 
                 docxScript.onerror = () => {
-                    console.error('Failed to load docx-preview');
-                    reject(new Error('Failed to load docx-preview'));
-                };
+                    console.error('Failed to load docx-preview')
+                    reject(new Error('Failed to load docx-preview'))
+                }
 
-                document.body.appendChild(docxScript);
-            };
+                document.body.appendChild(docxScript)
+            }
 
             jsZipScript.onerror = () => {
-                console.error('Failed to load JSZip');
-                reject(new Error('Failed to load JSZip'));
-            };
+                console.error('Failed to load JSZip')
+                reject(new Error('Failed to load JSZip'))
+            }
 
-            document.body.appendChild(jsZipScript);
-        });
-    };
+            document.body.appendChild(jsZipScript)
+        })
+    }
 
     const renderWordDocument = async () => {
         if (
@@ -164,19 +179,19 @@ const FilePreview: React.FC<IFilePreview> = ({ fileInfo }) => {
         ) {
             try {
                 // Load the libraries
-                await loadDocxPreviewScript();
+                await loadDocxPreviewScript()
 
                 // Wait a bit to ensure everything is loaded
-                await new Promise(resolve => setTimeout(resolve, 200));
+                await new Promise(resolve => setTimeout(resolve, 200))
 
                 // Verify window.docx exists
                 if (!window.docx) {
-                    throw new Error('docx-preview library not available');
+                    throw new Error('docx-preview library not available')
                 }
 
                 // Clear any previous content
                 if (wordContainerRef.current) {
-                    wordContainerRef.current.innerHTML = '';
+                    wordContainerRef.current.innerHTML = ''
 
                     // For DOCX files
                     if (
@@ -184,21 +199,29 @@ const FilePreview: React.FC<IFilePreview> = ({ fileInfo }) => {
                         'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
                     ) {
                         // Create a new blob to ensure it's processed correctly
-                        const docxBlob = new Blob([await wordBlob.arrayBuffer()], {
-                            type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-                        });
+                        const docxBlob = new Blob(
+                            [await wordBlob.arrayBuffer()],
+                            {
+                                type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+                            }
+                        )
 
                         // Use docx-preview to render the document
-                        await window.docx.renderAsync(docxBlob, wordContainerRef.current, null, {
-                            className: 'docx-preview',
-                            inWrapper: true,
-                            ignoreWidth: false,
-                            ignoreHeight: false,
-                            defaultFont: {
-                                family: 'Arial',
-                                size: 12,
-                            },
-                        });
+                        await window.docx.renderAsync(
+                            docxBlob,
+                            wordContainerRef.current,
+                            null,
+                            {
+                                className: 'docx-preview',
+                                inWrapper: true,
+                                ignoreWidth: false,
+                                ignoreHeight: false,
+                                defaultFont: {
+                                    family: 'Arial',
+                                    size: 12,
+                                },
+                            }
+                        )
                     } else {
                         // For DOC files, we can't use docx-preview directly
                         // Show a message that DOC files can't be previewed
@@ -208,12 +231,15 @@ const FilePreview: React.FC<IFilePreview> = ({ fileInfo }) => {
                         <p>Preview not available for .DOC files (only .DOCX is supported).</p>
                         <p>Please download the file to view it.</p>
                     </div>
-                `;
+                `
                         }
                     }
                 }
             } catch (error: any) {
-                console.error('Error rendering Word document with docx-preview:', error);
+                console.error(
+                    'Error rendering Word document with docx-preview:',
+                    error
+                )
 
                 // Display error message in the container
                 if (wordContainerRef.current) {
@@ -223,15 +249,15 @@ const FilePreview: React.FC<IFilePreview> = ({ fileInfo }) => {
                     <p>Error: ${error.message || 'Unknown error'}</p>
                     <p>Please download the file to view it.</p>
                 </div>
-            `;
+            `
                 }
             }
         }
-    };
+    }
 
     useEffect(() => {
         const fetchFile = async () => {
-            setIsLoading(true);
+            setIsLoading(true)
             try {
                 // Handle if fileContent is a URL
                 if (
@@ -239,28 +265,34 @@ const FilePreview: React.FC<IFilePreview> = ({ fileInfo }) => {
                     fileInfo.fileContent.startsWith('http')
                 ) {
                     // Ensure the URL has SSL
-                    const fileContentUrl = fileInfo.fileContent;
-                    const actualUrlToFetch = ensureDomainUrlHasSSL(fileContentUrl);
+                    const fileContentUrl = fileInfo.fileContent
+                    const actualUrlToFetch =
+                        ensureDomainUrlHasSSL(fileContentUrl)
 
                     const response = await fetch(actualUrlToFetch, {
                         headers: {
                             nonce: `${session?.nonce}`,
                         },
-                    });
+                    })
 
-                    if (!response.ok) throw new Error('Failed to fetch file');
+                    if (!response.ok) throw new Error('Failed to fetch file')
 
                     // Get content type from headers or from file extension
-                    let contentType = response.headers.get('Content-Type') || '';
+                    let contentType = response.headers.get('Content-Type') || ''
 
                     // If content type is missing or generic, try to detect from filename
-                    if (contentType === 'application/octet-stream' || contentType === '') {
-                        contentType = getContentTypeFromFileName(fileInfo.fileName || '');
+                    if (
+                        contentType === 'application/octet-stream' ||
+                        contentType === ''
+                    ) {
+                        contentType = getContentTypeFromFileName(
+                            fileInfo.fileName || ''
+                        )
                         //  console.log("Determined content type from filename:", contentType);
                     }
 
                     // Clone response and get data
-                    const arrayBuffer = await response.arrayBuffer();
+                    const arrayBuffer = await response.arrayBuffer()
 
                     // For text-based content types
                     if (
@@ -269,93 +301,111 @@ const FilePreview: React.FC<IFilePreview> = ({ fileInfo }) => {
                         contentType === 'application/xml'
                     ) {
                         try {
-                            const decoder = new TextDecoder('utf-8');
-                            const text = decoder.decode(arrayBuffer);
-                            setTextContent(text);
+                            const decoder = new TextDecoder('utf-8')
+                            const text = decoder.decode(arrayBuffer)
+                            setTextContent(text)
                         } catch (error) {
-                            console.error('Error decoding text content:', error);
+                            console.error('Error decoding text content:', error)
                         }
                     }
 
                     // Create blob with correct content type
-                    const blob = new Blob([arrayBuffer], { type: contentType });
+                    const blob = new Blob([arrayBuffer], { type: contentType })
                     //  console.log("Created blob with type:", contentType, "size:", blob.size);
 
-                    setFileType(contentType);
+                    setFileType(contentType)
 
                     // Store PDF blob for direct rendering if needed
                     if (contentType === 'application/pdf') {
-                        setPdfBlob(blob);
+                        setPdfBlob(blob)
                     } else if (
                         contentType.includes('wordprocessing') ||
                         contentType === 'application/msword'
                     ) {
-                        setWordBlob(blob);
+                        setWordBlob(blob)
                     }
 
                     // Create URL from blob
-                    const objectURL = URL.createObjectURL(blob);
-                    setFileURL(objectURL);
+                    const objectURL = URL.createObjectURL(blob)
+                    setFileURL(objectURL)
                 }
                 // Handle if fileContent is binary data (Uint8Array or similar)
-                else if (fileInfo.fileContent && typeof fileInfo.fileContent !== 'string') {
+                else if (
+                    fileInfo.fileContent &&
+                    typeof fileInfo.fileContent !== 'string'
+                ) {
                     // Determine content type from filename
-                    const contentType = getContentTypeFromFileName(fileInfo.fileName || '');
+                    const contentType = getContentTypeFromFileName(
+                        fileInfo.fileName || ''
+                    )
                     //  console.log("Determined content type for binary data:", contentType);
 
                     // Create blob with detected content type
-                    const blob = new Blob([fileInfo.fileContent as Uint8Array], {
-                        type: contentType,
-                    });
+                    const blob = new Blob(
+                        [fileInfo.fileContent as Uint8Array],
+                        {
+                            type: contentType,
+                        }
+                    )
 
-                    setFileType(contentType);
+                    setFileType(contentType)
 
                     if (contentType === 'application/pdf') {
-                        setPdfBlob(blob);
+                        setPdfBlob(blob)
                     } else if (
                         contentType.includes('wordprocessing') ||
                         contentType === 'application/msword'
                     ) {
-                        setWordBlob(blob);
+                        setWordBlob(blob)
                     }
 
-                    const objectURL = URL.createObjectURL(blob);
-                    setFileURL(objectURL);
+                    const objectURL = URL.createObjectURL(blob)
+                    setFileURL(objectURL)
                 }
                 // Handle if fileContent is plain text
                 else if (typeof fileInfo.fileContent === 'string') {
-                    setTextContent(fileInfo.fileContent);
-                    setFileType('text/plain');
+                    setTextContent(fileInfo.fileContent)
+                    setFileType('text/plain')
                 }
             } catch (error) {
-                console.error('Error processing file:', error);
+                console.error('Error processing file:', error)
             } finally {
-                setIsLoading(false);
+                setIsLoading(false)
             }
-        };
+        }
 
-        fetchFile();
+        fetchFile()
 
         // Cleanup function to revoke object URL
         return () => {
-            if (fileURL) URL.revokeObjectURL(fileURL);
-        };
-    }, [JSON.stringify(fileInfo), session?.nonce]);
+            if (fileURL) URL.revokeObjectURL(fileURL)
+        }
+    }, [JSON.stringify(fileInfo), session?.nonce])
 
-    if (isLoading) return <p>Loading...</p>;
+    if (isLoading) return <p>Loading...</p>
 
     // Render based on file type
     // Image files
     if (fileType.startsWith('image/')) {
         return (
-            <img src={fileURL} alt="File preview" style={{ maxWidth: '100%', height: 'auto' }} />
-        );
+            <img
+                src={fileURL}
+                alt="File preview"
+                style={{ maxWidth: '100%', height: 'auto' }}
+            />
+        )
     }
 
     // PDF files
     if (fileType === 'application/pdf') {
         // console.log("File url: ", fileURL)
-        return <PdfViewerComponent fileType={fileType} fileURL={fileURL} fileInfo={fileInfo} />;
+        return (
+            <PdfViewerComponent
+                fileType={fileType}
+                fileURL={fileURL}
+                fileInfo={fileInfo}
+            />
+        )
     }
 
     // Text files
@@ -364,17 +414,19 @@ const FilePreview: React.FC<IFilePreview> = ({ fileInfo }) => {
         fileType === 'application/json' ||
         fileType === 'application/xml'
     ) {
-        const newTxtContent = textContent;
-        const isJson = isJSONKeyValueStringContent(newTxtContent);
+        const newTxtContent = textContent
+        const isJson = isJSONKeyValueStringContent(newTxtContent)
 
         if (fileType === 'application/json' || isJson) {
             // console.log(`is this ${newTxtContent} is form ${isForm}-----`)
             // if (isForm) {
             return (
                 <div className="p-5 m-5">
-                    <FilePreviewAquaTreeFromTemplate formData={JSON.parse(newTxtContent)} />
+                    <FilePreviewAquaTreeFromTemplate
+                        formData={JSON.parse(newTxtContent)}
+                    />
                 </div>
-            );
+            )
             // }
         }
         return (
@@ -392,7 +444,7 @@ const FilePreview: React.FC<IFilePreview> = ({ fileInfo }) => {
             >
                 {newTxtContent}
             </div>
-        );
+        )
     }
 
     // Audio files
@@ -413,16 +465,17 @@ const FilePreview: React.FC<IFilePreview> = ({ fileInfo }) => {
                     </a>
                 </div>
             </div>
-        );
+        )
     }
 
     // Video files - improved handling
     if (
         fileType.startsWith('video/') ||
-        (fileInfo.fileName && /\.(mp4|webm|mov|avi|mkv)$/i.test(fileInfo.fileName))
+        (fileInfo.fileName &&
+            /\.(mp4|webm|mov|avi|mkv)$/i.test(fileInfo.fileName))
     ) {
         // Force content type for video if filename matches but type doesn't
-        const videoType = fileType.startsWith('video/') ? fileType : 'video/mp4';
+        const videoType = fileType.startsWith('video/') ? fileType : 'video/mp4'
 
         return (
             <div>
@@ -448,20 +501,21 @@ const FilePreview: React.FC<IFilePreview> = ({ fileInfo }) => {
                     </a>
                 </div>
             </div>
-        );
+        )
     }
 
     // Word documents
     if (
         fileType === 'application/msword' ||
-        fileType === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+        fileType ===
+            'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
     ) {
         // Create a component for word documents
         const WordDocumentComponent = () => {
             // Use effect to render the document after component mounts
             useEffect(() => {
-                renderWordDocument();
-            }, []);
+                renderWordDocument()
+            }, [])
 
             return (
                 <div>
@@ -494,10 +548,10 @@ const FilePreview: React.FC<IFilePreview> = ({ fileInfo }) => {
                         </a>
                     </div>
                 </div>
-            );
-        };
+            )
+        }
 
-        return <WordDocumentComponent />;
+        return <WordDocumentComponent />
     }
 
     // Default download option for other file types
@@ -542,7 +596,7 @@ const FilePreview: React.FC<IFilePreview> = ({ fileInfo }) => {
                 Download File
             </a>
         </div>
-    );
-};
+    )
+}
 
-export default FilePreview;
+export default FilePreview

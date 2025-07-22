@@ -1,25 +1,31 @@
-import { useState } from 'react';
+import { useState } from 'react'
 // import { Button } from "./chakra-ui/button";
 // import { DialogBody, DialogCloseTrigger, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "./chakra-ui/dialog";
 // import { Center, Dialog, Text, VStack } from "@chakra-ui/react";
-import { LuCircleCheck, LuCircleX, LuCopy, LuLogOut, LuWallet } from 'react-icons/lu';
+import {
+    LuCircleCheck,
+    LuCircleX,
+    LuCopy,
+    LuLogOut,
+    LuWallet,
+} from 'react-icons/lu'
 // import ReactLoading from "react-loading";
-import { ClipLoader } from 'react-spinners';
+import { ClipLoader } from 'react-spinners'
 import {
     fetchFiles,
     formatCryptoAddress,
     generateAvatar,
     getCookie,
     setCookie,
-} from '../utils/functions';
-import { SiweMessage, generateNonce } from 'siwe';
-import { SESSION_COOKIE_NAME } from '../utils/constants';
-import axios from 'axios';
-import { useStore } from 'zustand';
-import appStore from '../store';
-import { BrowserProvider, ethers } from 'ethers';
+} from '../utils/functions'
+import { SiweMessage, generateNonce } from 'siwe'
+import { SESSION_COOKIE_NAME } from '../utils/constants'
+import axios from 'axios'
+import { useStore } from 'zustand'
+import appStore from '../store'
+import { BrowserProvider, ethers } from 'ethers'
 
-import { Button } from './ui/button';
+import { Button } from './ui/button'
 import {
     Dialog,
     DialogContent,
@@ -27,9 +33,9 @@ import {
     DialogHeader,
     DialogTitle,
     DialogTrigger,
-} from './ui/dialog';
-import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar';
-import { toast } from 'sonner';
+} from './ui/dialog'
+import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar'
+import { toast } from 'sonner'
 
 const CustomCopyButton = ({ value }: { value: string }) => {
     // const clipboard = useClipboard({ value: value })
@@ -39,18 +45,20 @@ const CustomCopyButton = ({ value }: { value: string }) => {
             variant="default"
             size="sm"
             onClick={() => {
-                navigator.clipboard.writeText(value);
-                toast.success(`Wallet Address copied to clipboard`);
+                navigator.clipboard.writeText(value)
+                toast.success(`Wallet Address copied to clipboard`)
             }}
             className="flex items-center gap-2 rounded-md"
         >
             {'Copy Address'}
             <LuCopy />
         </Button>
-    );
-};
+    )
+}
 
-export const ConnectWallet: React.FC<{ dataTestId: string }> = ({ dataTestId }) => {
+export const ConnectWallet: React.FC<{ dataTestId: string }> = ({
+    dataTestId,
+}) => {
     const {
         setMetamaskAddress,
         session,
@@ -60,29 +68,29 @@ export const ConnectWallet: React.FC<{ dataTestId: string }> = ({ dataTestId }) 
         setUserProfile,
         backend_url,
         setSession,
-    } = useStore(appStore);
+    } = useStore(appStore)
 
-    const [isOpen, setIsOpen] = useState(false);
-    const [loading, setLoading] = useState(false);
+    const [isOpen, setIsOpen] = useState(false)
+    const [loading, setLoading] = useState(false)
     const [connectionState, setConnectionState] = useState<
         'idle' | 'connecting' | 'success' | 'error'
-    >('idle');
-    const [message, setMessage] = useState<string | null>(null);
+    >('idle')
+    const [message, setMessage] = useState<string | null>(null)
     // const [avatar, setAvatar] = useState("")
-    const [_progress, setProgress] = useState(0);
+    const [_progress, setProgress] = useState(0)
 
-    const iconSize = '120px';
+    const iconSize = '120px'
 
     const resetState = () => {
-        setConnectionState('idle');
-        setProgress(0);
-    };
+        setConnectionState('idle')
+        setProgress(0)
+    }
 
     function createSiweMessage(address: string, statement: string) {
         // const scheme = window.location.protocol.slice(0, -1);
-        const domain = window.location.host;
-        const origin = window.location.origin;
-        const expiry = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
+        const domain = window.location.host
+        const origin = window.location.origin
+        const expiry = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
         const message = new SiweMessage({
             // Setting scheme is giving out lots of headaches
             // scheme: scheme,
@@ -95,37 +103,40 @@ export const ConnectWallet: React.FC<{ dataTestId: string }> = ({ dataTestId }) 
             nonce: generateNonce(),
             expirationTime: expiry,
             issuedAt: new Date(Date.now()).toISOString(),
-        });
-        return message.prepareMessage();
+        })
+        return message.prepareMessage()
     }
 
     const signAndConnect = async () => {
-        console.log('Connecting to wallet');
+        console.log('Connecting to wallet')
 
-        const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
-            navigator.userAgent
-        );
+        const isMobile =
+            /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
+                navigator.userAgent
+            )
 
         // Function to check if MetaMask is installed
-        const isMetaMaskInstalled = () => !!window.ethereum;
+        const isMetaMaskInstalled = () => !!window.ethereum
 
         if (isMetaMaskInstalled()) {
-            setLoading(true);
-            setConnectionState('connecting');
-            const provider = new BrowserProvider(window.ethereum!);
+            setLoading(true)
+            setConnectionState('connecting')
+            const provider = new BrowserProvider(window.ethereum!)
 
             try {
                 // Request connection
-                await window.ethereum!.request({ method: 'eth_requestAccounts' });
-                const signer = await provider.getSigner();
+                await window.ethereum!.request({
+                    method: 'eth_requestAccounts',
+                })
+                const signer = await provider.getSigner()
 
                 // Generate SIWE message
-                const domain = window.location.host;
+                const domain = window.location.host
                 const message = createSiweMessage(
                     signer.address,
                     'Sign in with Ethereum to the app.'
-                );
-                const signature = await signer.signMessage(message);
+                )
+                const signature = await signer.signMessage(message)
                 // console.log("--Signature", signature)
                 // console.log("-- Adress", signer.address)
                 // Send session request
@@ -133,156 +144,170 @@ export const ConnectWallet: React.FC<{ dataTestId: string }> = ({ dataTestId }) 
                     message,
                     signature,
                     domain,
-                });
+                })
 
                 if (response.status === 200 || response.status === 201) {
-                    const responseData = response.data;
-                    const walletAddress = ethers.getAddress(responseData?.session?.address);
-                    setMetamaskAddress(walletAddress);
-                    setAvatar(generateAvatar(walletAddress));
+                    const responseData = response.data
+                    const walletAddress = ethers.getAddress(
+                        responseData?.session?.address
+                    )
+                    setMetamaskAddress(walletAddress)
+                    setAvatar(generateAvatar(walletAddress))
 
                     setCookie(
                         SESSION_COOKIE_NAME,
                         `${responseData.session.nonce}`,
                         new Date(responseData?.session?.expiration_time)
-                    );
+                    )
 
-                    setConnectionState('success');
-                    setUserProfile({ ...response.data.user_settings });
-                    setSession({ ...response.data.session });
+                    setConnectionState('success')
+                    setUserProfile({ ...response.data.user_settings })
+                    setSession({ ...response.data.session })
 
                     const files = await fetchFiles(
                         walletAddress,
                         `${backend_url}/explorer_files`,
                         responseData.session.nonce
-                    );
-                    setFiles(files);
+                    )
+                    setFiles(files)
                 }
 
-                setLoading(false);
-                setMessage(null);
+                setLoading(false)
+                setMessage(null)
                 toast('Sign In successful', {
                     description: 'Sign In successful',
-                });
+                })
 
                 setTimeout(() => {
-                    setIsOpen(false);
-                    resetState();
-                    setLoading(false);
-                    setMessage(null);
-                }, 2000);
+                    setIsOpen(false)
+                    resetState()
+                    setLoading(false)
+                    setMessage(null)
+                }, 2000)
             } catch (error: any) {
-                console.error('Error connecting:', error);
-                setConnectionState('error');
-                setLoading(false);
+                console.error('Error connecting:', error)
+                setConnectionState('error')
+                setLoading(false)
                 setMessage(
                     error.toString().includes('4001')
                         ? 'You have rejected signing the message.'
                         : 'An error occurred while connecting.'
-                );
+                )
                 toast(
                     error.toString().includes('4001')
                         ? 'You have rejected signing the message.'
                         : 'An error occurred while connecting.'
-                );
+                )
             }
         } else {
             // Handle mobile deep linking if MetaMask is not installed
             if (isMobile) {
-                const currentDomain = window.location.host;
-                const currentPath = window.location.pathname;
+                const currentDomain = window.location.host
+                const currentPath = window.location.pathname
 
-                const metamaskDeepLink = `https://metamask.app.link/dapp/${currentDomain}${currentPath}`;
-                const metamaskAppLink = `metamask://dapp/${currentDomain}${currentPath}`;
+                const metamaskDeepLink = `https://metamask.app.link/dapp/${currentDomain}${currentPath}`
+                const metamaskAppLink = `metamask://dapp/${currentDomain}${currentPath}`
 
                 try {
                     // Open MetaMask deep link in a new tab
-                    window.open(metamaskDeepLink, '_self');
+                    window.open(metamaskDeepLink, '_self')
 
                     // If MetaMask doesn't open, fall back to alternative link
                     setTimeout(() => {
-                        window.open(metamaskAppLink, '_self');
+                        window.open(metamaskAppLink, '_self')
 
                         // If still no response, redirect to MetaMask download page
                         setTimeout(() => {
                             if (!isMetaMaskInstalled()) {
-                                toast('MetaMask is not installed. Redirecting to download page.');
-                                window.location.href = 'https://metamask.io/download/';
+                                toast(
+                                    'MetaMask is not installed. Redirecting to download page.'
+                                )
+                                window.location.href =
+                                    'https://metamask.io/download/'
                             }
-                        }, 2000);
-                    }, 1000);
+                        }, 2000)
+                    }, 1000)
                 } catch (e) {
-                    console.error('Deep link error:', e);
-                    toast('Failed to open MetaMask. You may need to install it first.');
-                    window.location.href = 'https://metamask.io/download/';
+                    console.error('Deep link error:', e)
+                    toast(
+                        'Failed to open MetaMask. You may need to install it first.'
+                    )
+                    window.location.href = 'https://metamask.io/download/'
                 }
             } else {
-                toast('MetaMask is not installed. Please install it to connect.');
+                toast(
+                    'MetaMask is not installed. Please install it to connect.'
+                )
             }
         }
-    };
+    }
 
     const signOut = () => {
-        setLoading(true);
-        setCookie(SESSION_COOKIE_NAME, '', new Date('1970-01-01T00:00:00Z'));
-        setMetamaskAddress(null);
-        setAvatar(undefined);
-        setLoading(false);
-        setIsOpen(false);
-        toast('Signed out successfully');
-    };
+        setLoading(true)
+        setCookie(SESSION_COOKIE_NAME, '', new Date('1970-01-01T00:00:00Z'))
+        setMetamaskAddress(null)
+        setAvatar(undefined)
+        setLoading(false)
+        setIsOpen(false)
+        toast('Signed out successfully')
+    }
 
     const signOutFromSiweSession = async () => {
-        setLoading(true);
+        setLoading(true)
         try {
             // const formData = new URLSearchParams();
-            const nonce = getCookie('pkc_nonce');
+            const nonce = getCookie('pkc_nonce')
             // formData.append("nonce", nonce);
 
-            const url = `${backend_url}/session`;
+            const url = `${backend_url}/session`
             //  console.log("url is ", url);
             const response = await axios.delete(url, {
                 params: {
                     nonce,
                 },
-            });
+            })
 
             if (response.status === 200) {
-                signOut();
-                setMetamaskAddress(null);
-                setAvatar(undefined);
-                setSession(null);
-                setFiles([]);
+                signOut()
+                setMetamaskAddress(null)
+                setAvatar(undefined)
+                setSession(null)
+                setFiles([])
                 // disConnectWebsocket()
             }
         } catch (error: any) {
-            console.log('error', error);
+            console.log('error', error)
             // if (error?.response?.status === 404 || error?.response?.status === 401) {
-            setMetamaskAddress(null);
-            setAvatar(undefined);
-            setSession(null);
-            setFiles([]);
+            setMetamaskAddress(null)
+            setAvatar(undefined)
+            setSession(null)
+            setFiles([])
             // }
         }
-        setLoading(false);
-        setIsOpen(false);
-        toast('Signed out successfully');
-    };
+        setLoading(false)
+        setIsOpen(false)
+        toast('Signed out successfully')
+    }
 
     return (
-        <Dialog defaultOpen={isOpen} onOpenChange={(details: any) => setIsOpen(details.open)}>
+        <Dialog
+            defaultOpen={isOpen}
+            onOpenChange={(details: any) => setIsOpen(details.open)}
+        >
             <DialogTrigger asChild>
                 <Button
                     data-testid={dataTestId}
                     size={'sm'}
                     className="rounded-md"
                     onClick={() => {
-                        setIsOpen(true);
-                        !session && signAndConnect();
+                        setIsOpen(true)
+                        !session && signAndConnect()
                     }}
                 >
                     <LuWallet />
-                    {session ? formatCryptoAddress(session?.address, 3, 3) : 'Sign In'}
+                    {session
+                        ? formatCryptoAddress(session?.address, 3, 3)
+                        : 'Sign In'}
                 </Button>
             </DialogTrigger>
             <DialogContent
@@ -298,10 +323,15 @@ export const ConnectWallet: React.FC<{ dataTestId: string }> = ({ dataTestId }) 
                         <div className="flex flex-col gap-5 items-center">
                             <div className="relative group">
                                 <Avatar className="size-20 border-2 border-primary/20 hover:border-primary/50 transition-all duration-300">
-                                    <AvatarImage src={avatar} alt="User Avatar" />
+                                    <AvatarImage
+                                        src={avatar}
+                                        alt="User Avatar"
+                                    />
                                     <AvatarFallback className="bg-primary/10 text-primary font-semibold">
                                         {session?.address
-                                            ? session.address.substring(2, 4).toUpperCase()
+                                            ? session.address
+                                                  .substring(2, 4)
+                                                  .toUpperCase()
                                             : 'UN'}
                                     </AvatarFallback>
                                 </Avatar>
@@ -313,9 +343,15 @@ export const ConnectWallet: React.FC<{ dataTestId: string }> = ({ dataTestId }) 
 
                             <div className="flex flex-col items-center gap-2 w-full">
                                 <p className="font-mono text-sm bg-secondary/30 px-3 py-1 rounded-full">
-                                    {formatCryptoAddress(session?.address, 10, 10)}
+                                    {formatCryptoAddress(
+                                        session?.address,
+                                        10,
+                                        10
+                                    )}
                                 </p>
-                                <CustomCopyButton value={`${session?.address}`} />
+                                <CustomCopyButton
+                                    value={`${session?.address}`}
+                                />
                             </div>
 
                             {/* <div className="bg-secondary/20 w-full p-3 rounded-lg my-1">
@@ -349,7 +385,9 @@ export const ConnectWallet: React.FC<{ dataTestId: string }> = ({ dataTestId }) 
                                         aria-label="Loading Spinner"
                                         data-testid="loader"
                                     />
-                                    <p className="text-md text-center">Connecting to wallet...</p>
+                                    <p className="text-md text-center">
+                                        Connecting to wallet...
+                                    </p>
                                 </>
                             )}
                             {connectionState === 'success' && (
@@ -366,12 +404,18 @@ export const ConnectWallet: React.FC<{ dataTestId: string }> = ({ dataTestId }) 
                             )}
                             {connectionState === 'error' && (
                                 <>
-                                    <LuCircleX color="red" strokeWidth="1px" size={iconSize} />
+                                    <LuCircleX
+                                        color="red"
+                                        strokeWidth="1px"
+                                        size={iconSize}
+                                    />
                                     <div className="flex flex-col gap-0">
                                         <p className="text-md text-red-700">
                                             Error connecting to wallet
                                         </p>
-                                        <p className="text-md text-red-700">{message ?? ''}</p>
+                                        <p className="text-md text-red-700">
+                                            {message ?? ''}
+                                        </p>
                                     </div>
                                 </>
                             )}
@@ -381,5 +425,5 @@ export const ConnectWallet: React.FC<{ dataTestId: string }> = ({ dataTestId }) 
                 {/* <DialogCloseTrigger /> */}
             </DialogContent>
         </Dialog>
-    );
-};
+    )
+}

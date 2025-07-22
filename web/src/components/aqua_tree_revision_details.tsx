@@ -1,5 +1,5 @@
-import { useState, useEffect, useCallback, useMemo } from 'react';
-import { LuCheck, LuExternalLink, LuTrash, LuX } from 'react-icons/lu';
+import { useState, useEffect, useCallback, useMemo } from 'react'
+import { LuCheck, LuExternalLink, LuTrash, LuX } from 'react-icons/lu'
 import {
     displayTime,
     formatCryptoAddress,
@@ -10,25 +10,32 @@ import {
     isDeepLinkRevision,
     isAquaTree,
     getGenesisHash,
-} from '../utils/functions';
-import { AquaTree, FileObject, LogTypeEmojis, Revision } from 'aqua-js-sdk';
-import { ClipLoader } from 'react-spinners';
-import { ERROR_TEXT, WITNESS_NETWORK_MAP, ERROR_UKNOWN } from '../utils/constants';
-import { AquaTreeDetailsData, RevisionDetailsSummaryData } from '../models/AquaTreeDetails';
+} from '../utils/functions'
+import { AquaTree, FileObject, LogTypeEmojis, Revision } from 'aqua-js-sdk'
+import { ClipLoader } from 'react-spinners'
+import {
+    ERROR_TEXT,
+    WITNESS_NETWORK_MAP,
+    ERROR_UKNOWN,
+} from '../utils/constants'
+import {
+    AquaTreeDetailsData,
+    RevisionDetailsSummaryData,
+} from '../models/AquaTreeDetails'
 
-import { ItemDetail } from './item_details';
-import appStore from '../store';
-import { useStore } from 'zustand';
-import axios from 'axios';
-import { toast } from 'sonner';
-import { ApiFileInfo } from '../models/FileInfo';
-import React from 'react';
+import { ItemDetail } from './item_details'
+import appStore from '../store'
+import { useStore } from 'zustand'
+import axios from 'axios'
+import { toast } from 'sonner'
+import { ApiFileInfo } from '../models/FileInfo'
+import React from 'react'
 
 // Import /components/ UI components
-import { Button } from '@/components/ui/button';
-import { Alert, AlertTitle } from '@/components/ui/alert';
-import { Collapsible, CollapsibleContent } from '@/components/ui/collapsible';
-import { cn } from '@/lib/utils';
+import { Button } from '@/components/ui/button'
+import { Alert, AlertTitle } from '@/components/ui/alert'
+import { Collapsible, CollapsibleContent } from '@/components/ui/collapsible'
+import { cn } from '@/lib/utils'
 
 // Custom Timeline components using Tailwind
 const TimelineRoot = ({
@@ -37,21 +44,21 @@ const TimelineRoot = ({
     size = 'md',
     variant = 'default',
 }: {
-    children: React.ReactNode;
-    className?: string;
-    size?: 'sm' | 'md' | 'lg';
-    variant?: 'default' | 'subtle';
+    children: React.ReactNode
+    className?: string
+    size?: 'sm' | 'md' | 'lg'
+    variant?: 'default' | 'subtle'
 }) => {
     const sizeClasses = {
         sm: 'space-y-2 pl-4 before:left-1.5',
         md: 'space-y-3 pl-5 before:left-2',
         lg: 'space-y-4 pl-6 before:left-2.5',
-    };
+    }
 
     const variantClasses = {
         default: 'before:bg-gray-300',
         subtle: 'before:bg-gray-200',
-    };
+    }
 
     return (
         <div
@@ -64,27 +71,27 @@ const TimelineRoot = ({
         >
             {children}
         </div>
-    );
-};
+    )
+}
 
 const TimelineItem = ({ children }: { children: React.ReactNode }) => {
-    return <div className="relative mb-4">{children}</div>;
-};
+    return <div className="relative mb-4">{children}</div>
+}
 
 const TimelineConnector = ({
     children,
     bg,
 }: {
-    children: React.ReactNode;
-    bg: string;
-    color: string;
+    children: React.ReactNode
+    bg: string
+    color: string
 }) => {
     const bgColorMap: Record<string, string> = {
         'gray.400': 'bg-gray-400',
         green: 'bg-green-500',
         red: 'bg-red-500',
         yellow: 'bg-yellow-500',
-    };
+    }
 
     return (
         <div
@@ -95,26 +102,32 @@ const TimelineConnector = ({
         >
             {children}
         </div>
-    );
-};
+    )
+}
 
-const TimelineContent = ({ children, gap }: { children: React.ReactNode; gap?: string }) => {
+const TimelineContent = ({
+    children,
+    gap,
+}: {
+    children: React.ReactNode
+    gap?: string
+}) => {
     const gapMap: Record<string, string> = {
         '2': 'space-y-2',
         '4': 'space-y-4',
-    };
+    }
 
-    return <div className={cn('ml-6', gapMap[gap || '2'])}>{children}</div>;
-};
+    return <div className={cn('ml-6', gapMap[gap || '2'])}>{children}</div>
+}
 
 const TimelineTitle = ({
     children,
     onClick,
     cursor,
 }: {
-    children: React.ReactNode;
-    onClick?: () => void;
-    cursor?: string;
+    children: React.ReactNode
+    onClick?: () => void
+    cursor?: string
 }) => {
     return (
         <div
@@ -126,23 +139,27 @@ const TimelineTitle = ({
         >
             {children}
         </div>
-    );
-};
+    )
+}
 
 const TimelineDescription = ({ children }: { children: React.ReactNode }) => {
-    return <div className="text-sm text-gray-500 dark:text-gray-400">{children}</div>;
-};
+    return (
+        <div className="text-sm text-gray-500 dark:text-gray-400">
+            {children}
+        </div>
+    )
+}
 
 // Custom For component replacement
 export const For = <T extends any>({
     each,
     children,
 }: {
-    each: T[];
-    children: (item: T, index: number) => React.ReactNode;
+    each: T[]
+    children: (item: T, index: number) => React.ReactNode
 }) => {
-    return <>{each.map((item, index) => children(item, index))}</>;
-};
+    return <>{each.map((item, index) => children(item, index))}</>
+}
 
 // Custom WalletEnsView component
 const WalletEnsView = ({ walletAddress }: { walletAddress: string }) => {
@@ -153,8 +170,8 @@ const WalletEnsView = ({ walletAddress }: { walletAddress: string }) => {
                 {formatCryptoAddress(walletAddress, 4, 6)}
             </span>
         </div>
-    );
-};
+    )
+}
 
 const viewLinkedFile = (
     selectedApiFileInfo: ApiFileInfo,
@@ -166,7 +183,7 @@ const viewLinkedFile = (
 ): React.JSX.Element => {
     if (revision.revision_type == 'link') {
         if (isDeepLinkRevision(selectedApiFileInfo.aquaTree!, revisionHash)) {
-            return <></>;
+            return <></>
         }
 
         return (
@@ -178,58 +195,70 @@ const viewLinkedFile = (
                     let linkedFileName = fetchLinkedFileName(
                         selectedApiFileInfo.aquaTree!,
                         revision
-                    );
-                    let allFileObjects = [...selectedApiFileInfo.fileObject];
+                    )
+                    let allFileObjects = [...selectedApiFileInfo.fileObject]
                     apiFileInfo.forEach(e => {
-                        allFileObjects = [...allFileObjects, ...e.fileObject];
-                    });
+                        allFileObjects = [...allFileObjects, ...e.fileObject]
+                    })
                     if (isWorkflow || linkedFileName == ERROR_TEXT) {
                         linkedFileName = getFileNameWithDeepLinking(
                             selectedApiFileInfo.aquaTree!,
                             revisionHash,
                             allFileObjects
-                        );
+                        )
                     }
 
-                    let fileInfoFound: ApiFileInfo | undefined = undefined;
-                    if (linkedFileName != ERROR_TEXT && linkedFileName != ERROR_UKNOWN) {
+                    let fileInfoFound: ApiFileInfo | undefined = undefined
+                    if (
+                        linkedFileName != ERROR_TEXT &&
+                        linkedFileName != ERROR_UKNOWN
+                    ) {
                         for (const fileInfo of apiFileInfo) {
-                            const fileObject = getAquaTreeFileObject(fileInfo);
+                            const fileObject = getAquaTreeFileObject(fileInfo)
                             if (fileObject) {
                                 if (linkedFileName == fileObject.fileName) {
-                                    fileInfoFound = fileInfo;
-                                    break;
+                                    fileInfoFound = fileInfo
+                                    break
                                 }
                             }
                         }
                         if (fileInfoFound) {
                             updateSelectedFile({
                                 aquaTree: fileInfoFound.aquaTree,
-                                fileObject: [...fileInfoFound.fileObject, ...allFileObjects],
+                                fileObject: [
+                                    ...fileInfoFound.fileObject,
+                                    ...allFileObjects,
+                                ],
                                 linkedFileObjects: [],
                                 mode: '',
                                 owner: '',
-                            });
+                            })
                         } else {
                             for (const fileObject of allFileObjects) {
                                 if (linkedFileName == fileObject.fileName) {
-                                    let aquaTree: AquaTree | undefined = undefined;
+                                    let aquaTree: AquaTree | undefined =
+                                        undefined
                                     if (linkedFileName.endsWith('.aqua.json')) {
-                                        aquaTree = fileObject.fileContent as AquaTree;
+                                        aquaTree =
+                                            fileObject.fileContent as AquaTree
                                     } else {
-                                        const fileObjCtItem = allFileObjects.find(
-                                            e => e.fileName == `${linkedFileName}.aqua.json`
-                                        );
+                                        const fileObjCtItem =
+                                            allFileObjects.find(
+                                                e =>
+                                                    e.fileName ==
+                                                    `${linkedFileName}.aqua.json`
+                                            )
                                         if (fileObjCtItem) {
-                                            aquaTree = fileObjCtItem.fileContent as AquaTree;
+                                            aquaTree =
+                                                fileObjCtItem.fileContent as AquaTree
                                         }
                                     }
 
                                     if (aquaTree == undefined) {
                                         console.log(
                                             `show  ${linkedFileName}  filw object ${JSON.stringify(fileObject, null, 4)}`
-                                        );
-                                        toast.info('View not available');
+                                        )
+                                        toast.info('View not available')
                                     } else {
                                         updateSelectedFile({
                                             aquaTree: aquaTree,
@@ -237,67 +266,79 @@ const viewLinkedFile = (
                                             linkedFileObjects: [],
                                             mode: '',
                                             owner: '',
-                                        });
+                                        })
                                     }
 
-                                    break;
+                                    break
                                 }
                             }
                         }
                     } else {
-                        toast.info('Link file not found, possibly a deep link?');
+                        toast.info('Link file not found, possibly a deep link?')
                     }
                 }}
             >
                 View File
             </Button>
-        );
+        )
     } else {
-        return <></>;
+        return <></>
     }
-};
+}
 
 const revisionDataHeader = (
     aquaTree: AquaTree,
     revisionHash: string,
     fileObject: FileObject[]
 ): React.JSX.Element => {
-    const revision = aquaTree.revisions[revisionHash];
+    const revision = aquaTree.revisions[revisionHash]
 
     if (revision.previous_verification_hash.length == 0) {
-        return <span className="font-medium">Genesis Revision</span>;
+        return <span className="font-medium">Genesis Revision</span>
     }
 
     if (revision.revision_type == 'link') {
-        const isDeepLink = isDeepLinkRevision(aquaTree, revisionHash);
+        const isDeepLink = isDeepLinkRevision(aquaTree, revisionHash)
         if (isDeepLink == null) {
-            return <span>{ERROR_TEXT}</span>;
+            return <span>{ERROR_TEXT}</span>
         }
         if (isDeepLink) {
             // before returning deep link we traverse the current aqua tree
-            const aquaTreeFiles = fileObject.filter(file => isAquaTree(file.fileContent));
-            console.log(`👁️‍🗨️ aquaTreeFiles ${aquaTreeFiles.length} --  `);
+            const aquaTreeFiles = fileObject.filter(file =>
+                isAquaTree(file.fileContent)
+            )
+            console.log(`👁️‍🗨️ aquaTreeFiles ${aquaTreeFiles.length} --  `)
             if (aquaTreeFiles.length > 0) {
                 const aquaTreePick = aquaTreeFiles.find(e => {
-                    const tree: AquaTree = e.fileContent as AquaTree;
-                    const allHashes = Object.keys(tree.revisions);
+                    const tree: AquaTree = e.fileContent as AquaTree
+                    const allHashes = Object.keys(tree.revisions)
 
-                    console.log(`👁️‍🗨️ aquaTreeFiles ${allHashes.toString()} == ${revisionHash} `);
-                    return allHashes.includes(revision.link_verification_hashes![0]!);
-                });
+                    console.log(
+                        `👁️‍🗨️ aquaTreeFiles ${allHashes.toString()} == ${revisionHash} `
+                    )
+                    return allHashes.includes(
+                        revision.link_verification_hashes![0]!
+                    )
+                })
 
-                console.log(`👁️‍🗨️ aquaTreePick ${JSON.stringify(aquaTreePick, null, 4)} `);
+                console.log(
+                    `👁️‍🗨️ aquaTreePick ${JSON.stringify(aquaTreePick, null, 4)} `
+                )
                 if (aquaTreePick) {
-                    const tree: AquaTree = aquaTreePick.fileContent as AquaTree;
-                    const genesisHash = getGenesisHash(tree);
+                    const tree: AquaTree = aquaTreePick.fileContent as AquaTree
+                    const genesisHash = getGenesisHash(tree)
 
-                    console.log(`👁️‍🗨️  genesisHash ${genesisHash}`);
+                    console.log(`👁️‍🗨️  genesisHash ${genesisHash}`)
                     if (genesisHash) {
-                        const fileName = tree.file_index[genesisHash];
-                        console.log(`👁️‍🗨️ fileName ${fileName}`);
+                        const fileName = tree.file_index[genesisHash]
+                        console.log(`👁️‍🗨️ fileName ${fileName}`)
 
                         if (fileName) {
-                            return <span className="text-md">Linked to {fileName}</span>;
+                            return (
+                                <span className="text-md">
+                                    Linked to {fileName}
+                                </span>
+                            )
                         }
                     }
                 }
@@ -305,19 +346,21 @@ const revisionDataHeader = (
 
             return (
                 <span className="text-sm">
-                    Deep Link previous {revision.previous_verification_hash} revisionHash{' '}
-                    {revisionHash}
+                    Deep Link previous {revision.previous_verification_hash}{' '}
+                    revisionHash {revisionHash}
                 </span>
-            );
+            )
         } else {
             return (
-                <span className="text-md">linked to {fetchLinkedFileName(aquaTree, revision)}</span>
-            );
+                <span className="text-md">
+                    linked to {fetchLinkedFileName(aquaTree, revision)}
+                </span>
+            )
         }
     }
 
-    return <span className="text-sm">{revision.revision_type}</span>;
-};
+    return <span className="text-sm">{revision.revision_type}</span>
+}
 
 export const RevisionDisplay = ({
     fileInfo,
@@ -329,82 +372,88 @@ export const RevisionDisplay = ({
     deleteRevision,
     index,
 }: AquaTreeDetailsData) => {
-    const { session, backend_url, files, setFiles, setSelectedFileInfo } = useStore(appStore);
-    const [showRevisionDetails, setShowRevisionDetails] = useState(false);
-    const [isRevisionVerificationSuccessful, setIsRevisionVerificationSuccessful] = useState<
-        boolean | null
-    >(null);
-    const [isDeleting, setIsDeleting] = useState(false);
+    const { session, backend_url, files, setFiles, setSelectedFileInfo } =
+        useStore(appStore)
+    const [showRevisionDetails, setShowRevisionDetails] = useState(false)
+    const [
+        isRevisionVerificationSuccessful,
+        setIsRevisionVerificationSuccessful,
+    ] = useState<boolean | null>(null)
+    const [isDeleting, setIsDeleting] = useState(false)
 
-    const loaderSize = '40px';
+    const loaderSize = '40px'
 
     // Memoize background color calculation
     const returnBgColor = useMemo((): string => {
         if (!isVerificationComplete) {
-            return 'gray.400';
+            return 'gray.400'
         }
         const revisionVerificationResult = verificationResults.find(
             item => item.hash === revisionHash
-        );
+        )
         if (revisionVerificationResult === undefined) {
-            return 'yellow';
+            return 'yellow'
         }
-        return revisionVerificationResult.isSuccessful ? 'green' : 'red';
-    }, [isVerificationComplete, verificationResults, revisionHash]);
+        return revisionVerificationResult.isSuccessful ? 'green' : 'red'
+    }, [isVerificationComplete, verificationResults, revisionHash])
 
     // Run verification check when necessary
     useEffect(() => {
-        const checkVerification = () => isVerificationSuccessful();
-        checkVerification();
-    }, [isVerificationComplete, verificationResults]);
+        const checkVerification = () => isVerificationSuccessful()
+        checkVerification()
+    }, [isVerificationComplete, verificationResults])
 
     // Memoize verification status calculation and update state only when needed
     const isVerificationSuccessful = useCallback((): boolean | null => {
-        const currentRevisionResult = verificationResults.find(item => item.hash === revisionHash);
+        const currentRevisionResult = verificationResults.find(
+            item => item.hash === revisionHash
+        )
 
-        let verificationStatus: boolean | null = null;
+        let verificationStatus: boolean | null = null
 
         if (!isVerificationComplete) {
-            verificationStatus = null;
+            verificationStatus = null
         } else if (currentRevisionResult === undefined) {
-            verificationStatus = null;
+            verificationStatus = null
         } else {
-            verificationStatus = currentRevisionResult.isSuccessful ? true : false;
+            verificationStatus = currentRevisionResult.isSuccessful
+                ? true
+                : false
         }
 
         // Only update state if it's different to avoid unnecessary re-renders
         if (verificationStatus !== isRevisionVerificationSuccessful) {
-            setIsRevisionVerificationSuccessful(verificationStatus);
+            setIsRevisionVerificationSuccessful(verificationStatus)
         }
 
-        return verificationStatus;
+        return verificationStatus
     }, [
         verificationResults,
         revisionHash,
         isVerificationComplete,
         isRevisionVerificationSuccessful,
-    ]);
+    ])
 
     // Memoize status text to prevent recalculation
     const verificationStatusText = useMemo((): string => {
         if (isRevisionVerificationSuccessful === null) {
-            return 'loading';
+            return 'loading'
         }
-        return isRevisionVerificationSuccessful ? 'Valid' : 'Invalid';
-    }, [isRevisionVerificationSuccessful]);
+        return isRevisionVerificationSuccessful ? 'Valid' : 'Invalid'
+    }, [isRevisionVerificationSuccessful])
 
     // Memoize alert component to prevent recreation
     const displayAlert = useMemo((): React.JSX.Element => {
-        let alertVariant = 'bg-blue-50 border-blue-200 text-blue-700';
-        let title = 'This revision is being verified';
+        let alertVariant = 'bg-blue-50 border-blue-200 text-blue-700'
+        let title = 'This revision is being verified'
 
         if (isRevisionVerificationSuccessful !== null) {
             if (isRevisionVerificationSuccessful) {
-                alertVariant = 'bg-green-50 border-green-200 text-green-700';
-                title = 'This revision is valid';
+                alertVariant = 'bg-green-50 border-green-200 text-green-700'
+                title = 'This revision is valid'
             } else {
-                alertVariant = 'bg-red-50 border-red-200 text-red-700';
-                title = 'This revision is invalid';
+                alertVariant = 'bg-red-50 border-red-200 text-red-700'
+                title = 'This revision is invalid'
             }
         }
 
@@ -412,8 +461,8 @@ export const RevisionDisplay = ({
             <Alert className={alertVariant}>
                 <AlertTitle>{title}</AlertTitle>
             </Alert>
-        );
-    }, [isRevisionVerificationSuccessful]);
+        )
+    }, [isRevisionVerificationSuccessful])
 
     // Memoize verification icon to prevent recreation
     const verificationStatusIcon = useMemo((): React.JSX.Element => {
@@ -428,7 +477,7 @@ export const RevisionDisplay = ({
                         data-testid="loader"
                     />
                 </div>
-            );
+            )
         }
 
         return isRevisionVerificationSuccessful ? (
@@ -439,71 +488,73 @@ export const RevisionDisplay = ({
             <div className="text-white">
                 <LuX className="h-3 w-3" />
             </div>
-        );
-    }, [isRevisionVerificationSuccessful, loaderSize]);
+        )
+    }, [isRevisionVerificationSuccessful, loaderSize])
 
     // Memoize delete handler to prevent recreation on each render
     const handleDelete = useCallback(async () => {
-        if (isDeleting) return; // Prevent multiple clicks
+        if (isDeleting) return // Prevent multiple clicks
 
-        console.log('Deleting revision: ', revisionHash, index);
-        setIsDeleting(true);
+        console.log('Deleting revision: ', revisionHash, index)
+        setIsDeleting(true)
 
         try {
-            const url = `${backend_url}/tree/revisions/${revisionHash}`;
+            const url = `${backend_url}/tree/revisions/${revisionHash}`
 
             const response = await axios.delete(url, {
                 headers: {
                     metamask_address: session?.address,
                     nonce: session?.nonce,
                 },
-            });
+            })
 
             if (response.status === 200) {
                 toast.success('Revision deleted', {
                     description: 'The revision has been deleted',
                     duration: 3000,
-                });
+                })
 
                 // Reload files for the current user
                 if (index === 0) {
-                    window.location.reload();
+                    window.location.reload()
                 } else {
-                    const url2 = `${backend_url}/explorer_files`;
+                    const url2 = `${backend_url}/explorer_files`
                     const files = await fetchFiles(
                         `${session?.address}`,
                         url2,
                         `${session?.nonce}`
-                    );
-                    setFiles(files);
+                    )
+                    setFiles(files)
 
                     // we need to update the side drawer for reverification to start
                     const selectedFileData = files.find(e => {
                         Object.keys(e.aquaTree!.revisions!)[0] ==
-                            Object.keys(selectedFileData!.aquaTree!.revisions)[0];
-                    });
+                            Object.keys(
+                                selectedFileData!.aquaTree!.revisions
+                            )[0]
+                    })
                     if (selectedFileData) {
-                        setSelectedFileInfo(selectedFileData);
+                        setSelectedFileInfo(selectedFileData)
                     }
 
                     // Remove the revision from the list of revisions
-                    deleteRevision(revisionHash);
+                    deleteRevision(revisionHash)
                 }
             } else {
                 toast.error('Revision not deleted', {
                     description: 'The revision has not been deleted',
                     duration: 3000,
                     // placement: "bottom-end"
-                });
+                })
             }
         } catch (error) {
             toast.error('Revision not deleted', {
                 description: 'The revision has not been deleted',
                 duration: 3000,
                 // placement: "bottom-end"
-            });
+            })
         } finally {
-            setIsDeleting(false);
+            setIsDeleting(false)
         }
     }, [
         backend_url,
@@ -514,7 +565,7 @@ export const RevisionDisplay = ({
         deleteRevision,
         isDeleting,
         setFiles,
-    ]);
+    ])
 
     const displayDeleteButton = (): React.JSX.Element => {
         if (isDeletable) {
@@ -528,13 +579,13 @@ export const RevisionDisplay = ({
                 >
                     <LuTrash className="h-3 w-3" />
                 </Button>
-            );
+            )
         }
-        return <></>;
-    };
+        return <></>
+    }
 
     // Keep the original function
-    const revisionTypeEmoji = LogTypeEmojis[revision.revision_type];
+    const revisionTypeEmoji = LogTypeEmojis[revision.revision_type]
 
     return (
         <div>
@@ -561,7 +612,11 @@ export const RevisionDisplay = ({
                         <CollapsibleContent>
                             <div className="border rounded-md shadow-sm">
                                 <div className="p-4 text-sm leading-relaxed">
-                                    <TimelineRoot size="lg" variant="subtle" className="max-w-md">
+                                    <TimelineRoot
+                                        size="lg"
+                                        variant="subtle"
+                                        className="max-w-md"
+                                    >
                                         {revision.revision_type == 'file' ||
                                         revision.revision_type == 'form' ||
                                         revision.revision_type == 'link' ? (
@@ -577,16 +632,20 @@ export const RevisionDisplay = ({
                                                     <TimelineContent gap="2">
                                                         <TimelineTitle>
                                                             {revisionDataHeader(
-                                                                fileInfo!.aquaTree!,
+                                                                fileInfo!
+                                                                    .aquaTree!,
                                                                 revisionHash,
                                                                 fileInfo.fileObject
                                                             )}
                                                         </TimelineTitle>
                                                         <TimelineDescription>
-                                                            {displayTime(revision.local_timestamp)}
+                                                            {displayTime(
+                                                                revision.local_timestamp
+                                                            )}
                                                             &nbsp;(UTC)
                                                         </TimelineDescription>
-                                                        {revision.revision_type === 'file' ? (
+                                                        {revision.revision_type ===
+                                                        'file' ? (
                                                             <ItemDetail
                                                                 label="File Hash:"
                                                                 displayValue={formatCryptoAddress(
@@ -594,8 +653,12 @@ export const RevisionDisplay = ({
                                                                     10,
                                                                     15
                                                                 )}
-                                                                value={revision.file_hash!}
-                                                                showCopyIcon={true}
+                                                                value={
+                                                                    revision.file_hash!
+                                                                }
+                                                                showCopyIcon={
+                                                                    true
+                                                                }
                                                             />
                                                         ) : null}
                                                         {viewLinkedFile(
@@ -611,7 +674,8 @@ export const RevisionDisplay = ({
                                             </>
                                         ) : null}
 
-                                        {revision.revision_type == 'signature' ? (
+                                        {revision.revision_type ==
+                                        'signature' ? (
                                             <TimelineItem>
                                                 <TimelineConnector
                                                     bg={returnBgColor}
@@ -622,8 +686,11 @@ export const RevisionDisplay = ({
                                                 <TimelineContent gap="2">
                                                     <TimelineTitle>
                                                         <span>
-                                                            Revision signature is{' '}
-                                                            {verificationStatusText}
+                                                            Revision signature
+                                                            is{' '}
+                                                            {
+                                                                verificationStatusText
+                                                            }
                                                         </span>
                                                     </TimelineTitle>
                                                     <ItemDetail
@@ -633,13 +700,19 @@ export const RevisionDisplay = ({
                                                             4,
                                                             6
                                                         )}
-                                                        value={revision.signature}
+                                                        value={
+                                                            revision.signature
+                                                        }
                                                         showCopyIcon={true}
                                                     />
                                                     <ItemDetail
                                                         label="Signature Type:"
-                                                        displayValue={revision.signature_type!}
-                                                        value={revision.signature_type!}
+                                                        displayValue={
+                                                            revision.signature_type!
+                                                        }
+                                                        value={
+                                                            revision.signature_type!
+                                                        }
                                                         showCopyIcon={true}
                                                     />
                                                     <WalletEnsView
@@ -654,7 +727,9 @@ export const RevisionDisplay = ({
                                                             4,
                                                             6
                                                         )}
-                                                        value={revision.signature_public_key!}
+                                                        value={
+                                                            revision.signature_public_key!
+                                                        }
                                                         showCopyIcon={true}
                                                     />
                                                 </TimelineContent>
@@ -672,8 +747,11 @@ export const RevisionDisplay = ({
                                                 <TimelineContent gap="2">
                                                     <TimelineTitle>
                                                         <span>
-                                                            Revision witness is &nbsp;
-                                                            {verificationStatusText}
+                                                            Revision witness is
+                                                            &nbsp;
+                                                            {
+                                                                verificationStatusText
+                                                            }
                                                         </span>
                                                     </TimelineTitle>
 
@@ -685,7 +763,9 @@ export const RevisionDisplay = ({
                                                                 4,
                                                                 6
                                                             )}
-                                                            value={revision.witness_network!}
+                                                            value={
+                                                                revision.witness_network!
+                                                            }
                                                             showCopyIcon={false}
                                                         />
                                                     ) : null}
@@ -717,7 +797,9 @@ export const RevisionDisplay = ({
                                                                     6
                                                                 )}
                                                                 value={`0x${revision.witness_transaction_hash}`}
-                                                                showCopyIcon={true}
+                                                                showCopyIcon={
+                                                                    true
+                                                                }
                                                             />
                                                             <a
                                                                 className="outline-none"
@@ -748,43 +830,50 @@ export const RevisionDisplay = ({
                                         ) : null}
                                     </TimelineRoot>
                                 </div>
-                                <div className="p-4 border-t">{displayAlert}</div>
+                                <div className="p-4 border-t">
+                                    {displayAlert}
+                                </div>
                             </div>
                         </CollapsibleContent>
                     </Collapsible>
                 </TimelineContent>
             </TimelineItem>
         </div>
-    );
-};
+    )
+}
 
-export const RevisionDetailsSummary = ({ fileInfo, isWorkFlow }: RevisionDetailsSummaryData) => {
-    const { files, setSelectedFileInfo } = useStore(appStore);
-    const revisionHashes = Object.keys(fileInfo!.aquaTree!.revisions);
+export const RevisionDetailsSummary = ({
+    fileInfo,
+    isWorkFlow,
+}: RevisionDetailsSummaryData) => {
+    const { files, setSelectedFileInfo } = useStore(appStore)
+    const revisionHashes = Object.keys(fileInfo!.aquaTree!.revisions)
 
-    const revisionsWithSignatures: Array<Revision> = [];
-    const revisionsWithWitness: Array<Revision> = [];
-    const revisionHashesWithLinks: Array<string> = [];
+    const revisionsWithSignatures: Array<Revision> = []
+    const revisionsWithWitness: Array<Revision> = []
+    const revisionHashesWithLinks: Array<string> = []
 
     for (let i = 0; i < revisionHashes.length; i++) {
-        const currentRevision: string = revisionHashes[i];
-        const revision: Revision = fileInfo.aquaTree!.revisions[currentRevision];
+        const currentRevision: string = revisionHashes[i]
+        const revision: Revision = fileInfo.aquaTree!.revisions[currentRevision]
 
         if (revision.revision_type == 'signature') {
-            revisionsWithSignatures.push(revision);
+            revisionsWithSignatures.push(revision)
         }
 
         if (revision.revision_type == 'witness') {
-            revisionsWithWitness.push(revision);
+            revisionsWithWitness.push(revision)
         }
         if (revision.revision_type == 'link') {
-            revisionHashesWithLinks.push(currentRevision);
+            revisionHashesWithLinks.push(currentRevision)
         }
     }
 
     return (
         <div className="flex flex-col items-start w-full space-y-4">
-            <p className="text-base">Revisions count: {revisionHashes.length}</p>
+            <p className="text-base">
+                Revisions count: {revisionHashes.length}
+            </p>
 
             <div className="w-full bg-gray-100 dark:bg-gray-900 rounded-lg p-4 md:p-6">
                 <h3 className="mb-2 font-semibold text-lg">
@@ -806,14 +895,24 @@ export const RevisionDetailsSummary = ({ fileInfo, isWorkFlow }: RevisionDetails
                         <div>
                             <ItemDetail
                                 label="Signature Hash:"
-                                displayValue={formatCryptoAddress(revision.signature, 4, 6)}
+                                displayValue={formatCryptoAddress(
+                                    revision.signature,
+                                    4,
+                                    6
+                                )}
                                 value={revision.signature ?? ''}
                                 showCopyIcon={true}
                             />
-                            <WalletEnsView walletAddress={revision.signature_wallet_address!} />
+                            <WalletEnsView
+                                walletAddress={
+                                    revision.signature_wallet_address!
+                                }
+                            />
                             <ItemDetail
                                 label="Timestamp (UTC) : "
-                                displayValue={displayTime(revision.local_timestamp)}
+                                displayValue={displayTime(
+                                    revision.local_timestamp
+                                )}
                                 value={revision.local_timestamp ?? ''}
                                 showCopyIcon={false}
                             />
@@ -855,7 +954,9 @@ export const RevisionDetailsSummary = ({ fileInfo, isWorkFlow }: RevisionDetails
                                 displayValue={displayTime(
                                     revision.witness_timestamp?.toString() ?? ''
                                 )}
-                                value={revision.witness_timestamp?.toString() ?? ''}
+                                value={
+                                    revision.witness_timestamp?.toString() ?? ''
+                                }
                                 showCopyIcon={false}
                             />
                             <div className="my-2"></div>
@@ -864,8 +965,11 @@ export const RevisionDetailsSummary = ({ fileInfo, isWorkFlow }: RevisionDetails
                                 <ItemDetail
                                     label="Transaction Hash:"
                                     displayValue={formatCryptoAddress(
-                                        revision.witness_transaction_hash?.startsWith('0x')
-                                            ? (revision.witness_transaction_hash ?? '')
+                                        revision.witness_transaction_hash?.startsWith(
+                                            '0x'
+                                        )
+                                            ? (revision.witness_transaction_hash ??
+                                                  '')
                                             : `0x${revision.witness_transaction_hash ?? ''}`,
                                         4,
                                         6
@@ -893,7 +997,7 @@ export const RevisionDetailsSummary = ({ fileInfo, isWorkFlow }: RevisionDetails
                     Links ({revisionHashesWithLinks.length})
                 </h3>
                 {revisionHashesWithLinks.map((revisionHash, index) => {
-                    const revision = fileInfo!.aquaTree?.revisions[revisionHash];
+                    const revision = fileInfo!.aquaTree?.revisions[revisionHash]
                     return (
                         <div
                             key={`link_${index}`}
@@ -923,12 +1027,12 @@ export const RevisionDetailsSummary = ({ fileInfo, isWorkFlow }: RevisionDetails
                                 )}
                             </div>
                         </div>
-                    );
+                    )
                 })}
             </div>
         </div>
-    );
-};
+    )
+}
 
 // export const ChainDetails = ({ fileInfo }: AquaTreeDetails) => {
 

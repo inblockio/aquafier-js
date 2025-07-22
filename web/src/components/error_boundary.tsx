@@ -1,115 +1,123 @@
-import React, { Component, ErrorInfo, ReactNode } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Separator } from '@/components/ui/separator';
+import React, { Component, ErrorInfo, ReactNode } from 'react'
+import { useNavigate } from 'react-router-dom'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent } from '@/components/ui/card'
+import { Badge } from '@/components/ui/badge'
+import { Separator } from '@/components/ui/separator'
 import {
     Dialog,
     DialogContent,
     DialogDescription,
     DialogHeader,
     DialogTitle,
-} from '@/components/ui/dialog';
-import { AlertTriangle, Home, RefreshCw, Copy, ChevronDown, ChevronUp, Bug } from 'lucide-react';
+} from '@/components/ui/dialog'
+import {
+    AlertTriangle,
+    Home,
+    RefreshCw,
+    Copy,
+    ChevronDown,
+    ChevronUp,
+    Bug,
+} from 'lucide-react'
 
 interface Props {
-    children: ReactNode;
-    fallback?: ReactNode;
+    children: ReactNode
+    fallback?: ReactNode
 }
 
 // ErrorFallbackProps interface for the ErrorFallback component
 interface ErrorFallbackProps {
-    error: Error | null;
-    resetErrorBoundary: () => void;
+    error: Error | null
+    resetErrorBoundary: () => void
 }
 
 interface State {
-    hasError: boolean;
-    error: Error | null;
+    hasError: boolean
+    error: Error | null
 }
 
 class ErrorBoundary extends Component<Props, State> {
     constructor(props: Props) {
-        super(props);
+        super(props)
         this.state = {
             hasError: false,
             error: null,
-        };
+        }
     }
 
     static getDerivedStateFromError(error: Error): State {
         // Update the state so the next render will show the fallback UI
-        return { hasError: true, error };
+        return { hasError: true, error }
     }
 
     componentDidCatch(error: Error, errorInfo: ErrorInfo): void {
         // You can log the error to an error reporting service
-        console.error('Error caught by ErrorBoundary:', error, errorInfo);
+        console.error('Error caught by ErrorBoundary:', error, errorInfo)
     }
 
     render(): ReactNode {
         if (this.state.hasError) {
             // You can render any custom fallback UI
             if (this.props.fallback) {
-                return this.props.fallback;
+                return this.props.fallback
             }
 
             return (
                 <ErrorFallback
                     error={this.state.error}
                     resetErrorBoundary={() => {
-                        this.setState({ hasError: false, error: null });
+                        this.setState({ hasError: false, error: null })
                     }}
                 />
-            );
+            )
         }
 
-        return this.props.children;
+        return this.props.children
     }
 }
 
 // ErrorFallback component that displays a dialog with options to go home or reload
 const ErrorFallback = ({ error, resetErrorBoundary }: ErrorFallbackProps) => {
-    const [showDetails, setShowDetails] = React.useState(false);
-    const [copied, setCopied] = React.useState(false);
-    const [open, setOpen] = React.useState(true);
+    const [showDetails, setShowDetails] = React.useState(false)
+    const [copied, setCopied] = React.useState(false)
+    const [open, setOpen] = React.useState(true)
 
-    const navigate = useNavigate();
+    const navigate = useNavigate()
 
     const handleGoHome = () => {
-        resetErrorBoundary();
-        setOpen(false);
-        navigate('/');
-    };
+        resetErrorBoundary()
+        setOpen(false)
+        navigate('/')
+    }
 
     const handleReload = () => {
-        window.location.reload();
-    };
+        window.location.reload()
+    }
 
     const copyErrorDetails = async () => {
-        const errorText = `Error: ${error?.message}\n\nStack Trace:\n${error?.stack}`;
+        const errorText = `Error: ${error?.message}\n\nStack Trace:\n${error?.stack}`
         try {
-            await navigator.clipboard.writeText(errorText);
-            setCopied(true);
-            setTimeout(() => setCopied(false), 2000);
+            await navigator.clipboard.writeText(errorText)
+            setCopied(true)
+            setTimeout(() => setCopied(false), 2000)
         } catch (err) {
-            console.error('Failed to copy error details:', err);
+            console.error('Failed to copy error details:', err)
         }
-    };
+    }
 
     const getErrorType = (error: Error | null) => {
-        if (!error) return 'Unknown Error';
-        if (error.name) return error.name;
-        return 'Runtime Error';
-    };
+        if (!error) return 'Unknown Error'
+        if (error.name) return error.name
+        return 'Runtime Error'
+    }
 
     return (
         <Dialog
             open={open}
             onOpenChange={isOpen => {
                 if (!isOpen) {
-                    handleGoHome();
+                    handleGoHome()
                 }
             }}
         >
@@ -126,7 +134,8 @@ const ErrorFallback = ({ error, resetErrorBoundary }: ErrorFallbackProps) => {
                                 Oops! Something went wrong
                             </DialogTitle>
                             <DialogDescription className="text-gray-600 text-sm">
-                                We encountered an unexpected error. Don't worry, your data is safe.
+                                We encountered an unexpected error. Don't worry,
+                                your data is safe.
                             </DialogDescription>
                         </div>
                     </div>
@@ -145,7 +154,9 @@ const ErrorFallback = ({ error, resetErrorBoundary }: ErrorFallbackProps) => {
                             <Bug className="w-4 h-4 mr-1" />
                             {getErrorType(error)}
                         </Badge>
-                        <span className="text-xs text-gray-500">{new Date().toLocaleString()}</span>
+                        <span className="text-xs text-gray-500">
+                            {new Date().toLocaleString()}
+                        </span>
                     </div>
 
                     {/* Error Message */}
@@ -212,16 +223,25 @@ const ErrorFallback = ({ error, resetErrorBoundary }: ErrorFallbackProps) => {
                     <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
                         <div className="flex items-start gap-3">
                             <div className="w-5 h-5 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0 mt-0.5">
-                                <span className="text-blue-600 text-xs font-bold">?</span>
+                                <span className="text-blue-600 text-xs font-bold">
+                                    ?
+                                </span>
                             </div>
                             <div className="text-sm text-blue-800">
-                                <p className="font-medium mb-1">What can you do?</p>
+                                <p className="font-medium mb-1">
+                                    What can you do?
+                                </p>
                                 <ul className="text-xs space-y-1 text-blue-700">
-                                    <li>• Try reloading the page to see if the issue resolves</li>
-                                    <li>• Go back to the home page and try again</li>
                                     <li>
-                                        • If the problem persists, contact support with the error
-                                        details
+                                        • Try reloading the page to see if the
+                                        issue resolves
+                                    </li>
+                                    <li>
+                                        • Go back to the home page and try again
+                                    </li>
+                                    <li>
+                                        • If the problem persists, contact
+                                        support with the error details
                                     </li>
                                 </ul>
                             </div>
@@ -251,7 +271,7 @@ const ErrorFallback = ({ error, resetErrorBoundary }: ErrorFallbackProps) => {
                 </div>
             </DialogContent>
         </Dialog>
-    );
-};
+    )
+}
 
-export default ErrorBoundary;
+export default ErrorBoundary

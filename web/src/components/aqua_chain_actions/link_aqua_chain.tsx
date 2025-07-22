@@ -1,80 +1,84 @@
-import { LuLink2 } from 'react-icons/lu';
-import { useState } from 'react';
+import { LuLink2 } from 'react-icons/lu'
+import { useState } from 'react'
 import {
     areArraysEqual,
     fetchFiles,
     getAquaTreeFileObject,
     getFileName,
     isWorkFlowData,
-} from '../../utils/functions';
-import { useStore } from 'zustand';
-import appStore from '../../store';
-import axios from 'axios';
-import { ApiFileInfo } from '../../models/FileInfo';
-import Aquafier, { AquaTreeWrapper } from 'aqua-js-sdk';
-import { IShareButton } from '../../types/types';
+} from '../../utils/functions'
+import { useStore } from 'zustand'
+import appStore from '../../store'
+import axios from 'axios'
+import { ApiFileInfo } from '../../models/FileInfo'
+import Aquafier, { AquaTreeWrapper } from 'aqua-js-sdk'
+import { IShareButton } from '../../types/types'
 import {
     Dialog,
     DialogContent,
     DialogFooter,
     DialogHeader,
     DialogTitle,
-} from '@/components/ui/dialog';
-import { toast } from '@/components/ui/use-toast';
-import { Label } from '@/components/ui/label';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { AlertCircle, Loader2 } from 'lucide-react';
-import { Checkbox } from '@/components/ui/checkbox';
-import { Button } from '@/components/ui/button';
+} from '@/components/ui/dialog'
+import { toast } from '@/components/ui/use-toast'
+import { Label } from '@/components/ui/label'
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
+import { AlertCircle, Loader2 } from 'lucide-react'
+import { Checkbox } from '@/components/ui/checkbox'
+import { Button } from '@/components/ui/button'
 
 export const LinkButton = ({ item, nonce, index }: IShareButton) => {
-    const { backend_url, setFiles, files, session, systemFileInfo } = useStore(appStore);
-    const [isOpen, setIsOpen] = useState(false);
-    const [linking, setLinking] = useState(false);
-    const [linkItem, setLinkItem] = useState<ApiFileInfo | null>(null);
+    const { backend_url, setFiles, files, session, systemFileInfo } =
+        useStore(appStore)
+    const [isOpen, setIsOpen] = useState(false)
+    const [linking, setLinking] = useState(false)
+    const [linkItem, setLinkItem] = useState<ApiFileInfo | null>(null)
 
     const cancelClick = () => {
-        setLinkItem(null);
-        setIsOpen(false);
-    };
+        setLinkItem(null)
+        setIsOpen(false)
+    }
 
     const handleLink = async () => {
         if (linkItem == null) {
             toast({
                 description: `Please select an AquaTree to link`,
                 variant: 'destructive',
-            });
-            return;
+            })
+            return
         }
         try {
-            const aquafier = new Aquafier();
-            setLinking(true);
+            const aquafier = new Aquafier()
+            setLinking(true)
             const aquaTreeWrapper: AquaTreeWrapper = {
                 aquaTree: item.aquaTree!,
                 revision: '',
                 fileObject: item.fileObject[0],
-            };
+            }
             const linkAquaTreeWrapper: AquaTreeWrapper = {
                 aquaTree: linkItem!.aquaTree!,
                 revision: '',
                 fileObject: linkItem!.fileObject[0],
-            };
-            const result = await aquafier.linkAquaTree(aquaTreeWrapper, linkAquaTreeWrapper);
+            }
+            const result = await aquafier.linkAquaTree(
+                aquaTreeWrapper,
+                linkAquaTreeWrapper
+            )
 
             if (result.isErr()) {
                 toast({
                     description: `An error occurred when linking`,
                     variant: 'destructive',
-                });
-                return;
+                })
+                return
             }
 
-            const newAquaTree = result.data.aquaTree!;
-            const revisionHashes = Object.keys(newAquaTree.revisions);
-            const lastHash = revisionHashes[revisionHashes.length - 1];
-            const lastRevision = result.data.aquaTree?.revisions[lastHash];
+            const newAquaTree = result.data.aquaTree!
+            const revisionHashes = Object.keys(newAquaTree.revisions)
+            const lastHash = revisionHashes[revisionHashes.length - 1]
+            const lastRevision = result.data.aquaTree?.revisions[lastHash]
             // send to server
-            const url = `${backend_url}/tree`;
+            const url = `${backend_url}/tree`
 
             const response = await axios.post(
                 url,
@@ -88,26 +92,26 @@ export const LinkButton = ({ item, nonce, index }: IShareButton) => {
                         nonce: nonce,
                     },
                 }
-            );
+            )
 
             if (response.status === 200 || response.status === 201) {
-                await refetchAllUserFiles();
+                await refetchAllUserFiles()
             }
 
             toast({
                 description: `Linking successful`,
                 variant: 'default',
-            });
-            setLinkItem(null);
-            setIsOpen(false);
+            })
+            setLinkItem(null)
+            setIsOpen(false)
         } catch (error) {
             toast({
                 description: `An error occurred`,
                 variant: 'destructive',
-            });
+            })
         }
-        setLinking(false);
-    };
+        setLinking(false)
+    }
 
     const refetchAllUserFiles = async () => {
         // refetch all the files to ensure the front end state is the same as the backend
@@ -116,16 +120,16 @@ export const LinkButton = ({ item, nonce, index }: IShareButton) => {
                 session!.address!,
                 `${backend_url}/explorer_files`,
                 session!.nonce
-            );
-            setFiles(files);
+            )
+            setFiles(files)
         } catch (e) {
             toast({
                 description: 'Error updating files',
                 variant: 'destructive',
-            });
-            document.location.reload();
+            })
+            document.location.reload()
         }
-    };
+    }
 
     return (
         <>
@@ -155,8 +159,8 @@ export const LinkButton = ({ item, nonce, index }: IShareButton) => {
                                     Multiple files needed
                                 </AlertTitle>
                                 <AlertDescription className="text-orange-700">
-                                    For linking to work you need multiple files, currently you only
-                                    have {files?.length}.
+                                    For linking to work you need multiple files,
+                                    currently you only have {files?.length}.
                                 </AlertDescription>
                             </Alert>
                         ) : (
@@ -174,88 +178,135 @@ export const LinkButton = ({ item, nonce, index }: IShareButton) => {
 
                                 {/* File List */}
                                 <div className="space-y-3 max-h-60 overflow-y-auto">
-                                    {files?.map((itemLoop: ApiFileInfo, index: number) => {
-                                        const keys = Object.keys(itemLoop.aquaTree!.revisions!);
-                                        const keysPar = Object.keys(item.aquaTree!.revisions!);
-                                        const res = areArraysEqual(keys, keysPar);
-                                        const { isWorkFlow, workFlow } = isWorkFlowData(
-                                            itemLoop.aquaTree!,
-                                            systemFileInfo.map(e => getFileName(e.aquaTree!))
-                                        );
+                                    {files?.map(
+                                        (
+                                            itemLoop: ApiFileInfo,
+                                            index: number
+                                        ) => {
+                                            const keys = Object.keys(
+                                                itemLoop.aquaTree!.revisions!
+                                            )
+                                            const keysPar = Object.keys(
+                                                item.aquaTree!.revisions!
+                                            )
+                                            const res = areArraysEqual(
+                                                keys,
+                                                keysPar
+                                            )
+                                            const { isWorkFlow, workFlow } =
+                                                isWorkFlowData(
+                                                    itemLoop.aquaTree!,
+                                                    systemFileInfo.map(e =>
+                                                        getFileName(e.aquaTree!)
+                                                    )
+                                                )
 
-                                        if (res) {
-                                            return <div key={index}></div>;
-                                        }
+                                            if (res) {
+                                                return <div key={index}></div>
+                                            }
 
-                                        if (isWorkFlow && workFlow == 'aqua_sign') {
-                                            const fileName = getFileName(itemLoop.aquaTree!);
-                                            return (
-                                                <div key={index} className="text-sm text-gray-500">
-                                                    {index + 1}.{' '}
-                                                    {`${fileName} - This is a workflow file (${workFlow}). You can't link to it.`}
-                                                </div>
-                                            );
-                                        }
-
-                                        const fileObject = getAquaTreeFileObject(itemLoop);
-
-                                        if (fileObject) {
-                                            return (
-                                                <div
-                                                    key={index}
-                                                    className="flex items-center space-x-3 p-2 hover:bg-gray-50 rounded"
-                                                >
-                                                    <span className="text-sm text-gray-500 min-w-[20px]">
-                                                        {index + 1}.
-                                                    </span>
-                                                    <div className="flex items-center space-x-2 flex-1">
-                                                        <Checkbox
-                                                            id={`file-${index}`}
-                                                            checked={
-                                                                linkItem == null
-                                                                    ? false
-                                                                    : Object.keys(
-                                                                          linkItem?.aquaTree
-                                                                              ?.revisions!
-                                                                      )[0] ===
-                                                                      Object.keys(
-                                                                          itemLoop.aquaTree
-                                                                              ?.revisions!
-                                                                      )[0]
-                                                            }
-                                                            onCheckedChange={checked => {
-                                                                if (checked === true) {
-                                                                    setLinkItem(itemLoop);
-                                                                } else {
-                                                                    setLinkItem(null);
-                                                                }
-                                                            }}
-                                                        />
-                                                        <Label
-                                                            htmlFor={`file-${index}`}
-                                                            className="text-sm cursor-pointer flex-1"
-                                                        >
-                                                            {itemLoop.fileObject[0].fileName}
-                                                            {isWorkFlow ? (
-                                                                <span className="text-orange-600 text-xs ml-1">
-                                                                    - This is a workflow file (
-                                                                    {workFlow}).
-                                                                </span>
-                                                            ) : (
-                                                                ''
-                                                            )}
-                                                        </Label>
+                                            if (
+                                                isWorkFlow &&
+                                                workFlow == 'aqua_sign'
+                                            ) {
+                                                const fileName = getFileName(
+                                                    itemLoop.aquaTree!
+                                                )
+                                                return (
+                                                    <div
+                                                        key={index}
+                                                        className="text-sm text-gray-500"
+                                                    >
+                                                        {index + 1}.{' '}
+                                                        {`${fileName} - This is a workflow file (${workFlow}). You can't link to it.`}
                                                     </div>
-                                                </div>
-                                            );
-                                        } else {
-                                            return (
-                                                <div key={index} className="text-sm text-red-500">
-                                                    Error loading file
-                                                </div>
-                                            );
+                                                )
+                                            }
+
+                                            const fileObject =
+                                                getAquaTreeFileObject(itemLoop)
+
+                                            if (fileObject) {
+                                                return (
+                                                    <div
+                                                        key={index}
+                                                        className="flex items-center space-x-3 p-2 hover:bg-gray-50 rounded"
+                                                    >
+                                                        <span className="text-sm text-gray-500 min-w-[20px]">
+                                                            {index + 1}.
+                                                        </span>
+                                                        <div className="flex items-center space-x-2 flex-1">
+                                                            <Checkbox
+                                                                id={`file-${index}`}
+                                                                checked={
+                                                                    linkItem ==
+                                                                    null
+                                                                        ? false
+                                                                        : Object.keys(
+                                                                              linkItem
+                                                                                  ?.aquaTree
+                                                                                  ?.revisions!
+                                                                          )[0] ===
+                                                                          Object.keys(
+                                                                              itemLoop
+                                                                                  .aquaTree
+                                                                                  ?.revisions!
+                                                                          )[0]
+                                                                }
+                                                                onCheckedChange={checked => {
+                                                                    if (
+                                                                        checked ===
+                                                                        true
+                                                                    ) {
+                                                                        setLinkItem(
+                                                                            itemLoop
+                                                                        )
+                                                                    } else {
+                                                                        setLinkItem(
+                                                                            null
+                                                                        )
+                                                                    }
+                                                                }}
+                                                            />
+                                                            <Label
+                                                                htmlFor={`file-${index}`}
+                                                                className="text-sm cursor-pointer flex-1"
+                                                            >
+                                                                {
+                                                                    itemLoop
+                                                                        .fileObject[0]
+                                                                        .fileName
+                                                                }
+                                                                {isWorkFlow ? (
+                                                                    <span className="text-orange-600 text-xs ml-1">
+                                                                        - This
+                                                                        is a
+                                                                        workflow
+                                                                        file (
+                                                                        {
+                                                                            workFlow
+                                                                        }
+                                                                        ).
+                                                                    </span>
+                                                                ) : (
+                                                                    ''
+                                                                )}
+                                                            </Label>
+                                                        </div>
+                                                    </div>
+                                                )
+                                            } else {
+                                                return (
+                                                    <div
+                                                        key={index}
+                                                        className="text-sm text-red-500"
+                                                    >
+                                                        Error loading file
+                                                    </div>
+                                                )
+                                            }
                                         }
-                                    })}
+                                    )}
                                 </div>
 
                                 {/* Loading State */}
@@ -300,5 +351,5 @@ export const LinkButton = ({ item, nonce, index }: IShareButton) => {
                 </DialogContent>
             </Dialog>
         </>
-    );
-};
+    )
+}

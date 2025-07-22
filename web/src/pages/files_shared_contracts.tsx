@@ -1,42 +1,53 @@
-import { useEffect, useState } from 'react';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { FileText, Users, Hash, Wallet } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
-import { useStore } from 'zustand';
-import appStore from '@/store';
-import { formatCryptoAddress, timeToHumanFriendly } from '@/utils/functions';
-import { Contract } from '@/types/types';
+import { useEffect, useState } from 'react'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent } from '@/components/ui/card'
+import { Badge } from '@/components/ui/badge'
+import { Avatar, AvatarFallback } from '@/components/ui/avatar'
+import {
+    Tooltip,
+    TooltipContent,
+    TooltipProvider,
+    TooltipTrigger,
+} from '@/components/ui/tooltip'
+import { FileText, Users, Hash, Wallet } from 'lucide-react'
+import { useNavigate } from 'react-router-dom'
+import axios from 'axios'
+import { useStore } from 'zustand'
+import appStore from '@/store'
+import { formatCryptoAddress, timeToHumanFriendly } from '@/utils/functions'
+import { Contract } from '@/types/types'
 
-export const SharedContract = ({ contract, index }: { contract: Contract; index: number }) => {
-    const navigate = useNavigate();
+export const SharedContract = ({
+    contract,
+    index,
+}: {
+    contract: Contract
+    index: number
+}) => {
+    const navigate = useNavigate()
 
     const getStatusFromLatest = (latest?: string) => {
-        if (!latest) return 'unknown';
+        if (!latest) return 'unknown'
         try {
-            const parsed = JSON.parse(latest);
-            return parsed.status || 'unknown';
+            const parsed = JSON.parse(latest)
+            return parsed.status || 'unknown'
         } catch {
-            return 'unknown';
+            return 'unknown'
         }
-    };
+    }
 
     const getStatusColor = (status: string) => {
         switch (status) {
             case 'active':
-                return 'bg-green-100 text-green-800 border-green-200';
+                return 'bg-green-100 text-green-800 border-green-200'
             case 'pending':
-                return 'bg-yellow-100 text-yellow-800 border-yellow-200';
+                return 'bg-yellow-100 text-yellow-800 border-yellow-200'
             case 'completed':
-                return 'bg-blue-100 text-blue-800 border-blue-200';
+                return 'bg-blue-100 text-blue-800 border-blue-200'
             default:
-                return 'bg-gray-100 text-gray-800 border-gray-200';
+                return 'bg-gray-100 text-gray-800 border-gray-200'
         }
-    };
+    }
 
     return (
         <Card
@@ -74,7 +85,10 @@ export const SharedContract = ({ contract, index }: { contract: Contract; index:
                                 </div>
                                 {contract.created_at ? (
                                     <p className="text-xs text-gray-500 mt-1">
-                                        {timeToHumanFriendly(contract.created_at, true)}
+                                        {timeToHumanFriendly(
+                                            contract.created_at,
+                                            true
+                                        )}
                                     </p>
                                 ) : null}
                             </div>
@@ -93,14 +107,22 @@ export const SharedContract = ({ contract, index }: { contract: Contract; index:
                                             </Avatar>
                                             <div>
                                                 <p className="text-xs sm:text-sm font-medium text-gray-900 font-mono max-w-[120px] sm:max-w-none truncate">
-                                                    {formatCryptoAddress(contract.sender, 10, 10)}
+                                                    {formatCryptoAddress(
+                                                        contract.sender,
+                                                        10,
+                                                        10
+                                                    )}
                                                 </p>
-                                                <p className="text-xs text-gray-500">Sender</p>
+                                                <p className="text-xs text-gray-500">
+                                                    Sender
+                                                </p>
                                             </div>
                                         </div>
                                     </TooltipTrigger>
                                     <TooltipContent>
-                                        <p className="font-mono text-xs">{contract.sender}</p>
+                                        <p className="font-mono text-xs">
+                                            {contract.sender}
+                                        </p>
                                     </TooltipContent>
                                 </Tooltip>
                             </TooltipProvider>
@@ -122,7 +144,9 @@ export const SharedContract = ({ contract, index }: { contract: Contract; index:
                                             </Avatar>
                                             <div>
                                                 <p className="text-xs sm:text-sm font-medium text-gray-900 font-mono max-w-[120px] sm:max-w-none truncate">
-                                                    {formatCryptoAddress(contract.receiver)}
+                                                    {formatCryptoAddress(
+                                                        contract.receiver
+                                                    )}
                                                 </p>
                                                 <p className="text-xs text-gray-500 break-words">
                                                     Receiver
@@ -131,7 +155,9 @@ export const SharedContract = ({ contract, index }: { contract: Contract; index:
                                         </div>
                                     </TooltipTrigger>
                                     <TooltipContent>
-                                        <p className="font-mono text-xs">{contract.receiver}</p>
+                                        <p className="font-mono text-xs">
+                                            {contract.receiver}
+                                        </p>
                                     </TooltipContent>
                                 </Tooltip>
                             </TooltipProvider>
@@ -150,24 +176,34 @@ export const SharedContract = ({ contract, index }: { contract: Contract; index:
                                 {contract.option && (
                                     <div className="flex items-center gap-1 text-sm text-gray-600">
                                         <span className="w-2 h-2 rounded-full bg-gray-400"></span>
-                                        <span className="capitalize">{contract.option}</span>
+                                        <span className="capitalize">
+                                            {contract.option}
+                                        </span>
                                     </div>
                                 )}
 
                                 {contract.reference_count !== undefined && (
                                     <div className="flex items-center gap-1 text-sm text-gray-600">
                                         <Users className="w-4 h-4" />
-                                        <span>{contract.reference_count} refs</span>
+                                        <span>
+                                            {contract.reference_count} refs
+                                        </span>
                                     </div>
                                 )}
                             </div>
 
                             <Button
-                                data-testid={'open-shared-contract-button-' + index}
+                                data-testid={
+                                    'open-shared-contract-button-' + index
+                                }
                                 variant="outline"
                                 size="sm"
                                 className="w-full xs:w-auto"
-                                onClick={() => navigate(`/app/shared-contracts/${contract.hash}`)}
+                                onClick={() =>
+                                    navigate(
+                                        `/app/shared-contracts/${contract.hash}`
+                                    )
+                                }
                             >
                                 Open
                             </Button>
@@ -211,19 +247,19 @@ export const SharedContract = ({ contract, index }: { contract: Contract; index:
                 </div>
             </CardContent>
         </Card>
-    );
-};
+    )
+}
 
 export function SharedContracts() {
-    const [searchQuery, _setSearchQuery] = useState('');
-    const { backend_url, session, setContracts, contracts } = useStore(appStore);
+    const [searchQuery, _setSearchQuery] = useState('')
+    const { backend_url, session, setContracts, contracts } = useStore(appStore)
 
     const loadAccountSharedContracts = async () => {
         if (!session) {
-            return;
+            return
         }
         try {
-            const url = `${backend_url}/contracts`;
+            const url = `${backend_url}/contracts`
             const response = await axios.get(url, {
                 params: {
                     receiver: session?.address,
@@ -231,26 +267,28 @@ export function SharedContracts() {
                 headers: {
                     nonce: session?.nonce,
                 },
-            });
+            })
             if (response.status === 200) {
-                setContracts(response.data?.contracts);
+                setContracts(response.data?.contracts)
             }
         } catch (error) {
-            console.error(error);
+            console.error(error)
         }
-    };
+    }
     // console.log(contracts)
 
     useEffect(() => {
-        loadAccountSharedContracts();
-    }, [backend_url, session]);
+        loadAccountSharedContracts()
+    }, [backend_url, session])
 
     const filteredContracts = contracts.filter(
         contract =>
             contract.hash.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            contract.sender?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+            contract.sender
+                ?.toLowerCase()
+                .includes(searchQuery.toLowerCase()) ||
             contract.receiver?.toLowerCase().includes(searchQuery.toLowerCase())
-    );
+    )
 
     return (
         <div>
@@ -260,7 +298,9 @@ export function SharedContracts() {
                         <FileText className="w-5 h-5 text-blue-600" />
                     </div>
                     <div>
-                        <h2 className="text-xl font-semibold text-gray-900">Shared Contracts.</h2>
+                        <h2 className="text-xl font-semibold text-gray-900">
+                            Shared Contracts.
+                        </h2>
                         <p className="text-sm text-gray-500 mt-1">
                             {contracts.length} contracts available
                         </p>
@@ -299,7 +339,7 @@ export function SharedContracts() {
                 </div>
             </div>
         </div>
-    );
+    )
 }
 
 const FilesSharedContracts = () => {
@@ -307,7 +347,7 @@ const FilesSharedContracts = () => {
         <div className="container mx-auto max-w-4xl px-0 py-6">
             <SharedContracts />
         </div>
-    );
-};
+    )
+}
 
-export default FilesSharedContracts;
+export default FilesSharedContracts

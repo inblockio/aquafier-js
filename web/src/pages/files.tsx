@@ -1,7 +1,7 @@
-import React, { useEffect, useState } from 'react';
-import appStore from '../store';
-import { useStore } from 'zustand';
-import FilesList from './files_list';
+import React, { useEffect, useState } from 'react'
+import appStore from '../store'
+import { useStore } from 'zustand'
+import FilesList from './files_list'
 import {
     Upload,
     Plus,
@@ -12,8 +12,8 @@ import {
     Loader2,
     FileText,
     Minimize2,
-} from 'lucide-react';
-import { FileItemWrapper, UploadStatus } from '@/types/types';
+} from 'lucide-react'
+import { FileItemWrapper, UploadStatus } from '@/types/types'
 import {
     checkIfFileExistInUserFiles,
     fetchFiles,
@@ -23,9 +23,9 @@ import {
     isJSONKeyValueStringContent,
     isZipFile,
     readFileContent,
-} from '@/utils/functions';
-import { maxFileSizeForUpload } from '@/utils/constants';
-import axios from 'axios';
+} from '@/utils/functions'
+import { maxFileSizeForUpload } from '@/utils/constants'
+import axios from 'axios'
 
 // /components//ui components
 import {
@@ -34,21 +34,21 @@ import {
     DialogFooter,
     DialogHeader,
     DialogTitle,
-} from '@/components/ui/dialog';
-import { Progress } from '@/components/ui/progress';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Card, CardContent } from '@/components/ui/card';
+} from '@/components/ui/dialog'
+import { Progress } from '@/components/ui/progress'
+import { Button } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
+import { Card, CardContent } from '@/components/ui/card'
 
 // import { CompleteChainView } from './components/files_chain_details';
-import { IDrawerStatus } from '@/models/AquaTreeDetails';
-import { CompleteChainView } from '@/components/files_chain_details';
-import FileDropZone from '@/components/dropzone_file_actions';
-import { LuTrash2, LuUpload } from 'react-icons/lu';
-import { toast } from 'sonner';
-import { ImportAquaTree } from '@/components/dropzone_file_actions/import_aqua_tree';
-import { ImportAquaTreeZip } from '@/components/dropzone_file_actions/import_aqua_tree_zip';
-import { FormRevisionFile } from '@/components/dropzone_file_actions/form_revision';
+import { IDrawerStatus } from '@/models/AquaTreeDetails'
+import { CompleteChainView } from '@/components/files_chain_details'
+import FileDropZone from '@/components/dropzone_file_actions'
+import { LuTrash2, LuUpload } from 'react-icons/lu'
+import { toast } from 'sonner'
+import { ImportAquaTree } from '@/components/dropzone_file_actions/import_aqua_tree'
+import { ImportAquaTreeZip } from '@/components/dropzone_file_actions/import_aqua_tree_zip'
+import { FormRevisionFile } from '@/components/dropzone_file_actions/form_revision'
 
 const FilesPage = () => {
     const {
@@ -63,69 +63,74 @@ const FilesPage = () => {
         setOpenCreateAquaSignPopUp,
         setOpenCreateTemplatePopUp,
         setOpenCreateClaimPopUp,
-    } = useStore(appStore);
-    const fileInputRef = React.useRef<HTMLInputElement>(null);
-    const [filesListForUpload, setFilesListForUpload] = useState<FileItemWrapper[]>([]);
+    } = useStore(appStore)
+    const fileInputRef = React.useRef<HTMLInputElement>(null)
+    const [filesListForUpload, setFilesListForUpload] = useState<
+        FileItemWrapper[]
+    >([])
 
     // Upload popup state
-    const [uploadQueue, setUploadQueue] = useState<UploadStatus[]>([]);
-    const [isUploadDialogOpen, setIsUploadDialogOpen] = useState(false);
-    const [isMinimized, setIsMinimized] = useState(false);
+    const [uploadQueue, setUploadQueue] = useState<UploadStatus[]>([])
+    const [isUploadDialogOpen, setIsUploadDialogOpen] = useState(false)
+    const [isMinimized, setIsMinimized] = useState(false)
 
-    const [_drawerStatus, setDrawerStatus] = useState<IDrawerStatus | null>(null);
-    const [isSelectedFileDialogOpen, setIsSelectedFileDialogOpen] = useState(false);
+    const [_drawerStatus, setDrawerStatus] = useState<IDrawerStatus | null>(
+        null
+    )
+    const [isSelectedFileDialogOpen, setIsSelectedFileDialogOpen] =
+        useState(false)
 
     // Helper function to clear file input
     const clearFileInput = () => {
         if (fileInputRef.current) {
-            fileInputRef.current.value = '';
+            fileInputRef.current.value = ''
         }
-    };
+    }
 
     useEffect(() => {
         if (openFilesDetailsPopUp) {
-            setIsSelectedFileDialogOpen(true);
+            setIsSelectedFileDialogOpen(true)
         } else {
-            setIsSelectedFileDialogOpen(false);
+            setIsSelectedFileDialogOpen(false)
         }
-    }, [openFilesDetailsPopUp]);
+    }, [openFilesDetailsPopUp])
 
     const handleUploadClick = () => {
-        fileInputRef.current?.click();
-    };
+        fileInputRef.current?.click()
+    }
 
     const filesForUpload = async (selectedFiles: File[]) => {
-        const newUploads: UploadStatus[] = [];
+        const newUploads: UploadStatus[] = []
         for (const file of selectedFiles) {
-            console.log(`Files for  upload ${file.name} .....`);
-            const isJson = isJSONFile(file.name);
-            const isZip = isZipFile(file.name);
+            console.log(`Files for  upload ${file.name} .....`)
+            const isJson = isJSONFile(file.name)
+            const isZip = isZipFile(file.name)
             if (isJson || isZip) {
-                let isJsonForm = false;
-                let isJsonAquaTreeData = false;
+                let isJsonForm = false
+                let isJsonAquaTreeData = false
                 if (isJson) {
                     try {
-                        const content = await readFileContent(file);
-                        const contentStr = content as string;
-                        const isForm = isJSONKeyValueStringContent(contentStr);
-                        console.log(`isForm ${isForm}`);
+                        const content = await readFileContent(file)
+                        const contentStr = content as string
+                        const isForm = isJSONKeyValueStringContent(contentStr)
+                        console.log(`isForm ${isForm}`)
                         if (isForm) {
-                            isJsonForm = true;
+                            isJsonForm = true
                         }
 
-                        const jsonData = JSON.parse(contentStr);
-                        const isAquaTreeData = isAquaTree(jsonData);
-                        const r = typeof jsonData === 'object';
-                        const r2 = 'revisions' in jsonData;
-                        const r3 = 'file_index' in jsonData;
+                        const jsonData = JSON.parse(contentStr)
+                        const isAquaTreeData = isAquaTree(jsonData)
+                        const r = typeof jsonData === 'object'
+                        const r2 = 'revisions' in jsonData
+                        const r3 = 'file_index' in jsonData
                         console.log(
                             `isAquaTreeData  ${isAquaTreeData} contentStr ${contentStr} r ${r} r2 ${r2} r3 ${r3}`
-                        );
+                        )
                         if (isAquaTreeData) {
-                            isJsonAquaTreeData = isAquaTreeData;
+                            isJsonAquaTreeData = isAquaTreeData
                         }
                     } catch (error) {
-                        console.error('Error reading file content:', error);
+                        console.error('Error reading file content:', error)
                     }
                 }
                 const fileItemWrapper: FileItemWrapper = {
@@ -135,10 +140,12 @@ const FilesPage = () => {
                     isLoading: false,
                     isJsonForm: isJsonForm,
                     isJsonAquaTreeData: isJsonAquaTreeData,
-                };
+                }
 
-                console.log(`fileItemWrapper ${JSON.stringify(fileItemWrapper, null, 4)}`);
-                setFilesListForUpload(prev => [...prev, fileItemWrapper]);
+                console.log(
+                    `fileItemWrapper ${JSON.stringify(fileItemWrapper, null, 4)}`
+                )
+                setFilesListForUpload(prev => [...prev, fileItemWrapper])
             } else {
                 newUploads.push({
                     file,
@@ -146,62 +153,68 @@ const FilesPage = () => {
                     progress: 0,
                     isJson: isJson,
                     isZip: isZip,
-                });
+                })
             }
         }
 
         if (newUploads.length > 0) {
             // Create upload queue with initial status
-            setUploadQueue(newUploads);
-            setIsUploadDialogOpen(true);
-            setIsMinimized(false);
+            setUploadQueue(newUploads)
+            setIsUploadDialogOpen(true)
+            setIsMinimized(false)
 
             // Start processing files
-            processUploadQueue(newUploads);
+            processUploadQueue(newUploads)
         }
-    };
+    }
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const selectedFiles = Array.from(e.target.files ?? []);
+        const selectedFiles = Array.from(e.target.files ?? [])
         if (selectedFiles.length === 0) {
-            console.log(`handleFileChange is zero `);
-            return;
+            console.log(`handleFileChange is zero `)
+            return
         }
-        filesForUpload(selectedFiles);
-    };
+        filesForUpload(selectedFiles)
+    }
 
     const processUploadQueue = async (uploads: UploadStatus[]) => {
         for (let i = 0; i < uploads.length; i++) {
-            const upload = uploads[i];
+            const upload = uploads[i]
 
             // Update status to uploading
             setUploadQueue(prev =>
                 prev.map((item, index) =>
-                    index === i ? { ...item, status: 'uploading', progress: 10 } : item
+                    index === i
+                        ? { ...item, status: 'uploading', progress: 10 }
+                        : item
                 )
-            );
+            )
 
             try {
                 // Check file content first
-                await checkFileContentForUpload(upload, i);
+                await checkFileContentForUpload(upload, i)
 
                 // Simulate progress
                 for (let progress = 20; progress <= 80; progress += 20) {
                     setUploadQueue(prev =>
-                        prev.map((item, index) => (index === i ? { ...item, progress } : item))
-                    );
-                    await new Promise(resolve => setTimeout(resolve, 200));
+                        prev.map((item, index) =>
+                            index === i ? { ...item, progress } : item
+                        )
+                    )
+                    await new Promise(resolve => setTimeout(resolve, 200))
                 }
 
                 // Upload the file
-                await uploadFileFromQueue(upload, i);
+                await uploadFileFromQueue(upload, i)
 
                 // Mark as success
                 setUploadQueue(prev =>
                     prev.map((item, index) =>
-                        index === i ? { ...item, status: 'success', progress: 100 } : item
+                        index === i
+                            ? { ...item, status: 'success', progress: 100 }
+                            : item
                     )
-                );
+                )
             } catch (error) {
                 // Mark as error
                 setUploadQueue(prev =>
@@ -211,138 +224,159 @@ const FilesPage = () => {
                                   ...item,
                                   status: 'error',
                                   progress: 0,
-                                  error: error instanceof Error ? error.message : 'Upload failed',
+                                  error:
+                                      error instanceof Error
+                                          ? error.message
+                                          : 'Upload failed',
                               }
                             : item
                     )
-                );
+                )
             }
         }
 
         // fetch all files from the api
-        const url2 = `${backend_url}/explorer_files`;
-        const files = await fetchFiles(session?.address!, url2, session?.nonce!);
-        setFiles(files);
-    };
+        const url2 = `${backend_url}/explorer_files`
+        const files = await fetchFiles(session?.address!, url2, session?.nonce!)
+        setFiles(files)
+    }
 
-    const checkFileContentForUpload = async (upload: UploadStatus, index: number) => {
+    const checkFileContentForUpload = async (
+        upload: UploadStatus,
+        index: number
+    ) => {
         if (upload.isJson) {
             try {
-                const content = await readFileContent(upload.file);
-                const contentStr = content as string;
-                const isForm = isJSONKeyValueStringContent(contentStr);
+                const content = await readFileContent(upload.file)
+                const contentStr = content as string
+                const isForm = isJSONKeyValueStringContent(contentStr)
 
                 if (isForm) {
                     setUploadQueue(prev =>
                         prev.map((item, i) =>
                             i === index
-                                ? { ...item, isJsonForm: true, isJsonAquaTreeData: false }
+                                ? {
+                                      ...item,
+                                      isJsonForm: true,
+                                      isJsonAquaTreeData: false,
+                                  }
                                 : item
                         )
-                    );
-                    return;
+                    )
+                    return
                 }
 
-                const jsonData = JSON.parse(contentStr);
-                const isAquaTreeData = isAquaTree(jsonData);
+                const jsonData = JSON.parse(contentStr)
+                const isAquaTreeData = isAquaTree(jsonData)
 
                 if (isAquaTreeData) {
                     setUploadQueue(prev =>
                         prev.map((item, i) =>
                             i === index
-                                ? { ...item, isJsonForm: false, isJsonAquaTreeData: true }
+                                ? {
+                                      ...item,
+                                      isJsonForm: false,
+                                      isJsonAquaTreeData: true,
+                                  }
                                 : item
                         )
-                    );
-                    return;
+                    )
+                    return
                 }
             } catch (error) {
-                console.error('Error reading file content:', error);
-                throw new Error('Failed to read file content');
+                console.error('Error reading file content:', error)
+                throw new Error('Failed to read file content')
             }
         }
-    };
+    }
 
-    const uploadFileFromQueue = async (upload: UploadStatus, _index: number) => {
+    const uploadFileFromQueue = async (
+        upload: UploadStatus,
+        _index: number
+    ) => {
         if (!upload.file) {
-            throw new Error('No file selected');
+            throw new Error('No file selected')
         }
 
-        const fileExist = await checkIfFileExistInUserFiles(upload.file, files);
+        const fileExist = await checkIfFileExistInUserFiles(upload.file, files)
         if (fileExist) {
-            throw new Error('File already exists');
+            throw new Error('File already exists')
         }
 
         if (upload.file.size > maxFileSizeForUpload) {
-            throw new Error('File size exceeds 200MB limit');
+            throw new Error('File size exceeds 200MB limit')
         }
 
-        const metamaskAddress = session?.address ?? '';
-        const formData = new FormData();
-        formData.append('file', upload.file);
-        formData.append('account', `${metamaskAddress}`);
+        const metamaskAddress = session?.address ?? ''
+        const formData = new FormData()
+        formData.append('file', upload.file)
+        formData.append('account', `${metamaskAddress}`)
 
-        const url = `${backend_url}/explorer_files`;
+        const url = `${backend_url}/explorer_files`
         await axios.post(url, formData, {
             headers: {
                 'Content-Type': 'multipart/form-data',
                 nonce: session?.nonce,
             },
-        });
-    };
+        })
+    }
 
     const retryUpload = (index: number) => {
-        const upload = uploadQueue[index];
+        const upload = uploadQueue[index]
         if (upload.status === 'error') {
-            processUploadQueue([upload]);
+            processUploadQueue([upload])
         }
-    };
+    }
 
     const removeFromQueue = (index: number) => {
-        setUploadQueue(prev => prev.filter((_, i) => i !== index));
-    };
+        setUploadQueue(prev => prev.filter((_, i) => i !== index))
+    }
 
     const clearCompletedUploads = () => {
-        setUploadQueue(prev => prev.filter(upload => upload.status !== 'success'));
-    };
+        setUploadQueue(prev =>
+            prev.filter(upload => upload.status !== 'success')
+        )
+    }
 
     const getStatusIcon = (status: string) => {
         switch (status) {
             case 'pending':
-                return <FileText className="w-4 h-4 text-gray-500" />;
+                return <FileText className="w-4 h-4 text-gray-500" />
             case 'uploading':
-                return <Loader2 className="w-4 h-4 text-blue-500 animate-spin" />;
+                return (
+                    <Loader2 className="w-4 h-4 text-blue-500 animate-spin" />
+                )
             case 'success':
-                return <CheckCircle className="w-4 h-4 text-green-500" />;
+                return <CheckCircle className="w-4 h-4 text-green-500" />
             case 'error':
-                return <AlertCircle className="w-4 h-4 text-red-500" />;
+                return <AlertCircle className="w-4 h-4 text-red-500" />
             default:
-                return <FileText className="w-4 h-4 text-gray-500" />;
+                return <FileText className="w-4 h-4 text-gray-500" />
         }
-    };
+    }
 
     const getStatusColor = (status: string) => {
         switch (status) {
             case 'pending':
-                return 'bg-gray-100 text-gray-800';
+                return 'bg-gray-100 text-gray-800'
             case 'uploading':
-                return 'bg-blue-100 text-blue-800';
+                return 'bg-blue-100 text-blue-800'
             case 'success':
-                return 'bg-green-100 text-green-800';
+                return 'bg-green-100 text-green-800'
             case 'error':
-                return 'bg-red-100 text-red-800';
+                return 'bg-red-100 text-red-800'
             default:
-                return 'bg-gray-100 text-gray-800';
+                return 'bg-gray-100 text-gray-800'
         }
-    };
+    }
 
     const formatFileSize = (bytes: number) => {
-        if (bytes === 0) return '0 Bytes';
-        const k = 1024;
-        const sizes = ['Bytes', 'KB', 'MB', 'GB'];
-        const i = Math.floor(Math.log(bytes) / Math.log(k));
-        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
-    };
+        if (bytes === 0) return '0 Bytes'
+        const k = 1024
+        const sizes = ['Bytes', 'KB', 'MB', 'GB']
+        const i = Math.floor(Math.log(bytes) / Math.log(k))
+        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i]
+    }
 
     return (
         <div className="w-full max-w-full box-border overflow-x-hidden">
@@ -372,7 +406,7 @@ const FilesPage = () => {
                             style={{ backgroundColor: '#394150' }}
                             onClick={() => {
                                 //,
-                                setOpenCreateAquaSignPopUp(true);
+                                setOpenCreateAquaSignPopUp(true)
                             }}
                         >
                             <Plus className="w-4 h-4" />
@@ -385,7 +419,7 @@ const FilesPage = () => {
                             style={{ backgroundColor: '#3A5BF8' }}
                             onClick={() => {
                                 //,
-                                setOpenCreateClaimPopUp(true);
+                                setOpenCreateClaimPopUp(true)
                             }}
                         >
                             <Plus className="w-4 h-4" />
@@ -394,7 +428,7 @@ const FilesPage = () => {
                         <Button
                             className="flex items-center gap-1 sm:gap-2 text-gray-700 px-2 sm:px-4 py-1.5 sm:py-2.5 rounded-md text-xs sm:text-sm font-medium bg-white border border-gray-200 hover:bg-gray-50 transition-colors cursor-pointer whitespace-nowrap shadow-sm"
                             onClick={() => {
-                                setOpenCreateTemplatePopUp(true);
+                                setOpenCreateTemplatePopUp(true)
                             }}
                         >
                             <FolderPlus className="w-4 h-4" />
@@ -408,7 +442,9 @@ const FilesPage = () => {
                 {/* File List */}
                 {filesListForUpload.length > 0 && (
                     <div className="mt-6 mb-6 pb-5 pt-4 border-b border-b-gray-200">
-                        <h3 className="text-lg font-medium text-gray-900 mb-3">Files for upload</h3>
+                        <h3 className="text-lg font-medium text-gray-900 mb-3">
+                            Files for upload
+                        </h3>
                         <div className="space-y-2">
                             {filesListForUpload.map((fileData, index) => (
                                 <div
@@ -422,7 +458,10 @@ const FilesPage = () => {
                                                 {fileData.file.name}
                                             </p>
                                             <p className="text-xs text-gray-500">
-                                                {(fileData.file.size / 1024).toFixed(1)} KB
+                                                {(
+                                                    fileData.file.size / 1024
+                                                ).toFixed(1)}{' '}
+                                                KB
                                             </p>
                                         </div>
                                     </div>
@@ -433,10 +472,14 @@ const FilesPage = () => {
                                                 file={fileData.file}
                                                 uploadedIndexes={[]}
                                                 updateUploadedIndex={index => {
-                                                    setFilesListForUpload(prev =>
-                                                        prev.filter((_, i) => i !== index)
-                                                    );
-                                                    clearFileInput(); // Clear file input after removal
+                                                    setFilesListForUpload(
+                                                        prev =>
+                                                            prev.filter(
+                                                                (_, i) =>
+                                                                    i !== index
+                                                            )
+                                                    )
+                                                    clearFileInput() // Clear file input after removal
                                                 }}
                                                 fileIndex={index}
                                                 autoUpload={false}
@@ -448,10 +491,14 @@ const FilesPage = () => {
                                                 aquaFile={fileData.file}
                                                 uploadedIndexes={[]}
                                                 updateUploadedIndex={index => {
-                                                    setFilesListForUpload(prev =>
-                                                        prev.filter((_, i) => i !== index)
-                                                    );
-                                                    clearFileInput(); // Clear file input after removal
+                                                    setFilesListForUpload(
+                                                        prev =>
+                                                            prev.filter(
+                                                                (_, i) =>
+                                                                    i !== index
+                                                            )
+                                                    )
+                                                    clearFileInput() // Clear file input after removal
                                                 }}
                                                 fileIndex={index}
                                                 autoUpload={false}
@@ -466,13 +513,17 @@ const FilesPage = () => {
                                                     if (fileData.isLoading) {
                                                         toast.info(
                                                             'File is uploading, please wait'
-                                                        );
-                                                        return;
+                                                        )
+                                                        return
                                                     }
-                                                    setFilesListForUpload(prev =>
-                                                        prev.filter((_, i) => i !== index)
-                                                    );
-                                                    clearFileInput(); // Clear file input after removal
+                                                    setFilesListForUpload(
+                                                        prev =>
+                                                            prev.filter(
+                                                                (_, i) =>
+                                                                    i !== index
+                                                            )
+                                                    )
+                                                    clearFileInput() // Clear file input after removal
                                                 }}
                                                 fileIndex={index}
                                                 autoUpload={false}
@@ -524,13 +575,17 @@ const FilesPage = () => {
                                             className="flex items-center gap-1 text-white hover:text-white-700 text-sm font-medium bg-red-600 w-[80px] px-2 py-1 rounded"
                                             onClick={() => {
                                                 if (fileData.isLoading) {
-                                                    toast.info('File is uploading, please wait');
-                                                    return;
+                                                    toast.info(
+                                                        'File is uploading, please wait'
+                                                    )
+                                                    return
                                                 }
                                                 setFilesListForUpload(prev =>
-                                                    prev.filter((_, i) => i !== index)
-                                                );
-                                                clearFileInput(); // Clear file input after removal
+                                                    prev.filter(
+                                                        (_, i) => i !== index
+                                                    )
+                                                )
+                                                clearFileInput() // Clear file input after removal
                                             }}
                                         >
                                             <LuTrash2 />
@@ -548,8 +603,8 @@ const FilesPage = () => {
                 {files.length == 0 ? (
                     <FileDropZone
                         setFiles={(files: File[]) => {
-                            console.log(`call back here `);
-                            filesForUpload(files);
+                            console.log(`call back here `)
+                            filesForUpload(files)
                         }}
                     />
                 ) : (
@@ -561,10 +616,10 @@ const FilesPage = () => {
             <Dialog
                 open={isSelectedFileDialogOpen}
                 onOpenChange={openState => {
-                    setIsSelectedFileDialogOpen(openState);
+                    setIsSelectedFileDialogOpen(openState)
                     if (!openState) {
-                        setSelectedFileInfo(null);
-                        setOpenFileDetailsPopUp(false);
+                        setSelectedFileInfo(null)
+                        setOpenFileDetailsPopUp(false)
                     }
                 }}
             >
@@ -579,9 +634,9 @@ const FilesPage = () => {
                             size="icon"
                             className="h-6 w-6 bg-red-500 text-white hover:bg-red-500"
                             onClick={() => {
-                                setIsSelectedFileDialogOpen(false);
-                                setSelectedFileInfo(null);
-                                setOpenFileDetailsPopUp(false);
+                                setIsSelectedFileDialogOpen(false)
+                                setSelectedFileInfo(null)
+                                setOpenFileDetailsPopUp(false)
                             }}
                         >
                             <X className="h-4 w-4" />
@@ -592,14 +647,18 @@ const FilesPage = () => {
                             {/* Header - fixed height */}
                             <DialogHeader className="!h-[60px] !min-h-[60px] !max-h-[60px] flex justify-center px-6">
                                 <DialogTitle style={{ textAlign: 'start' }}>
-                                    {getAquaTreeFileName(selectedFileInfo.aquaTree!)}
+                                    {getAquaTreeFileName(
+                                        selectedFileInfo.aquaTree!
+                                    )}
                                 </DialogTitle>
                             </DialogHeader>
                             {/* Content - takes all available space */}
                             <div className="h-auto md:h-[calc(100%-60px)]">
                                 <CompleteChainView
-                                    callBack={function (_drawerStatus: IDrawerStatus): void {
-                                        setDrawerStatus(_drawerStatus);
+                                    callBack={function (
+                                        _drawerStatus: IDrawerStatus
+                                    ): void {
+                                        setDrawerStatus(_drawerStatus)
                                     }}
                                     selectedFileInfo={selectedFileInfo}
                                 />
@@ -613,8 +672,8 @@ const FilesPage = () => {
                             className="bg-black text-white-500 hover:bg-black-700 text-white cursor-pointer"
                             style={{}}
                             onClick={() => {
-                                setSelectedFileInfo(null);
-                                setOpenFileDetailsPopUp(false);
+                                setSelectedFileInfo(null)
+                                setOpenFileDetailsPopUp(false)
                             }}
                         >
                             Cancel
@@ -624,7 +683,10 @@ const FilesPage = () => {
             </Dialog>
 
             {/* Upload Progress Dialog */}
-            <Dialog open={isUploadDialogOpen} onOpenChange={setIsUploadDialogOpen}>
+            <Dialog
+                open={isUploadDialogOpen}
+                onOpenChange={setIsUploadDialogOpen}
+            >
                 <DialogContent className="sm:max-w-md  [&>button]:hidden">
                     <DialogHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                         <DialogTitle className="text-lg font-semibold">
@@ -666,14 +728,18 @@ const FilesPage = () => {
                                                         {upload.file.name}
                                                     </p>
                                                     <p className="text-xs text-gray-500">
-                                                        {formatFileSize(upload.file.size)}
+                                                        {formatFileSize(
+                                                            upload.file.size
+                                                        )}
                                                     </p>
                                                 </div>
                                             </div>
                                             <div className="flex items-center space-x-2">
                                                 <Badge
                                                     variant="secondary"
-                                                    className={getStatusColor(upload.status)}
+                                                    className={getStatusColor(
+                                                        upload.status
+                                                    )}
                                                 >
                                                     {upload.status}
                                                 </Badge>
@@ -681,7 +747,9 @@ const FilesPage = () => {
                                                     <Button
                                                         variant="ghost"
                                                         size="sm"
-                                                        onClick={() => retryUpload(index)}
+                                                        onClick={() =>
+                                                            retryUpload(index)
+                                                        }
                                                         className="text-xs"
                                                     >
                                                         Retry
@@ -690,7 +758,9 @@ const FilesPage = () => {
                                                 <Button
                                                     variant="ghost"
                                                     size="icon"
-                                                    onClick={() => removeFromQueue(index)}
+                                                    onClick={() =>
+                                                        removeFromQueue(index)
+                                                    }
                                                     className="h-6 w-6"
                                                 >
                                                     <X className="h-4 w-4" />
@@ -700,18 +770,22 @@ const FilesPage = () => {
 
                                         {upload.status === 'uploading' && (
                                             <div className="space-y-1">
-                                                <Progress value={upload.progress} className="h-2" />
+                                                <Progress
+                                                    value={upload.progress}
+                                                    className="h-2"
+                                                />
                                                 <p className="text-xs text-gray-500">
                                                     {upload.progress}% complete
                                                 </p>
                                             </div>
                                         )}
 
-                                        {upload.status === 'error' && upload.error && (
-                                            <p className="text-xs text-red-600 mt-1">
-                                                {upload.error}
-                                            </p>
-                                        )}
+                                        {upload.status === 'error' &&
+                                            upload.error && (
+                                                <p className="text-xs text-red-600 mt-1">
+                                                    {upload.error}
+                                                </p>
+                                            )}
 
                                         {upload.status === 'success' && (
                                             <p className="text-xs text-green-600 mt-1">
@@ -722,7 +796,9 @@ const FilesPage = () => {
                                 </Card>
                             ))}
 
-                            {uploadQueue.some(upload => upload.status === 'success') && (
+                            {uploadQueue.some(
+                                upload => upload.status === 'success'
+                            ) && (
                                 <div className="flex justify-end pt-2">
                                     <Button
                                         data-testid="clear-completed-button"
@@ -739,7 +815,7 @@ const FilesPage = () => {
                 </DialogContent>
             </Dialog>
         </div>
-    );
-};
+    )
+}
 
-export default FilesPage;
+export default FilesPage

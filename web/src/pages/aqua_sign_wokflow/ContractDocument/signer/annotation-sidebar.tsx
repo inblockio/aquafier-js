@@ -1,14 +1,14 @@
-import type React from 'react';
-import type { Annotation, ProfileAnnotation } from './types';
-import { Trash2 } from 'lucide-react';
-import { SignatureData } from '../../../../types/types';
+import type React from 'react'
+import type { Annotation, ProfileAnnotation } from './types'
+import { Trash2 } from 'lucide-react'
+import { SignatureData } from '../../../../types/types'
 
 interface AnnotationSidebarProps {
-    annotations: Annotation[];
-    onAnnotationUpdate: (annotation: Annotation) => void;
-    onAnnotationDelete: (id: string) => void;
-    selectedAnnotationId?: string | null;
-    onAnnotationSelect: (id: string | null) => void;
+    annotations: Annotation[]
+    onAnnotationUpdate: (annotation: Annotation) => void
+    onAnnotationDelete: (id: string) => void
+    selectedAnnotationId?: string | null
+    onAnnotationSelect: (id: string | null) => void
 }
 
 const AnnotationSidebar: React.FC<AnnotationSidebarProps> = ({
@@ -26,10 +26,10 @@ const AnnotationSidebar: React.FC<AnnotationSidebarProps> = ({
     // ) as ImageAnnotation[];
     const profileAnnotations = annotations.filter(
         anno => anno.type === 'profile'
-    ) as ProfileAnnotation[];
+    ) as ProfileAnnotation[]
     const signatureAnnotations = annotations.filter(
         anno => anno.type === 'signature'
-    ) as SignatureData[];
+    ) as SignatureData[]
 
     // const renderTextAnnotationEditor = (anno: TextAnnotation) => (
     //   <Card.Root key={anno.id} className={`mb-4 ${selectedAnnotationId === anno.id ? 'border-primary' : ''}`} onClick={() => onAnnotationSelect(anno.id)}>
@@ -240,7 +240,7 @@ const AnnotationSidebar: React.FC<AnnotationSidebarProps> = ({
     // );
 
     const renderSignatureAnnotationEditor = (anno: SignatureData) => {
-        console.log('anno: ', anno);
+        console.log('anno: ', anno)
         return (
             <div
                 key={anno.id}
@@ -254,8 +254,8 @@ const AnnotationSidebar: React.FC<AnnotationSidebarProps> = ({
                             <button
                                 className="p-1 rounded-md text-red-600 hover:bg-red-50"
                                 onClick={e => {
-                                    e.stopPropagation();
-                                    onAnnotationDelete(anno.id);
+                                    e.stopPropagation()
+                                    onAnnotationDelete(anno.id)
                                 }}
                             >
                                 <Trash2 className="h-4 w-4" />
@@ -282,7 +282,10 @@ const AnnotationSidebar: React.FC<AnnotationSidebarProps> = ({
                                 placeholder="Enter your image"
                                 defaultValue={anno.dataUrl}
                                 onChange={e =>
-                                    onAnnotationUpdate({ ...anno, dataUrl: e.target.value })
+                                    onAnnotationUpdate({
+                                        ...anno,
+                                        dataUrl: e.target.value,
+                                    })
                                 }
                             />
                         </div>
@@ -303,20 +306,28 @@ const AnnotationSidebar: React.FC<AnnotationSidebarProps> = ({
                                 placeholder="Enter your name"
                                 defaultValue={anno.name}
                                 onChange={e =>
-                                    onAnnotationUpdate({ ...anno, name: e.target.value })
+                                    onAnnotationUpdate({
+                                        ...anno,
+                                        name: e.target.value,
+                                    })
                                 }
                             />
                         </div>
 
                         <div className="space-y-1">
-                            <label className="text-sm font-medium">Wallet Address</label>
+                            <label className="text-sm font-medium">
+                                Wallet Address
+                            </label>
                             <input
                                 className="w-full px-3 py-2 border border-gray-300 rounded-md disabled:bg-gray-100 disabled:cursor-not-allowed"
                                 disabled
                                 placeholder="Enter your wallet address"
                                 defaultValue={anno.walletAddress}
                                 onChange={e =>
-                                    onAnnotationUpdate({ ...anno, walletAddress: e.target.value })
+                                    onAnnotationUpdate({
+                                        ...anno,
+                                        walletAddress: e.target.value,
+                                    })
                                 }
                             />
                         </div>
@@ -327,8 +338,8 @@ const AnnotationSidebar: React.FC<AnnotationSidebarProps> = ({
                     </div>
                 </div>
             </div>
-        );
-    };
+        )
+    }
 
     return (
         <div className="w-96 bg-card border-l p-4 h-full flex flex-col rounded-xl">
@@ -340,7 +351,9 @@ const AnnotationSidebar: React.FC<AnnotationSidebarProps> = ({
                 </div>
                 <div className="p-4">
                     {profileAnnotations.length > 0 ? (
-                        signatureAnnotations.map(renderSignatureAnnotationEditor)
+                        signatureAnnotations.map(
+                            renderSignatureAnnotationEditor
+                        )
                     ) : (
                         <p className="text-muted-foreground text-sm text-center py-4">
                             No signatures yet.
@@ -350,7 +363,7 @@ const AnnotationSidebar: React.FC<AnnotationSidebarProps> = ({
                 </div>
             </div>
         </div>
-    );
-};
+    )
+}
 
-export default AnnotationSidebar;
+export default AnnotationSidebar

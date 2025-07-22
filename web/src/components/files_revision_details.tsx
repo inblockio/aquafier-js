@@ -1,10 +1,16 @@
-import { RevisionDetailsSummaryData } from '@/models/AquaTreeDetails';
-import appStore from '@/store';
-import { AquaTree, FileObject, getGenesisHash, isAquaTree, Revision } from 'aqua-js-sdk';
-import { useStore } from 'zustand';
-import { Card, CardContent } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
+import { RevisionDetailsSummaryData } from '@/models/AquaTreeDetails'
+import appStore from '@/store'
+import {
+    AquaTree,
+    FileObject,
+    getGenesisHash,
+    isAquaTree,
+    Revision,
+} from 'aqua-js-sdk'
+import { useStore } from 'zustand'
+import { Card, CardContent } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
 import {
     ExternalLink,
     FileSignature,
@@ -16,8 +22,12 @@ import {
     User,
     Copy,
     ChevronRight,
-} from 'lucide-react';
-import { ERROR_TEXT, ERROR_UKNOWN, WITNESS_NETWORK_MAP } from '@/utils/constants';
+} from 'lucide-react'
+import {
+    ERROR_TEXT,
+    ERROR_UKNOWN,
+    WITNESS_NETWORK_MAP,
+} from '@/utils/constants'
 import {
     displayTime,
     fetchLinkedFileName,
@@ -25,39 +35,42 @@ import {
     getAquaTreeFileObject,
     getFileNameWithDeepLinking,
     isDeepLinkRevision,
-} from '@/utils/functions';
-import { ApiFileInfo } from '@/models/FileInfo';
-import { toaster } from '@/components/ui/use-toast';
-import { WalletEnsView } from '@/components/ui/wallet_ens';
+} from '@/utils/functions'
+import { ApiFileInfo } from '@/models/FileInfo'
+import { toaster } from '@/components/ui/use-toast'
+import { WalletEnsView } from '@/components/ui/wallet_ens'
 
-export const RevisionDetailsSummary = ({ fileInfo, isWorkFlow }: RevisionDetailsSummaryData) => {
-    const { files, setSelectedFileInfo } = useStore(appStore);
-    const revisionHashes = Object.keys(fileInfo!.aquaTree!.revisions);
+export const RevisionDetailsSummary = ({
+    fileInfo,
+    isWorkFlow,
+}: RevisionDetailsSummaryData) => {
+    const { files, setSelectedFileInfo } = useStore(appStore)
+    const revisionHashes = Object.keys(fileInfo!.aquaTree!.revisions)
 
-    const revisionsWithSignatures: Array<Revision> = [];
-    const revisionsWithWitness: Array<Revision> = [];
-    const revisionHashesWithLinks: Array<string> = [];
+    const revisionsWithSignatures: Array<Revision> = []
+    const revisionsWithWitness: Array<Revision> = []
+    const revisionHashesWithLinks: Array<string> = []
 
     for (let i = 0; i < revisionHashes.length; i++) {
-        const currentRevision: string = revisionHashes[i];
-        const revision: Revision = fileInfo.aquaTree!.revisions[currentRevision];
+        const currentRevision: string = revisionHashes[i]
+        const revision: Revision = fileInfo.aquaTree!.revisions[currentRevision]
 
         if (revision.revision_type == 'signature') {
-            revisionsWithSignatures.push(revision);
+            revisionsWithSignatures.push(revision)
         }
 
         if (revision.revision_type == 'witness') {
-            revisionsWithWitness.push(revision);
+            revisionsWithWitness.push(revision)
         }
 
         if (revision.revision_type == 'link') {
-            revisionHashesWithLinks.push(currentRevision);
+            revisionHashesWithLinks.push(currentRevision)
         }
     }
 
     const copyToClipboard = (text: string) => {
-        navigator.clipboard.writeText(text);
-    };
+        navigator.clipboard.writeText(text)
+    }
 
     return (
         <div className="max-w-4xl mx-auto space-y-6">
@@ -88,7 +101,8 @@ export const RevisionDetailsSummary = ({ fileInfo, isWorkFlow }: RevisionDetails
                                 Signatures
                             </h3>
                             <p className="text-sm text-gray-600 dark:text-gray-400">
-                                {revisionsWithSignatures.length} digital signatures found
+                                {revisionsWithSignatures.length} digital
+                                signatures found
                             </p>
                         </div>
                     </div>
@@ -105,7 +119,8 @@ export const RevisionDetailsSummary = ({ fileInfo, isWorkFlow }: RevisionDetails
                                     Signatures
                                 </h3>
                                 <p className="text-sm text-gray-600 dark:text-gray-400">
-                                    {revisionsWithSignatures.length} digital signatures found
+                                    {revisionsWithSignatures.length} digital
+                                    signatures found
                                 </p>
                             </div>
                         </div>
@@ -117,7 +132,10 @@ export const RevisionDetailsSummary = ({ fileInfo, isWorkFlow }: RevisionDetails
                                     className="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-sm border border-gray-200 dark:border-gray-700"
                                 >
                                     <div className="flex items-start gap-4">
-                                        <Badge variant="secondary" className="mt-1">
+                                        <Badge
+                                            variant="secondary"
+                                            className="mt-1"
+                                        >
                                             {index + 1}
                                         </Badge>
 
@@ -128,13 +146,20 @@ export const RevisionDetailsSummary = ({ fileInfo, isWorkFlow }: RevisionDetails
                                                     Signature Hash:
                                                 </span>
                                                 <code className="text-sm bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded font-mono">
-                                                    {formatCryptoAddress(revision.signature, 4, 6)}
+                                                    {formatCryptoAddress(
+                                                        revision.signature,
+                                                        4,
+                                                        6
+                                                    )}
                                                 </code>
                                                 <Button
                                                     variant="ghost"
                                                     size="sm"
                                                     onClick={() =>
-                                                        copyToClipboard(revision.signature ?? '')
+                                                        copyToClipboard(
+                                                            revision.signature ??
+                                                                ''
+                                                        )
                                                     }
                                                     className="p-1 h-auto"
                                                 >
@@ -160,7 +185,9 @@ export const RevisionDetailsSummary = ({ fileInfo, isWorkFlow }: RevisionDetails
                                                     Timestamp:
                                                 </span>
                                                 <span className="text-sm text-gray-600 dark:text-gray-400">
-                                                    {displayTime(revision.local_timestamp)}
+                                                    {displayTime(
+                                                        revision.local_timestamp
+                                                    )}
                                                 </span>
                                             </div>
                                         </div>
@@ -184,7 +211,8 @@ export const RevisionDetailsSummary = ({ fileInfo, isWorkFlow }: RevisionDetails
                                 Witnesses
                             </h3>
                             <p className="text-sm text-gray-600 dark:text-gray-400">
-                                {revisionsWithWitness.length} blockchain witnesses found
+                                {revisionsWithWitness.length} blockchain
+                                witnesses found
                             </p>
                         </div>
                     </div>
@@ -201,7 +229,8 @@ export const RevisionDetailsSummary = ({ fileInfo, isWorkFlow }: RevisionDetails
                                     Witnesses
                                 </h3>
                                 <p className="text-sm text-gray-600 dark:text-gray-400">
-                                    {revisionsWithWitness.length} blockchain witnesses found
+                                    {revisionsWithWitness.length} blockchain
+                                    witnesses found
                                 </p>
                             </div>
                         </div>
@@ -213,7 +242,10 @@ export const RevisionDetailsSummary = ({ fileInfo, isWorkFlow }: RevisionDetails
                                     className="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-sm border border-gray-200 dark:border-gray-700"
                                 >
                                     <div className="flex items-start gap-4">
-                                        <Badge variant="secondary" className="mt-1">
+                                        <Badge
+                                            variant="secondary"
+                                            className="mt-1"
+                                        >
                                             {index + 1}
                                         </Badge>
 
@@ -223,9 +255,13 @@ export const RevisionDetailsSummary = ({ fileInfo, isWorkFlow }: RevisionDetails
                                                 <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
                                                     Network:
                                                 </span>
-                                                <Badge variant="outline" className="capitalize">
+                                                <Badge
+                                                    variant="outline"
+                                                    className="capitalize"
+                                                >
                                                     {formatCryptoAddress(
-                                                        revision.witness_network ?? '',
+                                                        revision.witness_network ??
+                                                            '',
                                                         4,
                                                         6
                                                     )}
@@ -239,7 +275,8 @@ export const RevisionDetailsSummary = ({ fileInfo, isWorkFlow }: RevisionDetails
                                                 </span>
                                                 <span className="text-sm text-gray-600 dark:text-gray-400">
                                                     {displayTime(
-                                                        revision.witness_timestamp?.toString() ?? ''
+                                                        revision.witness_timestamp?.toString() ??
+                                                            ''
                                                     )}
                                                 </span>
                                             </div>
@@ -303,7 +340,8 @@ export const RevisionDetailsSummary = ({ fileInfo, isWorkFlow }: RevisionDetails
                                 Links
                             </h3>
                             <p className="text-sm text-gray-600 dark:text-gray-400">
-                                {revisionHashesWithLinks.length} file links found
+                                {revisionHashesWithLinks.length} file links
+                                found
                             </p>
                         </div>
                     </div>
@@ -320,101 +358,121 @@ export const RevisionDetailsSummary = ({ fileInfo, isWorkFlow }: RevisionDetails
                                     Links
                                 </h3>
                                 <p className="text-sm text-gray-600 dark:text-gray-400">
-                                    {revisionHashesWithLinks.length} file links found
+                                    {revisionHashesWithLinks.length} file links
+                                    found
                                 </p>
                             </div>
                         </div>
 
                         <div className="space-y-4">
-                            {revisionHashesWithLinks.map((revisionHash, index) => {
-                                const revision = fileInfo!.aquaTree?.revisions[revisionHash];
-                                return (
-                                    <div
-                                        key={`link_${index}`}
-                                        className="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-sm border border-gray-200 dark:border-gray-700"
-                                    >
-                                        <div className="flex items-start gap-4">
-                                            <Badge variant="secondary" className="mt-1">
-                                                {index + 1}
-                                            </Badge>
+                            {revisionHashesWithLinks.map(
+                                (revisionHash, index) => {
+                                    const revision =
+                                        fileInfo!.aquaTree?.revisions[
+                                            revisionHash
+                                        ]
+                                    return (
+                                        <div
+                                            key={`link_${index}`}
+                                            className="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-sm border border-gray-200 dark:border-gray-700"
+                                        >
+                                            <div className="flex items-start gap-4">
+                                                <Badge
+                                                    variant="secondary"
+                                                    className="mt-1"
+                                                >
+                                                    {index + 1}
+                                                </Badge>
 
-                                            <div className="flex-1 space-y-3">
-                                                <div className="flex items-center gap-2">
-                                                    <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                                                        Link Type:
-                                                    </span>
-                                                    {revisionDataHeader(
-                                                        fileInfo!.aquaTree!,
-                                                        revisionHash,
-                                                        fileInfo!.fileObject
-                                                    )}
-                                                </div>
+                                                <div className="flex-1 space-y-3">
+                                                    <div className="flex items-center gap-2">
+                                                        <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                                                            Link Type:
+                                                        </span>
+                                                        {revisionDataHeader(
+                                                            fileInfo!.aquaTree!,
+                                                            revisionHash,
+                                                            fileInfo!.fileObject
+                                                        )}
+                                                    </div>
 
-                                                <div className="flex items-center gap-2">
-                                                    {viewLinkedFile(
-                                                        fileInfo!,
-                                                        revisionHash,
-                                                        revision!,
-                                                        files,
-                                                        setSelectedFileInfo,
-                                                        isWorkFlow
-                                                    )}
+                                                    <div className="flex items-center gap-2">
+                                                        {viewLinkedFile(
+                                                            fileInfo!,
+                                                            revisionHash,
+                                                            revision!,
+                                                            files,
+                                                            setSelectedFileInfo,
+                                                            isWorkFlow
+                                                        )}
+                                                    </div>
                                                 </div>
                                             </div>
                                         </div>
-                                    </div>
-                                );
-                            })}
+                                    )
+                                }
+                            )}
                         </div>
                     </CardContent>
                 </Card>
             )}
         </div>
-    );
-};
+    )
+}
 
 export const revisionDataHeader = (
     aquaTree: AquaTree,
     revisionHash: string,
     fileObject: FileObject[]
 ): React.JSX.Element => {
-    const revision = aquaTree.revisions[revisionHash];
+    const revision = aquaTree.revisions[revisionHash]
 
     if (revision.previous_verification_hash.length == 0) {
         return (
-            <Badge variant="outline" className="bg-yellow-50 text-yellow-700 border-yellow-200">
+            <Badge
+                variant="outline"
+                className="bg-yellow-50 text-yellow-700 border-yellow-200"
+            >
                 Genesis Revision
             </Badge>
-        );
+        )
     }
 
     if (revision.revision_type == 'link') {
-        const isDeepLink = isDeepLinkRevision(aquaTree, revisionHash);
+        const isDeepLink = isDeepLinkRevision(aquaTree, revisionHash)
         if (isDeepLink == null) {
-            return <Badge variant="destructive">{ERROR_TEXT}</Badge>;
+            return <Badge variant="destructive">{ERROR_TEXT}</Badge>
         }
         if (isDeepLink) {
             // before returning deep link we traverse the current  aqua tree
-            const aquaTreeFiles = fileObject.filter(file => isAquaTree(file.fileContent));
-            console.log(`👁️‍🗨️ aquaTreeFiles ${aquaTreeFiles.length} --  `);
+            const aquaTreeFiles = fileObject.filter(file =>
+                isAquaTree(file.fileContent)
+            )
+            console.log(`👁️‍🗨️ aquaTreeFiles ${aquaTreeFiles.length} --  `)
             if (aquaTreeFiles.length > 0) {
                 const aquaTreePick = aquaTreeFiles.find(e => {
-                    const tree: AquaTree = e.fileContent as AquaTree;
-                    const allHashes = Object.keys(tree.revisions);
+                    const tree: AquaTree = e.fileContent as AquaTree
+                    const allHashes = Object.keys(tree.revisions)
 
-                    console.log(`👁️‍🗨️ aquaTreeFiles ${allHashes.toString()} == ${revisionHash} `);
-                    return allHashes.includes(revision.link_verification_hashes![0]!);
-                });
+                    console.log(
+                        `👁️‍🗨️ aquaTreeFiles ${allHashes.toString()} == ${revisionHash} `
+                    )
+                    return allHashes.includes(
+                        revision.link_verification_hashes![0]!
+                    )
+                })
 
-                console.log(`👁️‍🗨️ aquaTreePick ${JSON.stringify(aquaTreePick, null, 4)} `);
+                console.log(
+                    `👁️‍🗨️ aquaTreePick ${JSON.stringify(aquaTreePick, null, 4)} `
+                )
                 if (aquaTreePick) {
-                    const tree: AquaTree = aquaTreePick.fileContent as AquaTree;
-                    const genesisHash = getGenesisHash(tree);
+                    const tree: AquaTree = aquaTreePick.fileContent as AquaTree
+                    const genesisHash = getGenesisHash(tree)
 
-                    console.log(`👁️‍🗨️  genesisHash ${genesisHash}`);
+                    console.log(`👁️‍🗨️  genesisHash ${genesisHash}`)
                     if (genesisHash) {
-                        const fileName = tree.file_index[genesisHash];
-                        console.log(`👁️‍🗨️ fileName ${fileName}`);
+                        const fileName = tree.file_index[genesisHash]
+                        console.log(`👁️‍🗨️ fileName ${fileName}`)
 
                         if (fileName) {
                             return (
@@ -424,24 +482,30 @@ export const revisionDataHeader = (
                                 >
                                     Linked to {fileName}
                                 </Badge>
-                            );
+                            )
                         }
                     }
                 }
             }
 
             return (
-                <Badge variant="outline" className="bg-purple-50 text-purple-700 border-purple-200">
-                    Deep Link previous {revision.previous_verification_hash} revisionHash{' '}
-                    {revisionHash}
+                <Badge
+                    variant="outline"
+                    className="bg-purple-50 text-purple-700 border-purple-200"
+                >
+                    Deep Link previous {revision.previous_verification_hash}{' '}
+                    revisionHash {revisionHash}
                 </Badge>
-            );
+            )
         } else {
             return (
-                <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
+                <Badge
+                    variant="outline"
+                    className="bg-green-50 text-green-700 border-green-200"
+                >
                     Linked to {fetchLinkedFileName(aquaTree, revision)}
                 </Badge>
-            );
+            )
         }
     }
 
@@ -449,8 +513,8 @@ export const revisionDataHeader = (
         <Badge variant="outline" className="capitalize">
             {revision.revision_type}
         </Badge>
-    );
-};
+    )
+}
 
 export const viewLinkedFile = (
     selectedApiFileInfo: ApiFileInfo,
@@ -462,7 +526,7 @@ export const viewLinkedFile = (
 ): React.JSX.Element => {
     if (revision.revision_type == 'link') {
         if (isDeepLinkRevision(selectedApiFileInfo.aquaTree!, revisionHash)) {
-            return <></>;
+            return <></>
         }
 
         return (
@@ -472,62 +536,74 @@ export const viewLinkedFile = (
                     let linkedFileName = fetchLinkedFileName(
                         selectedApiFileInfo.aquaTree!,
                         revision
-                    );
-                    let allFileObjects = [...selectedApiFileInfo.fileObject];
+                    )
+                    let allFileObjects = [...selectedApiFileInfo.fileObject]
                     apiFileInfo.forEach(e => {
-                        allFileObjects = [...allFileObjects, ...e.fileObject];
-                    });
+                        allFileObjects = [...allFileObjects, ...e.fileObject]
+                    })
                     if (isWorkflow || linkedFileName == ERROR_TEXT) {
                         linkedFileName = getFileNameWithDeepLinking(
                             selectedApiFileInfo.aquaTree!,
                             revisionHash,
                             allFileObjects
-                        );
+                        )
                     }
 
-                    let fileInfoFound: ApiFileInfo | undefined = undefined;
-                    if (linkedFileName != ERROR_TEXT && linkedFileName != ERROR_UKNOWN) {
+                    let fileInfoFound: ApiFileInfo | undefined = undefined
+                    if (
+                        linkedFileName != ERROR_TEXT &&
+                        linkedFileName != ERROR_UKNOWN
+                    ) {
                         for (const fileInfo of apiFileInfo) {
-                            const fileObject = getAquaTreeFileObject(fileInfo);
+                            const fileObject = getAquaTreeFileObject(fileInfo)
                             if (fileObject) {
                                 if (linkedFileName == fileObject.fileName) {
-                                    fileInfoFound = fileInfo;
-                                    break;
+                                    fileInfoFound = fileInfo
+                                    break
                                 }
                             }
                         }
                         if (fileInfoFound) {
                             updateSelectedFile({
                                 aquaTree: fileInfoFound.aquaTree,
-                                fileObject: [...fileInfoFound.fileObject, ...allFileObjects],
+                                fileObject: [
+                                    ...fileInfoFound.fileObject,
+                                    ...allFileObjects,
+                                ],
                                 linkedFileObjects: [],
                                 mode: '',
                                 owner: '',
-                            });
+                            })
                         } else {
                             for (const fileObject of allFileObjects) {
                                 if (linkedFileName == fileObject.fileName) {
-                                    let aquaTree: AquaTree | undefined = undefined;
+                                    let aquaTree: AquaTree | undefined =
+                                        undefined
                                     if (linkedFileName.endsWith('.aqua.json')) {
-                                        aquaTree = fileObject.fileContent as AquaTree;
+                                        aquaTree =
+                                            fileObject.fileContent as AquaTree
                                     } else {
-                                        const fileObjCtItem = allFileObjects.find(
-                                            e => e.fileName == `${linkedFileName}.aqua.json`
-                                        );
+                                        const fileObjCtItem =
+                                            allFileObjects.find(
+                                                e =>
+                                                    e.fileName ==
+                                                    `${linkedFileName}.aqua.json`
+                                            )
                                         if (fileObjCtItem) {
-                                            aquaTree = fileObjCtItem.fileContent as AquaTree;
+                                            aquaTree =
+                                                fileObjCtItem.fileContent as AquaTree
                                         }
                                     }
 
                                     if (aquaTree == undefined) {
                                         console.log(
                                             `show  ${linkedFileName}  filw object ${JSON.stringify(fileObject, null, 4)}`
-                                        );
+                                        )
                                         toaster.create({
                                             title: 'View not available',
                                             type: 'info',
                                             description: 'View not available',
-                                        });
+                                        })
                                     } else {
                                         updateSelectedFile({
                                             aquaTree: aquaTree,
@@ -535,9 +611,9 @@ export const viewLinkedFile = (
                                             linkedFileObjects: [],
                                             mode: '',
                                             owner: '',
-                                        });
+                                        })
                                     }
-                                    break;
+                                    break
                                 }
                             }
                         }
@@ -546,7 +622,7 @@ export const viewLinkedFile = (
                             title: 'Link file not found , possibly a deep link ?',
                             type: 'info',
                             description: 'View not available',
-                        });
+                        })
                     }
                 }}
                 variant="outline"
@@ -556,11 +632,11 @@ export const viewLinkedFile = (
                 <span>View File</span>
                 <ChevronRight className="h-3 w-3" />
             </Button>
-        );
+        )
     } else {
-        return <></>;
+        return <></>
     }
-};
+}
 
 // import { RevisionDetailsSummaryData } from "@/models/AquaTreeDetails";
 // import appStore from "@/store";

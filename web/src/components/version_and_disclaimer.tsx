@@ -1,17 +1,17 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react'
 // import { Button } from "./chakra-ui/button";
 // import { DialogBody, DialogCloseTrigger, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "./chakra-ui/dialog";
-import { Center, Link, Spacer, Text, VStack } from '@chakra-ui/react';
-import { LuMessageCircleWarning } from 'react-icons/lu';
-import { useStore } from 'zustand';
-import appStore from '../store';
+import { Center, Link, Spacer, Text, VStack } from '@chakra-ui/react'
+import { LuMessageCircleWarning } from 'react-icons/lu'
+import { useStore } from 'zustand'
+import appStore from '../store'
 // import { Alert } from "./chakra-ui/alert";
-import axios from 'axios';
+import axios from 'axios'
 // import { toaster } from "./chakra-ui/toaster";
-import VersionDetails from '../models/VersionDetails';
-import { IVersionAndDisclaimer } from '../types/index';
-import versionInfo from '../version-info.json';
-import { toaster } from './ui/use-toast';
+import VersionDetails from '../models/VersionDetails'
+import { IVersionAndDisclaimer } from '../types/index'
+import versionInfo from '../version-info.json'
+import { toaster } from './ui/use-toast'
 import {
     Dialog,
     DialogBody,
@@ -20,9 +20,9 @@ import {
     DialogTitle,
     DialogTrigger,
     DialogCloseTrigger,
-} from '@chakra-ui/react';
-import { Button } from './ui/button';
-import { Alert } from './ui/alert';
+} from '@chakra-ui/react'
+import { Button } from './ui/button'
+import { Alert } from './ui/alert'
 
 export default function VersionAndDisclaimer({
     inline,
@@ -31,41 +31,41 @@ export default function VersionAndDisclaimer({
 }: IVersionAndDisclaimer) {
     //   const {  es, avatar, setAvatar, setUserProfile, backend_url } = useStore(appStore);
 
-    const { backend_url } = useStore(appStore);
+    const { backend_url } = useStore(appStore)
 
-    const [isOpen, setIsOpen] = useState(false);
+    const [isOpen, setIsOpen] = useState(false)
     const [versionDetails, setVersionDetails] = useState<VersionDetails>({
         backend: '1.2.X',
         frontend: '1.2.X',
         aquifier: '1.2.X',
         protocol: '1.2.X',
-    });
+    })
 
     const fetchVersionDetails = async () => {
         try {
-            const url = `${backend_url}/version`;
+            const url = `${backend_url}/version`
 
-            const response = await axios.get(url);
+            const response = await axios.get(url)
 
-            const res: VersionDetails = await response.data;
+            const res: VersionDetails = await response.data
 
             if (response.status === 200) {
-                setVersionDetails(res);
+                setVersionDetails(res)
             }
         } catch (e: unknown) {
             //  console.log("Error fetching version ", e)
             toaster.create({
                 description: 'Error fetching version details',
                 type: 'error',
-            });
+            })
         }
-    };
+    }
 
     useEffect(() => {
         if (!backend_url.includes('0.0.0.0')) {
-            fetchVersionDetails();
+            fetchVersionDetails()
         }
-    }, [backend_url]);
+    }, [backend_url])
 
     return (
         <Dialog.Root
@@ -81,7 +81,7 @@ export default function VersionAndDisclaimer({
                     size={'sm'}
                     // borderRadius={"md"}
                     onClick={() => {
-                        inline ? updateOpenStatus?.(true) : setIsOpen(true);
+                        inline ? updateOpenStatus?.(true) : setIsOpen(true)
                         // !metamaskAddress && signAndConnect();
                     }}
                     hidden={inline}
@@ -107,12 +107,16 @@ export default function VersionAndDisclaimer({
                         <Text fontFamily={'monospace'}>
                             Build Commit Hash : {versionInfo.commitHash}{' '}
                         </Text>
-                        <Text fontFamily={'monospace'}>Build Date: {versionInfo.buildDate} </Text>
+                        <Text fontFamily={'monospace'}>
+                            Build Date: {versionInfo.buildDate}{' '}
+                        </Text>
 
                         <Spacer height={30} />
 
                         {/* <Alert status="error" title="" variant="solid"   > */}
-                        <Alert>This is prototype software,use it with caution.</Alert>
+                        <Alert>
+                            This is prototype software,use it with caution.
+                        </Alert>
 
                         <Text>
                             This software is developed by{' '}
@@ -139,7 +143,9 @@ export default function VersionAndDisclaimer({
                         <Button
                             data-testid="close-info-button"
                             onClick={() => {
-                                inline ? updateOpenStatus?.(false) : setIsOpen(false);
+                                inline
+                                    ? updateOpenStatus?.(false)
+                                    : setIsOpen(false)
                             }}
                         >
                             close
@@ -149,10 +155,10 @@ export default function VersionAndDisclaimer({
                 </DialogBody>
                 <DialogCloseTrigger
                     onClick={() => {
-                        inline ? updateOpenStatus?.(false) : setIsOpen(false);
+                        inline ? updateOpenStatus?.(false) : setIsOpen(false)
                     }}
                 />
             </DialogContent>
         </Dialog.Root>
-    );
+    )
 }

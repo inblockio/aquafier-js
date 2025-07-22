@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react'
 import {
     Table,
     TableBody,
@@ -6,12 +6,12 @@ import {
     TableHead,
     TableHeader,
     TableRow,
-} from '@/components/ui/table';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Progress } from '@/components/ui/progress';
+} from '@/components/ui/table'
+import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import { Progress } from '@/components/ui/progress'
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -19,7 +19,7 @@ import {
     DropdownMenuLabel,
     DropdownMenuSeparator,
     DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
+} from '@/components/ui/dropdown-menu'
 import {
     FileText,
     Users,
@@ -32,9 +32,9 @@ import {
     Download,
     Send,
     Plus,
-} from 'lucide-react';
-import appStore from '@/store';
-import { useStore } from 'zustand';
+} from 'lucide-react'
+import appStore from '@/store'
+import { useStore } from 'zustand'
 import {
     displayTime,
     generateAvatar,
@@ -43,144 +43,164 @@ import {
     getGenesisHash,
     isWorkFlowData,
     processContractInformation,
-} from '@/utils/functions';
-import { ApiFileInfo } from '@/models/FileInfo';
-import { FileObject } from 'aqua-js-sdk';
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
-import { IContractInformation } from '@/types/contract_workflow';
-import { DownloadAquaChain } from '../../components/aqua_chain_actions/download_aqua_chain';
-import { OpenAquaSignWorkFlowButton } from '../../components/aqua_chain_actions/open_aqua_sign_workflow';
-import { DeleteAquaChain } from '../../components/aqua_chain_actions/delete_aqua_chain';
+} from '@/utils/functions'
+import { ApiFileInfo } from '@/models/FileInfo'
+import { FileObject } from 'aqua-js-sdk'
+import {
+    Tooltip,
+    TooltipContent,
+    TooltipTrigger,
+} from '@/components/ui/tooltip'
+import { IContractInformation } from '@/types/contract_workflow'
+import { DownloadAquaChain } from '../../components/aqua_chain_actions/download_aqua_chain'
+import { OpenAquaSignWorkFlowButton } from '../../components/aqua_chain_actions/open_aqua_sign_workflow'
+import { DeleteAquaChain } from '../../components/aqua_chain_actions/delete_aqua_chain'
 
 const getStatusIcon = (status: string) => {
     switch (status) {
         case 'completed':
-            return <CheckCircle className="h-4 w-4" />;
+            return <CheckCircle className="h-4 w-4" />
         case 'pending':
-            return <Clock className="h-4 w-4" />;
+            return <Clock className="h-4 w-4" />
         case 'overdue':
-            return <AlertCircle className="h-4 w-4" />;
+            return <AlertCircle className="h-4 w-4" />
         case 'draft':
-            return <FileText className="h-4 w-4" />;
+            return <FileText className="h-4 w-4" />
         default:
-            return <Clock className="h-4 w-4" />;
+            return <Clock className="h-4 w-4" />
     }
-};
+}
 
 const getStatusColor = (status: string) => {
     switch (status) {
         case 'completed':
-            return 'bg-green-100 text-green-800 border-green-200';
+            return 'bg-green-100 text-green-800 border-green-200'
         case 'pending':
-            return 'bg-blue-100 text-blue-800 border-blue-200';
+            return 'bg-blue-100 text-blue-800 border-blue-200'
         case 'overdue':
-            return 'bg-red-100 text-red-800 border-red-200';
+            return 'bg-red-100 text-red-800 border-red-200'
         case 'draft':
-            return 'bg-gray-100 text-gray-800 border-gray-200';
+            return 'bg-gray-100 text-gray-800 border-gray-200'
         default:
-            return 'bg-gray-100 text-gray-800 border-gray-200';
+            return 'bg-gray-100 text-gray-800 border-gray-200'
     }
-};
+}
 
 const getProgressPercentage = (total: number, remaining: number) => {
-    return ((total - remaining) / total) * 100;
-};
+    return ((total - remaining) / total) * 100
+}
 
 const getInitials = (name: string) => {
     return name
         .split(' ')
         .map(word => word.charAt(0))
         .join('')
-        .toUpperCase();
-};
-
-interface IWorkflowItem {
-    workflowName: string;
-    apiFileInfo: ApiFileInfo;
-    index?: number;
+        .toUpperCase()
 }
 
-const WorkflowTableItem = ({ workflowName, apiFileInfo, index = 0 }: IWorkflowItem) => {
-    const [currentFileObject, setCurrentFileObject] = useState<FileObject | undefined>(undefined);
+interface IWorkflowItem {
+    workflowName: string
+    apiFileInfo: ApiFileInfo
+    index?: number
+}
+
+const WorkflowTableItem = ({
+    workflowName,
+    apiFileInfo,
+    index = 0,
+}: IWorkflowItem) => {
+    const [currentFileObject, setCurrentFileObject] = useState<
+        FileObject | undefined
+    >(undefined)
     const [contractInformation, setContractInformation] = useState<
         IContractInformation | undefined
-    >(undefined);
-    const { session, backend_url } = useStore(appStore);
+    >(undefined)
+    const { session, backend_url } = useStore(appStore)
 
     const getCurrentFileObject = () => {
-        const fileObject = getAquaTreeFileObject(apiFileInfo);
-        setCurrentFileObject(fileObject);
-    };
+        const fileObject = getAquaTreeFileObject(apiFileInfo)
+        setCurrentFileObject(fileObject)
+    }
 
     const getTimeInfo = () => {
-        const genRevision = getGenesisHash(apiFileInfo.aquaTree!);
+        const genRevision = getGenesisHash(apiFileInfo.aquaTree!)
         if (genRevision) {
-            const timestamp = apiFileInfo.aquaTree?.revisions?.[genRevision]?.local_timestamp;
+            const timestamp =
+                apiFileInfo.aquaTree?.revisions?.[genRevision]?.local_timestamp
             if (timestamp) {
-                return displayTime(timestamp);
+                return displayTime(timestamp)
             }
         } else {
-            return 'Not available';
+            return 'Not available'
         }
-    };
+    }
 
     const getSigners = () => {
-        const genRevision = getGenesisHash(apiFileInfo.aquaTree!);
+        const genRevision = getGenesisHash(apiFileInfo.aquaTree!)
         if (genRevision) {
-            const signers = apiFileInfo.aquaTree?.revisions?.[genRevision]?.forms_signers;
+            const signers =
+                apiFileInfo.aquaTree?.revisions?.[genRevision]?.forms_signers
             if (signers) {
-                return signers.split(',');
+                return signers.split(',')
             }
         } else {
-            return 'Not available';
+            return 'Not available'
         }
-    };
+    }
 
     const getSignersStatus = () => {
-        let signersStatus: Array<{ address: string; status: string }> = [];
+        let signersStatus: Array<{ address: string; status: string }> = []
         if (contractInformation) {
             signersStatus = contractInformation.firstRevisionData?.forms_signers
                 .split(',')
                 .map((signer: string) => {
-                    const item = contractInformation.signatureRevisionHashes.find(
-                        e => e.walletAddress.toLowerCase().trim() == signer.toLowerCase().trim()
-                    );
+                    const item =
+                        contractInformation.signatureRevisionHashes.find(
+                            e =>
+                                e.walletAddress.toLowerCase().trim() ==
+                                signer.toLowerCase().trim()
+                        )
 
                     if (item) {
                         return {
                             address: signer,
                             status: 'signed',
-                        };
+                        }
                     } else {
                         // if isWorkFlowComplete is empty show green check mark
                         // this experiemntal,
-                        if (contractInformation.isWorkFlowComplete.length === 0) {
+                        if (
+                            contractInformation.isWorkFlowComplete.length === 0
+                        ) {
                             return {
                                 address: signer,
                                 status: 'signed',
-                            };
+                            }
                         }
                         return {
                             address: signer,
                             status: 'pending',
-                        };
+                        }
                     }
-                });
+                })
         }
-        return signersStatus;
-    };
+        return signersStatus
+    }
 
-    const signers = getSigners();
-    const signersStatus = getSignersStatus();
+    const signers = getSigners()
+    const signersStatus = getSignersStatus()
 
     useEffect(() => {
-        getCurrentFileObject();
-        const contractInformation = processContractInformation(apiFileInfo);
-        setContractInformation(contractInformation);
-    }, [apiFileInfo]);
+        getCurrentFileObject()
+        const contractInformation = processContractInformation(apiFileInfo)
+        setContractInformation(contractInformation)
+    }, [apiFileInfo])
 
     return (
-        <TableRow key={`${workflowName}-${index}`} className="hover:bg-muted/50">
+        <TableRow
+            key={`${workflowName}-${index}`}
+            className="hover:bg-muted/50"
+        >
             <TableCell className="font-medium w-[300px] max-w-[300px] min-w-[300px]">
                 <div className="w-full flex items-center gap-3">
                     <div className="flex-shrink-0">
@@ -204,24 +224,29 @@ const WorkflowTableItem = ({ workflowName, apiFileInfo, index = 0 }: IWorkflowIt
             <TableCell className="w-[200px]">
                 <div className="flex items-center gap-2">
                     <div className="flex -space-x-2">
-                        {signers?.slice(0, 3).map((signer: string, index: number) => (
-                            <Tooltip key={index}>
-                                <TooltipTrigger asChild>
-                                    <Avatar
-                                        key={index}
-                                        className="h-8 w-8 border-2 rounded-full border-blue-500"
-                                    >
-                                        <AvatarImage src={generateAvatar(signer)} alt="Avatar" />
-                                        <AvatarFallback className="text-xs">
-                                            {getInitials(signer)}
-                                        </AvatarFallback>
-                                    </Avatar>
-                                </TooltipTrigger>
-                                <TooltipContent>
-                                    <p>{signer}</p>
-                                </TooltipContent>
-                            </Tooltip>
-                        ))}
+                        {signers
+                            ?.slice(0, 3)
+                            .map((signer: string, index: number) => (
+                                <Tooltip key={index}>
+                                    <TooltipTrigger asChild>
+                                        <Avatar
+                                            key={index}
+                                            className="h-8 w-8 border-2 rounded-full border-blue-500"
+                                        >
+                                            <AvatarImage
+                                                src={generateAvatar(signer)}
+                                                alt="Avatar"
+                                            />
+                                            <AvatarFallback className="text-xs">
+                                                {getInitials(signer)}
+                                            </AvatarFallback>
+                                        </Avatar>
+                                    </TooltipTrigger>
+                                    <TooltipContent>
+                                        <p>{signer}</p>
+                                    </TooltipContent>
+                                </Tooltip>
+                            ))}
                         {signers?.length > 3 && (
                             <Avatar className="h-8 w-8 border-2 border-background">
                                 <AvatarFallback className="text-xs">
@@ -240,14 +265,21 @@ const WorkflowTableItem = ({ workflowName, apiFileInfo, index = 0 }: IWorkflowIt
                 <div className="space-y-1">
                     <div className="flex items-center justify-between text-sm">
                         <span>
-                            {signersStatus.filter(e => e.status == 'signed').length}/
-                            {signers?.length}
+                            {
+                                signersStatus.filter(e => e.status == 'signed')
+                                    .length
+                            }
+                            /{signers?.length}
                         </span>
                         <span className="text-muted-foreground">
                             {Math.round(
                                 getProgressPercentage(
-                                    signersStatus.filter(e => e.status == 'signed').length,
-                                    signersStatus.filter(e => e.status == 'pending').length
+                                    signersStatus.filter(
+                                        e => e.status == 'signed'
+                                    ).length,
+                                    signersStatus.filter(
+                                        e => e.status == 'pending'
+                                    ).length
                                 )
                             )}
                             %
@@ -255,14 +287,21 @@ const WorkflowTableItem = ({ workflowName, apiFileInfo, index = 0 }: IWorkflowIt
                     </div>
                     <Progress
                         value={getProgressPercentage(
-                            signersStatus.filter(e => e.status == 'signed').length,
-                            signersStatus.filter(e => e.status == 'pending').length
+                            signersStatus.filter(e => e.status == 'signed')
+                                .length,
+                            signersStatus.filter(e => e.status == 'pending')
+                                .length
                         )}
                         className="h-2"
                     />
-                    {signersStatus.filter(e => e.status == 'pending').length > 0 && (
+                    {signersStatus.filter(e => e.status == 'pending').length >
+                        0 && (
                         <div className="text-xs text-muted-foreground">
-                            {signersStatus.filter(e => e.status == 'pending').length} remaining
+                            {
+                                signersStatus.filter(e => e.status == 'pending')
+                                    .length
+                            }{' '}
+                            remaining
                         </div>
                     )}
                 </div>
@@ -273,12 +312,14 @@ const WorkflowTableItem = ({ workflowName, apiFileInfo, index = 0 }: IWorkflowIt
                     className={`${getStatusColor(signersStatus.filter(e => e.status == 'pending').length > 0 ? 'pending' : 'completed')} capitalize`}
                 >
                     {getStatusIcon(
-                        signersStatus.filter(e => e.status == 'pending').length > 0
+                        signersStatus.filter(e => e.status == 'pending')
+                            .length > 0
                             ? 'pending'
                             : 'completed'
                     )}
                     <span className="ml-1">
-                        {signersStatus.filter(e => e.status == 'pending').length > 0
+                        {signersStatus.filter(e => e.status == 'pending')
+                            .length > 0
                             ? 'pending'
                             : 'completed'}
                     </span>
@@ -287,14 +328,20 @@ const WorkflowTableItem = ({ workflowName, apiFileInfo, index = 0 }: IWorkflowIt
             <TableCell className="text-right w-[100px]">
                 <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                        <Button variant="outline" className="h-8 w-8 p-0 cursor-pointer">
+                        <Button
+                            variant="outline"
+                            className="h-8 w-8 p-0 cursor-pointer"
+                        >
                             <MoreHorizontal className="h-4 w-4" />
                         </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
                         <DropdownMenuLabel>Actions</DropdownMenuLabel>
                         <DropdownMenuSeparator />
-                        <OpenAquaSignWorkFlowButton item={apiFileInfo} nonce={session?.nonce ?? ''}>
+                        <OpenAquaSignWorkFlowButton
+                            item={apiFileInfo}
+                            nonce={session?.nonce ?? ''}
+                        >
                             <DropdownMenuItem>
                                 <Eye className="mr-2 h-4 w-4" />
                                 View Document
@@ -327,57 +374,62 @@ const WorkflowTableItem = ({ workflowName, apiFileInfo, index = 0 }: IWorkflowIt
                 </DropdownMenu>
             </TableCell>
         </TableRow>
-    );
-};
+    )
+}
 
 export default function WorkflowsTablePage() {
-    const { files, systemFileInfo, setOpenCreateAquaSignPopUp } = useStore(appStore);
+    const { files, systemFileInfo, setOpenCreateAquaSignPopUp } =
+        useStore(appStore)
 
     // const [workflows] = useState<DocumentWorkflow[]>(mockWorkflows);
 
-    const [_workflows, setWorkflows] = useState<IWorkflowItem[]>([]);
+    const [_workflows, setWorkflows] = useState<IWorkflowItem[]>([])
 
     const processFilesToGetWorkflows = () => {
         const someData = systemFileInfo.map(e => {
             try {
-                return getAquaTreeFileName(e.aquaTree!);
+                return getAquaTreeFileName(e.aquaTree!)
             } catch (e) {
-                console.log('Error processing system file'); // More descriptive
-                return '';
+                console.log('Error processing system file') // More descriptive
+                return ''
             }
-        });
+        })
 
-        const newData: IWorkflowItem[] = [];
+        const newData: IWorkflowItem[] = []
         files.forEach(file => {
             // const fileObject = getAquaTreeFileObject(file);
-            const { workFlow, isWorkFlow } = isWorkFlowData(file.aquaTree!, someData);
+            const { workFlow, isWorkFlow } = isWorkFlowData(
+                file.aquaTree!,
+                someData
+            )
             if (isWorkFlow && workFlow === 'aqua_sign') {
                 // setWorkflows((prev : IWorkflowItem[]) => {
 
-                const currentName = getAquaTreeFileName(file.aquaTree!);
-                const containsCurrentName: IWorkflowItem | undefined = newData.find(
-                    (e: IWorkflowItem) => {
+                const currentName = getAquaTreeFileName(file.aquaTree!)
+                const containsCurrentName: IWorkflowItem | undefined =
+                    newData.find((e: IWorkflowItem) => {
                         if (e && e.apiFileInfo && e.apiFileInfo.aquaTree) {
-                            const nameItem: string = getAquaTreeFileName(e.apiFileInfo.aquaTree);
-                            return nameItem === currentName;
+                            const nameItem: string = getAquaTreeFileName(
+                                e.apiFileInfo.aquaTree
+                            )
+                            return nameItem === currentName
                         }
-                    }
-                );
+                    })
                 if (!containsCurrentName) {
-                    newData.push({ workflowName: workFlow, apiFileInfo: file });
+                    newData.push({ workflowName: workFlow, apiFileInfo: file })
                 }
 
                 //   [...prev, { workflowName: workFlow, apiFileInfo: file }]
                 // })
             }
-        });
+        })
 
-        setWorkflows(newData);
-    };
+        setWorkflows(newData)
+    }
 
     useEffect(() => {
-        processFilesToGetWorkflows();
-    }, [JSON.stringify(files)]);
+        processFilesToGetWorkflows()
+    }, [JSON.stringify(files)])
 
     return (
         <>
@@ -390,7 +442,7 @@ export default function WorkflowsTablePage() {
                             className="flex items-center space-x-2 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-gray-100 cursor-pointer"
                             style={{ backgroundColor: '#394150' }}
                             onClick={() => {
-                                setOpenCreateAquaSignPopUp(true);
+                                setOpenCreateAquaSignPopUp(true)
                             }}
                         >
                             <Plus className="w-4 h-4" />
@@ -412,7 +464,7 @@ export default function WorkflowsTablePage() {
                                 className="flex items-center space-x-2 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-gray-100 cursor-pointer"
                                 style={{ backgroundColor: '#394150' }}
                                 onClick={() => {
-                                    setOpenCreateAquaSignPopUp(true);
+                                    setOpenCreateAquaSignPopUp(true)
                                 }}
                             >
                                 <Plus className="w-4 h-4" />
@@ -433,25 +485,36 @@ export default function WorkflowsTablePage() {
                                         <TableHead>Signers</TableHead>
                                         <TableHead>Progress</TableHead>
                                         <TableHead>Status</TableHead>
-                                        <TableHead className="text-right">Actions</TableHead>
+                                        <TableHead className="text-right">
+                                            Actions
+                                        </TableHead>
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
                                     {_workflows.length === 0 && (
                                         <TableRow>
-                                            <TableCell colSpan={6} className="h-24 text-center">
+                                            <TableCell
+                                                colSpan={6}
+                                                className="h-24 text-center"
+                                            >
                                                 No workflows found
                                             </TableCell>
                                         </TableRow>
                                     )}
-                                    {_workflows.map((workflow, index: number) => (
-                                        <WorkflowTableItem
-                                            key={`${index}-workflow`}
-                                            workflowName={workflow.workflowName}
-                                            apiFileInfo={workflow.apiFileInfo}
-                                            index={index}
-                                        />
-                                    ))}
+                                    {_workflows.map(
+                                        (workflow, index: number) => (
+                                            <WorkflowTableItem
+                                                key={`${index}-workflow`}
+                                                workflowName={
+                                                    workflow.workflowName
+                                                }
+                                                apiFileInfo={
+                                                    workflow.apiFileInfo
+                                                }
+                                                index={index}
+                                            />
+                                        )
+                                    )}
                                 </TableBody>
                             </Table>
                         </div>
@@ -459,5 +522,5 @@ export default function WorkflowsTablePage() {
                 </Card>
             </div>
         </>
-    );
+    )
 }

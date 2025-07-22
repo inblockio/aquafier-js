@@ -1,7 +1,7 @@
-import React, { useRef, useState } from 'react';
-import { LuImport } from 'react-icons/lu';
-import { useStore } from 'zustand';
-import appStore from '../../store';
+import React, { useRef, useState } from 'react'
+import { LuImport } from 'react-icons/lu'
+import { useStore } from 'zustand'
+import appStore from '../../store'
 import {
     readFileAsText,
     validateAquaTree,
@@ -13,19 +13,22 @@ import {
     allLinkRevisionHashes,
     getAquaTreeFileName,
     dummyCredential,
-} from '../../utils/functions';
-import Aquafier, { AquaTree, CredentialsData, FileObject } from 'aqua-js-sdk';
-import { IDropzoneAction2, UploadLinkAquaTreeExpectedData } from '../../types/types';
-import { Input } from '@/components/ui/input';
-import { toast } from '@/components/ui/use-toast';
+} from '../../utils/functions'
+import Aquafier, { AquaTree, CredentialsData, FileObject } from 'aqua-js-sdk'
+import {
+    IDropzoneAction2,
+    UploadLinkAquaTreeExpectedData,
+} from '../../types/types'
+import { Input } from '@/components/ui/input'
+import { toast } from '@/components/ui/use-toast'
 import {
     Dialog,
     DialogContent,
     DialogHeader,
     DialogTitle,
     DialogFooter,
-} from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
+} from '@/components/ui/dialog'
+import { Button } from '@/components/ui/button'
 
 export const ImportAquaTree = ({
     aquaFile,
@@ -33,67 +36,76 @@ export const ImportAquaTree = ({
     fileIndex,
     updateUploadedIndex,
 }: IDropzoneAction2) => {
-    const aquafier = new Aquafier();
-    const [uploading, setUploading] = useState(false);
-    const [uploaded, setUploaded] = useState(false);
-    const [requiredFileHash, setRequiredFileHash] = useState<string | null>(null);
-    const fileInputRef = useRef<HTMLInputElement>(null);
-    const [selectedFileName, setSelectedFileName] = useState<string>('');
-    const [isOpen, setIsOpen] = useState(false);
+    const aquafier = new Aquafier()
+    const [uploading, setUploading] = useState(false)
+    const [uploaded, setUploaded] = useState(false)
+    const [requiredFileHash, setRequiredFileHash] = useState<string | null>(
+        null
+    )
+    const fileInputRef = useRef<HTMLInputElement>(null)
+    const [selectedFileName, setSelectedFileName] = useState<string>('')
+    const [isOpen, setIsOpen] = useState(false)
     const [allFileObjectWrapper, setAllFileObjectsWrapper] = useState<
         Array<{
-            file: File;
-            fileObject: FileObject;
+            file: File
+            fileObject: FileObject
         }>
-    >([]);
-    const [expectedFile, setExpectedFile] = useState<UploadLinkAquaTreeExpectedData | null>(null);
+    >([])
+    const [expectedFile, setExpectedFile] =
+        useState<UploadLinkAquaTreeExpectedData | null>(null)
 
-    const { files, metamaskAddress, setFiles, backend_url, session, user_profile } =
-        useStore(appStore);
+    const {
+        files,
+        metamaskAddress,
+        setFiles,
+        backend_url,
+        session,
+        user_profile,
+    } = useStore(appStore)
 
     const uploadFileData = async (
         aquaFile: File,
         assetFile: File | null,
         isWorkflow: boolean = false
     ) => {
-        const formData = new FormData();
-        formData.append('file', aquaFile);
-        formData.append('has_asset', `${assetFile != null}`);
-        formData.append('asset', assetFile ?? aquaFile);
-        formData.append('account', `${metamaskAddress}`);
-        formData.append('is_workflow', `${isWorkflow}`);
+        const formData = new FormData()
+        formData.append('file', aquaFile)
+        formData.append('has_asset', `${assetFile != null}`)
+        formData.append('asset', assetFile ?? aquaFile)
+        formData.append('account', `${metamaskAddress}`)
+        formData.append('is_workflow', `${isWorkflow}`)
 
-        setUploading(true);
+        setUploading(true)
         try {
-            const url = `${backend_url}/explorer_aqua_file_upload`;
+            const url = `${backend_url}/explorer_aqua_file_upload`
             const response = await fetch(url, {
                 method: 'POST',
                 body: formData,
                 headers: {
                     nonce: session?.nonce || '',
                 },
-            });
+            })
 
-            const responseData = await response.json();
-            setFiles([...responseData.files]);
-            setUploaded(true);
-            setUploading(false);
-            setSelectedFileName('');
+            const responseData = await response.json()
+            setFiles([...responseData.files])
+            setUploaded(true)
+            setUploading(false)
+            setSelectedFileName('')
             toast({
                 description: 'File uploaded successfully',
                 variant: 'default',
-            });
-            updateUploadedIndex(fileIndex);
-            return;
+            })
+            updateUploadedIndex(fileIndex)
+            return
         } catch (error) {
-            setUploading(false);
-            setSelectedFileName('');
+            setUploading(false)
+            setSelectedFileName('')
             toast({
                 description: `Failed to upload file: ${error}`,
                 variant: 'destructive',
-            });
+            })
         }
-    };
+    }
 
     const importLinkedFile = async (aquaTree: AquaTree) => {
         const mainAquaFileObject: FileObject = {
@@ -101,32 +113,37 @@ export const ImportAquaTree = ({
             fileName: aquaFile.name,
             fileSize: aquaFile.size,
             path: '',
-        };
+        }
 
-        const newFileObjects = [{ fileObject: mainAquaFileObject, file: aquaFile }];
-        setAllFileObjectsWrapper(newFileObjects);
+        const newFileObjects = [
+            { fileObject: mainAquaFileObject, file: aquaFile },
+        ]
+        setAllFileObjectsWrapper(newFileObjects)
 
-        const genHash = getGenesisHash(aquaTree);
+        const genHash = getGenesisHash(aquaTree)
         if (genHash == null) {
             toast({
                 description: `Genesis Revision not found`,
                 variant: 'destructive',
-            });
-            return;
+            })
+            return
         }
 
-        console.log(`genHash -- ${genHash}`);
-        const genRevision = aquaTree.revisions[genHash!];
-        const actualUrlToFetch = ensureDomainUrlHasSSL(backend_url);
-        console.log(`revision  ${JSON.stringify(genRevision, null, 2)}`);
-        console.log(`file hash +++ ${genRevision.file_hash}`);
+        console.log(`genHash -- ${genHash}`)
+        const genRevision = aquaTree.revisions[genHash!]
+        const actualUrlToFetch = ensureDomainUrlHasSSL(backend_url)
+        console.log(`revision  ${JSON.stringify(genRevision, null, 2)}`)
+        console.log(`file hash +++ ${genRevision.file_hash}`)
 
-        const response = await fetch(`${actualUrlToFetch}/files/${genRevision.file_hash}`, {
-            method: 'GET',
-            headers: {
-                Nonce: session?.nonce ?? '--error--',
-            },
-        });
+        const response = await fetch(
+            `${actualUrlToFetch}/files/${genRevision.file_hash}`,
+            {
+                method: 'GET',
+                headers: {
+                    Nonce: session?.nonce ?? '--error--',
+                },
+            }
+        )
 
         if (!response.ok) {
             setExpectedFile({
@@ -135,150 +152,174 @@ export const ImportAquaTree = ({
                 expectedFileName: aquaTree.file_index[genHash],
                 itemRevisionHash: '',
                 isAquaFile: false,
-            });
-            setIsOpen(true);
+            })
+            setIsOpen(true)
         } else {
-            const allAquaTrees = newFileObjects.filter(e => isAquaTree(e.fileObject.fileContent));
-            const missingFile = checkAllFilesAvailable(allAquaTrees, newFileObjects);
+            const allAquaTrees = newFileObjects.filter(e =>
+                isAquaTree(e.fileObject.fileContent)
+            )
+            const missingFile = checkAllFilesAvailable(
+                allAquaTrees,
+                newFileObjects
+            )
             if (missingFile) {
-                setExpectedFile(missingFile);
-                setIsOpen(true);
-                return;
+                setExpectedFile(missingFile)
+                setIsOpen(true)
+                return
             }
         }
-    };
+    }
 
     const findFileRevision = (aquaTree: AquaTree): string => {
-        const genHash = getGenesisHash(aquaTree);
+        const genHash = getGenesisHash(aquaTree)
         if (genHash == null) {
-            return '';
+            return ''
         }
-        const fileRevision = aquaTree.revisions[genHash];
-        return fileRevision?.file_hash ?? '';
-    };
+        const fileRevision = aquaTree.revisions[genHash]
+        return fileRevision?.file_hash ?? ''
+    }
 
     const userHasAquaTreeByGenesis = (importedGenesisHash: string): boolean => {
         return files.some(userFile => {
-            const aquaTreeGenesisHash = getGenesisHash(userFile.aquaTree!);
-            return aquaTreeGenesisHash === importedGenesisHash;
-        });
-    };
+            const aquaTreeGenesisHash = getGenesisHash(userFile.aquaTree!)
+            return aquaTreeGenesisHash === importedGenesisHash
+        })
+    }
 
     const hasLinkRevisions = (aquaTree: AquaTree): boolean => {
-        return Object.values(aquaTree.revisions).some(item => item.revision_type === 'link');
-    };
+        return Object.values(aquaTree.revisions).some(
+            item => item.revision_type === 'link'
+        )
+    }
 
     const importSimpleAquaFileFile = async (aquaTree: AquaTree) => {
         try {
-            setUploading(true);
+            setUploading(true)
 
-            const [isValidAquaTree, failureReason] = validateAquaTree(aquaTree);
-            console.log(`is aqua tree valid ${isValidAquaTree} failure reason ${failureReason}`);
+            const [isValidAquaTree, failureReason] = validateAquaTree(aquaTree)
+            console.log(
+                `is aqua tree valid ${isValidAquaTree} failure reason ${failureReason}`
+            )
             if (!isValidAquaTree) {
-                setUploading(false);
+                setUploading(false)
                 toast({
                     description: `Aqua tree has an error: ${failureReason}`,
                     variant: 'destructive',
-                });
-                return;
+                })
+                return
             }
 
-            const fileHash = findFileRevision(aquaTree);
-            const actualUrlToFetch = ensureDomainUrlHasSSL(backend_url);
+            const fileHash = findFileRevision(aquaTree)
+            const actualUrlToFetch = ensureDomainUrlHasSSL(backend_url)
 
-            const response = await fetch(`${actualUrlToFetch}/files/${fileHash}`, {
-                method: 'GET',
-                headers: {
-                    Nonce: session?.nonce ?? '--error--',
-                },
-            });
+            const response = await fetch(
+                `${actualUrlToFetch}/files/${fileHash}`,
+                {
+                    method: 'GET',
+                    headers: {
+                        Nonce: session?.nonce ?? '--error--',
+                    },
+                }
+            )
 
             if (!response.ok) {
                 if (fileHash) {
-                    setRequiredFileHash(fileHash);
-                    setIsOpen(true);
-                    return;
+                    setRequiredFileHash(fileHash)
+                    setIsOpen(true)
+                    return
                 } else {
-                    setUploading(false);
+                    setUploading(false)
                     toast({
                         description: `Could not determine required file hash from AquaTree`,
                         variant: 'destructive',
-                    });
-                    return;
+                    })
+                    return
                 }
             }
 
-            console.log(`Response ok, fetching file content for ${fileHash}`);
-            const blob: Blob = await response.blob();
-            const fileName = getFileName(aquaTree);
-            const arrayBuffer = await blob.arrayBuffer();
-            const uint8Array = new Uint8Array(arrayBuffer);
+            console.log(`Response ok, fetching file content for ${fileHash}`)
+            const blob: Blob = await response.blob()
+            const fileName = getFileName(aquaTree)
+            const arrayBuffer = await blob.arrayBuffer()
+            const uint8Array = new Uint8Array(arrayBuffer)
 
             const fileObject: FileObject = {
                 fileContent: uint8Array,
                 fileName: fileName,
                 path: './',
                 fileSize: blob.size,
-            };
+            }
 
-            console.log(`here fileObject ${JSON.stringify(fileObject, null, 2)}`);
+            console.log(
+                `here fileObject ${JSON.stringify(fileObject, null, 2)}`
+            )
             if (hasLinkRevisions(aquaTree)) {
-                console.log(`has link revisions`);
-                setUploading(false);
+                console.log(`has link revisions`)
+                setUploading(false)
                 toast({
                     description: `Aqua tree has a link revision please import the Aquatree using the zip format`,
                     variant: 'destructive',
-                });
-                return;
+                })
+                return
             }
 
-            const dummyCreds: CredentialsData = dummyCredential();
-            dummyCreds.alchemy_key = user_profile.alchemy_key;
-            console.log(`dummyCreds ${JSON.stringify(dummyCreds, null, 2)}`);
-            const result = await aquafier.verifyAquaTree(aquaTree, [fileObject], dummyCreds);
-            console.log(`result of verifyAquaTree ${JSON.stringify(result, null, 2)}`);
+            const dummyCreds: CredentialsData = dummyCredential()
+            dummyCreds.alchemy_key = user_profile.alchemy_key
+            console.log(`dummyCreds ${JSON.stringify(dummyCreds, null, 2)}`)
+            const result = await aquafier.verifyAquaTree(
+                aquaTree,
+                [fileObject],
+                dummyCreds
+            )
+            console.log(
+                `result of verifyAquaTree ${JSON.stringify(result, null, 2)}`
+            )
             if (result.isErr()) {
-                setUploading(false);
+                setUploading(false)
                 toast({
                     description: `Aqua tree is not valid: ${JSON.stringify(result)}`,
                     variant: 'destructive',
-                });
-                return;
+                })
+                return
             }
 
-            const importedAquaTreeGenesisHash = getGenesisHash(aquaTree);
+            const importedAquaTreeGenesisHash = getGenesisHash(aquaTree)
 
             if (userHasAquaTreeByGenesis(importedAquaTreeGenesisHash!)) {
-                setUploading(false);
+                setUploading(false)
                 toast({
                     description: `Aqua tree exists already in your files`,
                     variant: 'destructive',
-                });
-                return;
+                })
+                return
             }
-            console.log(`importedAquaTreeGenesisHash ${importedAquaTreeGenesisHash}`);
+            console.log(
+                `importedAquaTreeGenesisHash ${importedAquaTreeGenesisHash}`
+            )
 
-            await uploadFileData(aquaFile, null, false);
+            await uploadFileData(aquaFile, null, false)
         } catch (e) {
-            setUploading(false);
+            setUploading(false)
             toast({
                 description: `Failed to import aqua tree file: ${e}`,
                 variant: 'destructive',
-            });
+            })
         }
-    };
+    }
 
     const findMissingFileForLinkHash = (
         aquaTreeItem: AquaTree,
         linkHash: string,
         newFileObjects: Array<{ file: File; fileObject: FileObject }>
     ): UploadLinkAquaTreeExpectedData | null => {
-        const revisionItem = aquaTreeItem.revisions[linkHash];
-        const fileRevisionHash = revisionItem.link_verification_hashes![0];
-        const fileName = aquaTreeItem.file_index[fileRevisionHash];
-        const aquaFile = `${fileName}.aqua.json`;
+        const revisionItem = aquaTreeItem.revisions[linkHash]
+        const fileRevisionHash = revisionItem.link_verification_hashes![0]
+        const fileName = aquaTreeItem.file_index[fileRevisionHash]
+        const aquaFile = `${fileName}.aqua.json`
 
-        const aquaFileItemObject = newFileObjects.find(e => e.fileObject.fileName === aquaFile);
+        const aquaFileItemObject = newFileObjects.find(
+            e => e.fileObject.fileName === aquaFile
+        )
         if (!aquaFileItemObject) {
             return {
                 displayText: `please upload ${aquaFile}.`,
@@ -286,12 +327,16 @@ export const ImportAquaTree = ({
                 itemRevisionHash: fileRevisionHash,
                 expectedFileName: aquaFile,
                 isAquaFile: true,
-            };
+            }
         }
 
-        const fileItemObject = newFileObjects.find(e => e.fileObject.fileName === fileName);
+        const fileItemObject = newFileObjects.find(
+            e => e.fileObject.fileName === fileName
+        )
         if (!fileItemObject) {
-            const aquaFileItemObject = newFileObjects.find(e => e.fileObject.fileName === aquaFile);
+            const aquaFileItemObject = newFileObjects.find(
+                e => e.fileObject.fileName === aquaFile
+            )
             if (!aquaFileItemObject) {
                 return {
                     displayText: `please upload ${aquaFile} .`,
@@ -299,26 +344,28 @@ export const ImportAquaTree = ({
                     itemRevisionHash: fileRevisionHash,
                     expectedFileName: aquaFile,
                     isAquaFile: true,
-                };
+                }
             }
 
-            let aquaTree: AquaTree;
-            const contentData = aquaFileItemObject.fileObject.fileContent;
+            let aquaTree: AquaTree
+            const contentData = aquaFileItemObject.fileObject.fileContent
             if (typeof contentData == 'string') {
-                aquaTree = JSON.parse(aquaFileItemObject.fileObject.fileContent as string);
+                aquaTree = JSON.parse(
+                    aquaFileItemObject.fileObject.fileContent as string
+                )
             } else if (typeof contentData === 'object') {
-                aquaTree = aquaFileItemObject.fileObject.fileContent as AquaTree;
+                aquaTree = aquaFileItemObject.fileObject.fileContent as AquaTree
             } else {
-                throw Error(`An error occured. could not deduce aqua tree`);
+                throw Error(`An error occured. could not deduce aqua tree`)
             }
-            const genHash = getGenesisHash(aquaTree);
+            const genHash = getGenesisHash(aquaTree)
             if (genHash == null) {
                 throw Error(
                     `Genesis hash cannot be null for ${aquaFileItemObject.fileObject.fileName}`
-                );
+                )
             }
-            const genRevision = aquaTree.revisions[genHash];
-            const fileHash = genRevision.file_hash;
+            const genRevision = aquaTree.revisions[genHash]
+            const fileHash = genRevision.file_hash
 
             return {
                 displayText: `please upload ${fileName}`,
@@ -326,19 +373,20 @@ export const ImportAquaTree = ({
                 expectedFileName: fileName,
                 itemRevisionHash: fileRevisionHash,
                 isAquaFile: false,
-            };
+            }
         }
 
-        return null;
-    };
+        return null
+    }
 
     const checkAllFilesAvailable = (
         allAquaTrees: Array<{ file: File; fileObject: FileObject }>,
         newFileObjects: Array<{ file: File; fileObject: FileObject }>
     ): UploadLinkAquaTreeExpectedData | null => {
         for (const aFileObject of allAquaTrees) {
-            const aquaTreeItem: AquaTree = aFileObject.fileObject.fileContent as AquaTree;
-            const linkHashes = allLinkRevisionHashes(aquaTreeItem);
+            const aquaTreeItem: AquaTree = aFileObject.fileObject
+                .fileContent as AquaTree
+            const linkHashes = allLinkRevisionHashes(aquaTreeItem)
 
             if (linkHashes.length > 0) {
                 for (const linkHash of linkHashes) {
@@ -346,203 +394,216 @@ export const ImportAquaTree = ({
                         aquaTreeItem,
                         linkHash,
                         newFileObjects
-                    );
+                    )
                     if (missingFile) {
-                        return missingFile;
+                        return missingFile
                     }
                 }
             }
         }
-        return null;
-    };
+        return null
+    }
 
     const inspectMultiFileUpload = async (filePar: File) => {
         if (!expectedFile) {
             toast({
                 description: 'An internal error occured',
                 variant: 'destructive',
-            });
-            return;
+            })
+            return
         }
 
-        const fileDataContent = await readFileContent(filePar);
-        console.log(`expectedFile ${JSON.stringify(expectedFile, null, 2)}`);
+        const fileDataContent = await readFileContent(filePar)
+        console.log(`expectedFile ${JSON.stringify(expectedFile, null, 2)}`)
 
         if (!expectedFile.expectedFileName.endsWith(`.aqua.json`)) {
-            const fileHash = aquafier.getFileHash(fileDataContent);
+            const fileHash = aquafier.getFileHash(fileDataContent)
 
             console.log(
                 `calculated fileHash ${fileHash} and from chain ${expectedFile.exectedFileHash} file name ${filePar.name}`
-            );
+            )
             if (fileHash.trim() != expectedFile.exectedFileHash.trim()) {
                 toast({
                     description:
                         "Dropped file hash doesn't match the required hash in the AquaTree..",
                     variant: 'destructive',
-                });
-                return;
+                })
+                return
             }
         } else {
-            const aquaTreeItem: AquaTree = JSON.parse(fileDataContent as string);
-            const allHashes = Object.keys(aquaTreeItem.revisions);
-            console.log(`All hashes ${allHashes} --`);
+            const aquaTreeItem: AquaTree = JSON.parse(fileDataContent as string)
+            const allHashes = Object.keys(aquaTreeItem.revisions)
+            console.log(`All hashes ${allHashes} --`)
             if (allHashes.includes(expectedFile.itemRevisionHash)) {
-                console.log(`Its okay continue ......`);
+                console.log(`Its okay continue ......`)
             } else {
                 toast({
-                    description: 'Aqua file does not contain ' + expectedFile.itemRevisionHash,
+                    description:
+                        'Aqua file does not contain ' +
+                        expectedFile.itemRevisionHash,
                     variant: 'destructive',
-                });
-                return;
+                })
+                return
             }
         }
 
         if (filePar.name != expectedFile.expectedFileName) {
             toast({
-                description: 'Please rename the file to ' + expectedFile.expectedFileName,
+                description:
+                    'Please rename the file to ' +
+                    expectedFile.expectedFileName,
                 variant: 'destructive',
-            });
-            return;
+            })
+            return
         }
 
-        let fileData = fileDataContent;
+        let fileData = fileDataContent
         if (filePar.name.endsWith(`.aqua.json`)) {
-            fileData = JSON.parse(fileDataContent as string);
+            fileData = JSON.parse(fileDataContent as string)
         }
         const fileObject: FileObject = {
             fileContent: fileData,
             fileName: filePar.name,
             fileSize: filePar.size,
             path: '',
-        };
+        }
 
-        console.log(`New file object ${JSON.stringify(fileObject, null, 4)}`);
+        console.log(`New file object ${JSON.stringify(fileObject, null, 4)}`)
 
-        const newFileObjects = allFileObjectWrapper;
+        const newFileObjects = allFileObjectWrapper
         newFileObjects.push({
             file: filePar,
             fileObject: fileObject,
-        });
+        })
 
         console.log(
             `--- inspectMultiFileUpload continue ${JSON.stringify(newFileObjects, null, 4)} `
-        );
-        setAllFileObjectsWrapper(newFileObjects);
+        )
+        setAllFileObjectsWrapper(newFileObjects)
 
-        const allAquaTrees = newFileObjects.filter(e => isAquaTree(e.fileObject.fileContent));
+        const allAquaTrees = newFileObjects.filter(e =>
+            isAquaTree(e.fileObject.fileContent)
+        )
 
-        const missingFile = checkAllFilesAvailable(allAquaTrees, newFileObjects);
+        const missingFile = checkAllFilesAvailable(allAquaTrees, newFileObjects)
         if (missingFile) {
-            console.log(`missingFile ${JSON.stringify(missingFile, null, 2)}`);
-            setExpectedFile(missingFile);
-            setIsOpen(true);
+            console.log(`missingFile ${JSON.stringify(missingFile, null, 2)}`)
+            setExpectedFile(missingFile)
+            setIsOpen(true)
             toast({
                 description: `Please upload ${missingFile.expectedFileName}`,
                 variant: 'destructive',
-            });
-            return;
+            })
+            return
         }
-        console.log(`allAquaTrees contrinue to upload  ${JSON.stringify(allAquaTrees, null, 4)}`);
+        console.log(
+            `allAquaTrees contrinue to upload  ${JSON.stringify(allAquaTrees, null, 4)}`
+        )
 
         for (const item of allAquaTrees) {
-            console.log(` looping aqua tree file ${item.file.name} `);
+            console.log(` looping aqua tree file ${item.file.name} `)
             if (aquaFile.name == item.file.name) {
-                console.log(`skip main file .. ${aquaFile.name}`);
+                console.log(`skip main file .. ${aquaFile.name}`)
             } else {
-                const aquaTreeItem: AquaTree = item.fileObject.fileContent as AquaTree;
-                const fileName = getAquaTreeFileName(aquaTreeItem);
-                const fileObjWrapper = newFileObjects.find(e => e.fileObject.fileName === fileName);
+                const aquaTreeItem: AquaTree = item.fileObject
+                    .fileContent as AquaTree
+                const fileName = getAquaTreeFileName(aquaTreeItem)
+                const fileObjWrapper = newFileObjects.find(
+                    e => e.fileObject.fileName === fileName
+                )
 
                 if (!fileObjWrapper) {
                     toast({
                         description: `An internal error occured , cannot find file ${fileName}`,
                         variant: 'destructive',
-                    });
-                    return false;
+                    })
+                    return false
                 }
 
-                await uploadFileData(item.file, fileObjWrapper.file, true);
+                await uploadFileData(item.file, fileObjWrapper.file, true)
             }
         }
 
-        const fileContent = await readFileAsText(aquaFile);
-        const aquaTree: AquaTree = JSON.parse(fileContent);
-        const fileName = getAquaTreeFileName(aquaTree);
-        const fileObjWrapper = newFileObjects.find(e => e.fileObject.fileName === fileName);
+        const fileContent = await readFileAsText(aquaFile)
+        const aquaTree: AquaTree = JSON.parse(fileContent)
+        const fileName = getAquaTreeFileName(aquaTree)
+        const fileObjWrapper = newFileObjects.find(
+            e => e.fileObject.fileName === fileName
+        )
 
-        await uploadFileData(aquaFile, fileObjWrapper?.file!, false);
-    };
+        await uploadFileData(aquaFile, fileObjWrapper?.file!, false)
+    }
 
     const importFile = async () => {
-        const fileContent = await readFileAsText(aquaFile);
-        const aquaTree: AquaTree = JSON.parse(fileContent);
-        const hasLinkRevision = hasLinkRevisions(aquaTree);
-        console.log(`one here ${hasLinkRevision}`);
+        const fileContent = await readFileAsText(aquaFile)
+        const aquaTree: AquaTree = JSON.parse(fileContent)
+        const hasLinkRevision = hasLinkRevisions(aquaTree)
+        console.log(`one here ${hasLinkRevision}`)
         if (hasLinkRevision) {
-            await importLinkedFile(aquaTree);
+            await importLinkedFile(aquaTree)
         } else {
-            await importSimpleAquaFileFile(aquaTree);
+            await importSimpleAquaFileFile(aquaTree)
         }
-    };
+    }
 
     const modalSelectedFile = async (selectedFile: File) => {
         if (requiredFileHash) {
-            const fileDataContent = await readFileContent(selectedFile);
-            const fileHash = aquafier.getFileHash(fileDataContent);
+            const fileDataContent = await readFileContent(selectedFile)
+            const fileHash = aquafier.getFileHash(fileDataContent)
             console.log(
                 `calculated fileHash ${fileHash} and from chain ${requiredFileHash} file name ${selectedFile.name}`
-            );
+            )
             if (fileHash !== requiredFileHash) {
                 toast({
                     description:
                         "Dropped file hash doesn't match the required hash in the AquaTree..",
                     variant: 'destructive',
-                });
+                })
             } else {
-                setSelectedFileName(selectedFile.name);
-                setIsOpen(false);
+                setSelectedFileName(selectedFile.name)
+                setIsOpen(false)
 
                 try {
-                    await uploadFileData(aquaFile, selectedFile, false);
+                    await uploadFileData(aquaFile, selectedFile, false)
                 } catch (error) {
                     toast({
                         description: `Error processing: ${error instanceof Error ? error.message : String(error)}`,
                         variant: 'destructive',
-                    });
-                    setUploading(false);
+                    })
+                    setUploading(false)
                 }
             }
         }
-    };
+    }
 
     const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files && e.target.files.length > 0) {
-            const file = e.target.files[0];
+            const file = e.target.files[0]
             if (expectedFile == null) {
-                await modalSelectedFile(file);
+                await modalSelectedFile(file)
             } else {
-                await inspectMultiFileUpload(file);
+                await inspectMultiFileUpload(file)
             }
         }
-    };
+    }
 
     const handleDrop = async (event: React.DragEvent<HTMLDivElement>) => {
-        event.preventDefault();
+        event.preventDefault()
 
         if (event.dataTransfer.files && event.dataTransfer.files.length > 0) {
-            const file = event.dataTransfer.files[0];
-            await modalSelectedFile(file);
+            const file = event.dataTransfer.files[0]
+            await modalSelectedFile(file)
         }
-    };
+    }
 
     const handleDragOver = (event: React.DragEvent<HTMLDivElement>) => {
-        event.preventDefault();
-    };
+        event.preventDefault()
+    }
 
     const closeModal = () => {
-        setUploading(false);
-        setIsOpen(false);
-    };
+        setUploading(false)
+        setIsOpen(false)
+    }
 
     return (
         <>
@@ -575,8 +636,9 @@ export const ImportAquaTree = ({
                             <p className="text-sm text-black text-center">
                                 {expectedFile == null ? (
                                     <span>
-                                        We couldn't fetch the file associated with this AquaTree.
-                                        Please select or drop the file:
+                                        We couldn't fetch the file associated
+                                        with this AquaTree. Please select or
+                                        drop the file:
                                     </span>
                                 ) : (
                                     <span>{expectedFile.displayText}</span>
@@ -588,11 +650,15 @@ export const ImportAquaTree = ({
                                 onDrop={handleDrop}
                                 onDragOver={handleDragOver}
                             >
-                                <p className="mb-2 text-sm text-black">Drag and drop file here</p>
+                                <p className="mb-2 text-sm text-black">
+                                    Drag and drop file here
+                                </p>
                                 <p className="text-sm text-black mb-3">or</p>
                                 <Button
                                     data-testid="action-select-file-06-button"
-                                    onClick={() => fileInputRef.current?.click()}
+                                    onClick={() =>
+                                        fileInputRef.current?.click()
+                                    }
                                     className="bg-black text-white hover:bg-gray-800"
                                     size="sm"
                                 >
@@ -627,5 +693,5 @@ export const ImportAquaTree = ({
                 </DialogContent>
             </Dialog>
         </>
-    );
-};
+    )
+}

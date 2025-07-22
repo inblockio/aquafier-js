@@ -1,6 +1,6 @@
-import { ArrowLeft, AlertCircle } from 'lucide-react';
-import { Link } from 'react-router-dom';
-import { Button } from '@/components/ui/button';
+import { ArrowLeft, AlertCircle } from 'lucide-react'
+import { Link } from 'react-router-dom'
+import { Button } from '@/components/ui/button'
 
 const PageNotFound = () => {
     return (
@@ -17,12 +17,17 @@ const PageNotFound = () => {
                             </div>
                         </div>
 
-                        <h1 className="text-5xl font-bold font-headline mb-2">404</h1>
-                        <h2 className="text-2xl font-semibold mb-4">Page Not Found</h2>
+                        <h1 className="text-5xl font-bold font-headline mb-2">
+                            404
+                        </h1>
+                        <h2 className="text-2xl font-semibold mb-4">
+                            Page Not Found
+                        </h2>
 
                         <p className="text-muted-foreground mb-8">
-                            The page you are looking for might have been removed, had its name
-                            changed, or is temporarily unavailable.
+                            The page you are looking for might have been
+                            removed, had its name changed, or is temporarily
+                            unavailable.
                         </p>
 
                         <Button
@@ -38,11 +43,12 @@ const PageNotFound = () => {
                 </div>
 
                 <div className="text-sm text-muted-foreground">
-                    &copy; {new Date().getFullYear()} Aqua Protocol. All rights reserved.
+                    &copy; {new Date().getFullYear()} Aqua Protocol. All rights
+                    reserved.
                 </div>
             </div>
         </div>
-    );
-};
+    )
+}
 
-export default PageNotFound;
+export default PageNotFound

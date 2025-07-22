@@ -8,7 +8,7 @@ import {
     DialogTitle,
     DialogTrigger,
     Text,
-} from '@chakra-ui/react';
+} from '@chakra-ui/react'
 // import React, { useEffect } from 'react'
 // import { } from './chakra-ui/dialog'
 // import ImportPage from '../pages/ImportPage'
@@ -59,7 +59,11 @@ const ImportByModal = () => {
         <>
             <DialogRoot size={'xl'}>
                 <DialogTrigger asChild>
-                    <Button data-testid="import-7-button" variant="outline" size="sm">
+                    <Button
+                        data-testid="import-7-button"
+                        variant="outline"
+                        size="sm"
+                    >
                         Import
                     </Button>
                 </DialogTrigger>
@@ -79,7 +83,7 @@ const ImportByModal = () => {
                 </DialogContent>
             </DialogRoot>
         </>
-    );
-};
+    )
+}
 
-export default ImportByModal;
+export default ImportByModal

@@ -1,24 +1,28 @@
-import { useState, useCallback } from 'react';
-import { Upload, FileText, Folder } from 'lucide-react';
+import { useState, useCallback } from 'react'
+import { Upload, FileText, Folder } from 'lucide-react'
 
 // import { useStore } from 'zustand';
 // import appStore from '../store';
-import { DropEvent, FileSelectEvent } from '@/types/types';
+import { DropEvent, FileSelectEvent } from '@/types/types'
 
-const FileDropZone = ({ setFiles }: { setFiles: (selectedFiles: File[]) => void }) => {
-    const [isDragOver, setIsDragOver] = useState(false);
+const FileDropZone = ({
+    setFiles,
+}: {
+    setFiles: (selectedFiles: File[]) => void
+}) => {
+    const [isDragOver, setIsDragOver] = useState(false)
     // const [filesList, setFilesList] = useState<FileItemWrapper[]>([]);
     //  const { files, setFiles, session , backend_url } = useStore(appStore)
 
     const handleDragOver = useCallback((e: { preventDefault: () => void }) => {
-        e.preventDefault();
-        setIsDragOver(true);
-    }, []);
+        e.preventDefault()
+        setIsDragOver(true)
+    }, [])
 
     const handleDragLeave = useCallback((e: { preventDefault: () => void }) => {
-        e.preventDefault();
-        setIsDragOver(false);
-    }, []);
+        e.preventDefault()
+        setIsDragOver(false)
+    }, [])
 
     // const uploadFile = async (fileData: FileItemWrapper) => {
 
@@ -213,24 +217,24 @@ const FileDropZone = ({ setFiles }: { setFiles: (selectedFiles: File[]) => void 
     // }, []);
 
     const handleDrop = useCallback((e: DropEvent) => {
-        e.preventDefault();
-        setIsDragOver(false);
+        e.preventDefault()
+        setIsDragOver(false)
 
-        const droppedFiles = Array.from(e.dataTransfer.files);
-        if (droppedFiles.length === 0) return;
+        const droppedFiles = Array.from(e.dataTransfer.files)
+        if (droppedFiles.length === 0) return
 
-        setFiles(droppedFiles);
+        setFiles(droppedFiles)
         // droppedFiles.forEach(file => handleFile(file));
         // setFiles((prev: File[]) => [...prev, ...droppedFiles]);
-    }, []);
+    }, [])
 
     const handleFileSelect = useCallback((e: FileSelectEvent) => {
-        const selectedFiles = Array.from(e.target.files ?? []);
-        if (selectedFiles.length === 0) return;
-        setFiles(selectedFiles);
+        const selectedFiles = Array.from(e.target.files ?? [])
+        if (selectedFiles.length === 0) return
+        setFiles(selectedFiles)
         // selectedFiles.forEach(file => handleFile(file));
         // setFiles((prev: File[]) => [...prev, ...selectedFiles]);
-    }, []);
+    }, [])
 
     return (
         <div className="w-full max-w-2xl mx-auto p-6 items-center justify-center">
@@ -252,8 +256,8 @@ const FileDropZone = ({ setFiles }: { setFiles: (selectedFiles: File[]) => void 
                     <div
                         className="relative"
                         onClick={() => {
-                            const input = document.getElementById('file-input');
-                            if (input) input.click();
+                            const input = document.getElementById('file-input')
+                            if (input) input.click()
                         }}
                     >
                         <Folder className="w-16 h-16 text-gray-400" />
@@ -300,12 +304,14 @@ const FileDropZone = ({ setFiles }: { setFiles: (selectedFiles: File[]) => void 
                 {/* Drag overlay */}
                 {isDragOver && (
                     <div className="absolute inset-0 bg-blue-100 bg-opacity-50 rounded-lg flex items-center justify-center">
-                        <div className="text-blue-600 font-medium">Drop files here</div>
+                        <div className="text-blue-600 font-medium">
+                            Drop files here
+                        </div>
                     </div>
                 )}
             </div>
         </div>
-    );
-};
+    )
+}
 
-export default FileDropZone;
+export default FileDropZone

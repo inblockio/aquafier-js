@@ -1,13 +1,13 @@
-import { LuSave } from 'react-icons/lu';
-import axios from 'axios';
-import { useStore } from 'zustand';
-import appStore from '../../store';
-import { useState } from 'react';
+import { LuSave } from 'react-icons/lu'
+import axios from 'axios'
+import { useStore } from 'zustand'
+import appStore from '../../store'
+import { useState } from 'react'
 
-import JSZip from 'jszip';
-import { IDropzoneAction } from '../../types/types';
-import { toaster } from '@/components/ui/use-toast';
-import { Button } from '@/components/ui/button';
+import JSZip from 'jszip'
+import { IDropzoneAction } from '../../types/types'
+import { toaster } from '@/components/ui/use-toast'
+import { Button } from '@/components/ui/button'
 
 export const ImportAquaTreeZip = ({
     file,
@@ -15,83 +15,84 @@ export const ImportAquaTreeZip = ({
     fileIndex,
     updateUploadedIndex,
 }: IDropzoneAction) => {
-    const [uploading, setUploading] = useState(false);
-    const [uploaded, setUploaded] = useState(false);
+    const [uploading, setUploading] = useState(false)
+    const [uploaded, setUploaded] = useState(false)
 
-    const { metamaskAddress, setFiles, backend_url, session } = useStore(appStore);
+    const { metamaskAddress, setFiles, backend_url, session } =
+        useStore(appStore)
 
     const uploadFileData = async () => {
-        console.log('uploadFileData called...');
+        console.log('uploadFileData called...')
 
         if (!file) {
             toaster.create({
                 description: 'No file selected!',
                 type: 'info',
-            });
-            return;
+            })
+            return
         }
 
-        const formData = new FormData();
-        formData.append('file', file);
-        formData.append('account', `${metamaskAddress}`);
+        const formData = new FormData()
+        formData.append('file', file)
+        formData.append('account', `${metamaskAddress}`)
 
-        setUploading(true);
+        setUploading(true)
         try {
-            const url = `${backend_url}/explorer_aqua_zip`;
+            const url = `${backend_url}/explorer_aqua_zip`
             //  console.log("url ", url)
             const response = await axios.post(url, formData, {
                 headers: {
                     'Content-Type': 'multipart/form-data',
                     nonce: session?.nonce,
                 },
-            });
+            })
 
             // return all user files
-            const res = response.data;
+            const res = response.data
 
-            setFiles([...res.data]);
-            setUploaded(true);
-            setUploading(false);
+            setFiles([...res.data])
+            setUploaded(true)
+            setUploading(false)
             toaster.create({
                 description: 'File uploaded successfuly',
                 type: 'success',
-            });
-            updateUploadedIndex(fileIndex);
-            return;
+            })
+            updateUploadedIndex(fileIndex)
+            return
         } catch (error) {
-            setUploading(false);
+            setUploading(false)
             toaster.create({
                 description: `Failed to upload file: ${error}`,
                 type: 'error',
-            });
+            })
         }
-    };
+    }
 
     const importFile = async () => {
-        console.log('importFile called');
-        const reader = new FileReader();
+        console.log('importFile called')
+        const reader = new FileReader()
 
         reader.onload = async function (_e) {
             try {
-                console.log('int try catch');
-                let hasAquaJson = false;
-                const zip = new JSZip();
-                const zipData = await zip.loadAsync(file);
+                console.log('int try catch')
+                let hasAquaJson = false
+                const zip = new JSZip()
+                const zipData = await zip.loadAsync(file)
 
-                const fileNames = Object.keys(zipData.files);
-                console.log('fileNames ', fileNames);
+                const fileNames = Object.keys(zipData.files)
+                console.log('fileNames ', fileNames)
 
                 for (const fileName in zipData.files) {
                     // Convert ASCII codes to string
                     const actualFileName = fileName
                         .split(',')
                         .map(code => String.fromCharCode(parseInt(code)))
-                        .join('');
-                    console.log('fileName', actualFileName);
+                        .join('')
+                    console.log('fileName', actualFileName)
 
                     if (actualFileName === 'aqua.json') {
-                        hasAquaJson = true;
-                        break;
+                        hasAquaJson = true
+                        break
                     }
                 }
 
@@ -99,19 +100,19 @@ export const ImportAquaTreeZip = ({
                     toaster.create({
                         description: 'Aqua Json not found.',
                         type: 'info',
-                    });
-                    return;
+                    })
+                    return
                 }
 
-                await uploadFileData();
+                await uploadFileData()
             } catch (error) {
-                console.error('Error reading ZIP file:', error);
-                alert('Failed to read ZIP file.');
+                console.error('Error reading ZIP file:', error)
+                alert('Failed to read ZIP file.')
             }
-        };
+        }
 
-        reader.readAsArrayBuffer(file);
-    };
+        reader.readAsArrayBuffer(file)
+    }
 
     return (
         <Button
@@ -129,5 +130,5 @@ export const ImportAquaTreeZip = ({
             )}
             Import
         </Button>
-    );
-};
+    )
+}

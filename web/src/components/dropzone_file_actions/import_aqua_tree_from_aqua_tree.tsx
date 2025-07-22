@@ -1,25 +1,25 @@
-import { LuCheck, LuChevronRight, LuImport, LuMinus, LuX } from 'react-icons/lu';
-import axios from 'axios';
-import { useStore } from 'zustand';
-import appStore from '../../store';
-import { useEffect, useState } from 'react';
-import { ApiFileInfo } from '../../models/FileInfo';
-import { formatCryptoAddress } from '../../utils/functions';
-import { useNavigate } from 'react-router-dom';
-import { analyzeAndMergeRevisions } from '../../utils/aqua_funcs';
-import { RevisionsComparisonResult } from '../../models/revision_merge';
-import { OrderRevisionInAquaTree, Revision } from 'aqua-js-sdk';
-import { BtnContent, ImportChainFromChainProps } from '../../types/types';
-import { toast } from '@/components/ui/use-toast';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Button } from '@/components/ui/button';
+import { LuCheck, LuChevronRight, LuImport, LuMinus, LuX } from 'react-icons/lu'
+import axios from 'axios'
+import { useStore } from 'zustand'
+import appStore from '../../store'
+import { useEffect, useState } from 'react'
+import { ApiFileInfo } from '../../models/FileInfo'
+import { formatCryptoAddress } from '../../utils/functions'
+import { useNavigate } from 'react-router-dom'
+import { analyzeAndMergeRevisions } from '../../utils/aqua_funcs'
+import { RevisionsComparisonResult } from '../../models/revision_merge'
+import { OrderRevisionInAquaTree, Revision } from 'aqua-js-sdk'
+import { BtnContent, ImportChainFromChainProps } from '../../types/types'
+import { toast } from '@/components/ui/use-toast'
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
+import { Button } from '@/components/ui/button'
 import {
     Dialog,
     DialogContent,
     DialogFooter,
     DialogHeader,
     DialogTitle,
-} from '@/components/ui/dialog';
+} from '@/components/ui/dialog'
 // import { toast } from "@/components/ui/use-toast";
 // import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 // import { Button } from "@/components/ui/button";
@@ -33,107 +33,121 @@ export const ImportAquaChainFromChain = ({
     isVerificationSuccessful,
     contractData,
 }: ImportChainFromChainProps) => {
-    const [uploading, setUploading] = useState(false);
-    const [_uploaded, setUploaded] = useState(false);
-    const [dbFiles, setDbFiles] = useState<ApiFileInfo[]>([]);
-    const [comparisonResult, setComparisonResult] = useState<RevisionsComparisonResult | null>(
-        null
-    );
-    const [modalOpen, setModalOpen] = useState(false);
+    const [uploading, setUploading] = useState(false)
+    const [_uploaded, setUploaded] = useState(false)
+    const [dbFiles, setDbFiles] = useState<ApiFileInfo[]>([])
+    const [comparisonResult, setComparisonResult] =
+        useState<RevisionsComparisonResult | null>(null)
+    const [modalOpen, setModalOpen] = useState(false)
 
-    const [_lastIdenticalRevisionHash, setLastIdenticalRevisionHash] = useState<string | null>(
-        null
-    );
-    const [_revisionsToImport, setRevisionsToImport] = useState<Revision[]>([]);
-    const [updateMessage, setUpdateMessage] = useState<string | null>(null);
+    const [_lastIdenticalRevisionHash, setLastIdenticalRevisionHash] = useState<
+        string | null
+    >(null)
+    const [_revisionsToImport, setRevisionsToImport] = useState<Revision[]>([])
+    const [updateMessage, setUpdateMessage] = useState<string | null>(null)
     const [btnText, setBtnText] = useState<BtnContent>({
         text: 'Submit chain',
         color: 'blue',
-    });
+    })
 
-    const { files, backend_url, session } = useStore(appStore);
-    const navigate = useNavigate();
+    const { files, backend_url, session } = useStore(appStore)
+    const navigate = useNavigate()
 
     const importAquaChain = async () => {
         // Early check to prevent recursion if already processing
-        if (uploading) return;
+        if (uploading) return
 
         const existingChainFile = dbFiles.find(
             file =>
                 Object.keys(file?.aquaTree?.revisions ?? {})[0] ===
                 Object.keys(fileInfo?.aquaTree?.revisions ?? {})[0]
-        );
+        )
 
         if (existingChainFile) {
-            const existingFileRevisions = Object.keys(existingChainFile?.aquaTree?.revisions ?? {});
-            const fileToImportRevisions = Object.keys(fileInfo?.aquaTree?.revisions ?? {});
+            const existingFileRevisions = Object.keys(
+                existingChainFile?.aquaTree?.revisions ?? {}
+            )
+            const fileToImportRevisions = Object.keys(
+                fileInfo?.aquaTree?.revisions ?? {}
+            )
 
             const mergeResult = analyzeAndMergeRevisions(
                 existingFileRevisions,
                 fileToImportRevisions
-            );
-            const _revisionsToImport: Revision[] = [];
+            )
+            const _revisionsToImport: Revision[] = []
 
-            if (mergeResult.existingRevisionsLength < mergeResult.upcomingRevisionsLength) {
+            if (
+                mergeResult.existingRevisionsLength <
+                mergeResult.upcomingRevisionsLength
+            ) {
                 setUpdateMessage(
                     'Importing chain is longer than existing chain, this will add new revisions to your local chain'
-                );
+                )
                 setBtnText({
                     text: 'Update Local Chain',
                     color: 'green',
-                });
-            }
-
-            if (mergeResult.existingRevisionsLength > mergeResult.upcomingRevisionsLength) {
-                setUpdateMessage(
-                    'Existing chain is longer than importing chain, this will delete some revisions in your local chain'
-                );
-                setBtnText({
-                    text: 'Rebase Local Chain',
-                    color: 'yellow',
-                });
+                })
             }
 
             if (
-                mergeResult.existingRevisionsLength === mergeResult.upcomingRevisionsLength &&
+                mergeResult.existingRevisionsLength >
+                mergeResult.upcomingRevisionsLength
+            ) {
+                setUpdateMessage(
+                    'Existing chain is longer than importing chain, this will delete some revisions in your local chain'
+                )
+                setBtnText({
+                    text: 'Rebase Local Chain',
+                    color: 'yellow',
+                })
+            }
+
+            if (
+                mergeResult.existingRevisionsLength ===
+                    mergeResult.upcomingRevisionsLength &&
                 mergeResult.divergences.length > 0
             ) {
                 setUpdateMessage(
                     'Chains are different, this will merge the chains, your local revisions will be deleted up to where the chains diverge'
-                );
+                )
                 setBtnText({
                     text: 'Merge Chains',
                     color: 'red',
-                });
+                })
             }
 
             if (mergeResult.divergences.length > 0) {
                 for (let i = 0; i < mergeResult.divergences.length; i++) {
-                    const div = mergeResult.divergences[i];
+                    const div = mergeResult.divergences[i]
                     if (div.upcomingRevisionHash) {
                         _revisionsToImport.push(
-                            fileInfo?.aquaTree?.revisions[div.upcomingRevisionHash]!
-                        );
+                            fileInfo?.aquaTree?.revisions[
+                                div.upcomingRevisionHash
+                            ]!
+                        )
                     }
                 }
             }
 
-            setComparisonResult(mergeResult);
-            setLastIdenticalRevisionHash(mergeResult.lastIdenticalRevisionHash);
-            setRevisionsToImport(_revisionsToImport);
-            setModalOpen(true);
-            return;
+            setComparisonResult(mergeResult)
+            setLastIdenticalRevisionHash(mergeResult.lastIdenticalRevisionHash)
+            setRevisionsToImport(_revisionsToImport)
+            setModalOpen(true)
+            return
         }
 
-        setUploading(true);
+        setUploading(true)
 
         try {
-            const url = `${backend_url}/transfer_chain`;
-            const reorderedRevisions = OrderRevisionInAquaTree(fileInfo.aquaTree!);
-            const revisions = reorderedRevisions.revisions;
-            const revisionHashes = Object.keys(revisions);
-            const latestRevisionHash = revisionHashes[revisionHashes.length - 1];
-            console.log('Latest revision hash: ', latestRevisionHash);
+            const url = `${backend_url}/transfer_chain`
+            const reorderedRevisions = OrderRevisionInAquaTree(
+                fileInfo.aquaTree!
+            )
+            const revisions = reorderedRevisions.revisions
+            const revisionHashes = Object.keys(revisions)
+            const latestRevisionHash = revisionHashes[revisionHashes.length - 1]
+            console.log('Latest revision hash: ', latestRevisionHash)
 
             const res = await axios.post(
                 url,
@@ -146,45 +160,47 @@ export const ImportAquaChainFromChain = ({
                         nonce: session?.nonce,
                     },
                 }
-            );
+            )
 
-            console.log('Transfer chain res: ', res);
+            console.log('Transfer chain res: ', res)
             if (res.status === 200) {
                 toast({
                     description: 'Aqua Chain imported successfully',
                     variant: 'default',
-                });
+                })
 
                 // Use setTimeout to ensure state is updated before navigation
                 setTimeout(() => {
-                    navigate('/app/loading?reload=true');
-                }, 500);
+                    navigate('/app/loading?reload=true')
+                }, 500)
             } else {
                 toast({
                     description: 'Failed to import chain',
                     variant: 'destructive',
-                });
+                })
             }
 
-            setUploading(false);
-            setUploaded(true);
-            return;
+            setUploading(false)
+            setUploaded(true)
+            return
         } catch (error) {
-            setUploading(false);
+            setUploading(false)
             toast({
                 description: `Failed to import chain: ${error}`,
                 variant: 'destructive',
-            });
+            })
         }
-    };
+    }
 
     const handleMergeRevisions = async () => {
         try {
-            const url = `${backend_url}/merge_chain`;
-            const reorderedRevisions = OrderRevisionInAquaTree(fileInfo.aquaTree!);
-            const revisions = reorderedRevisions.revisions;
-            const revisionHashes = Object.keys(revisions);
-            const latestRevisionHash = revisionHashes[revisionHashes.length - 1];
+            const url = `${backend_url}/merge_chain`
+            const reorderedRevisions = OrderRevisionInAquaTree(
+                fileInfo.aquaTree!
+            )
+            const revisions = reorderedRevisions.revisions
+            const revisionHashes = Object.keys(revisions)
+            const latestRevisionHash = revisionHashes[revisionHashes.length - 1]
 
             const res = await axios.post(
                 url,
@@ -198,57 +214,57 @@ export const ImportAquaChainFromChain = ({
                         nonce: session?.nonce,
                     },
                 }
-            );
+            )
 
             if (res.status === 200) {
                 toast({
                     description: 'Aqua Chain imported successfully',
                     variant: 'default',
-                });
+                })
 
                 // Use setTimeout to ensure state is updated before navigation
                 setTimeout(() => {
-                    navigate('/loading?reload=true');
-                }, 500);
+                    navigate('/loading?reload=true')
+                }, 500)
             } else {
                 toast({
                     description: 'Failed to import chain',
                     variant: 'destructive',
-                });
+                })
             }
 
-            setUploading(false);
-            setUploaded(true);
-            return;
+            setUploading(false)
+            setUploaded(true)
+            return
         } catch (error) {
-            setUploading(false);
+            setUploading(false)
             toast({
                 description: `Failed to import chain: ${error}`,
                 variant: 'destructive',
-            });
+            })
         }
-    };
+    }
 
     useEffect(() => {
         // Only update dbFiles if files have actually changed
         // This prevents unnecessary re-renders and potential recursion
         if (JSON.stringify(files) !== JSON.stringify(dbFiles)) {
-            setDbFiles(files);
+            setDbFiles(files)
         }
-    }, [files]);
+    }, [files])
 
     const getButtonVariant = (color: string) => {
         switch (color) {
             case 'green':
-                return 'default';
+                return 'default'
             case 'yellow':
-                return 'secondary';
+                return 'secondary'
             case 'red':
-                return 'destructive';
+                return 'destructive'
             default:
-                return 'default';
+                return 'default'
         }
-    };
+    }
 
     // const getTimelineItemColor = (color: string) => {
     //     switch (color) {
@@ -314,7 +330,9 @@ export const ImportAquaChainFromChain = ({
                                     <LuCheck className="h-4 w-4" />
                                 </div>
                                 <div className="flex-1">
-                                    <h4 className="text-sm font-medium">Verification status</h4>
+                                    <h4 className="text-sm font-medium">
+                                        Verification status
+                                    </h4>
                                     <p className="text-sm text-muted-foreground">
                                         Verification successful
                                     </p>
@@ -328,7 +346,9 @@ export const ImportAquaChainFromChain = ({
                                         <LuCheck className="h-4 w-4" />
                                     </div>
                                     <div className="flex-1">
-                                        <h4 className="text-sm font-medium">Chains Identical</h4>
+                                        <h4 className="text-sm font-medium">
+                                            Chains Identical
+                                        </h4>
                                         <p className="text-sm text-muted-foreground">
                                             Chains are identical
                                         </p>
@@ -338,15 +358,19 @@ export const ImportAquaChainFromChain = ({
 
                             {/* Chain Length Comparison */}
                             {(comparisonResult?.existingRevisionsLength ?? 0) >
-                                (comparisonResult?.upcomingRevisionsLength ?? 0) && (
+                                (comparisonResult?.upcomingRevisionsLength ??
+                                    0) && (
                                 <div className="flex gap-4">
                                     <div className="flex h-8 w-8 items-center justify-center rounded-full border-2 text-green-600 border-green-600 bg-background">
                                         <LuCheck className="h-4 w-4" />
                                     </div>
                                     <div className="flex-1">
-                                        <h4 className="text-sm font-medium">Chain Difference</h4>
+                                        <h4 className="text-sm font-medium">
+                                            Chain Difference
+                                        </h4>
                                         <p className="text-sm text-muted-foreground">
-                                            Existing Chain is Longer than Upcoming Chain
+                                            Existing Chain is Longer than
+                                            Upcoming Chain
                                         </p>
                                     </div>
                                 </div>
@@ -359,7 +383,9 @@ export const ImportAquaChainFromChain = ({
                                         <LuCheck className="h-4 w-4" />
                                     </div>
                                     <div className="flex-1">
-                                        <h4 className="text-sm font-medium">Chains Length</h4>
+                                        <h4 className="text-sm font-medium">
+                                            Chains Length
+                                        </h4>
                                         <p className="text-sm text-muted-foreground">
                                             Chains are of same Length
                                         </p>
@@ -369,8 +395,10 @@ export const ImportAquaChainFromChain = ({
 
                             {/* Divergences - Existing is shorter or equal */}
                             {(comparisonResult?.divergences?.length ?? 0) > 0 &&
-                                (comparisonResult?.existingRevisionsLength ?? 0) <=
-                                    (comparisonResult?.upcomingRevisionsLength ?? 0) && (
+                                (comparisonResult?.existingRevisionsLength ??
+                                    0) <=
+                                    (comparisonResult?.upcomingRevisionsLength ??
+                                        0) && (
                                     <>
                                         <div className="flex gap-4">
                                             <div className="flex h-8 w-8 items-center justify-center rounded-full border-2 text-gray-600 border-gray-600 bg-background">
@@ -429,12 +457,16 @@ export const ImportAquaChainFromChain = ({
                                                 <LuCheck className="h-4 w-4" />
                                             </div>
                                             <div className="flex-1">
-                                                <h4 className="text-sm font-medium">Action</h4>
+                                                <h4 className="text-sm font-medium">
+                                                    Action
+                                                </h4>
                                                 <p className="text-sm text-muted-foreground">
                                                     {btnText.text}
                                                 </p>
                                                 <Alert className="mt-2">
-                                                    <AlertTitle>Action Not reversible!</AlertTitle>
+                                                    <AlertTitle>
+                                                        Action Not reversible!
+                                                    </AlertTitle>
                                                     <AlertDescription>
                                                         {updateMessage}
                                                     </AlertDescription>
@@ -443,11 +475,17 @@ export const ImportAquaChainFromChain = ({
                                                     <Button
                                                         data-testid="action-32-button"
                                                         size="sm"
-                                                        variant={getButtonVariant(btnText.color)}
-                                                        onClick={handleMergeRevisions}
+                                                        variant={getButtonVariant(
+                                                            btnText.color
+                                                        )}
+                                                        onClick={
+                                                            handleMergeRevisions
+                                                        }
                                                         disabled={uploading}
                                                     >
-                                                        {uploading ? 'Processing...' : btnText.text}
+                                                        {uploading
+                                                            ? 'Processing...'
+                                                            : btnText.text}
                                                     </Button>
                                                 </div>
                                             </div>
@@ -457,8 +495,10 @@ export const ImportAquaChainFromChain = ({
 
                             {/* Divergences - Existing is longer */}
                             {(comparisonResult?.divergences?.length ?? 0) > 0 &&
-                                (comparisonResult?.existingRevisionsLength ?? 0) >
-                                    (comparisonResult?.upcomingRevisionsLength ?? 0) && (
+                                (comparisonResult?.existingRevisionsLength ??
+                                    0) >
+                                    (comparisonResult?.upcomingRevisionsLength ??
+                                        0) && (
                                     <>
                                         <div className="flex gap-4">
                                             <div className="flex h-8 w-8 items-center justify-center rounded-full border-2 text-gray-600 border-gray-600 bg-background">
@@ -518,12 +558,16 @@ export const ImportAquaChainFromChain = ({
                                                 <LuCheck className="h-4 w-4" />
                                             </div>
                                             <div className="flex-1">
-                                                <h4 className="text-sm font-medium">Action</h4>
+                                                <h4 className="text-sm font-medium">
+                                                    Action
+                                                </h4>
                                                 <p className="text-sm text-muted-foreground">
                                                     {btnText.text}
                                                 </p>
                                                 <Alert className="mt-2">
-                                                    <AlertTitle>Action Not reversible!</AlertTitle>
+                                                    <AlertTitle>
+                                                        Action Not reversible!
+                                                    </AlertTitle>
                                                     <AlertDescription>
                                                         {updateMessage}
                                                     </AlertDescription>
@@ -532,11 +576,17 @@ export const ImportAquaChainFromChain = ({
                                                     <Button
                                                         data-testid="action-67-button"
                                                         size="sm"
-                                                        variant={getButtonVariant(btnText.color)}
-                                                        onClick={handleMergeRevisions}
+                                                        variant={getButtonVariant(
+                                                            btnText.color
+                                                        )}
+                                                        onClick={
+                                                            handleMergeRevisions
+                                                        }
                                                         disabled={uploading}
                                                     >
-                                                        {uploading ? 'Processing...' : btnText.text}
+                                                        {uploading
+                                                            ? 'Processing...'
+                                                            : btnText.text}
                                                     </Button>
                                                 </div>
                                             </div>
@@ -553,7 +603,9 @@ export const ImportAquaChainFromChain = ({
                                             <LuMinus className="h-4 w-4" />
                                         </div>
                                         <div className="flex-1">
-                                            <h4 className="text-sm font-medium">Action</h4>
+                                            <h4 className="text-sm font-medium">
+                                                Action
+                                            </h4>
                                             <p className="text-sm text-muted-foreground">
                                                 No Action
                                             </p>
@@ -575,5 +627,5 @@ export const ImportAquaChainFromChain = ({
                 </DialogContent>
             </Dialog>
         </div>
-    );
-};
+    )
+}

@@ -1,22 +1,31 @@
-import { ConnectWallet } from '../components/connect_wallet';
-import { ConnectWalletPage } from '../components/connect_wallet_page';
-import { Separator } from '../components/ui/separator';
-import NotificationsBell from '../pages/notifications/NotificationsBell';
-import { SidebarInset, SidebarProvider, SidebarTrigger } from '../components/ui/sidebar';
-import appStore from '../store';
-import { X } from 'lucide-react';
-import { useEffect, useState } from 'react';
-import { Outlet } from 'react-router-dom';
-import { ClipLoader } from 'react-spinners';
-import { Toaster } from 'sonner';
-import { useStore } from 'zustand';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../components/ui/dialog';
-import { Button } from '../components/ui/button';
-import CreateFormFromTemplate from '../components/aqua_forms/CreateFormFromTemplate';
-import { ScrollArea } from '../components/ui/scroll-area';
-import FormTemplateEditorShadcn from '../components/aqua_forms/FormTemplateEditorShadcn';
-import { AppSidebar } from '../components/app_sidebar';
-import WebsocketFragment from '@/components/navbar/WebsocketFragment';
+import { ConnectWallet } from '../components/connect_wallet'
+import { ConnectWalletPage } from '../components/connect_wallet_page'
+import { Separator } from '../components/ui/separator'
+import NotificationsBell from '../pages/notifications/NotificationsBell'
+import {
+    SidebarInset,
+    SidebarProvider,
+    SidebarTrigger,
+} from '../components/ui/sidebar'
+import appStore from '../store'
+import { X } from 'lucide-react'
+import { useEffect, useState } from 'react'
+import { Outlet } from 'react-router-dom'
+import { ClipLoader } from 'react-spinners'
+import { Toaster } from 'sonner'
+import { useStore } from 'zustand'
+import {
+    Dialog,
+    DialogContent,
+    DialogHeader,
+    DialogTitle,
+} from '../components/ui/dialog'
+import { Button } from '../components/ui/button'
+import CreateFormFromTemplate from '../components/aqua_forms/CreateFormFromTemplate'
+import { ScrollArea } from '../components/ui/scroll-area'
+import FormTemplateEditorShadcn from '../components/aqua_forms/FormTemplateEditorShadcn'
+import { AppSidebar } from '../components/app_sidebar'
+import WebsocketFragment from '@/components/navbar/WebsocketFragment'
 
 export default function NewShadcnLayoutWithSidebar() {
     const {
@@ -30,54 +39,58 @@ export default function NewShadcnLayoutWithSidebar() {
         openCreateTemplatePopUp,
         setOpenCreateTemplatePopUp,
         formTemplates,
-    } = useStore(appStore);
+    } = useStore(appStore)
 
-    const [loading, setLoading] = useState(true);
+    const [loading, setLoading] = useState(true)
 
     useEffect(() => {
         const timer = setTimeout(() => {
-            setLoading(false);
-        }, 1000);
-        return () => clearTimeout(timer);
-    }, []);
+            setLoading(false)
+        }, 1000)
+        return () => clearTimeout(timer)
+    }, [])
 
-    const [isOpenCreateAquaSignPopUp, setIsOpenCreateAquaSignPopUp] = useState(false);
-    const [isOpenCreateTemplatePopUp, setIsOpenCreateTemplatePopUp] = useState(false);
-    const [isOpenCreateClaimPopUp, setIsOpenCreateClaimPopUp] = useState(false);
-    const [isOpenCreateClaimAttestationPopUp, setIsOpenCreateClaimAttestationPopUp] =
-        useState(false);
+    const [isOpenCreateAquaSignPopUp, setIsOpenCreateAquaSignPopUp] =
+        useState(false)
+    const [isOpenCreateTemplatePopUp, setIsOpenCreateTemplatePopUp] =
+        useState(false)
+    const [isOpenCreateClaimPopUp, setIsOpenCreateClaimPopUp] = useState(false)
+    const [
+        isOpenCreateClaimAttestationPopUp,
+        setIsOpenCreateClaimAttestationPopUp,
+    ] = useState(false)
 
     useEffect(() => {
         if (openCreateClaimPopUp) {
-            setIsOpenCreateClaimPopUp(true);
+            setIsOpenCreateClaimPopUp(true)
         } else {
-            setIsOpenCreateClaimPopUp(false);
+            setIsOpenCreateClaimPopUp(false)
         }
-    }, [openCreateClaimPopUp]);
+    }, [openCreateClaimPopUp])
 
     useEffect(() => {
         if (openCreateAquaSignPopUp) {
-            setIsOpenCreateAquaSignPopUp(true);
+            setIsOpenCreateAquaSignPopUp(true)
         } else {
-            setIsOpenCreateAquaSignPopUp(false);
+            setIsOpenCreateAquaSignPopUp(false)
         }
-    }, [openCreateAquaSignPopUp]);
+    }, [openCreateAquaSignPopUp])
 
     useEffect(() => {
         if (openCreateTemplatePopUp) {
-            setIsOpenCreateTemplatePopUp(true);
+            setIsOpenCreateTemplatePopUp(true)
         } else {
-            setIsOpenCreateTemplatePopUp(false);
+            setIsOpenCreateTemplatePopUp(false)
         }
-    }, [openCreateTemplatePopUp]);
+    }, [openCreateTemplatePopUp])
 
     useEffect(() => {
         if (openCreateClaimAttestationPopUp) {
-            setIsOpenCreateClaimAttestationPopUp(true);
+            setIsOpenCreateClaimAttestationPopUp(true)
         } else {
-            setIsOpenCreateClaimAttestationPopUp(false);
+            setIsOpenCreateClaimAttestationPopUp(false)
         }
-    }, [openCreateClaimAttestationPopUp]);
+    }, [openCreateClaimAttestationPopUp])
 
     if (loading) {
         return (
@@ -98,9 +111,11 @@ export default function NewShadcnLayoutWithSidebar() {
                     aria-label="Loading Spinner"
                     data-testid="loader"
                 />
-                <span style={{ fontSize: 24, fontWeight: 500 }}>Loading...</span>
+                <span style={{ fontSize: 24, fontWeight: 500 }}>
+                    Loading...
+                </span>
             </div>
-        );
+        )
     }
 
     return (
@@ -117,7 +132,10 @@ export default function NewShadcnLayoutWithSidebar() {
                         <header className="flex h-16 shrink-0 items-center gap-2 border-b sticky top-0 z-50 bg-accent w-full">
                             <div className="flex items-center gap-2 px-3 w-full">
                                 <SidebarTrigger />
-                                <Separator orientation="vertical" className="mr-2 h-4" />
+                                <Separator
+                                    orientation="vertical"
+                                    className="mr-2 h-4"
+                                />
 
                                 {/* Desktop Navigation */}
                                 <div className="hidden md:flex items-center space-x-4 ms-auto">
@@ -170,7 +188,7 @@ export default function NewShadcnLayoutWithSidebar() {
             <Dialog
                 open={isOpenCreateTemplatePopUp}
                 onOpenChange={openState => {
-                    setOpenCreateTemplatePopUp(openState);
+                    setOpenCreateTemplatePopUp(openState)
                 }}
             >
                 <DialogContent className="[&>button]:hidden !max-w-[95vw] !w-[95vw] h-[95vh] max-h-[95vh] sm:!max-w-[95vw] sm:!w-[95vw] sm:h-[95vh] sm:max-h-[95vh] flex flex-col">
@@ -180,7 +198,7 @@ export default function NewShadcnLayoutWithSidebar() {
                             size="icon"
                             className="h-6 w-6 bg-red-500 text-white hover:bg-red-500"
                             onClick={() => {
-                                setOpenCreateTemplatePopUp(false);
+                                setOpenCreateTemplatePopUp(false)
                             }}
                         >
                             <X className="h-4 w-4" />
@@ -188,7 +206,7 @@ export default function NewShadcnLayoutWithSidebar() {
                     </div>
                     <FormTemplateEditorShadcn
                         onSave={function (): void {
-                            setOpenCreateTemplatePopUp(false);
+                            setOpenCreateTemplatePopUp(false)
                         }}
                     />
                     {/* <DialogFooter className="mt-auto">
@@ -204,7 +222,7 @@ export default function NewShadcnLayoutWithSidebar() {
             <Dialog
                 open={isOpenCreateAquaSignPopUp}
                 onOpenChange={openState => {
-                    setOpenCreateAquaSignPopUp(openState);
+                    setOpenCreateAquaSignPopUp(openState)
                 }}
             >
                 <DialogContent className="[&>button]:hidden sm:!max-w-[65vw] sm:!w-[65vw] sm:h-[65vh] sm:max-h-[65vh] !max-w-[95vw] !w-[95vw] h-[95vh] max-h-[95vh] flex flex-col p-0 gap-0">
@@ -214,7 +232,7 @@ export default function NewShadcnLayoutWithSidebar() {
                             size="icon"
                             className="h-6 w-6 bg-red-500 text-white hover:bg-red-500"
                             onClick={() => {
-                                setOpenCreateAquaSignPopUp(false);
+                                setOpenCreateAquaSignPopUp(false)
                             }}
                         >
                             <X className="h-4 w-4" />
@@ -227,10 +245,13 @@ export default function NewShadcnLayoutWithSidebar() {
                         <ScrollArea className="h-full">
                             <CreateFormFromTemplate
                                 selectedTemplate={
-                                    formTemplates.find(template => template.name === 'aqua_sign')!
+                                    formTemplates.find(
+                                        template =>
+                                            template.name === 'aqua_sign'
+                                    )!
                                 }
                                 callBack={function (): void {
-                                    setOpenCreateAquaSignPopUp(false);
+                                    setOpenCreateAquaSignPopUp(false)
                                 }}
                                 openCreateTemplatePopUp={false}
                             />
@@ -249,7 +270,7 @@ export default function NewShadcnLayoutWithSidebar() {
             <Dialog
                 open={isOpenCreateClaimPopUp}
                 onOpenChange={openState => {
-                    setOpenCreateClaimPopUp(openState);
+                    setOpenCreateClaimPopUp(openState)
                 }}
             >
                 <DialogContent className="[&>button]:hidden sm:!max-w-[65vw] sm:!w-[65vw] sm:h-[65vh] sm:max-h-[65vh] !max-w-[95vw] !w-[95vw] h-[95vh] max-h-[95vh] flex flex-col p-0 gap-0">
@@ -259,7 +280,7 @@ export default function NewShadcnLayoutWithSidebar() {
                             size="icon"
                             className="h-6 w-6 bg-red-500 text-white hover:bg-red-500"
                             onClick={() => {
-                                setOpenCreateClaimPopUp(false);
+                                setOpenCreateClaimPopUp(false)
                             }}
                         >
                             <X className="h-4 w-4" />
@@ -273,11 +294,12 @@ export default function NewShadcnLayoutWithSidebar() {
                             <CreateFormFromTemplate
                                 selectedTemplate={
                                     formTemplates.find(
-                                        template => template.name === 'identity_claim'
+                                        template =>
+                                            template.name === 'identity_claim'
                                     )!
                                 }
                                 callBack={function (): void {
-                                    setOpenCreateClaimPopUp(false);
+                                    setOpenCreateClaimPopUp(false)
                                 }}
                                 openCreateTemplatePopUp={false}
                             />
@@ -296,7 +318,7 @@ export default function NewShadcnLayoutWithSidebar() {
             <Dialog
                 open={isOpenCreateClaimAttestationPopUp}
                 onOpenChange={openState => {
-                    setOpenCreateClaimAttestationPopUp(openState);
+                    setOpenCreateClaimAttestationPopUp(openState)
                 }}
             >
                 <DialogContent className="[&>button]:hidden sm:!max-w-[65vw] sm:!w-[65vw] sm:h-[65vh] sm:max-h-[65vh] !max-w-[95vw] !w-[95vw] h-[95vh] max-h-[95vh] flex flex-col p-0 gap-0">
@@ -306,7 +328,7 @@ export default function NewShadcnLayoutWithSidebar() {
                             size="icon"
                             className="h-6 w-6 bg-red-500 text-white hover:bg-red-500"
                             onClick={() => {
-                                setOpenCreateClaimAttestationPopUp(false);
+                                setOpenCreateClaimAttestationPopUp(false)
                             }}
                         >
                             <X className="h-4 w-4" />
@@ -320,11 +342,13 @@ export default function NewShadcnLayoutWithSidebar() {
                             <CreateFormFromTemplate
                                 selectedTemplate={
                                     formTemplates.find(
-                                        template => template.name === 'identity_attestation'
+                                        template =>
+                                            template.name ===
+                                            'identity_attestation'
                                     )!
                                 }
                                 callBack={function (): void {
-                                    setOpenCreateClaimAttestationPopUp(false);
+                                    setOpenCreateClaimAttestationPopUp(false)
                                 }}
                                 openCreateTemplatePopUp={false}
                             />
@@ -339,5 +363,5 @@ export default function NewShadcnLayoutWithSidebar() {
                 </DialogContent>
             </Dialog>
         </>
-    );
+    )
 }
