@@ -102,7 +102,7 @@ export default function ClaimsWorkflowPage() {
         }
     }, [JSON.stringify(processedInfo)])
 
-    const loadAttestationData = async (latestRevisionHash: string) => {
+    const loadAttestationData = async (_latestRevisionHash: string) => {
         setIsLoadingAttestations(true)
         try {
             // In a real implementation, this would be an API call to fetch attestations
