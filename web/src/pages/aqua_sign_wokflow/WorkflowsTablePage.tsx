@@ -181,7 +181,7 @@ const WorkflowTableItem = ({ workflowName, apiFileInfo, index = 0 }: IWorkflowIt
             <div className="text-xs text-muted-foreground">
               Created at {getTimeInfo()}
             </div>
-          </div>
+          </div> 
         </div>
       </TableCell>
       {/* <TableCell className="w-[200px]">
