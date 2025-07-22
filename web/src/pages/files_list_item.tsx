@@ -9,10 +9,11 @@ import { WitnessAquaChain } from "../components/aqua_chain_actions/witness_aqua_
 import { DownloadAquaChain } from "../components/aqua_chain_actions/download_aqua_chain";
 import { DeleteAquaChain } from "../components/aqua_chain_actions/delete_aqua_chain";
 import { ShareButton } from "../components/aqua_chain_actions/share_aqua_chain";
-import { OpenWorkflowButton } from "../components/aqua_chain_actions/open_aqua_sign_workflow";
+import { OpenAquaSignWorkFlowButton } from "../components/aqua_chain_actions/open_aqua_sign_workflow";
 import { LinkButton } from "../components/aqua_chain_actions/link_aqua_chain";
 import appStore from "@/store";
 import { useStore } from "zustand"; 
+import { OpenClaimsWorkFlowButton } from "@/components/aqua_chain_actions/open_identity_claim_workflow";
 
 
 export default function FilesListItem({ showWorkFlowsOnly, file, index, systemFileInfo, backendUrl, nonce, viewMode = "table" }: { showWorkFlowsOnly: boolean, file: ApiFileInfo, index: number, systemFileInfo: ApiFileInfo[], backendUrl: string, nonce: string, viewMode?: "table" | "card" | "actions-only" }) {
@@ -38,6 +39,7 @@ export default function FilesListItem({ showWorkFlowsOnly, file, index, systemFi
         const fileObject = getAquaTreeFileObject(file);
         setCurrentFileObject(fileObject);
         const workFlow = isWorkFlowData(file.aquaTree!!, someData);
+        console.log(`Workflow info for file ${getAquaTreeFileName(file.aquaTree!!)}: ${JSON.stringify(workFlow, null, 4)}`);
         setWorkFlowInfo(workFlow)
     }, []);
 
@@ -131,11 +133,38 @@ export default function FilesListItem({ showWorkFlowsOnly, file, index, systemFi
                     </div> */}
         </>
     }
-    const workFlowActions = () => {
+    const workFlowAquaSignActions = () => {
         return <>
             <div className="flex flex-wrap gap-1">
                 <div className="w-[202px]">
-                    <OpenWorkflowButton item={file} nonce={nonce} index={index}/>
+                    <OpenAquaSignWorkFlowButton item={file} nonce={nonce} index={index}/>
+                </div>
+
+                <div className="w-[100px]">
+                    <ShareButton item={file} nonce={nonce} index={index} />
+                </div>
+
+                {/* Delete Button */}
+                <div className="w-[100px]">
+                    <DeleteAquaChain apiFileInfo={file} backendUrl={backendUrl} nonce={nonce} revision="" index={index} />
+                </div>
+
+                {/* Download Button - Smaller width */}
+                <div className="w-[100px]">
+                    <DownloadAquaChain file={file} index={index}/>
+                </div>
+            </div>
+
+        </>
+
+    }
+
+
+     const workFlowIdentityClaimActions = () => {
+        return <>
+            <div className="flex flex-wrap gap-1">
+                <div className="w-[202px]">
+                    <OpenClaimsWorkFlowButton item={file} nonce={nonce} index={index}/>
                 </div>
 
                 <div className="w-[100px]">
@@ -160,7 +189,10 @@ export default function FilesListItem({ showWorkFlowsOnly, file, index, systemFi
     const showActionsButton = () => {
         console.log(`workflowInfo data ${JSON.stringify(workflowInfo, null, 4)}`)
         if (workflowInfo?.isWorkFlow == true && workflowInfo.workFlow == "aqua_sign") {
-            return workFlowActions()
+            return workFlowAquaSignActions()
+        }
+         if (workflowInfo?.isWorkFlow == true && workflowInfo.workFlow == "identity_claim") {
+            return workFlowIdentityClaimActions()
         }
         return workFileActions()
     }

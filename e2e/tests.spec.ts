@@ -331,8 +331,8 @@ test("single user aqua-sign", async (): Promise<void> => {
 
   // Open workflow
 
-  await testPage.waitForSelector('[data-testid="open-workflow-button-0"]', { state: 'visible', timeout: 10000 });
-  await testPage.click('[data-testid="open-workflow-button-0"]');
+  await testPage.waitForSelector('[data-testid="open-aqua-sign-workflow-button-0"]', { state: 'visible', timeout: 10000 });
+  await testPage.click('[data-testid="open-aqua-sign-workflow-button-0"]');
 
   // View contract document
   await testPage.waitForSelector('[data-testid="action-view-contract-button"]', { state: 'visible', timeout: 10000 });
@@ -366,8 +366,8 @@ test("two user aqua-sign", async (): Promise<void> => {
 
   // await testPageWalletOne.reload()
 
-  await testPageWalletOne.waitForSelector('[data-testid="open-workflow-button-0"]', { state: 'visible', timeout: 10000 });
-  await testPageWalletOne.click('[data-testid="open-workflow-button-0"]');
+  await testPageWalletOne.waitForSelector('[data-testid="open-aqua-sign-workflow-button-0"]', { state: 'visible', timeout: 10000 });
+  await testPageWalletOne.click('[data-testid="open-aqua-sign-workflow-button-0"]');
 
 
   await testPageWalletOne.waitForSelector('[data-testid="action-view-contract-button"]', { state: 'visible', timeout: 10000 });
@@ -393,8 +393,8 @@ test("two user aqua-sign", async (): Promise<void> => {
 
   // Open workflow
 
-  await testPageWalletTwo.waitForSelector('[data-testid="open-workflow-button-0"]', { state: 'visible', timeout: 10000 });
-  await testPageWalletTwo.click('[data-testid="open-workflow-button-0"]');
+  await testPageWalletTwo.waitForSelector('[data-testid="open-aqua-sign-workflow-button-0"]', { state: 'visible', timeout: 10000 });
+  await testPageWalletTwo.click('[data-testid="open-aqua-sign-workflow-button-0"]');
 
   // View contract document
   await testPageWalletTwo.waitForSelector('[data-testid="action-view-contract-button"]', { state: 'visible', timeout: 10000 });

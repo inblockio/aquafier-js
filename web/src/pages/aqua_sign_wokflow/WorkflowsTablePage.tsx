@@ -41,7 +41,7 @@ import { FileObject } from 'aqua-js-sdk';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { IContractInformation } from '@/types/contract_workflow';
 import { DownloadAquaChain } from '../../components/aqua_chain_actions/download_aqua_chain';
-import { OpenWorkflowButton } from '../../components/aqua_chain_actions/open_aqua_sign_workflow';
+import { OpenAquaSignWorkFlowButton } from '../../components/aqua_chain_actions/open_aqua_sign_workflow';
 import { DeleteAquaChain } from '../../components/aqua_chain_actions/delete_aqua_chain';
 
 const getStatusIcon = (status: string) => {
@@ -184,9 +184,9 @@ const WorkflowTableItem = ({ workflowName, apiFileInfo, index = 0 }: IWorkflowIt
           </div>
         </div>
       </TableCell>
-      <TableCell className="w-[200px]">
+      {/* <TableCell className="w-[200px]">
         <p className="text-sm capitalize">{workflowName.split("_").join(" ").trim()}</p>
-      </TableCell>
+      </TableCell> */}
       <TableCell className="w-[200px]">
         <div className="flex items-center gap-2">
           <div className="flex -space-x-2">
@@ -264,12 +264,12 @@ const WorkflowTableItem = ({ workflowName, apiFileInfo, index = 0 }: IWorkflowIt
           <DropdownMenuContent align="end">
             <DropdownMenuLabel>Actions</DropdownMenuLabel>
             <DropdownMenuSeparator />
-            <OpenWorkflowButton item={apiFileInfo} nonce={session?.nonce ?? ""}>
+            <OpenAquaSignWorkFlowButton item={apiFileInfo} nonce={session?.nonce ?? ""}>
               <DropdownMenuItem>
                 <Eye className="mr-2 h-4 w-4" />
                 View Document
               </DropdownMenuItem>
-            </OpenWorkflowButton>
+            </OpenAquaSignWorkFlowButton>
             <DropdownMenuItem disabled>
               <Send className="mr-2 h-4 w-4" />
               Send Reminder
@@ -367,14 +367,14 @@ export default function WorkflowsTablePage() {
       </div>
 
 
-      <div className="space-y-6">
+      <div className="space-y-6 mt-5">
         <Card className='py-6'>
           <CardHeader>
             <CardTitle className="flex items-center gap-2 justify-between">
               <div className="flex items-center gap-2">
                 <FileText className="h-5 w-5" />
                 <span>
-                  Workflows
+                 Aqua  Workflows
                 </span>
               </div>
               <button className="flex items-center space-x-2 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-gray-100 cursor-pointer"
@@ -390,12 +390,13 @@ export default function WorkflowsTablePage() {
             </CardTitle>
           </CardHeader>
           <CardContent className='px-1'>
-            <div className="rounded-md border">
+            {/* <div className="rounded-md border"> */}
+            <div className="overflow-x-auto">
               <Table>
                 <TableHeader>
                   <TableRow>
                     <TableHead className="w-[300px] max-w-[300px] min-w-[300px] break-words overflow-hidden">Document</TableHead>
-                    <TableHead>Workflow Type</TableHead>
+                    {/* <TableHead>Workflow Type</TableHead> */}
                     <TableHead>Signers</TableHead>
                     <TableHead>Progress</TableHead>
                     <TableHead>Status</TableHead>

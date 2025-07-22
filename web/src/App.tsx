@@ -7,7 +7,7 @@ import { useStore } from "zustand"
 import { BrowserRouter, Route, Routes } from 'react-router-dom'
 import ErrorBoundary from "./components/error_boundary";
 import Loading from './pages/loading';
-import PdfSigner from './pages/wokflow/ContractDocument/PdfSigner';
+import PdfSigner from './pages/aqua_sign_wokflow/ContractDocument/PdfSigner';
 import FilesPage from './pages/files';
 import Home from './pages/home';
 // import TailwindLayout from './layouts/TailwindLayout';
@@ -18,14 +18,15 @@ import SettingsPage from './pages/settings_page';
 import TemplatesPage from './pages/templates_page';
 import CreateFormInstance from './pages/create_form_instance';
 import NewShadcnLayoutWithSidebar from './layouts/NewShadcnLayoutWithSidebar';
-import PdfWorkflowPage from './pages/wokflow/PdfWorkflowPage';
+import PdfWorkflowPage from './pages/aqua_sign_wokflow/PdfWorkflowPage';
 import DomainAttestationPage from './pages/domain_attestation';
 import FilesSharedContracts from './pages/files_shared_contracts';
-import WorkflowsTablePage from './pages/wokflow/WorkflowsTablePage';
+import WorkflowsTablePage from './pages/aqua_sign_wokflow/WorkflowsTablePage';
 import SharePage from './pages/share_page';
 import TermsAndConditions from './pages/legal/TermsAndConditions';
 import PrivacyPolicy from './pages/legal/PrivacyPolicy';
 import ClaimsAndAttestationPage from './pages/claim_and_attestation';
+import ClaimsWorkflowPage from './pages/claims_workflow/claimsWorkflowPage';
 
 declare global {
   interface Window {
@@ -67,6 +68,7 @@ function App() {
           <Route path="/app" element={<NewShadcnLayoutWithSidebar />}>
             <Route index element={<FilesPage />} />
             <Route path="pdf/workflow" element={<PdfWorkflowPage />} />
+            <Route path="claims/workflow" element={<ClaimsWorkflowPage />} />
             <Route path="files_workflows" element={<FilesPage />} />
             <Route path="domain_attestation" element={<DomainAttestationPage />} />
             <Route path="claims_and_attestation" element={<ClaimsAndAttestationPage />} />

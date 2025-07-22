@@ -4,9 +4,9 @@ import { useStore } from "zustand";
 import appStore from "../store";
 import { ensureDomainUrlHasSSL, handleLoadFromUrl, isJSONKeyValueStringContent } from "../utils/functions";
 import  {FilePreviewAquaTreeFromTemplate} from "./file_preview_aqua_tree_from_template"
-import { EasyPDFRenderer } from "@/pages/wokflow/ContractDocument/signer/SignerPage";
+import { EasyPDFRenderer } from "@/pages/aqua_sign_wokflow/ContractDocument/signer/SignerPage";
 // import { EasyPDFRenderer } from "../pages/files/wokflow/ContractDocument/signer/SignerPage";
-// import { EasyPDFRenderer } from "../pages/wokflow/ContractDocument/signer/SignerPage";
+// import { EasyPDFRenderer } from "../pages/aqua_sign_wokflow/ContractDocument/signer/SignerPage";
 // import { toaster } from "./chakra-ui/toaster";
 
 // Define file extensions to content type mappings
