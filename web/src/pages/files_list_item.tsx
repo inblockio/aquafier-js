@@ -15,12 +15,13 @@ import appStore from "@/store";
 import { useStore } from "zustand"; 
 import { OpenClaimsWorkFlowButton } from "@/components/aqua_chain_actions/open_identity_claim_workflow";
 import { AttestAquaClaim } from "@/components/aqua_chain_actions/attest_aqua_claim";
+import { OpenSelectedFileDetailsButton } from "@/components/aqua_chain_actions/details_button";
 
 
 export default function FilesListItem({ showWorkFlowsOnly, file, index, systemFileInfo, backendUrl, nonce, viewMode = "table" }: { showWorkFlowsOnly: boolean, file: ApiFileInfo, index: number, systemFileInfo: ApiFileInfo[], backendUrl: string, nonce: string, viewMode?: "table" | "card" | "actions-only" }) {
 
 
-    const { setSelectedFileInfo, setOpenFileDetailsPopUp } = useStore(appStore)
+   
 
     // const [_selectedFiles, setSelectedFiles] = useState<number[]>([]);
     const [currentFileObject, setCurrentFileObject] = useState<FileObject | undefined>(undefined);
@@ -82,19 +83,23 @@ export default function FilesListItem({ showWorkFlowsOnly, file, index, systemFi
         }
     }
 
+
+    // const detailsButton = () =>{
+    //         return <button onClick={() => {
+    //             setOpenFileDetailsPopUp(true);
+    //             setSelectedFileInfo(file);
+    //         } } className="w-full flex items-center justify-center space-x-1 bg-green-100 text-green-700 px-2 py-2 rounded hover:bg-green-200 transition-colors text-xs">
+    //             <LuEye className="w-4 h-4" />
+    //             <span>Details</span>
+    //         </button>;
+    //     }
     const workFileActions = () => {
         return <>
             {/* Grid layout for action buttons with equal widths */}
             <div className="flex flex-wrap gap-1">
                 {/* Details Button */}
                 <div className="w-[100px]">
-                <button onClick={() => {
-                    setOpenFileDetailsPopUp(true)
-                    setSelectedFileInfo(file)
-                }} className="w-full flex items-center justify-center space-x-1 bg-green-100 text-green-700 px-2 py-2 rounded hover:bg-green-200 transition-colors text-xs">
-                    <LuEye className="w-4 h-4" />
-                    <span>Details</span>
-                </button>
+                 <OpenSelectedFileDetailsButton file={file} index={index} />
                 </div>
 
                 {/* Sign Button */}
@@ -133,6 +138,8 @@ export default function FilesListItem({ showWorkFlowsOnly, file, index, systemFi
                         
                     </div> */}
         </>
+
+        
     }
     const workFlowAquaSignActions = () => {
         return <>
@@ -161,6 +168,34 @@ export default function FilesListItem({ showWorkFlowsOnly, file, index, systemFi
     }
 
 
+     const workFlowIdentityClaimAttestationActions = () => {
+ return <>
+            <div className="flex flex-wrap gap-1">
+                <div className="w-[202px]">
+                    <OpenClaimsWorkFlowButton item={file} nonce={nonce} index={index}/>
+                </div>
+
+               <div className="w-[100px]">
+                 <OpenSelectedFileDetailsButton file={file} index={index} />
+                </div>
+
+                <div className="w-[100px]">
+                    <ShareButton item={file} nonce={nonce} index={index} />
+                </div>
+
+                {/* Delete Button */}
+                <div className="w-[100px]">
+                    <DeleteAquaChain apiFileInfo={file} backendUrl={backendUrl} nonce={nonce} revision="" index={index} />
+                </div>
+
+                {/* Download Button - Smaller width */}
+                <div className="w-[100px]">
+                    <DownloadAquaChain file={file} index={index}/>
+                </div>
+            </div>
+
+        </>
+     }
      const workFlowIdentityClaimActions = () => {
         return <>
             <div className="flex flex-wrap gap-1">
@@ -168,11 +203,15 @@ export default function FilesListItem({ showWorkFlowsOnly, file, index, systemFi
                     <OpenClaimsWorkFlowButton item={file} nonce={nonce} index={index}/>
                 </div>
 
-                {/* attest Button */}
-                
-                    <AttestAquaClaim file={file}  index={index} />
             
+                
+                <div className="w-[100px]">
+                 <AttestAquaClaim file={file} index={index} />
+                </div>
 
+                  <div className="w-[100px]">
+                 <OpenSelectedFileDetailsButton file={file} index={index} />
+                </div>
 
 
                 <div className="w-[100px]">
@@ -201,6 +240,10 @@ export default function FilesListItem({ showWorkFlowsOnly, file, index, systemFi
         }
          if (workflowInfo?.isWorkFlow == true && workflowInfo.workFlow == "identity_claim") {
             return workFlowIdentityClaimActions()
+        }
+
+         if (workflowInfo?.isWorkFlow == true && workflowInfo.workFlow == "identity_attestation") {
+            return workFlowIdentityClaimAttestationActions()
         }
         return workFileActions()
     }
