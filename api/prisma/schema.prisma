@@ -39,6 +39,11 @@ model AquaTemplateFields {
   type         String
   required     Boolean
   is_array     Boolean @default(false)
+  is_hidden   Boolean @default(false)
+  is_editable Boolean @default(true)
+  description String?
+  placeholder String?
+  support_text String?
 
   AquaForm AquaTemplate @relation(fields: [aqua_form_id], references: [id])
 

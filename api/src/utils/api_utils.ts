@@ -176,7 +176,7 @@ export async function checkFolderExists(folderPath: string) {
     return false;
   }
 }
-
+ 
 const setUpSystemTemplates = async () => {
 
   await prisma.users.upsert({
@@ -257,6 +257,8 @@ const setUpSystemTemplates = async () => {
     let fieldsFileData = fs.readFileSync(templateFieldsData, 'utf8')
     let documentContractFields: Array<AquaTemplatesFields> = JSON.parse(fieldsFileData)
     documentContractFields.forEach(async (fieldData, fieldIndex) => {
+
+      // console.log(`\n ##  templateItem ${templateItem} -- fieldData.isEditable ${fieldData.isEditable} --  fieldData ${JSON.stringify(fieldData)}`)
       await prisma.aquaTemplateFields.upsert({
         where: {
           id: `${index}${fieldIndex}`,
@@ -268,7 +270,13 @@ const setUpSystemTemplates = async () => {
           label: fieldData.label,
           type: fieldData.type,
           required: fieldData.required,
-          is_array: fieldData.isArray
+          is_array: fieldData.isArray,
+          is_hidden: fieldData.isHidden || false,
+          description: fieldData.description ,
+          placeholder: fieldData.placeholder ,
+          support_text: fieldData.supportText,
+
+          is_editable: fieldData.isEditable == null ? true : fieldData.isEditable,
         },
         update: {
 

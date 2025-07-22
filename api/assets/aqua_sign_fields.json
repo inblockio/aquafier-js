@@ -1,23 +1,27 @@
 [
-    {
-      "name": "document",
-      "label": "Document",
-      "type": "document",
-      "required": true,
-      "isArray": false
-    },
-    {
-      "name": "sender",
-      "label": "Sender",
-      "type": "wallet_address",
-      "required": true,
-      "isArray": false
-    },
-    {
-      "name": "signers",
-      "label": "Signers",
-      "type": "wallet_address",
-      "required": true,
-      "isArray": true
-    }
-  ]
+  {
+    "name": "document",
+    "label": "Document",
+    "type": "document",
+    "required": true,
+    "isArray": false
+  },
+  {
+    "name": "sender",
+    "label": "Sender",
+    "type": "wallet_address",
+    "required": true,
+    "isArray": false,
+    "isEditable": false,
+    "supportText": "The sender is the person who initiates the document signing process. This field is auto-filled with your wallet address.",
+    "random": "This will be used as the sender email for the document workflow"
+  },
+  {
+    "name": "signers",
+    "label": "Signers",
+    "type": "wallet_address",
+    "required": true,
+    "isArray": true,
+    "description": "Add multiple wallet addresses for document signers"
+  }
+]

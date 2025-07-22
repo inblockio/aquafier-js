@@ -17,7 +17,7 @@ import { useNavigate } from 'react-router-dom'
 import { AlertCircle, FileText, Image, Loader2, Plus, Trash2, Upload } from 'lucide-react'
 import { Badge } from '../ui/badge'
 import { Separator } from '../ui/separator'
-
+ 
 // const CreateFormFromTemplate = ({ selectedTemplate, callBack, openCreateTemplatePopUp = false }: { selectedTemplate: FormTemplate, callBack: () => void, openCreateTemplatePopUp: boolean }) => {
 const CreateFormFromTemplate = ({ selectedTemplate, callBack }: { selectedTemplate: FormTemplate, callBack: () => void, openCreateTemplatePopUp: boolean }) => {
     const [submittingTemplateData, setSubmittingTemplateData] = useState(false)
@@ -662,6 +662,10 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: { selectedTempla
                                 {selectedTemplate ? reorderInputFields(selectedTemplate.fields).map((field, fieldIndex) => {
                                     const isFileInput = field.type === 'file' || field.type === 'image' || field.type === 'document';
 
+                                    if( field.is_hidden) {
+                                        return null; // Skip hidden fields
+                                    }
+                                    
                                     if (field.is_array) {
                                         return (
                                             <div key={`field-${fieldIndex}`} className="space-y-4">
@@ -671,9 +675,13 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: { selectedTempla
                                                             {field.label}
                                                             {field.required && <span className="text-red-500 ml-1">*</span>}
                                                         </Label>
-                                                        <p className="text-sm text-gray-500 mt-1">
-                                                            Add multiple wallet addresses for document signers
-                                                        </p>
+                                                        {/* Add multiple wallet addresses for document signers */}
+                                                        {
+                                                            field.description ?  <p className="text-sm text-gray-500 mt-1">
+                                                            {field.description}
+                                                        </p> : null
+                                                        }
+                                                        
                                                     </div>
                                                     <Button
 
@@ -764,6 +772,7 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: { selectedTempla
                                                         {...(!isFileInput ? { defaultValue: getFieldDefaultValue(field, formData[field.name]) } : {})}
                                                         type={field.type === 'image' || field.type === 'document' ? 'file' : field.type}
                                                         required={field.required}
+                                                        disabled={field.is_editable === false}
                                                         accept={field.type === 'document' ? '.pdf' : field.type === 'image' ? 'image/*' : undefined}
                                                         placeholder={
                                                             field.type === 'wallet_address' ? 'Enter wallet address' :
@@ -772,6 +781,7 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: { selectedTempla
                                                                         `Enter ${field.label.toLowerCase()}`
                                                         }
                                                         onChange={(e) => {
+
                                                             if (selectedTemplate?.name === "aqua_sign" && field.name.toLowerCase() === "sender") {
                                                                 // Show toast notification (would need toast implementation)
                                                                 console.log("Aqua Sign sender cannot be changed");
@@ -822,7 +832,7 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: { selectedTempla
 
                                             {field.name === 'sender' && (
                                                 <p className="text-xs text-gray-500">
-                                                    This will be used as the sender email for the document workflow
+                                                   {field.support_text ? field.support_text : "The sender is the person who initiates the document signing process. This field is auto-filled with your wallet address."}
                                                 </p>
                                             )}
                                         </div>
