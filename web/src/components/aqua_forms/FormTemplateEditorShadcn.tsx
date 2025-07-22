@@ -27,15 +27,16 @@ const fieldTypes = [
 ];
 
 interface ICustomSelect {
+  id: string;
   label: string;
   onChange: (value: string) => void;
   value: string;
 }
 
-const CustomSelect = ({ label, onChange, value }: ICustomSelect) => {
+const CustomSelect = ({id, label, onChange, value }: ICustomSelect) => {
   return (
     <div className="w-full">
-      <Select value={value} onValueChange={onChange}>
+      <Select data-testid={id} value={value} onValueChange={onChange}>
         <SelectTrigger className="w-full">
           <SelectValue placeholder={label} />
         </SelectTrigger>
@@ -104,6 +105,14 @@ const FormTemplateEditorShadcn = ({ initialTemplate, onSave, updating }: FormTem
     try {
       console.log("Initial template: ", initialTemplate)
       setIsSubmitting(true);
+
+      // Check if form has validation errors
+    const formErrors = Object.keys(errors);
+    if (formErrors.length > 0) {
+      toast.error("Please fix the form errors before submitting");
+      return;
+    }
+
       const formValues = getValues();
       formValues.fields = formFields;
 
@@ -213,13 +222,7 @@ const FormTemplateEditorShadcn = ({ initialTemplate, onSave, updating }: FormTem
 
   return (
   
-    // <Card className="w-full shadow-sm">
-    //   <CardHeader>
-    //     <CardTitle>
-    //       {initialTemplate ? 'Edit Form Template' : 'Create Form Template'}
-    //     </CardTitle>
-    //   </CardHeader>
-    //   <CardContent>
+
       <div>
 
         <div className='text-lg mb-5'>
@@ -233,7 +236,12 @@ const FormTemplateEditorShadcn = ({ initialTemplate, onSave, updating }: FormTem
           </Alert>
         )}
         
-        <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-6">
+        {/* <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-6"> */}
+        <form  onSubmit={handleSubmit(handleFormSubmit, (errors) => {
+          console.error("Form validation errors:", errors);
+  // This function runs when validation fails
+  toast.error("Please fix the form errors before submitting (more thatn 3 characters  and atleast one form field is required)");
+})} className="space-y-6">
           {/* Template Form Fields */}
           <div className="space-y-4">
             {templateFormFields.map((field) => (
@@ -269,6 +277,7 @@ const FormTemplateEditorShadcn = ({ initialTemplate, onSave, updating }: FormTem
                   <div className="space-y-2">
                     <Label htmlFor={`field-label-${index}`}>Label</Label>
                     <Input
+                    data-testid={"field-label-" + index}
                       id={`field-label-${index}`}
                       placeholder="Document | Name | Email | Wallet Address | etc."
                       value={field.label}
@@ -279,8 +288,10 @@ const FormTemplateEditorShadcn = ({ initialTemplate, onSave, updating }: FormTem
                   
                   {/* Type Field */}
                   <div className="space-y-2">
-                    <Label htmlFor={`field-type-${index}`}>Type</Label>
+                    <Label htmlFor={`field-type-for-${index}`}>Type</Label>
                     <CustomSelect
+
+                      id={`field-type-${index}`}
                       label="Select type"
                       value={field.type}
                       onChange={(newVal) => updateFields(index, 'type', newVal)}

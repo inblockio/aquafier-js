@@ -42,6 +42,8 @@ const TemplatesPage = () => {
         <h1 className="text-2xl font-bold">Form Templates</h1>
         {activeTab === "list" && (
           <Button 
+          
+          data-testid="action-create-template-button" 
             onClick={handleCreateNew}
             className="flex items-center gap-2"
           >
@@ -52,8 +54,8 @@ const TemplatesPage = () => {
       
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList className="grid w-full max-w-md grid-cols-2">
-          <TabsTrigger value="list">Templates List</TabsTrigger>
-          <TabsTrigger value="editor" disabled={!isCreating && !selectedTemplate}>Template Editor</TabsTrigger>
+          <TabsTrigger data-testid="templates-list-tab" value="list">Templates List</TabsTrigger>
+          <TabsTrigger data-testid="templates-edito-tab" value="editor" disabled={!isCreating && !selectedTemplate}>Template Editor</TabsTrigger>
         </TabsList>
         
         <TabsContent value="list" className="mt-6">

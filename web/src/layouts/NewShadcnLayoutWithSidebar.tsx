@@ -72,7 +72,13 @@ export default function NewShadcnLayoutWithSidebar() {
         }
     }, [openCreateTemplatePopUp]);
 
+    useEffect(() => {
+        console.log("Session changed:", JSON.stringify(session, null, 2));
+    }, [session]);
 
+ useEffect(() => {
+        console.log("Session init:", JSON.stringify(session, null, 2));
+    }, []);
 
     if (loading) {
         return (

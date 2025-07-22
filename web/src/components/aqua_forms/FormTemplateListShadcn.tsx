@@ -87,7 +87,7 @@ const FormTemplateListShadcn = ({ onEdit }: FormTemplateListShadcnProps) => {
 
 
   return (
-    <Card className="w-full shadow-sm">
+    <Card className="w-full shadow-sm m-5">
       <CardHeader>
         <CardTitle>Form Templates</CardTitle>
       </CardHeader>
