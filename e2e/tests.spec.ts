@@ -25,8 +25,8 @@ test("basic site accessibility test", async ({ page }) => {
   console.log("Page loaded");
 
   // Take a screenshot for debugging
-  await page.screenshot({ path: 'site-loaded.png' });
-  console.log("Screenshot taken");
+  // await page.screenshot({ path: 'site-loaded.png' });
+  // console.log("Screenshot taken");
 
   // Simple assertion to verify the page loaded
   const title = await page.title();
@@ -209,22 +209,22 @@ test("upload, delete file", async (): Promise<void> => {
 
   console.log("upload, file multiple revisions started!");
 
-    // Upload file
+  // Upload file
   const filePath: string = path.join(__dirname, 'resources/exampleFile.pdf');
   await uploadFile(testPage, filePath);
 
 
-    await testPage.waitForSelector('[data-testid="delete-aqua-tree-button-1"]', { state: 'visible', timeout: 10000 });
+  await testPage.waitForSelector('[data-testid="delete-aqua-tree-button-1"]', { state: 'visible', timeout: 10000 });
   await testPage.click('[data-testid="delete-aqua-tree-button-1"]');
 
-   // ✅ Wait for the table row with "aqua.json" to be removed (not visible)
+  // ✅ Wait for the table row with "aqua.json" to be removed (not visible)
   const row = testPage.locator('table >> text=aqua.json');
   await expect(row).not.toBeVisible({ timeout: 10000 });
 
   // Reload the page and check again to ensure file is permanently deleted
   console.log("Reloading page to verify file deletion persisted");
   await testPage.reload();
-  
+
   // Wait for page to load and check that aqua.json is still not visible
   const rowAfterReload = testPage.locator('table >> text=aqua.json');
   await expect(rowAfterReload).not.toBeVisible({ timeout: 10000 });
@@ -489,4 +489,139 @@ test("share document with everyone", async (): Promise<void> => {
   // Cleanup
   await ownerContext.close();
   await recipientContext.close();
+});
+
+
+
+
+
+test("import aqua zip test", async (): Promise<void> => {
+  test.setTimeout(process.env.CI ? 180000 : 500000); // 3 minutes in CI
+  const registerResponse = await registerNewMetaMaskWalletAndLogin();
+  const context: BrowserContext = registerResponse.context;
+  const testPage: Page = context.pages()[0];
+  console.log("Uploading aqua zip!");
+
+  // Upload zip
+  const filePath: string = path.join(__dirname, 'resources/Screenshot from 2025-07-19 14-18-50.zip');
+  await uploadFile(testPage, filePath);
+
+  // close upload dialog
+  // await closeUploadDialog(testPage);
+
+  await testPage.waitForSelector('[data-testid="action-import-82-button"]', { state: 'visible', timeout: 10000 });
+  await testPage.click('[data-testid="action-import-82-button"]');
+
+  await testPage.waitForEvent('load');
+  await testPage.reload();
+
+
+   // Check that the table has two rows and contains aqua.json
+  const tableRows = testPage.locator('table tr');
+  await expect(tableRows).toHaveCount(2, { timeout: 10000 });
+
+});
+
+
+test("create a template", async (): Promise<void> => {
+  test.setTimeout(process.env.CI ? 180000 : 1500000); // 3 minutes in CI
+  const registerResponse = await registerNewMetaMaskWalletAndLogin(`app/templates`);
+  const context: BrowserContext = registerResponse.context;
+  const testPage: Page = context.pages()[0];
+
+  
+  console.log("create aqua form template started!");
+
+  console.log("Navigated to templates page");
+  await testPage.waitForTimeout(2000); 
+  
+  // Try to find the button by data-testid first, then fallback to text
+  try {
+    await testPage.waitForSelector('[data-testid="action-create-template-button"]', { state: 'visible', timeout: 10000 });
+    await testPage.click('[data-testid="action-create-template-button"]');
+    console.log("Clicked create template button using data-testid");
+  } catch (error) {
+    console.log("Failed to find button by data-testid, trying by text...");
+    await testPage.waitForSelector('button:has-text("New Template")', { state: 'visible', timeout: 10000 });
+    await testPage.click('button:has-text("New Template")');
+    console.log("Clicked create template button using text selector");
+  }
+
+  console.log("Clicked create template button");
+  await testPage.fill('#title', 'Test Template');
+
+  // Add two fields
+  try {
+    await testPage.click('[data-testid="action-add-form-field-button"]');
+    console.log("Clicked add form field button using data-testid");
+  } catch (error) {
+    console.log("Failed to find add form field button by data-testid, trying by text...");
+    await testPage.click('button:has-text("Add Form Field")');
+    console.log("Clicked add form field button using text selector");
+  }
+  let fields = [
+    {
+      label: 'Name',
+      type: 'text',
+      required: true,
+      is_array: false
+    },
+    {
+      label: 'Age',
+      type: 'number',
+      required: true,
+      is_array: false
+    }
+  ]
+
+  console.log("Adding fields to template form");
+  // Fill the template form
+  try {
+    await testPage.fill(`[data-testid="field-label-0"]`, fields[0].label);
+    console.log("Filled first field label using data-testid");
+  } catch (error) {
+    console.log("Failed to find first field label by data-testid, trying by id...");
+    await testPage.fill(`#field-label-0`, fields[0].label);
+    console.log("Filled first field label using id selector");
+  }
+  // await testPage.selectOption(`[data-testid="field-type-0"]`, fields[0].type);
+  // await testPage.click(`[data-testid="field-required-0"]`);
+
+  console.log("First field added to template form");
+  try {
+    await testPage.click('[data-testid="action-add-form-field-button"]');
+    console.log("Clicked second add form field button using data-testid");
+  } catch (error) {
+    console.log("Failed to find second add form field button by data-testid, trying by text...");
+    await testPage.click('button:has-text("Add Form Field")');
+    console.log("Clicked second add form field button using text selector");
+  }
+
+  // await testPage.waitForSelector('[data-testid="field-label-1"]', { state: 'visible', timeout: 10000 });
+  try {
+    await testPage.fill(`[data-testid="field-label-1"]`, fields[1].label);
+    console.log("Filled second field label using data-testid");
+  } catch (error) {
+    console.log("Failed to find second field label by data-testid, trying by id...");
+    await testPage.fill(`#field-label-1`, fields[1].label);
+    console.log("Filled second field label using id selector");
+  }
+  // await testPage.selectOption(`[data-testid="field-type-1"]`, fields[1].type);
+  // await testPage.click(`[data-testid="field-required-1"]`);
+  console.log("Second field added to template form");
+
+  // Save the form
+  try {
+    await testPage.click('[data-testid="save-form-action-button"]');
+    console.log("Clicked save form button using data-testid");
+  } catch (error) {
+    console.log("Failed to find save form button by data-testid, trying by text...");
+    await testPage.click('button:has-text("Save")');
+    console.log("Clicked save form button using text selector");
+  }
+  console.log("Template form saved");
+
+  
+
+  // await testPage.pause();
 });

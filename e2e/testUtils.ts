@@ -110,12 +110,12 @@ export async function handleMetaMaskNetworkAndConfirm(
           console.log(`Attempt ${currentAttempt + 1}: Transfer request dialog found`);
 
           // Take a screenshot for debugging
-          try {
-            await metaMaskPage.screenshot({ path: 'metamask-transfer-request.png' }).catch(() => { });
-            console.log("Saved screenshot of transfer request dialog");
-          } catch (e) {
-            console.log("Failed to take screenshot");
-          }
+          // try {
+          //   await metaMaskPage.screenshot({ path: 'metamask-transfer-request.png' }).catch(() => { });
+          //   console.log("Saved screenshot of transfer request dialog");
+          // } catch (e) {
+          //   console.log("Failed to take screenshot");
+          // }
 
           // Try multiple approaches to find and click the Review alert button
 
@@ -1131,7 +1131,7 @@ export async function registerNewMetaMaskWallet(): Promise<RegisterMetaMaskRespo
   }
 }
 
-export async function registerNewMetaMaskWalletAndLogin(): Promise<RegisterMetaMaskResponse> {
+export async function registerNewMetaMaskWalletAndLogin(pathname: string = "/app"): Promise<RegisterMetaMaskResponse> {
   const response = await registerNewMetaMaskWallet();
   const context = response.context;
   const testPage = context.pages()[0];
@@ -1140,7 +1140,7 @@ export async function registerNewMetaMaskWalletAndLogin(): Promise<RegisterMetaM
   // Get the BASE_URL from environment variables and navigate to it
   const baseUrl = process.env.BASE_URL || "https://dev.inblock.io";
   console.log(`BASE URL: ${baseUrl}`);
-  const url = `${baseUrl}/app`
+  const url = `${baseUrl}/${pathname.startsWith('/') ? pathname.slice(1) : pathname}`;
   console.log(`Navigating to: ${url}`);
   await testPage.goto(url, { waitUntil: 'networkidle' })
 
