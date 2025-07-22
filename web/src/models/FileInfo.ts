@@ -12,3 +12,10 @@ export interface ApiFileInfo {
     owner: string
 }
 
+export interface ClaimInformation {
+    isClaimValid: boolean,
+    claimInformation: Record<string, string>,
+    walletAddress: string | null,
+    latestRevisionHash: string | null,
+    genesisHash: string | null
+}

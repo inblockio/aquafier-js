@@ -1,7 +1,7 @@
 // import { ethers } from "ethers";
 import { isAddress, getAddress } from 'ethers';
 
-import { ApiFileInfo } from "../models/FileInfo";
+import { ApiFileInfo, ClaimInformation } from "../models/FileInfo";
 import { documentTypes, ERROR_TEXT, ERROR_UKNOWN, imageTypes, musicTypes, videoTypes } from "./constants";
 // import { AvatarGenerator } from 'random-avatar-generator';
 import Aquafier, { AquaTree, CredentialsData, FileObject, OrderRevisionInAquaTree, Revision } from "aqua-js-sdk";
@@ -2100,3 +2100,41 @@ export const processContractInformation = (selectedFileInfo: ApiFileInfo): ICont
         signatureRevisionHashes
     };
 };
+
+
+export const processSimpleWorkflowClaim = (selectedFileInfo: ApiFileInfo): ClaimInformation => {
+    let _aquaTree = selectedFileInfo.aquaTree!  
+    const aquaTree = OrderRevisionInAquaTree(_aquaTree) 
+    const revisionHashes = Object.keys(aquaTree.revisions)
+    const claimInformation: Record<string, string> = {}
+    const firstRevisionHash = revisionHashes[0]
+    const lastRevisionHash = revisionHashes[revisionHashes.length - 1]
+    const firstRevision = aquaTree.revisions[firstRevisionHash]
+    const firstRevisionKeys = Object.keys(firstRevision)
+    const mustContainkeys = ["forms_name", "forms_wallet_address", "forms_claim_context"]
+    const isClaimValid = mustContainkeys.every((key) => firstRevisionKeys.includes(key))
+
+    if (!isClaimValid) {
+        return {
+            isClaimValid,
+            claimInformation,
+            walletAddress: null,
+            latestRevisionHash: null,
+            genesisHash: null
+        }
+    }
+
+    firstRevisionKeys.map((key) => {
+        if(key.startsWith("forms_")) {
+            const processedKey = key.split('_').slice(1).join(" ")
+            claimInformation[processedKey] = firstRevision[key]
+        }
+    })
+    return {
+        claimInformation,
+        isClaimValid,
+        walletAddress: firstRevision["forms_wallet_address"],
+        latestRevisionHash: lastRevisionHash,
+        genesisHash: firstRevisionHash
+    }
+}

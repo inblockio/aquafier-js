@@ -338,9 +338,16 @@ export default async function shareController(fastify: FastifyInstance) {
 
     // Create an endpoint for filtering contracts, ie filter by sender, receiver, hash, etc
     fastify.get('/contracts', async (request, reply) => {
-        const { sender, receiver, hash } = request.query as { sender?: string, receiver?: string, hash?: string };
+        const { sender, receiver, hash, genesis_hash, ...otherParams } = request.query as { 
+            sender?: string, 
+            receiver?: string, 
+            hash?: string, 
+            genesis_hash?: string,
+            [key: string]: string | undefined 
+        };
 
-        if (!sender && !receiver && !hash) {
+        // Check if at least one search parameter is provided
+        if (!sender && !receiver && !hash && !genesis_hash && Object.keys(otherParams).length === 0) {
             return reply.code(400).send({ success: false, message: "Missing required parameters" });
         }
 
@@ -358,21 +365,114 @@ export default async function shareController(fastify: FastifyInstance) {
             return reply.code(403).send({ success: false, message: "Nounce  is invalid" });
         }
 
-        const contracts = await prisma.contract.findMany({
-            where: {
-                sender: {
-                    equals: sender,
-                    mode: 'insensitive'
-                },
-                receiver: {
-                    equals: receiver,
-                    mode: 'insensitive'
-                },
-                hash: hash
+        // Build dynamic where clause based on provided parameters
+        const whereClause: any = {};
+        
+        if (sender) {
+            whereClause.sender = {
+                contains: sender,
+                mode: 'insensitive'
+            };
+        }
+        
+        if (receiver) {
+            whereClause.receiver = {
+                equals: receiver,
+                mode: 'insensitive'
+            };
+        }
+        
+        if (hash) {
+            whereClause.hash = hash;
+        }
+        
+        if (genesis_hash) {
+            whereClause.genesis_hash = {
+                contains: genesis_hash,
+                mode: 'insensitive'
+            };
+        }
+        
+        // Handle any additional search parameters dynamically
+        for (const [key, value] of Object.entries(otherParams)) {
+            if (value !== undefined) {
+                // For string fields that should be case insensitive
+                if (['latest'].includes(key)) {
+                    whereClause[key] = {
+                        equals: value,
+                        mode: 'insensitive'
+                    };
+                } else {
+                    whereClause[key] = value;
+                }
             }
+        }
+
+        console.log('Query parameters:', JSON.stringify(whereClause, null, 2));
+        
+        // Enable query logging for this specific query
+        // const contracts = await prisma.$transaction(async (tx) => {
+        //     // Log the query being executed
+        //     const result = await tx.contract.findMany({
+        //         where: whereClause
+        //     });
+        //     return result;
+        // }, {
+        //     timeout: 10000,
+        //     // This enables logging for this transaction
+        //     log: ['query']
+        // });
+
+        const contracts = await prisma.$transaction(async (tx) => {
+            const result = await tx.contract.findMany({
+                where: whereClause
+            });
+            return result;
+        }, {
+            timeout: 10000
         });
+        
+        console.log('Found contracts:', contracts.length);
         return reply.code(200).send({ success: true, contracts });
     });
+
+    // Original, DO NOT DELETE
+    // fastify.get('/contracts', async (request, reply) => {
+    //     const { sender, receiver, hash } = request.query as { sender?: string, receiver?: string, hash?: string };
+
+    //     if (!sender && !receiver && !hash) {
+    //         return reply.code(400).send({ success: false, message: "Missing required parameters" });
+    //     }
+
+    //     const nonce = request.headers['nonce'];
+
+    //     if (!nonce || typeof nonce !== 'string' || nonce.trim() === '') {
+    //         return reply.code(401).send({ error: 'Unauthorized: Missing or empty nonce header' });
+    //     }
+
+    //     const session = await prisma.siweSession.findUnique({
+    //         where: { nonce: nonce }
+    //     });
+
+    //     if (session == null) {
+    //         return reply.code(403).send({ success: false, message: "Nounce  is invalid" });
+    //     }
+
+    //     const contracts = await prisma.contract.findMany({
+    //         where: {
+    //             sender: {
+    //                 equals: sender,
+    //                 mode: 'insensitive'
+    //             },
+    //             receiver: {
+    //                 equals: receiver,
+    //                 mode: 'insensitive'
+    //             },
+    //             hash: hash
+    //         }
+    //     });
+    //     return reply.code(200).send({ success: true, contracts });
+    // });
 
 
 }

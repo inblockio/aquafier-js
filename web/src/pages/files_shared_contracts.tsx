@@ -8,7 +8,6 @@ import {
     FileText,
     Users,
     Hash,
-    Copy,
     Wallet,
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
@@ -20,17 +19,9 @@ import { Contract } from '@/types/types';
 
 
 
-const SharedContract = ({ contract, index }: { contract: Contract, index: number }) => {
+export const SharedContract = ({ contract, index }: { contract: Contract, index: number }) => {
 
     let navigate = useNavigate();
-
-    const copyToClipboard = async (text: string) => {
-        try {
-            await navigator.clipboard.writeText(text);
-        } catch (err) {
-            console.error('Failed to copy:', err);
-        }
-    };
 
     const getStatusFromLatest = (latest?: string) => {
         if (!latest) return 'unknown';
@@ -70,12 +61,12 @@ const SharedContract = ({ contract, index }: { contract: Contract, index: number
                             </div>
                             <div className="flex-1">
                                 <div className="flex items-center gap-2">
-                                    File Name : 
+                                    <span className='text-xs sm:text-sm font-medium text-gray-900 font-mono max-w-[120px] sm:max-w-none truncate'>File Name: </span>
                                     <code className="text-xs sm:text-sm font-mono bg-gray-100 px-1 sm:px-2 py-1 rounded break-all sm:break-words sm:max-w-none overflow-hidden text-ellipsis">
                                         {/* {formatCryptoAddress(contract.hash, 10, 10)} */}
                                         {contract.file_name}
                                     </code>
-                                    <Button
+                                    {/* <Button
                                         variant="ghost"
                                         size="sm"
                                         onClick={(e) => {
@@ -85,7 +76,7 @@ const SharedContract = ({ contract, index }: { contract: Contract, index: number
                                         className="h-6 w-6 p-0"
                                     >
                                         <Copy className="w-4 h-4" />
-                                    </Button>
+                                    </Button> */}
                                 </div>
                                 {
                                     contract.created_at ? 
