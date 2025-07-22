@@ -27,6 +27,7 @@ type AppStoreState = {
     openCreateTemplatePopUp: boolean | null,
     openCreateAquaSignPopUp: boolean | null,
     openCreateClaimPopUp: boolean | null,
+    openCreateClaimAttestationPopUp: boolean | null,
     metamaskAddress: string | null,
     avatar: string | undefined,
     backend_url: string,
@@ -64,6 +65,10 @@ type AppStoreActions = {
     setOpenCreateClaimPopUp: (
         state: boolean | null,
     ) => void,
+    setOpenCreateClaimAttestationPopUp: (
+        state: boolean | null,
+    ) => void,
+    
     addFile: (
         file: ApiFileInfo,
     ) => void,
@@ -205,6 +210,7 @@ const appStore = createStore<TAppStore>()(
             openCreateTemplatePopUp: false,
             openCreateAquaSignPopUp: false,
             openCreateClaimPopUp: false,
+            openCreateClaimAttestationPopUp: false,
             metamaskAddress: '',
             avatar: "",
             apiFileData: [],
@@ -241,6 +247,10 @@ const appStore = createStore<TAppStore>()(
             setOpenCreateClaimPopUp: (
                 state: boolean | null
             ) => set({ openCreateClaimPopUp: state }),
+             setOpenCreateClaimAttestationPopUp: (
+                state: boolean | null
+            ) => set({ openCreateClaimAttestationPopUp: state }),
+            
             setApiFileData: (
                 apiFileData: ApiFileData[]
             ) => set({ apiFileData: apiFileData }),

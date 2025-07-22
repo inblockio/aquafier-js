@@ -14,6 +14,7 @@ import { LinkButton } from "../components/aqua_chain_actions/link_aqua_chain";
 import appStore from "@/store";
 import { useStore } from "zustand"; 
 import { OpenClaimsWorkFlowButton } from "@/components/aqua_chain_actions/open_identity_claim_workflow";
+import { AttestAquaClaim } from "@/components/aqua_chain_actions/attest_aqua_claim";
 
 
 export default function FilesListItem({ showWorkFlowsOnly, file, index, systemFileInfo, backendUrl, nonce, viewMode = "table" }: { showWorkFlowsOnly: boolean, file: ApiFileInfo, index: number, systemFileInfo: ApiFileInfo[], backendUrl: string, nonce: string, viewMode?: "table" | "card" | "actions-only" }) {
@@ -166,6 +167,13 @@ export default function FilesListItem({ showWorkFlowsOnly, file, index, systemFi
                 <div className="w-[202px]">
                     <OpenClaimsWorkFlowButton item={file} nonce={nonce} index={index}/>
                 </div>
+
+                {/* attest Button */}
+                
+                    <AttestAquaClaim file={file}  index={index} />
+            
+
+
 
                 <div className="w-[100px]">
                     <ShareButton item={file} nonce={nonce} index={index} />

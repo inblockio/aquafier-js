@@ -183,7 +183,7 @@ export const ShareButton = ({ item, nonce, index }: IShareButton) => {
                                     onClick={() => setOptionType("current")}
                                 >
                                     <div className="flex-1">
-                                        <div className="font-medium text-sm">Current</div>
+                                        <div className="font-medium text-sm">Latest</div>
                                         <div className="text-xs text-gray-500">Share current tree</div>
                                     </div>
                                     <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${optionType === "current"
@@ -210,13 +210,19 @@ export const ShareButton = ({ item, nonce, index }: IShareButton) => {
                             </div>
                         )}
 
-                        {/* Shared Link */}
+                        {/* Shared Link - FIXED OVERFLOW */}
                         {shared && (
                             <div className="space-y-2">
                                 <Label className="text-sm font-medium">Shared Document Link</Label>
-                                <div className="flex items-center space-x-2 p-2 bg-gray-50 rounded border">
-                                    <ClipboardIcon className="w-4 h-4 text-gray-500" />
-                                    <span className="text-sm text-gray-700 flex-1 truncate"  data-testid="share-url" >{shared}</span>
+                                <div className="flex items-center space-x-2 p-2 bg-gray-50 rounded border min-w-0">
+                                    <ClipboardIcon className="w-4 h-4 text-gray-500 flex-shrink-0" />
+                                    <span 
+                                        className="text-sm text-gray-700 flex-1 min-w-0 break-all overflow-hidden" 
+                                        data-testid="share-url"
+                                        title={shared}
+                                    >
+                                        {shared}
+                                    </span>
                                 </div>
                                 <p className="text-xs text-gray-500">Copy the link above and share</p>
                             </div>

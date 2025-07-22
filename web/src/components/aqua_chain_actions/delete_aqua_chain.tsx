@@ -119,7 +119,7 @@ export const DeleteAquaChain = ({ apiFileInfo, backendUrl, nonce, children, inde
                         if (!deleting) {
                             deleteFileAction();
                         } else {
-                            toast("Signing is already in progress")
+                            toast("Deletion is already in progress")
                         }
                     }}>
                         {children}
@@ -131,7 +131,7 @@ export const DeleteAquaChain = ({ apiFileInfo, backendUrl, nonce, children, inde
                             if (!deleting) {
                                 deleteFileAction();
                             } else {
-                                toast("Signing is already in progress")
+                                toast("Deletion is already in progress")
                             }
                         }}
                         className={`w-full flex items-center justify-center space-x-1 bg-[#FBE3E2] text-pink-700 px-3 py-2 rounded transition-colors text-xs ${deleting ? 'opacity-60 cursor-not-allowed' : 'hover:bg-[#FACBCB]'}`}

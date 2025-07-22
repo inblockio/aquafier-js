@@ -125,7 +125,7 @@ export const WitnessAquaChain = ({ apiFileInfo, backendUrl, nonce }: RevionOpera
                         witnessFileHandler();
                     } else {
                         toaster.create({
-                            description: "Signing is already in progress",
+                            description: "Witnessing is already in progress",
                             type: "info"
                         })
                     }

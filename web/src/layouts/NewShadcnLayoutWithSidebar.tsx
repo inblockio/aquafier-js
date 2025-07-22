@@ -24,7 +24,7 @@ import { AppSidebar } from "../components/app_sidebar"
 import WebsocketFragment from "@/components/navbar/WebsocketFragment"
 
 export default function NewShadcnLayoutWithSidebar() {
-    const { session,openCreateClaimPopUp, setOpenCreateClaimPopUp, openCreateAquaSignPopUp, setOpenCreateAquaSignPopUp, openCreateTemplatePopUp, setOpenCreateTemplatePopUp, formTemplates } = useStore(appStore);
+    const { session , openCreateClaimAttestationPopUp, setOpenCreateClaimAttestationPopUp ,openCreateClaimPopUp, setOpenCreateClaimPopUp, openCreateAquaSignPopUp, setOpenCreateAquaSignPopUp, openCreateTemplatePopUp, setOpenCreateTemplatePopUp, formTemplates } = useStore(appStore);
 
     const [loading, setLoading] = useState(true);
 
@@ -39,6 +39,7 @@ export default function NewShadcnLayoutWithSidebar() {
     const [isOpenCreateAquaSignPopUp, setIsOpenCreateAquaSignPopUp] = useState(false);
     const [isOpenCreateTemplatePopUp, setIsOpenCreateTemplatePopUp] = useState(false);
     const [isOpenCreateClaimPopUp, setIsOpenCreateClaimPopUp] = useState(false);
+    const [isOpenCreateClaimAttestationPopUp, setIsOpenCreateClaimAttestationPopUp] = useState(false);
 
 
     useEffect(() => {
@@ -72,13 +73,17 @@ export default function NewShadcnLayoutWithSidebar() {
         }
     }, [openCreateTemplatePopUp]);
 
-    useEffect(() => {
-        console.log("Session changed:", JSON.stringify(session, null, 2));
-    }, [session]);
 
- useEffect(() => {
-        console.log("Session init:", JSON.stringify(session, null, 2));
-    }, []);
+    useEffect(() => {
+        if (openCreateClaimAttestationPopUp) {
+            setIsOpenCreateClaimAttestationPopUp(true)
+        } else {
+            setIsOpenCreateClaimAttestationPopUp(false)
+
+        }
+    }, [openCreateClaimAttestationPopUp]);
+
+  
 
     if (loading) {
         return (
@@ -264,6 +269,45 @@ export default function NewShadcnLayoutWithSidebar() {
                         <ScrollArea className="h-full">
                             <CreateFormFromTemplate selectedTemplate={formTemplates.find((template) => template.name === "identity_claim")!!} callBack={function (): void {
                                 setOpenCreateClaimPopUp(false)
+                            }} openCreateTemplatePopUp={false} />
+                        </ScrollArea>
+                    </div> 
+                    {/* <DialogFooter className="mt-auto">
+                        <Button variant="outline" onClick={() => {
+                           setOpenCreateAquaSignPopUp(false)
+                        }}>Cancel</Button>
+                        <Button type="submit">Save changes</Button>
+                    </DialogFooter> */}
+                </DialogContent>
+            </Dialog>
+
+
+
+            {/* create claim  */}
+            <Dialog open={isOpenCreateClaimAttestationPopUp} onOpenChange={(openState) => {
+                setOpenCreateClaimAttestationPopUp(openState)
+            }} >
+
+                <DialogContent className="[&>button]:hidden sm:!max-w-[65vw] sm:!w-[65vw] sm:h-[65vh] sm:max-h-[65vh] !max-w-[95vw] !w-[95vw] h-[95vh] max-h-[95vh] flex flex-col p-0 gap-0">
+                    <div className="absolute top-4 right-4">
+                        <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-6 w-6 bg-red-500 text-white hover:bg-red-500"
+                            onClick={() => {
+                                setOpenCreateClaimAttestationPopUp(false)
+                            }}
+                        >
+                            <X className="h-4 w-4" />
+                        </Button>
+                    </div>
+                    <DialogHeader className="!h-[60px] !min-h-[60px] !max-h-[60px] flex justify-center items-start px-6">
+                        <DialogTitle >Create Claim Attestation</DialogTitle>
+                    </DialogHeader>
+                    <div className=' h-[calc(100%-60px)] pb-1'>
+                        <ScrollArea className="h-full">
+                            <CreateFormFromTemplate selectedTemplate={formTemplates.find((template) => template.name === "identity_attestation")!!} callBack={function (): void {
+                                setOpenCreateClaimAttestationPopUp(false)
                             }} openCreateTemplatePopUp={false} />
                         </ScrollArea>
                     </div> 
