@@ -88,6 +88,8 @@ const getStatusColor = (status: string) => {
 }
 
 const getProgressPercentage = (total: number, remaining: number) => {
+    console.log('Calculating progress percentage:', { total, remaining })
+    if (total === 0) return 0 // Avoid division by zero
     return ((total - remaining) / total) * 100
 }
 
