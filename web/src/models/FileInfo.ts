@@ -19,3 +19,10 @@ export interface ClaimInformation {
     latestRevisionHash: string | null
     genesisHash: string | null
 }
+
+
+export interface IAttestationEntry {
+    walletAddress: string
+    context: string
+    createdAt: string
+}

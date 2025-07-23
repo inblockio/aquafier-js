@@ -6,16 +6,17 @@ import { LuArrowLeft } from 'react-icons/lu'
 import appStore from '../../store'
 import { useStore } from 'zustand'
 import { ShareButton } from '@/components/aqua_chain_actions/share_aqua_chain'
-import { processSimpleWorkflowClaim } from '@/utils/functions'
+import { getAquaTreeFileName, isWorkFlowData, processSimpleWorkflowClaim, timeToHumanFriendly } from '@/utils/functions'
 import { ClipLoader } from 'react-spinners'
-import { ClaimInformation } from '@/models/FileInfo'
+import { ApiFileInfo, ClaimInformation, IAttestationEntry } from '@/models/FileInfo'
 import axios from 'axios'
 import { Contract } from '@/types/types'
 import { SharedContract } from '../files_shared_contracts'
 import AttestationEntry from './AttestationEntry'
+import { OrderRevisionInAquaTree } from 'aqua-js-sdk'
 
 export default function ClaimsWorkflowPage() {
-    const { selectedFileInfo, setSelectedFileInfo, session, backend_url } =
+    const { selectedFileInfo, setSelectedFileInfo, session, backend_url, systemFileInfo, files } =
         useStore(appStore)
 
     const [activeTab, setActiveTab] = useState('claims_summary')
@@ -84,6 +85,47 @@ export default function ClaimsWorkflowPage() {
         }
     }
 
+    const loadAttestationData = async (_latestRevisionHash: string) => {
+        setIsLoadingAttestations(true)
+        try {
+            const aquaTemplates = systemFileInfo.map(e => {
+                try {
+                    return getAquaTreeFileName(e.aquaTree!)
+                } catch (e) {
+                    console.log('Error processing system file')
+                    return ''
+                }
+            })
+            for (let i = 0; i < files.length; i++) {
+                const file: ApiFileInfo = files[i]
+                // const fileObject = getAquaTreeFileObject(file)
+
+                const {isWorkFlow, workFlow} = isWorkFlowData(file.aquaTree!, aquaTemplates)
+                if(isWorkFlow && workFlow === "identity_attestation"){
+                    const orderedAquaTree = OrderRevisionInAquaTree(file.aquaTree!)
+                    const revisionHashes = Object.keys(orderedAquaTree.revisions)
+                    const firstRevisionHash = revisionHashes[0]
+                    const firstRevision = orderedAquaTree.revisions[firstRevisionHash]
+                    const identityClaimId = firstRevision.forms_identity_claim_id
+                    if(identityClaimId === processedInfo?.genesisHash){
+                        const attestationEntry: IAttestationEntry = {
+                            walletAddress: firstRevision.forms_wallet_address,
+                            context: firstRevision.forms_context,
+                            createdAt: firstRevision.local_timestamp,
+                        }                        
+                        setAttestations((prev) => [...prev, attestationEntry])
+                    }
+                }
+            }
+            setIsLoadingAttestations(false)
+        } catch (error) {
+            console.error('Error loading attestations:', error)
+            setIsLoadingAttestations(false)
+        }
+    }
+
+    console.log(attestations)
+
     useEffect(() => {
         if (selectedFileInfo) {
             const processedInfo = processSimpleWorkflowClaim(selectedFileInfo)
@@ -101,54 +143,6 @@ export default function ClaimsWorkflowPage() {
             loadAttestationData(processedInfo.latestRevisionHash!)
         }
     }, [JSON.stringify(processedInfo)])
-
-    const loadAttestationData = async (_latestRevisionHash: string) => {
-        setIsLoadingAttestations(true)
-        try {
-            // In a real implementation, this would be an API call to fetch attestations
-            // For now, we'll use sample data
-            // Example API call structure:
-            // const url = `${backend_url}/attestations/${latestRevisionHash}`;
-            // const response = await axios.get(url, {
-            //     headers: { nonce: session?.nonce },
-            // });
-            // setAttestations(response.data.attestations);
-            //
-            // Sample data for demonstration
-            setTimeout(() => {
-                setAttestations([
-                    {
-                        walletAddress:
-                            '0x742d35Cc6634C0532925a3b844Bc454e4438f44e',
-                        context: 'Verified claim ownership and authenticity',
-                        createdAt: new Date(
-                            Date.now() - 86400000 * 2
-                        ).toISOString(), // 2 days ago
-                    },
-                    {
-                        walletAddress:
-                            '0x5aAeb6053F3E94C9b9A09f33669435E7Ef1BeAed',
-                        context:
-                            'Confirmed product specifications match documentation',
-                        createdAt: new Date(
-                            Date.now() - 86400000
-                        ).toISOString(), // 1 day ago
-                    },
-                    {
-                        walletAddress:
-                            session?.address ||
-                            '0x0000000000000000000000000000000000000000',
-                        context: 'Initial claim creation and registration',
-                        createdAt: new Date().toISOString(), // today
-                    },
-                ])
-                setIsLoadingAttestations(false)
-            }, 1000)
-        } catch (error) {
-            console.error('Error loading attestations:', error)
-            setIsLoadingAttestations(false)
-        }
-    }
 
     return (
         <>
@@ -333,9 +327,7 @@ export default function ClaimsWorkflowPage() {
                                                         context={
                                                             attestation.context
                                                         }
-                                                        createdAt={new Date(
-                                                            attestation.createdAt
-                                                        ).toLocaleString()}
+                                                        createdAt={timeToHumanFriendly(attestation.createdAt, true) ?? ""}
                                                     />
                                                 )
                                             )}

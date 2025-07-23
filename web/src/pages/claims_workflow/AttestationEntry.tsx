@@ -1,8 +1,4 @@
-interface IAttestationEntry {
-    walletAddress: string
-    context: string
-    createdAt: string
-}
+import { IAttestationEntry } from "@/models/FileInfo"
 
 const AttestationEntry = ({
     walletAddress,

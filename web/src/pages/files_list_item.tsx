@@ -65,7 +65,7 @@ export default function FilesListItem({
             `Workflow info for file ${getAquaTreeFileName(file.aquaTree!)}: ${JSON.stringify(workFlow, null, 4)}`
         )
         setWorkFlowInfo(workFlow)
-    }, [])
+    }, []) 
 
     useEffect(() => {
         const someData = systemFileInfo.map(e => {
