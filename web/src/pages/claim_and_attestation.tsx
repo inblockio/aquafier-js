@@ -37,7 +37,6 @@ import {
 } from '@/utils/functions'
 import { FileObject } from 'aqua-js-sdk'
 import { DownloadAquaChain } from '../components/aqua_chain_actions/download_aqua_chain'
-import { OpenAquaSignWorkFlowButton } from '../components/aqua_chain_actions/open_aqua_sign_workflow'
 import { DeleteAquaChain } from '../components/aqua_chain_actions/delete_aqua_chain'
 import { Contract, IWorkflowItem } from '@/types/types'
 import axios from 'axios'
@@ -258,7 +257,7 @@ const ClaimsAndAttestationPage = () => {
 
 
     const [totalClaims, setTotalClaims] = useState<number>(0)
-    const [totolAttestors, setTotolAttestors] = useState<number>(0)
+    const [_totolAttestors, setTotolAttestors] = useState<number>(0)
     const [myAttestions, setMyAttestionss] = useState<number>(0)
 
     const [workflows, setWorkflows] = useState<IWorkflowItem[]>([])

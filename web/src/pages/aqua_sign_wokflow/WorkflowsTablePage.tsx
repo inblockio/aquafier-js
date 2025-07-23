@@ -44,7 +44,6 @@ import {
     isWorkFlowData,
     processContractInformation,
 } from '@/utils/functions'
-import { ApiFileInfo } from '@/models/FileInfo'
 import { FileObject } from 'aqua-js-sdk'
 import {
     Tooltip,
