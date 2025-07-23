@@ -6,9 +6,18 @@ import { LuArrowLeft } from 'react-icons/lu'
 import appStore from '../../store'
 import { useStore } from 'zustand'
 import { ShareButton } from '@/components/aqua_chain_actions/share_aqua_chain'
-import { getAquaTreeFileName, isWorkFlowData, processSimpleWorkflowClaim, timeToHumanFriendly } from '@/utils/functions'
+import {
+    getAquaTreeFileName,
+    isWorkFlowData,
+    processSimpleWorkflowClaim,
+    timeToHumanFriendly,
+} from '@/utils/functions'
 import { ClipLoader } from 'react-spinners'
-import { ApiFileInfo, ClaimInformation, IAttestationEntry } from '@/models/FileInfo'
+import {
+    ApiFileInfo,
+    ClaimInformation,
+    IAttestationEntry,
+} from '@/models/FileInfo'
 import axios from 'axios'
 import { Contract } from '@/types/types'
 import { SharedContract } from '../files_shared_contracts'
@@ -16,8 +25,14 @@ import AttestationEntry from './AttestationEntry'
 import { OrderRevisionInAquaTree } from 'aqua-js-sdk'
 
 export default function ClaimsWorkflowPage() {
-    const { selectedFileInfo, setSelectedFileInfo, session, backend_url, systemFileInfo, files } =
-        useStore(appStore)
+    const {
+        selectedFileInfo,
+        setSelectedFileInfo,
+        session,
+        backend_url,
+        systemFileInfo,
+        files,
+    } = useStore(appStore)
 
     const [activeTab, setActiveTab] = useState('claims_summary')
     // const [previewEnabled, setPreviewEnabled] = useState(true);
@@ -100,20 +115,29 @@ export default function ClaimsWorkflowPage() {
                 const file: ApiFileInfo = files[i]
                 // const fileObject = getAquaTreeFileObject(file)
 
-                const {isWorkFlow, workFlow} = isWorkFlowData(file.aquaTree!, aquaTemplates)
-                if(isWorkFlow && workFlow === "identity_attestation"){
-                    const orderedAquaTree = OrderRevisionInAquaTree(file.aquaTree!)
-                    const revisionHashes = Object.keys(orderedAquaTree.revisions)
+                const { isWorkFlow, workFlow } = isWorkFlowData(
+                    file.aquaTree!,
+                    aquaTemplates
+                )
+                if (isWorkFlow && workFlow === 'identity_attestation') {
+                    const orderedAquaTree = OrderRevisionInAquaTree(
+                        file.aquaTree!
+                    )
+                    const revisionHashes = Object.keys(
+                        orderedAquaTree.revisions
+                    )
                     const firstRevisionHash = revisionHashes[0]
-                    const firstRevision = orderedAquaTree.revisions[firstRevisionHash]
-                    const identityClaimId = firstRevision.forms_identity_claim_id
-                    if(identityClaimId === processedInfo?.genesisHash){
+                    const firstRevision =
+                        orderedAquaTree.revisions[firstRevisionHash]
+                    const identityClaimId =
+                        firstRevision.forms_identity_claim_id
+                    if (identityClaimId === processedInfo?.genesisHash) {
                         const attestationEntry: IAttestationEntry = {
                             walletAddress: firstRevision.forms_wallet_address,
                             context: firstRevision.forms_context,
                             createdAt: firstRevision.local_timestamp,
-                        }                        
-                        setAttestations((prev) => [...prev, attestationEntry])
+                        }
+                        setAttestations(prev => [...prev, attestationEntry])
                     }
                 }
             }
@@ -327,7 +351,12 @@ export default function ClaimsWorkflowPage() {
                                                         context={
                                                             attestation.context
                                                         }
-                                                        createdAt={timeToHumanFriendly(attestation.createdAt, true) ?? ""}
+                                                        createdAt={
+                                                            timeToHumanFriendly(
+                                                                attestation.createdAt,
+                                                                true
+                                                            ) ?? ''
+                                                        }
                                                     />
                                                 )
                                             )}

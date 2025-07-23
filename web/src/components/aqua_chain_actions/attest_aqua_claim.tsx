@@ -10,6 +10,7 @@ import { ApiFileInfo } from '../../models/FileInfo'
 import { toast } from 'sonner'
 import { Album } from 'lucide-react'
 import { Revision } from 'aqua-js-sdk'
+import { Button } from '../ui/button'
 
 export const AttestAquaClaim = ({
     file,
@@ -87,7 +88,16 @@ export const AttestAquaClaim = ({
     if (secondRevision) {
         if (secondRevision.revision_type == 'signature') {
             if (secondRevision.signature_wallet_address == session?.address) {
-                return null
+                return (
+                    <Button
+                        disabled
+                        className={`w-full cursor-not-allowed flex items-center justify-center space-x-1 text-gray-600 px-3 py-2 rounded transition-colors text-xs bg-gray-200 `}
+                        // disabled={openCreateClaimAttestationPopUp}
+                    >
+                        <Album className="w-4 h-4" />
+                        <span>Attest</span>
+                    </Button>
+                )
             } else {
                 return (
                     <div className="w-[100px]">

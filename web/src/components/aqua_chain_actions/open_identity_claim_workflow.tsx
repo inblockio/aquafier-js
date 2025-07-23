@@ -28,7 +28,7 @@ export const OpenClaimsWorkFlowButton = ({
             ) : (
                 <Button
                     data-testid={'open-aqua-claim-workflow-button-' + index}
-                    className="w-full cursor-pointer rounded-sm bg-cyan-900/10 text-cyan-600 text-xs hover:bg-cyan-500/20 break-words break-all overflow-hidden"
+                    className="w-full cursor-pointer rounded-sm bg-cyan-900/10 text-cyan-600 hover:bg-cyan-500/20 break-words break-all overflow-hidden text-xs"
                     onClick={e => {
                         e.preventDefault()
                         setSelectedFileInfo(item)

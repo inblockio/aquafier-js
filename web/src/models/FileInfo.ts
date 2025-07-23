@@ -20,7 +20,6 @@ export interface ClaimInformation {
     genesisHash: string | null
 }
 
-
 export interface IAttestationEntry {
     walletAddress: string
     context: string

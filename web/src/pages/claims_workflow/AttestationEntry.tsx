@@ -1,4 +1,4 @@
-import { IAttestationEntry } from "@/models/FileInfo"
+import { IAttestationEntry } from '@/models/FileInfo'
 
 const AttestationEntry = ({
     walletAddress,
