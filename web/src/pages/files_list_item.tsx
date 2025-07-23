@@ -222,17 +222,18 @@ export default function FilesListItem({
 
     const workFlowIdentityClaimAttestationActions = () => {
         let identityClaimfile = null
+        const currentFileAquaTree = OrderRevisionInAquaTree(file.aquaTree!)
+        const currentFileRevisionHashes = Object.keys(
+            currentFileAquaTree.revisions
+        )
+        const firstRevision =
+            currentFileAquaTree.revisions[currentFileRevisionHashes[0]]
+
         for (let i = 0; i < files.length; i++) {
             const claimFile: ApiFileInfo = files[i]
             const aquaTree = OrderRevisionInAquaTree(claimFile.aquaTree!)
             const revisionHashes = Object.keys(aquaTree.revisions)
 
-            const currentFileAquaTree = OrderRevisionInAquaTree(file.aquaTree!)
-            const currentFileRevisionHashes = Object.keys(
-                currentFileAquaTree.revisions
-            )
-            const firstRevision =
-                currentFileAquaTree.revisions[currentFileRevisionHashes[0]]
             if (revisionHashes[0] === firstRevision.forms_identity_claim_id) {
                 identityClaimfile = claimFile
                 break
