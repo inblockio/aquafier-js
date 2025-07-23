@@ -20,7 +20,7 @@ export const OpenClaimsWorkFlowButton = ({
                     onClick={e => {
                         e.preventDefault()
                         setSelectedFileInfo(item)
-                        navigate('/app/claim/workflow')
+                        navigate('/app/claims/workflow')
                     }}
                 >
                     {children}
