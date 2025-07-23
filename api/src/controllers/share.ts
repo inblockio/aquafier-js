@@ -195,6 +195,8 @@ export default async function shareController(fastify: FastifyInstance) {
 
     });
 
+
+
     fastify.put('/contracts/:hash', async (request, reply) => {
         // Extract the hash parameter from the URL
         const { hash } = request.params as { hash: string };

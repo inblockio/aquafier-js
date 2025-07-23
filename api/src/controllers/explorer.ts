@@ -57,7 +57,7 @@ export default async function explorerController(fastify: FastifyInstance) {
 
             // Process aqua.json metadata first
             await processAquaMetadata(zipData, session.address);
- 
+
 
             // let isWorkFlow = false
             // const isWorkFlowPar = request.headers['is_workflow'];
@@ -135,7 +135,7 @@ export default async function explorerController(fastify: FastifyInstance) {
             let assetFilename = "";
             let isWorkFlow = false
             let templateId = ""
-
+            let walletAddress = session.address;
             // Process each part of the multipart form
             for await (const part of parts) {
                 if (part.type === 'file') {
@@ -159,9 +159,13 @@ export default async function explorerController(fastify: FastifyInstance) {
                     } else if (part.fieldname === 'account') {
                         // Store account if needed for further processing
                         const account = part.value;
+                        if (!account || typeof account !== 'string' || account.trim() === '') {
+                            return reply.code(400).send({ error: 'Account is required' });
+                        }
                         // Verify account matches session address
                         if (account !== session.address) {
-                            return reply.code(403).send({ error: 'Account mismatch with authenticated session' });
+                            walletAddress = account;
+                            // return reply.code(403).send({ error: 'Account mismatch with authenticated session' });
                         }
                     } else if (part.fieldname === 'is_workflow') {
                         isWorkFlow = part.value === 'true';
@@ -212,7 +216,8 @@ export default async function explorerController(fastify: FastifyInstance) {
                     return reply.code(500).send({ error: 'Genesis hash not found in aqua tree' });
                 }
 
-                let filepubkeyhash = `${session.address}_${genesisHash}`
+                // let filepubkeyhash = `${session.address}_${genesisHash}`
+                let filepubkeyhash = `${walletAddress}_${genesisHash}`
 
                 let existingFileIndex = await prisma.fileIndex.findFirst({
                     where: { file_hash: fileHash },
@@ -239,7 +244,7 @@ export default async function explorerController(fastify: FastifyInstance) {
                     await prisma.fileIndex.update({
                         where: { file_hash: existingFileIndex.file_hash },
                         data: {
-                            pubkey_hash: [...existingFileIndex.pubkey_hash, `${session.address}_${genesisHash}`]
+                            pubkey_hash: [...existingFileIndex.pubkey_hash, filepubkeyhash]//`${session.address}_${genesisHash}`]
                         }
                     });
 
@@ -314,7 +319,8 @@ export default async function explorerController(fastify: FastifyInstance) {
             // Save the aqua tree
 
             console.log(`🧭🧭 ${isWorkFlow + "--"} `)
-            await saveAquaTree(aquaTree, session.address, templateId.length == 0 ? null : templateId, isWorkFlow);
+            // await saveAquaTree(aquaTree, session.address, templateId.length == 0 ? null : templateId, isWorkFlow);
+            await saveAquaTree(aquaTree, walletAddress, templateId.length == 0 ? null : templateId, isWorkFlow);
 
 
 
@@ -328,10 +334,21 @@ export default async function explorerController(fastify: FastifyInstance) {
             // Get the protocol (http or https)
             const protocol = request.protocol || 'https'
 
-            // Construct the full URL
-            const url = `${protocol}://${host}`;
+            //DO NOT FETCH  API FILE INFO ASS THE WALLET ADDRES COULD BE OF ANOTHER USER 
+            // REMEMBER CLAIM ATTESTATION SAVE FOR OTHER USERS 
+            // THE FRON END  SHOULD USE FETCH API FILE INF0
 
-            const displayData = await getUserApiFileInfo(url, session.address)
+
+            let displayData: Array<{
+                aquaTree: AquaTree;
+                fileObject: FileObject[];
+            }> = []
+            if (session.address == walletAddress) {
+
+                // Construct the full URL
+                const url = `${protocol}://${host}`;
+                displayData = await getUserApiFileInfo(url, walletAddress)
+            }
             return reply.code(200).send({
                 success: true,
                 message: 'Aqua tree saved successfully',
@@ -386,7 +403,7 @@ export default async function explorerController(fastify: FastifyInstance) {
             message: 'Aqua tree saved successfully',
             data: displayData
         });
- 
+
     });
 
     fastify.post('/explorer_files', async (request, reply) => {
@@ -461,7 +478,7 @@ export default async function explorerController(fastify: FastifyInstance) {
             }
 
 
-           
+
 
             const fileBuffer: Buffer<ArrayBufferLike> = await streamToBuffer(data.file);
             // const buffer = Buffer.from([1, 2, 3, 4]);
@@ -477,7 +494,7 @@ export default async function explorerController(fastify: FastifyInstance) {
                 fileSize: fileSizeInBytes
             }
 
-            if(isForm){
+            if (isForm) {
                 let d = fileBuffer.toString('utf-8')
                 console.log(`fileBuffer as string: ${d}`)
                 // let one = JSON.parse(d)
@@ -498,7 +515,7 @@ export default async function explorerController(fastify: FastifyInstance) {
                 fileObjectPar,
                 isForm,
                 enableContent,
-               isForm ? false : enableScalar
+                isForm ? false : enableScalar
             )
 
             // console.log(`Aqua tree ${JSON.stringify(res, null, 4)}`)
@@ -598,8 +615,8 @@ export default async function explorerController(fastify: FastifyInstance) {
                     for (let formItem of revisioValue) {
                         // console.log(`three ${formItem}`)
                         if (formItem.startsWith("forms_")) {
-                                // console.log(`four ${formItem}`)
-                           let res=  await prisma.aquaForms.create({
+                            // console.log(`four ${formItem}`)
+                            let res = await prisma.aquaForms.create({
                                 data: {
                                     hash: filepubkeyhash,
                                     key: formItem,
@@ -659,7 +676,7 @@ export default async function explorerController(fastify: FastifyInstance) {
                         }
                     })
 
-                   
+
 
                 }
                 await prisma.fileName.upsert({
