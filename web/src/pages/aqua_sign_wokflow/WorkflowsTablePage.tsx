@@ -44,7 +44,6 @@ import {
     isWorkFlowData,
     processContractInformation,
 } from '@/utils/functions'
-import { ApiFileInfo } from '@/models/FileInfo'
 import { FileObject } from 'aqua-js-sdk'
 import {
     Tooltip,
@@ -55,6 +54,7 @@ import { IContractInformation } from '@/types/contract_workflow'
 import { DownloadAquaChain } from '../../components/aqua_chain_actions/download_aqua_chain'
 import { OpenAquaSignWorkFlowButton } from '../../components/aqua_chain_actions/open_aqua_sign_workflow'
 import { DeleteAquaChain } from '../../components/aqua_chain_actions/delete_aqua_chain'
+import { IWorkflowItem } from '@/types/types'
 
 const getStatusIcon = (status: string) => {
     switch (status) {
@@ -87,6 +87,8 @@ const getStatusColor = (status: string) => {
 }
 
 const getProgressPercentage = (total: number, remaining: number) => {
+    console.log('Calculating progress percentage:', { total, remaining })
+    if (total === 0) return 0 // Avoid division by zero
     return ((total - remaining) / total) * 100
 }
 
@@ -98,11 +100,7 @@ const getInitials = (name: string) => {
         .toUpperCase()
 }
 
-interface IWorkflowItem {
-    workflowName: string
-    apiFileInfo: ApiFileInfo
-    index?: number
-}
+
 
 const WorkflowTableItem = ({
     workflowName,
@@ -402,6 +400,7 @@ export default function WorkflowsTablePage() {
                 file.aquaTree!,
                 someData
             )
+            // console.log('Processing file:', JSON.stringify(file.aquaTree?, null,), 'WorkFlow:', workFlow, 'isWorkFlow:', isWorkFlow)
             if (isWorkFlow && workFlow === 'aqua_sign') {
                 // setWorkflows((prev : IWorkflowItem[]) => {
 
@@ -431,6 +430,8 @@ export default function WorkflowsTablePage() {
         processFilesToGetWorkflows()
     }, [JSON.stringify(files)])
 
+   
+
     return (
         <>
             {/* Action Bar */}
@@ -458,7 +459,7 @@ export default function WorkflowsTablePage() {
                         <CardTitle className="flex items-center gap-2 justify-between">
                             <div className="flex items-center gap-2">
                                 <FileText className="h-5 w-5" />
-                                <span>Aqua Workflows</span>
+                                <span>Aqua Sign Workflows</span>
                             </div>
                             <button
                                 className="flex items-center space-x-2 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-gray-100 cursor-pointer"
