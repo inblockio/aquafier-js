@@ -44,7 +44,7 @@ export default function ClaimsWorkflowPage() {
         null
     )
     const [attestations, setAttestations] = useState<
-        Array<{ walletAddress: string; context: string; createdAt: string }>
+        Array<{ walletAddress: string; context: string; createdAt: string, file : ApiFileInfo }>
     >([])
     const [isLoadingAttestations, setIsLoadingAttestations] = useState(false)
 
@@ -138,6 +138,8 @@ export default function ClaimsWorkflowPage() {
                             walletAddress: firstRevision.forms_wallet_address,
                             context: firstRevision.forms_context,
                             createdAt: firstRevision.local_timestamp,
+                            file: file,
+                            nonce: session!.nonce
                         }
                         setAttestations(prev => [...prev, attestationEntry])
                     }
@@ -256,7 +258,7 @@ export default function ClaimsWorkflowPage() {
                             </h1>
 
                             {processedInfo?.walletAddress ===
-                            session?.address ? (
+                            session?.address  &&  activeTabData?.id == `claims_summary` ? (
                                 <div className="flex items-center gap-3">
                                     <ShareButton
                                         item={selectedFileInfo!}
@@ -304,8 +306,7 @@ export default function ClaimsWorkflowPage() {
                                     <div>
                                         <div className="bg-gray-50 rounded-lg p-6">
                                             <p className="text-gray-900">
-                                                Wallets that you have shared the
-                                                claim with
+                                                Wallets that you have shared the claim with
                                             </p>
                                             <div className="mt-4 space-y-3">
                                                 {/* <div className="flex items-center justify-between p-3 bg-white rounded border">
@@ -364,6 +365,8 @@ export default function ClaimsWorkflowPage() {
                                                                 true
                                                             ) ?? ''
                                                         }
+                                                        nonce={session!.nonce}
+                                                        file={attestation.file}
                                                     />
                                                 )
                                             )}
