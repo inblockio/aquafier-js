@@ -323,6 +323,7 @@ export default function ClaimsWorkflowPage() {
                                                             key={`${contract.hash}`}
                                                             contract={contract}
                                                             index={index}
+                                                            showDeleteIcon={true}
                                                         />
                                                     )
                                                 )}

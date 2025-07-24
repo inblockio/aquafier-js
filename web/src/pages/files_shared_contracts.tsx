@@ -24,7 +24,7 @@ export const SharedContract = ({
 }: {
     contract: Contract
     index: number
-    showDeleteIcon : boolean
+    showDeleteIcon: boolean
 }) => {
     const navigate = useNavigate()
 
@@ -194,21 +194,38 @@ export const SharedContract = ({
                                 )}
                             </div>
 
-                            <Button
-                                data-testid={
-                                    'open-shared-contract-button-' + index
-                                }
-                                variant="outline"
-                                size="sm"
-                                className="w-full xs:w-auto"
-                                onClick={() =>
-                                    navigate(
-                                        `/app/shared-contracts/${contract.hash}`
-                                    )
-                                }
-                            >
-                                Open
-                            </Button>
+                            <div className="grid grid-cols-2 gap-2 w-full">
+                                <Button
+                                    data-testid={
+                                        'open-shared-contract-button-' + index
+                                    }
+                                    variant="outline"
+                                    size="sm"
+                                    className="w-full"
+                                    onClick={() =>
+                                        navigate(
+                                            `/app/shared-contracts/${contract.hash}`
+                                        )
+                                    }
+                                >
+                                    Open
+                                </Button>
+                                <Button
+                                    data-testid={
+                                        'delete-shared-contract-button-' + index
+                                    }
+                                    variant="destructive"
+                                    size="sm"
+                                    className="w-full"
+                                    onClick={() =>
+                                        navigate(
+                                            `/app/shared-contracts/${contract.hash}`
+                                        )
+                                    }
+                                >
+                                    Delete
+                                </Button>
+                            </div>
 
                             {/* <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
@@ -318,6 +335,7 @@ export function SharedContracts() {
                                     key={`${contract.hash}`}
                                     contract={contract}
                                     index={index}
+                                    showDeleteIcon={true}
                                 />
                             ))}
 
