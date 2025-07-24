@@ -1,6 +1,9 @@
+import { ShareButton } from '@/components/aqua_chain_actions/share_aqua_chain'
 import { IAttestationEntry } from '@/models/FileInfo'
 
 const AttestationEntry = ({
+    file,
+    nonce,
     walletAddress,
     context,
     createdAt,
@@ -32,7 +35,16 @@ const AttestationEntry = ({
                     </div>
                     <p className="text-gray-700 text-sm">{context}</p>
                 </div>
-                <span className="text-xs text-gray-500">{createdAt}</span>
+                <div className='flex-col'>
+                    <span className="text-xs text-gray-500 ">{createdAt}</span>
+                <div className="flex items-center gap-3 mt-4">
+                                                    <ShareButton
+                                                        item={file!}
+                                                        nonce={nonce}
+                                                        index={1}
+                                                    />
+                                                </div>
+                </div>
             </div>
         </div>
     )

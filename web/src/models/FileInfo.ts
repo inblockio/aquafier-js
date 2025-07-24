@@ -24,4 +24,6 @@ export interface IAttestationEntry {
     walletAddress: string
     context: string
     createdAt: string
+    nonce: string
+    file : ApiFileInfo
 }
