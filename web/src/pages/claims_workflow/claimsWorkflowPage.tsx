@@ -299,8 +299,7 @@ export default function ClaimsWorkflowPage() {
                                     <div>
                                         <div className="bg-gray-50 rounded-lg p-6">
                                             <p className="text-gray-900">
-                                                Wallets that you have shared the
-                                                claim with
+                                                Wallets that you have shared the claim with
                                             </p>
                                             <div className="mt-4 space-y-3">
                                                 {/* <div className="flex items-center justify-between p-3 bg-white rounded border">

@@ -20,9 +20,11 @@ import { Contract } from '@/types/types'
 export const SharedContract = ({
     contract,
     index,
+    showDeleteIcon
 }: {
     contract: Contract
     index: number
+    showDeleteIcon : boolean
 }) => {
     const navigate = useNavigate()
 
