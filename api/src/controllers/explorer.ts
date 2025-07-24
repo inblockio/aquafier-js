@@ -1,4 +1,4 @@
-import Aquafier, { AquaTree, FileObject, LogData, LogType, Revision } from 'aqua-js-sdk';
+import Aquafier, { AquaTree, FileObject, LogData, LogType, OrderRevisionInAquaTree, Revision } from 'aqua-js-sdk';
 import { FastifyInstance } from 'fastify';
 import { prisma } from '../database/db';
 import { getFileUploadDirectory, streamToBuffer } from '../utils/file_utils';
@@ -12,8 +12,10 @@ import { deleteAquaTreeFromSystem, fetchAquatreeFoUser, getUserApiFileInfo, proc
 import { getHost, getPort } from '../utils/api_utils';
 import { DeleteRevision } from '../models/request_models';
 import { fetchCompleteRevisionChain } from '../utils/quick_utils';
-import { transferRevisionChain, mergeRevisionChain } from '../utils/quick_revision_utils';
+import { mergeRevisionChain } from '../utils/quick_revision_utils';
 import { getGenesisHash, removeFilePathFromFileIndex, validateAquaTree } from '../utils/aqua_tree_utils';
+import WebSocketActions from '../constants/constants';
+import { sendToUserWebsockerAMessage } from './websocketController';
 // import getStream from 'get-stream';
 // Promisify pipeline
 const pump = util.promisify(pipeline);
@@ -184,6 +186,8 @@ export default async function explorerController(fastify: FastifyInstance) {
             let fileContent = fileBuffer.toString('utf-8');
             let aquaTreeFromFile: AquaTree = JSON.parse(fileContent);
 
+
+
             let aquaTree = removeFilePathFromFileIndex(aquaTreeFromFile);
 
             let [isValidAquaTree, failureReason] = validateAquaTree(aquaTree)
@@ -192,8 +196,6 @@ export default async function explorerController(fastify: FastifyInstance) {
                 // console.log(`failure reason ${failureReason}`)
                 return reply.code(412).send({ error: failureReason });
             }
-
-
 
             // console.log(`\n has asset save file ${hasAsset}  `)
             // Handle the asset if it exists
@@ -349,6 +351,23 @@ export default async function explorerController(fastify: FastifyInstance) {
                 const url = `${protocol}://${host}`;
                 displayData = await getUserApiFileInfo(url, walletAddress)
             }
+
+            if (walletAddress !== session.address) {
+                try {
+                    let sortedAquaTree = OrderRevisionInAquaTree(aquaTree)
+                    const revisionHashes = Object.keys(sortedAquaTree.revisions)
+                    const firstRevision = sortedAquaTree.revisions[revisionHashes[0]]
+                    if (firstRevision.revision_type == "form" && firstRevision.forms_claim_wallet_address) {
+                        const claimerWalletAddress = firstRevision.forms_claim_wallet_address
+                        // Websocket message to the claimer
+                        sendToUserWebsockerAMessage(claimerWalletAddress, WebSocketActions.REFETCH_FILES)
+                    }
+                }
+                catch (e) {
+                    console.log(`Attestation Error ${e}`);
+                }
+            }
+
             return reply.code(200).send({
                 success: true,
                 message: 'Aqua tree saved successfully',

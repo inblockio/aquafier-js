@@ -49,6 +49,7 @@ export default function ClaimsWorkflowPage() {
     const [isLoadingAttestations, setIsLoadingAttestations] = useState(false)
 
     const navigate = useNavigate()
+    
 
     const tabs = [
         {
@@ -111,6 +112,7 @@ export default function ClaimsWorkflowPage() {
                     return ''
                 }
             })
+            console.log("Files: ", files.length)
             for (let i = 0; i < files.length; i++) {
                 const file: ApiFileInfo = files[i]
                 // const fileObject = getAquaTreeFileObject(file)
@@ -145,18 +147,20 @@ export default function ClaimsWorkflowPage() {
         } catch (error) {
             console.error('Error loading attestations:', error)
             setIsLoadingAttestations(false)
-        }
+        }  
     }
 
     console.log(attestations)
 
     useEffect(() => {
+        console.log("Files useffect: ", files.length)
         if (selectedFileInfo) {
+            console.log()
             const processedInfo = processSimpleWorkflowClaim(selectedFileInfo)
             setTimeLineTitle('Claims Workflow')
             setProcessedInfo(processedInfo)
         }
-    }, [JSON.stringify(selectedFileInfo)])
+    }, [JSON.stringify(selectedFileInfo), JSON.stringify(files)])
 
     useEffect(() => {
         if (processedInfo) {
@@ -166,7 +170,10 @@ export default function ClaimsWorkflowPage() {
             )
             loadAttestationData(processedInfo.latestRevisionHash!)
         }
-    }, [JSON.stringify(processedInfo)])
+    }, [JSON.stringify(processedInfo), JSON.stringify(files)])
+
+
+    
 
     return (
         <>
