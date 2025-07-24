@@ -20,14 +20,15 @@ import { Contract } from '@/types/types'
 export const SharedContract = ({
     contract,
     index,
-    showDeleteIcon
+    contractDeleted
 }: {
     contract: Contract
     index: number
-    showDeleteIcon: boolean
+    contractDeleted: (hash: string) => void
+
 }) => {
     const navigate = useNavigate()
-
+    const { backend_url } = useStore(appStore)
     const getStatusFromLatest = (latest?: string) => {
         if (!latest) return 'unknown'
         try {
@@ -210,6 +211,7 @@ export const SharedContract = ({
                                 >
                                     Open
                                 </Button>
+                                
                                 <Button
                                     data-testid={
                                         'delete-shared-contract-button-' + index
@@ -217,10 +219,16 @@ export const SharedContract = ({
                                     variant="destructive"
                                     size="sm"
                                     className="w-full"
-                                    onClick={() =>
-                                        navigate(
-                                            `/app/shared-contracts/${contract.hash}`
-                                        )
+                                    onClick={async () => {
+
+                                        const response = await axios.delete(`${backend_url}/contracts/${contract.hash}`, {
+                                        })
+
+                                        if (response.status === 200 || response.status === 201) {
+                                            contractDeleted(contract.hash)
+                                        }
+                                    }
+
                                     }
                                 >
                                     Delete
@@ -271,6 +279,7 @@ export const SharedContract = ({
 
 export function SharedContracts() {
     const [searchQuery, _setSearchQuery] = useState('')
+    const [shareContracts, setShareContracts] = useState<Contract[]>([])
     const { backend_url, session, setContracts, contracts } = useStore(appStore)
 
     const loadAccountSharedContracts = async () => {
@@ -300,14 +309,21 @@ export function SharedContracts() {
         loadAccountSharedContracts()
     }, [backend_url, session])
 
-    const filteredContracts = contracts.filter(
-        contract =>
-            contract.hash.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            contract.sender
-                ?.toLowerCase()
-                .includes(searchQuery.toLowerCase()) ||
-            contract.receiver?.toLowerCase().includes(searchQuery.toLowerCase())
-    )
+    useEffect(() => {
+
+        const filteredContracts = contracts.filter(
+            contract =>
+                contract.hash.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                contract.sender
+                    ?.toLowerCase()
+                    .includes(searchQuery.toLowerCase()) ||
+                contract.receiver?.toLowerCase().includes(searchQuery.toLowerCase())
+        )
+        setShareContracts(filteredContracts)
+
+    }, [JSON.stringify(contracts)])
+
+
 
     return (
         <div>
@@ -330,16 +346,21 @@ export function SharedContracts() {
                     {/* Contracts List */}
                     <div className="flex-1 overflow-auto p-0">
                         <div className="space-y-4">
-                            {filteredContracts.map((contract, index) => (
+                            {shareContracts.map((contract, index) => (
                                 <SharedContract
                                     key={`${contract.hash}`}
                                     contract={contract}
                                     index={index}
-                                    showDeleteIcon={true}
+                                    contractDeleted={
+                                        (hash) => {
+                                            let newState = shareContracts.filter((e) => e.hash != hash);
+                                            setShareContracts(newState)
+                                        }
+                                    }
                                 />
                             ))}
 
-                            {filteredContracts.length === 0 && (
+                            {shareContracts.length === 0 && (
                                 <div className="text-center py-12">
                                     <div className="w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center mx-auto mb-4">
                                         <FileText className="w-8 h-8 text-gray-400" />
