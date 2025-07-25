@@ -61,9 +61,9 @@ export default function FilesListItem({
         const fileObject = getAquaTreeFileObject(file)
         setCurrentFileObject(fileObject)
         const workFlow = isWorkFlowData(file.aquaTree!, someData)
-        console.log(
-            `Workflow info for file ${getAquaTreeFileName(file.aquaTree!)}: ${JSON.stringify(workFlow, null, 4)}`
-        )
+        // console.log(
+        //     `Workflow info for some data ${JSON.stringify(someData, null, 4)} file ${getAquaTreeFileName(file.aquaTree!)}: ${JSON.stringify(workFlow, null, 4)}`
+        // )
         setWorkFlowInfo(workFlow)
     }, [])
 
@@ -112,75 +112,7 @@ export default function FilesListItem({
     //             <span>Details</span>
     //         </button>;
     //     }
-    const workFileActions = () => {
-        return (
-            <>
-                {/* Grid layout for action buttons with equal widths */}
-                <div className="flex flex-wrap gap-1">
-                    {/* Details Button */}
-                    <div className="w-[100px]">
-                        <OpenSelectedFileDetailsButton
-                            file={file}
-                            index={index}
-                        />
-                    </div>
-
-                    {/* Sign Button */}
-                    <div className="w-[100px]">
-                        <SignAquaChain
-                            apiFileInfo={file}
-                            backendUrl={backendUrl}
-                            nonce={nonce}
-                            revision=""
-                            index={index}
-                        />
-                    </div>
-
-                    {/* Witness Button */}
-                    <div className="w-[100px]">
-                        <WitnessAquaChain
-                            apiFileInfo={file}
-                            backendUrl={backendUrl}
-                            nonce={nonce}
-                            revision=""
-                            index={index}
-                        />
-                    </div>
-
-                    {/* Link Button */}
-                    <div className="w-[100px]">
-                        <LinkButton item={file} nonce={nonce} index={index} />
-                    </div>
-
-                    {/* Share Button */}
-                    <div className="w-[100px]">
-                        <ShareButton item={file} nonce={nonce} index={index} />
-                    </div>
-
-                    {/* Delete Button */}
-                    <div className="w-[100px]">
-                        <DeleteAquaChain
-                            apiFileInfo={file}
-                            backendUrl={backendUrl}
-                            nonce={nonce}
-                            revision=""
-                            index={index}
-                        />
-                    </div>
-
-                    {/* Download Button */}
-                    <div className="w-[100px]">
-                        <DownloadAquaChain file={file} index={index} />
-                    </div>
-                </div>
-
-                {/* Third row - 1 smaller button */}
-                {/* <div className="flex">
-                        
-                    </div> */}
-            </>
-        )
-    }
+    
     const workFlowAquaSignActions = () => {
         return (
             <>
@@ -332,6 +264,75 @@ export default function FilesListItem({
         return workFileActions()
     }
 
+    const workFileActions = () => {
+        return (
+            <>
+                {/* Grid layout for action buttons with equal widths */}
+                <div className="flex flex-wrap gap-1">
+                    {/* Details Button */}
+                    <div className="w-[100px]">
+                        <OpenSelectedFileDetailsButton
+                            file={file}
+                            index={index}
+                        />
+                    </div>
+
+                    {/* Sign Button */}
+                    <div className="w-[100px]">
+                        <SignAquaChain
+                            apiFileInfo={file}
+                            backendUrl={backendUrl}
+                            nonce={nonce}
+                            revision=""
+                            index={index}
+                        />
+                    </div>
+
+                    {/* Witness Button */}
+                    <div className="w-[100px]">
+                        <WitnessAquaChain
+                            apiFileInfo={file}
+                            backendUrl={backendUrl}
+                            nonce={nonce}
+                            revision=""
+                            index={index}
+                        />
+                    </div>
+
+                    {/* Link Button */}
+                    <div className="w-[100px]">
+                        <LinkButton item={file} nonce={nonce} index={index} />
+                    </div>
+
+                    {/* Share Button */}
+                    <div className="w-[100px]">
+                        <ShareButton item={file} nonce={nonce} index={index} />
+                    </div>
+
+                    {/* Delete Button */}
+                    <div className="w-[100px]">
+                        <DeleteAquaChain
+                            apiFileInfo={file}
+                            backendUrl={backendUrl}
+                            nonce={nonce}
+                            revision=""
+                            index={index}
+                        />
+                    </div>
+
+                    {/* Download Button */}
+                    <div className="w-[100px]">
+                        <DownloadAquaChain file={file} index={index} />
+                    </div>
+                </div>
+
+                {/* Third row - 1 smaller button */}
+                {/* <div className="flex">
+                        
+                    </div> */}
+            </>
+        )
+    }
     const renderTableView = () => {
         return (
             <tr
@@ -344,6 +345,13 @@ export default function FilesListItem({
                         {getAquaTreeFileName(file.aquaTree!)}
                     </span>
                 </td>
+                {
+                    showWorkFlowsOnly ? (
+                        <td className="py-3 px-3 text-sm text-gray-500">
+                            {workflowInfo?.workFlow || 'Not a workflow'}
+                        </td>
+                    ) : null
+                }
                 <td className="py-3 text-sm text-gray-500">
                     {getFileCategory(
                         getFileExtension(getAquaTreeFileName(file.aquaTree!))
@@ -378,10 +386,10 @@ export default function FilesListItem({
     }
 
     const renderCardView = () => {
-        if (
-            (showWorkFlowsOnly && workflowInfo?.isWorkFlow) ||
-            !showWorkFlowsOnly
-        ) {
+        // if (
+        //     (showWorkFlowsOnly && workflowInfo?.isWorkFlow) ||
+        //     !showWorkFlowsOnly
+        // ) {
             return (
                 <div className="space-y-3">
                     <div className="flex items-center space-x-3">
@@ -422,12 +430,18 @@ export default function FilesListItem({
                     </div>
                 </div>
             )
-        }
-        return null
+        // }
+        // return null
     }
 
-    const showListItemData = () => {
+
+    // return <>{showWorkFlowsOnly+"-"+workflowInfo?.isWorkFlow+"=="}</>
+    // const showListItemData = () => {
         // First check if we should show this item based on workflow filter
+
+        if(workflowInfo=== undefined) {
+            return null
+        }
         if (showWorkFlowsOnly && !workflowInfo?.isWorkFlow) {
             return null
         }
@@ -442,7 +456,7 @@ export default function FilesListItem({
         }
 
         return null
-    }
+    // }
 
-    return <>{showListItemData()}</>
+    // return <>{showListItemData()}</>
 }

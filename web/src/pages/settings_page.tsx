@@ -176,7 +176,7 @@ export default function SettingsPage() {
                     contract ?? '0x45f59310ADD88E6d23ca58A0Fa7A55BEE6d2a611',
             })
 
-            toast('Settings saved successfully')
+            toast.success('Settings saved successfully')
         }
     }
 

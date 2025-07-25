@@ -261,11 +261,11 @@ const FormTemplateListShadcn = ({ onEdit }: FormTemplateListShadcnProps) => {
                                 )}
                         </div>
 
-                        <DialogFooter className="flex-shrink-0 mt-2">
+                        {/* <DialogFooter className="flex-shrink-0 mt-2">
                             <DialogClose asChild>
                                 <Button variant="outline">Close</Button>
                             </DialogClose>
-                        </DialogFooter>
+                        </DialogFooter> */}
                     </DialogContent>
                 </Dialog>
 
