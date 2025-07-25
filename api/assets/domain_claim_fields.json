@@ -1,0 +1,35 @@
+[
+    {
+        "name": "domain",
+        "label": "Domain Name",
+        "type": "domain",
+        "required": true,
+        "isArray": false
+    },
+    {
+        "name": "type",
+        "label": "Type",
+        "type": "string",
+        "required": true,
+        "isArray": false,
+        "isEditable": false,
+        "isHidden": true,
+        "defaultValue": "dns_claim"
+    },
+    
+    {
+        "name": "claim_context",
+        "label": "context",
+        "type": "string",
+        "required": true,
+        "isArray": false
+    },
+    {
+        "name": "wallet_address",
+        "label": "Wallet Address",
+        "type": "wallet_address",
+        "required": true,
+        "isArray": false,
+         "isEditable": false
+    }
+]

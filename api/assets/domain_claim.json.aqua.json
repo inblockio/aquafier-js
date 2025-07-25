@@ -1,0 +1,43 @@
+{
+  "revisions": {
+    "0x6ef241fa1d974bf0d0585781d437c9f2d95e328b7ff922bf24261090c6c7ed3a": {
+      "file_hash": "148b1e77bd6f79bf592904c09105d736105619c668c78e1c6da1a20151ef78a8",
+      "file_nonce": "4c25a9a5ac9415cb201f57fb23add2eb43352eab1cd09e29c4df24616336da5c",
+      "forms_claim_context": "",
+      "forms_domain": "inblock.io",
+      "forms_type": "dns_claim",
+      "forms_wallet_address": "0x6c5544021930b7887455e21F00b157b2FA572667",
+      "leaves": [
+        "0c9985dd8f79341d697e1da60044c42646d825381075731c603fceb2e31b43cd",
+        "494cf617c5ca566d71341cf6e2feae99eba7b1f2e5b1cdea8474f1153a772f93",
+        "82bfd8032570ebc8643d95c031caa3361b3815f4d27092ca8c570e8054128077",
+        "bd9677256be452a8ce280e9366e9925154a2184d6a56413812346b638d714838",
+        "bf78f7144815802a2e72a86d650e336f979462132a95c3ae2cf0148af87c5d1b",
+        "445a977f64d45f5dedf26f85eb7c37f8f7be7e39945eb02998f3806f4a5e5071",
+        "3a329c1597a64419d540f3f632159a2017f7438f6fc12fb2d36b61910dfd5ae3",
+        "d781acf7ba880ecae581ffd8debcb4f5cb430bc2f237e27a6098471a9f7ffa60",
+        "43fcaef3dc4b2a2d0550543b638048edcfb710da9276da109a9e011ed1a53ed1",
+        "39ccd407bb105ed3be74df4a546d9b10c4f6c80e48b559102b04fa2b29aa83b4"
+      ],
+      "local_timestamp": "20250725061602",
+      "previous_verification_hash": "",
+      "revision_type": "form",
+      "version": "https://aqua-protocol.org/docs/v3/schema_2 | SHA256 | Method: tree"
+    }
+  },
+  "file_index": {
+    "0x6ef241fa1d974bf0d0585781d437c9f2d95e328b7ff922bf24261090c6c7ed3a": "domain_claim.json"
+  },
+  "tree": {
+    "children": [],
+    "hash": "0x6ef241fa1d974bf0d0585781d437c9f2d95e328b7ff922bf24261090c6c7ed3a"
+  },
+  "treeMapping": {
+    "paths": {
+      "0x6ef241fa1d974bf0d0585781d437c9f2d95e328b7ff922bf24261090c6c7ed3a": [
+        "0x6ef241fa1d974bf0d0585781d437c9f2d95e328b7ff922bf24261090c6c7ed3a"
+      ]
+    },
+    "latestHash": "0x6ef241fa1d974bf0d0585781d437c9f2d95e328b7ff922bf24261090c6c7ed3a"
+  }
+}

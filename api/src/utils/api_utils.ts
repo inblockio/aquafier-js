@@ -81,6 +81,7 @@ export const saveTemplateFileData = async (aquaTree: AquaTree, fileData: string,
   systemUUid.set("identity_attestation.json", "550e8400-e29b-41d4-a716-446655440000");
   systemUUid.set("identity_claim.json", "c9bf9e57-1685-4c89-badb-56781234abcd");
   systemUUid.set("user_signature.json", "d5a3e2f1-9c13-47a8-86ef-789012345678");
+  systemUUid.set("domain_claim.json", "4a081551-5cfb-4e7f-9238-ed072c0e9ff5");
 
   let genesisHashData = getGenesisHash(aquaTree);
   if (!genesisHashData) {
@@ -225,7 +226,8 @@ const setUpSystemTemplates = async () => {
     "cheque",
     "identity_attestation",
     "identity_claim",
-    "user_signature"
+    "user_signature",
+    "domain_claim"
   ]
   for (let index = 0; index < templates.length; index++) {
     const templateItem = templates[index];
