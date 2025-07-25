@@ -53,6 +53,21 @@ export default async function revisionsController(fastify: FastifyInstance) {
             const [anAquaTree, fileObject] = await createAquaTreeFromRevisions(latestRevisionHash, url)
 
             let sortedAquaTree = OrderRevisionInAquaTree(anAquaTree)
+            // console.log("Attestation: ", JSON.stringify(sortedAquaTree, null, 4))
+            // try{
+            //     const revisionHashes = Object.keys(sortedAquaTree.revisions)
+            //     const firstRevision = sortedAquaTree.revisions[revisionHashes[0]]
+            //     console.log("First revision: ", JSON.stringify(firstRevision, null, 4))
+            //     if(firstRevision.revision_type == "form" && firstRevision.forms_identity_claim_id){
+            //         const claimerWalletAddress = firstRevision.forms_claim_wallet_address
+            //         // Websocket message to the claimer
+            //         sendToUserWebsockerAMessage(claimerWalletAddress, WebSocketActions.REFETCH_FILES)
+            //     }
+                
+            // }
+            // catch(e){
+            //     console.log(`Error ${e}`);
+            // }
             displayData.push({
                 aquaTree: sortedAquaTree,
                 fileObject: fileObject

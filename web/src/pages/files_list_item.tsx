@@ -9,7 +9,7 @@ import {
     getGenesisHash,
     isWorkFlowData,
 } from '@/utils/functions'
-import { FileObject } from 'aqua-js-sdk'
+import { FileObject, OrderRevisionInAquaTree } from 'aqua-js-sdk'
 import { FileText } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { SignAquaChain } from '../components/aqua_chain_actions/sign_aqua_chain'
@@ -22,6 +22,8 @@ import { LinkButton } from '../components/aqua_chain_actions/link_aqua_chain'
 import { OpenClaimsWorkFlowButton } from '@/components/aqua_chain_actions/open_identity_claim_workflow'
 import { AttestAquaClaim } from '@/components/aqua_chain_actions/attest_aqua_claim'
 import { OpenSelectedFileDetailsButton } from '@/components/aqua_chain_actions/details_button'
+import { useStore } from 'zustand'
+import appStore from '@/store'
 
 export default function FilesListItem({
     showWorkFlowsOnly,
@@ -41,6 +43,7 @@ export default function FilesListItem({
     viewMode?: 'table' | 'card' | 'actions-only'
 }) {
     // const [_selectedFiles, setSelectedFiles] = useState<number[]>([]);
+    const { files } = useStore(appStore)
     const [currentFileObject, setCurrentFileObject] = useState<
         FileObject | undefined
     >(undefined)
@@ -150,17 +153,37 @@ export default function FilesListItem({
     }
 
     const workFlowIdentityClaimAttestationActions = () => {
+        let identityClaimfile = null
+        const currentFileAquaTree = OrderRevisionInAquaTree(file.aquaTree!)
+        const currentFileRevisionHashes = Object.keys(
+            currentFileAquaTree.revisions
+        )
+        const firstRevision =
+            currentFileAquaTree.revisions[currentFileRevisionHashes[0]]
+
+        for (let i = 0; i < files.length; i++) {
+            const claimFile: ApiFileInfo = files[i]
+            const aquaTree = OrderRevisionInAquaTree(claimFile.aquaTree!)
+            const revisionHashes = Object.keys(aquaTree.revisions)
+
+            if (revisionHashes[0] === firstRevision.forms_identity_claim_id) {
+                identityClaimfile = claimFile
+                break
+            }
+        }
+
         return (
             <>
                 <div className="flex flex-wrap gap-1">
-                    <div className="w-[202px]">
-                        <OpenClaimsWorkFlowButton
-                            item={file}
-                            nonce={nonce}
-                            index={index}
-                        />
-                    </div>
-
+                    {identityClaimfile ? (
+                        <div className="w-[202px]">
+                            <OpenClaimsWorkFlowButton
+                                item={identityClaimfile}
+                                nonce={nonce}
+                                index={index}
+                            />
+                        </div>
+                    ) : null}
                     <div className="w-[100px]">
                         <OpenSelectedFileDetailsButton
                             file={file}

@@ -176,6 +176,9 @@ const WebsocketFragment = () => {
                                     nounceRef.current
                                 )
                                 setFiles(files)
+                                // if(selectedFileInfo){
+                                //     const genesisHash = getGenesisHash(selectedFileInfo.aquaTree!)
+                                // }
 
                                 // Use the ref to get the current value
                                 const currentSelectedFile =
@@ -305,6 +308,10 @@ const WebsocketFragment = () => {
                     if (serverStatus) {
                         reconnectWithBackoff('connection closed')
                     }
+                }
+
+                if(event.reason === 'New connection established') {
+                    connectWebsocket()
                 }
             }
 

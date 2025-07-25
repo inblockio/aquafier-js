@@ -155,7 +155,6 @@ export interface ContractDocumentViewProps {
     setActiveStep: (step: number) => void
 }
 
-
 export interface IWorkflowItem {
     workflowName: string
     apiFileInfo: ApiFileInfo

@@ -41,8 +41,8 @@ import { DeleteAquaChain } from '../components/aqua_chain_actions/delete_aqua_ch
 import { Contract, IWorkflowItem } from '@/types/types'
 import axios from 'axios'
 import { OpenClaimsWorkFlowButton } from '@/components/aqua_chain_actions/open_identity_claim_workflow'
-
-
+import { useNavigate } from 'react-router-dom'
+import { ApiFileInfo } from '@/models/FileInfo'
 
 const WorkflowTableItem = ({
     workflowName,
@@ -52,9 +52,11 @@ const WorkflowTableItem = ({
     const [currentFileObject, setCurrentFileObject] = useState<
         FileObject | undefined
     >(undefined)
+    const navigate = useNavigate()
 
-    const { session, backend_url, files } = useStore(appStore)
+    const { session, backend_url, files, setSelectedFileInfo } = useStore(appStore)
 
+    const [claimName, setClaimName] = useState<string>("")
     const [attestorsCount, setAttestorsCount] = useState<number>(0)
     const [sharedContracts, setSharedContracts] = useState<Contract[] | null>(
         null
@@ -77,8 +79,6 @@ const WorkflowTableItem = ({
             return 'Not available'
         }
     }
-
-
 
     // const signers = getSigners()
     // const signersStatus = getSignersStatus()
@@ -111,18 +111,29 @@ const WorkflowTableItem = ({
         getCurrentFileObject()
         let allHahshes = Object.keys(apiFileInfo.aquaTree?.revisions || {})
         const latestRevisionHash = allHahshes[allHahshes.length - 1]
-        const genesisHash = allHahshes[0];
+        const genesisHash = allHahshes[0]
 
-        (async () => {
-            await loadSharedContractsData(latestRevisionHash, genesisHash)
-        })()
-
+            ; (async () => {
+                await loadSharedContractsData(latestRevisionHash, genesisHash)
+            })()
 
         let claimGenHash = getGenesisHash(apiFileInfo.aquaTree!)
         if (!claimGenHash) {
             console.log('No genesis hash found for file:', apiFileInfo)
             return
         }
+
+        // claims name
+        let allHashes = Object.keys(apiFileInfo.aquaTree?.revisions || {})
+        const firstRevsion = apiFileInfo.aquaTree?.revisions[allHashes[0]]
+        if (firstRevsion) {
+            let formName = firstRevsion[`forms_name`]
+            // console.log(`----------forms name ${formName}`)
+            if (formName) {
+                setClaimName(formName)
+            }
+        }
+
         let attestationsCount = 0
         for (const file of files) {
             // console.log('Processing file:', JSON.stringify(file.aquaTree, null, 4))
@@ -130,35 +141,45 @@ const WorkflowTableItem = ({
             if (allHashes.length >= 2) {
                 console.log('Found multiple revisions:', allHashes)
                 if (allHashes[0] === claimGenHash) {
-                    console.log('Found claim genesis hash match:', claimGenHash, 'file item ie same file:')
+                    console.log(
+                        'Found claim genesis hash match:',
+                        claimGenHash,
+                        'file item ie same file:'
+                    )
                     continue
                 }
                 const firstRevsion = file.aquaTree?.revisions[allHashes[0]]
                 if (!firstRevsion) {
-                    console.log('First revision not found for file:', JSON.stringify(file, null, 4))
+                    console.log(
+                        'First revision not found for file:',
+                        JSON.stringify(file, null, 4)
+                    )
                     continue
                 }
+
                 const secondRevsion = file.aquaTree?.revisions[allHashes[1]]
                 // console.log(`here..... ${JSON.stringify(secondRevsion, null, 4)}`)
                 if (secondRevsion && secondRevsion.revision_type === 'link') {
                     // console.log('Found second revision link:', secondRevsion)
-                    const linkVerificationHash = secondRevsion.link_verification_hashes![0];
+                    const linkVerificationHash =
+                        secondRevsion.link_verification_hashes![0]
                     if (!linkVerificationHash) {
                         continue
                     }
-                    let fileIndexName = file.aquaTree?.file_index[linkVerificationHash]
-                    if (fileIndexName && fileIndexName == `identity_attestation.json`) {
+                    let fileIndexName =
+                        file.aquaTree?.file_index[linkVerificationHash]
+                    if (
+                        fileIndexName &&
+                        fileIndexName == `identity_attestation.json`
+                    ) {
                         let claimId = firstRevsion[`forms_identity_claim_id`]
                         // console.log('Found claim ID:', claimId, 'for file item:', fileIndexName)
                         if (claimId.trim() === claimGenHash.trim()) {
                             // console.log('Found attestation for claim:', claimId, 'file item:', fileIndexName)
                             attestationsCount += 1
                         }
-
                     }
-
                 }
-
             }
         }
         setAttestorsCount(attestationsCount)
@@ -166,12 +187,19 @@ const WorkflowTableItem = ({
         // setContractInformation(contractInformation)
     }, [apiFileInfo])
 
+    const openClaimsInforPage = (item: ApiFileInfo) => {
+        setSelectedFileInfo(item)
+        navigate('/app/claims/workflow')
+    }
     return (
         <TableRow
+
             key={`${workflowName}-${index}`}
             className="hover:bg-muted/50"
         >
-            <TableCell className="font-medium w-[300px] max-w-[300px] min-w-[300px]">
+            <TableCell onClick={() => {
+                openClaimsInforPage(apiFileInfo!!)
+            }} className="font-medium w-[300px] max-w-[300px] min-w-[300px]">
                 <div className="w-full flex items-center gap-3">
                     <div className="flex-shrink-0">
                         <div className="h-10 w-10 rounded-lg bg-blue-100 flex items-center justify-center">
@@ -179,8 +207,14 @@ const WorkflowTableItem = ({
                         </div>
                     </div>
                     <div className="flex-grow min-w-0">
+
+
+
                         <div className="font-medium text-sm break-words whitespace-normal">
-                            {currentFileObject?.fileName}
+                           File Name :  {currentFileObject?.fileName}
+                        </div>
+                        <div className="font-medium text-sm break-words whitespace-normal">
+                            Claim Name :    {claimName}
                         </div>
                         <div className="text-xs text-muted-foreground">
                             Created at {getTimeInfo()}
@@ -189,13 +223,13 @@ const WorkflowTableItem = ({
                 </div>
             </TableCell>
 
-            <TableCell className="w-[200px]">
-                {attestorsCount}
-
-            </TableCell>
-            <TableCell className="w-[150px]">
+            <TableCell onClick={() => {
+                openClaimsInforPage(apiFileInfo!!)
+            }} className="w-[200px]">{attestorsCount}</TableCell>
+            <TableCell onClick={() => {
+                openClaimsInforPage(apiFileInfo!!)
+            }} className="w-[150px]">
                 {sharedContracts?.length}
-
             </TableCell>
 
             <TableCell className="text-right w-[100px]">
@@ -251,10 +285,8 @@ const WorkflowTableItem = ({
 }
 
 const ClaimsAndAttestationPage = () => {
-
-
-    const { files, systemFileInfo, setOpenCreateClaimPopUp, session } = useStore(appStore)
-
+    const { files, systemFileInfo, setOpenCreateClaimPopUp, session } =
+        useStore(appStore)
 
     const [totalClaims, setTotalClaims] = useState<number>(0)
     const [_totolAttestors, setTotolAttestors] = useState<number>(0)
@@ -289,8 +321,14 @@ const ClaimsAndAttestationPage = () => {
                 if (allHashes.length >= 2) {
                     const thirdRevision = file.aquaTree?.revisions[allHashes[2]]
 
-                    if (thirdRevision && thirdRevision.revision_type === 'signature') {
-                        if (thirdRevision.signature_wallet_address == session?.address) {
+                    if (
+                        thirdRevision &&
+                        thirdRevision.revision_type === 'signature'
+                    ) {
+                        if (
+                            thirdRevision.signature_wallet_address ==
+                            session?.address
+                        ) {
                             myAttestions += 1
                         }
                     }
@@ -306,17 +344,29 @@ const ClaimsAndAttestationPage = () => {
                 const thirdRevision = file.aquaTree?.revisions[allHashes[2]]
 
                 if (!thirdRevision) {
-                    console.log('Last revision not found for file:', JSON.stringify(file, null, 4))
+                    console.log(
+                        'Last revision not found for file:',
+                        JSON.stringify(file, null, 4)
+                    )
                     continue
                 }
 
                 if (thirdRevision.revision_type !== 'signature') {
-                    console.log('Last revision is not a signature:', thirdRevision)
+                    console.log(
+                        'Last revision is not a signature:',
+                        thirdRevision
+                    )
                     continue
                 }
 
-                if (thirdRevision.signature_wallet_address == session?.address) {
-                    console.log('Signature wallet address matches session address:', thirdRevision.signature_wallet_address, session?.address)
+                if (
+                    thirdRevision.signature_wallet_address == session?.address
+                ) {
+                    console.log(
+                        'Signature wallet address matches session address:',
+                        thirdRevision.signature_wallet_address,
+                        session?.address
+                    )
                     const currentName = getAquaTreeFileName(file.aquaTree!)
                     const containsCurrentName: IWorkflowItem | undefined =
                         newData.find((e: IWorkflowItem) => {
@@ -328,13 +378,14 @@ const ClaimsAndAttestationPage = () => {
                             }
                         })
                     if (!containsCurrentName) {
-                        newData.push({ workflowName: workFlow, apiFileInfo: file })
+                        newData.push({
+                            workflowName: workFlow,
+                            apiFileInfo: file,
+                        })
                     }
                 }
 
                 totolClaims += 1
-
-
             }
         }
 
@@ -383,10 +434,13 @@ const ClaimsAndAttestationPage = () => {
                                     <span>Aqua Claim Workflows</span>
                                 </div>
                                 <label className="text-sm font-medium text-gray-900  text-left">
-                                    Total claims you have attested {myAttestions} 
+                                    Total claims you have attested{' '}
+                                    {myAttestions}
                                 </label>
-                                 <label className="text-sm font-medium text-gray-900 mb-4 text-left">
-                                   Total claims imported  {totalClaims-workflows.length}. Claims created by you {workflows.length} 
+                                <label className="text-sm font-medium text-gray-900 mb-4 text-left">
+                                    Total claims imported{' '}
+                                    {totalClaims - workflows.length}. Claims
+                                    created by you {workflows.length}
                                 </label>
                             </div>
                             <button
@@ -412,7 +466,9 @@ const ClaimsAndAttestationPage = () => {
                                         </TableHead>
                                         {/* <TableHead>Workflow Type</TableHead> */}
                                         <TableHead>Attestors</TableHead>
-                                        <TableHead>Share Contracts created</TableHead>
+                                        <TableHead>
+                                            Share Contracts created
+                                        </TableHead>
                                         {/* <TableHead>Status</TableHead> */}
                                         <TableHead className="text-right">
                                             Actions
@@ -426,7 +482,8 @@ const ClaimsAndAttestationPage = () => {
                                                 colSpan={6}
                                                 className="h-24 text-center"
                                             >
-                                                You do not own any claim workflows
+                                                You do not own any claim
+                                                workflows
                                             </TableCell>
                                         </TableRow>
                                     )}

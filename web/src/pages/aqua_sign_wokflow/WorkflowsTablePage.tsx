@@ -100,8 +100,6 @@ const getInitials = (name: string) => {
         .toUpperCase()
 }
 
-
-
 const WorkflowTableItem = ({
     workflowName,
     apiFileInfo,
@@ -429,8 +427,6 @@ export default function WorkflowsTablePage() {
     useEffect(() => {
         processFilesToGetWorkflows()
     }, [JSON.stringify(files)])
-
-   
 
     return (
         <>

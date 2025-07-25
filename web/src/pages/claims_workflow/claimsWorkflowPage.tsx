@@ -6,17 +6,33 @@ import { LuArrowLeft } from 'react-icons/lu'
 import appStore from '../../store'
 import { useStore } from 'zustand'
 import { ShareButton } from '@/components/aqua_chain_actions/share_aqua_chain'
-import { processSimpleWorkflowClaim } from '@/utils/functions'
+import {
+    getAquaTreeFileName,
+    isWorkFlowData,
+    processSimpleWorkflowClaim,
+    timeToHumanFriendly,
+} from '@/utils/functions'
 import { ClipLoader } from 'react-spinners'
-import { ClaimInformation } from '@/models/FileInfo'
+import {
+    ApiFileInfo,
+    ClaimInformation,
+    IAttestationEntry,
+} from '@/models/FileInfo'
 import axios from 'axios'
 import { Contract } from '@/types/types'
 import { SharedContract } from '../files_shared_contracts'
 import AttestationEntry from './AttestationEntry'
+import { OrderRevisionInAquaTree } from 'aqua-js-sdk'
 
 export default function ClaimsWorkflowPage() {
-    const { selectedFileInfo, setSelectedFileInfo, session, backend_url } =
-        useStore(appStore)
+    const {
+        selectedFileInfo,
+        setSelectedFileInfo,
+        session,
+        backend_url,
+        systemFileInfo,
+        files,
+    } = useStore(appStore)
 
     const [activeTab, setActiveTab] = useState('claims_summary')
     // const [previewEnabled, setPreviewEnabled] = useState(true);
@@ -28,11 +44,12 @@ export default function ClaimsWorkflowPage() {
         null
     )
     const [attestations, setAttestations] = useState<
-        Array<{ walletAddress: string; context: string; createdAt: string }>
+        Array<{ walletAddress: string; context: string; createdAt: string, file: ApiFileInfo }>
     >([])
     const [isLoadingAttestations, setIsLoadingAttestations] = useState(false)
 
     const navigate = useNavigate()
+
 
     const tabs = [
         {
@@ -84,13 +101,68 @@ export default function ClaimsWorkflowPage() {
         }
     }
 
+    const loadAttestationData = async (_latestRevisionHash: string) => {
+        setIsLoadingAttestations(true)
+        try {
+            const aquaTemplates = systemFileInfo.map(e => {
+                try {
+                    return getAquaTreeFileName(e.aquaTree!)
+                } catch (e) {
+                    console.log('Error processing system file')
+                    return ''
+                }
+            })
+            console.log("Files: ", files.length)
+            for (let i = 0; i < files.length; i++) {
+                const file: ApiFileInfo = files[i]
+                // const fileObject = getAquaTreeFileObject(file)
+
+                const { isWorkFlow, workFlow } = isWorkFlowData(
+                    file.aquaTree!,
+                    aquaTemplates
+                )
+                if (isWorkFlow && workFlow === 'identity_attestation') {
+                    const orderedAquaTree = OrderRevisionInAquaTree(
+                        file.aquaTree!
+                    )
+                    const revisionHashes = Object.keys(
+                        orderedAquaTree.revisions
+                    )
+                    const firstRevisionHash = revisionHashes[0]
+                    const firstRevision =
+                        orderedAquaTree.revisions[firstRevisionHash]
+                    const identityClaimId =
+                        firstRevision.forms_identity_claim_id
+                    if (identityClaimId === processedInfo?.genesisHash) {
+                        const attestationEntry: IAttestationEntry = {
+                            walletAddress: firstRevision.forms_wallet_address,
+                            context: firstRevision.forms_context,
+                            createdAt: firstRevision.local_timestamp,
+                            file: file,
+                            nonce: session!.nonce
+                        }
+                        setAttestations(prev => [...prev, attestationEntry])
+                    }
+                }
+            }
+            setIsLoadingAttestations(false)
+        } catch (error) {
+            console.error('Error loading attestations:', error)
+            setIsLoadingAttestations(false)
+        }
+    }
+
+    console.log(attestations)
+
     useEffect(() => {
+        console.log("Files useffect: ", files.length)
         if (selectedFileInfo) {
+            console.log()
             const processedInfo = processSimpleWorkflowClaim(selectedFileInfo)
             setTimeLineTitle('Claims Workflow')
             setProcessedInfo(processedInfo)
         }
-    }, [JSON.stringify(selectedFileInfo)])
+    }, [JSON.stringify(selectedFileInfo), JSON.stringify(files)])
 
     useEffect(() => {
         if (processedInfo) {
@@ -100,55 +172,10 @@ export default function ClaimsWorkflowPage() {
             )
             loadAttestationData(processedInfo.latestRevisionHash!)
         }
-    }, [JSON.stringify(processedInfo)])
+    }, [JSON.stringify(processedInfo), JSON.stringify(files)])
 
-    const loadAttestationData = async (_latestRevisionHash: string) => {
-        setIsLoadingAttestations(true)
-        try {
-            // In a real implementation, this would be an API call to fetch attestations
-            // For now, we'll use sample data
-            // Example API call structure:
-            // const url = `${backend_url}/attestations/${latestRevisionHash}`;
-            // const response = await axios.get(url, {
-            //     headers: { nonce: session?.nonce },
-            // });
-            // setAttestations(response.data.attestations);
-            //
-            // Sample data for demonstration
-            setTimeout(() => {
-                setAttestations([
-                    {
-                        walletAddress:
-                            '0x742d35Cc6634C0532925a3b844Bc454e4438f44e',
-                        context: 'Verified claim ownership and authenticity',
-                        createdAt: new Date(
-                            Date.now() - 86400000 * 2
-                        ).toISOString(), // 2 days ago
-                    },
-                    {
-                        walletAddress:
-                            '0x5aAeb6053F3E94C9b9A09f33669435E7Ef1BeAed',
-                        context:
-                            'Confirmed product specifications match documentation',
-                        createdAt: new Date(
-                            Date.now() - 86400000
-                        ).toISOString(), // 1 day ago
-                    },
-                    {
-                        walletAddress:
-                            session?.address ||
-                            '0x0000000000000000000000000000000000000000',
-                        context: 'Initial claim creation and registration',
-                        createdAt: new Date().toISOString(), // today
-                    },
-                ])
-                setIsLoadingAttestations(false)
-            }, 1000)
-        } catch (error) {
-            console.error('Error loading attestations:', error)
-            setIsLoadingAttestations(false)
-        }
-    }
+
+
 
     return (
         <>
@@ -197,7 +224,7 @@ export default function ClaimsWorkflowPage() {
                                 if (
                                     tab.id === 'shared_data' &&
                                     processedInfo?.walletAddress !==
-                                        session?.address
+                                    session?.address
                                 ) {
                                     return null
                                 }
@@ -208,10 +235,9 @@ export default function ClaimsWorkflowPage() {
                                         onClick={() => setActiveTab(tab.id)}
                                         className={`
                                             relative flex items-center gap-2 px-4 py-3 text-sm font-medium border-b-2 transition-colors duration-200
-                                            ${
-                                                isActive
-                                                    ? 'text-gray-900 border-gray-900'
-                                                    : 'text-gray-500 border-transparent hover:text-gray-700 hover:border-gray-300'
+                                            ${isActive
+                                                ? 'text-gray-900 border-gray-900'
+                                                : 'text-gray-500 border-transparent hover:text-gray-700 hover:border-gray-300'
                                             }
                                             `}
                                     >
@@ -231,7 +257,7 @@ export default function ClaimsWorkflowPage() {
                             </h1>
 
                             {processedInfo?.walletAddress ===
-                            session?.address ? (
+                                session?.address && activeTabData?.id == `claims_summary` ? (
                                 <div className="flex items-center gap-3">
                                     <ShareButton
                                         item={selectedFileInfo!}
@@ -250,7 +276,7 @@ export default function ClaimsWorkflowPage() {
                                     <div className="space-y-2">
                                         {Object.keys(
                                             processedInfo?.claimInformation ??
-                                                {}
+                                            {}
                                         ).map((key: any) => (
                                             <div
                                                 key={key}
@@ -263,7 +289,7 @@ export default function ClaimsWorkflowPage() {
                                                     {
                                                         processedInfo
                                                             ?.claimInformation[
-                                                            key
+                                                        key
                                                         ]
                                                     }
                                                 </span>
@@ -275,12 +301,11 @@ export default function ClaimsWorkflowPage() {
 
                             {activeTab === 'shared_data' &&
                                 processedInfo.walletAddress ===
-                                    session?.address && (
+                                session?.address && (
                                     <div>
                                         <div className="bg-gray-50 rounded-lg p-6">
                                             <p className="text-gray-900">
-                                                Wallets that you have shared the
-                                                claim with
+                                                Wallets that you have shared the claim with
                                             </p>
                                             <div className="mt-4 space-y-3">
                                                 {/* <div className="flex items-center justify-between p-3 bg-white rounded border">
@@ -297,6 +322,12 @@ export default function ClaimsWorkflowPage() {
                                                             key={`${contract.hash}`}
                                                             contract={contract}
                                                             index={index}
+                                                            contractDeleted={
+                                                                (hash) => {
+                                                                    let newState = sharedContracts.filter((e) => e.hash != hash);
+                                                                    setSharedContracts(newState)
+                                                                }
+                                                            }
                                                         />
                                                     )
                                                 )}
@@ -333,9 +364,14 @@ export default function ClaimsWorkflowPage() {
                                                         context={
                                                             attestation.context
                                                         }
-                                                        createdAt={new Date(
-                                                            attestation.createdAt
-                                                        ).toLocaleString()}
+                                                        createdAt={
+                                                            timeToHumanFriendly(
+                                                                attestation.createdAt,
+                                                                true
+                                                            ) ?? ''
+                                                        }
+                                                        nonce={session!.nonce}
+                                                        file={attestation.file}
                                                     />
                                                 )
                                             )}
@@ -348,10 +384,10 @@ export default function ClaimsWorkflowPage() {
                                             </p>
                                             {processedInfo?.walletAddress ===
                                                 session?.address && (
-                                                <button className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors">
-                                                    Create Attestation
-                                                </button>
-                                            )}
+                                                    <button className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors">
+                                                        Create Attestation
+                                                    </button>
+                                                )}
                                         </div>
                                     )}
                                 </div>
