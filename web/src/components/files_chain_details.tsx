@@ -235,12 +235,6 @@ export const CompleteChainView = ({
         }
     }, [JSON.stringify(selectedFileInfo), deletedRevisions.length])
 
-    console.log(
-        'File object: ',
-        JSON.stringify(selectedFileInfo, null, 4),
-        getAquaTreeFileObject(selectedFileInfo!)
-    )
-
     return (
         <div className=" h-full">
             <div className="grid grid-cols-1 md:grid-cols-12 gap-4 h-full">

@@ -19,7 +19,6 @@ import {
     Clock,
     Hash,
     Network,
-    User,
     Copy,
     ChevronRight,
 } from 'lucide-react'
@@ -38,7 +37,7 @@ import {
 } from '@/utils/functions'
 import { ApiFileInfo } from '@/models/FileInfo'
 import { toaster } from '@/components/ui/use-toast'
-import { WalletEnsView } from '@/components/ui/wallet_ens'
+import SignatureWalletAddressCard from '@/pages/claims_workflow/SignatureWalletAddressCard'
 
 export const RevisionDetailsSummary = ({
     fileInfo,
@@ -126,7 +125,7 @@ export const RevisionDetailsSummary = ({
                         </div>
 
                         <div className="space-y-4">
-                            {revisionsWithSignatures.map((revision, index) => (
+                            {/* {revisionsWithSignatures.map((revision, index) => (
                                 <div
                                     key={`signature_${index}`}
                                     className="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-sm border border-gray-200 dark:border-gray-700"
@@ -193,6 +192,17 @@ export const RevisionDetailsSummary = ({
                                         </div>
                                     </div>
                                 </div>
+                            ))} */}
+                             {revisionsWithSignatures.map((revision, index) => (
+                                <SignatureWalletAddressCard
+                                    key={`signature_${index}`}
+                                    signatureHash={revision.signature}
+                                    timestamp={displayTime(
+                                        revision.local_timestamp
+                                    )}
+                                    walletAddress={revision.signature_wallet_address!!}
+                                    index={index + 1}
+                                />
                             ))}
                         </div>
                     </CardContent>

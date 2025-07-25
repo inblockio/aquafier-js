@@ -1,5 +1,6 @@
 import { ShareButton } from '@/components/aqua_chain_actions/share_aqua_chain'
 import { IAttestationEntry } from '@/models/FileInfo'
+import WalletAdrressClaim from './WalletAdrressClaim'
 
 const AttestationEntry = ({
     file,
@@ -27,23 +28,24 @@ const AttestationEntry = ({
                                 />
                             </svg>
                         </div>
-                        <span className="font-medium text-gray-900 text-sm font-mono">
-                            {/* {walletAddress.substring(0, 6)}...
-              {walletAddress.substring(walletAddress.length - 4)} */}
+                        {/* <span className="font-medium text-gray-900 text-sm font-mono">
+                            {walletAddress.substring(0, 6)}...
+              {walletAddress.substring(walletAddress.length - 4)}
                             {walletAddress}
-                        </span>
+                        </span> */}
+                        <WalletAdrressClaim walletAddress={walletAddress} />
                     </div>
                     <p className="text-gray-700 text-sm">{context}</p>
                 </div>
                 <div className='flex-col'>
                     <span className="text-xs text-gray-500 ">{createdAt}</span>
-                <div className="flex items-center gap-3 mt-4">
-                                                    <ShareButton
-                                                        item={file!}
-                                                        nonce={nonce}
-                                                        index={1}
-                                                    />
-                                                </div>
+                    <div className="flex items-center gap-3 mt-4">
+                        <ShareButton
+                            item={file!}
+                            nonce={nonce}
+                            index={1}
+                        />
+                    </div>
                 </div>
             </div>
         </div>

@@ -34,6 +34,8 @@ export default function ClaimsWorkflowPage() {
         files,
     } = useStore(appStore)
 
+    const [selectedClaim, setSelectedClaim] = useState<ApiFileInfo | null>(null) 
+
     const [activeTab, setActiveTab] = useState('claims_summary')
     // const [previewEnabled, setPreviewEnabled] = useState(true);
     const [timeLineTitle, setTimeLineTitle] = useState('')
@@ -103,6 +105,7 @@ export default function ClaimsWorkflowPage() {
 
     const loadAttestationData = async (_latestRevisionHash: string) => {
         setIsLoadingAttestations(true)
+        setAttestations([])
         try {
             const aquaTemplates = systemFileInfo.map(e => {
                 try {
@@ -152,17 +155,13 @@ export default function ClaimsWorkflowPage() {
         }
     }
 
-    console.log(attestations)
-
     useEffect(() => {
-        console.log("Files useffect: ", files.length)
-        if (selectedFileInfo) {
-            console.log()
-            const processedInfo = processSimpleWorkflowClaim(selectedFileInfo)
+        if (selectedClaim) {
+            const processedInfo = processSimpleWorkflowClaim(selectedClaim)
             setTimeLineTitle('Claims Workflow')
             setProcessedInfo(processedInfo)
         }
-    }, [JSON.stringify(selectedFileInfo), JSON.stringify(files)])
+    }, [JSON.stringify(selectedClaim), JSON.stringify(files)])
 
     useEffect(() => {
         if (processedInfo) {
@@ -174,12 +173,16 @@ export default function ClaimsWorkflowPage() {
         }
     }, [JSON.stringify(processedInfo), JSON.stringify(files)])
 
-
-
+    useEffect(() => {
+        if (selectedFileInfo) {
+            setActiveTab('claims_summary')
+            setSelectedClaim(selectedFileInfo)
+        }
+    }, [JSON.stringify(selectedFileInfo)])
 
     return (
         <>
-            {!processedInfo && selectedFileInfo ? (
+            {!processedInfo && selectedClaim ? (
                 <div className="flex items-center justify-center flex-col align-center py-8">
                     <ClipLoader
                         color={'blue'}
@@ -285,7 +288,7 @@ export default function ClaimsWorkflowPage() {
                                                 <span className="text-sm text-gray-700 capitalize">
                                                     {key}
                                                 </span>
-                                                <span className="text-sm text-gray-900 capitalize">
+                                                <span className="text-sm text-gray-900">
                                                     {
                                                         processedInfo
                                                             ?.claimInformation[
@@ -308,14 +311,6 @@ export default function ClaimsWorkflowPage() {
                                                 Wallets that you have shared the claim with
                                             </p>
                                             <div className="mt-4 space-y-3">
-                                                {/* <div className="flex items-center justify-between p-3 bg-white rounded border">
-                                                    <span className="text-sm text-gray-700">Product Category 1</span>
-                                                    <button className="text-blue-600 text-sm hover:text-blue-800">Edit</button>
-                                                </div>
-                                                <div className="flex items-center justify-between p-3 bg-white rounded border">
-                                                    <span className="text-sm text-gray-700">Product Category 2</span>
-                                                    <button className="text-blue-600 text-sm hover:text-blue-800">Edit</button>
-                                                </div> */}
                                                 {sharedContracts?.map(
                                                     (contract, index) => (
                                                         <SharedContract

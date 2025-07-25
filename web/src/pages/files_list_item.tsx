@@ -267,9 +267,9 @@ export default function FilesListItem({
     }
 
     const showActionsButton = () => {
-        console.log(
-            `workflowInfo data ${JSON.stringify(workflowInfo, null, 4)}`
-        )
+        // console.log(
+        //     `workflowInfo data ${JSON.stringify(workflowInfo, null, 4)}`
+        // )
         if (
             workflowInfo?.isWorkFlow == true &&
             workflowInfo.workFlow == 'aqua_sign'
