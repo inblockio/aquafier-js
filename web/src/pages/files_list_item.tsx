@@ -1,4 +1,5 @@
 import { ApiFileInfo } from '@/models/FileInfo'
+
 import {
     displayTime,
     formatBytes,
@@ -106,6 +107,12 @@ export default function FilesListItem({
         }
     }
 
+
+    
+// Helper function to capitalize the first character of every word
+function capitalizeWords(str: string): string {
+    return str.replace(/\b\w+/g, (word) => word.charAt(0).toUpperCase() + word.slice(1));
+}
     // const detailsButton = () =>{
     //         return <button onClick={() => {
     //             setOpenFileDetailsPopUp(true);
@@ -367,12 +374,23 @@ export default function FilesListItem({
                 key={index}
                 className="border-b border-gray-100 hover:bg-gray-50"
             >
-                <td className="py-3 flex items-center space-x-3 px-4">
+                <td className="py-3 flex items-center px-4">
                     {/* <FileText className="w-5 h-5 text-blue-500" /> */}
-                    <span className="font-medium text-sm">
-                        {getAquaTreeFileName(file.aquaTree!)}
-                    </span>
+                    <div className="flex flex-col">
+                        <span className="font-medium text-sm">
+                            {getAquaTreeFileName(file.aquaTree!)}
+                        </span>
+                        {
+                            !showWorkFlowsOnly && workflowInfo?.isWorkFlow ? (
+                                <span className="text-xs text-gray-500">    
+                                    Workflow :  {capitalizeWords(workflowInfo.workFlow.replace(/_/g, ' '))}
+                                </span> 
+                            ) : null
+                        }
+                    </div>
                 </td>
+
+               
                 {
                     showWorkFlowsOnly ? (
                         <td className="py-3 px-3 text-sm text-gray-500">

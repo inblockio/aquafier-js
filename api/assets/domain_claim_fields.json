@@ -16,13 +16,14 @@
         "isHidden": true,
         "defaultValue": "dns_claim"
     },
-    
     {
-        "name": "claim_context",
-        "label": "context",
+        "name": "signature",
+        "label": "string",
         "type": "string",
         "required": true,
-        "isArray": false
+        "isArray": false,
+        "isHidden": true,
+        "isEditable": false
     },
     {
         "name": "wallet_address",
@@ -30,6 +31,6 @@
         "type": "wallet_address",
         "required": true,
         "isArray": false,
-         "isEditable": false
+        "isEditable": false
     }
 ]
