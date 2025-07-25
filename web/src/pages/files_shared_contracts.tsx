@@ -20,12 +20,11 @@ import { Contract } from '@/types/types'
 export const SharedContract = ({
     contract,
     index,
-    contractDeleted
+    contractDeleted,
 }: {
     contract: Contract
     index: number
     contractDeleted: (hash: string) => void
-
 }) => {
     const navigate = useNavigate()
     const { backend_url } = useStore(appStore)
@@ -211,7 +210,7 @@ export const SharedContract = ({
                                 >
                                     Open
                                 </Button>
-                                
+
                                 <Button
                                     data-testid={
                                         'delete-shared-contract-button-' + index
@@ -220,16 +219,18 @@ export const SharedContract = ({
                                     size="sm"
                                     className="w-full"
                                     onClick={async () => {
+                                        const response = await axios.delete(
+                                            `${backend_url}/contracts/${contract.hash}`,
+                                            {}
+                                        )
 
-                                        const response = await axios.delete(`${backend_url}/contracts/${contract.hash}`, {
-                                        })
-
-                                        if (response.status === 200 || response.status === 201) {
+                                        if (
+                                            response.status === 200 ||
+                                            response.status === 201
+                                        ) {
                                             contractDeleted(contract.hash)
                                         }
-                                    }
-
-                                    }
+                                    }}
                                 >
                                     Delete
                                 </Button>
@@ -310,20 +311,20 @@ export function SharedContracts() {
     }, [backend_url, session])
 
     useEffect(() => {
-
         const filteredContracts = contracts.filter(
             contract =>
-                contract.hash.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                contract.hash
+                    .toLowerCase()
+                    .includes(searchQuery.toLowerCase()) ||
                 contract.sender
                     ?.toLowerCase()
                     .includes(searchQuery.toLowerCase()) ||
-                contract.receiver?.toLowerCase().includes(searchQuery.toLowerCase())
+                contract.receiver
+                    ?.toLowerCase()
+                    .includes(searchQuery.toLowerCase())
         )
         setShareContracts(filteredContracts)
-
     }, [JSON.stringify(contracts)])
-
-
 
     return (
         <div>
@@ -351,12 +352,12 @@ export function SharedContracts() {
                                     key={`${contract.hash}`}
                                     contract={contract}
                                     index={index}
-                                    contractDeleted={
-                                        (hash) => {
-                                            let newState = shareContracts.filter((e) => e.hash != hash);
-                                            setShareContracts(newState)
-                                        }
-                                    }
+                                    contractDeleted={hash => {
+                                        let newState = shareContracts.filter(
+                                            e => e.hash != hash
+                                        )
+                                        setShareContracts(newState)
+                                    }}
                                 />
                             ))}
 

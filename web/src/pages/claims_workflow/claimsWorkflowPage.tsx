@@ -23,6 +23,8 @@ import { Contract } from '@/types/types'
 import { SharedContract } from '../files_shared_contracts'
 import AttestationEntry from './AttestationEntry'
 import { OrderRevisionInAquaTree } from 'aqua-js-sdk'
+import SimpleClaim from './SimpleClaim'
+import DNSClaim from './DNSClaim'
 
 export default function ClaimsWorkflowPage() {
     const {
@@ -34,7 +36,7 @@ export default function ClaimsWorkflowPage() {
         files,
     } = useStore(appStore)
 
-    const [selectedClaim, setSelectedClaim] = useState<ApiFileInfo | null>(null) 
+    const [selectedClaim, setSelectedClaim] = useState<ApiFileInfo | null>(null)
 
     const [activeTab, setActiveTab] = useState('claims_summary')
     // const [previewEnabled, setPreviewEnabled] = useState(true);
@@ -46,12 +48,16 @@ export default function ClaimsWorkflowPage() {
         null
     )
     const [attestations, setAttestations] = useState<
-        Array<{ walletAddress: string; context: string; createdAt: string, file: ApiFileInfo }>
+        Array<{
+            walletAddress: string
+            context: string
+            createdAt: string
+            file: ApiFileInfo
+        }>
     >([])
     const [isLoadingAttestations, setIsLoadingAttestations] = useState(false)
 
     const navigate = useNavigate()
-
 
     const tabs = [
         {
@@ -111,11 +117,11 @@ export default function ClaimsWorkflowPage() {
                 try {
                     return getAquaTreeFileName(e.aquaTree!)
                 } catch (e) {
-                    console.log('Error processing system file')
+                    // console.log('Error processing system file')
                     return ''
                 }
             })
-            console.log("Files: ", files.length)
+
             for (let i = 0; i < files.length; i++) {
                 const file: ApiFileInfo = files[i]
                 // const fileObject = getAquaTreeFileObject(file)
@@ -142,7 +148,7 @@ export default function ClaimsWorkflowPage() {
                             context: firstRevision.forms_context,
                             createdAt: firstRevision.local_timestamp,
                             file: file,
-                            nonce: session!.nonce
+                            nonce: session!.nonce,
                         }
                         setAttestations(prev => [...prev, attestationEntry])
                     }
@@ -152,6 +158,14 @@ export default function ClaimsWorkflowPage() {
         } catch (error) {
             console.error('Error loading attestations:', error)
             setIsLoadingAttestations(false)
+        }
+    }
+
+    const renderClaim = (info: Record<string, string>) => {
+        if (info.forms_type === 'dns_claim') {
+            return <DNSClaim claimInfo={info} />
+        } else {
+            return <SimpleClaim claimInfo={info} />
         }
     }
 
@@ -227,7 +241,7 @@ export default function ClaimsWorkflowPage() {
                                 if (
                                     tab.id === 'shared_data' &&
                                     processedInfo?.walletAddress !==
-                                    session?.address
+                                        session?.address
                                 ) {
                                     return null
                                 }
@@ -238,9 +252,10 @@ export default function ClaimsWorkflowPage() {
                                         onClick={() => setActiveTab(tab.id)}
                                         className={`
                                             relative flex items-center gap-2 px-4 py-3 text-sm font-medium border-b-2 transition-colors duration-200
-                                            ${isActive
-                                                ? 'text-gray-900 border-gray-900'
-                                                : 'text-gray-500 border-transparent hover:text-gray-700 hover:border-gray-300'
+                                            ${
+                                                isActive
+                                                    ? 'text-gray-900 border-gray-900'
+                                                    : 'text-gray-500 border-transparent hover:text-gray-700 hover:border-gray-300'
                                             }
                                             `}
                                     >
@@ -260,7 +275,8 @@ export default function ClaimsWorkflowPage() {
                             </h1>
 
                             {processedInfo?.walletAddress ===
-                                session?.address && activeTabData?.id == `claims_summary` ? (
+                                session?.address &&
+                            activeTabData?.id == `claims_summary` ? (
                                 <div className="flex items-center gap-3">
                                     <ShareButton
                                         item={selectedFileInfo!}
@@ -276,7 +292,7 @@ export default function ClaimsWorkflowPage() {
                             {activeTab === 'claims_summary' && (
                                 <div className="bg-gray-50 rounded-lg p-6">
                                     {/* <h3 className="text-lg font-medium text-gray-900 mb-4">General Settings</h3> */}
-                                    <div className="space-y-2">
+                                    {/* <div className="space-y-2">
                                         {Object.keys(
                                             processedInfo?.claimInformation ??
                                             {}
@@ -298,17 +314,21 @@ export default function ClaimsWorkflowPage() {
                                                 </span>
                                             </div>
                                         ))}
-                                    </div>
+                                    </div> */}
+                                    {renderClaim(
+                                        processedInfo?.claimInformation!
+                                    )}
                                 </div>
                             )}
 
                             {activeTab === 'shared_data' &&
                                 processedInfo.walletAddress ===
-                                session?.address && (
+                                    session?.address && (
                                     <div>
                                         <div className="bg-gray-50 rounded-lg p-6">
                                             <p className="text-gray-900">
-                                                Wallets that you have shared the claim with
+                                                Wallets that you have shared the
+                                                claim with
                                             </p>
                                             <div className="mt-4 space-y-3">
                                                 {sharedContracts?.map(
@@ -317,12 +337,17 @@ export default function ClaimsWorkflowPage() {
                                                             key={`${contract.hash}`}
                                                             contract={contract}
                                                             index={index}
-                                                            contractDeleted={
-                                                                (hash) => {
-                                                                    let newState = sharedContracts.filter((e) => e.hash != hash);
-                                                                    setSharedContracts(newState)
-                                                                }
-                                                            }
+                                                            contractDeleted={hash => {
+                                                                let newState =
+                                                                    sharedContracts.filter(
+                                                                        e =>
+                                                                            e.hash !=
+                                                                            hash
+                                                                    )
+                                                                setSharedContracts(
+                                                                    newState
+                                                                )
+                                                            }}
                                                         />
                                                     )
                                                 )}
@@ -379,10 +404,10 @@ export default function ClaimsWorkflowPage() {
                                             </p>
                                             {processedInfo?.walletAddress ===
                                                 session?.address && (
-                                                    <button className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors">
-                                                        Create Attestation
-                                                    </button>
-                                                )}
+                                                <button className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors">
+                                                    Create Attestation
+                                                </button>
+                                            )}
                                         </div>
                                     )}
                                 </div>

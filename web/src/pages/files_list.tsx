@@ -100,13 +100,11 @@ export default function FilesList() {
                                         <th className="py-3 px-4 text-left text-sm font-medium text-gray-700 w-1/3 rounded-tl-md">
                                             Name
                                         </th>
-                                        {
-                                            showWorkFlowsOnly ? (
-                                                <th className="py-3 px-4 text-left text-sm font-medium text-gray-700 w-24">
-                                                    Workflow Name
-                                                </th>
-                                            ) : null
-                                        }
+                                        {showWorkFlowsOnly ? (
+                                            <th className="py-3 px-4 text-left text-sm font-medium text-gray-700 w-24">
+                                                Workflow Name
+                                            </th>
+                                        ) : null}
                                         <th className="py-3 px-4 text-left text-sm font-medium text-gray-700 w-30">
                                             Type
                                         </th>

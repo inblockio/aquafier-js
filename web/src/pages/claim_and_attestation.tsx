@@ -54,9 +54,10 @@ const WorkflowTableItem = ({
     >(undefined)
     const navigate = useNavigate()
 
-    const { session, backend_url, files, setSelectedFileInfo } = useStore(appStore)
+    const { session, backend_url, files, setSelectedFileInfo } =
+        useStore(appStore)
 
-    const [claimName, setClaimName] = useState<string>("")
+    const [claimName, setClaimName] = useState<string>('')
     const [attestorsCount, setAttestorsCount] = useState<number>(0)
     const [sharedContracts, setSharedContracts] = useState<Contract[] | null>(
         null
@@ -113,9 +114,9 @@ const WorkflowTableItem = ({
         const latestRevisionHash = allHahshes[allHahshes.length - 1]
         const genesisHash = allHahshes[0]
 
-            ; (async () => {
-                await loadSharedContractsData(latestRevisionHash, genesisHash)
-            })()
+        ;(async () => {
+            await loadSharedContractsData(latestRevisionHash, genesisHash)
+        })()
 
         let claimGenHash = getGenesisHash(apiFileInfo.aquaTree!)
         if (!claimGenHash) {
@@ -193,13 +194,15 @@ const WorkflowTableItem = ({
     }
     return (
         <TableRow
-
             key={`${workflowName}-${index}`}
             className="hover:bg-muted/50"
         >
-            <TableCell onClick={() => {
-                openClaimsInforPage(apiFileInfo!!)
-            }} className="font-medium w-[300px] max-w-[300px] min-w-[300px]">
+            <TableCell
+                onClick={() => {
+                    openClaimsInforPage(apiFileInfo!!)
+                }}
+                className="font-medium w-[300px] max-w-[300px] min-w-[300px]"
+            >
                 <div className="w-full flex items-center gap-3">
                     <div className="flex-shrink-0">
                         <div className="h-10 w-10 rounded-lg bg-blue-100 flex items-center justify-center">
@@ -207,14 +210,11 @@ const WorkflowTableItem = ({
                         </div>
                     </div>
                     <div className="flex-grow min-w-0">
-
-
-
                         <div className="font-medium text-sm break-words whitespace-normal">
-                           File Name :  {currentFileObject?.fileName}
+                            File Name : {currentFileObject?.fileName}
                         </div>
                         <div className="font-medium text-sm break-words whitespace-normal">
-                            Claim Name :    {claimName}
+                            Claim Name : {claimName}
                         </div>
                         <div className="text-xs text-muted-foreground">
                             Created at {getTimeInfo()}
@@ -223,12 +223,20 @@ const WorkflowTableItem = ({
                 </div>
             </TableCell>
 
-            <TableCell onClick={() => {
-                openClaimsInforPage(apiFileInfo!!)
-            }} className="w-[200px]">{attestorsCount}</TableCell>
-            <TableCell onClick={() => {
-                openClaimsInforPage(apiFileInfo!!)
-            }} className="w-[150px]">
+            <TableCell
+                onClick={() => {
+                    openClaimsInforPage(apiFileInfo!!)
+                }}
+                className="w-[200px]"
+            >
+                {attestorsCount}
+            </TableCell>
+            <TableCell
+                onClick={() => {
+                    openClaimsInforPage(apiFileInfo!!)
+                }}
+                className="w-[150px]"
+            >
                 {sharedContracts?.length}
             </TableCell>
 

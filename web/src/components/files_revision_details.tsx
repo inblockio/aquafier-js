@@ -193,14 +193,16 @@ export const RevisionDetailsSummary = ({
                                     </div>
                                 </div>
                             ))} */}
-                             {revisionsWithSignatures.map((revision, index) => (
+                            {revisionsWithSignatures.map((revision, index) => (
                                 <SignatureWalletAddressCard
                                     key={`signature_${index}`}
                                     signatureHash={revision.signature}
                                     timestamp={displayTime(
                                         revision.local_timestamp
                                     )}
-                                    walletAddress={revision.signature_wallet_address!!}
+                                    walletAddress={
+                                        revision.signature_wallet_address!!
+                                    }
                                     index={index + 1}
                                 />
                             ))}

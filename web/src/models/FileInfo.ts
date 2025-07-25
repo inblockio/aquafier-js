@@ -25,5 +25,5 @@ export interface IAttestationEntry {
     context: string
     createdAt: string
     nonce: string
-    file : ApiFileInfo
+    file: ApiFileInfo
 }

@@ -112,16 +112,22 @@
 }
 
 * {
-    font-family: 'Open Sans', sans-serif !important;
+    font-family: 'Open Sans', sans-serif;
 }
 
 @layer base {
     * {
         @apply border-border outline-ring/50;
-        font-family: 'Open Sans', sans-serif !important;
+        font-family: 'Open Sans', sans-serif;
     }
     body {
         @apply bg-background text-foreground;
-        font-family: 'Open Sans', sans-serif !important;
+        font-family: 'Open Sans', sans-serif;
     }
+}
+
+/* Monospace font class - no quotes around monospace */
+.code-mono,
+.font-mono {
+    font-family: monospace !important;
 }

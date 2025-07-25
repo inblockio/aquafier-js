@@ -310,7 +310,7 @@ const WebsocketFragment = () => {
                     }
                 }
 
-                if(event.reason === 'New connection established') {
+                if (event.reason === 'New connection established') {
                     connectWebsocket()
                 }
             }

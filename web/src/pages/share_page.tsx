@@ -23,9 +23,9 @@ const SharePage = () => {
     const params = useParams()
 
     const loadPageData = async () => {
-        if (loading){
-            console.log("Already loading, skipping new request")
-            toast.warning("Already loading, skipping new request")
+        if (loading) {
+            console.log('Already loading, skipping new request')
+            toast.warning('Already loading, skipping new request')
             return
         }
         if (!session?.nonce || !params?.identifier) {
@@ -76,7 +76,7 @@ const SharePage = () => {
             loadPageData()
         }
         setHasError(null)
-    // }, [params, session])
+        // }, [params, session])
     }, [session])
 
     const showProperWidget = () => {

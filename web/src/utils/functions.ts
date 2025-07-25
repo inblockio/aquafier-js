@@ -2451,10 +2451,11 @@ export const processSimpleWorkflowClaim = (
     const lastRevisionHash = revisionHashes[revisionHashes.length - 1]
     const firstRevision = aquaTree.revisions[firstRevisionHash]
     const firstRevisionKeys = Object.keys(firstRevision)
+
     const mustContainkeys = [
-        'forms_name',
-        'forms_wallet_address',
-        'forms_claim_context',
+        'forms_type',
+        // 'forms_wallet_address',
+        // 'forms_claim_context',
     ]
     const isClaimValid = mustContainkeys.every(key =>
         firstRevisionKeys.includes(key)
@@ -2472,15 +2473,105 @@ export const processSimpleWorkflowClaim = (
 
     firstRevisionKeys.map(key => {
         if (key.startsWith('forms_')) {
-            const processedKey = key.split('_').slice(1).join(' ')
-            claimInformation[processedKey] = firstRevision[key]
+            // const processedKey = key.split('_').slice(1).join(' ')
+            claimInformation[key] = firstRevision[key]
         }
     })
+
+    // Order the claimInformation keys in ascending order
+    const orderedClaimInformation = Object.keys(claimInformation)
+        .sort()
+        .reduce((obj: Record<string, string>, key) => {
+            obj[key] = claimInformation[key]
+            return obj
+        }, {})
     return {
-        claimInformation,
+        claimInformation: orderedClaimInformation,
         isClaimValid,
         walletAddress: firstRevision['forms_wallet_address'],
         latestRevisionHash: lastRevisionHash,
         genesisHash: firstRevisionHash,
+    }
+}
+
+export async function digTxtRecords(domain: string): Promise<string[]> {
+    try {
+        // Using Google's DNS-over-HTTPS API
+        const response = await fetch(
+            `https://dns.google/resolve?name=${encodeURIComponent(domain)}&type=TXT`
+        )
+        const data = await response.json()
+
+        if (!data.Answer) {
+            return []
+        }
+
+        // Extract TXT records from the response
+        return data.Answer
+    } catch (error) {
+        console.error('Error fetching DNS TXT records:', error)
+        return []
+    }
+}
+
+export async function digTxtRecordsGoogle(domain: string): Promise<string[]> {
+    console.log('Domain: ', domain)
+    try {
+        const response = await fetch(
+            `https://dns.google/resolve?name=${encodeURIComponent(domain)}&type=TXT`,
+            {
+                headers: {
+                    Accept: 'application/json',
+                },
+            }
+        )
+
+        if (!response.ok) {
+            throw new Error(`DNS query failed: ${response.statusText}`)
+        }
+
+        const data = await response.json()
+
+        if (data.Status !== 0) {
+            throw new Error(`DNS query failed with status: ${data.Status}`)
+        }
+
+        const txtRecords: string[] = []
+        console.log('Data: ', data)
+        if (data.Answer) {
+            for (const record of data.Answer) {
+                if (record.type === 16) {
+                    // TXT record type
+                    // Remove quotes from the TXT record data
+                    const cleanData = record.data.replace(/^"|"$/g, '')
+                    txtRecords.push(cleanData)
+                }
+            }
+        }
+
+        return txtRecords
+    } catch (error: any) {
+        throw new Error(
+            `Failed to lookup TXT records for ${domain}: ${error.message}`
+        )
+    }
+}
+
+export const extractDNSClaimInfo = (
+    record: string
+): {
+    walletAddress: string
+    timestamp: number
+    expiration: number
+    signature: string
+} => {
+    const [walletAddress, timestamp, expiration, signature] = record
+        .split('&')
+        .map(e => e.split('=')[1])
+    return {
+        walletAddress,
+        timestamp: Number(timestamp),
+        expiration: Number(expiration),
+        signature,
     }
 }

@@ -119,7 +119,7 @@ function App() {
                             element={
                                 <PdfSigner
                                     fileData={null}
-                                    setActiveStep={_one => { }}
+                                    setActiveStep={_one => {}}
                                 />
                             }
                         />

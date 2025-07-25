@@ -75,15 +75,9 @@ const CreateFormFromTemplate = ({
         Record<string, string | File | number>
     >({})
     const [multipleAddresses, setMultipleAddresses] = useState<string[]>([])
-    const [
-        isDialogOpen,
-        setDialogOpen,
-    ] = useState(false)
-    const [
-        dialogData,
-        setDialogData,
-    ] = useState<null | {
-        content: JSX.Element,
+    const [isDialogOpen, setDialogOpen] = useState(false)
+    const [dialogData, setDialogData] = useState<null | {
+        content: JSX.Element
         title: string
     }>(null)
 
@@ -309,475 +303,613 @@ const CreateFormFromTemplate = ({
         }
     }
 
-
     // Helper function to prepare complete form data
-    const prepareCompleteFormData = (formData: any, selectedTemplate: any, multipleAddresses: string[]) => {
-        const completeFormData = { ...formData };
+    const prepareCompleteFormData = (
+        formData: any,
+        selectedTemplate: any,
+        multipleAddresses: string[]
+    ) => {
+        const completeFormData = { ...formData }
 
         selectedTemplate.fields.forEach((field: any) => {
             if (!field.is_array && !(field.name in completeFormData)) {
-                completeFormData[field.name] = getFieldDefaultValue(field, undefined);
+                completeFormData[field.name] = getFieldDefaultValue(
+                    field,
+                    undefined
+                )
             } else {
-                if (field.name === 'signers' && selectedTemplate.name === 'aqua_sign') {
-                    completeFormData[field.name] = multipleAddresses.join(',');
+                if (
+                    field.name === 'signers' &&
+                    selectedTemplate.name === 'aqua_sign'
+                ) {
+                    completeFormData[field.name] = multipleAddresses.join(',')
                 }
             }
-        });
+        })
 
-        return completeFormData;
-    };
+        return completeFormData
+    }
 
     // Validation function for required fields
-    const validateRequiredFields = (completeFormData: any, selectedTemplate: any) => {
+    const validateRequiredFields = (
+        completeFormData: any,
+        selectedTemplate: any
+    ) => {
         for (const fieldItem of selectedTemplate.fields) {
-            const valueInput = completeFormData[fieldItem.name];
+            const valueInput = completeFormData[fieldItem.name]
             if (fieldItem.required && valueInput == undefined) {
-                throw new Error(`${fieldItem.name} is mandatory`);
+                throw new Error(`${fieldItem.name} is mandatory`)
             }
         }
-    };
+    }
 
     // Wallet address validation function
     const validateWalletAddress = (valueInput: any, fieldItem: any) => {
         if (typeof valueInput !== 'string') {
-            throw new Error(`${valueInput} provided at ${fieldItem.name} is not a string`);
+            throw new Error(
+                `${valueInput} provided at ${fieldItem.name} is not a string`
+            )
         }
 
         if (valueInput.includes(',')) {
-            const walletAddresses = valueInput.split(',');
-            const seenWalletAddresses = new Set<string>();
+            const walletAddresses = valueInput.split(',')
+            const seenWalletAddresses = new Set<string>()
 
             for (const walletAddress of walletAddresses) {
-                const trimmedAddress = walletAddress.trim();
-                const isValidWalletAddress = isValidEthereumAddress(trimmedAddress);
+                const trimmedAddress = walletAddress.trim()
+                const isValidWalletAddress =
+                    isValidEthereumAddress(trimmedAddress)
 
                 if (!isValidWalletAddress) {
-                    throw new Error(`>${trimmedAddress}< is not a valid wallet address`);
+                    throw new Error(
+                        `>${trimmedAddress}< is not a valid wallet address`
+                    )
                 }
 
                 if (seenWalletAddresses.has(trimmedAddress)) {
-                    throw new Error(`>${trimmedAddress}< is a duplicate wallet address`);
+                    throw new Error(
+                        `>${trimmedAddress}< is a duplicate wallet address`
+                    )
                 }
 
-                seenWalletAddresses.add(trimmedAddress);
+                seenWalletAddresses.add(trimmedAddress)
             }
         } else {
-            const isValidWalletAddress = isValidEthereumAddress(valueInput.trim());
+            const isValidWalletAddress = isValidEthereumAddress(
+                valueInput.trim()
+            )
             if (!isValidWalletAddress) {
-                throw new Error(`>${valueInput}< is not a valid wallet address`);
+                throw new Error(`>${valueInput}< is not a valid wallet address`)
             }
         }
-    };
+    }
 
     // Domain validation function
     const validateDomain = (valueInput: any, fieldItem: any) => {
         if (typeof valueInput !== 'string') {
-            throw new Error(`${valueInput} provided at ${fieldItem.name} is not a string`);
+            throw new Error(
+                `${valueInput} provided at ${fieldItem.name} is not a string`
+            )
         }
 
-        const trimmedInput = valueInput.trim();
+        const trimmedInput = valueInput.trim()
 
         // Check for protocol prefixes
         if (/^[a-zA-Z][a-zA-Z0-9+.-]*:\/\//.test(trimmedInput)) {
-            throw new Error(`${valueInput} - contains protocol (http://, https://, etc.). Please provide domain only (e.g., example.com)`);
+            throw new Error(
+                `${valueInput} - contains protocol (http://, https://, etc.). Please provide domain only (e.g., example.com)`
+            )
         }
 
         // Check for www subdomain
         if (/^www\./.test(trimmedInput)) {
-            throw new Error(`${valueInput} - www subdomain not allowed. Please provide domain without www (e.g., example.com instead of www.example.com)`);
+            throw new Error(
+                `${valueInput} - www subdomain not allowed. Please provide domain without www (e.g., example.com instead of www.example.com)`
+            )
         }
 
-        // Domain regex validation
-        const domainWithSubdomainRegex = /^(?!www\.)((?!-)[A-Za-z0-9-]{1,63}(?<!-)\.)*(?!-)[A-Za-z0-9-]{1,63}(?<!-)\.[A-Za-z]{2,6}$/;
+        // Domain regex validation - allowing underscores in subdomains for DNS TXT records
+        const domainWithSubdomainRegex =
+            /^(?!www\.)((?!-)[A-Za-z0-9_-]{1,63}(?<!-)\.)*(?!-)[A-Za-z0-9-]{1,63}(?<!-)\.[A-Za-z]{2,6}$/
 
         if (!domainWithSubdomainRegex.test(trimmedInput)) {
-            throw new Error(`${valueInput} - is not a valid domain. Expected format: example.com or api.example.com`);
+            throw new Error(
+                `${valueInput} - is not a valid domain. Expected format: example.com, api.example.com, or name._prefix.example.com`
+            )
         }
 
         // Ensure it's not just a TLD
-        const parts = trimmedInput.split('.');
+        const parts = trimmedInput.split('.')
         if (parts.length < 2 || parts[0].length === 0) {
-            throw new Error(`${valueInput} - must include both domain name and TLD (e.g., example.com)`);
+            throw new Error(
+                `${valueInput} - must include both domain name and TLD (e.g., example.com)`
+            )
         }
-    };
+    }
 
     // Field validation function
     const validateFields = (completeFormData: any, selectedTemplate: any) => {
-        validateRequiredFields(completeFormData, selectedTemplate);
+        validateRequiredFields(completeFormData, selectedTemplate)
 
         for (const fieldItem of selectedTemplate.fields) {
-            const valueInput = completeFormData[fieldItem.name];
+            const valueInput = completeFormData[fieldItem.name]
 
             if (fieldItem.type === 'wallet_address') {
-                validateWalletAddress(valueInput, fieldItem);
+                validateWalletAddress(valueInput, fieldItem)
             }
 
             if (fieldItem.type === 'domain') {
-                validateDomain(valueInput, fieldItem);
+                validateDomain(valueInput, fieldItem)
             }
         }
-    };
+    }
 
     // Function to get system files
-    const getSystemFiles = async (systemFileInfo: any[], backend_url: string, sessionAddress: string) => {
-        let allSystemFiles = systemFileInfo;
+    const getSystemFiles = async (
+        systemFileInfo: any[],
+        backend_url: string,
+        sessionAddress: string
+    ) => {
+        let allSystemFiles = systemFileInfo
 
         if (systemFileInfo.length === 0) {
-            const url3 = `${backend_url}/system/aqua_tree`;
-            const systemFiles = await fetchSystemFiles(url3, sessionAddress);
-            allSystemFiles = systemFiles;
+            const url3 = `${backend_url}/system/aqua_tree`
+            const systemFiles = await fetchSystemFiles(url3, sessionAddress)
+            allSystemFiles = systemFiles
         }
 
         if (allSystemFiles.length === 0) {
-            throw new Error('Aqua tree for templates not found');
+            throw new Error('Aqua tree for templates not found')
         }
 
-        return allSystemFiles;
-    };
+        return allSystemFiles
+    }
 
     // Function to find template API file info
-    const findTemplateApiFileInfo = (allSystemFiles: any[], selectedTemplate: any) => {
+    const findTemplateApiFileInfo = (
+        allSystemFiles: any[],
+        selectedTemplate: any
+    ) => {
         const templateApiFileInfo = allSystemFiles.find(e => {
-            const nameExtract = getAquaTreeFileName(e!.aquaTree!);
-            const selectedName = `${selectedTemplate?.name}.json`;
-            console.log(`nameExtract ${nameExtract} == selectedName ${selectedName}`);
-            return nameExtract === selectedName;
-        });
+            const nameExtract = getAquaTreeFileName(e!.aquaTree!)
+            const selectedName = `${selectedTemplate?.name}.json`
+            console.log(
+                `nameExtract ${nameExtract} == selectedName ${selectedName}`
+            )
+            return nameExtract === selectedName
+        })
 
         if (!templateApiFileInfo) {
-            throw new Error(`Aqua tree for ${selectedTemplate?.name} not found`);
+            throw new Error(`Aqua tree for ${selectedTemplate?.name} not found`)
         }
 
-        return templateApiFileInfo;
-    };
+        return templateApiFileInfo
+    }
 
     // Function to generate filename
     const generateFileName = (selectedTemplate: any, completeFormData: any) => {
-        const randomNumber = getRandomNumber(100, 1000);
-        let fileName = `${selectedTemplate?.name ?? 'template'}-${randomNumber}.json`;
+        const randomNumber = getRandomNumber(100, 1000)
+        let fileName = `${selectedTemplate?.name ?? 'template'}-${randomNumber}.json`
 
         if (selectedTemplate?.name === 'aqua_sign') {
-            const theFile = completeFormData['document'] as File;
-            const fileNameWithoutExt = theFile.name.substring(0, theFile.name.lastIndexOf('.'));
-            fileName = fileNameWithoutExt + '-' + formatDate(new Date()) + '-' + randomNumber + '.json';
+            const theFile = completeFormData['document'] as File
+            const fileNameWithoutExt = theFile.name.substring(
+                0,
+                theFile.name.lastIndexOf('.')
+            )
+            fileName =
+                fileNameWithoutExt +
+                '-' +
+                formatDate(new Date()) +
+                '-' +
+                randomNumber +
+                '.json'
         }
 
         if (selectedTemplate?.name === 'identity_attestation') {
-            fileName = `identity_attestation-${randomNumber}.json`;
+            fileName = `identity_attestation-${randomNumber}.json`
         }
 
-        return fileName;
-    };
+        return fileName
+    }
 
     // Function to handle identity attestation specific logic
-    const handleIdentityAttestation = (completeFormData: any, selectedFileInfo: any) : any=> {
+    const handleIdentityAttestation = (
+        completeFormData: any,
+        selectedFileInfo: any
+    ): any => {
         if (selectedFileInfo == null) {
-            throw new Error('No claim selected for identity attestation');
+            throw new Error('No claim selected for identity attestation')
         }
 
         // Set genesis form revision values
-        const genRevision: Revision = Object.values(selectedFileInfo.aquaTree?.revisions!)[0] as Revision;
+        const genRevision: Revision = Object.values(
+            selectedFileInfo.aquaTree?.revisions!
+        )[0] as Revision
         if (genRevision) {
-            const genKeys = Object.keys(genRevision);
+            const genKeys = Object.keys(genRevision)
             for (const key of genKeys) {
                 if (key.startsWith('forms_')) {
-                    const keyWithoutFormWord = key.replace('forms_', '');
-                    completeFormData[`claim_${keyWithoutFormWord}`] = genRevision[key];
+                    const keyWithoutFormWord = key.replace('forms_', '')
+                    completeFormData[`claim_${keyWithoutFormWord}`] =
+                        genRevision[key]
                 }
             }
         }
 
-        const genHash = getGenesisHash(selectedFileInfo.aquaTree!);
+        const genHash = getGenesisHash(selectedFileInfo.aquaTree!)
         if (genHash) {
-            completeFormData[`identity_claim_id`] = genHash;
+            completeFormData[`identity_claim_id`] = genHash
         } else {
-            throw new Error('Identity claim genesis id not found in selected file');
+            throw new Error(
+                'Identity claim genesis id not found in selected file'
+            )
         }
 
-        return completeFormData;
-    };
+        return completeFormData
+    }
 
-    async function domainTemplateSignMessageFunction(domainParams: string | undefined): Promise<string | undefined> {
-        let signature: string | undefined = undefined;
-        if (!domainParams
+    async function domainTemplateSignMessageFunction(
+        domainParams: string | undefined
+    ): Promise<string | undefined> {
+        let signature: string | undefined = undefined
+        if (!domainParams) {
+            alert('Please enter a domain name')
+            return
+        }
 
-        ) { alert('Please enter a domain name'); return; }
-
-        const account = session?.address;
+        const account = session?.address
         if (typeof window.ethereum == 'undefined') {
-            console.error('MetaMask not found');
-            setDialogOpen(true);
-            setDialogData(
-                {
-                    title: 'MetaMask not found',
-                    content: (<>
-
+            console.error('MetaMask not found')
+            setDialogOpen(true)
+            setDialogData({
+                title: 'MetaMask not found',
+                content: (
+                    <>
                         <Alert variant="destructive">
                             <AlertCircle className="h-4 w-4" />
                             <AlertDescription>
-                                Please install MetaMask to sign the domain claim.
+                                Please install MetaMask to sign the domain
+                                claim.
                             </AlertDescription>
                         </Alert>
-                    </>)
-                }
-            )
-
+                    </>
+                ),
+            })
         }
 
-        const domain = domainParams.trim();
+        const domain = domainParams.trim()
         try {
-            let timestamp = Math.floor(Date.now() / 1000).toString();
-            const expiration = Math.floor(Date.now() / 1000 + (90 * 24 * 60 * 60)).toString(); // 90 days default
+            let timestamp = Math.floor(Date.now() / 1000).toString()
+            const expiration = Math.floor(
+                Date.now() / 1000 + 90 * 24 * 60 * 60
+            ).toString() // 90 days default
             // Message format: unix_timestamp|domain_name|expiration_timestamp
-            const message = `${timestamp}|${domain}|${expiration}`;
-            console.log('Signing message (before EIP-191 formatting):', message);
-            console.log('MetaMask will apply EIP-191 formatting automatically');
+            const message = `${timestamp}|${domain}|${expiration}`
+            console.log('Signing message (before EIP-191 formatting):', message)
+            console.log('MetaMask will apply EIP-191 formatting automatically')
             // document.getElementById('sign-btn').textContent = 'Signing...';
             // document.getElementById('sign-btn').disabled = true;
-            signature = await window.ethereum!.request({ method: 'personal_sign', params: [message, account] });
-
+            signature = await window.ethereum!.request({
+                method: 'personal_sign',
+                params: [message, account],
+            })
         } catch (error: any) {
             // alert('Failed to sign: ' + error.message);
-            console.error('Error signing domain claim:', error);
-            setDialogOpen(true);
+            console.error('Error signing domain claim:', error)
+            setDialogOpen(true)
             setDialogData({
                 title: 'Error signing domain claim',
-                content: (<>
-
-                    <Alert variant="destructive">
-                        <AlertCircle className="h-4 w-4" />
-                        <AlertDescription>
-                            error signing domain claim: {error}
-                        </AlertDescription>
-                    </Alert>
-                </>),
-            }
-
-            )
-
+                content: (
+                    <>
+                        <Alert variant="destructive">
+                            <AlertCircle className="h-4 w-4" />
+                            <AlertDescription>
+                                error signing domain claim: {error}
+                            </AlertDescription>
+                        </Alert>
+                    </>
+                ),
+            })
         }
 
-        return signature;
+        return signature
     }
     // Function to prepare final form data
-    const prepareFinalFormData = async (completeFormData: any, selectedTemplate: any): Promise<{
-        filteredData: Record<string, string | number>;
+    const prepareFinalFormData = async (
+        completeFormData: any,
+        selectedTemplate: any
+    ): Promise<{
+        filteredData: Record<string, string | number>
     } | null> => {
-        const epochTimeInSeconds = Math.floor(Date.now() / 1000);
-        const filteredData: Record<string, string | number> = {};
+        const epochTimeInSeconds = Math.floor(Date.now() / 1000)
+        const filteredData: Record<string, string | number> = {}
 
         // Add timestamp for uniqueness
-        completeFormData['created_at'] = epochTimeInSeconds;
+        completeFormData['created_at'] = epochTimeInSeconds
 
         // Set default values
         selectedTemplate.fields.forEach((field: any) => {
             if (field.default_value && field.default_value !== '') {
-                completeFormData[field.name] = field.default_value;
+                completeFormData[field.name] = field.default_value
             }
-        });
-
-        
+        })
 
         // Filter out File objects for logging
         Object.entries(completeFormData).forEach(([key, value]) => {
             if (!(value instanceof File)) {
                 if (typeof value === 'string' || typeof value === 'number') {
-                    filteredData[key] = value;
+                    filteredData[key] = value
                 } else {
-                    filteredData[key] = String(value);
+                    filteredData[key] = String(value)
                 }
             } else {
-                filteredData[key] = (value as File).name;
+                filteredData[key] = (value as File).name
             }
-        });
+        })
 
-
-        console.log('completeFormData before validation:', selectedTemplate.name);
+        console.log(
+            'completeFormData before validation:',
+            selectedTemplate.name
+        )
         // for domain_claim show pop up
         if (selectedTemplate.name === 'domain_claim') {
-            // we sign the  
+            // we sign the
 
-            console.log('domain_claim selected ', JSON.stringify(completeFormData, null, 4));
-            let signature = await domainTemplateSignMessageFunction(completeFormData['domain']);
+            console.log(
+                'domain_claim selected ',
+                JSON.stringify(completeFormData, null, 4)
+            )
+            let signature = await domainTemplateSignMessageFunction(
+                completeFormData['domain']
+            )
             if (!signature) {
-                return null;
+                return null
             }
-            filteredData["signature"] = signature;
-
+            filteredData['signature'] = signature
         }
-        console.log('completeFormData after validation:',  JSON.stringify(filteredData, null, 4));
-        return { filteredData };
-    };
+        console.log(
+            'completeFormData after validation:',
+            JSON.stringify(filteredData, null, 4)
+        )
+        return { filteredData }
+    }
 
     // Function to create genesis aqua tree
-    const createGenesisAquaTree = async (completeFormData: any, fileName: string, aquafier: any) => {
-        const estimateSize = estimateFileSize(JSON.stringify(completeFormData));
-        const jsonString = JSON.stringify(completeFormData, null, 4);
-        console.log(`completeFormData -- jsonString-- ${jsonString}`);
+    const createGenesisAquaTree = async (
+        completeFormData: any,
+        fileName: string,
+        aquafier: any
+    ) => {
+        const estimateSize = estimateFileSize(JSON.stringify(completeFormData))
+        const jsonString = JSON.stringify(completeFormData, null, 4)
+        console.log(`completeFormData -- jsonString-- ${jsonString}`)
 
         const fileObject: FileObject = {
             fileContent: jsonString,
             fileName: fileName,
             path: './',
             fileSize: estimateSize,
-        };
-
-        const genesisAquaTree = await aquafier.createGenesisRevision(fileObject, true, false, false);
-
-        if (genesisAquaTree.isErr()) {
-            throw new Error('Error creating genesis aqua tree');
         }
 
-        return { genesisAquaTree: genesisAquaTree.data.aquaTree!, fileObject };
-    };
+        const genesisAquaTree = await aquafier.createGenesisRevision(
+            fileObject,
+            true,
+            false,
+            false
+        )
+
+        if (genesisAquaTree.isErr()) {
+            throw new Error('Error creating genesis aqua tree')
+        }
+
+        return { genesisAquaTree: genesisAquaTree.data.aquaTree!, fileObject }
+    }
 
     // Function to link aqua tree
-    const linkToSystemAquaTree = async (genesisAquaTree: any, fileObject: any, templateApiFileInfo: any, aquafier: any) => {
+    const linkToSystemAquaTree = async (
+        genesisAquaTree: any,
+        fileObject: any,
+        templateApiFileInfo: any,
+        aquafier: any
+    ) => {
         const mainAquaTreeWrapper: AquaTreeWrapper = {
             aquaTree: genesisAquaTree,
             revision: '',
             fileObject: fileObject,
-        };
+        }
 
-        const linkedAquaTreeFileObj = getAquaTreeFileObject(templateApiFileInfo);
+        const linkedAquaTreeFileObj = getAquaTreeFileObject(templateApiFileInfo)
         if (!linkedAquaTreeFileObj) {
-            throw new Error('System Aqua tree has error');
+            throw new Error('System Aqua tree has error')
         }
 
         const linkedToAquaTreeWrapper: AquaTreeWrapper = {
             aquaTree: templateApiFileInfo.aquaTree!,
             revision: '',
             fileObject: linkedAquaTreeFileObj,
-        };
+        }
 
-        const linkedAquaTreeResponse = await aquafier.linkAquaTree(mainAquaTreeWrapper, linkedToAquaTreeWrapper);
+        const linkedAquaTreeResponse = await aquafier.linkAquaTree(
+            mainAquaTreeWrapper,
+            linkedToAquaTreeWrapper
+        )
 
         if (linkedAquaTreeResponse.isErr()) {
-            throw new Error('Error linking aqua tree');
+            throw new Error('Error linking aqua tree')
         }
 
-        return linkedAquaTreeResponse.data.aquaTree!;
-    };
+        return linkedAquaTreeResponse.data.aquaTree!
+    }
 
     // Function to process file attachments
-    const processFileAttachments = async (selectedTemplate: any, completeFormData: any, aquaTreeData: any, fileObject: any, aquafier: any) => {
-        const containsFileData = selectedTemplate?.fields.filter((e: any) =>
-            e.type === 'file' || e.type === 'image' || e.type === 'document'
-        );
+    const processFileAttachments = async (
+        selectedTemplate: any,
+        completeFormData: any,
+        aquaTreeData: any,
+        fileObject: any,
+        aquafier: any
+    ) => {
+        const containsFileData = selectedTemplate?.fields.filter(
+            (e: any) =>
+                e.type === 'file' || e.type === 'image' || e.type === 'document'
+        )
 
         if (!containsFileData || containsFileData.length === 0) {
-            return aquaTreeData;
+            return aquaTreeData
         }
 
-        const fileProcessingPromises = containsFileData.map(async (element: any) => {
-            const file: File = completeFormData[element.name] as File;
+        const fileProcessingPromises = containsFileData.map(
+            async (element: any) => {
+                const file: File = completeFormData[element.name] as File
 
-            if (!file) {
-                console.warn(`No file found for field: ${element.name}`);
-                return null;
+                if (!file) {
+                    console.warn(`No file found for field: ${element.name}`)
+                    return null
+                }
+
+                try {
+                    const arrayBuffer = await file.arrayBuffer()
+                    const uint8Array = new Uint8Array(arrayBuffer)
+
+                    const fileObjectPar: FileObject = {
+                        fileContent: uint8Array,
+                        fileName: file.name,
+                        path: './',
+                        fileSize: file.size,
+                    }
+
+                    return fileObjectPar
+                } catch (error) {
+                    console.error(`Error processing file ${file.name}:`, error)
+                    throw new Error(`Error processing file ${file.name}`)
+                }
             }
+        )
 
-            try {
-                const arrayBuffer = await file.arrayBuffer();
-                const uint8Array = new Uint8Array(arrayBuffer);
+        const fileObjects = await Promise.all(fileProcessingPromises)
+        const validFileObjects = fileObjects.filter(
+            obj => obj !== null
+        ) as FileObject[]
 
-                const fileObjectPar: FileObject = {
-                    fileContent: uint8Array,
-                    fileName: file.name,
-                    path: './',
-                    fileSize: file.size,
-                };
+        console.log(`Processed ${validFileObjects.length} files successfully`)
 
-                return fileObjectPar;
-            } catch (error) {
-                console.error(`Error processing file ${file.name}:`, error);
-                throw new Error(`Error processing file ${file.name}`);
-            }
-        });
-
-        const fileObjects = await Promise.all(fileProcessingPromises);
-        const validFileObjects = fileObjects.filter(obj => obj !== null) as FileObject[];
-
-        console.log(`Processed ${validFileObjects.length} files successfully`);
-
-        let currentAquaTreeData = aquaTreeData;
+        let currentAquaTreeData = aquaTreeData
 
         for (const item of validFileObjects) {
-            const aquaTreeResponse = await aquafier.createGenesisRevision(item);
+            const aquaTreeResponse = await aquafier.createGenesisRevision(item)
 
             if (aquaTreeResponse.isErr()) {
-                throw new Error('Error creating aqua tree for file');
+                throw new Error('Error creating aqua tree for file')
             }
 
-            await saveAquaTree(aquaTreeResponse.data.aquaTree!, item, false, true);
+            await saveAquaTree(
+                aquaTreeResponse.data.aquaTree!,
+                item,
+                false,
+                true
+            )
 
             const aquaTreeWrapper: AquaTreeWrapper = {
                 aquaTree: currentAquaTreeData,
                 revision: '',
                 fileObject: fileObject,
-            };
+            }
 
             const aquaTreeWrapper2: AquaTreeWrapper = {
                 aquaTree: aquaTreeResponse.data.aquaTree!,
                 revision: '',
                 fileObject: item,
-            };
-
-            const res = await aquafier.linkAquaTree(aquaTreeWrapper, aquaTreeWrapper2);
-
-            if (res.isErr()) {
-                throw new Error('Error linking file aqua tree');
             }
 
-            currentAquaTreeData = res.data.aquaTree!;
+            const res = await aquafier.linkAquaTree(
+                aquaTreeWrapper,
+                aquaTreeWrapper2
+            )
+
+            if (res.isErr()) {
+                throw new Error('Error linking file aqua tree')
+            }
+
+            currentAquaTreeData = res.data.aquaTree!
         }
 
-        return currentAquaTreeData;
-    };
+        return currentAquaTreeData
+    }
 
     // Function to sign aqua tree
-    const signAquaTree = async (aquaTreeData: any, fileObject: any, aquafier: any) => {
+    const signAquaTree = async (
+        aquaTreeData: any,
+        fileObject: any,
+        aquafier: any
+    ) => {
         const aquaTreeWrapper: AquaTreeWrapper = {
             aquaTree: aquaTreeData,
             revision: '',
             fileObject: fileObject,
-        };
-
-        const signRes = await aquafier.signAquaTree(aquaTreeWrapper, 'metamask', dummyCredential());
-
-        if (signRes.isErr()) {
-            throw new Error('Error signing failed');
         }
 
-        return signRes.data.aquaTree!;
-    };
+        const signRes = await aquafier.signAquaTree(
+            aquaTreeWrapper,
+            'metamask',
+            dummyCredential()
+        )
+
+        if (signRes.isErr()) {
+            throw new Error('Error signing failed')
+        }
+
+        return signRes.data.aquaTree!
+    }
 
     // Function to handle post-signing actions
-    const handlePostSigning = async (signedAquaTree: any, fileObject: any, completeFormData: any, selectedTemplate: any, session: any, selectedFileInfo: any) => {
-        fileObject.fileContent = completeFormData;
-        console.log('Sign res: -- ', signedAquaTree);
+    const handlePostSigning = async (
+        signedAquaTree: any,
+        fileObject: any,
+        completeFormData: any,
+        selectedTemplate: any,
+        session: any,
+        selectedFileInfo: any
+    ) => {
+        fileObject.fileContent = completeFormData
+        console.log('Sign res: -- ', signedAquaTree)
 
-        await saveAquaTree(signedAquaTree, fileObject, true);
-        console.log('selectedTemplate.name -- ', selectedTemplate.name);
+        await saveAquaTree(signedAquaTree, fileObject, true)
+        console.log('selectedTemplate.name -- ', selectedTemplate.name)
 
         // Handle aqua_sign specific logic
-        if (selectedTemplate && selectedTemplate.name === 'aqua_sign' && session?.address) {
+        if (
+            selectedTemplate &&
+            selectedTemplate.name === 'aqua_sign' &&
+            session?.address
+        ) {
             if (completeFormData['signers'] !== session?.address) {
-                await shareAquaTree(signedAquaTree, completeFormData['signers'] as string);
+                await shareAquaTree(
+                    signedAquaTree,
+                    completeFormData['signers'] as string
+                )
             }
         }
 
         // Handle identity_attestation specific logic
-        if (selectedTemplate && selectedTemplate.name === 'identity_attestation') {
-            const allHashes = Object.keys(selectedFileInfo!.aquaTree!.revisions!);
-            let secondRevision: Revision | null = null;
+        if (
+            selectedTemplate &&
+            selectedTemplate.name === 'identity_attestation'
+        ) {
+            const allHashes = Object.keys(
+                selectedFileInfo!.aquaTree!.revisions!
+            )
+            let secondRevision: Revision | null = null
 
             if (allHashes.length >= 2) {
-                secondRevision = selectedFileInfo!.aquaTree!.revisions![allHashes[2]];
+                secondRevision =
+                    selectedFileInfo!.aquaTree!.revisions![allHashes[2]]
             }
 
             if (secondRevision == null) {
-                throw new Error('No second revision found in claim, unable to share with claim creator');
+                throw new Error(
+                    'No second revision found in claim, unable to share with claim creator'
+                )
             }
 
             await saveAquaTree(
@@ -786,92 +918,140 @@ const CreateFormFromTemplate = ({
                 true,
                 false,
                 secondRevision.signature_wallet_address!
-            );
+            )
         }
-    };
+    }
 
     // Main refactored function
     const createWorkflowFromTemplate = async (e: React.FormEvent) => {
-        e.preventDefault();
+        e.preventDefault()
 
         try {
-            setModalFormErorMessae('');
+            setModalFormErorMessae('')
 
             if (submittingTemplateData) {
-                toast.info('Data submission not completed, try again after some time.');
-                return;
+                toast.info(
+                    'Data submission not completed, try again after some time.'
+                )
+                return
             }
-            setSubmittingTemplateData(true);
+            setSubmittingTemplateData(true)
 
             // Step 1: Prepare complete form data
-            let completeFormData = prepareCompleteFormData(formData, selectedTemplate, multipleAddresses);
-            setFormData(completeFormData);
+            let completeFormData = prepareCompleteFormData(
+                formData,
+                selectedTemplate,
+                multipleAddresses
+            )
+            setFormData(completeFormData)
 
             // Step 2: Validate fields
-            validateFields(completeFormData, selectedTemplate);
+            validateFields(completeFormData, selectedTemplate)
 
             // Step 3: Get system files
-            const allSystemFiles = await getSystemFiles(systemFileInfo, backend_url, session?.address || '');
-            setSystemFileInfo(allSystemFiles);
+            const allSystemFiles = await getSystemFiles(
+                systemFileInfo,
+                backend_url,
+                session?.address || ''
+            )
+            setSystemFileInfo(allSystemFiles)
 
             // Step 4: Find template API file info
-            const templateApiFileInfo = findTemplateApiFileInfo(allSystemFiles, selectedTemplate);
+            const templateApiFileInfo = findTemplateApiFileInfo(
+                allSystemFiles,
+                selectedTemplate
+            )
 
             // Step 5: Initialize aquafier and prepare data
-            const aquafier = new Aquafier();
-            const fileName = generateFileName(selectedTemplate, completeFormData);
+            const aquafier = new Aquafier()
+            const fileName = generateFileName(
+                selectedTemplate,
+                completeFormData
+            )
 
             // Step 6: Handle identity attestation specific logic
             if (selectedTemplate?.name === 'identity_attestation') {
-               completeFormData=  handleIdentityAttestation(completeFormData, selectedFileInfo);
+                completeFormData = handleIdentityAttestation(
+                    completeFormData,
+                    selectedFileInfo
+                )
             }
 
             // Step 7: Prepare final form data
-            const finalFormDataRes = await  prepareFinalFormData(completeFormData, selectedTemplate);
+            const finalFormDataRes = await prepareFinalFormData(
+                completeFormData,
+                selectedTemplate
+            )
 
             // console.log('Final form data:', JSON.stringify(finalFormData, null, 4));
             // throw new Error('Final form data preparation failed');
 
-
             if (!finalFormDataRes) {
-                 toast.info('Final form data preparation failed.');
-                throw new Error('Final form data preparation failed');
-            }      
-            
-            const finalFormDataFiltered = finalFormDataRes.filteredData;
+                toast.info('Final form data preparation failed.')
+                throw new Error('Final form data preparation failed')
+            }
+
+            const finalFormDataFiltered = finalFormDataRes.filteredData
             // Step 8: Create genesis aqua tree
-            const { genesisAquaTree, fileObject } = await createGenesisAquaTree(finalFormDataFiltered, fileName, aquafier);
+            const { genesisAquaTree, fileObject } = await createGenesisAquaTree(
+                finalFormDataFiltered,
+                fileName,
+                aquafier
+            )
 
             // Step 9: Link to system aqua tree
-            let aquaTreeData = await linkToSystemAquaTree(genesisAquaTree, fileObject, templateApiFileInfo, aquafier);
+            let aquaTreeData = await linkToSystemAquaTree(
+                genesisAquaTree,
+                fileObject,
+                templateApiFileInfo,
+                aquafier
+            )
 
             // Step 10: Process file attachments
-            aquaTreeData = await processFileAttachments(selectedTemplate, finalFormDataFiltered, aquaTreeData, fileObject, aquafier);
+            aquaTreeData = await processFileAttachments(
+                selectedTemplate,
+                finalFormDataFiltered,
+                aquaTreeData,
+                fileObject,
+                aquafier
+            )
 
             // Step 11: Sign aqua tree
-            const signedAquaTree = await signAquaTree(aquaTreeData, fileObject, aquafier);
+            const signedAquaTree = await signAquaTree(
+                aquaTreeData,
+                fileObject,
+                aquafier
+            )
 
             // Step 12: Handle post-signing actions
-            await handlePostSigning(signedAquaTree, fileObject, finalFormDataFiltered, selectedTemplate, session, selectedFileInfo);
-
+            await handlePostSigning(
+                signedAquaTree,
+                fileObject,
+                finalFormDataFiltered,
+                selectedTemplate,
+                session,
+                selectedFileInfo
+            )
         } catch (error: any) {
-            setSubmittingTemplateData(false);
+            setSubmittingTemplateData(false)
 
             // Handle validation errors with specific messages
-            if (error.message.includes('is mandatory') ||
+            if (
+                error.message.includes('is mandatory') ||
                 error.message.includes('is not a valid') ||
-                error.message.includes('is a duplicate')) {
-                setModalFormErorMessae(error.message);
+                error.message.includes('is a duplicate')
+            ) {
+                setModalFormErorMessae(error.message)
             } else {
                 toast.error('Error creating Aqua tree from template', {
                     description: error?.message ?? 'Unknown error',
                     duration: 5000,
-                });
+                })
             }
         } finally {
-            setSubmittingTemplateData(false);
+            setSubmittingTemplateData(false)
         }
-    };
+    }
     // const createWorkflowFromTemplate = async (e: React.FormEvent) => {
     //     e.preventDefault()
 
@@ -1137,7 +1317,7 @@ const CreateFormFromTemplate = ({
     //         // set the default value if the form has default value
     //         selectedTemplate!.fields.forEach(field => {
 
-    //             // default value is provided and  default value is not empty 
+    //             // default value is provided and  default value is not empty
     //             if (
     //                 field.default_value &&
     //                 field.default_value !== ''
@@ -1150,8 +1330,6 @@ const CreateFormFromTemplate = ({
     //         const estimateize = estimateFileSize(
     //             JSON.stringify(completeFormData)
     //         )
-
-
 
     //         const jsonString = JSON.stringify(completeFormData, null, 4)
     //         console.log(`completeFormData -- jsonString-- ${jsonString}`)
@@ -1454,6 +1632,20 @@ const CreateFormFromTemplate = ({
         callBack && callBack()
     }
 
+    const getInputType = (fieldType: string): string => {
+        if (fieldType === 'image' || fieldType === 'document') {
+            return 'file'
+        }
+        if (
+            ['text', 'domain', 'wallet_address', 'signature', 'email'].includes(
+                fieldType
+            )
+        ) {
+            return 'text'
+        }
+        return fieldType // or return 'text' as a safe default
+    }
+
     return (
         <>
             {/* <div className="min-h-[100%] bg-gradient-to-br from-blue-50 via-white to-indigo-50 px-4"> */}
@@ -1504,373 +1696,391 @@ const CreateFormFromTemplate = ({
                             <div className="space-y-4 sm:space-y-6">
                                 {selectedTemplate
                                     ? reorderInputFields(
-                                        selectedTemplate.fields
-                                    ).map((field, fieldIndex) => {
-                                        const isFileInput =
-                                            field.type === 'file' ||
-                                            field.type === 'image' ||
-                                            field.type === 'document'
+                                          selectedTemplate.fields
+                                      ).map((field, fieldIndex) => {
+                                          const isFileInput =
+                                              field.type === 'file' ||
+                                              field.type === 'image' ||
+                                              field.type === 'document'
 
-                                        if (field.is_hidden) {
-                                            return null // Skip hidden fields
-                                        }
+                                          if (field.is_hidden) {
+                                              return null // Skip hidden fields
+                                          }
 
-                                        if (field.is_array) {
-                                            return (
-                                                <div
-                                                    key={`field-${fieldIndex}`}
-                                                    className="space-y-4"
-                                                >
-                                                    <div className="flex items-center justify-between">
-                                                        <div>
-                                                            <Label className="text-base sm:text-lg font-medium text-gray-900">
-                                                                {field.label}
-                                                                {field.required && (
-                                                                    <span className="text-red-500 ml-1">
-                                                                        *
-                                                                    </span>
-                                                                )}
-                                                            </Label>
-                                                            {/* Add multiple wallet addresses for document signers */}
-                                                            {field.description ? (
-                                                                <p className="text-sm text-gray-500 mt-1">
-                                                                    {
-                                                                        field.description
+                                          if (field.is_array) {
+                                              return (
+                                                  <div
+                                                      key={`field-${fieldIndex}`}
+                                                      className="space-y-4"
+                                                  >
+                                                      <div className="flex items-center justify-between">
+                                                          <div>
+                                                              <Label className="text-base sm:text-lg font-medium text-gray-900">
+                                                                  {field.label}
+                                                                  {field.required && (
+                                                                      <span className="text-red-500 ml-1">
+                                                                          *
+                                                                      </span>
+                                                                  )}
+                                                              </Label>
+                                                              {/* Add multiple wallet addresses for document signers */}
+                                                              {field.description ? (
+                                                                  <p className="text-sm text-gray-500 mt-1">
+                                                                      {
+                                                                          field.description
+                                                                      }
+                                                                  </p>
+                                                              ) : null}
+                                                          </div>
+                                                          <Button
+                                                              variant="outline"
+                                                              size="sm"
+                                                              type="button"
+                                                              className="rounded-lg hover:bg-blue-50 hover:border-blue-300"
+                                                              onClick={
+                                                                  addAddress
+                                                              }
+                                                              data-testid={`multiple_values_${field.name}`}
+                                                          >
+                                                              <Plus className="h-4 w-4 mr-1" />
+                                                              Add Signer
+                                                          </Button>
+                                                      </div>
+
+                                                      <div className="space-y-3">
+                                                          {multipleAddresses.map(
+                                                              (
+                                                                  address,
+                                                                  index
+                                                              ) => (
+                                                                  <div
+                                                                      key={`address-${index}`}
+                                                                      className="flex items-center space-x-2 sm:space-x-3 p-2 sm:p-4 bg-gray-50 rounded-lg border"
+                                                                  >
+                                                                      <div className="flex items-center justify-center w-8 h-8 bg-blue-100 rounded-full text-blue-600 font-medium text-sm">
+                                                                          {index +
+                                                                              1}
+                                                                      </div>
+                                                                      <div className="flex-1">
+                                                                          <Input
+                                                                              data-testid={`input-${field.name}-${index}`}
+                                                                              className="rounded-lg border-gray-200 focus:border-blue-500 focus:ring-blue-500"
+                                                                              placeholder="Enter signer wallet address"
+                                                                              type="text"
+                                                                              value={
+                                                                                  address
+                                                                              }
+                                                                              onChange={ev => {
+                                                                                  const newData =
+                                                                                      multipleAddresses.map(
+                                                                                          (
+                                                                                              e,
+                                                                                              i
+                                                                                          ) => {
+                                                                                              if (
+                                                                                                  i ===
+                                                                                                  index
+                                                                                              ) {
+                                                                                                  return ev
+                                                                                                      .target
+                                                                                                      .value
+                                                                                              }
+                                                                                              return e
+                                                                                          }
+                                                                                      )
+                                                                                  setMultipleAddresses(
+                                                                                      newData
+                                                                                  )
+                                                                              }}
+                                                                          />
+                                                                      </div>
+                                                                      {multipleAddresses.length >
+                                                                          1 && (
+                                                                          <Button
+                                                                              variant="outline"
+                                                                              size="sm"
+                                                                              type="button"
+                                                                              className="rounded-lg text-red-500 hover:text-red-700 hover:bg-red-50 hover:border-red-300"
+                                                                              onClick={() =>
+                                                                                  removeAddress(
+                                                                                      index
+                                                                                  )
+                                                                              }
+                                                                          >
+                                                                              <Trash2 className="h-4 w-4" />
+                                                                          </Button>
+                                                                      )}
+                                                                  </div>
+                                                              )
+                                                          )}
+                                                      </div>
+                                                  </div>
+                                              )
+                                          }
+
+                                          return (
+                                              <div
+                                                  key={`field-${fieldIndex}`}
+                                                  className="space-y-2 sm:space-y-3"
+                                              >
+                                                  <div className="flex items-center gap-2">
+                                                      {getFieldIcon(field.type)}
+                                                      <Label
+                                                          htmlFor={`input-${field.name}`}
+                                                          className="text-base font-medium text-gray-900"
+                                                      >
+                                                          {field.label}
+                                                          {field.required && (
+                                                              <span className="text-red-500">
+                                                                  *
+                                                              </span>
+                                                          )}
+                                                      </Label>
+                                                  </div>
+
+                                                  {field.type === 'text' ||
+                                                  field.type == 'domain' ? (
+                                                      <Input
+                                                          id={`input-${field.name}`}
+                                                          data-testid={`input-${field.name}`}
+                                                          className="w-full px-2 sm:px-3 py-1 sm:py-2 border border-gray-200 rounded-md focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 text-sm sm:text-base"
+                                                          placeholder="Type here..."
+                                                          disabled={
+                                                              field.is_editable ===
+                                                              false
+                                                          }
+                                                          defaultValue={getFieldDefaultValue(
+                                                              field,
+                                                              formData[
+                                                                  field.name
+                                                              ]
+                                                          )}
+                                                          onChange={e => {
+                                                              if (
+                                                                  field.is_editable ===
+                                                                  false
+                                                              ) {
+                                                                  // Show toast notification (would need toast implementation)
+
+                                                                  console.log(
+                                                                      `${field.label} cannot be changed`
+                                                                  )
+                                                                  toast.error(
+                                                                      `${field.label} cannot be changed`
+                                                                  )
+                                                                  return
+                                                              }
+
+                                                              if (
+                                                                  field.default_value !==
+                                                                      undefined &&
+                                                                  field.default_value !==
+                                                                      null &&
+                                                                  field.default_value !==
+                                                                      ''
+                                                              ) {
+                                                                  e.target.value =
+                                                                      field.default_value
+                                                                  toast.error(
+                                                                      `${field.label} cannot be changed`
+                                                                  )
+                                                              }
+
+                                                              setFormData({
+                                                                  ...formData,
+                                                                  [field.name]:
+                                                                      e.target
+                                                                          .value,
+                                                              })
+                                                          }}
+                                                      />
+                                                  ) : (
+                                                      <div className="relative">
+                                                          <Input
+                                                              id={`input-${field.name}`}
+                                                              data-testid={`input-${field.name}`}
+                                                              className="rounded-md border-gray-200 focus:border-blue-500 focus:ring-blue-500 text-sm sm:text-base h-9 sm:h-10"
+                                                              {...(!isFileInput
+                                                                  ? {
+                                                                        defaultValue:
+                                                                            getFieldDefaultValue(
+                                                                                field,
+                                                                                formData[
+                                                                                    field
+                                                                                        .name
+                                                                                ]
+                                                                            ),
                                                                     }
-                                                                </p>
-                                                            ) : null}
-                                                        </div>
-                                                        <Button
-                                                            variant="outline"
-                                                            size="sm"
-                                                            type="button"
-                                                            className="rounded-lg hover:bg-blue-50 hover:border-blue-300"
-                                                            onClick={
-                                                                addAddress
-                                                            }
-                                                            data-testid={`multiple_values_${field.name}`}
-                                                        >
-                                                            <Plus className="h-4 w-4 mr-1" />
-                                                            Add Signer
-                                                        </Button>
-                                                    </div>
-
-                                                    <div className="space-y-3">
-                                                        {multipleAddresses.map(
-                                                            (
-                                                                address,
-                                                                index
-                                                            ) => (
-                                                                <div
-                                                                    key={`address-${index}`}
-                                                                    className="flex items-center space-x-2 sm:space-x-3 p-2 sm:p-4 bg-gray-50 rounded-lg border"
-                                                                >
-                                                                    <div className="flex items-center justify-center w-8 h-8 bg-blue-100 rounded-full text-blue-600 font-medium text-sm">
-                                                                        {index +
-                                                                            1}
-                                                                    </div>
-                                                                    <div className="flex-1">
-                                                                        <Input
-                                                                            data-testid={`input-${field.name}-${index}`}
-                                                                            className="rounded-lg border-gray-200 focus:border-blue-500 focus:ring-blue-500"
-                                                                            placeholder="Enter signer wallet address"
-                                                                            type="text"
-                                                                            value={
-                                                                                address
-                                                                            }
-                                                                            onChange={ev => {
-                                                                                const newData =
-                                                                                    multipleAddresses.map(
-                                                                                        (
-                                                                                            e,
-                                                                                            i
-                                                                                        ) => {
-                                                                                            if (
-                                                                                                i ===
-                                                                                                index
-                                                                                            ) {
-                                                                                                return ev
-                                                                                                    .target
-                                                                                                    .value
-                                                                                            }
-                                                                                            return e
-                                                                                        }
-                                                                                    )
-                                                                                setMultipleAddresses(
-                                                                                    newData
-                                                                                )
-                                                                            }}
-                                                                        />
-                                                                    </div>
-                                                                    {multipleAddresses.length >
-                                                                        1 && (
-                                                                            <Button
-                                                                                variant="outline"
-                                                                                size="sm"
-                                                                                type="button"
-                                                                                className="rounded-lg text-red-500 hover:text-red-700 hover:bg-red-50 hover:border-red-300"
-                                                                                onClick={() =>
-                                                                                    removeAddress(
-                                                                                        index
-                                                                                    )
-                                                                                }
-                                                                            >
-                                                                                <Trash2 className="h-4 w-4" />
-                                                                            </Button>
-                                                                        )}
-                                                                </div>
-                                                            )
-                                                        )}
-                                                    </div>
-                                                </div>
-                                            )
-                                        }
-
-                                        return (
-                                            <div
-                                                key={`field-${fieldIndex}`}
-                                                className="space-y-2 sm:space-y-3"
-                                            >
-                                                <div className="flex items-center gap-2">
-                                                    {getFieldIcon(field.type)}
-                                                    <Label
-                                                        htmlFor={`input-${field.name}`}
-                                                        className="text-base font-medium text-gray-900"
-                                                    >
-                                                        {field.label}
-                                                        {field.required && (
-                                                            <span className="text-red-500">
-                                                                *
-                                                            </span>
-                                                        )}
-                                                    </Label>
-                                                </div>
-
-                                                {field.type === 'text' || field.type == 'domain' ? (
-                                                    <Input
-                                                        id={`input-${field.name}`}
-                                                        data-testid={`input-${field.name}`}
-                                                        className="w-full px-2 sm:px-3 py-1 sm:py-2 border border-gray-200 rounded-md focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 text-sm sm:text-base"
-                                                        placeholder="Type here..."
-                                                        disabled={
-                                                            field.is_editable ===
-                                                            false
-                                                        }
-                                                        defaultValue={getFieldDefaultValue(
-                                                            field,
-                                                            formData[
-                                                            field.name
-                                                            ]
-                                                        )}
-                                                        onChange={e => {
-
-                                                            if (field.is_editable === false) {
-                                                                // Show toast notification (would need toast implementation)
-
-                                                                console.log(
-                                                                    `${field.label} cannot be changed`
-                                                                )
-                                                                toast.error(`${field.label} cannot be changed`)
-                                                                return
-                                                            }
-
-
-                                                            if (field.default_value !== undefined && field.default_value !== null && field.default_value !== '') {
-                                                                e.target.value = field.default_value
-                                                                toast.error(`${field.label} cannot be changed`)
-
-                                                            }
-
-
-                                                            setFormData({
-                                                                ...formData,
-                                                                [field.name]:
-                                                                    e.target
-                                                                        .value,
-                                                            })
-                                                        }}
-                                                    />
-                                                ) : (
-                                                    <div className="relative">
-                                                        <Input
-                                                            id={`input-${field.name}`}
-                                                            data-testid={`input-${field.name}`}
-                                                            className="rounded-md border-gray-200 focus:border-blue-500 focus:ring-blue-500 text-sm sm:text-base h-9 sm:h-10"
-                                                            {...(!isFileInput
-                                                                ? {
-                                                                    defaultValue:
-                                                                        getFieldDefaultValue(
-                                                                            field,
-                                                                            formData[
-                                                                            field
-                                                                                .name
-                                                                            ]
-                                                                        ),
-                                                                }
-                                                                : {})}
-                                                            type={
-                                                                field.type ===
-                                                                    'image' ||
-                                                                    field.type ===
-                                                                    'document'
-                                                                    ? 'file'
-                                                                    : field.type === 'domain' ? 'text' : field.type
-                                                            }
-                                                            required={
-                                                                field.required
-                                                            }
-                                                            disabled={
-                                                                field.is_editable ===
-                                                                false
-                                                            }
-                                                            accept={
-                                                                field.type ===
-                                                                    'document'
-                                                                    ? '.pdf'
-                                                                    : field.type ===
-                                                                        'image'
+                                                                  : {})}
+                                                              type={getInputType(
+                                                                  field.type
+                                                              )}
+                                                              required={
+                                                                  field.required
+                                                              }
+                                                              disabled={
+                                                                  field.is_editable ===
+                                                                  false
+                                                              }
+                                                              accept={
+                                                                  field.type ===
+                                                                  'document'
+                                                                      ? '.pdf'
+                                                                      : field.type ===
+                                                                          'image'
                                                                         ? 'image/*'
                                                                         : undefined
-                                                            }
-                                                            placeholder={
-                                                                field.type ===
-                                                                    'wallet_address'
-                                                                    ? 'Enter wallet address'
-                                                                    : field.type ===
-                                                                        'date'
+                                                              }
+                                                              placeholder={
+                                                                  field.type ===
+                                                                  'wallet_address'
+                                                                      ? 'Enter wallet address'
+                                                                      : field.type ===
+                                                                          'date'
                                                                         ? 'Select due date'
                                                                         : field.type ===
                                                                             'document'
-                                                                            ? 'Upload PDF document'
-                                                                            : `Enter ${field.label.toLowerCase()}`
-                                                            }
-                                                            onChange={e => {
-                                                                if (field.is_editable === false) {
-                                                                    // Show toast notification (would need toast implementation)
+                                                                          ? 'Upload PDF document'
+                                                                          : `Enter ${field.label.toLowerCase()}`
+                                                              }
+                                                              onChange={e => {
+                                                                  if (
+                                                                      field.is_editable ===
+                                                                      false
+                                                                  ) {
+                                                                      // Show toast notification (would need toast implementation)
 
-                                                                    console.log(
-                                                                        `${field.label} cannot be changed`
-                                                                    )
-                                                                    toast.error(`${field.label} cannot be changed`)
-                                                                    return
-                                                                }
+                                                                      console.log(
+                                                                          `${field.label} cannot be changed`
+                                                                      )
+                                                                      toast.error(
+                                                                          `${field.label} cannot be changed`
+                                                                      )
+                                                                      return
+                                                                  }
 
+                                                                  if (
+                                                                      selectedTemplate?.name ===
+                                                                          'aqua_sign' &&
+                                                                      field.name.toLowerCase() ===
+                                                                          'sender'
+                                                                  ) {
+                                                                      // Show toast notification (would need toast implementation)
+                                                                      console.log(
+                                                                          'Aqua Sign sender cannot be changed'
+                                                                      )
+                                                                      return
+                                                                  }
 
+                                                                  if (
+                                                                      field.type ===
+                                                                      'image'
+                                                                  ) {
+                                                                      const files =
+                                                                          e
+                                                                              ?.target
+                                                                              ?.files
+                                                                      if (
+                                                                          files &&
+                                                                          files.length >
+                                                                              0
+                                                                      ) {
+                                                                          const file =
+                                                                              files[0]
+                                                                          if (
+                                                                              !file.type.startsWith(
+                                                                                  'image/'
+                                                                              )
+                                                                          ) {
+                                                                              alert(
+                                                                                  'Please select an image file'
+                                                                              )
+                                                                              e.target.value =
+                                                                                  ''
+                                                                              return
+                                                                          }
+                                                                      }
+                                                                  }
 
-                                                                if (
-                                                                    selectedTemplate?.name ===
-                                                                    'aqua_sign' &&
-                                                                    field.name.toLowerCase() ===
-                                                                    'sender'
-                                                                ) {
-                                                                    // Show toast notification (would need toast implementation)
-                                                                    console.log(
-                                                                        'Aqua Sign sender cannot be changed'
-                                                                    )
-                                                                    return
-                                                                }
+                                                                  if (
+                                                                      field.type ===
+                                                                      'document'
+                                                                  ) {
+                                                                      const files =
+                                                                          e
+                                                                              ?.target
+                                                                              ?.files
+                                                                      if (
+                                                                          files &&
+                                                                          files.length >
+                                                                              0
+                                                                      ) {
+                                                                          const file =
+                                                                              files[0]
+                                                                          if (
+                                                                              file.type !==
+                                                                              'application/pdf'
+                                                                          ) {
+                                                                              alert(
+                                                                                  'Please select a PDF file'
+                                                                              )
+                                                                              e.target.value =
+                                                                                  ''
+                                                                              return
+                                                                          }
+                                                                      }
+                                                                  }
 
-                                                                if (
-                                                                    field.type ===
-                                                                    'image'
-                                                                ) {
-                                                                    const files =
-                                                                        e
-                                                                            ?.target
-                                                                            ?.files
-                                                                    if (
-                                                                        files &&
-                                                                        files.length >
-                                                                        0
-                                                                    ) {
-                                                                        const file =
-                                                                            files[0]
-                                                                        if (
-                                                                            !file.type.startsWith(
-                                                                                'image/'
-                                                                            )
-                                                                        ) {
-                                                                            alert(
-                                                                                'Please select an image file'
-                                                                            )
-                                                                            e.target.value =
-                                                                                ''
-                                                                            return
-                                                                        }
-                                                                    }
-                                                                }
+                                                                  let value =
+                                                                      isFileInput &&
+                                                                      e.target
+                                                                          .files
+                                                                          ? e
+                                                                                .target
+                                                                                .files[0]
+                                                                          : e
+                                                                                .target
+                                                                                .value
 
-                                                                if (
-                                                                    field.type ===
-                                                                    'document'
-                                                                ) {
-                                                                    const files =
-                                                                        e
-                                                                            ?.target
-                                                                            ?.files
-                                                                    if (
-                                                                        files &&
-                                                                        files.length >
-                                                                        0
-                                                                    ) {
-                                                                        const file =
-                                                                            files[0]
-                                                                        if (
-                                                                            file.type !==
-                                                                            'application/pdf'
-                                                                        ) {
-                                                                            alert(
-                                                                                'Please select a PDF file'
-                                                                            )
-                                                                            e.target.value =
-                                                                                ''
-                                                                            return
-                                                                        }
-                                                                    }
-                                                                }
+                                                                  if (
+                                                                      field.default_value !==
+                                                                          undefined &&
+                                                                      field.default_value !==
+                                                                          null &&
+                                                                      field.default_value !==
+                                                                          ''
+                                                                  ) {
+                                                                      e.target.value =
+                                                                          field.default_value
+                                                                      toast.error(
+                                                                          `${field.label} cannot be changed`
+                                                                      )
+                                                                  }
+                                                                  setFormData({
+                                                                      ...formData,
+                                                                      [field.name]:
+                                                                          value,
+                                                                  })
+                                                              }}
+                                                          />
+                                                          {isFileInput && (
+                                                              <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+                                                                  <Upload className="h-4 w-4 text-gray-400" />
+                                                              </div>
+                                                          )}
+                                                      </div>
+                                                  )}
 
-                                                                let value =
-                                                                    isFileInput &&
-                                                                        e.target
-                                                                            .files
-                                                                        ? e
-                                                                            .target
-                                                                            .files[0]
-                                                                        : e
-                                                                            .target
-                                                                            .value
-
-
-                                                                if (field.default_value !== undefined && field.default_value !== null && field.default_value !== '') {
-                                                                    e.target.value = field.default_value
-                                                                    toast.error(`${field.label} cannot be changed`)
-
-                                                                }
-                                                                setFormData({
-                                                                    ...formData,
-                                                                    [field.name]:
-                                                                        value,
-                                                                })
-                                                            }}
-                                                        />
-                                                        {isFileInput && (
-                                                            <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
-                                                                <Upload className="h-4 w-4 text-gray-400" />
-                                                            </div>
-                                                        )}
-                                                    </div>
-                                                )}
-
-                                                {field.name === 'sender' && (
-                                                    <p className="text-xs text-gray-500">
-                                                        {field.support_text
-                                                            ? field.support_text
-                                                            : 'The sender is the person who initiates the document signing process. This field is auto-filled with your wallet address.'}
-                                                    </p>
-                                                )}
-                                            </div>
-                                        )
-                                    })
+                                                  {field.name === 'sender' && (
+                                                      <p className="text-xs text-gray-500">
+                                                          {field.support_text
+                                                              ? field.support_text
+                                                              : 'The sender is the person who initiates the document signing process. This field is auto-filled with your wallet address.'}
+                                                      </p>
+                                                  )}
+                                              </div>
+                                          )
+                                      })
                                     : null}
                             </div>
 
@@ -1912,7 +2122,6 @@ const CreateFormFromTemplate = ({
                 </div>
             </div>
 
-
             {/* create claim  */}
             <Dialog
                 open={isDialogOpen}
@@ -1935,13 +2144,17 @@ const CreateFormFromTemplate = ({
                         </Button>
                     </div>
                     <DialogHeader className="!h-[60px] !min-h-[60px] !max-h-[60px] flex justify-center items-start px-6">
-                        <DialogTitle>{
-                            dialogData?.title}</DialogTitle>
+                        <DialogTitle>{dialogData?.title}</DialogTitle>
                     </DialogHeader>
                     <div className=" h-[calc(100%-60px)] pb-1">
                         <ScrollArea className="h-full">
-                            {dialogData?.content ? <>{dialogData.content}</> : <p className="text-gray-500 text-sm">No content available</p>
-                            }
+                            {dialogData?.content ? (
+                                <>{dialogData.content}</>
+                            ) : (
+                                <p className="text-gray-500 text-sm">
+                                    No content available
+                                </p>
+                            )}
                         </ScrollArea>
                     </div>
                     {/* <DialogFooter className="mt-auto">

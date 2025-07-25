@@ -11,14 +11,17 @@ export interface FormField {
     label: string
     name: string
     type:
-    | 'text'
-    | 'number'
-    | 'date'
-    | 'file'
-    | 'image'
-    | 'document'
-    | 'domain'
-    | 'wallet_address'
+        | 'text'
+        | 'number'
+        | 'date'
+        | 'file'
+        | 'image'
+        | 'document'
+        | 'domain'
+        | 'wallet_address'
+        | 'signature'
+        | 'email'
+        | 'domain'
     required: boolean
     is_array: boolean
     is_hidden?: boolean

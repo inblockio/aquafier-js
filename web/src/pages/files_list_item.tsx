@@ -107,12 +107,13 @@ export default function FilesListItem({
         }
     }
 
-
-    
-// Helper function to capitalize the first character of every word
-function capitalizeWords(str: string): string {
-    return str.replace(/\b\w+/g, (word) => word.charAt(0).toUpperCase() + word.slice(1));
-}
+    // Helper function to capitalize the first character of every word
+    function capitalizeWords(str: string): string {
+        return str.replace(
+            /\b\w+/g,
+            word => word.charAt(0).toUpperCase() + word.slice(1)
+        )
+    }
     // const detailsButton = () =>{
     //         return <button onClick={() => {
     //             setOpenFileDetailsPopUp(true);
@@ -122,7 +123,7 @@ function capitalizeWords(str: string): string {
     //             <span>Details</span>
     //         </button>;
     //     }
-    
+
     const workFlowAquaSignActions = () => {
         return (
             <>
@@ -220,7 +221,7 @@ function capitalizeWords(str: string): string {
                 </div>
             </>
         )
-    } 
+    }
     const workFlowIdentityClaimActions = () => {
         return (
             <>
@@ -264,7 +265,7 @@ function capitalizeWords(str: string): string {
                         <DownloadAquaChain file={file} index={index} />
                     </div>
 
-                     {/* Link Button */}
+                    {/* Link Button */}
                     <div className="w-[100px]">
                         <LinkButton item={file} nonce={nonce} index={index} />
                     </div>
@@ -380,24 +381,22 @@ function capitalizeWords(str: string): string {
                         <span className="font-medium text-sm">
                             {getAquaTreeFileName(file.aquaTree!)}
                         </span>
-                        {
-                            !showWorkFlowsOnly && workflowInfo?.isWorkFlow ? (
-                                <span className="text-xs text-gray-500">    
-                                    Workflow :  {capitalizeWords(workflowInfo.workFlow.replace(/_/g, ' '))}
-                                </span> 
-                            ) : null
-                        }
+                        {!showWorkFlowsOnly && workflowInfo?.isWorkFlow ? (
+                            <span className="text-xs text-gray-500">
+                                Workflow :{' '}
+                                {capitalizeWords(
+                                    workflowInfo.workFlow.replace(/_/g, ' ')
+                                )}
+                            </span>
+                        ) : null}
                     </div>
                 </td>
 
-               
-                {
-                    showWorkFlowsOnly ? (
-                        <td className="py-3 px-3 text-sm text-gray-500">
-                            {workflowInfo?.workFlow || 'Not a workflow'}
-                        </td>
-                    ) : null
-                }
+                {showWorkFlowsOnly ? (
+                    <td className="py-3 px-3 text-sm text-gray-500">
+                        {workflowInfo?.workFlow || 'Not a workflow'}
+                    </td>
+                ) : null}
                 <td className="py-3 text-sm text-gray-500">
                     {getFileCategory(
                         getFileExtension(getAquaTreeFileName(file.aquaTree!))
@@ -436,72 +435,69 @@ function capitalizeWords(str: string): string {
         //     (showWorkFlowsOnly && workflowInfo?.isWorkFlow) ||
         //     !showWorkFlowsOnly
         // ) {
-            return (
-                <div className="space-y-3">
-                    <div className="flex items-center space-x-3">
-                        <FileText className="w-6 h-6 text-blue-500" />
-                        <span className="font-medium text-gray-900 text-sm">
-                            {getAquaTreeFileName(file.aquaTree!)}
-                        </span>
-                    </div>
+        return (
+            <div className="space-y-3">
+                <div className="flex items-center space-x-3">
+                    <FileText className="w-6 h-6 text-blue-500" />
+                    <span className="font-medium text-gray-900 text-sm">
+                        {getAquaTreeFileName(file.aquaTree!)}
+                    </span>
+                </div>
 
-                    <div className="grid grid-cols-2 gap-2 text-xs">
-                        <div>
-                            <p className="text-gray-500 font-medium">Type</p>
-                            <p className="text-gray-700">
-                                {getFileExtension(
-                                    getAquaTreeFileName(file.aquaTree!)
-                                )}
-                            </p>
-                        </div>
-                        <div>
-                            <p className="text-gray-500 font-medium">Size</p>
-                            <p className="text-gray-700">{getFileInfo()}</p>
-                        </div>
-                        <div className="col-span-2">
-                            <p className="text-gray-500 font-medium">
-                                Uploaded
-                            </p>
-                            <p className="text-gray-700">{getTimeInfo()}</p>
-                        </div>
-                    </div>
-
-                    <div className="pt-2 border-t border-gray-100">
-                        <p className="text-xs text-gray-500 font-medium mb-2">
-                            Actions
+                <div className="grid grid-cols-2 gap-2 text-xs">
+                    <div>
+                        <p className="text-gray-500 font-medium">Type</p>
+                        <p className="text-gray-700">
+                            {getFileExtension(
+                                getAquaTreeFileName(file.aquaTree!)
+                            )}
                         </p>
-                        <div className="flex flex-wrap gap-2">
-                            {showActionsButton()}
-                        </div>
+                    </div>
+                    <div>
+                        <p className="text-gray-500 font-medium">Size</p>
+                        <p className="text-gray-700">{getFileInfo()}</p>
+                    </div>
+                    <div className="col-span-2">
+                        <p className="text-gray-500 font-medium">Uploaded</p>
+                        <p className="text-gray-700">{getTimeInfo()}</p>
                     </div>
                 </div>
-            )
+
+                <div className="pt-2 border-t border-gray-100">
+                    <p className="text-xs text-gray-500 font-medium mb-2">
+                        Actions
+                    </p>
+                    <div className="flex flex-wrap gap-2">
+                        {showActionsButton()}
+                    </div>
+                </div>
+            </div>
+        )
         // }
         // return null
     }
 
-
     // return <>{showWorkFlowsOnly+"-"+workflowInfo?.isWorkFlow+"=="}</>
     // const showListItemData = () => {
-        // First check if we should show this item based on workflow filter
+    // First check if we should show this item based on workflow filter
 
-        if(workflowInfo=== undefined) {
-            return null
-        }
-        if (showWorkFlowsOnly && !workflowInfo?.isWorkFlow) {
-            return null
-        }
-
-        // Then handle different view modes
-        if (viewMode === 'table') {
-            return renderTableView()
-        } else if (viewMode === 'card') {
-            return renderCardView()
-        } else if (viewMode === 'actions-only') {
-            return workFileActions()
-        }
-
+    if (workflowInfo === undefined) {
         return null
+    }
+    if (showWorkFlowsOnly && !workflowInfo?.isWorkFlow) {
+        return null
+    }
+
+    // Then handle different view modes
+    if (viewMode === 'table') {
+        return renderTableView()
+    } else if (viewMode === 'card') {
+        return renderCardView()
+    } else if (viewMode === 'actions-only') {
+        return workFileActions()
+    }
+
+    return null
     // }
 
     // return <>{showListItemData()}</>
