@@ -1714,7 +1714,7 @@ const CreateFormFromTemplate = ({
                                                                     field.type ===
                                                                     'document'
                                                                     ? 'file'
-                                                                    : field.type == 'domain' ? 'text' : field.type
+                                                                    : field.type === 'domain' ? 'text' : field.type
                                                             }
                                                             required={
                                                                 field.required
