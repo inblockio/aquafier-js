@@ -213,7 +213,7 @@ export default function FilesListItem({
                 </div>
             </>
         )
-    }
+    } 
     const workFlowIdentityClaimActions = () => {
         return (
             <>
@@ -255,6 +255,11 @@ export default function FilesListItem({
                     {/* Download Button - Smaller width */}
                     <div className="w-[100px]">
                         <DownloadAquaChain file={file} index={index} />
+                    </div>
+
+                     {/* Link Button */}
+                    <div className="w-[100px]">
+                        <LinkButton item={file} nonce={nonce} index={index} />
                     </div>
                 </div>
             </>
