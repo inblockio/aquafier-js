@@ -1,5 +1,6 @@
 {
     "name": "John",
     "claim_context": "",
+    "type": "simple_claim",
     "wallet_address": "0x568a94a8f0f3dc0b245b853bef572075c1df5c50"
 }

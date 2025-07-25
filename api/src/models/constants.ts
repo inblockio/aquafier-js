@@ -7,7 +7,7 @@ export let systemTemplateHashes = [
         '0xfd2085151958e5dbaa32322f1266a3cf86ff547c75379a4c3ebd2272d4abd89f',
         '0x9da9cfc4587b102da24aec2ec0dbf5f7d702284f8073b476f9e94043673cf481',
         '0x0838e1ec49d66a0c39e068c8c8465ef59692a1d8565895e2a52c2c19c75ab673',
-        '0xe520adfbb4dae6f68f927d69294e13a547586a353ffebd6f0bb5ff8eb2939df4',
+        '0xc70a426b08fad5afe66ffea6237ef66a8718f0f66ee2a35dcc29cee3a4dfd0ee',
         '0x2a068d95f1f0e9e1f998bff3a7dffd0429aff2f0cc71b357733a19c2a926265c',
 
     ]

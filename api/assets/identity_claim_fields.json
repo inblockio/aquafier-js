@@ -6,6 +6,16 @@
         "required": true,
         "isArray": false
     },
+    {
+        "name": "type",
+        "label": "Type",
+        "type": "string",
+        "required": true,
+        "isArray": false,
+        "isEditable": false,
+        "isHidden": true,
+        "defaultValue": "simple_claim"
+    },
     
     {
         "name": "claim_context",

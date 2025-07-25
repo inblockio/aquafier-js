@@ -13,6 +13,7 @@ export interface AquaTemplatesFields {
   description : string,
   placeholder : string
   supportText : string
+  defaultValue? : string
 }
 
 

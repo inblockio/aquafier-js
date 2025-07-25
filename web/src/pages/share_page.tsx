@@ -16,13 +16,18 @@ const SharePage = () => {
     const { backend_url, metamaskAddress, session } = useStore(appStore)
     const [fileInfo, setFileInfo] = useState<ApiFileInfo | null>(null)
     const [contractData, setContractData] = useState<any | null>(null)
-    const [_loading, setLoading] = useState(false)
+    const [loading, setLoading] = useState(false)
     const [hasError, setHasError] = useState<string | null>(null)
     const [drawerStatus, setDrawerStatus] = useState<IDrawerStatus | null>(null)
 
     const params = useParams()
 
     const loadPageData = async () => {
+        if (loading){
+            console.log("Already loading, skipping new request")
+            toast.warning("Already loading, skipping new request")
+            return
+        }
         if (!session?.nonce || !params?.identifier) {
             return
         }
@@ -71,7 +76,8 @@ const SharePage = () => {
             loadPageData()
         }
         setHasError(null)
-    }, [params, session])
+    // }, [params, session])
+    }, [session])
 
     const showProperWidget = () => {
         if (hasError) {

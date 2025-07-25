@@ -24,6 +24,7 @@ export interface FormField {
     is_editable?: boolean
     description?: string
     support_text?: string
+    default_value?: string
 }
 
 export interface FormTemplate {

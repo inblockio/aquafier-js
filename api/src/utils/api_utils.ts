@@ -275,6 +275,7 @@ const setUpSystemTemplates = async () => {
           description: fieldData.description ,
           placeholder: fieldData.placeholder ,
           support_text: fieldData.supportText,
+          default_value: fieldData.defaultValue ,
 
           is_editable: fieldData.isEditable == null ? true : fieldData.isEditable,
         },
