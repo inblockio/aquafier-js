@@ -278,6 +278,7 @@ export default function FilesListItem({
         // console.log(
         //     `workflowInfo data ${JSON.stringify(workflowInfo, null, 4)}`
         // )
+        console.log("workflowInfo: ", workflowInfo)
         if (
             workflowInfo?.isWorkFlow == true &&
             workflowInfo.workFlow == 'aqua_sign'
@@ -286,7 +287,7 @@ export default function FilesListItem({
         }
         if (
             workflowInfo?.isWorkFlow == true &&
-            workflowInfo.workFlow == 'identity_claim'
+            (workflowInfo.workFlow == 'domain_claim' || workflowInfo.workFlow == 'simple_claim')
         ) {
             return workFlowIdentityClaimActions()
         }

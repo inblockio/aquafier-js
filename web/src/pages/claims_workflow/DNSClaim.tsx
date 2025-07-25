@@ -62,7 +62,13 @@ const DNSClaim = ({ claimInfo }: IDNSClaim) => {
         )
     })
 
+    const resetVerification = () => {
+        setVerificationStatus('loading')
+        setVerificationMessage('Checking DNS records...')
+    }
+
     const getRecords = async () => {
+        resetVerification()
         try {
             setVerificationStatus('loading')
             setVerificationMessage('Checking DNS records...')
@@ -136,7 +142,7 @@ const DNSClaim = ({ claimInfo }: IDNSClaim) => {
             )
             return false
         } catch (error) {
-            console.error('Error verifying DNS claim:', error)
+            // console.error('Error verifying DNS claim:', error)
             setVerificationStatus('failed')
             setVerificationMessage('Error checking DNS records')
             return false
