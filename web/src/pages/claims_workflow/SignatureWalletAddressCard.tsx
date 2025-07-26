@@ -67,15 +67,17 @@ const ClaimCard = ({ claim }: { claim: IClaim }) => {
                 <div className="w-[20px] h-[20px] flex items-center justify-center text-gray-500">
                     {getClaimIcon()}
                 </div>
-                <span className="text-sm">
-                    {claim.claimName || claim.claimType}
-                </span>
+                <div className="flex flex-col gap-2">
+                    <span className="text-sm">
+                        {claim.claimName || claim.claimType}
+                    </span>
+                    <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full w-fit">
+                        {claim.attestationsCount} attestation
+                        {claim.attestationsCount !== 1 ? 's' : ''}
+                    </span>
+                </div>
             </div>
             <div className="flex items-center gap-2">
-                <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full">
-                    {claim.attestationsCount} attestation
-                    {claim.attestationsCount !== 1 ? 's' : ''}
-                </span>
                 <button
                     onClick={openClaimPage}
                     className="px-3 py-1 text-xs bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-colors cursor-pointer"
@@ -159,7 +161,7 @@ const SignatureWalletAddressCard = ({
                                     getGenesisHash(attestationAquaTree)!
                                 let genesisRevision =
                                     attestationAquaTree.revisions[
-                                        attestationFileGenesisHash
+                                    attestationFileGenesisHash
                                     ]
                                 if (
                                     genesisRevision.forms_claim_wallet_address ===

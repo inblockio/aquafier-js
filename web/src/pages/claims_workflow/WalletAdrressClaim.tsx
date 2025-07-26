@@ -33,7 +33,7 @@ const WalletAdrressClaim = ({ walletAddress }: IWalletAdrressClaim) => {
                         aquaTree!,
                         aquaTemplates
                     )
-                    if (isWorkFlow && (workFlow === 'simple_claim' || workFlow === 'domain_claim')) {
+                    if (isWorkFlow && (workFlow === 'simple_claim' || workFlow === 'identity_claim' || workFlow === 'domain_claim')) {
                         const orderedAquaTree =
                             OrderRevisionInAquaTree(aquaTree)
                         const revisionHashes = Object.keys(

@@ -268,7 +268,7 @@ export default function ClaimsWorkflowPage() {
                     </div>
 
                     {/* Tab Content */}
-                    <div className="p-6">
+                    <div className="sm:p-2 md:p-6 mt-4">
                         <div className="flex items-center justify-between mb-6">
                             <h1 className="text-2xl font-semibold text-gray-900 capitalize">
                                 {activeTabData?.label}
@@ -290,7 +290,7 @@ export default function ClaimsWorkflowPage() {
                         {/* Content Area */}
                         <div className="space-y-6">
                             {activeTab === 'claims_summary' && (
-                                <div className="bg-gray-50 rounded-lg p-6">
+                                <div className="bg-gray-50 rounded-lg sm:p-2 md:p-6">
                                     {/* <h3 className="text-lg font-medium text-gray-900 mb-4">General Settings</h3> */}
                                     {/* <div className="space-y-2">
                                         {Object.keys(

@@ -287,7 +287,7 @@ export default function FilesListItem({
         }
         if (
             workflowInfo?.isWorkFlow == true &&
-            (workflowInfo.workFlow == 'domain_claim' || workflowInfo.workFlow == 'simple_claim')
+            (workflowInfo.workFlow == 'domain_claim' || workflowInfo.workFlow == 'identity_claim')
         ) {
             return workFlowIdentityClaimActions()
         }

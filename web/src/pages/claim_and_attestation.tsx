@@ -343,7 +343,7 @@ const ClaimsAndAttestationPage = () => {
                 }
             }
             // console.log('Processing file:', JSON.stringify(file.aquaTree!, null,), 'WorkFlow:', workFlow, 'isWorkFlow:', isWorkFlow)
-            if (isWorkFlow && workFlow === 'identity_claim') {
+            if (isWorkFlow && (workFlow === 'identity_claim' || workFlow === 'domain_claim')) {
                 let allHashes = Object.keys(file.aquaTree?.revisions || {})
                 if (allHashes.length < 2) {
                     console.log('Not enough revisions for file:', file)
