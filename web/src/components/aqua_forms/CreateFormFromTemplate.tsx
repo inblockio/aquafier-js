@@ -759,9 +759,12 @@ const CreateFormFromTemplate = ({
             return aquaTreeData
         }
 
+        console.log(completeFormData)
+
         const fileProcessingPromises = containsFileData.map(
             async (element: any) => {
                 const file: File = completeFormData[element.name] as File
+                console.log("file: ", file)
 
                 if (!file) {
                     console.warn(`No file found for field: ${element.name}`)
@@ -781,6 +784,7 @@ const CreateFormFromTemplate = ({
 
                     return fileObjectPar
                 } catch (error) {
+                    console.log("Error here: ---")
                     console.error(`Error processing file ${file.name}:`, error)
                     throw new Error(`Error processing file ${file.name}`)
                 }
@@ -977,6 +981,8 @@ const CreateFormFromTemplate = ({
                 )
             }
 
+            console.log("Complete form data: ", completeFormData)
+
             // Step 7: Prepare final form data
             const finalFormDataRes = await prepareFinalFormData(
                 completeFormData,
@@ -990,6 +996,8 @@ const CreateFormFromTemplate = ({
                 toast.info('Final form data preparation failed.')
                 throw new Error('Final form data preparation failed')
             }
+
+            console.log("Final form data: ", finalFormDataRes)
 
             const finalFormDataFiltered = finalFormDataRes.filteredData
             // Step 8: Create genesis aqua tree
@@ -1006,11 +1014,14 @@ const CreateFormFromTemplate = ({
                 templateApiFileInfo,
                 aquafier
             )
-
+            console.log("Form data: ", finalFormDataFiltered)
             // Step 10: Process file attachments
             aquaTreeData = await processFileAttachments(
                 selectedTemplate,
-                finalFormDataFiltered,
+                {
+                    ...finalFormDataFiltered,
+                    document: completeFormData.document
+                },
                 aquaTreeData,
                 fileObject,
                 aquafier
