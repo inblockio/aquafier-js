@@ -759,10 +759,11 @@ const CreateFormFromTemplate = ({
             return aquaTreeData
         }
 
-        console.log(completeFormData)
+        console.log("completeFormData: ",completeFormData, "Files: ", containsFileData)
 
         const fileProcessingPromises = containsFileData.map(
             async (element: any) => {
+                console.log("Element: ", element)
                 const file: File = completeFormData[element.name] as File
                 console.log("file: ", file)
 
