@@ -1292,6 +1292,103 @@ export async function findAndClickHighestSharedButton(page: Page): Promise<numbe
   //   }
 }
 
+
+export async function createTemplate(page: Page): Promise<void> {
+// Try to find the button by data-testid first, then fallback to text
+  try {
+    await page.waitForSelector('[data-testid="action-create-template-button"]', { state: 'visible', timeout: 10000 });
+    await page.click('[data-testid="action-create-template-button"]');
+    console.log("Clicked create template button using data-testid");
+  } catch (error) {
+    console.log("Failed to find button by data-testid, trying by text...");
+    await page.waitForSelector('button:has-text("New Template")', { state: 'visible', timeout: 10000 });
+    await page.click('button:has-text("New Template")');
+    console.log("Clicked create template button using text selector");
+  }
+
+  console.log("Clicked create template button");
+  await page.fill('#title', 'Test Template');
+
+  // Add two fields
+  try {
+    await page.click('[data-testid="action-add-form-field-button"]');
+    console.log("Clicked add form field button using data-testid");
+  } catch (error) {
+    console.log("Failed to find add form field button by data-testid, trying by text...");
+    await page.click('button:has-text("Add Form Field")');
+    console.log("Clicked add form field button using text selector");
+  }
+  let fields = [
+    {
+      label: 'Name',
+      type: 'text',
+      required: true,
+      is_array: false
+    },
+    {
+      label: 'Age',
+      type: 'number',
+      required: true,
+      is_array: false
+    }
+  ]
+
+  console.log("Adding fields to template form");
+  // Fill the template form
+  try {
+    await page.fill(`[data-testid="field-label-0"]`, fields[0].label);
+    console.log("Filled first field label using data-testid");
+  } catch (error) {
+    console.log("Failed to find first field label by data-testid, trying by id...");
+    await page.fill(`#field-label-0`, fields[0].label);
+    console.log("Filled first field label using id selector");
+  }
+  // await page.selectOption(`[data-testid="field-type-0"]`, fields[0].type);
+  // await page.click(`[data-testid="field-required-0"]`);
+
+  console.log("First field added to template form");
+  try {
+    await page.click('[data-testid="action-add-form-field-button"]');
+    console.log("Clicked second add form field button using data-testid");
+  } catch (error) {
+    console.log("Failed to find second add form field button by data-testid, trying by text...");
+    await page.click('button:has-text("Add Form Field")');
+    console.log("Clicked second add form field button using text selector");
+  }
+
+  // await page.waitForSelector('[data-testid="field-label-1"]', { state: 'visible', timeout: 10000 });
+  try {
+    await page.fill(`[data-testid="field-label-1"]`, fields[1].label);
+    console.log("Filled second field label using data-testid");
+  } catch (error) {
+    console.log("Failed to find second field label by data-testid, trying by id...");
+    await page.fill(`#field-label-1`, fields[1].label);
+    console.log("Filled second field label using id selector");
+  }
+  // await page.selectOption(`[data-testid="field-type-1"]`, fields[1].type);
+  // await page.click(`[data-testid="field-required-1"]`);
+  console.log("Second field added to template form");
+
+  // Save the form
+  try {
+    await page.click('[data-testid="save-form-action-button"]');
+    console.log("Clicked save form button using data-testid");
+  } catch (error) {
+    console.log("Failed to find save form button by data-testid, trying by text...");
+    await page.click('button:has-text("Save")');
+    console.log("Clicked save form button using text selector");
+  }
+  console.log("Template form saved");
+
+   
+}
+
+
+export async function deleteTemplate(page: Page): Promise<void> {
+
+
+}
+
 class RegisterMetaMaskResponse {
 
 
