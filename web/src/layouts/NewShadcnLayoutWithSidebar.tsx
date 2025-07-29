@@ -30,6 +30,7 @@ export default function NewShadcnLayoutWithSidebar() {
             // setOpenCreateAquaSignPopUp,
             //      openCreateTemplatePopUp,
             // setOpenCreateTemplatePopUp,
+            setSelectedFileInfo,
             openDialog,
             setOpenDialog,
             formTemplates,
@@ -245,9 +246,10 @@ export default function NewShadcnLayoutWithSidebar() {
                                     <Button
                                           variant="ghost"
                                           size="icon"
-                                          className="h-6 w-6 bg-red-500 text-white hover:bg-red-500"
+                                          className="h-6 w-6 bg-red-500 text-white hover:bg-red-500 z-10 relative"
                                           onClick={() => {
                                                 setOpenDialog(null)
+                                                setSelectedFileInfo(null)
                                           }}
                                     >
                                           <X className="h-4 w-4" />
