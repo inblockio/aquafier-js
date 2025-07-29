@@ -2,6 +2,13 @@ import { LogData, Revision } from 'aqua-js-sdk'
 import { IconType } from 'react-icons/lib'
 import { ApiFileInfo } from '../models/FileInfo'
 
+
+export interface OpenDialog {
+  dialogType: 'form_template_editor' | 'aqua_file_details' | 'identity_claim' | 'dns_claim' | 'aqua_sign' | 'identity_attestation',//'file' | 'folder' | 'contract' | 'claim' | 'claim-attestation'
+  isOpen: boolean
+  onClose: () => void
+  onConfirm: (data: any) => void
+}
 export interface Session {
       id: number
       address: string

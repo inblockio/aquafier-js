@@ -60,7 +60,7 @@ function App() {
                                     <Route path="terms-and-conditions" element={<TermsAndConditions />} />
                                     <Route path="privacy-policy" element={<PrivacyPolicy />} />
                               </Route>
-
+ 
                               {/* All file routes using Tailwind */}
                               <Route path="/app" element={<NewShadcnLayoutWithSidebar />}>
                                     <Route index element={<FilesPage />} />

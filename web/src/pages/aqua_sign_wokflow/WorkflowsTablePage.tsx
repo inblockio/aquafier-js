@@ -247,7 +247,7 @@ const WorkflowTableItem = ({ workflowName, apiFileInfo, index = 0 }: IWorkflowIt
 }
 
 export default function WorkflowsTablePage() {
-      const { files, systemFileInfo, setOpenCreateAquaSignPopUp } = useStore(appStore)
+      const { files, systemFileInfo, setOpenDialog } = useStore(appStore)
 
       // const [workflows] = useState<DocumentWorkflow[]>(mockWorkflows);
 
@@ -305,7 +305,16 @@ export default function WorkflowsTablePage() {
                                           className="flex items-center space-x-2 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-gray-100 cursor-pointer"
                                           style={{ backgroundColor: '#394150' }}
                                           onClick={() => {
-                                                setOpenCreateAquaSignPopUp(true)
+                                                // setOpenCreateAquaSignPopUp(true)
+                                                setOpenDialog({
+                                                      dialogType: 'aqua_sign',
+                                                      isOpen: true,
+                                                      onClose: () => setOpenDialog(null),
+                                                      onConfirm: (data) => {
+                                                            // Handle confirmation logic here
+                                                            console.log('Workflow created with data:', data)
+                                                      }
+                                                })
                                           }}
                                     >
                                           <Plus className="w-4 h-4" />
@@ -327,7 +336,16 @@ export default function WorkflowsTablePage() {
                                                 className="flex items-center space-x-2 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-gray-100 cursor-pointer"
                                                 style={{ backgroundColor: '#394150' }}
                                                 onClick={() => {
-                                                      setOpenCreateAquaSignPopUp(true)
+                                                      // setOpenCreateAquaSignPopUp(true)
+                                                      setOpenDialog({
+                                                            dialogType: 'aqua_sign',
+                                                            isOpen: true,
+                                                            onClose: () => setOpenDialog(null),
+                                                            onConfirm: (data) => {
+                                                                  // Handle confirmation logic here
+                                                                  console.log('Workflow created with data:', data)
+                                                            }
+                                                      })
                                                 }}
                                           >
                                                 <Plus className="w-4 h-4" />

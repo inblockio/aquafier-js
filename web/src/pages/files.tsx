@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import React, {  useState } from 'react'
 import appStore from '../store'
 import { useStore } from 'zustand'
 import FilesList from './files_list'
@@ -25,6 +25,8 @@ import { ImportAquaTree } from '@/components/dropzone_file_actions/import_aqua_t
 import { ImportAquaTreeZip } from '@/components/dropzone_file_actions/import_aqua_tree_zip'
 import { FormRevisionFile } from '@/components/dropzone_file_actions/form_revision'
 
+import ClaimTypesDropdownButton from '@/components/button_claim_dropdown'
+
 const FilesPage = () => {
       const {
             files,
@@ -33,11 +35,13 @@ const FilesPage = () => {
             backend_url,
             selectedFileInfo,
             setSelectedFileInfo,
-            setOpenFileDetailsPopUp,
-            openFilesDetailsPopUp,
-            setOpenCreateAquaSignPopUp,
-            setOpenCreateTemplatePopUp,
-            setOpenCreateClaimPopUp,
+            setOpenDialog,
+            openDialog,
+            // setOpenFileDetailsPopUp,
+            // openFilesDetailsPopUp,
+            // setOpenCreateAquaSignPopUp,
+            // setOpenCreateTemplatePopUp,
+            // setOpenCreateClaimPopUp,
       } = useStore(appStore)
       const fileInputRef = React.useRef<HTMLInputElement>(null)
       const [filesListForUpload, setFilesListForUpload] = useState<FileItemWrapper[]>([])
@@ -48,7 +52,7 @@ const FilesPage = () => {
       const [isMinimized, setIsMinimized] = useState(false)
 
       const [_drawerStatus, setDrawerStatus] = useState<IDrawerStatus | null>(null)
-      const [isSelectedFileDialogOpen, setIsSelectedFileDialogOpen] = useState(false)
+      // const [isSelectedFileDialogOpen, setIsSelectedFileDialogOpen] = useState(false)
 
       // Helper function to clear file input
       const clearFileInput = () => {
@@ -57,13 +61,13 @@ const FilesPage = () => {
             }
       }
 
-      useEffect(() => {
-            if (openFilesDetailsPopUp) {
-                  setIsSelectedFileDialogOpen(true)
-            } else {
-                  setIsSelectedFileDialogOpen(false)
-            }
-      }, [openFilesDetailsPopUp])
+      // useEffect(() => {
+      //       if (openFilesDetailsPopUp) {
+      //             setIsSelectedFileDialogOpen(true)
+      //       } else {
+      //             setIsSelectedFileDialogOpen(false)
+      //       }
+      // }, [openFilesDetailsPopUp])
 
       const handleUploadClick = () => {
             fileInputRef.current?.click()
@@ -171,11 +175,11 @@ const FilesPage = () => {
                               prev.map((item, index) =>
                                     index === i
                                           ? {
-                                                  ...item,
-                                                  status: 'error',
-                                                  progress: 0,
-                                                  error: error instanceof Error ? error.message : 'Upload failed',
-                                            }
+                                                ...item,
+                                                status: 'error',
+                                                progress: 0,
+                                                error: error instanceof Error ? error.message : 'Upload failed',
+                                          }
                                           : item
                               )
                         )
@@ -200,10 +204,10 @@ const FilesPage = () => {
                                     prev.map((item, i) =>
                                           i === index
                                                 ? {
-                                                        ...item,
-                                                        isJsonForm: true,
-                                                        isJsonAquaTreeData: false,
-                                                  }
+                                                      ...item,
+                                                      isJsonForm: true,
+                                                      isJsonAquaTreeData: false,
+                                                }
                                                 : item
                                     )
                               )
@@ -218,10 +222,10 @@ const FilesPage = () => {
                                     prev.map((item, i) =>
                                           i === index
                                                 ? {
-                                                        ...item,
-                                                        isJsonForm: false,
-                                                        isJsonAquaTreeData: true,
-                                                  }
+                                                      ...item,
+                                                      isJsonForm: false,
+                                                      isJsonAquaTreeData: true,
+                                                }
                                                 : item
                                     )
                               )
@@ -337,34 +341,41 @@ const FilesPage = () => {
                                           style={{ backgroundColor: '#394150' }}
                                           onClick={() => {
                                                 //,
-                                                setOpenCreateAquaSignPopUp(true)
+                                                // setOpenCreateAquaSignPopUp(true)
+                                                setOpenDialog({ dialogType: 'aqua_sign', isOpen: true, onClose: () => setOpenDialog(null), onConfirm: () => { } })
                                           }}
                                     >
                                           <Plus className="w-4 h-4" />
                                           <span>Document Signature </span>
                                     </Button>
 
-                                    <Button
+                                    {/* <Button
                                           data-testid="create-document-signature"
                                           className="flex items-center gap-1 sm:gap-2 text-white px-2 sm:px-4 py-1.5 sm:py-2.5 rounded-md text-xs sm:text-sm font-medium hover:bg-gray-700 transition-colors cursor-pointer whitespace-nowrap shadow-sm"
                                           style={{ backgroundColor: '#3A5BF8' }}
                                           onClick={() => {
                                                 //,
-                                                setOpenCreateClaimPopUp(true)
+                                                // setOpenCreateClaimPopUp(true)
+                                                setOpenDialog({ dialogType: 'identity_claim', isOpen: true, onClose: () => setOpenDialog(null), onConfirm: () => { } })
                                           }}
                                     >
                                           <Plus className="w-4 h-4" />
                                           <span>Create claim </span>
-                                    </Button>
+                                    </Button> */}
+
+                                    <ClaimTypesDropdownButton />
                                     <Button
                                           className="flex items-center gap-1 sm:gap-2 text-gray-700 px-2 sm:px-4 py-1.5 sm:py-2.5 rounded-md text-xs sm:text-sm font-medium bg-white border border-gray-200 hover:bg-gray-50 transition-colors cursor-pointer whitespace-nowrap shadow-sm"
                                           onClick={() => {
-                                                setOpenCreateTemplatePopUp(true)
+                                                // setOpenCreateTemplatePopUp(true)
+                                                setOpenDialog({ dialogType: 'form_template_editor', isOpen: true, onClose: () => setOpenDialog(null), onConfirm: () => { } })
                                           }}
                                     >
                                           <FolderPlus className="w-4 h-4" />
                                           <span>Create Template</span>
                                     </Button>
+
+                                  
                               </div>
                         </div>
                   </div>
@@ -491,12 +502,12 @@ const FilesPage = () => {
 
                   {/* chain details dialog */}
                   <Dialog
-                        open={isSelectedFileDialogOpen}
+                        open={openDialog !== null && openDialog.isOpen && openDialog.dialogType == 'aqua_file_details'}
                         onOpenChange={openState => {
-                              setIsSelectedFileDialogOpen(openState)
+                              // setIsSelectedFileDialogOpen(openState)
                               if (!openState) {
                                     setSelectedFileInfo(null)
-                                    setOpenFileDetailsPopUp(false)
+                                    setOpenDialog(null)
                               }
                         }}
                   >
@@ -508,9 +519,9 @@ const FilesPage = () => {
                                           size="icon"
                                           className="h-6 w-6 bg-red-500 text-white hover:bg-red-500"
                                           onClick={() => {
-                                                setIsSelectedFileDialogOpen(false)
+                                                // setIsSelectedFileDialogOpen(false)
                                                 setSelectedFileInfo(null)
-                                                setOpenFileDetailsPopUp(false)
+                                                setOpenDialog(null)
                                           }}
                                     >
                                           <X className="h-4 w-4" />
@@ -541,7 +552,7 @@ const FilesPage = () => {
                                           style={{}}
                                           onClick={() => {
                                                 setSelectedFileInfo(null)
-                                                setOpenFileDetailsPopUp(false)
+                                                setOpenDialog(null)
                                           }}
                                     >
                                           Cancel

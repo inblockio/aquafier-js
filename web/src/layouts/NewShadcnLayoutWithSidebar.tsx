@@ -10,10 +10,9 @@ import { Outlet } from 'react-router-dom'
 import { ClipLoader } from 'react-spinners'
 import { Toaster } from 'sonner'
 import { useStore } from 'zustand'
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../components/ui/dialog'
+import { Dialog, DialogContent } from '../components/ui/dialog'
 import { Button } from '../components/ui/button'
 import CreateFormFromTemplate from '../components/aqua_forms/CreateFormFromTemplate'
-import { ScrollArea } from '../components/ui/scroll-area'
 import FormTemplateEditorShadcn from '../components/aqua_forms/FormTemplateEditorShadcn'
 import { AppSidebar } from '../components/app_sidebar'
 import WebsocketFragment from '@/components/navbar/WebsocketFragment'
@@ -21,14 +20,16 @@ import WebsocketFragment from '@/components/navbar/WebsocketFragment'
 export default function NewShadcnLayoutWithSidebar() {
       const {
             session,
-            openCreateClaimAttestationPopUp,
-            setOpenCreateClaimAttestationPopUp,
-            openCreateClaimPopUp,
-            setOpenCreateClaimPopUp,
-            openCreateAquaSignPopUp,
-            setOpenCreateAquaSignPopUp,
-            openCreateTemplatePopUp,
-            setOpenCreateTemplatePopUp,
+            // openCreateClaimAttestationPopUp,
+            // setOpenCreateClaimAttestationPopUp,
+            // openCreateClaimPopUp,
+            // setOpenCreateClaimPopUp,
+            // openCreateAquaSignPopUp,
+            // setOpenCreateAquaSignPopUp,
+      //      openCreateTemplatePopUp,
+            // setOpenCreateTemplatePopUp,
+            openDialog,
+            setOpenDialog,
             formTemplates,
       } = useStore(appStore)
 
@@ -41,42 +42,52 @@ export default function NewShadcnLayoutWithSidebar() {
             return () => clearTimeout(timer)
       }, [])
 
-      const [isOpenCreateAquaSignPopUp, setIsOpenCreateAquaSignPopUp] = useState(false)
-      const [isOpenCreateTemplatePopUp, setIsOpenCreateTemplatePopUp] = useState(false)
-      const [isOpenCreateClaimPopUp, setIsOpenCreateClaimPopUp] = useState(false)
-      const [isOpenCreateClaimAttestationPopUp, setIsOpenCreateClaimAttestationPopUp] = useState(false)
+      // const [isDialogOpenPopUp, setIsDialogPopUp] = useState<OpenDialog | null>(null)
 
-      useEffect(() => {
-            if (openCreateClaimPopUp) {
-                  setIsOpenCreateClaimPopUp(true)
-            } else {
-                  setIsOpenCreateClaimPopUp(false)
-            }
-      }, [openCreateClaimPopUp])
+      // useEffect(() => {
+      //       if (openDialog) {
+      //             setIsOpenCreateClaimPopUp(true)
+      //       } else {
+      //             setIsOpenCreateClaimPopUp(false)
+      //       }
+      // }, [openCreateClaimPopUp])
 
-      useEffect(() => {
-            if (openCreateAquaSignPopUp) {
-                  setIsOpenCreateAquaSignPopUp(true)
-            } else {
-                  setIsOpenCreateAquaSignPopUp(false)
-            }
-      }, [openCreateAquaSignPopUp])
+      // const [isOpenCreateAquaSignPopUp, setIsOpenCreateAquaSignPopUp] = useState(false)
+      // const [isOpenCreateTemplatePopUp, setIsOpenCreateTemplatePopUp] = useState(false)
+      // const [isOpenCreateClaimPopUp, setIsOpenCreateClaimPopUp] = useState(false)
+      // const [isOpenCreateClaimAttestationPopUp, setIsOpenCreateClaimAttestationPopUp] = useState(false)
 
-      useEffect(() => {
-            if (openCreateTemplatePopUp) {
-                  setIsOpenCreateTemplatePopUp(true)
-            } else {
-                  setIsOpenCreateTemplatePopUp(false)
-            }
-      }, [openCreateTemplatePopUp])
+      // useEffect(() => {
+      //       if (openCreateClaimPopUp) {
+      //             setIsOpenCreateClaimPopUp(true)
+      //       } else {
+      //             setIsOpenCreateClaimPopUp(false)
+      //       }
+      // }, [openCreateClaimPopUp])
 
-      useEffect(() => {
-            if (openCreateClaimAttestationPopUp) {
-                  setIsOpenCreateClaimAttestationPopUp(true)
-            } else {
-                  setIsOpenCreateClaimAttestationPopUp(false)
-            }
-      }, [openCreateClaimAttestationPopUp])
+      // useEffect(() => {
+      //       if (openCreateAquaSignPopUp) {
+      //             setIsOpenCreateAquaSignPopUp(true)
+      //       } else {
+      //             setIsOpenCreateAquaSignPopUp(false)
+      //       }
+      // }, [openCreateAquaSignPopUp])
+
+      // useEffect(() => {
+      //       if (openCreateTemplatePopUp) {
+      //             setIsOpenCreateTemplatePopUp(true)
+      //       } else {
+      //             setIsOpenCreateTemplatePopUp(false)
+      //       }
+      // }, [openCreateTemplatePopUp])
+
+      // useEffect(() => {
+      //       if (openCreateClaimAttestationPopUp) {
+      //             setIsOpenCreateClaimAttestationPopUp(true)
+      //       } else {
+      //             setIsOpenCreateClaimAttestationPopUp(false)
+      //       }
+      // }, [openCreateClaimAttestationPopUp])
 
       if (loading) {
             return (
@@ -157,8 +168,99 @@ export default function NewShadcnLayoutWithSidebar() {
                         </SidebarProvider>
                   )}
 
+
+ <Dialog
+                        open={openDialog !== null && openDialog.isOpen && openDialog.dialogType != 'aqua_file_details'}
+                        onOpenChange={openState => {
+                              if (!openState) {
+                                    setOpenDialog(null)
+                              }
+                        }}
+                         
+                  >
+                        <DialogContent 
+                        
+                        className={
+                              openDialog?.dialogType === 'form_template_editor' ? 
+                              "[&>button]:hidden !max-w-[95vw] !w-[95vw] h-[95vh] max-h-[95vh] sm:!max-w-[95vw] sm:!w-[95vw] sm:h-[95vh] sm:max-h-[95vh] flex flex-col" :
+                              "[&>button]:hidden sm:!max-w-[65vw] sm:!w-[65vw] sm:h-[65vh] sm:max-h-[65vh] !max-w-[95vw] !w-[95vw] h-[95vh] max-h-[95vh] flex flex-col p-0 gap-0"
+                        }>
+                              <div className="absolute top-4 right-4">
+                                    <Button
+                                          variant="ghost"
+                                          size="icon"
+                                          className="h-6 w-6 bg-red-500 text-white hover:bg-red-500"
+                                          onClick={() => {
+                                                setOpenDialog(null)
+                                          }}
+                                    >
+                                          <X className="h-4 w-4" />
+                                    </Button>
+                              </div>
+
+                              {openDialog?.dialogType === 'form_template_editor' && (
+                                    
+                              <FormTemplateEditorShadcn
+                                    onSave={function (): void {
+                                          // setOpenCreateTemplatePopUp(false)
+                                           setOpenDialog(null)
+                                    }}
+                              />)}
+
+                              {openDialog?.dialogType === 'aqua_sign' && (
+                                    <CreateFormFromTemplate
+                                          selectedTemplate={formTemplates.find(template => template.name === 'aqua_sign')!}
+                                          callBack={function (): void {
+                                                // setOpenCreateAquaSignPopUp(false)
+                                                setOpenDialog(null)
+                                          }}
+                                          openCreateTemplatePopUp={false}
+                                    />
+                              )}
+
+                              {openDialog?.dialogType === 'identity_claim' && (
+                                    <CreateFormFromTemplate
+                                          selectedTemplate={formTemplates.find(template => template.name === 'identity_claim')!}
+                                          callBack={function (): void {
+                                                // setOpenCreateClaimPopUp(false)
+                                                setOpenDialog(null)
+                                          }}
+                                          openCreateTemplatePopUp={false}
+                                    />
+                              )}
+
+
+                              {openDialog?.dialogType === 'dns_claim' && (
+                                    <CreateFormFromTemplate
+                                          selectedTemplate={formTemplates.find(template => template.name === 'domain_claim')!}
+                                          callBack={function (): void {
+                                                // setOpenCreateClaimPopUp(false)
+                                                setOpenDialog(null)
+                                          }}
+                                          openCreateTemplatePopUp={false}
+                                    />
+                              )}
+
+                              {openDialog?.dialogType === 'identity_attestation' && (
+                                    <CreateFormFromTemplate
+                                          selectedTemplate={formTemplates.find(template => template.name === 'identity_attestation')!}
+                                          callBack={function (): void {
+                                                // setOpenCreateClaimAttestationPopUp(false)
+                                                setOpenDialog(null)
+                                          }}
+                                          openCreateTemplatePopUp={false}
+                                    />
+                              )}
+                             
+                        </DialogContent>
+                  </Dialog>
+
+
+
+                  
+
                   {/* create template dialog */}
-                  <Dialog
+                  {/* <Dialog
                         open={isOpenCreateTemplatePopUp}
                         onOpenChange={openState => {
                               setOpenCreateTemplatePopUp(openState)
@@ -182,17 +284,12 @@ export default function NewShadcnLayoutWithSidebar() {
                                           setOpenCreateTemplatePopUp(false)
                                     }}
                               />
-                              {/* <DialogFooter className="mt-auto">
-                        <Button variant="outline" onClick={() => {
-                           setOpenCreateAquaSignPopUp(false)
-                        }}>Cancel</Button>
-                        <Button type="submit">Save changes</Button>
-                    </DialogFooter> */}
+                             
                         </DialogContent>
-                  </Dialog>
+                  </Dialog> */}
 
                   {/* create aqua sign  */}
-                  <Dialog
+                  {/* <Dialog
                         open={isOpenCreateAquaSignPopUp}
                         onOpenChange={openState => {
                               setOpenCreateAquaSignPopUp(openState)
@@ -225,17 +322,12 @@ export default function NewShadcnLayoutWithSidebar() {
                                           />
                                     </ScrollArea>
                               </div>
-                              {/* <DialogFooter className="mt-auto">
-                        <Button variant="outline" onClick={() => {
-                           setOpenCreateAquaSignPopUp(false)
-                        }}>Cancel</Button>
-                        <Button type="submit">Save changes</Button>
-                    </DialogFooter> */}
+                             
                         </DialogContent>
-                  </Dialog>
+                  </Dialog> */}
 
                   {/* create claim  */}
-                  <Dialog
+                  {/* <Dialog
                         open={isOpenCreateClaimPopUp}
                         onOpenChange={openState => {
                               setOpenCreateClaimPopUp(openState)
@@ -268,17 +360,12 @@ export default function NewShadcnLayoutWithSidebar() {
                                           />
                                     </ScrollArea>
                               </div>
-                              {/* <DialogFooter className="mt-auto">
-                        <Button variant="outline" onClick={() => {
-                           setOpenCreateAquaSignPopUp(false)
-                        }}>Cancel</Button>
-                        <Button type="submit">Save changes</Button>
-                    </DialogFooter> */}
+                             
                         </DialogContent>
-                  </Dialog>
+                  </Dialog> */}
 
                   {/* create claim  */}
-                  <Dialog
+                  {/* <Dialog
                         open={isOpenCreateClaimAttestationPopUp}
                         onOpenChange={openState => {
                               setOpenCreateClaimAttestationPopUp(openState)
@@ -311,14 +398,9 @@ export default function NewShadcnLayoutWithSidebar() {
                                           />
                                     </ScrollArea>
                               </div>
-                              {/* <DialogFooter className="mt-auto">
-                        <Button variant="outline" onClick={() => {
-                           setOpenCreateAquaSignPopUp(false)
-                        }}>Cancel</Button>
-                        <Button type="submit">Save changes</Button>
-                    </DialogFooter> */}
+                              
                         </DialogContent>
-                  </Dialog>
+                  </Dialog> */}
             </>
       )
 }

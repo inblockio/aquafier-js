@@ -2,7 +2,7 @@ import { IDBPDatabase, openDB } from 'idb'
 import { createStore } from 'zustand'
 import { createJSONStorage, persist } from 'zustand/middleware'
 import { ApiFileInfo } from './models/FileInfo'
-import { ApiFileData, Session } from './types/types'
+import { ApiFileData, OpenDialog, Session } from './types/types'
 import { FormTemplate } from './components/aqua_forms/types'
 
 type AppStoreState = {
@@ -22,11 +22,12 @@ type AppStoreState = {
       systemFileInfo: ApiFileInfo[]
       formTemplates: FormTemplate[]
       selectedFileInfo: ApiFileInfo | null
-      openFilesDetailsPopUp: boolean | null
-      openCreateTemplatePopUp: boolean | null
-      openCreateAquaSignPopUp: boolean | null
-      openCreateClaimPopUp: boolean | null
-      openCreateClaimAttestationPopUp: boolean | null
+      openDialog: OpenDialog | null
+      // openFilesDetailsPopUp: boolean | null
+      // openCreateTemplatePopUp: boolean | null
+      // openCreateAquaSignPopUp: boolean | null
+      // openCreateClaimPopUp: boolean | null
+      // openCreateClaimAttestationPopUp: boolean | null
       metamaskAddress: string | null
       avatar: string | undefined
       backend_url: string
@@ -40,13 +41,13 @@ type AppStoreActions = {
       setAvatar: (avatar: AppStoreState['avatar']) => void
       setFiles: (files: AppStoreState['files']) => void
       setSelectedFileInfo: (file: ApiFileInfo | null) => void
-      setOpenFileDetailsPopUp: (state: boolean | null) => void
-
-      setOpenCreateTemplatePopUp: (state: boolean | null) => void
-      setOpenCreateAquaSignPopUp: (state: boolean | null) => void
-
-      setOpenCreateClaimPopUp: (state: boolean | null) => void
-      setOpenCreateClaimAttestationPopUp: (state: boolean | null) => void
+      
+      setOpenDialog:(state : OpenDialog | null) => void
+      // setOpenFileDetailsPopUp: (state: boolean | null) => void
+      // setOpenCreateTemplatePopUp: (state: boolean | null) => void
+      // setOpenCreateAquaSignPopUp: (state: boolean | null) => void
+      // setOpenCreateClaimPopUp: (state: boolean | null) => void
+      // setOpenCreateClaimAttestationPopUp: (state: boolean | null) => void
 
       addFile: (file: ApiFileInfo) => void
       setApiFileData: (apiFileData: ApiFileData[]) => void
@@ -170,11 +171,13 @@ const appStore = createStore<TAppStore>()(
                   session: null,
                   files: [],
                   selectedFileInfo: null,
-                  openFilesDetailsPopUp: false,
-                  openCreateTemplatePopUp: false,
-                  openCreateAquaSignPopUp: false,
-                  openCreateClaimPopUp: false,
-                  openCreateClaimAttestationPopUp: false,
+
+                  openDialog: null, // Initialize openDialog state
+                  // openFilesDetailsPopUp: false,
+                  // openCreateTemplatePopUp: false,
+                  // openCreateAquaSignPopUp: false,
+                  // openCreateClaimPopUp: false,
+                  // openCreateClaimAttestationPopUp: false,
                   metamaskAddress: '',
                   avatar: '',
                   apiFileData: [],
@@ -191,11 +194,12 @@ const appStore = createStore<TAppStore>()(
                   setFiles: (files: AppStoreState['files']) => set({ files: files }),
                   setSelectedFileInfo: (file: ApiFileInfo | null) => set({ selectedFileInfo: file }),
 
-                  setOpenFileDetailsPopUp: (state: boolean | null) => set({ openFilesDetailsPopUp: state }),
-                  setOpenCreateTemplatePopUp: (state: boolean | null) => set({ openCreateTemplatePopUp: state }),
-                  setOpenCreateAquaSignPopUp: (state: boolean | null) => set({ openCreateAquaSignPopUp: state }),
-                  setOpenCreateClaimPopUp: (state: boolean | null) => set({ openCreateClaimPopUp: state }),
-                  setOpenCreateClaimAttestationPopUp: (state: boolean | null) => set({ openCreateClaimAttestationPopUp: state }),
+                  setOpenDialog: (state: OpenDialog | null) => set({ openDialog: state }),
+                  // setOpenFileDetailsPopUp: (state: boolean | null) => set({ openFilesDetailsPopUp: state }),
+                  // setOpenCreateTemplatePopUp: (state: boolean | null) => set({ openCreateTemplatePopUp: state }),
+                  // setOpenCreateAquaSignPopUp: (state: boolean | null) => set({ openCreateAquaSignPopUp: state }),
+                  // setOpenCreateClaimPopUp: (state: boolean | null) => set({ openCreateClaimPopUp: state }),
+                  // setOpenCreateClaimAttestationPopUp: (state: boolean | null) => set({ openCreateClaimAttestationPopUp: state }),
 
                   setApiFileData: (apiFileData: ApiFileData[]) => set({ apiFileData: apiFileData }),
                   setSystemFileInfo: (systemFileInfo: ApiFileInfo[]) => set({ systemFileInfo: systemFileInfo }),

@@ -3,7 +3,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
-import { FileText, MoreHorizontal, Eye, Trash2, Download, Send, Plus } from 'lucide-react'
+import { FileText, MoreHorizontal, Eye, Trash2, Download, Send } from 'lucide-react'
 import appStore from '@/store'
 import { useStore } from 'zustand'
 import { displayTime, getAquaTreeFileName, getAquaTreeFileObject, getGenesisHash, isWorkFlowData } from '@/utils/functions'
@@ -15,6 +15,8 @@ import axios from 'axios'
 import { OpenClaimsWorkFlowButton } from '@/components/aqua_chain_actions/open_identity_claim_workflow'
 import { useNavigate } from 'react-router-dom'
 import { ApiFileInfo } from '@/models/FileInfo'
+import ClaimTypesDropdownButton from '@/components/button_claim_dropdown'
+
 
 const WorkflowTableItem = ({ workflowName, apiFileInfo, index = 0 }: IWorkflowItem) => {
       const [currentFileObject, setCurrentFileObject] = useState<FileObject | undefined>(undefined)
@@ -73,9 +75,9 @@ const WorkflowTableItem = ({ workflowName, apiFileInfo, index = 0 }: IWorkflowIt
             const latestRevisionHash = allHahshes[allHahshes.length - 1]
             const genesisHash = allHahshes[0]
 
-            ;(async () => {
-                  await loadSharedContractsData(latestRevisionHash, genesisHash)
-            })()
+                  ; (async () => {
+                        await loadSharedContractsData(latestRevisionHash, genesisHash)
+                  })()
 
             let claimGenHash = getGenesisHash(apiFileInfo.aquaTree!)
             if (!claimGenHash) {
@@ -219,7 +221,7 @@ const WorkflowTableItem = ({ workflowName, apiFileInfo, index = 0 }: IWorkflowIt
 }
 
 const ClaimsAndAttestationPage = () => {
-      const { files, systemFileInfo, setOpenCreateClaimPopUp, session } = useStore(appStore)
+      const { files, systemFileInfo, session } = useStore(appStore)
 
       const [totalClaims, setTotalClaims] = useState<number>(0)
       const [_totolAttestors, setTotolAttestors] = useState<number>(0)
@@ -318,18 +320,19 @@ const ClaimsAndAttestationPage = () => {
                   <div className="bg-white border-b border-gray-200 px-6 py-4 hidden">
                         <div className="flex items-center justify-between">
                               <div /> {/* Empty div to push the button right */}
-                              <div className="flex items-center space-x-4">
+                              {/* <div className="flex items-center space-x-4">
                                     <button
                                           className="flex items-center space-x-2 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-gray-100 cursor-pointer"
                                           style={{ backgroundColor: '#394150' }}
                                           onClick={() => {
-                                                setOpenCreateClaimPopUp(true)
+                                                // setOpenCreateClaimPopUp(true)
+                                                setOpenDialog({ dialogType: 'identity_claim', isOpen: true, onClose: () => setOpenDialog(null), onConfirm: () => { } })
                                           }}
                                     >
                                           <Plus className="w-4 h-4" />
                                           <span>Create Claim </span>
                                     </button>
-                              </div>
+                              </div> */}
                         </div>
                   </div>
 
@@ -348,7 +351,12 @@ const ClaimsAndAttestationPage = () => {
                                                 </label>
                                           </div>
 
-                                          <div className="flex justify-center ">
+                                          <div className='ml-auto flex items-center gap-2'>
+                                                <ClaimTypesDropdownButton /> 
+                                                <div  className='ml-4'></div>
+                                          </div>
+
+                                          {/* <div className="flex justify-center ">
                                                 <button
                                                       className="flex items-center space-x-2 text-white px-4 py-2 my-2 rounded-md text-sm font-medium hover:bg-blue-100 cursor-pointer"
                                                       style={{ backgroundColor: '#394150' }}
@@ -369,7 +377,7 @@ const ClaimsAndAttestationPage = () => {
                                                       <Plus className="w-4 h-4" />
                                                       <span>Create DNS Claim</span>
                                                 </button>
-                                          </div>
+                                          </div> */}
                                     </CardTitle>
                               </CardHeader>
                               <CardContent className="px-1">

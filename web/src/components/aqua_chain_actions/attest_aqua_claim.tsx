@@ -8,7 +8,7 @@ import { Revision } from 'aqua-js-sdk'
 import { Button } from '../ui/button'
 
 export const AttestAquaClaim = ({ file, index, children }: { file: ApiFileInfo; index: number; children?: React.ReactNode }) => {
-      const { files, session, openCreateClaimAttestationPopUp, setOpenCreateClaimAttestationPopUp, setSelectedFileInfo, systemFileInfo } = useStore(appStore)
+      const { files, session, openDialog, setOpenDialog, setSelectedFileInfo, systemFileInfo } = useStore(appStore)
       // const [isAttesting, setIsAttesting] = useState(false)
       // const [open, setOpen] = useState(false)
       // const [isLoading, setIsloading] = useState(false)
@@ -57,7 +57,16 @@ export const AttestAquaClaim = ({ file, index, children }: { file: ApiFileInfo; 
             }
 
             setSelectedFileInfo(file)
-            setOpenCreateClaimAttestationPopUp(true)
+            // setOpenCreateClaimAttestationPopUp(true)
+            setOpenDialog({
+                  dialogType: 'identity_attestation',
+                  isOpen: true,
+                  onClose: () => setOpenDialog(null),
+                  onConfirm: (data) => {
+                        // Handle confirmation logic here
+                        console.log('Attestation confirmed with data:', data)
+                  }
+            })
       }
 
       if (secondRevision) {
@@ -80,10 +89,10 @@ export const AttestAquaClaim = ({ file, index, children }: { file: ApiFileInfo; 
                                           <div
                                                 data-testid={'attest-in-progress-aqua-claim-button-' + index}
                                                 onClick={() => {
-                                                      if (!openCreateClaimAttestationPopUp) {
-                                                            attestAquaClaimAction()
-                                                      } else {
+                                                      if (openDialog && openDialog.dialogType == 'identity_attestation') {
                                                             toast('Attesting is already in progress')
+                                                      } else {
+                                                            attestAquaClaimAction()
                                                       }
                                                 }}
                                           >
@@ -92,17 +101,17 @@ export const AttestAquaClaim = ({ file, index, children }: { file: ApiFileInfo; 
                                     ) : (
                                           <button
                                                 data-testid={'attest-aqua-claim-button-' + index}
-                                                onClick={() => {
-                                                      if (!openCreateClaimAttestationPopUp) {
-                                                            attestAquaClaimAction()
-                                                      } else {
+                                               onClick={() => {
+                                                      if (openDialog && openDialog.dialogType == 'identity_attestation') {
                                                             toast('Attesting is already in progress')
+                                                      } else {
+                                                            attestAquaClaimAction()
                                                       }
                                                 }}
-                                                className={`w-full flex items-center justify-center space-x-1 bg-[#009c6e] text-white px-3 py-2 rounded transition-colors text-xs ${openCreateClaimAttestationPopUp ? 'opacity-60 cursor-not-allowed' : 'hover:bg-[#7ECEB7]'}`}
+                                                className={`w-full flex items-center justify-center space-x-1 bg-[#009c6e] text-white px-3 py-2 rounded transition-colors text-xs ${openDialog && openDialog.dialogType == 'identity_attestation' ? 'opacity-60 cursor-not-allowed' : 'hover:bg-[#7ECEB7]'}`}
                                                 // disabled={openCreateClaimAttestationPopUp}
                                           >
-                                                {openCreateClaimAttestationPopUp ? (
+                                                {openDialog && openDialog.dialogType == 'identity_attestation' ? (
                                                       <>
                                                             <svg className="animate-spin h-3 w-3 mr-1 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                                                                   <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
