@@ -4,7 +4,7 @@ import { Separator } from '../components/ui/separator'
 import NotificationsBell from '../pages/notifications/NotificationsBell'
 import { SidebarInset, SidebarProvider, SidebarTrigger } from '../components/ui/sidebar'
 import appStore from '../store'
-import { X } from 'lucide-react'
+import { Crown, Mail, X, Zap } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { Outlet } from 'react-router-dom'
 import { ClipLoader } from 'react-spinners'
@@ -17,6 +17,7 @@ import FormTemplateEditorShadcn from '../components/aqua_forms/FormTemplateEdito
 import { AppSidebar } from '../components/app_sidebar'
 import WebsocketFragment from '@/components/navbar/WebsocketFragment'
 
+
 export default function NewShadcnLayoutWithSidebar() {
       const {
             session,
@@ -26,7 +27,7 @@ export default function NewShadcnLayoutWithSidebar() {
             // setOpenCreateClaimPopUp,
             // openCreateAquaSignPopUp,
             // setOpenCreateAquaSignPopUp,
-      //      openCreateTemplatePopUp,
+            //      openCreateTemplatePopUp,
             // setOpenCreateTemplatePopUp,
             openDialog,
             setOpenDialog,
@@ -126,7 +127,31 @@ export default function NewShadcnLayoutWithSidebar() {
                                                 {/* Desktop Navigation */}
                                                 <div className="hidden md:flex items-center space-x-4 ms-auto">
                                                       <NotificationsBell />
-                                                      <Button className="bg-blue-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-blue-700">Start free trial</Button>
+                                                      {/* <Button className="bg-blue-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-blue-700"> Free Verision</Button> */}
+
+                                                      <div className="flex items-center gap-3">
+                                                            <div className="flex items-center gap-2 bg-blue-50 border border-blue-200 rounded-lg px-3 py-1.5">
+                                                                  <Crown className="w-4 h-4 text-blue-600" />
+                                                                  <span className="text-sm text-blue-700 font-medium">Free Plan</span>
+                                                            </div>
+                                                            <button
+                                                                  onClick={() => {
+                                                                        setOpenDialog({
+                                                                              dialogType: 'early_bird_offer',
+                                                                              isOpen: true,
+                                                                              onClose: () => setOpenDialog(null),
+                                                                              onConfirm: (data) => {
+                                                                                    // Handle confirmation logic here
+                                                                                    console.log('Early bird offer confirmed with data:', data)
+                                                                              }
+                                                                        })
+                                                                  }}
+                                                                  className="bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium px-4 py-1.5 rounded-lg transition-colors flex items-center gap-2"
+                                                            >
+                                                                  <Zap className="w-4 h-4" />
+                                                                  Upgrade to Pro
+                                                            </button>
+                                                      </div>
                                                       <ConnectWallet dataTestId="sign-in-button-files-list" />
                                                 </div>
 
@@ -169,22 +194,95 @@ export default function NewShadcnLayoutWithSidebar() {
                   )}
 
 
- <Dialog
-                        open={openDialog !== null && openDialog.isOpen && openDialog.dialogType != 'aqua_file_details'}
+
+                  {openDialog?.dialogType === 'early_bird_offer' && (
+                        <div className="fixed inset-0 bg-black bg-opacity-5 flex items-center justify-center z-50 p-4">
+                              <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6 relative animate-in fade-in duration-200">
+                                    {/* Close Button */}
+                                    <button
+                                          onClick={() => {
+                                                // setShowPopup(false)
+                                                setOpenDialog(null)
+                                          }}
+                                          className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors"
+                                    >
+                                          <X size={20} />
+                                    </button>
+
+                                    {/* Popup Content */}
+                                    <div className="text-center">
+                                          <div className="mb-4">
+                                                <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                                                      {/* <Mail className="w-8 h-8 text-green-600" /> */}
+                                                      <Crown className="w-8 h-8 text-orange-600" />
+                                                </div>
+                                                <h2 className="text-2xl font-bold text-gray-900 mb-2">
+                                                      Early Bird Special! 🎉
+                                                </h2>
+                                                {/* <p className="text-gray-600 leading-relaxed">
+                                                      The code is better! If you're interested in our early bird offer of
+                                                      <span className="font-semibold text-green-600"> 25% off</span>,
+                                                      please email us at:
+                                                </p> */}
+
+                                                <h4 className="text-md font-bold text-gray-900 mb-2">
+                                                      Upgrade to Pro! 🚀
+                                                </h4>
+                                                <p className="text-gray-600 leading-relaxed">
+                                                      Get access to premium features with our early bird offer of
+                                                      <span className="font-semibold text-orange-600"> 25% off</span>.
+                                                      Contact us to unlock the full potential:
+                                                </p>
+                                          </div>
+
+                                          <div className="bg-gray-50 rounded-lg p-4 mb-6">
+                                                <a
+                                                      href="mailto:info.inblock.io"
+                                                      className="text-blue-600 hover:text-blue-800 font-medium text-lg transition-colors"
+                                                >
+                                                      info.inblock.io
+                                                </a>
+                                          </div>
+
+                                          <div className="flex gap-3">
+                                                <button
+                                                      onClick={() => {
+                                                            setOpenDialog(null)
+                                                            // setShowPopup(false)
+                                                      }}
+                                                      className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors"
+                                                >
+                                                      Maybe Later
+                                                </button>
+                                                <a
+                                                      href="mailto:info.inblock.io"
+                                                      className="flex-1 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-center"
+                                                >
+                                                      Send Email
+                                                </a>
+                                          </div>
+                                    </div>
+                              </div>
+                        </div>
+
+                  )}
+
+                  <Dialog
+                        open={openDialog !== null && openDialog.isOpen && openDialog.dialogType != 'aqua_file_details' && openDialog.dialogType != 'early_bird_offer'}
                         onOpenChange={openState => {
                               if (!openState) {
                                     setOpenDialog(null)
                               }
                         }}
-                         
+
                   >
-                        <DialogContent 
-                        
-                        className={
-                              openDialog?.dialogType === 'form_template_editor' ? 
-                              "[&>button]:hidden !max-w-[95vw] !w-[95vw] h-[95vh] max-h-[95vh] sm:!max-w-[95vw] sm:!w-[95vw] sm:h-[95vh] sm:max-h-[95vh] flex flex-col" :
-                              "[&>button]:hidden sm:!max-w-[65vw] sm:!w-[65vw] sm:h-[65vh] sm:max-h-[65vh] !max-w-[95vw] !w-[95vw] h-[95vh] max-h-[95vh] flex flex-col p-0 gap-0"
-                        }>
+                        <DialogContent
+
+                              className={
+                                    openDialog?.dialogType === 'form_template_editor' ?
+                                          "[&>button]:hidden !max-w-[95vw] !w-[95vw] h-[95vh] max-h-[95vh] sm:!max-w-[95vw] sm:!w-[95vw] sm:h-[95vh] sm:max-h-[95vh] flex flex-col" :
+                                          "[&>button]:hidden sm:!max-w-[65vw] sm:!w-[65vw] sm:h-[65vh] sm:max-h-[65vh] !max-w-[95vw] !w-[95vw] h-[95vh] max-h-[95vh] flex flex-col p-0 gap-0"
+                              }>
                               <div className="absolute top-4 right-4">
                                     <Button
                                           variant="ghost"
@@ -199,13 +297,13 @@ export default function NewShadcnLayoutWithSidebar() {
                               </div>
 
                               {openDialog?.dialogType === 'form_template_editor' && (
-                                    
-                              <FormTemplateEditorShadcn
-                                    onSave={function (): void {
-                                          // setOpenCreateTemplatePopUp(false)
-                                           setOpenDialog(null)
-                                    }}
-                              />)}
+
+                                    <FormTemplateEditorShadcn
+                                          onSave={function (): void {
+                                                // setOpenCreateTemplatePopUp(false)
+                                                setOpenDialog(null)
+                                          }}
+                                    />)}
 
                               {openDialog?.dialogType === 'aqua_sign' && (
                                     <CreateFormFromTemplate
@@ -251,13 +349,15 @@ export default function NewShadcnLayoutWithSidebar() {
                                           openCreateTemplatePopUp={false}
                                     />
                               )}
-                             
+
+
+
                         </DialogContent>
                   </Dialog>
 
 
 
-                  
+
 
                   {/* create template dialog */}
                   {/* <Dialog

@@ -120,7 +120,7 @@ const TailwindLayout = () => {
                                                 <span className="text-sm font-medium">Get started</span>
                                                 <span className="text-xs bg-gray-700 px-2 py-1 rounded">25% off</span>
                                           </div>
-                                          <p className="text-xs text-gray-300">Give it a try today</p>
+                                          <p className="text-xs text-gray-300">Give it a try today.</p>
                                     </div>
                               </div>
                         </div>
@@ -150,7 +150,7 @@ const TailwindLayout = () => {
                                                       <Users className="w-5 h-5" />
                                                       {/* <span className="ml-1 text-sm">Invite members</span> */}
                                                 </button>
-                                                <button className="bg-blue-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-blue-700">Start free trial</button>
+                                                <button className="bg-blue-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-blue-700">Start free trial..</button>
                                                 {/* <div className="w-8 h-8 bg-red-500 rounded-full flex items-center justify-center text-white text-sm font-medium">
                                 A
                             </div> */}

@@ -8,9 +8,10 @@ import { formatBytes, getAquaTreeFileObject } from '@/utils/functions'
 import { useStore } from 'zustand'
 import appStore from '@/store'
 import { useState } from 'react'
+import { set } from 'date-fns'
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
-      const { files } = useStore(appStore)
+      const { files, setOpenDialog } = useStore(appStore)
 
       const [usedStorage, setUsedStorage] = useState<number>(0)
       const [totalStorage, _setTotalStorage] = useState<number>(maxUserFileSizeForUpload)
@@ -151,7 +152,17 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 
                   {/* Bottom section */}
                   <SidebarFooter>
-                        <div className="p-4 border-t border-gray-200">
+                        <div className="p-4 border-t border-gray-200" onClick={() => {
+                              setOpenDialog({
+                                    dialogType: 'early_bird_offer',
+                                    isOpen: true,
+                                    onClose: () => setOpenDialog(null),
+                                    onConfirm: (data) => {
+                                          // Handle confirmation logic here
+                                          console.log('Early bird offer confirmed with data:', data)
+                                    }
+                              })
+                        }}>
                               {files.length > 0 ? (
                                     <>
                                           <div className="bg-gray-50 p-4 rounded-lg">
@@ -178,7 +189,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                                           <span className="text-sm font-medium">Get started</span>
                                           <span className="text-xs bg-gray-700 px-2 py-1 rounded">25% off</span>
                                     </div>
-                                    <p className="text-xs text-gray-300">Give it a try today</p>
+                                    <p className="text-xs text-gray-300">Give it a try today,</p>
                               </div>
                         </div>
                   </SidebarFooter>

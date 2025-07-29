@@ -4,7 +4,7 @@ import { ApiFileInfo } from '../models/FileInfo'
 
 
 export interface OpenDialog {
-  dialogType: 'form_template_editor' | 'aqua_file_details' | 'identity_claim' | 'dns_claim' | 'aqua_sign' | 'identity_attestation',//'file' | 'folder' | 'contract' | 'claim' | 'claim-attestation'
+  dialogType: 'form_template_editor' | 'aqua_file_details' | 'identity_claim' | 'dns_claim' | 'aqua_sign' | 'identity_attestation' | 'early_bird_offer',//'file' | 'folder' | 'contract' | 'claim' | 'claim-attestation'
   isOpen: boolean
   onClose: () => void
   onConfirm: (data: any) => void
