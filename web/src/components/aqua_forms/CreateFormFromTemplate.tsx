@@ -2,8 +2,8 @@ import React, { JSX, useState } from 'react'
 import { FormField, FormTemplate } from './types'
 import { useStore } from 'zustand'
 import appStore from '@/store'
-import { isValidEthereumAddress, getRandomNumber, formatDate, estimateFileSize, dummyCredential, fetchSystemFiles, getGenesisHash, fetchFiles } from '@/utils/functions'
-import Aquafier, { AquaTree, FileObject, getAquaTreeFileName, AquaTreeWrapper, getAquaTreeFileObject, Revision } from 'aqua-js-sdk'
+import { isValidEthereumAddress, getRandomNumber, formatDate, estimateFileSize, dummyCredential, fetchSystemFiles, getGenesisHash, fetchFiles, isWorkFlowData } from '@/utils/functions'
+import Aquafier, { AquaTree, FileObject, getAquaTreeFileName, AquaTreeWrapper, getAquaTreeFileObject, Revision, OrderRevisionInAquaTree } from 'aqua-js-sdk'
 import axios from 'axios'
 import { generateNonce } from 'siwe'
 import { toast } from 'sonner'
@@ -19,12 +19,13 @@ import { Badge } from '../ui/badge'
 import { Separator } from '../ui/separator'
 import { ScrollArea } from '../ui/scroll-area'
 import FilePreview from '../file_preview'
+import { WalletAutosuggest } from '../wallet_auto_suggest'
 
 // const CreateFormFromTemplate  = ({ selectedTemplate, callBack, openCreateTemplatePopUp = false }: { selectedTemplate: FormTemplate, callBack: () => void, openCreateTemplatePopUp: boolean }) => {
 const CreateFormFromTemplate = ({ selectedTemplate, callBack }: { selectedTemplate: FormTemplate; callBack: () => void; openCreateTemplatePopUp: boolean }) => {
       const [submittingTemplateData, setSubmittingTemplateData] = useState(false)
       const [modalFormErorMessae, setModalFormErorMessae] = useState('')
-      const { session, backend_url, systemFileInfo, setSystemFileInfo, setFiles, selectedFileInfo } = useStore(appStore)
+      const { session, backend_url, systemFileInfo, setSystemFileInfo, setFiles, selectedFileInfo, files } = useStore(appStore)
       const [formData, setFormData] = useState<Record<string, string | File | number>>({})
       const [multipleAddresses, setMultipleAddresses] = useState<string[]>([])
       const [isDialogOpen, setDialogOpen] = useState(false)
@@ -835,12 +836,12 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: { selectedTempla
                                           </div>
                                           <div>
                                                 <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900">Create {selectedTemplate?.title} Workflow</h1>
-                                             {selectedTemplate?.subtitle ? 
-                                             <p className="text-gray-600 mt-1">{selectedTemplate.subtitle}</p>
+                                                {selectedTemplate?.subtitle ?
+                                                      <p className="text-gray-600 mt-1">{selectedTemplate.subtitle}</p>
 
-                                             : <></>
-                                             
-                                          }
+                                                      : <></>
+
+                                                }
                                           </div>
                                     </div>
 
@@ -867,6 +868,51 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: { selectedTempla
                                                             }
 
                                                             if (field.is_array) {
+                                                                  function fetchRecommendedWalletAddresses(): Map<string, string> {
+
+                                                                        const recommended = new Map<string, string>()
+
+                                                                        const someData = systemFileInfo.map(e => {
+                                                                              try {
+                                                                                    return getAquaTreeFileName(e.aquaTree!)
+                                                                              } catch (e) {
+                                                                                    console.log('Error processing system file') // More descriptive
+                                                                                    return ''
+                                                                              }
+                                                                        })
+
+                                                                        for (const file of files) {
+
+                                                                              const workFlow = isWorkFlowData(file.aquaTree!, someData)
+
+                                                                              if (workFlow && workFlow.isWorkFlow) {
+                                                                                    console.log('Workflow found: ', workFlow.workFlow)
+                                                                                    if (workFlow.workFlow === 'identity_claim') {
+                                                                                          console.log('Identity claim found:' )
+                                                                                          const orederdRevisionAquaTree = OrderRevisionInAquaTree(file.aquaTree!)
+                                                                                          let allHashes = Object.keys(orederdRevisionAquaTree.revisions)
+
+                                                                                          // console.log('orederdRevisionAquaTree: ', JSON.stringify (orederdRevisionAquaTree.revisions ,null, 2))
+                                                                                          // console.log('hashs: ', JSON.stringify (orederdRevisionAquaTree.revisions ,null, 2))
+                                                                                          let genRevsion = orederdRevisionAquaTree.revisions[allHashes[0]] 
+
+                                                                                          // console.log('genRevsion: ', JSON.stringify (genRevsion,null, 2))
+                                                                                          // console.log('name : ', genRevsion[`forms_name`])
+                                                                                          // console.log('forms_wallet_address  : ', genRevsion[`forms_wallet_address`])
+                                                                                          if (genRevsion && genRevsion[`forms_name`] && genRevsion[`forms_wallet_address`]) {
+                                                                                                recommended.set(genRevsion[`forms_name`], genRevsion[`forms_wallet_address`])
+                                                                                          }
+                                                                                    }
+                                                                              }else{
+                                                                                    console.log('Not a workflow data: ', file.aquaTree)
+                                                                              }
+
+                                                                        }
+
+                                                                        console.log('Recommended wallet addresses: ', JSON.stringify (recommended,null, 2))
+                                                                        
+                                                                        return recommended;
+                                                                  }
                                                                   return (
                                                                         <div key={`field-${fieldIndex}`} className="space-y-4">
                                                                               <div className="flex items-center justify-between">
@@ -901,7 +947,7 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: { selectedTempla
                                                                                                       {index + 1}
                                                                                                 </div>
                                                                                                 <div className="flex-1">
-                                                                                                      <Input
+                                                                                                      {/* <Input
                                                                                                             data-testid={`input-${field.name}-${index}`}
                                                                                                             className="rounded-lg border-gray-200 focus:border-blue-500 focus:ring-blue-500"
                                                                                                             placeholder="Enter signer wallet address"
@@ -916,6 +962,17 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: { selectedTempla
                                                                                                                   })
                                                                                                                   setMultipleAddresses(newData)
                                                                                                             }}
+                                                                                                      /> */}
+                                                                                                      <WalletAutosuggest
+
+                                                                                                            walletAddresses={fetchRecommendedWalletAddresses()}
+                                                                                                            field={field}
+                                                                                                            index={index}
+                                                                                                            address={address}
+                                                                                                            multipleAddresses={multipleAddresses}
+                                                                                                            setMultipleAddresses={setMultipleAddresses}
+                                                                                                            placeholder="Enter signer wallet address"
+                                                                                                            className="rounded-lg border-gray-200 focus:border-blue-500 focus:ring-blue-500"
                                                                                                       />
                                                                                                 </div>
                                                                                                 {multipleAddresses.length > 1 && (
@@ -1077,8 +1134,8 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: { selectedTempla
                                                 selectedTemplate.name == 'identity_attestation' && (
                                                       <div >
                                                             <div className="space-y-4">
-                                                              <h5>Claim To Be attested</h5>
-                                                                <FilePreview fileInfo={getAquaTreeFileObject(selectedFileInfo!)!} />
+                                                                  <h5>Claim To Be attested</h5>
+                                                                  <FilePreview fileInfo={getAquaTreeFileObject(selectedFileInfo!)!} />
                                                             </div>
                                                             <Separator className="my-8" />
                                                       </div>

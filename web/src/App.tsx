@@ -27,6 +27,7 @@ import TermsAndConditions from './pages/legal/TermsAndConditions'
 import PrivacyPolicy from './pages/legal/PrivacyPolicy'
 import ClaimsAndAttestationPage from './pages/claim_and_attestation'
 import ClaimsWorkflowPage from './pages/claims_workflow/claimsWorkflowPage'
+import WalletAutosuggestDemo from './pages/demo_auto_suggest'
 
 declare global {
       interface Window {
@@ -64,6 +65,7 @@ function App() {
                               {/* All file routes using Tailwind */}
                               <Route path="/app" element={<NewShadcnLayoutWithSidebar />}>
                                     <Route index element={<FilesPage />} />
+                                    <Route path="demo-auto-suggest" element={<WalletAutosuggestDemo />} />
                                     <Route path="pdf/workflow" element={<PdfWorkflowPage />} />
                                     <Route path="claims/workflow" element={<ClaimsWorkflowPage />} />
                                     <Route path="files_workflows" element={<FilesPage />} />

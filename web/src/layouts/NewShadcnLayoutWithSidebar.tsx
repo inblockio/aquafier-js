@@ -286,7 +286,7 @@ export default function NewShadcnLayoutWithSidebar() {
                                                 openCreateTemplatePopUp={false}
                                           />
                                     )}
-
+ 
 
                                     {openDialog?.dialogType === 'dns_claim' && (
                                           <CreateFormFromTemplate
