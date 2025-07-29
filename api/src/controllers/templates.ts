@@ -123,9 +123,9 @@ export default async function templatesController(fastify: FastifyInstance) {
 
             if (results != null) {
 
-
+console.log(`🫠🫠 results.hash --${JSON.stringify( results.hash, null, 4)}`)
                 let response = await deleteAquaTreeFromSystem(request.user?.address ?? "-", results.hash)
-                
+                console.log(`🫠🫠  Respmnse ${response}`)
                 if (response[0] != 200) {
                     return reply.code(response[0]).send({ success: response[0] == 200 ? true : false, message: response[1] });
 
@@ -229,6 +229,7 @@ export default async function templatesController(fastify: FastifyInstance) {
                     name: aquaFormdata.name,
                     owner: request.user?.address || '',
                     title: aquaFormdata.title,
+                    subtitle: aquaFormdata.subtitle || '',
                     created_at: new Date().toISOString(),
                     public: false
                 }
@@ -310,6 +311,8 @@ export default async function templatesController(fastify: FastifyInstance) {
                     name: aquaFormdata.name,
                     owner: request.user?.address || '',
                     title: aquaFormdata.title,
+                    subtitle: aquaFormdata.subtitle,
+                    
                     created_at: new Date().toISOString(),
                     public: false
                 }
