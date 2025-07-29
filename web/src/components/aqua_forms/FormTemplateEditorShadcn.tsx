@@ -87,6 +87,7 @@ const FormTemplateEditorShadcn = ({ initialTemplate, onSave, updating }: FormTem
             id: '',
             name: '',
             title: '',
+            subtitle: '',
             fields: [],
       }
 

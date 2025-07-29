@@ -4,7 +4,7 @@ import { Separator } from '../components/ui/separator'
 import NotificationsBell from '../pages/notifications/NotificationsBell'
 import { SidebarInset, SidebarProvider, SidebarTrigger } from '../components/ui/sidebar'
 import appStore from '../store'
-import { Crown, Mail, X, Zap } from 'lucide-react'
+import { Crown, X, Zap } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { Outlet } from 'react-router-dom'
 import { ClipLoader } from 'react-spinners'
@@ -16,6 +16,7 @@ import CreateFormFromTemplate from '../components/aqua_forms/CreateFormFromTempl
 import FormTemplateEditorShadcn from '../components/aqua_forms/FormTemplateEditorShadcn'
 import { AppSidebar } from '../components/app_sidebar'
 import WebsocketFragment from '@/components/navbar/WebsocketFragment'
+import { ScrollArea } from '@/components/ui/scroll-area'
 
 
 export default function NewShadcnLayoutWithSidebar() {
@@ -30,7 +31,7 @@ export default function NewShadcnLayoutWithSidebar() {
             //      openCreateTemplatePopUp,
             // setOpenCreateTemplatePopUp,
             openDialog,
-            setOpenDialog, 
+            setOpenDialog,
             formTemplates,
       } = useStore(appStore)
 
@@ -43,52 +44,7 @@ export default function NewShadcnLayoutWithSidebar() {
             return () => clearTimeout(timer)
       }, [])
 
-      // const [isDialogOpenPopUp, setIsDialogPopUp] = useState<OpenDialog | null>(null)
 
-      // useEffect(() => {
-      //       if (openDialog) {
-      //             setIsOpenCreateClaimPopUp(true)
-      //       } else {
-      //             setIsOpenCreateClaimPopUp(false)
-      //       }
-      // }, [openCreateClaimPopUp])
-
-      // const [isOpenCreateAquaSignPopUp, setIsOpenCreateAquaSignPopUp] = useState(false)
-      // const [isOpenCreateTemplatePopUp, setIsOpenCreateTemplatePopUp] = useState(false)
-      // const [isOpenCreateClaimPopUp, setIsOpenCreateClaimPopUp] = useState(false)
-      // const [isOpenCreateClaimAttestationPopUp, setIsOpenCreateClaimAttestationPopUp] = useState(false)
-
-      // useEffect(() => {
-      //       if (openCreateClaimPopUp) {
-      //             setIsOpenCreateClaimPopUp(true)
-      //       } else {
-      //             setIsOpenCreateClaimPopUp(false)
-      //       }
-      // }, [openCreateClaimPopUp])
-
-      // useEffect(() => {
-      //       if (openCreateAquaSignPopUp) {
-      //             setIsOpenCreateAquaSignPopUp(true)
-      //       } else {
-      //             setIsOpenCreateAquaSignPopUp(false)
-      //       }
-      // }, [openCreateAquaSignPopUp])
-
-      // useEffect(() => {
-      //       if (openCreateTemplatePopUp) {
-      //             setIsOpenCreateTemplatePopUp(true)
-      //       } else {
-      //             setIsOpenCreateTemplatePopUp(false)
-      //       }
-      // }, [openCreateTemplatePopUp])
-
-      // useEffect(() => {
-      //       if (openCreateClaimAttestationPopUp) {
-      //             setIsOpenCreateClaimAttestationPopUp(true)
-      //       } else {
-      //             setIsOpenCreateClaimAttestationPopUp(false)
-      //       }
-      // }, [openCreateClaimAttestationPopUp])
 
       if (loading) {
             return (
@@ -281,7 +237,9 @@ export default function NewShadcnLayoutWithSidebar() {
                               className={
                                     openDialog?.dialogType === 'form_template_editor' ?
                                           "[&>button]:hidden !max-w-[95vw] !w-[95vw] h-[95vh] max-h-[95vh] sm:!max-w-[95vw] sm:!w-[95vw] sm:h-[95vh] sm:max-h-[95vh] flex flex-col" :
-                                          "[&>button]:hidden sm:!max-w-[65vw] sm:!w-[65vw] sm:h-[65vh] sm:max-h-[65vh] !max-w-[95vw] !w-[95vw] h-[95vh] max-h-[95vh] flex flex-col p-0 gap-0"
+                                          openDialog?.dialogType === 'identity_attestation' ?
+                                                "[&>button]:hidden !max-w-[65vw] !w-[65vw] h-[85vh] max-h-[85vh] sm:!max-w-[65vw] sm:!w-[65vw] sm:h-[85vh] sm:max-h-[85vh] flex flex-col" :
+                                                "[&>button]:hidden sm:!max-w-[65vw] sm:!w-[65vw] sm:h-[65vh] sm:max-h-[65vh] !max-w-[95vw] !w-[95vw] h-[95vh] max-h-[95vh] flex flex-col p-0 gap-0"
                               }>
                               <div className="absolute top-4 right-4">
                                     <Button
@@ -296,60 +254,64 @@ export default function NewShadcnLayoutWithSidebar() {
                                     </Button>
                               </div>
 
-                              {openDialog?.dialogType === 'form_template_editor' && (
+                              <ScrollArea className="h-full">
 
-                                    <FormTemplateEditorShadcn
-                                          onSave={function (): void {
-                                                // setOpenCreateTemplatePopUp(false)
-                                                setOpenDialog(null)
-                                          }}
-                                    />)}
+                                    {openDialog?.dialogType === 'form_template_editor' && (
 
-                              {openDialog?.dialogType === 'aqua_sign' && (
-                                    <CreateFormFromTemplate
-                                          selectedTemplate={formTemplates.find(template => template.name === 'aqua_sign')!}
-                                          callBack={function (): void {
-                                                // setOpenCreateAquaSignPopUp(false)
-                                                setOpenDialog(null)
-                                          }}
-                                          openCreateTemplatePopUp={false}
-                                    />
-                              )}
+                                          <FormTemplateEditorShadcn
+                                                onSave={function (): void {
+                                                      // setOpenCreateTemplatePopUp(false)
+                                                      setOpenDialog(null)
+                                                }}
+                                          />)}
 
-                              {openDialog?.dialogType === 'identity_claim' && (
-                                    <CreateFormFromTemplate
-                                          selectedTemplate={formTemplates.find(template => template.name === 'identity_claim')!}
-                                          callBack={function (): void {
-                                                // setOpenCreateClaimPopUp(false)
-                                                setOpenDialog(null)
-                                          }}
-                                          openCreateTemplatePopUp={false}
-                                    />
-                              )}
+                                    {openDialog?.dialogType === 'aqua_sign' && (
+                                          <CreateFormFromTemplate
+                                                selectedTemplate={formTemplates.find(template => template.name === 'aqua_sign')!}
+                                                callBack={function (): void {
+                                                      // setOpenCreateAquaSignPopUp(false)
+                                                      setOpenDialog(null)
+                                                }}
+                                                openCreateTemplatePopUp={false}
+                                          />
+                                    )}
+
+                                    {openDialog?.dialogType === 'identity_claim' && (
+                                          <CreateFormFromTemplate
+                                                selectedTemplate={formTemplates.find(template => template.name === 'identity_claim')!}
+                                                callBack={function (): void {
+                                                      // setOpenCreateClaimPopUp(false)
+                                                      setOpenDialog(null)
+                                                }}
+                                                openCreateTemplatePopUp={false}
+                                          />
+                                    )}
 
 
-                              {openDialog?.dialogType === 'dns_claim' && (
-                                    <CreateFormFromTemplate
-                                          selectedTemplate={formTemplates.find(template => template.name === 'domain_claim')!}
-                                          callBack={function (): void {
-                                                // setOpenCreateClaimPopUp(false)
-                                                setOpenDialog(null)
-                                          }}
-                                          openCreateTemplatePopUp={false}
-                                    />
-                              )}
+                                    {openDialog?.dialogType === 'dns_claim' && (
+                                          <CreateFormFromTemplate
+                                                selectedTemplate={formTemplates.find(template => template.name === 'domain_claim')!}
+                                                callBack={function (): void {
+                                                      // setOpenCreateClaimPopUp(false)
+                                                      setOpenDialog(null)
+                                                }}
+                                                openCreateTemplatePopUp={false}
+                                          />
+                                    )}
 
-                              {openDialog?.dialogType === 'identity_attestation' && (
-                                    <CreateFormFromTemplate
-                                          selectedTemplate={formTemplates.find(template => template.name === 'identity_attestation')!}
-                                          callBack={function (): void {
-                                                // setOpenCreateClaimAttestationPopUp(false)
-                                                setOpenDialog(null)
-                                          }}
-                                          openCreateTemplatePopUp={false}
-                                    />
-                              )}
 
+                                    {openDialog?.dialogType === 'identity_attestation' && (
+                                          <CreateFormFromTemplate
+                                                selectedTemplate={formTemplates.find(template => template.name === 'identity_attestation')!}
+                                                callBack={function (): void {
+                                                      // setOpenCreateClaimAttestationPopUp(false)
+                                                      setOpenDialog(null)
+                                                }}
+                                                openCreateTemplatePopUp={false}
+                                          />
+                                    )}
+
+                              </ScrollArea>
 
 
                         </DialogContent>

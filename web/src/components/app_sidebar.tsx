@@ -8,7 +8,6 @@ import { formatBytes, getAquaTreeFileObject } from '@/utils/functions'
 import { useStore } from 'zustand'
 import appStore from '@/store'
 import { useState } from 'react'
-import { set } from 'date-fns'
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       const { files, setOpenDialog } = useStore(appStore)

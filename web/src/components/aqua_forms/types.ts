@@ -24,6 +24,7 @@ export interface FormTemplate {
       id: string
       name: string
       title: string
+      subtitle: string
       fields: FormField[]
       public?: boolean
 }

@@ -18,6 +18,7 @@ import { AlertCircle, FileText, Image, Link, Loader2, Pen, Plus, Trash2, Upload,
 import { Badge } from '../ui/badge'
 import { Separator } from '../ui/separator'
 import { ScrollArea } from '../ui/scroll-area'
+import FilePreview from '../file_preview'
 
 // const CreateFormFromTemplate  = ({ selectedTemplate, callBack, openCreateTemplatePopUp = false }: { selectedTemplate: FormTemplate, callBack: () => void, openCreateTemplatePopUp: boolean }) => {
 const CreateFormFromTemplate = ({ selectedTemplate, callBack }: { selectedTemplate: FormTemplate; callBack: () => void; openCreateTemplatePopUp: boolean }) => {
@@ -834,7 +835,12 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: { selectedTempla
                                           </div>
                                           <div>
                                                 <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900">Create {selectedTemplate?.title} Workflow</h1>
-                                                <p className="text-gray-600 mt-1">Set up a new document signing workflow with multiple signers</p>
+                                             {selectedTemplate?.subtitle ? 
+                                             <p className="text-gray-600 mt-1">{selectedTemplate.subtitle}</p>
+
+                                             : <></>
+                                             
+                                          }
                                           </div>
                                     </div>
 
@@ -842,7 +848,7 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: { selectedTempla
                                           Template: {selectedTemplate?.name}
                                     </Badge>
                               </div>
-                              <div className="pt-10">
+                              <div className="pt-5">
                                     <form onSubmit={createWorkflowFromTemplate} id="create-aqua-tree-form" className="space-y-8">
                                           {modalFormErorMessae.length > 0 && (
                                                 <Alert variant="destructive" className="border-red-200 bg-red-50">
@@ -1072,9 +1078,7 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: { selectedTempla
                                                       <div >
                                                             <div className="space-y-4">
                                                               <h5>Claim To Be attested</h5>
-                                                              {
-                                                            
-                                                              }
+                                                                <FilePreview fileInfo={getAquaTreeFileObject(selectedFileInfo!)!} />
                                                             </div>
                                                             <Separator className="my-8" />
                                                       </div>

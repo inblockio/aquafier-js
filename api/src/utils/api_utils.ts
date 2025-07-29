@@ -235,6 +235,9 @@ const setUpSystemTemplates = async () => {
     let templateFieldsData = path.join(assetsPath, `${templateItem}_fields.json`);
     let templateAquaTreeData = path.join(assetsPath, `${templateItem}.json.aqua.json`);
 
+    let subtitles : Map<string, string> = new Map();
+    subtitles.set("access_agreement", "Create a new access agreement workflow");
+    subtitles.set("aqua_sign", "Create a new access agreement workflow");
 
     // template
     await prisma.aquaTemplate.upsert({
@@ -247,6 +250,7 @@ const setUpSystemTemplates = async () => {
         owner: SYSTEM_WALLET_ADDRESS,
         public: true,
         title: convertNameToLabel(templateItem),
+        subtitle: subtitles.get(templateItem) || "",
         created_at: today.toDateString()
       },
       update: {
