@@ -30,7 +30,7 @@ export default function NewShadcnLayoutWithSidebar() {
             //      openCreateTemplatePopUp,
             // setOpenCreateTemplatePopUp,
             openDialog,
-            setOpenDialog,
+            setOpenDialog, 
             formTemplates,
       } = useStore(appStore)
 
