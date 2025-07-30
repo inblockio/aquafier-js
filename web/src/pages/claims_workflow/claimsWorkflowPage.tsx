@@ -226,12 +226,12 @@ export default function ClaimsWorkflowPage() {
                                                 </div>
                                           ) : null}
 
-{processedInfo?.walletAddress != session?.address && activeTabData?.id == `claims_attestation` ? (
+                                          {processedInfo?.walletAddress != session?.address && activeTabData?.id == `claims_attestation` ? (
                                                 <div className="flex items-center gap-3">
                                                       <AttestAquaClaim file={selectedFileInfo!!} index={1} />
                                                 </div>
                                           ) : null}
-                                          
+
                                     </div>
 
                                     {/* Content Area */}
@@ -291,7 +291,7 @@ export default function ClaimsWorkflowPage() {
                                                 <div className="bg-gray-50 rounded-lg p-6">
                                                       <h3 className="text-lg font-medium text-gray-900 mb-4 text-left">Attestation History</h3>
 
-                                                      
+
                                                       {isLoadingAttestations ? (
                                                             <div className="flex justify-center py-8">
                                                                   <ClipLoader color={'blue'} loading={true} size={40} aria-label="Loading Spinner" data-testid="loader" />

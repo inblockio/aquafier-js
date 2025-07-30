@@ -2,6 +2,7 @@ import { digTxtRecordsGoogle, extractDNSClaimInfo, formatCryptoAddress } from '@
 import { useEffect, useState } from 'react'
 import { TbWorldWww } from 'react-icons/tb'
 import { FaCheck, FaTimes } from 'react-icons/fa'
+import { verifyProofV2 } from '@/utils/dnsClaimVerification'
 
 interface IDNSClaim {
       claimInfo: Record<string, string>
@@ -123,8 +124,18 @@ const DNSClaim = ({ claimInfo }: IDNSClaim) => {
             }
       }
 
+      const getVerificationLogs = async () => {
+            const verifyProofResult = await verifyProofV2("inblock.io", "wallet")
+            console.log("verifyProofResult", verifyProofResult)
+            // setVerificationLogs(logs)
+      }
+
       useEffect(() => {
             getRecords()
+      }, [])
+
+      useEffect(() => {
+            getVerificationLogs()
       }, [])
 
       return (
