@@ -2,7 +2,7 @@ import { canDeleteRevision, deleteRevisionAndChildren } from '../utils/quick_rev
 import { prisma } from '../database/db';
 import { DeleteRevision, FetchAquaTreeRequest, SaveRevision, SaveRevisionForUser } from '../models/request_models';
 import { getHost, getPort } from '../utils/api_utils';
-import {  deleteAquaTree, fetchAquatreeFoUser, getSignatureAquaTrees, saveARevisionInAquaTree } from '../utils/revisions_utils';
+import {  deleteAquaTree, fetchAquatreeFoUser, getSignatureAquaTrees, getUserApiFileInfo, saveARevisionInAquaTree } from '../utils/revisions_utils';
 import { AquaTree, FileObject, OrderRevisionInAquaTree, Revision } from 'aqua-js-sdk';
 import { FastifyInstance } from 'fastify';
 import { sendToUserWebsockerAMessage } from './websocketController';
@@ -53,6 +53,21 @@ export default async function revisionsController(fastify: FastifyInstance) {
             const [anAquaTree, fileObject] = await createAquaTreeFromRevisions(latestRevisionHash, url)
 
             let sortedAquaTree = OrderRevisionInAquaTree(anAquaTree)
+            // console.log("Attestation: ", JSON.stringify(sortedAquaTree, null, 4))
+            // try{
+            //     const revisionHashes = Object.keys(sortedAquaTree.revisions)
+            //     const firstRevision = sortedAquaTree.revisions[revisionHashes[0]]
+            //     console.log("First revision: ", JSON.stringify(firstRevision, null, 4))
+            //     if(firstRevision.revision_type == "form" && firstRevision.forms_identity_claim_id){
+            //         const claimerWalletAddress = firstRevision.forms_claim_wallet_address
+            //         // Websocket message to the claimer
+            //         sendToUserWebsockerAMessage(claimerWalletAddress, WebSocketActions.REFETCH_FILES)
+            //     }
+                
+            // }
+            // catch(e){
+            //     console.log(`Error ${e}`);
+            // }
             displayData.push({
                 aquaTree: sortedAquaTree,
                 fileObject: fileObject
@@ -217,19 +232,21 @@ export default async function revisionsController(fastify: FastifyInstance) {
 
             // fetch all from latetst
 
-            let latest = await prisma.latest.findMany({
-                where: {
-                    user: session.address
-                }
-            });
+            // let latest = await prisma.latest.findMany({
+            //     where: {
+            //         user: session.address
+            //     }
+            // });
 
-            if (latest.length == 0) {
-                return reply.code(200).send({ data: [] });
-            }
+            // if (latest.length == 0) {
+            //     return reply.code(200).send({ data: [] });
+            // }
 
 
 
-            let displayData = await fetchAquatreeFoUser(url, latest)
+            // let displayData = await fetchAquatreeFoUser(url, latest)
+
+           let displayData = await getUserApiFileInfo(url,session.address )
 
             return reply.code(200).send({
                 success: true,

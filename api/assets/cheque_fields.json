@@ -1,32 +1,31 @@
 [
-
-    {
-      "name": "sender",
-      "label": "Sender",
-      "type": "wallet_address",
-      "required": true,
-      "isArray": false
-    },
-    {
-      "name": "receiver",
-      "label": "Receiver",
-      "type": "wallet_address",
-      "required": true,
-      "isArray": false
-    },
-    {
-        "name": "currency",
-        "label": "Currency",
-        "type": "number",
-        "required": true,
-        "isArray": false
-      },
-
-      {
-        "name": "note",
-        "label": "Note",
-        "type": "string",
-        "required": false,
-        "isArray": false
-      }
-  ]
+  {
+    "name": "sender",
+    "label": "Sender",
+    "type": "wallet_address",
+    "required": true,
+    "isArray": false,
+    "isEditable": false
+  },
+  {
+    "name": "receiver",
+    "label": "Receiver",
+    "type": "wallet_address",
+    "required": true,
+    "isArray": false
+  },
+  {
+    "name": "currency",
+    "label": "Currency",
+    "type": "number",
+    "required": true,
+    "isArray": false
+  },
+  {
+    "name": "note",
+    "label": "Note",
+    "type": "string",
+    "required": false,
+    "isArray": false
+  }
+]

@@ -5,12 +5,14 @@ env:
   IMAGE_NAME: ${{ github.repository }}
 
 on:
+  workflow_dispatch:
+    
   push:
     branches:
       - main
       - dev
-      - playwright
-      - add-additional-tags
+      # - playwright
+      # - add-additional-tags
 
 jobs:
   build:

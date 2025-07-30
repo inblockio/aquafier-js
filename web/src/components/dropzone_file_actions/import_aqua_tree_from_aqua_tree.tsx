@@ -1,98 +1,131 @@
-import { LuCheck, LuChevronRight, LuImport, LuMinus, LuX } from "react-icons/lu";
-import { Button } from "../chakra-ui/button";
-import axios from "axios";
-import { useStore } from "zustand";
-import appStore from "../../store";
-import { useEffect, useState } from "react";
-import { ApiFileInfo } from "../../models/FileInfo";
-import { toaster } from "../chakra-ui/toaster";
-import { formatCryptoAddress } from "../../utils/functions";
-import { Container, DialogCloseTrigger, Group, List, Text } from "@chakra-ui/react";
+import { LuCheck, LuChevronRight, LuImport, LuMinus, LuX } from 'react-icons/lu'
+import axios from 'axios'
+import { useStore } from 'zustand'
+import appStore from '../../store'
+import { useEffect, useState } from 'react'
+import { ApiFileInfo } from '../../models/FileInfo'
+import { formatCryptoAddress } from '../../utils/functions'
+import { useNavigate } from 'react-router-dom'
+import { analyzeAndMergeRevisions } from '../../utils/aqua_funcs'
+import { RevisionsComparisonResult } from '../../models/revision_merge'
+import { OrderRevisionInAquaTree, Revision } from 'aqua-js-sdk'
+import { BtnContent, ImportChainFromChainProps } from '../../types/types'
+import { toast } from '@/components/ui/use-toast'
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
+import { Button } from '@/components/ui/button'
+import {
+    Dialog,
+    DialogContent,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+} from '@/components/ui/dialog'
+// import { toast } from "@/components/ui/use-toast";
+// import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+// import { Button } from "@/components/ui/button";
+// import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogTrigger } from "@/components/ui/dialog";
+// import { Card, CardContent } from "@/components/ui/card";
+// import { Badge } from "@/components/ui/badge";
+// import { Separator } from "@/components/ui/separator";
 
-import { Alert } from "../chakra-ui/alert";
-import { useNavigate } from "react-router-dom";
-import { analyzeAndMergeRevisions } from "../../utils/aqua_funcs";
-import { DialogActionTrigger, DialogBody, DialogContent, DialogFooter, DialogHeader, DialogRoot, DialogTitle } from "../chakra-ui/dialog";
-import { TimelineConnector, TimelineContent, TimelineDescription, TimelineItem, TimelineRoot, TimelineTitle } from "../chakra-ui/timeline";
-import { RevisionsComparisonResult } from "../../models/revision_merge";
-import { OrderRevisionInAquaTree, Revision } from "aqua-js-sdk";
-import { BtnContent, ImportChainFromChainProps } from "../../types/types";
-
-
-
-export const ImportAquaChainFromChain = ({ fileInfo, isVerificationSuccessful, contractData }: ImportChainFromChainProps) => {
-
+export const ImportAquaChainFromChain = ({
+    fileInfo,
+    isVerificationSuccessful,
+    contractData,
+}: ImportChainFromChainProps) => {
     const [uploading, setUploading] = useState(false)
     const [_uploaded, setUploaded] = useState(false)
     const [dbFiles, setDbFiles] = useState<ApiFileInfo[]>([])
-    const [comparisonResult, setComparisonResult] = useState<RevisionsComparisonResult | null>(null)
+    const [comparisonResult, setComparisonResult] =
+        useState<RevisionsComparisonResult | null>(null)
     const [modalOpen, setModalOpen] = useState(false)
 
-    // const [_existingFileId, _setExistingFileId] = useState<number | null>(null)
-    const [_lastIdenticalRevisionHash, setLastIdenticalRevisionHash] = useState<string | null>(null)
+    const [_lastIdenticalRevisionHash, setLastIdenticalRevisionHash] = useState<
+        string | null
+    >(null)
     const [_revisionsToImport, setRevisionsToImport] = useState<Revision[]>([])
     const [updateMessage, setUpdateMessage] = useState<string | null>(null)
     const [btnText, setBtnText] = useState<BtnContent>({
-        text: "Submit chain",
-        color: "blue"
+        text: 'Submit chain',
+        color: 'blue',
     })
 
-    //  console.log(revisionsToImport)
-
     const { files, backend_url, session } = useStore(appStore)
-
-    let navigate = useNavigate();
-
-    //  console.log("Chain to import: ", fileInfo)
-    //  console.log("My db files: ", dbFiles)
+    const navigate = useNavigate()
 
     const importAquaChain = async () => {
         // Early check to prevent recursion if already processing
-        if (uploading) return;
+        if (uploading) return
 
-        const existingChainFile = dbFiles.find(file => Object.keys(file?.aquaTree?.revisions ?? {})[0] === Object.keys(fileInfo?.aquaTree?.revisions ?? {})[0])
-
-        // 1. update local chain with new revisions. (importing chain is bigger)
-        // 2. delete revsiion in local chain if the locl one has more revision than the importing one (ie remote has less and theyare the same revision)
-        // 3. if the  importing chain has  same length or bigger/smmal but divergent revision
+        const existingChainFile = dbFiles.find(
+            file =>
+                Object.keys(file?.aquaTree?.revisions ?? {})[0] ===
+                Object.keys(fileInfo?.aquaTree?.revisions ?? {})[0]
+        )
 
         if (existingChainFile) {
-            const existingFileRevisions = Object.keys(existingChainFile?.aquaTree?.revisions ?? {})
-            const fileToImportRevisions = Object.keys(fileInfo?.aquaTree?.revisions ?? {})
+            const existingFileRevisions = Object.keys(
+                existingChainFile?.aquaTree?.revisions ?? {}
+            )
+            const fileToImportRevisions = Object.keys(
+                fileInfo?.aquaTree?.revisions ?? {}
+            )
 
-            ////  console.log(existingFileRevisions, fileToImportRevisions)
-            const mergeResult = analyzeAndMergeRevisions(existingFileRevisions, fileToImportRevisions)
-            let _revisionsToImport: Revision[] = []
+            const mergeResult = analyzeAndMergeRevisions(
+                existingFileRevisions,
+                fileToImportRevisions
+            )
+            const _revisionsToImport: Revision[] = []
 
-            if (mergeResult.existingRevisionsLength < mergeResult.upcomingRevisionsLength) {
-                setUpdateMessage("Importing chain is longer than existing chain, this will add new revisions to your local chain")
+            if (
+                mergeResult.existingRevisionsLength <
+                mergeResult.upcomingRevisionsLength
+            ) {
+                setUpdateMessage(
+                    'Importing chain is longer than existing chain, this will add new revisions to your local chain'
+                )
                 setBtnText({
-                    text: "Update Local Chain",
-                    color: "green",
+                    text: 'Update Local Chain',
+                    color: 'green',
                 })
             }
 
-            if (mergeResult.existingRevisionsLength > mergeResult.upcomingRevisionsLength) {
-                setUpdateMessage("Existing chain is longer than importing chain, this will delete some revisions in your local chain")
+            if (
+                mergeResult.existingRevisionsLength >
+                mergeResult.upcomingRevisionsLength
+            ) {
+                setUpdateMessage(
+                    'Existing chain is longer than importing chain, this will delete some revisions in your local chain'
+                )
                 setBtnText({
-                    text: "Rebase Local Chain",
-                    color: "yellow"
+                    text: 'Rebase Local Chain',
+                    color: 'yellow',
                 })
             }
 
-            if (mergeResult.existingRevisionsLength === mergeResult.upcomingRevisionsLength && mergeResult.divergences.length > 0) {
-                setUpdateMessage("Chains are different, this will merge the chains, your local revisions will be deleted up to where the chains diverge")
+            if (
+                mergeResult.existingRevisionsLength ===
+                    mergeResult.upcomingRevisionsLength &&
+                mergeResult.divergences.length > 0
+            ) {
+                setUpdateMessage(
+                    'Chains are different, this will merge the chains, your local revisions will be deleted up to where the chains diverge'
+                )
                 setBtnText({
-                    text: "Merge Chains",
-                    color: "red"
+                    text: 'Merge Chains',
+                    color: 'red',
                 })
             }
 
             if (mergeResult.divergences.length > 0) {
                 for (let i = 0; i < mergeResult.divergences.length; i++) {
-                    const div = mergeResult.divergences[i];
+                    const div = mergeResult.divergences[i]
                     if (div.upcomingRevisionHash) {
-                        _revisionsToImport.push(fileInfo?.aquaTree?.revisions[div.upcomingRevisionHash]!!)
+                        _revisionsToImport.push(
+                            fileInfo?.aquaTree?.revisions[
+                                div.upcomingRevisionHash
+                            ]!
+                        )
                     }
                 }
             }
@@ -108,348 +141,491 @@ export const ImportAquaChainFromChain = ({ fileInfo, isVerificationSuccessful, c
 
         try {
             const url = `${backend_url}/transfer_chain`
-            const reorderedRevisions = OrderRevisionInAquaTree(fileInfo.aquaTree!!)
+            const reorderedRevisions = OrderRevisionInAquaTree(
+                fileInfo.aquaTree!
+            )
             const revisions = reorderedRevisions.revisions
             const revisionHashes = Object.keys(revisions)
             const latestRevisionHash = revisionHashes[revisionHashes.length - 1]
-            console.log("Latest revision hash: ", latestRevisionHash)
+            console.log('Latest revision hash: ', latestRevisionHash)
 
-            const res = await axios.post(url, {
-                latestRevisionHash: latestRevisionHash,
-                userAddress: contractData.sender
-            }, {
-                headers: {
-                    "nonce": session?.nonce
+            const res = await axios.post(
+                url,
+                {
+                    latestRevisionHash: latestRevisionHash,
+                    userAddress: contractData.sender,
+                },
+                {
+                    headers: {
+                        nonce: session?.nonce,
+                    },
                 }
-            })
+            )
 
-            console.log("Transfer chain res: ", res)
+            console.log('Transfer chain res: ', res)
             if (res.status === 200) {
-                toaster.create({
-                    description: "Aqua Chain imported successfully",
-                    type: "success"
+                toast({
+                    description: 'Aqua Chain imported successfully',
+                    variant: 'default',
                 })
 
                 // Use setTimeout to ensure state is updated before navigation
                 setTimeout(() => {
-                    navigate("/loading?reload=true");
-                }, 500);
+                    navigate('/app/loading?reload=true')
+                }, 500)
             } else {
-                toaster.create({
-                    description: "Failed to import chain",
-                    type: "error"
+                toast({
+                    description: 'Failed to import chain',
+                    variant: 'destructive',
                 })
             }
 
             setUploading(false)
             setUploaded(true)
-            return;
+            return
         } catch (error) {
             setUploading(false)
-            toaster.create({
+            toast({
                 description: `Failed to import chain: ${error}`,
-                type: "error"
-            })
-        }
-    };
-
-    const handleMergeRevisions = async () => {
-
-
-        try {
-            const url = `${backend_url}/merge_chain`
-            const reorderedRevisions = OrderRevisionInAquaTree(fileInfo.aquaTree!!)
-            const revisions = reorderedRevisions.revisions
-            const revisionHashes = Object.keys(revisions)
-            const latestRevisionHash = revisionHashes[revisionHashes.length - 1]
-            // console.log("Latest revision hash: ", latestRevisionHash)
-
-            const res = await axios.post(url, {
-                latestRevisionHash: latestRevisionHash,
-                userAddress: contractData.sender,
-                mergeStrategy: "fork"
-            }, {
-                headers: {
-                    "nonce": session?.nonce
-                }
-            })
-
-            // console.log("Transfer chain res: ", res)
-            if (res.status === 200) {
-                toaster.create({
-                    description: "Aqua Chain imported successfully",
-                    type: "success"
-                })
-
-                // Use setTimeout to ensure state is updated before navigation
-                setTimeout(() => {
-                    navigate("/loading?reload=true");
-                }, 500);
-            } else {
-                toaster.create({
-                    description: "Failed to import chain",
-                    type: "error"
-                })
-            }
-
-            setUploading(false)
-            setUploaded(true)
-            return;
-        } catch (error) {
-            setUploading(false)
-            toaster.create({
-                description: `Failed to import chain: ${error}`,
-                type: "error"
+                variant: 'destructive',
             })
         }
     }
 
-    //  console.log(comparisonResult)
+    const handleMergeRevisions = async () => {
+        try {
+            const url = `${backend_url}/merge_chain`
+            const reorderedRevisions = OrderRevisionInAquaTree(
+                fileInfo.aquaTree!
+            )
+            const revisions = reorderedRevisions.revisions
+            const revisionHashes = Object.keys(revisions)
+            const latestRevisionHash = revisionHashes[revisionHashes.length - 1]
+
+            const res = await axios.post(
+                url,
+                {
+                    latestRevisionHash: latestRevisionHash,
+                    userAddress: contractData.sender,
+                    mergeStrategy: 'fork',
+                },
+                {
+                    headers: {
+                        nonce: session?.nonce,
+                    },
+                }
+            )
+
+            if (res.status === 200) {
+                toast({
+                    description: 'Aqua Chain imported successfully',
+                    variant: 'default',
+                })
+
+                // Use setTimeout to ensure state is updated before navigation
+                setTimeout(() => {
+                    navigate('/loading?reload=true')
+                }, 500)
+            } else {
+                toast({
+                    description: 'Failed to import chain',
+                    variant: 'destructive',
+                })
+            }
+
+            setUploading(false)
+            setUploaded(true)
+            return
+        } catch (error) {
+            setUploading(false)
+            toast({
+                description: `Failed to import chain: ${error}`,
+                variant: 'destructive',
+            })
+        }
+    }
 
     useEffect(() => {
         // Only update dbFiles if files have actually changed
         // This prevents unnecessary re-renders and potential recursion
         if (JSON.stringify(files) !== JSON.stringify(dbFiles)) {
-            setDbFiles(files);
+            setDbFiles(files)
         }
-    }, [files]);
+    }, [files])
+
+    const getButtonVariant = (color: string) => {
+        switch (color) {
+            case 'green':
+                return 'default'
+            case 'yellow':
+                return 'secondary'
+            case 'red':
+                return 'destructive'
+            default:
+                return 'default'
+        }
+    }
+
+    // const getTimelineItemColor = (color: string) => {
+    //     switch (color) {
+    //         case 'green': return 'text-green-600';
+    //         case 'red': return 'text-red-600';
+    //         case 'yellow': return 'text-yellow-600';
+    //         case 'blue': return 'text-blue-600';
+    //         case 'info': return 'text-blue-600';
+    //         default: return 'text-gray-600';
+    //     }
+    // };
+
+    // const TimelineItem = ({ children, color = 'gray' }: { children: React.ReactNode, color?: string }) => (
+    //     <div className="flex gap-4 pb-6 last:pb-0">
+    //         <div className={`flex h-8 w-8 items-center justify-center rounded-full border-2 ${getTimelineItemColor(color)} bg-background`}>
+    //             {children}
+    //         </div>
+    //         <div className="flex-1 space-y-1">
+    //             <div className="text-sm font-medium">{children}</div>
+    //         </div>
+    //     </div>
+    // );
 
     return (
-        <Container maxW={'xl'}>
-            <Alert title="Import Aqua Chain" icon={<LuImport />}>
-                <Group gap={"10"}>
-                    <Text>
-                        Do you want to import this Aqua Chain?
-                    </Text>
-                    <Button data-testid="import-aqua-chain-1-button" size={'lg'} colorPalette={'blue'} variant={'solid'} onClick={importAquaChain}
-                   
-                    >
-                        <LuImport />
-                        Import
-                    </Button>
-                </Group>
+        <div className="container mx-auto max-w-4xl px-4">
+            <Alert className="mb-6">
+                <LuImport className="h-4 w-4" />
+                <AlertTitle>Import Aqua Chain</AlertTitle>
+                <AlertDescription>
+                    <div className="mt-4 space-y-4">
+                        <p>Do you want to import this Aqua Chain?</p>
+                        <Button
+                            data-testid="import-aqua-chain-1-button"
+                            size="lg"
+                            onClick={importAquaChain}
+                            className="w-auto"
+                        >
+                            <LuImport className="mr-2 h-4 w-4" />
+                            Import
+                        </Button>
+                    </div>
+                </AlertDescription>
             </Alert>
-           
-            <DialogRoot open={modalOpen} onOpenChange={e => setModalOpen(e.open)}>
-               
-                <DialogContent borderRadius={'lg'}>
+
+            <Dialog open={modalOpen} onOpenChange={setModalOpen}>
+                <DialogContent className="max-w-2xl rounded-lg">
                     <DialogHeader>
                         <DialogTitle>Aqua Chain Import</DialogTitle>
                     </DialogHeader>
-                    <DialogBody>
-                        <TimelineRoot>
-                            <TimelineItem colorPalette={isVerificationSuccessful ? 'green' : 'red'}>
-                                <TimelineConnector>
-                                    <LuCheck />
-                                </TimelineConnector>
-                                <TimelineContent colorPalette={'gray'}>
-                                    <TimelineTitle>Verification status</TimelineTitle>
-                                    <TimelineDescription>Verification successful</TimelineDescription>
-                                </TimelineContent>
-                            </TimelineItem>
 
-                            {
-                                comparisonResult?.identical ? (
+                    <div className="space-y-6">
+                        {/* Timeline */}
+                        <div className="space-y-4">
+                            {/* Verification Status */}
+                            <div className="flex gap-4">
+                                <div
+                                    className={`flex h-8 w-8 items-center justify-center rounded-full border-2 ${
+                                        isVerificationSuccessful
+                                            ? 'text-green-600 border-green-600'
+                                            : 'text-red-600 border-red-600'
+                                    } bg-background`}
+                                >
+                                    <LuCheck className="h-4 w-4" />
+                                </div>
+                                <div className="flex-1">
+                                    <h4 className="text-sm font-medium">
+                                        Verification status
+                                    </h4>
+                                    <p className="text-sm text-muted-foreground">
+                                        Verification successful
+                                    </p>
+                                </div>
+                            </div>
+
+                            {/* Chains Identical */}
+                            {comparisonResult?.identical && (
+                                <div className="flex gap-4">
+                                    <div className="flex h-8 w-8 items-center justify-center rounded-full border-2 text-green-600 border-green-600 bg-background">
+                                        <LuCheck className="h-4 w-4" />
+                                    </div>
+                                    <div className="flex-1">
+                                        <h4 className="text-sm font-medium">
+                                            Chains Identical
+                                        </h4>
+                                        <p className="text-sm text-muted-foreground">
+                                            Chains are identical
+                                        </p>
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Chain Length Comparison */}
+                            {(comparisonResult?.existingRevisionsLength ?? 0) >
+                                (comparisonResult?.upcomingRevisionsLength ??
+                                    0) && (
+                                <div className="flex gap-4">
+                                    <div className="flex h-8 w-8 items-center justify-center rounded-full border-2 text-green-600 border-green-600 bg-background">
+                                        <LuCheck className="h-4 w-4" />
+                                    </div>
+                                    <div className="flex-1">
+                                        <h4 className="text-sm font-medium">
+                                            Chain Difference
+                                        </h4>
+                                        <p className="text-sm text-muted-foreground">
+                                            Existing Chain is Longer than
+                                            Upcoming Chain
+                                        </p>
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Same Length */}
+                            {comparisonResult?.sameLength && (
+                                <div className="flex gap-4">
+                                    <div className="flex h-8 w-8 items-center justify-center rounded-full border-2 text-green-600 border-green-600 bg-background">
+                                        <LuCheck className="h-4 w-4" />
+                                    </div>
+                                    <div className="flex-1">
+                                        <h4 className="text-sm font-medium">
+                                            Chains Length
+                                        </h4>
+                                        <p className="text-sm text-muted-foreground">
+                                            Chains are of same Length
+                                        </p>
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Divergences - Existing is shorter or equal */}
+                            {(comparisonResult?.divergences?.length ?? 0) > 0 &&
+                                (comparisonResult?.existingRevisionsLength ??
+                                    0) <=
+                                    (comparisonResult?.upcomingRevisionsLength ??
+                                        0) && (
                                     <>
-                                        <TimelineItem colorPalette={'green'}>
-                                            <TimelineConnector>
-                                                <LuCheck />
-                                            </TimelineConnector>
-                                            <TimelineContent>
-                                                <TimelineTitle textStyle="sm">Chains Identical</TimelineTitle>
-                                                <TimelineDescription>Chains are identical</TimelineDescription>
-                                            </TimelineContent>
-                                        </TimelineItem>
-                                    </>
-                                ) : null
-                            }
+                                        <div className="flex gap-4">
+                                            <div className="flex h-8 w-8 items-center justify-center rounded-full border-2 text-gray-600 border-gray-600 bg-background">
+                                                <LuX className="h-4 w-4" />
+                                            </div>
+                                            <div className="flex-1">
+                                                <h4 className="text-sm font-medium">
+                                                    Chains are Different
+                                                </h4>
+                                                <div className="mt-2 space-y-1">
+                                                    {comparisonResult?.divergences.map(
+                                                        (diff, i: number) => (
+                                                            <div
+                                                                key={`diff_${i}`}
+                                                                className="text-sm"
+                                                            >
+                                                                {diff.existingRevisionHash ? (
+                                                                    <div className="flex items-center gap-2">
+                                                                        <span className="line-through text-red-600">
+                                                                            {formatCryptoAddress(
+                                                                                diff.existingRevisionHash ??
+                                                                                    '',
+                                                                                15,
+                                                                                4
+                                                                            )}
+                                                                        </span>
+                                                                        <LuChevronRight className="h-3 w-3" />
+                                                                        <span>
+                                                                            {formatCryptoAddress(
+                                                                                diff.upcomingRevisionHash ??
+                                                                                    '',
+                                                                                15,
+                                                                                4
+                                                                            )}
+                                                                        </span>
+                                                                    </div>
+                                                                ) : (
+                                                                    <span>
+                                                                        {formatCryptoAddress(
+                                                                            diff.upcomingRevisionHash ??
+                                                                                '',
+                                                                            20,
+                                                                            4
+                                                                        )}
+                                                                    </span>
+                                                                )}
+                                                            </div>
+                                                        )
+                                                    )}
+                                                </div>
+                                            </div>
+                                        </div>
 
-                            {
-                                (comparisonResult?.existingRevisionsLength ?? 0) > (comparisonResult?.upcomingRevisionsLength ?? 0) ? (
-                                    <>
-                                        <TimelineItem colorPalette={'green'}>
-                                            <TimelineConnector>
-                                                <LuCheck />
-                                            </TimelineConnector>
-                                            <TimelineContent>
-                                                <TimelineTitle textStyle="sm">Chain Difference</TimelineTitle>
-                                                <TimelineDescription>Existing Chain is Longer than Upcoming Chain</TimelineDescription>
-                                            </TimelineContent>
-                                        </TimelineItem>
-                                    </>
-                                ) : null
-                            }
-
-                            {
-                                comparisonResult?.sameLength ? (
-                                    <>
-                                        <TimelineItem colorPalette={'green'}>
-                                            <TimelineConnector>
-                                                <LuCheck />
-                                            </TimelineConnector>
-                                            <TimelineContent>
-                                                <TimelineTitle textStyle="sm">Chains Length</TimelineTitle>
-                                                <TimelineDescription>Chains are of same Length</TimelineDescription>
-                                            </TimelineContent>
-                                        </TimelineItem>
-                                    </>
-                                ) : null
-                            }
-
-
-                            {
-                                (
-                                    (comparisonResult?.divergences?.length ?? 0) > 0
-                                    && (comparisonResult?.existingRevisionsLength ?? 0) <= (comparisonResult?.upcomingRevisionsLength ?? 0)
-                                    // && isVerificationSuccessful // We won't reach here since by then the import button will be disabled
-                                ) ? (
-                                    <>
-                                        <TimelineItem colorPalette={'gray'}>
-                                            <TimelineConnector>
-                                                <LuX />
-                                            </TimelineConnector>
-                                            <TimelineContent>
-                                                <TimelineTitle textStyle="sm">Chains are Different</TimelineTitle>
-                                                {/* <TimelineDescription>Chains have divergencies</TimelineDescription> */}
-                                                <List.Root>
-                                                    {
-                                                        comparisonResult?.divergences.map((diff, i: number) => (
-                                                            <List.Item key={`diff_${i}`} fontSize={'sm'}>
-                                                                {
-                                                                    diff.existingRevisionHash ? (
-                                                                        <Group>
-                                                                            <Text textDecoration={'line-through'} style={{ textDecorationColor: 'red', color: "red" }}>
-                                                                                {formatCryptoAddress(diff.existingRevisionHash ?? "", 15, 4)}
-                                                                            </Text>
-                                                                            <LuChevronRight />
-                                                                            <Text>
-                                                                                {formatCryptoAddress(diff.upcomingRevisionHash ?? "", 15, 4)}
-                                                                            </Text>
-                                                                        </Group>
-                                                                    ) : (
-                                                                        <>
-                                                                            {formatCryptoAddress(diff.upcomingRevisionHash ?? "", 20, 4)}
-                                                                        </>
-                                                                    )
-                                                                }
-                                                            </List.Item>
-                                                        ))
-                                                    }
-                                                </List.Root>
-                                            </TimelineContent>
-                                        </TimelineItem>
-
-                                        <TimelineItem colorPalette={'info'}>
-                                            <TimelineConnector>
-                                                <LuCheck />
-                                            </TimelineConnector>
-                                            <TimelineContent>
-                                                <TimelineTitle textStyle="sm">Action</TimelineTitle>
-                                                <TimelineDescription>{btnText.text}</TimelineDescription>
-                                                <Alert title="Action Not reversible!" status={'warning'}>
-                                                    {/* This action will delete some revision(s) in your local Aqua Chain */}
-                                                    {updateMessage}
+                                        <div className="flex gap-4">
+                                            <div className="flex h-8 w-8 items-center justify-center rounded-full border-2 text-blue-600 border-blue-600 bg-background">
+                                                <LuCheck className="h-4 w-4" />
+                                            </div>
+                                            <div className="flex-1">
+                                                <h4 className="text-sm font-medium">
+                                                    Action
+                                                </h4>
+                                                <p className="text-sm text-muted-foreground">
+                                                    {btnText.text}
+                                                </p>
+                                                <Alert className="mt-2">
+                                                    <AlertTitle>
+                                                        Action Not reversible!
+                                                    </AlertTitle>
+                                                    <AlertDescription>
+                                                        {updateMessage}
+                                                    </AlertDescription>
                                                 </Alert>
-                                                <Group>
-                                                    <Button  data-testid="action-32-button" size={'xs'} borderRadius={'md'} colorPalette={btnText.color} onClick={handleMergeRevisions} loading={uploading}>{btnText.text}</Button>
-                                                </Group>
-                                            </TimelineContent>
-                                        </TimelineItem>
+                                                <div className="mt-3">
+                                                    <Button
+                                                        data-testid="action-32-button"
+                                                        size="sm"
+                                                        variant={getButtonVariant(
+                                                            btnText.color
+                                                        )}
+                                                        onClick={
+                                                            handleMergeRevisions
+                                                        }
+                                                        disabled={uploading}
+                                                    >
+                                                        {uploading
+                                                            ? 'Processing...'
+                                                            : btnText.text}
+                                                    </Button>
+                                                </div>
+                                            </div>
+                                        </div>
                                     </>
-                                ) : null
-                            }
+                                )}
 
-                            {
-                                (
-                                    (comparisonResult?.divergences?.length ?? 0) > 0
-                                    && (comparisonResult?.existingRevisionsLength ?? 0) > (comparisonResult?.upcomingRevisionsLength ?? 0)
-                                    // && isVerificationSuccessful // We won't reach here since by then the import button will be disabled
-                                ) ? (
+                            {/* Divergences - Existing is longer */}
+                            {(comparisonResult?.divergences?.length ?? 0) > 0 &&
+                                (comparisonResult?.existingRevisionsLength ??
+                                    0) >
+                                    (comparisonResult?.upcomingRevisionsLength ??
+                                        0) && (
                                     <>
-                                        <TimelineItem colorPalette={'gray'}>
-                                            <TimelineConnector>
-                                                <LuX />
-                                            </TimelineConnector>
-                                            <TimelineContent>
-                                                <TimelineTitle textStyle="sm">Chains are Different</TimelineTitle>
-                                                {/* <TimelineDescription>Chains have divergencies</TimelineDescription> */}
-                                                <List.Root>
-                                                    {
-                                                        comparisonResult?.divergences.map((diff, i: number) => (
-                                                            <List.Item key={`diff_${i}`} fontSize={'sm'}>
-                                                                {
-                                                                    diff.existingRevisionHash ? (
-                                                                        <Group>
-                                                                            <Text textDecoration={'line-through'} style={{ textDecorationColor: 'red', color: "red" }}>
-                                                                                {formatCryptoAddress(diff.existingRevisionHash ?? "", 15, 4)}
-                                                                            </Text>
-                                                                            <LuChevronRight />
-                                                                            <Text>
-                                                                                {formatCryptoAddress(diff.upcomingRevisionHash ?? "", 15, 4, "Revision will be deleted")}
-                                                                            </Text>
-                                                                        </Group>
-                                                                    ) : (
-                                                                        <>
-                                                                            {formatCryptoAddress(diff.upcomingRevisionHash ?? "", 20, 4)}
-                                                                        </>
-                                                                    )
-                                                                }
-                                                            </List.Item>
-                                                        ))
-                                                    }
-                                                </List.Root>
-                                            </TimelineContent>
-                                        </TimelineItem>
+                                        <div className="flex gap-4">
+                                            <div className="flex h-8 w-8 items-center justify-center rounded-full border-2 text-gray-600 border-gray-600 bg-background">
+                                                <LuX className="h-4 w-4" />
+                                            </div>
+                                            <div className="flex-1">
+                                                <h4 className="text-sm font-medium">
+                                                    Chains are Different
+                                                </h4>
+                                                <div className="mt-2 space-y-1">
+                                                    {comparisonResult?.divergences.map(
+                                                        (diff, i: number) => (
+                                                            <div
+                                                                key={`diff_${i}`}
+                                                                className="text-sm"
+                                                            >
+                                                                {diff.existingRevisionHash ? (
+                                                                    <div className="flex items-center gap-2">
+                                                                        <span className="line-through text-red-600">
+                                                                            {formatCryptoAddress(
+                                                                                diff.existingRevisionHash ??
+                                                                                    '',
+                                                                                15,
+                                                                                4
+                                                                            )}
+                                                                        </span>
+                                                                        <LuChevronRight className="h-3 w-3" />
+                                                                        <span>
+                                                                            {formatCryptoAddress(
+                                                                                diff.upcomingRevisionHash ??
+                                                                                    '',
+                                                                                15,
+                                                                                4,
+                                                                                'Revision will be deleted'
+                                                                            )}
+                                                                        </span>
+                                                                    </div>
+                                                                ) : (
+                                                                    <span>
+                                                                        {formatCryptoAddress(
+                                                                            diff.upcomingRevisionHash ??
+                                                                                '',
+                                                                            20,
+                                                                            4
+                                                                        )}
+                                                                    </span>
+                                                                )}
+                                                            </div>
+                                                        )
+                                                    )}
+                                                </div>
+                                            </div>
+                                        </div>
 
-                                        <TimelineItem colorPalette={'info'}>
-                                            <TimelineConnector>
-                                                <LuCheck />
-                                            </TimelineConnector>
-                                            <TimelineContent>
-                                                <TimelineTitle textStyle="sm">Action</TimelineTitle>
-                                                <TimelineDescription>{btnText.text}</TimelineDescription>
-                                                <Alert title="Action Not reversible!" status={'warning'}>
-                                                    {/* This action will delete some revision(s) in your local Aqua Chain */}
-                                                    {updateMessage}
+                                        <div className="flex gap-4">
+                                            <div className="flex h-8 w-8 items-center justify-center rounded-full border-2 text-blue-600 border-blue-600 bg-background">
+                                                <LuCheck className="h-4 w-4" />
+                                            </div>
+                                            <div className="flex-1">
+                                                <h4 className="text-sm font-medium">
+                                                    Action
+                                                </h4>
+                                                <p className="text-sm text-muted-foreground">
+                                                    {btnText.text}
+                                                </p>
+                                                <Alert className="mt-2">
+                                                    <AlertTitle>
+                                                        Action Not reversible!
+                                                    </AlertTitle>
+                                                    <AlertDescription>
+                                                        {updateMessage}
+                                                    </AlertDescription>
                                                 </Alert>
-                                                <Group>
-                                                    <Button  data-testid="action-67-button" size={'xs'} borderRadius={'md'} colorPalette={btnText.color} onClick={handleMergeRevisions} loading={uploading}>{btnText.text}</Button>
-                                                </Group>
-                                            </TimelineContent>
-                                        </TimelineItem>
+                                                <div className="mt-3">
+                                                    <Button
+                                                        data-testid="action-67-button"
+                                                        size="sm"
+                                                        variant={getButtonVariant(
+                                                            btnText.color
+                                                        )}
+                                                        onClick={
+                                                            handleMergeRevisions
+                                                        }
+                                                        disabled={uploading}
+                                                    >
+                                                        {uploading
+                                                            ? 'Processing...'
+                                                            : btnText.text}
+                                                    </Button>
+                                                </div>
+                                            </div>
+                                        </div>
                                     </>
-                                ) : null
-                            }
+                                )}
 
-                            {
-                                (
-                                    (comparisonResult?.identical && (comparisonResult?.sameLength && comparisonResult?.divergences.length === 0))
-                                    // || !isVerificationSuccessful // Import button will be disabled, no reaching this point
-                                ) ? (
-                                    <TimelineItem colorPalette={'blue'}>
-                                        <TimelineConnector>
-                                            <LuMinus />
-                                        </TimelineConnector>
-                                        <TimelineContent>
-                                            <TimelineTitle textStyle="sm">Action</TimelineTitle>
-                                            <TimelineDescription>No Action</TimelineDescription>
-                                        </TimelineContent>
-                                    </TimelineItem>
-                                ) : null
-                            }
+                            {/* No Action Needed */}
+                            {comparisonResult?.identical &&
+                                comparisonResult?.sameLength &&
+                                comparisonResult?.divergences.length === 0 && (
+                                    <div className="flex gap-4">
+                                        <div className="flex h-8 w-8 items-center justify-center rounded-full border-2 text-blue-600 border-blue-600 bg-background">
+                                            <LuMinus className="h-4 w-4" />
+                                        </div>
+                                        <div className="flex-1">
+                                            <h4 className="text-sm font-medium">
+                                                Action
+                                            </h4>
+                                            <p className="text-sm text-muted-foreground">
+                                                No Action
+                                            </p>
+                                        </div>
+                                    </div>
+                                )}
+                        </div>
+                    </div>
 
-                        </TimelineRoot>
-                    </DialogBody>
                     <DialogFooter>
-                        <DialogActionTrigger asChild>
-                            <Button data-testid="action-cancel-button" variant="outline" borderRadius={'md'}>Cancel</Button>
-                        </DialogActionTrigger>
-                        
+                        <Button
+                            data-testid="action-cancel-button"
+                            variant="outline"
+                            onClick={() => setModalOpen(false)}
+                        >
+                            Cancel
+                        </Button>
                     </DialogFooter>
-                    <DialogCloseTrigger />
                 </DialogContent>
-            </DialogRoot>
-
-        </Container >
+            </Dialog>
+        </div>
     )
 }

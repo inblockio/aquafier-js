@@ -405,6 +405,16 @@ export default async function userController(fastify: FastifyInstance) {
                 });
                 console.log(`Deleted ${deletedLatest.count} latest records`);
 
+                const deletedContracts = await tx.contract.deleteMany({
+                    where: { 
+                        receiver: {
+                            contains: userAddress,
+                            mode: 'insensitive'
+                        },
+                     }
+                });
+                console.log(`Deleted ${deletedContracts.count} contracts records`);
+
                 // Step 2: Get all revisions associated with this user
                 const userRevisions = await tx.revision.findMany({
                     where: {

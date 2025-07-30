@@ -7,7 +7,13 @@ export interface AquaTemplatesFields {
   label: string,
   type: string,
   required: boolean,
-  isArray: boolean
+  isArray: boolean,
+  isHidden: boolean,
+  isEditable: boolean,
+  description : string,
+  placeholder : string
+  supportText : string
+  defaultValue? : string
 }
 
 

@@ -39,6 +39,12 @@ model AquaTemplateFields {
   type         String
   required     Boolean
   is_array     Boolean @default(false)
+  is_hidden   Boolean @default(false)
+  is_editable Boolean @default(true)
+  description String?
+  placeholder String?
+  support_text String?
+  default_value String?
 
   AquaForm AquaTemplate @relation(fields: [aqua_form_id], references: [id])
 
@@ -66,13 +72,15 @@ model SiweSession {
 }
 
 model Contract {
-  hash            String  @id
+  hash            String   @id
   genesis_hash    String?
   latest          String? //Json?
   sender          String?
   receiver        String?
   option          String?
   reference_count Int?
+  file_name       String?
+  created_at      DateTime @default(now())
   // User             User?         @relation(fields: [hash], references: [user])
   // Revision         Revision?     @relation(fields: [hash], references: [pubkey_hash])
 
@@ -116,28 +124,25 @@ model Revision {
 }
 
 model File {
-  file_hash            String      @id 
-  file_location         String
-         
+  file_hash     String @id
+  file_location String
+
   @@map("file")
 }
 
 model FileIndex {
-  file_hash              String   @id 
-  pubkey_hash            String[] 
-  
+  file_hash   String   @id
+  pubkey_hash String[]
 
   @@map("file_index")
 }
 
 model FileName {
-   
-   pubkey_hash String @id 
-   file_name   String
+  pubkey_hash String @id
+  file_name   String
 
   @@map("file_name")
 }
-
 
 model Link {
   hash                              String   @id
@@ -227,4 +232,19 @@ model Settings {
   User                     Users   @relation(fields: [user_pub_key], references: [address])
 
   @@map("settings")
+}
+
+model Notifications {
+  id String @id @default(uuid())
+
+  sender   String
+  receiver String
+  content  String
+  is_read  Boolean @default(false)
+
+  created_on DateTime @default(now())
+
+  navigate_to String?
+
+  @@map("notifications")
 }

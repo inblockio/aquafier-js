@@ -7,15 +7,19 @@
         "isArray": false
     },
     {
-        "name": "surname",
-        "label": "Surname",
+        "name": "type",
+        "label": "Type",
         "type": "string",
         "required": true,
-        "isArray": false
+        "isArray": false,
+        "isEditable": false,
+        "isHidden": true,
+        "defaultValue": "simple_claim"
     },
+    
     {
-        "name": "email",
-        "label": "Email",
+        "name": "claim_context",
+        "label": "context",
         "type": "string",
         "required": true,
         "isArray": false
@@ -25,6 +29,7 @@
         "label": "Wallet Address",
         "type": "wallet_address",
         "required": true,
-        "isArray": false
+        "isArray": false,
+         "isEditable": false
     }
 ]

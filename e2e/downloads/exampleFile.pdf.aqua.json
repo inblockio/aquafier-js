@@ -1,0 +1,26 @@
+{
+  "revisions": {
+    "0xcfbde49a99b3ac962cef0ab7f994fd55449e74002b144f6fc8471e9d8cad2bcb": {
+      "file_hash": "7ea3b2ea416f2692551184ddf6254cde5b613189b17ce4ab94db1a97879a88ba",
+      "file_nonce": "4aa2972df9e8120d068480b827affa76f8f1706f58a5239cc4bcce9f799285ae",
+      "leaves": [],
+      "local_timestamp": "20250721124020",
+      "previous_verification_hash": "",
+      "revision_type": "file",
+      "version": "https://aqua-protocol.org/docs/v3/schema_2 | SHA256 | Method: scalar"
+    },
+    "0x32c9760fe5071fa434e6268272045d467efc52871710ad654c0e7cb7d305613c": {
+      "local_timestamp": "20250721124024",
+      "previous_verification_hash": "0xcfbde49a99b3ac962cef0ab7f994fd55449e74002b144f6fc8471e9d8cad2bcb",
+      "revision_type": "signature",
+      "signature": "0x172827f3240d0acfa8dae2d85d2880f16d2abcd88c5c0774069b2421e93e462212207f6ec8e56add817aad6fb192388eacca682358658e54d14b4ce6e89a71031c",
+      "signature_public_key": "0x049d101b7dc0edfeaa58b9b5563e5bc96a64ba456dccff0106625c09587f2a11de4d245b84966af3fbd3f8278be6b9ee9ce5a3b757e5fbb726a3edcd00fb67c14d",
+      "signature_type": "ethereum:eip-191",
+      "signature_wallet_address": "0x48BD1EB9cd0fA3e5723e901A6b28eC38C05DDb83",
+      "version": "https://aqua-protocol.org/docs/v3/schema_2 | SHA256 | Method: scalar"
+    }
+  },
+  "file_index": {
+    "0xcfbde49a99b3ac962cef0ab7f994fd55449e74002b144f6fc8471e9d8cad2bcb": "exampleFile.pdf"
+  }
+}

@@ -51,6 +51,7 @@ export default async function systemController(fastify: FastifyInstance) {
         let templates = [
             "access_agreement",
             "aqua_sign",
+            "domain_claim",
             "cheque",
             "identity_attestation",
             "identity_claim",

@@ -148,7 +148,6 @@ export default async function authController(fastify: FastifyInstance) {
         });
 
       } else {
-        console.log("User address exist in system")
 
         if (userData.ens_name == null || userData.ens_name == undefined || userData.ens_name == "") {
           if (infuraProjectId) {
@@ -185,6 +184,17 @@ export default async function authController(fastify: FastifyInstance) {
         }
 
         settingsData = defaultData
+
+        await prisma.notifications.create({
+          data: {
+            sender: "system",
+            receiver: siweData.address!!,
+            content: "Welcome to Aqua! Get started by creating your first document or uploading a file for notarization.",
+            navigate_to:"",
+            is_read: false,
+            created_on: new Date()
+          }
+        })
 
         await prisma.settings.create({
           data: defaultData

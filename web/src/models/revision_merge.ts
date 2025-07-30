@@ -14,7 +14,6 @@ export interface RevisionsComparisonResult {
     lastIdenticalRevisionHash: string | null
 }
 
-
 // const comparisonResult: RevisionsComparisonResult = {
 //     divergences: [
 //         {

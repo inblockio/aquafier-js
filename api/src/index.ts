@@ -2,6 +2,7 @@
 // Import the server
 import buildServer from './server';
 import { getHost, getPort } from './utils/api_utils';
+import { mockNotifications } from './server';
 
 const server = buildServer()
 
@@ -23,6 +24,16 @@ const start = async () => {
     console.log(`📡  Listening on: http://${HOST}:${PORT}`);
     console.log("====================================");
     console.log("\n");
+    
+    // Create mock notifications for testing
+    try {
+      if(process.env.NODE_ENV === "development" || process.env.NODE_ENV === "test"){
+        await mockNotifications();
+        console.log("✅ Mock notifications created successfully");
+      }
+    } catch (error) {
+      console.error("❌ Error creating mock notifications:", error);
+    }
   } catch (err) {
     server.log.error(err);
     process.exit(1);

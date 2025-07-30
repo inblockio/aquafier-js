@@ -81,6 +81,7 @@ export const saveTemplateFileData = async (aquaTree: AquaTree, fileData: string,
   systemUUid.set("identity_attestation.json", "550e8400-e29b-41d4-a716-446655440000");
   systemUUid.set("identity_claim.json", "c9bf9e57-1685-4c89-badb-56781234abcd");
   systemUUid.set("user_signature.json", "d5a3e2f1-9c13-47a8-86ef-789012345678");
+  systemUUid.set("domain_claim.json", "4a081551-5cfb-4e7f-9238-ed072c0e9ff5");
 
   let genesisHashData = getGenesisHash(aquaTree);
   if (!genesisHashData) {
@@ -176,7 +177,7 @@ export async function checkFolderExists(folderPath: string) {
     return false;
   }
 }
-
+ 
 const setUpSystemTemplates = async () => {
 
   await prisma.users.upsert({
@@ -225,7 +226,8 @@ const setUpSystemTemplates = async () => {
     "cheque",
     "identity_attestation",
     "identity_claim",
-    "user_signature"
+    "user_signature",
+    "domain_claim"
   ]
   for (let index = 0; index < templates.length; index++) {
     const templateItem = templates[index];
@@ -257,6 +259,8 @@ const setUpSystemTemplates = async () => {
     let fieldsFileData = fs.readFileSync(templateFieldsData, 'utf8')
     let documentContractFields: Array<AquaTemplatesFields> = JSON.parse(fieldsFileData)
     documentContractFields.forEach(async (fieldData, fieldIndex) => {
+
+      // console.log(`\n ##  templateItem ${templateItem} -- fieldData.isEditable ${fieldData.isEditable} --  fieldData ${JSON.stringify(fieldData)}`)
       await prisma.aquaTemplateFields.upsert({
         where: {
           id: `${index}${fieldIndex}`,
@@ -268,7 +272,14 @@ const setUpSystemTemplates = async () => {
           label: fieldData.label,
           type: fieldData.type,
           required: fieldData.required,
-          is_array: fieldData.isArray
+          is_array: fieldData.isArray,
+          is_hidden: fieldData.isHidden || false,
+          description: fieldData.description ,
+          placeholder: fieldData.placeholder ,
+          support_text: fieldData.supportText,
+          default_value: fieldData.defaultValue ,
+
+          is_editable: fieldData.isEditable == null ? true : fieldData.isEditable,
         },
         update: {
 
@@ -279,11 +290,11 @@ const setUpSystemTemplates = async () => {
 
 
     //save aqua tree
-    let templateAquaTreeDataContent = fs.readFileSync(templateAquaTreeData, 'utf8')
+    let templateAquaTreeDataContent = fs.readFileSync(templateAquaTreeData, 'utf-8')
     let templateAquaTree: AquaTree = JSON.parse(templateAquaTreeDataContent)
 
 
-    let templateDataContent = fs.readFileSync(templateData, 'utf8')
+    let templateDataContent = fs.readFileSync(templateData, 'utf-8')
     await saveTemplateFileData(templateAquaTree, templateDataContent, SYSTEM_WALLET_ADDRESS)
     await saveAquaTree(templateAquaTree, SYSTEM_WALLET_ADDRESS);
 

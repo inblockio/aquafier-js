@@ -1,0 +1,54 @@
+{
+  "revisions": {
+    "0x23774c35cb5cde050f0a7485c9fde153dd128a01f07f66c0242c2d39ebca20fa": {
+      "file_hash": "2b8b0349e68e15128d6336bb608e2d3a5b63789cb46c666caa09d7564668f759",
+      "file_nonce": "9d7c5e2f33907f8ff880ac6cd1729b2e6925094da26f38785b33b8b293b33e71",
+      "forms_genesis": "Trust-Domains.pdf",
+      "forms_name_with_hash": "",
+      "leaves": [
+        "f3f5864184ebcff3b58b695330a1866d06d98382434b82ceddc0af9cc46b9496",
+        "bd311275db152838429a9e0a506af71c42b6a911c9ad80479b1c6c3acb671f43",
+        "ac3ff4996c4f8f817d4e759955a084363315046131ae127d5031f2851e4678eb",
+        "20bacaebb20e30b63b79c1f936ca3967e6a10f672908548b1348a6e241b426cc",
+        "78699f718e5b288248afcc3d5fe33d3df94248248451a582b2b848d85461ac28",
+        "d781acf7ba880ecae581ffd8debcb4f5cb430bc2f237e27a6098471a9f7ffa60",
+        "43fcaef3dc4b2a2d0550543b638048edcfb710da9276da109a9e011ed1a53ed1",
+        "39ccd407bb105ed3be74df4a546d9b10c4f6c80e48b559102b04fa2b29aa83b4"
+      ],
+      "local_timestamp": "20250721090110",
+      "previous_verification_hash": "",
+      "revision_type": "form",
+      "version": "https://aqua-protocol.org/docs/v3/schema_2 | SHA256 | Method: scalar"
+    },
+    "0x838224262896ea7d7cdf4366559c1fc6718d60e23c57a2cc29e258e721537bff": {
+      "leaves": [],
+      "local_timestamp": "20250721090118",
+      "previous_verification_hash": "0x23774c35cb5cde050f0a7485c9fde153dd128a01f07f66c0242c2d39ebca20fa",
+      "revision_type": "signature",
+      "signature": "0x9945f48c383e921e8de6d0d50342b53d514e7377b0c135529381dc18eab3b84b5e04e8f7065e8d4e354f95b8bc17174aad66455028a1adeba9fbcc652e4fed121b",
+      "signature_public_key": "0x0483ee376a3c0d32cfac402d84ca028d2a1185d93371b76791d60df8a4a571cc1d482ab08ab2737bb6fe9693d3d6f2680380c4aec2bd8c7f9e83d3543378696d5e",
+      "signature_type": "ethereum:eip-191",
+      "signature_wallet_address": "0x3da329055da0Cb73DECecFb732AE309DC14a6595",
+      "version": "https://aqua-protocol.org/docs/v3/schema_2 | SHA256 | Method: scalar"
+    },
+    "0xb65fa61032529295be607dc59a7011c4705d67974df940fab6e30b61bea5dcb8": {
+      "leaves": [],
+      "local_timestamp": "20250721090119",
+      "previous_verification_hash": "0x838224262896ea7d7cdf4366559c1fc6718d60e23c57a2cc29e258e721537bff",
+      "revision_type": "witness",
+      "version": "https://aqua-protocol.org/docs/v3/schema_2 | SHA256 | Method: scalar",
+      "witness_merkle_proof": [
+        "0x838224262896ea7d7cdf4366559c1fc6718d60e23c57a2cc29e258e721537bff"
+      ],
+      "witness_merkle_root": "0x838224262896ea7d7cdf4366559c1fc6718d60e23c57a2cc29e258e721537bff",
+      "witness_network": "sepolia",
+      "witness_sender_account_address": "0x3da329055da0Cb73DECecFb732AE309DC14a6595",
+      "witness_smart_contract_address": "0x45f59310ADD88E6d23ca58A0Fa7A55BEE6d2a611",
+      "witness_timestamp": 1753088482,
+      "witness_transaction_hash": "0xca3f409400f2b7979bf2b4e20259b219b857798e9e2b3efa16003021e4026d9d"
+    }
+  },
+  "file_index": {
+    "0x23774c35cb5cde050f0a7485c9fde153dd128a01f07f66c0242c2d39ebca20fa": "aqua.json"
+  }
+}

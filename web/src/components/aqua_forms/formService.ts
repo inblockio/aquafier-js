@@ -10,7 +10,7 @@
 // export const saveFormTemplate = (template: FormTemplate): void => {
 //   const templates = getFormTemplates();
 //   const existingIndex = templates.findIndex(t => t.id === template.id);
-  
+
 //   if (existingIndex >= 0) {
 //     // Update existing template
 //     templates[existingIndex] = template;
@@ -18,7 +18,7 @@
 //     // Add new template
 //     templates.push(template);
 //   }
-  
+
 //   localStorage.setItem(STORAGE_KEY, JSON.stringify(templates));
 // };
 

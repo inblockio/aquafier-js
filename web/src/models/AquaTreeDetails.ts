@@ -1,6 +1,6 @@
-import { Revision } from "aqua-js-sdk"
-import { Session } from "../types"
-import { ApiFileInfo } from "./FileInfo"
+import { Revision } from 'aqua-js-sdk'
+import { Session } from '../types'
+import { ApiFileInfo } from './FileInfo'
 
 export interface IItemDetailData {
     label: string
@@ -9,24 +9,23 @@ export interface IItemDetailData {
     showCopyIcon: boolean
 }
 
-
 export interface RevisionDetailsSummaryData {
-    fileInfo: ApiFileInfo,
-    isVerificationComplete: boolean,
-    isVerificationSuccess: boolean,
-    isWorkFlow :  boolean,
-    callBack?: (res: boolean) => void,
+    fileInfo: ApiFileInfo
+    isVerificationComplete: boolean
+    isVerificationSuccess: boolean
+    isWorkFlow: boolean
+    callBack?: (res: boolean) => void
 }
 
 export interface AquaTreeDetailsViewData {
-    fileInfo: ApiFileInfo,
-    isVerificationComplete: boolean,
-    verificationResults: VerificationHashAndResult[],
+    fileInfo: ApiFileInfo
+    isVerificationComplete: boolean
+    verificationResults: VerificationHashAndResult[]
 }
 export interface AquaTreeDetailsData {
-    fileInfo: ApiFileInfo,
-    isVerificationComplete: boolean,
-    verificationResults: VerificationHashAndResult[],
+    fileInfo: ApiFileInfo
+    isVerificationComplete: boolean
+    verificationResults: VerificationHashAndResult[]
     revision: Revision
     revisionHash: string
     isDeletable: boolean
@@ -44,7 +43,6 @@ export interface AquaTreeDetails {
     callBack: (res: Array<boolean>, revisionCount: number) => void
 }
 
-
 export interface ICompleteChainView {
     callBack: (_drawerStatus: IDrawerStatus) => void
     selectedFileInfo: ApiFileInfo | null
@@ -57,8 +55,7 @@ export interface IDrawerStatus {
     isVerificationSuccessful: boolean
 }
 
-
 export interface VerificationHashAndResult {
-    hash: string,
+    hash: string
     isSuccessful: boolean | null
 }
