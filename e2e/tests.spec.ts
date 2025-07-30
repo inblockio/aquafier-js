@@ -2,7 +2,7 @@ import { test, BrowserContext, Page, chromium, expect } from '@playwright/test';
 import dotenv from 'dotenv';
 import path from "path";
 import fs from "fs";
-import { addSignatureToDocument, closeUploadDialog, createAndSaveSignature, createAquaSignForm, downloadAquaTree, findAndClickHighestSharedButton, fundWallet, importAquaChain, registerNewMetaMaskWallet, registerNewMetaMaskWalletAndLogin, shareDocument, signDocument, uploadFile, witnessDocument } from './testUtils';
+import { addSignatureToDocument, closeUploadDialog, createAndSaveSignature, createAquaSignForm, createTemplate, downloadAquaTree, findAndClickHighestSharedButton, fundWallet, importAquaChain, registerNewMetaMaskWallet, registerNewMetaMaskWalletAndLogin, shareDocument, signDocument, uploadFile, witnessDocument } from './testUtils';
 
 // Load environment variables from .env file
 dotenv.config({ path: path.resolve(__dirname, '../.env') });
@@ -521,7 +521,7 @@ test("import aqua zip test", async (): Promise<void> => {
   await expect(tableRows).toHaveCount(2, { timeout: 10000 });
 
 });
-
+  
 
 test("create a template", async (): Promise<void> => {
   test.setTimeout(process.env.CI ? 180000 : 1500000); // 3 minutes in CI
@@ -533,94 +533,30 @@ test("create a template", async (): Promise<void> => {
   console.log("create aqua form template started!");
 
   console.log("Navigated to templates page");
-  await testPage.waitForTimeout(2000); 
+  // await testPage.waitForTimeout(2000); 
   
-  // Try to find the button by data-testid first, then fallback to text
-  try {
-    await testPage.waitForSelector('[data-testid="action-create-template-button"]', { state: 'visible', timeout: 10000 });
-    await testPage.click('[data-testid="action-create-template-button"]');
-    console.log("Clicked create template button using data-testid");
-  } catch (error) {
-    console.log("Failed to find button by data-testid, trying by text...");
-    await testPage.waitForSelector('button:has-text("New Template")', { state: 'visible', timeout: 10000 });
-    await testPage.click('button:has-text("New Template")');
-    console.log("Clicked create template button using text selector");
-  }
+  await createTemplate(testPage);
+  
 
-  console.log("Clicked create template button");
-  await testPage.fill('#title', 'Test Template');
+  // await testPage.pause();
+});
 
-  // Add two fields
-  try {
-    await testPage.click('[data-testid="action-add-form-field-button"]');
-    console.log("Clicked add form field button using data-testid");
-  } catch (error) {
-    console.log("Failed to find add form field button by data-testid, trying by text...");
-    await testPage.click('button:has-text("Add Form Field")');
-    console.log("Clicked add form field button using text selector");
-  }
-  let fields = [
-    {
-      label: 'Name',
-      type: 'text',
-      required: true,
-      is_array: false
-    },
-    {
-      label: 'Age',
-      type: 'number',
-      required: true,
-      is_array: false
-    }
-  ]
 
-  console.log("Adding fields to template form");
-  // Fill the template form
-  try {
-    await testPage.fill(`[data-testid="field-label-0"]`, fields[0].label);
-    console.log("Filled first field label using data-testid");
-  } catch (error) {
-    console.log("Failed to find first field label by data-testid, trying by id...");
-    await testPage.fill(`#field-label-0`, fields[0].label);
-    console.log("Filled first field label using id selector");
-  }
-  // await testPage.selectOption(`[data-testid="field-type-0"]`, fields[0].type);
-  // await testPage.click(`[data-testid="field-required-0"]`);
+test("delete a template", async (): Promise<void> => {
+  test.setTimeout(process.env.CI ? 180000 : 1500000); // 3 minutes in CI
+  const registerResponse = await registerNewMetaMaskWalletAndLogin(`app/templates`);
+  const context: BrowserContext = registerResponse.context;
+  const testPage: Page = context.pages()[0];
 
-  console.log("First field added to template form");
-  try {
-    await testPage.click('[data-testid="action-add-form-field-button"]');
-    console.log("Clicked second add form field button using data-testid");
-  } catch (error) {
-    console.log("Failed to find second add form field button by data-testid, trying by text...");
-    await testPage.click('button:has-text("Add Form Field")');
-    console.log("Clicked second add form field button using text selector");
-  }
+  
+  console.log("create aqua form template started!");
 
-  // await testPage.waitForSelector('[data-testid="field-label-1"]', { state: 'visible', timeout: 10000 });
-  try {
-    await testPage.fill(`[data-testid="field-label-1"]`, fields[1].label);
-    console.log("Filled second field label using data-testid");
-  } catch (error) {
-    console.log("Failed to find second field label by data-testid, trying by id...");
-    await testPage.fill(`#field-label-1`, fields[1].label);
-    console.log("Filled second field label using id selector");
-  }
-  // await testPage.selectOption(`[data-testid="field-type-1"]`, fields[1].type);
-  // await testPage.click(`[data-testid="field-required-1"]`);
-  console.log("Second field added to template form");
-
-  // Save the form
-  try {
-    await testPage.click('[data-testid="save-form-action-button"]');
-    console.log("Clicked save form button using data-testid");
-  } catch (error) {
-    console.log("Failed to find save form button by data-testid, trying by text...");
-    await testPage.click('button:has-text("Save")');
-    console.log("Clicked save form button using text selector");
-  }
-  console.log("Template form saved");
-
+  console.log("Navigated to templates page");
+  // await testPage.waitForTimeout(2000); 
+  
+  await createTemplate(testPage);
+  console.log("Template created, now deleting it");
+  await deleteTemplate(testPage);
   
 
   // await testPage.pause();

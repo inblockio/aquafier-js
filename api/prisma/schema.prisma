@@ -23,6 +23,7 @@ model AquaTemplate {
   id          String               @id
   owner       String
   title       String
+  subtitle       String
   name        String
   created_at  String
   public      Boolean

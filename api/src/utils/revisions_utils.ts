@@ -618,6 +618,9 @@ export async function saveARevisionInAquaTree(revisionData: SaveRevisionForUser,
 
 // Utility function to generate pubkey hash
 function generatePubkeyHash(walletAddress: string, hash: string): string {
+    if(hash.includes("_")){
+        return hash
+    }
     return `${walletAddress}_${hash}`;
 }
 
@@ -976,6 +979,7 @@ export async function deleteAquaTree(currentHash: string, userAddress: string, u
 export async function deleteAquaTreeFromSystem(walletAddress: string, hash: string): Promise<[number, string]> {
     const filepubkeyHash = generatePubkeyHash(walletAddress, hash);
 
+    console.log(`🙃🙃 filepubkeyHash ${filepubkeyHash} hash ${hash} walletAddress ${walletAddress}`)
     try {
         // Fetch all revisions in the chain
         const revisionData: Revision[] = [];
