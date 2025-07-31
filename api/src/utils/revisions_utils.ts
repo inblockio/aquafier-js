@@ -8,7 +8,7 @@ import { getAquaTreeFileName } from './api_utils';
 import { createAquaTreeFromRevisions } from './revisions_operations_utils';
 import { getGenesisHash } from './aqua_tree_utils';
 import JSZip from 'jszip';
-import { getFileUploadDirectory } from './file_utils';
+import {deleteFile, getFileUploadDirectory} from './file_utils';
 import { hash, randomUUID } from 'crypto';
 import path from 'path';
 import { systemTemplateHashes } from '../models/constants';
@@ -774,7 +774,7 @@ async function handleSingleFileCleanup(tx: any, pubkeyHash: string) {
 
             if (file && file.file_location) {
                 try {
-                    fs.unlinkSync(file.file_location);
+                    await deleteFile(file.file_location)
                     console.log(`Deleted file from filesystem: ${file.file_location}`);
                 } catch (error) {
                     console.log("Error deleting file from filesystem:", error);
@@ -835,7 +835,7 @@ async function handleMultipleFileCleanup(tx: any, revisionHashes: string[]) {
 
                 if (file && file.file_location) {
                     try {
-                        fs.unlinkSync(file.file_location);
+                        await deleteFile(file.file_location)
                         console.log(`Deleted file from filesystem: ${file.file_location}`);
                     } catch (error) {
                         console.log(`Error deleting file from filesystem: ${file.file_location}`, error);

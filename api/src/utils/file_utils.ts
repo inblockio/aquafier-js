@@ -322,6 +322,20 @@ async function getFileSize(path: string): Promise<number | undefined | null> {
     }
 }
 
+async function deleteFile(path: string): Promise<void> {
+    if (path.includes("s3:")) {
+        if (await s3Available()) {
+            const cleanedPath = path.replace("s3:/", "");
+            const bucket = cleanedPath.substring(0, cleanedPath.indexOf("/"));
+            const filePath = cleanedPath.substring(cleanedPath.indexOf("/") + 1);
+            await getMinioClient().removeObject(bucket, filePath)
+        }
+    }else{
+        fs.unlinkSync(path);
+        return;
+    }
+}
+
 export {
     streamToBuffer,
     isTextFile,
@@ -335,5 +349,6 @@ export {
     readFileAsText,
     persistFile,
     getFile,
-    getFileSize
+    getFileSize,
+    deleteFile
 };
