@@ -1,10 +1,32 @@
 import { ShareButton } from '@/components/aqua_chain_actions/share_aqua_chain'
 import { IAttestationEntry } from '@/models/FileInfo'
 import WalletAdrressClaim from './WalletAdrressClaim'
+import appStore from '@/store'
+import { getWalletClaims } from '@/utils/functions'
+import { useNavigate } from 'react-router-dom'
+import { toast } from 'sonner'
+import { useStore } from 'zustand'
 
 const AttestationEntry = ({ file, nonce, walletAddress, context, createdAt }: IAttestationEntry) => {
+      const { files, systemFileInfo, setSelectedFileInfo } = useStore(appStore)
+      const navigate = useNavigate()
+      
       return (
-            <div className="bg-white rounded-lg border border-gray-200 p-4 mb-3 shadow-sm hover:shadow-md transition-shadow">
+            <div 
+                  className="bg-white rounded-lg border border-gray-200 p-4 mb-3 shadow-sm hover:shadow-md transition-shadow cursor-pointer"
+                  
+                  onClick={(e) => {
+                        e.stopPropagation()
+                        getWalletClaims(
+                              systemFileInfo,
+                              files,
+                              walletAddress,
+                              setSelectedFileInfo,
+                              navigate,
+                              toast
+                        )
+                  }}
+            >
                   <div className="flex justify-between items-start">
                         <div className="space-y-2">
                               <div className="flex items-center gap-2">
@@ -17,18 +39,16 @@ const AttestationEntry = ({ file, nonce, walletAddress, context, createdAt }: IA
                                                 />
                                           </svg>
                                     </div>
-                                    {/* <span className="font-medium text-gray-900 text-sm font-mono">
-                            {walletAddress.substring(0, 6)}...
-              {walletAddress.substring(walletAddress.length - 4)}
-                            {walletAddress}
-                        </span> */}
                                     <WalletAdrressClaim walletAddress={walletAddress} />
                               </div>
                               <p className="text-gray-700 text-sm">{context}</p>
                         </div>
                         <div className="flex-col">
-                              <span className="text-xs text-gray-500 ">{createdAt}</span>
-                              <div className="flex items-center gap-3 mt-4">
+                              <span className="text-xs text-gray-500">{createdAt}</span>
+                              <div 
+                                    className="flex items-center gap-3 mt-4"
+                                    onClick={(e) => e.stopPropagation()} // Prevent click from bubbling to parent
+                              >
                                     <ShareButton item={file!} nonce={nonce} index={1} />
                               </div>
                         </div>
