@@ -278,6 +278,18 @@ export default function NewShadcnLayoutWithSidebar() {
                                           />
                                     )}
 
+  {openDialog?.dialogType === 'user_signature' && (
+                                          <CreateFormFromTemplate
+                                                selectedTemplate={formTemplates.find(template => template.name === 'user_signature')!}
+                                                callBack={function (): void {
+                                                      // setOpenCreateAquaSignPopUp(false)
+                                                      setOpenDialog(null)
+                                                }}
+                                                openCreateTemplatePopUp={false}
+                                          />
+                                    )}
+
+
                                     {openDialog?.dialogType === 'identity_claim' && (
                                           <CreateFormFromTemplate
                                                 selectedTemplate={formTemplates.find(template => template.name === 'identity_claim')!}

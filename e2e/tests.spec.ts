@@ -2,7 +2,7 @@ import { test, BrowserContext, Page, chromium, expect } from '@playwright/test';
 import dotenv from 'dotenv';
 import path from "path";
 import fs from "fs";
-import { addSignatureToDocument, closeUploadDialog, createAndSaveSignature, createAquaSignForm, createTemplate, downloadAquaTree, findAndClickHighestSharedButton, fundWallet, importAquaChain, registerNewMetaMaskWallet, registerNewMetaMaskWalletAndLogin, shareDocument, signDocument, uploadFile, witnessDocument } from './testUtils';
+import { addSignatureToDocument, closeUploadDialog, createAndSaveSignature, createAquaSignForm, createTemplate, downloadAquaTree, findAndClickHighestSharedButton, fundWallet, handleMetaMaskNetworkAndConfirm, importAquaChain, registerNewMetaMaskWallet, registerNewMetaMaskWalletAndLogin, shareDocument, signDocument, uploadFile, witnessDocument } from './testUtils';
 
 // Load environment variables from .env file
 dotenv.config({ path: path.resolve(__dirname, '../.env') });
@@ -516,12 +516,12 @@ test("import aqua zip test", async (): Promise<void> => {
   await testPage.reload();
 
 
-   // Check that the table has two rows and contains aqua.json
+  // Check that the table has two rows and contains aqua.json
   const tableRows = testPage.locator('table tr');
   await expect(tableRows).toHaveCount(2, { timeout: 10000 });
 
 });
-  
+
 
 test("create a template", async (): Promise<void> => {
   test.setTimeout(process.env.CI ? 180000 : 1500000); // 3 minutes in CI
@@ -529,14 +529,14 @@ test("create a template", async (): Promise<void> => {
   const context: BrowserContext = registerResponse.context;
   const testPage: Page = context.pages()[0];
 
-  
+
   console.log("create aqua form template started!");
 
   console.log("Navigated to templates page");
   // await testPage.waitForTimeout(2000); 
-  
+
   await createTemplate(testPage);
-  
+
 
   // await testPage.pause();
 });
@@ -548,16 +548,80 @@ test("delete a template", async (): Promise<void> => {
   const context: BrowserContext = registerResponse.context;
   const testPage: Page = context.pages()[0];
 
-  
+
   console.log("create aqua form template started!");
 
   console.log("Navigated to templates page");
   // await testPage.waitForTimeout(2000); 
-  
+
   await createTemplate(testPage);
   console.log("Template created, now deleting it");
-  await deleteTemplate(testPage);
-  
+  // await deleteTemplate(testPage);
+
+
+  await testPage.waitForSelector('[data-testid="delete-form-template-0"]', { state: 'visible', timeout: 10000 });
+  await testPage.click('[data-testid=""]');
+  console.log("Clicked delete template button using data-testid");
+  try {
+    await testPage.waitForSelector('[data-testid="delete-form-template-0"]', { state: 'visible', timeout: 10000 });
+    await testPage.click('[data-testid="delete-form-template-0"]');
+    console.log("Clicked delete template button using data-testid");
+  } catch (error) {
+    console.log("Failed to find button by data-testid, trying by id...");
+    await testPage.waitForSelector('#delete-form-template-id-0', { state: 'visible', timeout: 10000 });
+    await testPage.click('#delete-form-template-id-0');
+    console.log("Clicked delete template button using id selector");
+  }
+
 
   // await testPage.pause();
+});
+
+
+
+
+test("create a simple claim", async (): Promise<void> => {
+  test.setTimeout(process.env.CI ? 180000 : 1500000); // 3 minutes in CI
+  const registerResponse = await registerNewMetaMaskWalletAndLogin(`app`);
+  const context: BrowserContext = registerResponse.context;
+  const testPage: Page = context.pages()[0];
+
+
+  console.log("create aqua form template started!");
+
+
+  await testPage.waitForSelector('[data-testid="create-claim-dropdown-button"]', { state: 'visible', timeout: 10000 });
+  await testPage.click('[data-testid="create-claim-dropdown-button"]');
+
+
+  await testPage.waitForSelector('[data-testid="create-simple-claim-dropdown-button-item"]', { state: 'visible', timeout: 10000 });
+  await testPage.click('[data-testid="create-simple-claim-dropdown-button-item"]');
+
+
+  // await testPage.click('[data-testid="create-document-signature"]');
+  //   console.log("clicked aqua sign");
+
+  // Upload document
+  // await uploadFile(page, filePath, '[data-testid="input-document"]');
+
+  // Configure signers
+  // await testPage.click('[data-testid="multiple_values_signers"]');
+  // console.log("clicked multiple values signers");
+
+  // const metaMaskAdr: string = await testPage.locator('[data-testid="input-sender"]').inputValue();
+  await testPage.fill('[data-testid="input-claim_context"]', "i claim the name sample");
+  console.log("input claim context filles");
+
+
+  await testPage.fill('[data-testid="input-name"]', "sa,ple");
+  console.log("input claim name ");
+
+
+  // Submit form and handle MetaMask
+  const metamaskPromise = context.waitForEvent("page");
+  await testPage.click('[type="submit"]');
+  await metamaskPromise;
+
+  await handleMetaMaskNetworkAndConfirm(context, true);
+
 });

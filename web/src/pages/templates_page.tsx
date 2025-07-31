@@ -68,7 +68,7 @@ const TemplatesPage = () => {
                                           onSave={handleSave}
                                           updating={!isCreating && (selectedTemplate !== undefined || selectedTemplate !== null)}
                                     />
-                              )}
+                              )} 
                         </TabsContent>
                   </Tabs>
             </div>

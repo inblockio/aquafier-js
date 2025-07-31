@@ -1293,6 +1293,7 @@ export async function findAndClickHighestSharedButton(page: Page): Promise<numbe
 }
 
 
+
 export async function createTemplate(page: Page): Promise<void> {
 // Try to find the button by data-testid first, then fallback to text
   try {
@@ -1383,11 +1384,6 @@ export async function createTemplate(page: Page): Promise<void> {
    
 }
 
-
-export async function deleteTemplate(page: Page): Promise<void> {
-
-
-}
 
 class RegisterMetaMaskResponse {
 

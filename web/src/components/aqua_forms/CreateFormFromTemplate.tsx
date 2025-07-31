@@ -147,10 +147,11 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: { selectedTempla
                   formData.append('account', account)
                   formData.append('is_workflow', `${isWorkflow}`)
 
+                  // todo unocmment here
                   //workflow specifi
-                  if (selectedTemplate?.name == 'user_signature') {
-                        formData.append('template_id', `${selectedTemplate.id}`)
-                  }
+                  // if (selectedTemplate?.name == 'user_signature') {
+                  //       formData.append('template_id', `${selectedTemplate.id}`)
+                  // }
 
                   // Check if we have an actual file to upload as an asset
                   if (fileObject.fileContent) {
@@ -588,6 +589,11 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: { selectedTempla
                         return null
                   }
 
+                  if (typeof file === 'string' || !(file instanceof File)) {
+                        console.warn(`Invalid file type for field: ${element.name}. Expected File object, got:`, typeof file)
+                        return null
+                  }
+
                   try {
                         const arrayBuffer = await file.arrayBuffer()
                         const uint8Array = new Uint8Array(arrayBuffer)
@@ -888,13 +894,13 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: { selectedTempla
                                                                               if (workFlow && workFlow.isWorkFlow) {
                                                                                     console.log('Workflow found: ', workFlow.workFlow)
                                                                                     if (workFlow.workFlow === 'identity_claim') {
-                                                                                          console.log('Identity claim found:' )
+                                                                                          console.log('Identity claim found:')
                                                                                           const orederdRevisionAquaTree = OrderRevisionInAquaTree(file.aquaTree!)
                                                                                           let allHashes = Object.keys(orederdRevisionAquaTree.revisions)
 
                                                                                           // console.log('orederdRevisionAquaTree: ', JSON.stringify (orederdRevisionAquaTree.revisions ,null, 2))
                                                                                           // console.log('hashs: ', JSON.stringify (orederdRevisionAquaTree.revisions ,null, 2))
-                                                                                          let genRevsion = orederdRevisionAquaTree.revisions[allHashes[0]] 
+                                                                                          let genRevsion = orederdRevisionAquaTree.revisions[allHashes[0]]
 
                                                                                           // console.log('genRevsion: ', JSON.stringify (genRevsion,null, 2))
                                                                                           // console.log('name : ', genRevsion[`forms_name`])
@@ -903,14 +909,14 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: { selectedTempla
                                                                                                 recommended.set(genRevsion[`forms_name`], genRevsion[`forms_wallet_address`])
                                                                                           }
                                                                                     }
-                                                                              }else{
+                                                                              } else {
                                                                                     console.log('Not a workflow data: ', file.aquaTree)
                                                                               }
 
                                                                         }
 
-                                                                        console.log('Recommended wallet addresses: ', JSON.stringify (recommended,null, 2))
-                                                                        
+                                                                        console.log('Recommended wallet addresses: ', JSON.stringify(recommended, null, 2))
+
                                                                         return recommended;
                                                                   }
                                                                   return (

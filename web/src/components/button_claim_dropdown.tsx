@@ -1,16 +1,16 @@
 import { useState, useRef, useEffect } from 'react';
-import { ChevronDown, Plus, Globe, UserLock } from 'lucide-react';
+import { ChevronDown, Plus, Globe, UserLock, Signature } from 'lucide-react';
 import { createPortal } from 'react-dom';
 import appStore from '../store'
 import { useStore } from 'zustand'
-
+ 
 export default function ClaimTypesDropdownButton() {
    const {setOpenDialog  } = useStore(appStore)
   const [isOpen, setIsOpen] = useState(false);
   const [dropdownPosition, setDropdownPosition] = useState({ top: 0, left: 0 });
   const buttonRef = useRef<HTMLButtonElement>(null);
 
-  const handleItemClick = (item: 'identity_claim' | 'dns_claim' ) => {
+  const handleItemClick = (item: 'identity_claim' | 'dns_claim' | 'user_signature' ) => {
     console.log(`Selected: ${item}`);
     setIsOpen(false);
 
@@ -91,6 +91,7 @@ export default function ClaimTypesDropdownButton() {
       >
         <div className="py-1">
           <button
+           data-testid="create-simple-claim-dropdown-button-item"
             onClick={() => handleItemClick('identity_claim')}
             className="group flex w-full items-center px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900"
           >
@@ -99,11 +100,22 @@ export default function ClaimTypesDropdownButton() {
           </button>
           
           <button
+          data-testid="create-dns-claim-dropdown-button-item"
             onClick={() => handleItemClick('dns_claim')}
             className="group flex w-full items-center px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900"
           >
             <Globe className="mr-3 h-4 w-4 text-gray-400 group-hover:text-gray-500" />
             Create DNS Claim
+          </button>
+
+
+           <button
+          data-testid="create-dns-claim-dropdown-button-item"
+            onClick={() => handleItemClick('user_signature')}
+            className="group flex w-full items-center px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900"
+          >
+            <Signature className="mr-3 h-4 w-4 text-gray-400 group-hover:text-gray-500" />
+            Create Signature
           </button>
         </div>
       </div>
@@ -121,6 +133,7 @@ export default function ClaimTypesDropdownButton() {
           style={{ backgroundColor: '#3A5BF8' }}
           aria-expanded={isOpen}
           aria-haspopup="true"
+          data-testid="create-claim-dropdown-button"
         >
           <Plus className="w-4 h-4" />
           Create Claim

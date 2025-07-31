@@ -349,19 +349,7 @@ const FilesPage = () => {
                                           <span>Document Signature </span>
                                     </Button>
 
-                                    {/* <Button
-                                          data-testid="create-document-signature"
-                                          className="flex items-center gap-1 sm:gap-2 text-white px-2 sm:px-4 py-1.5 sm:py-2.5 rounded-md text-xs sm:text-sm font-medium hover:bg-gray-700 transition-colors cursor-pointer whitespace-nowrap shadow-sm"
-                                          style={{ backgroundColor: '#3A5BF8' }}
-                                          onClick={() => {
-                                                //,
-                                                // setOpenCreateClaimPopUp(true)
-                                                setOpenDialog({ dialogType: 'identity_claim', isOpen: true, onClose: () => setOpenDialog(null), onConfirm: () => { } })
-                                          }}
-                                    >
-                                          <Plus className="w-4 h-4" />
-                                          <span>Create claim </span>
-                                    </Button> */}
+                                    
 
                                     <ClaimTypesDropdownButton />
                                     <Button
