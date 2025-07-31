@@ -27,6 +27,13 @@ export default function ClaimsWorkflowPage() {
       // const [previewEnabled, setPreviewEnabled] = useState(true);
       const [timeLineTitle, setTimeLineTitle] = useState('')
       const [processedInfo, setProcessedInfo] = useState<ClaimInformation | null>(null)
+      const [tabsData, setTabsData] = useState<Array<{
+            id: string,
+            label: string,
+            icon: any,
+            completion: number,
+            completionColor: string,
+      }>>([])
       const [sharedContracts, setSharedContracts] = useState<Contract[] | null>(null)
       const [attestations, setAttestations] = useState<
             Array<{
@@ -64,7 +71,7 @@ export default function ClaimsWorkflowPage() {
             },
       ]
 
-      const activeTabData = tabs.find(tab => tab.id === activeTab)
+      const activeTabData = tabsData.find(tab => tab.id === activeTab)
 
       const loadSharedContractsData = async (_latestRevisionHash: string, _genesisHash: string) => {
             try {
@@ -142,7 +149,14 @@ export default function ClaimsWorkflowPage() {
             if (selectedClaim) {
                   const processedInfo = processSimpleWorkflowClaim(selectedClaim)
                   setTimeLineTitle('Claims Workflow')
+                  if (processedInfo.claimInformation.forms_type === 'dns_claim') {
+                        let res = tabs.filter((e) => e.id != 'claims_attestation');
+                        setTabsData(res)
+                  } else {
+                        setTabsData(tabs)
+                  }
                   setProcessedInfo(processedInfo)
+
             }
       }, [JSON.stringify(selectedClaim), JSON.stringify(files)])
 
@@ -190,7 +204,7 @@ export default function ClaimsWorkflowPage() {
                               {/* Tab Navigation */}
                               <div className="border-b border-gray-200">
                                     <div className="flex space-x-0">
-                                          {tabs.map(tab => {
+                                          {tabsData.map(tab => {
                                                 const Icon = tab.icon
                                                 const isActive = activeTab === tab.id
 
