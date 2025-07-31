@@ -1,5 +1,9 @@
 import path from "path";
-import { fileURLToPath } from "url";
+import {fileURLToPath} from "url";
+import * as process from "node:process";
+import * as fs from "node:fs";
+import {getBucketName, getMinioClient, minioClientCompleted} from "./s3Utils";
+import stream from "node:stream";
 
 const getAquaAssetDirectory = (): string => {
     // Get the equivalent of __dirname in ES modules
@@ -181,14 +185,13 @@ const isTextFileUsingName = (filename: string): boolean => {
 };
 
 
-
 /**
  * Estimates the size in bytes that a string would occupy if saved to a file
  * Uses UTF-8 encoding rules where ASCII chars take 1 byte and others take 2-4 bytes
  * @param str Input string to estimate size for
  * @returns Estimated size in bytes
  */
- function estimateStringFileSize(str: string): number {
+function estimateStringFileSize(str: string): number {
     if (!str) return 0;
 
     return str.split('').reduce((acc, char) => {
@@ -244,4 +247,93 @@ const isTextFileProbability = async (buffer: Buffer, filename: string): Promise<
     return textRatio > 0.9; // If more than 90% is printable ASCII, consider it text
 };
 
-export { streamToBuffer, isTextFile, readFileContent, estimateStringFileSize, isTextFileUsingName, isTextFileProbability, getFileUploadDirectory, getAquaAssetDirectory, readFileAsArrayBuffer, readFileAsText };
+
+async function s3Available(): Promise<boolean> {
+    if (minioClientCompleted()) {
+        try {
+            const minioClient = getMinioClient();
+            if (!await minioClient.bucketExists(getBucketName())) {
+                await minioClient.makeBucket(getBucketName());
+            }
+        } catch (e) {
+            console.warn("Cannot use the s3 store!", e);
+            return false
+        }
+        return true;
+    }
+    return false;
+}
+
+async function persistFile(fileSystemPath: string, filename: string, content): Promise<string> {
+    if (await s3Available()) {
+        const minioClient = getMinioClient();
+        await minioClient.putObject(getBucketName(), filename, content)
+        return path.join('s3:', getBucketName(), filename);
+    } else {
+        const filePath = path.join(fileSystemPath, filename);
+        await fs.promises.writeFile(filePath, content);
+        return filePath;
+    }
+}
+
+async function getFile(path: string): Promise<Buffer<ArrayBuffer> | undefined> {
+    if (path.includes("s3:")) {
+        if (await s3Available()) {
+            const cleanedPath = path.replace("s3:/", "");
+            const bucket = cleanedPath.substring(0, cleanedPath.indexOf("/"));
+            const filePath = cleanedPath.substring(cleanedPath.indexOf("/") + 1);
+            const data = await getMinioClient().getObject(bucket, filePath)
+            let chunks = [];
+            data.on("data", chunk => {
+                chunks.push(chunk);
+            })
+            return new Promise((resolve, reject) => {
+                data.on('end', () => {
+                    const objectData = Buffer.concat(chunks); // Combine all chunks into a single Buffer (byte array)
+                    resolve(objectData);
+                });
+
+                data.on('error', (err) => {
+                    reject(err);
+                });
+            });
+        }
+    }else{
+        return fs.readFileSync(path);
+    }
+}
+
+async function getFileSize(path: string): Promise<number | undefined | null> {
+    if (path.includes("s3:")) {
+        if (await s3Available()) {
+            const cleanedPath = path.replace("s3:/", "");
+            const bucket = cleanedPath.substring(0, cleanedPath.indexOf("/"));
+            const filePath = cleanedPath.substring(cleanedPath.indexOf("/") + 1);
+            try{
+                const data = await getMinioClient().statObject(bucket, filePath)
+                return data.size;
+            }catch(e){
+                console.error(e);
+                return null
+            }
+        }
+    }else{
+        return fs.statSync(path).size;
+    }
+}
+
+export {
+    streamToBuffer,
+    isTextFile,
+    readFileContent,
+    estimateStringFileSize,
+    isTextFileUsingName,
+    isTextFileProbability,
+    getFileUploadDirectory,
+    getAquaAssetDirectory,
+    readFileAsArrayBuffer,
+    readFileAsText,
+    persistFile,
+    getFile,
+    getFileSize
+};
