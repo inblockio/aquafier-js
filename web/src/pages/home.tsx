@@ -86,6 +86,8 @@ const features = [
             icon: <FileCheck className="h-8 w-8 text-orange-500" />,
             title: 'Data Accountability',
             description: 'Track and verify the origin and history of data (data accounting).',
+            link: "https://digitalfreedom.substack.com/p/defining-data-accounting",
+            cta: 'Read More',
       },
       {
             icon: <ShieldCheck className="h-8 w-8 text-orange-500" />,
@@ -124,9 +126,21 @@ const FeaturesSection = () => (
                                     key={feature.title}
                                     className="flex flex-col items-center text-center p-6 rounded-lg transition-all duration-300 hover:bg-orange-50/50 dark:hover:bg-orange-900/10 hover:shadow-xl border border-transparent hover:border-orange-200/50 dark:hover:border-orange-800/30"
                               >
-                                    <div className="mb-4 rounded-full bg-orange-500/10 p-3 shadow-inner">{feature.icon}</div>
-                                    <h3 className="text-xl font-headline font-semibold">{feature.title}</h3>
-                                    <p className="mt-2 text-muted-foreground">{feature.description}</p>
+                                    <div className="flex flex-col gap-2">
+                                          <div className="mb-4 rounded-full bg-orange-500/10 p-3 shadow-inner w-fit mx-auto">{feature.icon}</div>
+                                          <h3 className="text-xl font-headline font-semibold">{feature.title}</h3>
+                                          <p className="mt-2 text-muted-foreground">{feature.description}</p>
+                                          {feature.link && (
+                                                <Button asChild variant="outline" className="border-orange-500/30 hover:border-orange-500 hover:bg-orange-500/5 transition-all duration-300 rounded-lg">
+                                                      <Link to={feature.link} target="_blank" rel="noopener noreferrer">
+                                                            <span className="flex items-center">
+                                                                  {feature.cta}
+                                                                  <ArrowUpRight className="ml-2 h-4 w-4 text-orange-500" />
+                                                            </span>
+                                                      </Link>
+                                                </Button>
+                                          )}
+                                    </div>
                               </div>
                         ))}
                   </div>
@@ -287,9 +301,9 @@ const prototypes = [
       {
             name: 'Firewall-Like Systems',
             description: "Automated access control enforcement integrated with Aqua ('Guardian,' Protocol v1.2).",
-            link: null,
+            link: "https://github.com/inblockio/aqua-guardian",
             icon: <Server className="h-10 w-10 text-orange-500" />,
-            cta: '',
+            cta: 'View on GitHub',
       },
       {
             name: 'Document Signing Service',
