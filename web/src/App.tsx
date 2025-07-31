@@ -27,6 +27,7 @@ import TermsAndConditions from './pages/legal/TermsAndConditions'
 import PrivacyPolicy from './pages/legal/PrivacyPolicy'
 import ClaimsAndAttestationPage from './pages/claim_and_attestation'
 import ClaimsWorkflowPage from './pages/claims_workflow/claimsWorkflowPage'
+import ClaimsWorkflowPageV2 from './pages/v2_claims_workflow/claimsWorkflowPage'
 import WalletAutosuggestDemo from './pages/demo_auto_suggest'
 
 declare global {
@@ -68,6 +69,7 @@ function App() {
                                     <Route path="demo-auto-suggest" element={<WalletAutosuggestDemo />} />
                                     <Route path="pdf/workflow" element={<PdfWorkflowPage />} />
                                     <Route path="claims/workflow" element={<ClaimsWorkflowPage />} />
+                                    <Route path="claims/workflow/:walletAddress" element={<ClaimsWorkflowPageV2 />} />
                                     <Route path="files_workflows" element={<FilesPage />} />
                                     <Route path="domain_attestation" element={<DomainAttestationPage />} />
                                     <Route path="claims_and_attestation" element={<ClaimsAndAttestationPage />} />

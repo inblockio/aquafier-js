@@ -1,5 +1,5 @@
 
-const { ethers } = require('ethers');
+import * as ethers from 'ethers';
 import * as dns from 'dns';
 import { promisify } from 'util';
 // import { TxtRecord } from './types';
@@ -347,7 +347,7 @@ async function verifySingleRecord(
   logs.push({ level: 'info', message: 'Test 6/7: Cryptographic Signature Verification (EIP-191 Compliant)' });
 
   try {
-    const recoveredAddress = ethers.utils.verifyMessage(originalMessage, parsedRecord.sig);
+    const recoveredAddress = ethers.verifyMessage(originalMessage, parsedRecord.sig);
 
     if (recoveredAddress.toLowerCase() !== parsedRecord.wallet.toLowerCase()) {
       logs.push({
