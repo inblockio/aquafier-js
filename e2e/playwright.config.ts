@@ -14,8 +14,7 @@ dotenv.config();
  */
 export default defineConfig({
   testDir: './cases',
-  /* Run tests in files in parallel - disabled in CI for blockchain tests */
-  fullyParallel: !process.env.CI,
+  fullyParallel: true,
   /* Fail the build on CI if you accidentally left test.only in the source code. */
   forbidOnly: !!process.env.CI,
   /* Opt out of parallel tests on CI. */
