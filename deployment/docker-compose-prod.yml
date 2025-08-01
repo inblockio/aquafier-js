@@ -27,6 +27,12 @@ services:
       DATABASE_URL: postgresql://${DB_USER:-aquafier}:${DB_PASSWORD:-changeme}@postgres:5432/aquafier
       BACKEND_URL: ${BACKEND_URL:-localhost:3000}
       FRONTEND_URL: ${FRONTEND_URL:-localhost:3600}
+      S3_ACCESSKEY: ${S3_USER:-aquafier}
+      S3_BUCKET: ${S3_BUCKET:-aquafier}
+      S3_PORT: ${S3_PORT:-9000}
+      S3_SECRETKEY: ${S3_PASSWORD:-aquafier}
+      S3_URL: ${S3_URL:-s3}
+      S3_USE_SSL: ${S3_USE_SSL:-false} #we use the docker network, this is the reason why we dont need a ssl encryption here.
       VITE_INFURA_PROJECT_ID: ${VITE_INFURA_PROJECT_ID}
       VIRTUAL_HOST_MULTIPORTS: |-
         ${FRONTEND_URL}:
@@ -81,8 +87,8 @@ services:
     image: minio/minio:latest
     restart: always
     environment:
-      MINIO_ROOT_USER: ${MINIO_USER:-aquafier}
-      MINIO_ROOT_PASSWORD: ${MINIO_PASSWORD:-supersafepassword123}
+      MINIO_ROOT_USER: ${S3_USER:-aquafier}
+      MINIO_ROOT_PASSWORD: ${S3_PASSWORD:-aquafier}
     command: [ "server", "/data" ]
     volumes:
       - s3_storage:/data
