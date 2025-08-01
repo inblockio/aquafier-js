@@ -1,8 +1,6 @@
-
 import * as ethers from 'ethers';
 import * as dns from 'dns';
 import { promisify } from 'util';
-// import { TxtRecord } from './types';
 import * as crypto from 'crypto';
 
 export interface TxtRecord {
@@ -12,6 +10,9 @@ export interface TxtRecord {
   sig: string;
 }
 
+// Promisify DNS functions for better async handling
+const resolveTxtAsync = promisify(dns.resolveTxt);
+
 // Set reliable DNS servers (Google and Cloudflare)
 dns.setServers([
   '8.8.8.8',
@@ -20,9 +21,7 @@ dns.setServers([
   '1.0.0.1'
 ]);
 
-// Create a custom resolver that definitely uses our DNS servers
-const customResolver = new dns.Resolver();
-customResolver.setServers(['8.8.8.8', '8.8.4.4', '1.1.1.1', '1.0.0.1']);
+console.log('🔧 DNS servers set to:', dns.getServers());
 
 // Rate limiting
 const rateLimitMap = new Map<string, { count: number; resetTime: number }>();
@@ -57,36 +56,115 @@ interface ApiResponse {
   dnssecValidated: boolean;
 }
 
-// DNSSEC validation using DNS.resolveAny with AD flag
-async function resolveTxtWithDNSSEC(domain: string): Promise<{ records: string[][]; dnssecValidated: boolean }> {
-  return new Promise((resolve, reject) => {
-    const resolver = new dns.Resolver();
+// Improved DNS resolution with multiple fallbacks
+async function resolveTxtWithFallbacks(domain: string): Promise<{ records: string[][]; dnssecValidated: boolean }> {
+  const logs: string[] = [];
+  
+  // Method 1: Try with promisified dns.resolveTxt
+  try {
+    logs.push(`Attempting DNS resolution for ${domain} using promisified dns.resolveTxt`);
+    const records = await resolveTxtAsync(domain);
+    logs.push(`Success with promisified dns.resolveTxt: ${records.length} records found`);
+    return { records, dnssecValidated: false };
+  } catch (error1) {
+    logs.push(`Method 1 failed: ${error1 instanceof Error ? error1.message : error1}`);
+  }
 
-    // Use resolve4 with options to check DNSSEC
-    resolver.resolve4(domain.replace('aqua._wallet.', ''), { ttl: true }, (err, addresses) => {
-      if (err && err.code !== 'ENODATA' && err.code !== 'ENOTFOUND') {
-        // Check if we can get basic DNS resolution for the parent domain
-        resolver.resolveTxt(domain, (txtErr, txtRecords) => {
-          if (txtErr) {
-            reject(txtErr);
-          } else {
-            // We got TXT records but couldn't verify DNSSEC
-            resolve({ records: txtRecords, dnssecValidated: false });
-          }
-        });
-      } else {
-        // Now get the actual TXT records
-        resolver.resolveTxt(domain, (txtErr, txtRecords) => {
-          if (txtErr) {
-            reject(txtErr);
-          } else {
-            // Simple DNSSEC check: if parent domain resolves, we have basic validation
-            resolve({ records: txtRecords, dnssecValidated: true });
-          }
-        });
-      }
+  // Method 2: Try with callback-based dns.resolveTxt in Promise wrapper
+  try {
+    logs.push(`Attempting DNS resolution using callback-based dns.resolveTxt`);
+    const records = await new Promise<string[][]>((resolve, reject) => {
+      // Set a timeout for the DNS query
+      const timeoutId = setTimeout(() => {
+        reject(new Error('DNS query timeout after 10 seconds'));
+      }, 10000);
+
+      dns.resolveTxt(domain, (err, records) => {
+        clearTimeout(timeoutId);
+        if (err) {
+          reject(err);
+        } else {
+          resolve(records);
+        }
+      });
     });
-  });
+    logs.push(`Success with callback-based dns.resolveTxt: ${records.length} records found`);
+    return { records, dnssecValidated: false };
+  } catch (error2) {
+    logs.push(`Method 2 failed: ${error2 instanceof Error ? error2.message : error2}`);
+  }
+
+  // Method 3: Try with custom resolver
+  try {
+    logs.push(`Attempting DNS resolution using custom resolver`);
+    const customResolver = new dns.Resolver();
+    customResolver.setServers(['8.8.8.8', '1.1.1.1']);
+    
+    const records = await new Promise<string[][]>((resolve, reject) => {
+      const timeoutId = setTimeout(() => {
+        reject(new Error('Custom resolver timeout after 10 seconds'));
+      }, 10000);
+
+      customResolver.resolveTxt(domain, (err, records) => {
+        clearTimeout(timeoutId);
+        if (err) {
+          reject(err);
+        } else {
+          resolve(records);
+        }
+      });
+    });
+    logs.push(`Success with custom resolver: ${records.length} records found`);
+    return { records, dnssecValidated: false };
+  } catch (error3) {
+    logs.push(`Method 3 failed: ${error3 instanceof Error ? error3.message : error3}`);
+  }
+
+  // Method 4: Try with different DNS servers
+  const dnsServers = [
+    ['8.8.8.8', '8.8.4.4'], // Google
+    ['1.1.1.1', '1.0.0.1'], // Cloudflare
+    ['208.67.222.222', '208.67.220.220'], // OpenDNS
+    ['9.9.9.9', '149.112.112.112'] // Quad9
+  ];
+
+  for (const servers of dnsServers) {
+    try {
+      logs.push(`Attempting DNS resolution using servers: ${servers.join(', ')}`);
+      const resolver = new dns.Resolver();
+      resolver.setServers(servers);
+      
+      const records = await new Promise<string[][]>((resolve, reject) => {
+        const timeoutId = setTimeout(() => {
+          reject(new Error(`DNS query timeout with servers ${servers.join(', ')}`));
+        }, 8000);
+
+        resolver.resolveTxt(domain, (err, records) => {
+          clearTimeout(timeoutId);
+          if (err) {
+            reject(err);
+          } else {
+            resolve(records);
+          }
+        });
+      });
+      logs.push(`Success with servers ${servers.join(', ')}: ${records.length} records found`);
+      return { records, dnssecValidated: false };
+    } catch (error) {
+      logs.push(`Failed with servers ${servers.join(', ')}: ${error instanceof Error ? error.message : error}`);
+    }
+  }
+
+  // If all methods fail, throw the last error with diagnostic info
+  const diagnosticInfo = {
+    domain,
+    availableServers: dns.getServers(),
+    logs,
+    nodeVersion: process.version,
+    platform: process.platform
+  };
+  
+  throw new Error(`All DNS resolution methods failed for ${domain}. Diagnostic info: ${JSON.stringify(diagnosticInfo, null, 2)}`);
 }
 
 // Rate limiting check
@@ -95,7 +173,6 @@ function checkRateLimit(identifier: string): boolean {
   const limit = rateLimitMap.get(identifier);
 
   if (!limit || now > limit.resetTime) {
-    // New window
     rateLimitMap.set(identifier, { count: 1, resetTime: now + RATE_LIMIT_WINDOW });
     return true;
   }
@@ -109,9 +186,7 @@ function checkRateLimit(identifier: string): boolean {
 }
 
 function parseTxtRecord(txt: string): TxtRecord {
-  // Use standard URLSearchParams for robust URL parameter parsing
   const params = new URLSearchParams(txt);
-
   return {
     wallet: params.get('wallet') || '',
     timestamp: params.get('timestamp') || '',
@@ -122,14 +197,14 @@ function parseTxtRecord(txt: string): TxtRecord {
 
 // Helper function to verify a single wallet record
 async function verifySingleRecord(
-  txtRecord: string, 
-  domain: string, 
-  recordName: string, 
+  txtRecord: string,
+  domain: string,
+  recordName: string,
   recordIndex: number,
   dnssecValidated: boolean,
   logs: LogEntry[]
 ): Promise<VerificationResult> {
-  
+
   logs.push({
     level: 'info',
     message: `Starting verification for record ${recordIndex}`,
@@ -149,14 +224,12 @@ async function verifySingleRecord(
   totalTests++;
   logs.push({ level: 'info', message: `Test 1/7: Wallet Record Format` });
 
-  // Check for new format first (with expiration)
   let isLegacyFormat = false;
   let hasValidFormat = txtRecord.includes('wallet=') &&
     txtRecord.includes('timestamp=') &&
     txtRecord.includes('expiration=') &&
     txtRecord.includes('sig=');
 
-  // Fallback to legacy format (without expiration)
   if (!hasValidFormat) {
     hasValidFormat = txtRecord.includes('wallet=') &&
       txtRecord.includes('timestamp=') &&
@@ -193,7 +266,6 @@ async function verifySingleRecord(
   const parsedRecord = parseTxtRecord(txtRecord);
   result.walletAddress = parsedRecord.wallet;
 
-  // For legacy format, set a default expiration (90 days from timestamp)
   if (isLegacyFormat && parsedRecord.timestamp && !parsedRecord.expiration) {
     parsedRecord.expiration = (parseInt(parsedRecord.timestamp) + (90 * 24 * 60 * 60)).toString();
     logs.push({
@@ -233,7 +305,7 @@ async function verifySingleRecord(
   const originalMessage = isLegacyFormat
     ? `${parsedRecord.timestamp}|${domain}`
     : `${parsedRecord.timestamp}|${domain}|${parsedRecord.expiration}`;
-  
+
   logs.push({
     level: 'success',
     message: 'Message prepared for verification',
@@ -266,8 +338,7 @@ async function verifySingleRecord(
     return result;
   }
 
-  // Check for future timestamps (clock skew attack)
-  if (timestamp > Math.floor(now.getTime() / 1000) + 300) { // 5 min tolerance
+  if (timestamp > Math.floor(now.getTime() / 1000) + 300) {
     logs.push({
       level: 'error',
       message: 'Timestamp is in the future - possible clock manipulation attack',
@@ -413,7 +484,6 @@ async function verifySingleRecord(
     });
     testsPassed++;
 
-    // Success
     logs.push({
       level: 'success',
       message: `Record ${recordIndex} verification complete: ${testsPassed}/${totalTests} tests passed`,
@@ -437,7 +507,7 @@ async function verifySingleRecord(
   }
 }
 
-// Main verification function adapted for API
+// Main verification function adapted for API with improved DNS handling
 export async function verifyProofApi(domain: string, lookupKey: string, expectedWallet?: string): Promise<ApiResponse> {
   const logs: LogEntry[] = [];
   const response: ApiResponse = {
@@ -499,15 +569,16 @@ export async function verifyProofApi(domain: string, lookupKey: string, expected
       domain: actualDomain,
       lookupKey: actualLookupKey,
       recordName: recordName,
-      expectedWallet: expectedWallet
+      expectedWallet: expectedWallet,
+      dnsServers: dns.getServers()
     }
   });
 
   try {
-    // DNS Record Existence with DNSSEC
+    // DNS Record Existence with improved fallback handling
     logs.push({
       level: 'info',
-      message: 'Querying DNS records',
+      message: 'Querying DNS records with multiple fallback methods',
       details: { recordName: recordName }
     });
 
@@ -515,37 +586,31 @@ export async function verifyProofApi(domain: string, lookupKey: string, expected
     let dnssecValidated = false;
 
     try {
-      const result = await resolveTxtWithDNSSEC(recordName);
+      const result = await resolveTxtWithFallbacks(recordName);
       txtRecords = result.records;
       dnssecValidated = result.dnssecValidated;
       response.dnssecValidated = dnssecValidated;
-    } catch (dnssecError) {
+      
       logs.push({
-        level: 'warning',
-        message: 'DNSSEC validation not available, falling back to standard DNS'
+        level: 'success',
+        message: 'DNS resolution successful',
+        details: {
+          recordCount: txtRecords.length,
+          dnssecValidated: dnssecValidated
+        }
       });
-
-      try {
-        txtRecords = await new Promise((resolve, reject) => {
-          dns.resolveTxt(recordName, (err, records) => {
-            if (err) {
-              reject(err);
-            } else {
-              resolve(records);
-            }
-          });
-        });
-        dnssecValidated = false;
-        response.dnssecValidated = false;
-      } catch (err) {
-        logs.push({
-          level: 'error',
-          message: 'DNS lookup failed',
-          details: { error: err instanceof Error ? err.message : err }
-        });
-        response.message = 'DNS lookup failed';
-        return response;
-      }
+    } catch (dnsError) {
+      logs.push({
+        level: 'error',
+        message: 'All DNS resolution methods failed',
+        details: { 
+          error: dnsError instanceof Error ? dnsError.message : dnsError,
+          recordName: recordName,
+          dnsServers: dns.getServers()
+        }
+      });
+      response.message = `DNS lookup failed for ${recordName}. This could be due to network restrictions in the server environment.`;
+      return response;
     }
 
     if (!txtRecords || txtRecords.length === 0) {
@@ -561,24 +626,15 @@ export async function verifyProofApi(domain: string, lookupKey: string, expected
       return response;
     }
 
-    logs.push({
-      level: 'success',
-      message: `Found ${txtRecords.length} TXT record(s)`,
-      details: {
-        recordCount: txtRecords.length,
-        dnssecValidated: dnssecValidated
-      }
-    });
-
     // Filter wallet records
     const walletRecords = txtRecords.flat().filter(record =>
       (record.includes('wallet=') &&
-       record.includes('timestamp=') &&
-       record.includes('expiration=') &&
-       record.includes('sig=')) ||
+        record.includes('timestamp=') &&
+        record.includes('expiration=') &&
+        record.includes('sig=')) ||
       (record.includes('wallet=') &&
-       record.includes('timestamp=') &&
-       record.includes('sig='))
+        record.includes('timestamp=') &&
+        record.includes('sig='))
     );
 
     if (walletRecords.length === 0) {
@@ -634,8 +690,7 @@ export async function verifyProofApi(domain: string, lookupKey: string, expected
     // Process each wallet record
     for (let i = 0; i < walletRecords.length; i++) {
       const record = walletRecords[i];
-      
-      // If expectedWallet is specified, only process that wallet
+
       if (expectedWallet) {
         const parsed = parseTxtRecord(record);
         if (!parsed.wallet || parsed.wallet.toLowerCase() !== expectedWallet.toLowerCase()) {
@@ -645,11 +700,10 @@ export async function verifyProofApi(domain: string, lookupKey: string, expected
 
       const result = await verifySingleRecord(record, actualDomain, recordName, i + 1, dnssecValidated, logs);
       response.results.push(result);
-      
+
       if (result.success) {
         response.verifiedRecords++;
-        
-        // If expectedWallet is specified and we found it, we can stop here
+
         if (expectedWallet) {
           break;
         }
@@ -668,7 +722,7 @@ export async function verifyProofApi(domain: string, lookupKey: string, expected
       }
     } else {
       response.success = response.verifiedRecords > 0;
-      response.message = response.success 
+      response.message = response.success
         ? `${response.verifiedRecords}/${response.totalRecords} records successfully verified`
         : 'No wallet records passed verification';
     }

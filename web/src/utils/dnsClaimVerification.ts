@@ -1,4 +1,4 @@
-import * as dns from 'dns';
+// import * as dns from 'dns';
 import { ethers } from "ethers";
 import { digTxtRecordsGoogle } from './functions';
 

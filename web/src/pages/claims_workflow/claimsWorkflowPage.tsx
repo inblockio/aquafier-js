@@ -243,6 +243,7 @@ export default function ClaimsWorkflowPage() {
                                           {processedInfo?.walletAddress != session?.address && activeTabData?.id == `claims_attestation` ? (
                                                 <div className="flex items-center gap-3">
                                                       <AttestAquaClaim file={selectedFileInfo!!} index={1} />
+                                                      
                                                 </div>
                                           ) : null}
 
