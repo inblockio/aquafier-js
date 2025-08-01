@@ -50,7 +50,7 @@ jobs:
           EOL
 
       - name: Start test env
-        run: cd e2e && docker-compose -f docker-compose.yml up
+        run: cd e2e && docker-compose -f docker-compose.yml up -d
           
       # - name: Prepare Test-Env
       #   run: cd e2e && docker compose up -d
