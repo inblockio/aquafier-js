@@ -513,6 +513,7 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: { selectedTempla
                   if (!signature) {
                         return null
                   }
+                  //todo @kenn set txt record
                   filteredData['signature'] = signature
             }
             console.log('completeFormData after validation:', JSON.stringify(filteredData, null, 4))
