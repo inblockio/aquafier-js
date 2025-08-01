@@ -48,6 +48,9 @@ jobs:
           PREFUNDED_WALLET_PRIVATEKEY=${{ secrets.PREFUNDED_WALLET_PRIVATEKEY }}
           ALCHEMY_PROJECT_ID=${{ secrets.ALCHEMY_PROJECT_ID }}
           EOL
+
+      - name: Start test env
+        run: cd e2e && docker-compose -f docker-compose.yml up
           
       # - name: Prepare Test-Env
       #   run: cd e2e && docker compose up -d

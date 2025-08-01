@@ -15,7 +15,8 @@ services:
       retries: 5
 
   aqua-container:
-    image: ghcr.io/inblockio/aquafier-js:dev
+    image: ghcr.io/inblockio/aquafier-js:latest
+    pull_policy: never
     ports:
       - 3600:3600
       - 3000:3000
