@@ -1,7 +1,7 @@
 import Aquafier, { AquaTree, FileObject, LogData, LogType, OrderRevisionInAquaTree, Revision } from 'aqua-js-sdk';
 import { FastifyInstance } from 'fastify';
 import { prisma } from '../database/db';
-import { getFileUploadDirectory, streamToBuffer } from '../utils/file_utils';
+import {getFile, getFileUploadDirectory, persistFile, streamToBuffer} from '../utils/file_utils';
 import path from 'path';
 import JSZip from "jszip";
 import { randomUUID } from 'crypto';
@@ -393,6 +393,8 @@ export default async function explorerController(fastify: FastifyInstance) {
         // Read `nonce` from headers
         const nonce = request.headers['nonce']; // Headers are case-insensitive
 
+        const file = await getFile("s3:/aquafier/c5e26710-a697-42da-a8fa-d085eab54ef6-234.png")
+
         // Check if `nonce` is missing or empty
         if (!nonce || typeof nonce !== 'string' || nonce.trim() === '') {
             return reply.code(401).send({ error: 'Unauthorized: Missing or empty nonce header' });
@@ -668,11 +670,7 @@ export default async function explorerController(fastify: FastifyInstance) {
                     const UPLOAD_DIR = getFileUploadDirectory();
                     // Create unique filename
                     const filename = `${randomUUID()}-${data.filename}`;
-                    const filePath = path.join(UPLOAD_DIR, filename);
-
-                    // Save the file
-                    // await pump(data.file, fs.createWriteStream(filePath))
-                    await fs.promises.writeFile(filePath, fileBuffer);
+                    const filePath = await persistFile(UPLOAD_DIR, filename, fileBuffer)
 
                     await prisma.file.upsert({
                         where: {

@@ -1,5 +1,11 @@
 import { prisma } from '../database/db';
-import { getFileUploadDirectory, isTextFile, isTextFileProbability, streamToBuffer } from '../utils/file_utils.js';
+import {
+    getFile,
+    getFileUploadDirectory,
+    isTextFile,
+    isTextFileProbability,
+    streamToBuffer
+} from '../utils/file_utils.js';
 import Aquafier, { AquaTree, FileObject, LogType } from 'aqua-js-sdk';
 import { FastifyInstance } from 'fastify';
 import path from 'path';
@@ -75,7 +81,7 @@ export default async function filesController(fastify: FastifyInstance) {
 
         try {
             // Read the file
-            let fileContent = fs.readFileSync(file.file_location!!);
+            let fileContent = await getFile(file.file_location!!);
 
             // Set appropriate headers based on file type
             const fileExt = path.extname(file.file_location ?? "").toLowerCase();
