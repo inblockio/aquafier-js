@@ -3,7 +3,7 @@
 import { streamToBuffer } from "../utils/file_utils";
 import Aquafier, { AquaTree, FileObject, LogData, LogType, Revision } from "aqua-js-sdk";
 import { FastifyInstance } from "fastify";
-import { verifyProofApi } from "src/utils/verify_dns_claim";
+import { verifyProofApi } from "../utils/verify_dns_claim";
 
 export default async function verifyController(fastify: FastifyInstance) {
 
