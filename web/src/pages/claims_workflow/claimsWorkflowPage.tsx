@@ -27,6 +27,13 @@ export default function ClaimsWorkflowPage() {
       // const [previewEnabled, setPreviewEnabled] = useState(true);
       const [timeLineTitle, setTimeLineTitle] = useState('')
       const [processedInfo, setProcessedInfo] = useState<ClaimInformation | null>(null)
+      const [tabsData, setTabsData] = useState<Array<{
+            id: string,
+            label: string,
+            icon: any,
+            completion: number,
+            completionColor: string,
+      }>>([])
       const [sharedContracts, setSharedContracts] = useState<Contract[] | null>(null)
       const [attestations, setAttestations] = useState<
             Array<{
@@ -64,7 +71,7 @@ export default function ClaimsWorkflowPage() {
             },
       ]
 
-      const activeTabData = tabs.find(tab => tab.id === activeTab)
+      const activeTabData = tabsData.find(tab => tab.id === activeTab)
 
       const loadSharedContractsData = async (_latestRevisionHash: string, _genesisHash: string) => {
             try {
@@ -142,7 +149,14 @@ export default function ClaimsWorkflowPage() {
             if (selectedClaim) {
                   const processedInfo = processSimpleWorkflowClaim(selectedClaim)
                   setTimeLineTitle('Claims Workflow')
+                  if (processedInfo.claimInformation.forms_type === 'dns_claim') {
+                        let res = tabs.filter((e) => e.id != 'claims_attestation');
+                        setTabsData(res)
+                  } else {
+                        setTabsData(tabs)
+                  }
                   setProcessedInfo(processedInfo)
+
             }
       }, [JSON.stringify(selectedClaim), JSON.stringify(files)])
 
@@ -190,7 +204,7 @@ export default function ClaimsWorkflowPage() {
                               {/* Tab Navigation */}
                               <div className="border-b border-gray-200">
                                     <div className="flex space-x-0">
-                                          {tabs.map(tab => {
+                                          {tabsData.map(tab => {
                                                 const Icon = tab.icon
                                                 const isActive = activeTab === tab.id
 
@@ -226,12 +240,13 @@ export default function ClaimsWorkflowPage() {
                                                 </div>
                                           ) : null}
 
-{processedInfo?.walletAddress != session?.address && activeTabData?.id == `claims_attestation` ? (
+                                          {processedInfo?.walletAddress != session?.address && activeTabData?.id == `claims_attestation` ? (
                                                 <div className="flex items-center gap-3">
                                                       <AttestAquaClaim file={selectedFileInfo!!} index={1} />
+                                                      
                                                 </div>
                                           ) : null}
-                                          
+
                                     </div>
 
                                     {/* Content Area */}
@@ -291,7 +306,7 @@ export default function ClaimsWorkflowPage() {
                                                 <div className="bg-gray-50 rounded-lg p-6">
                                                       <h3 className="text-lg font-medium text-gray-900 mb-4 text-left">Attestation History</h3>
 
-                                                      
+
                                                       {isLoadingAttestations ? (
                                                             <div className="flex justify-center py-8">
                                                                   <ClipLoader color={'blue'} loading={true} size={40} aria-label="Loading Spinner" data-testid="loader" />

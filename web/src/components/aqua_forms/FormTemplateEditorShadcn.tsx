@@ -75,7 +75,7 @@ const templateFormFields = [
             minLength: 4,
       },
 ]
-
+ 
 const FormTemplateEditorShadcn = ({ initialTemplate, onSave, updating }: FormTemplateEditorShadcnProps) => {
       const { session, backend_url, setFormTemplate, formTemplates, setSystemFileInfo, systemFileInfo } = useStore(appStore)
 
@@ -307,7 +307,7 @@ const FormTemplateEditorShadcn = ({ initialTemplate, onSave, updating }: FormTem
                                           </div>
 
                                           {/* Delete Button */}
-                                          <Button variant="ghost" size="icon" className="absolute top-2 right-2 text-red-500 hover:text-red-700 hover:bg-red-50" onClick={() => deleteField(index)}>
+                                          <Button data-testid={'delete-form-template' + index} id={"delete-form-template-id-"+index} variant="ghost" size="icon" className="absolute top-2 right-2 text-red-500 hover:text-red-700 hover:bg-red-50" onClick={() => deleteField(index)}>
                                                 <LuTrash className="h-4 w-4" />
                                           </Button>
                                     </div>

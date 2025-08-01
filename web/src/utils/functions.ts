@@ -8,6 +8,7 @@ import Aquafier, { AquaTree, CredentialsData, FileObject, OrderRevisionInAquaTre
 import jdenticon from 'jdenticon/standalone'
 import { IContractInformation } from '@/types/contract_workflow'
 import { SummaryDetailsDisplayData } from '@/types/types'
+import { NavigateFunction } from 'react-router-dom'
 
 export function formatDate(date: Date) {
       const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
@@ -251,6 +252,48 @@ export async function switchNetwork(chainId: string) {
             console.error('MetaMask is not installed.')
       }
 }
+
+export  const getWalletClaims = ( systemFileInfo: ApiFileInfo[],  files: ApiFileInfo[],    walletAddress: string, setSelectedFileInfo: (file: ApiFileInfo | null) => void , navigate : NavigateFunction, toast : any) => {
+            const aquaTemplates: string[] = systemFileInfo.map(e => {
+                  try {
+                        return getAquaTreeFileName(e.aquaTree!)
+                  } catch (e) {
+                        console.log('Error processing system file') // More descriptive
+                        return ''
+                  }
+            })
+
+            if (files && files.length > 0) {
+                  let firstClaim: ApiFileInfo | null = null
+                  for (let i = 0; i < files.length; i++) {
+                        const aquaTree = files[i].aquaTree
+                        if (aquaTree) {
+                              const { isWorkFlow, workFlow } = isWorkFlowData(aquaTree!, aquaTemplates)
+                              if (isWorkFlow && (workFlow === 'simple_claim' || workFlow === 'identity_claim' || workFlow === 'domain_claim')) {
+                                    const orderedAquaTree = OrderRevisionInAquaTree(aquaTree)
+                                    const revisionHashes = Object.keys(orderedAquaTree.revisions)
+                                    const firstRevisionHash = revisionHashes[0]
+                                    const firstRevision = orderedAquaTree.revisions[firstRevisionHash]
+                                    const _wallet_address = firstRevision.forms_wallet_address
+                                    if (walletAddress === _wallet_address) {
+                                          // setSelectedFileInfo(files[i])
+                                          firstClaim = files[i]
+                                          // We only take the first claim as of now
+                                          break
+                                    }
+                              }
+                        }
+                  }
+                  if (firstClaim) {
+                        setSelectedFileInfo(firstClaim)
+                        navigate('/app/claims/workflow')
+                  } else {
+                        toast.info('Claim not found', {
+                              description: 'No claims found for this wallet address',
+                        })
+                  }
+            }
+      }
 
 /**
  * Validates if a string is a valid Ethereum address using ethers.js v6

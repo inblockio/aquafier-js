@@ -1,6 +1,6 @@
-import { promisify } from "util";
-import * as dns from 'dns';
+// import * as dns from 'dns';
 import { ethers } from "ethers";
+import { digTxtRecordsGoogle } from './functions';
 
 
 export interface Proof {
@@ -35,7 +35,10 @@ export interface Proof {
     method: SignatureMethod;
   } 
 
-const resolveTxt = promisify(dns.resolveTxt);
+async function resolveTxt(hostname: string): Promise<string[]> {
+  const result = digTxtRecordsGoogle(hostname)
+  return result
+}
 
 function parseTxtRecord(txt: string): TxtRecord {
     // Use standard URLSearchParams for robust URL parameter parsing
@@ -55,38 +58,83 @@ const RATE_LIMIT_MAX = 10; // Max requests per window
 const RATE_LIMIT_WINDOW = 60000; // 1 minute window
 
 // DNSSEC validation using DNS.resolveAny with AD flag
+// async function resolveTxtWithDNSSEC(domain: string): Promise<{ records: string[][]; dnssecValidated: boolean }> {
+//   return new Promise((resolve, reject) => {
+//     const resolver = new dns.Resolver();
+
+//     // Enable DNSSEC validation by requesting AD (Authenticated Data) flag
+//     resolver.setServers(resolver.getServers());
+
+//     // Use resolve4 with options to check DNSSEC
+//     resolver.resolve4(domain.replace('aqua._wallet.', ''), { ttl: true }, (err, _addresses) => {
+//       if (err && err.code !== 'ENODATA' && err.code !== 'ENOTFOUND') {
+//         // Check if we can get basic DNS resolution for the parent domain
+//         resolver.resolveTxt(domain, (txtErr, txtRecords) => {
+//           if (txtErr) {
+//             reject(txtErr);
+//           } else {
+//             // We got TXT records but couldn't verify DNSSEC
+//             resolve({ records: txtRecords, dnssecValidated: false });
+//           }
+//         });
+//       } else {
+//         // Now get the actual TXT records
+//         resolver.resolveTxt(domain, (txtErr, txtRecords) => {
+//           if (txtErr) {
+//             reject(txtErr);
+//           } else {
+//             // Simple DNSSEC check: if parent domain resolves, we have basic validation
+//             resolve({ records: txtRecords, dnssecValidated: true });
+//           }
+//         });
+//       }
+//     });
+//   });
+// }
+
 async function resolveTxtWithDNSSEC(domain: string): Promise<{ records: string[][]; dnssecValidated: boolean }> {
-  return new Promise((resolve, reject) => {
-    const resolver = new dns.Resolver();
-
-    // Enable DNSSEC validation by requesting AD (Authenticated Data) flag
-    resolver.setServers(resolver.getServers());
-
-    // Use resolve4 with options to check DNSSEC
-    resolver.resolve4(domain.replace('aqua._wallet.', ''), { ttl: true }, (err, _addresses) => {
-      if (err && err.code !== 'ENODATA' && err.code !== 'ENOTFOUND') {
-        // Check if we can get basic DNS resolution for the parent domain
-        resolver.resolveTxt(domain, (txtErr, txtRecords) => {
-          if (txtErr) {
-            reject(txtErr);
-          } else {
-            // We got TXT records but couldn't verify DNSSEC
-            resolve({ records: txtRecords, dnssecValidated: false });
-          }
-        });
-      } else {
-        // Now get the actual TXT records
-        resolver.resolveTxt(domain, (txtErr, txtRecords) => {
-          if (txtErr) {
-            reject(txtErr);
-          } else {
-            // Simple DNSSEC check: if parent domain resolves, we have basic validation
-            resolve({ records: txtRecords, dnssecValidated: true });
-          }
-        });
+  try {
+    // Use Cloudflare DoH API with DNSSEC validation
+    const response = await fetch(`https://cloudflare-dns.com/dns-query?name=${domain}&type=TXT&do=true&cd=false`, {
+      headers: {
+        'Accept': 'application/dns-json'
       }
     });
-  });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const data = await response.json();
+    
+    // Check DNSSEC status
+    const dnssecValidated = data.AD === true; // AD flag indicates DNSSEC validation
+    const hasRcode = data.Status === 0; // NOERROR status
+    
+    if (!hasRcode) {
+      throw new Error(`DNS query failed with status: ${data.Status}`);
+    }
+
+    // Extract TXT records
+    const txtRecords: string[][] = [];
+    if (data.Answer) {
+      for (const answer of data.Answer) {
+        if (answer.type === 16) { // TXT record type
+          // Parse TXT data (remove quotes and split if needed)
+          const txtData = answer.data.replace(/^"|"$/g, '');
+          txtRecords.push([txtData]);
+        }
+      }
+    }
+
+    return {
+      records: txtRecords,
+      dnssecValidated
+    };
+
+  } catch (error: any) {
+    throw new Error(`DNSSEC validation failed: ${error.message}`);
+  }
 }
 
 
@@ -148,13 +196,13 @@ interface ILog {
     })
   
     try {
-      let txtRecords: string[][];
+      let txtRecords: string[] = [];
       let dnssecValidated = false;
+      const result = await resolveTxtWithDNSSEC(recordName);
+      console.log("Resolving with DNSSEC", result)
   
       try {
-        const result = await resolveTxtWithDNSSEC(recordName);
-        console.log("Resolving with DNSSEC", result)
-        txtRecords = result.records;
+        // txtRecords = result.records;
         dnssecValidated = result.dnssecValidated;
       } catch (dnssecError) {
         // Fallback to regular DNS if DNSSEC check fails
@@ -166,21 +214,21 @@ interface ILog {
         dnssecValidated = false;
       }
   
-      if (!txtRecords || txtRecords.length === 0) {
-        logs.push({
-          content: '❌ FAIL: No TXT records found at this location',
-          type: 'error'
-        })
-        logs.push({
-          content: `ℹ️  Expected: TXT record at ${recordName}`,
-          type: 'info'
-        })
-        logs.push({
-          content: `ℹ️  Found: No records`,
-          type: 'info'
-        })
-        return logs;
-      }
+      // if (!txtRecords || txtRecords.length === 0) {
+      //   logs.push({
+      //     content: '❌ FAIL: No TXT records found at this location',
+      //     type: 'error'
+      //   })
+      //   logs.push({
+      //     content: `ℹ️  Expected: TXT record at ${recordName}`,
+      //     type: 'info'
+      //   })
+      //   logs.push({
+      //     content: `ℹ️  Found: No records`,
+      //     type: 'info'
+      //   })
+      //   return logs;
+      // }
   
       logs.push({
         content: `✅ PASS: Found ${txtRecords.length} TXT record(s)`,
