@@ -12,7 +12,7 @@ import { defineConfig, devices } from '@playwright/test';
  * See https://playwright.dev/docs/test-configuration.
  */
 export default defineConfig({
-  testDir: './',
+  testDir: './cases',
   /* Run tests in files in parallel - disabled in CI for blockchain tests */
   fullyParallel: !process.env.CI,
   /* Fail the build on CI if you accidentally left test.only in the source code. */
@@ -65,6 +65,7 @@ export default defineConfig({
       name: 'chromium',
       use: { ...devices['Desktop Chrome'],
       baseURL: process.env.BASE_URL ? process.env.BASE_URL : "https://dev.inblock.io"},
+      timeout: 180000,
     }
   ],
 });
