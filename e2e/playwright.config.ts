@@ -1,5 +1,6 @@
 import { defineConfig, devices } from '@playwright/test';
-
+const dotenv = require('dotenv');
+dotenv.config();
 /**
  * Read environment variables from file.
  * https://github.com/motdotla/dotenv
@@ -23,7 +24,7 @@ export default defineConfig({
   reporter: [['junit', { outputFile: 'results.xml' }]],
   /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
   use: {
-    headless: true,
+    headless: false,
     permissions: ["clipboard-read"],
     /* Base URL to use in actions like `await page.goto('/')`. */
     // baseURL: 'http://localhost:3000',
