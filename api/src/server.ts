@@ -16,7 +16,7 @@ import indexController from './controllers/index';
 import versionController from './controllers/version';
 import filesController from './controllers/files';
 import explorerController from './controllers/explorer';
-import verifyController from './controllers/verify.js';
+import verifyController from './controllers/verify';
 import { getFileUploadDirectory } from './utils/file_utils';
 import revisionsController from './controllers/revisions';
 import shareController from './controllers/share';
