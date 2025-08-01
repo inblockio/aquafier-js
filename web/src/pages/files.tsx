@@ -510,7 +510,7 @@ const FilesPage = () => {
                                                 // setIsSelectedFileDialogOpen(false)
                                                 setSelectedFileInfo(null)
                                                 setOpenDialog(null)
-                                          }}
+                                          }} 
                                     >
                                           <X className="h-4 w-4" />
                                     </Button>

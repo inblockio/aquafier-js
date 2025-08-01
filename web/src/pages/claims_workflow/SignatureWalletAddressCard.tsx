@@ -1,11 +1,11 @@
 import { ApiFileInfo } from '@/models/FileInfo'
 import appStore from '@/store'
-import { formatCryptoAddress, getAquaTreeFileName, getGenesisHash, isWorkFlowData } from '@/utils/functions'
+import { ensureDomainUrlHasSSL, formatCryptoAddress, getAquaTreeFileName, getGenesisHash, isWorkFlowData } from '@/utils/functions'
 import { OrderRevisionInAquaTree } from 'aqua-js-sdk'
-import { LucideCheckCircle, TimerIcon } from 'lucide-react'
-import { useEffect, useState } from 'react'
-import { HiHashtag, HiShieldCheck } from 'react-icons/hi'
-import { LuUser } from 'react-icons/lu'
+import { LucideCheckCircle, TimerIcon, User, WalletMinimal } from 'lucide-react'
+import { JSX, useEffect, useState } from 'react'
+import { HiHashtag } from 'react-icons/hi'
+// import { LuUser } from 'react-icons/lu'
 import { TbWorldWww } from 'react-icons/tb'
 import { useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
@@ -25,58 +25,262 @@ interface IClaim {
       apiFileInfo: ApiFileInfo
 }
 
-const ClaimCard = ({ claim }: { claim: IClaim }) => {
-      const { setSelectedFileInfo } = useStore(appStore)
-      const navigate = useNavigate()
 
-      const openClaimPage = () => {
-            setSelectedFileInfo(claim.apiFileInfo)
-            navigate('/app/claims/workflow')
-      }
-
-      const getClaimIcon = () => {
-            if (claim.claimType === 'simple_claim') {
-                  return (
-                        <div className="h-[24px] w-[24px] flex items-center justify-center">
-                              <HiShieldCheck />
-                        </div>
-                  )
-            } else if (claim.claimType === 'dns_claim') {
-                  return (
-                        <div className="h-[24px] w-[24px] flex items-center justify-center">
-                              <TbWorldWww />
-                        </div>
-                  )
-            } else {
-                  return (
-                        <div className="h-[24px] w-[24px] flex items-center justify-center">
-                              <LucideCheckCircle />
-                        </div>
-                  )
-            }
-      }
-
-      return (
-            <div className="flex items-center justify-between p-2 border-t border-gray-200 dark:border-gray-700">
-                  <div className="flex items-center gap-2">
-                        <div className="w-[20px] h-[20px] flex items-center justify-center text-gray-500">{getClaimIcon()}</div>
-                        <div className="flex flex-col gap-2">
-                              <span className="text-sm">{claim.claimName || claim.claimType}</span>
-                              <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full w-fit">
-                                    {claim.attestationsCount} attestation
-                                    {claim.attestationsCount !== 1 ? 's' : ''}
-                              </span>
-                        </div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                        <button onClick={openClaimPage} className="px-3 py-1 text-xs bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-colors cursor-pointer">
-                              View
-                        </button>
-                  </div>
-            </div>
-      )
+interface ISignatureWalletAddressCard {
+  index?: number
+  signatureHash: string
+  walletAddress: string
+  timestamp: string
 }
 
+interface IClaim {
+  claimType: string
+  claimName?: string
+  attestationsCount: number
+  apiFileInfo: ApiFileInfo
+}
+
+interface VerificationResult {
+  success: boolean
+  message: string
+  domain: string
+  expectedWallet?: string
+  totalRecords: number
+  verifiedRecords: number
+  results: any[]
+  logs: LogEntry[]
+  dnssecValidated: boolean
+}
+
+interface LogEntry {
+  level: 'info' | 'success' | 'warning' | 'error'
+  message: string
+  details?: any
+}
+
+type DNSStatus = 'loading' | 'verified' | 'failed' | 'not_found'
+
+const ClaimCard: React.FC<{ claim: IClaim }> = ({ claim }) => {
+  const { setSelectedFileInfo, backend_url, session } = useStore(appStore)
+  const navigate = useNavigate()
+  
+  // DNS verification state
+  const [dnsStatus, setDnsStatus] = useState<DNSStatus>('loading')
+  const [dnsMessage, setDnsMessage] = useState<string>('Checking...')
+
+  const openClaimPage = (): void => {
+    setSelectedFileInfo(claim.apiFileInfo)
+    navigate('/app/claims/workflow')
+  }
+
+  const getClaimIcon = (): JSX.Element => {
+    if (claim.claimType === 'simple_claim') {
+      return (
+        <div className="h-[24px] w-[24px] flex items-center justify-center">
+          <User />
+        </div>
+      )
+    } else if (claim.claimType === 'dns_claim') {
+      return (
+        <div className="h-[24px] w-[24px] flex items-center justify-center">
+          <TbWorldWww />
+        </div>
+      )
+    } else {
+      return (
+        <div className="h-[24px] w-[24px] flex items-center justify-center">
+          <LucideCheckCircle />
+        </div>
+      )
+    }
+  }
+
+  const verifyDNS = async (): Promise<void> => {
+    // Hardcoded values as requested
+//     const domain = 'inblock.io'
+//     const walletAddress = '0x677e5E9a3badb280d7393464C09490F813d6d6ef'
+    
+    try {
+      setDnsStatus('loading')
+      setDnsMessage('Verifying...')
+
+      const url = `${backend_url}/verify/dns_claim`
+      const actualUrlToFetch = ensureDomainUrlHasSSL(url)
+      
+      const response = await fetch(actualUrlToFetch, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          domain: claim.claimName ?? "inblock.io",
+          wallet: session?.address
+        }),
+      })
+
+      const result: VerificationResult = await response.json()
+
+      if (result.success) {
+        setDnsStatus('verified')
+        setDnsMessage('Verified')
+      } else {
+        // Determine status based on the response status and result
+        if (response.status === 404) {
+          setDnsStatus('not_found')
+          setDnsMessage('Not found')
+        } else if (response.status === 429) {
+          setDnsStatus('failed')
+          setDnsMessage('Rate limited')
+        } else if (response.status === 400) {
+          setDnsStatus('failed')
+          setDnsMessage('Invalid request')
+        } else if (response.status === 422) {
+          setDnsStatus('failed')
+          setDnsMessage('Failed')
+        } else {
+          setDnsStatus('failed')
+          setDnsMessage('Failed')
+        }
+      }
+    } catch (error) {
+      console.error('Error verifying DNS claim:', error)
+      setDnsStatus('failed')
+      setDnsMessage('Connection error')
+    }
+  }
+
+  const getDNSStatusBadge = (): JSX.Element => {
+    switch (dnsStatus) {
+      case 'loading':
+        return (
+          <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full w-fit flex items-center gap-1">
+            <div className="animate-spin h-2 w-2 border border-blue-500 border-t-transparent rounded-full"></div>
+            {dnsMessage}
+          </span>
+        )
+      case 'verified':
+        return (
+          <span className="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full w-fit">
+            ✓ {dnsMessage}
+          </span>
+        )
+      case 'not_found':
+        return (
+          <span className="text-xs bg-amber-100 text-amber-800 px-2 py-1 rounded-full w-fit">
+            ⚠ {dnsMessage}
+          </span>
+        )
+      case 'failed':
+      default:
+        return (
+          <span className="text-xs bg-red-100 text-red-800 px-2 py-1 rounded-full w-fit">
+            ✗ {dnsMessage}
+          </span>
+        )
+    }
+  }
+
+  // Effect to verify DNS when component mounts and claim type is dns_claim
+  useEffect(() => {
+    if (claim.claimType === 'dns_claim') {
+      verifyDNS()
+    }
+  }, [claim.claimType, backend_url])
+
+  return (
+    <div className="flex items-center justify-between p-2 border-t border-gray-200 dark:border-gray-700">
+      <div className="flex items-center gap-2">
+        <div className="w-[20px] h-[20px] flex items-center justify-center text-gray-500">
+          {getClaimIcon()}
+        </div>
+        <div className="flex flex-col gap-2">
+          <span className="text-sm">{claim.claimName || claim.claimType}</span>
+          
+          {claim.claimType === 'simple_claim' && (
+            <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full w-fit">
+              {claim.attestationsCount} attestation
+              {claim.attestationsCount !== 1 ? 's' : ''}
+            </span>
+          )}
+
+          {claim.claimType === 'dns_claim' && getDNSStatusBadge()}
+        </div>
+      </div>
+      <div className="flex items-center gap-2">
+        <button 
+          onClick={openClaimPage} 
+          className="px-3 py-1 text-xs bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-colors cursor-pointer"
+        >
+          View
+        </button>
+      </div>
+    </div>
+  )
+}
+
+// const ClaimCard = ({ claim }: { claim: IClaim }) => {
+//       const { setSelectedFileInfo } = useStore(appStore)
+//       const navigate = useNavigate()
+
+//       const openClaimPage = () => {
+//             setSelectedFileInfo(claim.apiFileInfo)
+//             navigate('/app/claims/workflow')
+//       }
+
+//       const getClaimIcon = () => {
+//             if (claim.claimType === 'simple_claim') {
+//                   return (
+//                         <div className="h-[24px] w-[24px] flex items-center justify-center">
+//                               <User />
+//                         </div>
+//                   )
+//             } else if (claim.claimType === 'dns_claim') {
+//                   return (
+//                         <div className="h-[24px] w-[24px] flex items-center justify-center">
+//                               <TbWorldWww />
+//                         </div>
+//                   )
+//             } else {
+//                   return (
+//                         <div className="h-[24px] w-[24px] flex items-center justify-center">
+//                               <LucideCheckCircle />
+//                         </div>
+//                   )
+//             }
+//       }
+
+
+
+//       return (
+//             <div className="flex items-center justify-between p-2 border-t border-gray-200 dark:border-gray-700">
+//                   <div className="flex items-center gap-2">
+//                         <div className="w-[20px] h-[20px] flex items-center justify-center text-gray-500">{getClaimIcon()}</div>
+//                         <div className="flex flex-col gap-2">
+//                               <span className="text-sm">{claim.claimName || claim.claimType}</span>
+                         
+//                               {(claim.claimType =='simple_claim') && 
+//                               <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full w-fit">
+//                                     {claim.attestationsCount} attestation
+//                                     {claim.attestationsCount !== 1 ? 's' : ''}
+//                               </span>
+//                               }
+
+//                               {(claim.claimType =='domain_claim') && 
+//                               <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full w-fit">
+//                                    {/* todo */}
+//                               </span>
+//                               }
+//                         </div>
+//                   </div>
+//                   <div className="flex items-center gap-2">
+//                         <button onClick={openClaimPage} className="px-3 py-1 text-xs bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-colors cursor-pointer">
+//                               View
+//                         </button>
+//                   </div>
+//             </div>
+//       )
+// }
+ 
 const SignatureWalletAddressCard = ({ walletAddress, signatureHash, index, timestamp }: ISignatureWalletAddressCard) => {
       const { files, systemFileInfo, setSelectedFileInfo } = useStore(appStore)
       const [claims, setClaims] = useState<IClaim[]>([])
@@ -193,7 +397,7 @@ const SignatureWalletAddressCard = ({ walletAddress, signatureHash, index, times
                               </div>
                               <div className="flex align-center gap-2 justify-end">
                                     <div className="w-[20px] h-[20px] flex items-center justify-center">
-                                          <LuUser className="h-100 w-100 text-gray-500" />
+                                          <WalletMinimal className="h-90  w-100 text-gray-500" />
                                     </div>
                                     <div className="flex flex-nowrap gap-2">
                                           <p className="text-sm">Wallet: </p>
@@ -221,7 +425,7 @@ const SignatureWalletAddressCard = ({ walletAddress, signatureHash, index, times
                                     <p className="text-sm">Loading...</p>
                               </div>
                         </div>
-                  ) : (
+                  ) : ( 
                         <>
                               {claims.map((claim, index) => (
                                     <ClaimCard key={`claim_${index}`} claim={claim} />

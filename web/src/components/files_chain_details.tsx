@@ -11,7 +11,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/component
 import { CustomAlert } from '@/components/ui/alert-custom'
 import { RevisionDetailsSummary } from './files_revision_details'
 import { RevisionDisplay } from './files_revision_display'
-
+ 
 export const CompleteChainView = ({ callBack, selectedFileInfo }: ICompleteChainView) => {
       const [showMoreDetails, setShowMoreDetails] = useState(false)
       const [isSelectedFileAWorkFlow, setSelectedFileAWorkFlow] = useState(false)

@@ -11,7 +11,7 @@ import { displayTime, fetchLinkedFileName, formatCryptoAddress, getAquaTreeFileO
 import { ApiFileInfo } from '@/models/FileInfo'
 import { toaster } from '@/components/ui/use-toast'
 import SignatureWalletAddressCard from '@/pages/claims_workflow/SignatureWalletAddressCard'
-
+ 
 export const RevisionDetailsSummary = ({ fileInfo, isWorkFlow }: RevisionDetailsSummaryData) => {
       const { files, setSelectedFileInfo } = useStore(appStore)
       const revisionHashes = Object.keys(fileInfo!.aquaTree!.revisions)
