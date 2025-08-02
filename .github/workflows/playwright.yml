@@ -57,7 +57,7 @@ jobs:
       - name: Start Xvfb
         run: |
           sudo apt-get update
-          sudo apt-get install -y xvfb
+          sudo apt-get install -y xvfb zip
           Xvfb :99 -screen 0 1280x1024x24 &
           export DISPLAY=:99
 
@@ -82,10 +82,9 @@ jobs:
           DISPLAY: :99
         run: cd e2e && npx playwright test
 
-      - uses: montudor/action-zip@v1
+      - name: zip test-results
         if: ${{ !cancelled() }}
-        with:
-          args: zip -qq -r test-results.zip e2e/test-results
+        run: cd test-results && zip -9 test-results.zip * && mv test-results.zip ./../
 
       - uses: actions/upload-artifact@v4
         if: ${{ !cancelled() }}
@@ -100,10 +99,9 @@ jobs:
         with:
           dest: 'docker-logs'
 
-      - uses: montudor/action-zip@v1
+      - name: docker logs compress
         if: ${{ !cancelled() }}
-        with:
-          args: zip -qq -r docker-logs.zip docker-logs
+        run: cd docker-logs && zip -9 docker-logs.zip * && mv docker-logs.zip ./../
 
       - uses: actions/upload-artifact@v4
         if: ${{ !cancelled() }}
