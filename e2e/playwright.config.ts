@@ -1,5 +1,6 @@
 import { defineConfig, devices } from '@playwright/test';
-
+const dotenv = require('dotenv');
+dotenv.config();
 /**
  * Read environment variables from file.
  * https://github.com/motdotla/dotenv
@@ -12,18 +13,18 @@ import { defineConfig, devices } from '@playwright/test';
  * See https://playwright.dev/docs/test-configuration.
  */
 export default defineConfig({
-  testDir: './',
-  /* Run tests in files in parallel - disabled in CI for blockchain tests */
-  fullyParallel: !process.env.CI,
+  testDir: './cases',
+  fullyParallel: true,
   /* Fail the build on CI if you accidentally left test.only in the source code. */
   forbidOnly: !!process.env.CI,
+  retries: process.env.RETRIES ? parseInt(process.env.RETRIES) : 1,
   /* Opt out of parallel tests on CI. */
   workers: process.env.WORKERS ? parseInt(process.env.WORKERS) : 1,
   /* Reporter to use. See https://playwright.dev/docs/test-reporters */
   reporter: [['junit', { outputFile: 'results.xml' }]],
   /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
   use: {
-    headless: true,
+    headless: false,
     permissions: ["clipboard-read"],
     /* Base URL to use in actions like `await page.goto('/')`. */
     // baseURL: 'http://localhost:3000',
@@ -65,6 +66,7 @@ export default defineConfig({
       name: 'chromium',
       use: { ...devices['Desktop Chrome'],
       baseURL: process.env.BASE_URL ? process.env.BASE_URL : "https://dev.inblock.io"},
+      timeout: 180000,
     }
   ],
 });
