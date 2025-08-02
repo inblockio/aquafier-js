@@ -88,6 +88,7 @@ jobs:
           name: playwright-report
           path: e2e/test-results/
           retention-days: 30
+          compression-level: 9
 
       - name: Dump docker logs on failure using different shell
         if: ${{ !cancelled() }}
@@ -101,6 +102,7 @@ jobs:
           name: docker-logs
           path: docker-logs/
           retention-days: 30
+          compression-level: 9
 
       - name: Publish Test Report
         uses: mikepenz/action-junit-report@v5
