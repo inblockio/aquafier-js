@@ -47,6 +47,8 @@ jobs:
           BASE_URL=http://127.0.0.1:3600
           PREFUNDED_WALLET_PRIVATEKEY=${{ secrets.PREFUNDED_WALLET_PRIVATEKEY }}
           ALCHEMY_PROJECT_ID=${{ secrets.ALCHEMY_PROJECT_ID }}
+          WORKERS=2
+          RETRIES=1
           EOL
 
       - name: Start test env
@@ -78,12 +80,12 @@ jobs:
       - name: Run Playwright tests
         env:
           DISPLAY: :99
-        run: cd e2e && npx playwright test --workers=4
+        run: cd e2e && npx playwright test
 
       - uses: montudor/action-zip@v1
         if: ${{ !cancelled() }}
         with:
-          args: zip -qq -r test-results.zip test-results
+          args: zip -qq -r test-results.zip e2e/test-results
 
       - uses: actions/upload-artifact@v4
         if: ${{ !cancelled() }}
