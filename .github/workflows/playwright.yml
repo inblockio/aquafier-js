@@ -101,7 +101,7 @@ jobs:
 
       - name: docker logs compress
         if: ${{ !cancelled() }}
-        run: cd e2e/docker-logs && zip -9 docker-logs.zip * && mv docker-logs.zip ./../
+        run: cd docker-logs && zip -9 docker-logs.zip *
 
       - uses: actions/upload-artifact@v4
         if: ${{ !cancelled() }}
