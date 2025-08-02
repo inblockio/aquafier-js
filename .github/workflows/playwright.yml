@@ -51,9 +51,6 @@ jobs:
 
       - name: Start test env
         run: cd e2e && docker-compose -f docker-compose.yml up -d
-          
-      # - name: Prepare Test-Env
-      #   run: cd e2e && docker compose up -d
 
       - name: Start Xvfb
         run: |
@@ -81,9 +78,10 @@ jobs:
       - name: Run Playwright tests
         env:
           DISPLAY: :99
-        run: cd e2e && npx playwright test --workers=4 --retries=3
+        run: cd e2e && npx playwright test --workers=4
 
       - uses: montudor/action-zip@v1
+        if: ${{ !cancelled() }}
         with:
           args: zip -qq -r test-results.zip test-results
 
