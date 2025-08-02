@@ -47,7 +47,7 @@ jobs:
           BASE_URL=http://127.0.0.1:3600
           PREFUNDED_WALLET_PRIVATEKEY=${{ secrets.PREFUNDED_WALLET_PRIVATEKEY }}
           ALCHEMY_PROJECT_ID=${{ secrets.ALCHEMY_PROJECT_ID }}
-          WORKERS=2
+          WORKERS=4
           RETRIES=1
           EOL
 
