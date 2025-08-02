@@ -84,7 +84,7 @@ jobs:
 
       - name: zip test-results
         if: ${{ !cancelled() }}
-        run: cd e2e/test-results && zip -9 test-results.zip *
+        run: cd e2e/test-results && zip test-results.zip *
 
       - uses: actions/upload-artifact@v4
         if: ${{ !cancelled() }}
