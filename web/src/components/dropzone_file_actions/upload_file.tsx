@@ -8,7 +8,6 @@ import { checkIfFileExistInUserFiles } from '../../utils/functions'
 import { maxFileSizeForUpload } from '../../utils/constants'
 import { IDropzoneAction } from '../../types/types'
 import { toast } from 'sonner'
-import { toaster } from '@/components/ui/use-toast'
 import { Button } from '@/components/ui/button'
 import { Loader2 } from 'lucide-react'
 
@@ -30,20 +29,14 @@ export const UploadFile = ({ file, uploadedIndexes, fileIndex, updateUploadedInd
             const fileExist = await checkIfFileExistInUserFiles(file, files)
 
             if (fileExist) {
-                  toaster.create({
-                        description: 'You already have the file. Delete before importing this',
-                        type: 'info',
-                  })
+                  toast.info( 'You already have the file. Delete before importing this')
                   updateUploadedIndex(fileIndex)
 
                   return
             }
 
             if (file.size > maxFileSizeForUpload) {
-                  toaster.create({
-                        description: 'File size exceeds 200MB limit. Please upload a smaller file.',
-                        type: 'error',
-                  })
+                  toast.error( 'File size exceeds 200MB limit. Please upload a smaller file.')
                   return
             }
 
@@ -95,7 +88,7 @@ export const UploadFile = ({ file, uploadedIndexes, fileIndex, updateUploadedInd
 
                   setUploaded(true)
                   setUploading(false)
-                  toaster.create({
+                  toast.create({
                         description: 'File uploaded successfuly',
                         type: 'success',
                   })
@@ -103,7 +96,7 @@ export const UploadFile = ({ file, uploadedIndexes, fileIndex, updateUploadedInd
                   return
             } catch (error) {
                   setUploading(false)
-                  toaster.create({
+                  toast.create({
                         description: `Failed to upload file: ${error}`,
                         type: 'error',
                   })

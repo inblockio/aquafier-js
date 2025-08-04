@@ -11,10 +11,10 @@ import axios from 'axios'
 import VersionDetails from '../models/VersionDetails'
 import { IVersionAndDisclaimer } from '../types/index'
 import versionInfo from '../version-info.json'
-import { toaster } from './ui/use-toast'
 import { Dialog, DialogBody, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogCloseTrigger } from '@chakra-ui/react'
 import { Button } from './ui/button'
 import { Alert } from './ui/alert'
+import { toast } from 'sonner'
 
 export default function VersionAndDisclaimer({ inline, open, updateOpenStatus }: IVersionAndDisclaimer) {
       //   const {  es, avatar, setAvatar, setUserProfile, backend_url } = useStore(appStore);
@@ -42,10 +42,7 @@ export default function VersionAndDisclaimer({ inline, open, updateOpenStatus }:
                   }
             } catch (e: unknown) {
                   //  console.log("Error fetching version ", e)
-                  toaster.create({
-                        description: 'Error fetching version details',
-                        type: 'error',
-                  })
+                  toast.error( 'Error fetching version details')
             }
       }
 

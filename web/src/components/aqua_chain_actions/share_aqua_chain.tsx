@@ -5,14 +5,13 @@ import axios from 'axios'
 import { useEffect, useState } from 'react'
 import { generateNonce } from 'siwe'
 import { ClipLoader } from 'react-spinners'
-
+import { toast } from 'sonner'
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { IShareButton } from '../../types/types'
 import ClipboardButton from '@/components/ui/clipboard'
 import { Label } from '@/components/ui/label'
 import { Input } from '@/components/ui/input'
 import { ClipboardIcon } from 'lucide-react'
-import { toaster } from '@/components/ui/use-toast'
 import { Switch } from '@/components/ui/switch'
 import { Button } from '@/components/ui/button'
 
@@ -50,10 +49,7 @@ export const ShareButton = ({ item, nonce, index }: IShareButton) => {
 
       const handleShare = async () => {
             if (recipientType == 'specific' && walletAddress == '') {
-                  toaster.create({
-                        description: `If recipient is specific a wallet address has to be specified.`,
-                        type: 'error',
-                  })
+                  toast.error( `If recipient is specific a wallet address has to be specified.`)
                   return
             }
             setSharing(true)
@@ -89,10 +85,7 @@ export const ShareButton = ({ item, nonce, index }: IShareButton) => {
                   const domain = window.location.origin
                   setShared(`${domain}/app/shared-contracts/${unique_identifier}`)
             } else {
-                  toaster.create({
-                        description: 'Error sharing',
-                        type: 'error',
-                  })
+                  toast.error( 'Error sharing')
             }
       }
 

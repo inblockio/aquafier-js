@@ -44,7 +44,7 @@ export const DeleteAquaChain = ({ apiFileInfo, backendUrl, nonce, children, inde
                         // Close the dialog explicitly
                         setOpen(false)
                         setIsloading(false)
-                        toast('File deleted successfully')
+                        toast.success('File deleted successfully')
                         await refetchAllUserFiles()
                   }
             } catch (e) {

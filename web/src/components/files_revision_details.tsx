@@ -9,8 +9,8 @@ import { ExternalLink, FileSignature, Eye, Link2, Clock, Hash, Network, Copy, Ch
 import { ERROR_TEXT, ERROR_UKNOWN, WITNESS_NETWORK_MAP } from '@/utils/constants'
 import { displayTime, fetchLinkedFileName, formatCryptoAddress, getAquaTreeFileObject, getFileNameWithDeepLinking, isDeepLinkRevision } from '@/utils/functions'
 import { ApiFileInfo } from '@/models/FileInfo'
-import { toaster } from '@/components/ui/use-toast'
 import SignatureWalletAddressCard from '@/pages/claims_workflow/SignatureWalletAddressCard'
+import { toast } from 'sonner'
  
 export const RevisionDetailsSummary = ({ fileInfo, isWorkFlow }: RevisionDetailsSummaryData) => {
       const { files, setSelectedFileInfo } = useStore(appStore)
@@ -439,11 +439,7 @@ export const viewLinkedFile = (
 
                                                       if (aquaTree == undefined) {
                                                             console.log(`show  ${linkedFileName}  filw object ${JSON.stringify(fileObject, null, 4)}`)
-                                                            toaster.create({
-                                                                  title: 'View not available',
-                                                                  type: 'info',
-                                                                  description: 'View not available',
-                                                            })
+                                                            toast.info( 'View not available')
                                                       } else {
                                                             updateSelectedFile({
                                                                   aquaTree: aquaTree,
@@ -458,11 +454,7 @@ export const viewLinkedFile = (
                                           }
                                     }
                               } else {
-                                    toaster.create({
-                                          title: 'Link file not found , possibly a deep link ?',
-                                          type: 'info',
-                                          description: 'View not available',
-                                    })
+                                    toast.info('Link file not found , possibly a deep link ?')
                               }
                         }}
                         variant="outline"

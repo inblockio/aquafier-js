@@ -6,8 +6,8 @@ import { useState } from 'react'
 
 import JSZip from 'jszip'
 import { IDropzoneAction } from '../../types/types'
-import { toaster } from '@/components/ui/use-toast'
 import { Button } from '@/components/ui/button'
+import { toast } from 'sonner'
 
 export const ImportAquaTreeZip = ({ file, uploadedIndexes, fileIndex, updateUploadedIndex }: IDropzoneAction) => {
       const [uploading, setUploading] = useState(false)
@@ -19,10 +19,7 @@ export const ImportAquaTreeZip = ({ file, uploadedIndexes, fileIndex, updateUplo
             console.log('uploadFileData called...')
 
             if (!file) {
-                  toaster.create({
-                        description: 'No file selected!',
-                        type: 'info',
-                  })
+                  toast.info( 'No file selected!')
                   return
             }
 
@@ -47,18 +44,12 @@ export const ImportAquaTreeZip = ({ file, uploadedIndexes, fileIndex, updateUplo
                   setFiles([...res.data])
                   setUploaded(true)
                   setUploading(false)
-                  toaster.create({
-                        description: 'File uploaded successfuly',
-                        type: 'success',
-                  })
+                  toast.success('File uploaded successfuly')
                   updateUploadedIndex(fileIndex)
                   return
             } catch (error) {
                   setUploading(false)
-                  toaster.create({
-                        description: `Failed to upload file: ${error}`,
-                        type: 'error',
-                  })
+                  toast.error( `Failed to upload file: ${error}`)
             }
       }
 
@@ -91,10 +82,7 @@ export const ImportAquaTreeZip = ({ file, uploadedIndexes, fileIndex, updateUplo
                         }
 
                         if (!hasAquaJson) {
-                              toaster.create({
-                                    description: 'Aqua Json not found.',
-                                    type: 'info',
-                              })
+                              toast.info( 'Aqua Json not found.')
                               return
                         }
 
