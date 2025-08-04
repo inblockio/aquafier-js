@@ -22,7 +22,14 @@ FROM node:22-slim
 RUN apt-get update && apt-get install -y \
     postgresql-client \
     netcat-openbsd \
+    wget \
+    cron \
+    tar \
     && rm -rf /var/lib/apt/lists/*
+
+# prepare backup tools and dir
+RUN wget https://dl.min.io/client/mc/release/linux-amd64/mc && chmod +x mc
+RUN mkdir /backup
 
 EXPOSE 3000
 EXPOSE 3600
