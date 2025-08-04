@@ -22,97 +22,99 @@ import {
     witnessDocument
 } from '../testUtils';
 
-// // Simple test to verify Playwright is working correctly
-// test("basic site accessibility test", async ({page}) => {
-//     console.log("Running basic site accessibility test");
-//     // Navigate to the site
-//     await page.goto('/', {timeout: 60000});
-//     console.log("Page loaded");
-//
-//     // Take a screenshot for debugging
-//     // await page.screenshot({ path: 'site-loaded.png' });
-//     // console.log("Screenshot taken");
-//
-//     // Simple assertion to verify the page loaded
-//     const title = await page.title();
-//     console.log(`Page title: ${title}`);
-// });
-//
-// test("create new wallet test", async (): Promise<void> => {
-//     await registerNewMetaMaskWallet();
-// });
+// Simple test to verify Playwright is working correctly
+test("basic site accessibility test", async ({page}) => {
+    console.log("Running basic site accessibility test");
+    // Navigate to the site
+    await page.goto('/', {timeout: 60000});
+    console.log("Page loaded");
+
+    // Take a screenshot for debugging
+    // await page.screenshot({ path: 'site-loaded.png' });
+    // console.log("Screenshot taken");
+
+    // Simple assertion to verify the page loaded
+    const title = await page.title();
+    console.log(`Page title: ${title}`);
+});
+
+test("create new wallet test", async (): Promise<void> => {
+    await registerNewMetaMaskWallet();
+});
 
 test("login test", async (): Promise<void> => {
     await registerNewMetaMaskWalletAndLogin();
 });
 //
-// test("user setting test", async (): Promise<void> => {
-//     const registerResponse = await registerNewMetaMaskWalletAndLogin();
-//     const context: BrowserContext = registerResponse.context;
-//     const testPage: Page = context.pages()[0];
-//     console.log("user setting test started!");
-//
-//     //wait until the main page was fully loaded
-//     await testPage.waitForSelector('[data-testid="nav-link-0"]', {state: 'visible'});
-//
-//     await testPage.goto('/app/settings', {waitUntil: 'networkidle'})
-//
-//     // await testPage.reload(); // reload page
-//
-//     await testPage.fill('[data-testid="alias-name-input"]', "alias_data");
-//     console.log("filled aqua sign form");
-//
-//     await waitAndClick(testPage, '[data-testid="save-changes-settings"]')
-//
-//     await testPage.reload(); // reload page
-//
-//     const alisName: string = await testPage.locator('[data-testid="alias-name-input"]').inputValue();
-//
-//     if (alisName !== "alias_data") {
-//         throw new Error("Alias name not updated");
-//     }
-//
-//     console.log("Alias name updated successfully");
-// });
-//
-//
-// test("linking 2 files test", async (): Promise<void> => {
-//     const registerResponse = await registerNewMetaMaskWalletAndLogin();
-//     const context: BrowserContext = registerResponse.context;
-//     const testPage: Page = context.pages()[0];
-//     console.log("linking 2 files test started!");
-//
-//     // Upload file
-//     const filePath: string = path.join(__dirname, '/../resources/exampleFile.pdf');
-//     await uploadFile(testPage, filePath);
-//
-//     // close upload dialog
-//     await closeUploadDialog(testPage);
-//
-//     // Upload file
-//     const filePath2: string = path.join(__dirname, '/../resources/logo.png');
-//     await uploadFile(testPage, filePath2);
-//
-//     // close upload dialog
-//     await closeUploadDialog(testPage);
-//
-//     await waitAndClick(testPage, '[data-testid="link-action-button-1"]')
-//
-//     // Wait for the dialog to appear
-//     await testPage.waitForSelector('div[role="dialog"]', {state: 'visible', timeout: 5000});
-//
-//     // Click on the checkbox with id 'file-0'
-//     await waitAndClick(testPage, '#file-0')
-//
-//     // Click on the link button in the dialog
-//     await waitAndClick(testPage, '[data-testid="link-modal-action-button-dialog"]')
-//
-//     //TODO add a nice way to check if the linking was successful
-//     // close link dialog
-//     // await testPage.pause();
-// });
-//
-//
+test("user setting test", async (): Promise<void> => {
+    const registerResponse = await registerNewMetaMaskWalletAndLogin();
+    const context: BrowserContext = registerResponse.context;
+    const testPage: Page = context.pages()[0];
+    console.log("user setting test started!");
+
+    //wait until the main page was fully loaded
+    await testPage.waitForSelector('[data-testid="nav-link-0"]', {state: 'visible'});
+
+    await testPage.goto('/app/settings', {waitUntil: 'networkidle'})
+
+    // await testPage.reload(); // reload page
+
+    await testPage.fill('[data-testid="alias-name-input"]', "alias_data");
+    console.log("filled aqua sign form");
+
+    await waitAndClick(testPage, '[data-testid="save-changes-settings"]')
+
+    await testPage.reload(); // reload page
+
+    const alisName: string = await testPage.locator('[data-testid="alias-name-input"]').inputValue();
+
+    if (alisName !== "alias_data") {
+        throw new Error("Alias name not updated");
+    }
+
+    console.log("Alias name updated successfully");
+});
+
+
+test("linking 2 files test", async (): Promise<void> => {
+    const registerResponse = await registerNewMetaMaskWalletAndLogin();
+    const context: BrowserContext = registerResponse.context;
+    const testPage: Page = context.pages()[0];
+    console.log("linking 2 files test started!");
+
+    // Upload file
+    const filePath: string = path.join(__dirname, '/../resources/exampleFile.pdf');
+    await uploadFile(testPage, filePath);
+
+    // close upload dialog
+    await closeUploadDialog(testPage);
+
+    // Upload file
+    const filePath2: string = path.join(__dirname, '/../resources/logo.png');
+    await uploadFile(testPage, filePath2);
+
+    // close upload dialog
+    await closeUploadDialog(testPage);
+
+    await waitAndClick(testPage, '[data-testid="link-action-button-1"]')
+
+    // Wait for the dialog to appear
+    await testPage.waitForSelector('div[role="dialog"]', {state: 'visible', timeout: 5000});
+
+    // Click on the checkbox with id 'file-0'
+    await waitAndClick(testPage, '#file-0')
+
+    // Click on the link button in the dialog
+    await waitAndClick(testPage, '[data-testid="link-modal-action-button-dialog"]')
+
+    await testPage.pause();
+
+    //TODO add a nice way to check if the linking was successful
+    // close link dialog
+    // await testPage.pause();
+});
+
+
 // test("upload, file form revision", async (): Promise<void> => {
 //     const registerResponse = await registerNewMetaMaskWalletAndLogin();
 //     const context: BrowserContext = registerResponse.context;
