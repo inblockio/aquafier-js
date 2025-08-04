@@ -143,7 +143,6 @@ test("import, file multiple revisions", async (): Promise<void> => {
     const filePath: string = path.join(__dirname, '/../resources/aqua.json.aqua.json');
     await uploadFile(testPage, filePath);
 
-
     //import the aqua chain
     await waitAndClick(testPage, '[data-testid="action-import-93-button"]')
 
@@ -153,25 +152,28 @@ test("import, file multiple revisions", async (): Promise<void> => {
         const filePath2: string = path.join(__dirname, '/../resources/aqua.json');
         console.log("File upload dropzone is visible");
 
+        // Set up the file chooser promise BEFORE triggering the action
         const fileChooserPromise = testPage.waitForEvent('filechooser');
-        // Trigger the file chooser (you might need to click a specific element here)
-        // await testPage.click('[data-testid="some-upload-trigger"]');
+        
+        // Trigger the file chooser - you need to click the element that opens the file dialog
+        // This could be a button, input[type="file"], or dropzone
+        await testPage.click('[data-testid="action-select-file-06-button"]'); // or whatever element opens the file dialog
+        
+        // Wait for and handle the file chooser
         const fileChooser = await fileChooserPromise;
         await fileChooser.setFiles(filePath2);
         console.log("File selected in file chooser");
 
-
         console.log("File uploaded successfully");
     } catch (error) {
         console.log("Select file button is not visible, skipping file upload");
+        console.error(error); // Log the actual error for debugging
     }
 
     // ✅ Wait for the table row that includes "aqua.json"
     const row = testPage.locator('table >> text=aqua.json');
     await expect(row).toBeVisible({timeout: 10000});
-
 });
-
 
 test("upload, delete file", async (): Promise<void> => {
     const registerResponse = await registerNewMetaMaskWalletAndLogin();
@@ -540,7 +542,7 @@ test("create a simple claim", async (): Promise<void> => {
     console.log("input claim context filles");
 
 
-    await testPage.fill('[data-testid="input-name"]', "sa,ple");
+    await testPage.fill('[data-testid="input-name"]', "sample");
     console.log("input claim name ");
 
 
