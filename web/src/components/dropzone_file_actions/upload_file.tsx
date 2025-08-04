@@ -88,18 +88,12 @@ export const UploadFile = ({ file, uploadedIndexes, fileIndex, updateUploadedInd
 
                   setUploaded(true)
                   setUploading(false)
-                  toast.create({
-                        description: 'File uploaded successfuly',
-                        type: 'success',
-                  })
+                  toast.success('File uploaded successfuly')
                   updateUploadedIndex(fileIndex)
                   return
             } catch (error) {
                   setUploading(false)
-                  toast.create({
-                        description: `Failed to upload file: ${error}`,
-                        type: 'error',
-                  })
+                  toast.error( `Failed to upload file: ${error}`)
             }
       }
 
