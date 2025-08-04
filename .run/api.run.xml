@@ -1,0 +1,20 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="api" type="js.build_tools.npm">
+    <package-json value="$PROJECT_DIR$/api/package.json" />
+    <command value="run" />
+    <scripts>
+      <script value="dev" />
+    </scripts>
+    <node-interpreter value="project" />
+    <envs>
+      <env name="DATABASE_URL" value="postgresql://aquafier:changeme@localhost:5432/aquafier" />
+      <env name="S3_ACCESSKEY" value="aquafier" />
+      <env name="S3_BUCKET" value="aquafier" />
+      <env name="S3_PORT" value="9000" />
+      <env name="S3_SECRETKEY" value="supersafepassword123" />
+      <env name="S3_URL" value="localhost" />
+      <env name="S3_USE_SSL" value="false" />
+    </envs>
+    <method v="2" />
+  </configuration>
+</component>
