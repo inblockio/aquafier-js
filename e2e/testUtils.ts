@@ -1239,6 +1239,8 @@ export async function registerNewMetaMaskWalletAndLogin(url: string = "/app"): P
     await metamaskPage.waitForSelector('[data-testid="confirm-btn"]', {state: 'visible'})
     await metamaskPage.click('[data-testid="confirm-btn"]')
 
+    await metamaskPage.pause();
+    await metamaskPage.waitForSelector('[data-testid="confirm-footer-cancel-button"]', {state: 'visible'})
     await metamaskPage.waitForSelector('[data-testid="confirm-footer-button"]', {state: 'visible'})
     await metamaskPage.click('[data-testid="confirm-footer-button"]')
 
