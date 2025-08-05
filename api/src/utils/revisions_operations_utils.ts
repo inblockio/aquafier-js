@@ -583,8 +583,12 @@ async function getFileStats(filePath: string): Promise<{ fileSizeInBytes: number
         const fullFilename = path.basename(filePath);
         const originalFilename = fullFilename.substring(fullFilename.indexOf('-') + 1);
 
+        let size = await getFileSize(filePath);
+        if(!size){
+            size=-1
+        }
         return {
-            fileSizeInBytes: await getFileSize(filePath),
+            fileSizeInBytes: size,
             originalFilename
         };
     } catch (error) {

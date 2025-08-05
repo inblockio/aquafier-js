@@ -264,7 +264,7 @@ async function s3Available(): Promise<boolean> {
     return false;
 }
 
-async function persistFile(fileSystemPath: string, filename: string, content): Promise<string> {
+async function persistFile(fileSystemPath: string, filename: string, content: Buffer): Promise<string> {
     if (await s3Available()) {
         const minioClient = getMinioClient();
         await minioClient.putObject(getBucketName(), filename, content)
