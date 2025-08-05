@@ -20,6 +20,7 @@ import { Separator } from '../ui/separator'
 import { ScrollArea } from '../ui/scroll-area'
 import FilePreview from '../file_preview'
 import { WalletAutosuggest } from '../wallet_auto_suggest'
+import { ApiFileInfo } from '@/models/FileInfo'
 
 // const CreateFormFromTemplate  = ({ selectedTemplate, callBack, openCreateTemplatePopUp = false }: { selectedTemplate: FormTemplate, callBack: () => void, openCreateTemplatePopUp: boolean }) => {
 const CreateFormFromTemplate = ({ selectedTemplate, callBack }: { selectedTemplate: FormTemplate; callBack: () => void; openCreateTemplatePopUp: boolean }) => {
@@ -227,8 +228,8 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: { selectedTempla
       }
 
       // Helper function to prepare complete form data
-      const prepareCompleteFormData = (formData: any, selectedTemplate: any, multipleAddresses: string[]) => {
-            const completeFormData = { ...formData }
+      const prepareCompleteFormData = (formData: Record<string, string | File | number>, selectedTemplate: FormTemplate, multipleAddresses: string[]) : Record<string, string | File | number> => {
+            const completeFormData : Record<string, string | File | number> = { ...formData }
 
             selectedTemplate.fields.forEach((field: any) => {
                   if (!field.is_array && !(field.name in completeFormData)) {
@@ -244,7 +245,7 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: { selectedTempla
       }
 
       // Validation function for required fields
-      const validateRequiredFields = (completeFormData: any, selectedTemplate: any) => {
+      const validateRequiredFields = (completeFormData: any, selectedTemplate: FormTemplate) => {
             for (const fieldItem of selectedTemplate.fields) {
                   const valueInput = completeFormData[fieldItem.name]
                   if (fieldItem.required && valueInput == undefined) {
@@ -318,7 +319,9 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: { selectedTempla
       }
 
       // Field validation function
-      const validateFields = (completeFormData: any, selectedTemplate: any) => {
+      const validateFields = (completeFormData: Record<string, string | File | number> , selectedTemplate: FormTemplate) => {
+
+            console.log(`completeFormData  === ${JSON.stringify(completeFormData, null, 4)}`)
             validateRequiredFields(completeFormData, selectedTemplate)
 
             for (const fieldItem of selectedTemplate.fields) {
@@ -335,7 +338,7 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: { selectedTempla
       }
 
       // Function to get system files
-      const getSystemFiles = async (systemFileInfo: any[], backend_url: string, sessionAddress: string) => {
+      const getSystemFiles = async (systemFileInfo: ApiFileInfo[], backend_url: string, sessionAddress: string) => {
             let allSystemFiles = systemFileInfo
 
             if (systemFileInfo.length === 0) {
@@ -352,7 +355,7 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: { selectedTempla
       }
 
       // Function to find template API file info
-      const findTemplateApiFileInfo = (allSystemFiles: any[], selectedTemplate: any) => {
+      const findTemplateApiFileInfo = (allSystemFiles: ApiFileInfo[], selectedTemplate: FormTemplate) => {
             const templateApiFileInfo = allSystemFiles.find(e => {
                   const nameExtract = getAquaTreeFileName(e!.aquaTree!)
                   const selectedName = `${selectedTemplate?.name}.json`
@@ -368,7 +371,7 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: { selectedTempla
       }
 
       // Function to generate filename
-      const generateFileName = (selectedTemplate: any, completeFormData: any) => {
+      const generateFileName = (selectedTemplate: FormTemplate, completeFormData: Record<string, string | File | number>) => {
             const randomNumber = getRandomNumber(100, 1000)
             let fileName = `${selectedTemplate?.name ?? 'template'}-${randomNumber}.json`
 
@@ -386,7 +389,7 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: { selectedTempla
       }
 
       // Function to handle identity attestation specific logic
-      const handleIdentityAttestation = (completeFormData: any, selectedFileInfo: any): any => {
+      const handleIdentityAttestation = (completeFormData: Record<string, string | File | number>, selectedFileInfo: any): Record<string, string | File | number> => {
             if (selectedFileInfo == null) {
                   throw new Error('No claim selected for identity attestation')
             }
@@ -472,8 +475,8 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: { selectedTempla
       }
       // Function to prepare final form data
       const prepareFinalFormData = async (
-            completeFormData: any,
-            selectedTemplate: any
+            completeFormData: Record<string, string | File | number>,
+            selectedTemplate: FormTemplate
       ): Promise<{
             filteredData: Record<string, string | number>
       } | null> => {
@@ -492,6 +495,10 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: { selectedTempla
 
             // Filter out File objects for logging
             Object.entries(completeFormData).forEach(([key, value]) => {
+                  console.log('key', key)
+                  console.log('value', value)
+                  console.log('type  of  ', typeof value)
+                  console.log('instance of  ', value instanceof File)
                   if (!(value instanceof File)) {
                         if (typeof value === 'string' || typeof value === 'number') {
                               filteredData[key] = value
@@ -499,6 +506,7 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: { selectedTempla
                               filteredData[key] = String(value)
                         }
                   } else {
+                        console.log('file name', (value as File).name)
                         filteredData[key] = (value as File).name
                   }
             })
@@ -509,7 +517,7 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: { selectedTempla
                   // we sign the
 
                   console.log('domain_claim selected ', JSON.stringify(completeFormData, null, 4))
-                  let signature = await domainTemplateSignMessageFunction(completeFormData['domain'])
+                  let signature = await domainTemplateSignMessageFunction(completeFormData['domain'] as string)
                   if (!signature) {
                         return null
                   }
@@ -522,7 +530,7 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: { selectedTempla
       }
 
       // Function to create genesis aqua tree
-      const createGenesisAquaTree = async (completeFormData: any, fileName: string, aquafier: any) => {
+      const createGenesisAquaTree = async (completeFormData: Record<string, string | File | number>, fileName: string, aquafier: Aquafier) => {
             const estimateSize = estimateFileSize(JSON.stringify(completeFormData))
             const jsonString = JSON.stringify(completeFormData, null, 4)
             console.log(`completeFormData -- jsonString-- ${jsonString}`)
@@ -544,7 +552,7 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: { selectedTempla
       }
 
       // Function to link aqua tree
-      const linkToSystemAquaTree = async (genesisAquaTree: any, fileObject: any, templateApiFileInfo: any, aquafier: any) => {
+      const linkToSystemAquaTree = async (genesisAquaTree: any, fileObject: any, templateApiFileInfo: any, aquafier:  Aquafier) => {
             const mainAquaTreeWrapper: AquaTreeWrapper = {
                   aquaTree: genesisAquaTree,
                   revision: '',
@@ -572,8 +580,8 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: { selectedTempla
       }
 
       // Function to process file attachments
-      const processFileAttachments = async (selectedTemplate: any, completeFormData: any, aquaTreeData: any, fileObject: any, aquafier: any) => {
-            const containsFileData = selectedTemplate?.fields.filter((e: any) => e.type === 'file' || e.type === 'image' || e.type === 'document')
+      const processFileAttachments = async (selectedTemplate: FormTemplate, completeFormData: Record<string, string | File | number>, aquaTreeData: any, fileObject: FileObject, aquafier: Aquafier) => {
+            const containsFileData = selectedTemplate?.fields.filter((e: FormField) => e.type === 'file' || e.type === 'image' || e.type === 'document')
 
             if (!containsFileData || containsFileData.length === 0) {
                   return aquaTreeData
@@ -597,6 +605,7 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: { selectedTempla
                   }
 
                   try {
+                        console.log(`creating file object ...`)
                         const arrayBuffer = await file.arrayBuffer()
                         const uint8Array = new Uint8Array(arrayBuffer)
 
@@ -656,7 +665,7 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: { selectedTempla
       }
 
       // Function to sign aqua tree
-      const signAquaTree = async (aquaTreeData: any, fileObject: any, aquafier: any) => {
+      const signAquaTree = async (aquaTreeData: AquaTree, fileObject: FileObject, aquafier:  Aquafier) => {
             const aquaTreeWrapper: AquaTreeWrapper = {
                   aquaTree: aquaTreeData,
                   revision: '',
@@ -673,7 +682,7 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: { selectedTempla
       }
 
       // Function to handle post-signing actions
-      const handlePostSigning = async (signedAquaTree: any, fileObject: any, completeFormData: any, selectedTemplate: any, session: any, selectedFileInfo: any) => {
+      const handlePostSigning = async (signedAquaTree: any, fileObject: any, completeFormData: Record<string, string | File | number>, selectedTemplate: FormTemplate, session: any, selectedFileInfo: any) => {
             fileObject.fileContent = completeFormData
             console.log('Sign res: -- ', signedAquaTree)
 
@@ -717,12 +726,15 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: { selectedTempla
                   }
                   setSubmittingTemplateData(true)
 
+                  console.log(`b44444444  formData ${JSON.stringify(formData, null, 4)}`)
                   // Step 1: Prepare complete form data
                   let completeFormData = prepareCompleteFormData(formData, selectedTemplate, multipleAddresses)
+                  console.log(`afterrrrrrrr  formData ${JSON.stringify(formData, null, 4)}`)
                   setFormData(completeFormData)
 
                   // Step 2: Validate fields
                   validateFields(completeFormData, selectedTemplate)
+                  console.log(`goneeeee  formData ${JSON.stringify(formData, null, 4)}`)
 
                   // Step 3: Get system files
                   const allSystemFiles = await getSystemFiles(systemFileInfo, backend_url, session?.address || '')
@@ -766,10 +778,11 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: { selectedTempla
                   // Step 10: Process file attachments
                   aquaTreeData = await processFileAttachments(
                         selectedTemplate,
-                        {
-                              ...finalFormDataFiltered,
-                              document: completeFormData.document,
-                        },
+                        completeFormData,
+                        // {
+                        //       ...finalFormDataFiltered,
+                        //       document: completeFormData.document,
+                        // },
                         aquaTreeData,
                         fileObject,
                         aquafier
@@ -1103,7 +1116,7 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: { selectedTempla
                                                                                                 }
 
                                                                                                 let value = isFileInput && e.target.files ? e.target.files[0] : e.target.value
-
+                                                                                                console.log(`value us isFileInput ${isFileInput}  value ${value}`)
                                                                                                 if (field.default_value !== undefined && field.default_value !== null && field.default_value !== '') {
                                                                                                       e.target.value = field.default_value
                                                                                                       toast.error(`${field.label} cannot be changed`)
@@ -1136,7 +1149,7 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: { selectedTempla
                                           </div>
 
                                           <Separator className="my-8" />
- {
+                                          {
                                                 selectedTemplate.name == 'domain_claim' && (
                                                       <div >
                                                             <div className="space-y-4">
