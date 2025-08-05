@@ -1,10 +1,7 @@
-import { digTxtRecordsGoogle, ensureDomainUrlHasSSL, extractDNSClaimInfo, formatCryptoAddress } from '@/utils/functions'
+import { ensureDomainUrlHasSSL, formatCryptoAddress } from '@/utils/functions'
 import { useEffect, useState } from 'react'
 import { TbWorldWww } from 'react-icons/tb'
 import { FaCheck, FaTimes } from 'react-icons/fa'
-import { verifyProofV2 } from '@/utils/dnsClaimVerification'
-import { Info, Check, X, AlertTriangle } from 'lucide-react'
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { ShareButton } from '@/components/aqua_chain_actions/share_aqua_chain'
 import { ApiFileInfo } from '@/models/FileInfo'
 import { useStore } from 'zustand'
@@ -37,41 +34,41 @@ interface VerificationResult {
 }
 
 
-const getIcon = (type: string) => {
-      switch (type) {
-            case 'info':
-                  return <Info />
-            case 'success':
-                  return <Check />
-            case 'warning':
-                  return <AlertTriangle />
-            case 'error':
-                  return <X />
-            default:
-                  return <Info />
-      }
-}
+// const getIcon = (type: string) => {
+//       switch (type) {
+//             case 'info':
+//                   return <Info />
+//             case 'success':
+//                   return <Check />
+//             case 'warning':
+//                   return <AlertTriangle />
+//             case 'error':
+//                   return <X />
+//             default:
+//                   return <Info />
+//       }
+// }
 
-const getClasses = (type: string) => {
-      switch (type) {
-            case 'info':
-                  return 'bg-blue-50 border-blue-200 text-blue-800'
-            case 'success':
-                  return 'bg-green-50 border-green-200 text-green-800'
-            case 'warning':
-                  return 'bg-amber-50 border-amber-200 text-amber-800'
-            case 'error':
-                  return 'bg-red-50 border-red-200 text-red-800'
-            default:
-                  return 'bg-blue-50 border-blue-200 text-blue-800'
-      }
-}
+// const getClasses = (type: string) => {
+//       switch (type) {
+//             case 'info':
+//                   return 'bg-blue-50 border-blue-200 text-blue-800'
+//             case 'success':
+//                   return 'bg-green-50 border-green-200 text-green-800'
+//             case 'warning':
+//                   return 'bg-amber-50 border-amber-200 text-amber-800'
+//             case 'error':
+//                   return 'bg-red-50 border-red-200 text-red-800'
+//             default:
+//                   return 'bg-blue-50 border-blue-200 text-blue-800'
+//       }
+// }
 
 const DNSClaim = ({ claimInfo, apiFileInfo, nonce, sessionAddress }: IDNSClaim) => {
       // State for DNS verification
       const [verificationStatus, setVerificationStatus] = useState<'loading' | 'verified' | 'failed' | 'not_found' | 'pending'>('loading')
       const [verificationMessage, setVerificationMessage] = useState<string>('Checking DNS verification...')
-      const [dnsRecords, setDnsRecords] = useState<string[]>([])
+      // const [dnsRecords, setDnsRecords] = useState<string[]>([])
       const [verificationResult, setVerificationResult] = useState<VerificationResult | null>(null)
 
       const { backend_url } = useStore(appStore)
