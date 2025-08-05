@@ -733,15 +733,12 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: { selectedTempla
                   }
                   setSubmittingTemplateData(true)
 
-                  console.log(`b44444444  formData ${JSON.stringify(formData, null, 4)}`)
                   // Step 1: Prepare complete form data
                   let completeFormData = prepareCompleteFormData(formData, selectedTemplate, multipleAddresses)
-                  console.log(`afterrrrrrrr  formData ${JSON.stringify(formData, null, 4)}`)
                   setFormData(completeFormData)
 
                   // Step 2: Validate fields
                   validateFields(completeFormData, selectedTemplate)
-                  console.log(`goneeeee  formData ${JSON.stringify(formData, null, 4)}`)
 
                   // Step 3: Get system files
                   const allSystemFiles = await getSystemFiles(systemFileInfo, backend_url, session?.address || '')
@@ -786,10 +783,6 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: { selectedTempla
                   aquaTreeData = await processFileAttachments(
                         selectedTemplate,
                         completeFormData,
-                        // {
-                        //       ...finalFormDataFiltered,
-                        //       document: completeFormData.document,
-                        // },
                         aquaTreeData,
                         fileObject,
                         aquafier

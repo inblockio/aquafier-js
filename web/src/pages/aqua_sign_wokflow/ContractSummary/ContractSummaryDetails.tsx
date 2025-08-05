@@ -86,9 +86,7 @@ const ContractSummaryDetails = ({ data, goToSecondPage, enableNameResolution = f
                                     {mockContractData.status}
                               </Badge>
                         </div>
-                        <Button data-testid="action-contract-summary-button" variant="outline" className="text-blue-600 border-blue-600 hover:bg-blue-50">
-                              Contract
-                        </Button>
+                       
                   </div>
 
                   <div className="flex items-center px-2 md:px-8">
