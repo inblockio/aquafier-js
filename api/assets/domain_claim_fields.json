@@ -17,7 +17,7 @@
         "defaultValue": "dns_claim"
     },
     {
-        "name": "signature",
+        "name": "txt_record",
         "label": "string",
         "type": "string",
         "required": true,

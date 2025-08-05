@@ -179,7 +179,10 @@ export default function FilesListItem({
                   </>
             )
       }
-      const workFlowIdentityClaimActions = () => {
+      const workFlowIdentityClaimActions = (workflowInfo: {
+            isWorkFlow: boolean;
+            workFlow: string;
+      } | undefined) => {
             return (
                   <>
                         <div className="flex flex-wrap gap-1">
@@ -187,9 +190,14 @@ export default function FilesListItem({
                                     <OpenClaimsWorkFlowButton item={file} nonce={nonce} index={index} />
                               </div>
 
-                              <div className="w-[100px]">
-                                    <AttestAquaClaim file={file} index={index} />
-                              </div>
+                              {
+                                    workflowInfo && workflowInfo.workFlow == 'identity_claim' && (
+                                          <div className="w-[100px]">
+                                                <AttestAquaClaim file={file} index={index} />
+                                          </div>
+                                    )
+                              }
+
 
                               <div className="w-[100px]">
                                     <OpenSelectedFileDetailsButton file={file} index={index} />
@@ -227,7 +235,7 @@ export default function FilesListItem({
                   return workFlowAquaSignActions()
             }
             if (workflowInfo?.isWorkFlow == true && (workflowInfo.workFlow == 'domain_claim' || workflowInfo.workFlow == 'identity_claim')) {
-                  return workFlowIdentityClaimActions()
+                  return workFlowIdentityClaimActions(workflowInfo)
             }
 
             if (workflowInfo?.isWorkFlow == true && workflowInfo.workFlow == 'identity_attestation') {

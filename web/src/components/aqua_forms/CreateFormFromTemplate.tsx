@@ -514,7 +514,8 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: { selectedTempla
                         return null
                   }
                   //todo @kenn set txt record
-                  filteredData['signature'] = signature
+                  // filteredData['signature'] = signature
+                  filteredData['txt_record'] = signature
             }
             console.log('completeFormData after validation:', JSON.stringify(filteredData, null, 4))
             return { filteredData }
@@ -1135,6 +1136,22 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: { selectedTempla
                                           </div>
 
                                           <Separator className="my-8" />
+ {
+                                                selectedTemplate.name == 'domain_claim' && (
+                                                      <div >
+                                                            <div className="space-y-4">
+                                                                  <h5>Steps to be followed</h5>
+                                                                  <ul>
+                                                                        <li>Fill in the domain.</li>
+                                                                        <li>Sign with metamask to generate a TXT record.</li>
+                                                                        <li>Second metamask signature for self signed identity</li>
+                                                                        <li>Open details copy txt record and save it to your DNS records</li>
+                                                                  </ul>
+                                                            </div>
+                                                            <Separator className="my-8" />
+                                                      </div>
+                                                )
+                                          }
 
 
                                           {

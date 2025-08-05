@@ -5,8 +5,8 @@ enum StorageTypes {
 }
 
 
-const _ = {
+// const _ = {
 
-}
+// }
 
-export default _;
+// export default _;
