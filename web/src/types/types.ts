@@ -2,6 +2,14 @@ import { LogData, Revision } from 'aqua-js-sdk'
 import { IconType } from 'react-icons/lib'
 import { ApiFileInfo } from '../models/FileInfo'
 
+export interface DNSProof {
+      walletAddress: string;
+      domainName: string;
+      timestamp: string;
+      expiration: string;
+      signature: string;
+    }
+    
 
 export interface OpenDialog {
   dialogType: 'form_template_editor' | 'aqua_file_details' | 'identity_claim' | 'dns_claim' | 'aqua_sign' | 'identity_attestation' | 'early_bird_offer' | 'user_signature',//'file' | 'folder' | 'contract' | 'claim' | 'claim-attestation'

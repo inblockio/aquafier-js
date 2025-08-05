@@ -2,7 +2,7 @@ import React, { JSX, useState } from 'react'
 import { FormField, FormTemplate } from './types'
 import { useStore } from 'zustand'
 import appStore from '@/store'
-import { isValidEthereumAddress, getRandomNumber, formatDate, estimateFileSize, dummyCredential, fetchSystemFiles, getGenesisHash, fetchFiles, isWorkFlowData } from '@/utils/functions'
+import { isValidEthereumAddress, getRandomNumber, formatDate, estimateFileSize, dummyCredential, fetchSystemFiles, getGenesisHash, fetchFiles, isWorkFlowData, generateProofFromSignature, formatTxtRecord } from '@/utils/functions'
 import Aquafier, { AquaTree, FileObject, getAquaTreeFileName, AquaTreeWrapper, getAquaTreeFileObject, Revision, OrderRevisionInAquaTree } from 'aqua-js-sdk'
 import axios from 'axios'
 import { generateNonce } from 'siwe'
@@ -416,7 +416,7 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: { selectedTempla
             return completeFormData
       }
 
-      async function domainTemplateSignMessageFunction(domainParams: string | undefined): Promise<string | undefined> {
+      async function domainTemplateSignMessageFunction(domainParams: string | undefined, timestamp : string, expiration : string): Promise<string | undefined> {
             let signature: string | undefined = undefined
             if (!domainParams) {
                   alert('Please enter a domain name')
@@ -442,8 +442,8 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: { selectedTempla
 
             const domain = domainParams.trim()
             try {
-                  let timestamp = Math.floor(Date.now() / 1000).toString()
-                  const expiration = Math.floor(Date.now() / 1000 + 90 * 24 * 60 * 60).toString() // 90 days default
+                  // let timestamp = Math.floor(Date.now() / 1000).toString()
+                  // const expiration = Math.floor(Date.now() / 1000 + 90 * 24 * 60 * 60).toString() // 90 days default
                   // Message format: unix_timestamp|domain_name|expiration_timestamp
                   const message = `${timestamp}|${domain}|${expiration}`
                   console.log('Signing message (before EIP-191 formatting):', message)
@@ -515,15 +515,22 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: { selectedTempla
             // for domain_claim show pop up
             if (selectedTemplate.name === 'domain_claim') {
                   // we sign the
+                  const domain = completeFormData['domain'] as string
+                  const walletAddress = session?.address!
+                  const timestamp = Math.floor(Date.now() / 1000).toString()
+                  const expiration = Math.floor(Date.now() / 1000 + 90 * 24 * 60 * 60).toString() // 90 days default
 
                   console.log('domain_claim selected ', JSON.stringify(completeFormData, null, 4))
-                  let signature = await domainTemplateSignMessageFunction(completeFormData['domain'] as string)
-                  if (!signature) {
+                  let signature = await domainTemplateSignMessageFunction(domain, timestamp, expiration)
+                  if (!signature) { 
                         return null
                   }
                   //todo @kenn set txt record
                   // filteredData['signature'] = signature
-                  filteredData['txt_record'] = signature
+                  
+                  //domain: string, walletAddress: string, timestamp: string, expiration: string, signature: string
+                  const proof =  generateProofFromSignature(domain, walletAddress, timestamp, expiration, signature)
+                  filteredData['txt_record'] = formatTxtRecord(proof)//signature
             }
             console.log('completeFormData after validation:', JSON.stringify(filteredData, null, 4))
             return { filteredData }
