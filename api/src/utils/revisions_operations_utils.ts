@@ -9,6 +9,7 @@ import { getGenesisHash } from './aqua_tree_utils';
 import { AquaTreeFileData, LinkedRevisionResult, ProcessRevisionResult, UpdateGenesisResult } from '../models/types';
 import { file } from 'jszip';
 import { SYSTEM_WALLET_ADDRESS, systemTemplateHashes } from '../models/constants';
+import {getFileSize} from "./file_utils";
 
 // Main refactored function
 export async function createAquaTreeFromRevisions(
@@ -314,9 +315,10 @@ async function createFileObjects(aquaTreesFileData: AquaTreeFileData[], url: str
     const fileObjects: FileObject[] = [];
     for (const item of aquaTreesFileData) {
         try {
-            const fileStats = getFileStats(item.fileLocation);
+            const fileStats = await getFileStats(item.fileLocation);
             if (!fileStats) continue;
             const fullUrl = `${url}/files/${item.fileHash}`;
+
             fileObjects.push({
                 fileContent: fullUrl,
                 fileName: item.name, // No uri in schema, use file_hash
@@ -576,19 +578,13 @@ function extractHashOnly(pubkeyHash: string): string {
     return parts.length > 1 ? parts[1] : pubkeyHash;
 }
 
-function getFileStats(filePath: string): { fileSizeInBytes: number; originalFilename: string } | null {
+async function getFileStats(filePath: string): Promise<{ fileSizeInBytes: number; originalFilename: string; } | null> {
     try {
-        if (!fs.existsSync(filePath)) {
-            console.log(`File not found: ${filePath}`);
-            return null;
-        }
-
-        const stats = fs.statSync(filePath);
         const fullFilename = path.basename(filePath);
         const originalFilename = fullFilename.substring(fullFilename.indexOf('-') + 1);
 
         return {
-            fileSizeInBytes: stats.size,
+            fileSizeInBytes: await getFileSize(filePath),
             originalFilename
         };
     } catch (error) {
@@ -680,7 +676,7 @@ async function updateLinkRevisionFileIndex(revision: Revision,
 
     let updatedFileObjects = [...fileObjects];
 
-    const fileStats = getFileStats(fileData.fileLocation);
+    const fileStats = await getFileStats(fileData.fileLocation);
     if (fileStats) {
         const fullUrl = `${url}/files/${fileData.fileHash}`;
         let existInFileObjects = updatedFileObjects.find((e) => e.fileName == fileData.name)
@@ -762,7 +758,7 @@ async function updateGenesisFileIndex(
 
         let updatedFileObjects = [...fileObjects];
 
-        const fileStats = getFileStats(aquaTreeFileItemData.fileLocation);
+        const fileStats = await getFileStats(aquaTreeFileItemData.fileLocation);
         if (fileStats) {
             const fullUrl = `${url}/files/${aquaTreeFileItemData.fileHash}`;
 

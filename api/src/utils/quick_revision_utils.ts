@@ -2,6 +2,7 @@ import { prisma } from '../database/db';
 import { Revision, Link, Signature, WitnessEvent, AquaForms } from '@prisma/client';
 import * as fs from 'fs';
 import { ExtendedAquaTreeData } from '../models/types';
+import {deleteFile} from "./file_utils";
 
 /**
  * Recursively deletes a revision and all its child revisions (revisions that reference this as their previous hash)
@@ -210,7 +211,7 @@ export async function deleteRevisionAndChildren(
                                     // If this is the last reference to the file, delete the actual file if it exists
                                     if (file.file_location && fs.existsSync(file.file_location)) {
                                         try {
-                                            fs.unlinkSync(file.file_location);
+                                            await deleteFile(file.file_location)
                                         } catch (e) {
                                             console.error(`Error deleting file from filesystem: ${file.file_location}`, e);
                                         }
