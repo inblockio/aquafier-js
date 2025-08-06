@@ -805,6 +805,7 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: { selectedTempla
                                     console.log(`signatureFile ===  ${signatureFile}`)
                                     completeFormData[`image`] = signatureFile
 
+                                    clearSignature()
                               } else {
                                     console.log(`signatureRef is null 💣💣💣 `)
                               }
@@ -830,7 +831,7 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: { selectedTempla
                   
                   // console.log(`aquaTreeData after file attachement process ${JSON.stringify(aquaTreeData, null, 4)}`)
                   // throw Error(`fix mee...`)
-                  
+
                   // Step 11: Sign aqua tree
                   const signedAquaTree = await signAquaTree(aquaTreeData, fileObject, aquafier)
 
