@@ -382,6 +382,7 @@ export default function FilesListItem({
                       <p className="text-sm text-blue-600 mt-1">
                         Workflow: {capitalizeWords(workflowInfo.workFlow.replace(/_/g, ' '))}
                       </p>
+                      
                     )}
                   </div>
                 </div>

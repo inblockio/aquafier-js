@@ -46,7 +46,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       const sidebarItems = [
             // { icon: FaHome, label: 'Home', id: "/home" },
             { icon: FileText, label: 'All files', id: '/' },
-            { icon: Workflow, label: 'Workflows', id: '/files_workflows' },
+            // { icon: Workflow, label: 'Workflows', id: '/files_workflows' },
             { icon: LayoutTemplate, label: 'Templates', id: '/templates' },
             { icon: Share2, label: 'Shared files', id: '/shared-contracts' },
       ]
@@ -87,6 +87,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                   <SidebarContent className="gap-0">
                         <div className="flex-1 p-4">
                               <nav className="space-y-2">
+                                    <div className='my-3'/>
                                     {sidebarItems.map((item, index) => (
                                           <CustomNavLink
                                                 key={`app_${index}`}
