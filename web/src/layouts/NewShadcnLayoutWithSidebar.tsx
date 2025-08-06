@@ -87,11 +87,23 @@ export default function NewShadcnLayoutWithSidebar() {
                                                       {/* <Button className="bg-blue-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-blue-700"> Free Verision</Button> */}
 
                                                       <div className="flex items-center gap-3">
-                                                            <div className="flex items-center gap-2 bg-blue-50 border border-blue-200 rounded-lg px-3 py-1.5">
+                                                            <div className="flex items-center gap-2 bg-blue-50 border border-blue-200 rounded-lg px-3 py-1.5"
+                                                             onClick={() => {
+                                                                        setOpenDialog({
+                                                                              dialogType: 'early_bird_offer',
+                                                                              isOpen: true,
+                                                                              onClose: () => setOpenDialog(null),
+                                                                              onConfirm: (data) => {
+                                                                                    // Handle confirmation logic here
+                                                                                    console.log('Early bird offer confirmed with data:', data)
+                                                                              }
+                                                                        })
+                                                                  }}
+                                                            >
                                                                   <Crown className="w-4 h-4 text-blue-600" />
                                                                   <span className="text-sm text-blue-700 font-medium">Free Plan</span>
                                                             </div>
-                                                            <button
+                                                            {/* <button
                                                                   onClick={() => {
                                                                         setOpenDialog({
                                                                               dialogType: 'early_bird_offer',
@@ -107,7 +119,7 @@ export default function NewShadcnLayoutWithSidebar() {
                                                             >
                                                                   <Zap className="w-4 h-4" />
                                                                   Upgrade to Pro
-                                                            </button>
+                                                            </button> */}
                                                       </div>
                                                       <ConnectWallet dataTestId="sign-in-button-files-list" />
                                                 </div>
@@ -194,10 +206,10 @@ export default function NewShadcnLayoutWithSidebar() {
 
                                           <div className="bg-gray-50 rounded-lg p-4 mb-6">
                                                 <a
-                                                      href="mailto:info.inblock.io"
+                                                      href="mailto:info@inblock.io"
                                                       className="text-blue-600 hover:text-blue-800 font-medium text-lg transition-colors"
                                                 >
-                                                      info.inblock.io
+                                                      info@inblock.io
                                                 </a>
                                           </div>
 
@@ -212,7 +224,7 @@ export default function NewShadcnLayoutWithSidebar() {
                                                       Maybe Later
                                                 </button>
                                                 <a
-                                                      href="mailto:info.inblock.io"
+                                                      href="mailto:info@inblock.io"
                                                       className="flex-1 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-center"
                                                 >
                                                       Send Email
