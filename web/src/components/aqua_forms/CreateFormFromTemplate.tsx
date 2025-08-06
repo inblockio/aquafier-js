@@ -1153,13 +1153,13 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: { selectedTempla
                                                 selectedTemplate.name == 'domain_claim' && (
                                                       <div >
                                                             <div className="space-y-4">
-                                                                  <h5>Steps to be followed</h5>
-                                                                  <ul>
-                                                                        <li>Fill in the domain.</li>
+                                                                  <h5>Follow the following steps to associate your wallet with your domain:</h5>
+                                                                  <ol  className="list-decimal list-inside">
+                                                                        <li>Fill in the Domain Name (FQDN).</li>
                                                                         <li>Sign with metamask to generate a TXT record.</li>
-                                                                        <li>Second metamask signature for self signed identity</li>
-                                                                        <li>Open details copy txt record and save it to your DNS records</li>
-                                                                  </ul>
+                                                                        <li>Second metamask signature for self signed identity.</li>
+                                                                        <li>Open details of the DNS Claim and copy the TXT record into to your DNS records under the following subdomain <em>aqua._wallet.[domain filled above]</em></li>
+                                                                  </ol>
                                                             </div>
                                                             <Separator className="my-8" />
                                                       </div>
