@@ -2,7 +2,7 @@ import { ApiFileInfo } from '@/models/FileInfo'
 
 import { displayTime, formatBytes, formatCryptoAddress, getAquaTreeFileName, getAquaTreeFileObject, getFileCategory, getFileExtension, getGenesisHash, isWorkFlowData } from '@/utils/functions'
 import { FileObject, OrderRevisionInAquaTree } from 'aqua-js-sdk'
-import { FileText, WalletMinimal } from 'lucide-react'
+import { FileText } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { SignAquaChain } from '../components/aqua_chain_actions/sign_aqua_chain'
 import { WitnessAquaChain } from '../components/aqua_chain_actions/witness_aqua_chain'
