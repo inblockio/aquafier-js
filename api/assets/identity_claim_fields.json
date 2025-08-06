@@ -2,14 +2,14 @@
     {
         "name": "name",
         "label": "Name",
-        "type": "string",
+        "type": "text",
         "required": true,
         "isArray": false
     },
     {
         "name": "type",
         "label": "Type",
-        "type": "string",
+        "type": "text",
         "required": true,
         "isArray": false,
         "isEditable": false,
@@ -20,7 +20,7 @@
     {
         "name": "claim_context",
         "label": "context",
-        "type": "string",
+        "type": "text",
         "required": true,
         "isArray": false
     },

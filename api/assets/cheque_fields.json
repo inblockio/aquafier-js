@@ -24,7 +24,7 @@
   {
     "name": "note",
     "label": "Note",
-    "type": "string",
+    "type": "text",
     "required": false,
     "isArray": false
   }
