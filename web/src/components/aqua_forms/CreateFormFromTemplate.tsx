@@ -589,7 +589,7 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: { selectedTempla
 
       // Function to process file attachments
       const processFileAttachments = async (selectedTemplate: FormTemplate, completeFormData: Record<string, string | File | number>, aquaTreeData: any, fileObject: FileObject, aquafier: Aquafier) => {
-            const containsFileData = selectedTemplate?.fields.filter((e: FormField) => e.type === 'file' || e.type === 'image' || e.type === 'document')
+            const containsFileData = selectedTemplate?.fields.filter((e: FormField) => e.type === 'file' || e.type === 'scratchpad' || e.type === 'image' || e.type === 'document')
 
             if (!containsFileData || containsFileData.length === 0) {
                   return aquaTreeData
@@ -792,16 +792,18 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: { selectedTempla
                   // let newCompleteData = completeFormData
                   for (const fieldItem of selectedTemplate.fields) {
                         const valueInput = completeFormData[fieldItem.name]
-                        console.log(`valueInput ${valueInput}  -- type ${fieldItem.type}`)
+                        console.log(`fieldItem.name -- ${fieldItem.name} valueInput ${valueInput}  -- type ${fieldItem.type}`)
                         if (fieldItem.type === 'scratchpad') {
                               console.log(` in scratch pad`)
                               if (signatureRef.current) {
+                                      console.log(` not null `)
                                     const dataUrl = signatureRef.current.toDataURL('image/png')
                                     const epochInSeconds = Math.floor(Date.now() / 1000)
                                     const lastFiveCharactersOfWalletAddres = session?.address.slice(-5)
                                     const signatureFileName = `user_signature_${lastFiveCharactersOfWalletAddres}_${epochInSeconds}.png`
                                     const signatureFile = dataURLToFile(dataUrl, signatureFileName)
-                                    completeFormData[fieldItem.name] = signatureFile
+                                    console.log(`signatureFile ===  ${signatureFile}`)
+                                    completeFormData[`image`] = signatureFile
 
                               } else {
                                     console.log(`signatureRef is null 💣💣💣 `)
@@ -814,6 +816,8 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: { selectedTempla
                   }
 
 
+                  console.log(`completeFormData ${JSON.stringify(completeFormData, null, 4)}`)
+
                   // Step 10: Process file attachments
                   aquaTreeData = await processFileAttachments(
                         selectedTemplate,
@@ -823,6 +827,10 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: { selectedTempla
                         aquafier
                   )
 
+                  
+                  // console.log(`aquaTreeData after file attachement process ${JSON.stringify(aquaTreeData, null, 4)}`)
+                  // throw Error(`fix mee...`)
+                  
                   // Step 11: Sign aqua tree
                   const signedAquaTree = await signAquaTree(aquaTreeData, fileObject, aquafier)
 
