@@ -1068,13 +1068,11 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: { selectedTempla
                                                                                     className="w-full px-2 sm:px-3 py-1 sm:py-2 border border-gray-200 rounded-md focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 text-sm sm:text-base"
                                                                                     // placeholder="Type here..."
                                                                                     placeholder={
-                                                                                          field.type === 'wallet_address'
-                                                                                                ? 'Enter wallet address'
+                                                                                          field.type === 'domain'
+                                                                                                ? 'Fill in the Domain Name (FQDN)'
                                                                                                 : field.type === 'date'
-                                                                                                      ? 'Select due date'
-                                                                                                      : field.type === 'document'
-                                                                                                            ? 'Upload PDF document'
-                                                                                                            : `Enter ${field.label.toLowerCase()}`
+                                                                                                      ? 'Select a date'
+                                                                                                      :  `Enter ${field.label.toLowerCase()}`
                                                                                     }
                                                                                     disabled={field.is_editable === false}
                                                                                     defaultValue={getFieldDefaultValue(field, formData[field.name])}
@@ -1174,11 +1172,7 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: { selectedTempla
                                                                                           disabled={field.is_editable === false}
                                                                                           accept={field.type == 'document' ? '.pdf' : field.type === 'image' ? 'image/*' : undefined}
                                                                                           placeholder={
-                                                                                                field.type == 'wallet_address'
-                                                                                                      ? 'Enter wallet address'
-                                                                                                      : field.type == 'date'
-                                                                                                            ? 'Select due date'
-                                                                                                            : field.type === 'document'
+                                                                                               field.type === 'document'
                                                                                                                   ? 'Upload PDF document'
                                                                                                                   : `Enter ${field.label.toLowerCase()}`
                                                                                           }
