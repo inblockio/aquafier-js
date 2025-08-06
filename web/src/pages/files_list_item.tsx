@@ -1,8 +1,8 @@
 import { ApiFileInfo } from '@/models/FileInfo'
 
-import { displayTime, formatBytes, getAquaTreeFileName, getAquaTreeFileObject, getFileCategory, getFileExtension, getGenesisHash, isWorkFlowData } from '@/utils/functions'
+import { displayTime, formatBytes, formatCryptoAddress, getAquaTreeFileName, getAquaTreeFileObject, getFileCategory, getFileExtension, getGenesisHash, isWorkFlowData } from '@/utils/functions'
 import { FileObject, OrderRevisionInAquaTree } from 'aqua-js-sdk'
-import { FileText } from 'lucide-react'
+import { FileText, WalletMinimal } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { SignAquaChain } from '../components/aqua_chain_actions/sign_aqua_chain'
 import { WitnessAquaChain } from '../components/aqua_chain_actions/witness_aqua_chain'
@@ -300,7 +300,10 @@ export default function FilesListItem({
                               <div className="flex flex-col">
                                     <span className="font-medium text-sm">{getAquaTreeFileName(file.aquaTree!)}</span>
                                     {!showWorkFlowsOnly && workflowInfo?.isWorkFlow ? (
+                                          <div className='mt-1'>
                                           <span className="text-xs text-gray-500">Workflow : {capitalizeWords(workflowInfo.workFlow.replace(/_/g, ' '))}</span>
+                                           {showClaimExtraInfo()}
+                                          </div>
                                     ) : null}
                               </div>
                         </td>
@@ -333,96 +336,93 @@ export default function FilesListItem({
             )
       }
 
-      // const renderCardView = () => {
-        
-      //       return (
-      //             <div className="space-y-3">
-      //                   <div className="flex items-center space-x-3">
-      //                         <FileText className="w-6 h-6 text-blue-500" />
-      //                         <span className="font-medium text-gray-900 text-sm">{getAquaTreeFileName(file.aquaTree!)}</span>
-      //                   </div>
+      
 
-      //                   <div className="grid grid-cols-2 gap-2 text-xs">
-      //                         <div>
-      //                               <p className="text-gray-500 font-medium">Type</p>
-      //                               <p className="text-gray-700">{getFileExtension(getAquaTreeFileName(file.aquaTree!))}</p>
-      //                         </div>
-      //                         <div>
-      //                               <p className="text-gray-500 font-medium">Size</p>
-      //                               <p className="text-gray-700">{getFileInfo()}</p>
-      //                         </div>
-      //                         <div className="col-span-2">
-      //                               <p className="text-gray-500 font-medium">Uploaded</p>
-      //                               <p className="text-gray-700">{getTimeInfo()}</p>
-      //                         </div>
-      //                   </div>
+      const showClaimExtraInfo = () => {
+            if (workflowInfo?.workFlow == "identity_claim") {
+                  let genesisHash = getGenesisHash(file.aquaTree!)
+                  if (!genesisHash) {
+                        return <div />
+                  }
+                  let genRevision = file.aquaTree?.revisions[genesisHash]
+                  if (!genRevision) {
+                        return <div />
+                  }
 
-      //                   <div className="pt-2 border-t border-gray-100">
-      //                         <p className="text-xs text-gray-500 font-medium mb-2">Actions</p>
-      //                         <div className="flex flex-wrap gap-2">{showActionsButton()}</div>
-      //                   </div>
-      //             </div>
-      //       )
-          
-      // }
+                  let creatorWallet = genRevision[`forms_wallet_address`]
+
+                  if (creatorWallet) {
+                        return  <div className="flex flex-nowrap  text-xs text-gray-500">
+                                    <p className="text-xs">Wallet: &nbsp;</p>
+                                    <p className="text-xs ">{formatCryptoAddress(creatorWallet)}</p>
+                              </div>
+                  }
+            }
+            return <div />
+      }
 
       const renderCardView = () => {
             return (
-              <div className="bg-white border border-gray-200 rounded-lg shadow-sm p-6 hover:shadow-md transition-shadow">
-                {/* Header with file icon and name */}
-                <div className="flex items-start space-x-3 mb-4">
-                  <div className="flex-shrink-0">
-                    <FileText className="w-8 h-8 text-blue-500" />
+                  <div className="bg-white border border-gray-200 rounded-lg shadow-sm p-6 hover:shadow-md transition-shadow">
+                        {/* Header with file icon and name */}
+                        <div className="flex items-start space-x-3 mb-4">
+                              <div className="flex-shrink-0">
+                                    <FileText className="w-8 h-8 text-blue-500" />
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                    <h3 className="text-base font-semibold text-gray-900 truncate">
+                                          {getAquaTreeFileName(file.aquaTree!)}
+                                    </h3>
+                                    {!showWorkFlowsOnly && workflowInfo?.isWorkFlow && (
+
+
+                                          <>
+                                                <p className="text-sm text-blue-600 mt-1">
+                                                      Workflow: {capitalizeWords(workflowInfo.workFlow.replace(/_/g, ' '))}
+                                                </p>
+
+                                               
+                                          </>
+                                    )}
+                              </div>
+                        </div>
+
+                        {/* File details grid */}
+                        <div className="grid grid-cols-2 gap-4 mb-6">
+                              <div className="space-y-1">
+                                    <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">Type</p>
+                                    <p className="text-sm text-gray-900 font-medium">
+                                          {getFileCategory(getFileExtension(getAquaTreeFileName(file.aquaTree!)))}
+                                    </p>
+                              </div>
+                              <div className="space-y-1">
+                                    <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">Size</p>
+                                    <p className="text-sm text-gray-900 font-medium">{getFileInfo()}</p>
+                              </div>
+                              <div className="col-span-2 space-y-1">
+                                    <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">Uploaded</p>
+                                    <p className="text-sm text-gray-900">{getTimeInfo()}</p>
+                              </div>
+                              {showWorkFlowsOnly && (
+                                    <div className="col-span-2 space-y-1">
+                                          <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">Workflow Type</p>
+                                          <p className="text-sm text-gray-900 font-medium">
+                                                {workflowInfo?.workFlow ? capitalizeWords(workflowInfo.workFlow.replace(/_/g, ' ')) : 'Not a workflow'}
+                                          </p>
+                                    </div>
+                              )}
+                        </div>
+
+                        {/* Actions section */}
+                        <div className="border-t border-gray-100 pt-4">
+                              <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-3">Actions</p>
+                              <div className="flex flex-wrap gap-2">
+                                    {showActionsButton()}
+                              </div>
+                        </div>
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <h3 className="text-base font-semibold text-gray-900 truncate">
-                      {getAquaTreeFileName(file.aquaTree!)}
-                    </h3>
-                    {!showWorkFlowsOnly && workflowInfo?.isWorkFlow && (
-                      <p className="text-sm text-blue-600 mt-1">
-                        Workflow: {capitalizeWords(workflowInfo.workFlow.replace(/_/g, ' '))}
-                      </p>
-                      
-                    )}
-                  </div>
-                </div>
-          
-                {/* File details grid */}
-                <div className="grid grid-cols-2 gap-4 mb-6">
-                  <div className="space-y-1">
-                    <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">Type</p>
-                    <p className="text-sm text-gray-900 font-medium">
-                      {getFileCategory(getFileExtension(getAquaTreeFileName(file.aquaTree!)))}
-                    </p>
-                  </div>
-                  <div className="space-y-1">
-                    <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">Size</p>
-                    <p className="text-sm text-gray-900 font-medium">{getFileInfo()}</p>
-                  </div>
-                  <div className="col-span-2 space-y-1">
-                    <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">Uploaded</p>
-                    <p className="text-sm text-gray-900">{getTimeInfo()}</p>
-                  </div>
-                  {showWorkFlowsOnly && (
-                    <div className="col-span-2 space-y-1">
-                      <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">Workflow Type</p>
-                      <p className="text-sm text-gray-900 font-medium">
-                        {workflowInfo?.workFlow ? capitalizeWords(workflowInfo.workFlow.replace(/_/g, ' ')) : 'Not a workflow'}
-                      </p>
-                    </div>
-                  )}
-                </div>
-          
-                {/* Actions section */}
-                <div className="border-t border-gray-100 pt-4">
-                  <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-3">Actions</p>
-                  <div className="flex flex-wrap gap-2">
-                    {showActionsButton()}
-                  </div>
-                </div>
-              </div>
             )
-          }
+      }
 
       if (workflowInfo === undefined) {
             return null
@@ -432,7 +432,7 @@ export default function FilesListItem({
       }
 
       // Then handle different view modes
-      if (viewMode === 'table' ) {
+      if (viewMode === 'table') {
             return renderTableView()
       } else if (viewMode === 'card') {
             return renderCardView()
