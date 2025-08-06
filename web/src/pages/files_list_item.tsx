@@ -178,7 +178,7 @@ export default function FilesListItem({
                         </div>
                   </>
             )
-      }
+      } 
       const workFlowIdentityClaimActions = (workflowInfo: {
             isWorkFlow: boolean;
             workFlow: string;
