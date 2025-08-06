@@ -18,7 +18,7 @@ import { AppSidebar } from '../components/app_sidebar'
 import WebsocketFragment from '@/components/navbar/WebsocketFragment'
 import { ScrollArea } from '@/components/ui/scroll-area'
  
- 
+  
 export default function NewShadcnLayoutWithSidebar() {
       const {
             session,

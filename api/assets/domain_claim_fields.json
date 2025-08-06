@@ -9,7 +9,7 @@
     {
         "name": "type",
         "label": "Type",
-        "type": "string",
+        "type": "text",
         "required": true,
         "isArray": false,
         "isEditable": false,
@@ -19,7 +19,7 @@
     {
         "name": "txt_record",
         "label": "string",
-        "type": "string",
+        "type": "text",
         "required": true,
         "isArray": false,
         "isHidden": true,

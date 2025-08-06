@@ -1,8 +1,8 @@
-import React, { JSX, useState } from 'react'
+import React, { JSX, useRef, useState } from 'react'
 import { FormField, FormTemplate } from './types'
 import { useStore } from 'zustand'
 import appStore from '@/store'
-import { isValidEthereumAddress, getRandomNumber, formatDate, estimateFileSize, dummyCredential, fetchSystemFiles, getGenesisHash, fetchFiles, isWorkFlowData, generateProofFromSignature, formatTxtRecord } from '@/utils/functions'
+import { isValidEthereumAddress, getRandomNumber, formatDate, estimateFileSize, dummyCredential, fetchSystemFiles, getGenesisHash, fetchFiles, isWorkFlowData, generateProofFromSignature, formatTxtRecord, dataURLToFile } from '@/utils/functions'
 import Aquafier, { AquaTree, FileObject, getAquaTreeFileName, AquaTreeWrapper, getAquaTreeFileObject, Revision, OrderRevisionInAquaTree } from 'aqua-js-sdk'
 import axios from 'axios'
 import { generateNonce } from 'siwe'
@@ -21,6 +21,7 @@ import { ScrollArea } from '../ui/scroll-area'
 import FilePreview from '../file_preview'
 import { WalletAutosuggest } from '../wallet_auto_suggest'
 import { ApiFileInfo } from '@/models/FileInfo'
+import SignatureCanvas from 'react-signature-canvas'
 
 // const CreateFormFromTemplate  = ({ selectedTemplate, callBack, openCreateTemplatePopUp = false }: { selectedTemplate: FormTemplate, callBack: () => void, openCreateTemplatePopUp: boolean }) => {
 const CreateFormFromTemplate = ({ selectedTemplate, callBack }: { selectedTemplate: FormTemplate; callBack: () => void; openCreateTemplatePopUp: boolean }) => {
@@ -35,6 +36,7 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: { selectedTempla
             title: string
       }>(null)
 
+      const signatureRef = useRef<SignatureCanvas | null>(null)
       const navigate = useNavigate()
 
       const getFieldDefaultValue = (field: FormField, currentState: any) => {
@@ -228,8 +230,8 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: { selectedTempla
       }
 
       // Helper function to prepare complete form data
-      const prepareCompleteFormData = (formData: Record<string, string | File | number>, selectedTemplate: FormTemplate, multipleAddresses: string[]) : Record<string, string | File | number> => {
-            const completeFormData : Record<string, string | File | number> = { ...formData }
+      const prepareCompleteFormData = (formData: Record<string, string | File | number>, selectedTemplate: FormTemplate, multipleAddresses: string[]): Record<string, string | File | number> => {
+            const completeFormData: Record<string, string | File | number> = { ...formData }
 
             selectedTemplate.fields.forEach((field: any) => {
                   if (!field.is_array && !(field.name in completeFormData)) {
@@ -319,7 +321,7 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: { selectedTempla
       }
 
       // Field validation function
-      const validateFields = (completeFormData: Record<string, string | File | number> , selectedTemplate: FormTemplate) => {
+      const validateFields = (completeFormData: Record<string, string | File | number>, selectedTemplate: FormTemplate) => {
 
             console.log(`completeFormData  === ${JSON.stringify(completeFormData, null, 4)}`)
             validateRequiredFields(completeFormData, selectedTemplate)
@@ -416,7 +418,7 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: { selectedTempla
             return completeFormData
       }
 
-      async function domainTemplateSignMessageFunction(domainParams: string | undefined, timestamp : string, expiration : string): Promise<string | undefined> {
+      async function domainTemplateSignMessageFunction(domainParams: string | undefined, timestamp: string, expiration: string): Promise<string | undefined> {
             let signature: string | undefined = undefined
             if (!domainParams) {
                   alert('Please enter a domain name')
@@ -522,14 +524,13 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: { selectedTempla
 
                   console.log('domain_claim selected ', JSON.stringify(completeFormData, null, 4))
                   let signature = await domainTemplateSignMessageFunction(domain, timestamp, expiration)
-                  if (!signature) { 
+                  if (!signature) {
                         return null
                   }
-                  //todo @kenn set txt record
-                  // filteredData['signature'] = signature
-                  
+
+
                   //domain: string, walletAddress: string, timestamp: string, expiration: string, signature: string
-                  const proof =  generateProofFromSignature(domain, walletAddress, timestamp, expiration, signature)
+                  const proof = generateProofFromSignature(domain, walletAddress, timestamp, expiration, signature)
                   filteredData['txt_record'] = formatTxtRecord(proof)//signature
             }
             console.log('completeFormData after validation:', JSON.stringify(filteredData, null, 4))
@@ -559,7 +560,7 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: { selectedTempla
       }
 
       // Function to link aqua tree
-      const linkToSystemAquaTree = async (genesisAquaTree: any, fileObject: any, templateApiFileInfo: any, aquafier:  Aquafier) => {
+      const linkToSystemAquaTree = async (genesisAquaTree: any, fileObject: any, templateApiFileInfo: any, aquafier: Aquafier) => {
             const mainAquaTreeWrapper: AquaTreeWrapper = {
                   aquaTree: genesisAquaTree,
                   revision: '',
@@ -588,7 +589,7 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: { selectedTempla
 
       // Function to process file attachments
       const processFileAttachments = async (selectedTemplate: FormTemplate, completeFormData: Record<string, string | File | number>, aquaTreeData: any, fileObject: FileObject, aquafier: Aquafier) => {
-            const containsFileData = selectedTemplate?.fields.filter((e: FormField) => e.type === 'file' || e.type === 'image' || e.type === 'document')
+            const containsFileData = selectedTemplate?.fields.filter((e: FormField) => e.type === 'file' || e.type === 'scratchpad' || e.type === 'image' || e.type === 'document')
 
             if (!containsFileData || containsFileData.length === 0) {
                   return aquaTreeData
@@ -672,7 +673,7 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: { selectedTempla
       }
 
       // Function to sign aqua tree
-      const signAquaTree = async (aquaTreeData: AquaTree, fileObject: FileObject, aquafier:  Aquafier) => {
+      const signAquaTree = async (aquaTreeData: AquaTree, fileObject: FileObject, aquafier: Aquafier) => {
             const aquaTreeWrapper: AquaTreeWrapper = {
                   aquaTree: aquaTreeData,
                   revision: '',
@@ -717,6 +718,14 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: { selectedTempla
                   }
 
                   await saveAquaTree(signedAquaTree, fileObject, true, false, secondRevision.signature_wallet_address!)
+            }
+      }
+
+      // Clear signature canvas
+      const clearSignature = () => {
+            if (signatureRef.current) {
+                  signatureRef.current.clear()
+                  // Don't clear all signatures, just reset the canvas
             }
       }
 
@@ -779,6 +788,37 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: { selectedTempla
                   let aquaTreeData = await linkToSystemAquaTree(genesisAquaTree, fileObject, templateApiFileInfo, aquafier)
                   console.log('Form data: ', finalFormDataFiltered)
 
+                  // check if the types contains scratchpad
+                  // let newCompleteData = completeFormData
+                  for (const fieldItem of selectedTemplate.fields) {
+                        const valueInput = completeFormData[fieldItem.name]
+                        console.log(`fieldItem.name -- ${fieldItem.name} valueInput ${valueInput}  -- type ${fieldItem.type}`)
+                        if (fieldItem.type === 'scratchpad') {
+                              console.log(` in scratch pad`)
+                              if (signatureRef.current) {
+                                      console.log(` not null `)
+                                    const dataUrl = signatureRef.current.toDataURL('image/png')
+                                    const epochInSeconds = Math.floor(Date.now() / 1000)
+                                    const lastFiveCharactersOfWalletAddres = session?.address.slice(-5)
+                                    const signatureFileName = `user_signature_${lastFiveCharactersOfWalletAddres}_${epochInSeconds}.png`
+                                    const signatureFile = dataURLToFile(dataUrl, signatureFileName)
+                                    console.log(`signatureFile ===  ${signatureFile}`)
+                                    completeFormData[`image`] = signatureFile
+
+                                    clearSignature()
+                              } else {
+                                    console.log(`signatureRef is null 💣💣💣 `)
+                              }
+
+                              break;
+                        }
+
+
+                  }
+
+
+                  console.log(`completeFormData ${JSON.stringify(completeFormData, null, 4)}`)
+
                   // Step 10: Process file attachments
                   aquaTreeData = await processFileAttachments(
                         selectedTemplate,
@@ -787,6 +827,10 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: { selectedTempla
                         fileObject,
                         aquafier
                   )
+
+                  
+                  // console.log(`aquaTreeData after file attachement process ${JSON.stringify(aquaTreeData, null, 4)}`)
+                  // throw Error(`fix mee...`)
 
                   // Step 11: Sign aqua tree
                   const signedAquaTree = await signAquaTree(aquaTreeData, fileObject, aquafier)
@@ -844,6 +888,52 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: { selectedTempla
             return fieldType // or return 'text' as a safe default
       }
 
+
+      const fetchRecommendedWalletAddresses = (): Map<string, string> => {
+
+            const recommended = new Map<string, string>()
+
+            const someData = systemFileInfo.map(e => {
+                  try {
+                        return getAquaTreeFileName(e.aquaTree!)
+                  } catch (e) {
+                        console.log('Error processing system file') // More descriptive
+                        return ''
+                  }
+            })
+
+            for (const file of files) {
+
+                  const workFlow = isWorkFlowData(file.aquaTree!, someData)
+
+                  if (workFlow && workFlow.isWorkFlow) {
+                        console.log('Workflow found: ', workFlow.workFlow)
+                        if (workFlow.workFlow === 'identity_claim') {
+                              console.log('Identity claim found:')
+                              const orederdRevisionAquaTree = OrderRevisionInAquaTree(file.aquaTree!)
+                              let allHashes = Object.keys(orederdRevisionAquaTree.revisions)
+
+                              // console.log('orederdRevisionAquaTree: ', JSON.stringify (orederdRevisionAquaTree.revisions ,null, 2))
+                              // console.log('hashs: ', JSON.stringify (orederdRevisionAquaTree.revisions ,null, 2))
+                              let genRevsion = orederdRevisionAquaTree.revisions[allHashes[0]]
+
+                              // console.log('genRevsion: ', JSON.stringify (genRevsion,null, 2))
+                              // console.log('name : ', genRevsion[`forms_name`])
+                              // console.log('forms_wallet_address  : ', genRevsion[`forms_wallet_address`])
+                              if (genRevsion && genRevsion[`forms_name`] && genRevsion[`forms_wallet_address`]) {
+                                    recommended.set(genRevsion[`forms_name`], genRevsion[`forms_wallet_address`])
+                              }
+                        }
+                  } else {
+                        console.log('Not a workflow data: ', file.aquaTree)
+                  }
+
+            }
+
+            console.log('Recommended wallet addresses: ', JSON.stringify(recommended, null, 2))
+
+            return recommended;
+      }
       return (
             <>
                   {/* <div className="min-h-[100%] bg-gradient-to-br from-blue-50 via-white to-indigo-50 px-4"> */}
@@ -889,51 +979,7 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: { selectedTempla
                                                             }
 
                                                             if (field.is_array) {
-                                                                  function fetchRecommendedWalletAddresses(): Map<string, string> {
 
-                                                                        const recommended = new Map<string, string>()
-
-                                                                        const someData = systemFileInfo.map(e => {
-                                                                              try {
-                                                                                    return getAquaTreeFileName(e.aquaTree!)
-                                                                              } catch (e) {
-                                                                                    console.log('Error processing system file') // More descriptive
-                                                                                    return ''
-                                                                              }
-                                                                        })
-
-                                                                        for (const file of files) {
-
-                                                                              const workFlow = isWorkFlowData(file.aquaTree!, someData)
-
-                                                                              if (workFlow && workFlow.isWorkFlow) {
-                                                                                    console.log('Workflow found: ', workFlow.workFlow)
-                                                                                    if (workFlow.workFlow === 'identity_claim') {
-                                                                                          console.log('Identity claim found:')
-                                                                                          const orederdRevisionAquaTree = OrderRevisionInAquaTree(file.aquaTree!)
-                                                                                          let allHashes = Object.keys(orederdRevisionAquaTree.revisions)
-
-                                                                                          // console.log('orederdRevisionAquaTree: ', JSON.stringify (orederdRevisionAquaTree.revisions ,null, 2))
-                                                                                          // console.log('hashs: ', JSON.stringify (orederdRevisionAquaTree.revisions ,null, 2))
-                                                                                          let genRevsion = orederdRevisionAquaTree.revisions[allHashes[0]]
-
-                                                                                          // console.log('genRevsion: ', JSON.stringify (genRevsion,null, 2))
-                                                                                          // console.log('name : ', genRevsion[`forms_name`])
-                                                                                          // console.log('forms_wallet_address  : ', genRevsion[`forms_wallet_address`])
-                                                                                          if (genRevsion && genRevsion[`forms_name`] && genRevsion[`forms_wallet_address`]) {
-                                                                                                recommended.set(genRevsion[`forms_name`], genRevsion[`forms_wallet_address`])
-                                                                                          }
-                                                                                    }
-                                                                              } else {
-                                                                                    console.log('Not a workflow data: ', file.aquaTree)
-                                                                              }
-
-                                                                        }
-
-                                                                        console.log('Recommended wallet addresses: ', JSON.stringify(recommended, null, 2))
-
-                                                                        return recommended;
-                                                                  }
                                                                   return (
                                                                         <div key={`field-${fieldIndex}`} className="space-y-4">
                                                                               <div className="flex items-center justify-between">
@@ -1024,12 +1070,19 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: { selectedTempla
                                                                               </Label>
                                                                         </div>
 
-                                                                        {field.type === 'text' || field.type == 'domain' ? (
+                                                                        {(field.type == 'text' || field.type == 'number' || field.type == 'date' || field.type == 'domain' || field.type == 'email') && (
                                                                               <Input
                                                                                     id={`input-${field.name}`}
                                                                                     data-testid={`input-${field.name}`}
                                                                                     className="w-full px-2 sm:px-3 py-1 sm:py-2 border border-gray-200 rounded-md focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 text-sm sm:text-base"
-                                                                                    placeholder="Type here..."
+                                                                                    // placeholder="Type here..."
+                                                                                    placeholder={
+                                                                                          field.type === 'domain'
+                                                                                                ? 'Fill in the Domain Name (FQDN)'
+                                                                                                : field.type === 'date'
+                                                                                                      ? 'Select a date'
+                                                                                                      :  `Enter ${field.label.toLowerCase()}`
+                                                                                    }
                                                                                     disabled={field.is_editable === false}
                                                                                     defaultValue={getFieldDefaultValue(field, formData[field.name])}
                                                                                     onChange={e => {
@@ -1052,7 +1105,67 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: { selectedTempla
                                                                                           })
                                                                                     }}
                                                                               />
-                                                                        ) : (
+                                                                        )}
+
+                                                                        {
+                                                                              field.type == 'scratchpad' && (
+                                                                                    <div className="border border-gray-200 w-full h-[200px] bg-white">
+                                                                                          <SignatureCanvas
+                                                                                                ref={signatureRef}
+                                                                                                canvasProps={{
+                                                                                                      style: {
+                                                                                                            maxWidth: '100%',
+                                                                                                      },
+                                                                                                      width: 500,
+                                                                                                      height: 400,
+                                                                                                      className: 'signature-canvas',
+                                                                                                }}
+                                                                                                backgroundColor="transparent"
+                                                                                          />
+                                                                                    </div>
+                                                                              )
+                                                                        }
+
+                                                                        {field.type == 'wallet_address' && (
+                                                                              <>
+                                                                                    {
+                                                                                          field.is_editable == false ?
+                                                                                                <Input
+                                                                                                      id={`input-${field.name}`}
+                                                                                                      data-testid={`input-${field.name}`}
+                                                                                                      className="rounded-md border-gray-200 focus:border-blue-500 focus:ring-blue-500 text-sm sm:text-base h-9 sm:h-10"
+                                                                                                      disabled={field.is_editable === false}
+                                                                                                      defaultValue={getFieldDefaultValue(field, formData[field.name])} />
+
+                                                                                                :
+
+                                                                                                <WalletAutosuggest
+                                                                                                      walletAddresses={fetchRecommendedWalletAddresses()}
+                                                                                                      field={field}
+                                                                                                      index={1}
+                                                                                                      address={formData[field.name] ? formData[field.name] as string : ""}
+                                                                                                      multipleAddresses={[]}
+                                                                                                      setMultipleAddresses={(data) => {
+                                                                                                            // setMultipleAddresses
+                                                                                                            console.log(`data  ... ${data}`);
+                                                                                                            let d = data[0]
+                                                                                                            console.log(`data  ... ${d}`)
+                                                                                                            if (d) {
+                                                                                                                  setFormData({
+                                                                                                                        ...formData,
+                                                                                                                        [field.name]: d,
+                                                                                                                  })
+                                                                                                            }
+                                                                                                      }}
+                                                                                                      placeholder="Enter signer wallet address"
+                                                                                                      className="rounded-lg border-gray-200 focus:border-blue-500 focus:ring-blue-500"
+                                                                                                />
+                                                                                    }
+                                                                              </>
+                                                                        )}
+
+
+                                                                        {(field.type == 'document' || field.type == 'image' || field.type == 'file') && (
                                                                               <div className="relative">
                                                                                     <Input
                                                                                           id={`input-${field.name}`}
@@ -1066,13 +1179,9 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: { selectedTempla
                                                                                           type={getInputType(field.type)}
                                                                                           required={field.required}
                                                                                           disabled={field.is_editable === false}
-                                                                                          accept={field.type === 'document' ? '.pdf' : field.type === 'image' ? 'image/*' : undefined}
+                                                                                          accept={field.type == 'document' ? '.pdf' : field.type === 'image' ? 'image/*' : undefined}
                                                                                           placeholder={
-                                                                                                field.type === 'wallet_address'
-                                                                                                      ? 'Enter wallet address'
-                                                                                                      : field.type === 'date'
-                                                                                                            ? 'Select due date'
-                                                                                                            : field.type === 'document'
+                                                                                               field.type === 'document'
                                                                                                                   ? 'Upload PDF document'
                                                                                                                   : `Enter ${field.label.toLowerCase()}`
                                                                                           }
@@ -1154,7 +1263,7 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: { selectedTempla
                                                       <div >
                                                             <div className="space-y-4">
                                                                   <h5>Follow the following steps to associate your wallet with your domain:</h5>
-                                                                  <ol  className="list-decimal list-inside">
+                                                                  <ol className="list-decimal list-inside">
                                                                         <li>Fill in the Domain Name (FQDN).</li>
                                                                         <li>Sign with metamask to generate a TXT record.</li>
                                                                         <li>Second metamask signature for self signed identity.</li>

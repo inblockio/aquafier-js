@@ -1,19 +1,19 @@
 [
     {
-        "name": "image",
-        "label": "Signature Image",
-        "type": "image",
+        "name": "scratchpad",
+        "label": "Draw Signature",
+        "type": "scratchpad",
         "required": true,
         "isArray": false
     },
     {
         "name": "name",
         "label": "Name",
-        "type": "string",
+        "type": "text",
         "required": true,
         "isArray": false
     },
-    {
+    { 
         "name": "wallet_address",
         "label": "Wallet Address",
         "type": "wallet_address",

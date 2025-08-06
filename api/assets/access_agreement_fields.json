@@ -17,21 +17,21 @@
     {
       "name": "resource",
       "label": "Resource",
-      "type": "string",
+      "type": "text",
       "required": true,
       "isArray": false
     },
     {
       "name": "option",
       "label": "Option",
-      "type": "string",
+      "type": "text",
       "required": false,
       "isArray": false
     },
     {
       "name": "terms",
       "label": "Terms",
-      "type": "string",
+      "type": "text",
       "required": false,
       "isArray": false
     }

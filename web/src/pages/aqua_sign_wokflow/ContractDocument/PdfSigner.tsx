@@ -1608,7 +1608,7 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ fileData, setActiveStep, document
 
                                     <p className="text-sm text-gray-700">
                                           Wallet Address: {session?.address ? `${session?.address.substring(0, 6)}...${session?.address.substring(session?.address.length - 4)}` : 'Not connected'}
-                                    </p>
+                                    </p> 
 
                                     <div className="border border-gray-200 w-full h-[200px] bg-white">
                                           <SignatureCanvas
