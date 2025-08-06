@@ -68,7 +68,15 @@ const DNSClaim = ({ claimInfo }: IDNSClaim) => {
             return (
                   <div key={key} className="flex justify-between items-start">
                         <span className="text-sm text-gray-600 capitalize">{processedKey}</span>
-                        <p className={`text-sm font-medium max-w-[200px] break-all text-right ${cssClass}`}>{processedValue}</p>
+                        <p 
+                              className={`text-sm font-medium max-w-[200px] text-right ${cssClass}`}
+                              style={{
+                                    whiteSpace: 'normal',
+                                    wordWrap: 'break-word',
+                                    wordBreak: 'break-word',
+                                    overflowWrap: 'break-word',
+                              }}
+                        >{processedValue}</p>
                   </div>
             )
       }).filter(Boolean) // Filter out null entries
