@@ -35,7 +35,7 @@ const SimpleClaim = ({ claimInfo }: ISimpleClaim) => {
             return (
                   <div key={key} className="flex justify-between items-start">
                         <span className="text-sm text-gray-600 capitalize">{processedKey}</span>
-                        <span className={`text-sm font-medium max-w-[200px] break-all ${cssClass}`} 
+                        <span className={`text-sm font-medium max-w-[200px] ${cssClass}`} 
                         style={{ 
                               textAlign: 'right',
                               whiteSpace: 'normal',
