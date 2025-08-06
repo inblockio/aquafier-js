@@ -80,7 +80,10 @@ const NotificationItem = ({ notification, onRead }: NotificationItemProps) => {
                                           {notification.sender === 'system' ? 'System' : formatCryptoAddress(notification.sender, 4, 4)}
                                     </Badge>
                               </div>
-                              <p className="text-xs font-medium">{notification.content}</p>
+                              <p className="text-xs font-medium" style={{
+                                    whiteSpace: 'pre-wrap',
+                                    wordBreak: 'break-word',
+                              }}>{notification.content}</p>
                               <p className="text-xs text-gray-500 mt-1">{formattedDate}</p>
                         </div>
                         <div className="flex items-center space-x-2">
@@ -118,7 +121,7 @@ const NotificaitonsHolder = ({ notifications, isLoading, markAllAsRead, onNotifi
                         )}
                   </CardHeader>
                   <CardContent className="p-0 mt-0">
-                        <ScrollArea className="h-[300px]">
+                        <ScrollArea className="h-[300px] w-full">
                               {isLoading ? (
                                     <div className="flex justify-center items-center h-[100px]">
                                           <Loader2 className="h-6 w-6 animate-spin text-gray-400" />
