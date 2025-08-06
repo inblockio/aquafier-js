@@ -368,16 +368,21 @@ export default async function shareController(fastify: FastifyInstance) {
         }
 
         // Build dynamic where clause based on provided parameters
-        const whereClause: any = {};
+        let whereClause: any = {};
         
-        if (sender) {
+        if (sender && receiver) {
+            whereClause = {
+                OR: [
+                    { sender: { equals: sender, mode: 'insensitive' } },
+                    { receiver: { equals: receiver, mode: 'insensitive' } }
+                ]
+            };
+        } else if (sender) {
             whereClause.sender = {
-                contains: sender,
+                equals: sender,
                 mode: 'insensitive'
             };
-        }
-        
-        if (receiver) {
+        } else if (receiver) {
             whereClause.receiver = {
                 equals: receiver,
                 mode: 'insensitive'
@@ -410,7 +415,7 @@ export default async function shareController(fastify: FastifyInstance) {
             }
         }
 
-        console.log('Query parameters:', JSON.stringify(whereClause, null, 2));
+        // console.log('Query parameters:', JSON.stringify(whereClause, null, 2));
         
         // Enable query logging for this specific query
         // const contracts = await prisma.$transaction(async (tx) => {
@@ -434,7 +439,7 @@ export default async function shareController(fastify: FastifyInstance) {
             timeout: 10000
         });
         
-        console.log('Found contracts:', contracts.length);
+        // console.log('Found contracts:', contracts.length);
         return reply.code(200).send({ success: true, contracts });
     });
 

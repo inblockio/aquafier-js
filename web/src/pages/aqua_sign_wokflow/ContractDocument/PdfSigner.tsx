@@ -37,6 +37,7 @@ import { PdfRenderer } from './signer/SignerPage'
 import React from 'react'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { toast } from 'sonner'
+import WalletAddressClaim from '../../v2_claims_workflow/WalletAdrressClaim'
 
 interface PdfSignerProps {
       fileData: File | null
@@ -1294,7 +1295,8 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ fileData, setActiveStep, document
                                                                                     />
                                                                                     <div className="flex flex-col flex-1 overflow-hidden space-y-0">
                                                                                           <p className="text-sm font-medium">{signature.name}</p>
-                                                                                          <p className="text-xs text-gray-600 break-words">{signature.walletAddress ?? 'NO WALLET ADDRESS'}</p>
+                                                                                          {/* <p className="text-xs text-gray-600 break-words">{signature.walletAddress ?? 'NO WALLET ADDRESS'}</p> */}
+                                                                                          <WalletAddressClaim walletAddress={signature.walletAddress} />
                                                                                     </div>
                                                                               </div>
                                                                         </div>
@@ -1322,11 +1324,12 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ fileData, setActiveStep, document
                                                                                     />
                                                                                     <div className="flex flex-col space-y-0">
                                                                                           <p className="text-sm font-medium">{signature.name}</p>
-                                                                                          <p className="text-xs text-gray-600">
+                                                                                          {/* <p className="text-xs text-gray-600">
                                                                                                 {signature.walletAddress.length > 10
                                                                                                       ? `${signature.walletAddress.substring(0, 6)}...${signature.walletAddress.substring(signature.walletAddress.length - 4)}`
                                                                                                       : signature.walletAddress}
-                                                                                          </p>
+                                                                                          </p> */}
+                                                                                          <WalletAddressClaim walletAddress={signature.walletAddress} />
                                                                                     </div>
                                                                               </div>
                                                                         </div>

@@ -292,7 +292,7 @@ export async function switchNetwork(chainId: string) {
       }
 }
 
-export  const getWalletClaims = ( systemFileInfo: ApiFileInfo[],  files: ApiFileInfo[],    walletAddress: string, setSelectedFileInfo: (file: ApiFileInfo | null) => void , navigate : NavigateFunction, toast : any) => {
+export  const getWalletClaims = ( systemFileInfo: ApiFileInfo[],  files: ApiFileInfo[],    walletAddress: string, _setSelectedFileInfo: (file: ApiFileInfo | null) => void , navigate : NavigateFunction, toast : any) => {
             const aquaTemplates: string[] = systemFileInfo.map(e => {
                   try {
                         return getAquaTreeFileName(e.aquaTree!)
@@ -324,8 +324,10 @@ export  const getWalletClaims = ( systemFileInfo: ApiFileInfo[],  files: ApiFile
                         }
                   }
                   if (firstClaim) {
-                        setSelectedFileInfo(firstClaim)
-                        navigate('/app/claims/workflow')
+                        // IMPORTANT: I have disable setting file here and navigation has changed to specific wallet address
+                        // setSelectedFileInfo(firstClaim)
+                        // navigate('/app/claims/workflow')
+                        navigate(`/app/claims/workflow/${walletAddress}`)
                   } else {
                         toast.info('Claim not found', {
                               description: 'No claims found for this wallet address',

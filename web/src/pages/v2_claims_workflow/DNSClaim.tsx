@@ -355,7 +355,7 @@ const DNSClaim = ({ claimInfo, apiFileInfo, nonce, sessionAddress }: IDNSClaim) 
                   <div className='col-span-5 p-2'>
                         <div className="flex flex-col gap-2">
                               <h3 className="text-lg font-bold text-center">Claim Verification</h3>
-                              <div className="flex flex-col gap-2 h-[400px] overflow-y-auto px-2 py-2">
+                              <div className="flex flex-col h-[600px] overflow-y-auto px-2">
                                     {verificationResult && (
                                           <ImprovedDNSLogs
                                                 verificationResult={verificationResult}
