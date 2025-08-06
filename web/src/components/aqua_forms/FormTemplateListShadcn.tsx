@@ -78,11 +78,13 @@ const FormTemplateListShadcn = ({ onEdit }: FormTemplateListShadcnProps) => {
       }
 
       return (
-            <Card className="w-full shadow-sm m-5">
-                  <CardHeader>
+                   <div className='m-10'>
+               {/* <Card className="w-full shadow-sm m-5">
+               <CardHeader>
                         <CardTitle>Form Templates</CardTitle>
-                  </CardHeader>
-                  <CardContent>
+                  </CardHeader> 
+                  <CardContent> */}
+           
                         {formTemplates.length === 0 ? (
                               <div className="p-8 text-center text-muted-foreground">No form templates found. Create your first template!</div>
                         ) : (
@@ -212,8 +214,11 @@ const FormTemplateListShadcn = ({ onEdit }: FormTemplateListShadcnProps) => {
                                     </AlertDialogFooter>
                               </AlertDialogContent>
                         </AlertDialog>
-                  </CardContent>
-            </Card>
+
+            
+                 {/*  </CardContent>
+            </Card>  */}
+            </div>
       )
 }
 
