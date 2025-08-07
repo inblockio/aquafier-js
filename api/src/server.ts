@@ -153,7 +153,7 @@ function buildServer() {
     // createEthAccount()
 
     // Server attestation test
-    serverAttestation("0x3e66c76fd088e0aac4cdb6726aa26041473be7b37a5ca8337c185de21bc9c3f0")
+    // serverAttestation("0x3e66c76fd088e0aac4cdb6726aa26041473be7b37a5ca8337c185de21bc9c3f0")
 
 
     // setInterval(() => {
