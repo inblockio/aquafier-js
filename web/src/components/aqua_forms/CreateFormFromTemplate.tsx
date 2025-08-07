@@ -1,4 +1,4 @@
-import React, { JSX, useRef, useState } from 'react'
+import React, { JSX, useEffect, useRef, useState } from 'react'
 import { FormField, FormTemplate } from './types'
 import { useStore } from 'zustand'
 import appStore from '@/store'
@@ -38,6 +38,19 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: { selectedTempla
 
       const signatureRef = useRef<SignatureCanvas | null>(null)
       const navigate = useNavigate()
+
+      const [canvasSize, setCanvasSize] = useState({ width: 800, height: 200 });
+      const containerRef = useRef<HTMLDivElement | null>(null);
+
+      useEffect(() => {
+            if (containerRef.current) {
+                  const rect = containerRef.current.getBoundingClientRect();
+                  setCanvasSize({
+                        width: rect.width,
+                        height: rect.height,
+                  });
+            }
+      }, []);
 
       const getFieldDefaultValue = (field: FormField, currentState: any) => {
             if (field.type === 'number') {
@@ -796,7 +809,7 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: { selectedTempla
                         if (fieldItem.type === 'scratchpad') {
                               console.log(` in scratch pad`)
                               if (signatureRef.current) {
-                                      console.log(` not null `)
+                                    console.log(` not null `)
                                     const dataUrl = signatureRef.current.toDataURL('image/png')
                                     const epochInSeconds = Math.floor(Date.now() / 1000)
                                     const lastFiveCharactersOfWalletAddres = session?.address.slice(-5)
@@ -805,7 +818,7 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: { selectedTempla
                                     console.log(`signatureFile ===  ${signatureFile}`)
                                     completeFormData[`scratchpad`] = signatureFile
 
-                                   
+
                               } else {
                                     console.log(`signatureRef is null 💣💣💣 `)
                               }
@@ -828,7 +841,7 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: { selectedTempla
                         aquafier
                   )
 
-                  
+
                   // console.log(`aquaTreeData after file attachement process ${JSON.stringify(aquaTreeData, null, 4)}`)
                   // throw Error(`fix mee...`)
 
@@ -836,12 +849,12 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: { selectedTempla
                   const signedAquaTree = await signAquaTree(aquaTreeData, fileObject, aquafier)
 
 
-                     clearSignature()
+                  clearSignature()
 
                   // Step 12: Handle post-signing actions
                   await handlePostSigning(signedAquaTree, fileObject, finalFormDataFiltered, selectedTemplate, session, selectedFileInfo)
 
-                
+
             } catch (error: any) {
                   setSubmittingTemplateData(false)
 
@@ -1086,7 +1099,7 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: { selectedTempla
                                                                                                 ? 'Fill in the Domain Name (FQDN)'
                                                                                                 : field.type === 'date'
                                                                                                       ? 'Select a date'
-                                                                                                      :  `Enter ${field.label.toLowerCase()}`
+                                                                                                      : `Enter ${field.label.toLowerCase()}`
                                                                                     }
                                                                                     disabled={field.is_editable === false}
                                                                                     defaultValue={getFieldDefaultValue(field, formData[field.name])}
@@ -1114,15 +1127,16 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: { selectedTempla
 
                                                                         {
                                                                               field.type == 'scratchpad' && (
-                                                                                    <div className="border border-gray-200 w-full h-[200px] bg-white">
+                                                                                    <div ref={containerRef} className="border border-gray-200 w-full h-[200px] bg-white">
                                                                                           <SignatureCanvas
                                                                                                 ref={signatureRef}
                                                                                                 canvasProps={{
+                                                                                                      width: canvasSize.width,
+                                                                                                      height: canvasSize.height,
                                                                                                       style: {
-                                                                                                            maxWidth: '100%',
+                                                                                                            width: '100%',
+                                                                                                            height: '100%',
                                                                                                       },
-                                                                                                      width: 500,
-                                                                                                      height: 400,
                                                                                                       className: 'signature-canvas',
                                                                                                 }}
                                                                                                 backgroundColor="transparent"
@@ -1186,9 +1200,9 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: { selectedTempla
                                                                                           disabled={field.is_editable === false}
                                                                                           accept={field.type == 'document' ? '.pdf' : field.type === 'image' ? 'image/*' : undefined}
                                                                                           placeholder={
-                                                                                               field.type === 'document'
-                                                                                                                  ? 'Upload PDF document'
-                                                                                                                  : `Enter ${field.label.toLowerCase()}`
+                                                                                                field.type === 'document'
+                                                                                                      ? 'Upload PDF document'
+                                                                                                      : `Enter ${field.label.toLowerCase()}`
                                                                                           }
                                                                                           onChange={e => {
                                                                                                 if (field.is_editable === false) {
