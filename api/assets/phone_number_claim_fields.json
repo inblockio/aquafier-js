@@ -1,0 +1,27 @@
+[
+    {
+        "name": "phone_number",
+        "label": "Phone Number",
+        "type": "text",
+        "required": true,
+        "isArray": false
+    },
+    {
+        "name": "type",
+        "label": "Type",
+        "type": "text",
+        "required": true,
+        "isArray": false,
+        "isEditable": false,
+        "isHidden": true,
+        "defaultValue": "phone_number_claim"
+    },
+    {
+        "name": "wallet_address",
+        "label": "Wallet Address",
+        "type": "wallet_address",
+        "required": true,
+        "isArray": false,
+         "isEditable": false
+    }
+]

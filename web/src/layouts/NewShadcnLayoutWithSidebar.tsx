@@ -337,6 +337,30 @@ export default function NewShadcnLayoutWithSidebar() {
                                           />
                                     )}
 
+
+                                    {openDialog?.dialogType === 'email_claim' && (
+                                          <CreateFormFromTemplate
+                                                selectedTemplate={formTemplates.find(template => template.name === 'email_claim')!}
+                                                callBack={function (): void {
+                                                      // setOpenCreateClaimAttestationPopUp(false)
+                                                      setOpenDialog(null)
+                                                }}
+                                                openCreateTemplatePopUp={false}
+                                          />
+                                    )}
+
+
+                                    {openDialog?.dialogType === 'phone_number_claim' && (
+                                          <CreateFormFromTemplate
+                                                selectedTemplate={formTemplates.find(template => template.name === 'phone_number_claim')!}
+                                                callBack={function (): void {
+                                                      // setOpenCreateClaimAttestationPopUp(false)
+                                                      setOpenDialog(null)
+                                                }}
+                                                openCreateTemplatePopUp={false}
+                                          />
+                                    )}
+
                               </ScrollArea>
 
 

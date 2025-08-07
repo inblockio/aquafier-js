@@ -1285,7 +1285,7 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: { selectedTempla
                                                                   <ol className="list-decimal list-inside">
                                                                         <li>Fill in the Domain Name (FQDN).</li>
                                                                         <li>Sign with metamask to generate a TXT record.</li>
-                                                                        <li>Second metamask signature for self signed identity.</li>
+                                                                        <li>Second metamask signature for self signed identity claim.</li>
                                                                         <li>Open details of the DNS Claim and copy the TXT record into to your DNS records under the following subdomain <em>aqua._wallet.[domain filled above]</em></li>
                                                                   </ol>
                                                             </div>

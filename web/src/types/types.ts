@@ -12,7 +12,7 @@ export interface DNSProof {
     
 
 export interface OpenDialog {
-  dialogType: 'form_template_editor' | 'aqua_file_details' | 'identity_claim' | 'dns_claim' | 'aqua_sign' | 'identity_attestation' | 'early_bird_offer' | 'user_signature',//'file' | 'folder' | 'contract' | 'claim' | 'claim-attestation'
+  dialogType: 'form_template_editor' | 'aqua_file_details' | 'identity_claim' | 'dns_claim' | 'aqua_sign' | 'identity_attestation' | 'early_bird_offer' | 'user_signature' | 'email_claim' | 'phone_number_claim' ,//'file' | 'folder' | 'contract' | 'claim' | 'claim-attestation'
   isOpen: boolean
   onClose: () => void
   onConfirm: (data: any) => void

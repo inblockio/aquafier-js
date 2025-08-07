@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { ChevronDown, Plus, Globe, UserLock, Signature } from 'lucide-react';
+import { ChevronDown, Plus, Globe, UserLock, Signature, Phone, Mail } from 'lucide-react';
 import { createPortal } from 'react-dom';
 import appStore from '../store'
 import { useStore } from 'zustand'
@@ -10,7 +10,7 @@ export default function ClaimTypesDropdownButton() {
   const [dropdownPosition, setDropdownPosition] = useState({ top: 0, left: 0 });
   const buttonRef = useRef<HTMLButtonElement>(null);
 
-  const handleItemClick = (item: 'identity_claim' | 'dns_claim' | 'user_signature' ) => {
+  const handleItemClick = (item: 'identity_claim' | 'dns_claim' | 'user_signature' | 'email_claim' | 'phone_number_claim' ) => {
     console.log(`Selected: ${item}`);
     setIsOpen(false);
 
@@ -116,6 +116,26 @@ export default function ClaimTypesDropdownButton() {
           >
             <Signature className="mr-3 h-4 w-4 text-gray-400 group-hover:text-gray-500" />
             Create Signature
+          </button>
+
+             <button
+          data-testid="create-dns-claim-dropdown-button-item"
+            onClick={() => handleItemClick('email_claim')}
+            className="group flex w-full items-center px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900"
+          >
+            <Mail className="mr-3 h-4 w-4 text-gray-400 group-hover:text-gray-500" />
+            Create Email Claim
+          </button>
+
+
+
+             <button
+          data-testid="create-dns-claim-dropdown-button-item"
+            onClick={() => handleItemClick('phone_number_claim')}
+            className="group flex w-full items-center px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900"
+          >
+            <Phone className="mr-3 h-4 w-4 text-gray-400 group-hover:text-gray-500" />
+            Create Phone Number claim
           </button>
         </div>
       </div>
