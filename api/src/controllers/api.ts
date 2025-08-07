@@ -1,6 +1,6 @@
 import { FastifyInstance } from "fastify";
-import { twilioClient } from "src/api/twilio";
-import { prisma } from "src/database/db";
+import { twilioClient } from "../api/twilio";
+import { prisma } from "../database/db";
 
 export default async function ApiController(fastify: FastifyInstance) {
 
