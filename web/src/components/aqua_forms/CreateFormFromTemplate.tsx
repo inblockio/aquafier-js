@@ -14,7 +14,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { useNavigate } from 'react-router-dom'
-import { AlertCircle, FileText, Image, Link, Loader2, Pen, Plus, Trash2, Upload, Wallet, X } from 'lucide-react'
+import { AlertCircle, BookCheck, FileText, Image, Link, Loader2, Pen, Plus, Send, Trash2, Upload, Wallet, X } from 'lucide-react'
 import { Badge } from '../ui/badge'
 import { Separator } from '../ui/separator'
 import { ScrollArea } from '../ui/scroll-area'
@@ -27,6 +27,7 @@ import SignatureCanvas from 'react-signature-canvas'
 const CreateFormFromTemplate = ({ selectedTemplate, callBack }: { selectedTemplate: FormTemplate; callBack: () => void; openCreateTemplatePopUp: boolean }) => {
       const [submittingTemplateData, setSubmittingTemplateData] = useState(false)
       const [modalFormErorMessae, setModalFormErorMessae] = useState('')
+
       const { session, backend_url, systemFileInfo, setSystemFileInfo, setFiles, selectedFileInfo, files } = useStore(appStore)
       const [formData, setFormData] = useState<Record<string, string | File | number>>({})
       const [multipleAddresses, setMultipleAddresses] = useState<string[]>([])
@@ -39,6 +40,7 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: { selectedTempla
       const signatureRef = useRef<SignatureCanvas | null>(null)
       const navigate = useNavigate()
 
+      const [verifyingFormField, setVerifyingFormField] = useState('')
       const [canvasSize, setCanvasSize] = useState({ width: 800, height: 200 });
       const containerRef = useRef<HTMLDivElement | null>(null);
 
@@ -348,6 +350,41 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: { selectedTempla
 
                   if (fieldItem.type === 'domain') {
                         validateDomain(valueInput, fieldItem)
+                  }
+
+
+                  // ensure there is code input for all verifiable data
+                  if (fieldItem.is_verifiable) {
+                        let verificationCodeData = formData[`${fieldItem.name}_verification`]
+                        if (!verificationCodeData) {
+                              throw new Error(`${fieldItem.label} has no verification code provided.`)
+                        }
+                  }
+
+                  // ensure required fields have input
+                  if (fieldItem.required) {
+                        let inputData = formData[fieldItem.name]
+                        if (!inputData) {
+                              if (fieldItem.default_value) {
+
+                                    setFormData({
+                                          ...formData,
+                                          [fieldItem.name]: fieldItem.default_value,
+                                    })
+                              } else {
+
+                                    if (fieldItem.name == 'wallet_address' && fieldItem.type == 'wallet_address') {
+                                          setFormData({
+                                                ...formData,
+                                                [fieldItem.name]: session!.address,
+                                          })
+                                    } else {
+
+                                          throw new Error(`${fieldItem.label} must have an input.`)
+                                    }
+
+                              }
+                        }
                   }
             }
       }
@@ -762,6 +799,51 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: { selectedTempla
                   // Step 2: Validate fields
                   validateFields(completeFormData, selectedTemplate)
 
+
+
+
+                  for (const fieldItem of selectedTemplate.fields) {
+                        const filledValue = completeFormData[fieldItem.name]
+
+
+                        // ensure there is code input for all verifiable data
+                        if (fieldItem.is_verifiable) {
+                              let verificationCodeData = formData[`${fieldItem.name}_verification`]
+
+                              try {
+                                    const url = `${backend_url}/verify_code`
+                                    const response = await axios.post(
+                                          url,
+                                          {
+                                                email_or_phone_number: filledValue,
+                                                code: verificationCodeData
+                                          },
+                                          {
+                                                headers: {
+                                                      nonce: session?.nonce,
+                                                },
+                                          }
+                                    )
+
+                                    if (response.status == 200) {
+                                          toast.success(`verification code verified sucessfully`)
+
+                                          setFormData(prev =>
+                                                Object.fromEntries(
+                                                      Object.entries(prev).filter(([key]) => key !== `${fieldItem.name}_verification`)
+                                                )
+                                          );
+                                    }
+                              } catch (e) {
+
+                                    console.log(`Verify endpoint ${e}`)
+                                    toast.error(`Error verfying code.`)
+                                    return
+                              }
+                        }
+
+                  }
+
                   // Step 3: Get system files
                   const allSystemFiles = await getSystemFiles(systemFileInfo, backend_url, session?.address || '')
                   setSystemFileInfo(allSystemFiles)
@@ -1089,40 +1171,152 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: { selectedTempla
                                                                         </div>
 
                                                                         {(field.type == 'text' || field.type == 'number' || field.type == 'date' || field.type == 'domain' || field.type == 'email') && (
-                                                                              <Input
-                                                                                    id={`input-${field.name}`}
-                                                                                    data-testid={`input-${field.name}`}
-                                                                                    className="w-full px-2 sm:px-3 py-1 sm:py-2 border border-gray-200 rounded-md focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 text-sm sm:text-base"
-                                                                                    // placeholder="Type here..."
-                                                                                    placeholder={
-                                                                                          field.type === 'domain'
-                                                                                                ? 'Fill in the Domain Name (FQDN)'
-                                                                                                : field.type === 'date'
-                                                                                                      ? 'Select a date'
-                                                                                                      : `Enter ${field.label.toLowerCase()}`
-                                                                                    }
-                                                                                    disabled={field.is_editable === false}
-                                                                                    defaultValue={getFieldDefaultValue(field, formData[field.name])}
-                                                                                    onChange={e => {
-                                                                                          if (field.is_editable === false) {
-                                                                                                // Show toast notification (would need toast implementation)
-
-                                                                                                console.log(`${field.label} cannot be changed`)
-                                                                                                toast.error(`${field.label} cannot be changed`)
-                                                                                                return
+                                                                              <>
+                                                                                    <Input
+                                                                                          id={`input-${field.name}`}
+                                                                                          data-testid={`input-${field.name}`}
+                                                                                          className="w-full px-2 sm:px-3 py-1 sm:py-2 border border-gray-200 rounded-md focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 text-sm sm:text-base"
+                                                                                          // placeholder="Type here..."
+                                                                                          placeholder={
+                                                                                                field.type === 'domain'
+                                                                                                      ? 'Fill in the Domain Name (FQDN)'
+                                                                                                      : field.type === 'date'
+                                                                                                            ? 'Select a date'
+                                                                                                            : `Enter ${field.label.toLowerCase()}`
                                                                                           }
+                                                                                          disabled={field.is_editable === false}
+                                                                                          defaultValue={getFieldDefaultValue(field, formData[field.name])}
+                                                                                          onChange={e => {
+                                                                                                if (field.is_editable === false) {
+                                                                                                      // Show toast notification (would need toast implementation)
 
-                                                                                          if (field.default_value !== undefined && field.default_value !== null && field.default_value !== '') {
-                                                                                                e.target.value = field.default_value
-                                                                                                toast.error(`${field.label} cannot be changed`)
-                                                                                          }
+                                                                                                      console.log(`${field.label} cannot be changed`)
+                                                                                                      toast.error(`${field.label} cannot be changed`)
+                                                                                                      return
+                                                                                                }
 
-                                                                                          setFormData({
-                                                                                                ...formData,
-                                                                                                [field.name]: e.target.value,
-                                                                                          })
-                                                                                    }}
-                                                                              />
+                                                                                                if (field.default_value !== undefined && field.default_value !== null && field.default_value !== '') {
+                                                                                                      e.target.value = field.default_value
+                                                                                                      toast.error(`${field.label} cannot be changed`)
+                                                                                                }
+
+                                                                                                setFormData({
+                                                                                                      ...formData,
+                                                                                                      [field.name]: e.target.value,
+                                                                                                })
+                                                                                          }}
+                                                                                    />
+
+                                                                                    {field.support_text && (
+                                                                                          <p className="text-xs text-gray-500">
+                                                                                                {field.support_text}
+                                                                                          </p>
+                                                                                    )}
+                                                                                    <>
+                                                                                          {
+                                                                                                field.is_verifiable && (
+                                                                                                      <>
+                                                                                                            <button
+                                                                                                                  type='button'
+                                                                                                                  data-testid={'send-verifcation-ciode-'}
+                                                                                                                  onClick={async () => {
+
+                                                                                                                        setVerifyingFormField(`field-${field.name}`)
+
+
+                                                                                                                        let filledValue = formData[field.name]
+
+                                                                                                                        if (!filledValue || (filledValue as string).length == 0) {
+                                                                                                                              toast.error(`${field.label} is empty`)
+                                                                                                                              setVerifyingFormField("")
+                                                                                                                              return
+                                                                                                                        }
+                                                                                                                        try {
+                                                                                                                              // const allRevisionHashes = Object.keys(apiFileInfo.aquaTree!.revisions!)
+                                                                                                                              // const lastRevisionHash = allRevisionHashes[allRevisionHashes.length - 1]
+                                                                                                                              const url = `${backend_url}/send_code`
+                                                                                                                              const response = await axios.post(
+                                                                                                                                    url,
+                                                                                                                                    {
+                                                                                                                                          email_or_phone_number: filledValue,
+                                                                                                                                          name: field.name
+                                                                                                                                    },
+                                                                                                                                    {
+                                                                                                                                          headers: {
+                                                                                                                                                nonce: session?.nonce,
+                                                                                                                                          },
+                                                                                                                                    }
+                                                                                                                              )
+
+                                                                                                                              if (response.status === 200) {
+                                                                                                                                    toast.success(`verification code sent sucessfully`)
+                                                                                                                                    // Close the dialog explicitly
+                                                                                                                                    // setOpen(false)
+                                                                                                                                    // setIsloading(false)
+                                                                                                                                    // toast('File deleted successfully')
+                                                                                                                                    // await refetchAllUserFiles()
+                                                                                                                              }
+                                                                                                                        } catch (e) {
+                                                                                                                              console.log(`Error ${e}`)
+                                                                                                                              toast.error('verification code not sent')
+                                                                                                                              // setIsloading(false) // Add this to ensure loading state is cleared on error
+                                                                                                                        } finally {
+                                                                                                                              setVerifyingFormField(``)
+
+                                                                                                                        }
+
+                                                                                                                  }}
+                                                                                                                  className={`w-full flex items-center justify-center space-x-1 bg-blue-100 text-blue-700 px-3 py-2 rounded transition-colors text-xs ${verifyingFormField == `field-${field.name}` ? 'opacity-60 cursor-not-allowed' : 'hover:bg-blue-200'}`}
+                                                                                                            // disabled={signing}
+                                                                                                            >
+                                                                                                                  {verifyingFormField == `field-${field.name}` ? (
+                                                                                                                        <>
+                                                                                                                              <svg className="animate-spin h-3 w-3 mr-1 text-blue-700" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                                                                                                                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                                                                                                                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
+                                                                                                                              </svg>
+                                                                                                                              <span>Sending code...</span>
+                                                                                                                        </>
+                                                                                                                  ) : (
+                                                                                                                        <>
+                                                                                                                              <Send className="w-4 h-4" />
+                                                                                                                              <span>Send Code</span>
+                                                                                                                        </>
+                                                                                                                  )}
+                                                                                                            </button>
+
+
+                                                                                                            <div className="flex items-center gap-2">
+                                                                                                                  <BookCheck className="h-4 w-4" />
+                                                                                                                  <Label htmlFor={`input-verification-${field.name}`} className="text-base font-medium text-gray-900">
+                                                                                                                        Verification code for {field.label}
+                                                                                                                        <span className="text-red-500">*</span>
+                                                                                                                  </Label>
+                                                                                                            </div>
+
+
+                                                                                                            <Input
+                                                                                                                  id={`input-verification-${field.name}`}
+                                                                                                                  data-testid={`input-verification-${field.name}`}
+                                                                                                                  className="w-full px-2 sm:px-3 py-1 sm:py-2 border border-gray-200 rounded-md focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 text-sm sm:text-base"
+                                                                                                                  placeholder="Type code here..."
+
+
+                                                                                                                  onChange={e => {
+
+
+                                                                                                                        setFormData({
+                                                                                                                              ...formData,
+                                                                                                                              [`${field.name}_verification`]: e.target.value,
+                                                                                                                        })
+                                                                                                                  }}
+                                                                                                            />
+
+                                                                                                      </>
+                                                                                                )
+                                                                                          }</>
+                                                                              </>
+
                                                                         )}
 
                                                                         {
@@ -1255,6 +1449,13 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: { selectedTempla
                                                                                                 })
                                                                                           }}
                                                                                     />
+
+                                                                                    {field.support_text && (
+                                                                                          <p className="text-xs text-gray-500">
+                                                                                                {field.support_text}
+                                                                                          </p>
+                                                                                    )}
+
                                                                                     {isFileInput && (
                                                                                           <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
                                                                                                 <Upload className="h-4 w-4 text-gray-400" />
@@ -1263,6 +1464,9 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: { selectedTempla
                                                                               </div>
                                                                         )}
 
+
+
+
                                                                         {field.name === 'sender' && (
                                                                               <p className="text-xs text-gray-500">
                                                                                     {field.support_text
@@ -1270,6 +1474,7 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: { selectedTempla
                                                                                           : 'The sender is the person who initiates the document signing process. This field is auto-filled with your wallet address.'}
                                                                               </p>
                                                                         )}
+
                                                                   </div>
                                                             )
                                                       })

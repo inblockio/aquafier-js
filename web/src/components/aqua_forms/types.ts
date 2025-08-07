@@ -15,6 +15,7 @@ export interface FormField {
       is_array: boolean
       is_hidden?: boolean
       is_editable?: boolean
+      is_verifiable?: boolean
       description?: string
       support_text?: string
       default_value?: string

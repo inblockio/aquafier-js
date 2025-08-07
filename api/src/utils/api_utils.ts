@@ -284,6 +284,7 @@ const setUpSystemTemplates = async () => {
           placeholder: fieldData.placeholder ,
           support_text: fieldData.supportText,
           default_value: fieldData.defaultValue ,
+          is_verifiable : fieldData.isVerifiable ||  false ,
 
           is_editable: fieldData.isEditable == null ? true : fieldData.isEditable,
         },

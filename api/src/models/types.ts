@@ -10,6 +10,7 @@ export interface AquaTemplatesFields {
   isArray: boolean,
   isHidden: boolean,
   isEditable: boolean,
+  isVerifiable: boolean,
   description : string,
   placeholder : string
   supportText : string

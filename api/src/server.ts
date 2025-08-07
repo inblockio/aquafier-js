@@ -27,8 +27,7 @@ import systemController from './controllers/system';
 import webSocketController from './controllers/websocketController';
 import notificationsController from './controllers/notifications';
 import { prisma } from './database/db';
-
-
+import ApiController from './controllers/api';
 
 export async function mockNotifications(){
     // 0x254B0D7b63342Fcb8955DB82e95C21d72EFdB6f7 - This is the receiver and the sender is 'system'
@@ -171,6 +170,7 @@ function buildServer() {
     fastify.register(systemController);
     fastify.register(webSocketController);
     fastify.register(notificationsController);
+    fastify.register(ApiController);
 
     return fastify
 

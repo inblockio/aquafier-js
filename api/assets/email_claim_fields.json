@@ -4,7 +4,8 @@
         "label": "Email",
         "type": "email",
         "required": true,
-        "isArray": false
+        "isArray": false,
+        "isVerifiable": true
     },
     {
         "name": "type",
@@ -22,6 +23,6 @@
         "type": "wallet_address",
         "required": true,
         "isArray": false,
-         "isEditable": false
+        "isEditable": false
     }
 ]

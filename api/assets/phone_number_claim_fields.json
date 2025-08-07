@@ -4,7 +4,9 @@
         "label": "Phone Number",
         "type": "text",
         "required": true,
-        "isArray": false
+        "isArray": false,
+        "isVerifiable" : true,
+        "supportText":"start with +(country code)(phone number)  example +2547XX-XXX-XXX"
     },
     {
         "name": "type",
