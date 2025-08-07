@@ -28,6 +28,8 @@ import webSocketController from './controllers/websocketController';
 import notificationsController from './controllers/notifications';
 import { prisma } from './database/db';
 import ApiController from './controllers/api';
+import { createEthAccount } from './utils/server_utils';
+import { serverAttestation } from './utils/server_attest';
 
 export async function mockNotifications(){
     // 0x254B0D7b63342Fcb8955DB82e95C21d72EFdB6f7 - This is the receiver and the sender is 'system'
@@ -146,6 +148,12 @@ function buildServer() {
     });
 
     fastify.register(import('@fastify/websocket'));
+
+    // Helper function to quickly create a wallet
+    // createEthAccount()
+
+    // Server attestation test
+    serverAttestation("0x3e66c76fd088e0aac4cdb6726aa26041473be7b37a5ca8337c185de21bc9c3f0")
 
 
     // setInterval(() => {

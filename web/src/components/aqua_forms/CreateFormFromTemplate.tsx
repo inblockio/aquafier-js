@@ -164,6 +164,8 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: { selectedTempla
                   // formData.append('account', session?.address || '')
                   formData.append('account', account)
                   formData.append('is_workflow', `${isWorkflow}`)
+                  // Template name
+                  formData.append('template_name', selectedTemplate?.name || '')
 
                   // todo unocmment here
                   //workflow specifi

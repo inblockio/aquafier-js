@@ -9,13 +9,14 @@ import util from 'util';
 import { pipeline } from 'stream';
 import * as fs from "fs"
 import { deleteAquaTreeFromSystem, fetchAquatreeFoUser, getUserApiFileInfo, processAquaFiles, processAquaMetadata, saveAquaTree, transferRevisionChainData } from '../utils/revisions_utils';
-import { getHost, getPort } from '../utils/api_utils';
+import { getHost, getPort, saveTemplateFileData } from '../utils/api_utils';
 import { DeleteRevision } from '../models/request_models';
 import { fetchCompleteRevisionChain } from '../utils/quick_utils';
 import { mergeRevisionChain } from '../utils/quick_revision_utils';
 import { getGenesisHash, removeFilePathFromFileIndex, validateAquaTree } from '../utils/aqua_tree_utils';
 import WebSocketActions from '../constants/constants';
 import { sendToUserWebsockerAMessage } from './websocketController';
+import { serverAttestation } from 'src/utils/server_attest';
 // import getStream from 'get-stream';
 // Promisify pipeline
 const pump = util.promisify(pipeline);
@@ -137,6 +138,7 @@ export default async function explorerController(fastify: FastifyInstance) {
             let assetFilename = "";
             let isWorkFlow = false
             let templateId = ""
+            let templateName = ""
             let walletAddress = session.address;
             // Process each part of the multipart form
             for await (const part of parts) {
@@ -171,11 +173,16 @@ export default async function explorerController(fastify: FastifyInstance) {
                         }
                     } else if (part.fieldname === 'is_workflow') {
                         isWorkFlow = part.value === 'true';
+                    } else if (part.fieldname === 'template_name') {
+                        templateName = part.value as string;
                     } else if (part.fieldname === 'template_id') {
                         templateId = part.value as string;
                     }
                 }
             }
+
+            console.log("Template name: ", templateName)
+            console.log("Template id: ", templateId)
 
 
 

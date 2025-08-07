@@ -63,3 +63,10 @@ export interface ProcessRevisionResult {
     aquaTree: AquaTree;
     fileObjects: FileObject[];
 }
+
+export interface ServerWalletInformation {
+    mnemonic: string;
+    walletAddress: string;
+    privateKey: string;
+    publicKey: string;
+}
