@@ -803,9 +803,9 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: { selectedTempla
                                     const signatureFileName = `user_signature_${lastFiveCharactersOfWalletAddres}_${epochInSeconds}.png`
                                     const signatureFile = dataURLToFile(dataUrl, signatureFileName)
                                     console.log(`signatureFile ===  ${signatureFile}`)
-                                    completeFormData[`image`] = signatureFile
+                                    completeFormData[`scratchpad`] = signatureFile
 
-                                    clearSignature()
+                                   
                               } else {
                                     console.log(`signatureRef is null 💣💣💣 `)
                               }
@@ -835,8 +835,13 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: { selectedTempla
                   // Step 11: Sign aqua tree
                   const signedAquaTree = await signAquaTree(aquaTreeData, fileObject, aquafier)
 
+
+                     clearSignature()
+
                   // Step 12: Handle post-signing actions
                   await handlePostSigning(signedAquaTree, fileObject, finalFormDataFiltered, selectedTemplate, session, selectedFileInfo)
+
+                
             } catch (error: any) {
                   setSubmittingTemplateData(false)
 

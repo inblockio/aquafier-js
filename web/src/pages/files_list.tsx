@@ -11,7 +11,7 @@ export default function FilesList() {
       const [isSmallScreen, setIsSmallScreen] = useState(false)
       const [uniqueWorkflows, setUniqueWorkflows] = useState<string[]>([])
       const [selectedWorkflow, setSelectedWorkflow] = useState<string>('all')
-      
+
       // Filter states
       const [showFilterModal, setShowFilterModal] = useState(false)
       const [selectedFilters, setSelectedFilters] = useState<string[]>(['all'])
@@ -61,36 +61,95 @@ export default function FilesList() {
       }, [files, systemFileInfo])
 
       // Filter files based on selected filters
+      // const getFilteredFiles = () => {
+      //       if (selectedFilters.includes('all')) {
+      //             return files
+      //       }
+
+      //       const someData = systemFileInfo.map(e => {
+      //             try {
+      //                   return getAquaTreeFileName(e.aquaTree!)
+      //             } catch (e) {
+      //                   console.log('Error processing system file')
+      //                   return ''
+      //             }
+      //       })
+
+      //       return files.filter(file => {
+      //             try {
+      //                   const workFlow = isWorkFlowData(file.aquaTree!, someData)
+
+      //                   // Check if it's a workflow file
+      //                   if (workFlow.isWorkFlow && workFlow.workFlow) {
+      //                         return selectedFilters.includes(workFlow.workFlow)
+      //                   } else {
+      //                         // Non-workflow file
+      //                         return selectedFilters.includes('aqua_files')
+      //                   }
+      //             } catch (e) {
+      //                   console.log('Error filtering file:', file)
+      //                   return false
+      //             }
+      //       })
+      // }
+
+
+      // Filter files based on selected filters AND selected workflow
       const getFilteredFiles = () => {
-            if (selectedFilters.includes('all')) {
-                  return files
+            // First filter by the modal filters
+            let filteredByFilters = files;
+
+            if (!selectedFilters.includes('all')) {
+                  const someData = systemFileInfo.map(e => {
+                        try {
+                              return getAquaTreeFileName(e.aquaTree!)
+                        } catch (e) {
+                              console.log('Error processing system file')
+                              return ''
+                        }
+                  })
+
+                  filteredByFilters = files.filter(file => {
+                        try {
+                              const workFlow = isWorkFlowData(file.aquaTree!, someData)
+
+                              // Check if it's a workflow file
+                              if (workFlow.isWorkFlow && workFlow.workFlow) {
+                                    return selectedFilters.includes(workFlow.workFlow)
+                              } else {
+                                    // Non-workflow file
+                                    return selectedFilters.includes('aqua_files')
+                              }
+                        } catch (e) {
+                              console.log('Error filtering file:', file)
+                              return false
+                        }
+                  })
             }
 
-            const someData = systemFileInfo.map(e => {
-                  try {
-                        return getAquaTreeFileName(e.aquaTree!)
-                  } catch (e) {
-                        console.log('Error processing system file')
-                        return ''
-                  }
-            })
-
-            return files.filter(file => {
-                  try {
-                        const workFlow = isWorkFlowData(file.aquaTree!, someData)
-                        
-                        // Check if it's a workflow file
-                        if (workFlow.isWorkFlow && workFlow.workFlow) {
-                              return selectedFilters.includes(workFlow.workFlow)
-                        } else {
-                              // Non-workflow file
-                              return selectedFilters.includes('aqua_files')
+            // Then filter by workflow tabs (only if "all" filters are selected)
+            if (selectedFilters.includes('all') && selectedWorkflow !== 'all') {
+                  const someData = systemFileInfo.map(e => {
+                        try {
+                              return getAquaTreeFileName(e.aquaTree!)
+                        } catch (e) {
+                              console.log('Error processing system file')
+                              return ''
                         }
-                  } catch (e) {
-                        console.log('Error filtering file:', file)
-                        return false
-                  }
-            })
+                  })
+
+                  filteredByFilters = filteredByFilters.filter(file => {
+                        try {
+                              const workFlow = isWorkFlowData(file.aquaTree!, someData)
+                              return workFlow.isWorkFlow && workFlow.workFlow === selectedWorkflow
+                        } catch (e) {
+                              console.log('Error filtering by workflow:', file)
+                              return false
+                        }
+                  })
+            }
+
+            return filteredByFilters
       }
 
       const filteredFiles = getFilteredFiles()
@@ -151,7 +210,7 @@ export default function FilesList() {
                   setTempSelectedFilters(['all'])
             } else {
                   let newFilters = tempSelectedFilters.filter(f => f !== 'all')
-                  
+
                   if (newFilters.includes(filterValue)) {
                         newFilters = newFilters.filter(f => f !== filterValue)
                   } else {
@@ -265,10 +324,10 @@ export default function FilesList() {
                                     <button
                                           onClick={() => setSelectedWorkflow('all')}
                                           className={`whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm ${selectedWorkflow === 'all'
-                                                      ? 'border-blue-500 text-blue-600'
-                                                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                                                ? 'border-blue-500 text-blue-600'
+                                                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                                                 }`}
-                                    > 
+                                    >
                                           All Files ({files.length})
                                     </button>
                                     {
@@ -294,8 +353,8 @@ export default function FilesList() {
                                                             key={workflow}
                                                             onClick={() => setSelectedWorkflow(workflow)}
                                                             className={`whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm ${selectedWorkflow === workflow
-                                                                        ? 'border-blue-500 text-blue-600'
-                                                                        : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                                                                  ? 'border-blue-500 text-blue-600'
+                                                                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                                                                   }`}
                                                       >
                                                             {capitalizeWords(workflow.replace(/_/g, ' '))} ({workflowCount})
@@ -396,16 +455,15 @@ export default function FilesList() {
                                                       setTempSelectedFilters(selectedFilters)
                                                       setShowFilterModal(true)
                                                 }}
-                                                className={`p-2 rounded-md border ${
-                                                      !selectedFilters.includes('all') 
-                                                            ? 'bg-blue-50 border-blue-200 text-blue-700' 
+                                                className={`p-2 rounded-md border ${!selectedFilters.includes('all')
+                                                            ? 'bg-blue-50 border-blue-200 text-blue-700'
                                                             : 'border-gray-300 text-gray-700 hover:bg-gray-50'
-                                                }`}
+                                                      }`}
                                                 title="Filter files"
                                           >
                                                 <Filter className="w-4 h-4" />
                                           </button>
-                                          
+
                                           {/* View Toggle */}
                                           <div className="flex bg-gray-100 rounded-md">
                                                 <button onClick={() => setView('card')} className={`p-2 rounded-md ${view === 'card' ? 'bg-white shadow-sm' : ''}`}>
