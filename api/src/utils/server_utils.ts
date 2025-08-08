@@ -10,7 +10,7 @@ import { prisma } from "../database/db";
 import { randomUUID } from "crypto";
 import { isWorkFlowData, saveAquaTree } from "./revisions_utils";
 import { serverAttestation } from "./server_attest";
-import { systemTemplateHashes } from "src/models/constants";
+import { systemTemplateHashes } from "../models/constants";
 import { getGenesisHash } from "./aqua_tree_utils";
 
 

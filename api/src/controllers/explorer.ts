@@ -18,7 +18,7 @@ import WebSocketActions from '../constants/constants';
 import { sendToUserWebsockerAMessage } from './websocketController';
 // import { systemTemplateHashes } from '../models/constants';
 // import { serverAttestation } from '../utils/server_attest';
-import { saveAttestationFileAndAquaTree } from 'src/utils/server_utils';
+import { saveAttestationFileAndAquaTree } from '../utils/server_utils';
 // import { saveAquaFile } from '../utils/server_utils';
 // import { serverAttestation } from '../utils/server_attest';
 // import getStream from 'get-stream';
