@@ -18,14 +18,22 @@ RUN npm run build
 
 FROM node:22-slim
 
+COPY actionfiles/aquafier-ts/script/entrypoint.sh /app/utils/entrypoint.sh
+ENTRYPOINT ["/app/utils/entrypoint.sh"]
+
 # Install system dependencies
 RUN apt-get update && apt-get install -y \
-    postgresql-client \
     netcat-openbsd \
     wget \
     cron \
     tar \
+    gnupg \
+    && wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | apt-key add - \
+    && sh -c 'echo "deb http://apt.postgresql.org/pub/repos/apt bookworm-pgdg main" > /etc/apt/sources.list.d/pgdg.list' \
+    && apt update \
+    && apt install postgresql-client -y \
     && rm -rf /var/lib/apt/lists/*
+
 
 # prepare backup tools and dir
 RUN wget https://dl.min.io/client/mc/release/linux-amd64/mc && chmod +x mc
@@ -58,6 +66,13 @@ RUN npm ci --only=production
 # Copy startup script
 COPY actionfiles/aquafier-ts/script/start_aqua.sh /app/start_aqua.sh
 RUN chmod +x /app/start_aqua.sh
+
+COPY actionfiles/aquafier-ts/script/create_backup.sh /app/utils/create_backup.sh
+RUN chmod +x /app/utils/create_backup.sh
+COPY actionfiles/aquafier-ts/script/restore_backup.sh /app/utils/restore_backup.sh
+RUN chmod +x /app/utils/restore_backup.sh
+
+COPY web/src/version-info.json /app/
 
 WORKDIR /app
 CMD ["./start_aqua.sh"]

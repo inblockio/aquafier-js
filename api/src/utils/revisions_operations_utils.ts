@@ -584,6 +584,7 @@ async function getFileStats(filePath: string): Promise<{ fileSizeInBytes: number
         const originalFilename = fullFilename.substring(fullFilename.indexOf('-') + 1);
 
         return {
+            //@ts-ignore
             fileSizeInBytes: await getFileSize(filePath),
             originalFilename
         };

@@ -264,7 +264,7 @@ async function s3Available(): Promise<boolean> {
     return false;
 }
 
-async function persistFile(fileSystemPath: string, filename: string, content): Promise<string> {
+async function persistFile(fileSystemPath: string, filename: string, content: Buffer<ArrayBuffer>): Promise<string> {
     if (await s3Available()) {
         const minioClient = getMinioClient();
         await minioClient.putObject(getBucketName(), filename, content)
@@ -283,7 +283,7 @@ async function getFile(path: string): Promise<Buffer<ArrayBuffer> | undefined> {
             const bucket = cleanedPath.substring(0, cleanedPath.indexOf("/"));
             const filePath = cleanedPath.substring(cleanedPath.indexOf("/") + 1);
             const data = await getMinioClient().getObject(bucket, filePath)
-            let chunks = [];
+            let chunks: any[] = [];
             data.on("data", chunk => {
                 chunks.push(chunk);
             })
@@ -298,7 +298,7 @@ async function getFile(path: string): Promise<Buffer<ArrayBuffer> | undefined> {
                 });
             });
         }
-    }else{
+    } else {
         return fs.readFileSync(path);
     }
 }
@@ -309,15 +309,15 @@ async function getFileSize(path: string): Promise<number | undefined | null> {
             const cleanedPath = path.replace("s3:/", "");
             const bucket = cleanedPath.substring(0, cleanedPath.indexOf("/"));
             const filePath = cleanedPath.substring(cleanedPath.indexOf("/") + 1);
-            try{
+            try {
                 const data = await getMinioClient().statObject(bucket, filePath)
                 return data.size;
-            }catch(e){
+            } catch (e) {
                 console.error(e);
                 return null
             }
         }
-    }else{
+    } else {
         return fs.statSync(path).size;
     }
 }
@@ -330,7 +330,7 @@ async function deleteFile(path: string): Promise<void> {
             const filePath = cleanedPath.substring(cleanedPath.indexOf("/") + 1);
             await getMinioClient().removeObject(bucket, filePath)
         }
-    }else{
+    } else {
         fs.unlinkSync(path);
         return;
     }

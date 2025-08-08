@@ -34,3 +34,9 @@ At the root of the project
 
 ## Windows deeveloment
 - `git config core.filemode false` to prevent git from tracking file permissions(bash scripts file permissions change in windows) 
+
+
+## Backup & Restore
+### Backup
+You can define a ```BACKUP_CRON``` in the aquafier_container to define the intervall in which the container will create a backup and store this backup (tar.gz format) to the /backup dir in the container
+### Restore
