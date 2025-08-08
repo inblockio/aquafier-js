@@ -36,7 +36,7 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: { selectedTempla
             content: JSX.Element
             title: string
       }>(null)
-
+ 
       const signatureRef = useRef<SignatureCanvas | null>(null)
       // const navigate = useNavigate()
 
@@ -1331,8 +1331,12 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: { selectedTempla
                                                                               field.type == 'scratchpad' && (
                                                                                     <div ref={containerRef} className="border border-gray-200 w-full h-[200px] bg-white">
                                                                                           <SignatureCanvas
+                                                                               
+                                                                                           
                                                                                                 ref={signatureRef}
                                                                                                 canvasProps={{
+                                                                                                      
+                                                                                                      id: 'signature-canvas-id',
                                                                                                       width: canvasSize.width,
                                                                                                       height: canvasSize.height,
                                                                                                       style: {

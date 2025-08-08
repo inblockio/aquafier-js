@@ -556,3 +556,34 @@ test("create a simple claim", async (): Promise<void> => {
     await handleMetaMaskNetworkAndConfirm(context, true);
 
 });
+
+test("create simple claim", async (): Promise<void> => {
+    const registerResponse = await registerNewMetaMaskWalletAndLogin();
+    const context: BrowserContext = registerResponse.context;
+    const testPage: Page = context.pages()[0];
+
+    console.log("create a simple claim!");
+
+   // Open workflow
+    await waitAndClick(testPage,'[data-testid="create-claim-dropdown-button"]')
+    console.log("claims dropdown ");
+    await waitAndClick(testPage,'[data-testid="create-simple-claim-dropdown-button-item"]')
+
+    console.log("fill simple claim form");
+    await testPage.locator('[id="input-claim_context"]').fill("i attest the name in a test ");
+    await testPage.locator('[id="input-name"]').fill("Test user ");
+
+     const metamaskPromise = context.waitForEvent("page");
+    // await page.getByText("Save Signature").click();
+    
+    console.log("create workflow");
+    await testPage.getByText("Create Workflow").click();
+    await metamaskPromise;
+
+    console.log("simple workflow created");
+
+     // Check that the table has two rows and contains aqua.json
+    const tableRows = testPage.locator('table tr');
+    //header + two files
+    await expect(tableRows).toHaveCount(2, {timeout: 10000});
+});
