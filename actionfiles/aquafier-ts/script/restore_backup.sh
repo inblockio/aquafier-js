@@ -23,6 +23,10 @@ if [ "${count}" -eq 1 ]; then
       mkdir /restore/workdir
       tar -xvf "${backupFile}" -C /restore/workdir
 
+      if [ $(jq '.commitHash' /restore/workdir/version-info.json) != $(jq '.commitHash' /app/version-info.json) ]; then
+          echo "Aquafier commit-hash does not match! \nbackup: $(jq '.commitHash' /restore/workdir/version-info.json)\nserver: $(jq '.commitHash' /app/version-info.json)"
+      fi
+
       cd /restore/workdir/
 
      if [ -z "${DB_PASSWORD}" ] && [ -z "${DB_USER}" ] && [ -z "${DB_NAME}" ]; then
