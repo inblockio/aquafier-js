@@ -410,8 +410,6 @@ export default async function explorerController(fastify: FastifyInstance) {
         // Read `nonce` from headers
         const nonce = request.headers['nonce']; // Headers are case-insensitive
 
-        const file = await getFile("s3:/aquafier/c5e26710-a697-42da-a8fa-d085eab54ef6-234.png")
-
         // Check if `nonce` is missing or empty
         if (!nonce || typeof nonce !== 'string' || nonce.trim() === '') {
             return reply.code(401).send({ error: 'Unauthorized: Missing or empty nonce header' });

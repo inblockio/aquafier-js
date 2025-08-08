@@ -4,9 +4,9 @@ import * as process from "node:process";
 
 function getMinioClient(): Client {
     return new Minio.Client({
-        accessKey: process.env.S3_ACCESSKEY,
+        accessKey: process.env.S3_USER,
         endPoint: process.env.S3_URL ?? "",
-        secretKey: process.env.S3_SECRETKEY,
+        secretKey: process.env.S3_PASSWORD,
         port: process.env.S3_PORT != undefined && process.env.S3_PORT != "" ? Number(process.env.S3_PORT) : 9000,
         useSSL: process.env.S3_USE_SSL ? (String(process.env.S3_USE_SSL).toLowerCase() === 'true') : true //only dev!!!
     })
@@ -17,7 +17,7 @@ function getBucketName(): string {
 }
 
 function minioClientCompleted(): boolean{
-    return !!process.env.S3_SECRETKEY && !!process.env.S3_ACCESSKEY && !!process.env.S3_URL && !!process.env.S3_BUCKET
+    return !!process.env.S3_PASSWORD && !!process.env.S3_USER && !!process.env.S3_URL && !!process.env.S3_BUCKET
 }
 
 export {getMinioClient, getBucketName,minioClientCompleted}

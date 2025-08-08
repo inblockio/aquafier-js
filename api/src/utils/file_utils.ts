@@ -264,7 +264,7 @@ async function s3Available(): Promise<boolean> {
     return false;
 }
 
-async function persistFile(fileSystemPath: string, filename: string, content: Buffer): Promise<string> {
+async function persistFile(fileSystemPath: string, filename: string, content: Buffer<ArrayBuffer>): Promise<string> {
     if (await s3Available()) {
         const minioClient = getMinioClient();
         await minioClient.putObject(getBucketName(), filename, content)
@@ -303,48 +303,21 @@ async function getFile(path: string): Promise<Buffer | undefined> {
     }
 }
 
-// async function getFile(path: string): Promise<Buffer<ArrayBuffer> | undefined> {
-//     if (path.includes("s3:")) {
-//         if (await s3Available()) {
-//             const cleanedPath = path.replace("s3:/", "");
-//             const bucket = cleanedPath.substring(0, cleanedPath.indexOf("/"));
-//             const filePath = cleanedPath.substring(cleanedPath.indexOf("/") + 1);
-//             const data = await getMinioClient().getObject(bucket, filePath)
-//             let chunks: any[] | readonly Uint8Array<ArrayBufferLike>[] = [];
-//             data.on("data", chunk => {
-//                 chunks.push(chunk);
-//             })
-//             return new Promise((resolve, reject) => {
-//                 data.on('end', () => {
-//                     const objectData = Buffer.concat(chunks); // Combine all chunks into a single Buffer (byte array)
-//                     resolve(objectData);
-//                 });
-
-//                 data.on('error', (err) => {
-//                     reject(err);
-//                 });
-//             });
-//         }
-//     }else{
-//         return fs.readFileSync(path);
-//     }
-// }
-
 async function getFileSize(path: string): Promise<number | undefined | null> {
     if (path.includes("s3:")) {
         if (await s3Available()) {
             const cleanedPath = path.replace("s3:/", "");
             const bucket = cleanedPath.substring(0, cleanedPath.indexOf("/"));
             const filePath = cleanedPath.substring(cleanedPath.indexOf("/") + 1);
-            try{
+            try {
                 const data = await getMinioClient().statObject(bucket, filePath)
                 return data.size;
-            }catch(e){
+            } catch (e) {
                 console.error(e);
                 return null
             }
         }
-    }else{
+    } else {
         return fs.statSync(path).size;
     }
 }
@@ -357,7 +330,7 @@ async function deleteFile(path: string): Promise<void> {
             const filePath = cleanedPath.substring(cleanedPath.indexOf("/") + 1);
             await getMinioClient().removeObject(bucket, filePath)
         }
-    }else{
+    } else {
         fs.unlinkSync(path);
         return;
     }
