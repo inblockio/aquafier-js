@@ -1239,8 +1239,27 @@ export async function registerNewMetaMaskWalletAndLogin(url: string = "/app"): P
     await metamaskPage.waitForSelector('[data-testid="confirm-btn"]', {state: 'visible'})
     await metamaskPage.click('[data-testid="confirm-btn"]')
 
-    await metamaskPage.waitForSelector('[data-testid="confirm-footer-button"]', {state: 'visible'})
-    await metamaskPage.click('[data-testid="confirm-footer-button"]')
+    try {
+        if (!metamaskPage.isClosed()) {
+            for (let i = 0; i < 3; i++) {
+                await metamaskPage.waitForSelector('[data-testid="confirm-footer-cancel-button"]', {state: 'visible'})
+                await metamaskPage.waitForSelector('[data-testid="confirm-footer-button"]', {state: 'visible'})
+                await metamaskPage.click('[data-testid="confirm-footer-button"]')
+                //Dont ask me why
+                if (!metamaskPage.isClosed()) {
+                    await metamaskPage.waitForTimeout(1000)
+                    if (i === 2) {
+                        console.log("Cannot confirm signing request!")
+                    }
+                } else {
+                    break;
+                }
+            }
+        }
+    } catch (e) {
+        console.error("Something happend here!", e);
+    }
+
 
     return response;
 }
