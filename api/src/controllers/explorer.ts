@@ -8,14 +8,19 @@ import { randomUUID } from 'crypto';
 import util from 'util';
 import { pipeline } from 'stream';
 import * as fs from "fs"
-import { deleteAquaTreeFromSystem, fetchAquatreeFoUser, getUserApiFileInfo, processAquaFiles, processAquaMetadata, saveAquaTree, transferRevisionChainData } from '../utils/revisions_utils';
-import { getHost, getPort } from '../utils/api_utils';
+import { deleteAquaTreeFromSystem, fetchAquatreeFoUser, getUserApiFileInfo, isWorkFlowData, processAquaFiles, processAquaMetadata, saveAquaTree, transferRevisionChainData } from '../utils/revisions_utils';
+import { getHost, getPort, saveTemplateFileData } from '../utils/api_utils';
 import { DeleteRevision } from '../models/request_models';
 import { fetchCompleteRevisionChain } from '../utils/quick_utils';
 import { mergeRevisionChain } from '../utils/quick_revision_utils';
 import { getGenesisHash, removeFilePathFromFileIndex, validateAquaTree } from '../utils/aqua_tree_utils';
 import WebSocketActions from '../constants/constants';
 import { sendToUserWebsockerAMessage } from './websocketController';
+// import { systemTemplateHashes } from '../models/constants';
+// import { serverAttestation } from '../utils/server_attest';
+import { saveAttestationFileAndAquaTree } from '../utils/server_utils';
+// import { saveAquaFile } from '../utils/server_utils';
+// import { serverAttestation } from '../utils/server_attest';
 // import getStream from 'get-stream';
 // Promisify pipeline
 const pump = util.promisify(pipeline);
@@ -137,6 +142,7 @@ export default async function explorerController(fastify: FastifyInstance) {
             let assetFilename = "";
             let isWorkFlow = false
             let templateId = ""
+            let templateName = ""
             let walletAddress = session.address;
             // Process each part of the multipart form
             for await (const part of parts) {
@@ -171,11 +177,17 @@ export default async function explorerController(fastify: FastifyInstance) {
                         }
                     } else if (part.fieldname === 'is_workflow') {
                         isWorkFlow = part.value === 'true';
+                    } else if (part.fieldname === 'template_name') {
+                        templateName = part.value as string;
                     } else if (part.fieldname === 'template_id') {
                         templateId = part.value as string;
                     }
                 }
             }
+
+            console.log("Template name: ", templateName)
+            console.log("Template id: ", templateId)
+            
 
 
 
@@ -185,6 +197,7 @@ export default async function explorerController(fastify: FastifyInstance) {
 
             let fileContent = fileBuffer.toString('utf-8');
             let aquaTreeFromFile: AquaTree = JSON.parse(fileContent);
+
 
 
 
@@ -217,6 +230,9 @@ export default async function explorerController(fastify: FastifyInstance) {
                 if (genesisHash == null || genesisHash == "") {
                     return reply.code(500).send({ error: 'Genesis hash not found in aqua tree' });
                 }
+
+                saveAttestationFileAndAquaTree(aquaTree, genesisHash, walletAddress)
+                
 
                 // let filepubkeyhash = `${session.address}_${genesisHash}`
                 let filepubkeyhash = `${walletAddress}_${genesisHash}`
@@ -287,6 +303,7 @@ export default async function explorerController(fastify: FastifyInstance) {
                         }
                     })
 
+                  
 
                 }
 

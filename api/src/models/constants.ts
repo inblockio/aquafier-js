@@ -9,7 +9,9 @@ export let systemTemplateHashes = [
         '0x0838e1ec49d66a0c39e068c8c8465ef59692a1d8565895e2a52c2c19c75ab673', // identity_attestation
         '0xc70a426b08fad5afe66ffea6237ef66a8718f0f66ee2a35dcc29cee3a4dfd0ee', // identity_claim
         '0x2a068d95f1f0e9e1f998bff3a7dffd0429aff2f0cc71b357733a19c2a926265c', // user_signature
-        '0x6ef241fa1d974bf0d0585781d437c9f2d95e328b7ff922bf24261090c6c7ed3a' // domain_claim
+        '0x6ef241fa1d974bf0d0585781d437c9f2d95e328b7ff922bf24261090c6c7ed3a', // domain_claim
+        '0x4b9202932025142b4d9a75141239e46ebfed210d178434303d1c7e5f586959c3', // email claim
+        '0xfa4c4ffde60cd293033b986034890800a63bd27ca2cde44d1fce5a073ae5e937', // phone number claim
 
     ]
 

@@ -1,10 +1,12 @@
 [
     {
-        "name": "domain",
-        "label": "Domain Name",
-        "type": "domain",
+        "name": "phone_number",
+        "label": "Phone Number",
+        "type": "text",
         "required": true,
-        "isArray": false
+        "isArray": false,
+        "isVerifiable" : true,
+        "supportText":"start with +(country code)(phone number)  example +2547XX-XXX-XXX"
     },
     {
         "name": "type",
@@ -14,16 +16,7 @@
         "isArray": false,
         "isEditable": false,
         "isHidden": true,
-        "defaultValue": "dns_claim"
-    },
-    {
-        "name": "txt_record",
-        "label": "string",
-        "type": "text",
-        "required": true,
-        "isArray": false,
-        "isHidden": true,
-        "isEditable": false
+        "defaultValue": "phone_number_claim"
     },
     {
         "name": "wallet_address",
@@ -31,6 +24,6 @@
         "type": "wallet_address",
         "required": true,
         "isArray": false,
-        "isEditable": false
+         "isEditable": false
     }
 ]

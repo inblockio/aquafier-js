@@ -4,13 +4,16 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
-import { FileText, Users, Hash, Wallet } from 'lucide-react'
+import { FileText, Users, Hash, Wallet, X } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import axios from 'axios'
 import { useStore } from 'zustand'
 import appStore from '@/store'
 import { formatCryptoAddress, timeToHumanFriendly } from '@/utils/functions'
 import { Contract } from '@/types/types'
+import WalletAddresClaim from "./../pages/v2_claims_workflow/WalletAdrressClaim"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 
 export const SharedContract = ({ contract, index, contractDeleted }: { contract: Contract; index: number; contractDeleted: (hash: string) => void }) => {
       const navigate = useNavigate()
@@ -84,7 +87,8 @@ export const SharedContract = ({ contract, index, contractDeleted }: { contract:
                                                                   </Avatar>
                                                                   <div>
                                                                         <p className="text-xs sm:text-sm font-medium text-gray-900 font-mono max-w-[120px] sm:max-w-none truncate">
-                                                                              {formatCryptoAddress(contract.sender, 10, 10)}
+                                                                              {/* {formatCryptoAddress(contract.sender, 10, 10)} */}
+                                                                              <WalletAddresClaim walletAddress={contract.sender!} isShortened={true} />
                                                                         </p>
                                                                         <p className="text-xs text-gray-500">Sender</p>
                                                                   </div>
@@ -113,7 +117,8 @@ export const SharedContract = ({ contract, index, contractDeleted }: { contract:
                                                                   </Avatar>
                                                                   <div>
                                                                         <p className="text-xs sm:text-sm font-medium text-gray-900 font-mono max-w-[120px] sm:max-w-none truncate">
-                                                                              {formatCryptoAddress(contract.receiver)}
+                                                                              {/* {formatCryptoAddress(contract.receiver)} */}
+                                                                              <WalletAddresClaim walletAddress={contract.receiver!} isShortened={true} />
                                                                         </p>
                                                                         <p className="text-xs text-gray-500 break-words">Receiver</p>
                                                                   </div>
@@ -235,6 +240,7 @@ export function SharedContracts() {
                   const response = await axios.get(url, {
                         params: {
                               receiver: session?.address,
+                              sender: session?.address,
                         },
                         headers: {
                               nonce: session?.nonce,
@@ -280,17 +286,64 @@ export function SharedContracts() {
                               {/* Contracts List */}
                               <div className="flex-1 overflow-auto p-0">
                                     <div className="space-y-4">
-                                          {shareContracts.map((contract, index) => (
-                                                <SharedContract
-                                                      key={`${contract.hash}`}
-                                                      contract={contract}
-                                                      index={index}
-                                                      contractDeleted={hash => {
-                                                            let newState = shareContracts.filter(e => e.hash != hash)
-                                                            setShareContracts(newState)
-                                                      }}
-                                                />
-                                          ))}
+                                          <Tabs defaultValue="account">
+                                                <TabsList>
+                                                      <TabsTrigger value="account">Incoming</TabsTrigger>
+                                                      <TabsTrigger value="password">Outgoing</TabsTrigger>
+                                                </TabsList>
+                                                <TabsContent value="account">
+                                                      {shareContracts.filter(contract => contract.receiver == session?.address).map((contract, index) => (
+                                                            <SharedContract
+                                                                  key={`${contract.hash}`}
+                                                                  contract={contract}
+                                                                  index={index}
+            /**
+             * Removes a contract from the share contracts list by hash.
+             * @param {string} hash - The hash of the contract to remove.
+             */
+                                                                  contractDeleted={hash => {
+                                                                        let newState = shareContracts.filter(e => e.hash != hash)
+                                                                        setShareContracts(newState)
+                                                                  }}
+                                                            />
+                                                      ))}
+                                                      {shareContracts.filter(contract => contract.receiver == session?.address).length == 0 && (
+                                                            <div className="card">
+                                                                  <Alert variant="default">
+                                                                        <X />
+                                                                        <AlertTitle>Shared Contracts</AlertTitle>
+                                                                        <AlertDescription>
+                                                                              No incoming contracts
+                                                                        </AlertDescription>
+                                                                  </Alert>
+                                                            </div>
+                                                      )}
+                                                </TabsContent>
+                                                <TabsContent value="password">
+                                                      {shareContracts.filter(contract => contract.sender == session?.address).map((contract, index) => (
+                                                            <SharedContract
+                                                                  key={`${contract.hash}`}
+                                                                  contract={contract}
+                                                                  index={index}
+                                                                  contractDeleted={hash => {
+                                                                        let newState = shareContracts.filter(e => e.hash != hash)
+                                                                        setShareContracts(newState)
+                                                                  }}
+                                                            />
+                                                      ))}
+                                                      {shareContracts.filter(contract => contract.sender == session?.address).length == 0 && (
+                                                            <div className="card">
+                                                                  <Alert variant="default">
+                                                                        <X />
+                                                                        <AlertTitle>Shared Contracts</AlertTitle>
+                                                                        <AlertDescription>
+                                                                              No outgoing contracts
+                                                                        </AlertDescription>
+                                                                  </Alert>
+                                                            </div>
+                                                      )}
+                                                </TabsContent>
+                                          </Tabs>
 
                                           {shareContracts.length === 0 && (
                                                 <div className="text-center py-12">

@@ -1,10 +1,11 @@
 [
     {
-        "name": "domain",
-        "label": "Domain Name",
-        "type": "domain",
+        "name": "email",
+        "label": "Email",
+        "type": "email",
         "required": true,
-        "isArray": false
+        "isArray": false,
+        "isVerifiable": true
     },
     {
         "name": "type",
@@ -14,16 +15,7 @@
         "isArray": false,
         "isEditable": false,
         "isHidden": true,
-        "defaultValue": "dns_claim"
-    },
-    {
-        "name": "txt_record",
-        "label": "string",
-        "type": "text",
-        "required": true,
-        "isArray": false,
-        "isHidden": true,
-        "isEditable": false
+        "defaultValue": "email_claim"
     },
     {
         "name": "wallet_address",

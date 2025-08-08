@@ -23,7 +23,7 @@ model AquaTemplate {
   id          String               @id
   owner       String
   title       String
-  subtitle       String
+  subtitle    String
   name        String
   created_at  String
   public      Boolean
@@ -32,19 +32,31 @@ model AquaTemplate {
   @@map("aqua_templates")
 }
 
+model VerificationData {
+  id           String   @id @default(uuid())
+  session      String
+  filled_value String
+  code         String
+  is_used      Boolean  @default(false)
+  created_on   DateTime @default(now())
+
+  @@map("verification_data")
+}
+
 model AquaTemplateFields {
-  id           String  @id @default(uuid())
-  aqua_form_id String
-  name         String
-  label        String
-  type         String
-  required     Boolean
-  is_array     Boolean @default(false)
-  is_hidden   Boolean @default(false)
-  is_editable Boolean @default(true)
-  description String?
-  placeholder String?
-  support_text String?
+  id            String  @id @default(uuid())
+  aqua_form_id  String
+  name          String
+  label         String
+  type          String
+  required      Boolean
+  is_array      Boolean @default(false)
+  is_hidden     Boolean @default(false)
+  is_editable   Boolean @default(true)
+  is_verifiable Boolean @default(false)
+  description   String?
+  placeholder   String?
+  support_text  String?
   default_value String?
 
   AquaForm AquaTemplate @relation(fields: [aqua_form_id], references: [id])

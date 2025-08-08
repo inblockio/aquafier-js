@@ -1,8 +1,8 @@
-import React, { JSX, useState } from 'react'
+import React, { JSX, useEffect, useRef, useState } from 'react'
 import { FormField, FormTemplate } from './types'
 import { useStore } from 'zustand'
 import appStore from '@/store'
-import { isValidEthereumAddress, getRandomNumber, formatDate, estimateFileSize, dummyCredential, fetchSystemFiles, getGenesisHash, fetchFiles, isWorkFlowData } from '@/utils/functions'
+import { isValidEthereumAddress, getRandomNumber, formatDate, estimateFileSize, dummyCredential, fetchSystemFiles, getGenesisHash, fetchFiles, isWorkFlowData, generateProofFromSignature, formatTxtRecord, dataURLToFile } from '@/utils/functions'
 import Aquafier, { AquaTree, FileObject, getAquaTreeFileName, AquaTreeWrapper, getAquaTreeFileObject, Revision, OrderRevisionInAquaTree } from 'aqua-js-sdk'
 import axios from 'axios'
 import { generateNonce } from 'siwe'
@@ -13,18 +13,21 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Alert, AlertDescription } from '@/components/ui/alert'
-import { useNavigate } from 'react-router-dom'
-import { AlertCircle, FileText, Image, Link, Loader2, Pen, Plus, Trash2, Upload, Wallet, X } from 'lucide-react'
+// import { useNavigate } from 'react-router-dom'
+import { AlertCircle, BookCheck, FileText, Image, Link, Loader2, Pen, Plus, Send, Trash2, Upload, Wallet, X } from 'lucide-react'
 import { Badge } from '../ui/badge'
 import { Separator } from '../ui/separator'
 import { ScrollArea } from '../ui/scroll-area'
 import FilePreview from '../file_preview'
 import { WalletAutosuggest } from '../wallet_auto_suggest'
+import { ApiFileInfo } from '@/models/FileInfo'
+import SignatureCanvas from 'react-signature-canvas'
 
 // const CreateFormFromTemplate  = ({ selectedTemplate, callBack, openCreateTemplatePopUp = false }: { selectedTemplate: FormTemplate, callBack: () => void, openCreateTemplatePopUp: boolean }) => {
 const CreateFormFromTemplate = ({ selectedTemplate, callBack }: { selectedTemplate: FormTemplate; callBack: () => void; openCreateTemplatePopUp: boolean }) => {
       const [submittingTemplateData, setSubmittingTemplateData] = useState(false)
       const [modalFormErorMessae, setModalFormErorMessae] = useState('')
+
       const { session, backend_url, systemFileInfo, setSystemFileInfo, setFiles, selectedFileInfo, files } = useStore(appStore)
       const [formData, setFormData] = useState<Record<string, string | File | number>>({})
       const [multipleAddresses, setMultipleAddresses] = useState<string[]>([])
@@ -34,7 +37,22 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: { selectedTempla
             title: string
       }>(null)
 
-      const navigate = useNavigate()
+      const signatureRef = useRef<SignatureCanvas | null>(null)
+      // const navigate = useNavigate()
+
+      const [verifyingFormField, setVerifyingFormField] = useState('')
+      const [canvasSize, setCanvasSize] = useState({ width: 800, height: 200 });
+      const containerRef = useRef<HTMLDivElement | null>(null);
+
+      useEffect(() => {
+            if (containerRef.current) {
+                  const rect = containerRef.current.getBoundingClientRect();
+                  setCanvasSize({
+                        width: rect.width,
+                        height: rect.height,
+                  });
+            }
+      }, []);
 
       const getFieldDefaultValue = (field: FormField, currentState: any) => {
             if (field.type === 'number') {
@@ -146,6 +164,8 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: { selectedTempla
                   // formData.append('account', session?.address || '')
                   formData.append('account', account)
                   formData.append('is_workflow', `${isWorkflow}`)
+                  // Template name
+                  formData.append('template_name', selectedTemplate?.name || '')
 
                   // todo unocmment here
                   //workflow specifi
@@ -214,7 +234,7 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: { selectedTempla
 
                               toast.success('Aqua tree created successfully')
                               callBack && callBack()
-                              navigate('/app')
+                              // navigate('/app')
                               setModalFormErorMessae('')
                               setFormData({})
                               setSubmittingTemplateData(false)
@@ -227,8 +247,8 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: { selectedTempla
       }
 
       // Helper function to prepare complete form data
-      const prepareCompleteFormData = (formData: any, selectedTemplate: any, multipleAddresses: string[]) => {
-            const completeFormData = { ...formData }
+      const prepareCompleteFormData = (formData: Record<string, string | File | number>, selectedTemplate: FormTemplate, multipleAddresses: string[]): Record<string, string | File | number> => {
+            const completeFormData: Record<string, string | File | number> = { ...formData }
 
             selectedTemplate.fields.forEach((field: any) => {
                   if (!field.is_array && !(field.name in completeFormData)) {
@@ -244,7 +264,7 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: { selectedTempla
       }
 
       // Validation function for required fields
-      const validateRequiredFields = (completeFormData: any, selectedTemplate: any) => {
+      const validateRequiredFields = (completeFormData: any, selectedTemplate: FormTemplate) => {
             for (const fieldItem of selectedTemplate.fields) {
                   const valueInput = completeFormData[fieldItem.name]
                   if (fieldItem.required && valueInput == undefined) {
@@ -318,7 +338,9 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: { selectedTempla
       }
 
       // Field validation function
-      const validateFields = (completeFormData: any, selectedTemplate: any) => {
+      const validateFields = (completeFormData: Record<string, string | File | number>, selectedTemplate: FormTemplate) => {
+
+            console.log(`completeFormData  === ${JSON.stringify(completeFormData, null, 4)}`)
             validateRequiredFields(completeFormData, selectedTemplate)
 
             for (const fieldItem of selectedTemplate.fields) {
@@ -331,11 +353,47 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: { selectedTempla
                   if (fieldItem.type === 'domain') {
                         validateDomain(valueInput, fieldItem)
                   }
+
+
+                  // ensure there is code input for all verifiable data
+                  if (fieldItem.is_verifiable) {
+                        let verificationCodeData = formData[`${fieldItem.name}_verification`]
+                        if (!verificationCodeData) {
+                              throw new Error(`${fieldItem.label} has no verification code provided.`)
+                        }
+                  }
+
+                  // ensure required fields have input
+                  // if (fieldItem.required) {
+                  //       let inputData = formData[fieldItem.name]
+                  //       if (!inputData) {
+                  //             if (fieldItem.default_value) {
+
+                  //                   setFormData({
+                  //                         ...formData,
+                  //                         [fieldItem.name]: fieldItem.default_value,
+                  //                   })
+                  //             } else {
+
+                  //                   if ((fieldItem.name == 'wallet_address' || fieldItem.name == "sender" ) && fieldItem.type == 'wallet_address') {
+                  //                         setFormData({
+                  //                               ...formData,
+                  //                               [fieldItem.name]: session!.address,
+                  //                         })
+                  //                   } else {
+
+                  //                         console.log(` Validation formdata == ${JSON.stringify(formData, null, 2)}`)
+                  //                         throw new Error(`${fieldItem.label} must have an input.`)
+                  //                   }
+
+                  //             }
+                  //       }
+                  // }
             }
       }
 
       // Function to get system files
-      const getSystemFiles = async (systemFileInfo: any[], backend_url: string, sessionAddress: string) => {
+      const getSystemFiles = async (systemFileInfo: ApiFileInfo[], backend_url: string, sessionAddress: string) => {
             let allSystemFiles = systemFileInfo
 
             if (systemFileInfo.length === 0) {
@@ -352,7 +410,7 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: { selectedTempla
       }
 
       // Function to find template API file info
-      const findTemplateApiFileInfo = (allSystemFiles: any[], selectedTemplate: any) => {
+      const findTemplateApiFileInfo = (allSystemFiles: ApiFileInfo[], selectedTemplate: FormTemplate) => {
             const templateApiFileInfo = allSystemFiles.find(e => {
                   const nameExtract = getAquaTreeFileName(e!.aquaTree!)
                   const selectedName = `${selectedTemplate?.name}.json`
@@ -368,7 +426,7 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: { selectedTempla
       }
 
       // Function to generate filename
-      const generateFileName = (selectedTemplate: any, completeFormData: any) => {
+      const generateFileName = (selectedTemplate: FormTemplate, completeFormData: Record<string, string | File | number>) => {
             const randomNumber = getRandomNumber(100, 1000)
             let fileName = `${selectedTemplate?.name ?? 'template'}-${randomNumber}.json`
 
@@ -386,7 +444,7 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: { selectedTempla
       }
 
       // Function to handle identity attestation specific logic
-      const handleIdentityAttestation = (completeFormData: any, selectedFileInfo: any): any => {
+      const handleIdentityAttestation = (completeFormData: Record<string, string | File | number>, selectedFileInfo: any): Record<string, string | File | number> => {
             if (selectedFileInfo == null) {
                   throw new Error('No claim selected for identity attestation')
             }
@@ -413,7 +471,7 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: { selectedTempla
             return completeFormData
       }
 
-      async function domainTemplateSignMessageFunction(domainParams: string | undefined): Promise<string | undefined> {
+      async function domainTemplateSignMessageFunction(domainParams: string | undefined, timestamp: string, expiration: string): Promise<string | undefined> {
             let signature: string | undefined = undefined
             if (!domainParams) {
                   alert('Please enter a domain name')
@@ -439,8 +497,8 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: { selectedTempla
 
             const domain = domainParams.trim()
             try {
-                  let timestamp = Math.floor(Date.now() / 1000).toString()
-                  const expiration = Math.floor(Date.now() / 1000 + 90 * 24 * 60 * 60).toString() // 90 days default
+                  // let timestamp = Math.floor(Date.now() / 1000).toString()
+                  // const expiration = Math.floor(Date.now() / 1000 + 90 * 24 * 60 * 60).toString() // 90 days default
                   // Message format: unix_timestamp|domain_name|expiration_timestamp
                   const message = `${timestamp}|${domain}|${expiration}`
                   console.log('Signing message (before EIP-191 formatting):', message)
@@ -472,8 +530,8 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: { selectedTempla
       }
       // Function to prepare final form data
       const prepareFinalFormData = async (
-            completeFormData: any,
-            selectedTemplate: any
+            completeFormData: Record<string, string | File | number>,
+            selectedTemplate: FormTemplate
       ): Promise<{
             filteredData: Record<string, string | number>
       } | null> => {
@@ -492,13 +550,23 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: { selectedTempla
 
             // Filter out File objects for logging
             Object.entries(completeFormData).forEach(([key, value]) => {
+                  console.log('key', key)
+                  console.log('value', value)
+                  console.log('type  of  ', typeof value)
+                  console.log('instance of  ', value instanceof File)
                   if (!(value instanceof File)) {
                         if (typeof value === 'string' || typeof value === 'number') {
-                              filteredData[key] = value
+                              if (key.endsWith(`_verification`)) {
+                                    console.log(`ends with _verification`)
+                              } else {
+
+                                    filteredData[key] = value
+                              }
                         } else {
                               filteredData[key] = String(value)
                         }
                   } else {
+                        console.log('file name', (value as File).name)
                         filteredData[key] = (value as File).name
                   }
             })
@@ -507,21 +575,28 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: { selectedTempla
             // for domain_claim show pop up
             if (selectedTemplate.name === 'domain_claim') {
                   // we sign the
+                  const domain = completeFormData['domain'] as string
+                  const walletAddress = session?.address!
+                  const timestamp = Math.floor(Date.now() / 1000).toString()
+                  const expiration = Math.floor(Date.now() / 1000 + 90 * 24 * 60 * 60).toString() // 90 days default
 
                   console.log('domain_claim selected ', JSON.stringify(completeFormData, null, 4))
-                  let signature = await domainTemplateSignMessageFunction(completeFormData['domain'])
+                  let signature = await domainTemplateSignMessageFunction(domain, timestamp, expiration)
                   if (!signature) {
                         return null
                   }
-                  //todo @kenn set txt record
-                  filteredData['signature'] = signature
+
+
+                  //domain: string, walletAddress: string, timestamp: string, expiration: string, signature: string
+                  const proof = generateProofFromSignature(domain, walletAddress, timestamp, expiration, signature)
+                  filteredData['txt_record'] = formatTxtRecord(proof)//signature
             }
             console.log('completeFormData after validation:', JSON.stringify(filteredData, null, 4))
             return { filteredData }
       }
 
       // Function to create genesis aqua tree
-      const createGenesisAquaTree = async (completeFormData: any, fileName: string, aquafier: any) => {
+      const createGenesisAquaTree = async (completeFormData: Record<string, string | File | number>, fileName: string, aquafier: Aquafier) => {
             const estimateSize = estimateFileSize(JSON.stringify(completeFormData))
             const jsonString = JSON.stringify(completeFormData, null, 4)
             console.log(`completeFormData -- jsonString-- ${jsonString}`)
@@ -543,7 +618,7 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: { selectedTempla
       }
 
       // Function to link aqua tree
-      const linkToSystemAquaTree = async (genesisAquaTree: any, fileObject: any, templateApiFileInfo: any, aquafier: any) => {
+      const linkToSystemAquaTree = async (genesisAquaTree: any, fileObject: any, templateApiFileInfo: any, aquafier: Aquafier) => {
             const mainAquaTreeWrapper: AquaTreeWrapper = {
                   aquaTree: genesisAquaTree,
                   revision: '',
@@ -571,8 +646,8 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: { selectedTempla
       }
 
       // Function to process file attachments
-      const processFileAttachments = async (selectedTemplate: any, completeFormData: any, aquaTreeData: any, fileObject: any, aquafier: any) => {
-            const containsFileData = selectedTemplate?.fields.filter((e: any) => e.type === 'file' || e.type === 'image' || e.type === 'document')
+      const processFileAttachments = async (selectedTemplate: FormTemplate, completeFormData: Record<string, string | File | number>, aquaTreeData: any, fileObject: FileObject, aquafier: Aquafier) => {
+            const containsFileData = selectedTemplate?.fields.filter((e: FormField) => e.type === 'file' || e.type === 'scratchpad' || e.type === 'image' || e.type === 'document')
 
             if (!containsFileData || containsFileData.length === 0) {
                   return aquaTreeData
@@ -596,6 +671,7 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: { selectedTempla
                   }
 
                   try {
+                        console.log(`creating file object ...`)
                         const arrayBuffer = await file.arrayBuffer()
                         const uint8Array = new Uint8Array(arrayBuffer)
 
@@ -655,7 +731,7 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: { selectedTempla
       }
 
       // Function to sign aqua tree
-      const signAquaTree = async (aquaTreeData: any, fileObject: any, aquafier: any) => {
+      const signAquaTree = async (aquaTreeData: AquaTree, fileObject: FileObject, aquafier: Aquafier) => {
             const aquaTreeWrapper: AquaTreeWrapper = {
                   aquaTree: aquaTreeData,
                   revision: '',
@@ -672,7 +748,7 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: { selectedTempla
       }
 
       // Function to handle post-signing actions
-      const handlePostSigning = async (signedAquaTree: any, fileObject: any, completeFormData: any, selectedTemplate: any, session: any, selectedFileInfo: any) => {
+      const handlePostSigning = async (signedAquaTree: any, fileObject: any, completeFormData: Record<string, string | File | number>, selectedTemplate: FormTemplate, session: any, selectedFileInfo: any) => {
             fileObject.fileContent = completeFormData
             console.log('Sign res: -- ', signedAquaTree)
 
@@ -703,6 +779,14 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: { selectedTempla
             }
       }
 
+      // Clear signature canvas
+      const clearSignature = () => {
+            if (signatureRef.current) {
+                  signatureRef.current.clear()
+                  // Don't clear all signatures, just reset the canvas
+            }
+      }
+
       // Main refactored function
       const createWorkflowFromTemplate = async (e: React.FormEvent) => {
             e.preventDefault()
@@ -722,6 +806,51 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: { selectedTempla
 
                   // Step 2: Validate fields
                   validateFields(completeFormData, selectedTemplate)
+
+
+
+
+                  for (const fieldItem of selectedTemplate.fields) {
+                        const filledValue = completeFormData[fieldItem.name]
+
+
+                        // ensure there is code input for all verifiable data
+                        if (fieldItem.is_verifiable) {
+                              let verificationCodeData = formData[`${fieldItem.name}_verification`]
+
+                              try {
+                                    const url = `${backend_url}/verify_code`
+                                    const response = await axios.post(
+                                          url,
+                                          {
+                                                email_or_phone_number: filledValue,
+                                                code: verificationCodeData
+                                          },
+                                          {
+                                                headers: {
+                                                      nonce: session?.nonce,
+                                                },
+                                          }
+                                    )
+
+                                    if (response.status == 200) {
+                                          toast.success(`verification code verified sucessfully`)
+
+                                          setFormData(prev =>
+                                                Object.fromEntries(
+                                                      Object.entries(prev).filter(([key]) => key !== `${fieldItem.name}_verification`)
+                                                )
+                                          );
+                                    }
+                              } catch (e) {
+
+                                    console.log(`Verify endpoint ${e}`)
+                                    toast.error(`Error verfying code.`)
+                                    return
+                              }
+                        }
+
+                  }
 
                   // Step 3: Get system files
                   const allSystemFiles = await getSystemFiles(systemFileInfo, backend_url, session?.address || '')
@@ -762,23 +891,60 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: { selectedTempla
                   let aquaTreeData = await linkToSystemAquaTree(genesisAquaTree, fileObject, templateApiFileInfo, aquafier)
                   console.log('Form data: ', finalFormDataFiltered)
 
+                  // check if the types contains scratchpad
+                  // let newCompleteData = completeFormData
+                  for (const fieldItem of selectedTemplate.fields) {
+                        const valueInput = completeFormData[fieldItem.name]
+                        console.log(`fieldItem.name -- ${fieldItem.name} valueInput ${valueInput}  -- type ${fieldItem.type}`)
+                        if (fieldItem.type === 'scratchpad') {
+                              console.log(` in scratch pad`)
+                              if (signatureRef.current) {
+                                    console.log(` not null `)
+                                    const dataUrl = signatureRef.current.toDataURL('image/png')
+                                    const epochInSeconds = Math.floor(Date.now() / 1000)
+                                    const lastFiveCharactersOfWalletAddres = session?.address.slice(-5)
+                                    const signatureFileName = `user_signature_${lastFiveCharactersOfWalletAddres}_${epochInSeconds}.png`
+                                    const signatureFile = dataURLToFile(dataUrl, signatureFileName)
+                                    console.log(`signatureFile ===  ${signatureFile}`)
+                                    completeFormData[`scratchpad`] = signatureFile
+
+
+                              } else {
+                                    console.log(`signatureRef is null 💣💣💣 `)
+                              }
+
+                              break;
+                        }
+
+
+                  }
+
+
+                  console.log(`completeFormData ${JSON.stringify(completeFormData, null, 4)}`)
+
                   // Step 10: Process file attachments
                   aquaTreeData = await processFileAttachments(
                         selectedTemplate,
-                        {
-                              ...finalFormDataFiltered,
-                              document: completeFormData.document,
-                        },
+                        completeFormData,
                         aquaTreeData,
                         fileObject,
                         aquafier
                   )
 
+
+                  // console.log(`aquaTreeData after file attachement process ${JSON.stringify(aquaTreeData, null, 4)}`)
+                  // throw Error(`fix mee...`)
+
                   // Step 11: Sign aqua tree
                   const signedAquaTree = await signAquaTree(aquaTreeData, fileObject, aquafier)
 
+
+                  clearSignature()
+
                   // Step 12: Handle post-signing actions
                   await handlePostSigning(signedAquaTree, fileObject, finalFormDataFiltered, selectedTemplate, session, selectedFileInfo)
+
+
             } catch (error: any) {
                   setSubmittingTemplateData(false)
 
@@ -830,6 +996,52 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: { selectedTempla
             return fieldType // or return 'text' as a safe default
       }
 
+
+      const fetchRecommendedWalletAddresses = (): Map<string, string> => {
+
+            const recommended = new Map<string, string>()
+
+            const someData = systemFileInfo.map(e => {
+                  try {
+                        return getAquaTreeFileName(e.aquaTree!)
+                  } catch (e) {
+                        console.log('Error processing system file') // More descriptive
+                        return ''
+                  }
+            })
+
+            for (const file of files) {
+
+                  const workFlow = isWorkFlowData(file.aquaTree!, someData)
+
+                  if (workFlow && workFlow.isWorkFlow) {
+                        console.log('Workflow found: ', workFlow.workFlow)
+                        if (workFlow.workFlow === 'identity_claim') {
+                              console.log('Identity claim found:')
+                              const orederdRevisionAquaTree = OrderRevisionInAquaTree(file.aquaTree!)
+                              let allHashes = Object.keys(orederdRevisionAquaTree.revisions)
+
+                              // console.log('orederdRevisionAquaTree: ', JSON.stringify (orederdRevisionAquaTree.revisions ,null, 2))
+                              // console.log('hashs: ', JSON.stringify (orederdRevisionAquaTree.revisions ,null, 2))
+                              let genRevsion = orederdRevisionAquaTree.revisions[allHashes[0]]
+
+                              // console.log('genRevsion: ', JSON.stringify (genRevsion,null, 2))
+                              // console.log('name : ', genRevsion[`forms_name`])
+                              // console.log('forms_wallet_address  : ', genRevsion[`forms_wallet_address`])
+                              if (genRevsion && genRevsion[`forms_name`] && genRevsion[`forms_wallet_address`]) {
+                                    recommended.set(genRevsion[`forms_name`], genRevsion[`forms_wallet_address`])
+                              }
+                        }
+                  } else {
+                        console.log('Not a workflow data: ', file.aquaTree)
+                  }
+
+            }
+
+            console.log('Recommended wallet addresses: ', JSON.stringify(recommended, null, 2))
+
+            return recommended;
+      }
       return (
             <>
                   {/* <div className="min-h-[100%] bg-gradient-to-br from-blue-50 via-white to-indigo-50 px-4"> */}
@@ -875,51 +1087,7 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: { selectedTempla
                                                             }
 
                                                             if (field.is_array) {
-                                                                  function fetchRecommendedWalletAddresses(): Map<string, string> {
 
-                                                                        const recommended = new Map<string, string>()
-
-                                                                        const someData = systemFileInfo.map(e => {
-                                                                              try {
-                                                                                    return getAquaTreeFileName(e.aquaTree!)
-                                                                              } catch (e) {
-                                                                                    console.log('Error processing system file') // More descriptive
-                                                                                    return ''
-                                                                              }
-                                                                        })
-
-                                                                        for (const file of files) {
-
-                                                                              const workFlow = isWorkFlowData(file.aquaTree!, someData)
-
-                                                                              if (workFlow && workFlow.isWorkFlow) {
-                                                                                    console.log('Workflow found: ', workFlow.workFlow)
-                                                                                    if (workFlow.workFlow === 'identity_claim') {
-                                                                                          console.log('Identity claim found:')
-                                                                                          const orederdRevisionAquaTree = OrderRevisionInAquaTree(file.aquaTree!)
-                                                                                          let allHashes = Object.keys(orederdRevisionAquaTree.revisions)
-
-                                                                                          // console.log('orederdRevisionAquaTree: ', JSON.stringify (orederdRevisionAquaTree.revisions ,null, 2))
-                                                                                          // console.log('hashs: ', JSON.stringify (orederdRevisionAquaTree.revisions ,null, 2))
-                                                                                          let genRevsion = orederdRevisionAquaTree.revisions[allHashes[0]]
-
-                                                                                          // console.log('genRevsion: ', JSON.stringify (genRevsion,null, 2))
-                                                                                          // console.log('name : ', genRevsion[`forms_name`])
-                                                                                          // console.log('forms_wallet_address  : ', genRevsion[`forms_wallet_address`])
-                                                                                          if (genRevsion && genRevsion[`forms_name`] && genRevsion[`forms_wallet_address`]) {
-                                                                                                recommended.set(genRevsion[`forms_name`], genRevsion[`forms_wallet_address`])
-                                                                                          }
-                                                                                    }
-                                                                              } else {
-                                                                                    console.log('Not a workflow data: ', file.aquaTree)
-                                                                              }
-
-                                                                        }
-
-                                                                        console.log('Recommended wallet addresses: ', JSON.stringify(recommended, null, 2))
-
-                                                                        return recommended;
-                                                                  }
                                                                   return (
                                                                         <div key={`field-${fieldIndex}`} className="space-y-4">
                                                                               <div className="flex items-center justify-between">
@@ -1010,35 +1178,215 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: { selectedTempla
                                                                               </Label>
                                                                         </div>
 
-                                                                        {field.type === 'text' || field.type == 'domain' ? (
-                                                                              <Input
-                                                                                    id={`input-${field.name}`}
-                                                                                    data-testid={`input-${field.name}`}
-                                                                                    className="w-full px-2 sm:px-3 py-1 sm:py-2 border border-gray-200 rounded-md focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 text-sm sm:text-base"
-                                                                                    placeholder="Type here..."
-                                                                                    disabled={field.is_editable === false}
-                                                                                    defaultValue={getFieldDefaultValue(field, formData[field.name])}
-                                                                                    onChange={e => {
-                                                                                          if (field.is_editable === false) {
-                                                                                                // Show toast notification (would need toast implementation)
-
-                                                                                                console.log(`${field.label} cannot be changed`)
-                                                                                                toast.error(`${field.label} cannot be changed`)
-                                                                                                return
+                                                                        {(field.type == 'text' || field.type == 'number' || field.type == 'date' || field.type == 'domain' || field.type == 'email') && (
+                                                                              <>
+                                                                                    <Input
+                                                                                          id={`input-${field.name}`}
+                                                                                          data-testid={`input-${field.name}`}
+                                                                                          className="w-full px-2 sm:px-3 py-1 sm:py-2 border border-gray-200 rounded-md focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 text-sm sm:text-base"
+                                                                                          // placeholder="Type here..."
+                                                                                          placeholder={
+                                                                                                field.type === 'domain'
+                                                                                                      ? 'Fill in the Domain Name (FQDN)'
+                                                                                                      : field.type === 'date'
+                                                                                                            ? 'Select a date'
+                                                                                                            : `Enter ${field.label.toLowerCase()}`
                                                                                           }
+                                                                                          disabled={field.is_editable === false}
+                                                                                          defaultValue={getFieldDefaultValue(field, formData[field.name])}
+                                                                                          onChange={e => {
+                                                                                                if (field.is_editable === false) {
+                                                                                                      // Show toast notification (would need toast implementation)
 
-                                                                                          if (field.default_value !== undefined && field.default_value !== null && field.default_value !== '') {
-                                                                                                e.target.value = field.default_value
-                                                                                                toast.error(`${field.label} cannot be changed`)
-                                                                                          }
+                                                                                                      console.log(`${field.label} cannot be changed`)
+                                                                                                      toast.error(`${field.label} cannot be changed`)
+                                                                                                      return
+                                                                                                }
 
-                                                                                          setFormData({
-                                                                                                ...formData,
-                                                                                                [field.name]: e.target.value,
-                                                                                          })
-                                                                                    }}
-                                                                              />
-                                                                        ) : (
+                                                                                                if (field.default_value !== undefined && field.default_value !== null && field.default_value !== '') {
+                                                                                                      e.target.value = field.default_value
+                                                                                                      toast.error(`${field.label} cannot be changed`)
+                                                                                                }
+
+                                                                                                setFormData({
+                                                                                                      ...formData,
+                                                                                                      [field.name]: e.target.value,
+                                                                                                })
+                                                                                          }}
+                                                                                    />
+
+                                                                                    {field.support_text && (
+                                                                                          <p className="text-xs text-gray-500">
+                                                                                                {field.support_text}
+                                                                                          </p>
+                                                                                    )}
+                                                                                    <>
+                                                                                          {
+                                                                                                field.is_verifiable && (
+                                                                                                      <>
+                                                                                                            <button
+                                                                                                                  type='button'
+                                                                                                                  data-testid={'send-verifcation-ciode-'}
+                                                                                                                  onClick={async () => {
+
+                                                                                                                        setVerifyingFormField(`field-${field.name}`)
+
+
+                                                                                                                        let filledValue = formData[field.name]
+
+                                                                                                                        if (!filledValue || (filledValue as string).length == 0) {
+                                                                                                                              toast.error(`${field.label} is empty`)
+                                                                                                                              setVerifyingFormField("")
+                                                                                                                              return
+                                                                                                                        }
+                                                                                                                        try {
+                                                                                                                              // const allRevisionHashes = Object.keys(apiFileInfo.aquaTree!.revisions!)
+                                                                                                                              // const lastRevisionHash = allRevisionHashes[allRevisionHashes.length - 1]
+                                                                                                                              const url = `${backend_url}/send_code`
+                                                                                                                              const response = await axios.post(
+                                                                                                                                    url,
+                                                                                                                                    {
+                                                                                                                                          email_or_phone_number: filledValue,
+                                                                                                                                          name: field.name
+                                                                                                                                    },
+                                                                                                                                    {
+                                                                                                                                          headers: {
+                                                                                                                                                nonce: session?.nonce,
+                                                                                                                                          },
+                                                                                                                                    }
+                                                                                                                              )
+
+                                                                                                                              if (response.status === 200) {
+                                                                                                                                    toast.success(`verification code sent sucessfully`)
+                                                                                                                                    // Close the dialog explicitly
+                                                                                                                                    // setOpen(false)
+                                                                                                                                    // setIsloading(false)
+                                                                                                                                    // toast('File deleted successfully')
+                                                                                                                                    // await refetchAllUserFiles()
+                                                                                                                              }
+                                                                                                                        } catch (e) {
+                                                                                                                              console.log(`Error ${e}`)
+                                                                                                                              toast.error('verification code not sent')
+                                                                                                                              // setIsloading(false) // Add this to ensure loading state is cleared on error
+                                                                                                                        } finally {
+                                                                                                                              setVerifyingFormField(``)
+
+                                                                                                                        }
+
+                                                                                                                  }}
+                                                                                                                  className={`w-full flex items-center justify-center space-x-1 bg-blue-100 text-blue-700 px-3 py-2 rounded transition-colors text-xs ${verifyingFormField == `field-${field.name}` ? 'opacity-60 cursor-not-allowed' : 'hover:bg-blue-200'}`}
+                                                                                                            // disabled={signing}
+                                                                                                            >
+                                                                                                                  {verifyingFormField == `field-${field.name}` ? (
+                                                                                                                        <>
+                                                                                                                              <svg className="animate-spin h-3 w-3 mr-1 text-blue-700" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                                                                                                                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                                                                                                                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
+                                                                                                                              </svg>
+                                                                                                                              <span>Sending code...</span>
+                                                                                                                        </>
+                                                                                                                  ) : (
+                                                                                                                        <>
+                                                                                                                              <Send className="w-4 h-4" />
+                                                                                                                              <span>Send Code</span>
+                                                                                                                        </>
+                                                                                                                  )}
+                                                                                                            </button>
+
+
+                                                                                                            <div className="flex items-center gap-2">
+                                                                                                                  <BookCheck className="h-4 w-4" />
+                                                                                                                  <Label htmlFor={`input-verification-${field.name}`} className="text-base font-medium text-gray-900">
+                                                                                                                        Verification code for {field.label}
+                                                                                                                        <span className="text-red-500">*</span>
+                                                                                                                  </Label>
+                                                                                                            </div>
+
+
+                                                                                                            <Input
+                                                                                                                  id={`input-verification-${field.name}`}
+                                                                                                                  data-testid={`input-verification-${field.name}`}
+                                                                                                                  className="w-full px-2 sm:px-3 py-1 sm:py-2 border border-gray-200 rounded-md focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 text-sm sm:text-base"
+                                                                                                                  placeholder="Type code here..."
+
+
+                                                                                                                  onChange={e => {
+
+
+                                                                                                                        setFormData({
+                                                                                                                              ...formData,
+                                                                                                                              [`${field.name}_verification`]: e.target.value,
+                                                                                                                        })
+                                                                                                                  }}
+                                                                                                            />
+
+                                                                                                      </>
+                                                                                                )
+                                                                                          }</>
+                                                                              </>
+
+                                                                        )}
+
+                                                                        {
+                                                                              field.type == 'scratchpad' && (
+                                                                                    <div ref={containerRef} className="border border-gray-200 w-full h-[200px] bg-white">
+                                                                                          <SignatureCanvas
+                                                                                                ref={signatureRef}
+                                                                                                canvasProps={{
+                                                                                                      width: canvasSize.width,
+                                                                                                      height: canvasSize.height,
+                                                                                                      style: {
+                                                                                                            width: '100%',
+                                                                                                            height: '100%',
+                                                                                                      },
+                                                                                                      className: 'signature-canvas',
+                                                                                                }}
+                                                                                                backgroundColor="transparent"
+                                                                                          />
+                                                                                    </div>
+                                                                              )
+                                                                        }
+
+                                                                        {field.type == 'wallet_address' && (
+                                                                              <>
+                                                                                    {
+                                                                                          field.is_editable == false ?
+                                                                                                <Input
+                                                                                                      id={`input-${field.name}`}
+                                                                                                      data-testid={`input-${field.name}`}
+                                                                                                      className="rounded-md border-gray-200 focus:border-blue-500 focus:ring-blue-500 text-sm sm:text-base h-9 sm:h-10"
+                                                                                                      disabled={field.is_editable === false}
+                                                                                                      defaultValue={getFieldDefaultValue(field, formData[field.name])} />
+
+                                                                                                :
+
+                                                                                                <WalletAutosuggest
+                                                                                                      walletAddresses={fetchRecommendedWalletAddresses()}
+                                                                                                      field={field}
+                                                                                                      index={1}
+                                                                                                      address={formData[field.name] ? formData[field.name] as string : ""}
+                                                                                                      multipleAddresses={[]}
+                                                                                                      setMultipleAddresses={(data) => {
+                                                                                                            // setMultipleAddresses
+                                                                                                            console.log(`data  ... ${data}`);
+                                                                                                            let d = data[0]
+                                                                                                            console.log(`data  ... ${d}`)
+                                                                                                            if (d) {
+                                                                                                                  setFormData({
+                                                                                                                        ...formData,
+                                                                                                                        [field.name]: d,
+                                                                                                                  })
+                                                                                                            }
+                                                                                                      }}
+                                                                                                      placeholder="Enter signer wallet address"
+                                                                                                      className="rounded-lg border-gray-200 focus:border-blue-500 focus:ring-blue-500"
+                                                                                                />
+                                                                                    }
+                                                                              </>
+                                                                        )}
+
+
+                                                                        {(field.type == 'document' || field.type == 'image' || field.type == 'file') && (
                                                                               <div className="relative">
                                                                                     <Input
                                                                                           id={`input-${field.name}`}
@@ -1052,15 +1400,11 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: { selectedTempla
                                                                                           type={getInputType(field.type)}
                                                                                           required={field.required}
                                                                                           disabled={field.is_editable === false}
-                                                                                          accept={field.type === 'document' ? '.pdf' : field.type === 'image' ? 'image/*' : undefined}
+                                                                                          accept={field.type == 'document' ? '.pdf' : field.type === 'image' ? 'image/*' : undefined}
                                                                                           placeholder={
-                                                                                                field.type === 'wallet_address'
-                                                                                                      ? 'Enter wallet address'
-                                                                                                      : field.type === 'date'
-                                                                                                            ? 'Select due date'
-                                                                                                            : field.type === 'document'
-                                                                                                                  ? 'Upload PDF document'
-                                                                                                                  : `Enter ${field.label.toLowerCase()}`
+                                                                                                field.type === 'document'
+                                                                                                      ? 'Upload PDF document'
+                                                                                                      : `Enter ${field.label.toLowerCase()}`
                                                                                           }
                                                                                           onChange={e => {
                                                                                                 if (field.is_editable === false) {
@@ -1102,7 +1446,7 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: { selectedTempla
                                                                                                 }
 
                                                                                                 let value = isFileInput && e.target.files ? e.target.files[0] : e.target.value
-
+                                                                                                console.log(`value us isFileInput ${isFileInput}  value ${value}`)
                                                                                                 if (field.default_value !== undefined && field.default_value !== null && field.default_value !== '') {
                                                                                                       e.target.value = field.default_value
                                                                                                       toast.error(`${field.label} cannot be changed`)
@@ -1113,6 +1457,13 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: { selectedTempla
                                                                                                 })
                                                                                           }}
                                                                                     />
+
+                                                                                    {field.support_text && (
+                                                                                          <p className="text-xs text-gray-500">
+                                                                                                {field.support_text}
+                                                                                          </p>
+                                                                                    )}
+
                                                                                     {isFileInput && (
                                                                                           <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
                                                                                                 <Upload className="h-4 w-4 text-gray-400" />
@@ -1121,6 +1472,9 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: { selectedTempla
                                                                               </div>
                                                                         )}
 
+
+
+
                                                                         {field.name === 'sender' && (
                                                                               <p className="text-xs text-gray-500">
                                                                                     {field.support_text
@@ -1128,6 +1482,7 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: { selectedTempla
                                                                                           : 'The sender is the person who initiates the document signing process. This field is auto-filled with your wallet address.'}
                                                                               </p>
                                                                         )}
+
                                                                   </div>
                                                             )
                                                       })
@@ -1135,6 +1490,22 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: { selectedTempla
                                           </div>
 
                                           <Separator className="my-8" />
+                                          {
+                                                selectedTemplate.name == 'domain_claim' && (
+                                                      <div >
+                                                            <div className="space-y-4">
+                                                                  <h5>Follow the following steps to associate your wallet with your domain:</h5>
+                                                                  <ol className="list-decimal list-inside">
+                                                                        <li>Fill in the Domain Name (FQDN).</li>
+                                                                        <li>Sign with metamask to generate a TXT record.</li>
+                                                                        <li>Second metamask signature for self signed identity claim.</li>
+                                                                        <li>Open details of the DNS Claim and copy the TXT record into to your DNS records under the following subdomain <em>aqua._wallet.[domain filled above]</em></li>
+                                                                  </ol>
+                                                            </div>
+                                                            <Separator className="my-8" />
+                                                      </div>
+                                                )
+                                          }
 
 
                                           {

@@ -33,7 +33,8 @@
     "prisma": "^6.4.1",
     "siwe": "^3.0.0",
     "tap": "^21.1.0",
-    "ts-mock-imports": "^1.3.16"
+    "ts-mock-imports": "^1.3.16",
+    "twilio": "^5.7.1"
   },
   "devDependencies": {
     "@types/estree": "^1.0.8",

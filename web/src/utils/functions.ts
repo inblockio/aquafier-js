@@ -7,7 +7,7 @@ import { documentTypes, ERROR_TEXT, ERROR_UKNOWN, imageTypes, musicTypes, videoT
 import Aquafier, { AquaTree, CredentialsData, FileObject, OrderRevisionInAquaTree, Revision } from 'aqua-js-sdk'
 import jdenticon from 'jdenticon/standalone'
 import { IContractInformation } from '@/types/contract_workflow'
-import { SummaryDetailsDisplayData } from '@/types/types'
+import { DNSProof, SummaryDetailsDisplayData } from '@/types/types'
 import { NavigateFunction } from 'react-router-dom'
 
 export function formatDate(date: Date) {
@@ -65,6 +65,45 @@ export const convertTemplateNameToTitle = (str: string) => {
       // const remainingWords = words.slice(1).join(' ');
       // return firstWord + ' ' + remainingWords;
 }
+
+// Default expiration period in days
+// const DEFAULT_EXPIRATION_DAYS = 90;
+
+// export async function generateProof(domain: string, walletAddress: string, expirationDays: number = DEFAULT_EXPIRATION_DAYS, signature : string): Promise<DNSProof> {
+//   const timestamp = Math.floor(Date.now() / 1000).toString();
+//   const expiration = Math.floor(Date.now() / 1000 + (expirationDays * 24 * 60 * 60)).toString();
+  
+  // Message format: unix_timestamp|domain_name|expiration_timestamp
+//   const message = `${timestamp}|${domain}|${expiration}`;
+  
+  // Sign with EIP-191 compliant personal_sign format
+  // ethers.js automatically applies: "\x19Ethereum Signed Message:\n" + len(message) + message
+  // This matches MetaMask's personal_sign behavior (EIP-191 version 0x45)
+//   const wallet = new ethers.Wallet(privateKey);
+//   const signature = await wallet.signMessage(message);
+  
+//   return {
+//     walletAddress: walletAddress,
+//     domainName: domain,
+//     timestamp,
+//     expiration,
+//     signature
+//   };
+// }
+
+export function generateProofFromSignature(domain: string, walletAddress: string, timestamp: string, expiration: string, signature: string): DNSProof {
+      return {
+        walletAddress,
+        domainName: domain,
+        timestamp,
+        expiration,
+        signature
+      };
+    }
+
+export function formatTxtRecord(proof: DNSProof): string {
+      return `wallet=${proof.walletAddress}&timestamp=${proof.timestamp}&expiration=${proof.expiration}&sig=${proof.signature}`;
+    } 
 
 export const isWorkFlowData = (aquaTree: AquaTree, systemAndUserWorkFlow: string[]): { isWorkFlow: boolean; workFlow: string } => {
       const falseResponse = {
@@ -253,7 +292,7 @@ export async function switchNetwork(chainId: string) {
       }
 }
 
-export  const getWalletClaims = ( systemFileInfo: ApiFileInfo[],  files: ApiFileInfo[],    walletAddress: string, setSelectedFileInfo: (file: ApiFileInfo | null) => void , navigate : NavigateFunction, toast : any) => {
+export  const getWalletClaims = ( systemFileInfo: ApiFileInfo[],  files: ApiFileInfo[],    walletAddress: string, _setSelectedFileInfo: (file: ApiFileInfo | null) => void , navigate : NavigateFunction, toast : any) => {
             const aquaTemplates: string[] = systemFileInfo.map(e => {
                   try {
                         return getAquaTreeFileName(e.aquaTree!)
@@ -285,8 +324,10 @@ export  const getWalletClaims = ( systemFileInfo: ApiFileInfo[],  files: ApiFile
                         }
                   }
                   if (firstClaim) {
-                        setSelectedFileInfo(firstClaim)
-                        navigate('/app/claims/workflow')
+                        // IMPORTANT: I have disable setting file here and navigation has changed to specific wallet address
+                        // setSelectedFileInfo(firstClaim)
+                        // navigate('/app/claims/workflow')
+                        navigate(`/app/claims/workflow/${walletAddress}`)
                   } else {
                         toast.info('Claim not found', {
                               description: 'No claims found for this wallet address',

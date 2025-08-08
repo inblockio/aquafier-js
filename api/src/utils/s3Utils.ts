@@ -5,10 +5,10 @@ import * as process from "node:process";
 function getMinioClient(): Client {
     return new Minio.Client({
         accessKey: process.env.S3_USER,
-        endPoint: process.env.S3_URL as string,
+        endPoint: process.env.S3_URL ?? "",
         secretKey: process.env.S3_PASSWORD,
-        port: parseInt(process.env.S3_PORT as string) || 9000,
-        useSSL: process.env.S3_USE_SSL ? (String(process.env.S3_USE_SSL).toLowerCase() === 'true') : true
+        port: process.env.S3_PORT != undefined && process.env.S3_PORT != "" ? Number(process.env.S3_PORT) : 9000,
+        useSSL: process.env.S3_USE_SSL ? (String(process.env.S3_USE_SSL).toLowerCase() === 'true') : true //only dev!!!
     })
 }
 

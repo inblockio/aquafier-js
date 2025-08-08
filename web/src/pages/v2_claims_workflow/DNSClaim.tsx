@@ -1,12 +1,12 @@
-import { digTxtRecordsGoogle, extractDNSClaimInfo, formatCryptoAddress } from '@/utils/functions'
+import { ensureDomainUrlHasSSL, formatCryptoAddress } from '@/utils/functions'
 import { useEffect, useState } from 'react'
 import { TbWorldWww } from 'react-icons/tb'
 import { FaCheck, FaTimes } from 'react-icons/fa'
-import { verifyProofV2 } from '@/utils/dnsClaimVerification'
-import { Info, Check, X, AlertTriangle } from 'lucide-react'
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { ShareButton } from '@/components/aqua_chain_actions/share_aqua_chain'
 import { ApiFileInfo } from '@/models/FileInfo'
+import { useStore } from 'zustand'
+import appStore from '@/store'
+import ImprovedDNSLogs from '../claims_workflow/DNSClaimLogs'
 
 interface IDNSClaim {
       claimInfo: Record<string, string>,
@@ -15,47 +15,69 @@ interface IDNSClaim {
       sessionAddress: string,
 }
 
-const getIcon = (type: string) => {
-      switch (type) {
-            case 'info':
-                  return <Info />
-            case 'success':
-                  return <Check />
-            case 'warning':
-                  return <AlertTriangle />
-            case 'error':
-                  return <X />
-            default:
-                  return <Info />
-      }
+interface LogEntry {
+      level: 'info' | 'success' | 'warning' | 'error'
+      message: string
+      details?: any
 }
 
-const getClasses = (type: string) => {
-      switch (type) {
-            case 'info':
-                  return 'bg-blue-50 border-blue-200 text-blue-800'
-            case 'success':
-                  return 'bg-green-50 border-green-200 text-green-800'
-            case 'warning':
-                  return 'bg-amber-50 border-amber-200 text-amber-800'
-            case 'error':
-                  return 'bg-red-50 border-red-200 text-red-800'
-            default:
-                  return 'bg-blue-50 border-blue-200 text-blue-800'
-      }
+interface VerificationResult {
+      success: boolean
+      message: string
+      domain: string
+      expectedWallet?: string
+      totalRecords: number
+      verifiedRecords: number
+      results: any[]
+      logs: LogEntry[]
+      dnssecValidated: boolean
 }
+
+
+// const getIcon = (type: string) => {
+//       switch (type) {
+//             case 'info':
+//                   return <Info />
+//             case 'success':
+//                   return <Check />
+//             case 'warning':
+//                   return <AlertTriangle />
+//             case 'error':
+//                   return <X />
+//             default:
+//                   return <Info />
+//       }
+// }
+
+// const getClasses = (type: string) => {
+//       switch (type) {
+//             case 'info':
+//                   return 'bg-blue-50 border-blue-200 text-blue-800'
+//             case 'success':
+//                   return 'bg-green-50 border-green-200 text-green-800'
+//             case 'warning':
+//                   return 'bg-amber-50 border-amber-200 text-amber-800'
+//             case 'error':
+//                   return 'bg-red-50 border-red-200 text-red-800'
+//             default:
+//                   return 'bg-blue-50 border-blue-200 text-blue-800'
+//       }
+// }
 
 const DNSClaim = ({ claimInfo, apiFileInfo, nonce, sessionAddress }: IDNSClaim) => {
       // State for DNS verification
       const [verificationStatus, setVerificationStatus] = useState<'loading' | 'verified' | 'failed' | 'not_found' | 'pending'>('loading')
       const [verificationMessage, setVerificationMessage] = useState<string>('Checking DNS verification...')
-      const [dnsRecords, setDnsRecords] = useState<string[]>([])
-      const [verificationLogs, setVerificationLogs] = useState<Array<{ content: string; type: string }>>([])
+      // const [dnsRecords, setDnsRecords] = useState<string[]>([])
+      const [verificationResult, setVerificationResult] = useState<VerificationResult | null>(null)
+
+      const { backend_url } = useStore(appStore)
 
       // Extract relevant information from claimInfo
       const claimName = 'DNS Claim'
       const description = 'Domain control validation for a domain.'
       const domain = claimInfo['forms_domain'] || ''
+      const walletAddress = claimInfo['forms_wallet_address'] || ''
       const date =
             claimInfo['forms_created_at'] ||
             claimInfo['date'] ||
@@ -92,95 +114,112 @@ const DNSClaim = ({ claimInfo, apiFileInfo, nonce, sessionAddress }: IDNSClaim) 
             setVerificationMessage('Checking DNS records...')
       }
 
-      const getRecords = async () => {
+      const verifyDNS = async () => {
             resetVerification()
+
+            if (!domain) {
+                  setVerificationStatus('failed')
+                  setVerificationMessage('No domain specified')
+                  return
+            }
+
             try {
                   setVerificationStatus('loading')
-                  setVerificationMessage('Checking DNS records...')
+                  setVerificationMessage('Verifying DNS records...')
 
-                  const domain = claimInfo['forms_domain'] || 'aqua._wallet.inblock.io'
-                  const records = await digTxtRecordsGoogle(domain)
+                  const url = `${backend_url}/verify/dns_claim`
+                  const actualUrlToFetch = ensureDomainUrlHasSSL(url)
+                  const response = await fetch(actualUrlToFetch, {
+                        method: 'POST',
+                        headers: {
+                              'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                              domain: domain,
+                              wallet: walletAddress
+                        }),
+                  })
 
-                  if (!records || records.length === 0) {
-                        setVerificationStatus('not_found')
-                        setVerificationMessage(`No DNS TXT records found for ${domain}`)
-                        return false
-                  }
+                  // if (!response.ok) {
+                  //   throw new Error(`HTTP error! status: ${response.status}`)
+                  // }
 
-                  console.log('DNS records:', records)
+                  // const result: VerificationResult = await response.json()
+                  // setVerificationResult(result)
 
-                  setDnsRecords(records)
 
-                  const currentWalletAddress = claimInfo['forms_wallet_address']
-                  const currentSignature = claimInfo['forms_signature']
+                  // if (result.success) {
+                  //   setVerificationStatus('verified')
+                  //   setVerificationMessage(result.message)
+                  // } else {
+                  // Determine status based on the response and logs
+                  //   if (response.status === 404 || result.logs.some(log => log.message.includes('No TXT records found'))) {
+                  //     setVerificationStatus('not_found')
+                  //     setVerificationMessage(result.message || 'DNS records not found')
+                  //   } else {
+                  //     setVerificationStatus('failed')
+                  //     setVerificationMessage(result.message || 'Verification failed')
+                  //   }
 
-                  if (!currentWalletAddress || !currentSignature) {
-                        setVerificationStatus('failed')
-                        setVerificationMessage('Missing wallet address or signature in claim')
-                        return false
-                  }
 
-                  // Loop through records and find a record whose signature matches the current signature and wallet address
-                  for (const record of records) {
-                        try {
-                              const { walletAddress, expiration } = extractDNSClaimInfo(record)
+                  // }
 
-                              // Check if the record is expired
-                              const currentTime = Date.now() / 1000 // Convert to seconds
-                              const isExpired = expiration > 0 && currentTime > expiration
+                  const result: VerificationResult = await response.json()
+                  setVerificationResult(result)
+                  console.log(`logs ${JSON.stringify(result, null, 4)}`)
 
-                              if (isExpired) {
-                                    continue // Skip expired records
-                              }
-
-                              // TODO: We should find a way to show the user the txt record to add it to the domain
-                              // if (walletAddress === currentWalletAddress && signature === currentSignature) {
-                              if (walletAddress.trim().toLowerCase() === currentWalletAddress.trim().toLowerCase()) {
-                                    let verificationMsg = 'Signature verified via DNS TXT record'
-                                    if (expiration > 0) {
-                                          const expirationDate = new Date(expiration * 1000).toLocaleDateString()
-                                          verificationMsg += ` (valid until ${expirationDate})`
-                                    }
-
-                                    setVerificationStatus('verified')
-                                    setVerificationMessage(verificationMsg)
-                                    return true
-                              }
-                        } catch (err) {
-                              // Continue to next record if this one fails to parse
+                  if (result.success) {
+                        setVerificationStatus('verified')
+                        setVerificationMessage(result.message)
+                  } else {
+                        // Determine status based on the response status and result
+                        if (response.status === 404) {
+                              setVerificationStatus('not_found')
+                              setVerificationMessage(result.message || 'DNS records not found')
+                        } else if (response.status === 429) {
+                              setVerificationStatus('failed')
+                              setVerificationMessage(result.message || 'Rate limit exceeded. Please try again later.')
+                        } else if (response.status === 400) {
+                              setVerificationStatus('failed')
+                              setVerificationMessage(result.message || 'Invalid request format')
+                        } else if (response.status === 422) {
+                              setVerificationStatus('failed')
+                              setVerificationMessage(result.message || 'Verification failed')
+                        } else {
+                              // Fallback for other cases
+                              setVerificationStatus('failed')
+                              setVerificationMessage(result.message || 'Verification failed')
                         }
                   }
-
-                  setVerificationStatus('failed')
-                  setVerificationMessage('No matching DNS record found for verification')
-                  return false
             } catch (error) {
-                  // console.error('Error verifying DNS claim:', error)
+                  console.error('Error verifying DNS claim:', error)
                   setVerificationStatus('failed')
-                  setVerificationMessage('Error checking DNS records')
-                  return false
+                  setVerificationMessage('Error connecting to verification service')
+
+
             }
       }
 
-      const getVerificationLogs = async () => {
-            const verifyProofResult = await verifyProofV2("inblock.io", "wallet")
-            console.log("verifyProofResult", verifyProofResult)
-            setVerificationLogs(verifyProofResult)
+      const getCardBackgroundColor = () => {
+            if (verificationStatus === 'verified') {
+                  return 'bg-green-50 border-green-200'
+            } else if (verificationStatus === 'failed' || verificationStatus === 'not_found') {
+                  return 'bg-red-50 border-red-200'
+            }
+            return 'bg-white border-gray-200'
       }
 
       useEffect(() => {
-            getRecords()
-      }, [])
-
-      useEffect(() => {
-            getVerificationLogs()
-      }, [])
+            if (domain && walletAddress) {
+                  verifyDNS()
+            }
+      }, [domain, walletAddress])
 
       return (
             <div className="grid lg:grid-cols-12 gap-4">
                   <div className='col-span-7 bg-gray-50 p-2'>
                         <div className="flex flex-col gap-2">
-                              <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                              <div className={`rounded-lg shadow-sm border p-6 ${getCardBackgroundColor()}`}>
                                     <div className="flex items-start justify-between mb-4">
                                           <div className="flex items-start gap-3">
                                                 <div className="bg-purple-50 p-2 rounded-lg">
@@ -239,7 +278,7 @@ const DNSClaim = ({ claimInfo, apiFileInfo, nonce, sessionAddress }: IDNSClaim) 
                                     <div className="flex flex-col gap-3">{fields}</div>
 
                                     {/* Verification alert */}
-                                    {verificationStatus !== 'loading' && (
+                                    {/* {verificationStatus !== 'loading' && (
                                           <div
                                                 className={`mt-4 p-3 rounded-md ${verificationStatus === 'verified' ? 'bg-green-50 border border-green-200' : verificationStatus === 'not_found' ? 'bg-amber-50 border border-amber-200' : 'bg-red-50 border border-red-200'}`}
                                           >
@@ -257,7 +296,6 @@ const DNSClaim = ({ claimInfo, apiFileInfo, nonce, sessionAddress }: IDNSClaim) 
                                                       {verificationMessage}
                                                 </p>
 
-                                                {/* Show DNS records if available */}
                                                 {dnsRecords.length > 0 && verificationStatus !== 'verified' && (
                                                       <div className="mt-2">
                                                             <p className="text-xs font-medium mb-1">Found DNS TXT Records:</p>
@@ -271,36 +309,64 @@ const DNSClaim = ({ claimInfo, apiFileInfo, nonce, sessionAddress }: IDNSClaim) 
                                                       </div>
                                                 )}
                                           </div>
+                                    )} */}
+                                    {verificationResult && (
+                                          <div className="mt-4">
+                                                <div
+                                                      className={`p-3 rounded-md ${verificationResult.success
+                                                            ? 'bg-green-100 border border-green-200'
+                                                            : 'bg-red-100 border border-red-200'
+                                                            }`}
+                                                >
+                                                      <div className="flex items-center justify-between">
+                                                            <div className="flex items-center">
+                                                                  {verificationResult.success ? (
+                                                                        <FaCheck className="text-green-500 mr-2" />
+                                                                  ) : (
+                                                                        <FaTimes className="text-red-500 mr-2" />
+                                                                  )}
+                                                                  <p
+                                                                        className={`text-sm font-medium ${verificationResult.success ? 'text-green-800' : 'text-red-800'
+                                                                              }`}
+                                                                  >
+                                                                        {verificationResult.success ? 'Domain Ownership Verified' : 'Verification Failed'}
+                                                                  </p>
+                                                            </div>
+                                                      </div>
+
+                                                      <p className={`mt-1 text-xs ${verificationResult.success ? 'text-green-700' : 'text-red-700'}`}>
+                                                            {verificationMessage}
+                                                      </p>
+
+                                                      {verificationResult.totalRecords > 0 && (
+                                                            <p className="text-xs text-gray-600 mt-1">
+                                                                  Records: {verificationResult.verifiedRecords}/{verificationResult.totalRecords} verified
+                                                            </p>
+                                                      )}
+                                                </div>
+                                          </div>
                                     )}
                               </div>
-                        {claimInfo?.forms_wallet_address?.trim().toLowerCase() === sessionAddress?.trim().toLowerCase() && (
-                              <ShareButton item={apiFileInfo} nonce={nonce} />
-                        )}
+                              {claimInfo?.forms_wallet_address?.trim().toLowerCase() === sessionAddress?.trim().toLowerCase() && (
+                                    <ShareButton item={apiFileInfo} nonce={nonce} />
+                              )}
                         </div>
                   </div>
                   <div className='col-span-5 p-2'>
-                              <div className="flex flex-col gap-2">
-                                    <h3 className="text-lg font-bold text-center">Claim Verification</h3>
-                                    <div className="flex flex-col gap-2 h-[400px] overflow-y-auto px-2 py-2">
-                                          {
-                                                verificationLogs.map((log, index) => (
-                                                      <div className="w-full" key={index}>
-                                                            <Alert className={getClasses(log.type)}>
-                                                                  {/* <Terminal /> */}
-                                                                  {
-                                                                        getIcon(log.type)
-                                                                  }
-                                                                  <AlertTitle>Heads up!</AlertTitle>
-                                                                  <AlertDescription className={getClasses(log.type)}>
-                                                                        {log.content}
-                                                                  </AlertDescription>
-                                                            </Alert>
-                                                      </div>
-                                                ))
-                                          }
-                                    </div>
+                        <div className="flex flex-col gap-2">
+                              <h3 className="text-lg font-bold text-center">Claim Verification</h3>
+                              <div className="flex flex-col h-[600px] overflow-y-auto px-2">
+                                    {verificationResult && (
+                                          <ImprovedDNSLogs
+                                                verificationResult={verificationResult}
+                                                verificationMessage={verificationMessage}
+                                                showLogs={true}
+                                                onToggleLogs={() => { }}
+                                          />
+                                    )}
                               </div>
                         </div>
+                  </div>
             </div>
       )
 }

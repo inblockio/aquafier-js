@@ -10,6 +10,7 @@ export interface AquaTemplatesFields {
   isArray: boolean,
   isHidden: boolean,
   isEditable: boolean,
+  isVerifiable: boolean,
   description : string,
   placeholder : string
   supportText : string
@@ -61,4 +62,11 @@ export interface UpdateGenesisResult {
 export interface ProcessRevisionResult {
     aquaTree: AquaTree;
     fileObjects: FileObject[];
+}
+
+export interface ServerWalletInformation {
+    mnemonic: string;
+    walletAddress: string;
+    privateKey: string;
+    publicKey: string;
 }

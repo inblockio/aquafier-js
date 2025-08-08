@@ -3,20 +3,20 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Progress } from '@/components/ui/progress'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
 import { FileText, Users, Clock, CheckCircle, AlertCircle, MoreHorizontal, Eye, Trash2, Download, Send, Plus } from 'lucide-react'
 import appStore from '@/store'
 import { useStore } from 'zustand'
-import { displayTime, generateAvatar, getAquaTreeFileName, getAquaTreeFileObject, getGenesisHash, isWorkFlowData, processContractInformation } from '@/utils/functions'
+import { displayTime, getAquaTreeFileName, getAquaTreeFileObject, getGenesisHash, isWorkFlowData, processContractInformation } from '@/utils/functions'
 import { FileObject } from 'aqua-js-sdk'
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { IContractInformation } from '@/types/contract_workflow'
 import { DownloadAquaChain } from '../../components/aqua_chain_actions/download_aqua_chain'
 import { OpenAquaSignWorkFlowButton } from '../../components/aqua_chain_actions/open_aqua_sign_workflow'
 import { DeleteAquaChain } from '../../components/aqua_chain_actions/delete_aqua_chain'
 import { IWorkflowItem } from '@/types/types'
+import WalletAdrressClaim from '../v2_claims_workflow/WalletAdrressClaim'
 
 const getStatusIcon = (status: string) => {
       switch (status) {
@@ -52,14 +52,6 @@ const getProgressPercentage = (total: number, remaining: number) => {
       console.log('Calculating progress percentage:', { total, remaining })
       if (total === 0) return 0 // Avoid division by zero
       return ((total - remaining) / total) * 100
-}
-
-const getInitials = (name: string) => {
-      return name
-            .split(' ')
-            .map(word => word.charAt(0))
-            .join('')
-            .toUpperCase()
 }
 
 const WorkflowTableItem = ({ workflowName, apiFileInfo, index = 0 }: IWorkflowItem) => {
@@ -157,17 +149,7 @@ const WorkflowTableItem = ({ workflowName, apiFileInfo, index = 0 }: IWorkflowIt
                         <div className="flex items-center gap-2">
                               <div className="flex -space-x-2">
                                     {signers?.slice(0, 3).map((signer: string, index: number) => (
-                                          <Tooltip key={index}>
-                                                <TooltipTrigger asChild>
-                                                      <Avatar key={index} className="h-8 w-8 border-2 rounded-full border-blue-500">
-                                                            <AvatarImage src={generateAvatar(signer)} alt="Avatar" />
-                                                            <AvatarFallback className="text-xs">{getInitials(signer)}</AvatarFallback>
-                                                      </Avatar>
-                                                </TooltipTrigger>
-                                                <TooltipContent>
-                                                      <p>{signer}</p>
-                                                </TooltipContent>
-                                          </Tooltip>
+                                          <WalletAdrressClaim key={index} avatarOnly={true} walletAddress={signer} />
                                     ))}
                                     {signers?.length > 3 && (
                                           <Avatar className="h-8 w-8 border-2 border-background">

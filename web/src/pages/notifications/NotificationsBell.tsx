@@ -86,7 +86,7 @@ const NotificationsBell = () => {
             if (session?.address) {
                   fetchNotifications()
             }
-      }, [session?.address])
+      }, [])
 
       return (
             <Popover open={isOpen} onOpenChange={setIsOpen} modal>
