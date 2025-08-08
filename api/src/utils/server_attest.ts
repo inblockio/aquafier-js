@@ -4,7 +4,7 @@ import { getAquaAssetDirectory } from "./file_utils";
 import { getGenesisHash } from "./aqua_tree_utils";
 import fs from "fs";
 import { AquaTree } from "aqua-js-sdk";
-import { dummyCredential, getServerWalletInformation } from "./server_utils";
+import { dummyCredential, getRandomNumber, getServerWalletInformation } from "./server_utils";
 import { getAquaTreeFileName } from "./api_utils";
 
 interface TemplateInformation {
@@ -38,7 +38,11 @@ export function getTemplateInformation(templateItem: string): TemplateInformatio
 
 
 
-export async function serverAttestation(identityClaimId: string): Promise<AquaTree | null> {
+export async function serverAttestation(identityClaimId: string): Promise<{
+    aquaTree : AquaTree,
+    attestationJSONfileData : Object, 
+    attestationJSONfileName : string
+} | null> {
 
     const aquafier = new Aquafier()
     const templateItem = "identity_attestation"
@@ -61,8 +65,11 @@ export async function serverAttestation(identityClaimId: string): Promise<AquaTr
         "wallet_address": serverWalletInformation.walletAddress
     }
 
+    let randomNum = getRandomNumber(999, 9999)
+    let fileName = `identity_attestation_server_${randomNum}.json`
+
     const fileObject: FileObject = {
-        fileName: `identity_attestation_server_${identityClaimId.substring(0, 4)}.json`,
+        fileName: fileName,
         fileContent: JSON.stringify(attestationForm),
         path: ""
     }
@@ -83,8 +90,13 @@ export async function serverAttestation(identityClaimId: string): Promise<AquaTr
         revision: ""
     }
 
+    let name =  getAquaTreeFileName(templateInformation.templateAquaTree);
+    if(name.length==0){
+        name="identity_attestation.json"
+    }
+
     const templateFileObject: FileObject = {
-        fileName: getAquaTreeFileName(templateInformation.templateAquaTree),
+        fileName:name,
         fileContent: templateInformation.templateAquaTreeDataContent,
         path: ""
     }
@@ -97,7 +109,7 @@ export async function serverAttestation(identityClaimId: string): Promise<AquaTr
 
     const linkedAquaTreeResult = await aquafier.linkAquaTree(aquatreeWrapperToWrapTo, wrapThis, false)
 
-    // console.log(`\n ## linkedAquaTreeResult ${JSON.stringify(linkedAquaTreeResult)}`)
+    console.log(`\n ## linkedAquaTreeResult ${JSON.stringify(linkedAquaTreeResult)}`)
 
     if (linkedAquaTreeResult.isErr()) {
         console.log(`Error linking aqua tree ${linkedAquaTreeResult.data}`)
@@ -124,5 +136,9 @@ export async function serverAttestation(identityClaimId: string): Promise<AquaTr
 
     //   console.log(`\n ## signedAttestation: `, JSON.stringify(signedAttestation, null, 4))
 
-    return signedAttestation
+    return {
+        aquaTree: signedAttestation!!,
+        attestationJSONfileData : attestationForm,
+        attestationJSONfileName : fileName
+    }
 }

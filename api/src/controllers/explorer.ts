@@ -16,8 +16,9 @@ import { mergeRevisionChain } from '../utils/quick_revision_utils';
 import { getGenesisHash, removeFilePathFromFileIndex, validateAquaTree } from '../utils/aqua_tree_utils';
 import WebSocketActions from '../constants/constants';
 import { sendToUserWebsockerAMessage } from './websocketController';
-import { systemTemplateHashes } from '../models/constants';
-import { serverAttestation } from '../utils/server_attest';
+// import { systemTemplateHashes } from '../models/constants';
+// import { serverAttestation } from '../utils/server_attest';
+import { saveAttestationFileAndAquaTree } from 'src/utils/server_utils';
 // import { saveAquaFile } from '../utils/server_utils';
 // import { serverAttestation } from '../utils/server_attest';
 // import getStream from 'get-stream';
@@ -230,17 +231,7 @@ export default async function explorerController(fastify: FastifyInstance) {
                     return reply.code(500).send({ error: 'Genesis hash not found in aqua tree' });
                 }
 
-                // Logic to check and attest an aquatree if its a phone number claim or email_claim
-                let workflowDataResponse = isWorkFlowData(aquaTree,systemTemplateHashes)
-                // throw new Error(`workflowDataResponse ${JSON.stringify(workflowDataResponse)}`)
-                if(workflowDataResponse.isWorkFlow && (workflowDataResponse.workFlow.includes("phone_number_claim") || workflowDataResponse.workFlow.includes("email_claim"))){
-                    let serverAttestationInfo = await serverAttestation(genesisHash)
-                    if(serverAttestationInfo){
-                        const attestedAquaTree = serverAttestationInfo
-                        fs.writeFileSync(path.join("./", `attested_aqua_tree.json.aqua.json`), JSON.stringify(attestedAquaTree, null, 4))
-                        saveAquaTree(attestedAquaTree, walletAddress, null, false)
-                    }
-                }
+                saveAttestationFileAndAquaTree(aquaTree, genesisHash, walletAddress)
                 
 
                 // let filepubkeyhash = `${session.address}_${genesisHash}`
@@ -312,8 +303,7 @@ export default async function explorerController(fastify: FastifyInstance) {
                         }
                     })
 
-                    // saveAquaFile(aquaTree, assetBuffer, genesisHash, fileHash, fileName, filepubkeyhash)
-
+                  
 
                 }
 
