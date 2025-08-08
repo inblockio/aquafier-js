@@ -17,8 +17,8 @@ import FormTemplateEditorShadcn from '../components/aqua_forms/FormTemplateEdito
 import { AppSidebar } from '../components/app_sidebar'
 import WebsocketFragment from '@/components/navbar/WebsocketFragment'
 import { ScrollArea } from '@/components/ui/scroll-area'
- 
-  
+
+
 export default function NewShadcnLayoutWithSidebar() {
       const {
             session,
@@ -88,7 +88,7 @@ export default function NewShadcnLayoutWithSidebar() {
 
                                                       <div className="flex items-center gap-3">
                                                             <div className="flex items-center gap-2 bg-blue-50 border border-blue-200 rounded-lg px-3 py-1.5"
-                                                             onClick={() => {
+                                                                  onClick={() => {
                                                                         setOpenDialog({
                                                                               dialogType: 'early_bird_offer',
                                                                               isOpen: true,
@@ -290,7 +290,7 @@ export default function NewShadcnLayoutWithSidebar() {
                                           />
                                     )}
 
-  {openDialog?.dialogType === 'user_signature' && (
+                                    {openDialog?.dialogType === 'user_signature' && (
                                           <CreateFormFromTemplate
                                                 selectedTemplate={formTemplates.find(template => template.name === 'user_signature')!}
                                                 callBack={function (): void {
@@ -312,7 +312,7 @@ export default function NewShadcnLayoutWithSidebar() {
                                                 openCreateTemplatePopUp={false}
                                           />
                                     )}
- 
+
 
                                     {openDialog?.dialogType === 'dns_claim' && (
                                           <CreateFormFromTemplate

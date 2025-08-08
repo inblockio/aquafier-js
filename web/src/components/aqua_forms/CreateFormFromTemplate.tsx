@@ -13,7 +13,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Alert, AlertDescription } from '@/components/ui/alert'
-import { useNavigate } from 'react-router-dom'
+// import { useNavigate } from 'react-router-dom'
 import { AlertCircle, BookCheck, FileText, Image, Link, Loader2, Pen, Plus, Send, Trash2, Upload, Wallet, X } from 'lucide-react'
 import { Badge } from '../ui/badge'
 import { Separator } from '../ui/separator'
@@ -38,7 +38,7 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: { selectedTempla
       }>(null)
 
       const signatureRef = useRef<SignatureCanvas | null>(null)
-      const navigate = useNavigate()
+      // const navigate = useNavigate()
 
       const [verifyingFormField, setVerifyingFormField] = useState('')
       const [canvasSize, setCanvasSize] = useState({ width: 800, height: 200 });
@@ -234,7 +234,7 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: { selectedTempla
 
                               toast.success('Aqua tree created successfully')
                               callBack && callBack()
-                              navigate('/app')
+                              // navigate('/app')
                               setModalFormErorMessae('')
                               setFormData({})
                               setSubmittingTemplateData(false)
@@ -364,30 +364,31 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: { selectedTempla
                   }
 
                   // ensure required fields have input
-                  if (fieldItem.required) {
-                        let inputData = formData[fieldItem.name]
-                        if (!inputData) {
-                              if (fieldItem.default_value) {
+                  // if (fieldItem.required) {
+                  //       let inputData = formData[fieldItem.name]
+                  //       if (!inputData) {
+                  //             if (fieldItem.default_value) {
 
-                                    setFormData({
-                                          ...formData,
-                                          [fieldItem.name]: fieldItem.default_value,
-                                    })
-                              } else {
+                  //                   setFormData({
+                  //                         ...formData,
+                  //                         [fieldItem.name]: fieldItem.default_value,
+                  //                   })
+                  //             } else {
 
-                                    if (fieldItem.name == 'wallet_address' && fieldItem.type == 'wallet_address') {
-                                          setFormData({
-                                                ...formData,
-                                                [fieldItem.name]: session!.address,
-                                          })
-                                    } else {
+                  //                   if ((fieldItem.name == 'wallet_address' || fieldItem.name == "sender" ) && fieldItem.type == 'wallet_address') {
+                  //                         setFormData({
+                  //                               ...formData,
+                  //                               [fieldItem.name]: session!.address,
+                  //                         })
+                  //                   } else {
 
-                                          throw new Error(`${fieldItem.label} must have an input.`)
-                                    }
+                  //                         console.log(` Validation formdata == ${JSON.stringify(formData, null, 2)}`)
+                  //                         throw new Error(`${fieldItem.label} must have an input.`)
+                  //                   }
 
-                              }
-                        }
-                  }
+                  //             }
+                  //       }
+                  // }
             }
       }
 
@@ -555,7 +556,12 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: { selectedTempla
                   console.log('instance of  ', value instanceof File)
                   if (!(value instanceof File)) {
                         if (typeof value === 'string' || typeof value === 'number') {
-                              filteredData[key] = value
+                              if (key.endsWith(`_verification`)) {
+                                    console.log(`ends with _verification`)
+                              } else {
+
+                                    filteredData[key] = value
+                              }
                         } else {
                               filteredData[key] = String(value)
                         }

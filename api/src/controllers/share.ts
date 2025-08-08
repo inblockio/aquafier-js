@@ -190,6 +190,7 @@ export default async function shareController(fastify: FastifyInstance) {
 
         //trigger the other party to refetch explorer files
         sendToUserWebsockerAMessage(recipient, WebSocketActions.REFETCH_SHARE_CONTRACTS)
+        sendToUserWebsockerAMessage(recipient, WebSocketActions.REFETCH_SHARE_CONTRACTS)
 
         return reply.code(200).send({ success: true, message: "share contract created successfully." });
 
