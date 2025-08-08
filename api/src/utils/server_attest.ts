@@ -38,7 +38,7 @@ export function getTemplateInformation(templateItem: string): TemplateInformatio
 
 
 
-export async function serverAttestation(identityClaimId: string) {
+export async function serverAttestation(identityClaimId: string): Promise<AquaTree | null> {
 
     const aquafier = new Aquafier()
     const templateItem = "identity_attestation"
@@ -50,7 +50,9 @@ export async function serverAttestation(identityClaimId: string) {
     // console.log("Server wallet information", serverWalletInformation)
 
     if (!serverWalletInformation) {
-        throw new Error("Server wallet information is not defined");
+        // throw new Error("Server wallet information is not defined");
+        console.log("Server wallet information is not defined");
+        return null;
     }
 
     const attestationForm = {
@@ -70,7 +72,8 @@ export async function serverAttestation(identityClaimId: string) {
     // console.log(`\n ## genesisAquaTreeResult ${JSON.stringify(genesisAquaTreeResult)}`)
 
     if (genesisAquaTreeResult.isErr()) {
-        throw new Error(`Error creating genesis aqua tree ${genesisAquaTreeResult.data}`)
+        console.log(`Error creating genesis aqua tree ${genesisAquaTreeResult.data}`)
+        return null;
     }
     const genesisAquaTree = genesisAquaTreeResult.data.aquaTree
 
@@ -97,7 +100,8 @@ export async function serverAttestation(identityClaimId: string) {
     // console.log(`\n ## linkedAquaTreeResult ${JSON.stringify(linkedAquaTreeResult)}`)
 
     if (linkedAquaTreeResult.isErr()) {
-        throw new Error(`Error linking aqua tree ${linkedAquaTreeResult.data}`)
+        console.log(`Error linking aqua tree ${linkedAquaTreeResult.data}`)
+        return null;
     }
     const creds = dummyCredential()
     creds.mnemonic = serverWalletInformation.mnemonic
@@ -112,7 +116,8 @@ export async function serverAttestation(identityClaimId: string) {
     // console.log(`\n ## signAquaTreeResult ${JSON.stringify(signAquaTreeResult)}`)
 
     if (signAquaTreeResult.isErr()) {
-        throw new Error(`Error signing aqua tree ${signAquaTreeResult.data}`)
+        console.log(`Error signing aqua tree ${signAquaTreeResult.data}`)
+        return null;
     }
 
     const signedAttestation = signAquaTreeResult.data.aquaTree

@@ -8,7 +8,7 @@ import { randomUUID } from 'crypto';
 import util from 'util';
 import { pipeline } from 'stream';
 import * as fs from "fs"
-import { deleteAquaTreeFromSystem, fetchAquatreeFoUser, getUserApiFileInfo, processAquaFiles, processAquaMetadata, saveAquaTree, transferRevisionChainData } from '../utils/revisions_utils';
+import { deleteAquaTreeFromSystem, fetchAquatreeFoUser, getUserApiFileInfo, isWorkFlowData, processAquaFiles, processAquaMetadata, saveAquaTree, transferRevisionChainData } from '../utils/revisions_utils';
 import { getHost, getPort, saveTemplateFileData } from '../utils/api_utils';
 import { DeleteRevision } from '../models/request_models';
 import { fetchCompleteRevisionChain } from '../utils/quick_utils';
@@ -16,7 +16,10 @@ import { mergeRevisionChain } from '../utils/quick_revision_utils';
 import { getGenesisHash, removeFilePathFromFileIndex, validateAquaTree } from '../utils/aqua_tree_utils';
 import WebSocketActions from '../constants/constants';
 import { sendToUserWebsockerAMessage } from './websocketController';
-// import { serverAttestation } from 'src/utils/server_attest';
+import { systemTemplateHashes } from '../models/constants';
+import { serverAttestation } from '../utils/server_attest';
+// import { saveAquaFile } from '../utils/server_utils';
+// import { serverAttestation } from '../utils/server_attest';
 // import getStream from 'get-stream';
 // Promisify pipeline
 const pump = util.promisify(pipeline);
@@ -183,6 +186,7 @@ export default async function explorerController(fastify: FastifyInstance) {
 
             console.log("Template name: ", templateName)
             console.log("Template id: ", templateId)
+            
 
 
 
@@ -192,6 +196,7 @@ export default async function explorerController(fastify: FastifyInstance) {
 
             let fileContent = fileBuffer.toString('utf-8');
             let aquaTreeFromFile: AquaTree = JSON.parse(fileContent);
+
 
 
 
@@ -224,6 +229,19 @@ export default async function explorerController(fastify: FastifyInstance) {
                 if (genesisHash == null || genesisHash == "") {
                     return reply.code(500).send({ error: 'Genesis hash not found in aqua tree' });
                 }
+
+                // Logic to check and attest an aquatree if its a phone number claim or email_claim
+                let workflowDataResponse = isWorkFlowData(aquaTree,systemTemplateHashes)
+                // throw new Error(`workflowDataResponse ${JSON.stringify(workflowDataResponse)}`)
+                if(workflowDataResponse.isWorkFlow && (workflowDataResponse.workFlow.includes("phone_number_claim") || workflowDataResponse.workFlow.includes("email_claim"))){
+                    let serverAttestationInfo = await serverAttestation(genesisHash)
+                    if(serverAttestationInfo){
+                        const attestedAquaTree = serverAttestationInfo
+                        fs.writeFileSync(path.join("./", `attested_aqua_tree.json.aqua.json`), JSON.stringify(attestedAquaTree, null, 4))
+                        saveAquaTree(attestedAquaTree, walletAddress, null, false)
+                    }
+                }
+                
 
                 // let filepubkeyhash = `${session.address}_${genesisHash}`
                 let filepubkeyhash = `${walletAddress}_${genesisHash}`
@@ -293,6 +311,8 @@ export default async function explorerController(fastify: FastifyInstance) {
 
                         }
                     })
+
+                    // saveAquaFile(aquaTree, assetBuffer, genesisHash, fileHash, fileName, filepubkeyhash)
 
 
                 }
