@@ -131,7 +131,7 @@ export const AttestAquaClaim = ({ file, index, children }: { file: ApiFileInfo; 
                         )
                   }
             } else {
-                  toast.error('This claim does not have a signature revision, cannot attest')
+                  // toast.error(`This claim does not have a signature revision, cannot attest ${secondRevision.revision_type}`)
                   return null
             }
       }

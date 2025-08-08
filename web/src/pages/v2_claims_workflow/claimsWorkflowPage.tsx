@@ -16,6 +16,7 @@ import DNSClaim from './DNSClaim'
 import { toast } from 'sonner'
 
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
+import { ChevronDown, ChevronUp } from 'lucide-react'
 
 
 export default function ClaimsWorkflowPage() {
@@ -249,7 +250,16 @@ export default function ClaimsWorkflowPage() {
                                     <div key={`claim_${index}`} className="container mx-auto py-4 px-1 md:px-4 bg-gray-200 rounded-lg">
                                           {renderClaim(claim)}
                                           <Collapsible className='mt-4 bg-gray-50 p-2 rounded-lg'>
-                                                <CollapsibleTrigger className='cursor-pointer w-full py-4 border-2 border-gray-400 rounded-lg font-bold'>Sharing Information</CollapsibleTrigger>
+                                                <CollapsibleTrigger className='cursor-pointer w-full p-2 border-2 border-gray-200 rounded-lg flex justify-between items-center'>
+                                                <div className="flex flex-col text-start">
+                                                      <p className='font-bold text-gray-700'>Sharing Information</p>
+                                                      <p className='text-gray-600'>Who have you shared the claim with</p>
+                                                </div>
+                                                <div className='flex flex-col gap-0 h-fit'>
+                                                      <ChevronDown />
+                                                      <ChevronUp />
+                                                </div>
+                                                </CollapsibleTrigger>
                                                 <CollapsibleContent>
                                                       <div className="flex flex-col gap-2 p-2">
                                                             {

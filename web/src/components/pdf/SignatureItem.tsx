@@ -1,10 +1,12 @@
 import { SignatureData } from '../../types/types'
+import WalletAddressClaim from '../../pages/v2_claims_workflow/WalletAdrressClaim'
 
 interface ISignatureItem {
       signature: SignatureData
 }
 
 const SignatureItem: React.FC<ISignatureItem> = ({ signature }) => {
+      
       return (
             <div>
                   <div key={signature.id} className="p-2 cursor-pointer bg-blue-50 hover:bg-gray-50 transition-colors">
@@ -13,9 +15,10 @@ const SignatureItem: React.FC<ISignatureItem> = ({ signature }) => {
                               <div className="flex flex-col space-y-0">
                                     <p className="text-sm font-medium">{signature.name}</p>
                                     <p className="text-xs text-gray-600">
-                                          {signature.walletAddress.length > 10
+                                          {/* {signature.walletAddress.length > 10
                                                 ? `${signature.walletAddress.substring(0, 6)}...${signature.walletAddress.substring(signature.walletAddress.length - 4)}`
-                                                : signature.walletAddress}
+                                                : signature.walletAddress} */}
+                                                <WalletAddressClaim walletAddress={signature.walletAddress} />
                                     </p>
                               </div>
                         </div>

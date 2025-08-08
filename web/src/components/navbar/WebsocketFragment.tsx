@@ -179,6 +179,8 @@ const WebsocketFragment = () => {
                                           }
                                     })()
                               } else if (message.action === WebSocketActions.REFETCH_SHARE_CONTRACTS) {
+                                    
+                              } else if (message.action === WebSocketActions.REFETCH_SHARE_CONTRACTS) {
                                     ;(async () => {
                                           try {
                                                 const url = `${backend_url}/contracts`
@@ -202,7 +204,7 @@ const WebsocketFragment = () => {
                               } else if (message.action === WebSocketActions.FETCH_USERS) {
                                     fetchConnectedUsers()
                               } else {
-                                    // console.log(`🔌 ECHO - message received ${JSON.stringify(message, null, 4)}`)
+                                    console.log(`🔌 ECHO - message received ${JSON.stringify(message, null, 4)}`)
                               }
                         } catch (error) {
                               console.error('Error parsing WebSocket message:', error)

@@ -1,21 +1,26 @@
 import Aquafier, { AquaTree, FileObject, LogData, LogType, OrderRevisionInAquaTree, Revision } from 'aqua-js-sdk';
 import { FastifyInstance } from 'fastify';
 import { prisma } from '../database/db';
-import { getFileUploadDirectory, streamToBuffer } from '../utils/file_utils';
+import {getFile, getFileUploadDirectory, persistFile, streamToBuffer} from '../utils/file_utils';
 import path from 'path';
 import JSZip from "jszip";
 import { randomUUID } from 'crypto';
 import util from 'util';
 import { pipeline } from 'stream';
 import * as fs from "fs"
-import { deleteAquaTreeFromSystem, fetchAquatreeFoUser, getUserApiFileInfo, processAquaFiles, processAquaMetadata, saveAquaTree, transferRevisionChainData } from '../utils/revisions_utils';
-import { getHost, getPort } from '../utils/api_utils';
+import { deleteAquaTreeFromSystem, fetchAquatreeFoUser, getUserApiFileInfo, isWorkFlowData, processAquaFiles, processAquaMetadata, saveAquaTree, transferRevisionChainData } from '../utils/revisions_utils';
+import { getHost, getPort, saveTemplateFileData } from '../utils/api_utils';
 import { DeleteRevision } from '../models/request_models';
 import { fetchCompleteRevisionChain } from '../utils/quick_utils';
 import { mergeRevisionChain } from '../utils/quick_revision_utils';
 import { getGenesisHash, removeFilePathFromFileIndex, validateAquaTree } from '../utils/aqua_tree_utils';
 import WebSocketActions from '../constants/constants';
 import { sendToUserWebsockerAMessage } from './websocketController';
+// import { systemTemplateHashes } from '../models/constants';
+// import { serverAttestation } from '../utils/server_attest';
+import { saveAttestationFileAndAquaTree } from '../utils/server_utils';
+// import { saveAquaFile } from '../utils/server_utils';
+// import { serverAttestation } from '../utils/server_attest';
 // import getStream from 'get-stream';
 // Promisify pipeline
 const pump = util.promisify(pipeline);
@@ -137,6 +142,7 @@ export default async function explorerController(fastify: FastifyInstance) {
             let assetFilename = "";
             let isWorkFlow = false
             let templateId = ""
+            let templateName = ""
             let walletAddress = session.address;
             // Process each part of the multipart form
             for await (const part of parts) {
@@ -171,11 +177,17 @@ export default async function explorerController(fastify: FastifyInstance) {
                         }
                     } else if (part.fieldname === 'is_workflow') {
                         isWorkFlow = part.value === 'true';
+                    } else if (part.fieldname === 'template_name') {
+                        templateName = part.value as string;
                     } else if (part.fieldname === 'template_id') {
                         templateId = part.value as string;
                     }
                 }
             }
+
+            console.log("Template name: ", templateName)
+            console.log("Template id: ", templateId)
+            
 
 
 
@@ -185,6 +197,7 @@ export default async function explorerController(fastify: FastifyInstance) {
 
             let fileContent = fileBuffer.toString('utf-8');
             let aquaTreeFromFile: AquaTree = JSON.parse(fileContent);
+
 
 
 
@@ -217,6 +230,9 @@ export default async function explorerController(fastify: FastifyInstance) {
                 if (genesisHash == null || genesisHash == "") {
                     return reply.code(500).send({ error: 'Genesis hash not found in aqua tree' });
                 }
+
+                saveAttestationFileAndAquaTree(aquaTree, genesisHash, walletAddress)
+                
 
                 // let filepubkeyhash = `${session.address}_${genesisHash}`
                 let filepubkeyhash = `${walletAddress}_${genesisHash}`
@@ -287,6 +303,7 @@ export default async function explorerController(fastify: FastifyInstance) {
                         }
                     })
 
+                  
 
                 }
 
@@ -392,6 +409,8 @@ export default async function explorerController(fastify: FastifyInstance) {
 
         // Read `nonce` from headers
         const nonce = request.headers['nonce']; // Headers are case-insensitive
+
+        const file = await getFile("s3:/aquafier/c5e26710-a697-42da-a8fa-d085eab54ef6-234.png")
 
         // Check if `nonce` is missing or empty
         if (!nonce || typeof nonce !== 'string' || nonce.trim() === '') {
@@ -668,11 +687,7 @@ export default async function explorerController(fastify: FastifyInstance) {
                     const UPLOAD_DIR = getFileUploadDirectory();
                     // Create unique filename
                     const filename = `${randomUUID()}-${data.filename}`;
-                    const filePath = path.join(UPLOAD_DIR, filename);
-
-                    // Save the file
-                    // await pump(data.file, fs.createWriteStream(filePath))
-                    await fs.promises.writeFile(filePath, fileBuffer);
+                    const filePath = await persistFile(UPLOAD_DIR, filename, fileBuffer)
 
                     await prisma.file.upsert({
                         where: {

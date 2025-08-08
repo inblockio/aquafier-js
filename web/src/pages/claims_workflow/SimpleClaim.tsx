@@ -22,10 +22,10 @@ const SimpleClaim = ({ claimInfo }: ISimpleClaim) => {
       const fields = Object.entries(claimInfo).map(([key, value]) => {
             let processedKey = key.split('forms_')[1].split('_').join(' ')
             let processedValue = value
-            let extraStyles = {}
+            let cssClass = {}
             if (key === 'forms_wallet_address') {
                   processedValue = formatCryptoAddress(processedValue, 6, 4)
-                  extraStyles = { fontFamily: 'monospace' }
+                  cssClass = 'font-mono'
             }
 
             if (key === 'forms_type') {
@@ -35,7 +35,15 @@ const SimpleClaim = ({ claimInfo }: ISimpleClaim) => {
             return (
                   <div key={key} className="flex justify-between items-start">
                         <span className="text-sm text-gray-600 capitalize">{processedKey}</span>
-                        <span className={`text-sm font-medium max-w-[200px] break-all`} style={{ textAlign: 'right', ...extraStyles }}>
+                        <span className={`text-sm font-medium max-w-[200px] break-all ${cssClass}`} 
+                        style={{ 
+                              textAlign: 'right',
+                              whiteSpace: 'normal',
+                              wordWrap: 'break-word',
+                              wordBreak: 'break-word',
+                              overflowWrap: 'break-word',
+                        }}
+                        >
                               {processedValue}
                         </span>
                   </div>

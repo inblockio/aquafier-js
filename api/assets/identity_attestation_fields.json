@@ -10,7 +10,7 @@
   {
     "name": "context",
     "label": "Context",
-    "type": "string",
+    "type": "text",
     "required": false,
     "isArray": false
   },

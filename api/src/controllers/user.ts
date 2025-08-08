@@ -399,6 +399,11 @@ export default async function userController(fastify: FastifyInstance) {
             await prisma.$transaction(async (tx) => {
                 console.log('Starting user data deletion transaction for user:', userAddress);
 
+                  const deletedNotifications = await tx.notifications.deleteMany({
+                    where: { receiver: userAddress }
+                });
+                console.log(`Deleted deletedNotifications ${deletedNotifications.count}  records`);
+
                 // Step 1: Delete all Latest records associated with user address
                 const deletedLatest = await tx.latest.deleteMany({
                     where: { user: userAddress }

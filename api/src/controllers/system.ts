@@ -1,18 +1,15 @@
 
-import { FastifyInstance, FastifyRequest } from 'fastify';
+import { FastifyInstance } from 'fastify';
 import fastifyRateLimit from '@fastify/rate-limit';
-import { SiweMessage } from 'siwe';
 import { prisma } from '../database/db';
-import { Settings } from '@prisma/client';
-import { SessionQuery, ShareRequest, SiweRequest } from '../models/request_models';
-import { AquaTree, FileObject, OrderRevisionInAquaTree, reorderAquaTreeRevisionsProperties } from 'aqua-js-sdk';
+import { AquaTree } from 'aqua-js-sdk';
 import { checkFolderExists, getHost, getPort } from '../utils/api_utils';
-import { fetchAquatreeFoUser, fetchAquaTreeWithForwardRevisions, saveAquaTree } from '../utils/revisions_utils';
+import { fetchAquatreeFoUser } from '../utils/revisions_utils';
 import { SYSTEM_WALLET_ADDRESS } from '../models/constants';
 import path from 'path';
 import * as fs from "fs"
-import { getGenesisHash } from '../utils/aqua_tree_utils';
 import { getAquaAssetDirectory } from '../utils/file_utils';
+import { getTemplateInformation } from '../utils/server_attest';
 
 export default async function systemController(fastify: FastifyInstance) {
 
@@ -55,24 +52,16 @@ export default async function systemController(fastify: FastifyInstance) {
             "cheque",
             "identity_attestation",
             "identity_claim",
-            "user_signature"
+            "user_signature",
+            "email_claim",
+            "phone_number_claim"
         ]
 
         for (let index = 0; index < templates.length; index++) {
             const templateItem = templates[index];
-            let templateAquaTreeData = path.join(assetsPath, `${templateItem}.json.aqua.json`);
-
-
-            let templateAquaTreeDataContent = fs.readFileSync(templateAquaTreeData, 'utf8')
-            let templateAquaTree: AquaTree = JSON.parse(templateAquaTreeDataContent)
-            let genHash = getGenesisHash(templateAquaTree);
-            console.log(`Template ${templateItem} with genesis hash ${genHash}`)
-
-            if (!genHash) {
-                throw new Error(`Genesis hash for template ${templateItem} is not defined`);
-            }
+            const templateInformation = getTemplateInformation(templateItem)
             // save to map
-            dataMap.set(templateItem, genHash);
+            dataMap.set(templateItem, templateInformation.genHash);
 
         }
 

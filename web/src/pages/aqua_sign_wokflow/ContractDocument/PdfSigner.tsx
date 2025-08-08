@@ -2,12 +2,12 @@ import { useState, useRef, useEffect, useCallback } from 'react'
 
 // Import /components//ui components
 import { Button } from '../../../components/ui/button'
-import { Input } from '../../../components/ui/input'
-import { Label } from '../../../components/ui/label'
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../../../components/ui/dialog'
+// import { Input } from '../../../components/ui/input'
+// import { Label } from '../../../components/ui/label'
+// import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../../../components/ui/dialog'
 // import { PDFDocument, rgb, StandardFonts } from 'pdf-lib';
 import { PDFDocument } from 'pdf-lib'
-import SignatureCanvas from 'react-signature-canvas'
+// import SignatureCanvas from 'react-signature-canvas'
 import { FaPlus } from 'react-icons/fa'
 import appStore from '../../../store'
 import { useStore } from 'zustand'
@@ -15,12 +15,12 @@ import { useStore } from 'zustand'
 import axios from 'axios'
 import { ApiFileInfo } from '../../../models/FileInfo'
 import {
-      dataURLToFile,
+      // dataURLToFile,
       dummyCredential,
       ensureDomainUrlHasSSL,
       estimateFileSize,
       fetchFiles,
-      getAquaTreeFileName,
+      // getAquaTreeFileName,
       getGenesisHash,
       getRandomNumber,
       timeStampToDateObject,
@@ -37,6 +37,7 @@ import { PdfRenderer } from './signer/SignerPage'
 import React from 'react'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { toast } from 'sonner'
+import WalletAddressClaim from '../../v2_claims_workflow/WalletAdrressClaim'
 
 interface PdfSignerProps {
       fileData: File | null
@@ -45,37 +46,40 @@ interface PdfSignerProps {
 }
 
 const PdfSigner: React.FC<PdfSignerProps> = ({ fileData, setActiveStep, documentSignatures }) => {
-      const { formTemplates, systemFileInfo, selectedFileInfo, setSelectedFileInfo, setFiles } = useStore(appStore)
+      // const { formTemplates, systemFileInfo, selectedFileInfo, setSelectedFileInfo, setFiles , setOpenDialog, openDialog} = useStore(appStore)
+      const {  selectedFileInfo, setSelectedFileInfo, setFiles , setOpenDialog, openDialog} = useStore(appStore)
       // State for PDF document
       const [pdfFile, setPdfFile] = useState<File | null>(null)
       const [_pdfUrl, setPdfUrl] = useState<string | null>(null)
       const [_pdfDoc, setPdfDoc] = useState<PDFDocument | null>(null)
-      const [creatingUserSignature, setCreatingUserSignature] = useState<boolean>(false)
+      // const [creatingUserSignature, setCreatingUserSignature] = useState<boolean>(false)
       const [signers, setSigners] = useState<string[]>([])
       const [allSignersBeforeMe, setAllSignersBeforeMe] = useState<string[]>([])
+
+      
       // const [userCanSign, setUserCanSign] = useState<boolean>(false);
 
       // const [numPages, setNumPages] = useState<number>(0);
       // const [currentPage, setCurrentPage] = useState<number>(1);
 
       // State for signatures
-      const signatureRef = useRef<SignatureCanvas | null>(null)
+      // const signatureRef = useRef<SignatureCanvas | null>(null)
       const [mySignaturesAquaTree, setMySignaturesAquaTree] = useState<Array<ApiFileInfo>>([])
       const [mySignatureData, setMySignatureData] = useState<Array<SignatureData>>([])
 
       // const [signaturesInDocument, setSignaturesInDocument] = useState<SignatureData[]>(documentSignatures || []);
 
       const [selectedSignatureId, setSelectedSignatureId] = useState<string | null>(null)
-      const [signerName, setSignerName] = useState<string>('John Doe')
+      // const [signerName, setSignerName] = useState<string>('John Doe')
       const [signaturePositions, setSignaturePositions] = useState<SignatureData[]>([])
-      const [placingSignature, setPlacingSignature] = useState<boolean>(false)
+      // const [placingSignature, setPlacingSignature] = useState<boolean>(false)
       // const [signatureSize, setSignatureSize] = useState<number>(330);
       const [canPlaceSignature, setCanPlaceSignature] = useState(false)
       const [selectedTool, setSelectedTool] = useState<'text' | 'image' | 'profile' | 'signature' | null>(null)
       const [submittingSignatureData, setSubmittingSignatureData] = useState(false)
 
       // Modal state
-      const [isOpen, setIsOpen] = useState(false)
+      // const [isOpen, setIsOpen] = useState(false)
 
       // Get wallet address from store
       const { session, backend_url } = useStore(appStore)
@@ -446,6 +450,25 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ fileData, setActiveStep, document
                         if (sender && session?.address && sender !== session.address) {
                               await createSigningNotification(session.address, sender)
                         }
+
+                        let signersString = revision['forms_signers']
+                        let signers : string []=[];
+                        if(signersString.includes(',')){
+                              signers = signersString.split(',')
+                        }else{
+                              signers.push(signersString)
+                        }
+
+                        for(const wallet of signers){
+
+                              if(wallet ==sender || wallet == session?.address){
+                                    //ignore senting notification to self
+                                    // ignore sending notification to  sender already sent above
+                              }else{
+                                 await createSigningNotification(session!.address, wallet)   
+                              }
+                        }
+
                   }
 
                   // Step 8: Update UI and refresh files
@@ -464,12 +487,12 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ fileData, setActiveStep, document
       }
 
       // Clear signature canvas
-      const clearSignature = () => {
-            if (signatureRef.current) {
-                  signatureRef.current.clear()
-                  // Don't clear all signatures, just reset the canvas
-            }
-      }
+      // const clearSignature = () => {
+      //       if (signatureRef.current) {
+      //             signatureRef.current.clear()
+      //             // Don't clear all signatures, just reset the canvas
+      //       }
+      // }
 
       const saveAquaTree = async (aquaTree: AquaTree, fileObject: FileObject, isFinal: boolean = false, isWorkflow: boolean = false, template_id: string): Promise<boolean> => {
             try {
@@ -560,292 +583,293 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ fileData, setActiveStep, document
             }
       }
 
-      const createWorkflowFromTemplate = async (): Promise<boolean> => {
-            const selectedTemplate = formTemplates.find(e => e.name == 'user_signature')
+      // const createWorkflowFromTemplate = async (): Promise<boolean> => {
+      //       const selectedTemplate = formTemplates.find(e => e.name == 'user_signature')
 
-            if (!selectedTemplate) {
-                  toast.error('User Signature template not found', {
-                        description: `User Signature template not found`,
-                        duration: 5000,
-                  })
-                  return false
-            }
+      //       if (!selectedTemplate) {
+      //             toast.error('User Signature template not found', {
+      //                   description: `User Signature template not found`,
+      //                   duration: 5000,
+      //             })
+      //             return false
+      //       }
 
-            if (systemFileInfo.length == 0) {
-                  toast.error('Aqua tree for templates not found')
-                  return false
-            }
+      //       if (systemFileInfo.length == 0) {
+      //             toast.error('Aqua tree for templates not found')
+      //             return false
+      //       }
 
-            if (!signatureRef.current) {
-                  toast.error('Signature image not found')
-                  return false
-            }
+      //       if (!signatureRef.current) {
+      //             toast.error('Signature image not found')
+      //             return false
+      //       }
 
-            if (session?.address == undefined) {
-                  toast.error('Wallet address not found')
-                  return false
-            }
+      //       if (session?.address == undefined) {
+      //             toast.error('Wallet address not found')
+      //             return false
+      //       }
 
-            const templateApiFileInfo = systemFileInfo.find(e => {
-                  const nameExtract = getAquaTreeFileName(e!.aquaTree!)
-                  const selectedName = `${selectedTemplate?.name}.json`
-                  console.log(`nameExtract ${nameExtract} == selectedName ${selectedName}`)
-                  return nameExtract == selectedName
-            })
-            if (!templateApiFileInfo) {
-                  toast.error(`Aqua tree for ${selectedTemplate?.name} not found`)
-                  return false
-            }
+      //       const templateApiFileInfo = systemFileInfo.find(e => {
+      //             const nameExtract = getAquaTreeFileName(e!.aquaTree!)
+      //             const selectedName = `${selectedTemplate?.name}.json`
+      //             console.log(`nameExtract ${nameExtract} == selectedName ${selectedName}`)
+      //             return nameExtract == selectedName
+      //       })
+      //       if (!templateApiFileInfo) {
+      //             toast.error(`Aqua tree for ${selectedTemplate?.name} not found`)
+      //             return false
+      //       }
 
-            const dataUrl = signatureRef.current.toDataURL('image/png')
+      //       const dataUrl = signatureRef.current.toDataURL('image/png')
 
-            const epochInSeconds = Math.floor(Date.now() / 1000)
-            const lastFiveCharactersOfWalletAddres = session?.address.slice(-5)
-            const signatureFileName = `user_signature_${lastFiveCharactersOfWalletAddres}_${epochInSeconds}.png`
-            const signatureFile = dataURLToFile(dataUrl, signatureFileName)
+      //       const epochInSeconds = Math.floor(Date.now() / 1000)
+      //       const lastFiveCharactersOfWalletAddres = session?.address.slice(-5)
+      //       const signatureFileName = `user_signature_${lastFiveCharactersOfWalletAddres}_${epochInSeconds}.png`
+      //       const signatureFile = dataURLToFile(dataUrl, signatureFileName)
 
-            setSignaturePositions([])
+      //       setSignaturePositions([])
 
-            const formData = {
-                  name: signerName,
-                  wallet_address: session!.address,
-                  image: signatureFile,
-            }
-            const aquafier = new Aquafier()
-            const filteredData: Record<string, string | number> = {}
+      //       const formData = {
+      //             name: signerName,
+      //             wallet_address: session!.address,
+      //             image: signatureFile,
+      //       }
+      //       const aquafier = new Aquafier()
+      //       const filteredData: Record<string, string | number> = {}
 
-            Object.entries(formData).forEach(([key, value]) => {
-                  // Only include values that are not File objects
-                  if (!(value instanceof File)) {
-                        filteredData[key] = value
-                  }
-            })
+      //       Object.entries(formData).forEach(([key, value]) => {
+      //             // Only include values that are not File objects
+      //             if (!(value instanceof File)) {
+      //                   filteredData[key] = value
+      //             }
+      //       })
 
-            const estimateize = estimateFileSize(JSON.stringify(formData))
+      //       const estimateize = estimateFileSize(JSON.stringify(formData))
 
-            const jsonString = JSON.stringify(formData, null, 4)
+      //       const jsonString = JSON.stringify(formData, null, 4)
 
-            const randomNumber = getRandomNumber(100, 1000)
-            const lastSixChar = session?.address.substring(session?.address.length - 6)
-            const fileObject: FileObject = {
-                  fileContent: jsonString,
-                  fileName: `${selectedTemplate?.name ?? 'template'}-${lastSixChar}-${randomNumber}.json`,
-                  path: './',
-                  fileSize: estimateize,
-            }
-            const genesisAquaTree = await aquafier.createGenesisRevision(fileObject, true, false, false)
+      //       const randomNumber = getRandomNumber(100, 1000)
+      //       const lastSixChar = session?.address.substring(session?.address.length - 6)
+      //       const fileObject: FileObject = {
+      //             fileContent: jsonString,
+      //             fileName: `${selectedTemplate?.name ?? 'template'}-${lastSixChar}-${randomNumber}.json`,
+      //             path: './',
+      //             fileSize: estimateize,
+      //       }
+      //       const genesisAquaTree = await aquafier.createGenesisRevision(fileObject, true, false, false)
 
-            if (genesisAquaTree.isOk()) {
-                  // create a link revision with the systems aqua tree
-                  const mainAquaTreeWrapper: AquaTreeWrapper = {
-                        aquaTree: genesisAquaTree.data.aquaTree!,
-                        revision: '',
-                        fileObject: fileObject,
-                  }
-                  const linkedAquaTreeFileObj = getAquaTreeFileObject(templateApiFileInfo)
+      //       if (genesisAquaTree.isOk()) {
+      //             // create a link revision with the systems aqua tree
+      //             const mainAquaTreeWrapper: AquaTreeWrapper = {
+      //                   aquaTree: genesisAquaTree.data.aquaTree!,
+      //                   revision: '',
+      //                   fileObject: fileObject,
+      //             }
+      //             const linkedAquaTreeFileObj = getAquaTreeFileObject(templateApiFileInfo)
 
-                  if (!linkedAquaTreeFileObj) {
-                        toast.error('system Aqua tee has error')
-                        return false
-                  }
-                  const linkedToAquaTreeWrapper: AquaTreeWrapper = {
-                        aquaTree: templateApiFileInfo.aquaTree!,
-                        revision: '',
-                        fileObject: linkedAquaTreeFileObj,
-                  }
-                  const linkedAquaTreeResponse = await aquafier.linkAquaTree(mainAquaTreeWrapper, linkedToAquaTreeWrapper)
+      //             if (!linkedAquaTreeFileObj) {
+      //                   toast.error('system Aqua tee has error')
+      //                   return false
+      //             }
+      //             const linkedToAquaTreeWrapper: AquaTreeWrapper = {
+      //                   aquaTree: templateApiFileInfo.aquaTree!,
+      //                   revision: '',
+      //                   fileObject: linkedAquaTreeFileObj,
+      //             }
+      //             const linkedAquaTreeResponse = await aquafier.linkAquaTree(mainAquaTreeWrapper, linkedToAquaTreeWrapper)
 
-                  if (linkedAquaTreeResponse.isErr()) {
-                        toast.error('Error linking aqua tree')
-                        return false
-                  }
+      //             if (linkedAquaTreeResponse.isErr()) {
+      //                   toast.error('Error linking aqua tree')
+      //                   return false
+      //             }
 
-                  let aquaTreeData = linkedAquaTreeResponse.data.aquaTree!
+      //             let aquaTreeData = linkedAquaTreeResponse.data.aquaTree!
 
-                  const containsFileData = selectedTemplate?.fields.filter(e => e.type == 'file' || e.type == 'image')
-                  if (containsFileData && containsFileData.length > 0) {
-                        // for (let index = 0; index < containsFileData.length; index++) {
-                        //     const element = containsFileData[index];
-                        //     const file: File = formData[element['name']] as File
+      //             const containsFileData = selectedTemplate?.fields.filter(e => e.type == 'file' || e.type == 'image')
+      //             if (containsFileData && containsFileData.length > 0) {
+      //                   // for (let index = 0; index < containsFileData.length; index++) {
+      //                   //     const element = containsFileData[index];
+      //                   //     const file: File = formData[element['name']] as File
 
-                        // Create an array to store all file processing promises
-                        const fileProcessingPromises = containsFileData.map(async element => {
-                              const file: File = formData['image']
+      //                   // Create an array to store all file processing promises
+      //                   const fileProcessingPromises = containsFileData.map(async element => {
+      //                         const file: File = formData['image']
 
-                              // Check if file exists
-                              if (!file) {
-                                    console.warn(`No file found for field: ${element.name}`)
-                                    return null
-                              }
+      //                         // Check if file exists
+      //                         if (!file) {
+      //                               console.warn(`No file found for field: ${element.name}`)
+      //                               return null
+      //                         }
 
-                              try {
-                                    // Convert File to Uint8Array
-                                    const arrayBuffer = await file.arrayBuffer()
-                                    const uint8Array = new Uint8Array(arrayBuffer)
+      //                         try {
+      //                               // Convert File to Uint8Array
+      //                               const arrayBuffer = await file.arrayBuffer()
+      //                               const uint8Array = new Uint8Array(arrayBuffer)
 
-                                    // Create the FileObject with properties from the File object
-                                    const fileObjectPar: FileObject = {
-                                          fileContent: uint8Array,
-                                          fileName: file.name,
-                                          path: './',
-                                          fileSize: file.size,
-                                    }
+      //                               // Create the FileObject with properties from the File object
+      //                               const fileObjectPar: FileObject = {
+      //                                     fileContent: uint8Array,
+      //                                     fileName: file.name,
+      //                                     path: './',
+      //                                     fileSize: file.size,
+      //                               }
 
-                                    return fileObjectPar
-                                    // After this you can use fileObjectPar with aquafier.createGenesisRevision() or other operations
-                              } catch (error) {
-                                    console.error(`Error processing file ${file.name}:`, error)
-                                    return null
-                              }
-                        })
+      //                               return fileObjectPar
+      //                               // After this you can use fileObjectPar with aquafier.createGenesisRevision() or other operations
+      //                         } catch (error) {
+      //                               console.error(`Error processing file ${file.name}:`, error)
+      //                               return null
+      //                         }
+      //                   })
 
-                        // Wait for all file processing to complete
-                        try {
-                              const fileObjects = await Promise.all(fileProcessingPromises)
-                              // Filter out null results (from errors)
-                              const validFileObjects = fileObjects.filter(obj => obj !== null) as FileObject[]
+      //                   // Wait for all file processing to complete
+      //                   try {
+      //                         const fileObjects = await Promise.all(fileProcessingPromises)
+      //                         // Filter out null results (from errors)
+      //                         const validFileObjects = fileObjects.filter(obj => obj !== null) as FileObject[]
 
-                              // Now you can use validFileObjects
-                              console.log(`Processed ${validFileObjects.length} files successfully`)
+      //                         // Now you can use validFileObjects
+      //                         console.log(`Processed ${validFileObjects.length} files successfully`)
 
-                              // Example usage with each file object:
-                              for (const item of validFileObjects) {
-                                    const aquaTreeResponse = await aquafier.createGenesisRevision(item)
+      //                         // Example usage with each file object:
+      //                         for (const item of validFileObjects) {
+      //                               const aquaTreeResponse = await aquafier.createGenesisRevision(item)
 
-                                    if (aquaTreeResponse.isErr()) {
-                                          console.error('Error linking aqua tree:', aquaTreeResponse.data.toString())
+      //                               if (aquaTreeResponse.isErr()) {
+      //                                     console.error('Error linking aqua tree:', aquaTreeResponse.data.toString())
 
-                                          toast.error('Error linking aqua tree')
-                                          return false
-                                    }
-                                    // upload the single aqua tree
-                                    const resApi = await saveAquaTree(aquaTreeResponse.data.aquaTree!, item, false, true, selectedTemplate.id)
-                                    console.log(`here 2`)
-                                    if (resApi == false) {
-                                          toast.error('An Error  occured saving signature')
-                                          return false
-                                    }
-                                    // linke it to main aqua tree
-                                    const aquaTreeWrapper: AquaTreeWrapper = {
-                                          aquaTree: aquaTreeData,
-                                          revision: '',
-                                          fileObject: fileObject,
-                                    }
+      //                                     toast.error('Error linking aqua tree')
+      //                                     return false
+      //                               }
+      //                               // upload the single aqua tree
+      //                               const resApi = await saveAquaTree(aquaTreeResponse.data.aquaTree!, item, false, true, selectedTemplate.id)
+      //                               console.log(`here 2`)
+      //                               if (resApi == false) {
+      //                                     toast.error('An Error  occured saving signature')
+      //                                     return false
+      //                               }
+      //                               // linke it to main aqua tree
+      //                               const aquaTreeWrapper: AquaTreeWrapper = {
+      //                                     aquaTree: aquaTreeData,
+      //                                     revision: '',
+      //                                     fileObject: fileObject,
+      //                               }
 
-                                    const aquaTreeWrapper2: AquaTreeWrapper = {
-                                          aquaTree: aquaTreeResponse.data.aquaTree!,
-                                          revision: '',
-                                          fileObject: item,
-                                    }
+      //                               const aquaTreeWrapper2: AquaTreeWrapper = {
+      //                                     aquaTree: aquaTreeResponse.data.aquaTree!,
+      //                                     revision: '',
+      //                                     fileObject: item,
+      //                               }
 
-                                    const res = await aquafier.linkAquaTree(aquaTreeWrapper, aquaTreeWrapper2)
-                                    if (res.isErr()) {
-                                          console.error('Error linking aqua tree:', aquaTreeResponse.data.toString())
+      //                               const res = await aquafier.linkAquaTree(aquaTreeWrapper, aquaTreeWrapper2)
+      //                               if (res.isErr()) {
+      //                                     console.error('Error linking aqua tree:', aquaTreeResponse.data.toString())
 
-                                          toast.error('Error linking aqua tree')
-                                          return false
-                                    }
-                                    aquaTreeData = res.data.aquaTree!
-                              }
-                        } catch (error) {
-                              console.error('Error processing files:', error)
+      //                                     toast.error('Error linking aqua tree')
+      //                                     return false
+      //                               }
+      //                               aquaTreeData = res.data.aquaTree!
+      //                         }
+      //                   } catch (error) {
+      //                         console.error('Error processing files:', error)
 
-                              toast.error('Error proceessing files')
-                              return false
-                        }
-                  }
+      //                         toast.error('Error proceessing files')
+      //                         return false
+      //                   }
+      //             }
 
-                  console.log(`here 2.5`)
-                  const aquaTreeWrapper: AquaTreeWrapper = {
-                        aquaTree: aquaTreeData,
-                        revision: '',
-                        fileObject: fileObject,
-                  }
+      //             console.log(`here 2.5`)
+      //             const aquaTreeWrapper: AquaTreeWrapper = {
+      //                   aquaTree: aquaTreeData,
+      //                   revision: '',
+      //                   fileObject: fileObject,
+      //             }
 
-                  // sign the aqua chain
-                  const signRes = await aquafier.signAquaTree(aquaTreeWrapper, 'metamask', dummyCredential())
+      //             // sign the aqua chain
+      //             const signRes = await aquafier.signAquaTree(aquaTreeWrapper, 'metamask', dummyCredential())
 
-                  if (signRes.isErr()) {
-                        console.log(`here 2.6 -- err`)
-                        toast.error('Error signing failed')
-                        return false
-                  } else {
-                        console.log('signRes.data', signRes.data)
-                        fileObject.fileContent = formData
-                        const resApi = await saveAquaTree(signRes.data.aquaTree!, fileObject, true, true, selectedTemplate.id)
-                        console.log(`here 3`)
-                        if (resApi == false) {
-                              toast.error('An Error  occured saving signature')
-                              return false
-                        }
+      //             if (signRes.isErr()) {
+      //                   console.log(`here 2.6 -- err`)
+      //                   toast.error('Error signing failed')
+      //                   return false
+      //             } else {
+      //                   console.log('signRes.data', signRes.data)
+      //                   fileObject.fileContent = formData
+      //                   const resApi = await saveAquaTree(signRes.data.aquaTree!, fileObject, true, true, selectedTemplate.id)
+      //                   console.log(`here 3 ${resApi}`)
+      //                   if (resApi == false) {
+      //                         toast.error('An Error  occured saving signature')
+      //                         return false
+      //                   }
 
-                        const genHash = getGenesisHash(signRes.data.aquaTree!)
-                        if (genHash == null || genHash == undefined) {
-                              toast.error('Error  Aqua tree - Genesis hash not found')
-                        }
+      //                   const genHash = getGenesisHash(signRes.data.aquaTree!)
+      //                   if (genHash == null || genHash == undefined) {
+      //                         toast.error('Error  Aqua tree - Genesis hash not found')
+      //                   }
 
-                        setSignerName('')
-                        return true
-                  }
-            } else {
-                  toast.error('Error creating Aqua tree from template')
+      //                   setSignerName('')
+      //                   return true
+      //             }
+      //       } else {
+      //             toast.error('Error creating Aqua tree from template')
 
-                  return false
-            }
-      }
+      //             return false
+      //       }
+      // }
 
       // Save signature from canvas
-      const saveSignature = async () => {
-            setCreatingUserSignature(true)
-            if (signatureRef.current && !signatureRef.current.isEmpty()) {
-                  if (signaturePositions.length > 0) {
-                        const userConfirmed = confirm('Your document will lose all the signatures appended. Do you want to continue?')
-                        if (!userConfirmed) {
-                              setSignerName('')
-                              setIsOpen(false)
+      // const saveSignature = async () => {
+      //       setCreatingUserSignature(true)
+      //       if (signatureRef.current && !signatureRef.current.isEmpty()) {
+      //             if (signaturePositions.length > 0) {
+      //                   const userConfirmed = confirm('Your document will lose all the signatures appended. Do you want to continue?')
+      //                   if (!userConfirmed) {
+      //                         setSignerName('')
+      //                         setIsOpen(false)
 
-                              // Clear the canvas for next signature
-                              if (signatureRef.current) {
-                                    signatureRef.current.clear()
-                              }
+      //                         // Clear the canvas for next signature
+      //                         if (signatureRef.current) {
+      //                               signatureRef.current.clear()
+      //                         }
 
-                              return // Exit if user clicks "Cancel" (No)
-                        }
-                  }
+      //                         return // Exit if user clicks "Cancel" (No)
+      //                   }
+      //             }
 
-                  const resp = await createWorkflowFromTemplate()
-                  if (resp) {
-                        await loadUserSignatures(true)
+      //             const resp = await createWorkflowFromTemplate()
+      //             console.log(`createWorkflowFromTemplate resp ${resp}`)
+      //             if (resp) {
+      //                   await loadUserSignatures(true)
 
-                        setIsOpen(false)
-                        setCreatingUserSignature(false)
+      //                   setIsOpen(false)
+      //                   setCreatingUserSignature(false)
 
-                        // Clear the canvas for next signature
-                        if (signatureRef.current) {
-                              signatureRef.current.clear()
-                        }
+      //                   // Clear the canvas for next signature
+      //                   if (signatureRef.current) {
+      //                         signatureRef.current.clear()
+      //                   }
 
-                        toast.success('Signature saved', {
-                              description: 'You can now place it on the document',
-                              duration: 3000,
-                        })
+      //                   toast.success('Signature saved', {
+      //                         description: 'You can now place it on the document',
+      //                         duration: 3000,
+      //                   })
 
-                        // If user is in placing mode, allow them to place the signature
-                        if (!placingSignature) {
-                              setPlacingSignature(true)
-                              toast.info('Click on the PDF to place your signature', {
-                                    duration: 3000,
-                              })
-                        }
-                  }
-            } else {
-                  setCreatingUserSignature(false)
+      //                   // If user is in placing mode, allow them to place the signature
+      //                   if (!placingSignature) {
+      //                         setPlacingSignature(true)
+      //                         toast.info('Click on the PDF to place your signature', {
+      //                               duration: 3000,
+      //                         })
+      //                   }
+      //             }
+      //       } else {
+      //             setCreatingUserSignature(false)
 
-                  toast.warning('Please draw a signature first', {
-                        duration: 3000,
-                  })
-            }
-      }
+      //             toast.warning('Please draw a signature first', {
+      //                   duration: 3000,
+      //             })
+      //       }
+      // }
 
       const fetchImage = async (fileUrl: string) => {
             try {
@@ -1005,54 +1029,54 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ fileData, setActiveStep, document
 
                         const firstRevision = userSignature.aquaTree?.revisions[allHashes[0]]
                         if (!firstRevision) {
-                              // console.log(`📢📢 first revision does not exist, this should be investigated`)
+                              console.log(`📢📢 first revision does not exist, this should be investigated`)
                               continue
                         }
                         if (!firstRevision.forms_wallet_address) {
-                              // console.log(`📢📢 first revision does not contain wallet address, this should be investigated`)
+                              console.log(`📢📢 first revision does not contain wallet address, this should be investigated`)
                               continue
                         }
                         if (!firstRevision.forms_name) {
-                              // console.log(`📢📢 first revision does not contain signature name, this should be investigated`)
+                              console.log(`📢📢 first revision does not contain signature name, this should be investigated`)
                               continue
                         }
                         const sinatureAquaTreeName = userSignature.aquaTree?.file_index[allHashes[0]]
                         if (!sinatureAquaTreeName) {
-                              // console.log(`📢📢 aqua tree sintaure instance unique na`)
+                              console.log(`📢📢 aqua tree sintaure instance unique na`)
                               continue
                         }
                         const thirdRevision = userSignature.aquaTree?.revisions[allHashes[2]]
                         if (!thirdRevision) {
-                              // console.log(`📢📢 third revision does not exist, this should be investigated`)
+                              console.log(`📢📢 third revision does not exist, this should be investigated`)
                               continue
                         }
                         if (!thirdRevision.link_verification_hashes) {
-                              // console.log(`📢📢 third revision link_verification_hashes is undefined, this should be investigated`)
+                              console.log(`📢📢 third revision link_verification_hashes is undefined, this should be investigated`)
                               continue
                         }
                         const signatureHash = thirdRevision.link_verification_hashes[0]
                         const signatureImageName = userSignature.aquaTree?.file_index[signatureHash]
                         if (!signatureImageName) {
-                              // console.log(`📢📢 signature Image Name not found in index, this should be investigated`)
+                              console.log(`📢📢 signature Image Name not found in index, this should be investigated`)
 
                               continue
                         }
 
                         const signatureImageObject = userSignature.fileObject.find(e => e.fileName == signatureImageName)
                         if (!signatureImageObject) {
-                              // console.log(`📢📢 file object does not contain the signature image object, this should be investigated`)
+                              console.log(`📢📢 file object does not contain the signature image object, this should be investigated`)
 
                               continue
                         }
 
                         const forthRevision = userSignature.aquaTree?.revisions[allHashes[3]]
                         if (!thirdRevision) {
-                              // console.log(`📢📢 forth revision does not exist, this should be investigated`)
+                              console.log(`📢📢 forth revision does not exist, this should be investigated`)
                               continue
                         }
 
                         if (forthRevision?.signature_wallet_address != session.address) {
-                              // console.log(` 🤫🤫 skip signature as its not mine`)
+                              console.log(` 🤫🤫 skip signature as its not mine`)
                               continue
                         }
 
@@ -1090,7 +1114,7 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ fileData, setActiveStep, document
                         }
                   }
 
-                  // console.log(`Signatures length ${apiSigntures.length} now update state ${JSON.stringify(apiSigntures)}`)
+                  console.log(`Signatures length ${apiSigntures.length} now update state ${JSON.stringify(apiSigntures)}`)
 
                   // Update mySignatureData with the fetched signatures
                   setMySignatureData(apiSigntures)
@@ -1256,7 +1280,10 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ fileData, setActiveStep, document
             return (
                   <div className="col-span-12 md:col-span-1 h-auto md:h-full overflow-hidden md:overflow-auto">
                         <div className="flex flex-col gap-4 p-4 border border-gray-100 dark:border-gray-800 rounded-md">
-                              <Button data-testid="action-create-signature-button" className="flex items-center gap-2" onClick={() => setIsOpen(true)}>
+                              <Button data-testid="action-create-signature-button" className="flex items-center gap-2" onClick={() => {
+                                    // setIsOpen(true)
+                                    setOpenDialog({ dialogType: 'user_signature', isOpen: true, onClose: () => setOpenDialog(null), onConfirm: () => { } })
+                              }}>
                                     <FaPlus className="h-4 w-4" />
                                     Create Signature
                               </Button>
@@ -1294,7 +1321,8 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ fileData, setActiveStep, document
                                                                                     />
                                                                                     <div className="flex flex-col flex-1 overflow-hidden space-y-0">
                                                                                           <p className="text-sm font-medium">{signature.name}</p>
-                                                                                          <p className="text-xs text-gray-600 break-words">{signature.walletAddress ?? 'NO WALLET ADDRESS'}</p>
+                                                                                          {/* <p className="text-xs text-gray-600 break-words">{signature.walletAddress ?? 'NO WALLET ADDRESS'}</p> */}
+                                                                                          <WalletAddressClaim walletAddress={signature.walletAddress} />
                                                                                     </div>
                                                                               </div>
                                                                         </div>
@@ -1322,11 +1350,12 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ fileData, setActiveStep, document
                                                                                     />
                                                                                     <div className="flex flex-col space-y-0">
                                                                                           <p className="text-sm font-medium">{signature.name}</p>
-                                                                                          <p className="text-xs text-gray-600">
+                                                                                          {/* <p className="text-xs text-gray-600">
                                                                                                 {signature.walletAddress.length > 10
                                                                                                       ? `${signature.walletAddress.substring(0, 6)}...${signature.walletAddress.substring(signature.walletAddress.length - 4)}`
                                                                                                       : signature.walletAddress}
-                                                                                          </p>
+                                                                                          </p> */}
+                                                                                          <WalletAddressClaim walletAddress={signature.walletAddress} />
                                                                                     </div>
                                                                               </div>
                                                                         </div>
@@ -1549,6 +1578,19 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ fileData, setActiveStep, document
             return () => window.removeEventListener('resize', handleResize)
       }, [])
 
+
+      useEffect(()=>{
+
+            if(openDialog==null){
+//fetch user signatures 
+
+ (async()=>{
+      await loadUserSignatures(true)
+ })()
+
+            }
+
+      },[openDialog])
       return (
             <div className="h-[calc(100vh-70px)] overflow-y-scroll md:overflow-hidden">
                   <div className="h-[60px] flex items-center">
@@ -1592,7 +1634,7 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ fileData, setActiveStep, document
                   </div>
 
                   {/* Signature drawing modal */}
-                  <Dialog open={isOpen} onOpenChange={open => setIsOpen(open)}>
+                  {/* <Dialog open={isOpen} onOpenChange={open => setIsOpen(open)}>
                         <DialogContent className="sm:rounded-lg md:rounded-xl">
                               <DialogHeader>
                                     <DialogTitle>Draw Signature</DialogTitle>
@@ -1605,7 +1647,7 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ fileData, setActiveStep, document
 
                                     <p className="text-sm text-gray-700">
                                           Wallet Address: {session?.address ? `${session?.address.substring(0, 6)}...${session?.address.substring(session?.address.length - 4)}` : 'Not connected'}
-                                    </p>
+                                    </p> 
 
                                     <div className="border border-gray-200 w-full h-[200px] bg-white">
                                           <SignatureCanvas
@@ -1644,7 +1686,7 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ fileData, setActiveStep, document
                                     </div>
                               </div>
                         </DialogContent>
-                  </Dialog>
+                  </Dialog> */}
             </div>
       )
 }

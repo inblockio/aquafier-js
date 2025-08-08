@@ -5,22 +5,9 @@ import { Button } from '../../../components/ui/button'
 import { Badge } from '../../../components/ui/badge'
 import { Card, CardContent } from '../../../components/ui/card'
 import { cn } from '../../../lib/utils'
+import WalletAdrressClaim from '@/pages/v2_claims_workflow/WalletAdrressClaim'
 
-const DisplayWalletAddress = ({ walletAddress }: { walletAddress: string; enableNameResolution: boolean }) => {
-      return (
-            <>
-                  {/* If we enable name resolution, we can easily do it here without any chaos */}
-                  {/* {
-        enableNameResolution ?
-          <WalletEnsView walletAddress={walletAddress} inline={true} />
-          : formatCryptoAddress(walletAddress, 10, 4)
-      } */}
-                  {walletAddress}
-            </>
-      )
-}
-
-const ContractSummaryDetails = ({ data, goToSecondPage, enableNameResolution = false, isValidTree }: IContractWorkFlowFirstPage) => {
+const ContractSummaryDetails = ({ data, goToSecondPage, isValidTree }: IContractWorkFlowFirstPage) => {
       const mockContractData = data
 
       const formatDateTime = (dateString: string) => {
@@ -86,9 +73,7 @@ const ContractSummaryDetails = ({ data, goToSecondPage, enableNameResolution = f
                                     {mockContractData.status}
                               </Badge>
                         </div>
-                        <Button data-testid="action-contract-summary-button" variant="outline" className="text-blue-600 border-blue-600 hover:bg-blue-50">
-                              Contract
-                        </Button>
+                       
                   </div>
 
                   <div className="flex items-center px-2 md:px-8">
@@ -98,7 +83,7 @@ const ContractSummaryDetails = ({ data, goToSecondPage, enableNameResolution = f
 
                   <div className="flex items-center px-2 md:px-8">
                         <p className="text-gray-600 dark:text-gray-300 text-sm break-words transition-all duration-500">
-                              Wallet address: <DisplayWalletAddress walletAddress={mockContractData.creatorAddress} enableNameResolution={enableNameResolution} />
+                              Wallet address: <WalletAdrressClaim walletAddress={mockContractData.creatorAddress} />
                         </p>
                         <FiCopy className="ml-2 cursor-pointer" />
                   </div>
@@ -120,7 +105,7 @@ const ContractSummaryDetails = ({ data, goToSecondPage, enableNameResolution = f
                                                 <div className="flex items-center">
                                                       {signer.status === 'pending' ? <FiAlertCircle className="text-yellow-500 mr-2" /> : <FiCheckCircle className="text-green-500 mr-2" />}
                                                       <p className="text-black/90 font-mono text-sm break-all">
-                                                            <DisplayWalletAddress walletAddress={signer.address} enableNameResolution={enableNameResolution} />
+                                                            <WalletAdrressClaim walletAddress={signer.address} />
                                                       </p>
                                                 </div>
                                                 <p className={cn('text-xs font-medium', signer.status === 'pending' ? 'text-yellow-600' : 'text-green-600')}>
@@ -167,7 +152,7 @@ const ContractSummaryDetails = ({ data, goToSecondPage, enableNameResolution = f
                                                                   <p className="opacity-80 text-sm break-all">
                                                                         User with address{' '}
                                                                         <span className="font-semibold font-mono">
-                                                                              <DisplayWalletAddress walletAddress={activity.address ?? ''} enableNameResolution={enableNameResolution} />
+                                                                              <WalletAdrressClaim walletAddress={activity.address ?? ''} />
                                                                         </span>{' '}
                                                                         signed the document at <span className="font-semibold">{formatDateTime(activity.timestamp)}</span>
                                                                   </p>
@@ -179,7 +164,7 @@ const ContractSummaryDetails = ({ data, goToSecondPage, enableNameResolution = f
                                                                               <p className="opacity-90 text-sm text-black/90 break-all">
                                                                                     User with address{' '}
                                                                                     <span className="font-semibold font-mono">
-                                                                                          <DisplayWalletAddress walletAddress={activity.address ?? ''} enableNameResolution={enableNameResolution} />
+                                                                                          <WalletAdrressClaim walletAddress={activity.address ?? ''} />
                                                                                     </span>{' '}
                                                                                     Created the contract workflow at <span className="font-semibold">{formatDateTime(activity.timestamp)}</span>
                                                                               </p>

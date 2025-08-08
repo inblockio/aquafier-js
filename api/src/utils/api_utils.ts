@@ -227,7 +227,9 @@ const setUpSystemTemplates = async () => {
     "identity_attestation",
     "identity_claim",
     "user_signature",
-    "domain_claim"
+    "domain_claim",
+    "email_claim",
+    "phone_number_claim"
   ]
   for (let index = 0; index < templates.length; index++) {
     const templateItem = templates[index];
@@ -282,6 +284,7 @@ const setUpSystemTemplates = async () => {
           placeholder: fieldData.placeholder ,
           support_text: fieldData.supportText,
           default_value: fieldData.defaultValue ,
+          is_verifiable : fieldData.isVerifiable ||  false ,
 
           is_editable: fieldData.isEditable == null ? true : fieldData.isEditable,
         },

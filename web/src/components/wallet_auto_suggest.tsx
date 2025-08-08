@@ -34,7 +34,7 @@ export const WalletAutosuggest: React.FC<WalletAutosuggestProps> = ({
 
   // Filter suggestions based on input - now checks Map keys
   const filterSuggestions = (input: string): string[] => {
-    if (!input || input.length < 3) {
+    if (!input || input.length < 1) {
       return [];
     }
     
