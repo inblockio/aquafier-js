@@ -69,15 +69,6 @@ npx prisma migrate dev --name init || {
   }
 }
 
-# Set backend URL
-if [[ -z "${BACKEND_URL}" ]]; then
-  echo "BACKEND_URL is not set. Defaulting to http://127.0.0.1:3000"
-  export BACKEND_URL=http://127.0.0.1:3000
-else
-  echo "BACKEND_URL is set to: ${BACKEND_URL}"
-  export BACKEND_URL=http://${BACKEND_URL}
-fi
-
 # Replace backend URL placeholder in config
 sed -i -e "s|BACKEND_URL_PLACEHOLDER|$BACKEND_URL|g" /app/frontend/config.json
 
