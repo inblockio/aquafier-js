@@ -7,7 +7,8 @@ import { ApiFileInfo } from '../../models/FileInfo'
 import { useState } from 'react'
 import Aquafier, { AquaTreeWrapper } from 'aqua-js-sdk'
 import { RevionOperation } from '../../models/RevisionOperation'
-import { toaster } from '@/components/ui/use-toast'
+import { toast } from 'sonner'
+// import { toast, toaster } from '@/components/ui/use-toast'
 
 export const SignAquaChain = ({ apiFileInfo, backendUrl, nonce, index }: RevionOperation) => {
       const { files, setFiles, setSelectedFileInfo, selectedFileInfo, user_profile, session, backend_url } = useStore(appStore)
@@ -30,18 +31,12 @@ export const SignAquaChain = ({ apiFileInfo, backendUrl, nonce, index }: RevionO
 
                         const result = await aquafier.signAquaTree(aquaTreeWrapper, 'metamask', xCredentials)
                         if (result.isErr()) {
-                              toaster.create({
-                                    description: `Error signing failed`,
-                                    type: 'error',
-                              })
+                              toast.error( `Error signing failed`)
                         } else {
                               const revisionHashes = result.data.aquaTree?.revisions ? Object.keys(result.data.aquaTree.revisions) : []
 
                               if (revisionHashes.length == 0) {
-                                    toaster.create({
-                                          description: `Error signing failed (aqua tree structure)`,
-                                          type: 'error',
-                                    })
+                                   toast.error( `Error signing failed (aqua tree structure)`)
                                     return
                               }
                               const lastHash = revisionHashes[revisionHashes.length - 1]
@@ -93,10 +88,7 @@ export const SignAquaChain = ({ apiFileInfo, backendUrl, nonce, index }: RevionO
                                                 }
                                           } catch (e) {
                                                 //  console.log(`Error ${e}`)
-                                                toaster.create({
-                                                      description: 'Error updating files',
-                                                      type: 'error',
-                                                })
+                                               toast.error( 'Error updating files')
                                                 // document.location.reload()
                                           }
                                     } else {
@@ -121,27 +113,18 @@ export const SignAquaChain = ({ apiFileInfo, backendUrl, nonce, index }: RevionO
                                     }
                               }
 
-                              toaster.create({
-                                    description: `Signing successfull`,
-                                    type: 'success',
-                              })
+                              toast.success( `Signing successfull`)
                         }
 
                         setSigning(false)
                   } catch (error) {
                         console.error('An Error', error)
                         setSigning(false)
-                        toaster.create({
-                              description: `Error during signing`,
-                              type: 'error',
-                        })
+                        toast.error( `Error during signing`)
                   }
             } else {
                   setSigning(false)
-                  toaster.create({
-                        description: `MetaMask is not installed`,
-                        type: 'info',
-                  })
+                  toast.info(`MetaMask is not installed`)
             }
       }
       return (
@@ -153,10 +136,7 @@ export const SignAquaChain = ({ apiFileInfo, backendUrl, nonce, index }: RevionO
                               if (!signing) {
                                     signFileHandler()
                               } else {
-                                    toaster.create({
-                                          description: 'Signing is already in progress',
-                                          type: 'info',
-                                    })
+                                    toast.info( 'Signing is already in progress')
                               }
                         }}
                         className={`w-full flex items-center justify-center space-x-1 bg-blue-100 text-blue-700 px-3 py-2 rounded transition-colors text-xs ${signing ? 'opacity-60 cursor-not-allowed' : 'hover:bg-blue-200'}`}

@@ -5,7 +5,8 @@ import axios from 'axios'
 import { useEffect, useRef, useState } from 'react'
 import { WebSocketMessage } from '../../types/types'
 import WebSocketActions from '../../constants/constants'
-import { toaster } from '../ui/use-toast'
+
+import { toast } from 'sonner'
 
 // Add these at the component level (outside the component if using class)
 let pingInterval: NodeJS.Timeout | null = null
@@ -83,10 +84,7 @@ const WebsocketFragment = () => {
                   // Stop if we've reached maximum attempts
                   if (attemptCount >= MAX_RECONNECT_ATTEMPTS) {
                         // console.log(`Max reconnection attempts (${MAX_RECONNECT_ATTEMPTS}) reached. Giving up.`);
-                        toaster.create({
-                              description: 'Could not reconnect to server. Please refresh the page.',
-                              type: 'error',
-                        })
+                        toast.error( 'Could not reconnect to server. Please refresh the page.')
                         return
                   }
 
@@ -197,10 +195,7 @@ const WebsocketFragment = () => {
                                                       setContracts(response.data?.contracts)
                                                 }
 
-                                                toaster.create({
-                                                      description: `An item was shared to your account`,
-                                                      type: 'success',
-                                                })
+                                                toast.success( `An item was shared to your account`)
                                           } catch (e) {
                                                 console.log('Error loadin cntract')
                                           }
@@ -235,7 +230,7 @@ const WebsocketFragment = () => {
                         console.log(`🔌 - Disconnected from WebSocket as user: ${isExplicitDisconnect}`)
                         // Only show error if not an explicit disconnect
                         // if (!isExplicitDisconnect) {
-                        //     // toaster.create({
+                        //     // toast.create({
                         //     //     description: `Realtime connection disconnected: ${event.reason || 'No reason provided'}`,
                         //     //     type: "error"
                         //     // });
@@ -245,7 +240,7 @@ const WebsocketFragment = () => {
                         //     }
                         // }
                         if (event.wasClean && event.code === 1005) {
-                              // toaster.create({
+                              // toast.create({
                               //     description: `Realtime connection disconnected: ${event.reason || 'No reason provided'}`,
                               //     type: "error"
                               // });
@@ -270,10 +265,7 @@ const WebsocketFragment = () => {
                         }
 
                         if (!isExplicitDisconnect) {
-                              toaster.create({
-                                    description: `Realtime connection error occurred`,
-                                    type: 'error',
-                              })
+                              toast.error( `Realtime connection error occurred`)
 
                               // The onclose handler will trigger reconnection
                         }
@@ -281,10 +273,7 @@ const WebsocketFragment = () => {
             } catch (error) {
                   console.error('Failed to connect to WebSocket:', error)
                   if (!isExplicitDisconnect) {
-                        toaster.create({
-                              description: `Failed to establish realtime connection`,
-                              type: 'error',
-                        })
+                        toast.error(`Failed to establish realtime connection`)
                         reconnectWithBackoff('connection error')
                   }
             }

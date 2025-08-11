@@ -7,7 +7,7 @@ import { ApiFileInfo } from '../../models/FileInfo'
 import { useState } from 'react'
 import Aquafier, { AquaTreeWrapper, WitnessNetwork } from 'aqua-js-sdk'
 import { RevionOperation } from '../../models/RevisionOperation'
-import { toaster } from '@/components/ui/use-toast'
+import { toast } from 'sonner'
 
 export const WitnessAquaChain = ({ apiFileInfo, backendUrl, nonce }: RevionOperation) => {
       const { setFiles, metamaskAddress, selectedFileInfo, setSelectedFileInfo, user_profile, session } = useStore(appStore)
@@ -21,10 +21,7 @@ export const WitnessAquaChain = ({ apiFileInfo, backendUrl, nonce }: RevionOpera
 
                         if (!walletAddress) {
                               setWitnessing(false)
-                              toaster.create({
-                                    description: `Please connect your wallet to continue`,
-                                    type: 'info',
-                              })
+                              toast.info( `Please connect your wallet to continue`)
                               return
                         }
 
@@ -40,18 +37,12 @@ export const WitnessAquaChain = ({ apiFileInfo, backendUrl, nonce }: RevionOpera
                         xCredentials.witness_eth_network = user_profile?.witness_network ?? 'sepolia'
                         const result = await aquafier.witnessAquaTree(aquaTreeWrapper, 'eth', xCredentials.witness_eth_network as WitnessNetwork, 'metamask', xCredentials)
                         if (result.isErr()) {
-                              toaster.create({
-                                    description: `Error witnessing failed`,
-                                    type: 'error',
-                              })
+                              toast.error( `Error witnessing failed`)
                         } else {
                               const revisionHashes = result.data.aquaTree?.revisions ? Object.keys(result.data.aquaTree.revisions) : []
 
                               if (revisionHashes.length == 0) {
-                                    toaster.create({
-                                          description: `Error witnessing failed (aqua tree structure)`,
-                                          type: 'error',
-                                    })
+                                    toast.error( `Error witnessing failed (aqua tree structure)`)
                               }
                               const lastHash = revisionHashes[revisionHashes.length - 1]
                               const lastRevision = result.data.aquaTree?.revisions[lastHash]
@@ -88,27 +79,18 @@ export const WitnessAquaChain = ({ apiFileInfo, backendUrl, nonce }: RevionOpera
                                     }
                               }
 
-                              toaster.create({
-                                    description: `Witnessing successfull`,
-                                    type: 'success',
-                              })
+                              toast.success( `Witnessing successfull`)
                         }
 
                         setWitnessing(false)
                   } catch (error) {
                         console.log('Error  ', error)
                         setWitnessing(false)
-                        toaster.create({
-                              description: `Error during witnessing`,
-                              type: 'error',
-                        })
+                        toast.error( `Error during witnessing`)
                   }
             } else {
                   setWitnessing(false)
-                  toaster.create({
-                        description: `MetaMask is not installed`,
-                        type: 'info',
-                  })
+                  toast.info( `MetaMask is not installed`)
             }
       }
 
@@ -121,10 +103,7 @@ export const WitnessAquaChain = ({ apiFileInfo, backendUrl, nonce }: RevionOpera
                               if (!witnessing) {
                                     witnessFileHandler()
                               } else {
-                                    toaster.create({
-                                          description: 'Witnessing is already in progress',
-                                          type: 'info',
-                                    })
+                                    toast.info('Witnessing is already in progress')
                               }
                         }}
                         className={`w-full flex items-center justify-center space-x-1 bg-gray-800  text-white px-3 py-2 rounded-md transition-colors text-xs ${witnessing ? 'opacity-60 cursor-not-allowed' : 'hover:bg-gray-600'}`}

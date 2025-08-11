@@ -46,7 +46,7 @@ services:
     env_file:
       - .env
     volumes:
-      - app_data:/app/data
+      - app_data:/app/backend/media
 
   proxy:
     image: ghcr.io/inblockio/ngnix-proxy:master
