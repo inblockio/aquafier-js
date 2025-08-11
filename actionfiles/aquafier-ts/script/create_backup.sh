@@ -81,7 +81,7 @@ cd backup && tar -cvf - * | gzip -9 > /backup/backup_"$(date +'%H-%M_%d-%m-%Y').
 rm -rf backup
 
 #delete old backups if configured
-if [ -n "${BACKUP_COUNT}" ]; then
+if [ -n "${BACKUP_COUNT}" ] && [ -n "$(ls -A .)"  ] ; then
     ls -t | tail -n "+${BACKUP_COUNT}" | xargs -d '\n' rm --
 fi
 

@@ -3,8 +3,8 @@
 set -ex
 
 if [ -d  "/restore" ]; then
-files=$(find /restore -name "backup*.tar.gz")
-count=$(find /restore -name "backup*.tar.gz"| wc -l)
+files=$(find /restore -maxdepth 1 -name "backup*.tar.gz")
+count=$(find /restore -maxdepth 1 -name "backup*.tar.gz"| wc -l)
 
 if [ "${count}" -eq 1 ]; then
   echo "found backup!"
