@@ -68,7 +68,6 @@ services:
       - proxy_data_html:/usr/share/nginx/html
       - proxy_data_certs:/etc/nginx/certs
       - /var/run/docker.sock:/tmp/docker.sock
-    restart: unless-stopped
 
   letsencrypt:
     image: nginxproxy/acme-companion:latest
