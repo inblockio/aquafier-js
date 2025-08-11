@@ -16,6 +16,9 @@ services:
       interval: 5s
       timeout: 5s
       retries: 5
+    logging:
+      options:
+        tag: postgres
 
   aqua-container:
     image: ghcr.io/inblockio/aquafier-js:dev
@@ -47,6 +50,9 @@ services:
       - .env
     volumes:
       - app_data:/app/backend/media
+    logging:
+      options:
+        tag: aqua-container
 
   proxy:
     image: ghcr.io/inblockio/ngnix-proxy:master
@@ -68,6 +74,9 @@ services:
       - proxy_data_html:/usr/share/nginx/html
       - proxy_data_certs:/etc/nginx/certs
       - /var/run/docker.sock:/tmp/docker.sock
+    logging:
+      options:
+        tag: proxy
 
   letsencrypt:
     image: nginxproxy/acme-companion:latest
@@ -82,6 +91,9 @@ services:
       - proxy_data_certs:/etc/nginx/certs
       - /var/run/docker.sock:/var/run/docker.sock
     restart: always
+    logging:
+      options:
+        tag: letsencrypt
 
   s3:
     image: minio/minio:latest
