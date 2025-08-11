@@ -1,9 +1,5 @@
 import { useState } from 'react'
-// import { Button } from "./chakra-ui/button";
-// import { DialogBody, DialogCloseTrigger, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "./chakra-ui/dialog";
-// import { Center, Dialog, Text, VStack } from "@chakra-ui/react";
-import { LuCircleCheck, LuCircleX, LuCopy, LuLogOut, LuWallet } from 'react-icons/lu'
-// import ReactLoading from "react-loading";
+import { LuCircleCheck, LuCircleX, LuLogOut, LuWallet } from 'react-icons/lu'
 import { ClipLoader } from 'react-spinners'
 import { fetchFiles, formatCryptoAddress, generateAvatar, getCookie, setCookie } from '../utils/functions'
 import { SiweMessage, generateNonce } from 'siwe'
@@ -15,30 +11,11 @@ import { BrowserProvider, ethers } from 'ethers'
 
 import { Button } from './ui/button'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from './ui/dialog'
-import { Avatar, AvatarFallback, AvatarImage } from './ui/avatar'
 import { toast } from 'sonner'
-
-const CustomCopyButton = ({ value }: { value: string }) => {
-      // const clipboard = useClipboard({ value: value })
-      return (
-            <Button
-                  data-testid="custom-copy-button"
-                  variant="default"
-                  size="sm"
-                  onClick={() => {
-                        navigator.clipboard.writeText(value)
-                        toast.success(`Wallet Address copied to clipboard`)
-                  }}
-                  className="flex items-center gap-2 rounded-md"
-            >
-                  {'Copy Address'}
-                  <LuCopy />
-            </Button>
-      )
-}
+import WalletAddressProfile from '@/pages/v2_claims_workflow/WalletAddressProfile'
 
 export const ConnectWallet: React.FC<{ dataTestId: string }> = ({ dataTestId }) => {
-      const { setMetamaskAddress, session, setFiles, avatar, setAvatar, setUserProfile, backend_url, setSession } = useStore(appStore)
+      const { setMetamaskAddress, session, setFiles, setAvatar, setUserProfile, backend_url, setSession } = useStore(appStore)
 
       const [isOpen, setIsOpen] = useState(false)
       const [loading, setLoading] = useState(false)
@@ -249,7 +226,7 @@ export const ConnectWallet: React.FC<{ dataTestId: string }> = ({ dataTestId }) 
                         <DialogDescription>
                               {session ? (
                                     <div className="flex flex-col gap-5 items-center">
-                                          <div className="relative group">
+                                          {/* <div className="relative group">
                                                 <Avatar className="size-20 border-2 border-primary/20 hover:border-primary/50 transition-all duration-300">
                                                       <AvatarImage src={avatar} alt="User Avatar" />
                                                       <AvatarFallback className="bg-primary/10 text-primary font-semibold">
@@ -262,7 +239,10 @@ export const ConnectWallet: React.FC<{ dataTestId: string }> = ({ dataTestId }) 
                                           <div className="flex flex-col items-center gap-2 w-full">
                                                 <p className="font-mono text-sm bg-secondary/30 px-3 py-1 rounded-full">{formatCryptoAddress(session?.address, 10, 10)}</p>
                                                 <CustomCopyButton value={`${session?.address}`} />
-                                          </div>
+                                          </div> */}
+                                          <WalletAddressProfile walletAddress={session?.address} callBack={() => {
+                                                setIsOpen(false)
+                                          }} showAvatar={true} />
 
                                           {/* <div className="bg-secondary/20 w-full p-3 rounded-lg my-1">
                 <div className="flex justify-between items-center mb-1">

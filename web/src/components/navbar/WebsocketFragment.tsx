@@ -3,7 +3,6 @@ import appStore from '../../store'
 import { convertToWebsocketUrl, ensureDomainUrlHasSSL, fetchFiles, getGenesisHash } from '../../utils/functions'
 import axios from 'axios'
 import { useEffect, useRef, useState } from 'react'
-// import { toaster } from "../chakra-ui/toaster";
 import { WebSocketMessage } from '../../types/types'
 import WebSocketActions from '../../constants/constants'
 import { toaster } from '../ui/use-toast'
