@@ -749,7 +749,8 @@ async function updateGenesisFileIndex(
     if (!aquaTreeFileItemData) {
         let allData = await fetchAquaTreeFileData([revision.pubkey_hash])
         if (allData.length == 0) {
-            throw Error(`Expectde revision file data found none ${revision.pubkey_hash}`)
+            // throw Error(`Expectde revision file data found none ${revision.pubkey_hash}`)
+            return { aquaTree, fileObjects, revisionData };
         } else if (allData.length > 1) {
             throw Error(`Expectd 1 revision file data found ${allData.length} `)
         } else {
@@ -797,7 +798,7 @@ async function updateGenesisFileIndex(
         revisionData: updatedRevisionData
     };
 
-    // return { aquaTree, fileObjects, revisionData };
+    
 }
 
 async function processLinkedFileRevision(

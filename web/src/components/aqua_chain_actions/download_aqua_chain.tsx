@@ -61,19 +61,20 @@ export const DownloadAquaChain = ({ file, index, children }: { file: ApiFileInfo
             const zip = new JSZip()
             const aquafier = new Aquafier()
             let mainAquaFileName = ''
-            let mainAquaHash = ''
+            let genesisHash = ''
             // fetch the genesis
             const revisionHashes = Object.keys(file.aquaTree!.revisions!)
             for (const revisionHash of revisionHashes) {
                   const revisionData = file.aquaTree!.revisions![revisionHash]
                   if (revisionData.previous_verification_hash == null || revisionData.previous_verification_hash == '') {
-                        mainAquaHash = revisionHash
+                        genesisHash = revisionHash
                         break
                   }
             }
-            mainAquaFileName = file.aquaTree!.file_index[mainAquaHash]
+            mainAquaFileName = file.aquaTree!.file_index[genesisHash]
 
-            zip.file(`${mainAquaFileName}.aqua.json`, JSON.stringify(file.aquaTree))
+            let mainAquaFileNameWithAquaDotJson = `${mainAquaFileName}.aqua.json`
+            zip.file(mainAquaFileNameWithAquaDotJson, JSON.stringify(file.aquaTree))
 
             const nameWithHashes: Array<AquaNameWithHash> = []
             for (const fileObj of file.fileObject) {
@@ -164,6 +165,26 @@ export const DownloadAquaChain = ({ file, index, children }: { file: ApiFileInfo
                         })
                   }
             }
+
+
+            let genesisRevision: Revision | undefined = file.aquaTree!.revisions[genesisHash]
+            if (!genesisRevision) {
+                  toast.error(`an error occured creating zip file : genesis revision`)
+                  return
+            }
+
+            let fileHash = genesisRevision.file_hash
+            if (!fileHash) {
+                  toast.error(`an error occured creating zip file:  file hash`)
+                  return
+            }
+            //add main aqua file
+            nameWithHashes.push({
+                  name: mainAquaFileNameWithAquaDotJson,
+                  hash: fileHash,
+            })
+
+
 
             //create aqua.json
             const aquaObject: AquaJsonInZip = {
