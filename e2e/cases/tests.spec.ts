@@ -1,4 +1,4 @@
-import {test, BrowserContext, Page, chromium, expect} from '@playwright/test';
+import { test, BrowserContext, Page, chromium, expect } from '@playwright/test';
 import dotenv from 'dotenv';
 import path from "path";
 import fs from "fs";
@@ -23,10 +23,10 @@ import {
 } from '../testUtils';
 
 // Simple test to verify Playwright is working correctly
-test("basic site accessibility test", async ({page}) => {
+test("basic site accessibility test", async ({ page }) => {
     console.log("Running basic site accessibility test");
     // Navigate to the site
-    await page.goto('/', {timeout: 60000});
+    await page.goto('/', { timeout: 60000 });
     console.log("Page loaded");
 
     // Take a screenshot for debugging
@@ -53,9 +53,9 @@ test("user setting test", async (): Promise<void> => {
     console.log("user setting test started!");
 
     //wait until the main page was fully loaded
-    await testPage.waitForSelector('[data-testid="nav-link-0"]', {state: 'visible'});
+    await testPage.waitForSelector('[data-testid="nav-link-0"]', { state: 'visible' });
 
-    await testPage.goto('/app/settings', {waitUntil: 'networkidle'})
+    await testPage.goto('/app/settings', { waitUntil: 'networkidle' })
 
     // await testPage.reload(); // reload page
 
@@ -99,7 +99,7 @@ test("linking 2 files test", async (): Promise<void> => {
     await waitAndClick(testPage, '[data-testid="link-action-button-1"]')
 
     // Wait for the dialog to appear
-    await testPage.waitForSelector('div[role="dialog"]', {state: 'visible', timeout: 5000});
+    await testPage.waitForSelector('div[role="dialog"]', { state: 'visible', timeout: 5000 });
 
     // Click on the checkbox with id 'file-0'
     await waitAndClick(testPage, '#file-0')
@@ -131,7 +131,7 @@ test("upload, file form revision", async (): Promise<void> => {
 
     // ✅ Wait for the table row that includes "aqua.json"
     const row = testPage.locator('table >> text=aqua.json');
-    await expect(row).toBeVisible({timeout: 10000});
+    await expect(row).toBeVisible({ timeout: 10000 });
 });
 
 test("import, file multiple revisions", async (): Promise<void> => {
@@ -174,7 +174,7 @@ test("import, file multiple revisions", async (): Promise<void> => {
 
     // ✅ Wait for the table row that includes "aqua.json"
     const row = testPage.locator('table >> text=aqua.json');
-    await expect(row).toBeVisible({timeout: 10000});
+    await expect(row).toBeVisible({ timeout: 10000 });
 });
 
 test("upload, delete file", async (): Promise<void> => {
@@ -194,7 +194,7 @@ test("upload, delete file", async (): Promise<void> => {
 
     // ✅ Wait for the table row with "exampleFile.pdf" to be removed (not visible)
     const row = testPage.locator('table >> text=exampleFile.pdf');
-    await expect(row).not.toBeVisible({timeout: 10000});
+    await expect(row).not.toBeVisible({ timeout: 10000 });
 
     // Reload the page and check again to ensure file is permanently deleted
     console.log("Reloading page to verify file deletion persisted");
@@ -202,7 +202,7 @@ test("upload, delete file", async (): Promise<void> => {
 
     // Wait for page to load and check that exampleFile.pdf is still not visible
     const rowAfterReload = testPage.locator('table >> text=exampleFile.pdf');
-    await expect(rowAfterReload).not.toBeVisible({timeout: 10000});
+    await expect(rowAfterReload).not.toBeVisible({ timeout: 10000 });
 
 });
 
@@ -302,7 +302,7 @@ test("single user aqua-sign", async (): Promise<void> => {
 
 
     // Open workflow
-    await waitAndClick(testPage,'[data-testid="open-aqua-sign-workflow-button-0"]')
+    await waitAndClick(testPage, '[data-testid="open-aqua-sign-workflow-button-0"]')
 
     // View contract document
     await waitAndClick(testPage, '[data-testid="action-view-contract-button"]')
@@ -314,13 +314,13 @@ test("single user aqua-sign", async (): Promise<void> => {
     await addSignatureToDocument(testPage, context);
 
     // Wait for completion
-    await testPage.getByText("Workflow completed and validated").waitFor({state: 'visible'});
+    await testPage.getByText("Workflow completed and validated").waitFor({ state: 'visible' });
 });
 
 
 test("two user aqua-sign", async (): Promise<void> => {
-  const registerWalletOneResponse = await registerNewMetaMaskWalletAndLogin();
-  const registerWalletTwoResponse = await registerNewMetaMaskWalletAndLogin();
+    const registerWalletOneResponse = await registerNewMetaMaskWalletAndLogin();
+    const registerWalletTwoResponse = await registerNewMetaMaskWalletAndLogin();
 
     const contextWalletOne: BrowserContext = registerWalletOneResponse.context;
     const testPageWalletOne: Page = contextWalletOne.pages()[0];
@@ -334,9 +334,9 @@ test("two user aqua-sign", async (): Promise<void> => {
 
     // await testPageWalletOne.reload()
 
-    await waitAndClick(testPageWalletOne,'[data-testid="open-aqua-sign-workflow-button-0"]')
+    await waitAndClick(testPageWalletOne, '[data-testid="open-aqua-sign-workflow-button-0"]')
 
-    await waitAndClick(testPageWalletOne,'[data-testid="action-view-contract-button"]')
+    await waitAndClick(testPageWalletOne, '[data-testid="action-view-contract-button"]')
 
     // Create and save signature
     await createAndSaveSignature(testPageWalletOne, contextWalletOne);
@@ -452,7 +452,7 @@ test("import aqua zip test", async (): Promise<void> => {
     // Check that the table has two rows and contains aqua.json
     const tableRows = testPage.locator('table tr');
     //header + two files
-    await expect(tableRows).toHaveCount(3, {timeout: 10000});
+    await expect(tableRows).toHaveCount(3, { timeout: 10000 });
 });
 
 
@@ -490,16 +490,16 @@ test("delete a template", async (): Promise<void> => {
     // await deleteTemplate(testPage);
 
 
-    await testPage.waitForSelector('[data-testid="delete-form-template-0"]', {state: 'visible', timeout: 10000});
+    await testPage.waitForSelector('[data-testid="delete-form-template-0"]', { state: 'visible', timeout: 10000 });
     await testPage.click('[data-testid=""]');
     console.log("Clicked delete template button using data-testid");
     try {
-        await testPage.waitForSelector('[data-testid="delete-form-template-0"]', {state: 'visible', timeout: 10000});
+        await testPage.waitForSelector('[data-testid="delete-form-template-0"]', { state: 'visible', timeout: 10000 });
         await testPage.click('[data-testid="delete-form-template-0"]');
         console.log("Clicked delete template button using data-testid");
     } catch (error) {
         console.log("Failed to find button by data-testid, trying by id...");
-        await testPage.waitForSelector('#delete-form-template-id-0', {state: 'visible', timeout: 10000});
+        await testPage.waitForSelector('#delete-form-template-id-0', { state: 'visible', timeout: 10000 });
         await testPage.click('#delete-form-template-id-0');
         console.log("Clicked delete template button using id selector");
     }
@@ -518,7 +518,7 @@ test("create a simple claim", async (): Promise<void> => {
     console.log("create aqua form template started!");
 
 
-    await testPage.waitForSelector('[data-testid="create-claim-dropdown-button"]', {state: 'visible', timeout: 10000});
+    await testPage.waitForSelector('[data-testid="create-claim-dropdown-button"]', { state: 'visible', timeout: 10000 });
     await testPage.click('[data-testid="create-claim-dropdown-button"]');
 
 
@@ -564,26 +564,142 @@ test("create simple claim", async (): Promise<void> => {
 
     console.log("create a simple claim!");
 
-   // Open workflow
-    await waitAndClick(testPage,'[data-testid="create-claim-dropdown-button"]')
+    // Open workflow
+    await waitAndClick(testPage, '[data-testid="create-claim-dropdown-button"]')
     console.log("claims dropdown ");
-    await waitAndClick(testPage,'[data-testid="create-simple-claim-dropdown-button-item"]')
+    await waitAndClick(testPage, '[data-testid="create-simple-claim-dropdown-button-item"]')
 
     console.log("fill simple claim form");
     await testPage.locator('[id="input-claim_context"]').fill("i attest the name in a test ");
     await testPage.locator('[id="input-name"]').fill("Test user ");
 
-     const metamaskPromise = context.waitForEvent("page");
+    const metamaskPromise = context.waitForEvent("page");
     // await page.getByText("Save Signature").click();
-    
+
     console.log("create workflow");
     await testPage.getByText("Create Workflow").click();
     await metamaskPromise;
 
+
+    await handleMetaMaskNetworkAndConfirm(context, false);
+
     console.log("simple workflow created");
 
-     // Check that the table has two rows and contains aqua.json
+    // Check that the table has two rows and contains aqua.json
     const tableRows = testPage.locator('table tr');
-    //header + two files
-    await expect(tableRows).toHaveCount(2, {timeout: 10000});
+    // //header + two files
+    await expect(tableRows).toHaveCount(2, { timeout: 10000 });
+});
+
+
+
+test("create dns claim", async (): Promise<void> => {
+    const registerResponse = await registerNewMetaMaskWalletAndLogin();
+    const context: BrowserContext = registerResponse.context;
+    const testPage: Page = context.pages()[0];
+
+    console.log("create a dns claim!");
+
+    // Open workflow
+    await waitAndClick(testPage, '[data-testid="create-claim-dropdown-button"]')
+    console.log("claims dropdown ");
+    await waitAndClick(testPage, '[data-testid="create-dns-claim-dropdown-button-item"]')
+
+    console.log("fill dns claim form");
+    // await testPage.locator('[id="input-wallet_address"]').fill("0x6c5544021930b7887455e21F00b157b2FA572667");
+    await testPage.locator('[id="input-domain"]').fill("inblock.io");
+
+    const metamaskPromise = context.waitForEvent("page");
+    // await page.getByText("Save Signature").click();
+
+    console.log("create workflow");
+    await testPage.getByText("Create Workflow").click();
+    await metamaskPromise;
+
+    console.log("sign dns txt record ");
+    await handleMetaMaskNetworkAndConfirm(context, false);
+
+    console.log("sign the aqua tree ");
+
+    await handleMetaMaskNetworkAndConfirm(context, false);
+    console.log("dns workflow created");
+
+    // Check that the table has two rows and contains aqua.json
+    const tableRows = testPage.locator('table tr');
+    // //header + two files
+    await expect(tableRows).toHaveCount(2, { timeout: 10000 });
+});
+
+
+
+
+
+test("create aqua sign claim", async (): Promise<void> => {
+    const registerResponse = await registerNewMetaMaskWalletAndLogin();
+    const context: BrowserContext = registerResponse.context;
+    const testPage: Page = context.pages()[0];
+
+    console.log("create a dns claim!");
+
+    // Open workflow
+    await waitAndClick(testPage, '[data-testid="create-claim-dropdown-button"]')
+    console.log("claims dropdown ");
+    await waitAndClick(testPage, '[data-testid="create-signature-claim-dropdown-button-item"]')
+
+    console.log("fill dns claim form");
+
+    await testPage.locator('[id="input-name"]').fill("User name ");
+
+    await testPage.getByText("Create Workflow").waitFor({ state: 'visible' });
+    await testPage.waitForSelector('[class="signature-canvas"]', { state: 'visible' });
+    await testPage.click('[class="signature-canvas"]');
+
+    const metamaskPromise = context.waitForEvent("page");
+    await testPage.getByText("Create Workflow").click();
+    await metamaskPromise;
+
+    await handleMetaMaskNetworkAndConfirm(context, false);
+    console.log("signature saved");
+    // Check that the table has two rows and contains aqua.json
+    const tableRows = testPage.locator('table tr');
+    // //header + two files
+    await expect(tableRows).toHaveCount(2, { timeout: 10000 });
+});
+
+
+
+
+
+
+
+test("create email claim", async (): Promise<void> => {
+    const registerResponse = await registerNewMetaMaskWalletAndLogin();
+    const context: BrowserContext = registerResponse.context;
+    const testPage: Page = context.pages()[0];
+
+    console.log("create a email claim!");
+
+    // Open workflow
+    await waitAndClick(testPage, '[data-testid="create-claim-dropdown-button"]')
+    console.log("claims dropdown ");
+    await waitAndClick(testPage, '[data-testid="create-email-claim-dropdown-button-item"]')
+
+    console.log("fill email claim form");
+
+    await testPage.locator('[id="input-name"]').fill("User name ");
+
+    await testPage.getByText("Create Workflow").waitFor({ state: 'visible' });
+    await testPage.waitForSelector('[class="signature-canvas"]', { state: 'visible' });
+    await testPage.click('[class="signature-canvas"]');
+
+    const metamaskPromise = context.waitForEvent("page");
+    await testPage.getByText("Create Workflow").click();
+    await metamaskPromise;
+
+    await handleMetaMaskNetworkAndConfirm(context, false);
+    console.log("signature saved");
+    // Check that the table has two rows and contains aqua.json
+    const tableRows = testPage.locator('table tr');
+    // //header + two files
+    await expect(tableRows).toHaveCount(2, { timeout: 10000 });
 });

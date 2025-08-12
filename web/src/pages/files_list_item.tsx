@@ -59,6 +59,8 @@ export default function FilesListItem({
       }, [])
 
       useEffect(() => {
+
+            console.log(`FilesListItem  useEffect ---- `)
             const someData = systemFileInfo.map(e => {
                   try {
                         return getAquaTreeFileName(e.aquaTree!)
@@ -71,6 +73,8 @@ export default function FilesListItem({
             const fileObject = getAquaTreeFileObject(file)
             setCurrentFileObject(fileObject)
             const workFlow = isWorkFlowData(file.aquaTree!, someData)
+
+            console.log(`systemFileInfo ${systemFileInfo} someData ${someData} -- workFlow ${JSON.stringify(workFlow, null, 4)} `)
             setWorkFlowInfo(workFlow)
       }, [file, systemFileInfo])
 
@@ -230,7 +234,7 @@ export default function FilesListItem({
             // console.log(
             //     `workflowInfo data ${JSON.stringify(workflowInfo, null, 4)}`
             // )
-            console.log('workflowInfo: ', workflowInfo)
+            // console.log('workflowInfo: ', workflowInfo)
             if (workflowInfo?.isWorkFlow == true && workflowInfo.workFlow == 'aqua_sign') {
                   return workFlowAquaSignActions()
             }

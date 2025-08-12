@@ -116,7 +116,7 @@ export default async function shareController(fastify: FastifyInstance) {
                 }
             });
 
-        } catch (error) {
+        } catch (error : any) {
             console.error("Error fetching session:", error);
             return reply.code(500).send({ success: false, message: "Internal server error" });
         }
@@ -253,7 +253,7 @@ export default async function shareController(fastify: FastifyInstance) {
             sendToUserWebsockerAMessage(recipient, WebSocketActions.REFETCH_SHARE_CONTRACTS);
 
             return reply.code(200).send({ success: true, message: "Share contract updated successfully." });
-        } catch (error) {
+        } catch (error : any) {
             console.error("Error updating contract:", error);
             return reply.code(500).send({ success: false, message: "Internal server error" });
         }
@@ -333,7 +333,7 @@ export default async function shareController(fastify: FastifyInstance) {
             });
 
             return reply.code(200).send({ success: true, message: "Share contract deleted successfully." });
-        } catch (error) {
+        } catch (error : any) {
             console.error("Error deleting contract:", error);
             return reply.code(500).send({ success: false, message: "Internal server error" });
         }

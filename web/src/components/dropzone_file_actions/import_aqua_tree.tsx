@@ -15,16 +15,17 @@ import {
       dummyCredential,
 } from '../../utils/functions'
 import Aquafier, { AquaTree, CredentialsData, FileObject } from 'aqua-js-sdk'
-import { IDropzoneAction2, UploadLinkAquaTreeExpectedData } from '../../types/types'
+import { IDropzoneAction, UploadLinkAquaTreeExpectedData } from '../../types/types'
 import { Input } from '@/components/ui/input'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { toast } from 'sonner'
 
-export const ImportAquaTree = ({ aquaFile, uploadedIndexes, fileIndex, updateUploadedIndex }: IDropzoneAction2) => {
+// export const ImportAquaTree = ({ aquaFile, uploadedIndexes, fileIndex, updateUploadedIndex }: IDropzoneAction2) => {
+export const ImportAquaTree = ({ file, filesWrapper, removeFilesListForUpload}: IDropzoneAction) => {
       const aquafier = new Aquafier()
       const [uploading, setUploading] = useState(false)
-      const [uploaded, setUploaded] = useState(false)
+      // const [uploaded, setUploaded] = useState(false)
       const [requiredFileHash, setRequiredFileHash] = useState<string | null>(null)
       const fileInputRef = useRef<HTMLInputElement>(null)
       const [selectedFileName, setSelectedFileName] = useState<string>('')
@@ -60,11 +61,12 @@ export const ImportAquaTree = ({ aquaFile, uploadedIndexes, fileIndex, updateUpl
 
                   const responseData = await response.json()
                   setFiles([...responseData.files])
-                  setUploaded(true)
+                  // setUploaded(true)
                   setUploading(false)
                   setSelectedFileName('')
                   toast.success( 'File uploaded successfully')
-                  updateUploadedIndex(fileIndex)
+                  // updateUploadedIndex(fileIndex)
+                   removeFilesListForUpload(filesWrapper)
                   return
             } catch (error) {
                   setUploading(false)
@@ -76,12 +78,12 @@ export const ImportAquaTree = ({ aquaFile, uploadedIndexes, fileIndex, updateUpl
       const importLinkedFile = async (aquaTree: AquaTree) => {
             const mainAquaFileObject: FileObject = {
                   fileContent: aquaTree,
-                  fileName: aquaFile.name,
-                  fileSize: aquaFile.size,
+                  fileName: file.name,
+                  fileSize: file.size,
                   path: '',
             }
 
-            const newFileObjects = [{ fileObject: mainAquaFileObject, file: aquaFile }]
+            const newFileObjects = [{ fileObject: mainAquaFileObject, file: file }]
             setAllFileObjectsWrapper(newFileObjects)
 
             const genHash = getGenesisHash(aquaTree)
@@ -218,7 +220,7 @@ export const ImportAquaTree = ({ aquaFile, uploadedIndexes, fileIndex, updateUpl
                   }
                   console.log(`importedAquaTreeGenesisHash ${importedAquaTreeGenesisHash}`)
 
-                  await uploadFileData(aquaFile, null, false)
+                  await uploadFileData(file, null, false)
             } catch (e) {
                   setUploading(false)
                   toast.error( `Failed to import aqua tree file: ${e}`)
@@ -373,8 +375,8 @@ export const ImportAquaTree = ({ aquaFile, uploadedIndexes, fileIndex, updateUpl
 
             for (const item of allAquaTrees) {
                   console.log(` looping aqua tree file ${item.file.name} `)
-                  if (aquaFile.name == item.file.name) {
-                        console.log(`skip main file .. ${aquaFile.name}`)
+                  if (file.name == item.file.name) {
+                        console.log(`skip main file .. ${file.name}`)
                   } else {
                         const aquaTreeItem: AquaTree = item.fileObject.fileContent as AquaTree
                         const fileName = getAquaTreeFileName(aquaTreeItem)
@@ -389,16 +391,20 @@ export const ImportAquaTree = ({ aquaFile, uploadedIndexes, fileIndex, updateUpl
                   }
             }
 
-            const fileContent = await readFileAsText(aquaFile)
+            const fileContent = await readFileAsText(file)
             const aquaTree: AquaTree = JSON.parse(fileContent)
             const fileName = getAquaTreeFileName(aquaTree)
             const fileObjWrapper = newFileObjects.find(e => e.fileObject.fileName === fileName)
 
-            await uploadFileData(aquaFile, fileObjWrapper?.file!, false)
+            await uploadFileData(file, fileObjWrapper?.file!, false)
       }
 
       const importFile = async () => {
-            const fileContent = await readFileAsText(aquaFile)
+ if(uploading){
+                  toast.info(`Wait for upload to complete`)
+                  return
+            }            
+            const fileContent = await readFileAsText(file)
             const aquaTree: AquaTree = JSON.parse(fileContent)
             const hasLinkRevision = hasLinkRevisions(aquaTree)
             console.log(`one here ${hasLinkRevision}`)
@@ -421,7 +427,7 @@ export const ImportAquaTree = ({ aquaFile, uploadedIndexes, fileIndex, updateUpl
                         setIsOpen(false)
 
                         try {
-                              await uploadFileData(aquaFile, selectedFile, false)
+                              await uploadFileData(file, selectedFile, false)
                         } catch (error) {
                               toast.error( `Error processing: ${error instanceof Error ? error.message : String(error)}`)
                               setUploading(false)
@@ -467,7 +473,7 @@ export const ImportAquaTree = ({ aquaFile, uploadedIndexes, fileIndex, updateUpl
                         variant="outline"
                         className="w-24 bg-green-50 border-green-200 text-green-700 hover:bg-green-100"
                         onClick={importFile}
-                        disabled={uploadedIndexes.includes(fileIndex) || uploaded}
+                        // disabled={uploadedIndexes.includes(fileIndex) || uploaded}
                   >
                         {uploading ? <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-green-700"></div> : <LuImport className="w-4 h-4 mr-1" />}
                         Import

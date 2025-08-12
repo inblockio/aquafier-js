@@ -144,7 +144,7 @@ export default async function webSocketController(fastify: FastifyInstance) {
                         userId: userId
                     }));
                 }
-            } catch (error) {
+            } catch (error : any) {
                 // Handle non-JSON messages
                 ws.send(JSON.stringify({
                     type: 'echo - error',

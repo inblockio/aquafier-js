@@ -1,4 +1,4 @@
-import React, {  useState } from 'react'
+import React, { useState } from 'react'
 import appStore from '../store'
 import { useStore } from 'zustand'
 import FilesList from './files_list'
@@ -73,6 +73,67 @@ const FilesPage = () => {
             fileInputRef.current?.click()
       }
 
+      // Also fix the upload button logic - add this function to your component
+      const handleDirectUpload = async (fileData: FileItemWrapper, index: number) => {
+            if (fileData.isLoading) {
+                  toast.info('File is already uploading, please wait')
+                  return
+            }
+
+            // Set loading state for this specific file
+            setFilesListForUpload(prev =>
+                  prev.map((item, i) =>
+                        i === index ? { ...item, isLoading: true } : item
+                  )
+            )
+
+            try {
+                  // Process the file upload
+                  const fileExist = await checkIfFileExistInUserFiles(fileData.file, files)
+                  if (fileExist) {
+                        throw new Error('File already exists')
+                  }
+
+                  if (fileData.file.size > maxFileSizeForUpload) {
+                        throw new Error('File size exceeds 200MB limit')
+                  }
+
+                  const metamaskAddress = session?.address ?? ''
+                  const formData = new FormData()
+                  formData.append('file', fileData.file)
+                  formData.append('account', `${metamaskAddress}`)
+
+                  const url = `${backend_url}/explorer_files`
+                  await axios.post(url, formData, {
+                        headers: {
+                              'Content-Type': 'multipart/form-data',
+                              nonce: session?.nonce,
+                        },
+                  })
+
+                  // Remove from upload list after successful upload
+                  setFilesListForUpload(prev => prev.filter((_, i) => i !== index))
+                  clearFileInput()
+
+                  // Refresh files list
+                  const url2 = `${backend_url}/explorer_files`
+                  const updatedFiles = await fetchFiles(session?.address!, url2, session?.nonce!)
+                  setFiles(updatedFiles)
+
+                  toast.success('File uploaded successfully')
+            } catch (error) {
+                  const errorMessage = error instanceof Error ? error.message : 'Upload failed'
+                  toast.error(errorMessage)
+
+                  // Reset loading state
+                  setFilesListForUpload(prev =>
+                        prev.map((item, i) =>
+                              i === index ? { ...item, isLoading: false } : item
+                        )
+                  )
+            }
+      }
+
       const filesForUpload = async (selectedFiles: File[]) => {
             const newUploads: UploadStatus[] = []
             for (const file of selectedFiles) {
@@ -105,25 +166,53 @@ const FilesPage = () => {
                                     console.error('Error reading file content:', error)
                               }
                         }
-                        const fileItemWrapper: FileItemWrapper = {
-                              file,
-                              isJson,
-                              isZip,
-                              isLoading: false,
-                              isJsonForm: isJsonForm,
-                              isJsonAquaTreeData: isJsonAquaTreeData,
-                        }
 
-                        console.log(`fileItemWrapper ${JSON.stringify(fileItemWrapper, null, 4)}`)
-                        setFilesListForUpload(prev => [...prev, fileItemWrapper])
+                        // Check if file already exists in the upload list
+                        const fileExists = filesListForUpload.some(existingFile =>
+                              existingFile.file.name === file.name &&
+                              existingFile.file.size === file.size &&
+                              existingFile.file.lastModified === file.lastModified
+                        )
+
+                        if (!fileExists) {
+                              const fileItemWrapper: FileItemWrapper = {
+                                    status: 'pending',
+                                    file,
+                                    isJson,
+                                    isZip,
+                                    isLoading: false,
+                                    isJsonForm: isJsonForm,
+                                    isJsonAquaTreeData: isJsonAquaTreeData,
+                              }
+
+                              console.log(`fileItemWrapper ${JSON.stringify(fileItemWrapper, null, 4)}`)
+                              setFilesListForUpload(prev => [...prev, fileItemWrapper])
+
+                        } else {
+                              console.log(`File ${file.name} already exists in upload list`)
+
+                              toast.error(`1. Error file exist in upload list`)
+                        }
                   } else {
-                        newUploads.push({
-                              file,
-                              status: 'pending',
-                              progress: 0,
-                              isJson: isJson,
-                              isZip: isZip,
-                        })
+                        // Check if file already exists in the upload queue
+                        const fileExists = newUploads.some(existingFile =>
+                              existingFile.file.name === file.name &&
+                              existingFile.file.size === file.size &&
+                              existingFile.file.lastModified === file.lastModified
+                        )
+
+                        if (!fileExists) {
+                              newUploads.push({
+                                    file,
+                                    status: 'pending',
+                                    progress: 0,
+                                    isJson: isJson,
+                                    isZip: isZip,
+                              })
+                        } else {
+                              console.log(`=== File ${file.name} already exists in upload list`)
+                              toast.error(`1. Error file exist in upload list`)
+                        }
                   }
             }
 
@@ -138,13 +227,16 @@ const FilesPage = () => {
             }
       }
 
-      const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+      const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
             const selectedFiles = Array.from(e.target.files ?? [])
             if (selectedFiles.length === 0) {
                   console.log(`handleFileChange is zero `)
                   return
             }
-            filesForUpload(selectedFiles)
+            await filesForUpload(selectedFiles)
+            // Clear the file input immediately after processing
+            clearFileInput()
+
       }
 
       const processUploadQueue = async (uploads: UploadStatus[]) => {
@@ -349,7 +441,7 @@ const FilesPage = () => {
                                           <span>Document Signature </span>
                                     </Button>
 
-                                    
+
 
                                     <ClaimTypesDropdownButton />
                                     <Button
@@ -363,7 +455,7 @@ const FilesPage = () => {
                                           <span>Create Template</span>
                                     </Button>
 
-                                  
+
                               </div>
                         </div>
                   </div>
@@ -388,25 +480,35 @@ const FilesPage = () => {
                                                             {fileData.isJsonForm ? (
                                                                   <FormRevisionFile
                                                                         file={fileData.file}
-                                                                        uploadedIndexes={[]}
-                                                                        updateUploadedIndex={index => {
-                                                                              setFilesListForUpload(prev => prev.filter((_, i) => i !== index))
-                                                                              clearFileInput() // Clear file input after removal
+                                                                        filesWrapper={fileData}
+                                                                        removeFilesListForUpload={(item) => {
+                                                                              let newFilesList = filesListForUpload.filter((item2) => item2.file.name != item.file.name)
+                                                                              setFilesListForUpload(newFilesList)
                                                                         }}
-                                                                        fileIndex={index}
+                                                                        // uploadedIndexes={[]}
+                                                                        // updateUploadedIndex={index => {
+                                                                        //       setFilesListForUpload(prev => prev.filter((_, i) => i !== index))
+                                                                        //       clearFileInput() // Clear file input after removal
+                                                                        // }}
+                                                                        // fileIndex={index}
                                                                         autoUpload={false}
                                                                   />
                                                             ) : null}
 
                                                             {fileData.isJsonAquaTreeData ? (
                                                                   <ImportAquaTree
-                                                                        aquaFile={fileData.file}
-                                                                        uploadedIndexes={[]}
-                                                                        updateUploadedIndex={index => {
-                                                                              setFilesListForUpload(prev => prev.filter((_, i) => i !== index))
-                                                                              clearFileInput() // Clear file input after removal
+                                                                        file={fileData.file}
+                                                                        filesWrapper={fileData}
+                                                                        removeFilesListForUpload={(item) => {
+                                                                              let newFilesList = filesListForUpload.filter((item2) => item2.file.name != item.file.name)
+                                                                              setFilesListForUpload(newFilesList)
                                                                         }}
-                                                                        fileIndex={index}
+                                                                        // uploadedIndexes={[]}
+                                                                        // updateUploadedIndex={index => {
+                                                                        //       setFilesListForUpload(prev => prev.filter((_, i) => i !== index))
+                                                                        //       clearFileInput() // Clear file input after removal
+                                                                        // }}
+                                                                        // fileIndex={index}
                                                                         autoUpload={false}
                                                                   />
                                                             ) : null}
@@ -414,16 +516,21 @@ const FilesPage = () => {
                                                             {fileData.isZip ? (
                                                                   <ImportAquaTreeZip
                                                                         file={fileData.file}
-                                                                        uploadedIndexes={[]}
-                                                                        updateUploadedIndex={index => {
-                                                                              if (fileData.isLoading) {
-                                                                                    toast.info('File is uploading, please wait')
-                                                                                    return
-                                                                              }
-                                                                              setFilesListForUpload(prev => prev.filter((_, i) => i !== index))
-                                                                              clearFileInput() // Clear file input after removal
+                                                                        filesWrapper={fileData}
+                                                                        removeFilesListForUpload={(item) => {
+                                                                              let newFilesList = filesListForUpload.filter((item2) => item2.file.name != item.file.name)
+                                                                              setFilesListForUpload(newFilesList)
                                                                         }}
-                                                                        fileIndex={index}
+                                                                        // uploadedIndexes={[]}
+                                                                        // updateUploadedIndex={index => {
+                                                                        //       if (fileData.isLoading) {
+                                                                        //             toast.info('File is uploading, please wait')
+                                                                        //             return
+                                                                        //       }
+                                                                        //       setFilesListForUpload(prev => prev.filter((_, i) => i !== index))
+                                                                        //       clearFileInput() // Clear file input after removal
+                                                                        // }}
+                                                                        // fileIndex={index}
                                                                         autoUpload={false}
                                                                   />
                                                             ) : null}
@@ -444,7 +551,7 @@ const FilesPage = () => {
                                                                         data-testid="action-upload-51-button"
                                                                         className="flex items-center gap-1 text-white hover:text-white-700 text-sm font-medium bg-gray-800 w-[80px] px-2 py-1 rounded"
                                                                         onClick={() => {
-                                                                              // uploadFile(fileData)
+                                                                              handleDirectUpload(fileData, index)
                                                                         }}
                                                                   >
                                                                         <LuUpload />
@@ -510,7 +617,7 @@ const FilesPage = () => {
                                                 // setIsSelectedFileDialogOpen(false)
                                                 setSelectedFileInfo(null)
                                                 setOpenDialog(null)
-                                          }} 
+                                          }}
                                     >
                                           <X className="h-4 w-4" />
                                     </Button>

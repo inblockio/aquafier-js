@@ -61,19 +61,20 @@ export const DownloadAquaChain = ({ file, index, children }: { file: ApiFileInfo
             const zip = new JSZip()
             const aquafier = new Aquafier()
             let mainAquaFileName = ''
-            let mainAquaHash = ''
+            let genesisHash = ''
             // fetch the genesis
             const revisionHashes = Object.keys(file.aquaTree!.revisions!)
             for (const revisionHash of revisionHashes) {
                   const revisionData = file.aquaTree!.revisions![revisionHash]
                   if (revisionData.previous_verification_hash == null || revisionData.previous_verification_hash == '') {
-                        mainAquaHash = revisionHash
+                        genesisHash = revisionHash
                         break
                   }
             }
-            mainAquaFileName = file.aquaTree!.file_index[mainAquaHash]
+            mainAquaFileName = file.aquaTree!.file_index[genesisHash]
 
-            zip.file(`${mainAquaFileName}.aqua.json`, JSON.stringify(file.aquaTree))
+            let mainAquaFileNameWithAquaDotJson = `${mainAquaFileName}.aqua.json`
+            zip.file(mainAquaFileNameWithAquaDotJson, JSON.stringify(file.aquaTree))
 
             const nameWithHashes: Array<AquaNameWithHash> = []
             for (const fileObj of file.fileObject) {
@@ -129,7 +130,7 @@ export const DownloadAquaChain = ({ file, index, children }: { file: ApiFileInfo
                               // It's an AquaTree, so stringify it as JSON
                               const jsonContent = JSON.stringify(fileObj.fileContent as AquaTree)
                               // Only add .json extension if it doesn't already have one
-                              const fileName = fileObj.fileName.endsWith('.json') ? fileObj.fileName : `${fileObj.fileName}.json`
+                              const fileName = fileObj.fileName.endsWith('.aqua.json') ? fileObj.fileName : `${fileObj.fileName}.aqua.json`
                               zip.file(fileName, jsonContent)
                               hashData = aquafier.getFileHash(jsonContent)
                         } else if (typeof fileObj.fileContent === 'string') {
@@ -150,9 +151,10 @@ export const DownloadAquaChain = ({ file, index, children }: { file: ApiFileInfo
                               const jsonContent = JSON.stringify(fileObj.fileContent)
                               // Only add .json extension if it doesn't already have one and it's not a known binary file
                               let fileName = fileObj.fileName
-                              if (!fileName.endsWith('.json') && !isBinaryFile(fileName)) {
-                                    fileName = `${fileName}.json`
-                              }
+                              console.log(`download file ${fileName}`)
+                              // if (!fileName.endsWith('.json') && !isBinaryFile(fileName)) {
+                              //       fileName = `${fileName}.json`
+                              // }
                               zip.file(fileName, jsonContent)
                               hashData = aquafier.getFileHash(jsonContent)
                         }
@@ -163,6 +165,26 @@ export const DownloadAquaChain = ({ file, index, children }: { file: ApiFileInfo
                         })
                   }
             }
+
+
+            let genesisRevision: Revision | undefined = file.aquaTree!.revisions[genesisHash]
+            if (!genesisRevision) {
+                  toast.error(`an error occured creating zip file : genesis revision`)
+                  return
+            }
+
+            let fileHash = genesisRevision.file_hash
+            if (!fileHash) {
+                  toast.error(`an error occured creating zip file:  file hash`)
+                  return
+            }
+            //add main aqua file
+            nameWithHashes.push({
+                  name: mainAquaFileNameWithAquaDotJson,
+                  hash: fileHash,
+            })
+
+
 
             //create aqua.json
             const aquaObject: AquaJsonInZip = {

@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Grid3X3, List, Filter, X } from 'lucide-react'
 import FileListItem from './files_list_item'
-import { getAquaTreeFileName, isWorkFlowData } from '@/utils/functions'
+import { fetchSystemFiles, getAquaTreeFileName, isWorkFlowData } from '@/utils/functions'
 
 import { useStore } from 'zustand'
 import appStore from '../store'
@@ -17,7 +17,7 @@ export default function FilesList() {
       const [selectedFilters, setSelectedFilters] = useState<string[]>(['all'])
       const [tempSelectedFilters, setTempSelectedFilters] = useState<string[]>(['all'])
 
-      const { files, systemFileInfo, backend_url, session } = useStore(appStore)
+      const { files, systemFileInfo, backend_url, session, setSystemFileInfo } = useStore(appStore)
 
       // Add screen size detector
       useEffect(() => {
@@ -35,29 +35,43 @@ export default function FilesList() {
 
       // Extract unique workflows from files
       useEffect(() => {
-            const someData = systemFileInfo.map(e => {
-                  try {
-                        return getAquaTreeFileName(e.aquaTree!)
-                  } catch (e) {
-                        console.log('Error processing system file')
-                        return ''
-                  }
-            })
 
-            const workflows = new Set<string>()
+            console.log(`use effect in files list file and systemn  info `)
 
-            files.forEach(file => {
-                  try {
-                        const workFlow = isWorkFlowData(file.aquaTree!, someData)
-                        if (workFlow.isWorkFlow && workFlow.workFlow) {
-                              workflows.add(workFlow.workFlow)
+            if (systemFileInfo.length == 0) {
+                  (async () => {
+                        const url3 = `${backend_url}/system/aqua_tree`
+                        const systemFiles = await fetchSystemFiles(url3, session?.address)
+                        setSystemFileInfo(systemFiles)
+                  })()
+            } else {
+
+
+                  const someData = systemFileInfo.map(e => {
+                        try {
+                              return getAquaTreeFileName(e.aquaTree!)
+                        } catch (e) {
+                              console.log('Error processing system file')
+                              return ''
                         }
-                  } catch (e) {
-                        console.log('Error processing workflow data for file:', file)
-                  }
-            })
+                  })
 
-            setUniqueWorkflows(Array.from(workflows).sort())
+                  const workflows = new Set<string>()
+
+                  files.forEach(file => {
+                        try {
+                              const workFlow = isWorkFlowData(file.aquaTree!, someData)
+                              if (workFlow.isWorkFlow && workFlow.workFlow) {
+                                    workflows.add(workFlow.workFlow)
+                              }
+                        } catch (e) {
+                              console.log('Error processing workflow data for file:', file)
+                        }
+                  })
+
+                  setUniqueWorkflows(Array.from(workflows).sort())
+
+            }
       }, [files, systemFileInfo])
 
       // Filter files based on selected filters
@@ -456,8 +470,8 @@ export default function FilesList() {
                                                       setShowFilterModal(true)
                                                 }}
                                                 className={`p-2 rounded-md border ${!selectedFilters.includes('all')
-                                                            ? 'bg-blue-50 border-blue-200 text-blue-700'
-                                                            : 'border-gray-300 text-gray-700 hover:bg-gray-50'
+                                                      ? 'bg-blue-50 border-blue-200 text-blue-700'
+                                                      : 'border-gray-300 text-gray-700 hover:bg-gray-50'
                                                       }`}
                                                 title="Filter files"
                                           >

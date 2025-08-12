@@ -1,14 +1,14 @@
-import { AquaTree, FileObject, OrderRevisionInAquaTree, reorderAquaTreeRevisionsProperties } from 'aqua-js-sdk';
+import { AquaTree, FileObject, Revision as AquaTreeRevision, OrderRevisionInAquaTree, reorderAquaTreeRevisionsProperties } from 'aqua-js-sdk';
 import { prisma } from '../database/db';
 // For specific model types
-import { Signature, Revision, AquaForms, WitnessEvent, Link, FileIndex } from '@prisma/client';
+import { Signature, Revision as DBRevision, AquaForms, WitnessEvent, Link, FileIndex } from '@prisma/client';
 import * as fs from "fs"
 import { AquaJsonInZip, SaveRevision, SaveRevisionForUser } from '../models/request_models';
 import { getAquaTreeFileName } from './api_utils';
 import { createAquaTreeFromRevisions } from './revisions_operations_utils';
 import { getGenesisHash } from './aqua_tree_utils';
 import JSZip from 'jszip';
-import {deleteFile, getFileUploadDirectory} from './file_utils';
+import { deleteFile, getFileUploadDirectory } from './file_utils';
 import { hash, randomUUID } from 'crypto';
 import path from 'path';
 import { systemTemplateHashes } from '../models/constants';
@@ -618,7 +618,7 @@ export async function saveARevisionInAquaTree(revisionData: SaveRevisionForUser,
 
 // Utility function to generate pubkey hash
 function generatePubkeyHash(walletAddress: string, hash: string): string {
-    if(hash.includes("_")){
+    if (hash.includes("_")) {
         return hash
     }
     return `${walletAddress}_${hash}`;
@@ -776,7 +776,7 @@ async function handleSingleFileCleanup(tx: any, pubkeyHash: string) {
                 try {
                     await deleteFile(file.file_location)
                     console.log(`Deleted file from filesystem: ${file.file_location}`);
-                } catch (error) {
+                } catch (error : any) {
                     console.log("Error deleting file from filesystem:", error);
                 }
 
@@ -837,7 +837,7 @@ async function handleMultipleFileCleanup(tx: any, revisionHashes: string[]) {
                     try {
                         await deleteFile(file.file_location)
                         console.log(`Deleted file from filesystem: ${file.file_location}`);
-                    } catch (error) {
+                    } catch (error : any) {
                         console.log(`Error deleting file from filesystem: ${file.file_location}`, error);
                     }
                 }
@@ -876,7 +876,7 @@ async function cleanUpRevisionReferences(tx: any, revisionHashes: string[]) {
 }
 
 // Utility function to delete revisions
-async function deleteRevisions(tx: any, revisions: Revision[]) {
+async function deleteRevisions(tx: any, revisions: DBRevision[]) {
     let deletedCount = 0;
     for (const revision of revisions) {
         await tx.revision.delete({
@@ -884,7 +884,7 @@ async function deleteRevisions(tx: any, revisions: Revision[]) {
         });
         deletedCount++;
     }
-    console.log(`Deleted ${deletedCount} Revision entries`);
+    console.log(`Deleted ${deletedCount} DBRevision entries`);
     return deletedCount;
 }
 
@@ -982,9 +982,9 @@ export async function deleteAquaTreeFromSystem(walletAddress: string, hash: stri
     console.log(`🙃🙃 filepubkeyHash ${filepubkeyHash} hash ${hash} walletAddress ${walletAddress}`)
     try {
         // Fetch all revisions in the chain
-        const revisionData: Revision[] = [];
+        const revisionData: DBRevision[] = [];
 
-        const latestRevisionData: Revision | null = await prisma.revision.findFirst({
+        const latestRevisionData: DBRevision | null = await prisma.revision.findFirst({
             where: { pubkey_hash: filepubkeyHash }
         });
 
@@ -1034,7 +1034,7 @@ export async function deleteAquaTreeFromSystem(walletAddress: string, hash: stri
             // Delete contracts
             await deleteContracts(tx, revisionPubkeyHashes, walletAddress);
 
-            console.log('Revision chain deletion completed successfully');
+            console.log('DBRevision chain deletion completed successfully');
         });
 
         return [200, "File and revisions deleted successfully"];
@@ -1063,7 +1063,7 @@ async function processFileData(
     fileHash: string,
     userAddress: string,
     revisionHash: string,
-    fileAsset?: any,
+    fileAsset?: JSZip.JSZipObject,
     fileName?: string
 ): Promise<FileProcessingResult> {
     const pubKeyHash = `${userAddress}_${revisionHash}`;
@@ -1077,6 +1077,8 @@ async function processFileData(
     });
 
     if (!fileResult && fileAsset && fileName) {
+
+        console.log(`🪄🪄 creating file and hash `)
         // Create new file
         const fileContent = await fileAsset.async('nodebuffer');
         const UPLOAD_DIR = getFileUploadDirectory();
@@ -1115,6 +1117,8 @@ async function processFileData(
     }
 
     if (fileResult && existingFileIndex) {
+
+           console.log(`🪄🪄 updating  file and hash - ${fileHash} `)
         // Update existing file index
         if (!existingFileIndex.pubkey_hash.includes(pubKeyHash)) {
             existingFileIndex.pubkey_hash.push(pubKeyHash);
@@ -1150,7 +1154,7 @@ async function processFileData(
  * Processes revision data based on revision type
  */
 async function processRevisionByType(
-    revisionData: any,
+    revisionData: AquaTreeRevision,
     pubKeyHash: string,
     userAddress: string,
     aquaTree: AquaTree
@@ -1200,7 +1204,7 @@ async function processFormRevision(revisionData: any, pubKeyHash: string) {
     }
 }
 
-async function processSignatureRevision(revisionData: any, pubKeyHash: string) {
+async function processSignatureRevision(revisionData: AquaTreeRevision, pubKeyHash: string) {
     const signature = typeof revisionData.signature === "string"
         ? revisionData.signature
         : JSON.stringify(revisionData.signature);
@@ -1219,7 +1223,7 @@ async function processSignatureRevision(revisionData: any, pubKeyHash: string) {
     });
 }
 
-async function processWitnessRevision(revisionData: any, pubKeyHash: string) {
+async function processWitnessRevision(revisionData: AquaTreeRevision, pubKeyHash: string) {
 
     // First, create or update the WitnessEvent (the referenced table)
     await prisma.witnessEvent.upsert({
@@ -1232,7 +1236,7 @@ async function processWitnessRevision(revisionData: any, pubKeyHash: string) {
             Witness_sender_account_address: revisionData.witness_sender_account_address
         },
         create: {
-            Witness_merkle_root: revisionData.witness_merkle_root,
+            Witness_merkle_root: revisionData.witness_merkle_root ?? "",
             Witness_timestamp: revisionData.witness_timestamp?.toString(),
             Witness_network: revisionData.witness_network,
             Witness_smart_contract_address: revisionData.witness_smart_contract_address,
@@ -1282,9 +1286,9 @@ async function processWitnessRevision(revisionData: any, pubKeyHash: string) {
     // });
 }
 
-async function processFileRevision(revisionData: any, pubKeyHash: string, userAddress: string) {
+async function processFileRevision(revisionData: AquaTreeRevision, pubKeyHash: string, userAddress: string) {
     if (!revisionData.file_hash) {
-        throw new Error(`Revision is detected to be a file but file_hash is missing`);
+        throw new Error(`AquaTreeRevision is detected to be a file but file_hash is missing`);
     }
 
     let fileResult = await prisma.file.findFirst({
@@ -1294,7 +1298,7 @@ async function processFileRevision(revisionData: any, pubKeyHash: string, userAd
     });
 
     if (!fileResult) {
-        throw new Error(`File data should be in database but is not found.`);
+        throw new Error(`File data should be in database but is not found. [file hash ${revisionData.file_hash}]`);
     }
 
 
@@ -1503,7 +1507,10 @@ export async function processAquaMetadata(zipData: JSZip, userAddress: string) {
     }
 
     const aquaJsonOriginalKey = fileMap.get('aqua.json');
-    if (!aquaJsonOriginalKey) return;
+    if (!aquaJsonOriginalKey) {
+          throw new Error(`Manifets file not found ie aqua.json`);
+        // return
+    };
 
     const aquaJsonFile = zipData.files[aquaJsonOriginalKey];
     const fileContent = await aquaJsonFile.async('text');
@@ -1513,35 +1520,52 @@ export async function processAquaMetadata(zipData: JSZip, userAddress: string) {
         let aquaFileName = "";
         if (nameHash.name.endsWith('.aqua.json')) {
             aquaFileName = nameHash.name;
+            
+            const aquaFileOriginalKey = fileMap.get(aquaFileName);
+
+            if (!aquaFileOriginalKey) {
+                throw new Error(`Expected to find ${aquaFileName} as defined in aqua.json but file not found`);
+            }
+
+            const aquaFile = zipData.files[aquaFileOriginalKey];
+            const aquaFileDataText = await aquaFile.async('text');
+            const aquaTreeData: AquaTree = JSON.parse(aquaFileDataText);
+
+            const genesisHash = getGenesisHash(aquaTreeData);
+            if (!genesisHash) {
+                throw new Error(`Genesis hash cannot be null`);
+            }
+
+            // const filePubKeyHash = `${userAddress}_${genesisHash}`;
+            let nameNoAquaJsonExtsion = nameHash.name.replace('.aqua.json','')
+            const fileAssetOriginalKey = fileMap.get(nameNoAquaJsonExtsion);
+            const fileAsset = zipData.files[fileAssetOriginalKey];
+
+            const genRevision : AquaTreeRevision = aquaTreeData.revisions[genesisHash]
+            const assetFileHash = genRevision.file_hash
+
+
+            if(!assetFileHash){
+                 throw new Error(`Asset hash not found in aqua tree check genesis of ${nameHash.name}  `);
+            }
+            if(!fileAsset){
+                 throw new Error(`Asset not found ${nameNoAquaJsonExtsion}`);
+            }
+
+
+            console.log(`processFileData assetFileHash ${assetFileHash}  nameNoAquaJsonExtsion ${nameNoAquaJsonExtsion} genesisHash ${genesisHash}`)
+            
+            await processFileData(
+                assetFileHash, // nameHash.hash, should have been the asset hash not the file tree hash  nameHash.hashis the aqua tree hash
+                userAddress,
+                genesisHash,
+                fileAsset,
+                nameNoAquaJsonExtsion  //nameHash.name
+            );
+
         } else {
-            aquaFileName = `${nameHash.name}.aqua.json`;
+            console.log(`skipping non aqua json file ${nameHash.name}`)
         }
-        const aquaFileOriginalKey = fileMap.get(aquaFileName);
-
-        if (!aquaFileOriginalKey) {
-            throw new Error(`Expected to find ${aquaFileName} as defined in aqua.json but file not found`);
-        }
-
-        const aquaFile = zipData.files[aquaFileOriginalKey];
-        const aquaFileDataText = await aquaFile.async('text');
-        const aquaTreeData: AquaTree = JSON.parse(aquaFileDataText);
-
-        const genesisHash = getGenesisHash(aquaTreeData);
-        if (!genesisHash) {
-            throw new Error(`Genesis hash cannot be null`);
-        }
-
-        const filePubKeyHash = `${userAddress}_${genesisHash}`;
-        const fileAssetOriginalKey = fileMap.get(nameHash.name);
-        const fileAsset = zipData.files[fileAssetOriginalKey];
-
-        await processFileData(
-            nameHash.hash,
-            userAddress,
-            genesisHash,
-            fileAsset,
-            nameHash.name
-        );
     }
 }
 
@@ -1565,7 +1589,7 @@ export async function processAquaFiles(
 
 
         await processAllAquaFiles(zipData, userAddress, templateId, aquaConfig, mainAquaTree, actualIsWorkFlow);
-    } catch (error) {
+    } catch (error : any) {
         console.error('Error processing aqua files:', error);
         // Fallback: process all aqua files without special workflow handling
         await processAllAquaFilesGeneric(zipData, userAddress, templateId, isWorkFlow);
@@ -1719,8 +1743,8 @@ export async function fetchAquaTreeWithForwardRevisions(latestRevisionHash: stri
 }
 
 
-export async function findAquaTreeRevision(revisionHash: string): Promise<Array<Revision>> {
-    let revisions: Array<Revision> = [];
+export async function findAquaTreeRevision(revisionHash: string): Promise<Array<DBRevision>> {
+    let revisions: Array<DBRevision> = [];
 
     // fetch latest revision 
     let latestRevionData = await prisma.revision.findFirst({
@@ -1755,7 +1779,7 @@ export async function findAquaTreeRevision(revisionHash: string): Promise<Array<
 }
 
 
-export async function FetchRevisionInfo(hash: string, revision: Revision): Promise<Signature | WitnessEvent | AquaForms[] | Link | null> {
+export async function FetchRevisionInfo(hash: string, revision: AquaTreeRevision): Promise<Signature | WitnessEvent | AquaForms[] | Link | null> {
 
     if (revision.revision_type == "signature") {
         //  console.log(`signature with hash ${hash}`)

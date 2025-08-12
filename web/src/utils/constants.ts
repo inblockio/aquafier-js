@@ -30,7 +30,16 @@ export const WITNESS_NETWORK_MAP: Record<string, string> = {
 
 // constants
 
-export const imageTypes = ['image/png', 'image/jpeg', 'image/gif', 'image/svg+xml']
+export const imageTypes = [
+      'image/png',
+      'image/jpeg',
+      'image/gif',
+      'image/svg+xml',
+      'image/webp',
+      'image/bmp',
+      'image/heic',
+      'image/heif',
+]
 export const documentTypes = ['application/pdf', 'text/plain', 'text/csv', 'text/json', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document']
 export const musicTypes = ['audio/mpeg', 'audio/wav']
 export const videoTypes = ['video/mp4', 'video/mpeg', 'video/webm']

@@ -8,10 +8,10 @@ import JSZip from 'jszip'
 import { IDropzoneAction } from '../../types/types'
 import { Button } from '@/components/ui/button'
 import { toast } from 'sonner'
-
-export const ImportAquaTreeZip = ({ file, uploadedIndexes, fileIndex, updateUploadedIndex }: IDropzoneAction) => {
+ 
+export const ImportAquaTreeZip = ({ file, filesWrapper, removeFilesListForUpload }: IDropzoneAction) => {
       const [uploading, setUploading] = useState(false)
-      const [uploaded, setUploaded] = useState(false)
+      // const [uploaded, setUploaded] = useState(false)
 
       const { metamaskAddress, setFiles, backend_url, session } = useStore(appStore)
 
@@ -37,15 +37,17 @@ export const ImportAquaTreeZip = ({ file, uploadedIndexes, fileIndex, updateUplo
                               nonce: session?.nonce,
                         },
                   })
-
+  
                   // return all user files
                   const res = response.data
 
                   setFiles([...res.data])
-                  setUploaded(true)
-                  setUploading(false)
+                  // setUploaded(true)
+                  setUploading(false) 
                   toast.success('File uploaded successfuly')
-                  updateUploadedIndex(fileIndex)
+                  // updateUploadedIndex(fileIndex)
+
+                  removeFilesListForUpload(filesWrapper)
                   return
             } catch (error) {
                   setUploading(false)
@@ -54,6 +56,11 @@ export const ImportAquaTreeZip = ({ file, uploadedIndexes, fileIndex, updateUplo
       }
 
       const importFile = async () => {
+
+            if(uploading){
+                  toast.info(`Wait for upload to complete`)
+                  return
+            }
             console.log('importFile called')
             const reader = new FileReader()
 
@@ -103,7 +110,7 @@ export const ImportAquaTreeZip = ({ file, uploadedIndexes, fileIndex, updateUplo
                   variant="outline"
                   className="w-24 bg-green-50 border-green-200 text-green-700 hover:bg-green-100"
                   onClick={importFile}
-                  disabled={uploadedIndexes.includes(fileIndex) || uploaded}
+                  // disabled={uploadedIndexes.includes(fileIndex) || uploaded}
             >
                   {uploading ? <span className="w-4 h-4 animate-spin border-2 border-green-600 border-t-transparent rounded-full" /> : <LuSave className="w-4 h-4" />}
                   Import
