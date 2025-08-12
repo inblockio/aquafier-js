@@ -148,7 +148,7 @@ export default async function templatesController(fastify: FastifyInstance) {
             });
 
             return reply.code(200).send({ success: true });
-        } catch (error) {
+        } catch (error : any) {
             return reply.code(500).send({ success: false, error: "Failed to delete template" });
         }
     });
@@ -278,7 +278,7 @@ export default async function templatesController(fastify: FastifyInstance) {
             } else {
                 return reply.code(500).send({ success: true, logs: resIdentityAquaTree.data });
             }
-        } catch (error) {
+        } catch (error : any) {
             console.error("Error creating template:", error);
             return reply.code(500).send({ success: false, message: "Failed to create template" });
         }
@@ -339,7 +339,7 @@ export default async function templatesController(fastify: FastifyInstance) {
             }
 
             return reply.code(200).send({ success: true });
-        } catch (error) {
+        } catch (error : any) {
             console.error("Error creating template:", error);
             return reply.code(500).send({ success: false, message: "Failed to create template" });
         }

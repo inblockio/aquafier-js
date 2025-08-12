@@ -104,7 +104,7 @@ export default async function filesController(fastify: FastifyInstance) {
 
             // Send the file content as a response
             return reply.send(fileContent);
-        } catch (error) {
+        } catch (error : any) {
             console.error('Error reading file:', error);
             return reply.code(500).send({ success: false, message: 'Error reading file content' });
         }
@@ -171,7 +171,7 @@ export default async function filesController(fastify: FastifyInstance) {
             return reply.code(200).send({
                 aquaTree: resData,
             });
-        } catch (error) {
+        } catch (error : any) {
             request.log.error(error);
             return reply.code(500).send({ error: 'File upload failed' });
         }
@@ -278,7 +278,7 @@ export default async function filesController(fastify: FastifyInstance) {
             return reply.code(200).send({
                 aquaTree: resData,
             });
-        } catch (error) {
+        } catch (error : any) {
             request.log.error(error);
             return reply.code(500).send({ error: 'File upload failed' });
         }

@@ -776,7 +776,7 @@ async function handleSingleFileCleanup(tx: any, pubkeyHash: string) {
                 try {
                     await deleteFile(file.file_location)
                     console.log(`Deleted file from filesystem: ${file.file_location}`);
-                } catch (error) {
+                } catch (error : any) {
                     console.log("Error deleting file from filesystem:", error);
                 }
 
@@ -837,7 +837,7 @@ async function handleMultipleFileCleanup(tx: any, revisionHashes: string[]) {
                     try {
                         await deleteFile(file.file_location)
                         console.log(`Deleted file from filesystem: ${file.file_location}`);
-                    } catch (error) {
+                    } catch (error : any) {
                         console.log(`Error deleting file from filesystem: ${file.file_location}`, error);
                     }
                 }
@@ -1589,7 +1589,7 @@ export async function processAquaFiles(
 
 
         await processAllAquaFiles(zipData, userAddress, templateId, aquaConfig, mainAquaTree, actualIsWorkFlow);
-    } catch (error) {
+    } catch (error : any) {
         console.error('Error processing aqua files:', error);
         // Fallback: process all aqua files without special workflow handling
         await processAllAquaFilesGeneric(zipData, userAddress, templateId, isWorkFlow);

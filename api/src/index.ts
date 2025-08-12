@@ -31,7 +31,7 @@ const start = async () => {
         await mockNotifications();
         console.log("✅ Mock notifications created successfully");
       }
-    } catch (error) {
+    } catch (error : any) {
       console.error("❌ Error creating mock notifications:", error);
     }
   } catch (err) {

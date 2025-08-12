@@ -79,7 +79,7 @@ export async function mockNotifications(){
         }
         
         console.log(`Created ${notifications.length} mock notifications for ${receiverAddress}`);
-    } catch (error) {
+    } catch (error : any) {
         console.error('Error creating mock notifications:', error);
     } finally {
         await prisma.$disconnect();

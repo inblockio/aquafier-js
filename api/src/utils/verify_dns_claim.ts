@@ -150,7 +150,7 @@ async function resolveTxtWithFallbacks(domain: string): Promise<{ records: strin
       });
       logs.push(`Success with servers ${servers.join(', ')}: ${records.length} records found`);
       return { records, dnssecValidated: false };
-    } catch (error) {
+    } catch (error : any) {
       logs.push(`Failed with servers ${servers.join(', ')}: ${error instanceof Error ? error.message : error}`);
     }
   }
@@ -497,7 +497,7 @@ async function verifySingleRecord(
     result.success = true;
     return result;
 
-  } catch (error) {
+  } catch (error : any) {
     logs.push({
       level: 'error',
       message: 'Signature verification error',
@@ -729,7 +729,7 @@ export async function verifyProofApi(domain: string, lookupKey: string, expected
 
     return response;
 
-  } catch (error) {
+  } catch (error : any) {
     logs.push({
       level: 'error',
       message: 'Unexpected error during verification',

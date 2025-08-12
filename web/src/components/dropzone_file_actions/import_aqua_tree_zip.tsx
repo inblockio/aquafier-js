@@ -37,13 +37,13 @@ export const ImportAquaTreeZip = ({ file, filesWrapper, removeFilesListForUpload
                               nonce: session?.nonce,
                         },
                   })
-
+  
                   // return all user files
                   const res = response.data
 
                   setFiles([...res.data])
                   // setUploaded(true)
-                  setUploading(false)
+                  setUploading(false) 
                   toast.success('File uploaded successfuly')
                   // updateUploadedIndex(fileIndex)
 

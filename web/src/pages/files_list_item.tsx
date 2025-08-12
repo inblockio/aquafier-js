@@ -59,6 +59,8 @@ export default function FilesListItem({
       }, [])
 
       useEffect(() => {
+
+            console.log(`FilesListItem  useEffect ---- `)
             const someData = systemFileInfo.map(e => {
                   try {
                         return getAquaTreeFileName(e.aquaTree!)

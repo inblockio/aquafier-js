@@ -96,7 +96,7 @@ export default async function explorerController(fastify: FastifyInstance) {
                 data: displayData
             });
 
-        } catch (error) {
+        } catch (error : any) {
             request.log.error(error);
             return reply.code(500).send({
                 error: error instanceof Error ? error.message : 'File upload failed'
@@ -390,7 +390,7 @@ export default async function explorerController(fastify: FastifyInstance) {
                 message: 'Aqua tree saved successfully',
                 files: displayData
             });
-        } catch (error) {
+        } catch (error : any) {
             console.error('\n\n Specific error in file/fileIndex creation:', error);
             request.log.error(error);
             return reply.code(500).send({ error: `Error ${error}` });
@@ -729,7 +729,7 @@ export default async function explorerController(fastify: FastifyInstance) {
                     }
                 })
 
-            } catch (error) {
+            } catch (error : any) {
                 console.log("======================================")
                 console.log(`error ${error}`)
                 let logs: LogData[] = []
@@ -749,7 +749,7 @@ export default async function explorerController(fastify: FastifyInstance) {
                 aquaTree: resData,
                 fileObject: fileObject
             });
-        } catch (error) {
+        } catch (error : any) {
             console.log("++++++++++++++++++++++++++++++++++++++=")
             console.log(`error ${error}`)
             request.log.error(error);
