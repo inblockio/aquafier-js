@@ -110,7 +110,7 @@ export default function ClaimTypesDropdownButton() {
 
 
            <button
-          data-testid="create-dns-claim-dropdown-button-item"
+          data-testid="create-signature-claim-dropdown-button-item"
             onClick={() => handleItemClick('user_signature')}
             className="group flex w-full items-center px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900"
           >
@@ -119,7 +119,7 @@ export default function ClaimTypesDropdownButton() {
           </button>
 
              <button
-          data-testid="create-dns-claim-dropdown-button-item"
+          data-testid="create-email-claim-dropdown-button-item"
             onClick={() => handleItemClick('email_claim')}
             className="group flex w-full items-center px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900"
           >
@@ -130,7 +130,7 @@ export default function ClaimTypesDropdownButton() {
 
 
              <button
-          data-testid="create-dns-claim-dropdown-button-item"
+          data-testid="create-phone-number-claim-dropdown-button-item"
             onClick={() => handleItemClick('phone_number_claim')}
             className="group flex w-full items-center px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900"
           >

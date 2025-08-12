@@ -32,7 +32,7 @@ const fetchEnsName = async (walletAddress: string, infuraKey: string): Promise<s
     ensName = await provider.lookupAddress(walletAddress) ?? "";
 
 
-  } catch (error) {
+  } catch (error : any) {
     console.error('Error fetching ENS name:', error);
 
     // Continue with creation without ENS name
@@ -173,7 +173,7 @@ export async function checkFolderExists(folderPath: string) {
     await fs.promises.access(folderPath, fs.constants.F_OK);
     const stats = await fs.promises.lstat(folderPath);
     return stats.isDirectory();
-  } catch (error) {
+  } catch (error : any) {
     return false;
   }
 }

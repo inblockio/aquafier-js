@@ -10,10 +10,10 @@ import { analyzeAndMergeRevisions } from '../../utils/aqua_funcs'
 import { RevisionsComparisonResult } from '../../models/revision_merge'
 import { OrderRevisionInAquaTree, Revision } from 'aqua-js-sdk'
 import { BtnContent, ImportChainFromChainProps } from '../../types/types'
-import { toast } from '@/components/ui/use-toast'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { toast } from 'sonner'
 // import { toast } from "@/components/ui/use-toast";
 // import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 // import { Button } from "@/components/ui/button";
@@ -118,20 +118,14 @@ export const ImportAquaChainFromChain = ({ fileInfo, isVerificationSuccessful, c
 
                   console.log('Transfer chain res: ', res)
                   if (res.status === 200) {
-                        toast({
-                              description: 'Aqua Chain imported successfully',
-                              variant: 'default',
-                        })
+                        toast.success( 'Aqua Chain imported successfully')
 
                         // Use setTimeout to ensure state is updated before navigation
                         setTimeout(() => {
                               navigate('/app/loading?reload=true')
                         }, 500)
                   } else {
-                        toast({
-                              description: 'Failed to import chain',
-                              variant: 'destructive',
-                        })
+                        toast.error( 'Failed to import chain')
                   }
 
                   setUploading(false)
@@ -139,10 +133,7 @@ export const ImportAquaChainFromChain = ({ fileInfo, isVerificationSuccessful, c
                   return
             } catch (error) {
                   setUploading(false)
-                  toast({
-                        description: `Failed to import chain: ${error}`,
-                        variant: 'destructive',
-                  })
+                  toast.error( `Failed to import chain: ${error}`)
             }
       }
 
@@ -169,20 +160,14 @@ export const ImportAquaChainFromChain = ({ fileInfo, isVerificationSuccessful, c
                   )
 
                   if (res.status === 200) {
-                        toast({
-                              description: 'Aqua Chain imported successfully',
-                              variant: 'default',
-                        })
+                        toast.success( 'Aqua Chain imported successfully')
 
                         // Use setTimeout to ensure state is updated before navigation
                         setTimeout(() => {
                               navigate('/loading?reload=true')
                         }, 500)
                   } else {
-                        toast({
-                              description: 'Failed to import chain',
-                              variant: 'destructive',
-                        })
+                        toast.error( 'Failed to import chain')
                   }
 
                   setUploading(false)
@@ -190,10 +175,7 @@ export const ImportAquaChainFromChain = ({ fileInfo, isVerificationSuccessful, c
                   return
             } catch (error) {
                   setUploading(false)
-                  toast({
-                        description: `Failed to import chain: ${error}`,
-                        variant: 'destructive',
-                  })
+                  toast.error(`Failed to import chain: ${error}`)
             }
       }
 

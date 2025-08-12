@@ -65,7 +65,7 @@ export async function fetchCompleteRevisionChain(
         console.log(`${indent}[Depth:${_depth}] Successfully processed chain for ${fullLatestHash}`);
         return extendedAquaTree;
 
-    } catch (error) {
+    } catch (error : any) {
         console.error(`${indent}[Depth:%s] Error fetching revision chain for %s:`, _depth, fullLatestHash, error);
         throw error;
     }
@@ -175,7 +175,7 @@ async function updateFileIndexForLinkedHash(linkedHash: string): Promise<string>
         });
 
         return fileNameEntry?.file_name ?? '--error--++';
-    } catch (error) {
+    } catch (error : any) {
         console.error(`Error updating file index for linked hash ${linkedHash}:`, error);
         return '--error--';
     }
@@ -292,7 +292,7 @@ export async function diagnoseLinks(): Promise<void> {
             console.error('Could not retrieve Link table structure:', err);
         }
 
-    } catch (error) {
+    } catch (error : any) {
         console.error('Error in diagnoseLinks:', error);
     }
 

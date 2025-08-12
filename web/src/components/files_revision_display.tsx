@@ -1,6 +1,6 @@
 import { CustomAlert } from '@/components/ui/alert-custom'
 import { Button } from '@/components/ui/button'
-import { toaster } from '@/components/ui/use-toast'
+import { toast } from 'sonner'
 import { AquaTreeDetailsData } from '@/models/AquaTreeDetails'
 import appStore from '@/store'
 import { displayTime, fetchFiles, formatCryptoAddress } from '@/utils/functions'
@@ -129,13 +129,7 @@ export const RevisionDisplay = ({ fileInfo, revision, revisionHash, isVerificati
                   })
 
                   if (response.status === 200) {
-                        toaster.create({
-                              title: 'Revision deleted',
-                              description: 'The revision has been deleted',
-                              type: 'success',
-                              // duration: 3000,
-                              // placement: "bottom-end"
-                        })
+                        toast.success('Revision deleted')
 
                         // Reload files for the current user
                         if (index === 0) {
@@ -157,22 +151,10 @@ export const RevisionDisplay = ({ fileInfo, revision, revisionHash, isVerificati
                               deleteRevision(revisionHash)
                         }
                   } else {
-                        toaster.create({
-                              title: 'Revision not deleted',
-                              description: 'The revision has not been deleted',
-                              type: 'error',
-                              // duration: 3000,
-                              // placement: "bottom-end"
-                        })
+                        toast.error( 'Revision not deleted')
                   }
             } catch (error) {
-                  toaster.create({
-                        title: 'Revision not deleted',
-                        description: 'The revision has not been deleted',
-                        type: 'error',
-                        // duration: 3000,
-                        // placement: "bottom-end"
-                  })
+                  toast.error('Revision not deleted')
             } finally {
                   setIsDeleting(false)
             }

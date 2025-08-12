@@ -105,7 +105,7 @@ export async function createAquaTreeFromRevisions(
 
         return [aquaTreeWithOrderdRevision, fileObjects];
 
-    } catch (error) {
+    } catch (error : any) {
         console.error('Error creating AquaTree:', error);
         throw new Error(`Failed to create AquaTree: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
@@ -136,7 +136,7 @@ async function getRevisionChain(latestRevisionHash: string): Promise<Revision[]>
             const previousRevisions = await findAquaTreeRevision(latestRevision.previous);
             // console.log("Genesis revision: ", previousRevisions);
             revisionData.push(...previousRevisions);
-        } catch (error) {
+        } catch (error : any) {
             throw new Error(`Error fetching previous revisions: ${JSON.stringify(error, null, 4)}`);
         }
     }
@@ -325,7 +325,7 @@ async function createFileObjects(aquaTreesFileData: AquaTreeFileData[], url: str
                 path: "",//item.fileLocation,
                 fileSize: fileStats.fileSizeInBytes
             });
-        } catch (error) {
+        } catch (error : any) {
             console.error(`Error processing file with hash ${item.fileHash} pub key hash ${item.pubKeyHash} :`, error);
         }
     }
@@ -509,7 +509,7 @@ function processSignatureRevision(revisionData: AquaRevision, signatureData: Sig
         if (signatureData.signature_type?.includes("did")) {
             sig = JSON.parse(signatureData.signature_digest!);
         }
-    } catch (error) {
+    } catch (error : any) {
         console.log("Error parsing signature digest:", error);
     }
 
@@ -591,7 +591,7 @@ async function getFileStats(filePath: string): Promise<{ fileSizeInBytes: number
             fileSizeInBytes: size,
             originalFilename
         };
-    } catch (error) {
+    } catch (error : any) {
         console.error(`Error getting file stats for ${filePath}:`, error);
         return null;
     }
@@ -875,7 +875,7 @@ async function addRevisionContent(revision: Revision, revisionData: AquaRevision
         try {
             const fileContent = fs.readFileSync(fileItem.fileLocation, 'utf8');
             return { ...revisionData, content: fileContent };
-        } catch (error) {
+        } catch (error : any) {
             console.error(`Error reading file content: ${error}`);
             return { ...revisionData, content: "--error--&" };
         }

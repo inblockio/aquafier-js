@@ -172,7 +172,7 @@ export async function createEthAccount() {
             publicKey,
             privateKey
         };
-    } catch (error) {
+    } catch (error : any) {
         console.error('Error creating Ethereum account:', error);
         throw new Error('Failed to create Ethereum account');
     }

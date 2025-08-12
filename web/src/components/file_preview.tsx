@@ -5,9 +5,7 @@ import appStore from '../store'
 import { ensureDomainUrlHasSSL, handleLoadFromUrl, isJSONKeyValueStringContent } from '../utils/functions'
 import { FilePreviewAquaTreeFromTemplate } from './file_preview_aqua_tree_from_template'
 import { EasyPDFRenderer } from '@/pages/aqua_sign_wokflow/ContractDocument/signer/SignerPage'
-// import { EasyPDFRenderer } from "../pages/files/wokflow/ContractDocument/signer/SignerPage";
-// import { EasyPDFRenderer } from "../pages/aqua_sign_wokflow/ContractDocument/signer/SignerPage";
-// import { toaster } from "./chakra-ui/toaster";
+import heic2any from "heic2any"
 
 // Define file extensions to content type mappings
 const fileExtensionMap: { [key: string]: string } = {
@@ -18,6 +16,9 @@ const fileExtensionMap: { [key: string]: string } = {
       gif: 'image/gif',
       webp: 'image/webp',
       bmp: 'image/bmp',
+      heic: 'image/heic',
+      heif: 'image/heif',
+
       // Documents
       pdf: 'application/pdf',
       docx: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
@@ -310,13 +311,55 @@ const FilePreview: React.FC<IFilePreview> = ({ fileInfo }) => {
             }
       }, [JSON.stringify(fileInfo), session?.nonce])
 
+      const [convertedHeicUrl, setConvertedHeicUrl] = useState<string | null>(null)
+      const [isHeic, setIsHeic] = useState<boolean>(false)
+
+      useEffect(() => {
+            const convertIfHeic = async () => {
+                  if (fileType === 'image/heic' || fileType === 'image/heif') {
+                        setIsHeic(true)
+                        try {
+                              const response = await fetch(fileURL)
+                              const blob = await response.blob()
+
+                              const convertedBlob = await heic2any({
+                                    blob,
+                                    toType: 'image/jpeg', // or 'image/png'
+                                    quality: 0.9
+                              })
+
+                              const newUrl = URL.createObjectURL(convertedBlob as Blob)
+                              setConvertedHeicUrl(newUrl)
+                        } catch (err) {
+                              console.error("HEIC conversion failed:", err)
+                        }
+                  } else {
+                        setConvertedHeicUrl(null) // clear old state
+                  }
+            }
+
+            if (fileURL) {
+                  convertIfHeic()
+            }
+      }, [fileType, fileURL])
+
       if (isLoading) return <p>Loading...</p>
 
       // Render based on file type
       // Image files
       if (fileType.startsWith('image/')) {
-            return <img src={fileURL} alt="File preview" style={{ maxWidth: '100%', height: 'auto' }} />
+
+            if(isHeic && convertedHeicUrl == null ){
+                  return <p>Loading Heic Image...</p>
+            }
+            // return <img src={fileURL} alt="File preview" style={{ maxWidth: '100%', height: 'auto' }} />
+            const previewUrl = convertedHeicUrl || fileURL
+            return <img src={previewUrl} alt="File preview" style={{ maxWidth: '100%', height: 'auto' }} />
+
       }
+
+
+
 
       // PDF files
       if (fileType === 'application/pdf') {

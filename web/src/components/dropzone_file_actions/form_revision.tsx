@@ -7,40 +7,36 @@ import { ApiFileInfo } from '../../models/FileInfo'
 import { checkIfFileExistInUserFiles } from '../../utils/functions'
 import { maxFileSizeForUpload } from '../../utils/constants'
 import { IDropzoneAction } from '../../types/types'
-import { toaster } from '@/components/ui/use-toast'
 import { Button } from '@/components/ui/button'
 import { Loader2 } from 'lucide-react'
-
-export const FormRevisionFile = ({ file, uploadedIndexes, fileIndex, updateUploadedIndex }: IDropzoneAction) => {
+import { toast } from 'sonner'
+// export const FormRevisionFile = ({ file, uploadedIndexes, fileIndex, updateUploadedIndex }: IDropzoneAction) => {
+export const FormRevisionFile = ({ file, filesWrapper, removeFilesListForUpload }: IDropzoneAction) => {
       const [uploading, setUploading] = useState(false)
-      const [uploaded, setUploaded] = useState(false)
+      // const [uploaded, setUploaded] = useState(false)
 
       const { metamaskAddress, setFiles, files, backend_url, session } = useStore(appStore)
 
       const uploadFile = async () => {
+
+             if(uploading){
+                  toast.info(`Wait for upload to complete`)
+                  return
+            }
             const fileExist = await checkIfFileExistInUserFiles(file, files)
 
             if (fileExist) {
-                  toaster.create({
-                        description: 'You already have the file. Delete before importing this',
-                        type: 'info',
-                  })
+                  toast.info( 'You already have the file. Delete before importing this')
                   return
             }
 
             if (!file) {
-                  toaster.create({
-                        description: 'No file selected!',
-                        type: 'info',
-                  })
+                  toast.info( 'No file selected!')
                   return
             }
 
             if (file.size > maxFileSizeForUpload) {
-                  toaster.create({
-                        description: 'File size exceeds 200MB limit. Please upload a smaller file.',
-                        type: 'error',
-                  })
+                  toast.info( 'File size exceeds 200MB limit. Please upload a smaller file.')
                   return
             }
 
@@ -87,20 +83,15 @@ export const FormRevisionFile = ({ file, uploadedIndexes, fileIndex, updateUploa
                   // };
 
                   setFiles([...files, fileInfo])
-                  setUploaded(true)
+                  // setUploaded(true)
                   setUploading(false)
-                  toaster.create({
-                        description: 'File uploaded successfuly',
-                        type: 'success',
-                  })
-                  updateUploadedIndex(fileIndex)
+                  toast.success( 'File uploaded successfuly')
+                  // updateUploadedIndex(fileIndex)
+                   removeFilesListForUpload(filesWrapper)
                   return
             } catch (error) {
                   setUploading(false)
-                  toaster.create({
-                        description: `Failed to upload file: ${error}`,
-                        type: 'error',
-                  })
+                  toast.error(`Failed to upload file: ${error}`)
             }
       }
 
@@ -111,7 +102,7 @@ export const FormRevisionFile = ({ file, uploadedIndexes, fileIndex, updateUploa
                   variant="secondary"
                   className="w-[130px] bg-yellow-100 hover:bg-yellow-200 text-yellow-800 border-yellow-300"
                   onClick={uploadFile}
-                  disabled={uploadedIndexes.includes(fileIndex) || uploaded}
+                  // disabled={uploadedIndexes.includes(fileIndex) || uploaded}
             >
                   {uploading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <LuDock className="h-4 w-4 mr-2" />}
                   Create Form

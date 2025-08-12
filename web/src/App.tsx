@@ -73,10 +73,6 @@ function App() {
                                     <Route path="files_workflows" element={<FilesPage />} />
                                     <Route path="domain_attestation" element={<DomainAttestationPage />} />
                                     <Route path="claims_and_attestation" element={<ClaimsAndAttestationPage />} />
-                                    {/* <Route path="files_docs" element={<FilesPage />} />
-            <Route path="files_attestation" element={<FilesPage />} />
-            <Route path="files_document_signature" element={<FilesPage />} />
-            <Route path="files_domain_attestation" element={<FilesPage />} /> */}
 
                                     <Route path="templates" element={<TemplatesPage />} />
 
@@ -91,17 +87,7 @@ function App() {
                                     <Route path="pdf-signer" element={<PdfSigner fileData={null} setActiveStep={_one => {}} />} />
                               </Route>
 
-                              {/* Routes with Chakra UI (wrapped in MainLayout) */}
-                              {/* <Route path="/" element={<MainLayoutHolder />} >
-          <Route index element={<Home />} />
-       
-          <Route path="/share/:identifier" element={<SharePage />} />
-          <Route path="/aqua-forms" element={<AquaForms />} />
-         
-          <Route path="/workflow" element={<WorkFlowPage />} />
-          <Route path="/form-generator" element={<FormGenerator />} />
-          <Route path="/attestation_addresses" element={<AttestationAddresses />} />
-        </Route> */}
+
                               <Route path="*" element={<PageNotFound />} />
                         </Routes>
                   </ErrorBoundary>

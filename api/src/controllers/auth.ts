@@ -64,7 +64,7 @@ export default async function authController(fastify: FastifyInstance) {
         },
         user_settings: settingsData 
       };
-    } catch (error) {
+    } catch (error : any) {
       console.error("Error fetching session:", error);
       return reply.code(500).send({ success: false, message: "Internal server error" });
     }
@@ -83,7 +83,7 @@ export default async function authController(fastify: FastifyInstance) {
       });
 
       return { success: true, message: "Session deleted successfully" };
-    } catch (error) {
+    } catch (error : any) {
       console.error("Error deleting session:", error);
       return reply.code(500).send({ success: false, message: "Internal server error" });
     }
@@ -209,7 +209,7 @@ export default async function authController(fastify: FastifyInstance) {
         session,
         user_settings: settingsData 
       });
-    } catch (error) {
+    } catch (error : any) {
       logs.push(`SIWE sign-in failed: ${error}`);
       fastify.log.error(error);
 

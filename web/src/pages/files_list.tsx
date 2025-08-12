@@ -18,7 +18,7 @@ export default function FilesList() {
       const [tempSelectedFilters, setTempSelectedFilters] = useState<string[]>(['all'])
 
       const { files, systemFileInfo, backend_url, session } = useStore(appStore)
-
+ 
       // Add screen size detector
       useEffect(() => {
             const checkScreenSize = () => {
@@ -35,6 +35,8 @@ export default function FilesList() {
 
       // Extract unique workflows from files
       useEffect(() => {
+
+            console.log(`use effect in files list file and systemn  info `)
             const someData = systemFileInfo.map(e => {
                   try {
                         return getAquaTreeFileName(e.aquaTree!)

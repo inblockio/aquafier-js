@@ -36,7 +36,7 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: { selectedTempla
             content: JSX.Element
             title: string
       }>(null)
-
+ 
       const signatureRef = useRef<SignatureCanvas | null>(null)
       // const navigate = useNavigate()
 
@@ -852,10 +852,13 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: { selectedTempla
 
                   }
 
+
+                  console.log(`see me ...1`)
                   // Step 3: Get system files
                   const allSystemFiles = await getSystemFiles(systemFileInfo, backend_url, session?.address || '')
                   setSystemFileInfo(allSystemFiles)
 
+                  console.log(`see me ...2`)
                   // Step 4: Find template API file info
                   const templateApiFileInfo = findTemplateApiFileInfo(allSystemFiles, selectedTemplate)
 
@@ -863,6 +866,7 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: { selectedTempla
                   const aquafier = new Aquafier()
                   const fileName = generateFileName(selectedTemplate, completeFormData)
 
+                  console.log(`see me ...3`)
                   // Step 6: Handle identity attestation specific logic
                   if (selectedTemplate?.name === 'identity_attestation') {
                         completeFormData = handleIdentityAttestation(completeFormData, selectedFileInfo)
@@ -1331,8 +1335,12 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: { selectedTempla
                                                                               field.type == 'scratchpad' && (
                                                                                     <div ref={containerRef} className="border border-gray-200 w-full h-[200px] bg-white">
                                                                                           <SignatureCanvas
+                                                                               
+                                                                                           
                                                                                                 ref={signatureRef}
                                                                                                 canvasProps={{
+                                                                                                      
+                                                                                                      id: 'signature-canvas-id',
                                                                                                       width: canvasSize.width,
                                                                                                       height: canvasSize.height,
                                                                                                       style: {

@@ -13,6 +13,9 @@ services:
   aqua-container:
     image: ghcr.io/inblockio/aquafier-js:latest
     pull_policy: never
+    ports:
+      - 3600:3600
+      - 3000:3000
     depends_on:
       postgres:
         condition: service_healthy

@@ -40,7 +40,7 @@ export default async function verifyController(fastify: FastifyInstance) {
             }
 
 
-        } catch (error) {
+        } catch (error : any) {
             request.log.error(error);
             return reply.code(500).send({
                 error: 'Error processing AquaTree',
@@ -179,7 +179,7 @@ export default async function verifyController(fastify: FastifyInstance) {
                 });
             }
 
-        } catch (error) {
+        } catch (error : any) {
             request.log.error(error);
             return reply.code(500).send({
                 error: 'Error processing AquaTree',
@@ -234,7 +234,7 @@ export default async function verifyController(fastify: FastifyInstance) {
                 return reply.code(statusCode).send(result);
             }
 
-        } catch (error) {
+        } catch (error : any) {
             request.log.error(error);
             return reply.code(500).send({
                 error: 'Internal server error',

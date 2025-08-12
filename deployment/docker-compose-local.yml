@@ -45,8 +45,7 @@ services:
       postgres:
         condition: service_healthy
     volumes:
-      - ./restore:/restore
-      - ./backup:/backup
+      - ./dev_mount_points/aquafier:/app/backend/media
 
 
   s3storage:

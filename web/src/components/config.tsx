@@ -101,10 +101,7 @@ const LoadConfiguration = () => {
                               theme: 'light',
                               witness_contract_address: '0x45f59310ADD88E6d23ca58A0Fa7A55BEE6d2a611',
                         })
-                        // toaster.create({
-                        //     description: "You are not logged in! Please login",
-                        //     type: "info",
-                        // })
+                        // toast.info( "You are not logged in! Please login")
                         // window.location.reload()
                   }
             } else {

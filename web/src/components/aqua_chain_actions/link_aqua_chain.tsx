@@ -8,12 +8,12 @@ import { ApiFileInfo } from '../../models/FileInfo'
 import Aquafier, { AquaTreeWrapper } from 'aqua-js-sdk'
 import { IShareButton } from '../../types/types'
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
-import { toast } from '@/components/ui/use-toast'
 import { Label } from '@/components/ui/label'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { AlertCircle, Loader2 } from 'lucide-react'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Button } from '@/components/ui/button'
+import { toast } from 'sonner'
 
 export const LinkButton = ({ item, nonce, index }: IShareButton) => {
       const { backend_url, setFiles, files, session, systemFileInfo } = useStore(appStore)
@@ -28,10 +28,7 @@ export const LinkButton = ({ item, nonce, index }: IShareButton) => {
 
       const handleLink = async () => {
             if (linkItem == null) {
-                  toast({
-                        description: `Please select an AquaTree to link`,
-                        variant: 'destructive',
-                  })
+                  toast.error( `Please select an AquaTree to link`)
                   return
             }
             try {
@@ -50,10 +47,7 @@ export const LinkButton = ({ item, nonce, index }: IShareButton) => {
                   const result = await aquafier.linkAquaTree(aquaTreeWrapper, linkAquaTreeWrapper)
 
                   if (result.isErr()) {
-                        toast({
-                              description: `An error occurred when linking`,
-                              variant: 'destructive',
-                        })
+                        toast.error( `An error occurred when linking`)
                         return
                   }
 
@@ -82,17 +76,11 @@ export const LinkButton = ({ item, nonce, index }: IShareButton) => {
                         await refetchAllUserFiles()
                   }
 
-                  toast({
-                        description: `Linking successful`,
-                        variant: 'default',
-                  })
+                  toast.success( `Linking successful`)
                   setLinkItem(null)
                   setIsOpen(false)
             } catch (error) {
-                  toast({
-                        description: `An error occurred`,
-                        variant: 'destructive',
-                  })
+                  toast.error( `An error occurred`)
             }
             setLinking(false)
       }
@@ -103,10 +91,7 @@ export const LinkButton = ({ item, nonce, index }: IShareButton) => {
                   const files = await fetchFiles(session!.address!, `${backend_url}/explorer_files`, session!.nonce)
                   setFiles(files)
             } catch (e) {
-                  toast({
-                        description: 'Error updating files',
-                        variant: 'destructive',
-                  })
+                  toast.error( 'Error updating files')
                   document.location.reload()
             }
       }
