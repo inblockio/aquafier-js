@@ -3,6 +3,7 @@
 import { streamToBuffer } from "../utils/file_utils";
 import Aquafier, { AquaTree, FileObject, LogData, LogType, Revision } from "aqua-js-sdk";
 import { FastifyInstance } from "fastify";
+import { verifyProofApi } from "../utils/verify_dns_claim";
 
 export default async function verifyController(fastify: FastifyInstance) {
 
@@ -39,7 +40,7 @@ export default async function verifyController(fastify: FastifyInstance) {
             }
 
 
-        } catch (error) {
+        } catch (error : any) {
             request.log.error(error);
             return reply.code(500).send({
                 error: 'Error processing AquaTree',
@@ -178,11 +179,72 @@ export default async function verifyController(fastify: FastifyInstance) {
                 });
             }
 
-        } catch (error) {
+        } catch (error : any) {
             request.log.error(error);
             return reply.code(500).send({
                 error: 'Error processing AquaTree',
                 details: error instanceof Error ? error.message : 'Unknown error'
+            });
+        }
+    });
+
+    //Creates a new revision, validated against aqua-verifier-js-lib verifier.
+
+    // Fastify endpoint implementation
+
+    fastify.post('/verify/dns_claim', async (request: any, reply: any) => {
+        try {
+            const data: { domain: string, wallet?: string } = request.body as { domain: string, wallet?: string };
+
+            // Validate input
+            if (!data.domain || typeof data.domain !== 'string') {
+                return reply.code(400).send({
+                    error: 'Invalid input',
+                    message: 'Domain is required and must be a string',
+                    logs: [{
+                        level: 'error',
+                        message: 'Missing or invalid domain parameter',
+                        details: { received: data }
+                    }]
+                });
+            }
+
+            // Perform verification (assuming 'wallet' as default lookup key)
+            const result = await verifyProofApi(data.domain, 'wallet', data.wallet);
+
+            // Return appropriate status code based on result
+            if (result.success) {
+                return reply.code(200).send(result);
+            } else {
+                // Determine appropriate error code
+                const hasRateLimitError = result.logs.some(log => log.message.includes('Rate limit'));
+                const hasDnsError = result.logs.some(log => log.message.includes('DNS lookup failed'));
+                const hasInvalidFormat = result.logs.some(log => log.message.includes('Invalid') || log.message.includes('Missing'));
+
+                let statusCode = 422; // Unprocessable Entity (default for verification failures)
+
+                if (hasRateLimitError) {
+                    statusCode = 429; // Too Many Requests
+                } else if (hasDnsError) {
+                    statusCode = 404; // Not Found (DNS record doesn't exist)
+                } else if (hasInvalidFormat) {
+                    statusCode = 400; // Bad Request (invalid format)
+                }
+
+                return reply.code(statusCode).send(result);
+            }
+
+        } catch (error : any) {
+            request.log.error(error);
+            return reply.code(500).send({
+                error: 'Internal server error',
+                message: 'Error processing DNS verification',
+                details: error instanceof Error ? error.message : 'Unknown error',
+                logs: [{
+                    level: 'error',
+                    message: 'Internal server error',
+                    details: { error: error instanceof Error ? error.message : 'Unknown error' }
+                }]
             });
         }
     });

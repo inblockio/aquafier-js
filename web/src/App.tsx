@@ -27,120 +27,72 @@ import TermsAndConditions from './pages/legal/TermsAndConditions'
 import PrivacyPolicy from './pages/legal/PrivacyPolicy'
 import ClaimsAndAttestationPage from './pages/claim_and_attestation'
 import ClaimsWorkflowPage from './pages/claims_workflow/claimsWorkflowPage'
+import ClaimsWorkflowPageV2 from './pages/v2_claims_workflow/claimsWorkflowPage'
+import WalletAutosuggestDemo from './pages/demo_auto_suggest'
 
 declare global {
-    interface Window {
-        ethereum?: ethers.Eip1193Provider
-    }
+      interface Window {
+            ethereum?: ethers.Eip1193Provider
+      }
 }
 
 function App() {
-    const { setBackEndUrl } = useStore(appStore)
+      const { setBackEndUrl } = useStore(appStore)
 
-    useEffect(() => {
-        //  console.log("backedn url is", backend_url);
-        // Properly handle async initialization
-        const initBackend = async () => {
-            const url = await initializeBackendUrl()
-            setBackEndUrl(url)
-        }
+      useEffect(() => {
+            //  console.log("backedn url is", backend_url);
+            // Properly handle async initialization
+            const initBackend = async () => {
+                  const url = await initializeBackendUrl()
+                  setBackEndUrl(url)
+            }
 
-        initBackend()
-    }, []) // Empty dependency array means this runs once on mount
+            initBackend()
+      }, []) // Empty dependency array means this runs once on mount
 
-    return (
-        <BrowserRouter>
-            <LoadConfiguration />
-            <ErrorBoundary>
-                <Routes>
-                    {/* Routes with Tailwind UI (no MainLayout wrapper) */}
+      return (
+            <BrowserRouter>
+                  <LoadConfiguration />
+                  <ErrorBoundary>
+                        <Routes>
+                              {/* Routes with Tailwind UI (no MainLayout wrapper) */}
 
-                    <Route path="/" element={<TailwindMainLayout />}>
-                        <Route index element={<Home />} />
-                        <Route
-                            path="terms-and-conditions"
-                            element={<TermsAndConditions />}
-                        />
-                        <Route
-                            path="privacy-policy"
-                            element={<PrivacyPolicy />}
-                        />
-                    </Route>
+                              <Route path="/" element={<TailwindMainLayout />}>
+                                    <Route index element={<Home />} />
+                                    <Route path="terms-and-conditions" element={<TermsAndConditions />} />
+                                    <Route path="privacy-policy" element={<PrivacyPolicy />} />
+                              </Route>
+   
+                              {/* All file routes using Tailwind */}
+                              <Route path="/app" element={<NewShadcnLayoutWithSidebar />}>
+                                    <Route index element={<FilesPage />} />
+                                    <Route path="demo-auto-suggest" element={<WalletAutosuggestDemo />} />
+                                    <Route path="pdf/workflow" element={<PdfWorkflowPage />} />
+                                    <Route path="claims/workflow" element={<ClaimsWorkflowPage />} />
+                                    <Route path="claims/workflow/:walletAddress" element={<ClaimsWorkflowPageV2 />} />
+                                    <Route path="files_workflows" element={<FilesPage />} />
+                                    <Route path="domain_attestation" element={<DomainAttestationPage />} />
+                                    <Route path="claims_and_attestation" element={<ClaimsAndAttestationPage />} />
 
-                    {/* All file routes using Tailwind */}
-                    <Route path="/app" element={<NewShadcnLayoutWithSidebar />}>
-                        <Route index element={<FilesPage />} />
-                        <Route
-                            path="pdf/workflow"
-                            element={<PdfWorkflowPage />}
-                        />
-                        <Route
-                            path="claims/workflow"
-                            element={<ClaimsWorkflowPage />}
-                        />
-                        <Route path="files_workflows" element={<FilesPage />} />
-                        <Route
-                            path="domain_attestation"
-                            element={<DomainAttestationPage />}
-                        />
-                        <Route
-                            path="claims_and_attestation"
-                            element={<ClaimsAndAttestationPage />}
-                        />
-                        {/* <Route path="files_docs" element={<FilesPage />} />
-            <Route path="files_attestation" element={<FilesPage />} />
-            <Route path="files_document_signature" element={<FilesPage />} />
-            <Route path="files_domain_attestation" element={<FilesPage />} /> */}
+                                    <Route path="templates" element={<TemplatesPage />} />
 
-                        <Route path="templates" element={<TemplatesPage />} />
+                                    <Route path="shared-contracts" element={<FilesSharedContracts />} />
+                                    <Route path="shared-contracts/:identifier" element={<SharePage />} />
 
-                        <Route
-                            path="shared-contracts"
-                            element={<FilesSharedContracts />}
-                        />
-                        <Route
-                            path="shared-contracts/:identifier"
-                            element={<SharePage />}
-                        />
+                                    <Route path="settings" element={<SettingsPage />} />
+                                    <Route path="info" element={<InfoPage />} />
+                                    <Route path="workflows" element={<WorkflowsTablePage />} />
+                                    <Route path="form-instance/:templateName" element={<CreateFormInstance />} />
+                                    <Route path="loading" element={<Loading />} />
+                                    <Route path="pdf-signer" element={<PdfSigner fileData={null} setActiveStep={_one => {}} />} />
+                              </Route>
 
-                        <Route path="settings" element={<SettingsPage />} />
-                        <Route path="info" element={<InfoPage />} />
-                        <Route
-                            path="workflows"
-                            element={<WorkflowsTablePage />}
-                        />
-                        <Route
-                            path="form-instance/:templateName"
-                            element={<CreateFormInstance />}
-                        />
-                        <Route path="loading" element={<Loading />} />
-                        <Route
-                            path="pdf-signer"
-                            element={
-                                <PdfSigner
-                                    fileData={null}
-                                    setActiveStep={_one => {}}
-                                />
-                            }
-                        />
-                    </Route>
 
-                    {/* Routes with Chakra UI (wrapped in MainLayout) */}
-                    {/* <Route path="/" element={<MainLayoutHolder />} >
-          <Route index element={<Home />} />
-       
-          <Route path="/share/:identifier" element={<SharePage />} />
-          <Route path="/aqua-forms" element={<AquaForms />} />
-         
-          <Route path="/workflow" element={<WorkFlowPage />} />
-          <Route path="/form-generator" element={<FormGenerator />} />
-          <Route path="/attestation_addresses" element={<AttestationAddresses />} />
-        </Route> */}
-                    <Route path="*" element={<PageNotFound />} />
-                </Routes>
-            </ErrorBoundary>
-        </BrowserRouter>
-    )
+                              <Route path="*" element={<PageNotFound />} />
+                        </Routes>
+                  </ErrorBoundary>
+            </BrowserRouter>
+      )
 }
 
 export default App

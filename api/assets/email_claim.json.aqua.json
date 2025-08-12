@@ -1,0 +1,41 @@
+{
+  "revisions": {
+    "0x4b9202932025142b4d9a75141239e46ebfed210d178434303d1c7e5f586959c3": {
+      "file_hash": "ed8bc76894b59e08cd1aee2c7375051969acb8a69a01ae3bb139d4e14f67086a",
+      "file_nonce": "79c41599c76f41518c708b2c7ecda5ab83b9987587281d65928b752145e109f2",
+      "forms_email": "info@inblock.io",
+      "forms_type": "email_claim",
+      "forms_wallet_address": "0x6c5544021930b7887455e21F00b157b2FA572667",
+      "leaves": [
+        "8a883a1efec7e73ddbacc3bbeae2cd86e8b3a95c205920eaaf46a0894518ec58",
+        "fdff1b2a870101c61d60af57efc2d9960bb3abd3c9bd13b10e884085025a5a6e",
+        "ebf448167b2f521582efb8626748742487ec6378e7443db7801af48d504515f6",
+        "db8d800576e4375b48d5db4318e9691e4d43c27ff93cb661fd43dbadfb07d09d",
+        "445a977f64d45f5dedf26f85eb7c37f8f7be7e39945eb02998f3806f4a5e5071",
+        "ccd894ce41cbf35cc3bd48c2ac25b20b5b39edd24cd797551983f328e6c9bd2c",
+        "d781acf7ba880ecae581ffd8debcb4f5cb430bc2f237e27a6098471a9f7ffa60",
+        "43fcaef3dc4b2a2d0550543b638048edcfb710da9276da109a9e011ed1a53ed1",
+        "39ccd407bb105ed3be74df4a546d9b10c4f6c80e48b559102b04fa2b29aa83b4"
+      ],
+      "local_timestamp": "20250807114638",
+      "previous_verification_hash": "",
+      "revision_type": "form",
+      "version": "https://aqua-protocol.org/docs/v3/schema_2 | SHA256 | Method: tree"
+    }
+  },
+  "file_index": {
+    "0x4b9202932025142b4d9a75141239e46ebfed210d178434303d1c7e5f586959c3": "email_claim.json"
+  },
+  "tree": {
+    "children": [],
+    "hash": "0x4b9202932025142b4d9a75141239e46ebfed210d178434303d1c7e5f586959c3"
+  },
+  "treeMapping": {
+    "paths": {
+      "0x4b9202932025142b4d9a75141239e46ebfed210d178434303d1c7e5f586959c3": [
+        "0x4b9202932025142b4d9a75141239e46ebfed210d178434303d1c7e5f586959c3"
+      ]
+    },
+    "latestHash": "0x4b9202932025142b4d9a75141239e46ebfed210d178434303d1c7e5f586959c3"
+  }
+}

@@ -27,6 +27,7 @@ export interface AquaFormRequest {
   id: string;
   name: string;
   title: string;
+  subtitle: string;
   public : boolean;
   fields: AquaFormFieldRequest[];
 }

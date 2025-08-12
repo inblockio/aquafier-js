@@ -310,7 +310,7 @@ export default async function userController(fastify: FastifyInstance) {
                     }
                 }
             }
-        } catch (error) {
+        } catch (error : any) {
             console.error("Error fetching session:", error);
             return reply.code(500).send({ success: false, message: "Internal server error" });
         }
@@ -363,7 +363,7 @@ export default async function userController(fastify: FastifyInstance) {
                 }
             })
 
-        } catch (error) {
+        } catch (error : any) {
             console.error("Error fetching session:", error);
             return reply.code(500).send({ success: false, message: "Internal server error" });
         }
@@ -398,6 +398,11 @@ export default async function userController(fastify: FastifyInstance) {
             // Start a transaction to ensure all operations succeed or fail together
             await prisma.$transaction(async (tx) => {
                 console.log('Starting user data deletion transaction for user:', userAddress);
+
+                  const deletedNotifications = await tx.notifications.deleteMany({
+                    where: { receiver: userAddress }
+                });
+                console.log(`Deleted deletedNotifications ${deletedNotifications.count}  records`);
 
                 // Step 1: Delete all Latest records associated with user address
                 const deletedLatest = await tx.latest.deleteMany({
@@ -546,7 +551,7 @@ export default async function userController(fastify: FastifyInstance) {
                 message: 'All user data has been cleared successfully'
             });
 
-        } catch (error) {
+        } catch (error : any) {
             console.error('Error clearing user data:', error);
             return reply.code(500).send({
                 success: false,

@@ -11,9 +11,6 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@chakra-ui/hooks": "^2.4.2",
-    "@chakra-ui/modal": "^2.3.1",
-    "@chakra-ui/react": "^3.0.0",
     "@emotion/react": "^11.13.3",
     "@radix-ui/react-alert-dialog": "^1.1.14",
     "@radix-ui/react-avatar": "^1.1.10",
@@ -42,8 +39,10 @@
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "date-fns": "^4.1.0",
+    "dns-packet": "^5.6.1",
     "docx-preview": "^0.3.5",
     "ethers": "^6.13.4",
+    "heic2any": "^0.0.4",
     "idb": "^8.0.2",
     "jdenticon": "^3.3.0",
     "js-sha3": "^0.9.3",

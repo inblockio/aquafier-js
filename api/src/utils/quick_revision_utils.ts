@@ -2,6 +2,7 @@ import { prisma } from '../database/db';
 import { Revision, Link, Signature, WitnessEvent, AquaForms } from '@prisma/client';
 import * as fs from 'fs';
 import { ExtendedAquaTreeData } from '../models/types';
+import {deleteFile} from "./file_utils";
 
 /**
  * Recursively deletes a revision and all its child revisions (revisions that reference this as their previous hash)
@@ -210,7 +211,7 @@ export async function deleteRevisionAndChildren(
                                     // If this is the last reference to the file, delete the actual file if it exists
                                     if (file.file_location && fs.existsSync(file.file_location)) {
                                         try {
-                                            fs.unlinkSync(file.file_location);
+                                            await deleteFile(file.file_location)
                                         } catch (e) {
                                             console.error(`Error deleting file from filesystem: ${file.file_location}`, e);
                                         }
@@ -287,7 +288,7 @@ export async function deleteRevisionAndChildren(
                 }
             }
         };
-    } catch (error) {
+    } catch (error : any) {
         console.error(`Error deleting revision chain: ${error}`);
         return {
             success: false,
@@ -350,7 +351,7 @@ export async function canDeleteRevision(
         // Additional checks can be added here (e.g., admin privileges, time limits)
 
         return true;
-    } catch (error) {
+    } catch (error : any) {
         console.error(`Error checking revision deletability: ${error}`);
         return false;
     }
@@ -1085,7 +1086,7 @@ async function orderUserChain(genesisHash: string): Promise<string[]> {
         }
 
         return orderedChain;
-    } catch (error) {
+    } catch (error : any) {
         console.error("Error ordering user chain:", error);
         return [];
     }
@@ -1155,7 +1156,7 @@ function orderRevisionsInChain(chainData: any): string[] {
         }
 
         return ordered;
-    } catch (error) {
+    } catch (error : any) {
         console.error("Error ordering revisions:", error);
         return [];
     }
@@ -1193,7 +1194,7 @@ async function updateLatestHash(userAddress: string, oldHash: string, newHash: s
                 }
             });
         }
-    } catch (error) {
+    } catch (error : any) {
         console.error("Error updating latest hash:", error);
         throw error;
     }

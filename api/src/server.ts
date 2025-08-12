@@ -16,7 +16,7 @@ import indexController from './controllers/index';
 import versionController from './controllers/version';
 import filesController from './controllers/files';
 import explorerController from './controllers/explorer';
-import verifyController from './controllers/verify.js';
+import verifyController from './controllers/verify';
 import { getFileUploadDirectory } from './utils/file_utils';
 import revisionsController from './controllers/revisions';
 import shareController from './controllers/share';
@@ -27,8 +27,9 @@ import systemController from './controllers/system';
 import webSocketController from './controllers/websocketController';
 import notificationsController from './controllers/notifications';
 import { prisma } from './database/db';
-
-
+import ApiController from './controllers/api';
+import { createEthAccount } from './utils/server_utils';
+import { serverAttestation } from './utils/server_attest';
 
 export async function mockNotifications(){
     // 0x254B0D7b63342Fcb8955DB82e95C21d72EFdB6f7 - This is the receiver and the sender is 'system'
@@ -78,7 +79,7 @@ export async function mockNotifications(){
         }
         
         console.log(`Created ${notifications.length} mock notifications for ${receiverAddress}`);
-    } catch (error) {
+    } catch (error : any) {
         console.error('Error creating mock notifications:', error);
     } finally {
         await prisma.$disconnect();
@@ -148,6 +149,12 @@ function buildServer() {
 
     fastify.register(import('@fastify/websocket'));
 
+    // Helper function to quickly create a wallet
+    // createEthAccount()
+
+    // Server attestation test
+    // serverAttestation("0x3e66c76fd088e0aac4cdb6726aa26041473be7b37a5ca8337c185de21bc9c3f0")
+
 
     // setInterval(() => {
 
@@ -171,6 +178,7 @@ function buildServer() {
     fastify.register(systemController);
     fastify.register(webSocketController);
     fastify.register(notificationsController);
+    fastify.register(ApiController);
 
     return fastify
 

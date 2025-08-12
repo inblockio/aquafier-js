@@ -48,7 +48,7 @@ services:
       postgres:
         condition: service_healthy
     volumes:
-      - ./dev_mount_points/aquafier:/app/data
+      - ./dev_mount_points/aquafier:/app/backend/media
 
 
   s3:

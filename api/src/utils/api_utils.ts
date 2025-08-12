@@ -32,7 +32,7 @@ const fetchEnsName = async (walletAddress: string, infuraKey: string): Promise<s
     ensName = await provider.lookupAddress(walletAddress) ?? "";
 
 
-  } catch (error) {
+  } catch (error : any) {
     console.error('Error fetching ENS name:', error);
 
     // Continue with creation without ENS name
@@ -173,7 +173,7 @@ export async function checkFolderExists(folderPath: string) {
     await fs.promises.access(folderPath, fs.constants.F_OK);
     const stats = await fs.promises.lstat(folderPath);
     return stats.isDirectory();
-  } catch (error) {
+  } catch (error : any) {
     return false;
   }
 }
@@ -227,7 +227,9 @@ const setUpSystemTemplates = async () => {
     "identity_attestation",
     "identity_claim",
     "user_signature",
-    "domain_claim"
+    "domain_claim",
+    "email_claim",
+    "phone_number_claim"
   ]
   for (let index = 0; index < templates.length; index++) {
     const templateItem = templates[index];
@@ -235,6 +237,9 @@ const setUpSystemTemplates = async () => {
     let templateFieldsData = path.join(assetsPath, `${templateItem}_fields.json`);
     let templateAquaTreeData = path.join(assetsPath, `${templateItem}.json.aqua.json`);
 
+    let subtitles : Map<string, string> = new Map();
+    subtitles.set("access_agreement", "Create a new access agreement workflow");
+    subtitles.set("aqua_sign", "Create a new access agreement workflow");
 
     // template
     await prisma.aquaTemplate.upsert({
@@ -247,6 +252,7 @@ const setUpSystemTemplates = async () => {
         owner: SYSTEM_WALLET_ADDRESS,
         public: true,
         title: convertNameToLabel(templateItem),
+        subtitle: subtitles.get(templateItem) || "",
         created_at: today.toDateString()
       },
       update: {
@@ -278,6 +284,7 @@ const setUpSystemTemplates = async () => {
           placeholder: fieldData.placeholder ,
           support_text: fieldData.supportText,
           default_value: fieldData.defaultValue ,
+          is_verifiable : fieldData.isVerifiable ||  false ,
 
           is_editable: fieldData.isEditable == null ? true : fieldData.isEditable,
         },

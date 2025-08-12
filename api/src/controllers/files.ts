@@ -1,5 +1,11 @@
 import { prisma } from '../database/db';
-import { getFileUploadDirectory, isTextFile, isTextFileProbability, streamToBuffer } from '../utils/file_utils.js';
+import {
+    getFile,
+    getFileUploadDirectory,
+    isTextFile,
+    isTextFileProbability,
+    streamToBuffer
+} from '../utils/file_utils.js';
 import Aquafier, { AquaTree, FileObject, LogType } from 'aqua-js-sdk';
 import { FastifyInstance } from 'fastify';
 import path from 'path';
@@ -75,7 +81,7 @@ export default async function filesController(fastify: FastifyInstance) {
 
         try {
             // Read the file
-            let fileContent = fs.readFileSync(file.file_location!!);
+            let fileContent = await getFile(file.file_location!!);
 
             // Set appropriate headers based on file type
             const fileExt = path.extname(file.file_location ?? "").toLowerCase();
@@ -98,7 +104,7 @@ export default async function filesController(fastify: FastifyInstance) {
 
             // Send the file content as a response
             return reply.send(fileContent);
-        } catch (error) {
+        } catch (error : any) {
             console.error('Error reading file:', error);
             return reply.code(500).send({ success: false, message: 'Error reading file content' });
         }
@@ -165,7 +171,7 @@ export default async function filesController(fastify: FastifyInstance) {
             return reply.code(200).send({
                 aquaTree: resData,
             });
-        } catch (error) {
+        } catch (error : any) {
             request.log.error(error);
             return reply.code(500).send({ error: 'File upload failed' });
         }
@@ -272,7 +278,7 @@ export default async function filesController(fastify: FastifyInstance) {
             return reply.code(200).send({
                 aquaTree: resData,
             });
-        } catch (error) {
+        } catch (error : any) {
             request.log.error(error);
             return reply.code(500).send({ error: 'File upload failed' });
         }
