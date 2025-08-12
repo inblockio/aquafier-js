@@ -135,6 +135,7 @@ const WalletAddressProfile = ({ walletAddress, callBack, showAvatar }: ISignatur
                               const { isWorkFlow, workFlow } = isWorkFlowData(aquaTree!, aquaTemplates)
 
                               if (isWorkFlow && requiredClaims.includes(workFlow)) {
+
                                     const orderedAquaTree = OrderRevisionInAquaTree(aquaTree)
                                     const revisionHashes = Object.keys(orderedAquaTree.revisions)
                                     const firstRevisionHash = revisionHashes[0]
@@ -151,8 +152,12 @@ const WalletAddressProfile = ({ walletAddress, callBack, showAvatar }: ISignatur
                                                 let attestationAquaTree = attestationFile?.aquaTree!
                                                 let attestationFileGenesisHash = getGenesisHash(attestationAquaTree)!
                                                 let genesisRevision = attestationAquaTree.revisions[attestationFileGenesisHash]
-                                                if (genesisRevision.forms_claim_wallet_address === _wallet_address
-                                                      && genesisRevision.forms_identity_claim_id === firstRevisionHash) {
+                                                // TODO: Do we have to countercheck the wallet addresses too!
+                                                // if (genesisRevision.forms_claim_wallet_address === _wallet_address
+                                                //       && genesisRevision.forms_identity_claim_id === firstRevisionHash) {
+                                                //       attestationsCount += 1
+                                                // }
+                                                if (genesisRevision.forms_identity_claim_id === firstRevisionHash) {
                                                       attestationsCount += 1
                                                 }
                                           }

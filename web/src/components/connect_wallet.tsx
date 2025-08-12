@@ -204,7 +204,7 @@ export const ConnectWallet: React.FC<{ dataTestId: string }> = ({ dataTestId }) 
       }
 
       return (
-            <Dialog defaultOpen={isOpen} onOpenChange={(details: any) => setIsOpen(details.open)}>
+            <Dialog defaultOpen={isOpen} open={isOpen} onOpenChange={(details: any) => setIsOpen(details.open)}>
                   <DialogTrigger asChild>
                         <Button
                               data-testid={dataTestId}
