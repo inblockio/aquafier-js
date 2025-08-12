@@ -129,7 +129,7 @@ export const DownloadAquaChain = ({ file, index, children }: { file: ApiFileInfo
                               // It's an AquaTree, so stringify it as JSON
                               const jsonContent = JSON.stringify(fileObj.fileContent as AquaTree)
                               // Only add .json extension if it doesn't already have one
-                              const fileName = fileObj.fileName.endsWith('.json') ? fileObj.fileName : `${fileObj.fileName}.json`
+                              const fileName = fileObj.fileName.endsWith('.aqua.json') ? fileObj.fileName : `${fileObj.fileName}.aqua.json`
                               zip.file(fileName, jsonContent)
                               hashData = aquafier.getFileHash(jsonContent)
                         } else if (typeof fileObj.fileContent === 'string') {

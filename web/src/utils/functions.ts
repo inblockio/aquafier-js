@@ -1570,6 +1570,7 @@ export const isZipFile = (fileName: string) => {
 // }
 
 // Utility function to determine file type and potentially rename
+
 export const determineFileType = async (file: File): Promise<File> => {
       // If file already has an extension, return as is
       if (file.name.includes('.')) return file
@@ -1583,20 +1584,193 @@ export const determineFileType = async (file: File): Promise<File> => {
             let extension = ''
             let detectedMimeType = ''
 
+            // Helper function to check bytes at specific positions
+            const checkBytes = (positions: number[], values: number[]): boolean => {
+                  return values.every((value, index) => uint8Array[positions[index]] === value)
+            }
+
+            // Helper function to check string at position
+            const checkString = (position: number, str: string): boolean => {
+                  const bytes = new TextEncoder().encode(str)
+                  return bytes.every((byte, index) => uint8Array[position + index] === byte)
+            }
+
             // PDF signature
-            if (uint8Array[0] === 0x25 && uint8Array[1] === 0x50 && uint8Array[2] === 0x44 && uint8Array[3] === 0x46) {
+            if (checkBytes([0, 1, 2, 3], [0x25, 0x50, 0x44, 0x46])) {
                   extension = '.pdf'
                   detectedMimeType = 'application/pdf'
             }
             // PNG signature
-            else if (uint8Array[0] === 0x89 && uint8Array[1] === 0x50 && uint8Array[2] === 0x4e && uint8Array[3] === 0x47) {
+            else if (checkBytes([0, 1, 2, 3], [0x89, 0x50, 0x4e, 0x47])) {
                   extension = '.png'
                   detectedMimeType = 'image/png'
             }
             // JPEG signature
-            else if (uint8Array[0] === 0xff && uint8Array[1] === 0xd8 && uint8Array[2] === 0xff) {
+            else if (checkBytes([0, 1, 2], [0xff, 0xd8, 0xff])) {
                   extension = '.jpg'
                   detectedMimeType = 'image/jpeg'
+            }
+            // HEIC/HEIF signatures
+            else if (uint8Array.length >= 12 && 
+                     checkBytes([0, 1, 2, 3], [0x00, 0x00, 0x00, 0x18]) &&
+                     checkString(4, 'ftyp') && 
+                     (checkString(8, 'heic') || checkString(8, 'heix'))) {
+                  extension = '.heic'
+                  detectedMimeType = 'image/heic'
+            }
+            // Alternative HEIC signature
+            else if (uint8Array.length >= 12 && 
+                     checkString(4, 'ftyp') && 
+                     (checkString(8, 'heic') || checkString(8, 'heix') || checkString(8, 'heim') || checkString(8, 'heis'))) {
+                  extension = '.heic'
+                  detectedMimeType = 'image/heic'
+            }
+            // HEIF signature
+            else if (uint8Array.length >= 12 && 
+                     checkString(4, 'ftyp') && 
+                     (checkString(8, 'mif1') || checkString(8, 'heif'))) {
+                  extension = '.heif'
+                  detectedMimeType = 'image/heif'
+            }
+            // GIF signatures
+            else if ((checkString(0, 'GIF87a') || checkString(0, 'GIF89a'))) {
+                  extension = '.gif'
+                  detectedMimeType = 'image/gif'
+            }
+            // WebP signature
+            else if (checkString(0, 'RIFF') && uint8Array.length >= 12 && checkString(8, 'WEBP')) {
+                  extension = '.webp'
+                  detectedMimeType = 'image/webp'
+            }
+            // BMP signature
+            else if (checkBytes([0, 1], [0x42, 0x4d])) {
+                  extension = '.bmp'
+                  detectedMimeType = 'image/bmp'
+            }
+            // TIFF signatures
+            else if ((checkBytes([0, 1, 2, 3], [0x49, 0x49, 0x2a, 0x00]) || 
+                     checkBytes([0, 1, 2, 3], [0x4d, 0x4d, 0x00, 0x2a]))) {
+                  extension = '.tiff'
+                  detectedMimeType = 'image/tiff'
+            }
+            // ICO signature
+            else if (checkBytes([0, 1, 2, 3], [0x00, 0x00, 0x01, 0x00])) {
+                  extension = '.ico'
+                  detectedMimeType = 'image/x-icon'
+            }
+            // SVG signature (XML-based)
+            else if (checkString(0, '<?xml') || checkString(0, '<svg')) {
+                  try {
+                        const text = new TextDecoder().decode(uint8Array)
+                        if (text.includes('<svg') || text.includes('xmlns="http://www.w3.org/2000/svg"')) {
+                              extension = '.svg'
+                              detectedMimeType = 'image/svg+xml'
+                        }
+                  } catch {
+                        // Not SVG
+                  }
+            }
+            // MP4 signatures
+            else if (uint8Array.length >= 12 && 
+                     checkString(4, 'ftyp') && 
+                     (checkString(8, 'mp41') || checkString(8, 'mp42') || checkString(8, 'isom') || 
+                      checkString(8, 'M4V ') || checkString(8, 'M4A '))) {
+                  extension = '.mp4'
+                  detectedMimeType = 'video/mp4'
+            }
+            // AVI signature
+            else if (checkString(0, 'RIFF') && uint8Array.length >= 12 && checkString(8, 'AVI ')) {
+                  extension = '.avi'
+                  detectedMimeType = 'video/x-msvideo'
+            }
+            // MOV signature (QuickTime)
+            else if (uint8Array.length >= 12 && 
+                     checkString(4, 'ftyp') && 
+                     checkString(8, 'qt  ')) {
+                  extension = '.mov'
+                  detectedMimeType = 'video/quicktime'
+            }
+            // MP3 signature
+            else if (checkBytes([0, 1], [0xff, 0xfb]) || checkString(0, 'ID3')) {
+                  extension = '.mp3'
+                  detectedMimeType = 'audio/mpeg'
+            }
+            // WAV signature
+            else if (checkString(0, 'RIFF') && uint8Array.length >= 12 && checkString(8, 'WAVE')) {
+                  extension = '.wav'
+                  detectedMimeType = 'audio/wav'
+            }
+            // OGG signature
+            else if (checkString(0, 'OggS')) {
+                  extension = '.ogg'
+                  detectedMimeType = 'audio/ogg'
+            }
+            // ZIP signature (also covers XLSX, DOCX, etc.)
+            else if (checkBytes([0, 1, 2, 3], [0x50, 0x4b, 0x03, 0x04]) || 
+                     checkBytes([0, 1, 2, 3], [0x50, 0x4b, 0x05, 0x06]) || 
+                     checkBytes([0, 1, 2, 3], [0x50, 0x4b, 0x07, 0x08])) {
+                  // Need to check if it's a specific Office format
+                  try {
+                        const text = new TextDecoder().decode(uint8Array.slice(0, 1024))
+                        if (text.includes('word/')) {
+                              extension = '.docx'
+                              detectedMimeType = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+                        } else if (text.includes('xl/')) {
+                              extension = '.xlsx'
+                              detectedMimeType = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+                        } else if (text.includes('ppt/')) {
+                              extension = '.pptx'
+                              detectedMimeType = 'application/vnd.openxmlformats-officedocument.presentationml.presentation'
+                        } else {
+                              extension = '.zip'
+                              detectedMimeType = 'application/zip'
+                        }
+                  } catch {
+                        extension = '.zip'
+                        detectedMimeType = 'application/zip'
+                  }
+            }
+            // RAR signature
+            else if (checkString(0, 'Rar!')) {
+                  extension = '.rar'
+                  detectedMimeType = 'application/vnd.rar'
+            }
+            // 7z signature
+            else if (checkBytes([0, 1, 2, 3, 4, 5], [0x37, 0x7a, 0xbc, 0xaf, 0x27, 0x1c])) {
+                  extension = '.7z'
+                  detectedMimeType = 'application/x-7z-compressed'
+            }
+            // TAR signature
+            else if (uint8Array.length >= 262 && 
+                     checkString(257, 'ustar')) {
+                  extension = '.tar'
+                  detectedMimeType = 'application/x-tar'
+            }
+            // GZIP signature
+            else if (checkBytes([0, 1, 2], [0x1f, 0x8b, 0x08])) {
+                  extension = '.gz'
+                  detectedMimeType = 'application/gzip'
+            }
+            // MS Office legacy formats
+            else if (checkBytes([0, 1, 2, 3, 4, 5, 6, 7], [0xd0, 0xcf, 0x11, 0xe0, 0xa1, 0xb1, 0x1a, 0xe1])) {
+                  // Could be DOC, XLS, or PPT - default to DOC
+                  extension = '.doc'
+                  detectedMimeType = 'application/msword'
+            }
+            // RTF signature
+            else if (checkString(0, '{\\rtf1')) {
+                  extension = '.rtf'
+                  detectedMimeType = 'application/rtf'
+            }
+            // XML signature
+            else if (checkString(0, '<?xml')) {
+                  extension = '.xml'
+                  detectedMimeType = 'application/xml'
+            }
+            // HTML signature
+            else if (checkString(0, '<!DOCTYPE html') || checkString(0, '<html') || checkString(0, '<!doctype html')) {
+                  extension = '.html'
+                  detectedMimeType = 'text/html'
             }
             // JSON signature (looks like a JSON object or array start)
             else if (uint8Array[0] === 0x7b || uint8Array[0] === 0x5b) {
@@ -1610,20 +1784,53 @@ export const determineFileType = async (file: File): Promise<File> => {
                         // Not a valid JSON
                   }
             }
-            // Excel XLSX signature
-            else if (uint8Array[0] === 0x50 && uint8Array[1] === 0x4b && uint8Array[2] === 0x03 && uint8Array[3] === 0x04) {
-                  extension = '.xlsx'
-                  detectedMimeType = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+            // CSS signature
+            else if (uint8Array.length > 0) {
+                  try {
+                        const text = new TextDecoder().decode(uint8Array.slice(0, 1024))
+                        if (/^[\s]*[.#@]/.test(text) || text.includes('{') && text.includes('}') && text.includes(':')) {
+                              extension = '.css'
+                              detectedMimeType = 'text/css'
+                        }
+                  } catch {
+                        // Not CSS
+                  }
             }
-            // CSV/Text detection (try to parse as CSV or check for text-like content)
-            else {
+            // JavaScript signature
+            else if (uint8Array.length > 0) {
+                  try {
+                        const text = new TextDecoder().decode(uint8Array.slice(0, 1024))
+                        if (text.includes('function') || text.includes('var ') || text.includes('const ') || 
+                            text.includes('let ') || text.includes('=>') || text.includes('console.log')) {
+                              extension = '.js'
+                              detectedMimeType = 'application/javascript'
+                        }
+                  } catch {
+                        // Not JavaScript
+                  }
+            }
+
+            // If still no extension detected, try text-based detection
+            if (!extension) {
                   try {
                         const text = new TextDecoder().decode(uint8Array)
                         // Check if content looks like CSV (contains commas or semicolons)
-                        if (/[,;]/.test(text)) {
+                        if (/[,;]/.test(text) && text.split('\n').length > 1) {
                               extension = '.csv'
                               detectedMimeType = 'text/csv'
-                        } else {
+                        } 
+                        // Check if it's a tab-separated file
+                        else if (/\t/.test(text) && text.split('\n').length > 1) {
+                              extension = '.tsv'
+                              detectedMimeType = 'text/tab-separated-values'
+                        }
+                        // Check if it looks like code
+                        else if (text.includes('#include') || text.includes('import ') || text.includes('from ')) {
+                              extension = '.txt'
+                              detectedMimeType = 'text/plain'
+                        }
+                        // Default to text
+                        else {
                               extension = '.txt'
                               detectedMimeType = 'text/plain'
                         }
@@ -1660,6 +1867,96 @@ export const determineFileType = async (file: File): Promise<File> => {
             return fallbackFile
       }
 }
+// export const determineFileType = async (file: File): Promise<File> => {
+//       // If file already has an extension, return as is
+//       if (file.name.includes('.')) return file
+
+//       try {
+//             // Attempt to read the file contents
+//             const arrayBuffer = await file.arrayBuffer()
+//             const uint8Array = new Uint8Array(arrayBuffer)
+
+//             // Advanced MIME type detection using file signatures
+//             let extension = ''
+//             let detectedMimeType = ''
+
+//             // PDF signature
+//             if (uint8Array[0] === 0x25 && uint8Array[1] === 0x50 && uint8Array[2] === 0x44 && uint8Array[3] === 0x46) {
+//                   extension = '.pdf'
+//                   detectedMimeType = 'application/pdf'
+//             }
+//             // PNG signature
+//             else if (uint8Array[0] === 0x89 && uint8Array[1] === 0x50 && uint8Array[2] === 0x4e && uint8Array[3] === 0x47) {
+//                   extension = '.png'
+//                   detectedMimeType = 'image/png'
+//             }
+//             // JPEG signature
+//             else if (uint8Array[0] === 0xff && uint8Array[1] === 0xd8 && uint8Array[2] === 0xff) {
+//                   extension = '.jpg'
+//                   detectedMimeType = 'image/jpeg'
+//             }
+//             // JSON signature (looks like a JSON object or array start)
+//             else if (uint8Array[0] === 0x7b || uint8Array[0] === 0x5b) {
+//                   try {
+//                         // Attempt to parse as JSON
+//                         const jsonTest = new TextDecoder().decode(uint8Array)
+//                         JSON.parse(jsonTest)
+//                         extension = '.json'
+//                         detectedMimeType = 'application/json'
+//                   } catch {
+//                         // Not a valid JSON
+//                   }
+//             }
+//             // Excel XLSX signature
+//             else if (uint8Array[0] === 0x50 && uint8Array[1] === 0x4b && uint8Array[2] === 0x03 && uint8Array[3] === 0x04) {
+//                   extension = '.xlsx'
+//                   detectedMimeType = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+//             }
+//             // CSV/Text detection (try to parse as CSV or check for text-like content)
+//             else {
+//                   try {
+//                         const text = new TextDecoder().decode(uint8Array)
+//                         // Check if content looks like CSV (contains commas or semicolons)
+//                         if (/[,;]/.test(text)) {
+//                               extension = '.csv'
+//                               detectedMimeType = 'text/csv'
+//                         } else {
+//                               extension = '.txt'
+//                               detectedMimeType = 'text/plain'
+//                         }
+//                   } catch {
+//                         extension = '.bin'
+//                         detectedMimeType = 'application/octet-stream'
+//                   }
+//             }
+
+//             // If no extension was detected, fall back to original file type or generic
+//             if (!extension) {
+//                   extension = file.type ? `.${file.type.split('/').pop()}` : '.bin'
+//                   detectedMimeType = file.type || 'application/octet-stream'
+//             }
+
+//             // Create a new file with the determined extension
+//             const renamedFile = new File([uint8Array], `${file.name}${extension}`, {
+//                   type: detectedMimeType,
+//                   lastModified: file.lastModified,
+//             })
+
+//             return renamedFile
+//       } catch (error) {
+//             console.error('Error determining file type:', error)
+
+//             // Fallback: use file type or add a generic extension
+//             const fallbackExtension = file.type ? `.${file.type.split('/').pop()}` : file.name.includes('.') ? '' : '.bin'
+
+//             const fallbackFile = new File([await file.arrayBuffer()], `${file.name}${fallbackExtension}`, {
+//                   type: file.type || 'application/octet-stream',
+//                   lastModified: file.lastModified,
+//             })
+
+//             return fallbackFile
+//       }
+// }
 
 export function getFileExtension(fileName: string): string {
       // If the file name contains a dot, extract the extension
