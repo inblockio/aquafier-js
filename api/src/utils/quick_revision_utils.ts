@@ -288,7 +288,7 @@ export async function deleteRevisionAndChildren(
                 }
             }
         };
-    } catch (error) {
+    } catch (error : any) {
         console.error(`Error deleting revision chain: ${error}`);
         return {
             success: false,
@@ -351,7 +351,7 @@ export async function canDeleteRevision(
         // Additional checks can be added here (e.g., admin privileges, time limits)
 
         return true;
-    } catch (error) {
+    } catch (error : any) {
         console.error(`Error checking revision deletability: ${error}`);
         return false;
     }
@@ -1086,7 +1086,7 @@ async function orderUserChain(genesisHash: string): Promise<string[]> {
         }
 
         return orderedChain;
-    } catch (error) {
+    } catch (error : any) {
         console.error("Error ordering user chain:", error);
         return [];
     }
@@ -1156,7 +1156,7 @@ function orderRevisionsInChain(chainData: any): string[] {
         }
 
         return ordered;
-    } catch (error) {
+    } catch (error : any) {
         console.error("Error ordering revisions:", error);
         return [];
     }
@@ -1194,7 +1194,7 @@ async function updateLatestHash(userAddress: string, oldHash: string, newHash: s
                 }
             });
         }
-    } catch (error) {
+    } catch (error : any) {
         console.error("Error updating latest hash:", error);
         throw error;
     }

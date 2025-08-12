@@ -28,7 +28,7 @@ export default async function notificationsController(fastify: FastifyInstance) 
             });
             
             return reply.code(200).send(notifications);
-        } catch (error) {
+        } catch (error : any) {
             request.log.error('Error fetching notifications:', error);
             return reply.code(500).send({ error: 'Failed to fetch notifications' });
         }
@@ -71,7 +71,7 @@ export default async function notificationsController(fastify: FastifyInstance) 
             });
             
             return reply.code(201).send(notification);
-        } catch (error) {
+        } catch (error : any) {
             request.log.error('Error creating notification:', error);
             return reply.code(500).send({ error: 'Failed to create notification' });
         }
@@ -112,7 +112,7 @@ export default async function notificationsController(fastify: FastifyInstance) 
             });
             
             return reply.code(200).send(updatedNotification);
-        } catch (error) {
+        } catch (error : any) {
             request.log.error('Error updating notification:', error);
             return reply.code(500).send({ error: 'Failed to update notification' });
         }
@@ -140,7 +140,7 @@ export default async function notificationsController(fastify: FastifyInstance) 
             });
             
             return reply.code(200).send({ message: 'All notifications marked as read' });
-        } catch (error) {
+        } catch (error : any) {
             request.log.error('Error marking all notifications as read:', error);
             return reply.code(500).send({ error: 'Failed to update notifications' });
         }

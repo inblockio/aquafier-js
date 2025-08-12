@@ -163,7 +163,7 @@ export default async function revisionsController(fastify: FastifyInstance) {
                 success: true,
             });
 
-        } catch (error) {
+        } catch (error : any) {
             request.log.error(error);
             return reply.code(500).send({ error: `Failed to process revisions other user ${error}` });
         }
@@ -255,7 +255,7 @@ export default async function revisionsController(fastify: FastifyInstance) {
 
             });
 
-        } catch (error) {
+        } catch (error : any) {
             request.log.error(error);
             return reply.code(500).send({ error: `Failed to process revisions ${error}` });
         }
