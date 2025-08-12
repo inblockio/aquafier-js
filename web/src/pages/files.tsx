@@ -166,26 +166,53 @@ const FilesPage = () => {
                                     console.error('Error reading file content:', error)
                               }
                         }
-                        const fileItemWrapper: FileItemWrapper = {
-                              status: 'pending',
-                              file,
-                              isJson,
-                              isZip,
-                              isLoading: false,
-                              isJsonForm: isJsonForm,
-                              isJsonAquaTreeData: isJsonAquaTreeData,
-                        }
 
-                        console.log(`fileItemWrapper ${JSON.stringify(fileItemWrapper, null, 4)}`)
-                        setFilesListForUpload(prev => [...prev, fileItemWrapper])
+                        // Check if file already exists in the upload list
+                        const fileExists = filesListForUpload.some(existingFile =>
+                              existingFile.file.name === file.name &&
+                              existingFile.file.size === file.size &&
+                              existingFile.file.lastModified === file.lastModified
+                        )
+
+                        if (!fileExists) {
+                              const fileItemWrapper: FileItemWrapper = {
+                                    status: 'pending',
+                                    file,
+                                    isJson,
+                                    isZip,
+                                    isLoading: false,
+                                    isJsonForm: isJsonForm,
+                                    isJsonAquaTreeData: isJsonAquaTreeData,
+                              }
+
+                              console.log(`fileItemWrapper ${JSON.stringify(fileItemWrapper, null, 4)}`)
+                              setFilesListForUpload(prev => [...prev, fileItemWrapper])
+
+                        } else {
+                              console.log(`File ${file.name} already exists in upload list`)
+
+                              toast.error(`1. Error file exist in upload list`)
+                        }
                   } else {
-                        newUploads.push({
-                              file,
-                              status: 'pending',
-                              progress: 0,
-                              isJson: isJson,
-                              isZip: isZip,
-                        })
+                        // Check if file already exists in the upload queue
+                        const fileExists = newUploads.some(existingFile =>
+                              existingFile.file.name === file.name &&
+                              existingFile.file.size === file.size &&
+                              existingFile.file.lastModified === file.lastModified
+                        )
+
+                        if (!fileExists) {
+                              newUploads.push({
+                                    file,
+                                    status: 'pending',
+                                    progress: 0,
+                                    isJson: isJson,
+                                    isZip: isZip,
+                              })
+                        } else {
+                              console.log(`=== File ${file.name} already exists in upload list`)
+                              toast.error(`1. Error file exist in upload list`)
+                        }
                   }
             }
 
@@ -200,13 +227,16 @@ const FilesPage = () => {
             }
       }
 
-      const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+      const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
             const selectedFiles = Array.from(e.target.files ?? [])
             if (selectedFiles.length === 0) {
                   console.log(`handleFileChange is zero `)
                   return
             }
-            filesForUpload(selectedFiles)
+            await filesForUpload(selectedFiles)
+            // Clear the file input immediately after processing
+            clearFileInput()
+
       }
 
       const processUploadQueue = async (uploads: UploadStatus[]) => {
