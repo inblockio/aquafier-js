@@ -25,6 +25,26 @@ import { saveAttestationFileAndAquaTree } from '../utils/server_utils';
 // Promisify pipeline
 const pump = util.promisify(pipeline);
 
+/**
+ * Registers Explorer-related HTTP routes on the provided Fastify instance.
+ *
+ * This controller attaches endpoints for importing, uploading, listing, deleting,
+ * transferring, and merging AquaTree revisions and their associated files. Routes
+ * include nonce-based authentication, multipart handling, ZIP and file processing,
+ * interaction with the Prisma database, filesystem persistence, Aquafier operations,
+ * and optional WebSocket notifications when cross-user events occur.
+ *
+ * Side effects:
+ * - Persists records to the database (revisions, files, indices, names, etc.).
+ * - Writes uploaded files to disk.
+ * - May send WebSocket messages to notify other users.
+ * - Calls external utilities to validate/process AquaTree data and fetch remote chains.
+ *
+ * HTTP behavior highlights:
+ * - Returns 401/403 for missing or invalid nonce headers.
+ * - Validates multipart/form-data and enforces file size limits (20MB or 200MB depending on endpoint).
+ * - Uses appropriate HTTP status codes for validation, success, and error conditions.
+ */
 export default async function explorerController(fastify: FastifyInstance) {
 
     fastify.post('/explorer_aqua_zip', async (request: any, reply: any) => {
