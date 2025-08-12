@@ -180,7 +180,7 @@ export default async function notificationsController(fastify: FastifyInstance) 
             });
             
             return reply.code(200).send({ message: 'Notification deleted successfully' });
-        } catch (error) {
+        } catch (error : any) {
             request.log.error('Error deleting notification:', error);
             return reply.code(500).send({ error: 'Failed to delete notification' });
         }
