@@ -13,9 +13,12 @@ attempt=0
 
 #init backup cron
 if [ -n "${BACKUP_CRON}" ]; then
-  env | grep -e DB_ -e S3_ -e BACKUP_COUNT >> /app/utils/env
+  # Create env file with restricted permissions
+  touch /app/utils/env
+  chmod 600 /app/utils/env
+  env | grep -E '^(DB_|S3_|BACKUP_COUNT)' >> /app/utils/env
   echo "prepare backup cron"
-  printf "${BACKUP_CRON} /app/utils/create_backup.sh >> /var/log/aquafier_ext 2>&1\n\n" > /etc/cron.d/backup_cron
+  printf '%s /app/utils/create_backup.sh >> /var/log/aquafier_ext 2>&1\n\n' "${BACKUP_CRON}" > /etc/cron.d/backup_cron
   chmod 0644 /etc/cron.d/backup_cron
   crontab /etc/cron.d/backup_cron
 fi

@@ -23,7 +23,7 @@ if [ -z "${DB_PASSWORD}" ] && [ -z "${DB_USER}" ] && [ -z "${DB_NAME}" ]; then
 fi
 
 #backup the sqls
-PGPASSWORD=${DB_PASSWORD} pg_dump -U ${DB_USER} -h postgres -p 5432 ${DB_NAME} >> backup/backup.sql
+PGPASSWORD="${DB_PASSWORD}" pg_dump -U "${DB_USER}" -h postgres -p 5432 "${DB_NAME}" >> backup/backup.sql
 
 #create dump of the s3 storage
 if [ -n "${S3_USER}" ] && [ -n "${S3_PASSWORD}" ] && [ -n "${S3_BUCKET}" ] && [ -n "${S3_URL}" ]; then
@@ -54,7 +54,7 @@ if [ -n "${S3_USER}" ] && [ -n "${S3_PASSWORD}" ] && [ -n "${S3_BUCKET}" ] && [ 
 
     /mc alias set backupSource "${URL}":"${PORT}" "${USER}" "${PASSWORD}" "${USE_SSL}"
 
-    /mc mirror backupSource/${BUCKET} workdir
+    /mc mirror "backupSource/${BUCKET}" workdir
 
     #i need the files not the dir
     mkdir backup/s3
@@ -76,13 +76,15 @@ if [ ! -d "/backup" ]; then
   mkdir /backup
 fi
 
-cd backup && tar -cvf - * | gzip -9 > /backup/backup_"$(date +'%H-%M_%d-%m-%Y').tar.gz" && cd ..
+cd backup && tar -cvf - -- * | gzip -9 > /backup/backup_"$(date +'%H-%M_%d-%m-%Y').tar.gz" && cd ..
 
 rm -rf backup
 
 #delete old backups if configured
-if [ -n "${BACKUP_COUNT}" ] && [ -n "$(ls -A .)"  ] ; then
-    ls -t | tail -n "+${BACKUP_COUNT}" | xargs -d '\n' rm --
+if [ -n "${BACKUP_COUNT}" ]; then
+  cd /backup
+  if [ "$(find . -name "backup_*.tar.gz" | wc -l)" -gt "${BACKUP_COUNT}" ]; then
+    find . -name "backup_*.tar.gz" -type f -printf '%T@ %p\n' | sort -rn | tail -n +$((BACKUP_COUNT + 1)) | cut -d' ' -f2- | xargs -r rm -f
+  fi
 fi
-
 

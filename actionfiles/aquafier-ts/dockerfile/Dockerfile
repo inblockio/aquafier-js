@@ -18,6 +18,7 @@ RUN npm run build
 
 FROM node:22-slim
 
+SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 COPY actionfiles/aquafier-ts/script/entrypoint.sh /app/utils/entrypoint.sh
 ENTRYPOINT ["/app/utils/entrypoint.sh"]
 

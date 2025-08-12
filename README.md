@@ -68,8 +68,8 @@ Used in the proxy to define the target for the requests. Obsolet in local deploy
 
 ## Backup and Restore
 ### Backup
-You can find the script which creates the backup under `actionfiles/aquafier-ts/script/create_backup.sh`. Depending on the `BACKUP_CRON` this file will be called from a cron job.
-This creation of the cron-job happend in the `actionfiles/aquafier-ts/script/start_aqua.sh` file. The backup file tries to copy everything from the Database and create a copy of the file source (filesystem or s3 storage) and create a tar.gz of this files. After the tar.gz was successfully created, you can find the Backup under /backup in the container. So you have two options to get this backup:
+You can find the script that creates the backup under `actionfiles/aquafier-ts/script/create_backup.sh`. Depending on the `BACKUP_CRON`, this file will be called from a cron job.
+This creation of the cron-job happens in the `actionfiles/aquafier-ts/script/start_aqua.sh` file.
 
 1. `docker cp <docker container id>:/backup/<backup-file-name>.tar.gz .`
 2. create a mount volume from you host in the docker-compose-<env>.yml

@@ -14,7 +14,7 @@ if [ "${count}" -eq 1 ]; then
   fi
    if [ -n "${RESTORE_BACKUP}" ] && [ "${RESTORE_BACKUP}" == "true" ]; then
 
-      backupFile=${files[0]}
+      backupFile=$(echo "$files" | head -n1)
 
       if [ -d "/restore/workdir" ]; then
           rm -rf /restore/workdir
@@ -23,8 +23,11 @@ if [ "${count}" -eq 1 ]; then
       mkdir /restore/workdir
       tar -xvf "${backupFile}" -C /restore/workdir
 
-      if [ $(jq '.commitHash' /restore/workdir/version-info.json) != $(jq '.commitHash' /app/version-info.json) ]; then
-          echo "Aquafier commit-hash does not match! \nbackup: $(jq '.commitHash' /restore/workdir/version-info.json)\nserver: $(jq '.commitHash' /app/version-info.json)"
+
+      backup_hash=$(jq -r '.commitHash' /restore/workdir/version-info.json 2>/dev/null || echo "unknown")
+      server_hash=$(jq -r '.commitHash' /app/version-info.json 2>/dev/null || echo "unknown")
+      if [ "$backup_hash" != "$server_hash" ]; then
+          printf "Aquafier commit-hash does not match!\nbackup: %s\nserver: %s\n" "$backup_hash" "$server_hash"
       fi
 
       cd /restore/workdir/
@@ -35,7 +38,7 @@ if [ "${count}" -eq 1 ]; then
      fi
 
       #TODO split up the url and add the host here
-      PGPASSWORD=${DB_PASSWORD} psql -U "${DB_USER}" -h postgres -d postgres -c "drop database IF EXISTS ${DB_NAME} (force);"
+      PGPASSWORD="${DB_PASSWORD}" psql -U "${DB_USER}" -h postgres -d postgres -c "DROP DATABASE IF EXISTS \"${DB_NAME}\";"
       PGPASSWORD=${DB_PASSWORD} psql -U "${DB_USER}" -h postgres -d postgres -c "CREATE DATABASE ${DB_NAME};"
       PGPASSWORD=${DB_PASSWORD} psql -U "${DB_USER}" -h postgres -d "${DB_NAME}" < backup.sql
       echo "Successfully restored the database!"
@@ -66,24 +69,25 @@ if [ "${count}" -eq 1 ]; then
           if /mc stat "restoreDestination/${S3_BUCKET}" > /dev/null 2>&1; then
             echo "bucket exists! RESET"
             /mc rm -r --force "restoreDestination/${S3_BUCKET}"
+            /mc mb "restoreDestination/${S3_BUCKET}"
           else
             echo "Bucket does not exists! Create them!"
             /mc mb "restoreDestination/${S3_BUCKET}"
           fi
-
-          /mc rm -r --force "restoreDestination/${S3_BUCKET}"
 
           /mc cp /restore/workdir/s3/* "restoreDestination/${S3_BUCKET}/"
         fi
       fi
 
       if [ -d "/restore/workdir/filesystem" ]; then
-        if [ -d "/app/api/media" ]; then
-          rm --interactive=never /app/backup/media/*
+        if [ -d "/app/backend/media" ]; then
+          rm --interactive=never /app/backend/media/*
         else
-          mkdir -p /app/backup/media
+          mkdir -p /app/backend/media
         fi
-          cp /restore/workdir/filesystem/* /app/backup/media
+          if [ "$(ls -A /restore/workdir/filesystem 2>/dev/null)" ]; then
+            cp /restore/workdir/filesystem/* /app/backend/media/
+          fi
       fi
 
       if [ ! -d "/restore/imported" ]; then
