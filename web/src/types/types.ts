@@ -61,6 +61,7 @@ export interface DropEvent extends React.DragEvent<HTMLDivElement> {}
 // interface ChangeEvent extends React.ChangeEvent<HTMLInputElement> {}
 
 export interface FileItemWrapper {
+       status: 'pending' | 'uploading' | 'success' | 'error'
       file: File
       isJson: boolean
       isLoading: boolean
@@ -125,9 +126,11 @@ export interface IDropzoneAction2 {
 }
 export interface IDropzoneAction {
       file: File
-      fileIndex: number
-      uploadedIndexes: number[]
-      updateUploadedIndex: (fileIndex: number) => void
+      // fileIndex: number,
+      filesWrapper : FileItemWrapper,
+      removeFilesListForUpload : (file: FileItemWrapper) => void
+      // uploadedIndexes: number[]
+      // updateUploadedIndex: (fileIndex: number) => void
       autoUpload: boolean
 }
 

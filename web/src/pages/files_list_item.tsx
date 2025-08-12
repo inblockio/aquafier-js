@@ -230,7 +230,7 @@ export default function FilesListItem({
             // console.log(
             //     `workflowInfo data ${JSON.stringify(workflowInfo, null, 4)}`
             // )
-            console.log('workflowInfo: ', workflowInfo)
+            // console.log('workflowInfo: ', workflowInfo)
             if (workflowInfo?.isWorkFlow == true && workflowInfo.workFlow == 'aqua_sign') {
                   return workFlowAquaSignActions()
             }

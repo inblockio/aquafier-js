@@ -8,13 +8,20 @@ import { IDropzoneAction } from '../../types/types'
 import { Button } from '@/components/ui/button'
 import { toast } from 'sonner'
 
-export const ImportAquaChainFromFile = ({ file, uploadedIndexes, fileIndex, updateUploadedIndex }: IDropzoneAction) => {
+// export const ImportAquaChainFromFile = ({ file, uploadedIndexes, fileIndex, updateUploadedIndex }: IDropzoneAction) => {
+export const ImportAquaChainFromFile = ({ file, filesWrapper, removeFilesListForUpload}: IDropzoneAction) => {
       const [uploading, setUploading] = useState(false)
-      const [uploaded, setUploaded] = useState(false)
+      // const [uploaded, setUploaded] = useState(false)
 
       const { metamaskAddress, setFiles, files, backend_url } = useStore(appStore)
 
       const importAquaChain = async () => {
+
+             if(uploading){
+                  toast.info(`Wait for upload to complete`)
+                  return
+            }
+            
             if (!file) {
                   toast.error( 'No file selected!')
                   return
@@ -56,8 +63,8 @@ export const ImportAquaChainFromFile = ({ file, uploadedIndexes, fileIndex, upda
                   // setUploadedFilesIndexes(value => [...value, fileIndex])
                   toast.success( 'Aqua Chain imported successfully')
                   setUploading(false)
-                  setUploaded(true)
-                  updateUploadedIndex(fileIndex)
+                  // setUploaded(true)
+                  removeFilesListForUpload(filesWrapper)
                   return
             } catch (error) {
                   setUploading(false)
@@ -71,7 +78,7 @@ export const ImportAquaChainFromFile = ({ file, uploadedIndexes, fileIndex, upda
                   size="sm"
                   className="w-[80px] flex items-center gap-1 text-muted-foreground"
                   onClick={importAquaChain}
-                  disabled={uploadedIndexes.includes(fileIndex) || uploaded}
+                  // disabled={uploadedIndexes.includes(fileIndex) || uploaded}
             >
                   {uploading ? <span className="w-4 h-4 animate-spin border-2 border-muted-foreground border-t-transparent rounded-full" /> : <LuImport className="w-4 h-4" />}
                   Import

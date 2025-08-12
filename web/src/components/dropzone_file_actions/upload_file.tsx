@@ -11,9 +11,10 @@ import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Loader2 } from 'lucide-react'
 
-export const UploadFile = ({ file, uploadedIndexes, fileIndex, updateUploadedIndex, autoUpload }: IDropzoneAction) => {
+// export const UploadFile = ({ file, uploadedIndexes, fileIndex, updateUploadedIndex, autoUpload }: IDropzoneAction) => {
+export const UploadFile = ({ file, filesWrapper, removeFilesListForUpload , autoUpload}: IDropzoneAction) => {
       const [uploading, setUploading] = useState(false)
-      const [uploaded, setUploaded] = useState(false)
+      // const [uploaded, setUploaded] = useState(false)
 
       const { metamaskAddress, addFile, files, backend_url, session } = useStore(appStore)
 
@@ -21,6 +22,11 @@ export const UploadFile = ({ file, uploadedIndexes, fileIndex, updateUploadedInd
             // let aquafier = new Aquafier();
             // let fileContent = await  readFileContent()
             // const existingChainFile = files.find(_file => _file.fileObject.find((e) => e.fileName == file.name) != undefined)
+
+             if(uploading){
+                              toast.info(`Wait for upload to complete`)
+                              return
+                        }  
             if (!file) {
                   toast.info('No file selected!')
                   return
@@ -29,14 +35,14 @@ export const UploadFile = ({ file, uploadedIndexes, fileIndex, updateUploadedInd
             const fileExist = await checkIfFileExistInUserFiles(file, files)
 
             if (fileExist) {
-                  toast.info( 'You already have the file. Delete before importing this')
-                  updateUploadedIndex(fileIndex)
-
+                  toast.info('You already have the file. Delete before importing this')
+                  // updateUploadedIndex(fileIndex)
+                  removeFilesListForUpload(filesWrapper)
                   return
             }
 
             if (file.size > maxFileSizeForUpload) {
-                  toast.error( 'File size exceeds 200MB limit. Please upload a smaller file.')
+                  toast.error('File size exceeds 200MB limit. Please upload a smaller file.')
                   return
             }
 
@@ -86,14 +92,15 @@ export const UploadFile = ({ file, uploadedIndexes, fileIndex, updateUploadedInd
 
                   addFile(fileInfo)
 
-                  setUploaded(true)
+                  // setUploaded(true)
                   setUploading(false)
                   toast.success('File uploaded successfuly')
-                  updateUploadedIndex(fileIndex)
+                  // updateUploadedIndex(fileIndex)
+                   removeFilesListForUpload(filesWrapper)
                   return
             } catch (error) {
                   setUploading(false)
-                  toast.error( `Failed to upload file: ${error}`)
+                  toast.error(`Failed to upload file: ${error}`)
             }
       }
 
@@ -118,7 +125,7 @@ export const UploadFile = ({ file, uploadedIndexes, fileIndex, updateUploadedInd
                   variant="secondary"
                   className="w-[80px] bg-gray-100 hover:bg-gray-200 text-gray-700 border-gray-300"
                   onClick={uploadFile}
-                  disabled={uploadedIndexes.includes(fileIndex) || uploaded}
+                  // disabled={uploadedIndexes.includes(fileIndex) || uploaded}
             >
                   {uploading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <LuUpload className="h-4 w-4 mr-2" />}
                   Upload
