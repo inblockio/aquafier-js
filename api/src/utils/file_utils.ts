@@ -248,6 +248,16 @@ const isTextFileProbability = async (buffer: Buffer, filename: string): Promise<
 };
 
 
+/**
+ * Determine whether S3/MinIO storage is available and ready.
+ *
+ * If a MinIO client is configured, this function verifies the configured bucket exists and will create it if missing.
+ * Returns true when the client is configured and the bucket is ensured; returns false if no client is configured or if any error occurs while checking/creating the bucket.
+ *
+ * Note: On error this function logs a warning and returns false (it does not throw).
+ *
+ * @returns True when S3/MinIO is available and the bucket is ensured, otherwise false.
+ */
 async function s3Available(): Promise<boolean> {
     if (minioClientCompleted()) {
         try {
@@ -264,7 +274,19 @@ async function s3Available(): Promise<boolean> {
     return false;
 }
 
-async function persistFile(fileSystemPath: string, filename: string, content: Buffer): Promise<string> {
+/**
+ * Persist binary content either to S3 (MinIO) or to the local filesystem and return the stored path.
+ *
+ * If S3/MinIO is available (s3Available() returns true) the function uploads `content` to the configured bucket
+ * and returns a path of the form `s3:<bucket>/<filename>`. Otherwise it writes `content` to
+ * `<fileSystemPath>/<filename>` on the local filesystem and returns that file system path.
+ *
+ * @param fileSystemPath - Local directory to use when S3 is not available.
+ * @param filename - Name (key) to use for the stored file.
+ * @param content - Binary content to persist (provided as a Buffer or Buffer-like object).
+ * @returns The storage path where the file was written: either `s3:<bucket>/<filename>` or the local file path.
+ */
+async function persistFile(fileSystemPath: string, filename: string, content: Buffer<ArrayBuffer>): Promise<string> {
     if (await s3Available()) {
         const minioClient = getMinioClient();
         await minioClient.putObject(getBucketName(), filename, content)
@@ -276,6 +298,18 @@ async function persistFile(fileSystemPath: string, filename: string, content: Bu
     }
 }
 
+/**
+ * Retrieve a file from S3 (MinIO) or the local filesystem as a Buffer.
+ *
+ * If `path` contains the prefix `s3:` the function attempts to read from the configured MinIO/S3 bucket:
+ * the expected format is `s3:/<bucket>/<key>` (one leading slash after `s3:`). When S3 is available the object
+ * is streamed and concatenated into a single Buffer which is returned.
+ *
+ * If `path` does not contain `s3:` the function reads and returns the local file synchronously via `fs.readFileSync`.
+ *
+ * @param path - Either a local filesystem path or an S3 path of the form `s3:/bucket/key`.
+ * @returns A Buffer with the file contents, or `undefined` when an S3 path is supplied but S3/MinIO is not available.
+ */
 async function getFile(path: string): Promise<Buffer | undefined> {
     if (path.includes("s3:")) {
         if (await s3Available()) {
@@ -303,52 +337,46 @@ async function getFile(path: string): Promise<Buffer | undefined> {
     }
 }
 
-// async function getFile(path: string): Promise<Buffer<ArrayBuffer> | undefined> {
-//     if (path.includes("s3:")) {
-//         if (await s3Available()) {
-//             const cleanedPath = path.replace("s3:/", "");
-//             const bucket = cleanedPath.substring(0, cleanedPath.indexOf("/"));
-//             const filePath = cleanedPath.substring(cleanedPath.indexOf("/") + 1);
-//             const data = await getMinioClient().getObject(bucket, filePath)
-//             let chunks: any[] | readonly Uint8Array<ArrayBufferLike>[] = [];
-//             data.on("data", chunk => {
-//                 chunks.push(chunk);
-//             })
-//             return new Promise((resolve, reject) => {
-//                 data.on('end', () => {
-//                     const objectData = Buffer.concat(chunks); // Combine all chunks into a single Buffer (byte array)
-//                     resolve(objectData);
-//                 });
-
-//                 data.on('error', (err) => {
-//                     reject(err);
-//                 });
-//             });
-//         }
-//     }else{
-//         return fs.readFileSync(path);
-//     }
-// }
-
+/**
+ * Return the size (in bytes) of a file identified by a local path or an S3-style path.
+ *
+ * If `path` contains the prefix `s3:` (for example `"s3://bucket/key"`), the function will try to
+ * use the configured MinIO/S3 client to stat the object and return its size. If the S3 client is
+ * not available the function returns `undefined`. If statting the object fails, the function
+ * returns `null`.
+ *
+ * For non-S3 paths the function returns the local filesystem file size (in bytes).
+ *
+ * @param path - Local filesystem path or an S3-style path prefixed with `s3:` (e.g. `"s3://bucket/key"`).
+ * @returns The file size in bytes, `null` if stat on S3 failed, or `undefined` when S3 is chosen but not available.
+ */
 async function getFileSize(path: string): Promise<number | undefined | null> {
     if (path.includes("s3:")) {
         if (await s3Available()) {
             const cleanedPath = path.replace("s3:/", "");
             const bucket = cleanedPath.substring(0, cleanedPath.indexOf("/"));
             const filePath = cleanedPath.substring(cleanedPath.indexOf("/") + 1);
-            try{
+            try {
                 const data = await getMinioClient().statObject(bucket, filePath)
                 return data.size;
-            }catch(e){
+            } catch (e) {
                 console.error(e);
                 return null
             }
         }
-    }else{
+    } else {
         return fs.statSync(path).size;
     }
 }
 
+/**
+ * Delete a file from either S3/MinIO (when the path contains `s3:`) or the local filesystem.
+ *
+ * For S3 paths the function expects a path containing `s3:` and of the form `s3:/<bucket>/<key>` (the code strips the `s3:/` prefix, extracts bucket and key, and calls the MinIO client to remove the object). If S3 is not available the function is a no-op.
+ *
+ * @param path - File path to delete. Use a local filesystem path for local files or an S3-style path containing `s3:` for objects in the configured MinIO/S3 bucket.
+ * @throws When removing a local file fails (filesystem errors) or when the MinIO client fails to remove the object.
+ */
 async function deleteFile(path: string): Promise<void> {
     if (path.includes("s3:")) {
         if (await s3Available()) {
@@ -357,7 +385,7 @@ async function deleteFile(path: string): Promise<void> {
             const filePath = cleanedPath.substring(cleanedPath.indexOf("/") + 1);
             await getMinioClient().removeObject(bucket, filePath)
         }
-    }else{
+    } else {
         fs.unlinkSync(path);
         return;
     }

@@ -8,12 +8,12 @@
     <node-interpreter value="project" />
     <envs>
       <env name="DATABASE_URL" value="postgresql://aquafier:changeme@localhost:5432/aquafier" />
-      <env name="S3_ACCESSKEY" value="aquafier" />
       <env name="S3_BUCKET" value="aquafier" />
+      <env name="S3_PASSWORD" value="aquafier" />
       <env name="S3_PORT" value="9000" />
-      <env name="S3_SECRETKEY" value="supersafepassword123" />
       <env name="S3_URL" value="localhost" />
       <env name="S3_USE_SSL" value="false" />
+      <env name="S3_USER" value="aquafier" />
     </envs>
     <method v="2" />
   </configuration>

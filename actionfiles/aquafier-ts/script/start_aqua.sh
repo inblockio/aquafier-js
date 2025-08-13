@@ -1,20 +1,34 @@
 #!/bin/bash
 
+set -ex
+
 # Set default values if not provided
 DB_USER=${DB_USER:-aquafier}
 DB_PASSWORD=${DB_PASSWORD:-changeme}
-POSTGRES_DB=${POSTGRES_DB:-aquafier}
+DB_NAME=${DB_NAME:-aquafier}
 
 # Wait for database to be ready with improved error handling
 max_attempts=30
 attempt=0
 
+#init backup cron
+if [ -n "${BACKUP_CRON}" ]; then
+  # Create env file with restricted permissions
+  touch /app/utils/env
+  chmod 600 /app/utils/env
+  env | grep -E '^(DB_|S3_|BACKUP_COUNT)' >> /app/utils/env
+  echo "prepare backup cron"
+  printf '%s /app/utils/create_backup.sh >> /var/log/aquafier_ext 2>&1\n\n' "${BACKUP_CRON}" > /etc/cron.d/backup_cron
+  chmod 0644 /etc/cron.d/backup_cron
+  crontab /etc/cron.d/backup_cron
+fi
+
 while [ $attempt -lt $max_attempts ]; do
   # Use PGPASSWORD to avoid interactive password prompt
-  export PGPASSWORD=$DB_PASSWORD
+  export PGPASSWORD=$DB_NAME
 
   # Try to connect to PostgreSQL and check if it responds
-  if psql -h postgres -U "$DB_USER" -d "$POSTGRES_DB" -c "SELECT 1" > /dev/null 2>&1; then
+  if psql -h postgres -U "$DB_USER" -d "$DB_NAME" -c "SELECT 1" > /dev/null 2>&1; then
     echo "Database is ready!"
     break
   fi
@@ -58,15 +72,6 @@ npx prisma migrate dev --name init || {
   }
 }
 
-# Set backend URL
-if [[ -z "${BACKEND_URL}" ]]; then
-  echo "BACKEND_URL is not set. Defaulting to http://127.0.0.1:3000"
-  export BACKEND_URL=http://127.0.0.1:3000
-else
-  echo "BACKEND_URL is set to: ${BACKEND_URL}"
-  export BACKEND_URL=http://${BACKEND_URL}
-fi
-
 # Replace backend URL placeholder in config
 sed -i -e "s|BACKEND_URL_PLACEHOLDER|$BACKEND_URL|g" /app/frontend/config.json
 
@@ -92,8 +97,16 @@ cat > serve.json << EOF
 }
 EOF
 
+#start cron scheduler
+service cron start
+
 # Start serve with the configuration
 serve -s . -l 3600 &
+
+#extra aquafier log
+touch /var/log/aquafier_ext
+
+tail -f /var/log/aquafier_ext &
 
 # Wait for any process to exit
 wait -n

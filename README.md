@@ -1,36 +1,102 @@
-## Aquafiier Js Project.
-A tool that illustrates the capability & utility of Aqua protocol.
 
-## Getting started 
-The api project structure is inspired by laravel project layout.<br/> The project is a fastify project with prisma ord (psql db).<br/><br/>
-The web project is a react(typescript) project using chackra ui.
+# Aquafier-js
 
-## Running 
-To run the api, navigate to api directory.
-1. `create .env from .env.sample`, edit the db credentials.
-2. `npm i` to install dependancies
-3. run prisma db migration `npx prisma migrate dev` : Tip run `npx prisma generate` when you change `schema.prisma`
-4. `npm run dev` to start http server
+Aquafier-JS is a reference implementation of the Aqua Protocol, demonstrating how its features can be integrated into modern web and backend applications.
+The project enables digital content signing, provenance verification, and integrity validation, serving as an example for real-world Aqua use cases.
+
+Technically, Aquafier-JS combines a Fastify backend with Prisma and PostgreSQL, alongside a React frontend (TypeScript, Chakra UI). End-to-end testing is implemented using Playwright to ensure high software quality.
+Its modular architecture makes it a solid foundation for custom applications or proof-of-concepts.
 
 
-## Database creation
-To create a database use the `create_db.sh`. Update the file with the config to use.
-```bash
-chmod +x ./api/create_db.sh
-```
+## Authors
 
+- [@Tim Bansemer](https://github.com/FantasticoFox) Project-Manager
+- [@Arthur Kamau](https://github.com/Arthur-Kamau) Developer
+- [@Dalmas Nyaboga Ogembo](https://github.com/dalmasonto) Developer
+- [@Florian Zeps](https://github.com/Zusel) DevOps
+- [Renovate](https://docs.renovatebot.com/)
+
+
+## Environment Variables
+
+To run this project, you will need to add the following environment variables to your .env file. See deployment/.env.sample
+
+`HOST`
+
+`PORT`
+
+`admin_wallet` ? TBD
+
+### Proxy settings / Lets Encrypt
+Used in the proxy to define the target for the requests. Obsolet in local deployment.
+
+`FRONTEND_URL`
+
+`BACKEND_URL`
+
+`LETSENCRYPT_EMAIL`
+
+### Database
+
+`DB_USER` Database-User
+
+`DB_PASSWORD` Password for the Database-User
+
+`DB_NAME` Name of the Database
+
+### Backend
+//TODO split this
+
+`DATABASE_URL` define the url for the postgres-connection used by the prisma client (`postgres://<user>:<password>@<host>:<post>/<database>`)
+
+`SERVER_MNEMONIC` ?
+
+### Twilio
+`TWILIO_ACCOUNT_SID`
+
+`TWILIO_AUTH_TOKEN`
+
+`TWILIO_VERIFY_SERVICE_SID`
+
+### Backup
+`BACKUP_CRON` (cron expression e.g. `* * * * *`) set how often the server create an backup
+
+`BACKUP_COUNT` define how many backups sould we create befor delte the oldest one
+
+### e2e (playwright)
+`BASE_URL` Set the URL for the Playwright runner to execute the tests against this URL.
+
+## Backup and Restore
+### Backup
+You can find the script that creates the backup under `actionfiles/aquafier-ts/script/create_backup.sh`. Depending on the `BACKUP_CRON`, this file will be called from a cron job.
+This creation of the cron-job happens in the `actionfiles/aquafier-ts/script/start_aqua.sh` file.
+
+1. `docker cp <docker container id>:/backup/<backup-file-name>.tar.gz .`
+2. create a mount volume from you host in the docker-compose-<env>.yml
+
+### Restore
+On startup the container checks if there is a backup file under /restore. If the server can find one, the server will performs several checks. For example the server will check if there is a specific env-var to prevent "ups backup restored" situations. So this is the reason why i dont document this var here. After this check is successfully, the server performs a version check. Checks if the version of the backup file is the same as the Server-Version. If this matches, the server will start dropping the database and restore the backup. The same prodecuer with the s3 storage and the filesystem storage.
 
 ## Deployment
-check out [docker.md](./docs/docker.md) 
 
-## PlayWright tests
-At the root of the project
-- `cd e2e`
-- `npm i` to install dependancies
-- visit `https://github.com/metamask/metamask-extension/releases` download metamsk browser extsion and extract  it to `/e2e/metamask-extension/` 
-- Install playwright browsers `npx playwright install`
-- `npx playwright test e2e/tests.spec.ts` to run tests 
-- `npx playwright test -g "single user aqua-sign" --headed --retries 3` to run specific tests in headed mode
+### Requirements
+- Docker-Compose Plugin
+- Dockerd
 
-## Windows deeveloment
-- `git config core.filemode false` to prevent git from tracking file permissions(bash scripts file permissions change in windows) 
+### How to deploy
+
+We are committed to making the deployment process as simple as possible. For dev/prod deployments, an additional DNS entry is required, but otherwise the deployments are identical.
+
+1. prepare you .env file (typically in your work dir)
+2. (prod/dev) prepare your DNS
+3. `docker compose -f deployment/docker-compose-<local|dev|prod>.yml up` (with a -d you can detach from the startup process)
+
+### Dev vs Prod vs Local
+Dev and Prod are the same files only with diffrent docker image tags.
+Local has no proxy/letsencrypt container and has exposed ports (for debugging reason).
+
+
+## Build
+
+We use Github-Actions to build our images. You can find the Workflow-Definition under `./github/workflows/build-docker.yml`. This image uses the dockerfile under `actionfiles/aquafier-ts/dockerfile/Dockerfile` to create an image and push this image to the github-registry. You can find this images under https://github.com/inblockio/aquafier-js/pkgs/container/aquafier-js. The Tag depends on the build-base and contains the commit sha. 
+
