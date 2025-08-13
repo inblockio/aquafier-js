@@ -12,11 +12,11 @@ import { ApiFileInfo, ClaimInformation, IAttestationEntry } from '@/models/FileI
 import axios from 'axios'
 import { Contract } from '@/types/types'
 import { SharedContract } from '../files_shared_contracts'
-import AttestationEntry from './AttestationEntry'
 import { OrderRevisionInAquaTree } from 'aqua-js-sdk'
 import SimpleClaim from './SimpleClaim'
 import DNSClaim from './DNSClaim'
 import { AttestAquaClaim } from '@/components/aqua_chain_actions/attest_aqua_claim'
+import AttestationEntry from '../v2_claims_workflow/AttestationEntry'
 
 export default function ClaimsWorkflowPage() {
       const { selectedFileInfo, setSelectedFileInfo, session, backend_url, systemFileInfo, files } = useStore(appStore)

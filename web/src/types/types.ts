@@ -1,6 +1,6 @@
 import { LogData, Revision } from 'aqua-js-sdk'
 import { IconType } from 'react-icons/lib'
-import { ApiFileInfo } from '../models/FileInfo'
+import { ApiFileInfo, ClaimInformation, IAttestationEntry } from '../models/FileInfo'
 
 export interface DNSProof {
       walletAddress: string;
@@ -8,14 +8,14 @@ export interface DNSProof {
       timestamp: string;
       expiration: string;
       signature: string;
-    }
-    
+}
+
 
 export interface OpenDialog {
-  dialogType: 'form_template_editor' | 'aqua_file_details' | 'identity_claim' | 'dns_claim' | 'aqua_sign' | 'identity_attestation' | 'early_bird_offer' | 'user_signature' | 'email_claim' | 'phone_number_claim' ,//'file' | 'folder' | 'contract' | 'claim' | 'claim-attestation'
-  isOpen: boolean
-  onClose: () => void
-  onConfirm: (data: any) => void
+      dialogType: 'form_template_editor' | 'aqua_file_details' | 'identity_claim' | 'dns_claim' | 'aqua_sign' | 'identity_attestation' | 'early_bird_offer' | 'user_signature' | 'email_claim' | 'phone_number_claim',//'file' | 'folder' | 'contract' | 'claim' | 'claim-attestation'
+      isOpen: boolean
+      onClose: () => void
+      onConfirm: (data: any) => void
 }
 export interface Session {
       id: number
@@ -56,12 +56,12 @@ export interface SummaryDetailsDisplayData {
       walletAddress: string
 }
 
-export interface FileSelectEvent extends React.ChangeEvent<HTMLInputElement> {}
-export interface DropEvent extends React.DragEvent<HTMLDivElement> {}
+export interface FileSelectEvent extends React.ChangeEvent<HTMLInputElement> { }
+export interface DropEvent extends React.DragEvent<HTMLDivElement> { }
 // interface ChangeEvent extends React.ChangeEvent<HTMLInputElement> {}
 
 export interface FileItemWrapper {
-       status: 'pending' | 'uploading' | 'success' | 'error'
+      status: 'pending' | 'uploading' | 'success' | 'error'
       file: File
       isJson: boolean
       isLoading: boolean
@@ -127,8 +127,8 @@ export interface IDropzoneAction2 {
 export interface IDropzoneAction {
       file: File
       // fileIndex: number,
-      filesWrapper : FileItemWrapper,
-      removeFilesListForUpload : (file: FileItemWrapper) => void
+      filesWrapper: FileItemWrapper,
+      removeFilesListForUpload: (file: FileItemWrapper) => void
       // uploadedIndexes: number[]
       // updateUploadedIndex: (fileIndex: number) => void
       autoUpload: boolean
@@ -182,4 +182,11 @@ export interface IWorkflowItem {
 
 export interface IIdentityClaimDetails {
       name: string
+}
+
+export interface ICompleteClaimInformation {
+      file: ApiFileInfo,
+      processedInfo: ClaimInformation,
+      attestations: Array<IAttestationEntry>,
+      sharedContracts: Contract[]
 }

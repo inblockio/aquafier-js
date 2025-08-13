@@ -1,31 +1,12 @@
 import { ShareButton } from '@/components/aqua_chain_actions/share_aqua_chain'
 import { IAttestationEntry } from '@/models/FileInfo'
 import WalletAdrressClaim from './WalletAdrressClaim'
-import appStore from '@/store'
-import { getWalletClaims } from '@/utils/functions'
-import { useNavigate } from 'react-router-dom'
-import { toast } from 'sonner'
-import { useStore } from 'zustand'
 
 const AttestationEntry = ({ file, nonce, walletAddress, context, createdAt }: IAttestationEntry) => {
-      const { files, systemFileInfo, setSelectedFileInfo } = useStore(appStore)
-      const navigate = useNavigate()
       
       return (
             <div 
                   className="bg-white rounded-lg border border-gray-200 p-4 mb-3 shadow-sm hover:shadow-md transition-shadow cursor-pointer"
-                  
-                  onClick={(e) => {
-                        e.stopPropagation()
-                        getWalletClaims(
-                              systemFileInfo,
-                              files,
-                              walletAddress,
-                              setSelectedFileInfo,
-                              navigate,
-                              toast
-                        )
-                  }}
             >
                   <div className="flex justify-between items-start">
                         <div className="space-y-2">

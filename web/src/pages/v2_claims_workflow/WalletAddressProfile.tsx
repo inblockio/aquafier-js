@@ -23,6 +23,7 @@ interface ISignatureWalletAddressCard {
       showAvatar?: boolean
       width?: string
       showShadow?: boolean
+      hideOpenProfileButton?: boolean
 }
 
 interface IClaim {
@@ -103,7 +104,7 @@ const ClaimCard = ({ claim }: { claim: IClaim }) => {
       )
 }
 
-const WalletAddressProfile = ({ walletAddress, callBack, showAvatar, width, showShadow }: ISignatureWalletAddressCard) => {
+const WalletAddressProfile = ({ walletAddress, callBack, showAvatar, width, showShadow, hideOpenProfileButton }: ISignatureWalletAddressCard) => {
       const { files, systemFileInfo } = useStore(appStore)
       const [claims, setClaims] = useState<IClaim[]>([])
       // const [totalAttestations, setTotalAttestations] = useState(0)
@@ -202,7 +203,7 @@ const WalletAddressProfile = ({ walletAddress, callBack, showAvatar, width, show
             const timeoutId = setTimeout(() => {
                   getWalletClaims()
             }, 0)
-            
+
             return () => clearTimeout(timeoutId)
       }, [JSON.stringify(files)])
 
@@ -262,16 +263,19 @@ const WalletAddressProfile = ({ walletAddress, callBack, showAvatar, width, show
                               }
                         </div>
                         <div className="flex justify-end">
-                              <Button className="bg-blue-50 hover:bg-blue-100 text-blue-600 hover:text-blue-700 px-3 py-1.5 rounded-lg flex items-center gap-1.5 text-sm font-medium transition-colors duration-200 border border-blue-200 hover:border-blue-300 cursor-pointer" onClick={() => {
-                                    console.log("Clicked", callBack)
-                                    if (callBack) {
-                                          callBack()
-                                    }
-                                    navigate(`/app/claims/workflow/${walletAddress}`)
-                              }}>
-                                    Open Profile
-                                    <ArrowRight className="w-4 h-4" />
-                              </Button>
+                              {
+                                    !hideOpenProfileButton && (
+                                          <Button className="bg-blue-50 hover:bg-blue-100 text-blue-600 hover:text-blue-700 px-3 py-1.5 rounded-lg flex items-center gap-1.5 text-sm font-medium transition-colors duration-200 border border-blue-200 hover:border-blue-300 cursor-pointer" onClick={() => {
+                                                console.log("Clicked", callBack)
+                                                if (callBack) {
+                                                      callBack()
+                                                }
+                                                navigate(`/app/claims/workflow/${walletAddress}`)
+                                          }}>
+                                                Open Profile
+                                                <ArrowRight className="w-4 h-4" />
+                                          </Button>
+                                    )}
                         </div>
                   </div>
             </div>

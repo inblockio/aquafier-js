@@ -7,7 +7,7 @@ import { getAquaTreeFileName, isWorkFlowData, processSimpleWorkflowClaim, timeTo
 import { ClipLoader } from 'react-spinners'
 import { ApiFileInfo, ClaimInformation, IAttestationEntry } from '@/models/FileInfo'
 import axios from 'axios'
-import { Contract } from '@/types/types'
+import { Contract, ICompleteClaimInformation } from '@/types/types'
 import { SharedContract } from '../files_shared_contracts'
 import AttestationEntry from './AttestationEntry'
 import { OrderRevisionInAquaTree } from 'aqua-js-sdk'
@@ -17,6 +17,9 @@ import { toast } from 'sonner'
 
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
 import { ChevronDown, ChevronUp } from 'lucide-react'
+import WalletAddressProfile from './WalletAddressProfile'
+import PhoneNumberClaim from './PhoneNumberClaim'
+// import EmailClaim from './EmailClaim'
 
 
 export default function ClaimsWorkflowPage() {
@@ -62,8 +65,6 @@ export default function ClaimsWorkflowPage() {
                         const firstRevisionHash = revisionHashes[0]
                         const firstRevision = orderedAquaTree.revisions[firstRevisionHash]
                         const identityClaimId = firstRevision.forms_identity_claim_id
-                        console.log("Identity Claim id: ", identityClaimId)
-                        console.log("Latest Revision Hash: ", _latestRevisionHash)
                         if (identityClaimId === _latestRevisionHash) {
                               const attestationEntry: IAttestationEntry = {
                                     walletAddress: firstRevision.forms_wallet_address,
@@ -114,7 +115,7 @@ export default function ClaimsWorkflowPage() {
                   return
             }
             setIsLoading(true)
-            const claimTemplateNames = ["simple_claim", "identity_claim", "dns_claim", "domain_claim"]
+            const claimTemplateNames = ["simple_claim", "identity_claim", "dns_claim", "domain_claim", "phone_number_claim", "email_claim"]
 
             const aquaTemplates = systemFileInfo.map(e => {
                   try {
@@ -135,8 +136,7 @@ export default function ClaimsWorkflowPage() {
                   // const fileObject = getAquaTreeFileObject(file)
 
                   const { isWorkFlow, workFlow } = isWorkFlowData(file.aquaTree!, aquaTemplates)
-                  console.log("isWorkFlow", isWorkFlow)
-                  console.log("workFlow", workFlow)
+
                   if (isWorkFlow && claimTemplateNames.includes(workFlow)) {
                         const orderedAquaTree = OrderRevisionInAquaTree(file.aquaTree!)
                         const revisionHashes = Object.keys(orderedAquaTree.revisions)
@@ -146,9 +146,8 @@ export default function ClaimsWorkflowPage() {
                         const _walletAddress = firstRevision.forms_wallet_address
                         if (_walletAddress === walletAddress) {
                               const processedClaimInfo = processSimpleWorkflowClaim(file)
-                              console.log("Processed Claim Info: ", processedClaimInfo)
                               let processedAttestations: Array<IAttestationEntry> = []
-                              if (processedClaimInfo.claimInformation.forms_type === 'simple_claim') {
+                              if (["simple_claim", "identity_claim", "dns_claim", "domain_claim", "phone_number_claim", "email_claim"].includes(processedClaimInfo.claimInformation.forms_type)) {
                                     processedAttestations = await loadAttestationData(processedClaimInfo.genesisHash!, _attestations)
                               }
                               const sharedContracts = await loadSharedContractsData(lastRevisionHash)
@@ -161,7 +160,7 @@ export default function ClaimsWorkflowPage() {
             setIsLoading(false)
       }
 
-      const renderClaim = (claim: { file: ApiFileInfo, processedInfo: ClaimInformation, attestations: Array<IAttestationEntry>, sharedContracts: Contract[] }) => {
+      const renderClaim = (claim: ICompleteClaimInformation) => {
             const claimInfo = claim.processedInfo.claimInformation
 
             if (claimInfo.forms_type === 'dns_claim') {
@@ -169,6 +168,16 @@ export default function ClaimsWorkflowPage() {
                         <DNSClaim claimInfo={claimInfo} apiFileInfo={claim.file} nonce={session!.nonce} sessionAddress={session!.address} />
                   )
             }
+            else if (claimInfo.forms_type === 'phone_number_claim') {
+                  return (
+                        <PhoneNumberClaim claim={claim} />
+                  )
+            }
+            // else if (claimInfo.forms_type === 'email_claim') {
+            //       return (
+            //             <EmailClaim claimInfo={claimInfo} />
+            //       )
+            // }
             else {
                   return (
                         <div className="grid lg:grid-cols-12 gap-4">
@@ -243,6 +252,10 @@ export default function ClaimsWorkflowPage() {
                               </div>
                         ) : null
                   }
+                  
+                  <div className="container mx-auto py-4 px-1 md:px-4 bg-gray-200 rounded-lg">
+                        <WalletAddressProfile walletAddress={walletAddress} hideOpenProfileButton={true} />      
+                  </div>
 
                   <div className="flex flex-col gap-4">
                         {

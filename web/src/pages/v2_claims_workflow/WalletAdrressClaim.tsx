@@ -63,7 +63,7 @@ const WalletAdrressClaim = forwardRef<HTMLDivElement, IWalletAdrressClaim>(
                                                             <span className="flex gap-0 items-center">
                                                                   <p className='text-sm'>{showWalletAddress ? walletAddress : identityClaimDetails?.name || walletAddress}</p>
                                                                   <CopyButton text={`${walletAddress}`} isIcon={true} />
-                                                                  <ArrowRightLeft size={16} onClick={() => setShowWalletAddress(prev => !prev)} />
+                                                                  {identityClaimDetails && <ArrowRightLeft size={16} onClick={() => setShowWalletAddress(prev => !prev)} />}
                                                             </span>
                                                       </TooltipContent>
                                                 </Tooltip>
@@ -76,7 +76,7 @@ const WalletAdrressClaim = forwardRef<HTMLDivElement, IWalletAdrressClaim>(
                                                             {showWalletAddress ? walletAddress : identityClaimDetails?.name || walletAddress}
                                                       </span>
                                                       <CopyButton text={`${walletAddress}`} isIcon={true} />
-                                                      <ArrowRightLeft size={16} onClick={() => setShowWalletAddress(prev => !prev)} />
+                                                      {identityClaimDetails && <ArrowRightLeft size={16} onClick={() => setShowWalletAddress(prev => !prev)} />}
                                                 </span>
                                           )}
                                     </div>
