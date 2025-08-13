@@ -73,6 +73,8 @@ export default function FilesListItem({
             const fileObject = getAquaTreeFileObject(file)
             setCurrentFileObject(fileObject)
             const workFlow = isWorkFlowData(file.aquaTree!, someData)
+
+            console.log(`systemFileInfo ${systemFileInfo} someData ${someData} -- workFlow ${JSON.stringify(workFlow, null, 4)} `)
             setWorkFlowInfo(workFlow)
       }, [file, systemFileInfo])
 
@@ -251,6 +253,8 @@ export default function FilesListItem({
                   <>
                         {/* Grid layout for action buttons with equal widths */}
                         <div className="flex flex-wrap gap-1">
+
+                              
                               {/* Details Button */}
                               <div className="w-[100px]">
                                     <OpenSelectedFileDetailsButton file={file} index={index} />

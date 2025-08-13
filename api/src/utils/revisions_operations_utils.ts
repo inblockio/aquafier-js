@@ -7,9 +7,8 @@ import * as fs from "fs"
 import path from 'path';
 import { getGenesisHash } from './aqua_tree_utils';
 import { AquaTreeFileData, LinkedRevisionResult, ProcessRevisionResult, UpdateGenesisResult } from '../models/types';
-import { file } from 'jszip';
 import { SYSTEM_WALLET_ADDRESS, systemTemplateHashes } from '../models/constants';
-import {getFileSize} from "./file_utils";
+import { getFileSize } from "./file_utils";
 
 // Main refactored function
 export async function createAquaTreeFromRevisions(
@@ -26,11 +25,10 @@ export async function createAquaTreeFromRevisions(
         // Step 1: Get all revisions in the chain
         const revisionData = await getRevisionChain(latestRevisionHash);
 
-        console.log(`🤔🤔 revisionData ${JSON.stringify(revisionData, null, 4)} `)
+        // console.log(`🤔🤔 revisionData ${JSON.stringify(revisionData, null, 4)} `)
         if (revisionData.length === 0) {
             console.error(`Revision with hash ${latestRevisionHash} not found in system`);
             return [aquaTree, []];
-
         }
 
         console.log(`🎾🎾🎾 All revision ${JSON.stringify(revisionData, null, 4)}`)
@@ -102,6 +100,7 @@ export async function createAquaTreeFromRevisions(
         }
 
         const aquaTreeWithOrderdRevision = OrderRevisionInAquaTree(aquaTree);
+
 
         return [aquaTreeWithOrderdRevision, fileObjects];
 
@@ -200,8 +199,8 @@ export async function FetchRevisionInfo(hash: string, revision: Revision): Promi
         console.log("Witness: ", res);
         if (res == null) {
             // throw new Error(`witness is null ${revision.revision_type}`);
-             console.log(`☢️☢️ witness is null with hash ${hash}`);
-        return null;
+            console.log(`☢️☢️ witness is null with hash ${hash}`);
+            return null;
         }
         return await prisma.witnessEvent.findFirst({
             where: {
@@ -288,7 +287,7 @@ async function fetchAquaTreeFileData(pubKeyHashes: string[]): Promise<AquaTreeFi
                     file_hash: fileIndex.file_hash
                 },
             });
-            
+
 
             let data: AquaTreeFileData = {
                 name: fileNameData?.file_name ?? "File name not found",
@@ -584,8 +583,8 @@ async function getFileStats(filePath: string): Promise<{ fileSizeInBytes: number
         const originalFilename = fullFilename.substring(fullFilename.indexOf('-') + 1);
 
         let size = await getFileSize(filePath);
-        if(!size){
-            size=-1
+        if (!size) {
+            size = -1
         }
         return {
             fileSizeInBytes: size,
@@ -747,48 +746,59 @@ async function updateGenesisFileIndex(
         item.pubKeyHash.includes(revision.pubkey_hash)
     );
 
-    if (aquaTreeFileItemData) {
-        const updatedAquaTree: AquaTree = {
-            ...aquaTree,
-            file_index: {
-                ...aquaTree.file_index,
-                [hashOnly]: aquaTreeFileItemData.name
-            }
-        };
-        const updatedRevisionData = {
-            ...revisionData,
-            file_hash: aquaTreeFileItemData.fileHash
-        };
-
-        let updatedFileObjects = [...fileObjects];
-
-        const fileStats = await getFileStats(aquaTreeFileItemData.fileLocation);
-        if (fileStats) {
-            const fullUrl = `${url}/files/${aquaTreeFileItemData.fileHash}`;
-
-            let existInFileObjects = fileObjects.find((e) => e.fileName == aquaTreeFileItemData.name)
-            // add it to file objects array if it does not exist to avoid large payloads
-            if (!existInFileObjects) {
-
-                updatedFileObjects = [
-                    ...fileObjects,
-                    {
-                        fileContent: fullUrl,
-                        fileName: aquaTreeFileItemData.name, // file_hash as identifier
-                        path: "..",
-                        fileSize: fileStats.fileSizeInBytes
-                    }
-                ];
-            }
+    if (!aquaTreeFileItemData) {
+        let allData = await fetchAquaTreeFileData([revision.pubkey_hash])
+        if (allData.length == 0) {
+            // throw Error(`Expectde revision file data found none ${revision.pubkey_hash}`)
+            return { aquaTree, fileObjects, revisionData };
+        } else if (allData.length > 1) {
+            throw Error(`Expectd 1 revision file data found ${allData.length} `)
+        } else {
+            aquaTreeFileItemData = allData[0]
         }
-
-        return {
-            aquaTree: updatedAquaTree,
-            fileObjects: updatedFileObjects,
-            revisionData: updatedRevisionData
-        };
     }
-    return { aquaTree, fileObjects, revisionData };
+
+    const updatedAquaTree: AquaTree = {
+        ...aquaTree,
+        file_index: {
+            ...aquaTree.file_index,
+            [hashOnly]: aquaTreeFileItemData.name
+        }
+    };
+    const updatedRevisionData = {
+        ...revisionData,
+        file_hash: aquaTreeFileItemData.fileHash
+    };
+
+    let updatedFileObjects = [...fileObjects];
+
+    const fileStats = await getFileStats(aquaTreeFileItemData.fileLocation);
+    if (fileStats) {
+        const fullUrl = `${url}/files/${aquaTreeFileItemData.fileHash}`;
+
+        let existInFileObjects = fileObjects.find((e) => e.fileName == aquaTreeFileItemData.name)
+        // add it to file objects array if it does not exist to avoid large payloads
+        if (!existInFileObjects) {
+
+            updatedFileObjects = [
+                ...fileObjects,
+                {
+                    fileContent: fullUrl,
+                    fileName: aquaTreeFileItemData.name, // file_hash as identifier
+                    path: "..",
+                    fileSize: fileStats.fileSizeInBytes
+                }
+            ];
+        }
+    }
+
+    return {
+        aquaTree: updatedAquaTree,
+        fileObjects: updatedFileObjects,
+        revisionData: updatedRevisionData
+    };
+
+    
 }
 
 async function processLinkedFileRevision(

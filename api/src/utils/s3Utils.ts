@@ -17,7 +17,7 @@ function getBucketName(): string {
 }
 
 function minioClientCompleted(): boolean{
-    return !!process.env.S3_SECRETKEY && !!process.env.S3_ACCESSKEY && !!process.env.S3_URL && !!process.env.S3_BUCKET
+    return !!process.env.S3_SECRETKEY && !!process.env.S3_ACCESSKEY && !!process.env.S3_URL && !!process.env.S3_BUCKET && !!process.env.DISABLE_S3
 }
 
 export {getMinioClient, getBucketName,minioClientCompleted}
