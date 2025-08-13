@@ -3,12 +3,10 @@ import { isAddress, getAddress } from 'ethers'
 
 import { ApiFileInfo, ClaimInformation } from '../models/FileInfo'
 import { documentTypes, ERROR_TEXT, ERROR_UKNOWN, imageTypes, musicTypes, videoTypes } from './constants'
-// import { AvatarGenerator } from 'random-avatar-generator';
 import Aquafier, { AquaTree, CredentialsData, FileObject, OrderRevisionInAquaTree, Revision } from 'aqua-js-sdk'
 import jdenticon from 'jdenticon/standalone'
 import { IContractInformation } from '@/types/contract_workflow'
-import { DNSProof, SummaryDetailsDisplayData } from '@/types/types'
-import { NavigateFunction } from 'react-router-dom'
+import { DNSProof, IIdentityClaimDetails, SummaryDetailsDisplayData } from '@/types/types'
 
 export function formatDate(date: Date) {
       const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
@@ -292,7 +290,7 @@ export async function switchNetwork(chainId: string) {
       }
 }
 
-export  const getWalletClaims = ( systemFileInfo: ApiFileInfo[],  files: ApiFileInfo[],    walletAddress: string, _setSelectedFileInfo: (file: ApiFileInfo | null) => void , navigate : NavigateFunction, toast : any) => {
+export  const getWalletClaims = ( systemFileInfo: ApiFileInfo[],  files: ApiFileInfo[],    walletAddress: string, _setSelectedFileInfo: (file: ApiFileInfo | null) => void): IIdentityClaimDetails | null  => {
             const aquaTemplates: string[] = systemFileInfo.map(e => {
                   try {
                         return getAquaTreeFileName(e.aquaTree!)
@@ -308,32 +306,30 @@ export  const getWalletClaims = ( systemFileInfo: ApiFileInfo[],  files: ApiFile
                         const aquaTree = files[i].aquaTree
                         if (aquaTree) {
                               const { isWorkFlow, workFlow } = isWorkFlowData(aquaTree!, aquaTemplates)
-                              if (isWorkFlow && (workFlow === 'simple_claim' || workFlow === 'identity_claim' || workFlow === 'domain_claim')) {
+                              if (isWorkFlow && (workFlow === 'simple_claim' || workFlow === 'identity_claim')) {
                                     const orderedAquaTree = OrderRevisionInAquaTree(aquaTree)
                                     const revisionHashes = Object.keys(orderedAquaTree.revisions)
                                     const firstRevisionHash = revisionHashes[0]
                                     const firstRevision = orderedAquaTree.revisions[firstRevisionHash]
                                     const _wallet_address = firstRevision.forms_wallet_address
                                     if (walletAddress === _wallet_address) {
-                                          // setSelectedFileInfo(files[i])
                                           firstClaim = files[i]
-                                          // We only take the first claim as of now
                                           break
                                     }
                               }
                         }
                   }
                   if (firstClaim) {
-                        // IMPORTANT: I have disable setting file here and navigation has changed to specific wallet address
-                        // setSelectedFileInfo(firstClaim)
-                        // navigate('/app/claims/workflow')
-                        navigate(`/app/claims/workflow/${walletAddress}`)
-                  } else {
-                        toast.info('Claim not found', {
-                              description: 'No claims found for this wallet address',
-                        })
+                        const genesisHash = getGenesisHash(firstClaim.aquaTree!)
+                        const firstRevision = firstClaim.aquaTree!.revisions[genesisHash!]
+                        const name = firstRevision.forms_name
+
+                        return {
+                              name
+                        }
                   }
             }
+            return null
       }
 
 /**

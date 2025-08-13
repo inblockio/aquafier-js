@@ -23,7 +23,7 @@ import { saveAttestationFileAndAquaTree } from '../utils/server_utils';
 // import { serverAttestation } from '../utils/server_attest';
 // import getStream from 'get-stream';
 // Promisify pipeline
-const pump = util.promisify(pipeline);
+// const pump = util.promisify(pipeline);
 
 /**
  * Registers Explorer-related HTTP routes on the provided Fastify instance.
