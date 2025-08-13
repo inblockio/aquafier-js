@@ -632,32 +632,115 @@ test("create dns claim", async (): Promise<void> => {
 
 
 test("import dns claim", async (): Promise<void> => {
-    // const registerResponse = await registerNewMetaMaskWalletAndLogin();
-    // const context: BrowserContext = registerResponse.context;
-    // const testPage: Page = context.pages()[0];
+    const registerResponse = await registerNewMetaMaskWalletAndLogin();
+    const context: BrowserContext = registerResponse.context;
+    const testPage: Page = context.pages()[0];
 
+    console.log("import user signature test started!");
 
+    // Upload file
+    const filePath: string = path.join(__dirname, '/../resources/domain_claim-675.zip');
+
+    let dropzoneSelector: string = '[data-testid="file-upload-dropzone"]'
+    console.log("Waiting for file upload dropzone to be visible...");
+    await testPage.waitForSelector(dropzoneSelector, { state: 'visible', timeout: 10000 });
+    console.log("File upload dropzone is visible");
+
+    const fileChooserPromise = testPage.waitForEvent('filechooser');
+    await testPage.click(dropzoneSelector);
+    const fileChooser = await fileChooserPromise;
+    await fileChooser.setFiles(filePath);
+
+    await testPage.click('[data-testid="action-import-82-button"]')
+    console.log("File uploaded successfully");
 
 
     // Check that the table has two rows and contains aqua.json
-    // const tableRows = testPage.locator('table tr');
-    // //header + two files
-    // await expect(tableRows).toHaveCount(2, { timeout: 10000 });
+    const tableRows = testPage.locator('table tr');
+    //header + two files
+    await expect(tableRows).toHaveCount(2, { timeout: 10000 });
+
+    console.log("open details");
+    try {
+        // Click and wait for the dialog to appear
+        await Promise.all([
+            testPage.waitForSelector('text=This aqua tree is valid', { timeout: 15000 }),
+            testPage.click('[data-testid="open-aqua-claim-workflow-button-0"]')
+        ]);
+
+        // Verify the validation message is visible
+        const validationMessage = testPage.locator('text=This aqua tree is valid');
+        await expect(validationMessage).toBeVisible();
+
+        console.log("Aqua tree validation confirmed!");
+
+    } catch (error) {
+        console.log("Error after clicking details button:", error);
+
+        // Check if page is still alive
+        if (testPage.isClosed()) {
+            throw new Error("Test page was closed unexpectedly");
+        }
+
+        throw error;
+    }
 });
 
 
 test("import user  signature", async (): Promise<void> => {
-    // const registerResponse = await registerNewMetaMaskWalletAndLogin();
-    // const context: BrowserContext = registerResponse.context;
-    // const testPage: Page = context.pages()[0];
+    const registerResponse = await registerNewMetaMaskWalletAndLogin();
+    const context: BrowserContext = registerResponse.context;
+    const testPage: Page = context.pages()[0];
 
 
+    console.log("import user  signature test started!");
+
+    // Upload file
+    const filePath: string = path.join(__dirname, '/../resources/user_signature-577.zip');
+    let dropzoneSelector: string = '[data-testid="file-upload-dropzone"]'
+    console.log("Waiting for file upload dropzone to be visible...");
+    await testPage.waitForSelector(dropzoneSelector, { state: 'visible', timeout: 10000 });
+    console.log("File upload dropzone is visible");
+
+    const fileChooserPromise = testPage.waitForEvent('filechooser');
+    await testPage.click(dropzoneSelector);
+    const fileChooser = await fileChooserPromise;
+    await fileChooser.setFiles(filePath);
+
+    await testPage.click('[data-testid="action-import-82-button"]')
+    console.log("File uploaded successfully");
 
 
     // Check that the table has two rows and contains aqua.json
-    // const tableRows = testPage.locator('table tr');
-    // //header + two files
-    // await expect(tableRows).toHaveCount(2, { timeout: 10000 });
+    const tableRows = testPage.locator('table tr');
+    //header + two files
+    await expect(tableRows).toHaveCount(2, { timeout: 10000 });
+
+    console.log("open details");
+    try {
+        // Click and wait for the dialog to appear
+        await Promise.all([
+            testPage.waitForSelector('text=This aqua tree is valid', { timeout: 15000 }),
+            testPage.click('[data-testid="open-aqua-claim-workflow-button-0"]')
+        ]);
+
+        // Verify the validation message is visible
+        const validationMessage = testPage.locator('text=This aqua tree is valid');
+        await expect(validationMessage).toBeVisible();
+
+        console.log("Aqua tree validation confirmed!");
+
+    } catch (error) {
+        console.log("Error after clicking details button:", error);
+
+        // Check if page is still alive
+        if (testPage.isClosed()) {
+            throw new Error("Test page was closed unexpectedly");
+        }
+
+        throw error;
+    }
+
 });
 
 
