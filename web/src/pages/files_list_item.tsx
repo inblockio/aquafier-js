@@ -253,6 +253,8 @@ export default function FilesListItem({
                   <>
                         {/* Grid layout for action buttons with equal widths */}
                         <div className="flex flex-wrap gap-1">
+
+                              
                               {/* Details Button */}
                               <div className="w-[100px]">
                                     <OpenSelectedFileDetailsButton file={file} index={index} />

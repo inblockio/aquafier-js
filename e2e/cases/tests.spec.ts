@@ -631,6 +631,37 @@ test("create dns claim", async (): Promise<void> => {
 });
 
 
+test("import dns claim", async (): Promise<void> => {
+    // const registerResponse = await registerNewMetaMaskWalletAndLogin();
+    // const context: BrowserContext = registerResponse.context;
+    // const testPage: Page = context.pages()[0];
+
+
+
+
+    // Check that the table has two rows and contains aqua.json
+    // const tableRows = testPage.locator('table tr');
+    // //header + two files
+    // await expect(tableRows).toHaveCount(2, { timeout: 10000 });
+});
+
+
+test("import user  signature", async (): Promise<void> => {
+    // const registerResponse = await registerNewMetaMaskWalletAndLogin();
+    // const context: BrowserContext = registerResponse.context;
+    // const testPage: Page = context.pages()[0];
+
+
+
+
+    // Check that the table has two rows and contains aqua.json
+    // const tableRows = testPage.locator('table tr');
+    // //header + two files
+    // await expect(tableRows).toHaveCount(2, { timeout: 10000 });
+});
+
+
+
 
 
 
