@@ -178,3 +178,8 @@ export interface IWorkflowItem {
       apiFileInfo: ApiFileInfo
       index?: number
 }
+
+
+export interface IIdentityClaimDetails {
+      name: string
+}

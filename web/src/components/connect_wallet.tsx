@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { Suspense, useState, lazy } from 'react'
 import { LuCircleCheck, LuCircleX, LuLogOut, LuWallet } from 'react-icons/lu'
 import { ClipLoader } from 'react-spinners'
 import { fetchFiles, formatCryptoAddress, generateAvatar, getCookie, setCookie } from '../utils/functions'
@@ -12,7 +12,8 @@ import { BrowserProvider, ethers } from 'ethers'
 import { Button } from './ui/button'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from './ui/dialog'
 import { toast } from 'sonner'
-import WalletAddressProfile from '@/pages/v2_claims_workflow/WalletAddressProfile'
+// Lazy load the WalletAddressProfile component
+const WalletAddressProfile = lazy(() => import('@/pages/v2_claims_workflow/WalletAddressProfile'))
 
 export const ConnectWallet: React.FC<{ dataTestId: string }> = ({ dataTestId }) => {
       const { setMetamaskAddress, session, setFiles, setAvatar, setUserProfile, backend_url, setSession } = useStore(appStore)
@@ -240,9 +241,11 @@ export const ConnectWallet: React.FC<{ dataTestId: string }> = ({ dataTestId }) 
                                                 <p className="font-mono text-sm bg-secondary/30 px-3 py-1 rounded-full">{formatCryptoAddress(session?.address, 10, 10)}</p>
                                                 <CustomCopyButton value={`${session?.address}`} />
                                           </div> */}
-                                          <WalletAddressProfile walletAddress={session?.address} callBack={() => {
-                                                setIsOpen(false)
-                                          }} showAvatar={true} />
+                                          <Suspense fallback={<div>Loading...</div>}>
+                                                <WalletAddressProfile walletAddress={session?.address} callBack={() => {
+                                                      setIsOpen(false)
+                                                }} showAvatar={false} />
+                                          </Suspense>
 
                                           {/* <div className="bg-secondary/20 w-full p-3 rounded-lg my-1">
                 <div className="flex justify-between items-center mb-1">

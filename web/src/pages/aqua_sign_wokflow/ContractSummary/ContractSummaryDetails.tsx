@@ -1,4 +1,4 @@
-import { FiAlertCircle, FiCalendar, FiCheck, FiCheckCircle, FiCheckSquare, FiCopy, FiFileText, FiInfo } from 'react-icons/fi'
+import { FiAlertCircle, FiCalendar, FiCheck, FiCheckCircle, FiCheckSquare, FiFileText, FiInfo } from 'react-icons/fi'
 import { BsCheckCircleFill } from 'react-icons/bs'
 import { IContractWorkFlowFirstPage } from '../../../types/contract_workflow'
 import { Button } from '../../../components/ui/button'
@@ -85,7 +85,6 @@ const ContractSummaryDetails = ({ data, goToSecondPage, isValidTree }: IContract
                         <p className="text-gray-600 dark:text-gray-300 text-sm break-words transition-all duration-500">
                               Wallet address: <WalletAdrressClaim walletAddress={mockContractData.creatorAddress} />
                         </p>
-                        <FiCopy className="ml-2 cursor-pointer" />
                   </div>
 
                   <CustomDivider mt={2} mb={2} />
