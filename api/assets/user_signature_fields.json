@@ -13,6 +13,16 @@
         "required": true,
         "isArray": false
     },
+    {
+        "name": "type", 
+        "label": "Type",
+        "type": "text",
+        "required": true,
+        "isArray": false,
+        "isEditable": false,
+        "isHidden": true,
+        "defaultValue": "user_signature"
+    },
     { 
         "name": "wallet_address",
         "label": "Wallet Address",
