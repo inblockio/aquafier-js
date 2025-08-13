@@ -28,25 +28,27 @@ import webSocketController from './controllers/websocketController';
 import notificationsController from './controllers/notifications';
 import { prisma } from './database/db';
 import ApiController from './controllers/api';
-import { createEthAccount } from './utils/server_utils';
-import { serverAttestation } from './utils/server_attest';
+// import { createEthAccount } from './utils/server_utils';
+// import { serverAttestation } from './utils/server_attest';
+import * as Sentry from "@sentry/node"
+import {nodeProfilingIntegration } from "@sentry/profiling-node"
 
-export async function mockNotifications(){
+export async function mockNotifications() {
     // 0x254B0D7b63342Fcb8955DB82e95C21d72EFdB6f7 - This is the receiver and the sender is 'system'
-    
+
     const receiverAddress = '0x254B0D7b63342Fcb8955DB82e95C21d72EFdB6f7';
     const systemSender = 'system';
-    
+
     // Check if notifications already exist for this user
     const existingNotifications = await prisma.notifications.findMany({
         where: { receiver: receiverAddress }
     });
-    
+
     if (existingNotifications.length > 0) {
         console.log(`${existingNotifications.length} notifications already exist for ${receiverAddress}`);
         return;
     }
-    
+
     // Sample notification messages
     const notificationMessages = [
         'Welcome to Aqua Protocol v2! Get started by creating your first document.',
@@ -60,11 +62,11 @@ export async function mockNotifications(){
         'Congratulations! Your document has been viewed 50 times.',
         'New template available: Legal Contract with Smart Contract Integration.'
     ];
-    
+
     try {
         // Create notifications with different read statuses
         const notifications = [];
-        
+
         for (let i = 0; i < notificationMessages.length; i++) {
             const notification = await prisma.notifications.create({
                 data: {
@@ -77,9 +79,9 @@ export async function mockNotifications(){
             });
             notifications.push(notification);
         }
-        
+
         console.log(`Created ${notifications.length} mock notifications for ${receiverAddress}`);
-    } catch (error : any) {
+    } catch (error: any) {
         console.error('Error creating mock notifications:', error);
     } finally {
         await prisma.$disconnect();
@@ -102,9 +104,31 @@ function buildServer() {
         fs.mkdirSync(UPLOAD_DIR, { recursive: true });
     }
 
+
+    Sentry.init({
+        dsn: "https://03e24951c77d8a1aa048982fdb0296e5@o4506135316987904.ingest.us.sentry.io/4509835109531648",
+  integrations: [
+    nodeProfilingIntegration(),
+  ],
+  // Tracing
+  tracesSampleRate: 1.0, //  Capture 100% of the transactions
+  // Set sampling rate for profiling - this is evaluated only once per SDK.init call
+  profileSessionSampleRate: 1.0,
+  // Trace lifecycle automatically enables profiling during active traces
+  profileLifecycle: 'trace',
+
+  // Send structured logs to Sentry
+  enableLogs: true,
+
+  // Setting this option to true will send default PII data to Sentry.
+  // For example, automatic IP address collection on events
+  sendDefaultPii: true,
+    });
+
     // Create a Fastify instance
     const fastify = Fastify({ logger: true });
 
+    Sentry.setupFastifyErrorHandler(fastify);
 
     // reister system templates ie cheque, identity and attestation
     setUpSystemTemplates();
