@@ -22,6 +22,7 @@ import FilePreview from '../file_preview'
 import { WalletAutosuggest } from '../wallet_auto_suggest'
 import { ApiFileInfo } from '@/models/FileInfo'
 import SignatureCanvas from 'react-signature-canvas'
+import { Session } from '@/types'
 
 // const CreateFormF romTemplate  = ({ selectedTemplate, callBack, openCreateTemplatePopUp = false }: { selectedTemplate: FormTemplate, callBack: () => void, openCreateTemplatePopUp: boolean }) => {
 const CreateFormFromTemplate = ({ selectedTemplate, callBack }: { selectedTemplate: FormTemplate; callBack: () => void; openCreateTemplatePopUp: boolean }) => {
@@ -54,7 +55,9 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: { selectedTempla
             }
       }, []);
 
-      const getFieldDefaultValue = (field: FormField, currentState: any) => {
+      const getFieldDefaultValue = (field: FormField, currentState:  string | File | number | undefined
+
+      ) : string | File | number  => {
             if (field.type === 'number') {
                   return currentState ?? 0
             }
@@ -65,7 +68,7 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: { selectedTempla
                   return currentState ?? ''
             }
             if (field.type === 'file') {
-                  return currentState ?? null
+                  return currentState ?? ''
             }
             if (field.type === 'wallet_address') {
                   return currentState ?? session?.address ?? ''
@@ -250,7 +253,7 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: { selectedTempla
       const prepareCompleteFormData = (formData: Record<string, string | File | number>, selectedTemplate: FormTemplate, multipleAddresses: string[]): Record<string, string | File | number> => {
             const completeFormData: Record<string, string | File | number> = { ...formData }
 
-            selectedTemplate.fields.forEach((field: any) => {
+            selectedTemplate.fields.forEach((field: FormField) => {
                   if (!field.is_array && !(field.name in completeFormData)) {
                         completeFormData[field.name] = getFieldDefaultValue(field, undefined)
                   } else {
@@ -264,7 +267,7 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: { selectedTempla
       }
 
       // Validation function for required fields
-      const validateRequiredFields = (completeFormData: any, selectedTemplate: FormTemplate) => {
+      const validateRequiredFields = (completeFormData:  Record<string, string | File | number>, selectedTemplate: FormTemplate) => {
             for (const fieldItem of selectedTemplate.fields) {
                   const valueInput = completeFormData[fieldItem.name]
                   if (fieldItem.required && valueInput == undefined) {
@@ -274,7 +277,7 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: { selectedTempla
       }
 
       // Wallet address validation function
-      const validateWalletAddress = (valueInput: any, fieldItem: any) => {
+      const validateWalletAddress = (valueInput: string | number | File, fieldItem: FormField) => {
             if (typeof valueInput !== 'string') {
                   throw new Error(`${valueInput} provided at ${fieldItem.name} is not a string`)
             }
@@ -306,7 +309,7 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: { selectedTempla
       }
 
       // Domain validation function
-      const validateDomain = (valueInput: any, fieldItem: any) => {
+      const validateDomain = (valueInput: string | number | File, fieldItem: FormField) => {
             if (typeof valueInput !== 'string') {
                   throw new Error(`${valueInput} provided at ${fieldItem.name} is not a string`)
             }
@@ -444,7 +447,7 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: { selectedTempla
       }
 
       // Function to handle identity attestation specific logic
-      const handleIdentityAttestation = (completeFormData: Record<string, string | File | number>, selectedFileInfo: any): Record<string, string | File | number> => {
+      const handleIdentityAttestation = (completeFormData: Record<string, string | File | number>, selectedFileInfo: ApiFileInfo | null): Record<string, string | File | number> => {
             if (selectedFileInfo == null) {
                   throw new Error('No claim selected for identity attestation')
             }
@@ -542,7 +545,7 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: { selectedTempla
             completeFormData['created_at'] = epochTimeInSeconds
 
             // Set default values
-            selectedTemplate.fields.forEach((field: any) => {
+            selectedTemplate.fields.forEach((field: FormField) => {
                   if (field.default_value && field.default_value !== '') {
                         completeFormData[field.name] = field.default_value
                   }
@@ -618,7 +621,7 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: { selectedTempla
       }
 
       // Function to link aqua tree
-      const linkToSystemAquaTree = async (genesisAquaTree: any, fileObject: any, templateApiFileInfo: any, aquafier: Aquafier) => {
+      const linkToSystemAquaTree = async (genesisAquaTree: AquaTree, fileObject: FileObject, templateApiFileInfo: ApiFileInfo, aquafier: Aquafier) => {
             const mainAquaTreeWrapper: AquaTreeWrapper = {
                   aquaTree: genesisAquaTree,
                   revision: '',
@@ -646,7 +649,7 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: { selectedTempla
       }
 
       // Function to process file attachments
-      const processFileAttachments = async (selectedTemplate: FormTemplate, completeFormData: Record<string, string | File | number>, aquaTreeData: any, fileObject: FileObject, aquafier: Aquafier) => {
+      const processFileAttachments = async (selectedTemplate: FormTemplate, completeFormData: Record<string, string | File | number>, aquaTreeData: AquaTree, fileObject: FileObject, aquafier: Aquafier) => {
             const containsFileData = selectedTemplate?.fields.filter((e: FormField) => e.type === 'file' || e.type === 'scratchpad' || e.type === 'image' || e.type === 'document')
 
             if (!containsFileData || containsFileData.length === 0) {
@@ -655,7 +658,7 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: { selectedTempla
 
             console.log('completeFormData: ', completeFormData, 'Files: ', containsFileData)
 
-            const fileProcessingPromises = containsFileData.map(async (element: any) => {
+            const fileProcessingPromises = containsFileData.map(async (element: FormField) => {
                   console.log('Element: ', element)
                   const file: File = completeFormData[element.name] as File
                   console.log('file: ', file)
@@ -748,7 +751,7 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: { selectedTempla
       }
 
       // Function to handle post-signing actions
-      const handlePostSigning = async (signedAquaTree: any, fileObject: any, completeFormData: Record<string, string | File | number>, selectedTemplate: FormTemplate, session: any, selectedFileInfo: any) => {
+      const handlePostSigning = async (signedAquaTree: AquaTree, fileObject: FileObject, completeFormData: Record<string, string | File | number>, selectedTemplate: FormTemplate, session: Session | null, selectedFileInfo: ApiFileInfo | null) => {
             fileObject.fileContent = completeFormData
             console.log('Sign res: -- ', signedAquaTree)
 
@@ -1197,7 +1200,12 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: { selectedTempla
                                                                                                             : `Enter ${field.label.toLowerCase()}`
                                                                                           }
                                                                                           disabled={field.is_editable === false}
-                                                                                          defaultValue={getFieldDefaultValue(field, formData[field.name])}
+                                                                                          defaultValue={
+                                                                                                (() => {
+                                                                                                      const val = getFieldDefaultValue(field, formData[field.name]);
+                                                                                                      return val instanceof File ? undefined : val;
+                                                                                                })()
+                                                                                          }
                                                                                           onChange={e => {
                                                                                                 if (field.is_editable === false) {
                                                                                                       // Show toast notification (would need toast implementation)
@@ -1364,7 +1372,12 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: { selectedTempla
                                                                                                       data-testid={`input-${field.name}`}
                                                                                                       className="rounded-md border-gray-200 focus:border-blue-500 focus:ring-blue-500 text-sm sm:text-base h-9 sm:h-10"
                                                                                                       disabled={field.is_editable === false}
-                                                                                                      defaultValue={getFieldDefaultValue(field, formData[field.name])} />
+                                                                                                     defaultValue={
+                                                                                                (() => {
+                                                                                                      const val = getFieldDefaultValue(field, formData[field.name]);
+                                                                                                      return val instanceof File ? undefined : val;
+                                                                                                })()
+                                                                                          } />
 
                                                                                                 :
 
@@ -1400,11 +1413,23 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: { selectedTempla
                                                                                           id={`input-${field.name}`}
                                                                                           data-testid={`input-${field.name}`}
                                                                                           className="rounded-md border-gray-200 focus:border-blue-500 focus:ring-blue-500 text-sm sm:text-base h-9 sm:h-10"
-                                                                                          {...(!isFileInput
-                                                                                                ? {
-                                                                                                      defaultValue: getFieldDefaultValue(field, formData[field.name]),
-                                                                                                }
-                                                                                                : {})}
+                                                                                          // {...(!isFileInput
+                                                                                          //       ? {
+                                                                                                //       defaultValue={
+                                                                                                // (() => {
+                                                                                                //       const val = getFieldDefaultValue(field, formData[field.name]);
+                                                                                                //       return val instanceof File ? undefined : val;
+                                                                                                // })()
+                                                                                          // },
+                                                                                          //       }
+                                                                                          //       : {})}
+
+                                                                                          defaultValue={
+                                                                                                (() => {
+                                                                                                      const val = getFieldDefaultValue(field, formData[field.name]);
+                                                                                                      return val instanceof File ? undefined : val;
+                                                                                                })()
+                                                                                          }
                                                                                           type={getInputType(field.type)}
                                                                                           required={field.required}
                                                                                           disabled={field.is_editable === false}
@@ -1562,7 +1587,7 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: { selectedTempla
                   {/* create claim  */}
                   <Dialog
                         open={isDialogOpen}
-                        onOpenChange={(openState: any) => {
+                        onOpenChange={(openState: boolean) => {
                               console.log('Dialog open state:', openState)
                               // setOpenCreateClaimAttestationPopUp(openState)
                         }}

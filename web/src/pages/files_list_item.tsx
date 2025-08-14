@@ -60,7 +60,7 @@ export default function FilesListItem({
 
       useEffect(() => {
 
-            console.log(`FilesListItem  useEffect ---- `)
+            // console.log(`FilesListItem  useEffect ---- `)
             const someData = systemFileInfo.map(e => {
                   try {
                         return getAquaTreeFileName(e.aquaTree!)
@@ -74,7 +74,7 @@ export default function FilesListItem({
             setCurrentFileObject(fileObject)
             const workFlow = isWorkFlowData(file.aquaTree!, someData)
 
-            console.log(`systemFileInfo ${systemFileInfo} someData ${someData} -- workFlow ${JSON.stringify(workFlow, null, 4)} `)
+            // console.log(`systemFileInfo ${systemFileInfo} someData ${someData} -- workFlow ${JSON.stringify(workFlow, null, 4)} `)
             setWorkFlowInfo(workFlow)
       }, [file, systemFileInfo])
 
@@ -111,7 +111,7 @@ export default function FilesListItem({
 
       const workFlowAquaSignActions = () => {
             return (
-                  <>
+                  
                         <div className="flex flex-wrap gap-1">
                               <div className="w-[202px]">
                                     <OpenAquaSignWorkFlowButton item={file} nonce={nonce} index={index} />
@@ -131,7 +131,7 @@ export default function FilesListItem({
                                     <DownloadAquaChain file={file} index={index} />
                               </div>
                         </div>
-                  </>
+                  
             )
       }
 

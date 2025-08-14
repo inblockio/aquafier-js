@@ -36,7 +36,7 @@ export default function FilesList() {
       // Extract unique workflows from files
       useEffect(() => {
 
-            console.log(`use effect in files list file and systemn  info `)
+            // console.log(`use effect in files list file and systemn  info `)
 
             if (systemFileInfo.length == 0) {
                   (async () => {
