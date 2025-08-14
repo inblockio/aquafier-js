@@ -30,7 +30,7 @@ type AppStoreState = {
       // openCreateClaimAttestationPopUp: boolean | null
       metamaskAddress: string | null
       avatar: string | undefined
-      backend_url: string
+      backend_url: string 
       contracts: any[]
 }
 
@@ -54,7 +54,7 @@ type AppStoreActions = {
       setSystemFileInfo: (systemFileInfo: ApiFileInfo[]) => void
       setFormTemplate: (apiFileData: FormTemplate[]) => void
       setContracts: (contracts: any[]) => void
-      setBackEndUrl: (backend_url: AppStoreState['backend_url']) => void
+      // setBackEndUrl: (backend_url: AppStoreState['backend_url']) => void
 }
 
 type TAppStore = AppStoreState & AppStoreActions
@@ -209,7 +209,7 @@ const appStore = createStore<TAppStore>()(
                         const { files } = appStore.getState()
                         set({ files: [...files, file] })
                   },
-                  setBackEndUrl: (backend_url: AppStoreState['backend_url']) => set({ backend_url: backend_url }),
+                  // setBackEndUrl: (backend_url: AppStoreState['backend_url']) => set({ backend_url: backend_url }),
             }),
             {
                   name: 'app-store', // Unique name for storage key

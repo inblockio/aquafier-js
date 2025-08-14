@@ -171,8 +171,10 @@ export const ConnectWalletPage = () => {
                   const message = createSiweMessage(address, 'Sign in with Ethereum to the app.')
                   const signature = await signer.signMessage(message)
 
+                  let url = `${backend_url}/session`
+                  console.log(`url ${url}`)
                   // Send session request
-                  const response = await axios.post(`${backend_url}/session`, {
+                  const response = await axios.post(url, {
                         message,
                         signature,
                         domain: window.location.host,
