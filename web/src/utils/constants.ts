@@ -45,6 +45,7 @@ export const musicTypes = ['audio/mpeg', 'audio/wav']
 export const videoTypes = ['video/mp4', 'video/mpeg', 'video/webm']
 
 // Function to initialize the backend URL
+// Function to initialize the backend URL
 export const initializeBackendUrl = async (): Promise<string> => {
       let BACKEND_URL = 'http://127.0.0.1:3000'
       try {
@@ -67,6 +68,13 @@ export const initializeBackendUrl = async (): Promise<string> => {
             }
 
             console.log("Config Backend URL", BACKEND_URL);
+
+            // Check if URL doesn't start with http:// or https:// and prepend http://
+            if (!BACKEND_URL.startsWith('http://') && !BACKEND_URL.startsWith('https://')) {
+                  BACKEND_URL = 'http://' + BACKEND_URL
+                  console.log("Prepended http:// to Backend URL", BACKEND_URL);
+            }
+
             if (BACKEND_URL.includes('inblock.io')) {
                   BACKEND_URL = BACKEND_URL.replace('http:', 'https:')
             }
@@ -82,7 +90,7 @@ export const initializeBackendUrl = async (): Promise<string> => {
             console.error('Error reading config:', err)
       }
 
-      console.log(`backe end url ${BACKEND_URL} `)
+      console.log(`backend url ${BACKEND_URL}`)
 
       return BACKEND_URL
 }
