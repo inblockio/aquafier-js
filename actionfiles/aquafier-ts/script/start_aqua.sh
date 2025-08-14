@@ -25,7 +25,8 @@ fi
 
 while [ $attempt -lt $max_attempts ]; do
   # Use PGPASSWORD to avoid interactive password prompt
-  export PGPASSWORD=$DB_NAME
+  # export PGPASSWORD=$DB_NAME
+  export PGPASSWORD=$DB_PASSWORD
 
   # Try to connect to PostgreSQL and check if it responds
   if psql -h postgres -U "$DB_USER" -d "$DB_NAME" -c "SELECT 1" > /dev/null 2>&1; then

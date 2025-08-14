@@ -45,7 +45,7 @@ export default function FilesList() {
                         setSystemFileInfo(systemFiles)
                   })()
             } else {
-
+ 
 
                   const someData = systemFileInfo.map(e => {
                         try {
@@ -185,6 +185,7 @@ export default function FilesList() {
                   try {
                         return getAquaTreeFileName(e.aquaTree!)
                   } catch (e) {
+                        console.error('systemFileInfo : Error processing system file:', e);
                         return ''
                   }
             })
@@ -201,6 +202,7 @@ export default function FilesList() {
                               nonWorkflowCount++
                         }
                   } catch (e) {
+                        console.error('files : Error processing system file:', e);
                         // Handle error
                   }
             })

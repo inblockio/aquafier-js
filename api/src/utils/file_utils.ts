@@ -4,7 +4,7 @@ import * as process from "node:process";
 import * as fs from "node:fs";
 import {getBucketName, getMinioClient, minioClientCompleted} from "./s3Utils";
 import stream from "node:stream";
-
+ 
 const getAquaAssetDirectory = (): string => {
     // Get the equivalent of __dirname in ES modules
     const __filename = fileURLToPath(import.meta.url);
@@ -286,7 +286,7 @@ async function s3Available(): Promise<boolean> {
  * @param content - Binary content to persist (provided as a Buffer or Buffer-like object).
  * @returns The storage path where the file was written: either `s3:<bucket>/<filename>` or the local file path.
  */
-async function persistFile(fileSystemPath: string, filename: string, content: Buffer<ArrayBuffer>): Promise<string> {
+async function persistFile(fileSystemPath: string, filename: string, content: Buffer): Promise<string> {
     if (await s3Available()) {
         const minioClient = getMinioClient();
         await minioClient.putObject(getBucketName(), filename, content)

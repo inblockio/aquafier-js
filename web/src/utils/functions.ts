@@ -194,7 +194,9 @@ export function remove0xPrefix(input: string): string {
       // Return the original string if it doesn't start with '0x'
       return input
 }
-
+export function capitalizeWords(str: string): string {
+            return str.replace(/\b\w+/g, word => word.charAt(0).toUpperCase() + word.slice(1))
+      }
 export function getCookie(name: string) {
       const value = `; ${document.cookie}`
       const parts: any = value.split(`; ${name}=`)

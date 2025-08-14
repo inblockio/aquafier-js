@@ -1,6 +1,6 @@
 import { ApiFileInfo } from '@/models/FileInfo'
 
-import { displayTime, formatBytes, formatCryptoAddress, getAquaTreeFileName, getAquaTreeFileObject, getFileCategory, getFileExtension, getGenesisHash, isWorkFlowData } from '@/utils/functions'
+import { capitalizeWords, displayTime, formatBytes, formatCryptoAddress, getAquaTreeFileName, getAquaTreeFileObject, getFileCategory, getFileExtension, getGenesisHash, isWorkFlowData } from '@/utils/functions'
 import { FileObject, OrderRevisionInAquaTree } from 'aqua-js-sdk'
 import { FileText } from 'lucide-react'
 import { useEffect, useState } from 'react'
@@ -98,9 +98,7 @@ export default function FilesListItem({
       }
 
       // Helper function to capitalize the first character of every word
-      function capitalizeWords(str: string): string {
-            return str.replace(/\b\w+/g, word => word.charAt(0).toUpperCase() + word.slice(1))
-      }
+      
       // const detailsButton = () =>{
       //         return <button onClick={() => {
       //             setOpenFileDetailsPopUp(true);
@@ -362,6 +360,34 @@ export default function FilesListItem({
                                     <p className="text-xs">Wallet: &nbsp;</p>
                                     <p className="text-xs ">{formatCryptoAddress(creatorWallet)}</p>
                               </div>
+                  }
+            }
+
+             if (workflowInfo?.workFlow == "identity_attestation") {
+                  let genesisHash = getGenesisHash(file.aquaTree!)
+                  if (!genesisHash) {
+                        return <div />
+                  }
+                  let genRevision = file.aquaTree?.revisions[genesisHash]
+                  if (!genRevision) {
+                        return <div />
+                  }
+
+                  let creatorWallet = genRevision[`forms_wallet_address`]
+                  let claimWallet = genRevision[`forms_claim_wallet_address`]
+
+                  if (creatorWallet) {
+                        return  <>
+                        <div className="flex flex-nowrap  text-xs text-gray-500">
+                                    <p className="text-xs">Claim  Owner: &nbsp;</p>
+                                    <p className="text-xs ">{formatCryptoAddress(claimWallet)}</p>
+                              </div>
+
+                        <div className="flex flex-nowrap  text-xs text-gray-500">
+                                    <p className="text-xs">Attestor Wallet: &nbsp;</p>
+                                    <p className="text-xs ">{formatCryptoAddress(creatorWallet)}</p>
+                              </div>
+                        </>
                   }
             }
             return <div />
