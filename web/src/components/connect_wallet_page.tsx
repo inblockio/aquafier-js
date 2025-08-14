@@ -180,7 +180,13 @@ export const ConnectWalletPage = () => {
 
                   if (response.status === 200 || response.status === 201) {
                         const responseData = response.data
-                        const walletAddress = ethers.getAddress(responseData?.session?.address)
+                        console.log('Backend response:', responseData)
+                        console.log('Session data:', responseData?.session)
+                        console.log('Address from response:', responseData?.session?.address)
+
+                        // const walletAddress = ethers.getAddress(responseData?.session?.address)
+                        const backendAddress = responseData?.session?.address
+                        const walletAddress = backendAddress ? ethers.getAddress(backendAddress) : ethers.getAddress(address)
 
                         setMetamaskAddress(walletAddress)
                         setAvatar(generateAvatar(walletAddress))
