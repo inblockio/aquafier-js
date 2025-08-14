@@ -198,8 +198,8 @@ const WalletAddressProfile = ({ walletAddress, callBack, showAvatar, width, show
 
                   setClaims(localClaims)
                   // setTotalAttestations(_totalAttestations)
-                  setLoading(false)
             }
+            setLoading(false)
       }
 
 
@@ -330,10 +330,18 @@ const WalletAddressProfile = ({ walletAddress, callBack, showAvatar, width, show
 
       const handleShareProfile = async () => {
             try {
+
+                   if(claims.length==0){
+                    toast.error(`Please create a claim  first.`)
+                    return    
+                  }
+
                   console.log("Creating profile for sharing...");
                   if (callBack) {
                         callBack();
                   }
+
+                 
 
 
                   let allFileObjects : Array<FileObject> =[]
