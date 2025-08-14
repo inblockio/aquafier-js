@@ -101,7 +101,7 @@ export const ConnectWalletPage = () => {
       }
 
       const signAndConnect = async () => {
-            console.log('Connecting to wallet')
+            console.log('Connecting to wallet '+backend_url)
             setIsConnecting(true)
             setError('')
 
