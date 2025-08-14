@@ -66,15 +66,23 @@ export const initializeBackendUrl = async (): Promise<string> => {
                   BACKEND_URL = 'http://127.0.0.1:3000'
             }
 
-            // console.log("Config Backend URL", BACKEND_URL);
+            console.log("Config Backend URL", BACKEND_URL);
             if (BACKEND_URL.includes('inblock.io')) {
                   BACKEND_URL = BACKEND_URL.replace('http:', 'https:')
             }
-            // console.log("Config Backend URL Replaced http with https", BACKEND_URL);
+            console.log("Config Backend URL Replaced http with https", BACKEND_URL);
+
+            // Handle duplicated inblock.io domains (e.g., https://dev.inblock.io/dev-api.inblock.io/session)
+            if (BACKEND_URL.includes('inblock.io') && BACKEND_URL.match(/inblock\.io.*inblock\.io/)) {
+                  // Remove the duplicated domain part
+                  BACKEND_URL = BACKEND_URL.replace(/^(https?:\/\/[^\/]+)\/[^\/]*inblock\.io/, '$1')
+            }
       } catch (err) {
             // If there's an error, it will use the default URL
             console.error('Error reading config:', err)
       }
+
+      console.log(`backe end url ${BACKEND_URL} `)
 
       return BACKEND_URL
 }
