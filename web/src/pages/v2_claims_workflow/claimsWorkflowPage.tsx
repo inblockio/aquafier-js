@@ -19,7 +19,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/component
 import { ChevronDown, ChevronUp } from 'lucide-react'
 import WalletAddressProfile from './WalletAddressProfile'
 import PhoneNumberClaim from './PhoneNumberClaim'
-// import EmailClaim from './EmailClaim'
+import EmailClaim from './EmailClaim'
 
 
 export default function ClaimsWorkflowPage() {
@@ -173,11 +173,11 @@ export default function ClaimsWorkflowPage() {
                         <PhoneNumberClaim claim={claim} />
                   )
             }
-            // else if (claimInfo.forms_type === 'email_claim') {
-            //       return (
-            //             <EmailClaim claimInfo={claimInfo} />
-            //       )
-            // }
+            else if (claimInfo.forms_type === 'email_claim') {
+                  return (
+                        <EmailClaim claim={claim} />
+                  )
+            }
             else {
                   return (
                         <div className="grid lg:grid-cols-12 gap-4">
@@ -252,26 +252,71 @@ export default function ClaimsWorkflowPage() {
                               </div>
                         ) : null
                   }
-                  
+
                   <div className="container mx-auto py-4 px-1 md:px-4 bg-gray-200 rounded-lg">
-                        <WalletAddressProfile walletAddress={walletAddress} hideOpenProfileButton={true} />      
+                        <WalletAddressProfile walletAddress={walletAddress} hideOpenProfileButton={true} />
                   </div>
 
                   <div className="flex flex-col gap-4">
                         {
-                              claims.map((claim, index) => (
+                              claims.filter(item => ["simple_claim", "identity_claim"].includes(item.processedInfo.claimInformation.forms_type)).map((claim, index) => (
                                     <div key={`claim_${index}`} className="container mx-auto py-4 px-1 md:px-4 bg-gray-200 rounded-lg">
                                           {renderClaim(claim)}
                                           <Collapsible className='mt-4 bg-gray-50 p-2 rounded-lg'>
                                                 <CollapsibleTrigger className='cursor-pointer w-full p-2 border-2 border-gray-200 rounded-lg flex justify-between items-center'>
-                                                <div className="flex flex-col text-start">
-                                                      <p className='font-bold text-gray-700'>Sharing Information</p>
-                                                      <p className='text-gray-600'>Who have you shared the claim with</p>
-                                                </div>
-                                                <div className='flex flex-col gap-0 h-fit'>
-                                                      <ChevronDown />
-                                                      <ChevronUp />
-                                                </div>
+                                                      <div className="flex flex-col text-start">
+                                                            <p className='font-bold text-gray-700'>Sharing Information</p>
+                                                            <p className='text-gray-600'>Who have you shared the claim with</p>
+                                                      </div>
+                                                      <div className='flex flex-col gap-0 h-fit'>
+                                                            <ChevronDown />
+                                                            <ChevronUp />
+                                                      </div>
+                                                </CollapsibleTrigger>
+                                                <CollapsibleContent>
+                                                      <div className="flex flex-col gap-2 p-2">
+                                                            {
+                                                                  claim.sharedContracts?.map((contract, index) => (
+                                                                        <div key={`shared_contract_${index}`}>
+                                                                              <SharedContract
+                                                                                    key={`${contract.hash}`}
+                                                                                    contract={contract}
+                                                                                    index={index}
+                                                                                    contractDeleted={hash => {
+                                                                                          let newState = claim.sharedContracts?.filter(e => e.hash != hash)
+                                                                                          claim.sharedContracts = newState
+                                                                                    }}
+                                                                              />
+                                                                        </div>
+                                                                  ))
+                                                            }
+                                                      </div>
+                                                      {
+                                                            claim.sharedContracts?.length === 0 ? (
+                                                                  <div className="flex flex-col gap-2 p-4 text-center">
+                                                                        <p>No shared contracts found</p>
+                                                                  </div>
+                                                            ) : null
+                                                      }
+                                                </CollapsibleContent>
+                                          </Collapsible>
+                                    </div>
+                              ))
+                        }
+                        {
+                              claims.filter(item => !["simple_claim", "identity_claim"].includes(item.processedInfo.claimInformation.forms_type)).map((claim, index) => (
+                                    <div key={`claim_${index}`} className="container mx-auto py-4 px-1 md:px-4 bg-gray-200 rounded-lg">
+                                          {renderClaim(claim)}
+                                          <Collapsible className='mt-4 bg-gray-50 p-2 rounded-lg'>
+                                                <CollapsibleTrigger className='cursor-pointer w-full p-2 border-2 border-gray-200 rounded-lg flex justify-between items-center'>
+                                                      <div className="flex flex-col text-start">
+                                                            <p className='font-bold text-gray-700'>Sharing Information</p>
+                                                            <p className='text-gray-600'>Who have you shared the claim with</p>
+                                                      </div>
+                                                      <div className='flex flex-col gap-0 h-fit'>
+                                                            <ChevronDown />
+                                                            <ChevronUp />
+                                                      </div>
                                                 </CollapsibleTrigger>
                                                 <CollapsibleContent>
                                                       <div className="flex flex-col gap-2 p-2">
