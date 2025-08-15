@@ -4,6 +4,10 @@ services:
   postgres:
     image: postgres:17
     container_name: aquafier-postgres
+    environment:
+      POSTGRES_DB: aquafier
+      POSTGRES_USER: ${DB_USER:-aquafier}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-changeme}
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U aquafier -d aquafier"]
       interval: 5s
@@ -11,8 +15,8 @@ services:
       retries: 5
 
   aqua-container:
-    image: ghcr.io/inblockio/aquafier-js:latest
-    pull_policy: never
+    image: ghcr.io/inblockio/aquafier-js:dev
+#    pull_policy: never
     ports:
       - 3600:3600
       - 3000:3000
