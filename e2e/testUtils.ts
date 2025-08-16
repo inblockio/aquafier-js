@@ -1242,9 +1242,12 @@ export async function registerNewMetaMaskWalletAndLogin(url: string = "/app"): P
         }
     }
 
-    await waitAndClick(metamaskPage, '[data-testid="confirm-btn"]')
+    await metamaskPage.pause();
+    await testPage.pause();
 
-    await waitAndClick(metamaskPage, '[data-testid="confirm-footer-button"]')
+    await waitAndClick(metamaskPage, '[class="mm-box mm-text mm-button-base mm-button-base--size-lg mm-button-base--block mm-button-primary mm-text--body-md-medium mm-box--padding-0 mm-box--padding-right-4 mm-box--padding-left-4 mm-box--display-inline-flex mm-box--justify-content-center mm-box--align-items-center mm-box--color-primary-inverse mm-box--background-color-primary-default mm-box--rounded-xl"]')
+
+    await waitAndClick(metamaskPage, '[class="mm-box mm-text mm-button-base mm-button-base--size-lg mm-button-base--block mm-button-primary mm-text--body-md-medium mm-box--padding-0 mm-box--padding-right-4 mm-box--padding-left-4 mm-box--display-inline-flex mm-box--justify-content-center mm-box--align-items-center mm-box--color-primary-inverse mm-box--background-color-primary-default mm-box--rounded-xl"]')
 
     return response;
 }
