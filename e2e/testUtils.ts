@@ -1241,11 +1241,10 @@ export async function registerNewMetaMaskWalletAndLogin(url: string = "/app"): P
             throw new Error("MetaMask popup never appeared");
         }
     }
-    await metamaskPage.waitForSelector('[data-testid="confirm-btn"]', { state: 'visible' })
-    await metamaskPage.click('[data-testid="confirm-btn"]')
 
-    await metamaskPage.waitForLoadState('load')
-    await metamaskPage.click('[data-testid="confirm-footer-button"]')
+    await waitAndClick(metamaskPage, '[data-testid="confirm-btn"]')
+
+    await waitAndClick(metamaskPage, '[data-testid="confirm-footer-button"]')
 
     return response;
 }
@@ -1353,7 +1352,7 @@ export async function createTemplate(page: Page): Promise<void> {
 }
 
 export async function waitAndClick(page: Page, selector: string) {
-    await page.waitForSelector(selector, { state: 'visible' });
+    await page.waitForSelector(selector, { state: 'attached' });
     await page.click(selector);
 }
 
