@@ -40,7 +40,7 @@
             FOR r IN (
                 SELECT 
                     tc.table_schema, 
-                    tc.constraint_name, 
+                    tc.constraint_name,
                     tc.table_name
                 FROM 
                     information_schema.table_constraints tc
@@ -130,7 +130,77 @@ select pubkey_hash from revision;
 select file_hash, reference_count from file;
 select file_hash, reference_count from file_index;
 ```
+## postgres in docker  docker 
 
-## Testing
+1. ` docker  ps` -> list images
+2. ` docker exec -it aquafier-postgres psql -U {user name in .env}`
 
-https://www.youtube.com/watch?v=gq8ZQrBJb2M&t=640s&ab_channel=TomDoesTech
+
+
+## Going into a docker container
+
+if you want to go inside the deployment-aqua-container container and explore its filesystem, you can use docker exec with a shell
+
+->  `docker exec -it deployment-aqua-container-1 sh`
+
+## checkinfg the env and container/image details
+-> `docker compose --file .\deployment\docker-compose-local.yml config`
+
+## delet volume
+-> `docker compose --file .\deployment\docker-compose-local.yml down --volumes --remove-orphans`
+-> `docker compose --file .\deployment\docker-compose-local.yml up --build --force-recreate`
+
+## 1. Remove Docker Volumes
+Even though you deleted the bind mount directory, PostgreSQL data might be stored in Docker volumes:
+
+```cmd
+docker-compose  --file .\deployment\docker-compose-local.yml  down -v
+```
+
+The `-v` flag removes all volumes associated with the services.
+
+## 2. Remove Any Named Volumes (if they exist)
+Check for any Docker volumes:
+```cmd
+docker volume ls
+```
+
+Remove any volumes related to your project:
+```cmd
+docker volume rm deployment_postgres_data
+```
+(Replace with actual volume name if different)
+
+## 3. Remove Container Data Completely
+Since PostgreSQL stores its data internally, you may need to:
+
+```cmd
+docker-compose down
+docker system prune -a --volumes
+```
+
+**Warning**: This removes ALL unused Docker data system-wide.
+
+## 4. Alternative: Target Specific Components
+If you want to be more selective:
+
+```cmd
+# Stop and remove containers
+docker-compose down
+
+# Remove specific containers
+docker rm aquafier-postgres deployment-aqua-container-1 deployment-s3storage-1
+
+# Remove specific images (optional)
+docker rmi postgres:17
+
+# Start fresh
+docker-compose up
+```
+
+## 5. Verify Clean State
+After running the above commands:
+1. Recreate the mount directory: `mkdir dev_mount_points\aquafier`
+2. Start the services: `docker-compose up`
+
+The issue is that PostgreSQL data persists in the container's internal storage even when bind mounts are removed. The `-v` flag with `docker-compose down` should resolve this.
