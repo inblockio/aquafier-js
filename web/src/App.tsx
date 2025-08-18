@@ -10,7 +10,6 @@ import Loading from './pages/loading'
 import PdfSigner from './pages/aqua_sign_wokflow/ContractDocument/PdfSigner'
 import FilesPage from './pages/files'
 import Home from './pages/home'
-// import TailwindLayout from './layouts/TailwindLayout';
 import TailwindMainLayout from './layouts/TailwindMainLayout'
 import PageNotFound from './pages/page_not_found'
 import InfoPage from './pages/info_page'
