@@ -2112,58 +2112,99 @@ export function convertToWebsocketUrl(actualUrlToFetch: string): string {
 }
 
 export function ensureDomainUrlHasSSL(actualUrlToFetch: string): string {
-      let url = actualUrlToFetch
+  let url = actualUrlToFetch;
 
-      if (actualUrlToFetch.includes('inblock.io')) {
-            if (!actualUrlToFetch.includes('https')) {
-                  url = actualUrlToFetch.replace('http', 'https')
-            }
-      }
+  // Step 1: Enforce HTTPS for all domains except localhost/development
+  const isLocalhost = url.includes('127.0.0.1') || url.includes('0.0.0.0') || url.includes('localhost');
+  
+  if (!isLocalhost) {
+    // Add https if no protocol specified
+    if (!url.includes('://')) {
+      url = 'https://' + url;
+    }
+    // Replace http with https if not localhost
+    else if (url.startsWith('http://')) {
+      url = url.replace('http://', 'https://');
+    }
+  }
 
-      // Alternatively, if the domain is "inblock.io" but lacks protocol
+  // Step 2: Replace unsafe localhost URLs with safe ones
+  const localhostReplacements = [
+    { from: 'https://0.0.0.0', to: 'http://127.0.0.1' },
+    { from: 'http://0.0.0.0', to: 'http://127.0.0.1' },
+    { from: 'https://127.0.0.1', to: 'http://127.0.0.1' },
+    { from: 'https://localhost', to: 'http://127.0.0.1' }
+  ];
 
-      if (url.startsWith('inblock.io')) {
-            url = 'https://' + url
-      }
+  for (const replacement of localhostReplacements) {
+    if (url.startsWith(replacement.from)) {
+      url = url.replace(replacement.from, replacement.to);
+    }
+  }
 
-      // Replace unsafe localhost URL (HTTPS on 0.0.0.0:0 → HTTP on 127.0.0.1:3000)
-      if (url.startsWith('https://0.0.0.0') || url.startsWith('http://0.0.0.0') || url.startsWith('https://127.0.0.1') || url.startsWith('https://localhost')) {
-            url = url.replace('https://0.0.0.0', 'http://127.0.0.1')
-            url = url.replace('http://0.0.0.0', 'http://127.0.0.1')
-            url = url.replace('https://127.0.0.1', 'http://127.0.0.1')
-            url = url.replace('https://localhost', 'http://127.0.0.1')
-      }
+  // Step 3: Remove port numbers for non-localhost URLs
+  const isStillLocalhost = url.includes('127.0.0.1') || url.includes('0.0.0.0') || url.includes('localhost');
+  if (!isStillLocalhost) {
+    url = url.replace(/:\d+/g, '');
+  }
 
-      // Check if we're on inblock.io domain but URL contains localhost IP addresses
-      const currentDomain = typeof window !== 'undefined' ? window.location.hostname : ''
-      // console.log(`ensureDomainUrlHasSSL currentDomain ${currentDomain}`)
-      if (currentDomain === 'inblock.io' || currentDomain === 'dev.inblock.io' || currentDomain == 'aquafier.inblock.io' || currentDomain.includes('inblock.io')) {
-            if (url.includes('127.0.0.1') || url.includes('0.0.0.0') || url.includes('localhost')) {
-                  let domainData = ''
-                  if (currentDomain === 'aquafier.inblock.io') {
-                        domainData = 'https://aquafier-api.inblock.io'
-                  } else {
-                        domainData = 'https://dev-api.inblock.io'
-                  }
-
-                  url = url.replace('http://127.0.0.1', domainData)
-                  url = url.replace('https://127.0.0.1', domainData)
-
-                  // Handle 0.0.0.0 with or without port
-                  url = url.replace('http://0.0.0.0', domainData)
-                  url = url.replace('https://0.0.0.0', domainData)
-
-                  // Handle localhost with or without port
-                  url = url.replace('http://localhost', domainData)
-                  url = url.replace('https://localhost', domainData)
-
-                  // Remove any port numbers that might remain
-                  url = url.replace(/:\d+/g, '')
-            }
-      }
-
-      return url
+  return url;
 }
+
+
+// export function ensureDomainUrlHasSSL(actualUrlToFetch: string): string {
+//       let url = actualUrlToFetch
+
+//       if (actualUrlToFetch.includes('inblock.io')) {
+//             if (!actualUrlToFetch.includes('https')) {
+//                   url = actualUrlToFetch.replace('http', 'https')
+//             }
+//       }
+
+//       // Alternatively, if the domain is "inblock.io" but lacks protocol
+
+//       if (url.startsWith('inblock.io')) {
+//             url = 'https://' + url
+//       }
+
+//       // Replace unsafe localhost URL (HTTPS on 0.0.0.0:0 → HTTP on 127.0.0.1:3000)
+//       if (url.startsWith('https://0.0.0.0') || url.startsWith('http://0.0.0.0') || url.startsWith('https://127.0.0.1') || url.startsWith('https://localhost')) {
+//             url = url.replace('https://0.0.0.0', 'http://127.0.0.1')
+//             url = url.replace('http://0.0.0.0', 'http://127.0.0.1')
+//             url = url.replace('https://127.0.0.1', 'http://127.0.0.1')
+//             url = url.replace('https://localhost', 'http://127.0.0.1')
+//       }
+
+//       // Check if we're on inblock.io domain but URL contains localhost IP addresses
+//       const currentDomain = typeof window !== 'undefined' ? window.location.hostname : ''
+//       // console.log(`ensureDomainUrlHasSSL currentDomain ${currentDomain}`)
+//       if (currentDomain === 'inblock.io' || currentDomain === 'dev.inblock.io' || currentDomain == 'aquafier.inblock.io' || currentDomain.includes('inblock.io')) {
+//             if (url.includes('127.0.0.1') || url.includes('0.0.0.0') || url.includes('localhost')) {
+//                   let domainData = ''
+//                   if (currentDomain === 'aquafier.inblock.io') {
+//                         domainData = 'https://aquafier-api.inblock.io'
+//                   } else {
+//                         domainData = 'https://dev-api.inblock.io'
+//                   }
+
+//                   url = url.replace('http://127.0.0.1', domainData)
+//                   url = url.replace('https://127.0.0.1', domainData)
+
+//                   // Handle 0.0.0.0 with or without port
+//                   url = url.replace('http://0.0.0.0', domainData)
+//                   url = url.replace('https://0.0.0.0', domainData)
+
+//                   // Handle localhost with or without port
+//                   url = url.replace('http://localhost', domainData)
+//                   url = url.replace('https://localhost', domainData)
+
+//                   // Remove any port numbers that might remain
+//                   url = url.replace(/:\d+/g, '')
+//             }
+//       }
+
+//       return url
+// }
 
 export function makeProperReadableWord(wordWithUnderScores: string) {
       if (!wordWithUnderScores) {
