@@ -2126,6 +2126,9 @@ export function ensureDomainUrlHasSSL(actualUrlToFetch: string): string {
     else if (url.startsWith('http://')) {
       url = url.replace('http://', 'https://');
     }
+
+    //Remove port numbers for non-localhost URLs
+     url = url.replace(/:\d+/g, '');
   }
 
   // Step 2: Replace unsafe localhost URLs with safe ones
@@ -2142,11 +2145,6 @@ export function ensureDomainUrlHasSSL(actualUrlToFetch: string): string {
     }
   }
 
-  // Step 3: Remove port numbers for non-localhost URLs
-  const isStillLocalhost = url.includes('127.0.0.1') || url.includes('0.0.0.0') || url.includes('localhost');
-  if (!isStillLocalhost) {
-    url = url.replace(/:\d+/g, '');
-  }
 
   return url;
 }

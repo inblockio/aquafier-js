@@ -266,6 +266,7 @@ const HowItWorksSection = () => (
                                           <div className="box-border h-[380px] overflow-y-auto">
                                                 <SyntaxHighlighter
                                                       language="json"
+                                                      wrapLines={true}
                                                       customStyle={{
                                                             padding: 'calc(var(--spacing) * 6)',
                                                       }}
