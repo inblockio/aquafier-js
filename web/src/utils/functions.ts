@@ -2142,6 +2142,8 @@ export function ensureDomainUrlHasSSL(actualUrlToFetch: string): string {
                   let domainData = ''
                   if (currentDomain === 'aquafier.inblock.io') {
                         domainData = 'https://aquafier-api.inblock.io'
+                  } else if (currentDomain === 'aquafier.zeps.dev') {
+                        domainData = 'https://aquafier-api.zeps.dev'
                   } else {
                         domainData = 'https://dev-api.inblock.io'
                   }
