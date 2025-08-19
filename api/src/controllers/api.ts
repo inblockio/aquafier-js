@@ -35,18 +35,17 @@ export default async function ApiController(fastify: FastifyInstance) {
             return reply.code(400).send({ success: false, message: "verification code is required" });
         }
 
-        const {
-            TWILIO_VERIFY_SERVICE_SID,
-        } = process.env;
+        const twilio = process.env.TWILIO_VERIFY_SERVICE_SID;
 
-        if (!TWILIO_VERIFY_SERVICE_SID) {
+        console.log(`=========== twilio ${twilio}`)
+        if (!twilio) {
             return reply.code(500).send({ success: false, message: "twilio env variable not set" });
         }
         try {
 
 
             await twilioClient.verify.v2
-                .services(TWILIO_VERIFY_SERVICE_SID)
+                .services(twilio)
                 .verificationChecks.create({ to: revisionDataPar.email_or_phone_number, code: revisionDataPar.code });
 
         } catch (err: any) {
