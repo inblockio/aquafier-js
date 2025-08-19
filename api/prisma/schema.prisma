@@ -262,3 +262,14 @@ model Notifications {
 
   @@map("notifications")
 }
+
+model VerificationAttempt {
+  id                    Int      @id @default(autoincrement())
+  email_or_phone_number String
+  verification_type     String // "email" or "phone_number"
+  nonce                 String? // Optional, links to siweSession
+  action                String // "send_code" or "verify_code"
+  createdAt             DateTime @default(now())
+
+  @@index([email_or_phone_number, verification_type, action]) // For efficient querying
+}

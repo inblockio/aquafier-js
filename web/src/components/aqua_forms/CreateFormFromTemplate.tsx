@@ -1276,9 +1276,10 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: { selectedTempla
                                                                                                                                     // toast('File deleted successfully')
                                                                                                                                     // await refetchAllUserFiles()
                                                                                                                               }
-                                                                                                                        } catch (e) {
-                                                                                                                              console.log(`Error ${e}`)
-                                                                                                                              toast.error('verification code not sent')
+                                                                                                                        } catch (e: any) {
+                                                                                                                              console.log(`Error ${e}`, e)
+                                                                                                                              // toast.error('verification code not sent')
+                                                                                                                              toast.error(`verification code not sent ${e?.response?.data?.message ?? ""}`)
                                                                                                                               // setIsloading(false) // Add this to ensure loading state is cleared on error
                                                                                                                         } finally {
                                                                                                                               setVerifyingFormField(``)

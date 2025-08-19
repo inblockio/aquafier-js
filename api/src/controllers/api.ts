@@ -1,122 +1,356 @@
+// import { FastifyInstance } from "fastify";
+// import { twilioClient } from "../api/twilio";
+// import { prisma } from "../database/db";
+
+// export default async function ApiController(fastify: FastifyInstance) {
+
+
+//     fastify.post("/verify_code", async (request, reply) => {
+
+//         const nonce = request.headers['nonce']; // Headers are case-insensitive
+
+//         // Check if `nonce` is missing or empty
+//         if (!nonce || typeof nonce !== 'string' || nonce.trim() === '') {
+//             return reply.code(401).send({ error: 'Unauthorized: Missing or empty nonce header' });
+//         }
+
+//         const session = await prisma.siweSession.findUnique({
+//             where: { nonce }
+//         });
+
+//         if (!session) {
+//             return reply.code(403).send({ success: false, message: "Nonce is invalid" });
+//         }
+
+//         const revisionDataPar = request.body as {
+//             email_or_phone_number: string,
+//             code: string
+//         };
+
+//         if (!revisionDataPar.email_or_phone_number || revisionDataPar.email_or_phone_number.length == 0) {
+//             return reply.code(400).send({ success: false, message: "input is required" });
+//         }
+
+//         if (!revisionDataPar.code || revisionDataPar.code.length == 0) {
+//             return reply.code(400).send({ success: false, message: "verification code is required" });
+//         }
+
+//         const twilio = process.env.TWILIO_VERIFY_SERVICE_SID;
+
+//         console.log(`=========== twilio ${twilio}`)
+//         if (!twilio) {
+//             return reply.code(500).send({ success: false, message: "twilio env variable not set" });
+//         }
+//         try {
+
+
+//             await twilioClient.verify.v2
+//                 .services(twilio)
+//                 .verificationChecks.create({ to: revisionDataPar.email_or_phone_number, code: revisionDataPar.code });
+
+//         } catch (err: any) {
+//             console.error('🛑  Twilio Verify initiation failed', err.message);
+//             return reply.code(500).send({ ok: false, error: `Twilio Failed ${err.message}` });
+//         }
+
+//         return reply.code(200).send({ success: true, message: "verification code sent" });
+
+//     });
+
+
+    
+//     fastify.post("/send_code", async (request, reply) => {
+
+
+//         const nonce = request.headers['nonce']; // Headers are case-insensitive
+
+//         // Check if `nonce` is missing or empty
+//         if (!nonce || typeof nonce !== 'string' || nonce.trim() === '') {
+//             return reply.code(401).send({ error: 'Unauthorized: Missing or empty nonce header' });
+//         }
+
+//         const session = await prisma.siweSession.findUnique({
+//             where: { nonce }
+//         });
+
+//         if (!session) {
+//             return reply.code(403).send({ success: false, message: "Nonce is invalid" });
+//         }
+
+//         const revisionDataPar = request.body as {
+//             email_or_phone_number: string,
+//             name: string
+//         };
+
+//         if (!revisionDataPar.email_or_phone_number || revisionDataPar.email_or_phone_number.length == 0) {
+//             return reply.code(400).send({ success: false, message: "input is required" });
+//         }
+
+//         if (!revisionDataPar.email_or_phone_number || revisionDataPar.name.length == 0) {
+//             return reply.code(400).send({ success: false, message: "input type is required" });
+//         }
+
+
+//         let channel = 'sms'
+//         if (revisionDataPar.name == "email" || revisionDataPar.name.includes('email')) {
+//             channel = 'email'
+//         }
+
+
+//         const {
+//             TWILIO_VERIFY_SERVICE_SID,
+//         } = process.env;
+
+//         if (!TWILIO_VERIFY_SERVICE_SID) {
+//             return reply.code(500).send({ success: false, message: "twilio env variable not set" });
+//         }
+//         try {
+//             await twilioClient.verify.v2
+//                 .services(TWILIO_VERIFY_SERVICE_SID)
+//                 .verifications.create({ to: revisionDataPar.email_or_phone_number, channel });
+//         } catch (err: any) {
+//             console.error('🛑  Twilio Verify initiation failed', err.message);
+//             return reply.code(500).send({ ok: false, error: `Twilio Failed ${err.message}` });
+//         }
+
+//         return reply.code(200).send({ success: true, message: "verification code sent" });
+
+//     });
+
+// }
+
+
 import { FastifyInstance } from "fastify";
 import { twilioClient } from "../api/twilio";
 import { prisma } from "../database/db";
 
+// Rate-limiting configuration
+const RATE_LIMIT_CONFIG = {
+  send_code: { maxAttempts: 5, timeWindowMinutes: 120 }, // 5 attempts per 120 minutes
+  verify_code: { maxAttempts: 10, timeWindowMinutes: 120 }, // 10 attempts per 120 minutes
+};
+
+// Helper function to check and record rate limit
+async function checkRateLimit(
+  emailOrPhoneNumber: string,
+  verificationType: string,
+  action: "send_code" | "verify_code",
+  nonce: string
+): Promise<{ success: boolean; message?: string }> {
+  const timeWindow = RATE_LIMIT_CONFIG[action].timeWindowMinutes * 60 * 1000; // Convert to milliseconds
+  const maxAttempts = RATE_LIMIT_CONFIG[action].maxAttempts;
+
+  // Calculate the start of the time window
+  const timeWindowStart = new Date(Date.now() - timeWindow);
+
+  // Count attempts within the time window
+  const attemptCount = await prisma.verificationAttempt.count({
+    where: {
+      email_or_phone_number: emailOrPhoneNumber,
+      verification_type: verificationType,
+      action,
+      createdAt: { gte: timeWindowStart },
+    },
+  });
+
+  if (attemptCount >= maxAttempts) {
+    let phone_email = verificationType === "email" ? "email" : "phone number";
+    return {
+      success: false,
+      message: `Rate limit exceeded for this ${phone_email}. Try again later.`,
+    };
+  }
+
+  // Record the attempt
+  await prisma.verificationAttempt.create({
+    data: {
+      email_or_phone_number: emailOrPhoneNumber,
+      verification_type: verificationType,
+      action,
+      nonce,
+    },
+  });
+
+  return { success: true };
+}
+
 export default async function ApiController(fastify: FastifyInstance) {
+  fastify.post("/verify_code", async (request, reply) => {
+    const nonce = request.headers["nonce"];
 
+    // Check if `nonce` is missing or empty
+    if (!nonce || typeof nonce !== "string" || nonce.trim() === "") {
+      return reply
+        .code(401)
+        .send({ error: "Unauthorized: Missing or empty nonce header" });
+    }
 
-    fastify.post("/verify_code", async (request, reply) => {
-
-        const nonce = request.headers['nonce']; // Headers are case-insensitive
-
-        // Check if `nonce` is missing or empty
-        if (!nonce || typeof nonce !== 'string' || nonce.trim() === '') {
-            return reply.code(401).send({ error: 'Unauthorized: Missing or empty nonce header' });
-        }
-
-        const session = await prisma.siweSession.findUnique({
-            where: { nonce }
-        });
-
-        if (!session) {
-            return reply.code(403).send({ success: false, message: "Nonce is invalid" });
-        }
-
-        const revisionDataPar = request.body as {
-            email_or_phone_number: string,
-            code: string
-        };
-
-        if (!revisionDataPar.email_or_phone_number || revisionDataPar.email_or_phone_number.length == 0) {
-            return reply.code(400).send({ success: false, message: "input is required" });
-        }
-
-        if (!revisionDataPar.code || revisionDataPar.code.length == 0) {
-            return reply.code(400).send({ success: false, message: "verification code is required" });
-        }
-
-        const twilio = process.env.TWILIO_VERIFY_SERVICE_SID;
-
-        console.log(`=========== twilio ${twilio}`)
-        if (!twilio) {
-            return reply.code(500).send({ success: false, message: "twilio env variable not set" });
-        }
-        try {
-
-
-            await twilioClient.verify.v2
-                .services(twilio)
-                .verificationChecks.create({ to: revisionDataPar.email_or_phone_number, code: revisionDataPar.code });
-
-        } catch (err: any) {
-            console.error('🛑  Twilio Verify initiation failed', err.message);
-            return reply.code(500).send({ ok: false, error: `Twilio Failed ${err.message}` });
-        }
-
-        return reply.code(200).send({ success: true, message: "verification code sent" });
-
+    const session = await prisma.siweSession.findUnique({
+      where: { nonce },
     });
 
+    if (!session) {
+      return reply
+        .code(403)
+        .send({ success: false, message: "Nonce is invalid" });
+    }
 
-    
-    fastify.post("/send_code", async (request, reply) => {
+    const revisionDataPar = request.body as {
+      email_or_phone_number: string;
+      code: string;
+    };
 
+    if (
+      !revisionDataPar.email_or_phone_number ||
+      revisionDataPar.email_or_phone_number.length === 0
+    ) {
+      return reply
+        .code(400)
+        .send({ success: false, message: "Input is required" });
+    }
 
-        const nonce = request.headers['nonce']; // Headers are case-insensitive
+    if (!revisionDataPar.code || revisionDataPar.code.length === 0) {
+      return reply
+        .code(400)
+        .send({ success: false, message: "Verification code is required" });
+    }
 
-        // Check if `nonce` is missing or empty
-        if (!nonce || typeof nonce !== 'string' || nonce.trim() === '') {
-            return reply.code(401).send({ error: 'Unauthorized: Missing or empty nonce header' });
-        }
+    // Determine verification type (email or phone_number)
+    const verificationType = revisionDataPar.email_or_phone_number.includes("@")
+      ? "email"
+      : "phone_number";
 
-        const session = await prisma.siweSession.findUnique({
-            where: { nonce }
+    // Check rate limit for verify_code
+    const rateLimitCheck = await checkRateLimit(
+      revisionDataPar.email_or_phone_number,
+      verificationType,
+      "verify_code",
+      nonce
+    );
+
+    if (!rateLimitCheck.success) {
+      return reply.code(429).send({
+        success: false,
+        message: rateLimitCheck.message,
+      });
+    }
+
+    const twilio = process.env.TWILIO_VERIFY_SERVICE_SID;
+
+    if (!twilio) {
+      return reply
+        .code(500)
+        .send({ success: false, message: "Twilio env variable not set" });
+    }
+
+    try {
+      await twilioClient.verify.v2
+        .services(twilio)
+        .verificationChecks.create({
+          to: revisionDataPar.email_or_phone_number,
+          code: revisionDataPar.code,
         });
+    } catch (err: any) {
+      console.error("🛑 Twilio Verify initiation failed", err.message);
+      return reply
+        .code(500)
+        .send({ ok: false, error: `Twilio Failed ${err.message}` });
+    }
 
-        if (!session) {
-            return reply.code(403).send({ success: false, message: "Nonce is invalid" });
-        }
+    return reply
+      .code(200)
+      .send({ success: true, message: "Verification code validated" });
+  });
 
-        const revisionDataPar = request.body as {
-            email_or_phone_number: string,
-            name: string
-        };
+  fastify.post("/send_code", async (request, reply) => {
+    const nonce = request.headers["nonce"];
 
-        if (!revisionDataPar.email_or_phone_number || revisionDataPar.email_or_phone_number.length == 0) {
-            return reply.code(400).send({ success: false, message: "input is required" });
-        }
+    // Check if `nonce` is missing or empty
+    if (!nonce || typeof nonce !== "string" || nonce.trim() === "") {
+      return reply
+        .code(401)
+        .send({ error: "Unauthorized: Missing or empty nonce header" });
+    }
 
-        if (!revisionDataPar.email_or_phone_number || revisionDataPar.name.length == 0) {
-            return reply.code(400).send({ success: false, message: "input type is required" });
-        }
-
-
-        let channel = 'sms'
-        if (revisionDataPar.name == "email" || revisionDataPar.name.includes('email')) {
-            channel = 'email'
-        }
-
-
-        const {
-            TWILIO_VERIFY_SERVICE_SID,
-        } = process.env;
-
-        if (!TWILIO_VERIFY_SERVICE_SID) {
-            return reply.code(500).send({ success: false, message: "twilio env variable not set" });
-        }
-        try {
-            await twilioClient.verify.v2
-                .services(TWILIO_VERIFY_SERVICE_SID)
-                .verifications.create({ to: revisionDataPar.email_or_phone_number, channel });
-        } catch (err: any) {
-            console.error('🛑  Twilio Verify initiation failed', err.message);
-            return reply.code(500).send({ ok: false, error: `Twilio Failed ${err.message}` });
-        }
-
-        return reply.code(200).send({ success: true, message: "verification code sent" });
-
+    const session = await prisma.siweSession.findUnique({
+      where: { nonce },
     });
 
+    if (!session) {
+      return reply
+        .code(403)
+        .send({ success: false, message: "Nonce is invalid" });
+    }
 
+    const revisionDataPar = request.body as {
+      email_or_phone_number: string;
+      name: string;
+    };
 
+    if (
+      !revisionDataPar.email_or_phone_number ||
+      revisionDataPar.email_or_phone_number.length === 0
+    ) {
+      return reply
+        .code(400)
+        .send({ success: false, message: "Input is required" });
+    }
+
+    if (!revisionDataPar.name || revisionDataPar.name.length === 0) {
+      return reply
+        .code(400)
+        .send({ success: false, message: "Input type is required" });
+    }
+
+    let channel = "sms";
+    const verificationType =
+      revisionDataPar.name === "email" || revisionDataPar.name.includes("email")
+        ? "email"
+        : "phone_number";
+
+    if (verificationType === "email") {
+      channel = "email";
+    }
+
+    // Check rate limit for send_code
+    const rateLimitCheck = await checkRateLimit(
+      revisionDataPar.email_or_phone_number,
+      verificationType,
+      "send_code",
+      nonce
+    );
+
+    if (!rateLimitCheck.success) {
+      return reply.code(429).send({
+        success: false,
+        message: rateLimitCheck.message,
+      });
+    }
+
+    const { TWILIO_VERIFY_SERVICE_SID } = process.env;
+
+    if (!TWILIO_VERIFY_SERVICE_SID) {
+      return reply
+        .code(500)
+        .send({ success: false, message: "Twilio env variable not set" });
+    }
+
+    try {
+      await twilioClient.verify.v2
+        .services(TWILIO_VERIFY_SERVICE_SID)
+        .verifications.create({
+          to: revisionDataPar.email_or_phone_number,
+          channel,
+        });
+    } catch (err: any) {
+      console.error("🛑 Twilio Verify initiation failed", err.message);
+      return reply
+        .code(500)
+        .send({ ok: false, error: `Twilio Failed ${err.message}` });
+    }
+
+    return reply
+      .code(200)
+      .send({ success: true, message: "Verification code sent" });
+  });
 }
