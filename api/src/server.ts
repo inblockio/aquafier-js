@@ -31,7 +31,7 @@ import ApiController from './controllers/api';
 // import { createEthAccount } from './utils/server_utils';
 // import { serverAttestation } from './utils/server_attest';
 import * as Sentry from "@sentry/node"
-import {nodeProfilingIntegration } from "@sentry/profiling-node"
+import { nodeProfilingIntegration } from "@sentry/profiling-node"
 
 export async function mockNotifications() {
     // 0x254B0D7b63342Fcb8955DB82e95C21d72EFdB6f7 - This is the receiver and the sender is 'system'
@@ -107,22 +107,22 @@ function buildServer() {
 
     Sentry.init({
         dsn: "https://03e24951c77d8a1aa048982fdb0296e5@o4506135316987904.ingest.us.sentry.io/4509835109531648",
-  integrations: [
-    nodeProfilingIntegration(),
-  ],
-  // Tracing
-  tracesSampleRate: 1.0, //  Capture 100% of the transactions
-  // Set sampling rate for profiling - this is evaluated only once per SDK.init call
-  profileSessionSampleRate: 1.0,
-  // Trace lifecycle automatically enables profiling during active traces
-  profileLifecycle: 'trace',
+        integrations: [
+            nodeProfilingIntegration(),
+        ],
+        // Tracing
+        tracesSampleRate: 1.0, //  Capture 100% of the transactions
+        // Set sampling rate for profiling - this is evaluated only once per SDK.init call
+        profileSessionSampleRate: 1.0,
+        // Trace lifecycle automatically enables profiling during active traces
+        profileLifecycle: 'trace',
 
-  // Send structured logs to Sentry
-  enableLogs: true,
+        // Send structured logs to Sentry
+        enableLogs: true,
 
-  // Setting this option to true will send default PII data to Sentry.
-  // For example, automatic IP address collection on events
-  sendDefaultPii: true,
+        // Setting this option to true will send default PII data to Sentry.
+        // For example, automatic IP address collection on events
+        sendDefaultPii: true,
     });
 
     // Create a Fastify instance
@@ -149,6 +149,8 @@ function buildServer() {
             'http://aquafier.inblock.io',
             'https://dev.inblock.io',
             'http://dev.inblock.io',
+            'https://aquafier.zeps.dev',
+            'http://aquafier.zeps.dev'
         ], // Allow your React app origins
         methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
         credentials: true, // Allow cookies if needed

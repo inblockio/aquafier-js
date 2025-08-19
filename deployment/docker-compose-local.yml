@@ -44,8 +44,8 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
-    volumes:
-      - ./dev_mount_points/aquafier:/app/backend/media
+    # volumes:
+    #   - ./dev_mount_points/aquafier:/app/backend/media
 
 
   s3storage:
