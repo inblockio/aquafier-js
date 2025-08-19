@@ -273,3 +273,20 @@ export async function saveAquaFile(aquaTree: AquaTree, assetBuffer: Buffer, gene
         }
     })
 }
+
+export function ensureDomainViewForCors(domain?: string): string[] {
+    const domains: string[] = []
+    
+    if(!domain){
+        return domains
+    }
+    if(domain.startsWith("http")){
+        domains.push(domain)
+    }
+    else{
+        domains.push(`https://${domain}`)
+        domains.push(`http://${domain}`)
+    }
+    
+    return domains
+}

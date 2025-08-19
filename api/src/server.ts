@@ -32,6 +32,7 @@ import ApiController from './controllers/api';
 // import { serverAttestation } from './utils/server_attest';
 import * as Sentry from "@sentry/node"
 import { nodeProfilingIntegration } from "@sentry/profiling-node"
+import { ensureDomainViewForCors } from './utils/server_utils';
 
 export async function mockNotifications() {
     // 0x254B0D7b63342Fcb8955DB82e95C21d72EFdB6f7 - This is the receiver and the sender is 'system'
@@ -136,13 +137,12 @@ function buildServer() {
     // Register the CORS plugin
     fastify.register(cors, {
         // Configure CORS options
-        origin: process.env.ALLOWED_CORS ? [process.env.ALLOWED_CORS.split(',').map(origin => origin.trim()), process.env.FRONTEND_URL ?? ""] : [
+        origin: process.env.ALLOWED_CORS ? [process.env.ALLOWED_CORS.split(',').map(origin => origin.trim()), ...ensureDomainViewForCors(process.env.FRONTEND_URL)]: [
             'http://localhost:5173',
             'http://127.0.0.1:5173',
             'http://localhost:5174',
             'http://127.0.0.1:5174',
             'http://localhost:3000',
-            'http://127.0.0.1:3000',
             'http://localhost:3600',
             'http://127.0.0.1:3600',
             'https://aquafier.inblock.io',
@@ -151,7 +151,7 @@ function buildServer() {
             'http://dev.inblock.io',
             'https://aquafier.zeps.dev',
             'http://aquafier.zeps.dev',
-            process.env.FRONTEND_URL ?? "",
+            ...ensureDomainViewForCors(process.env.FRONTEND_URL),
         ], // Allow your React app origins
         methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
         credentials: true, // Allow cookies if needed
