@@ -322,7 +322,16 @@ export default async function shareController(fastify: FastifyInstance) {
                 return reply.code(404).send({ success: false, message: "Contract not found" });
             }
             if (contract.sender !== session.address) {
-                return reply.code(403).send({ success: false, message: "Unauthorized: You are not the owner of this contract" });
+                // return reply.code(403).send({ success: false, message: "Unauthorized: You are not the owner of this contract" });
+                await prisma.contract.update({
+                    where: {
+                        hash: hash
+                    },
+                    data: {
+                        receiver_has_deleted: true
+                    }
+                });
+                return reply.code(200).send({ success: true, message: "Share contract deleted successfully." });
             }
 
             // Delete the contract
@@ -415,6 +424,9 @@ export default async function shareController(fastify: FastifyInstance) {
                 }
             }
         }
+
+        // Update the where clause to avoid querying anything that has receiver_has_deleted set to true
+        whereClause.receiver_has_deleted = false;
 
         // console.log('Query parameters:', JSON.stringify(whereClause, null, 2));
         

@@ -14,10 +14,12 @@ import { Contract } from '@/types/types'
 import WalletAddresClaim from "./../pages/v2_claims_workflow/WalletAdrressClaim"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
+import { toast } from 'sonner'
 
 export const SharedContract = ({ contract, index, contractDeleted }: { contract: Contract; index: number; contractDeleted: (hash: string) => void }) => {
       const navigate = useNavigate()
-      const { backend_url } = useStore(appStore)
+      const [loading, setLoading] = useState(false)
+      const { backend_url, session } = useStore(appStore)
       const getStatusFromLatest = (latest?: string) => {
             if (!latest) return 'unknown'
             try {
@@ -38,6 +40,26 @@ export const SharedContract = ({ contract, index, contractDeleted }: { contract:
                         return 'bg-blue-100 text-blue-800 border-blue-200'
                   default:
                         return 'bg-gray-100 text-gray-800 border-gray-200'
+            }
+      }
+
+      async function deleteContract() {
+            setLoading(true)
+            try {
+                  const response = await axios.delete(`${backend_url}/contracts/${contract.hash}`, {
+                        headers: {
+                              nonce: session?.nonce,
+                        }
+                  })
+
+                  if (response.status === 200 || response.status === 201) {
+                        contractDeleted(contract.hash)
+                        toast.success('Contract deleted successfully')
+                  }
+                  setLoading(false)
+            } catch (error: any) {
+                  toast.error('Error deleting contract:', error)
+                  setLoading(false)
             }
       }
 
@@ -172,52 +194,13 @@ export const SharedContract = ({ contract, index, contractDeleted }: { contract:
                                                       variant="destructive"
                                                       size="sm"
                                                       className="w-full"
-                                                      onClick={async () => {
-                                                            const response = await axios.delete(`${backend_url}/contracts/${contract.hash}`, {})
-
-                                                            if (response.status === 200 || response.status === 201) {
-                                                                  contractDeleted(contract.hash)
-                                                            }
-                                                      }}
+                                                      disabled={loading}
+                                                      onClick={deleteContract}
                                                 >
-                                                      Delete
+                                                      {loading ? 'Deleting...' : 'Delete'}
                                                 </Button>
                                           </div>
 
-                                          {/* <DropdownMenu>
-                                <DropdownMenuTrigger asChild>
-                                    <Button
-                                        variant="ghost"
-                                        size="sm"
-                                        onClick={(e) => e.stopPropagation()}
-                                        className="h-8 w-8 p-0"
-                                    >
-                                        <MoreHorizontal className="w-4 h-4" />
-                                    </Button>
-                                </DropdownMenuTrigger>
-                                <DropdownMenuContent align="end">
-                                    <DropdownMenuItem>
-                                        <Eye className="w-4 h-4 mr-2" />
-                                        View Details
-                                    </DropdownMenuItem>
-                                    <DropdownMenuItem>
-                                        <Copy className="w-4 h-4 mr-2" />
-                                        Copy Hash
-                                    </DropdownMenuItem>
-                                    <DropdownMenuItem>
-                                        <ExternalLink className="w-4 h-4 mr-2" />
-                                        Open in Explorer
-                                    </DropdownMenuItem>
-                                    <DropdownMenuItem>
-                                        <Download className="w-4 h-4 mr-2" />
-                                        Export
-                                    </DropdownMenuItem>
-                                    <DropdownMenuItem>
-                                        <Share2 className="w-4 h-4 mr-2" />
-                                        Share
-                                    </DropdownMenuItem>
-                                </DropdownMenuContent>
-                            </DropdownMenu> */}
                                     </div>
                               </div>
                         </div>
