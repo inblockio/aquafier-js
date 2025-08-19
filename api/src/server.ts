@@ -136,7 +136,7 @@ function buildServer() {
     // Register the CORS plugin
     fastify.register(cors, {
         // Configure CORS options
-        origin: process.env.ALLOWED_CORS ? process.env.ALLOWED_CORS.split(',').map(origin => origin.trim()) : [
+        origin: process.env.ALLOWED_CORS ? [process.env.ALLOWED_CORS.split(',').map(origin => origin.trim()), process.env.FRONTEND_URL ?? ""] : [
             'http://localhost:5173',
             'http://127.0.0.1:5173',
             'http://localhost:5174',
@@ -150,7 +150,8 @@ function buildServer() {
             'https://dev.inblock.io',
             'http://dev.inblock.io',
             'https://aquafier.zeps.dev',
-            'http://aquafier.zeps.dev'
+            'http://aquafier.zeps.dev',
+            process.env.FRONTEND_URL ?? "",
         ], // Allow your React app origins
         methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
         credentials: true, // Allow cookies if needed
