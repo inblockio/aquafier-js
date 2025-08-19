@@ -1,7 +1,7 @@
 import { Suspense, useState, lazy } from 'react'
 import { LuCircleCheck, LuCircleX, LuLogOut, LuWallet } from 'react-icons/lu'
 import { ClipLoader } from 'react-spinners'
-import { fetchFiles, formatCryptoAddress, generateAvatar, getCookie, setCookie } from '../utils/functions'
+import { ensureDomainUrlHasSSL, fetchFiles, formatCryptoAddress, generateAvatar, getCookie, setCookie } from '../utils/functions'
 import { SiweMessage, generateNonce } from 'siwe'
 import { SESSION_COOKIE_NAME } from '../utils/constants'
 import axios from 'axios'
@@ -80,7 +80,8 @@ export const ConnectWallet: React.FC<{ dataTestId: string }> = ({ dataTestId }) 
                         // console.log("--Signature", signature)
                         // console.log("-- Adress", signer.address)
                         // Send session request
-                        const response = await axios.post(`${backend_url}/session`, {
+                         const url = ensureDomainUrlHasSSL(`${backend_url}/session`)
+                        const response = await axios.post(url, {
                               message,
                               signature,
                               domain,
@@ -174,7 +175,7 @@ export const ConnectWallet: React.FC<{ dataTestId: string }> = ({ dataTestId }) 
                   const nonce = getCookie('pkc_nonce')
                   // formData.append("nonce", nonce);
 
-                  const url = `${backend_url}/session`
+                   const url = ensureDomainUrlHasSSL(`${backend_url}/session`)
                   //  console.log("url is ", url);
                   const response = await axios.delete(url, {
                         params: {

@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { fetchFiles, generateAvatar, setCookie } from '../utils/functions'
+import { ensureDomainUrlHasSSL, fetchFiles, generateAvatar, setCookie } from '../utils/functions'
 import { SiweMessage, generateNonce } from 'siwe'
 import { SESSION_COOKIE_NAME } from '../utils/constants'
 import axios from 'axios'
@@ -171,7 +171,7 @@ export const ConnectWalletPage = () => {
                   const message = createSiweMessage(address, 'Sign in with Ethereum to the app.')
                   const signature = await signer.signMessage(message)
 
-                  let url = `${backend_url}/session`
+                  const url = ensureDomainUrlHasSSL(`${backend_url}/session`)
                   console.log(`url ${url}`)
                   // Send session request
                   const response = await axios.post(url, {

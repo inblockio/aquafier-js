@@ -4,6 +4,7 @@ import { createJSONStorage, persist } from 'zustand/middleware'
 import { ApiFileInfo } from './models/FileInfo'
 import { ApiFileData, OpenDialog, Session } from './types/types'
 import { FormTemplate } from './components/aqua_forms/types'
+import { ensureDomainUrlHasSSL } from './utils/functions'
 
 type AppStoreState = {
       user_profile: {
@@ -211,7 +212,8 @@ const appStore = createStore<TAppStore>()(
                   },
                   setBackEndUrl: (backend_url: AppStoreState['backend_url']) => {
                         console.log(`set backend_url to ${backend_url} `)
-                        set({ backend_url: backend_url })
+                        let urlData = ensureDomainUrlHasSSL(backend_url)
+                        set({ backend_url: urlData })
                   },
             }),
             {
