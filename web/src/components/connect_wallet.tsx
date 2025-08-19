@@ -205,14 +205,13 @@ export const ConnectWallet: React.FC<{ dataTestId: string }> = ({ dataTestId }) 
       }
 
       return (
-            <Dialog defaultOpen={isOpen} open={isOpen} onOpenChange={(details: any) => setIsOpen(details.open)}>
+            <Dialog open={isOpen} onOpenChange={setIsOpen}>
                   <DialogTrigger asChild>
                         <Button
                               data-testid={dataTestId}
                               size={'sm'}
                               className="rounded-md"
                               onClick={() => {
-                                    setIsOpen(true)
                                     !session && signAndConnect()
                               }}
                         >
