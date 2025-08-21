@@ -30,13 +30,13 @@ export default async function filesController(fastify: FastifyInstance) {
             return reply.code(401).send({ error: 'Unauthorized: Missing or empty nonce header' });
         }
 
-        const session = await prisma.siweSession.findUnique({
-            where: { nonce }
-        });
+        // const session = await prisma.siweSession.findUnique({
+        //     where: { nonce }
+        // });
 
-        if (!session) {
-            return reply.code(403).send({ success: false, message: "Nounce  is invalid" });
-        }
+        // if (!session) {  
+        //     return reply.code(403).send({ success: false, message: "Nounce  is invalid "+nonce  });
+        // }
 
         let file = await prisma.file.findFirst({
             where: {

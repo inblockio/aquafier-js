@@ -7,6 +7,7 @@ import { SignatureData } from '../../../../types/types'
 import { LuInfo } from 'react-icons/lu'
 import { Button } from '../../../../components/ui/button'
 import { Slider } from '../../../../components/ui/slider'
+import { ensureDomainUrlHasSSL } from '@/utils/functions'
 // import { ScrollArea } from '@/components/ui/scroll-area';
 
 // const parseFontSizeToPoints = (fontSizeString: string, defaultSize: number = 12): number => {
@@ -524,7 +525,7 @@ export default function SignerPage({
                                                                               <div
                                                                                     className="w-[60px] h-[40px] bg-contain bg-no-repeat bg-center border border-gray-200 rounded-sm"
                                                                                     style={{
-                                                                                          backgroundImage: `url(${signature.dataUrl})`,
+                                                                                          backgroundImage: `url(${ensureDomainUrlHasSSL(signature.dataUrl)})`,
                                                                                     }}
                                                                               />
                                                                               <div className="flex flex-col space-y-0">

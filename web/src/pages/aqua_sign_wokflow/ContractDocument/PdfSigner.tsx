@@ -1316,7 +1316,7 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ fileData, setActiveStep, document
                                                                                     <div
                                                                                           className="w-[80px] min-w-[80px] h-[40px] min-h-[40px] bg-contain bg-no-repeat bg-center border border-gray-200 rounded-sm"
                                                                                           style={{
-                                                                                                backgroundImage: `url(${signature.dataUrl})`,
+                                                                                                backgroundImage: `url(${ensureDomainUrlHasSSL(signature.dataUrl)})`,
                                                                                           }}
                                                                                     />
                                                                                     <div className="flex flex-col flex-1 overflow-hidden space-y-0">

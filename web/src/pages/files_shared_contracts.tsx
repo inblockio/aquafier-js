@@ -64,7 +64,7 @@ export const SharedContract = ({ contract, index, contractDeleted }: { contract:
       }
 
       return (
-            <Card key={contract.hash} className="hover:shadow-md transition-shadow cursor-pointer border border-gray-200">
+            <Card key={contract.hash} className="hover:shadow-md transition-shadow cursor-pointer border border-gray-200 " style={{marginTop: '10px', marginBottom: '10px'}}>
                   <CardContent className="p-3 sm:p-6">
                         <div className="flex items-start justify-between">
                               <div className="flex-1 space-y-4">

@@ -134,28 +134,38 @@ function buildServer() {
     // reister system templates ie cheque, identity and attestation
     setUpSystemTemplates();
 
+    let allowedCors = process.env.ALLOWED_CORS ? [process.env.ALLOWED_CORS.split(',').map(origin => origin.trim()), ...ensureDomainViewForCors(process.env.FRONTEND_URL)] : [
+        'http://localhost:5173',
+        'http://127.0.0.1:5173',
+        'http://localhost:5174',
+        'http://127.0.0.1:5174',
+        'http://localhost:3000',
+        'http://localhost:3600',
+        'http://127.0.0.1:3600',
+        'https://aquafier.inblock.io',
+        'http://aquafier.inblock.io',
+        'https://dev.inblock.io',
+        'http://dev.inblock.io',
+        'https://aquafier.zeps.dev',
+        'http://aquafier.zeps.dev',
+        ...ensureDomainViewForCors(process.env.FRONTEND_URL),
+    ]; // Allow your React app origins
+
+    console.log("Allowed CORS origins: ", JSON.stringify(allowedCors, null, 2));
+
+    
+// Remove duplicates using Set
+allowedCors = [...new Set(allowedCors.flat())];
+
+console.log("Without duplicates Allowed CORS origins: ", JSON.stringify(allowedCors, null, 2));
+
     // Register the CORS plugin
     fastify.register(cors, {
         // Configure CORS options
-        origin: process.env.ALLOWED_CORS ? [process.env.ALLOWED_CORS.split(',').map(origin => origin.trim()), ...ensureDomainViewForCors(process.env.FRONTEND_URL)]: [
-            'http://localhost:5173',
-            'http://127.0.0.1:5173',
-            'http://localhost:5174',
-            'http://127.0.0.1:5174',
-            'http://localhost:3000',
-            'http://localhost:3600',
-            'http://127.0.0.1:3600',
-            'https://aquafier.inblock.io',
-            'http://aquafier.inblock.io',
-            'https://dev.inblock.io',
-            'http://dev.inblock.io',
-            'https://aquafier.zeps.dev',
-            'http://aquafier.zeps.dev',
-            ...ensureDomainViewForCors(process.env.FRONTEND_URL),
-        ], // Allow your React app origins
+        origin: allowedCors, // Allow specific origins
         methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
         credentials: true, // Allow cookies if needed
-        allowedHeaders: ['Content-Type', 'Authorization', 'nonce', 'metamask_address']
+        allowedHeaders: ['Content-Type', 'Authorization', 'nonce', 'metamask_address', 'baggage', 'sentry-trace', 'x-sentry-trace', 'x-request-id', 'x-correlation-id'],
     });
 
     // Static handler
