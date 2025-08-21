@@ -873,6 +873,7 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ fileData, setActiveStep, document
 
       const fetchImage = async (fileUrl: string) => {
             try {
+                  console.log(`fetchImage fileUrl ${fileUrl}`)
                   const actualUrlToFetch = ensureDomainUrlHasSSL(fileUrl)
                   const response = await fetch(actualUrlToFetch, {
                         headers: {
@@ -1083,7 +1084,9 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ fileData, setActiveStep, document
                         const fileContentUrl = signatureImageObject.fileContent
 
                         if (typeof fileContentUrl === 'string' && fileContentUrl.startsWith('http')) {
-                              let dataUrl = await fetchImage(fileContentUrl)
+                              let url = ensureDomainUrlHasSSL(fileContentUrl)
+                               console.log(`fileContentUrl ===  ${url}`)
+                              let dataUrl = await fetchImage(url)
 
                               if (!dataUrl) {
                                     dataUrl = '/images/placeholder-img.png'
@@ -1313,7 +1316,8 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ fileData, setActiveStep, document
                                                                   return signature ? (
                                                                         <div key={signature.hash} className="p-2 cursor-pointer bg-blue-50 hover:bg-gray-50">
                                                                               <div className="flex items-center space-x-3">
-                                                                                    <div
+
+                                                                                    <div data-Id={signature.dataUrl}
                                                                                           className="w-[80px] min-w-[80px] h-[40px] min-h-[40px] bg-contain bg-no-repeat bg-center border border-gray-200 rounded-sm"
                                                                                           style={{
                                                                                                 backgroundImage: `url(${ensureDomainUrlHasSSL(signature.dataUrl)})`,
