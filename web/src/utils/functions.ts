@@ -2111,8 +2111,8 @@ export function convertToWebsocketUrl(actualUrlToFetch: string): string {
       return 'wss://' + validHttpAndDomain
 }
 
-export function ensureDomainUrlHasSSL(actualUrlToFetch: string): string {
-      let url = actualUrlToFetch;
+export function ensureDomainUrlHasSSL(url: string): string {
+      // let url = actualUrlToFetch;
 
       // Check if actualUrlToFetch is localhost but window host is not localhost
       const isLocalhost = url.includes('127.0.0.1') || url.includes('0.0.0.0') || url.includes('localhost');
@@ -2149,8 +2149,11 @@ export function ensureDomainUrlHasSSL(actualUrlToFetch: string): string {
             }
       }
 
+console.log(`ensureDomainUrlHasSSL url after replacements: ${url}`)
 
        if (isLocalhost && !(windowHost.includes('127.0.0.1') || windowHost.includes('localhost'))) {
+
+            console.log(`ensureDomainUrlHasSSL isLocalhost: ${isLocalhost}, windowHost: ${windowHost}`)
             // Replace localhost/127.0.0.1 based on window host
             if (windowHost === 'https://dev.inblock.io') {
                   url = url.replace(/https?:\/\/(127\.0\.0\.1|localhost|0\.0\.0\.0)/g, 'https://dev-api.inblock.io');

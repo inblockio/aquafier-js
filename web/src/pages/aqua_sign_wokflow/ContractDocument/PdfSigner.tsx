@@ -1084,13 +1084,16 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ fileData, setActiveStep, document
                         const fileContentUrl = signatureImageObject.fileContent
 
                         if (typeof fileContentUrl === 'string' && fileContentUrl.startsWith('http')) {
+                              console.log(`fileContentUrl before  ===  ${fileContentUrl}`)
                               let url = ensureDomainUrlHasSSL(fileContentUrl)
                                console.log(`fileContentUrl ===  ${url}`)
                               let dataUrl = await fetchImage(url)
 
                               if (!dataUrl) {
-                                    dataUrl = '/images/placeholder-img.png'
+                                    dataUrl = `${window.location.origin}/images/placeholder-img.png`
                               }
+
+                              console.log(`dataUrl after fetchImage ===  ${dataUrl}`)
 
                               // Add to signature
                               const sign: SignatureData = {
