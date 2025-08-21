@@ -70,16 +70,16 @@ export const convertTemplateNameToTitle = (str: string) => {
 // export async function generateProof(domain: string, walletAddress: string, expirationDays: number = DEFAULT_EXPIRATION_DAYS, signature : string): Promise<DNSProof> {
 //   const timestamp = Math.floor(Date.now() / 1000).toString();
 //   const expiration = Math.floor(Date.now() / 1000 + (expirationDays * 24 * 60 * 60)).toString();
-  
-  // Message format: unix_timestamp|domain_name|expiration_timestamp
+
+// Message format: unix_timestamp|domain_name|expiration_timestamp
 //   const message = `${timestamp}|${domain}|${expiration}`;
-  
-  // Sign with EIP-191 compliant personal_sign format
-  // ethers.js automatically applies: "\x19Ethereum Signed Message:\n" + len(message) + message
-  // This matches MetaMask's personal_sign behavior (EIP-191 version 0x45)
+
+// Sign with EIP-191 compliant personal_sign format
+// ethers.js automatically applies: "\x19Ethereum Signed Message:\n" + len(message) + message
+// This matches MetaMask's personal_sign behavior (EIP-191 version 0x45)
 //   const wallet = new ethers.Wallet(privateKey);
 //   const signature = await wallet.signMessage(message);
-  
+
 //   return {
 //     walletAddress: walletAddress,
 //     domainName: domain,
@@ -91,17 +91,17 @@ export const convertTemplateNameToTitle = (str: string) => {
 
 export function generateProofFromSignature(domain: string, walletAddress: string, timestamp: string, expiration: string, signature: string): DNSProof {
       return {
-        walletAddress,
-        domainName: domain,
-        timestamp,
-        expiration,
-        signature
+            walletAddress,
+            domainName: domain,
+            timestamp,
+            expiration,
+            signature
       };
-    }
+}
 
 export function formatTxtRecord(proof: DNSProof): string {
       return `wallet=${proof.walletAddress}&timestamp=${proof.timestamp}&expiration=${proof.expiration}&sig=${proof.signature}`;
-    } 
+}
 
 export const isWorkFlowData = (aquaTree: AquaTree, systemAndUserWorkFlow: string[]): { isWorkFlow: boolean; workFlow: string } => {
       const falseResponse = {
@@ -195,8 +195,8 @@ export function remove0xPrefix(input: string): string {
       return input
 }
 export function capitalizeWords(str: string): string {
-            return str.replace(/\b\w+/g, word => word.charAt(0).toUpperCase() + word.slice(1))
-      }
+      return str.replace(/\b\w+/g, word => word.charAt(0).toUpperCase() + word.slice(1))
+}
 export function getCookie(name: string) {
       const value = `; ${document.cookie}`
       const parts: any = value.split(`; ${name}=`)
@@ -292,47 +292,47 @@ export async function switchNetwork(chainId: string) {
       }
 }
 
-export  const getWalletClaims = ( systemFileInfo: ApiFileInfo[],  files: ApiFileInfo[],    walletAddress: string, _setSelectedFileInfo: (file: ApiFileInfo | null) => void): IIdentityClaimDetails | null  => {
-            const aquaTemplates: string[] = systemFileInfo.map(e => {
-                  try {
-                        return getAquaTreeFileName(e.aquaTree!)
-                  } catch (e) {
-                        console.log('Error processing system file') // More descriptive
-                        return ''
-                  }
-            })
+export const getWalletClaims = (systemFileInfo: ApiFileInfo[], files: ApiFileInfo[], walletAddress: string, _setSelectedFileInfo: (file: ApiFileInfo | null) => void): IIdentityClaimDetails | null => {
+      const aquaTemplates: string[] = systemFileInfo.map(e => {
+            try {
+                  return getAquaTreeFileName(e.aquaTree!)
+            } catch (e) {
+                  console.log('Error processing system file') // More descriptive
+                  return ''
+            }
+      })
 
-            if (files && files.length > 0) {
-                  let firstClaim: ApiFileInfo | null = null
-                  for (let i = 0; i < files.length; i++) {
-                        const aquaTree = files[i].aquaTree
-                        if (aquaTree) {
-                              const { isWorkFlow, workFlow } = isWorkFlowData(aquaTree!, aquaTemplates)
-                              if (isWorkFlow && (workFlow === 'simple_claim' || workFlow === 'identity_claim')) {
-                                    const orderedAquaTree = OrderRevisionInAquaTree(aquaTree)
-                                    const revisionHashes = Object.keys(orderedAquaTree.revisions)
-                                    const firstRevisionHash = revisionHashes[0]
-                                    const firstRevision = orderedAquaTree.revisions[firstRevisionHash]
-                                    const _wallet_address = firstRevision.forms_wallet_address
-                                    if (walletAddress === _wallet_address) {
-                                          firstClaim = files[i]
-                                          break
-                                    }
+      if (files && files.length > 0) {
+            let firstClaim: ApiFileInfo | null = null
+            for (let i = 0; i < files.length; i++) {
+                  const aquaTree = files[i].aquaTree
+                  if (aquaTree) {
+                        const { isWorkFlow, workFlow } = isWorkFlowData(aquaTree!, aquaTemplates)
+                        if (isWorkFlow && (workFlow === 'simple_claim' || workFlow === 'identity_claim')) {
+                              const orderedAquaTree = OrderRevisionInAquaTree(aquaTree)
+                              const revisionHashes = Object.keys(orderedAquaTree.revisions)
+                              const firstRevisionHash = revisionHashes[0]
+                              const firstRevision = orderedAquaTree.revisions[firstRevisionHash]
+                              const _wallet_address = firstRevision.forms_wallet_address
+                              if (walletAddress === _wallet_address) {
+                                    firstClaim = files[i]
+                                    break
                               }
                         }
                   }
-                  if (firstClaim) {
-                        const genesisHash = getGenesisHash(firstClaim.aquaTree!)
-                        const firstRevision = firstClaim.aquaTree!.revisions[genesisHash!]
-                        const name = firstRevision.forms_name
+            }
+            if (firstClaim) {
+                  const genesisHash = getGenesisHash(firstClaim.aquaTree!)
+                  const firstRevision = firstClaim.aquaTree!.revisions[genesisHash!]
+                  const name = firstRevision.forms_name
 
-                        return {
-                              name
-                        }
+                  return {
+                        name
                   }
             }
-            return null
       }
+      return null
+}
 
 /**
  * Validates if a string is a valid Ethereum address using ethers.js v6
@@ -1609,24 +1609,24 @@ export const determineFileType = async (file: File): Promise<File> => {
                   detectedMimeType = 'image/jpeg'
             }
             // HEIC/HEIF signatures
-            else if (uint8Array.length >= 12 && 
-                     checkBytes([0, 1, 2, 3], [0x00, 0x00, 0x00, 0x18]) &&
-                     checkString(4, 'ftyp') && 
-                     (checkString(8, 'heic') || checkString(8, 'heix'))) {
+            else if (uint8Array.length >= 12 &&
+                  checkBytes([0, 1, 2, 3], [0x00, 0x00, 0x00, 0x18]) &&
+                  checkString(4, 'ftyp') &&
+                  (checkString(8, 'heic') || checkString(8, 'heix'))) {
                   extension = '.heic'
                   detectedMimeType = 'image/heic'
             }
             // Alternative HEIC signature
-            else if (uint8Array.length >= 12 && 
-                     checkString(4, 'ftyp') && 
-                     (checkString(8, 'heic') || checkString(8, 'heix') || checkString(8, 'heim') || checkString(8, 'heis'))) {
+            else if (uint8Array.length >= 12 &&
+                  checkString(4, 'ftyp') &&
+                  (checkString(8, 'heic') || checkString(8, 'heix') || checkString(8, 'heim') || checkString(8, 'heis'))) {
                   extension = '.heic'
                   detectedMimeType = 'image/heic'
             }
             // HEIF signature
-            else if (uint8Array.length >= 12 && 
-                     checkString(4, 'ftyp') && 
-                     (checkString(8, 'mif1') || checkString(8, 'heif'))) {
+            else if (uint8Array.length >= 12 &&
+                  checkString(4, 'ftyp') &&
+                  (checkString(8, 'mif1') || checkString(8, 'heif'))) {
                   extension = '.heif'
                   detectedMimeType = 'image/heif'
             }
@@ -1646,8 +1646,8 @@ export const determineFileType = async (file: File): Promise<File> => {
                   detectedMimeType = 'image/bmp'
             }
             // TIFF signatures
-            else if ((checkBytes([0, 1, 2, 3], [0x49, 0x49, 0x2a, 0x00]) || 
-                     checkBytes([0, 1, 2, 3], [0x4d, 0x4d, 0x00, 0x2a]))) {
+            else if ((checkBytes([0, 1, 2, 3], [0x49, 0x49, 0x2a, 0x00]) ||
+                  checkBytes([0, 1, 2, 3], [0x4d, 0x4d, 0x00, 0x2a]))) {
                   extension = '.tiff'
                   detectedMimeType = 'image/tiff'
             }
@@ -1669,10 +1669,10 @@ export const determineFileType = async (file: File): Promise<File> => {
                   }
             }
             // MP4 signatures
-            else if (uint8Array.length >= 12 && 
-                     checkString(4, 'ftyp') && 
-                     (checkString(8, 'mp41') || checkString(8, 'mp42') || checkString(8, 'isom') || 
-                      checkString(8, 'M4V ') || checkString(8, 'M4A '))) {
+            else if (uint8Array.length >= 12 &&
+                  checkString(4, 'ftyp') &&
+                  (checkString(8, 'mp41') || checkString(8, 'mp42') || checkString(8, 'isom') ||
+                        checkString(8, 'M4V ') || checkString(8, 'M4A '))) {
                   extension = '.mp4'
                   detectedMimeType = 'video/mp4'
             }
@@ -1682,9 +1682,9 @@ export const determineFileType = async (file: File): Promise<File> => {
                   detectedMimeType = 'video/x-msvideo'
             }
             // MOV signature (QuickTime)
-            else if (uint8Array.length >= 12 && 
-                     checkString(4, 'ftyp') && 
-                     checkString(8, 'qt  ')) {
+            else if (uint8Array.length >= 12 &&
+                  checkString(4, 'ftyp') &&
+                  checkString(8, 'qt  ')) {
                   extension = '.mov'
                   detectedMimeType = 'video/quicktime'
             }
@@ -1704,9 +1704,9 @@ export const determineFileType = async (file: File): Promise<File> => {
                   detectedMimeType = 'audio/ogg'
             }
             // ZIP signature (also covers XLSX, DOCX, etc.)
-            else if (checkBytes([0, 1, 2, 3], [0x50, 0x4b, 0x03, 0x04]) || 
-                     checkBytes([0, 1, 2, 3], [0x50, 0x4b, 0x05, 0x06]) || 
-                     checkBytes([0, 1, 2, 3], [0x50, 0x4b, 0x07, 0x08])) {
+            else if (checkBytes([0, 1, 2, 3], [0x50, 0x4b, 0x03, 0x04]) ||
+                  checkBytes([0, 1, 2, 3], [0x50, 0x4b, 0x05, 0x06]) ||
+                  checkBytes([0, 1, 2, 3], [0x50, 0x4b, 0x07, 0x08])) {
                   // Need to check if it's a specific Office format
                   try {
                         const text = new TextDecoder().decode(uint8Array.slice(0, 1024))
@@ -1739,8 +1739,8 @@ export const determineFileType = async (file: File): Promise<File> => {
                   detectedMimeType = 'application/x-7z-compressed'
             }
             // TAR signature
-            else if (uint8Array.length >= 262 && 
-                     checkString(257, 'ustar')) {
+            else if (uint8Array.length >= 262 &&
+                  checkString(257, 'ustar')) {
                   extension = '.tar'
                   detectedMimeType = 'application/x-tar'
             }
@@ -1798,8 +1798,8 @@ export const determineFileType = async (file: File): Promise<File> => {
             else if (uint8Array.length > 0) {
                   try {
                         const text = new TextDecoder().decode(uint8Array.slice(0, 1024))
-                        if (text.includes('function') || text.includes('var ') || text.includes('const ') || 
-                            text.includes('let ') || text.includes('=>') || text.includes('console.log')) {
+                        if (text.includes('function') || text.includes('var ') || text.includes('const ') ||
+                              text.includes('let ') || text.includes('=>') || text.includes('console.log')) {
                               extension = '.js'
                               detectedMimeType = 'application/javascript'
                         }
@@ -1816,7 +1816,7 @@ export const determineFileType = async (file: File): Promise<File> => {
                         if (/[,;]/.test(text) && text.split('\n').length > 1) {
                               extension = '.csv'
                               detectedMimeType = 'text/csv'
-                        } 
+                        }
                         // Check if it's a tab-separated file
                         else if (/\t/.test(text) && text.split('\n').length > 1) {
                               extension = '.tsv'
@@ -2112,41 +2112,65 @@ export function convertToWebsocketUrl(actualUrlToFetch: string): string {
 }
 
 export function ensureDomainUrlHasSSL(actualUrlToFetch: string): string {
-  let url = actualUrlToFetch;
+      let url = actualUrlToFetch;
 
-  // Step 1: Enforce HTTPS for all domains except localhost/development
-  const isLocalhost = url.includes('127.0.0.1') || url.includes('0.0.0.0') || url.includes('localhost');
-  
-  if (!isLocalhost) {
-    // Add https if no protocol specified
-    if (!url.includes('://')) {
-      url = 'https://' + url;
-    }
-    // Replace http with https if not localhost
-    else if (url.startsWith('http://')) {
-      url = url.replace('http://', 'https://');
-    }
+      // Check if actualUrlToFetch is localhost but window host is not localhost
+      const isLocalhost = url.includes('127.0.0.1') || url.includes('0.0.0.0') || url.includes('localhost');
+      const windowHost = window.location.origin;
 
-    //Remove port numbers for non-localhost URLs
-     url = url.replace(/:\d+/g, '');
-  }
+     
+      
+      // Step 1: Enforce HTTPS for all domains except localhost/development
+      if (!isLocalhost) {
+            // Add https if no protocol specified
+            if (!url.includes('://')) {
+                  url = 'https://' + url;
+            }
+            // Replace http with https if not localhost
+            else if (url.startsWith('http://')) {
+                  url = url.replace('http://', 'https://');
+            }
 
-  // Step 2: Replace unsafe localhost URLs with safe ones
-  const localhostReplacements = [
-    { from: 'https://0.0.0.0', to: 'http://127.0.0.1' },
-    { from: 'http://0.0.0.0', to: 'http://127.0.0.1' },
-    { from: 'https://127.0.0.1', to: 'http://127.0.0.1' },
-    { from: 'https://localhost', to: 'http://127.0.0.1' }
-  ];
+            //Remove port numbers for non-localhost URLs
+            url = url.replace(/:\d+/g, '');
+      }
 
-  for (const replacement of localhostReplacements) {
-    if (url.startsWith(replacement.from)) {
-      url = url.replace(replacement.from, replacement.to);
-    }
-  }
+      // Step 2: Replace unsafe localhost URLs with safe ones
+      const localhostReplacements = [
+            { from: 'https://0.0.0.0', to: 'http://127.0.0.1' },
+            { from: 'http://0.0.0.0', to: 'http://127.0.0.1' },
+            { from: 'https://127.0.0.1', to: 'http://127.0.0.1' },
+            { from: 'https://localhost', to: 'http://127.0.0.1' }
+      ];
+
+      for (const replacement of localhostReplacements) {
+            if (url.startsWith(replacement.from)) {
+                  url = url.replace(replacement.from, replacement.to);
+            }
+      }
 
 
-  return url;
+       if (isLocalhost && !(windowHost.includes('127.0.0.1') || windowHost.includes('localhost'))) {
+            // Replace localhost/127.0.0.1 based on window host
+            if (windowHost === 'https://dev.inblock.io') {
+                  url = url.replace(/https?:\/\/(127\.0\.0\.1|localhost|0\.0\.0\.0)/g, 'https://dev-api.inblock.io');
+            } else if (windowHost === 'https://aquafier.inblock.io') {
+                  url = url.replace(/https?:\/\/(127\.0\.0\.1|localhost|0\.0\.0\.0)/g, 'https://aquafier-api.inblock.io');
+            } else {
+                  // Extract subdomain and add -api
+                  const match = windowHost.match(/https?:\/\/([^.]+)\./);
+                  if (match) {
+                        const subdomain = match[1];
+                        const baseHost = windowHost.replace(/https?:\/\/[^.]+\./, `https://${subdomain}-api.`);
+                        url = url.replace(/https?:\/\/(127\.0\.0\.1|localhost|0\.0\.0\.0)/g, baseHost);
+                  }
+            }
+            // Remove port numbers and path from the replaced URL if they exist
+            url = url.replace(/:\d+/g, '').replace(/\/.*$/, '');
+            return url;
+      }
+
+      return url;
 }
 
 
