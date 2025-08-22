@@ -1,6 +1,18 @@
 #!/bin/bash
 set -ex
 
+# LOGGING: Create detailed log
+LOGFILE="/var/log/aquafier_startup.log"
+exec 19>&1
+exec 1> >(tee -a $LOGFILE)
+exec 2>&1
+
+echo "=== STARTUP LOG - $(date) ==="
+echo "Container started with environment:"
+echo "RESET_DATABASE=${RESET_DATABASE:-false}"
+echo "RESTORE_BACKUP=${RESTORE_BACKUP:-false}"
+echo "NODE_ENV=${NODE_ENV:-production}"
+
 # Set default values if not provided
 DB_USER=${DB_USER:-aquafier}
 DB_PASSWORD=${DB_PASSWORD:-changeme}
@@ -8,6 +20,8 @@ DB_NAME=${DB_NAME:-aquafier}
 
 # NEW: Check for database reset flag
 RESET_DATABASE=${RESET_DATABASE:-false}
+
+echo "Database configuration: User=$DB_USER, DB=$DB_NAME, Reset=$RESET_DATABASE"
 
 # Wait for database to be ready with improved error handling
 max_attempts=30
@@ -44,9 +58,17 @@ while [ $attempt -lt $max_attempts ]; do
   fi
 done
 
-# Check if database has been restored (contains data)
-echo "Checking database state..."
+# DETAILED DATABASE ANALYSIS
+echo "=== PRE-MIGRATION DATABASE STATE ==="
 export PGPASSWORD=$DB_PASSWORD
+
+# Count all tables
+all_tables=$(psql -h postgres -U "$DB_USER" -d "$DB_NAME" -t -c "
+  SELECT count(*) 
+  FROM information_schema.tables 
+  WHERE table_schema='public' 
+    AND table_type='BASE TABLE'
+" 2>/dev/null | xargs || echo "0")
 
 # Count non-system tables
 table_count=$(psql -h postgres -U "$DB_USER" -d "$DB_NAME" -t -c "
@@ -65,29 +87,32 @@ migration_table_exists=$(psql -h postgres -U "$DB_USER" -d "$DB_NAME" -t -c "
     AND table_name = '_prisma_migrations'
 " 2>/dev/null | xargs || echo "0")
 
-# Check if database has actual data (not just empty tables)
+# Count existing data
+user_count=$(psql -h postgres -U "$DB_USER" -d "$DB_NAME" -t -c "SELECT count(*) FROM users" 2>/dev/null | xargs || echo "0")
+file_count=$(psql -h postgres -U "$DB_USER" -d "$DB_NAME" -t -c "SELECT count(*) FROM file" 2>/dev/null | xargs || echo "0")
+revision_count=$(psql -h postgres -U "$DB_USER" -d "$DB_NAME" -t -c "SELECT count(*) FROM revision" 2>/dev/null | xargs || echo "0")
+siwe_count=$(psql -h postgres -U "$DB_USER" -d "$DB_NAME" -t -c "SELECT count(*) FROM siwe_session" 2>/dev/null | xargs || echo "0")
+
+# Check if database has actual data
 data_exists="false"
-if [ "$table_count" -gt "0" ]; then
-    # Check a few key tables for data
-    user_count=$(psql -h postgres -U "$DB_USER" -d "$DB_NAME" -t -c "
-      SELECT COALESCE((
-        SELECT count(*) FROM users
-        UNION ALL
-        SELECT count(*) FROM file
-        UNION ALL  
-        SELECT count(*) FROM revision
-        ORDER BY 1 DESC LIMIT 1
-      ), 0)
-    " 2>/dev/null | xargs || echo "0")
-    
-    if [ "$user_count" -gt "0" ]; then
-        data_exists="true"
-    fi
+if [ "$user_count" -gt "0" ] || [ "$file_count" -gt "0" ] || [ "$revision_count" -gt "0" ]; then
+    data_exists="true"
 fi
 
-echo "Database analysis: tables=$table_count, migration_table=$migration_table_exists, has_data=$data_exists, restore_mode=$RESTORE_BACKUP, reset_flag=$RESET_DATABASE"
+echo "Database state before migration:"
+echo "  Total tables: $all_tables"
+echo "  App tables: $table_count" 
+echo "  Migration table exists: $migration_table_exists"
+echo "  Users: $user_count"
+echo "  Files: $file_count"
+echo "  Revisions: $revision_count"
+echo "  SIWE Sessions: $siwe_count"
+echo "  Has data: $data_exists"
 
-# Unset PGPASSWORD for security
+# List all tables
+echo "All tables in database:"
+psql -h postgres -U "$DB_USER" -d "$DB_NAME" -c "\dt" 2>/dev/null || echo "No tables found"
+
 unset PGPASSWORD
 
 # Run Prisma commands with proper initialization
@@ -100,10 +125,13 @@ npx prisma generate || {
   exit 1
 }
 
+echo "=== MIGRATION DECISION LOGIC ==="
+
 # NEW: Handle explicit database reset
 if [ "$RESET_DATABASE" = "true" ]; then
     echo "🗑️  RESET_DATABASE=true detected - RESETTING DATABASE!"
     echo "⚠️  WARNING: This will delete all existing data!"
+    echo "Pre-reset data counts: Users=$user_count, Files=$file_count, Revisions=$revision_count"
     
     # Force reset the database
     npx prisma migrate reset --force || {
@@ -113,7 +141,7 @@ if [ "$RESET_DATABASE" = "true" ]; then
     
     echo "✅ Database reset complete - fresh start!"
     
-# Handle Prisma setup based on database state
+# Handle restored backups
 elif [ "$RESTORE_BACKUP" = "true" ] && [ "$data_exists" = "true" ]; then
     echo "=== RESTORED DATABASE DETECTED ==="
     echo "Skipping destructive Prisma operations to preserve restored data..."
@@ -121,7 +149,6 @@ elif [ "$RESTORE_BACKUP" = "true" ] && [ "$data_exists" = "true" ]; then
     if [ "$migration_table_exists" = "0" ]; then
         echo "Creating Prisma migration history for restored database..."
         
-        # Create migration table and mark as migrated
         export PGPASSWORD=$DB_PASSWORD
         
         # Create the *prisma*migrations table
@@ -158,112 +185,110 @@ elif [ "$RESTORE_BACKUP" = "true" ] && [ "$data_exists" = "true" ]; then
         
         unset PGPASSWORD
         echo "✅ Migration history created for restored database"
-    else
-        echo "✅ Migration table already exists, database ready"
     fi
-    
-    # Verify schema is in sync (non-destructive)
-    echo "Verifying Prisma schema alignment..."
-    npx prisma db pull --force --print || echo "WARN: Could not pull schema, but continuing..."
     
     echo "✅ Restored database setup complete - data preserved!"
 
+# Handle empty databases
 elif [ "$table_count" -eq "0" ] || [ "$data_exists" = "false" ]; then
     echo "=== EMPTY DATABASE DETECTED ==="
     echo "Running full Prisma initialization for empty database..."
     
-    # For empty database, we need to either deploy migrations or push schema
-    if [ -d "prisma/migrations" ] && [ "$(ls -A prisma/migrations 2>/dev/null)" ]; then
-        echo "Migration files found, deploying migrations..."
-        npx prisma migrate deploy || {
-            echo "Deploy failed, falling back to schema push..."
-            npx prisma db push || {
-                echo "ERROR: Both migration deploy and schema push failed"
-                exit 1
-            }
-        }
-    else
-        echo "No migration files found, pushing schema directly..."
-        npx prisma db push || {
-            echo "ERROR: Schema push failed"
-            exit 1
-        }
-    fi
+    # Always use db push for empty databases to ensure all tables are created
+    echo "Pushing complete schema to empty database..."
+    npx prisma db push || {
+        echo "ERROR: Schema push failed"
+        exit 1
+    }
     
     echo "✅ Empty database initialized successfully"
 
+# Handle existing databases with data
 else
     echo "=== EXISTING DATABASE WITH DATA DETECTED ==="
-    echo "🔒 PRESERVING EXISTING DATA - Using non-destructive operations..."
+    echo "🔒 PRESERVING EXISTING DATA"
+    echo "Current data: Users=$user_count, Files=$file_count, Revisions=$revision_count"
     
-    # For existing database with data, first try to deploy any pending migrations
-    echo "Checking for pending migrations..."
-    
-    # Check if we have migration files
-    if [ -d "prisma/migrations" ] && [ "$(ls -A prisma/migrations 2>/dev/null)" ]; then
-        echo "Migration files found, attempting to deploy..."
-        npx prisma migrate deploy || {
-            echo "Migration deploy failed, checking schema state..."
-            
-            # Check if schema matches
-            echo "Checking schema alignment..."
-            npx prisma db pull --force || {
-                echo "Could not pull current schema"
-            }
-            
-            # Try a cautious schema push
-            echo "Attempting schema synchronization..."
-            npx prisma db push || {
-                echo "Schema push failed. The database schema might be out of sync."
-                echo "Consider creating new migration files or setting RESET_DATABASE=true"
-                exit 1
-            }
-        }
-    else
-        echo "No migration files found, using schema push..."
-        npx prisma db push || {
-            echo "ERROR: Schema push failed"
-            exit 1
-        }
-    fi
-    
-    # Verify that required tables exist
+    # Check if all required tables exist
     export PGPASSWORD=$DB_PASSWORD
-    missing_tables=$(psql -h postgres -U "$DB_USER" -d "$DB_NAME" -t -c "
-        SELECT string_agg(table_name, ', ') 
-        FROM (
-            SELECT 'siwe_session' as table_name
-            UNION SELECT 'users'
-            UNION SELECT 'file'
-            UNION SELECT 'revision'
-        ) expected_tables
-        WHERE table_name NOT IN (
-            SELECT table_name 
-            FROM information_schema.tables 
-            WHERE table_schema = 'public'
-        )
-    " 2>/dev/null | xargs || echo "")
+    required_tables="users file revision siwe_session"
+    missing_tables=""
+    
+    for table in $required_tables; do
+        exists=$(psql -h postgres -U "$DB_USER" -d "$DB_NAME" -t -c "
+            SELECT count(*) FROM information_schema.tables 
+            WHERE table_schema = 'public' AND table_name = '$table'
+        " 2>/dev/null | xargs || echo "0")
+        
+        if [ "$exists" = "0" ]; then
+            missing_tables="$missing_tables $table"
+        fi
+    done
     unset PGPASSWORD
     
-    if [ -n "$missing_tables" ] && [ "$missing_tables" != "" ]; then
-        echo "⚠️  Missing tables detected: $missing_tables"
-        echo "Schema appears incomplete. Forcing schema push..."
-        npx prisma db push --force-reset || {
-            echo "ERROR: Could not create missing tables"
+    if [ -n "$missing_tables" ]; then
+        echo "⚠️  Missing required tables:$missing_tables"
+        echo "Adding missing tables with schema push..."
+        npx prisma db push || {
+            echo "ERROR: Could not add missing tables"
             exit 1
         }
-        echo "✅ Missing tables created"
+        echo "✅ Missing tables added"
+    else
+        echo "✅ All required tables present"
+        
+        # Try to deploy any pending migrations safely
+        if [ -d "prisma/migrations" ] && [ "$(ls -A prisma/migrations 2>/dev/null)" ]; then
+            echo "Attempting to deploy any pending migrations..."
+            npx prisma migrate deploy || {
+                echo "Migration deploy failed, but continuing with existing schema"
+            }
+        fi
     fi
     
     echo "✅ Existing database preserved and updated safely"
 fi
 
+# POST-MIGRATION VERIFICATION
+echo "=== POST-MIGRATION DATABASE STATE ==="
+export PGPASSWORD=$DB_PASSWORD
+
+final_user_count=$(psql -h postgres -U "$DB_USER" -d "$DB_NAME" -t -c "SELECT count(*) FROM users" 2>/dev/null | xargs || echo "0")
+final_file_count=$(psql -h postgres -U "$DB_USER" -d "$DB_NAME" -t -c "SELECT count(*) FROM file" 2>/dev/null | xargs || echo "0")
+final_revision_count=$(psql -h postgres -U "$DB_USER" -d "$DB_NAME" -t -c "SELECT count(*) FROM revision" 2>/dev/null | xargs || echo "0")
+final_siwe_count=$(psql -h postgres -U "$DB_USER" -d "$DB_NAME" -t -c "SELECT count(*) FROM siwe_session" 2>/dev/null | xargs || echo "0")
+
+echo "Final database state:"
+echo "  Users: $final_user_count (was $user_count)"
+echo "  Files: $final_file_count (was $file_count)"  
+echo "  Revisions: $final_revision_count (was $revision_count)"
+echo "  SIWE Sessions: $final_siwe_count (was $siwe_count)"
+
+# Check for data loss
+if [ "$RESET_DATABASE" != "true" ] && [ "$data_exists" = "true" ]; then
+    if [ "$final_user_count" -lt "$user_count" ] || [ "$final_file_count" -lt "$file_count" ] || [ "$final_revision_count" -lt "$revision_count" ]; then
+        echo "🚨 POTENTIAL DATA LOSS DETECTED!"
+        echo "Data counts decreased unexpectedly"
+    else
+        echo "✅ Data preservation verified"
+    fi
+fi
+
+echo "Final table list:"
+psql -h postgres -U "$DB_USER" -d "$DB_NAME" -c "\dt" 2>/dev/null || echo "No tables found"
+
+unset PGPASSWORD
+
 # Replace backend URL placeholder in config
 sed -i -e "s|BACKEND_URL_PLACEHOLDER|$BACKEND_URL|g" /app/frontend/config.json
 
+echo "=== STARTING SERVICES ==="
+
 # Start backend in the background
 cd /app/backend
+echo "Starting backend..."
 node dist/index.js &
+backend_pid=$!
 
 # Serve frontend
 cd /app/frontend
@@ -288,11 +313,22 @@ EOF
 service cron start
 
 # Start serve with the configuration
+echo "Starting frontend..."
 serve -s . -l 3600 &
+frontend_pid=$!
 
 #extra aquafier log
 touch /var/log/aquafier_ext
 tail -f /var/log/aquafier_ext &
+
+echo "=== SERVICES STARTED ==="
+echo "Backend PID: $backend_pid"
+echo "Frontend PID: $frontend_pid"
+echo "Startup complete at $(date)"
+echo "========================="
+
+# Restore original stdout
+exec 1>&19 19>&-
 
 # Wait for any process to exit
 wait -n
