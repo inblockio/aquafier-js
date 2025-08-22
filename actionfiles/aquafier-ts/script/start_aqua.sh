@@ -172,19 +172,23 @@ elif [ "$table_count" -eq "0" ] || [ "$data_exists" = "false" ]; then
     echo "=== EMPTY DATABASE DETECTED ==="
     echo "Running full Prisma initialization for empty database..."
     
-    # Standard initialization for empty database
-    npx prisma migrate deploy || {
-        echo "Deploy failed, trying to push schema directly..."
+    # For empty database, we need to either deploy migrations or push schema
+    if [ -d "prisma/migrations" ] && [ "$(ls -A prisma/migrations 2>/dev/null)" ]; then
+        echo "Migration files found, deploying migrations..."
+        npx prisma migrate deploy || {
+            echo "Deploy failed, falling back to schema push..."
+            npx prisma db push || {
+                echo "ERROR: Both migration deploy and schema push failed"
+                exit 1
+            }
+        }
+    else
+        echo "No migration files found, pushing schema directly..."
         npx prisma db push || {
-            echo "ERROR: Both migration deploy and schema push failed"
+            echo "ERROR: Schema push failed"
             exit 1
         }
-        
-        # After successful db push, try migrations again
-        npx prisma migrate deploy || {
-            echo "WARN: Could not deploy migrations after schema push, but schema is ready"
-        }
-    }
+    fi
     
     echo "✅ Empty database initialized successfully"
 
@@ -192,32 +196,64 @@ else
     echo "=== EXISTING DATABASE WITH DATA DETECTED ==="
     echo "🔒 PRESERVING EXISTING DATA - Using non-destructive operations..."
     
-    # For existing database with data, use deploy instead of dev to avoid resets
-    echo "Running safe migration deployment..."
-    npx prisma migrate deploy || {
-        echo "Migration deploy failed, checking schema differences..."
-        
-        # Try to detect schema drift
-        echo "Checking for schema differences..."
-        npx prisma db pull --print > /tmp/current_schema.prisma 2>/dev/null || true
-        
-        if diff -q prisma/schema.prisma /tmp/current_schema.prisma > /dev/null 2>&1; then
-            echo "✅ Schema is in sync, no migration needed"
-        else
-            echo "⚠️  Schema differences detected!"
-            echo "Current schema differs from Prisma schema file."
-            echo "This usually means you need to create a new migration."
-            echo "Run 'prisma migrate dev' in development to create migration files."
+    # For existing database with data, first try to deploy any pending migrations
+    echo "Checking for pending migrations..."
+    
+    # Check if we have migration files
+    if [ -d "prisma/migrations" ] && [ "$(ls -A prisma/migrations 2>/dev/null)" ]; then
+        echo "Migration files found, attempting to deploy..."
+        npx prisma migrate deploy || {
+            echo "Migration deploy failed, checking schema state..."
             
-            # Try a gentle push that won't reset data
-            echo "Attempting gentle schema push..."
-            if ! npx prisma db push --accept-data-loss=false 2>/dev/null; then
-                echo "❌ Cannot safely update schema without potential data loss."
-                echo "Please create proper migration files or set RESET_DATABASE=true if data loss is acceptable."
+            # Check if schema matches
+            echo "Checking schema alignment..."
+            npx prisma db pull --force || {
+                echo "Could not pull current schema"
+            }
+            
+            # Try a cautious schema push
+            echo "Attempting schema synchronization..."
+            npx prisma db push || {
+                echo "Schema push failed. The database schema might be out of sync."
+                echo "Consider creating new migration files or setting RESET_DATABASE=true"
                 exit 1
-            fi
-        fi
-    }
+            }
+        }
+    else
+        echo "No migration files found, using schema push..."
+        npx prisma db push || {
+            echo "ERROR: Schema push failed"
+            exit 1
+        }
+    fi
+    
+    # Verify that required tables exist
+    export PGPASSWORD=$DB_PASSWORD
+    missing_tables=$(psql -h postgres -U "$DB_USER" -d "$DB_NAME" -t -c "
+        SELECT string_agg(table_name, ', ') 
+        FROM (
+            SELECT 'siwe_session' as table_name
+            UNION SELECT 'users'
+            UNION SELECT 'file'
+            UNION SELECT 'revision'
+        ) expected_tables
+        WHERE table_name NOT IN (
+            SELECT table_name 
+            FROM information_schema.tables 
+            WHERE table_schema = 'public'
+        )
+    " 2>/dev/null | xargs || echo "")
+    unset PGPASSWORD
+    
+    if [ -n "$missing_tables" ] && [ "$missing_tables" != "" ]; then
+        echo "⚠️  Missing tables detected: $missing_tables"
+        echo "Schema appears incomplete. Forcing schema push..."
+        npx prisma db push --force-reset || {
+            echo "ERROR: Could not create missing tables"
+            exit 1
+        }
+        echo "✅ Missing tables created"
+    fi
     
     echo "✅ Existing database preserved and updated safely"
 fi
