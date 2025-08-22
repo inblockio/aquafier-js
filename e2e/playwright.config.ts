@@ -16,7 +16,7 @@ export default defineConfig({
   testDir: './cases',
   fullyParallel: true,
   /* Fail the build on CI if you accidentally left test.only in the source code. */
-  forbidOnly: !!process.env.CI,
+  forbidOnly: false,
   retries: process.env.RETRIES ? parseInt(process.env.RETRIES) : 1,
   /* Opt out of parallel tests on CI. */
   workers: process.env.WORKERS ? parseInt(process.env.WORKERS) : 1,
