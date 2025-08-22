@@ -48,7 +48,7 @@ RUN mkdir /backup
 
 EXPOSE 3000
 EXPOSE 3600
-
+ 
 # Create necessary directories
 RUN mkdir -p /app/backend /app/frontend /app/data
 
