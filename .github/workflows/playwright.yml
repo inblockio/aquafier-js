@@ -16,6 +16,9 @@ env:
 
 jobs:
   Playwright-Tests:
+    strategy:
+      matrix:
+        shardIndex: [ 1, 2, 3, 4 ]
     timeout-minutes: 60
     runs-on: ubuntu-latest
     steps:
@@ -80,7 +83,7 @@ jobs:
       - name: Run Playwright tests
         env:
           DISPLAY: :99
-        run: cd e2e && npx playwright test
+        run: cd e2e && npx playwright test --shard=${{ matrix.shardIndex }}/4
 
       - uses: actions/upload-artifact@v4
         if: ${{ !cancelled() }}
