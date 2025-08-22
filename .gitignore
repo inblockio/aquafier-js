@@ -16,4 +16,5 @@ android
 
 #dev
 deployment/dev_mount_points/
+deployment/restore/
 /.idea/
