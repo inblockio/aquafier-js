@@ -79,7 +79,7 @@ table_count=$(psql -h postgres -U "$DB_USER" -d "$DB_NAME" -t -c "
     AND table_name != '_prisma_migrations'
 " 2>/dev/null | xargs || echo "0")
 
-# Check if *prisma*migrations exists
+# Check if _prisma_migrations exists
 migration_table_exists=$(psql -h postgres -U "$DB_USER" -d "$DB_NAME" -t -c "
   SELECT count(*) 
   FROM information_schema.tables 
@@ -133,10 +133,65 @@ if [ "$RESET_DATABASE" = "true" ]; then
     echo "⚠️  WARNING: This will delete all existing data!"
     echo "Pre-reset data counts: Users=$user_count, Files=$file_count, Revisions=$revision_count"
     
-    # Force reset the database
+    # FIXED: Use a more reliable reset approach
+    echo "Step 1: Resetting database with migrate reset..."
     npx prisma migrate reset --force || {
-        echo "Reset failed, trying manual approach..."
-        npx prisma db push --force-reset
+        echo "Migrate reset failed, trying manual approach..."
+        # Manual reset approach
+        echo "Step 1a: Dropping all tables manually..."
+        export PGPASSWORD=$DB_PASSWORD
+        psql -h postgres -U "$DB_USER" -d "$DB_NAME" -c "
+        DROP SCHEMA public CASCADE;
+        CREATE SCHEMA public;
+        GRANT ALL ON SCHEMA public TO postgres;
+        GRANT ALL ON SCHEMA public TO public;
+        " || {
+            echo "Manual schema reset failed"
+            exit 1
+        }
+        unset PGPASSWORD
+        
+        echo "Step 1b: Pushing fresh schema..."
+        npx prisma db push --force-reset || {
+            echo "ERROR: Schema push after manual reset failed"
+            exit 1
+        }
+    }
+    
+    # CRITICAL: Ensure schema is properly applied after reset
+    echo "Step 2: Verifying and applying schema after reset..."
+    
+    # Check if tables were created by reset
+    export PGPASSWORD=$DB_PASSWORD
+    tables_after_reset=$(psql -h postgres -U "$DB_USER" -d "$DB_NAME" -t -c "
+      SELECT count(*) 
+      FROM information_schema.tables 
+      WHERE table_schema='public' 
+        AND table_type='BASE TABLE'
+        AND table_name != '_prisma_migrations'
+    " 2>/dev/null | xargs || echo "0")
+    unset PGPASSWORD
+    
+    echo "Tables after reset: $tables_after_reset"
+    
+    # If no tables were created, force schema creation
+    if [ "$tables_after_reset" -eq "0" ]; then
+        echo "Step 2a: No tables found after reset, forcing schema creation..."
+        npx prisma db push || {
+            echo "ERROR: Failed to create schema after reset"
+            exit 1
+        }
+    fi
+    
+    # ADDITIONAL: Run migrate dev to ensure proper migration state
+    echo "Step 3: Initializing migration history..."
+    npx prisma migrate dev --name init --create-only || {
+        echo "Could not create migration file, but schema should be ready"
+    }
+    
+    # Apply the migration if it was created
+    npx prisma migrate deploy || {
+        echo "Migration deploy failed, but schema should still be ready"
     }
     
     echo "✅ Database reset complete - fresh start!"
@@ -151,7 +206,7 @@ elif [ "$RESTORE_BACKUP" = "true" ] && [ "$data_exists" = "true" ]; then
         
         export PGPASSWORD=$DB_PASSWORD
         
-        # Create the *prisma*migrations table
+        # Create the _prisma_migrations table
         psql -h postgres -U "$DB_USER" -d "$DB_NAME" -c "
         CREATE TABLE IF NOT EXISTS \"_prisma_migrations\" (
             \"id\" VARCHAR(36) PRIMARY KEY,
@@ -258,11 +313,45 @@ final_file_count=$(psql -h postgres -U "$DB_USER" -d "$DB_NAME" -t -c "SELECT co
 final_revision_count=$(psql -h postgres -U "$DB_USER" -d "$DB_NAME" -t -c "SELECT count(*) FROM revision" 2>/dev/null | xargs || echo "0")
 final_siwe_count=$(psql -h postgres -U "$DB_USER" -d "$DB_NAME" -t -c "SELECT count(*) FROM siwe_session" 2>/dev/null | xargs || echo "0")
 
+# CRITICAL: Check if siwe_session table exists
+siwe_table_exists=$(psql -h postgres -U "$DB_USER" -d "$DB_NAME" -t -c "
+  SELECT count(*) 
+  FROM information_schema.tables 
+  WHERE table_schema='public' 
+    AND table_name = 'siwe_session'
+" 2>/dev/null | xargs || echo "0")
+
 echo "Final database state:"
 echo "  Users: $final_user_count (was $user_count)"
 echo "  Files: $final_file_count (was $file_count)"  
 echo "  Revisions: $final_revision_count (was $revision_count)"
 echo "  SIWE Sessions: $final_siwe_count (was $siwe_count)"
+echo "  SIWE table exists: $siwe_table_exists"
+
+# CRITICAL: Fail if siwe_session table is missing
+if [ "$siwe_table_exists" = "0" ]; then
+    echo "🚨 CRITICAL ERROR: siwe_session table is missing!"
+    echo "Attempting emergency schema push..."
+    npx prisma db push --force || {
+        echo "Emergency schema push failed!"
+        exit 1
+    }
+    
+    # Re-check
+    siwe_table_exists=$(psql -h postgres -U "$DB_USER" -d "$DB_NAME" -t -c "
+      SELECT count(*) 
+      FROM information_schema.tables 
+      WHERE table_schema='public' 
+        AND table_name = 'siwe_session'
+    " 2>/dev/null | xargs || echo "0")
+    
+    if [ "$siwe_table_exists" = "0" ]; then
+        echo "🚨 FATAL: Could not create siwe_session table!"
+        exit 1
+    else
+        echo "✅ Emergency schema push successful - siwe_session table created"
+    fi
+fi
 
 # Check for data loss
 if [ "$RESET_DATABASE" != "true" ] && [ "$data_exists" = "true" ]; then
@@ -335,6 +424,7 @@ wait -n
 
 # Exit with status of process that exited first
 exit $?
+
 
 
 # #!/bin/bash
