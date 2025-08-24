@@ -78,7 +78,7 @@ jobs:
         run: ./e2e/script/prepare_browser.sh
 
       - name: "test"
-        run: apt update && apt install curl && curl "http://127.0.0.1:3000"
+        run: sudo apt update && sudo apt install curl && curl "http://127.0.0.1:3000"
 
       - name: Run Playwright tests
         env:
