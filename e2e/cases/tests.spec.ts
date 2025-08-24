@@ -26,7 +26,7 @@ import {
 test("basic site accessibility test", async ({page}) => {
     console.log("Running basic site accessibility test");
     // Navigate to the site
-    await page.goto('/', {timeout: 60000});
+    await page.goto('/');
     console.log("Page loaded");
 
     // Take a screenshot for debugging
@@ -131,7 +131,7 @@ test("upload, file form revision", async (): Promise<void> => {
 
     // ✅ Wait for the table row that includes "aqua.json"
     const row = testPage.locator('table >> text=aqua.json');
-    await expect(row).toBeVisible({timeout: 10000});
+    await expect(row).toBeVisible();
 });
 
 test("import, file multiple revisions", async (): Promise<void> => {
@@ -174,7 +174,7 @@ test("import, file multiple revisions", async (): Promise<void> => {
 
     // ✅ Wait for the table row that includes "aqua.json"
     const row = testPage.locator('table >> text=aqua.json');
-    await expect(row).toBeVisible({timeout: 10000});
+    await expect(row).toBeVisible();
 });
 
 test("upload, delete file", async (): Promise<void> => {
@@ -194,7 +194,7 @@ test("upload, delete file", async (): Promise<void> => {
 
     // ✅ Wait for the table row with "exampleFile.pdf" to be removed (not visible)
     const row = testPage.locator('table >> text=exampleFile.pdf');
-    await expect(row).not.toBeVisible({timeout: 10000});
+    await expect(row).not.toBeVisible();
 
     // Reload the page and check again to ensure file is permanently deleted
     console.log("Reloading page to verify file deletion persisted");
@@ -202,7 +202,7 @@ test("upload, delete file", async (): Promise<void> => {
 
     // Wait for page to load and check that exampleFile.pdf is still not visible
     const rowAfterReload = testPage.locator('table >> text=exampleFile.pdf');
-    await expect(rowAfterReload).not.toBeVisible({timeout: 10000});
+    await expect(rowAfterReload).not.toBeVisible();
 
 });
 
@@ -364,9 +364,6 @@ test("two user aqua-sign", async (): Promise<void> => {
 
     // Add signature to document and sign
     await addSignatureToDocument(testPageWalletTwo, contextWalletTwo);
-
-    // Wait for completion
-    // await testPageWalletOne.getByText("All signatures have been collected").waitFor({ state: 'visible', timeout: 2000 });
 });
 
 
@@ -452,7 +449,7 @@ test("import aqua zip test", async (): Promise<void> => {
     // Check that the table has two rows and contains aqua.json
     const tableRows = testPage.locator('table tr');
     //header + two files
-    await expect(tableRows).toHaveCount(3, {timeout: 10000});
+    await expect(tableRows).toHaveCount(3);
 });
 
 
@@ -490,16 +487,16 @@ test("delete a template", async (): Promise<void> => {
     // await deleteTemplate(testPage);
 
 
-    await testPage.waitForSelector('[data-testid="delete-form-template-0"]', {state: 'visible', timeout: 10000});
+    await testPage.waitForSelector('[data-testid="delete-form-template-0"]', {state: 'visible'});
     await testPage.click('[data-testid=""]');
     console.log("Clicked delete template button using data-testid");
     try {
-        await testPage.waitForSelector('[data-testid="delete-form-template-0"]', {state: 'visible', timeout: 10000});
+        await testPage.waitForSelector('[data-testid="delete-form-template-0"]', {state: 'visible'});
         await testPage.click('[data-testid="delete-form-template-0"]');
         console.log("Clicked delete template button using data-testid");
     } catch (error) {
         console.log("Failed to find button by data-testid, trying by id...");
-        await testPage.waitForSelector('#delete-form-template-id-0', {state: 'visible', timeout: 10000});
+        await testPage.waitForSelector('#delete-form-template-id-0', {state: 'visible'});
         await testPage.click('#delete-form-template-id-0');
         console.log("Clicked delete template button using id selector");
     }
@@ -518,13 +515,12 @@ test("create a simple claim", async (): Promise<void> => {
     console.log("create aqua form template started!");
 
 
-    await testPage.waitForSelector('[data-testid="create-claim-dropdown-button"]', {state: 'visible', timeout: 10000});
+    await testPage.waitForSelector('[data-testid="create-claim-dropdown-button"]', {state: 'visible'});
     await testPage.click('[data-testid="create-claim-dropdown-button"]');
 
 
     await testPage.waitForSelector('[data-testid="create-simple-claim-dropdown-button-item"]', {
-        state: 'visible',
-        timeout: 10000
+        state: 'visible'
     });
     await testPage.click('[data-testid="create-simple-claim-dropdown-button-item"]');
 
@@ -588,7 +584,7 @@ test("create simple claim", async (): Promise<void> => {
     // Check that the table has two rows and contains aqua.json
     const tableRows = testPage.locator('table tr');
     // //header + two files
-    await expect(tableRows).toHaveCount(2, {timeout: 10000});
+    await expect(tableRows).toHaveCount(2);
 });
 
 
@@ -626,7 +622,7 @@ test("create dns claim", async (): Promise<void> => {
     // Check that the table has two rows and contains aqua.json
     const tableRows = testPage.locator('table tr');
     // //header + two files
-    await expect(tableRows).toHaveCount(2, {timeout: 10000});
+    await expect(tableRows).toHaveCount(2);
 });
 
 
@@ -654,13 +650,13 @@ test("import dns claim", async (): Promise<void> => {
     // Check that the table has two rows and contains aqua.json
     const tableRows = testPage.locator('table tr');
     //header + two files
-    await expect(tableRows).toHaveCount(2, {timeout: 10000});
+    await expect(tableRows).toHaveCount(2);
 
     console.log("open details");
     try {
         // Click and wait for the dialog to appear
         await Promise.all([
-            testPage.waitForSelector('text=This aqua tree is valid', {timeout: 15000}),
+            testPage.waitForSelector('text=This aqua tree is valid'),
             testPage.click('[data-testid="open-aqua-claim-workflow-button-0"]')
         ]);
 
@@ -710,13 +706,13 @@ test("import user  signature", async (): Promise<void> => {
     // Check that the table has two rows and contains aqua.json
     const tableRows = testPage.locator('table tr');
     //header + two files
-    await expect(tableRows).toHaveCount(2, {timeout: 10000});
+    await expect(tableRows).toHaveCount(2);
 
     console.log("open details");
     try {
         // Click and wait for the dialog to appear
         await Promise.all([
-            testPage.waitForSelector('text=This aqua tree is valid', {timeout: 15000}),
+            testPage.waitForSelector('text=This aqua tree is valid'),
             testPage.click('[data-testid="open-aqua-claim-workflow-button-0"]')
         ]);
 
@@ -769,7 +765,7 @@ test("create aqua sign claim", async (): Promise<void> => {
     // Check that the table has two rows and contains aqua.json
     const tableRows = testPage.locator('table tr');
     // //header + two files
-    await expect(tableRows).toHaveCount(2, {timeout: 10000});
+    await expect(tableRows).toHaveCount(2);
 });
 
 
@@ -802,5 +798,5 @@ test("create email claim", async (): Promise<void> => {
     // Check that the table has two rows and contains aqua.json
     const tableRows = testPage.locator('table tr');
     // //header + two files
-    await expect(tableRows).toHaveCount(2, {timeout: 10000});
+    await expect(tableRows).toHaveCount(2);
 });
