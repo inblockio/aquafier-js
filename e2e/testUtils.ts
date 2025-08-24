@@ -304,11 +304,11 @@ export async function waitForMetaMaskPopup(context: BrowserContext): Promise<Pag
 // Helper function to close upload dialog
 export async function closeUploadDialog(page: Page): Promise<void> {
     console.log("Waiting for clear completed button to appear...");
-    await page.waitForSelector('[data-testid="clear-completed-button"]', { state: 'visible', timeout: 10000 });
+    await page.waitForSelector('[data-testid="clear-completed-button"]', { state: 'visible'});
     await page.click('[data-testid="clear-completed-button"]');
 
     console.log("Waiting for close upload dialog to appear");
-    await page.waitForSelector('[data-testid="close-upload-dialog-button"]', { state: 'visible', timeout: 10000 });
+    await page.waitForSelector('[data-testid="close-upload-dialog-button"]', { state: 'visible'});
     await page.click('[data-testid="close-upload-dialog-button"]');
 
     console.log("Clicked close upload dialog button");
