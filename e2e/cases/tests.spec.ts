@@ -107,11 +107,8 @@ test("linking 2 files test", async (): Promise<void> => {
     // Click on the link button in the dialog
     await waitAndClick(testPage, '[data-testid="link-modal-action-button-dialog"]')
 
-    await testPage.pause();
-
     //TODO add a nice way to check if the linking was successful
     // close link dialog
-    // await testPage.pause();
 });
 
 
@@ -465,9 +462,6 @@ test("create a template", async (): Promise<void> => {
     // await testPage.waitForTimeout(2000);
 
     await createTemplate(testPage);
-
-
-    // await testPage.pause();
 });
 
 
@@ -500,9 +494,6 @@ test("delete a template", async (): Promise<void> => {
         await testPage.click('#delete-form-template-id-0');
         console.log("Clicked delete template button using id selector");
     }
-
-
-    // await testPage.pause();
 });
 
 

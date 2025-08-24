@@ -849,7 +849,6 @@ export async function registerNewMetaMaskWallet(): Promise<RegisterMetaMaskRespo
         // Switch to a test network to avoid mainnet connection issues
         console.log("Switching to test network")
 
-
         try {
 
             // Try stop the not now popup
@@ -878,15 +877,6 @@ export async function registerNewMetaMaskWallet(): Promise<RegisterMetaMaskRespo
             console.log("Switched to Sepolia test network");
         } catch (error) {
             console.log("Could not switch network, continuing with current network", error);
-        }
-
-        // Handle the popup that might appear asking to connect
-        console.log("Handling connection popup")
-        try {
-            await metaMaskPage.waitForSelector('[data-testid="not-now-button"]', { state: 'visible'});
-            await metaMaskPage.click('[data-testid="not-now-button"]')
-        } catch (error) {
-            console.log("No connection popup appeared or it was already dismissed");
         }
 
         // Get wallet address

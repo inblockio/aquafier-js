@@ -33,7 +33,7 @@ export default defineConfig({
     trace:  'on-first-retry',
     video: 'retain-on-failure',
     // Increase timeouts for CI environment
-    actionTimeout: 60000,
+    actionTimeout: 120000,
     navigationTimeout: 60000,
     // Add browser launch options to optimize for CI
     launchOptions: {
