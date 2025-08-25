@@ -1,5 +1,5 @@
 import { LuDownload } from 'react-icons/lu'
-import { ensureDomainUrlHasSSL, extractFileHash, isAquaTree } from '../../utils/functions'
+import { ensureDomainUrlHasSSL, extractFileHash, isAquaTree, isHttpUrl, isValidUrl } from '../../utils/functions'
 import { useStore } from 'zustand'
 import appStore from '../../store'
 import { ApiFileInfo } from '../../models/FileInfo'
@@ -73,6 +73,14 @@ export const DownloadAquaChain = ({ file, index, children }: { file: ApiFileInfo
             }
             mainAquaFileName = file.aquaTree!.file_index[genesisHash]
 
+            // console.log(`main aqua file name ${JSON.stringify(file.aquaTree, null, 4)} genesis hash ${genesisHash}`)
+            // throw Error(`Genesis hash for file ${mainAquaFileName} is not defined`)
+
+            if(!mainAquaFileName || !genesisHash){
+                  toast.error(`an error occured creating zip file : genesis hash or main aqua file name is not defined`)
+                  return      
+            }
+
             let mainAquaFileNameWithAquaDotJson = `${mainAquaFileName}.aqua.json`
             zip.file(mainAquaFileNameWithAquaDotJson, JSON.stringify(file.aquaTree))
 
@@ -81,7 +89,7 @@ export const DownloadAquaChain = ({ file, index, children }: { file: ApiFileInfo
                   console.log('Processing file:', fileObj.fileName, 'Content type:', typeof fileObj.fileContent)
 
                   const isAquaTreeData = isAquaTree(fileObj.fileContent)
-                  if (typeof fileObj.fileContent === 'string' && fileObj.fileContent.startsWith('http')) {
+                   if (typeof fileObj.fileContent === 'string' && isValidUrl(fileObj.fileContent) && isHttpUrl(fileObj.fileContent)) {
                         try {
                               const actualUrlToFetch = ensureDomainUrlHasSSL(fileObj.fileContent)
 
@@ -235,7 +243,7 @@ export const DownloadAquaChain = ({ file, index, children }: { file: ApiFileInfo
             // Loop through each file object and download the content
             for (const fileObj of file.fileObject) {
                   // Check if fileContent is a string (URL)
-                  if (typeof fileObj.fileContent === 'string' && fileObj.fileContent.startsWith('http')) {
+                      if (typeof fileObj.fileContent === 'string' && isValidUrl(fileObj.fileContent) && isHttpUrl(fileObj.fileContent)) {
                         try {
                               const actualUrlToFetch = ensureDomainUrlHasSSL(fileObj.fileContent)
 

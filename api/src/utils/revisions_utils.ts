@@ -3,7 +3,7 @@ import { prisma } from '../database/db';
 // For specific model types
 import { Signature, Revision as DBRevision, AquaForms, WitnessEvent, Link, FileIndex } from '@prisma/client';
 import * as fs from "fs"
-import { AquaJsonInZip, SaveRevision, SaveRevisionForUser } from '../models/request_models';
+import { AquaJsonInZip, AquaNameWithHash, SaveRevision, SaveRevisionForUser } from '../models/request_models';
 import { getAquaTreeFileName } from './api_utils';
 import { createAquaTreeFromRevisions } from './revisions_operations_utils';
 import { getGenesisHash } from './aqua_tree_utils';
@@ -1490,6 +1490,7 @@ export async function streamToBuffer(stream: any): Promise<Buffer> {
     return Buffer.concat(chunks);
 }
 export async function processAquaMetadata(zipData: JSZip, userAddress: string) {
+    let allFiles: string [] = Object.keys(zipData.files);
     // Helper function to decode filename if it's in ASCII format
     const decodeFileName = (fileName: string): string => {
         if (fileName.includes(',') && /^\d+,/.test(fileName)) {
@@ -1499,13 +1500,22 @@ export async function processAquaMetadata(zipData: JSZip, userAddress: string) {
     };
 
     // Create a map of decoded filenames to original keys
-    const fileMap = new Map();
+    const fileMap: Map<string,string> = new Map();
     for (const originalKey in zipData.files) {
         const decodedKey = decodeFileName(originalKey);
         console.log(`Decoded key: ${decodedKey} for original key: ${originalKey}`);
         fileMap.set(decodedKey.trim(), originalKey.trim());
     }
 
+    // for (const [decodedKey, originalKey] of fileMap.entries()) {
+    //     console.log(`Mapping: ${decodedKey} -> ${originalKey}`);
+    //     // if(decodedKey === 'aqua.json') {
+    //     //     console.log(`Found aqua.json mapping to original key: ${originalKey}`);
+    //     // let aquaFile = zipData.files[originalKey];
+    //     // }
+    // }
+
+    // throw new Error(`Manifets file not found ie aqua.json`);
     const aquaJsonOriginalKey = fileMap.get('aqua.json');
     if (!aquaJsonOriginalKey) {
           throw new Error(`Manifets file not found ie aqua.json`);
@@ -1517,7 +1527,24 @@ export async function processAquaMetadata(zipData: JSZip, userAddress: string) {
     const aquaData: AquaJsonInZip = JSON.parse(fileContent);
 
     for (const nameHash of aquaData.name_with_hash) {
-        let aquaFileName = "";
+        allFiles = allFiles.filter(item => item !== nameHash.name)
+        processAquaMetadataOperation(nameHash, fileMap, zipData, userAddress)
+    }
+
+
+    for (const remainingFile of allFiles) {
+        const decodedFileName = decodeFileName(remainingFile);
+        console.log(`Processing remaining file: ${decodedFileName}`);
+        const nameHash: AquaNameWithHash = {
+            name: decodedFileName,
+            hash: '' // Hash is unknown for remaining files
+        };
+        processAquaMetadataOperation(nameHash, fileMap, zipData, userAddress)
+    }
+}
+
+export async function processAquaMetadataOperation(nameHash: AquaNameWithHash, fileMap: Map<string,string>, zipData: JSZip, userAddress: string) {
+let aquaFileName = "";
         if (nameHash.name.endsWith('.aqua.json')) {
             aquaFileName = nameHash.name;
             
@@ -1539,6 +1566,10 @@ export async function processAquaMetadata(zipData: JSZip, userAddress: string) {
             // const filePubKeyHash = `${userAddress}_${genesisHash}`;
             let nameNoAquaJsonExtsion = nameHash.name.replace('.aqua.json','')
             const fileAssetOriginalKey = fileMap.get(nameNoAquaJsonExtsion);
+
+            if (!fileAssetOriginalKey) {
+                throw new Error(`Expected to find asset file ${nameNoAquaJsonExtsion} as defined in ${aquaFileName} but file not found`);
+            }
             const fileAsset = zipData.files[fileAssetOriginalKey];
 
             const genRevision : AquaTreeRevision = aquaTreeData.revisions[genesisHash]
@@ -1566,7 +1597,6 @@ export async function processAquaMetadata(zipData: JSZip, userAddress: string) {
         } else {
             console.log(`skipping non aqua json file ${nameHash.name}`)
         }
-    }
 }
 
 
