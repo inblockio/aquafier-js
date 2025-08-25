@@ -500,9 +500,13 @@ export default async function explorerController(fastify: FastifyInstance) {
                 return reply.code(400).send({ error: 'No file uploaded' });
             }
             // Verify file size (20MB = 20 * 1024 * 1024 bytes)
-            const maxFileSize = 20 * 1024 * 1024;
+            const maxFileSize = 25 * 1024 * 1024;
             if (data.file.bytesRead > maxFileSize) {
-                return reply.code(413).send({ error: 'File too large. Maximum file size is 20MB' });
+                return reply.code(413).send({ 
+                    error: 'File too large. Maximum file size is 20MB',
+                  maxSize: '20MB',
+            receivedSize: `${Math.round(data.file.bytesRead / 1024 / 1024)}MB`
+                });
             }
 
             // Extract form fields with default values

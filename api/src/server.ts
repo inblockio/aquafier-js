@@ -127,7 +127,11 @@ function buildServer() {
     });
 
     // Create a Fastify instance
-    const fastify = Fastify({ logger: true });
+    const fastify = Fastify({ 
+        logger: true , 
+        bodyLimit: 50 * 1024 * 1024 /* 50MB */, 
+        requestTimeout: 120000 /* 2 minutes */ 
+    });
 
     Sentry.setupFastifyErrorHandler(fastify);
 
@@ -180,7 +184,9 @@ console.log("Without duplicates Allowed CORS origins: ", JSON.stringify(allowedC
     // Register the plugin
     fastify.register(fastifyMultipart, {
         limits: {
-            fileSize: 200 * 1024 * 1024 // 200MB - Adding this here as well for early rejection
+            fileSize: 200 * 1024 * 1024, // 200MB - Adding this here as well for early rejection
+             files: 1,
+    fieldSize:  30 * 1024 * 1024, // 25MB for form fields
         }
     });
 
