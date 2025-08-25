@@ -76,7 +76,7 @@ export default function FilesList() {
                   setUniqueWorkflows(Array.from(workflows).sort())
 
             }
-      }, [files, systemFileInfo])
+      }, [JSON.stringify(files), JSON.stringify(systemFileInfo)])
 
 
 
