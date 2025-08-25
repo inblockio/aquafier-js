@@ -1,4 +1,4 @@
-import {test, BrowserContext, Page, chromium, expect} from '@playwright/test';
+import { test, BrowserContext, Page, chromium, expect } from '@playwright/test';
 import dotenv from 'dotenv';
 import path from "path";
 import fs from "fs";
@@ -23,7 +23,7 @@ import {
 } from '../testUtils';
 
 // Simple test to verify Playwright is working correctly
-test("basic site accessibility test", async ({page}) => {
+test("basic site accessibility test", async ({ page }) => {
     console.log("Running basic site accessibility test");
     // Navigate to the site
     await page.goto('/');
@@ -46,29 +46,39 @@ test("login test", async (): Promise<void> => {
     await registerNewMetaMaskWalletAndLogin();
 });
 //
-test("user setting test", async (): Promise<void> => {
+test("user alias setting test", async (): Promise<void> => {
     const registerResponse = await registerNewMetaMaskWalletAndLogin();
     const context: BrowserContext = registerResponse.context;
     const testPage: Page = context.pages()[0];
-    console.log("user setting test started!");
+    console.log("user alias setting test started!");
 
     //wait until the main page was fully loaded
-    await testPage.waitForSelector('[data-testid="nav-link-0"]', {state: 'visible'});
+    await testPage.waitForSelector('[data-testid="nav-link-0"]', { state: 'visible' });
 
-    await testPage.goto('/app/settings', {waitUntil: 'networkidle'})
+    await testPage.goto('/app/settings', { waitUntil: 'networkidle' })
 
-    // await testPage.reload(); // reload page
+
 
     await testPage.fill('[data-testid="alias-name-input"]', "alias_data");
     console.log("filled aqua sign form");
 
-    await waitAndClick(testPage, '[data-testid="save-changes-settings"]')
 
-    await testPage.reload(); // reload page
+    await testPage.waitForSelector('[data-testid="save-changes-settings"]', { state: 'visible', timeout: 1000 });
+    await testPage.click('[data-testid="save-changes-settings"]');
 
+    // for data to be saved
+    await testPage.waitForTimeout(1000);
+    
+    console.log("Reloading page to verify alias name persistence");
+    await testPage.reload({ waitUntil: 'networkidle' });
+
+    //tod add a small wait to ensure the page is fully loaded
+    await testPage.waitForTimeout(2000);
     const alisName: string = await testPage.locator('[data-testid="alias-name-input"]').inputValue();
 
-    if (alisName !== "alias_data") {
+    console.log(`Alias name after reload: ${alisName}`);
+
+    if (alisName != "alias_data") {
         throw new Error("Alias name not updated");
     }
 
@@ -99,7 +109,7 @@ test("linking 2 files test", async (): Promise<void> => {
     await waitAndClick(testPage, '[data-testid="link-action-button-1"]')
 
     // Wait for the dialog to appear
-    await testPage.waitForSelector('div[role="dialog"]', {state: 'visible'});
+    await testPage.waitForSelector('div[role="dialog"]', { state: 'visible' });
 
     // Click on the checkbox with id 'file-0'
     await waitAndClick(testPage, '#file-0')
@@ -311,7 +321,7 @@ test("single user aqua-sign", async (): Promise<void> => {
     await addSignatureToDocument(testPage, context);
 
     // Wait for completion
-    await testPage.getByText("Workflow completed and validated").waitFor({state: 'visible'});
+    await testPage.getByText("Workflow completed and validated").waitFor({ state: 'visible' });
 });
 
 
@@ -481,16 +491,16 @@ test("delete a template", async (): Promise<void> => {
     // await deleteTemplate(testPage);
 
 
-    await testPage.waitForSelector('[data-testid="delete-form-template-0"]', {state: 'visible'});
+    await testPage.waitForSelector('[data-testid="delete-form-template-0"]', { state: 'visible' });
     await testPage.click('[data-testid=""]');
     console.log("Clicked delete template button using data-testid");
     try {
-        await testPage.waitForSelector('[data-testid="delete-form-template-0"]', {state: 'visible'});
+        await testPage.waitForSelector('[data-testid="delete-form-template-0"]', { state: 'visible' });
         await testPage.click('[data-testid="delete-form-template-0"]');
         console.log("Clicked delete template button using data-testid");
     } catch (error) {
         console.log("Failed to find button by data-testid, trying by id...");
-        await testPage.waitForSelector('#delete-form-template-id-0', {state: 'visible'});
+        await testPage.waitForSelector('#delete-form-template-id-0', { state: 'visible' });
         await testPage.click('#delete-form-template-id-0');
         console.log("Clicked delete template button using id selector");
     }
@@ -506,7 +516,7 @@ test("create a simple claim", async (): Promise<void> => {
     console.log("create aqua form template started!");
 
 
-    await testPage.waitForSelector('[data-testid="create-claim-dropdown-button"]', {state: 'visible'});
+    await testPage.waitForSelector('[data-testid="create-claim-dropdown-button"]', { state: 'visible' });
     await testPage.click('[data-testid="create-claim-dropdown-button"]');
 
 
@@ -627,7 +637,7 @@ test("import dns claim", async (): Promise<void> => {
     // Upload file
     const filePath: string = path.join(__dirname, '/../resources/domain_claim-675.zip');
 
-    await testPage.waitForSelector('[data-testid="file-upload-dropzone"]', {state: 'visible'});
+    await testPage.waitForSelector('[data-testid="file-upload-dropzone"]', { state: 'visible' });
 
     const fileChooserPromise = testPage.waitForEvent('filechooser');
     await waitAndClick(testPage, '[data-testid="file-upload-dropzone"]')
@@ -682,7 +692,7 @@ test("import user  signature", async (): Promise<void> => {
     const filePath: string = path.join(__dirname, '/../resources/user_signature-577.zip');
     let dropzoneSelector: string = '[data-testid="file-upload-dropzone"]'
     console.log("Waiting for file upload dropzone to be visible...");
-    await testPage.waitForSelector(dropzoneSelector, {state: 'visible'});
+    await testPage.waitForSelector(dropzoneSelector, { state: 'visible' });
     console.log("File upload dropzone is visible");
 
     const fileChooserPromise = testPage.waitForEvent('filechooser');
@@ -743,8 +753,8 @@ test("create aqua sign claim", async (): Promise<void> => {
 
     await testPage.locator('[id="input-name"]').fill("User name ");
 
-    await testPage.getByText("Create Workflow").waitFor({state: 'visible'});
-    await testPage.waitForSelector('[class="signature-canvas"]', {state: 'visible'});
+    await testPage.getByText("Create Workflow").waitFor({ state: 'visible' });
+    await testPage.waitForSelector('[class="signature-canvas"]', { state: 'visible' });
     await testPage.click('[class="signature-canvas"]');
 
     const metamaskPromise = context.waitForEvent("page");
@@ -776,8 +786,8 @@ test("create email claim", async (): Promise<void> => {
 
     await testPage.locator('[id="input-name"]').fill("User name ");
 
-    await testPage.getByText("Create Workflow").waitFor({state: 'visible'});
-    await testPage.waitForSelector('[class="signature-canvas"]', {state: 'visible'});
+    await testPage.getByText("Create Workflow").waitFor({ state: 'visible' });
+    await testPage.waitForSelector('[class="signature-canvas"]', { state: 'visible' });
     await testPage.click('[class="signature-canvas"]');
 
     const metamaskPromise = context.waitForEvent("page");
