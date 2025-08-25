@@ -466,7 +466,7 @@ export async function createAquaSignForm(page: Page, context: BrowserContext, fi
 
     if (signerAddress) {
         await page.click('[data-testid="multiple_values_signers"]');
-        console.log("clicked multiple values signers");
+        console.log("clicked multiple values signers =>"+signerAddress);
 
         await page.fill('[data-testid="input-signers-1"]', signerAddress);
         console.log("filled aqua sign form");
