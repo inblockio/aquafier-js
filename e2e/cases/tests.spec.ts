@@ -68,11 +68,11 @@ test("user alias setting test", async (): Promise<void> => {
 
     // for data to be saved
     await testPage.waitForTimeout(1000);
-    
+
     console.log("Reloading page to verify alias name persistence");
     await testPage.reload({ waitUntil: 'networkidle' });
 
-    //tod add a small wait to ensure the page is fully loaded
+    //add a small wait to ensure the page is fully loaded
     await testPage.waitForTimeout(2000);
     const alisName: string = await testPage.locator('[data-testid="alias-name-input"]').inputValue();
 
@@ -152,11 +152,19 @@ test("import, file multiple revisions", async (): Promise<void> => {
     const filePath: string = path.join(__dirname, '/../resources/aqua.json.aqua.json');
     await uploadFile(testPage, filePath);
 
-    //import the aqua chain
-    await waitAndClick(testPage, '[data-testid="action-import-93-button"]')
+    // Import the aqua chain
+    await waitAndClick(testPage, '[data-testid="action-import-93-button"]');
 
+    // Check if we need to select another file using Playwright's expect assertion
+    const selectFileButton = testPage.locator('[data-testid="action-select-file-06-button"]');
+    
     try {
-        await waitAndClick(testPage, '[data-testid="action-select-file-06-button"]')
+        // Use expect().toBeVisible() with a short timeout to check if button exists
+        await expect(selectFileButton).toBeVisible({ timeout: 5000 });
+        console.log("Select file button found, proceeding with file selection...");
+
+        // Button is visible, proceed with file selection
+        await waitAndClick(testPage, '[data-testid="action-select-file-06-button"]');
 
         const filePath2: string = path.join(__dirname, '/../resources/aqua.json');
         console.log("File upload dropzone is visible");
@@ -164,24 +172,68 @@ test("import, file multiple revisions", async (): Promise<void> => {
         // Set up the file chooser promise BEFORE triggering the action
         const fileChooserPromise = testPage.waitForEvent('filechooser');
 
-        // Trigger the file chooser - you need to click the element that opens the file dialog
-        // This could be a button, input[type="file"], or dropzone
-        await testPage.click('[data-testid="action-select-file-06-button"]'); // or whatever element opens the file dialog
+        // Trigger the file chooser
+        await testPage.click('[data-testid="action-select-file-06-button"]');
 
         // Wait for and handle the file chooser
         const fileChooser = await fileChooserPromise;
         await fileChooser.setFiles(filePath2);
         console.log("File selected in file chooser");
+        console.log("Additional file uploaded successfully");
 
-        console.log("File uploaded successfully");
-    } catch (error) {
-        console.log("Select file button is not visible, skipping file upload");
-        console.error(error); // Log the actual error for debugging
+    } catch (error: any) {
+        // Button not visible or file upload failed - this might be expected behavior
+        console.log("Select file button not visible or file upload failed, continuing with test...");
+        console.log("Error details:", error.message);
     }
 
-    // ✅ Wait for the table row that includes "aqua.json"
-    const row = testPage.locator('table >> text=aqua.json');
-    await expect(row).toBeVisible();
+    console.log("Checking for aqua.json in table...");
+
+    // Simplified approach - try the most reliable locator first, then fallback
+    const fileNameSpan = testPage.locator('table span.font-medium:has-text("aqua.json")');
+    const tableRow = testPage.locator('table tr:has-text("aqua.json")');
+    const tableText = testPage.locator('table').getByText('aqua.json');
+
+    //sonar toast check up logic
+    try {
+        // Approach 1: Look for the specific span containing the filename
+        await expect(fileNameSpan).toBeVisible({ timeout: 10000 });
+        console.log("✅ Found aqua.json using span locator");
+    } catch (error1) {
+        try {
+            // Approach 2: Look for table row containing the text
+            await expect(tableRow).toBeVisible({ timeout: 5000 });
+            console.log("✅ Found aqua.json using row locator");
+        } catch (error2) {
+            try {
+                // Approach 3: Look for any text element containing aqua.json
+                await expect(tableText).toBeVisible({ timeout: 5000 });
+                console.log("✅ Found aqua.json using text locator");
+            } catch (error3) {
+                // Debug: take screenshot and dump table content
+                console.log("❌ Failed to find aqua.json, debugging...");
+                await testPage.screenshot({ path: 'debug-table-state.png', fullPage: true });
+                
+                // Check if table exists at all
+                const table = testPage.locator('table');
+                await expect(table).toBeVisible({ timeout: 5000 });
+                
+                const tableContent = await table.textContent();
+                console.log("Table content:", tableContent);
+                
+                // List all table rows for debugging
+                const rows = await table.locator('tr').all();
+                console.log(`Found ${rows.length} table rows:`);
+                for (let i = 0; i < rows.length; i++) {
+                    const rowText = await rows[i].textContent();
+                    console.log(`Row ${i}: ${rowText}`);
+                }
+
+                // Re-throw the error to fail the test
+                throw new Error(`Could not find aqua.json in table. Table content: ${tableContent}`);
+            }
+        }
+    }
 });
 
 test("upload, delete file", async (): Promise<void> => {
@@ -402,10 +454,10 @@ test("share document between two users", async (): Promise<void> => {
     console.log("share document between two users - share ");
 
     // Owner shares the document with recipient
-    await shareDocument(ownerPage, ownerContext, recipientAddress);
+    let url = await shareDocument(ownerPage, ownerContext, recipientAddress);
 
     // Recipient verifies they can access the shared document
-    await importAquaChain(recipientPage, recipientContext);
+    await importAquaChain(recipientPage, recipientContext, url);
 });
 
 // Test for sharing with different permission levels
