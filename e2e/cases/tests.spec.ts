@@ -72,7 +72,7 @@ test("user alias setting test", async (): Promise<void> => {
     console.log("Reloading page to verify alias name persistence");
     await testPage.reload({ waitUntil: 'networkidle' });
 
-    //tod add a small wait to ensure the page is fully loaded
+    //add a small wait to ensure the page is fully loaded
     await testPage.waitForTimeout(2000);
     const alisName: string = await testPage.locator('[data-testid="alias-name-input"]').inputValue();
 
