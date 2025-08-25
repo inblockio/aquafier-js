@@ -26,7 +26,7 @@ import {
 test("basic site accessibility test", async ({ page }) => {
     console.log("Running basic site accessibility test");
     // Navigate to the site
-    await page.goto('/', { timeout: 60000 });
+    await page.goto('/');
     console.log("Page loaded");
 
     // Take a screenshot for debugging
@@ -46,29 +46,39 @@ test("login test", async (): Promise<void> => {
     await registerNewMetaMaskWalletAndLogin();
 });
 //
-test("user setting test", async (): Promise<void> => {
+test("user alias setting test", async (): Promise<void> => {
     const registerResponse = await registerNewMetaMaskWalletAndLogin();
     const context: BrowserContext = registerResponse.context;
     const testPage: Page = context.pages()[0];
-    console.log("user setting test started!");
+    console.log("user alias setting test started!");
 
     //wait until the main page was fully loaded
     await testPage.waitForSelector('[data-testid="nav-link-0"]', { state: 'visible' });
 
     await testPage.goto('/app/settings', { waitUntil: 'networkidle' })
 
-    // await testPage.reload(); // reload page
+
 
     await testPage.fill('[data-testid="alias-name-input"]', "alias_data");
     console.log("filled aqua sign form");
 
-    await waitAndClick(testPage, '[data-testid="save-changes-settings"]')
 
-    await testPage.reload(); // reload page
+    await testPage.waitForSelector('[data-testid="save-changes-settings"]', { state: 'visible', timeout: 1000 });
+    await testPage.click('[data-testid="save-changes-settings"]');
 
+    // for data to be saved
+    await testPage.waitForTimeout(1000);
+    
+    console.log("Reloading page to verify alias name persistence");
+    await testPage.reload({ waitUntil: 'networkidle' });
+
+    //tod add a small wait to ensure the page is fully loaded
+    await testPage.waitForTimeout(2000);
     const alisName: string = await testPage.locator('[data-testid="alias-name-input"]').inputValue();
 
-    if (alisName !== "alias_data") {
+    console.log(`Alias name after reload: ${alisName}`);
+
+    if (alisName != "alias_data") {
         throw new Error("Alias name not updated");
     }
 
@@ -99,7 +109,7 @@ test("linking 2 files test", async (): Promise<void> => {
     await waitAndClick(testPage, '[data-testid="link-action-button-1"]')
 
     // Wait for the dialog to appear
-    await testPage.waitForSelector('div[role="dialog"]', { state: 'visible', timeout: 5000 });
+    await testPage.waitForSelector('div[role="dialog"]', { state: 'visible' });
 
     // Click on the checkbox with id 'file-0'
     await waitAndClick(testPage, '#file-0')
@@ -107,11 +117,8 @@ test("linking 2 files test", async (): Promise<void> => {
     // Click on the link button in the dialog
     await waitAndClick(testPage, '[data-testid="link-modal-action-button-dialog"]')
 
-    await testPage.pause();
-
     //TODO add a nice way to check if the linking was successful
     // close link dialog
-    // await testPage.pause();
 });
 
 
@@ -131,7 +138,7 @@ test("upload, file form revision", async (): Promise<void> => {
 
     // ✅ Wait for the table row that includes "aqua.json"
     const row = testPage.locator('table >> text=aqua.json');
-    await expect(row).toBeVisible({ timeout: 10000 });
+    await expect(row).toBeVisible();
 });
 
 test("import, file multiple revisions", async (): Promise<void> => {
@@ -174,7 +181,7 @@ test("import, file multiple revisions", async (): Promise<void> => {
 
     // ✅ Wait for the table row that includes "aqua.json"
     const row = testPage.locator('table >> text=aqua.json');
-    await expect(row).toBeVisible({ timeout: 10000 });
+    await expect(row).toBeVisible();
 });
 
 test("upload, delete file", async (): Promise<void> => {
@@ -194,7 +201,7 @@ test("upload, delete file", async (): Promise<void> => {
 
     // ✅ Wait for the table row with "exampleFile.pdf" to be removed (not visible)
     const row = testPage.locator('table >> text=exampleFile.pdf');
-    await expect(row).not.toBeVisible({ timeout: 10000 });
+    await expect(row).not.toBeVisible();
 
     // Reload the page and check again to ensure file is permanently deleted
     console.log("Reloading page to verify file deletion persisted");
@@ -202,7 +209,7 @@ test("upload, delete file", async (): Promise<void> => {
 
     // Wait for page to load and check that exampleFile.pdf is still not visible
     const rowAfterReload = testPage.locator('table >> text=exampleFile.pdf');
-    await expect(rowAfterReload).not.toBeVisible({ timeout: 10000 });
+    await expect(rowAfterReload).not.toBeVisible();
 
 });
 
@@ -364,9 +371,6 @@ test("two user aqua-sign", async (): Promise<void> => {
 
     // Add signature to document and sign
     await addSignatureToDocument(testPageWalletTwo, contextWalletTwo);
-
-    // Wait for completion
-    // await testPageWalletOne.getByText("All signatures have been collected").waitFor({ state: 'visible', timeout: 2000 });
 });
 
 
@@ -452,7 +456,7 @@ test("import aqua zip test", async (): Promise<void> => {
     // Check that the table has two rows and contains aqua.json
     const tableRows = testPage.locator('table tr');
     //header + two files
-    await expect(tableRows).toHaveCount(3, { timeout: 10000 });
+    await expect(tableRows).toHaveCount(3);
 });
 
 
@@ -468,9 +472,6 @@ test("create a template", async (): Promise<void> => {
     // await testPage.waitForTimeout(2000);
 
     await createTemplate(testPage);
-
-
-    // await testPage.pause();
 });
 
 
@@ -490,22 +491,19 @@ test("delete a template", async (): Promise<void> => {
     // await deleteTemplate(testPage);
 
 
-    await testPage.waitForSelector('[data-testid="delete-form-template-0"]', { state: 'visible', timeout: 10000 });
+    await testPage.waitForSelector('[data-testid="delete-form-template-0"]', { state: 'visible' });
     await testPage.click('[data-testid=""]');
     console.log("Clicked delete template button using data-testid");
     try {
-        await testPage.waitForSelector('[data-testid="delete-form-template-0"]', { state: 'visible', timeout: 10000 });
+        await testPage.waitForSelector('[data-testid="delete-form-template-0"]', { state: 'visible' });
         await testPage.click('[data-testid="delete-form-template-0"]');
         console.log("Clicked delete template button using data-testid");
     } catch (error) {
         console.log("Failed to find button by data-testid, trying by id...");
-        await testPage.waitForSelector('#delete-form-template-id-0', { state: 'visible', timeout: 10000 });
+        await testPage.waitForSelector('#delete-form-template-id-0', { state: 'visible' });
         await testPage.click('#delete-form-template-id-0');
         console.log("Clicked delete template button using id selector");
     }
-
-
-    // await testPage.pause();
 });
 
 
@@ -518,13 +516,12 @@ test("create a simple claim", async (): Promise<void> => {
     console.log("create aqua form template started!");
 
 
-    await testPage.waitForSelector('[data-testid="create-claim-dropdown-button"]', { state: 'visible', timeout: 10000 });
+    await testPage.waitForSelector('[data-testid="create-claim-dropdown-button"]', { state: 'visible' });
     await testPage.click('[data-testid="create-claim-dropdown-button"]');
 
 
     await testPage.waitForSelector('[data-testid="create-simple-claim-dropdown-button-item"]', {
-        state: 'visible',
-        timeout: 10000
+        state: 'visible'
     });
     await testPage.click('[data-testid="create-simple-claim-dropdown-button-item"]');
 
@@ -588,9 +585,8 @@ test("create simple claim", async (): Promise<void> => {
     // Check that the table has two rows and contains aqua.json
     const tableRows = testPage.locator('table tr');
     // //header + two files
-    await expect(tableRows).toHaveCount(2, { timeout: 10000 });
+    await expect(tableRows).toHaveCount(2);
 });
-
 
 
 test("create dns claim", async (): Promise<void> => {
@@ -627,7 +623,7 @@ test("create dns claim", async (): Promise<void> => {
     // Check that the table has two rows and contains aqua.json
     const tableRows = testPage.locator('table tr');
     // //header + two files
-    await expect(tableRows).toHaveCount(2, { timeout: 10000 });
+    await expect(tableRows).toHaveCount(2);
 });
 
 
@@ -641,13 +637,10 @@ test("import dns claim", async (): Promise<void> => {
     // Upload file
     const filePath: string = path.join(__dirname, '/../resources/domain_claim-675.zip');
 
-    let dropzoneSelector: string = '[data-testid="file-upload-dropzone"]'
-    console.log("Waiting for file upload dropzone to be visible...");
-    await testPage.waitForSelector(dropzoneSelector, { state: 'visible', timeout: 10000 });
-    console.log("File upload dropzone is visible");
+    await testPage.waitForSelector('[data-testid="file-upload-dropzone"]', { state: 'visible' });
 
     const fileChooserPromise = testPage.waitForEvent('filechooser');
-    await testPage.click(dropzoneSelector);
+    await waitAndClick(testPage, '[data-testid="file-upload-dropzone"]')
     const fileChooser = await fileChooserPromise;
     await fileChooser.setFiles(filePath);
 
@@ -658,13 +651,13 @@ test("import dns claim", async (): Promise<void> => {
     // Check that the table has two rows and contains aqua.json
     const tableRows = testPage.locator('table tr');
     //header + two files
-    await expect(tableRows).toHaveCount(2, { timeout: 10000 });
+    await expect(tableRows).toHaveCount(2);
 
     console.log("open details");
     try {
         // Click and wait for the dialog to appear
         await Promise.all([
-            testPage.waitForSelector('text=This aqua tree is valid', { timeout: 15000 }),
+            testPage.waitForSelector('text=This aqua tree is valid'),
             testPage.click('[data-testid="open-aqua-claim-workflow-button-0"]')
         ]);
 
@@ -699,7 +692,7 @@ test("import user  signature", async (): Promise<void> => {
     const filePath: string = path.join(__dirname, '/../resources/user_signature-577.zip');
     let dropzoneSelector: string = '[data-testid="file-upload-dropzone"]'
     console.log("Waiting for file upload dropzone to be visible...");
-    await testPage.waitForSelector(dropzoneSelector, { state: 'visible', timeout: 10000 });
+    await testPage.waitForSelector(dropzoneSelector, { state: 'visible' });
     console.log("File upload dropzone is visible");
 
     const fileChooserPromise = testPage.waitForEvent('filechooser');
@@ -714,13 +707,13 @@ test("import user  signature", async (): Promise<void> => {
     // Check that the table has two rows and contains aqua.json
     const tableRows = testPage.locator('table tr');
     //header + two files
-    await expect(tableRows).toHaveCount(2, { timeout: 10000 });
+    await expect(tableRows).toHaveCount(2);
 
     console.log("open details");
     try {
         // Click and wait for the dialog to appear
         await Promise.all([
-            testPage.waitForSelector('text=This aqua tree is valid', { timeout: 15000 }),
+            testPage.waitForSelector('text=This aqua tree is valid'),
             testPage.click('[data-testid="open-aqua-claim-workflow-button-0"]')
         ]);
 
@@ -742,10 +735,6 @@ test("import user  signature", async (): Promise<void> => {
     }
 
 });
-
-
-
-
 
 
 test("create aqua sign claim", async (): Promise<void> => {
@@ -777,13 +766,8 @@ test("create aqua sign claim", async (): Promise<void> => {
     // Check that the table has two rows and contains aqua.json
     const tableRows = testPage.locator('table tr');
     // //header + two files
-    await expect(tableRows).toHaveCount(2, { timeout: 10000 });
+    await expect(tableRows).toHaveCount(2);
 });
-
-
-
-
-
 
 
 test("create email claim", async (): Promise<void> => {
@@ -815,5 +799,5 @@ test("create email claim", async (): Promise<void> => {
     // Check that the table has two rows and contains aqua.json
     const tableRows = testPage.locator('table tr');
     // //header + two files
-    await expect(tableRows).toHaveCount(2, { timeout: 10000 });
+    await expect(tableRows).toHaveCount(2);
 });

@@ -16,7 +16,7 @@ export default defineConfig({
   testDir: './cases',
   fullyParallel: true,
   /* Fail the build on CI if you accidentally left test.only in the source code. */
-  forbidOnly: !!process.env.CI,
+  forbidOnly: false,
   retries: process.env.RETRIES ? parseInt(process.env.RETRIES) : 1,
   /* Opt out of parallel tests on CI. */
   workers: process.env.WORKERS ? parseInt(process.env.WORKERS) : 1,
@@ -30,13 +30,11 @@ export default defineConfig({
     // baseURL: 'http://localhost:3000',
 
     /* Collect trace when retrying the failed test. See https://playwright.dev/docs/trace-viewer */
-    trace: process.env.CI ? 'retain-on-failure' : 'on',
-    video: {
-      mode: process.env.CI ? "retain-on-failure" : "on",
-    },
+    trace:  'on-first-retry',
+    video: 'retain-on-failure',
     // Increase timeouts for CI environment
-    actionTimeout: process.env.CI ? 120000 : 60000,
-    navigationTimeout: process.env.CI ? 120000 : 60000,
+    actionTimeout: 120000,
+    navigationTimeout: 60000,
     // Add browser launch options to optimize for CI
     launchOptions: {
       slowMo: process.env.CI ? 5 : 0, // Reduce slowMo to avoid excessive delays

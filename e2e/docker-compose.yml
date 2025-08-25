@@ -4,6 +4,10 @@ services:
   postgres:
     image: postgres:17
     container_name: aquafier-postgres
+    environment:
+      POSTGRES_DB: aquafier
+      POSTGRES_USER: ${DB_USER:-aquafier}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-changeme}
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U aquafier -d aquafier"]
       interval: 5s
