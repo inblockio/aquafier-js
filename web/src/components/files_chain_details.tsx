@@ -1,7 +1,7 @@
 import FilePreview from '@/components/file_preview'
 import { ICompleteChainView, VerificationHashAndResult } from '@/models/AquaTreeDetails'
 import appStore from '@/store'
-import { ensureDomainUrlHasSSL, getFileName, getFileHashFromUrl, isArrayBufferText, isWorkFlowData } from '@/utils/functions'
+import { ensureDomainUrlHasSSL, getFileName, getFileHashFromUrl, isArrayBufferText, isWorkFlowData, isValidUrl, isHttpUrl } from '@/utils/functions'
 import Aquafier, { LogData, getAquaTreeFileName, getAquaTreeFileObject, OrderRevisionInAquaTree } from 'aqua-js-sdk'
 import { ChevronUp, ChevronDown } from 'lucide-react'
 import { useCallback, useEffect, useState } from 'react'
@@ -72,7 +72,8 @@ export const CompleteChainView = ({ callBack, selectedFileInfo }: ICompleteChain
                         // UPDATE: Removed fileObjectVerifier to track the fileobjects because pushing in promises is not ideal
                         // const fileObjectVerifier: FileObject[] = []
                         const filePromises = selectedFileInfo.fileObject.map(async file => {
-                              if (typeof file.fileContent === 'string' && file.fileContent.startsWith('http')) {
+                              // if (typeof file.fileContent === 'string' && file.fileContent.startsWith('http')) {
+                                if (typeof file.fileContent === 'string' && isValidUrl(file.fileContent) && isHttpUrl(file.fileContent)) {
                                     const hash = getFileHashFromUrl(file.fileContent)
 
                                     // TODO: FIX ME - Here we check if the file is already in the cache
