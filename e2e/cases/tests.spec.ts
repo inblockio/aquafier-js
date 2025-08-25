@@ -454,10 +454,10 @@ test("share document between two users", async (): Promise<void> => {
     console.log("share document between two users - share ");
 
     // Owner shares the document with recipient
-    await shareDocument(ownerPage, ownerContext, recipientAddress);
+    let url = await shareDocument(ownerPage, ownerContext, recipientAddress);
 
     // Recipient verifies they can access the shared document
-    await importAquaChain(recipientPage, recipientContext);
+    await importAquaChain(recipientPage, recipientContext, url);
 });
 
 // Test for sharing with different permission levels

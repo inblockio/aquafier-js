@@ -542,79 +542,164 @@ export async function addSignatureToDocument(page: Page, context: BrowserContext
 /**
  * Helper function to share a document with another user
  */
+/**
+ * Helper function to share a document with another user
+ */
 export async function shareDocument(
     page: Page,
     context: BrowserContext,
     recipientAddress: string
 ): Promise<string> {
-    console.log(`Share document ....`)
+    console.log(`Share document function ....`)
     let shareUrl = ""
 
     await waitAndClick(page, '[data-testid="share-action-button-0"]')
 
     if (recipientAddress.length > 0) {
-
         console.log(`Toggle specific wallet sharing`)
 
-
         // Wait for the dialog to be fully loaded
-        await page.waitForSelector('text=Share with specific wallet', { state: 'visible'});
+        await page.waitForSelector('text=Who can access', { state: 'visible'});
 
-        // Toggle specific wallet sharing - try multiple selectors to find the switch
+        // Click on the "Specific wallet" option - look for the container with "Specific wallet" text
         try {
-            // Method 1: Try to find the switch by its parent container
-            await page.locator('text=Share with specific wallet').locator('..').locator('button').click();
+            // Method 1: Click on the specific wallet option container
+            await page.locator('text=Specific wallet').locator('..').click();
         } catch (error) {
             console.log('Method 1 failed, trying method 2...');
             try {
-                // Method 2: Look for switch component directly
-                await page.locator('[role="switch"]').click();
+                // Method 2: Look for the Lock icon container (which represents specific wallet)
+                await page.locator('svg.lucide-lock').locator('../../../..').click();
             } catch (error2) {
                 console.log('Method 2 failed, trying method 3...');
-                try {
-                    // Method 3: Look for any button near the "Share with specific wallet" text
-                    await page.locator('text=Share with specific wallet').locator('..//button').click();
-                } catch (error3) {
-                    console.log('Method 3 failed, trying method 4...');
-                    // Method 4: Use a more generic approach - find any clickable element in the switch container
-                    const switchContainer = page.locator('text=Share with specific wallet').locator('..');
-                    await switchContainer.locator('button, [role="switch"], [data-state]').first().click();
-                }
+                // Method 3: Find the container with "Restricted access by wallet address" text
+                await page.locator('text=Restricted access by wallet address').locator('../../../..').click();
             }
         }
 
         // Wait for the wallet address input to appear
-        await page.waitForSelector('input[placeholder="Enter wallet address"]', { state: 'visible'});
+        await page.waitForSelector('input[placeholder="Enter wallet address (0x...)"]', { state: 'visible'});
 
         // Enter recipient address
-        await page.locator('input[placeholder="Enter wallet address"]').fill(recipientAddress);
+        await page.locator('input[placeholder="Enter wallet address (0x...)"]').fill(recipientAddress);
     } else {
-        console.log(` sharing to everyone `)
+        console.log(`Sharing to everyone - "Anyone with link" should already be selected by default`)
     }
 
-    // Confirm sharing
-    // await page.getByTestId('share-modal-action-button-dialog').click();
-    await page.waitForSelector('[data-testid="share-modal-action-button-dialog"]', { state: 'visible'});
-    await page.click('[data-testid="share-modal-action-button-dialog"]');
+    // Click the "Create Share Link" button
+    await page.waitForSelector('text=Create Share Link', { state: 'visible'});
+    await page.locator('text=Create Share Link').click();
 
-    // Handle MetaMask confirmation if needed
-    // await handleMetaMaskNetworkAndConfirm(context);
-    console.log(` Shared Document Link to be visible `)
-    // Wait for success message - look for the shared document link section
-    await page.getByText('Shared Document Link').waitFor({ state: 'visible'});
+    // Wait for sharing process to complete
+    await page.waitForSelector('text=Creating share link...', { state: 'visible'});
+    await page.waitForSelector('text=Creating share link...', { state: 'hidden'});
 
-    console.log(` copy share url logic  `)
-    // Method 1: Using getByTestId() and textContent() - Most common approach
-    shareUrl = await page.getByTestId('share-url').textContent() ?? "";
+    console.log(`Shared Document Link to be visible`)
+    // Wait for success message - look for "Share Link Ready" section
+    await page.waitForSelector('text=Share Link Ready', { state: 'visible'});
+
+    console.log(`Copy share url logic`)
+    // Get the share URL from the gray container with the link
+    try {
+        // Method 1: Get the URL from the container with ExternalLink icon
+        const linkContainer = page.locator('svg.lucide-external-link').locator('..').locator('p.break-all');
+        shareUrl = await linkContainer.textContent() ?? "";
+    } catch (error) {
+        console.log('Method 1 failed, trying method 2...');
+        try {
+            // Method 2: Look for text that starts with the domain
+            const urlElement = page.locator('p.break-all').filter({ hasText: '/app/shared-contracts/' });
+            shareUrl = await urlElement.textContent() ?? "";
+        } catch (error2) {
+            console.log('Method 2 failed, trying method 3...');
+            // Method 3: Look for any text in the share link container
+            const shareContainer = page.locator('text=Share Link Ready').locator('..').locator('p.break-all');
+            shareUrl = await shareContainer.textContent() ?? "";
+        }
+    }
+    
     console.log('Share URL:', shareUrl);
 
-    // Close the share dialog
-    // await page.getByTestId('share-cancel-action-button').click();
-    await page.waitForSelector('[data-testid="share-cancel-action-button"]', { state: 'visible'});
-    await page.click('[data-testid="share-cancel-action-button"]');
+    // Close the share dialog using the Cancel button
+    // await page.waitForSelector('text=Cancel', { state: 'visible'});
+    // await page.locator('text=Cancel').click();
 
     return shareUrl;
 }
+
+// export async function shareDocument(
+//     page: Page,
+//     context: BrowserContext,
+//     recipientAddress: string
+// ): Promise<string> {
+//     console.log(`Share document ....`)
+//     let shareUrl = ""
+
+//     await waitAndClick(page, '[data-testid="share-action-button-0"]')
+
+//     if (recipientAddress.length > 0) {
+
+//         console.log(`Toggle specific wallet sharing`)
+
+
+//         // Wait for the dialog to be fully loaded
+//         await page.waitForSelector('text=Share with specific wallet', { state: 'visible'});
+
+//         // Toggle specific wallet sharing - try multiple selectors to find the switch
+//         try {
+//             // Method 1: Try to find the switch by its parent container
+//             await page.locator('text=Share with specific wallet').locator('..').locator('button').click();
+//         } catch (error) {
+//             console.log('Method 1 failed, trying method 2...');
+//             try {
+//                 // Method 2: Look for switch component directly
+//                 await page.locator('[role="switch"]').click();
+//             } catch (error2) {
+//                 console.log('Method 2 failed, trying method 3...');
+//                 try {
+//                     // Method 3: Look for any button near the "Share with specific wallet" text
+//                     await page.locator('text=Share with specific wallet').locator('..//button').click();
+//                 } catch (error3) {
+//                     console.log('Method 3 failed, trying method 4...');
+//                     // Method 4: Use a more generic approach - find any clickable element in the switch container
+//                     const switchContainer = page.locator('text=Share with specific wallet').locator('..');
+//                     await switchContainer.locator('button, [role="switch"], [data-state]').first().click();
+//                 }
+//             }
+//         }
+
+//         // Wait for the wallet address input to appear
+//         await page.waitForSelector('input[placeholder="Enter wallet address"]', { state: 'visible'});
+
+//         // Enter recipient address
+//         await page.locator('input[placeholder="Enter wallet address"]').fill(recipientAddress);
+//     } else {
+//         console.log(` sharing to everyone `)
+//     }
+
+//     // Confirm sharing
+//     // await page.getByTestId('share-modal-action-button-dialog').click();
+//     await page.waitForSelector('[data-testid="share-modal-action-button-dialog"]', { state: 'visible'});
+//     await page.click('[data-testid="share-modal-action-button-dialog"]');
+
+//     // Handle MetaMask confirmation if needed
+//     // await handleMetaMaskNetworkAndConfirm(context);
+//     console.log(` Shared Document Link to be visible `)
+//     // Wait for success message - look for the shared document link section
+//     await page.getByText('Shared Document Link').waitFor({ state: 'visible'});
+
+//     console.log(` copy share url logic  `)
+//     // Method 1: Using getByTestId() and textContent() - Most common approach
+//     shareUrl = await page.getByTestId('share-url').textContent() ?? "";
+//     console.log('Share URL:', shareUrl);
+
+//     // Close the share dialog
+//     // await page.getByTestId('share-cancel-action-button').click();
+//     await page.waitForSelector('[data-testid="share-cancel-action-button"]', { state: 'visible'});
+//     await page.click('[data-testid="share-cancel-action-button"]');
+
+//     return shareUrl;
+// }
 
 /**
  * Helper function to verify a shared document is accessible
