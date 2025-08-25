@@ -142,11 +142,21 @@ export default async function systemController(fastify: FastifyInstance) {
             }
         });
 
-        
+           // Get the host from the request headers
+        const host = request.headers.host || `${getHost()}:${getPort()}`;
+
+         // Get the protocol (http or https)
+        const protocol = request.protocol || 'https'
+
+        // Construct the full URL
+        const url = `${protocol}://${host}`;
 
         const metamaskAddress = request.headers['metamask_address'];
         if (!metamaskAddress || typeof metamaskAddress !== 'string' || metamaskAddress.trim() === '') {
-            return reply.code(500).send({ data: [] });
+
+             // throw Error(`Fetching AquaTree for user ${metamaskAddress} with url ${url}  -- ${JSON.stringify(trees, null, 4)}`)
+        let displayData = await fetchAquatreeFoUser(url, trees)
+            return reply.code(200).send({ data: displayData });
 
         } else {
 
@@ -175,14 +185,9 @@ export default async function systemController(fastify: FastifyInstance) {
         }
 
 
-        // Get the host from the request headers
-        const host = request.headers.host || `${getHost()}:${getPort()}`;
+     
 
-        // Get the protocol (http or https)
-        const protocol = request.protocol || 'https'
-
-        // Construct the full URL
-        const url = `${protocol}://${host}`;
+       
 
 
         // throw Error(`Fetching AquaTree for user ${metamaskAddress} with url ${url}  -- ${JSON.stringify(trees, null, 4)}`)
