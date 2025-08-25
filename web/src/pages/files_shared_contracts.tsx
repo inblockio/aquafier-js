@@ -208,7 +208,7 @@ export const SharedContract = ({ contract, index, contractDeleted }: { contract:
             </Card>
       )
 }
-
+ 
 export function SharedContracts() {
       const [searchQuery, _setSearchQuery] = useState('')
       const [shareContracts, setShareContracts] = useState<Contract[]>([])
@@ -275,7 +275,7 @@ export function SharedContracts() {
                                                       <TabsTrigger value="password">Outgoing</TabsTrigger>
                                                 </TabsList>
                                                 <TabsContent value="account">
-                                                      {shareContracts.filter(contract => contract.receiver == session?.address).map((contract, index) => (
+                                                      {shareContracts.filter(contract => contract.receiver?.toLocaleLowerCase() == session?.address?.toLocaleLowerCase()).map((contract, index) => (
                                                             <SharedContract
                                                                   key={`${contract.hash}`}
                                                                   contract={contract}
@@ -290,7 +290,7 @@ export function SharedContracts() {
                                                                   }}
                                                             />
                                                       ))}
-                                                      {shareContracts.filter(contract => contract.receiver == session?.address).length == 0 && (
+                                                      {shareContracts.filter(contract => contract.receiver?.toLocaleLowerCase() == session?.address.toLocaleLowerCase()).length == 0 && (
                                                             <div className="card">
                                                                   <Alert variant="default">
                                                                         <X />
@@ -303,7 +303,7 @@ export function SharedContracts() {
                                                       )}
                                                 </TabsContent>
                                                 <TabsContent value="password">
-                                                      {shareContracts.filter(contract => contract.sender == session?.address).map((contract, index) => (
+                                                      {shareContracts.filter(contract => contract.sender?.toLocaleLowerCase() == session?.address?.toLocaleLowerCase).map((contract, index) => (
                                                             <SharedContract
                                                                   key={`${contract.hash}`}
                                                                   contract={contract}
@@ -314,7 +314,7 @@ export function SharedContracts() {
                                                                   }}
                                                             />
                                                       ))}
-                                                      {shareContracts.filter(contract => contract.sender == session?.address).length == 0 && (
+                                                      {shareContracts.filter(contract => contract.sender?.toLocaleLowerCase() == session?.address.toLocaleLowerCase()).length == 0 && (
                                                             <div className="card">
                                                                   <Alert variant="default">
                                                                         <X />

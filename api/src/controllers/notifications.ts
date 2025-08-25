@@ -20,7 +20,11 @@ export default async function notificationsController(fastify: FastifyInstance) 
             
             const notifications = await prisma.notifications.findMany({
                 where: {
-                    receiver: userAddress
+                    receiver: {
+                        equals: userAddress,
+                        mode: 'insensitive'
+                    },
+                    
                 },
                 orderBy: {
                     created_on: 'desc'
