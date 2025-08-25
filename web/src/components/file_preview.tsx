@@ -313,7 +313,7 @@ const FilePreview: React.FC<IFilePreview> = ({ fileInfo }) => {
             return () => {
                   if (fileURL) URL.revokeObjectURL(fileURL)
             }
-      }, [JSON.stringify(fileInfo), session?.nonce])
+      }, [fileInfo.fileSize, session?.nonce])
 
       const [convertedHeicUrl, setConvertedHeicUrl] = useState<string | null>(null)
       const [isHeic, setIsHeic] = useState<boolean>(false)

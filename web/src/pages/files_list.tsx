@@ -77,7 +77,7 @@ export default function FilesList() {
 
             }
    
-      }, [JSON.stringify(files), JSON.stringify(systemFileInfo)])
+      }, [files.length, systemFileInfo.length])
 
 
 
