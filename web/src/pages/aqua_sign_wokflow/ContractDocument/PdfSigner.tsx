@@ -20,6 +20,7 @@ import {
       ensureDomainUrlHasSSL,
       estimateFileSize,
       fetchFiles,
+      fetchImage,
       // getAquaTreeFileName,
       getGenesisHash,
       getRandomNumber,
@@ -871,43 +872,6 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ fileData, setActiveStep, document
       //       }
       // }
 
-      const fetchImage = async (fileUrl: string) => {
-            try {
-                  console.log(`fetchImage fileUrl ${fileUrl}`)
-                  const actualUrlToFetch = ensureDomainUrlHasSSL(fileUrl)
-                  const response = await fetch(actualUrlToFetch, {
-                        headers: {
-                              nonce: `${session?.nonce}`,
-                        },
-                  })
-
-                  if (!response.ok) {
-                        console.error('FFFailed to fetch file:', response.status, response.statusText)
-                        return null
-                  }
-
-                  // Get content type from headers
-                  let contentType = response.headers.get('Content-Type') || ''
-
-                  // If content type is missing or generic, try to detect from URL
-                  if (contentType === 'application/octet-stream' || contentType === '') {
-                        contentType = 'image/png'
-                  }
-
-                  if (contentType.startsWith('image')) {
-                        const arrayBuffer = await response.arrayBuffer()
-                        // Ensure we use the PDF content type
-                        const blob = new Blob([arrayBuffer], { type: contentType })
-                        return URL.createObjectURL(blob)
-                  }
-
-                  return null
-            } catch (error) {
-                  console.error('Error fetching file:', error)
-                  return null
-            }
-      }
-
       // Handle signature dragging
       const [activeDragId, setActiveDragId] = useState<string | null>(null)
       const [isDragging, setIsDragging] = useState(false)
@@ -1087,7 +1051,7 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ fileData, setActiveStep, document
                               console.log(`fileContentUrl before  ===  ${fileContentUrl}`)
                               let url = ensureDomainUrlHasSSL(fileContentUrl)
                                console.log(`fileContentUrl ===  ${url}`)
-                              let dataUrl = await fetchImage(url)
+                              let dataUrl = await fetchImage(url, `${session?.nonce}`)
 
                               if (!dataUrl) {
                                     dataUrl = `${window.location.origin}/images/placeholder-img.png`

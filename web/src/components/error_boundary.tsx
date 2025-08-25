@@ -107,7 +107,7 @@ const ErrorFallback = ({ error, resetErrorBoundary }: ErrorFallbackProps) => {
                         }
                   }}
             >
-                  <DialogContent className="max-w-lg">
+                  <DialogContent className="max-w-lg overflow-x-hidden">
                         <DialogHeader className="pb-4">
                               <div className="flex items-center gap-4">
                                     <div className="flex-shrink-0">
@@ -125,7 +125,7 @@ const ErrorFallback = ({ error, resetErrorBoundary }: ErrorFallbackProps) => {
                         <Separator />
 
                         {/* Error Details */}
-                        <div className="space-y-4">
+                        <div className="space-y-4 overflow-y-auto">
                               {/* Error Type Badge */}
                               <div className="flex items-center gap-2">
                                     <Badge variant="destructive" className="bg-red-50 text-red-700 border-red-200">
