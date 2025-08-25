@@ -391,19 +391,28 @@ export default async function revisionsController(fastify: FastifyInstance) {
             }
 
             // Method 1: Check Origin header (used in CORS requests)
-            const origin = request.headers.origin;
+            // const origin = request.headers.origin;
 
             // throw Error(`Orgin ${origin}`)
             // Get the host from the request headers
-            const host = `${getHost()}:${getPort()}`;
+            // const host = `${getHost()}:${getPort()}`;
+
+            // // Get the protocol (http or https)
+            // const protocol = 'https'
+
+            // // Construct the full URL
+            // const url = `${protocol}://${host}`;
+
+ // Get the host from the request headers
+            const host = request.headers.host || `${getHost()}:${getPort()}`;
 
             // Get the protocol (http or https)
-            const protocol = 'https'
+            const protocol = request.protocol || 'https'
 
             // Construct the full URL
             const url = `${protocol}://${host}`;
 
-
+            
 
             let signatureAquaTrees: Array<{
                 aquaTree: AquaTree,
