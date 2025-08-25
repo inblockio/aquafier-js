@@ -8,6 +8,7 @@ import appStore from '../store'
 
 export default function FilesList() {
       const [view, setView] = useState<'table' | 'card'>('table')
+      const [hasFetchedSystemAquaTrees, setHasFetchedSystemAquaTrees] = useState(false)
       const [isSmallScreen, setIsSmallScreen] = useState(false)
       const [uniqueWorkflows, setUniqueWorkflows] = useState<string[]>([])
       const [selectedWorkflow, setSelectedWorkflow] = useState<string>('all')
@@ -39,13 +40,16 @@ export default function FilesList() {
             // console.log(`use effect in files list file and systemn  info `)
 
             if (systemFileInfo.length == 0) {
-                  (async () => {
-                        const url3 = `${backend_url}/system/aqua_tree`
-                        const systemFiles = await fetchSystemFiles(url3, session?.address)
-                        setSystemFileInfo(systemFiles)
-                  })()
+                  if (!hasFetchedSystemAquaTrees) {
+                        setHasFetchedSystemAquaTrees(true);
+                        (async () => {
+                              const url3 = `${backend_url}/system/aqua_tree`
+                              const systemFiles = await fetchSystemFiles(url3, session?.address)
+                              setSystemFileInfo(systemFiles)
+                        })()
+                  }
             } else {
- 
+
 
                   const someData = systemFileInfo.map(e => {
                         try {
@@ -74,38 +78,6 @@ export default function FilesList() {
             }
       }, [files, systemFileInfo])
 
-      // Filter files based on selected filters
-      // const getFilteredFiles = () => {
-      //       if (selectedFilters.includes('all')) {
-      //             return files
-      //       }
-
-      //       const someData = systemFileInfo.map(e => {
-      //             try {
-      //                   return getAquaTreeFileName(e.aquaTree!)
-      //             } catch (e) {
-      //                   console.log('Error processing system file')
-      //                   return ''
-      //             }
-      //       })
-
-      //       return files.filter(file => {
-      //             try {
-      //                   const workFlow = isWorkFlowData(file.aquaTree!, someData)
-
-      //                   // Check if it's a workflow file
-      //                   if (workFlow.isWorkFlow && workFlow.workFlow) {
-      //                         return selectedFilters.includes(workFlow.workFlow)
-      //                   } else {
-      //                         // Non-workflow file
-      //                         return selectedFilters.includes('aqua_files')
-      //                   }
-      //             } catch (e) {
-      //                   console.log('Error filtering file:', file)
-      //                   return false
-      //             }
-      //       })
-      // }
 
 
       // Filter files based on selected filters AND selected workflow

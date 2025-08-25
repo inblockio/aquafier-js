@@ -2185,6 +2185,28 @@ console.log(`ensureDomainUrlHasSSL url after replacements: ${url}`)
 }
 
 
+
+ export  function isValidUrl(str: string): boolean {
+  try {
+    new URL(str)
+    return true
+  } catch {
+    return false
+  }
+}
+
+export function isHttpUrl(str: string): boolean {
+  // quick reject if contains newline or tab
+  if (/\s/.test(str)) return false
+
+  try {
+    const url = new URL(str)
+    return url.protocol === "http:" || url.protocol === "https:"
+  } catch {
+    return false
+  }
+}
+
 // export function ensureDomainUrlHasSSL(actualUrlToFetch: string): string {
 //       let url = actualUrlToFetch
 
