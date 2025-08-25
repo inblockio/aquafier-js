@@ -20,6 +20,7 @@ import { ChevronDown, ChevronUp } from 'lucide-react'
 import WalletAddressProfile from './WalletAddressProfile'
 import PhoneNumberClaim from './PhoneNumberClaim'
 import EmailClaim from './EmailClaim'
+import UserSignatureClaim from './UserSignatureClaim'
 
 
 export default function ClaimsWorkflowPage() {
@@ -115,7 +116,7 @@ export default function ClaimsWorkflowPage() {
                   return
             }
             setIsLoading(true)
-            const claimTemplateNames = ["simple_claim", "identity_claim", "dns_claim", "domain_claim", "phone_number_claim", "email_claim"]
+            const claimTemplateNames = ["simple_claim", "identity_claim", "dns_claim", "domain_claim", "phone_number_claim", "email_claim", "user_signature"]
 
             const aquaTemplates = systemFileInfo.map(e => {
                   try {
@@ -176,6 +177,11 @@ export default function ClaimsWorkflowPage() {
             else if (claimInfo.forms_type === 'email_claim') {
                   return (
                         <EmailClaim claim={claim} />
+                  )
+            }
+            else if (claimInfo.forms_type === 'user_signature') {
+                  return (
+                        <UserSignatureClaim claim={claim} />
                   )
             }
             else {

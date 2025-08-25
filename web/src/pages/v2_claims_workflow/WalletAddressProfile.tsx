@@ -7,7 +7,7 @@ import { ApiFileInfo } from '@/models/FileInfo'
 import appStore from '@/store'
 import { estimateFileSize, fetchFiles, formatCryptoAddress, generateAvatar, getAquaTreeFileName, getAquaTreeFileObject, getGenesisHash, getRandomNumber, isWorkFlowData, timeToHumanFriendly } from '@/utils/functions'
 import Aquafier, { AquaTree, AquaTreeWrapper, FileObject, OrderRevisionInAquaTree } from 'aqua-js-sdk'
-import { ArrowRight, LucideCheckCircle, Mail, Phone,  Share2, Wallet } from 'lucide-react'
+import { ArrowRight, LucideCheckCircle, Mail, Phone,  Share2, Signature, Wallet } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { HiShieldCheck } from 'react-icons/hi'
 import { TbWorldWww } from 'react-icons/tb'
@@ -86,6 +86,17 @@ const ClaimCard = ({ claim }: { claim: IClaim }) => {
                         </div>
                   )
             }
+            else if (claim.claimType === 'user_signature') {
+                  let extraClasses = ""
+                  if (claim.attestationsCount > 0) {
+                        extraClasses = "text-yellow-500"
+                  }
+                  return (
+                        <div className={`h-[34px] w-[34px] flex items-center justify-center ${extraClasses}`}>
+                              <Signature size={24} />
+                        </div>
+                  )
+            }
             else {
                   return (
                         <div className="h-[34px] w-[34px] flex items-center justify-center">
@@ -117,7 +128,7 @@ const WalletAddressProfile = ({ walletAddress, callBack, showAvatar, width, show
 
       const shadowClasses = showShadow ? 'shadow-lg hover:shadow-xl transition-shadow duration-300' : 'shadow-none'
 
-      const requiredClaims = ['simple_claim', 'domain_claim', 'identity_claim', 'phone_number_claim', 'email_claim']
+      const requiredClaims = ['simple_claim', 'domain_claim', 'identity_claim', 'phone_number_claim', 'email_claim', 'user_signature']
 
       const getWalletClaims = () => {
             setLoading(true)
@@ -175,7 +186,7 @@ const WalletAddressProfile = ({ walletAddress, callBack, showAvatar, width, show
 
                                           // _totalAttestations += attestationsCount
                                           let claimName = ""
-                                          if (workFlow === 'simple_claim' || workFlow === 'identity_claim') {
+                                          if (workFlow === 'simple_claim' || workFlow === 'identity_claim' || workFlow === 'user_signature') {
                                                 claimName = firstRevision.forms_name ?? firstRevision.forms_domain
                                           } else if (workFlow === 'domain_claim' || workFlow === 'dns_claim') {
                                                 claimName = firstRevision.forms_domain

@@ -2118,8 +2118,8 @@ export function ensureDomainUrlHasSSL(url: string): string {
       const isLocalhost = url.includes('127.0.0.1') || url.includes('0.0.0.0') || url.includes('localhost');
       const windowHost = window.location.origin;
 
-     
-      
+
+
       // Step 1: Enforce HTTPS for all domains except localhost/development
       if (!isLocalhost) {
             // Add https if no protocol specified
@@ -2149,21 +2149,21 @@ export function ensureDomainUrlHasSSL(url: string): string {
             }
       }
 
-console.log(`ensureDomainUrlHasSSL url after replacements: ${url}`)
+      console.log(`ensureDomainUrlHasSSL url after replacements: ${url}`)
 
-       if (isLocalhost && !(windowHost.includes('127.0.0.1') || windowHost.includes('localhost'))) {
+      if (isLocalhost && !(windowHost.includes('127.0.0.1') || windowHost.includes('localhost'))) {
 
             console.log(`ensureDomainUrlHasSSL isLocalhost: ${isLocalhost}, windowHost: ${windowHost}`)
             // Replace localhost/127.0.0.1 based on window host
             if (windowHost === 'https://dev.inblock.io') {
                   url = url.replace('https://127.0.0.1', 'https://dev-api.inblock.io')
-                      .replace('https://localhost', 'https://dev-api.inblock.io')
-                      .replace('https://0.0.0.0', 'https://dev-api.inblock.io');
-                  
+                        .replace('https://localhost', 'https://dev-api.inblock.io')
+                        .replace('https://0.0.0.0', 'https://dev-api.inblock.io');
+
             } else if (windowHost === 'https://aquafier.inblock.io') {
                   url = url.replace('https://127.0.0.1', 'https://aquafier-api.inblock.io')
-                      .replace('https://localhost', 'https://aquafier-api.inblock.io')
-                      .replace('https://0.0.0.0', 'https://aquafier-api.inblock.io');
+                        .replace('https://localhost', 'https://aquafier-api.inblock.io')
+                        .replace('https://0.0.0.0', 'https://aquafier-api.inblock.io');
             } else {
                   // Extract subdomain and add -api
                   const match = windowHost.match(/https?:\/\/([^.]+)\./);
@@ -2172,8 +2172,8 @@ console.log(`ensureDomainUrlHasSSL url after replacements: ${url}`)
                         const baseHost = windowHost.replace(/https?:\/\/[^.]+\./, `https://${subdomain}-api.`);
                         // url = url.replace(/https?:\/\/(127\.0\.0\.1|localhost|0\.0\.0\.0)/g, baseHost);
                         url = url.replace('https://127.0.0.1', baseHost)
-                            .replace('https://localhost', baseHost)
-                            .replace('https://0.0.0.0', baseHost); 
+                              .replace('https://localhost', baseHost)
+                              .replace('https://0.0.0.0', baseHost);
                   }
             }
             // Remove port numbers and path from the replaced URL if they exist
@@ -2186,25 +2186,25 @@ console.log(`ensureDomainUrlHasSSL url after replacements: ${url}`)
 
 
 
- export  function isValidUrl(str: string): boolean {
-  try {
-    new URL(str)
-    return true
-  } catch {
-    return false
-  }
+export function isValidUrl(str: string): boolean {
+      try {
+            new URL(str)
+            return true
+      } catch {
+            return false
+      }
 }
 
 export function isHttpUrl(str: string): boolean {
-  // quick reject if contains newline or tab
-  if (/\s/.test(str)) return false
+      // quick reject if contains newline or tab
+      if (/\s/.test(str)) return false
 
-  try {
-    const url = new URL(str)
-    return url.protocol === "http:" || url.protocol === "https:"
-  } catch {
-    return false
-  }
+      try {
+            const url = new URL(str)
+            return url.protocol === "http:" || url.protocol === "https:"
+      } catch {
+            return false
+      }
 }
 
 // export function ensureDomainUrlHasSSL(actualUrlToFetch: string): string {
@@ -2656,5 +2656,43 @@ export const extractDNSClaimInfo = (
             timestamp: Number(timestamp),
             expiration: Number(expiration),
             signature,
+      }
+}
+
+
+export const fetchImage = async (fileUrl: string, nonce: string) => {
+      try {
+            console.log(`fetchImage fileUrl ${fileUrl}`)
+            const actualUrlToFetch = ensureDomainUrlHasSSL(fileUrl)
+            const response = await fetch(actualUrlToFetch, {
+                  headers: {
+                        nonce: `${nonce}`,
+                  },
+            })
+
+            if (!response.ok) {
+                  console.error('FFFailed to fetch file:', response.status, response.statusText)
+                  return null
+            }
+
+            // Get content type from headers
+            let contentType = response.headers.get('Content-Type') || ''
+
+            // If content type is missing or generic, try to detect from URL
+            if (contentType === 'application/octet-stream' || contentType === '') {
+                  contentType = 'image/png'
+            }
+
+            if (contentType.startsWith('image')) {
+                  const arrayBuffer = await response.arrayBuffer()
+                  // Ensure we use the PDF content type
+                  const blob = new Blob([arrayBuffer], { type: contentType })
+                  return URL.createObjectURL(blob)
+            }
+
+            return null
+      } catch (error) {
+            console.error('Error fetching file:', error)
+            return null
       }
 }
