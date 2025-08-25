@@ -184,9 +184,11 @@ console.log("Without duplicates Allowed CORS origins: ", JSON.stringify(allowedC
     // Register the plugin
     fastify.register(fastifyMultipart, {
         limits: {
-            fileSize: 200 * 1024 * 1024, // 200MB - Adding this here as well for early rejection
-             files: 1,
-    fieldSize:  30 * 1024 * 1024, // 25MB for form fields
+            files:100,
+            fields:100,
+            fieldNameSize: 200 * 1024 * 1024 ,// 200MB
+            parts: 500, // files + fields
+            fileSize: 200 * 1024 * 1024 // 200MB - Adding this here as well for early rejection
         }
     });
 
