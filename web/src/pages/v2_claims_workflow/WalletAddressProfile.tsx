@@ -177,7 +177,7 @@ const ClaimCard = ({ claim }: { claim: IClaim }) => {
                         <div className="w-[34px] h-[34px] flex items-center justify-center text-gray-500 rounded-full bg-gray-100">{getClaimIcon()}</div>
                         <div className="flex flex-col gap-1">
                               <p className="text-xs">{getClaimTitle()}</p>
-                              <p className="text-xs font-medium text-gray-800">{getTextContent()}</p>
+                              <p className="text-xs font-medium text-gray-900">{getTextContent()}</p>
                         </div>
                   </div>
                   <div className="flex gap-2">
@@ -1025,5 +1025,7 @@ export default WalletAddressProfile
 // }
 
 // export default WalletAddressProfile
+
+
 
 
