@@ -100,9 +100,10 @@ export default async function explorerController(fastify: FastifyInstance) {
             }
 
 
+
+
             // Process individual .aqua.json files
-            //todo fix me to check for workflo
-            await processAquaFiles(zipData, session.address, templateId, false);
+            await processAquaFiles(zipData, session.address, templateId);
 
             // Return response with file info
             const host = request.headers.host || `${getHost()}:${getPort()}`;
@@ -123,7 +124,6 @@ export default async function explorerController(fastify: FastifyInstance) {
             });
         }
     });
-
 
 
     fastify.post('/explorer_aqua_file_upload', async (request, reply) => {
@@ -845,7 +845,7 @@ export default async function explorerController(fastify: FastifyInstance) {
                     }
                 ]
             const entireChain = await fetchAquatreeFoUser(url, latest)//(latestRevisionHash, userAddress, url);
-
+ 
             // Check if the user exists (create if not)
             const targetUser = await prisma.users.findUnique({
                 where: { address: session.address }

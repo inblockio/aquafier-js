@@ -192,13 +192,16 @@ export async function transferRevisionChainData(userAddress: string, chainData: 
         }
 
 
+         let workFlowData = isWorkFlowData(chainData.aquaTree, systemTemplateHashes);
         // save aquatree in file objects
         for (let fileObject of chainData.fileObject) {
             // Ensure the file object has a valid hashe
             let isAquaTreeData = isAquaTree(fileObject.fileContent);
             if (isAquaTreeData) {
                 let aquaTree = fileObject.fileContent as AquaTree
-                await saveAquaTree(aquaTree, userAddress, null, true);
+
+               
+                await saveAquaTree(aquaTree, userAddress, null, workFlowData.isWorkFlow);
                 allAquaTrees.push(aquaTree);
                 for (let key in chainData.aquaTree.file_index) {
                     // Ensure the file object has a valid hashe
@@ -1221,7 +1224,7 @@ async function processSignatureRevision(revisionData: AquaTreeRevision, pubKeyHa
             reference_count: 1
         }
     });
-}
+} 
 
 async function processWitnessRevision(revisionData: AquaTreeRevision, pubKeyHash: string) {
 
@@ -1601,28 +1604,36 @@ let aquaFileName = "";
 
 
 // read zip file and create AquaTree from revisions
-
-
 export async function processAquaFiles(
     zipData: JSZip,
     userAddress: string,
     templateId: string | null = null,
-    isWorkFlow: boolean = false
+    
 ) {
-    try {
-        const aquaConfig = await getAquaConfiguration(zipData);
+const aquaConfig = await getAquaConfiguration(zipData);
         console.log(`config Aqua Tree: ${JSON.stringify(aquaConfig, null, 2)}`);
         const mainAquaTree = await getMainAquaTree(zipData, aquaConfig);
         console.log(`Main Aqua Tree: ${JSON.stringify(mainAquaTree, null, 2)}`);
-        const actualIsWorkFlow = determineWorkFlowStatus(mainAquaTree, isWorkFlow);
-        console.log(`actualIsWorkFlow: ${actualIsWorkFlow}`);
+        
+        
 
+    const isWorkFlow :  {
+    isWorkFlow: boolean;
+    workFlow: string;
+} = isWorkFlowData(mainAquaTree!, systemTemplateHashes)
 
-        await processAllAquaFiles(zipData, userAddress, templateId, aquaConfig, mainAquaTree, actualIsWorkFlow);
+console.log(`actualIsWorkFlow: ${isWorkFlow}`);
+    try {
+        
+
+        await processAllAquaFiles(zipData, userAddress, templateId, aquaConfig, mainAquaTree, isWorkFlow.isWorkFlow);
     } catch (error : any) {
         console.error('Error processing aqua files:', error);
         // Fallback: process all aqua files without special workflow handling
-        await processAllAquaFilesGeneric(zipData, userAddress, templateId, isWorkFlow);
+        // await processAllAquaFilesGeneric(zipData, userAddress, templateId);
+
+        const aquaFiles = getAquaFiles(zipData);
+    await processRegularFiles(aquaFiles, userAddress, templateId, isWorkFlow.isWorkFlow);
     }
 }
 
@@ -1649,10 +1660,7 @@ async function getMainAquaTree(zipData: JSZip, aquaConfig: AquaJsonInZip | null)
     return JSON.parse(aquaTreeContent);
 }
 
-function determineWorkFlowStatus(mainAquaTree: AquaTree | null, fallbackStatus: boolean): boolean {
-    if (!mainAquaTree) return fallbackStatus;
-    return isWorkFlowData(mainAquaTree, systemTemplateHashes).isWorkFlow || fallbackStatus;
-}
+
 
 async function processAllAquaFiles(
     zipData: JSZip,
@@ -1700,15 +1708,7 @@ async function processRegularFiles(
     }
 }
 
-async function processAllAquaFilesGeneric(
-    zipData: JSZip,
-    userAddress: string,
-    templateId: string | null,
-    isWorkFlow: boolean
-) {
-    const aquaFiles = getAquaFiles(zipData);
-    await processRegularFiles(aquaFiles, userAddress, templateId, isWorkFlow);
-}
+
 
 function getAquaFiles(zipData: JSZip): Array<{ fileName: string; file: JSZip.JSZipObject }> {
     return Object.entries(zipData.files)
