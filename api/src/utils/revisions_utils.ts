@@ -192,7 +192,7 @@ export async function transferRevisionChainData(userAddress: string, chainData: 
         }
 
 
-         let workFlowData = isWorkFlowData(chainData.aquaTree, systemTemplateHashes);
+        let workFlowData = isWorkFlowData(chainData.aquaTree, systemTemplateHashes);
         // save aquatree in file objects
         for (let fileObject of chainData.fileObject) {
             // Ensure the file object has a valid hashe
