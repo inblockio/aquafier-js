@@ -145,6 +145,7 @@ const FormTemplateListShadcn = ({ onEdit }: FormTemplateListShadcnProps) => {
                                                                                           </CustomTooltip>
                                                                                           <CustomTooltip content="Delete template">
                                                                                                 <Button
+                                                                                                     data-testid={"delete-form-template-"+template.name}
                                                                                                       variant="ghost"
                                                                                                       size="icon"
                                                                                                       className="text-red-500 hover:text-red-700 hover:bg-red-50 cursor-pointer"

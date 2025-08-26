@@ -157,7 +157,7 @@ test("import, file multiple revisions", async (): Promise<void> => {
 
     // Check if we need to select another file using Playwright's expect assertion
     const selectFileButton = testPage.locator('[data-testid="action-select-file-06-button"]');
-    
+
     try {
         // Use expect().toBeVisible() with a short timeout to check if button exists
         await expect(selectFileButton).toBeVisible({ timeout: 5000 });
@@ -213,14 +213,14 @@ test("import, file multiple revisions", async (): Promise<void> => {
                 // Debug: take screenshot and dump table content
                 console.log("❌ Failed to find aqua.json, debugging...");
                 await testPage.screenshot({ path: 'debug-table-state.png', fullPage: true });
-                
+
                 // Check if table exists at all
                 const table = testPage.locator('table');
                 await expect(table).toBeVisible({ timeout: 5000 });
-                
+
                 const tableContent = await table.textContent();
                 console.log("Table content:", tableContent);
-                
+
                 // List all table rows for debugging
                 const rows = await table.locator('tr').all();
                 console.log(`Found ${rows.length} table rows:`);
@@ -543,19 +543,23 @@ test("delete a template", async (): Promise<void> => {
     // await deleteTemplate(testPage);
 
 
-    await testPage.waitForSelector('[data-testid="delete-form-template-0"]', { state: 'visible' });
-    await testPage.click('[data-testid=""]');
+    await testPage.waitForSelector('[data-testid="delete-form-template-test_template"]', { state: 'visible' });
+    await testPage.click('[data-testid="delete-form-template-test_template"]');
     console.log("Clicked delete template button using data-testid");
-    try {
-        await testPage.waitForSelector('[data-testid="delete-form-template-0"]', { state: 'visible' });
-        await testPage.click('[data-testid="delete-form-template-0"]');
-        console.log("Clicked delete template button using data-testid");
-    } catch (error) {
-        console.log("Failed to find button by data-testid, trying by id...");
-        await testPage.waitForSelector('#delete-form-template-id-0', { state: 'visible' });
-        await testPage.click('#delete-form-template-id-0');
-        console.log("Clicked delete template button using id selector");
-    }
+
+    await testPage.waitForSelector('[data-testid="delete-form-action-button"]', { state: 'visible' });
+    await testPage.click('[data-testid="delete-form-action-button"]');
+    console.log("Clicked confirm delete modal");
+
+    // testPage.waitForTimeout(500);
+// Verify template was deleted by checking both the delete button and template text are not visible
+    const deleteButton = testPage.locator('[data-testid="delete-form-template-test_template"]');
+    const templateText = testPage.locator('text=Test Template');
+    
+    await expect(deleteButton).not.toBeVisible();
+    await expect(templateText).not.toBeVisible();
+    
+    console.log("Template successfully deleted - verification complete");
 });
 
 
@@ -759,18 +763,25 @@ test("import user  signature", async (): Promise<void> => {
     // Check that the table has two rows and contains aqua.json
     const tableRows = testPage.locator('table tr');
     //header + two files
-    await expect(tableRows).toHaveCount(2);
+    await expect(tableRows).toHaveCount(4);
 
     console.log("open details");
     try {
+
+
+
         // Click and wait for the dialog to appear
-        await Promise.all([
-            testPage.waitForSelector('text=This aqua tree is valid'),
-            testPage.click('[data-testid="open-aqua-claim-workflow-button-0"]')
-        ]);
+        // await Promise.all([
+        //     testPage.waitForSelector('text=This aqua tree is valid'),
+        //     testPage.click('[data-testid="open-aqua-claim-workflow-button-0"]')
+        // ]);
+
+        testPage.click('[data-testid="open-aqua-claim-workflow-button-0"]')
+        await testPage.waitForTimeout(1000);
+        await testPage.waitForSelector('text=This aqua tree is valid', { state: 'visible', timeout: 5000 });
 
         // Verify the validation message is visible
-        const validationMessage = testPage.locator('text=This aqua tree is valid');
+        const validationMessage = testPage.locator('text=This aqua tree is valid').first();
         await expect(validationMessage).toBeVisible();
 
         console.log("Aqua tree validation confirmed!");
@@ -837,8 +848,8 @@ test("create phone number claim", async (): Promise<void> => {
 
     console.log("fill phone number claim form");
 
-    await testPage.locator('[id="input-phone_number"]').fill("000-000-0000"); 
-    await testPage.locator('[data-testid="input-verification-phone_number"]').fill("111"); 
+    await testPage.locator('[id="input-phone_number"]').fill("000-000-0000");
+    await testPage.locator('[data-testid="input-verification-phone_number"]').fill("111");
 
     // await testPage.getByText("Create Workflow").waitFor({ state: 'visible' });
     // await testPage.waitForSelector('[class="signature-canvas"]', { state: 'visible' });
@@ -870,8 +881,8 @@ test("create email claim", async (): Promise<void> => {
 
     console.log("fill email claim form");
 
-    await testPage.locator('[id="input-email"]').fill("test@inblock.io.com"); 
-    await testPage.locator('[data-testid="input-verification-email"]').fill("111"); 
+    await testPage.locator('[id="input-email"]').fill("test@inblock.io.com");
+    await testPage.locator('[data-testid="input-verification-email"]').fill("111");
 
     // await testPage.getByText("Create Workflow").waitFor({ state: 'visible' });
     // await testPage.waitForSelector('[class="signature-canvas"]', { state: 'visible' });

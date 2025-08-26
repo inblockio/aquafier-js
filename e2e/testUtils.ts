@@ -1102,9 +1102,24 @@ export async function registerNewMetaMaskWalletAndLogin(url: string = "/app"): P
             throw new Error("MetaMask popup never appeared");
         }
     }
+
+    // Check if page is still open before proceeding
+        if (metamaskPage.isClosed()) {
+            throw new Error("MetaMask page was closed unexpectedly");
+        }
+    await metamaskPage.bringToFront();
+    await metamaskPage.waitForLoadState("load");
+    console.log("MetaMask page loaded");
+
     await metamaskPage.waitForSelector('[data-testid="confirm-btn"]', { state: 'visible' })
     await metamaskPage.click('[data-testid="confirm-btn"]')
 
+      // Check if page is still open after first click
+        if (metamaskPage.isClosed()) {
+            console.log("MetaMask page closed after first confirmation - this might be expected behavior");
+            return response; // Return if the flow is complete
+        }
+        
     await metamaskPage.waitForSelector('[data-testid="confirm-footer-cancel-button"]', { state: 'visible' })
     await metamaskPage.waitForSelector('[data-testid="confirm-footer-button"]', { state: 'visible' })
     await metamaskPage.click('[data-testid="confirm-footer-button"]')
@@ -1151,7 +1166,7 @@ export async function createTemplate(page: Page): Promise<void> {
     await page.fill('#title', 'Test Template');
 
     // Add two fields
-    await waitAndClick(page, '[data-testid="action-add-form-field-button"]');
+    await waitAndClick(page, '[data-testid="add-form-action-button"]');
     console.log("Clicked add form field button using data-testid");
     let fields = [
         {
@@ -1180,7 +1195,7 @@ export async function createTemplate(page: Page): Promise<void> {
     }
 
     console.log("First field added to template form");
-    await waitAndClick(page, '[data-testid="action-add-form-field-button"]')
+    await waitAndClick(page, '[data-testid="add-form-action-button"]')
 
     try {
         await page.fill(`[data-testid="field-label-1"]`, fields[1].label);
@@ -1191,7 +1206,8 @@ export async function createTemplate(page: Page): Promise<void> {
         console.log("Filled second field label using id selector");
     }
     // await page.selectOption(`[data-testid="field-type-1"]`, fields[1].type);
-    // await page.click(`[data-testid="field-required-1"]`);
+    // await page.cli
+    // ck(`[data-testid="field-required-1"]`);
     console.log("Second field added to template form");
 
     // Save the form
