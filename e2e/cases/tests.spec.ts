@@ -508,9 +508,7 @@ test("import aqua zip test", async (): Promise<void> => {
     // Check that the table has two rows and contains aqua.json
     const tableRows = testPage.locator('table tr');
     //header + two files
-    // await expect(tableRows).toHaveCount(3);
-    const rowCount = await tableRows.count();
-    expect(rowCount).toBeGreaterThanOrEqual(2);
+    await expect(tableRows).toHaveCount(3);
 });
 
 
@@ -554,13 +552,13 @@ test("delete a template", async (): Promise<void> => {
     console.log("Clicked confirm delete modal");
 
     // testPage.waitForTimeout(500);
-    // Verify template was deleted by checking both the delete button and template text are not visible
+// Verify template was deleted by checking both the delete button and template text are not visible
     const deleteButton = testPage.locator('[data-testid="delete-form-template-test_template"]');
     const templateText = testPage.locator('text=Test Template');
-
+    
     await expect(deleteButton).not.toBeVisible();
     await expect(templateText).not.toBeVisible();
-
+    
     console.log("Template successfully deleted - verification complete");
 });
 
@@ -643,9 +641,7 @@ test("create simple claim", async (): Promise<void> => {
     // Check that the table has two rows and contains aqua.json
     const tableRows = testPage.locator('table tr');
     // //header + two files
-    // await expect(tableRows).toHaveCount(2);
-    const rowCount = await tableRows.count();
-    expect(rowCount).toBeGreaterThanOrEqual(2);
+    await expect(tableRows).toHaveCount(2);
 });
 
 
@@ -683,9 +679,7 @@ test("create dns claim", async (): Promise<void> => {
     // Check that the table has two rows and contains aqua.json
     const tableRows = testPage.locator('table tr');
     // //header + two files
-    // await expect(tableRows).toHaveCount(2);
-    const rowCount = await tableRows.count();
-    expect(rowCount).toBeGreaterThanOrEqual(2);
+    await expect(tableRows).toHaveCount(2);
 });
 
 
@@ -713,9 +707,7 @@ test("import dns claim", async (): Promise<void> => {
     // Check that the table has two rows and contains aqua.json
     const tableRows = testPage.locator('table tr');
     //header + two files
-    // await expect(tableRows).toHaveCount(2);
-    const rowCount = await tableRows.count();
-    expect(rowCount).toBeGreaterThanOrEqual(2);
+    await expect(tableRows).toHaveCount(2);
 
     console.log("open details");
     try {
@@ -771,9 +763,7 @@ test("import user  signature", async (): Promise<void> => {
     // Check that the table has two rows and contains aqua.json
     const tableRows = testPage.locator('table tr');
     //header + two files
-    // await expect(tableRows).toHaveCount(4);
-    const rowCount = await tableRows.count();
-    expect(rowCount).toBeGreaterThanOrEqual(2);
+    await expect(tableRows).toHaveCount(4);
 
     console.log("open details");
     try {
@@ -839,9 +829,7 @@ test("create aqua sign claim", async (): Promise<void> => {
     // Check that the table has two rows and contains aqua.json
     const tableRows = testPage.locator('table tr');
     // //header + two files
-    // await expect(tableRows).toHaveCount(2);
-    const rowCount = await tableRows.count();
-    expect(rowCount).toBeGreaterThanOrEqual(2);
+    await expect(tableRows).toHaveCount(2);
 });
 
 
@@ -876,8 +864,7 @@ test("create phone number claim", async (): Promise<void> => {
     // Check that the table has two rows and contains aqua.json
     const tableRows = testPage.locator('table tr');
     // //header + two files
-    const rowCount = await tableRows.count();
-    expect(rowCount).toBeGreaterThanOrEqual(2);
+    await expect(tableRows).toHaveCount(3);
 });
 
 test("create email claim", async (): Promise<void> => {
@@ -910,7 +897,5 @@ test("create email claim", async (): Promise<void> => {
     // Check that the table has two rows and contains aqua.json
     const tableRows = testPage.locator('table tr');
     // //header + two files
-
-    const rowCount = await tableRows.count();
-    expect(rowCount).toBeGreaterThanOrEqual(2);
+    await expect(tableRows).toHaveCount(2);
 });
