@@ -21,6 +21,7 @@ import WalletAddressProfile from './WalletAddressProfile'
 import PhoneNumberClaim from './PhoneNumberClaim'
 import EmailClaim from './EmailClaim'
 import UserSignatureClaim from './UserSignatureClaim'
+import { AddressView } from './AddressView'
 
 
 export default function ClaimsWorkflowPage() {
@@ -238,10 +239,24 @@ export default function ClaimsWorkflowPage() {
       return (
             <div className='py-6 flex flex-col gap-4'>
 
-                  <div className='flex items-center gap-2 flex-col text-center'>
+                  {/* <div className='flex items-center gap-2 flex-col text-center'>
                         <h2 className="text-2xl font-bold">Wallet Address Profile</h2>
                         <h3 className="text-lg">{walletAddress}</h3>
-                        {/* <CopyButton text={walletAddress} /> */}
+                  </div> */}
+
+                  <div className="bg-gradient-to-br from-slate-100 via-blue-50 to-indigo-100 p-4 sm:p-6 lg:p-8 rounded-lg">
+                        <div className="max-w-2xl mx-auto">
+                              <div className="text-center mb-8">
+                                    <h1 className="text-3xl font-bold text-gray-900 mb-2">Wallet Profile</h1>
+                                    <p className="text-gray-600">View and manage your wallet profile</p>
+                              </div>
+
+                              <AddressView
+                                    address={`${walletAddress}`}
+                                    className="max-w-full"
+                              />
+
+                        </div>
                   </div>
 
                   {isLoading ? (
@@ -259,14 +274,14 @@ export default function ClaimsWorkflowPage() {
                         ) : null
                   }
 
-                  <div className="container mx-auto py-4 px-1 md:px-4 bg-gray-200 rounded-lg">
+                  <div className="container mx-auto py-4 bg-white rounded-lg">
                         <WalletAddressProfile walletAddress={walletAddress} hideOpenProfileButton={true} />
                   </div>
 
                   <div className="flex flex-col gap-4">
                         {
                               claims.filter(item => ["simple_claim", "identity_claim"].includes(item.processedInfo.claimInformation.forms_type)).map((claim, index) => (
-                                    <div key={`claim_${index}`} className="container mx-auto py-4 px-1 md:px-4 bg-gray-200 rounded-lg">
+                                    <div key={`claim_${index}`} className="container mx-auto py-4 px-1 md:px-4 bg-gray-50 rounded-lg">
                                           {renderClaim(claim)}
                                           <Collapsible className='mt-4 bg-gray-50 p-2 rounded-lg'>
                                                 <CollapsibleTrigger className='cursor-pointer w-full p-2 border-2 border-gray-200 rounded-lg flex justify-between items-center'>
@@ -311,7 +326,7 @@ export default function ClaimsWorkflowPage() {
                         }
                         {
                               claims.filter(item => !["simple_claim", "identity_claim"].includes(item.processedInfo.claimInformation.forms_type)).map((claim, index) => (
-                                    <div key={`claim_${index}`} className="container mx-auto py-4 px-1 md:px-4 bg-gray-200 rounded-lg">
+                                    <div key={`claim_${index}`} className="container mx-auto py-4 px-1 md:px-4 bg-gray-50 rounded-lg">
                                           {renderClaim(claim)}
                                           <Collapsible className='mt-4 bg-gray-50 p-2 rounded-lg'>
                                                 <CollapsibleTrigger className='cursor-pointer w-full p-2 border-2 border-gray-200 rounded-lg flex justify-between items-center'>
