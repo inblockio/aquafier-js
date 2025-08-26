@@ -865,7 +865,8 @@ export default async function explorerController(fastify: FastifyInstance) {
                 return reply.code(400).send({ success: false, message: "Multiple revisions found for the provided hash. Please provide a unique revision hash." });
             }
 
-
+            // console.log("Just before transfer: ", JSON.stringify(entireChain[0], null, 4))
+            // throw new Error("Just before transfer");
 
             // Transfer the chain to the target user (session.address)
             const transferResult = await transferRevisionChainData(

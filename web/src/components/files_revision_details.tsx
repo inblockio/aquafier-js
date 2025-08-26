@@ -9,9 +9,12 @@ import { ExternalLink, FileSignature, Eye, Link2, Clock, Hash, Network, Copy, Ch
 import { ERROR_TEXT, ERROR_UKNOWN, WITNESS_NETWORK_MAP } from '@/utils/constants'
 import { displayTime, fetchLinkedFileName, formatCryptoAddress, getAquaTreeFileObject, getFileNameWithDeepLinking, isDeepLinkRevision } from '@/utils/functions'
 import { ApiFileInfo } from '@/models/FileInfo'
-import SignatureWalletAddressCard from '@/pages/claims_workflow/SignatureWalletAddressCard'
 import { toast } from 'sonner'
- 
+import { lazy, Suspense } from 'react'
+import { ClipLoader } from 'react-spinners'
+
+const WalletAddressProfile = lazy(() => import('@/pages/v2_claims_workflow/WalletAddressProfile'))
+
 export const RevisionDetailsSummary = ({ fileInfo, isWorkFlow }: RevisionDetailsSummaryData) => {
       const { files, setSelectedFileInfo } = useStore(appStore)
       const revisionHashes = Object.keys(fileInfo!.aquaTree!.revisions)
@@ -149,7 +152,7 @@ export const RevisionDetailsSummary = ({ fileInfo, isWorkFlow }: RevisionDetails
                                     </div>
                                 </div>
                             ))} */}
-                                          {revisionsWithSignatures.map((revision, index) => (
+                                          {/* {revisionsWithSignatures.map((revision, index) => (
                                                 <SignatureWalletAddressCard
                                                       key={`signature_${index}`}
                                                       signatureHash={revision.signature}
@@ -157,7 +160,18 @@ export const RevisionDetailsSummary = ({ fileInfo, isWorkFlow }: RevisionDetails
                                                       walletAddress={revision.signature_wallet_address!!}
                                                       index={index + 1}
                                                 />
-                                          ))}
+                                          ))} */}
+                                          <Suspense fallback={<ClipLoader size={20} color="#000000" />}>
+                                                {revisionsWithSignatures.map((revision, index) => (
+                                                      <WalletAddressProfile
+                                                            key={`signature_${index}`}
+                                                            signatureHash={revision.signature}
+                                                            timestamp={displayTime(revision.local_timestamp)}
+                                                            walletAddress={revision.signature_wallet_address!!}
+                                                            index={index + 1}
+                                                      />
+                                                ))}
+                                          </Suspense>
                                     </div>
                               </CardContent>
                         </Card>
@@ -477,7 +491,7 @@ export const viewLinkedFile = (
 
                                                       if (aquaTree == undefined) {
                                                             console.log(`show  ${linkedFileName}  filw object ${JSON.stringify(fileObject, null, 4)}`)
-                                                            toast.info( 'View not available')
+                                                            toast.info('View not available')
                                                       } else {
                                                             updateSelectedFile({
                                                                   aquaTree: aquaTree,
