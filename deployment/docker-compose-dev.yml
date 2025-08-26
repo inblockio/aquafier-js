@@ -53,8 +53,6 @@ services:
       - 80:80
       - 443:443
     volumes:
-      - proxy_data_conf_d:/etc/nginx/conf.d
-      - proxy_data_vhost_d:/etc/nginx/vhost.d
       - proxy_data_html:/usr/share/nginx/html
       - proxy_data_certs:/etc/nginx/certs
       - /var/run/docker.sock:/tmp/docker.sock
@@ -66,8 +64,6 @@ services:
       - proxy
     volumes:
       - proxy_data_acme:/etc/acme.sh
-      - proxy_data_conf_d:/etc/nginx/conf.d
-      - proxy_data_vhost_d:/etc/nginx/vhost.d
       - proxy_data_html:/usr/share/nginx/html
       - proxy_data_certs:/etc/nginx/certs
       - /var/run/docker.sock:/var/run/docker.sock
@@ -87,8 +83,6 @@ volumes:
   s3_storage:
   app_data:
   proxy_data_acme:
-  proxy_data_conf_d:
-  proxy_data_vhost_d:
   proxy_data_html:
   proxy_data_certs:
   postgres_data:

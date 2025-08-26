@@ -191,6 +191,13 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: { selectedTempla
                               const fileBlob = new Blob([fileObject.fileContent], {
                                     type: 'application/octet-stream',
                               })
+
+                              // const uint8Array = fileObject.fileContent instanceof Uint8Array
+                              //       ? fileObject.fileContent
+                              //       : new Uint8Array(fileObject.fileContent as ArrayBuffer)
+                              // const fileBlob = new Blob([uint8Array], {
+                              //       type: 'application/octet-stream',
+                              // })
                               formData.append('asset', fileBlob, fileObject.fileName)
                         }
                         // If it's a base64 string (common for image data)
