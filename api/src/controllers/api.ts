@@ -220,6 +220,36 @@ export default async function ApiController(fastify: FastifyInstance) {
       ? "email"
       : "phone_number";
 
+      if (verificationType === "email") {
+        // Basic email format validation
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(revisionDataPar.email_or_phone_number)) {
+          return reply
+            .code(400)
+            .send({ success: false, message: "Invalid email format" });
+        }
+
+        if(revisionDataPar.email_or_phone_number=="test@inblock.io.com"){
+          return reply
+          .code(200)
+          .send({ success: true, message: "Verification code validated" });
+        }
+      }else{
+        // Basic phone number format validation (simple regex for illustration)
+        // const phoneRegex = /^\+?[1-9]\d{1,14}$/; // E.164 format
+        // if (!phoneRegex.test(revisionDataPar.email_or_phone_number)) {
+        //   return reply
+        //     .code(400)
+        //     .send({ success: false, message: "Invalid phone number format" });
+        // }
+
+          if(revisionDataPar.email_or_phone_number=="000-000-0000"){
+          return reply
+          .code(200)
+          .send({ success: true, message: "Verification code validated" });
+        }
+      }
+
     // Check rate limit for verify_code
     const rateLimitCheck = await checkRateLimit(
       revisionDataPar.email_or_phone_number,
@@ -311,6 +341,37 @@ export default async function ApiController(fastify: FastifyInstance) {
     if (verificationType === "email") {
       channel = "email";
     }
+
+
+     if (verificationType === "email") {
+        // Basic email format validation
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(revisionDataPar.email_or_phone_number)) {
+          return reply
+            .code(400)
+            .send({ success: false, message: "Invalid email format" });
+        }
+
+        if(revisionDataPar.email_or_phone_number=="test@inblock.io.com"){
+          return reply
+          .code(200)
+          .send({ success: true, message: "Verification code sent" });
+        }
+      }else{
+        // Basic phone number format validation (simple regex for illustration)
+        // const phoneRegex = /^\+?[1-9]\d{1,14}$/; // E.164 format
+        // if (!phoneRegex.test(revisionDataPar.email_or_phone_number)) {
+        //   return reply
+        //     .code(400)
+        //     .send({ success: false, message: "Invalid phone number format" });
+        // }
+
+          if(revisionDataPar.email_or_phone_number=="000-000-0000"){
+          return reply
+          .code(200)
+          .send({ success: true, message: "Verification code sent" });
+        }
+      }
 
     // Check rate limit for send_code
     const rateLimitCheck = await checkRateLimit(

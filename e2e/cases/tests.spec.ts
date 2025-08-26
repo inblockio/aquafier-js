@@ -822,6 +822,40 @@ test("create aqua sign claim", async (): Promise<void> => {
 });
 
 
+
+test("create phone number claim", async (): Promise<void> => {
+    const registerResponse = await registerNewMetaMaskWalletAndLogin();
+    const context: BrowserContext = registerResponse.context;
+    const testPage: Page = context.pages()[0];
+
+    console.log("create a phone number claim!");
+
+    // Open workflow
+    await waitAndClick(testPage, '[data-testid="create-claim-dropdown-button"]')
+    console.log("claims dropdown ");
+    await waitAndClick(testPage, '[data-testid="create-phone-number-claim-dropdown-button-item"]')
+
+    console.log("fill phone number claim form");
+
+    await testPage.locator('[id="input-phone_number"]').fill("000-000-0000"); 
+    await testPage.locator('[data-testid="input-verification-phone_number"]').fill("111"); 
+
+    // await testPage.getByText("Create Workflow").waitFor({ state: 'visible' });
+    // await testPage.waitForSelector('[class="signature-canvas"]', { state: 'visible' });
+    // await testPage.click('[class="signature-canvas"]');
+
+    const metamaskPromise = context.waitForEvent("page");
+    await testPage.getByText("Create Workflow").click();
+    await metamaskPromise;
+
+    await handleMetaMaskNetworkAndConfirm(context, false);
+    console.log("phone number claim saved");
+    // Check that the table has two rows and contains aqua.json
+    const tableRows = testPage.locator('table tr');
+    // //header + two files
+    await expect(tableRows).toHaveCount(3);
+});
+
 test("create email claim", async (): Promise<void> => {
     const registerResponse = await registerNewMetaMaskWalletAndLogin();
     const context: BrowserContext = registerResponse.context;
@@ -836,20 +870,21 @@ test("create email claim", async (): Promise<void> => {
 
     console.log("fill email claim form");
 
-    await testPage.locator('[id="input-name"]').fill("User name ");
+    await testPage.locator('[id="input-email"]').fill("test@inblock.io.com"); 
+    await testPage.locator('[data-testid="input-verification-email"]').fill("111"); 
 
-    await testPage.getByText("Create Workflow").waitFor({ state: 'visible' });
-    await testPage.waitForSelector('[class="signature-canvas"]', { state: 'visible' });
-    await testPage.click('[class="signature-canvas"]');
+    // await testPage.getByText("Create Workflow").waitFor({ state: 'visible' });
+    // await testPage.waitForSelector('[class="signature-canvas"]', { state: 'visible' });
+    // await testPage.click('[class="signature-canvas"]');
 
     const metamaskPromise = context.waitForEvent("page");
     await testPage.getByText("Create Workflow").click();
     await metamaskPromise;
 
     await handleMetaMaskNetworkAndConfirm(context, false);
-    console.log("signature saved");
+    console.log("email claim saved");
     // Check that the table has two rows and contains aqua.json
     const tableRows = testPage.locator('table tr');
     // //header + two files
-    await expect(tableRows).toHaveCount(2);
+    await expect(tableRows).toHaveCount(3);
 });

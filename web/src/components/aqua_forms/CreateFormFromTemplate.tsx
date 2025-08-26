@@ -37,7 +37,7 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: { selectedTempla
             content: JSX.Element
             title: string
       }>(null)
- 
+
       const signatureRef = useRef<SignatureCanvas | null>(null)
       // const navigate = useNavigate()
 
@@ -55,9 +55,9 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: { selectedTempla
             }
       }, []);
 
-      const getFieldDefaultValue = (field: FormField, currentState:  string | File | number | undefined
+      const getFieldDefaultValue = (field: FormField, currentState: string | File | number | undefined
 
-      ) : string | File | number  => {
+      ): string | File | number => {
             if (field.type === 'number') {
                   return currentState ?? 0
             }
@@ -267,7 +267,7 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: { selectedTempla
       }
 
       // Validation function for required fields
-      const validateRequiredFields = (completeFormData:  Record<string, string | File | number>, selectedTemplate: FormTemplate) => {
+      const validateRequiredFields = (completeFormData: Record<string, string | File | number>, selectedTemplate: FormTemplate) => {
             for (const fieldItem of selectedTemplate.fields) {
                   const valueInput = completeFormData[fieldItem.name]
                   if (fieldItem.required && valueInput == undefined) {
@@ -1251,6 +1251,14 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: { selectedTempla
                                                                                                                               setVerifyingFormField("")
                                                                                                                               return
                                                                                                                         }
+
+                                                                                                                        if (filledValue == "000-000-0000" || filledValue == "test@inblock.io.com") {
+                                                                                                                              if (window.location.hostname === "localhost" || window.location.hostname === "dev.inblock.io") {
+                                                                                                                                    toast.info(`Using test value, no code will be sent`)
+                                                                                                                              } else {
+                                                                                                                                    return toast.error(`Please provide a valid ${field.label} to receive verification code`)
+                                                                                                                              }
+                                                                                                                        }
                                                                                                                         try {
                                                                                                                               // const allRevisionHashes = Object.keys(apiFileInfo.aquaTree!.revisions!)
                                                                                                                               // const lastRevisionHash = allRevisionHashes[allRevisionHashes.length - 1]
@@ -1344,11 +1352,11 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: { selectedTempla
                                                                               field.type == 'scratchpad' && (
                                                                                     <div ref={containerRef} className="border border-gray-200 w-full h-[200px] bg-white">
                                                                                           <SignatureCanvas
-                                                                               
-                                                                                           
+
+
                                                                                                 ref={signatureRef}
                                                                                                 canvasProps={{
-                                                                                                      
+
                                                                                                       id: 'signature-canvas-id',
                                                                                                       width: canvasSize.width,
                                                                                                       height: canvasSize.height,
@@ -1373,12 +1381,12 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: { selectedTempla
                                                                                                       data-testid={`input-${field.name}`}
                                                                                                       className="rounded-md border-gray-200 focus:border-blue-500 focus:ring-blue-500 text-sm sm:text-base h-9 sm:h-10"
                                                                                                       disabled={field.is_editable === false}
-                                                                                                     defaultValue={
-                                                                                                (() => {
-                                                                                                      const val = getFieldDefaultValue(field, formData[field.name]);
-                                                                                                      return val instanceof File ? undefined : val;
-                                                                                                })()
-                                                                                          } />
+                                                                                                      defaultValue={
+                                                                                                            (() => {
+                                                                                                                  const val = getFieldDefaultValue(field, formData[field.name]);
+                                                                                                                  return val instanceof File ? undefined : val;
+                                                                                                            })()
+                                                                                                      } />
 
                                                                                                 :
 
@@ -1416,11 +1424,11 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: { selectedTempla
                                                                                           className="rounded-md border-gray-200 focus:border-blue-500 focus:ring-blue-500 text-sm sm:text-base h-9 sm:h-10"
                                                                                           // {...(!isFileInput
                                                                                           //       ? {
-                                                                                                //       defaultValue={
-                                                                                                // (() => {
-                                                                                                //       const val = getFieldDefaultValue(field, formData[field.name]);
-                                                                                                //       return val instanceof File ? undefined : val;
-                                                                                                // })()
+                                                                                          //       defaultValue={
+                                                                                          // (() => {
+                                                                                          //       const val = getFieldDefaultValue(field, formData[field.name]);
+                                                                                          //       return val instanceof File ? undefined : val;
+                                                                                          // })()
                                                                                           // },
                                                                                           //       }
                                                                                           //       : {})}
