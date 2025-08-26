@@ -7,15 +7,15 @@ import { ApiFileInfo } from '@/models/FileInfo'
 import appStore from '@/store'
 import { estimateFileSize, fetchFiles, formatCryptoAddress, generateAvatar, getAquaTreeFileName, getAquaTreeFileObject, getGenesisHash, getRandomNumber, isWorkFlowData, timeToHumanFriendly } from '@/utils/functions'
 import Aquafier, { AquaTree, AquaTreeWrapper, FileObject, OrderRevisionInAquaTree } from 'aqua-js-sdk'
-import { ArrowRight, LucideCheckCircle, Mail, Phone,  Share2, Signature, Wallet } from 'lucide-react'
+import { ArrowRight, CheckCircle, LucideCheckCircle, Mail, Phone,  Share2, Signature, User } from 'lucide-react'
 import { useEffect, useState } from 'react'
-import { HiShieldCheck } from 'react-icons/hi'
 import { TbWorldWww } from 'react-icons/tb'
 import { useNavigate } from 'react-router-dom'
 import { ClipLoader } from 'react-spinners'
 import { toast } from 'sonner'
 import { useStore } from 'zustand'
 import axios from 'axios'
+import { loadSignatureImage } from './UserSignatureClaim'
 
 interface ISignatureWalletAddressCard {
       index?: number
@@ -38,12 +38,39 @@ interface IClaim {
 
 const ClaimCard = ({ claim }: { claim: IClaim }) => {
 
+      const [signatureImage, setSignatureImage] = useState<string | null>(null)
+
+      const { session } = useStore(appStore)
+
+      const ICON_SIZE = 18
+
       const getTextContent = () => {
             let textContent = claim.claimName || claim.claimType
             if (claim.claimType === "domain_claim") {
                   textContent = textContent.replace("aqua._wallet.", "")
             }
             return textContent
+      }
+
+      const getClaimTitle = () => {
+            if(claim.claimType === 'identity_claim'){
+                  return 'Identity'
+            }
+            else if(claim.claimType === 'domain_claim'){
+                  return 'Domain'
+            }
+            else if(claim.claimType === 'phone_number_claim'){
+                  return 'Phone'
+            }
+            else if(claim.claimType === 'email_claim'){
+                  return 'Email'
+            }
+            else if(claim.claimType === 'user_signature'){
+                  return 'Signature'
+            }
+            else{
+                  return 'Unknown'
+            }
       }
 
       const getClaimIcon = () => {
@@ -54,13 +81,13 @@ const ClaimCard = ({ claim }: { claim: IClaim }) => {
                   }
                   return (
                         <div className={`h-[34px] w-[34px] flex items-center justify-center ${extraClasses}`}>
-                              <HiShieldCheck size={24} className={extraClasses} />
+                              <User size={ICON_SIZE} className={"text-orange-500"} />
                         </div>
                   )
             } else if (claim.claimType === 'domain_claim') {
                   return (
                         <div className="h-[34px] w-[34px] flex items-center justify-center">
-                              <TbWorldWww size={24} />
+                              <TbWorldWww size={ICON_SIZE} className='text-purple-500' />
                         </div>
                   )
             }
@@ -71,7 +98,7 @@ const ClaimCard = ({ claim }: { claim: IClaim }) => {
                   }
                   return (
                         <div className={`h-[34px] w-[34px] flex items-center justify-center ${extraClasses}`}>
-                              <Phone size={24} />
+                              <Phone size={ICON_SIZE} className='text-green-500' />
                         </div>
                   )
             }
@@ -82,7 +109,7 @@ const ClaimCard = ({ claim }: { claim: IClaim }) => {
                   }
                   return (
                         <div className={`h-[34px] w-[34px] flex items-center justify-center ${extraClasses}`}>
-                              <Mail size={24} />
+                              <Mail size={ICON_SIZE} className='text-blue-500' />
                         </div>
                   )
             }
@@ -93,26 +120,68 @@ const ClaimCard = ({ claim }: { claim: IClaim }) => {
                   }
                   return (
                         <div className={`h-[34px] w-[34px] flex items-center justify-center ${extraClasses}`}>
-                              <Signature size={24} />
+                              <Signature size={ICON_SIZE} className='text-yellow-500' />
                         </div>
                   )
             }
             else {
                   return (
                         <div className="h-[34px] w-[34px] flex items-center justify-center">
-                              <LucideCheckCircle size={24} />
+                              <LucideCheckCircle size={ICON_SIZE} className='text-green-500' />
                         </div>
                   )
             }
       }
 
-      return (
-            <div className="flex items-center justify-between p-2 border-t border-gray-200 dark:border-gray-700">
-                  <div className="flex items-center gap-2">
-                        <div className="w-[34px] h-[34px] flex items-center justify-center text-gray-500">{getClaimIcon()}</div>
-                        <div className="flex flex-col gap-2">
-                              <span className="text-sm">{getTextContent()}</span>
+      const getRightSectionContent = () => {
+
+            if(claim.claimType === "user_signature"){
+                  return (    
+                        <div className="flex gap-2 items-center">
+                              <div className="p-1 rounded-md w-[120px]">
+                                    {
+                                          signatureImage ? (
+                                                <img src={signatureImage} alt={claim.claimName} />
+                                          ) : (
+                                                <img src={`${window.location.origin}/images/placeholder-img.png`} alt={claim.claimName} />
+                                          )
+                                    }
+                              </div>
                         </div>
+                  )
+            }
+            else{
+                  return (
+                        <>
+                        <CheckCircle size={ICON_SIZE-2} className="text-green-500" />
+                        <p className="text-xs font-medium text-gray-900">Verified</p>
+                        </>
+                  )
+            }
+      }
+
+      const loadImage = async () => {
+              let signatureImage = await loadSignatureImage(claim.apiFileInfo.aquaTree!, claim.apiFileInfo.fileObject, session?.nonce!)
+              setSignatureImage(signatureImage)
+          }
+
+      useEffect(() => {
+            if (claim.claimType === 'user_signature') {
+                  loadImage()
+            }
+      }, [])
+
+      return (
+            <div className="flex gap-2 p-2 bg-gray-50 rounded-lg justify-between items-center">
+                  <div className="flex gap-2">
+                        <div className="w-[34px] h-[34px] flex items-center justify-center text-gray-500 rounded-full bg-gray-100">{getClaimIcon()}</div>
+                        <div className="flex flex-col gap-1">
+                              <p className="text-xs">{getClaimTitle()}</p>
+                              <p className="text-xs font-medium text-gray-900">{getTextContent()}</p>
+                        </div>
+                  </div>
+                  <div className="flex gap-2">
+                        {getRightSectionContent()}
                   </div>
             </div>
       )
@@ -438,6 +507,19 @@ const WalletAddressProfile = ({ walletAddress, callBack, showAvatar, width, show
             }
       }
 
+      const getIdentityClaim = () => {
+            if (claims.length === 0) {
+                  return null
+            }
+            let identityClaim = claims.find((claim) => claim.claimType === 'identity_claim')
+            if(!identityClaim){
+                  return null
+            }
+            return {
+                  name: identityClaim.claimName,
+            }
+      }
+
       useEffect(() => {
             // Defer the heavy computation to allow UI to render first
             const timeoutId = setTimeout(() => {
@@ -449,7 +531,7 @@ const WalletAddressProfile = ({ walletAddress, callBack, showAvatar, width, show
 
       return (
             <div className={`${width ? width : 'w-full'} bg-transparent`}>
-                  <div className={`flex p-6 flex-col bg-gradient-to-br from-white to-slate-50 border border-slate-200 ${shadowClasses} rounded-xl gap-4 transition-shadow duration-300`}>
+                  <div className={`flex p-6 flex-col bg-gradient-to-br from-white to-slate-200 border border-slate-200 ${shadowClasses} rounded-xl gap-4 transition-shadow duration-300`}>
                         {
                               loading ? <div className="py-6 flex flex-col items-center justify-center h-full w-full">
                                     <ClipLoader color="#000" loading={loading} size={50} />
@@ -474,13 +556,7 @@ const WalletAddressProfile = ({ walletAddress, callBack, showAvatar, width, show
                                     <CustomCopyButton value={`${walletAddress}`} />
                               </div>
                         )}
-                        <div className="flex gap-2 align-center items-center">
-                              <Wallet size={16} />
-                              <div className="flex gap-2 items-center">
-                                    <p className="text-sm break-all">{walletAddress}</p>
-                                    <CopyButton text={`${walletAddress}`} isIcon={true} />
-                              </div>
-                        </div>
+
                         {
                               claims.length === 0 ? (
                                     <div className="flex flex-col gap-0 bg-blue-100 rounded-lg p-4">
@@ -490,7 +566,28 @@ const WalletAddressProfile = ({ walletAddress, callBack, showAvatar, width, show
                                     </div>
                               ) : null
                         }
-                        <div className="flex flex-col gap-0 bg-amber-100 rounded-lg">
+                        {
+                              claims.length > 0 ? (
+                                    <>
+                                      <div className="flex items-center gap-2">
+                                          <Avatar className='size-12'>
+                                                {/* <AvatarImage src={generateAvatar(walletAddress!)} alt="User Avatar" /> */}
+                                                <AvatarFallback className="bg-primary/10 text-primary font-semibold">
+                                                      {getIdentityClaim() ? getIdentityClaim()!.name?.substring(0, 2).toUpperCase() : 'UN'}
+                                                </AvatarFallback>
+                                          </Avatar>
+                                          <div className="flex flex-col gap-1">
+                                                <p className="font-semibold text-gray-800">{getIdentityClaim() ? getIdentityClaim()!.name : 'UN'}</p>
+                                                <div className="flex gap-2 items-center">
+                                                      <p className="text-xs break-all">{walletAddress}</p>
+                                                      <CopyButton text={`${walletAddress}`} isIcon={true} />
+                                                </div>
+                                          </div>
+                                      </div>
+                                    </>
+                              ): null
+                        }
+                        <div className="flex flex-col gap-[6px] rounded-lg">
                               {
                                     claims.filter((claim) => claim.claimType === 'identity_claim').map((claim, index) => (
                                           <ClaimCard key={`claim_${index}`} claim={claim} />
@@ -505,10 +602,10 @@ const WalletAddressProfile = ({ walletAddress, callBack, showAvatar, width, show
                         <div className="flex justify-end">
                               {
                                     !hideOpenProfileButton && (
-                                          <div className="flex gap-2">
+                                          <div className="flex gap-2 flex-1">
                                                 {/* Share Profile button */}
                                                 <Button
-                                                      className="bg-orange-50 hover:bg-orange-200 text-orange-700 hover:text-orange-800 px-3 py-1.5 rounded-lg flex items-center gap-1.5 text-sm font-medium transition-colors duration-200 border border-orange-200 hover:border-orange-300 cursor-pointer"
+                                                      className="flex-1 bg-orange-50 hover:bg-orange-200 text-orange-700 hover:text-orange-800 px-3 py-1.5 rounded-md flex items-center gap-1.5 text-sm font-medium transition-colors duration-200 border border-orange-200 hover:border-orange-300 cursor-pointer"
                                                       onClick={handleShareProfile}
                                                 >
                                                       Share Profile
@@ -517,7 +614,7 @@ const WalletAddressProfile = ({ walletAddress, callBack, showAvatar, width, show
 
                                                 {/* Open Profile button */}
                                                 <Button
-                                                      className="bg-blue-50 hover:bg-blue-100 text-blue-600 hover:text-blue-700 px-3 py-1.5 rounded-lg flex items-center gap-1.5 text-sm font-medium transition-colors duration-200 border border-blue-200 hover:border-blue-300 cursor-pointer"
+                                                      className="flex-1 bg-blue-50 hover:bg-blue-100 text-blue-600 hover:text-blue-700 px-3 py-1.5 rounded-md flex items-center gap-1.5 text-sm font-medium transition-colors duration-200 border border-blue-200 hover:border-blue-300 cursor-pointer"
                                                       onClick={() => {
                                                             console.log("Clicked", callBack);
                                                             if (callBack) {
@@ -928,5 +1025,7 @@ export default WalletAddressProfile
 // }
 
 // export default WalletAddressProfile
+
+
 
 
