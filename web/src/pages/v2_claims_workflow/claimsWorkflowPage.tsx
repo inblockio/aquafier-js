@@ -247,8 +247,8 @@ export default function ClaimsWorkflowPage() {
                   <div className="bg-gradient-to-br from-slate-100 via-blue-50 to-indigo-100 p-4 sm:p-6 lg:p-8 rounded-lg">
                         <div className="max-w-2xl mx-auto">
                               <div className="text-center mb-8">
-                                    <h1 className="text-3xl font-bold text-gray-900 mb-2">Wallet Profile</h1>
-                                    <p className="text-gray-600">View and manage your wallet profile</p>
+                                    <h1 className="text-3xl font-bold text-gray-900 mb-2">Identity Profile</h1>
+                                    <p className="text-gray-600">Manage your verified claims and digital identity</p>
                               </div>
 
                               <AddressView
