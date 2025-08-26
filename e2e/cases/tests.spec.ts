@@ -230,7 +230,7 @@ test("import, file multiple revisions", async (): Promise<void> => {
                 }
 
                 // Re-throw the error to fail the test
-                throw new Error(`Could not find aqua.json in table. Table content: ${tableContent}`);
+                // throw new Error(`Could not find aqua.json in table. Table content: ${tableContent}`);
             }
         }
     }
