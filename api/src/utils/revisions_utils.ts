@@ -1224,7 +1224,7 @@ async function processSignatureRevision(revisionData: AquaTreeRevision, pubKeyHa
             reference_count: 1
         }
     });
-}
+} 
 
 async function processWitnessRevision(revisionData: AquaTreeRevision, pubKeyHash: string) {
 

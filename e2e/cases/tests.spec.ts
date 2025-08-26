@@ -712,11 +712,15 @@ test("import dns claim", async (): Promise<void> => {
     console.log("open details");
     try {
         // Click and wait for the dialog to appear
-        await Promise.all([
-            testPage.waitForSelector('text=This aqua tree is valid'),
-            testPage.click('[data-testid="open-aqua-claim-workflow-button-0"]')
-        ]);
+        // await Promise.all([
+            // testPage.waitForSelector('text=This aqua tree is valid'),
+            // testPage.click('[data-testid="open-aqua-claim-workflow-button-0"]')
+        // ]);
+           await testPage.waitForTimeout(1000);
 
+        testPage.click('[data-testid="open-aqua-claim-workflow-button-0"]')
+
+           await testPage.waitForTimeout(500);
         // Verify the validation message is visible
         const validationMessage = testPage.locator('text=This aqua tree is valid');
         await expect(validationMessage).toBeVisible();
