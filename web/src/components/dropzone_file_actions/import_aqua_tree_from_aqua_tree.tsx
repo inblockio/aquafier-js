@@ -37,6 +37,10 @@ export const ImportAquaChainFromChain = ({ fileInfo, isVerificationSuccessful, c
       })
 
       const { files, backend_url, session } = useStore(appStore)
+<<<<<<< HEAD
+=======
+      // const navigate = useNavigate()
+>>>>>>> 112432b22258a9ff1ec074713bc6ffb82daa0bcf
 
       const importAquaChain = async () => {
             // Early check to prevent recursion if already processing
