@@ -101,7 +101,7 @@ const WorkflowTableItem = ({ workflowName, apiFileInfo, index = 0 }: IWorkflowIt
                   // console.log('Processing file:', JSON.stringify(file.aquaTree, null, 4))
                   let allHashes = Object.keys(file.aquaTree?.revisions || {})
                   if (allHashes.length >= 2) {
-                        console.log('Found multiple revisions:', allHashes)
+                        // console.log('Found multiple revisions:', allHashes)
                         if (allHashes[0] === claimGenHash) {
                               console.log('Found claim genesis hash match:', claimGenHash, 'file item ie same file:')
                               continue
@@ -247,6 +247,8 @@ const ClaimsAndAttestationPage = () => {
                   // const fileObject = getAquaTreeFileObject(file);
                   const { workFlow, isWorkFlow } = isWorkFlowData(file.aquaTree!, someData)
 
+
+                  console.log(`workFlow ${workFlow}  isWorkFlow ${isWorkFlow}`)
                   if (isWorkFlow && workFlow === 'identity_attestation') {
                         totolAttestors += 1
                         let allHashes = Object.keys(file.aquaTree?.revisions || {})
@@ -261,26 +263,31 @@ const ClaimsAndAttestationPage = () => {
                         }
                   }
                   // console.log('Processing file:', JSON.stringify(file.aquaTree!, null,), 'WorkFlow:', workFlow, 'isWorkFlow:', isWorkFlow)
-                  if (isWorkFlow && (workFlow === 'identity_claim' || workFlow === 'domain_claim')) {
+                  if (isWorkFlow && ["identity_claim", "email_claim", "domain_claim", "phone_number_claim", "user_signature"].includes(workFlow.trim())) {
                         let allHashes = Object.keys(file.aquaTree?.revisions || {})
                         if (allHashes.length < 2) {
                               console.log('Not enough revisions for file:', file)
                               continue
                         }
-                        const thirdRevision = file.aquaTree?.revisions[allHashes[2]]
 
-                        if (!thirdRevision) {
+                        let signatureReisionIndex = 2;
+                        if (workFlow.trim()== "user_signature"){
+                              signatureReisionIndex =3
+                        }
+                        const signatureRevision = file.aquaTree?.revisions[allHashes[signatureReisionIndex]]
+
+                        if (!signatureRevision) {
                               console.log('Last revision not found for file:', JSON.stringify(file, null, 4))
                               continue
                         }
 
-                        if (thirdRevision.revision_type !== 'signature') {
-                              console.log('Last revision is not a signature:', thirdRevision)
+                        if (signatureRevision.revision_type !== 'signature') {
+                              console.log('Last revision is not a signature:', signatureRevision)
                               continue
                         }
 
-                        if (thirdRevision.signature_wallet_address == session?.address) {
-                              console.log('Signature wallet address matches session address:', thirdRevision.signature_wallet_address, session?.address)
+                        if (signatureRevision.signature_wallet_address == session?.address) {
+                              // console.log('Signature wallet address matches session address:', signatureRevision.signature_wallet_address, session?.address)
                               const currentName = getAquaTreeFileName(file.aquaTree!)
                               const containsCurrentName: IWorkflowItem | undefined = newData.find((e: IWorkflowItem) => {
                                     if (e && e.apiFileInfo && e.apiFileInfo.aquaTree) {
@@ -293,10 +300,14 @@ const ClaimsAndAttestationPage = () => {
                                           workflowName: workFlow,
                                           apiFileInfo: file,
                                     })
+                              }else{
+                                   console.log(`here not added `) 
                               }
                         }
 
                         totolClaims += 1
+                  }else{
+                        console.log(`does not include ${workFlow}`)
                   }
             }
 

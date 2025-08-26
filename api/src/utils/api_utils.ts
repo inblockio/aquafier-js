@@ -11,7 +11,7 @@ import path from 'path';
 import { getGenesisHash } from "./aqua_tree_utils"
 
 const getHost = (): string => {
-  return process.env.HOST || '127.0.0.1'
+  return process.env.HOST || '0.0.0.0'
 }
 
 

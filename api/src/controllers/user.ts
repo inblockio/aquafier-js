@@ -79,7 +79,7 @@ export default async function userController(fastify: FastifyInstance) {
                 });
             }
         }
-
+ 
         // Check if we should attempt ENS lookup
         const infuraProjectId = process.env.VITE_INFURA_PROJECT_ID;
 

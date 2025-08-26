@@ -1,17 +1,18 @@
 import FilePreview from '@/components/file_preview'
 import { ICompleteChainView, VerificationHashAndResult } from '@/models/AquaTreeDetails'
 import appStore from '@/store'
-import { ensureDomainUrlHasSSL, getFileName, getFileHashFromUrl, isArrayBufferText, isWorkFlowData } from '@/utils/functions'
+import { ensureDomainUrlHasSSL, getFileName, getFileHashFromUrl, isArrayBufferText, isWorkFlowData, isValidUrl, isHttpUrl } from '@/utils/functions'
 import Aquafier, { LogData, getAquaTreeFileName, getAquaTreeFileObject, OrderRevisionInAquaTree } from 'aqua-js-sdk'
 import { ChevronUp, ChevronDown } from 'lucide-react'
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useState, Suspense } from 'react'
 import { useStore } from 'zustand'
-import { Button } from '@/components/ui/button'
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
-import { CustomAlert } from '@/components/ui/alert-custom'
-import { RevisionDetailsSummary } from './files_revision_details'
+import { Button } from './ui/button'
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from './ui/collapsible'
 import { RevisionDisplay } from './files_revision_display'
- 
+import ErrorBoundary from './error_boundary'
+import { CustomAlert } from './ui/alert-custom'
+import { RevisionDetailsSummary } from './files_revision_details'
+
 export const CompleteChainView = ({ callBack, selectedFileInfo }: ICompleteChainView) => {
       const [showMoreDetails, setShowMoreDetails] = useState(false)
       const [isSelectedFileAWorkFlow, setSelectedFileAWorkFlow] = useState(false)
@@ -72,7 +73,8 @@ export const CompleteChainView = ({ callBack, selectedFileInfo }: ICompleteChain
                         // UPDATE: Removed fileObjectVerifier to track the fileobjects because pushing in promises is not ideal
                         // const fileObjectVerifier: FileObject[] = []
                         const filePromises = selectedFileInfo.fileObject.map(async file => {
-                              if (typeof file.fileContent === 'string' && file.fileContent.startsWith('http')) {
+                              // if (typeof file.fileContent === 'string' && file.fileContent.startsWith('http')) {
+                                if (typeof file.fileContent === 'string' && isValidUrl(file.fileContent) && isHttpUrl(file.fileContent)) {
                                     const hash = getFileHashFromUrl(file.fileContent)
 
                                     // TODO: FIX ME - Here we check if the file is already in the cache
@@ -141,15 +143,46 @@ export const CompleteChainView = ({ callBack, selectedFileInfo }: ICompleteChain
                   const names = systemFileInfo.map(e => getAquaTreeFileName(e.aquaTree!))
                   setSelectedFileAWorkFlow(isWorkFlowData(selectedFileInfo.aquaTree!, names).isWorkFlow)
             }
-      }, [JSON.stringify(selectedFileInfo), deletedRevisions.length])
-
+      }, [JSON.stringify(Object.keys(selectedFileInfo?.aquaTree?.revisions || {})), deletedRevisions.length])
+console.log(selectedFileInfo)
       return (
             <div className=" h-full">
                   <div className="grid grid-cols-1 md:grid-cols-12 gap-4 h-full">
                         <div className="md:col-span-8 flex flex-col min-h-0 h-full">
                               <div className="h-full rounded-2xl bg-gray-100">
                                     {/* <ScrollArea className="h-full w-full"> */}
-                                    <FilePreview fileInfo={getAquaTreeFileObject(selectedFileInfo!)!} />
+                                    <ErrorBoundary
+                                          fallback={
+                                                <div className="flex items-center justify-center h-full">
+                                                      <div className="text-center p-6">
+                                                            <div className="text-red-500 text-lg font-semibold mb-2">
+                                                                  Failed to load file preview
+                                                            </div>
+                                                            <div className="text-gray-600 text-sm">
+                                                                  The file may be too large or corrupted
+                                                            </div>
+                                                      </div>
+                                                </div>
+                                          }
+                                          // onError={(error) => {
+                                          //       console.error('FilePreview error:', error)
+                                          // }}
+                                    >
+                                          <Suspense
+                                                fallback={
+                                                      <div className="flex items-center justify-center h-full">
+                                                            <div className="text-center p-6">
+                                                                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
+                                                                  <div className="text-gray-600 text-sm">
+                                                                        Loading file preview...
+                                                                  </div>
+                                                            </div>
+                                                      </div>
+                                                }
+                                          >
+                                                <FilePreview fileInfo={getAquaTreeFileObject(selectedFileInfo!)!} />
+                                          </Suspense>
+                                    </ErrorBoundary>
                                     {/* </ScrollArea> */}
                               </div>
                         </div>

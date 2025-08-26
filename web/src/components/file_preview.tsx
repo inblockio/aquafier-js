@@ -2,7 +2,7 @@ import { FileObject } from 'aqua-js-sdk'
 import { useEffect, useRef, useState } from 'react'
 import { useStore } from 'zustand'
 import appStore from '../store'
-import { ensureDomainUrlHasSSL, handleLoadFromUrl, isJSONKeyValueStringContent } from '../utils/functions'
+import { ensureDomainUrlHasSSL, handleLoadFromUrl, isHttpUrl, isJSONKeyValueStringContent, isValidUrl } from '../utils/functions'
 import { FilePreviewAquaTreeFromTemplate } from './file_preview_aqua_tree_from_template'
 import { EasyPDFRenderer } from '@/pages/aqua_sign_wokflow/ContractDocument/signer/SignerPage'
 import heic2any from "heic2any"
@@ -211,12 +211,16 @@ const FilePreview: React.FC<IFilePreview> = ({ fileInfo }) => {
             }
       }
 
+
+   
+
+
       useEffect(() => {
             const fetchFile = async () => {
                   setIsLoading(true)
                   try {
                         // Handle if fileContent is a URL
-                        if (typeof fileInfo.fileContent === 'string' && fileInfo.fileContent.startsWith('http')) {
+                        if (typeof fileInfo.fileContent === 'string' && isValidUrl(fileInfo.fileContent) && isHttpUrl(fileInfo.fileContent)) { //&& fileInfo.fileContent.startsWith('http')) {
                               // Ensure the URL has SSL
                               const fileContentUrl = fileInfo.fileContent
                               const actualUrlToFetch = ensureDomainUrlHasSSL(fileContentUrl)
@@ -309,7 +313,7 @@ const FilePreview: React.FC<IFilePreview> = ({ fileInfo }) => {
             return () => {
                   if (fileURL) URL.revokeObjectURL(fileURL)
             }
-      }, [JSON.stringify(fileInfo), session?.nonce])
+      }, [fileInfo.fileSize, session?.nonce])
 
       const [convertedHeicUrl, setConvertedHeicUrl] = useState<string | null>(null)
       const [isHeic, setIsHeic] = useState<boolean>(false)

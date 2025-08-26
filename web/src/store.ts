@@ -4,6 +4,7 @@ import { createJSONStorage, persist } from 'zustand/middleware'
 import { ApiFileInfo } from './models/FileInfo'
 import { ApiFileData, OpenDialog, Session } from './types/types'
 import { FormTemplate } from './components/aqua_forms/types'
+import { ensureDomainUrlHasSSL } from './utils/functions'
 
 type AppStoreState = {
       user_profile: {
@@ -30,7 +31,7 @@ type AppStoreState = {
       // openCreateClaimAttestationPopUp: boolean | null
       metamaskAddress: string | null
       avatar: string | undefined
-      backend_url: string
+      backend_url: string 
       contracts: any[]
 }
 
@@ -209,7 +210,11 @@ const appStore = createStore<TAppStore>()(
                         const { files } = appStore.getState()
                         set({ files: [...files, file] })
                   },
-                  setBackEndUrl: (backend_url: AppStoreState['backend_url']) => set({ backend_url: backend_url }),
+                  setBackEndUrl: (backend_url: AppStoreState['backend_url']) => {
+                        console.log(`set backend_url to ${backend_url} `)
+                        let urlData = ensureDomainUrlHasSSL(backend_url)
+                        set({ backend_url: urlData })
+                  },
             }),
             {
                   name: 'app-store', // Unique name for storage key

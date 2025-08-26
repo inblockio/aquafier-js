@@ -1,6 +1,6 @@
 import { ApiFileInfo } from '@/models/FileInfo'
 
-import { displayTime, formatBytes, formatCryptoAddress, getAquaTreeFileName, getAquaTreeFileObject, getFileCategory, getFileExtension, getGenesisHash, isWorkFlowData } from '@/utils/functions'
+import { capitalizeWords, displayTime, formatBytes, formatCryptoAddress, getAquaTreeFileName, getAquaTreeFileObject, getFileCategory, getFileExtension, getGenesisHash, isWorkFlowData } from '@/utils/functions'
 import { FileObject, OrderRevisionInAquaTree } from 'aqua-js-sdk'
 import { FileText } from 'lucide-react'
 import { useEffect, useState } from 'react'
@@ -60,7 +60,7 @@ export default function FilesListItem({
 
       useEffect(() => {
 
-            console.log(`FilesListItem  useEffect ---- `)
+            // console.log(`FilesListItem  useEffect ---- `)
             const someData = systemFileInfo.map(e => {
                   try {
                         return getAquaTreeFileName(e.aquaTree!)
@@ -74,7 +74,7 @@ export default function FilesListItem({
             setCurrentFileObject(fileObject)
             const workFlow = isWorkFlowData(file.aquaTree!, someData)
 
-            console.log(`systemFileInfo ${systemFileInfo} someData ${someData} -- workFlow ${JSON.stringify(workFlow, null, 4)} `)
+            // console.log(`systemFileInfo ${systemFileInfo} someData ${someData} -- workFlow ${JSON.stringify(workFlow, null, 4)} `)
             setWorkFlowInfo(workFlow)
       }, [file, systemFileInfo])
 
@@ -98,9 +98,7 @@ export default function FilesListItem({
       }
 
       // Helper function to capitalize the first character of every word
-      function capitalizeWords(str: string): string {
-            return str.replace(/\b\w+/g, word => word.charAt(0).toUpperCase() + word.slice(1))
-      }
+
       // const detailsButton = () =>{
       //         return <button onClick={() => {
       //             setOpenFileDetailsPopUp(true);
@@ -113,27 +111,27 @@ export default function FilesListItem({
 
       const workFlowAquaSignActions = () => {
             return (
-                  <>
-                        <div className="flex flex-wrap gap-1">
-                              <div className="w-[202px]">
-                                    <OpenAquaSignWorkFlowButton item={file} nonce={nonce} index={index} />
-                              </div>
 
-                              <div className="w-[100px]">
-                                    <ShareButton item={file} nonce={nonce} index={index} />
-                              </div>
-
-                              {/* Delete Button */}
-                              <div className="w-[100px]">
-                                    <DeleteAquaChain apiFileInfo={file} backendUrl={backendUrl} nonce={nonce} revision="" index={index} />
-                              </div>
-
-                              {/* Download Button - Smaller width */}
-                              <div className="w-[100px]">
-                                    <DownloadAquaChain file={file} index={index} />
-                              </div>
+                  <div className="flex flex-wrap gap-1">
+                        <div className="w-[202px]">
+                              <OpenAquaSignWorkFlowButton item={file} nonce={nonce} index={index} />
                         </div>
-                  </>
+
+                        <div className="w-[100px]">
+                              <ShareButton item={file} nonce={nonce} index={index} />
+                        </div>
+
+                        {/* Delete Button */}
+                        <div className="w-[100px]">
+                              <DeleteAquaChain apiFileInfo={file} backendUrl={backendUrl} nonce={nonce} revision="" index={index} />
+                        </div>
+
+                        {/* Download Button - Smaller width */}
+                        <div className="w-[100px]">
+                              <DownloadAquaChain file={file} index={index} />
+                        </div>
+                  </div>
+
             )
       }
 
@@ -182,7 +180,7 @@ export default function FilesListItem({
                         </div>
                   </>
             )
-      } 
+      }
       const workFlowIdentityClaimActions = (workflowInfo: {
             isWorkFlow: boolean;
             workFlow: string;
@@ -254,7 +252,7 @@ export default function FilesListItem({
                         {/* Grid layout for action buttons with equal widths */}
                         <div className="flex flex-wrap gap-1">
 
-                              
+
                               {/* Details Button */}
                               <div className="w-[100px]">
                                     <OpenSelectedFileDetailsButton file={file} index={index} />
@@ -307,8 +305,8 @@ export default function FilesListItem({
                                     <span className="font-medium text-sm">{getAquaTreeFileName(file.aquaTree!)}</span>
                                     {!showWorkFlowsOnly && workflowInfo?.isWorkFlow ? (
                                           <div className='mt-1'>
-                                          <span className="text-xs text-gray-500">Workflow : {capitalizeWords(workflowInfo.workFlow.replace(/_/g, ' '))}</span>
-                                           {showClaimExtraInfo()}
+                                                <span className="text-xs text-gray-500">Workflow : {capitalizeWords(workflowInfo.workFlow.replace(/_/g, ' '))}</span>
+                                                {showClaimExtraInfo()}
                                           </div>
                                     ) : null}
                               </div>
@@ -342,7 +340,7 @@ export default function FilesListItem({
             )
       }
 
-      
+
 
       const showClaimExtraInfo = () => {
             if (workflowInfo?.workFlow == "identity_claim") {
@@ -358,12 +356,64 @@ export default function FilesListItem({
                   let creatorWallet = genRevision[`forms_wallet_address`]
 
                   if (creatorWallet) {
-                        return  <div className="flex flex-nowrap  text-xs text-gray-500">
-                                    <p className="text-xs">Wallet: &nbsp;</p>
-                                    <p className="text-xs ">{formatCryptoAddress(creatorWallet)}</p>
-                              </div>
+                        return <div className="flex flex-nowrap  text-xs text-gray-500">
+                              <p className="text-xs">Wallet: &nbsp;</p>
+                              <p className="text-xs ">{formatCryptoAddress(creatorWallet)}</p>
+                        </div>
                   }
             }
+
+            if (workflowInfo?.workFlow == "identity_attestation") {
+                  let genesisHash = getGenesisHash(file.aquaTree!)
+                  if (!genesisHash) {
+                        return <div />
+                  }
+                  let genRevision = file.aquaTree?.revisions[genesisHash]
+                  if (!genRevision) {
+                        return <div />
+                  }
+
+                  let creatorWallet = genRevision[`forms_wallet_address`]
+                  let claimWallet = genRevision[`forms_claim_wallet_address`]
+
+                  if (creatorWallet) {
+                        return <>
+                              <div className="flex flex-nowrap  text-xs text-gray-500">
+                                    <p className="text-xs">Claim  Owner: &nbsp;</p>
+                                    <p className="text-xs ">{formatCryptoAddress(claimWallet)}</p>
+                              </div>
+
+                              <div className="flex flex-nowrap  text-xs text-gray-500">
+                                    <p className="text-xs">Attestor Wallet: &nbsp;</p>
+                                    <p className="text-xs ">{formatCryptoAddress(creatorWallet)}</p>
+                              </div>
+                        </>
+                  }
+            }
+
+            if (workflowInfo?.workFlow == "domain_claim") {
+
+                  let genesisHash = getGenesisHash(file.aquaTree!)
+                  if (!genesisHash) {
+                        return <div />
+                  }
+                  let genRevision = file.aquaTree?.revisions[genesisHash]
+                  if (!genRevision) {
+                        return <div />
+                  }
+
+                  let domain = genRevision[`forms_domain`]
+
+                  if (domain) {
+                        return <div className="flex flex-nowrap  text-xs text-gray-500">
+                                    <p className="text-xs">Domain : &nbsp;</p>
+                                    <p className="text-xs ">{domain}</p>
+                              </div>
+                      
+                  }
+
+            }
+
             return <div />
       }
 
@@ -387,7 +437,7 @@ export default function FilesListItem({
                                                       Workflow: {capitalizeWords(workflowInfo.workFlow.replace(/_/g, ' '))}
                                                 </p>
 
-                                               
+
                                           </>
                                     )}
                               </div>

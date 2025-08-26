@@ -14,10 +14,12 @@ import { Contract } from '@/types/types'
 import WalletAddresClaim from "./../pages/v2_claims_workflow/WalletAdrressClaim"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
+import { toast } from 'sonner'
 
 export const SharedContract = ({ contract, index, contractDeleted }: { contract: Contract; index: number; contractDeleted: (hash: string) => void }) => {
       const navigate = useNavigate()
-      const { backend_url } = useStore(appStore)
+      const [loading, setLoading] = useState(false)
+      const { backend_url, session } = useStore(appStore)
       const getStatusFromLatest = (latest?: string) => {
             if (!latest) return 'unknown'
             try {
@@ -41,8 +43,28 @@ export const SharedContract = ({ contract, index, contractDeleted }: { contract:
             }
       }
 
+      async function deleteContract() {
+            setLoading(true)
+            try {
+                  const response = await axios.delete(`${backend_url}/contracts/${contract.hash}`, {
+                        headers: {
+                              nonce: session?.nonce,
+                        }
+                  })
+
+                  if (response.status === 200 || response.status === 201) {
+                        contractDeleted(contract.hash)
+                        toast.success('Contract deleted successfully')
+                  }
+                  setLoading(false)
+            } catch (error: any) {
+                  toast.error('Error deleting contract:', error)
+                  setLoading(false)
+            }
+      }
+
       return (
-            <Card key={contract.hash} className="hover:shadow-md transition-shadow cursor-pointer border border-gray-200">
+            <Card key={contract.hash} className="hover:shadow-md transition-shadow cursor-pointer border border-gray-200 " style={{marginTop: '10px', marginBottom: '10px'}}>
                   <CardContent className="p-3 sm:p-6">
                         <div className="flex items-start justify-between">
                               <div className="flex-1 space-y-4">
@@ -172,52 +194,13 @@ export const SharedContract = ({ contract, index, contractDeleted }: { contract:
                                                       variant="destructive"
                                                       size="sm"
                                                       className="w-full"
-                                                      onClick={async () => {
-                                                            const response = await axios.delete(`${backend_url}/contracts/${contract.hash}`, {})
-
-                                                            if (response.status === 200 || response.status === 201) {
-                                                                  contractDeleted(contract.hash)
-                                                            }
-                                                      }}
+                                                      disabled={loading}
+                                                      onClick={deleteContract}
                                                 >
-                                                      Delete
+                                                      {loading ? 'Deleting...' : 'Delete'}
                                                 </Button>
                                           </div>
 
-                                          {/* <DropdownMenu>
-                                <DropdownMenuTrigger asChild>
-                                    <Button
-                                        variant="ghost"
-                                        size="sm"
-                                        onClick={(e) => e.stopPropagation()}
-                                        className="h-8 w-8 p-0"
-                                    >
-                                        <MoreHorizontal className="w-4 h-4" />
-                                    </Button>
-                                </DropdownMenuTrigger>
-                                <DropdownMenuContent align="end">
-                                    <DropdownMenuItem>
-                                        <Eye className="w-4 h-4 mr-2" />
-                                        View Details
-                                    </DropdownMenuItem>
-                                    <DropdownMenuItem>
-                                        <Copy className="w-4 h-4 mr-2" />
-                                        Copy Hash
-                                    </DropdownMenuItem>
-                                    <DropdownMenuItem>
-                                        <ExternalLink className="w-4 h-4 mr-2" />
-                                        Open in Explorer
-                                    </DropdownMenuItem>
-                                    <DropdownMenuItem>
-                                        <Download className="w-4 h-4 mr-2" />
-                                        Export
-                                    </DropdownMenuItem>
-                                    <DropdownMenuItem>
-                                        <Share2 className="w-4 h-4 mr-2" />
-                                        Share
-                                    </DropdownMenuItem>
-                                </DropdownMenuContent>
-                            </DropdownMenu> */}
                                     </div>
                               </div>
                         </div>
@@ -225,7 +208,7 @@ export const SharedContract = ({ contract, index, contractDeleted }: { contract:
             </Card>
       )
 }
-
+ 
 export function SharedContracts() {
       const [searchQuery, _setSearchQuery] = useState('')
       const [shareContracts, setShareContracts] = useState<Contract[]>([])
@@ -292,7 +275,7 @@ export function SharedContracts() {
                                                       <TabsTrigger value="password">Outgoing</TabsTrigger>
                                                 </TabsList>
                                                 <TabsContent value="account">
-                                                      {shareContracts.filter(contract => contract.receiver == session?.address).map((contract, index) => (
+                                                      {shareContracts.filter(contract => contract.receiver?.toLocaleLowerCase() == session?.address?.toLocaleLowerCase()).map((contract, index) => (
                                                             <SharedContract
                                                                   key={`${contract.hash}`}
                                                                   contract={contract}
@@ -307,7 +290,7 @@ export function SharedContracts() {
                                                                   }}
                                                             />
                                                       ))}
-                                                      {shareContracts.filter(contract => contract.receiver == session?.address).length == 0 && (
+                                                      {shareContracts.filter(contract => contract.receiver?.toLocaleLowerCase() == session?.address.toLocaleLowerCase()).length == 0 && (
                                                             <div className="card">
                                                                   <Alert variant="default">
                                                                         <X />
@@ -320,7 +303,7 @@ export function SharedContracts() {
                                                       )}
                                                 </TabsContent>
                                                 <TabsContent value="password">
-                                                      {shareContracts.filter(contract => contract.sender == session?.address).map((contract, index) => (
+                                                      {shareContracts.filter(contract => contract.sender?.toLocaleLowerCase() == session?.address?.toLocaleLowerCase).map((contract, index) => (
                                                             <SharedContract
                                                                   key={`${contract.hash}`}
                                                                   contract={contract}
@@ -331,7 +314,7 @@ export function SharedContracts() {
                                                                   }}
                                                             />
                                                       ))}
-                                                      {shareContracts.filter(contract => contract.sender == session?.address).length == 0 && (
+                                                      {shareContracts.filter(contract => contract.sender?.toLocaleLowerCase() == session?.address.toLocaleLowerCase()).length == 0 && (
                                                             <div className="card">
                                                                   <Alert variant="default">
                                                                         <X />

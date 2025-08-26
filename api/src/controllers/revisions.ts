@@ -288,13 +288,24 @@ export default async function revisionsController(fastify: FastifyInstance) {
 
 
         // Get the host from the request headers
-        const host = `${getHost()}:${getPort()}`;
+        // const host = `${getHost()}:${getPort()}`;
 
-        // Get the protocol (http or https)
-        const protocol = 'https'
+        // // Get the protocol (http or https)
+        // const protocol = 'https'
 
-        // Construct the full URL
-        const url = `${protocol}://${host}`;
+        // // Construct the full URL
+        // const url = `${protocol}://${host}`;
+
+        
+ // Get the host from the request headers
+            const host = request.headers.host || `${getHost()}:${getPort()}`;
+
+            // Get the protocol (http or https)
+            const protocol = request.protocol || 'https'
+
+            // Construct the full URL
+            const url = `${protocol}://${host}`;
+
 
         const revisionHashestoDelete: Array<string> = revisionDataPar.revisionHash.split(",")
 
@@ -390,15 +401,13 @@ export default async function revisionsController(fastify: FastifyInstance) {
                 return reply.code(403).send({ success: false, message: "Nounce  is invalid" });
             }
 
-            // Method 1: Check Origin header (used in CORS requests)
-            const origin = request.headers.origin;
+;
 
-            // throw Error(`Orgin ${origin}`)
-            // Get the host from the request headers
-            const host = `${getHost()}:${getPort()}`;
+ // Get the host from the request headers
+            const host = request.headers.host || `${getHost()}:${getPort()}`;
 
             // Get the protocol (http or https)
-            const protocol = 'https'
+            const protocol = request.protocol || 'https'
 
             // Construct the full URL
             const url = `${protocol}://${host}`;

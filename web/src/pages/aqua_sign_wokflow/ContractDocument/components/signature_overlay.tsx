@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react'
 // import { PDFJSViewer } from 'pdfjs-react-viewer';
 import { SignatureData } from '../../../../types/types'
 import { EasyPDFRenderer } from '../signer/SignerPage'
-import { handleLoadFromUrl } from '../../../../utils/functions'
+import { ensureDomainUrlHasSSL, handleLoadFromUrl } from '../../../../utils/functions'
 import { toast } from 'sonner'
 
 export const SignatureOverlay = ({
@@ -64,7 +64,7 @@ export const SignatureOverlay = ({
                         <div
                               className="flex-1 bg-contain bg-no-repeat bg-left min-h-[40px] min-w-[150px]"
                               style={{
-                                    backgroundImage: `url(${signature.dataUrl})`,
+                                    backgroundImage: `url(${ensureDomainUrlHasSSL(signature.dataUrl)})`,
                                     width: '240px',
                                     height: '290px',
                               }}
@@ -105,7 +105,7 @@ export const SimpleSignatureOverlay = ({ signature, currentPage }: { signature: 
                         <div
                               className="flex-1 bg-contain bg-no-repeat bg-left min-h-[40px] min-w-[150px]"
                               style={{
-                                    backgroundImage: `url(${signature.dataUrl})`,
+                                    backgroundImage: `url(${ensureDomainUrlHasSSL(signature.dataUrl)})`,
                                     width: '240px',
                                     height: '290px',
                               }}

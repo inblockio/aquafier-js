@@ -1,6 +1,6 @@
 import axios from 'axios'
 import { useEffect } from 'react'
-import { fetchFiles, fetchSystemFiles, generateAvatar, getCookie } from '../utils/functions'
+import { ensureDomainUrlHasSSL, fetchFiles, fetchSystemFiles, generateAvatar, getCookie } from '../utils/functions'
 import { useStore } from 'zustand'
 import appStore from '../store'
 import { ethers } from 'ethers'
@@ -13,7 +13,8 @@ const LoadConfiguration = () => {
       const fetchAddressGivenANonce = async (nonce: string) => {
             if (!backend_url.includes('0.0.0.0')) {
                   try {
-                        const url = `${backend_url}/session`
+                       
+                         const url = ensureDomainUrlHasSSL(`${backend_url}/session`)
                         const response = await axios.get(url, {
                               params: { nonce: nonce }, // This is the correct way to pass query params
                               headers: {

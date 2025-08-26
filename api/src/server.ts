@@ -31,7 +31,8 @@ import ApiController from './controllers/api';
 // import { createEthAccount } from './utils/server_utils';
 // import { serverAttestation } from './utils/server_attest';
 import * as Sentry from "@sentry/node"
-import {nodeProfilingIntegration } from "@sentry/profiling-node"
+import { nodeProfilingIntegration } from "@sentry/profiling-node"
+import { ensureDomainViewForCors } from './utils/server_utils';
 
 export async function mockNotifications() {
     // 0x254B0D7b63342Fcb8955DB82e95C21d72EFdB6f7 - This is the receiver and the sender is 'system'
@@ -107,52 +108,68 @@ function buildServer() {
 
     Sentry.init({
         dsn: "https://03e24951c77d8a1aa048982fdb0296e5@o4506135316987904.ingest.us.sentry.io/4509835109531648",
-  integrations: [
-    nodeProfilingIntegration(),
-  ],
-  // Tracing
-  tracesSampleRate: 1.0, //  Capture 100% of the transactions
-  // Set sampling rate for profiling - this is evaluated only once per SDK.init call
-  profileSessionSampleRate: 1.0,
-  // Trace lifecycle automatically enables profiling during active traces
-  profileLifecycle: 'trace',
+        integrations: [
+            nodeProfilingIntegration(),
+        ],
+        // Tracing
+        tracesSampleRate: 1.0, //  Capture 100% of the transactions
+        // Set sampling rate for profiling - this is evaluated only once per SDK.init call
+        profileSessionSampleRate: 1.0,
+        // Trace lifecycle automatically enables profiling during active traces
+        profileLifecycle: 'trace',
 
-  // Send structured logs to Sentry
-  enableLogs: true,
+        // Send structured logs to Sentry
+        enableLogs: true,
 
-  // Setting this option to true will send default PII data to Sentry.
-  // For example, automatic IP address collection on events
-  sendDefaultPii: true,
+        // Setting this option to true will send default PII data to Sentry.
+        // For example, automatic IP address collection on events
+        sendDefaultPii: true,
     });
 
     // Create a Fastify instance
-    const fastify = Fastify({ logger: true });
+    const fastify = Fastify({ 
+        logger: true , 
+        bodyLimit: 50 * 1024 * 1024 /* 50MB */, 
+        requestTimeout: 120000 /* 2 minutes */ 
+    });
 
     Sentry.setupFastifyErrorHandler(fastify);
 
     // reister system templates ie cheque, identity and attestation
     setUpSystemTemplates();
 
+    let allowedCors = process.env.ALLOWED_CORS ? [process.env.ALLOWED_CORS.split(',').map(origin => origin.trim()), ...ensureDomainViewForCors(process.env.FRONTEND_URL)] : [
+        'http://localhost:5173',
+        'http://127.0.0.1:5173',
+        'http://localhost:5174',
+        'http://127.0.0.1:5174',
+        'http://localhost:3000',
+        'http://localhost:3600',
+        'http://127.0.0.1:3600',
+        'https://aquafier.inblock.io',
+        'http://aquafier.inblock.io',
+        'https://dev.inblock.io',
+        'http://dev.inblock.io',
+        'https://aquafier.zeps.dev',
+        'http://aquafier.zeps.dev',
+        ...ensureDomainViewForCors(process.env.FRONTEND_URL),
+    ]; // Allow your React app origins
+
+    console.log("Allowed CORS origins: ", JSON.stringify(allowedCors, null, 2));
+
+    
+// Remove duplicates using Set
+allowedCors = [...new Set(allowedCors.flat())];
+
+console.log("Without duplicates Allowed CORS origins: ", JSON.stringify(allowedCors, null, 2));
+
     // Register the CORS plugin
     fastify.register(cors, {
         // Configure CORS options
-        origin: process.env.ALLOWED_CORS ? process.env.ALLOWED_CORS.split(',').map(origin => origin.trim()) : [
-            'http://localhost:5173',
-            'http://127.0.0.1:5173',
-            'http://localhost:5174',
-            'http://127.0.0.1:5174',
-            'http://localhost:3000',
-            'http://127.0.0.1:3000',
-            'http://localhost:3600',
-            'http://127.0.0.1:3600',
-            'https://aquafier.inblock.io',
-            'http://aquafier.inblock.io',
-            'https://dev.inblock.io',
-            'http://dev.inblock.io',
-        ], // Allow your React app origins
+        origin: allowedCors, // Allow specific origins
         methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
         credentials: true, // Allow cookies if needed
-        allowedHeaders: ['Content-Type', 'Authorization', 'nonce', 'metamask_address']
+        allowedHeaders: ['Content-Type', 'Authorization', 'nonce', 'metamask_address', 'baggage', 'sentry-trace', 'x-sentry-trace', 'x-request-id', 'x-correlation-id'],
     });
 
     // Static handler
@@ -167,6 +184,10 @@ function buildServer() {
     // Register the plugin
     fastify.register(fastifyMultipart, {
         limits: {
+            files:100,
+            fields:100,
+            fieldNameSize: 200 * 1024 * 1024 ,// 200MB
+            parts: 500, // files + fields
             fileSize: 200 * 1024 * 1024 // 200MB - Adding this here as well for early rejection
         }
     });

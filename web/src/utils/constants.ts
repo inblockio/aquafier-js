@@ -1,5 +1,5 @@
 export const SEPOLIA_SMART_CONTRACT_ADDRESS = '0x45f59310ADD88E6d23ca58A0Fa7A55BEE6d2a611'
-
+export const SYSTEM_WALLET_ADDRESS = "0xfabacc150f2a0000000000000000000000000000"
 // export const await API_ENDPOINT() =  //import.meta.env.VITE_API_ENDPOINT
 
 // export const await API_ENDPOINT() = `http://${import.meta.env.VITE_REMOTE || '127.0.0.1'}:${ import.meta.env.VITE_REMOTE_PORT || 3600}`;
@@ -45,6 +45,7 @@ export const musicTypes = ['audio/mpeg', 'audio/wav']
 export const videoTypes = ['video/mp4', 'video/mpeg', 'video/webm']
 
 // Function to initialize the backend URL
+// Function to initialize the backend URL
 export const initializeBackendUrl = async (): Promise<string> => {
       let BACKEND_URL = 'http://127.0.0.1:3000'
       try {
@@ -66,15 +67,30 @@ export const initializeBackendUrl = async (): Promise<string> => {
                   BACKEND_URL = 'http://127.0.0.1:3000'
             }
 
-            // console.log("Config Backend URL", BACKEND_URL);
+            console.log("Config Backend URL", BACKEND_URL);
+
+            // Check if URL doesn't start with http:// or https:// and prepend http://
+            if (!BACKEND_URL.startsWith('http://') && !BACKEND_URL.startsWith('https://')) {
+                  BACKEND_URL = 'http://' + BACKEND_URL
+                  console.log("Prepended http:// to Backend URL", BACKEND_URL);
+            }
+
             if (BACKEND_URL.includes('inblock.io')) {
                   BACKEND_URL = BACKEND_URL.replace('http:', 'https:')
             }
-            // console.log("Config Backend URL Replaced http with https", BACKEND_URL);
+            console.log("Config Backend URL Replaced http with https", BACKEND_URL);
+
+            // Handle duplicated inblock.io domains (e.g., https://dev.inblock.io/dev-api.inblock.io/session)
+            if (BACKEND_URL.includes('inblock.io') && BACKEND_URL.match(/inblock\.io.*inblock\.io/)) {
+                  // Remove the duplicated domain part
+                  BACKEND_URL = BACKEND_URL.replace(/^(https?:\/\/[^\/]+)\/[^\/]*inblock\.io/, '$1')
+            }
       } catch (err) {
             // If there's an error, it will use the default URL
             console.error('Error reading config:', err)
       }
+
+      console.log(`backend url ${BACKEND_URL}`)
 
       return BACKEND_URL
 }

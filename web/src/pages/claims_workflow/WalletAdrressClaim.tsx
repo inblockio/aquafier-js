@@ -1,8 +1,6 @@
 
 import appStore from '@/store'
 import { getWalletClaims } from '@/utils/functions'
-import { useNavigate } from 'react-router-dom'
-import { toast } from 'sonner'
 import { useStore } from 'zustand'
 
 interface IWalletAdrressClaim {
@@ -12,7 +10,6 @@ interface IWalletAdrressClaim {
  
 const WalletAdrressClaim = ({ walletAddress }: IWalletAdrressClaim) => {
       const { files, systemFileInfo, setSelectedFileInfo } = useStore(appStore)
-      const navigate = useNavigate()
 
      
 
@@ -23,9 +20,7 @@ const WalletAdrressClaim = ({ walletAddress }: IWalletAdrressClaim) => {
                           systemFileInfo    ,
                           files , 
                           walletAddress ,
-                          setSelectedFileInfo , 
-                          navigate , 
-                          toast
+                          setSelectedFileInfo ,
                         )
                   }}>
                         {walletAddress}

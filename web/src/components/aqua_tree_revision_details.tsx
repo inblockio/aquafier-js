@@ -10,6 +10,7 @@ import {
       isDeepLinkRevision,
       isAquaTree,
       getGenesisHash,
+      ensureDomainUrlHasSSL,
 } from '../utils/functions'
 import { AquaTree, FileObject, LogTypeEmojis, Revision } from 'aqua-js-sdk'
 import { ClipLoader } from 'react-spinners'
@@ -349,8 +350,8 @@ export const RevisionDisplay = ({ fileInfo, revision, revisionHash, isVerificati
             setIsDeleting(true)
 
             try {
-                  const url = `${backend_url}/tree/revisions/${revisionHash}`
-
+                 
+ const url = ensureDomainUrlHasSSL(`${backend_url}/tree/revisions/${revisionHash}`)
                   const response = await axios.delete(url, {
                         headers: {
                               metamask_address: session?.address,
@@ -368,7 +369,8 @@ export const RevisionDisplay = ({ fileInfo, revision, revisionHash, isVerificati
                         if (index === 0) {
                               window.location.reload()
                         } else {
-                              const url2 = `${backend_url}/explorer_files`
+                              const urlPath = `${backend_url}/explorer_files`
+                               const url2 = ensureDomainUrlHasSSL(urlPath)
                               const files = await fetchFiles(`${session?.address}`, url2, `${session?.nonce}`)
                               setFiles(files)
 

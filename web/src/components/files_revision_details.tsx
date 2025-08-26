@@ -276,23 +276,27 @@ export const RevisionDetailsSummary = ({ fileInfo, isWorkFlow }: RevisionDetails
                                           </div>
                                     </div>
 
-                                    <div className="space-y-4">
+                                    <div className="space-y-4 w-full">
                                           {revisionHashesWithLinks.map((revisionHash, index) => {
                                                 const revision = fileInfo!.aquaTree?.revisions[revisionHash]
                                                 return (
-                                                      <div key={`link_${index}`} className="bg-white dark:bg-gray-800 rounded-lg p-4 shadow-sm border border-gray-200 dark:border-gray-700">
-                                                            <div className="flex items-start gap-4">
-                                                                  <Badge variant="secondary" className="mt-1">
+                                                      <div key={`link_${index}`} className="bg-white px-4 dark:bg-gray-800 rounded-lg p-4 shadow-sm border border-gray-200 dark:border-gray-700 w-full !max-w-full overflow-hidden">
+                                                            <div className="flex items-start gap-2 w-full max-w-full overflow-hidden">
+                                                                  <Badge variant="default" className="mt-1">
                                                                         {index + 1}
                                                                   </Badge>
 
-                                                                  <div className="flex-1 space-y-3">
-                                                                        <div className="flex items-center gap-2">
-                                                                              <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Link Type:</span>
-                                                                              {revisionDataHeader(fileInfo!.aquaTree!, revisionHash, fileInfo!.fileObject)}
+                                                                  <div className="flex-1 space-y-3 bg-yellow">
+                                                                        <div className="w-full !max-w-full flex flex-wrap">
+                                                                              <span className="text-sm font-medium text-gray-700 dark:text-gray-300 p-1" style={{
+                                                                                    display: "block"
+                                                                              }}>Linked To:</span>
+                                                                              <div className="flex-1 min-w-[100px] !overflow-hidden">
+                                                                                    {revisionDataHeader(fileInfo!.aquaTree!, revisionHash, fileInfo!.fileObject)}
+                                                                              </div>
                                                                         </div>
 
-                                                                        <div className="flex items-center gap-2">
+                                                                        <div className="w-full">
                                                                               {viewLinkedFile(fileInfo!, revisionHash, revision!, files, setSelectedFileInfo, isWorkFlow)}
                                                                         </div>
                                                                   </div>
@@ -313,16 +317,30 @@ export const revisionDataHeader = (aquaTree: AquaTree, revisionHash: string, fil
 
       if (revision.previous_verification_hash.length == 0) {
             return (
-                  <Badge variant="outline" className="bg-yellow-50 text-yellow-700 border-yellow-200">
+                  <div className="inline-flex rounded-[50px] items-center px-2.5 py-0.5 text-xs font-medium bg-yellow-50 text-yellow-700 border border-yellow-200 max-w-full w-full" style={{
+                        wordBreak: 'break-word',
+                        overflowWrap: 'break-word',
+                        whiteSpace: 'normal',
+                        lineHeight: '1.2'
+                  }}>
                         Genesis Revision
-                  </Badge>
+                  </div>
             )
       }
 
       if (revision.revision_type == 'link') {
             const isDeepLink = isDeepLinkRevision(aquaTree, revisionHash)
             if (isDeepLink == null) {
-                  return <Badge variant="destructive">{ERROR_TEXT}</Badge>
+                  return (
+                        <div className="inline-flex rounded-[50px] items-center px-2.5 py-0.5 text-xs font-medium bg-red-50 text-red-700 border border-red-200 max-w-full w-full" style={{
+                              wordBreak: 'break-word',
+                              overflowWrap: 'break-word',
+                              whiteSpace: 'normal',
+                              lineHeight: '1.2'
+                        }}>
+                              {ERROR_TEXT}
+                        </div>
+                  )
             }
             if (isDeepLink) {
                   // before returning deep link we traverse the current  aqua tree
@@ -349,9 +367,14 @@ export const revisionDataHeader = (aquaTree: AquaTree, revisionHash: string, fil
 
                                     if (fileName) {
                                           return (
-                                                <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
+                                                <div className="inline-flex rounded-[50px] items-center px-2.5 py-0.5 text-xs font-medium bg-blue-50 text-blue-700 border border-blue-200 max-w-full w-full" style={{
+                                                      wordBreak: 'break-word',
+                                                      overflowWrap: 'break-word',
+                                                      whiteSpace: 'normal',
+                                                      lineHeight: '1.2'
+                                                }}>
                                                       Linked to {fileName}
-                                                </Badge>
+                                                </div>
                                           )
                                     }
                               }
@@ -359,23 +382,38 @@ export const revisionDataHeader = (aquaTree: AquaTree, revisionHash: string, fil
                   }
 
                   return (
-                        <Badge variant="outline" className="bg-purple-50 text-purple-700 border-purple-200">
+                        <div className="inline-flex rounded-[50px] items-center px-2.5 py-0.5 text-xs font-medium bg-purple-50 text-purple-700 border border-purple-200 max-w-full w-full" style={{
+                              wordBreak: 'break-word',
+                              overflowWrap: 'break-word',
+                              whiteSpace: 'normal',
+                              lineHeight: '1.2'
+                        }}>
                               Deep Link previous {revision.previous_verification_hash} revisionHash {revisionHash}
-                        </Badge>
+                        </div>
                   )
             } else {
                   return (
-                        <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
-                              Linked to {fetchLinkedFileName(aquaTree, revision)}
-                        </Badge>
+                        <div className="inline-flex rounded-[50px] items-center px-2.5 py-0.5 text-xs font-medium bg-green-50 text-green-700 border border-green-200 max-w-full w-full" style={{
+                              wordBreak: 'break-word',
+                              overflowWrap: 'break-word',
+                              whiteSpace: 'normal',
+                              lineHeight: '1.2'
+                        }}>
+                              {`Linked to ${fetchLinkedFileName(aquaTree, revision)}`}
+                        </div>
                   )
             }
       }
 
       return (
-            <Badge variant="outline" className="capitalize">
+            <div className="inline-flex rounded-[50px] items-center px-2.5 py-0.5 text-xs font-medium bg-gray-50 text-gray-700 border border-gray-200 max-w-full w-full capitalize" style={{
+                  wordBreak: 'break-word',
+                  overflowWrap: 'break-word',
+                  whiteSpace: 'normal',
+                  lineHeight: '1.2'
+            }}>
                   {revision.revision_type}
-            </Badge>
+            </div>
       )
 }
 

@@ -85,15 +85,16 @@ model SiweSession {
 }
 
 model Contract {
-  hash            String   @id
-  genesis_hash    String?
-  latest          String? //Json?
-  sender          String?
-  receiver        String?
-  option          String?
-  reference_count Int?
-  file_name       String?
-  created_at      DateTime @default(now())
+  hash                 String   @id
+  genesis_hash         String?
+  latest               String? //Json?
+  sender               String?
+  receiver             String?
+  option               String?
+  reference_count      Int?
+  file_name            String?
+  receiver_has_deleted Boolean  @default(false)
+  created_at           DateTime @default(now())
   // User             User?         @relation(fields: [hash], references: [user])
   // Revision         Revision?     @relation(fields: [hash], references: [pubkey_hash])
 
@@ -260,4 +261,15 @@ model Notifications {
   navigate_to String?
 
   @@map("notifications")
+}
+
+model VerificationAttempt {
+  id                    Int      @id @default(autoincrement())
+  email_or_phone_number String
+  verification_type     String // "email" or "phone_number"
+  nonce                 String? // Optional, links to siweSession
+  action                String // "send_code" or "verify_code"
+  createdAt             DateTime @default(now())
+
+  @@index([email_or_phone_number, verification_type, action]) // For efficient querying
 }

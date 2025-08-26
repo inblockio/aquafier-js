@@ -44,6 +44,7 @@ export async function saveAttestationFileAndAquaTree(aquaTree: AquaTree, genesis
     // throw new Error(`workflowDataResponse ${JSON.stringify(workflowDataResponse)}`)
     if (workflowDataResponse.isWorkFlow && (workflowDataResponse.workFlow.includes("phone_number_claim") || workflowDataResponse.workFlow.includes("email_claim"))) {
         let serverAttestationInfo = await serverAttestation(genesisHashOfFile)
+       
         if (serverAttestationInfo) {
             const attestedData = serverAttestationInfo
 
@@ -141,8 +142,6 @@ export async function saveAttestationFileAndAquaTree(aquaTree: AquaTree, genesis
 
             }
 
-
-            fs.writeFileSync(path.join("./", `attested_aqua_tree.json.aqua.json`), JSON.stringify(attestedData, null, 4))
             saveAquaTree(attestedData.aquaTree, walletAddress, null, false)
 
 
@@ -272,4 +271,21 @@ export async function saveAquaFile(aquaTree: AquaTree, assetBuffer: Buffer, gene
 
         }
     })
+}
+
+export function ensureDomainViewForCors(domain?: string): string[] {
+    const domains: string[] = []
+    
+    if(!domain){
+        return domains
+    }
+    if(domain.startsWith("http")){
+        domains.push(domain)
+    }
+    else{
+        domains.push(`https://${domain}`)
+        domains.push(`http://${domain}`)
+    }
+    
+    return domains
 }

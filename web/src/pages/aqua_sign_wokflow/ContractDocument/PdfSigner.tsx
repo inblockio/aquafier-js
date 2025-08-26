@@ -20,6 +20,7 @@ import {
       ensureDomainUrlHasSSL,
       estimateFileSize,
       fetchFiles,
+      fetchImage,
       // getAquaTreeFileName,
       getGenesisHash,
       getRandomNumber,
@@ -871,42 +872,6 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ fileData, setActiveStep, document
       //       }
       // }
 
-      const fetchImage = async (fileUrl: string) => {
-            try {
-                  const actualUrlToFetch = ensureDomainUrlHasSSL(fileUrl)
-                  const response = await fetch(actualUrlToFetch, {
-                        headers: {
-                              nonce: `${session?.nonce}`,
-                        },
-                  })
-
-                  if (!response.ok) {
-                        console.error('FFFailed to fetch file:', response.status, response.statusText)
-                        return null
-                  }
-
-                  // Get content type from headers
-                  let contentType = response.headers.get('Content-Type') || ''
-
-                  // If content type is missing or generic, try to detect from URL
-                  if (contentType === 'application/octet-stream' || contentType === '') {
-                        contentType = 'image/png'
-                  }
-
-                  if (contentType.startsWith('image')) {
-                        const arrayBuffer = await response.arrayBuffer()
-                        // Ensure we use the PDF content type
-                        const blob = new Blob([arrayBuffer], { type: contentType })
-                        return URL.createObjectURL(blob)
-                  }
-
-                  return null
-            } catch (error) {
-                  console.error('Error fetching file:', error)
-                  return null
-            }
-      }
-
       // Handle signature dragging
       const [activeDragId, setActiveDragId] = useState<string | null>(null)
       const [isDragging, setIsDragging] = useState(false)
@@ -1083,11 +1048,16 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ fileData, setActiveStep, document
                         const fileContentUrl = signatureImageObject.fileContent
 
                         if (typeof fileContentUrl === 'string' && fileContentUrl.startsWith('http')) {
-                              let dataUrl = await fetchImage(fileContentUrl)
+                              console.log(`fileContentUrl before  ===  ${fileContentUrl}`)
+                              let url = ensureDomainUrlHasSSL(fileContentUrl)
+                               console.log(`fileContentUrl ===  ${url}`)
+                              let dataUrl = await fetchImage(url, `${session?.nonce}`)
 
                               if (!dataUrl) {
-                                    dataUrl = '/images/placeholder-img.png'
+                                    dataUrl = `${window.location.origin}/images/placeholder-img.png`
                               }
+
+                              console.log(`dataUrl after fetchImage ===  ${dataUrl}`)
 
                               // Add to signature
                               const sign: SignatureData = {
@@ -1313,10 +1283,11 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ fileData, setActiveStep, document
                                                                   return signature ? (
                                                                         <div key={signature.hash} className="p-2 cursor-pointer bg-blue-50 hover:bg-gray-50">
                                                                               <div className="flex items-center space-x-3">
-                                                                                    <div
+
+                                                                                    <div data-Id={signature.dataUrl}
                                                                                           className="w-[80px] min-w-[80px] h-[40px] min-h-[40px] bg-contain bg-no-repeat bg-center border border-gray-200 rounded-sm"
                                                                                           style={{
-                                                                                                backgroundImage: `url(${signature.dataUrl})`,
+                                                                                                backgroundImage: `url(${ensureDomainUrlHasSSL(signature.dataUrl)})`,
                                                                                           }}
                                                                                     />
                                                                                     <div className="flex flex-col flex-1 overflow-hidden space-y-0">

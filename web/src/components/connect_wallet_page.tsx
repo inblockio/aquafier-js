@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { fetchFiles, generateAvatar, setCookie } from '../utils/functions'
+import { ensureDomainUrlHasSSL, fetchFiles, generateAvatar, setCookie } from '../utils/functions'
 import { SiweMessage, generateNonce } from 'siwe'
 import { SESSION_COOKIE_NAME } from '../utils/constants'
 import axios from 'axios'
@@ -101,7 +101,7 @@ export const ConnectWalletPage = () => {
       }
 
       const signAndConnect = async () => {
-            console.log('Connecting to wallet')
+            console.log('Connecting to wallet '+backend_url)
             setIsConnecting(true)
             setError('')
 
@@ -171,8 +171,10 @@ export const ConnectWalletPage = () => {
                   const message = createSiweMessage(address, 'Sign in with Ethereum to the app.')
                   const signature = await signer.signMessage(message)
 
+                  const url = ensureDomainUrlHasSSL(`${backend_url}/session`)
+                  console.log(`url ${url}`)
                   // Send session request
-                  const response = await axios.post(`${backend_url}/session`, {
+                  const response = await axios.post(url, {
                         message,
                         signature,
                         domain: window.location.host,
@@ -180,7 +182,13 @@ export const ConnectWalletPage = () => {
 
                   if (response.status === 200 || response.status === 201) {
                         const responseData = response.data
-                        const walletAddress = ethers.getAddress(responseData?.session?.address)
+                        console.log('Backend response:', responseData)
+                        console.log('Session data:', responseData?.session)
+                        console.log('Address from response:', responseData?.session?.address)
+
+                        // const walletAddress = ethers.getAddress(responseData?.session?.address)
+                        const backendAddress = responseData?.session?.address
+                        const walletAddress = backendAddress ? ethers.getAddress(backendAddress) : ethers.getAddress(address)
 
                         setMetamaskAddress(walletAddress)
                         setAvatar(generateAvatar(walletAddress))
