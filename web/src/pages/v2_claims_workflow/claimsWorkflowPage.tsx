@@ -234,7 +234,8 @@ export default function ClaimsWorkflowPage() {
 
       useEffect(() => {
             processAllAddressClaims()
-      }, [walletAddress, JSON.stringify(files)])
+      // }, [walletAddress, JSON.stringify(files)])
+   }, [files.map(e => Object.keys(e.aquaTree?.file_index ?? {})).join(','), systemFileInfo.map(e => Object.keys(e.aquaTree?.file_index??{})).join(','), walletAddress])
 
       return (
             <div className='py-6 flex flex-col gap-4'>

@@ -319,7 +319,9 @@ const ClaimsAndAttestationPage = () => {
 
       useEffect(() => {
             processFilesToGetWorkflows()
-      }, [JSON.stringify(files)])
+      // }, [JSON.stringify(files)])
+         }, [files.map(e => Object.keys(e.aquaTree?.file_index ?? {})).join(','), systemFileInfo.map(e => Object.keys(e.aquaTree?.file_index??{})).join(',')])
+
 
       useEffect(() => {
             processFilesToGetWorkflows()

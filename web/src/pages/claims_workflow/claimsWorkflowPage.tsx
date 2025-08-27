@@ -159,6 +159,7 @@ export default function ClaimsWorkflowPage() {
 
             }
       }, [JSON.stringify(selectedClaim), JSON.stringify(files)])
+      
 
       useEffect(() => {
             if (processedInfo) {

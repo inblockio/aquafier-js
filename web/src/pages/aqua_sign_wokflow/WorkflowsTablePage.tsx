@@ -273,9 +273,11 @@ export default function WorkflowsTablePage() {
       }
 
       useEffect(() => {
+             console.log('____Rendering WorkflowsTablePage, files length:', files.length, 'systemFileInfo length:', systemFileInfo.length)
             processFilesToGetWorkflows()
-      }, [JSON.stringify(files)])
+      }, [files.map(e => Object.keys(e.aquaTree?.file_index ?? {})).join(','), systemFileInfo.map(e => Object.keys(e.aquaTree?.file_index??{})).join(',')])
 
+       
       return (
             <>
                   {/* Action Bar */}

@@ -49,24 +49,24 @@ export const LinkButton = ({ item, nonce, index }: IShareButton) => {
                   return
             }
             if (primaryFileObject === "loading") {
-toast.error("File is still loading, please wait a moment and try again")
-return
-}else  if (primaryFileObject === null) {
-toast.error("Error loading file, please refresh the page and try again")
-return
-}
+                  toast.error("File is still loading, please wait a moment and try again")
+                  return
+            } else if (primaryFileObject === null) {
+                  toast.error("Error loading file, please refresh the page and try again")
+                  return
+            }
             try {
                   const aquafier = new Aquafier()
                   setLinking(true)
                   const aquaTreeWrapper: AquaTreeWrapper = {
                         aquaTree: item.aquaTree!,
                         revision: '',
-                        fileObject:  primaryFileObject ,
+                        fileObject: primaryFileObject,
                   }
                   const linkAquaTreeWrapper: AquaTreeWrapper = {
                         aquaTree: linkItem!.aquaTree!,
                         revision: '',
-                        fileObject:  primaryFileObject ,
+                        fileObject: primaryFileObject,
                   }
                   const result = await aquafier.linkAquaTree(aquaTreeWrapper, linkAquaTreeWrapper)
 
@@ -121,7 +121,7 @@ return
       }
 
 
-      const showClaimExtraInfo = (workflowInfo :  { isWorkFlow: boolean; workFlow: string } , file : ApiFileInfo) => {
+      const showClaimExtraInfo = (workflowInfo: { isWorkFlow: boolean; workFlow: string }, file: ApiFileInfo) => {
             if (workflowInfo?.workFlow == "identity_claim") {
                   let genesisHash = getGenesisHash(file.aquaTree!)
                   if (!genesisHash) {
@@ -179,13 +179,13 @@ return
                   <button
                         data-testid={'link-action-button-' + index}
                         onClick={() => {
-if(primaryFileObject !== null && primaryFileObject !== "loading") {
-      setIsOpen(true)
-}else if (primaryFileObject === "loading") {
-toast.error("File is still loading, please wait a moment and try again")
-}else {
-toast.error("Error loading file, please refresh the page and try again")
-}
+                              if (primaryFileObject !== null && primaryFileObject !== "loading") {
+                                    setIsOpen(true)
+                              } else if (primaryFileObject === "loading") {
+                                    toast.error("File is still loading, please wait a moment and try again")
+                              } else {
+                                    toast.error("Error loading file, please refresh the page and try again")
+                              }
                         }}
                         className="flex items-center space-x-1 bg-yellow-100 text-yellow-700 px-3 py-2 rounded hover:bg-yellow-200 transition-colors text-xs w-full justify-center"
                   >
@@ -280,15 +280,14 @@ toast.error("Error loading file, please refresh the page and try again")
                                                                         const fileObject = getAquaTreeFileObject(itemLoop)
 
                                                                         if (fileObject) {
-                                                                              const isSelected = linkItem != null && 
+                                                                              const isSelected = linkItem != null &&
                                                                                     Object.keys(linkItem?.aquaTree?.revisions!)[0] === Object.keys(itemLoop.aquaTree?.revisions!)[0]
-                                                                              
+
                                                                               return (
-                                                                                    <div 
-                                                                                          key={fileIndex} 
-                                                                                          className={`px-4 py-4 border-b border-gray-100 hover:bg-gray-50 transition-colors cursor-pointer ${
-                                                                                                isSelected ? 'bg-blue-50 border-blue-200' : ''
-                                                                                          }`}
+                                                                                    <div
+                                                                                          key={fileIndex}
+                                                                                          className={`px-4 py-4 border-b border-gray-100 hover:bg-gray-50 transition-colors cursor-pointer ${isSelected ? 'bg-blue-50 border-blue-200' : ''
+                                                                                                }`}
                                                                                           onClick={() => {
                                                                                                 if (isSelected) {
                                                                                                       setLinkItem(null)
@@ -318,13 +317,13 @@ toast.error("Error loading file, please refresh the page and try again")
                                                                                                                   {(primaryFileObject && primaryFileObject !== "loading" ? primaryFileObject.fileName : "")}
                                                                                                             </span>
                                                                                                       </div>
-                                                                                                      
+
                                                                                                       {isWorkFlow && workFlow != 'aqua_sign' && (
                                                                                                             <div className="space-y-1">
                                                                                                                   <div className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-700">
                                                                                                                         Workflow: {capitalizeWords(workFlow.replace(/_/g, ' '))}
                                                                                                                   </div>
-                                                                                                                  {showClaimExtraInfo({isWorkFlow, workFlow }, itemLoop)}
+                                                                                                                  {showClaimExtraInfo({ isWorkFlow, workFlow }, itemLoop)}
                                                                                                             </div>
                                                                                                       )}
                                                                                                 </div>
@@ -363,9 +362,9 @@ toast.error("Error loading file, please refresh the page and try again")
 
                               <DialogFooter className="px-6 py-4 border-t border-gray-200 bg-gray-50 flex-shrink-0">
                                     <div className="flex justify-between w-full">
-                                          <Button 
-                                                variant="outline" 
-                                                onClick={cancelClick} 
+                                          <Button
+                                                variant="outline"
+                                                onClick={cancelClick}
                                                 data-testid="link-cancel-action-button"
                                                 disabled={linking}
                                           >
@@ -373,9 +372,9 @@ toast.error("Error loading file, please refresh the page and try again")
                                           </Button>
 
                                           {files?.length > 1 && (
-                                                <Button 
-                                                      onClick={handleLink} 
-                                                      disabled={linking || linkItem === null} 
+                                                <Button
+                                                      onClick={handleLink}
+                                                      disabled={linking || linkItem === null}
                                                       data-testid="link-modal-action-button-dialog"
                                                       className="bg-yellow-600 hover:bg-yellow-700 text-white"
                                                 >

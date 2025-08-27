@@ -571,7 +571,8 @@ const WalletAddressProfile = ({ walletAddress, callBack, showAvatar, width, show
             }, 0)
 
             return () => clearTimeout(timeoutId)
-      }, [files.length])
+      // }, [files.length])
+          }, [files.map(e => Object.keys(e.aquaTree?.file_index ?? {})).join(','), systemFileInfo.map(e => Object.keys(e.aquaTree?.file_index??{})).join(','), walletAddress])
 
       return (
             <div className={`${width ? width : 'w-full'} bg-transparent`}>

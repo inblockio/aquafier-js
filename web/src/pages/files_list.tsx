@@ -77,8 +77,10 @@ export default function FilesList() {
 
             }
    
-      }, [files.length, systemFileInfo.length])
+      // }, [files.length, systemFileInfo.length])
+      }, [files.map(e => Object.keys(e.aquaTree?.file_index ?? {})).join(','), systemFileInfo.map(e => Object.keys(e.aquaTree?.file_index??{})).join(',')])
 
+       
 
 
       // Filter files based on selected filters AND selected workflow

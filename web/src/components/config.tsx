@@ -85,6 +85,7 @@ const LoadConfiguration = () => {
       useEffect(() => {
             if (!backend_url.includes('0.0.0.0')) {
                   const nonce = getCookie('pkc_nonce')
+                  console.log('Fetched nonce from cookies:', nonce)
                   if (nonce) {
                         fetchAddressGivenANonce(nonce)
                   } else {
@@ -106,7 +107,7 @@ const LoadConfiguration = () => {
                         // window.location.reload()
                   }
             } else {
-                  // console.log(`backend url is ${backend_url}`)
+                  console.log(`backend url is ${backend_url}`)
             }
       }, [backend_url])
 
@@ -139,6 +140,8 @@ const LoadConfiguration = () => {
                   loadTemplates()
             }
       }, [session])
+
+      
 
       return <></>
 }
