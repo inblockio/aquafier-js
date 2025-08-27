@@ -173,10 +173,10 @@ const ClaimCard = ({ claim }: { claim: IClaim }) => {
             else {
                   if (claim.attestationsCount > 0) {
                         return (
-                              <>
+                              <div className="flex gap-2 items-center flex-wrap">
                                     <CheckCircle size={ICON_SIZE - 2} className="text-green-500" />
                                     <p className="text-xs font-medium text-gray-900">Verified</p>
-                              </>
+                              </div>
                         )
                   }
                   return (
@@ -218,11 +218,11 @@ const ClaimCard = ({ claim }: { claim: IClaim }) => {
 
       return (
             <div className="flex gap-2 p-2 bg-gray-50 rounded-lg justify-between items-center">
-                  <div className="flex gap-2">
+                  <div className="flex gap-2 max-w-[60%]">
                         <div className="w-[34px] h-[34px] flex items-center justify-center text-gray-500 rounded-full bg-gray-100">{getClaimIcon()}</div>
                         <div className="flex flex-col gap-1">
                               <p className="text-xs">{getClaimTitle()}</p>
-                              <p className="text-xs font-medium text-gray-900">{getTextContent()}</p>
+                              <p className="text-xs font-medium text-gray-900 break-all">{getTextContent()}</p>
                         </div>
                   </div>
                   <div className="flex gap-1">
@@ -617,9 +617,12 @@ const WalletAddressProfile = ({ walletAddress, callBack, showAvatar, width, show
                                                 <BsInfoCircle size={15} className="text-primary" />
                                                 <p className="text-sm">Profile not Found!</p>
                                           </div>
-                                          <p className="text-sm font-mono break-all">
-                                                {walletAddress}
-                                          </p>
+                                          <div className="flex gap-2 items-center">
+                                                <p className="text-sm font-mono break-all">
+                                                      {walletAddress}
+                                                </p>
+                                                <CopyButton text={`${walletAddress}`} isIcon={true} />
+                                          </div>
                                           {
                                                 timestamp ? (
                                                       <p className="text-xs break-all">{timestamp}</p>
