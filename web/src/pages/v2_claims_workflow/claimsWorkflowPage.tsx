@@ -263,7 +263,7 @@ export default function ClaimsWorkflowPage() {
                   ) : null}
 
                   {
-                        claims.length === 0 ? (
+                        (claims.length === 0 && !isLoading) ? (
                               <div className="bg-blue-50 border border-blue-200 rounded-lg p-6 mx-auto max-w-md">
                                     <div className="flex items-center justify-center flex-col gap-3">
                                           <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
