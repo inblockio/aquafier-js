@@ -7,8 +7,8 @@ import { ApiFileInfo } from '@/models/FileInfo'
 import appStore from '@/store'
 import { estimateFileSize, fetchFiles, formatCryptoAddress, generateAvatar, getAquaTreeFileName, getAquaTreeFileObject, getGenesisHash, getRandomNumber, isWorkFlowData, timeToHumanFriendly } from '@/utils/functions'
 import Aquafier, { AquaTree, AquaTreeWrapper, FileObject, OrderRevisionInAquaTree } from 'aqua-js-sdk'
-import { ArrowRight, CheckCircle, LucideCheckCircle, Mail, Phone,  Share2, Signature, User } from 'lucide-react'
-import { useEffect, useState } from 'react'
+import { ArrowRight, CheckCircle, LucideCheckCircle, Mail, Phone,  Share2, Signature, User, X } from 'lucide-react'
+import { useEffect, useState, Suspense } from 'react'
 import { TbWorldWww } from 'react-icons/tb'
 import { useNavigate } from 'react-router-dom'
 import { ClipLoader } from 'react-spinners'
@@ -16,6 +16,7 @@ import { toast } from 'sonner'
 import { useStore } from 'zustand'
 import axios from 'axios'
 import { loadSignatureImage } from './UserSignatureClaim'
+import { getDNSStatusBadge, IDnsVerificationResult, verifyDNS } from '@/utils/verifiy_dns'
 
 interface ISignatureWalletAddressCard {
       index?: number
@@ -27,6 +28,7 @@ interface ISignatureWalletAddressCard {
       width?: string
       showShadow?: boolean
       hideOpenProfileButton?: boolean
+      noBg?: boolean
 }
 
 interface IClaim {
@@ -39,8 +41,9 @@ interface IClaim {
 const ClaimCard = ({ claim }: { claim: IClaim }) => {
 
       const [signatureImage, setSignatureImage] = useState<string | null>(null)
+      const [dnsVerificationResult, setDnsVerificationResult] = useState<IDnsVerificationResult | null>(null)
 
-      const { session } = useStore(appStore)
+      const { session, backend_url } = useStore(appStore)
 
       const ICON_SIZE = 18
 
@@ -150,14 +153,49 @@ const ClaimCard = ({ claim }: { claim: IClaim }) => {
                         </div>
                   )
             }
+            else if(claim.claimType === "domain_claim"){
+                  if(!dnsVerificationResult){
+                        return (
+                              <div className="flex gap-2 items-center">
+                                    <div className="animate-spin h-2 w-2 border border-blue-500 border-t-transparent rounded-full" /> 
+                                    <p className="text-xs font-medium text-gray-900">Loading</p>
+                              </div>
+                        )
+                  }
+                  const verificationBadge = getDNSStatusBadge(dnsVerificationResult?.dnsStatus!, dnsVerificationResult?.message!)
+                  return (
+                        <div className="flex gap-2 items-center">
+                              {verificationBadge}
+                        </div>
+                  )
+            }
             else{
+                  if(claim.attestationsCount > 0){
+                        return (
+                              <>
+                                    <CheckCircle size={ICON_SIZE-2} className="text-green-500" />
+                                    <p className="text-xs font-medium text-gray-900">Verified</p>
+                              </>
+                        )
+                  }
                   return (
                         <>
-                        <CheckCircle size={ICON_SIZE-2} className="text-green-500" />
-                        <p className="text-xs font-medium text-gray-900">Verified</p>
+                              <X size={ICON_SIZE-2} className="text-red-500" />
+                              <p className="text-xs font-medium text-gray-900">Not Verified</p>
                         </>
                   )
             }
+      }
+      
+      const verifyDomainClaim = async     () => {
+            try {
+                  const result = await verifyDNS(backend_url, claim.claimName!, session?.address!)
+                  console.log(result)
+                  setDnsVerificationResult(result)
+            } catch (error) {
+                  console.error(error)
+            }
+            
       }
 
       const loadImage = async () => {
@@ -165,10 +203,16 @@ const ClaimCard = ({ claim }: { claim: IClaim }) => {
               setSignatureImage(signatureImage)
           }
 
-      useEffect(() => {
-            if (claim.claimType === 'user_signature') {
-                  loadImage()
-            }
+      useEffect(() => { 
+            const timeoutId = setTimeout(() => {
+                  if (claim.claimType === 'user_signature') {
+                        loadImage()
+                  }else if(claim.claimType === 'domain_claim'){
+                        verifyDomainClaim()
+                  }
+            }, 0)
+
+            return () => clearTimeout(timeoutId)
       }, [])
 
       return (
@@ -180,14 +224,14 @@ const ClaimCard = ({ claim }: { claim: IClaim }) => {
                               <p className="text-xs font-medium text-gray-900">{getTextContent()}</p>
                         </div>
                   </div>
-                  <div className="flex gap-2">
+                  <div className="flex gap-1">
                         {getRightSectionContent()}
                   </div>
             </div>
       )
 }
 
-const WalletAddressProfile = ({ walletAddress, callBack, showAvatar, width, showShadow, hideOpenProfileButton }: ISignatureWalletAddressCard) => {
+const WalletAddressProfile = ({ walletAddress, callBack, showAvatar, width, showShadow, hideOpenProfileButton, noBg }: ISignatureWalletAddressCard) => {
       const { files, systemFileInfo , session, setFiles, backend_url, setOpenDialog, setSelectedFileInfo} = useStore(appStore)
       const [claims, setClaims] = useState<IClaim[]>([])
       const [loading, setLoading] = useState(false)
@@ -527,11 +571,11 @@ const WalletAddressProfile = ({ walletAddress, callBack, showAvatar, width, show
             }, 0)
 
             return () => clearTimeout(timeoutId)
-      }, [JSON.stringify(files)])
+      }, [files.length])
 
       return (
             <div className={`${width ? width : 'w-full'} bg-transparent`}>
-                  <div className={`flex p-6 flex-col bg-gradient-to-br from-white to-slate-200 border border-slate-200 ${shadowClasses} rounded-xl gap-4 transition-shadow duration-300`}>
+                  <div className={`flex p-2 flex-col ${noBg ? '' : 'bg-gradient-to-br from-white to-slate-200 border border-slate-200'} ${shadowClasses} rounded-xl gap-4 transition-shadow duration-300`}>
                         {
                               loading ? <div className="py-6 flex flex-col items-center justify-center h-full w-full">
                                     <ClipLoader color="#000" loading={loading} size={50} />
@@ -590,12 +634,16 @@ const WalletAddressProfile = ({ walletAddress, callBack, showAvatar, width, show
                         <div className="flex flex-col gap-[6px] rounded-lg">
                               {
                                     claims.filter((claim) => claim.claimType === 'identity_claim').map((claim, index) => (
-                                          <ClaimCard key={`claim_${index}`} claim={claim} />
+                                          <Suspense key={`claim_${index}`} fallback={<div className="flex gap-2 p-2 bg-gray-50 rounded-lg justify-between items-center animate-pulse"><div className="h-8 bg-gray-200 rounded w-full"></div></div>}>
+                                                <ClaimCard claim={claim} />
+                                          </Suspense>
                                     ))
                               }
                               {
                                     claims.filter((claim) => claim.claimType !== 'identity_claim').map((claim, index) => (
-                                          <ClaimCard key={`claim_${index}`} claim={claim} />
+                                          <Suspense key={`claim_${index}`} fallback={<div className="flex gap-2 p-2 bg-gray-50 rounded-lg justify-between items-center animate-pulse"><div className="h-8 bg-gray-200 rounded w-full"></div></div>}>
+                                                <ClaimCard claim={claim} />
+                                          </Suspense>
                                     ))
                               }
                         </div>

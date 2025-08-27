@@ -83,7 +83,7 @@ const WalletAdrressClaim = forwardRef<HTMLDivElement, IWalletAdrressClaim>(
                               </HoverCardTrigger>
                               <HoverCardContent className='w-[350px] p-0'>
                                     <Suspense fallback={<p className='p-6'>Loading...</p>}>
-                                    <WalletAddressProfile walletAddress={walletAddress} showShadow={false} />
+                                    <WalletAddressProfile walletAddress={walletAddress} showShadow={false} noBg={true} />
                                     </Suspense>
                               </HoverCardContent>
                         </HoverCard>

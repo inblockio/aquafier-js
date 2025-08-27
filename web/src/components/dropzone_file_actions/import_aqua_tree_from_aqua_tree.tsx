@@ -5,7 +5,6 @@ import appStore from '../../store'
 import { useEffect, useState } from 'react'
 import { ApiFileInfo } from '../../models/FileInfo'
 import { formatCryptoAddress } from '../../utils/functions'
-// import { useNavigate } from 'react-router-dom'
 import { analyzeAndMergeRevisions } from '../../utils/aqua_funcs'
 import { RevisionsComparisonResult } from '../../models/revision_merge'
 import { OrderRevisionInAquaTree, Revision } from 'aqua-js-sdk'
@@ -14,7 +13,7 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { toast } from 'sonner'
-// import { toast } from "@/components/ui/use-toast";
+// import { toast } from "@/components/ui/use-toast"; 
 // import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 // import { Button } from "@/components/ui/button";
 // import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogTrigger } from "@/components/ui/dialog";
@@ -38,7 +37,6 @@ export const ImportAquaChainFromChain = ({ fileInfo, isVerificationSuccessful, c
       })
 
       const { files, backend_url, session } = useStore(appStore)
-      // const navigate = useNavigate()
 
       const importAquaChain = async () => {
             // Early check to prevent recursion if already processing
