@@ -236,7 +236,7 @@ export function SharedContracts() {
                   console.error(error)
             }
       }
-      // console.log(contracts)
+      // //  console.log(contracts)
 
       useEffect(() => {
             loadAccountSharedContracts()

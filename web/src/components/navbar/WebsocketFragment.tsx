@@ -37,8 +37,8 @@ const WebsocketFragment = () => {
                   // Step 1: Ensure SSL if needed
                   const validHttpAndDomain = ensureDomainUrlHasSSL(backend_url)
                   const response = await axios.get(`${validHttpAndDomain}/ws/clients`)
-                  const users = response.data.clients.map((client: any) => client.userId)
-                  console.log(`Users ${users} ..`)
+                   response.data.clients.map((client: any) => client.userId)
+                  //  console.log(`Users ${users} ..`)
                   // setConnectedUsers(users);
             } catch (error) {
                   console.error('Error fetching connected users:', error)
@@ -69,12 +69,12 @@ const WebsocketFragment = () => {
             const WS_URL = `${convertToWebsocketUrl(backend_url)}/ws`
 
             // Update your reconnectWithBackoff function
-            const reconnectWithBackoff = (reason: string) => {
-                  console.log('Connection Reason: ', reason)
+            const reconnectWithBackoff = (_reason: string) => {
+                  //  console.log('Connection Reason: ', reason)
 
                   // Don't reconnect if we explicitly disconnected or reached max attempts
                   if (isExplicitDisconnect) {
-                        // console.log("Not reconnecting - explicit disconnect");
+                        // //  console.log("Not reconnecting - explicit disconnect");
                         return
                   }
 
@@ -83,7 +83,7 @@ const WebsocketFragment = () => {
 
                   // Stop if we've reached maximum attempts
                   if (attemptCount >= MAX_RECONNECT_ATTEMPTS) {
-                        // console.log(`Max reconnection attempts (${MAX_RECONNECT_ATTEMPTS}) reached. Giving up.`);
+                        // //  console.log(`Max reconnection attempts (${MAX_RECONNECT_ATTEMPTS}) reached. Giving up.`);
                         toast.error( 'Could not reconnect to server. Please refresh the page.')
                         return
                   }
@@ -91,7 +91,7 @@ const WebsocketFragment = () => {
                   // Calculate delay with exponential backoff
                   const delay = Math.min(Math.pow(2, attemptCount) * RECONNECT_BASE_DELAY, RECONNECT_MAX_DELAY)
 
-                  // console.log(`Scheduling reconnection attempt ${attemptCount + 1} in ${delay}ms`);
+                  // //  console.log(`Scheduling reconnection attempt ${attemptCount + 1} in ${delay}ms`);
 
                   // Increment the reconnection attempt counter
                   setWebsocketReconnectAttempts(prev => prev + 1)
@@ -103,7 +103,7 @@ const WebsocketFragment = () => {
 
                   // Set new reconnection timeout
                   activeReconnectTimeout = setTimeout(() => {
-                        // console.log(`Attempting reconnection #${attemptCount + 1}`);
+                        // //  console.log(`Attempting reconnection #${attemptCount + 1}`);
                         activeReconnectTimeout = null
                         connectWebsocket()
                   }, delay)
@@ -113,7 +113,7 @@ const WebsocketFragment = () => {
                   const websocket = new WebSocket(`${WS_URL}?userId=${encodeURIComponent(userId)}`)
 
                   websocket.onopen = () => {
-                        console.log(`Connected to WebSocket as user: ${userId}`)
+                        //  console.log(`Connected to WebSocket as user: ${userId}`)
                         setIsConnected(true)
                         setWs(websocket)
                         setWebsocketReconnectAttempts(0)
@@ -135,11 +135,11 @@ const WebsocketFragment = () => {
                         try {
                               const message: WebSocketMessage = JSON.parse(event.data)
 
-                              // console.log(`🔌 ECHO - message received ${message.action}`)
+                              // //  console.log(`🔌 ECHO - message received ${message.action}`)
                               if (message.action === WebSocketActions.REFETCH_FILES) {
                                     ;(async () => {
                                           if (walletAddressRef.current && nounceRef.current) {
-                                                // console.log(`🔌 ECHO - message  fetching data`)
+                                                // //  console.log(`🔌 ECHO - message  fetching data`)
 
                                                 const url = `${backend_url}/explorer_files`
                                                 const actualUrlToFetch = ensureDomainUrlHasSSL(url)
@@ -167,15 +167,15 @@ const WebsocketFragment = () => {
                                                                   }
                                                             }
                                                       } else {
-                                                            console.log(`🔌 - Genesis hash not found for selected file`)
+                                                            //  console.log(`🔌 - Genesis hash not found for selected file`)
                                                       }
                                                 } else {
-                                                      // console.log(`🔌 -1- No selected file ${userSelectedFile}`)
-                                                      // console.log(`🔌 -2- No selected file ${selectedFileInfo}`)
-                                                      console.log(`🔌 -3- No selected file ${currentSelectedFile}`)
+                                                      // //  console.log(`🔌 -1- No selected file ${userSelectedFile}`)
+                                                      // //  console.log(`🔌 -2- No selected file ${selectedFileInfo}`)
+                                                      //  console.log(`🔌 -3- No selected file ${currentSelectedFile}`)
                                                 }
                                           } else {
-                                                console.log(`🔌 - Cannot refetch files as session or address or nounce is not defined DEBUG : ${JSON.stringify(session ?? {})}  `)
+                                                //  console.log(`🔌 - Cannot refetch files as session or address or nounce is not defined DEBUG : ${JSON.stringify(session ?? {})}  `)
                                           }
                                     })()
                               } else if (message.action === WebSocketActions.REFETCH_SHARE_CONTRACTS) {
@@ -198,13 +198,13 @@ const WebsocketFragment = () => {
 
                                                 toast.success( `An item was shared to your account`)
                                           } catch (e) {
-                                                console.log('Error loadin cntract')
+                                                //  console.log('Error loadin cntract')
                                           }
                                     })()
                               } else if (message.action === WebSocketActions.FETCH_USERS) {
                                     fetchConnectedUsers()
                               } else {
-                                    console.log(`🔌 ECHO - message received ${JSON.stringify(message, null, 4)}`)
+                                    //  console.log(`🔌 ECHO - message received ${JSON.stringify(message, null, 4)}`)
                               }
                         } catch (error) {
                               console.error('Error parsing WebSocket message:', error)
@@ -214,13 +214,13 @@ const WebsocketFragment = () => {
                               //     data: event.data,
                               //     timestamp: new Date().toISOString()
                               // };
-                              // console.log(`Raw message ${JSON.stringify(message)}`)
+                              // //  console.log(`Raw message ${JSON.stringify(message)}`)
                               // setMessages(prev => [...prev, message]);
                         }
                   }
 
                   websocket.onclose = async event => {
-                        console.log('Disconnected from WebSocket:', event, isExplicitDisconnect)
+                        //  console.log('Disconnected from WebSocket:', event, isExplicitDisconnect)
                         setIsConnected(false)
                         setWs(null)
 
@@ -228,7 +228,7 @@ const WebsocketFragment = () => {
                               clearInterval(pingInterval)
                               pingInterval = null
                         }
-                        console.log(`🔌 - Disconnected from WebSocket as user: ${isExplicitDisconnect}`)
+                        //  console.log(`🔌 - Disconnected from WebSocket as user: ${isExplicitDisconnect}`)
                         // Only show error if not an explicit disconnect
                         // if (!isExplicitDisconnect) {
                         //     // toast.create({

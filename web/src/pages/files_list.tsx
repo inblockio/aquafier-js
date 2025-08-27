@@ -38,7 +38,7 @@ export default function FilesList() {
       // Extract unique workflows from files
       useEffect(() => {
 
-            // console.log(`use effect in files list file and systemn  info `)
+            // //  console.log(`use effect in files list file and systemn  info `)
 
             if (systemFileInfo.length == 0) {
                   if (!hasFetchedSystemAquaTrees) {
@@ -56,7 +56,7 @@ export default function FilesList() {
                         try {
                               return getAquaTreeFileName(e.aquaTree!)
                         } catch (e) {
-                              console.log('Error processing system file')
+                              //  console.log('Error processing system file')
                               return ''
                         }
                   })
@@ -70,7 +70,7 @@ export default function FilesList() {
                                     workflows.add(workFlow.workFlow)
                               }
                         } catch (e) {
-                              console.log('Error processing workflow data for file:', file)
+                              //  console.log('Error processing workflow data for file:', file)
                         }
                   })
 
@@ -79,7 +79,7 @@ export default function FilesList() {
             }
    
       // }, [files.length, systemFileInfo.length])
-      }, [files.fileData.map(e => Object.keys(e.aquaTree?.file_index ?? {})).join(','), systemFileInfo.map(e => Object.keys(e.aquaTree?.file_index??{})).join(',')])
+      }, [files.fileData.map(e => Object.keys(e?.aquaTree?.file_index ?? {})).join(','), systemFileInfo.map(e => Object.keys(e?.aquaTree?.file_index??{})).join(',')])
 
        
 
@@ -94,7 +94,7 @@ export default function FilesList() {
                         try {
                               return getAquaTreeFileName(e.aquaTree!)
                         } catch (e) {
-                              console.log('Error processing system file')
+                              //  console.log('Error processing system file')
                               return ''
                         }
                   })
@@ -111,7 +111,7 @@ export default function FilesList() {
                                     return selectedFilters.includes('aqua_files')
                               }
                         } catch (e) {
-                              console.log('Error filtering file:', file)
+                              //  console.log('Error filtering file:', file)
                               return false
                         }
                   })
@@ -123,7 +123,7 @@ export default function FilesList() {
                         try {
                               return getAquaTreeFileName(e.aquaTree!)
                         } catch (e) {
-                              console.log('Error processing system file')
+                              //  console.log('Error processing system file')
                               return ''
                         }
                   })
@@ -133,7 +133,7 @@ export default function FilesList() {
                               const workFlow = isWorkFlowData(file.aquaTree!, someData)
                               return workFlow.isWorkFlow && workFlow.workFlow === selectedWorkflow
                         } catch (e) {
-                              console.log('Error filtering by workflow:', file)
+                              //  console.log('Error filtering by workflow:', file)
                               return false
                         }
                   })
@@ -271,6 +271,22 @@ export default function FilesList() {
       }
 
       const renderFilesList = () => {
+
+            let hasUndefined = false
+            for (let i = 0; i < filteredFiles.length; i++) {
+                  if (filteredFiles[i].aquaTree === undefined) {
+                        hasUndefined = true
+                        break
+                  }
+                  if (filteredFiles[i].aquaTree?.revisions === undefined) {
+                        hasUndefined = true
+                        break
+                  }
+            }
+            if(hasUndefined) {
+                  return <div>No files available.</div>
+
+            }
             return <table className="w-full border-collapse">
                   <thead>
                         <tr className="bg-gray-50">

@@ -190,7 +190,7 @@ const ClaimCard = ({ claim }: { claim: IClaim }) => {
       const verifyDomainClaim = async     () => {
             try {
                   const result = await verifyDNS(backend_url, claim.claimName!, session?.address!)
-                  console.log(result)
+                  //  console.log(result)
                   setDnsVerificationResult(result)
             } catch (error) {
                   console.error(error)
@@ -249,7 +249,7 @@ const WalletAddressProfile = ({ walletAddress, callBack, showAvatar, width, show
                   try {
                         return getAquaTreeFileName(e.aquaTree!)
                   } catch (e) {
-                        // console.log('Error processing system file') // More descriptive
+                        // //  console.log('Error processing system file') // More descriptive
                         return ''
                   }
             })
@@ -260,7 +260,7 @@ const WalletAddressProfile = ({ walletAddress, callBack, showAvatar, width, show
                         return fileInfo.isWorkFlow && fileInfo.workFlow === 'identity_attestation'
                   })
 
-                  console.log("attestationFiles", attestationFiles)
+                  //  console.log("attestationFiles", attestationFiles)
 
                   const localClaims: IClaim[] = []
                   // let _totalAttestations = 0
@@ -405,15 +405,18 @@ const WalletAddressProfile = ({ walletAddress, callBack, showAvatar, width, show
 
                   if (response.status === 200 || response.status === 201) {
                         if (isFinal) {
-                              if (account !== session?.address) {
-                                    const files = await fetchFiles(session!.address, `${backend_url}/explorer_files`, session!.nonce)
-                                    setFiles({ fileData: files, status: 'loaded' })
-                              } else {
-                                    setFiles({
-                                          fileData: response.data.files,
-                                          status: 'loaded',
-                                    })
-                              }
+                              // if (account !== session?.address) {
+                              //       const files = await fetchFiles(session!.address, `${backend_url}/explorer_files`, session!.nonce)
+                              //       setFiles({ fileData: files, status: 'loaded' })
+                              // } else {
+                              //       setFiles({
+                              //             fileData: response.data.files,
+                              //             status: 'loaded',
+                              //       })
+                              // }
+
+                               const files = await fetchFiles(session!.address, `${backend_url}/explorer_files`, session!.nonce)
+                                                      setFiles({ fileData: files, status: 'loaded' })
 
                               toast.success('Profile Aqua tree created successfully')
                               callBack && callBack()
@@ -434,9 +437,9 @@ const WalletAddressProfile = ({ walletAddress, callBack, showAvatar, width, show
                                                 dialogType: 'share_dialog',
                                                 isOpen: true,
                                                 onClose: () => setOpenDialog(null),
-                                                onConfirm: (data) => {
+                                                onConfirm: () => {
                                                       // Handle confirmation logic here
-                                                      console.log('Attestation confirmed with data:', data)
+                                                      //  console.log('Attestation confirmed with data:', data)
                                                 }
                                           })
 
@@ -463,7 +466,7 @@ const WalletAddressProfile = ({ walletAddress, callBack, showAvatar, width, show
                     return    
                   }
 
-                  console.log("Creating profile for sharing...");
+                  //  console.log("Creating profile for sharing...");
                   if (callBack) {
                         callBack();
                   }
@@ -489,7 +492,7 @@ const WalletAddressProfile = ({ walletAddress, callBack, showAvatar, width, show
 
                   const estimateSize = estimateFileSize(JSON.stringify(completeFormData))
                   const jsonString = JSON.stringify(completeFormData, null, 4)
-                  console.log(`completeFormData -- jsonString-- ${jsonString}`)
+                  //  console.log(`completeFormData -- jsonString-- ${jsonString}`)
 
                   const fileObject: FileObject = {
                         fileContent: jsonString,
@@ -540,7 +543,7 @@ const WalletAddressProfile = ({ walletAddress, callBack, showAvatar, width, show
                         currentAquaTree = linkedAquaTreeResponse.data.aquaTree
                   }
 
-                  console.log(`here  ${JSON.stringify(currentAquaTree, null, 4)}`)
+                  //  console.log(`here  ${JSON.stringify(currentAquaTree, null, 4)}`)
 // throw Error(`here...`)
                  
                       // save it on the server 
@@ -575,7 +578,7 @@ const WalletAddressProfile = ({ walletAddress, callBack, showAvatar, width, show
 
             return () => clearTimeout(timeoutId)
       // }, [files.length])
-          }, [files.fileData.map(e => Object.keys(e.aquaTree?.file_index ?? {})).join(','), systemFileInfo.map(e => Object.keys(e.aquaTree?.file_index??{})).join(','), walletAddress])
+          }, [files.fileData.map(e => Object.keys(e?.aquaTree?.file_index ?? {})).join(','), systemFileInfo.map(e => Object.keys(e?.aquaTree?.file_index??{})).join(','), walletAddress])
 
       return (
             <div className={`${width ? width : 'w-full'} bg-transparent`}>
@@ -668,7 +671,7 @@ const WalletAddressProfile = ({ walletAddress, callBack, showAvatar, width, show
                                                 <Button
                                                       className="flex-1 bg-blue-50 hover:bg-blue-100 text-blue-600 hover:text-blue-700 px-3 py-1.5 rounded-md flex items-center gap-1.5 text-sm font-medium transition-colors duration-200 border border-blue-200 hover:border-blue-300 cursor-pointer"
                                                       onClick={() => {
-                                                            console.log("Clicked", callBack);
+                                                            //  console.log("Clicked", callBack);
                                                             if (callBack) {
                                                                   callBack();
                                                             }
@@ -823,7 +826,7 @@ export default WalletAddressProfile
 //                   try {
 //                         return getAquaTreeFileName(e.aquaTree!)
 //                   } catch (e) {
-//                         // console.log('Error processing system file') // More descriptive
+//                         // //  console.log('Error processing system file') // More descriptive
 //                         return ''
 //                   }
 //             })
@@ -834,7 +837,7 @@ export default WalletAddressProfile
 //                         return fileInfo.isWorkFlow && fileInfo.workFlow === 'identity_attestation'
 //                   })
 
-//                   console.log("attestationFiles", attestationFiles)
+//                   //  console.log("attestationFiles", attestationFiles)
 
 //                   const localClaims: IClaim[] = []
 //                   // let _totalAttestations = 0
@@ -974,7 +977,7 @@ export default WalletAddressProfile
 //                                                 <Button
 //                                                       className="bg-orange-50 hover:bg-orange-200 text-orange-700 hover:text-orange-800 px-3 py-1.5 rounded-lg flex items-center gap-1.5 text-sm font-medium transition-colors duration-200 border border-orange-200 hover:border-orange-300 cursor-pointer"
 //                                                       onClick={async () => {
-//                                                             console.log("Clicked", callBack);
+//                                                             //  console.log("Clicked", callBack);
 //                                                             if (callBack) {
 //                                                                   callBack();
 //                                                             }
@@ -990,7 +993,7 @@ export default WalletAddressProfile
 
 //                                                             const estimateSize = estimateFileSize(JSON.stringify(completeFormData))
 //                                                             const jsonString = JSON.stringify(completeFormData, null, 4)
-//                                                             console.log(`completeFormData -- jsonString-- ${jsonString}`)
+//                                                             //  console.log(`completeFormData -- jsonString-- ${jsonString}`)
 
 //                                                             const fileObject: FileObject = {
 //                                                                   fileContent: jsonString,
@@ -1055,7 +1058,7 @@ export default WalletAddressProfile
 //                                                 <Button
 //                                                       className="bg-blue-50 hover:bg-blue-100 text-blue-600 hover:text-blue-700 px-3 py-1.5 rounded-lg flex items-center gap-1.5 text-sm font-medium transition-colors duration-200 border border-blue-200 hover:border-blue-300 cursor-pointer"
 //                                                       onClick={() => {
-//                                                             console.log("Clicked", callBack);
+//                                                             //  console.log("Clicked", callBack);
 //                                                             if (callBack) {
 //                                                                   callBack();
 //                                                             }

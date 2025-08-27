@@ -115,7 +115,7 @@ export const RevisionDisplay = ({ fileInfo, revision, revisionHash, isVerificati
       const handleDelete = useCallback(async () => {
             if (isDeleting) return // Prevent multiple clicks
 
-            console.log('Deleting revision: ', revisionHash, index)
+            //  console.log('Deleting revision: ', revisionHash, index)
             setIsDeleting(true)
 
             try {

@@ -101,7 +101,7 @@ export const ConnectWalletPage = () => {
       }
 
       const signAndConnect = async () => {
-            console.log('Connecting to wallet '+backend_url)
+            //  console.log('Connecting to wallet '+backend_url)
             setIsConnecting(true)
             setError('')
 
@@ -172,7 +172,7 @@ export const ConnectWalletPage = () => {
                   const signature = await signer.signMessage(message)
 
                   const url = ensureDomainUrlHasSSL(`${backend_url}/session`)
-                  console.log(`url ${url}`)
+                  //  console.log(`url ${url}`)
                   // Send session request
                   const response = await axios.post(url, {
                         message,
@@ -182,9 +182,9 @@ export const ConnectWalletPage = () => {
 
                   if (response.status === 200 || response.status === 201) {
                         const responseData = response.data
-                        console.log('Backend response:', responseData)
-                        console.log('Session data:', responseData?.session)
-                        console.log('Address from response:', responseData?.session?.address)
+                        //  console.log('Backend response:', responseData)
+                        //  console.log('Session data:', responseData?.session)
+                        //  console.log('Address from response:', responseData?.session?.address)
 
                         // const walletAddress = ethers.getAddress(responseData?.session?.address)
                         const backendAddress = responseData?.session?.address

@@ -61,8 +61,8 @@ export default function NewShadcnLayoutWithSidebar() {
                                                                               dialogType: 'early_bird_offer',
                                                                               isOpen: true,
                                                                               onClose: () => setOpenDialog(null),
-                                                                              onConfirm: (data) => {
-                                                                                    console.log('Early bird offer confirmed with data:', data)
+                                                                              onConfirm: () => {
+                                                                                    //  console.log('Early bird offer confirmed with data:', data)
                                                                               }
                                                                         })
                                                                   }}
@@ -440,7 +440,7 @@ export default function NewShadcnLayoutWithSidebar() {
 //                                                                               onClose: () => setOpenDialog(null),
 //                                                                               onConfirm: (data) => {
 //                                                                                     // Handle confirmation logic here
-//                                                                                     console.log('Early bird offer confirmed with data:', data)
+//                                                                                     //  console.log('Early bird offer confirmed with data:', data)
 //                                                                               }
 //                                                                         })
 //                                                                   }}
@@ -456,7 +456,7 @@ export default function NewShadcnLayoutWithSidebar() {
 //                                                                               onClose: () => setOpenDialog(null),
 //                                                                               onConfirm: (data) => {
 //                                                                                     // Handle confirmation logic here
-//                                                                                     console.log('Early bird offer confirmed with data:', data)
+//                                                                                     //  console.log('Early bird offer confirmed with data:', data)
 //                                                                               }
 //                                                                         })
 //                                                                   }}

@@ -199,7 +199,7 @@ interface ILog {
       let txtRecords: string[] = [];
       let dnssecValidated = false;
       const result = await resolveTxtWithDNSSEC(recordName);
-      console.log("Resolving with DNSSEC", result)
+      //  console.log("Resolving with DNSSEC", result)
   
       try {
         // txtRecords = result.records;
@@ -261,7 +261,7 @@ interface ILog {
         record.includes('expiration=') &&
         record.includes('sig=')
       );
-      console.log("Txt record: ", txtRecord)
+      //  console.log("Txt record: ", txtRecord)
   
       let isLegacyFormat = false;
   

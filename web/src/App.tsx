@@ -39,7 +39,7 @@ function App() {
       const { setBackEndUrl } = useStore(appStore)
 
       useEffect(() => {
-            //  console.log("backedn url is", backend_url);
+            //  //  console.log("backedn url is", backend_url);
             // Properly handle async initialization
             const initBackend = async () => {
                   const url = await initializeBackendUrl()

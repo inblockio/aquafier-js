@@ -91,7 +91,7 @@ const SignatureWalletAddressCard = ({ walletAddress, signatureHash, index, times
                   try {
                         return getAquaTreeFileName(e.aquaTree!)
                   } catch (e) {
-                        // console.log('Error processing system file') // More descriptive
+                        // //  console.log('Error processing system file') // More descriptive
                         return ''
                   }
             })

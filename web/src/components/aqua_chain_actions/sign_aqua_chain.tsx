@@ -88,12 +88,12 @@ export const SignAquaChain = ({ apiFileInfo, backendUrl, nonce, index }: RevionO
                                                       }
                                                 }
                                           } catch (e) {
-                                                //  console.log(`Error ${e}`)
+                                                //  //  console.log(`Error ${e}`)
                                                toast.error( 'Error updating files')
                                                 // document.location.reload()
                                           }
                                     } else {
-                                          //  console.log("update state ...")
+                                          //  //  console.log("update state ...")
                                           const newFiles: ApiFileInfo[] = []
                                           const keysPar = Object.keys(apiFileInfo.aquaTree!.revisions!)
                                           files.fileData.forEach(item => {

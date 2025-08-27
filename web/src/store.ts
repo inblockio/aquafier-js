@@ -93,8 +93,8 @@ let dbPromiseInstance: Promise<IDBPDatabase> | null = null
 const getDbPromise = () => {
       if (!dbPromiseInstance) {
             dbPromiseInstance = openDB('aquafier-db', 2, {
-                  upgrade(db, oldVersion, newVersion, _transaction) {
-                        console.log(`Upgrading from version ${oldVersion} to ${newVersion}`)
+                  upgrade(db, _oldVersion, _newVersion, _transaction) {
+                        //  console.log(`Upgrading from version ${oldVersion} to ${newVersion}`)
 
                         // Handle version upgrades properly
                         if (!db.objectStoreNames.contains('store')) {
@@ -219,7 +219,7 @@ const appStore = createStore<TAppStore>()(
                         set({ files: files })
                   },
                   setBackEndUrl: (backend_url: AppStoreState['backend_url']) => {
-                        console.log(`set backend_url to ${backend_url} `)
+                        //  console.log(`set backend_url to ${backend_url} `)
                         let urlData = ensureDomainUrlHasSSL(backend_url)
                         set({ backend_url: urlData })
                   },

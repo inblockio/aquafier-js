@@ -13,6 +13,7 @@ import {
       allLinkRevisionHashes,
       getAquaTreeFileName,
       dummyCredential,
+      fetchFiles,
 } from '../../utils/functions'
 import Aquafier, { AquaTree, CredentialsData, FileObject } from 'aqua-js-sdk'
 import { IDropzoneAction, UploadLinkAquaTreeExpectedData } from '../../types/types'
@@ -51,7 +52,7 @@ export const ImportAquaTree = ({ file, filesWrapper, removeFilesListForUpload}: 
             setUploading(true)
             try {
                   const url = `${backend_url}/explorer_aqua_file_upload`
-                  const response = await fetch(url, {
+                 await fetch(url, {
                         method: 'POST',
                         body: formData,
                         headers: {
@@ -59,11 +60,17 @@ export const ImportAquaTree = ({ file, filesWrapper, removeFilesListForUpload}: 
                         },
                   })
 
-                  const responseData = await response.json()
+                  // const responseData = await response.json()
                   // setFiles([...responseData.files])
 
-                    setFiles({ fileData: [...responseData.data, file], status: 'loaded' })
+                  //   setFiles({ fileData: [...responseData.data, file], status: 'loaded' })
+
+                  //  const filesFromApi: Array<ApiFileInfo> = responseData.files
+                  //                     setFiles({ fileData: filesFromApi, status: 'loaded' })
                   // setUploaded(true)
+
+                   const files = await fetchFiles(session!.address, `${backend_url}/explorer_files`, session!.nonce)
+                                                                        setFiles({ fileData: files, status: 'loaded' })
                   setUploading(false)
                   setSelectedFileName('')
                   toast.success( 'File uploaded successfully')
@@ -94,11 +101,11 @@ export const ImportAquaTree = ({ file, filesWrapper, removeFilesListForUpload}: 
                   return
             }
 
-            console.log(`genHash -- ${genHash}`)
+            //  console.log(`genHash -- ${genHash}`)
             const genRevision = aquaTree.revisions[genHash!]
             const actualUrlToFetch = ensureDomainUrlHasSSL(backend_url)
-            console.log(`revision  ${JSON.stringify(genRevision, null, 2)}`)
-            console.log(`file hash +++ ${genRevision.file_hash}`)
+            //  console.log(`revision  ${JSON.stringify(genRevision, null, 2)}`)
+            //  console.log(`file hash +++ ${genRevision.file_hash}`)
 
             const response = await fetch(`${actualUrlToFetch}/files/${genRevision.file_hash}`, {
                   method: 'GET',
@@ -152,7 +159,7 @@ export const ImportAquaTree = ({ file, filesWrapper, removeFilesListForUpload}: 
                   setUploading(true)
 
                   const [isValidAquaTree, failureReason] = validateAquaTree(aquaTree)
-                  console.log(`is aqua tree valid ${isValidAquaTree} failure reason ${failureReason}`)
+                  //  console.log(`is aqua tree valid ${isValidAquaTree} failure reason ${failureReason}`)
                   if (!isValidAquaTree) {
                         setUploading(false)
                         toast.error( `Aqua tree has an error: ${failureReason}`)
@@ -181,7 +188,7 @@ export const ImportAquaTree = ({ file, filesWrapper, removeFilesListForUpload}: 
                         }
                   }
 
-                  console.log(`Response ok, fetching file content for ${fileHash}`)
+                  //  console.log(`Response ok, fetching file content for ${fileHash}`)
                   const blob: Blob = await response.blob()
                   const fileName = getFileName(aquaTree)
                   const arrayBuffer = await blob.arrayBuffer()
@@ -194,9 +201,9 @@ export const ImportAquaTree = ({ file, filesWrapper, removeFilesListForUpload}: 
                         fileSize: blob.size,
                   }
 
-                  console.log(`here fileObject ${JSON.stringify(fileObject, null, 2)}`)
+                  //  console.log(`here fileObject ${JSON.stringify(fileObject, null, 2)}`)
                   if (hasLinkRevisions(aquaTree)) {
-                        console.log(`has link revisions`)
+                        //  console.log(`has link revisions`)
                         setUploading(false)
                         toast.error( `Aqua tree has a link revision please import the Aquatree using the zip format`)
                         return
@@ -204,9 +211,9 @@ export const ImportAquaTree = ({ file, filesWrapper, removeFilesListForUpload}: 
 
                   const dummyCreds: CredentialsData = dummyCredential()
                   dummyCreds.alchemy_key = user_profile.alchemy_key
-                  console.log(`dummyCreds ${JSON.stringify(dummyCreds, null, 2)}`)
+                  //  console.log(`dummyCreds ${JSON.stringify(dummyCreds, null, 2)}`)
                   const result = await aquafier.verifyAquaTree(aquaTree, [fileObject], dummyCreds)
-                  console.log(`result of verifyAquaTree ${JSON.stringify(result, null, 2)}`)
+                  //  console.log(`result of verifyAquaTree ${JSON.stringify(result, null, 2)}`)
                   if (result.isErr()) {
                         setUploading(false)
                         toast.error( `Aqua tree is not valid: ${JSON.stringify(result)}`)
@@ -220,7 +227,7 @@ export const ImportAquaTree = ({ file, filesWrapper, removeFilesListForUpload}: 
                         toast.error( `Aqua tree exists already in your files`)
                         return
                   }
-                  console.log(`importedAquaTreeGenesisHash ${importedAquaTreeGenesisHash}`)
+                  //  console.log(`importedAquaTreeGenesisHash ${importedAquaTreeGenesisHash}`)
 
                   await uploadFileData(file, null, false)
             } catch (e) {
@@ -314,12 +321,12 @@ export const ImportAquaTree = ({ file, filesWrapper, removeFilesListForUpload}: 
             }
 
             const fileDataContent = await readFileContent(filePar)
-            console.log(`expectedFile ${JSON.stringify(expectedFile, null, 2)}`)
+            //  console.log(`expectedFile ${JSON.stringify(expectedFile, null, 2)}`)
 
             if (!expectedFile.expectedFileName.endsWith(`.aqua.json`)) {
                   const fileHash = aquafier.getFileHash(fileDataContent)
 
-                  console.log(`calculated fileHash ${fileHash} and from chain ${expectedFile.exectedFileHash} file name ${filePar.name}`)
+                  //  console.log(`calculated fileHash ${fileHash} and from chain ${expectedFile.exectedFileHash} file name ${filePar.name}`)
                   if (fileHash.trim() != expectedFile.exectedFileHash.trim()) {
                         toast.error( "Dropped file hash doesn't match the required hash in the AquaTree..")
                         return
@@ -327,9 +334,9 @@ export const ImportAquaTree = ({ file, filesWrapper, removeFilesListForUpload}: 
             } else {
                   const aquaTreeItem: AquaTree = JSON.parse(fileDataContent as string)
                   const allHashes = Object.keys(aquaTreeItem.revisions)
-                  console.log(`All hashes ${allHashes} --`)
+                  //  console.log(`All hashes ${allHashes} --`)
                   if (allHashes.includes(expectedFile.itemRevisionHash)) {
-                        console.log(`Its okay continue ......`)
+                        //  console.log(`Its okay continue ......`)
                   } else {
                         toast.error( 'Aqua file does not contain ' + expectedFile.itemRevisionHash)
                         return
@@ -352,7 +359,7 @@ export const ImportAquaTree = ({ file, filesWrapper, removeFilesListForUpload}: 
                   path: '',
             }
 
-            console.log(`New file object ${JSON.stringify(fileObject, null, 4)}`)
+            //  console.log(`New file object ${JSON.stringify(fileObject, null, 4)}`)
 
             const newFileObjects = allFileObjectWrapper
             newFileObjects.push({
@@ -360,25 +367,25 @@ export const ImportAquaTree = ({ file, filesWrapper, removeFilesListForUpload}: 
                   fileObject: fileObject,
             })
 
-            console.log(`--- inspectMultiFileUpload continue ${JSON.stringify(newFileObjects, null, 4)} `)
+            //  console.log(`--- inspectMultiFileUpload continue ${JSON.stringify(newFileObjects, null, 4)} `)
             setAllFileObjectsWrapper(newFileObjects)
 
             const allAquaTrees = newFileObjects.filter(e => isAquaTree(e.fileObject.fileContent))
 
             const missingFile = checkAllFilesAvailable(allAquaTrees, newFileObjects)
             if (missingFile) {
-                  console.log(`missingFile ${JSON.stringify(missingFile, null, 2)}`)
+                  //  console.log(`missingFile ${JSON.stringify(missingFile, null, 2)}`)
                   setExpectedFile(missingFile)
                   setIsOpen(true)
                   toast.error( `Please upload ${missingFile.expectedFileName}`)
                   return
             }
-            console.log(`allAquaTrees contrinue to upload  ${JSON.stringify(allAquaTrees, null, 4)}`)
+            //  console.log(`allAquaTrees contrinue to upload  ${JSON.stringify(allAquaTrees, null, 4)}`)
 
             for (const item of allAquaTrees) {
-                  console.log(` looping aqua tree file ${item.file.name} `)
+                  //  console.log(` looping aqua tree file ${item.file.name} `)
                   if (file.name == item.file.name) {
-                        console.log(`skip main file .. ${file.name}`)
+                        //  console.log(`skip main file .. ${file.name}`)
                   } else {
                         const aquaTreeItem: AquaTree = item.fileObject.fileContent as AquaTree
                         const fileName = getAquaTreeFileName(aquaTreeItem)
@@ -409,7 +416,7 @@ export const ImportAquaTree = ({ file, filesWrapper, removeFilesListForUpload}: 
             const fileContent = await readFileAsText(file)
             const aquaTree: AquaTree = JSON.parse(fileContent)
             const hasLinkRevision = hasLinkRevisions(aquaTree)
-            console.log(`one here ${hasLinkRevision}`)
+            //  console.log(`one here ${hasLinkRevision}`)
             if (hasLinkRevision) {
                   await importLinkedFile(aquaTree)
             } else {
@@ -421,7 +428,7 @@ export const ImportAquaTree = ({ file, filesWrapper, removeFilesListForUpload}: 
             if (requiredFileHash) {
                   const fileDataContent = await readFileContent(selectedFile)
                   const fileHash = aquafier.getFileHash(fileDataContent)
-                  console.log(`calculated fileHash ${fileHash} and from chain ${requiredFileHash} file name ${selectedFile.name}`)
+                  //  console.log(`calculated fileHash ${fileHash} and from chain ${requiredFileHash} file name ${selectedFile.name}`)
                   if (fileHash !== requiredFileHash) {
                         toast.error( "Dropped file hash doesn't match the required hash in the AquaTree..")
                   } else {

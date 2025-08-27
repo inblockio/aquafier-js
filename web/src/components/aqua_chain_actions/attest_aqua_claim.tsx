@@ -1,4 +1,4 @@
-import { getFileName, getGenesisHash, isWorkFlowData, getAquaTreeFileName } from '../../utils/functions'
+import {  getGenesisHash, isWorkFlowData, getAquaTreeFileName } from '../../utils/functions'
 import { useStore } from 'zustand'
 import appStore from '../../store'
 import { ApiFileInfo } from '../../models/FileInfo'
@@ -29,7 +29,7 @@ export const AttestAquaClaim = ({ file, index, children }: { file: ApiFileInfo; 
                               try {
                                     return getAquaTreeFileName(e.aquaTree!)
                               } catch (e) {
-                                    console.log('Error')
+                                    //  console.log('Error')
                                     return ''
                               }
                         })
@@ -39,7 +39,7 @@ export const AttestAquaClaim = ({ file, index, children }: { file: ApiFileInfo; 
                         const genRevision: Revision = Object.values(anAquaTree.aquaTree?.revisions!)[0]
                         if (genRevision) {
                               const identityClaimId: string | undefined = genRevision[`forms_identity_claim_id`]
-                              console.log(`identityClaimId  ${identityClaimId} genHash ${genHash} fileName ${getFileName(file.aquaTree!)}`)
+                              //  console.log(`identityClaimId  ${identityClaimId} genHash ${genHash} fileName ${getFileName(file.aquaTree!)}`)
                               if (identityClaimId == genHash) {
                                     toast.error('This file is already attested')
                                     return
@@ -62,9 +62,9 @@ export const AttestAquaClaim = ({ file, index, children }: { file: ApiFileInfo; 
                   dialogType: 'identity_attestation',
                   isOpen: true,
                   onClose: () => setOpenDialog(null),
-                  onConfirm: (data) => {
+                  onConfirm: () => {
                         // Handle confirmation logic here
-                        console.log('Attestation confirmed with data:', data)
+                        //  console.log('Attestation confirmed with data:', data)
                   }
             })
       }

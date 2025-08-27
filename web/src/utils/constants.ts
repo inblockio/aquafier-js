@@ -60,25 +60,25 @@ export const initializeBackendUrl = async (): Promise<string> => {
             // Parse the JSON
             const configData = await response.json()
 
-            //  console.log("Data from config ", configData);
+            //  //  console.log("Data from config ", configData);
             // Update the BACKEND_URL
             BACKEND_URL = configData.BACKEND_URL || 'http://127.0.0.1:3000'
             if (BACKEND_URL == 'BACKEND_URL_PLACEHOLDER') {
                   BACKEND_URL = 'http://127.0.0.1:3000'
             }
 
-            console.log("Config Backend URL", BACKEND_URL);
+            //  console.log("Config Backend URL", BACKEND_URL);
 
             // Check if URL doesn't start with http:// or https:// and prepend http://
             if (!BACKEND_URL.startsWith('http://') && !BACKEND_URL.startsWith('https://')) {
                   BACKEND_URL = 'http://' + BACKEND_URL
-                  console.log("Prepended http:// to Backend URL", BACKEND_URL);
+                  //  console.log("Prepended http:// to Backend URL", BACKEND_URL);
             }
 
             if (BACKEND_URL.includes('inblock.io')) {
                   BACKEND_URL = BACKEND_URL.replace('http:', 'https:')
             }
-            console.log("Config Backend URL Replaced http with https", BACKEND_URL);
+            //  console.log("Config Backend URL Replaced http with https", BACKEND_URL);
 
             // Handle duplicated inblock.io domains (e.g., https://dev.inblock.io/dev-api.inblock.io/session)
             if (BACKEND_URL.includes('inblock.io') && BACKEND_URL.match(/inblock\.io.*inblock\.io/)) {
@@ -90,7 +90,7 @@ export const initializeBackendUrl = async (): Promise<string> => {
             console.error('Error reading config:', err)
       }
 
-      console.log(`backend url ${BACKEND_URL}`)
+      //  console.log(`backend url ${BACKEND_URL}`)
 
       return BACKEND_URL
 }

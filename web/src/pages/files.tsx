@@ -137,7 +137,7 @@ const FilesPage = () => {
       const filesForUpload = async (selectedFiles: File[]) => {
             const newUploads: UploadStatus[] = []
             for (const file of selectedFiles) {
-                  console.log(`Files for  upload ${file.name} .....`)
+                  //  console.log(`Files for  upload ${file.name} .....`)
                   const isJson = isJSONFile(file.name)
                   const isZip = isZipFile(file.name)
                   if (isJson || isZip) {
@@ -148,17 +148,17 @@ const FilesPage = () => {
                                     const content = await readFileContent(file)
                                     const contentStr = content as string
                                     const isForm = isJSONKeyValueStringContent(contentStr)
-                                    console.log(`isForm ${isForm}`)
+                                    //  console.log(`isForm ${isForm}`)
                                     if (isForm) {
                                           isJsonForm = true
                                     }
 
                                     const jsonData = JSON.parse(contentStr)
                                     const isAquaTreeData = isAquaTree(jsonData)
-                                    const r = typeof jsonData === 'object'
-                                    const r2 = 'revisions' in jsonData
-                                    const r3 = 'file_index' in jsonData
-                                    console.log(`isAquaTreeData  ${isAquaTreeData} contentStr ${contentStr} r ${r} r2 ${r2} r3 ${r3}`)
+                                    // const _r = typeof jsonData === 'object'
+                                    // const _r2 = 'revisions' in jsonData
+                                    // const _r3 = 'file_index' in jsonData
+                                    //  console.log(`isAquaTreeData  ${isAquaTreeData} contentStr ${contentStr} r ${r} r2 ${r2} r3 ${r3}`)
                                     if (isAquaTreeData) {
                                           isJsonAquaTreeData = isAquaTreeData
                                     }
@@ -185,11 +185,11 @@ const FilesPage = () => {
                                     isJsonAquaTreeData: isJsonAquaTreeData,
                               }
 
-                              console.log(`fileItemWrapper ${JSON.stringify(fileItemWrapper, null, 4)}`)
+                              //  console.log(`fileItemWrapper ${JSON.stringify(fileItemWrapper, null, 4)}`)
                               setFilesListForUpload(prev => [...prev, fileItemWrapper])
 
                         } else {
-                              console.log(`File ${file.name} already exists in upload list`)
+                              //  console.log(`File ${file.name} already exists in upload list`)
 
                               toast.error(`1. Error file exist in upload list`)
                         }
@@ -210,7 +210,7 @@ const FilesPage = () => {
                                     isZip: isZip,
                               })
                         } else {
-                              console.log(`=== File ${file.name} already exists in upload list`)
+                              //  console.log(`=== File ${file.name} already exists in upload list`)
                               toast.error(`1. Error file exist in upload list`)
                         }
                   }
@@ -230,7 +230,7 @@ const FilesPage = () => {
       const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
             const selectedFiles = Array.from(e.target.files ?? [])
             if (selectedFiles.length === 0) {
-                  console.log(`handleFileChange is zero `)
+                  //  console.log(`handleFileChange is zero `)
                   return
             }
             await filesForUpload(selectedFiles)
@@ -596,7 +596,7 @@ const FilesPage = () => {
                                     {files.fileData.length == 0 ? (
                                           <FileDropZone
                                                 setFiles={(files: File[]) => {
-                                                      console.log(`call back here `)
+                                                      //  console.log(`call back here `)
                                                       filesForUpload(files)
                                                 }}
                                           />

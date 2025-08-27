@@ -173,6 +173,7 @@ export const LinkButton = ({ item, nonce, index }: IShareButton) => {
             return <div />
       }
 
+     
       return (
             <>
                   {/* Link Button */}
@@ -246,7 +247,10 @@ export const LinkButton = ({ item, nonce, index }: IShareButton) => {
                                                       {/* File List */}
                                                       <div className="border border-gray-200 rounded-lg overflow-hidden flex-1">
                                                             <div className="max-h-96 min-h-80 overflow-y-auto">
+                                                                  
                                                                   {files?.fileData.map((itemLoop: ApiFileInfo, fileIndex: number) => {
+                                                                        //  console.log(`   ^^^^  file: ${JSON.stringify(files, null, 4)}`)
+                                                                        //  console.log(`  ^^^^^   itemLoop: ${JSON.stringify(itemLoop, null, 4)}`)
                                                                         const keys = Object.keys(itemLoop.aquaTree!.revisions!)
                                                                         const keysPar = Object.keys(item.aquaTree!.revisions!)
                                                                         const res = areArraysEqual(keys, keysPar)
@@ -314,7 +318,8 @@ export const LinkButton = ({ item, nonce, index }: IShareButton) => {
                                                                                                       <div className="flex items-center space-x-2 mb-2">
                                                                                                             <FileText className="w-4 h-4 text-blue-500 flex-shrink-0" />
                                                                                                             <span className="font-medium text-sm text-gray-900 truncate">
-                                                                                                                  {(primaryFileObject && primaryFileObject !== "loading" ? primaryFileObject.fileName : "")}
+                                                                                                                  {/* {(primaryFileObject && primaryFileObject !== "loading" ? primaryFileObject.fileName : "")} */}
+                                                                                                                  {fileObject.fileName}
                                                                                                             </span>
                                                                                                       </div>
 

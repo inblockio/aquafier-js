@@ -34,7 +34,7 @@ export const ContractDocumentView: React.FC<ContractDocumentViewProps> = ({ setA
 
             for (let i = 0; i < hashesToLoopPar.length; i += 3) {
                   const batch = hashesToLoopPar.slice(i, i + 3)
-                  //  // console.log(`Processing batch ${i / 3 + 1}:`, batch);
+                  //  // //  console.log(`Processing batch ${i / 3 + 1}:`, batch);
 
                   let signaturePositionCount = 0
                   const hashSigPosition = batch[0] ?? ''
@@ -95,7 +95,7 @@ export const ContractDocumentView: React.FC<ContractDocumentViewProps> = ({ setA
 
                   // Get content type from headers
                   let contentType = response.headers.get('Content-Type') || ''
-                  // console.log("fetched: ", response, "content type:", contentType);
+                  // //  console.log("fetched: ", response, "content type:", contentType);
 
                   // If content type is missing or generic, try to detect from URL
                   if (contentType === 'application/octet-stream' || contentType === '') {
@@ -141,37 +141,37 @@ export const ContractDocumentView: React.FC<ContractDocumentViewProps> = ({ setA
                   // remove the first 4 elements from the revision list
                   fourthItmeHashOnwards = revisionHashes.slice(4)
 
-                  console.log(`fourthItmeHashOnwards data 00 ${JSON.stringify(fourthItmeHashOnwards, null, 4)}`)
+                  //  console.log(`fourthItmeHashOnwards data 00 ${JSON.stringify(fourthItmeHashOnwards, null, 4)}`)
                   signatureRevionHashes = getSignatureRevionHashes(fourthItmeHashOnwards)
             }
 
-            console.log(`signatureRevionHashes data 00 ${JSON.stringify(signatureRevionHashes, null, 4)}`)
+            //  console.log(`signatureRevionHashes data 00 ${JSON.stringify(signatureRevionHashes, null, 4)}`)
 
             for (const sigHash of signatureRevionHashes) {
-                  console.log(`looping  ${JSON.stringify(sigHash, null, 2)}`)
+                  //  console.log(`looping  ${JSON.stringify(sigHash, null, 2)}`)
 
                   const revisionSigImage = selectedFileInfo!.aquaTree!.revisions[sigHash.revisionHashWithSinatureRevision]
                   const linkRevisionWithSignaturePositions: Revision = selectedFileInfo!.aquaTree!.revisions[sigHash.revisionHashWithSignaturePosition]
                   const revisionMetMask: Revision = selectedFileInfo!.aquaTree!.revisions[sigHash.revisionHashMetamask]
 
                   // const fileHash = revisionSigImage.link_file_hashes![0]!;
-                  // console.log(`fileHash ${fileHash}`)
+                  // //  console.log(`fileHash ${fileHash}`)
                   // get the name
                   const referenceRevisin: string = revisionSigImage.link_verification_hashes![0]
                   let name = 'name-err'
                   let imageDataUrl = ''
                   for (const item of selectedFileInfo?.fileObject ?? []) {
                         const isAquaTreeItem = isAquaTree(item.fileContent)
-                        // console.log(`isAquaTreeItem ${isAquaTreeItem} loopin gfile objects ${JSON.stringify(item, null, 4)}`)
+                        // //  console.log(`isAquaTreeItem ${isAquaTreeItem} loopin gfile objects ${JSON.stringify(item, null, 4)}`)
                         if (isAquaTreeItem) {
-                              //  // console.log(`looping aqua tree`)
+                              //  // //  console.log(`looping aqua tree`)
                               const aquaTreeGeneral = item.fileContent as AquaTree
                               const aquaTree = reorderAquaTreeRevisionsProperties(aquaTreeGeneral)
                               const allHashes = Object.keys(aquaTree.revisions)
-                              //  // console.log(`looping aqua tree allHashes ${allHashes}`)
+                              //  // //  console.log(`looping aqua tree allHashes ${allHashes}`)
                               if (allHashes.includes(referenceRevisin)) {
                                     const genesisHash = getGenesisHash(aquaTree)!
-                                    // console.log(`include genesisHash ${genesisHash}`)
+                                    // //  console.log(`include genesisHash ${genesisHash}`)
                                     const genRevision = aquaTree.revisions[genesisHash]
                                     name = genRevision['forms_name']
 
@@ -184,9 +184,9 @@ export const ContractDocumentView: React.FC<ContractDocumentViewProps> = ({ setA
                                     }
                                     const imgFileHash = signatureRevision.link_file_hashes![0]
                                     const imageUrl = findImageUrl(imgFileHash)
-                                    console.log(`findImageUrl ${imgFileHash} ==  ${imageUrl}`)
+                                    //  console.log(`findImageUrl ${imgFileHash} ==  ${imageUrl}`)
                                     if (imageUrl) {
-                                          console.log(` imageUrl ==  ${imageUrl}`)
+                                          //  console.log(` imageUrl ==  ${imageUrl}`)
                                           const image = await fetchImage(imageUrl)
                                           if (image) {
                                                 imageDataUrl = image
@@ -216,7 +216,7 @@ export const ContractDocumentView: React.FC<ContractDocumentViewProps> = ({ setA
                   let revisionSigPosition: Revision | null = null
 
                   const revisionHashWithPositions = linkRevisionWithSignaturePositions.link_verification_hashes![0]
-                  console.log(`revisionSigPosition === ${revisionHashWithPositions}`)
+                  //  console.log(`revisionSigPosition === ${revisionHashWithPositions}`)
 
                   for (const item of selectedFileInfo?.fileObject ?? []) {
                         const isAquaTreeItem = isAquaTree(item.fileContent)
@@ -224,7 +224,7 @@ export const ContractDocumentView: React.FC<ContractDocumentViewProps> = ({ setA
                               const aquaTreeGeneral = item.fileContent as AquaTree
                               const aquaTree = reorderAquaTreeRevisionsProperties(aquaTreeGeneral)
                               const allHashes = Object.keys(aquaTree.revisions)
-                              //  // console.log(`looping aqua tree allHashes ${allHashes}`)
+                              //  // //  console.log(`looping aqua tree allHashes ${allHashes}`)
                               if (allHashes.includes(revisionHashWithPositions)) {
                                     revisionSigPosition = aquaTree.revisions[revisionHashWithPositions]
                               }
@@ -232,9 +232,9 @@ export const ContractDocumentView: React.FC<ContractDocumentViewProps> = ({ setA
                   }
 
                   if (revisionSigPosition != null) {
-                        console.log(
-                              `revisionSigPosition ==  sigHash.revisionHashWithSignaturePositionCount == > ${sigHash.revisionHashWithSignaturePositionCount}=== ${JSON.stringify(revisionSigPosition, null, 4)}`
-                        )
+                        //  console.log(
+                        //       `revisionSigPosition ==  sigHash.revisionHashWithSignaturePositionCount == > ${sigHash.revisionHashWithSignaturePositionCount}=== ${JSON.stringify(revisionSigPosition, null, 4)}`
+                        // )
                         if (sigHash.revisionHashWithSignaturePositionCount == 0) {
                               const signatureDetails: SignatureData = {
                                     id: sigHash.revisionHashWithSignaturePosition, // Use the hash key instead of revision.revision_hash
@@ -270,7 +270,7 @@ export const ContractDocumentView: React.FC<ContractDocumentViewProps> = ({ setA
                                     () => Math.random()
                               )
                               for (let index = 0; index < randomArray.length; index++) {
-                                    // console.log(`Looping  ${index}`)
+                                    // //  console.log(`Looping  ${index}`)
                                     const signatureDetails: SignatureData = {
                                           id: `${sigHash.revisionHashWithSignaturePosition}_${index}`, // Make unique IDs for multiple signatures
                                           height: revisionSigPosition[`forms_height_${index}`],
@@ -299,35 +299,35 @@ export const ContractDocumentView: React.FC<ContractDocumentViewProps> = ({ setA
                               }
                         }
                   } else {
-                        console.log(`signature positions not found   searchiong for gensis ${revisionHashWithPositions} `)
+                        //  console.log(`signature positions not found   searchiong for gensis ${revisionHashWithPositions} `)
                         // we try with fetching the image
                         //  ......
                   }
             }
 
-            // console.log(`sigData length  ${JSON.stringify(sigData, null, 4)}`)
+            // //  console.log(`sigData length  ${JSON.stringify(sigData, null, 4)}`)
             return sigData
       }
 
       const initializeComponent = async () => {
             try {
-                  console.log(`initializeComponent ...`)
+                  //  console.log(`initializeComponent ...`)
                   if (pdfFile == null) {
-                        console.log(`null......`)
+                        //  console.log(`null......`)
                         // Load PDF first
                         const pdfFile = await fetchPDFfile()
 
-                        console.log(`pdfFile ......${pdfFile}`)
+                        //  console.log(`pdfFile ......${pdfFile}`)
                         setPdfFile(pdfFile)
                         setLoadingPdfFile(false)
 
                         const shouldLoad = shouldLoadSignatures()
-                        console.log(`Should load ${shouldLoad + '='} ....`)
+                        //  console.log(`Should load ${shouldLoad + '='} ....`)
 
                         if (shouldLoad) {
                               setSignaturesLoading(true)
                               const allSignatures: SignatureData[] = await loadSignatures()
-                              console.log(`allSignatures in pdf  ${JSON.stringify(allSignatures, null, 2)}`)
+                              //  console.log(`allSignatures in pdf  ${JSON.stringify(allSignatures, null, 2)}`)
                               setSignatures(allSignatures)
                               setSignaturesLoading(false)
                         }
@@ -341,12 +341,12 @@ export const ContractDocumentView: React.FC<ContractDocumentViewProps> = ({ setA
 
       const fetchPDFfile = async (): Promise<File | null> => {
             try {
-                  console.log(`fetchPDFfile......1`)
+                  //  console.log(`fetchPDFfile......1`)
                   if (!selectedFileInfo?.aquaTree?.revisions) {
                         throw new Error('Selected file info or revisions not found')
                   }
 
-                  console.log(`fetchPDFfile......2`)
+                  //  console.log(`fetchPDFfile......2`)
                   const allHashes = Object.keys(selectedFileInfo.aquaTree.revisions)
                   const pdfLinkRevision = selectedFileInfo.aquaTree.revisions[allHashes[2]]
 
@@ -354,7 +354,7 @@ export const ContractDocumentView: React.FC<ContractDocumentViewProps> = ({ setA
                         throw new Error('PDF link revision not found')
                   }
 
-                  console.log(`fetchPDFfile......3`)
+                  //  console.log(`fetchPDFfile......3`)
                   const pdfHash = pdfLinkRevision.link_verification_hashes[0]
                   const pdfName = selectedFileInfo.aquaTree.file_index?.[pdfHash]
 
@@ -364,21 +364,21 @@ export const ContractDocumentView: React.FC<ContractDocumentViewProps> = ({ setA
 
                   const pdfFileObject = selectedFileInfo.fileObject.find(e => e.fileName === pdfName)
 
-                  console.log(`fetchPDFfile......4`)
+                  //  console.log(`fetchPDFfile......4`)
                   if (!pdfFileObject) {
                         throw new Error('PDF file object not found')
                   }
 
                   const fileContentUrl = pdfFileObject.fileContent
-                  // console.log(`fetchPDFfile......4.5 ${typeof fileContentUrl} --  ${JSON.stringify(fileContentUrl, null, 4)}`)
-                  console.log(`fetchPDFfile......4.5  ${typeof fileContentUrl}`)
+                  // //  console.log(`fetchPDFfile......4.5 ${typeof fileContentUrl} --  ${JSON.stringify(fileContentUrl, null, 4)}`)
+                  //  console.log(`fetchPDFfile......4.5  ${typeof fileContentUrl}`)
                   if (typeof fileContentUrl === 'string' && fileContentUrl.startsWith('http')) {
                         return await fetchFileFromUrl(fileContentUrl, pdfName)
                   }
 
                   // Handle object that might be binary data (like PDF bytes)
                   if (typeof fileContentUrl === 'object' && fileContentUrl !== null) {
-                        console.log(`fetchPDFfile......4.6 handling object data`)
+                        //  console.log(`fetchPDFfile......4.6 handling object data`)
 
                         // Check if it's an array-like object with numeric indices (like your example)
                         if (Object.keys(fileContentUrl).every(key => !isNaN(Number(key)))) {
@@ -406,7 +406,7 @@ export const ContractDocumentView: React.FC<ContractDocumentViewProps> = ({ setA
                         // }
                   }
 
-                  console.log(`fetchPDFfile......5`)
+                  //  console.log(`fetchPDFfile......5`)
 
                   return null
             } catch (error) {

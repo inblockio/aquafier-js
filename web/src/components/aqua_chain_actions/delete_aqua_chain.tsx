@@ -48,7 +48,7 @@ export const DeleteAquaChain = ({ apiFileInfo, backendUrl, nonce, children, inde
                         await refetchAllUserFiles()
                   }
             } catch (e) {
-                  //  console.log(`Error ${e}`)
+                  //  //  console.log(`Error ${e}`)
                   toast.error('File deletion error')
                   setIsloading(false) // Add this to ensure loading state is cleared on error
             }
@@ -64,7 +64,7 @@ export const DeleteAquaChain = ({ apiFileInfo, backendUrl, nonce, children, inde
                         fileData: files, status: 'loaded'
                   })
             } catch (e) {
-                  //  console.log(`Error ${e}`)
+                  //  //  console.log(`Error ${e}`)
                   toast.error('Error updating files')
                   document.location.reload()
             }
@@ -80,7 +80,7 @@ export const DeleteAquaChain = ({ apiFileInfo, backendUrl, nonce, children, inde
                   // skip the current file being deleted
                   const genesisHash = getGenesisHash(anAquaTree.aquaTree!)
                   if (genesisHash == genesisOfFileBeingDeleted) {
-                        console.log(`skipping ${fileNameBeingDeleted} the file is being deleted`)
+                        //  console.log(`skipping ${fileNameBeingDeleted} the file is being deleted`)
                   } else {
                         const { isWorkFlow } = isWorkFlowData(
                               anAquaTree.aquaTree!,
@@ -88,7 +88,7 @@ export const DeleteAquaChain = ({ apiFileInfo, backendUrl, nonce, children, inde
                                     try {
                                           return getAquaTreeFileName(e.aquaTree!)
                                     } catch (e) {
-                                          console.log('Error')
+                                          //  console.log('Error')
                                           return ''
                                     }
                               })

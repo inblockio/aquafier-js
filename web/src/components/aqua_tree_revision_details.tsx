@@ -159,7 +159,7 @@ const viewLinkedFile = (
                                                       }
 
                                                       if (aquaTree == undefined) {
-                                                            console.log(`show  ${linkedFileName}  filw object ${JSON.stringify(fileObject, null, 4)}`)
+                                                            //  console.log(`show  ${linkedFileName}  filw object ${JSON.stringify(fileObject, null, 4)}`)
                                                             toast.info('View not available')
                                                       } else {
                                                             updateSelectedFile({
@@ -203,25 +203,25 @@ const revisionDataHeader = (aquaTree: AquaTree, revisionHash: string, fileObject
             if (isDeepLink) {
                   // before returning deep link we traverse the current aqua tree
                   const aquaTreeFiles = fileObject.filter(file => isAquaTree(file.fileContent))
-                  console.log(`👁️‍🗨️ aquaTreeFiles ${aquaTreeFiles.length} --  `)
+                  //  console.log(`👁️‍🗨️ aquaTreeFiles ${aquaTreeFiles.length} --  `)
                   if (aquaTreeFiles.length > 0) {
                         const aquaTreePick = aquaTreeFiles.find(e => {
                               const tree: AquaTree = e.fileContent as AquaTree
                               const allHashes = Object.keys(tree.revisions)
 
-                              console.log(`👁️‍🗨️ aquaTreeFiles ${allHashes.toString()} == ${revisionHash} `)
+                              //  console.log(`👁️‍🗨️ aquaTreeFiles ${allHashes.toString()} == ${revisionHash} `)
                               return allHashes.includes(revision.link_verification_hashes![0]!)
                         })
 
-                        console.log(`👁️‍🗨️ aquaTreePick ${JSON.stringify(aquaTreePick, null, 4)} `)
+                        //  console.log(`👁️‍🗨️ aquaTreePick ${JSON.stringify(aquaTreePick, null, 4)} `)
                         if (aquaTreePick) {
                               const tree: AquaTree = aquaTreePick.fileContent as AquaTree
                               const genesisHash = getGenesisHash(tree)
 
-                              console.log(`👁️‍🗨️  genesisHash ${genesisHash}`)
+                              //  console.log(`👁️‍🗨️  genesisHash ${genesisHash}`)
                               if (genesisHash) {
                                     const fileName = tree.file_index[genesisHash]
-                                    console.log(`👁️‍🗨️ fileName ${fileName}`)
+                                    //  console.log(`👁️‍🗨️ fileName ${fileName}`)
 
                                     if (fileName) {
                                           return <span className="text-md">Linked to {fileName}</span>
@@ -346,7 +346,7 @@ export const RevisionDisplay = ({ fileInfo, revision, revisionHash, isVerificati
       const handleDelete = useCallback(async () => {
             if (isDeleting) return // Prevent multiple clicks
 
-            console.log('Deleting revision: ', revisionHash, index)
+            //  console.log('Deleting revision: ', revisionHash, index)
             setIsDeleting(true)
 
             try {

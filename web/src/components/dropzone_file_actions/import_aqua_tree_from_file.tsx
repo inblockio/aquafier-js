@@ -3,17 +3,17 @@ import axios from 'axios'
 import { useStore } from 'zustand'
 import appStore from '../../store'
 import { useState } from 'react'
-import { ApiFileInfo } from '../../models/FileInfo'
 import { IDropzoneAction } from '../../types/types'
 import { Button } from '@/components/ui/button'
 import { toast } from 'sonner'
+import { fetchFiles } from '@/utils/functions'
 
 // export const ImportAquaChainFromFile = ({ file, uploadedIndexes, fileIndex, updateUploadedIndex }: IDropzoneAction) => {
 export const ImportAquaChainFromFile = ({ file, filesWrapper, removeFilesListForUpload}: IDropzoneAction) => {
       const [uploading, setUploading] = useState(false)
       // const [uploaded, setUploaded] = useState(false)
 
-      const { metamaskAddress, setFiles, files, backend_url } = useStore(appStore)
+      const { metamaskAddress, setFiles, session, backend_url } = useStore(appStore)
 
       const importAquaChain = async () => {
 
@@ -33,21 +33,21 @@ export const ImportAquaChainFromFile = ({ file, filesWrapper, removeFilesListFor
             setUploading(true)
             try {
                   const url = `${backend_url}/explorer_aqua_file_upload`
-                  //  console.log("importAquaChain url ", url)
-                  const response = await axios.post(url, formData, {
+                  //  //  console.log("importAquaChain url ", url)
+                   await axios.post(url, formData, {
                         headers: {
                               'Content-Type': 'multipart/form-data',
                               metamask_address: metamaskAddress,
                         },
                   })
 
-                  const res = response.data
+                  // const res = response.data
 
                   // let logs: Array<string> = res.logs
                   // logs.forEach((item) => {
-                  //    //  console.log("**>" + item + "\n.")
+                  //    //  //  console.log("**>" + item + "\n.")
                   // })
-                  ////  console.log("Upload res: ", res)
+                  ////  //  console.log("Upload res: ", res)
                   // Assuming the API returns an array of FileInfo objects
                   // const file: ApiFileInfo = {
                   // id: res.file.id,
@@ -58,9 +58,13 @@ export const ImportAquaChainFromFile = ({ file, filesWrapper, removeFilesListFor
                   // owner: metamaskAddress ?? "",
                   // };
 
-                  const file: ApiFileInfo = res
-                    setFiles({ fileData: [...files.fileData, file], status: 'loaded' })
+                  // const filesFromApi: Array<ApiFileInfo> = response.data.files
+                  //   setFiles({ fileData: filesFromApi, status: 'loaded' })
                   // setUploadedFilesIndexes(value => [...value, fileIndex])
+
+                   const files = await fetchFiles(session!.address, `${backend_url}/explorer_files`, session!.nonce)
+                                                      setFiles({ fileData: files, status: 'loaded' })
+
                   toast.success( 'Aqua Chain imported successfully')
                   setUploading(false)
                   // setUploaded(true)

@@ -8,6 +8,7 @@ import JSZip from 'jszip'
 import { IDropzoneAction } from '../../types/types'
 import { Button } from '@/components/ui/button'
 import { toast } from 'sonner'
+import { fetchFiles } from '@/utils/functions'
  
 export const ImportAquaTreeZip = ({ file, filesWrapper, removeFilesListForUpload }: IDropzoneAction) => {
       const [uploading, setUploading] = useState(false)
@@ -16,7 +17,7 @@ export const ImportAquaTreeZip = ({ file, filesWrapper, removeFilesListForUpload
       const { metamaskAddress, setFiles, backend_url, session } = useStore(appStore)
 
       const uploadFileData = async () => {
-            console.log('uploadFileData called...')
+            //  console.log('uploadFileData called...')
 
             if (!file) {
                   toast.info( 'No file selected!')
@@ -30,8 +31,8 @@ export const ImportAquaTreeZip = ({ file, filesWrapper, removeFilesListForUpload
             setUploading(true)
             try {
                   const url = `${backend_url}/explorer_aqua_zip`
-                  //  console.log("url ", url)
-                  const response = await axios.post(url, formData, {
+                  //  //  console.log("url ", url)
+                   await axios.post(url, formData, {
                         headers: {
                               'Content-Type': 'multipart/form-data',
                               nonce: session?.nonce,
@@ -39,11 +40,13 @@ export const ImportAquaTreeZip = ({ file, filesWrapper, removeFilesListForUpload
                   })
   
                   // return all user files
-                  const res = response.data
+                  // const res = response.data
 
                   // setFiles([...res.data])
-
-                   setFiles({ fileData: [...res.data, file], status: 'loaded' })
+   const files = await fetchFiles(session!.address!, `${backend_url}/explorer_files`, session!.nonce)
+                  setFiles({
+                        fileData: files, status: 'loaded'
+                  })
                   // setUploaded(true)
                   setUploading(false) 
                   toast.success('File uploaded successfuly')
@@ -63,18 +66,18 @@ export const ImportAquaTreeZip = ({ file, filesWrapper, removeFilesListForUpload
                   toast.info(`Wait for upload to complete`)
                   return
             }
-            console.log('importFile called')
+            //  console.log('importFile called')
             const reader = new FileReader()
 
             reader.onload = async function (_e) {
                   try {
-                        console.log('int try catch')
+                        //  console.log('int try catch')
                         let hasAquaJson = false
                         const zip = new JSZip()
                         const zipData = await zip.loadAsync(file)
 
-                        const fileNames = Object.keys(zipData.files)
-                        console.log('fileNames ', fileNames)
+                        // const fileNames = Object.keys(zipData.files)
+                        //  console.log('fileNames ', fileNames)
 
                         for (const fileName in zipData.files) {
                               // Convert ASCII codes to string
@@ -82,7 +85,7 @@ export const ImportAquaTreeZip = ({ file, filesWrapper, removeFilesListForUpload
                                     .split(',')
                                     .map(code => String.fromCharCode(parseInt(code)))
                                     .join('')
-                              console.log('fileName', actualFileName)
+                              //  console.log('fileName', actualFileName)
 
                               if (actualFileName === 'aqua.json') {
                                     hasAquaJson = true

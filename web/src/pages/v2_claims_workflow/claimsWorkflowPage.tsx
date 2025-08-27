@@ -90,7 +90,7 @@ export default function ClaimsWorkflowPage() {
                   try {
                         return getAquaTreeFileName(e.aquaTree!)
                   } catch (e) {
-                        // console.log('Error processing system file')
+                        // //  console.log('Error processing system file')
                         return ''
                   }
             })
@@ -112,7 +112,7 @@ export default function ClaimsWorkflowPage() {
             setIsLoading(true)
             if (!walletAddress) {
                   toast.info('Please select a wallet address')
-                  console.log('Please select a wallet address')
+                  //  console.log('Please select a wallet address')
                   setIsLoading(false)
                   return
             }
@@ -123,7 +123,7 @@ export default function ClaimsWorkflowPage() {
                   try {
                         return getAquaTreeFileName(e.aquaTree!)
                   } catch (e) {
-                        // console.log('Error processing system file')
+                        // //  console.log('Error processing system file')
                         return ''
                   }
             })
@@ -235,7 +235,7 @@ export default function ClaimsWorkflowPage() {
       useEffect(() => {
             processAllAddressClaims()
       // }, [walletAddress, JSON.stringify(files)])
-   }, [files.fileData.map(e => Object.keys(e.aquaTree?.file_index ?? {})).join(','), systemFileInfo.map(e => Object.keys(e.aquaTree?.file_index??{})).join(','), walletAddress])
+   }, [files.fileData.map(e => Object.keys(e?.aquaTree?.file_index ?? {})).join(','), systemFileInfo.map(e => Object.keys(e?.aquaTree?.file_index??{})).join(','), walletAddress])
 
       return (
             <div className='py-6 flex flex-col gap-4'>

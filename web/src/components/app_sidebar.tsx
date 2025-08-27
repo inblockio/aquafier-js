@@ -157,9 +157,9 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                                     dialogType: 'early_bird_offer',
                                     isOpen: true,
                                     onClose: () => setOpenDialog(null),
-                                    onConfirm: (data) => {
+                                    onConfirm: () => {
                                           // Handle confirmation logic here
-                                          console.log('Early bird offer confirmed with data:', data)
+                                          //  console.log('Early bird offer confirmed with data:', data)
                                     }
                               })
                         }}>

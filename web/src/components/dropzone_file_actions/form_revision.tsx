@@ -48,7 +48,7 @@ export const FormRevisionFile = ({ file, filesWrapper, removeFilesListForUpload 
             setUploading(true)
             try {
                   const url = `${backend_url}/explorer_files`
-                  //  console.log("url ", url)
+                  //  //  console.log("url ", url)
                   const response = await axios.post(url, formData, {
                         headers: {
                               'Content-Type': 'multipart/form-data',

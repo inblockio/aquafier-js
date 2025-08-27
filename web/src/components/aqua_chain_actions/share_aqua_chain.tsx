@@ -30,7 +30,7 @@ export const ShareButton = ({ item, index, autoOpenShareDialog }: IShareButton) 
 
       // // Effect for setting filename when item changes
       // useEffect(() => {
-      //        console.log(`item dep array`)
+      //        //  console.log(`item dep array`)
       //       if (item) {
       //             const name = item.fileObject[0].fileName
       //             setFileName(name)
@@ -39,7 +39,7 @@ export const ShareButton = ({ item, index, autoOpenShareDialog }: IShareButton) 
 
       // // Effect for auto-opening dialog
       // useEffect(() => {
-      //        console.log(`autoOpenShareDialog dep array`)
+      //        //  console.log(`autoOpenShareDialog dep array`)
       //       if (autoOpenShareDialog) {
       //             setIsOpenChange(true)
       //       }
@@ -47,7 +47,7 @@ export const ShareButton = ({ item, index, autoOpenShareDialog }: IShareButton) 
 
 
       //  useEffect(() => {
-      //       console.log(`no dep array`)
+      //       //  console.log(`no dep array`)
       //       if (autoOpenShareDialog) {
       //             setIsOpenChange(true)
       //       }
@@ -55,12 +55,12 @@ export const ShareButton = ({ item, index, autoOpenShareDialog }: IShareButton) 
 
       // Effect for setting filename when item changes
       // useEffect(() => {
-      //       console.log(`item dep array`)
+      //       //  console.log(`item dep array`)
       //       if (item) {
       //             const name = item.fileObject[0].fileName
       //             setFileName(name)
 
-      //             console.log(`isOpenState  ${isOpenState}  -- autoOpenShareDialog ${autoOpenShareDialog} `)
+      //             //  console.log(`isOpenState  ${isOpenState}  -- autoOpenShareDialog ${autoOpenShareDialog} `)
       //           if(autoOpenShareDialog != undefined){
       //               if (isOpenState != autoOpenShareDialog) {
       //                   setIsOpenChange(autoOpenShareDialog)
@@ -71,7 +71,7 @@ export const ShareButton = ({ item, index, autoOpenShareDialog }: IShareButton) 
       // }, [item, autoOpenShareDialog])
 
       // const setIsOpenChange = (isOpen: boolean) => {
-      //       console.log('setIsOpenChange called with:', isOpen)
+      //       //  console.log('setIsOpenChange called with:', isOpen)
       //       setIsOpenState(isOpen)
       //       // Reset state to default when closing the dialog
       //       if (!isOpen) {
@@ -85,7 +85,7 @@ export const ShareButton = ({ item, index, autoOpenShareDialog }: IShareButton) 
 
       // REMOVE THIS COMPLETELY - it's not needed and might be causing conflicts
       // useEffect(() => {
-      //     console.log(`no dep array`)
+      //     //  console.log(`no dep array`)
       //     if (autoOpenShareDialog) {
       //         setIsOpenChange(true)
       //     }
@@ -119,9 +119,9 @@ export const ShareButton = ({ item, index, autoOpenShareDialog }: IShareButton) 
                                                 dialogType: 'share_dialog',
                                                 isOpen: true,
                                                 onClose: () => setOpenDialog(null),
-                                                onConfirm: (data) => {
+                                                onConfirm: () => {
                                                       // Handle confirmation logic here
-                                                      console.log('Attestation confirmed with data:', data)
+                                                      //  console.log('Attestation confirmed with data:', data)
                                                 }
                                           })
                                     }}

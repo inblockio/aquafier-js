@@ -33,7 +33,7 @@ const InfoPage = () => {
                         setVersionDetails(res)
                   }
             } catch (e: unknown) {
-                  //  console.log("Error fetching version ", e)
+                  //  //  console.log("Error fetching version ", e)
                   toast('Error fetching version details')
             }
       }

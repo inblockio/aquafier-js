@@ -49,7 +49,7 @@ const getStatusColor = (status: string) => {
 }
 
 const getProgressPercentage = (total: number, remaining: number) => {
-      console.log('Calculating progress percentage:', { total, remaining })
+      //  console.log('Calculating progress percentage:', { total, remaining })
       if (total === 0) return 0 // Avoid division by zero
       return ((total - remaining) / total) * 100
 }
@@ -240,7 +240,7 @@ export default function WorkflowsTablePage() {
                   try {
                         return getAquaTreeFileName(e.aquaTree!)
                   } catch (e) {
-                        console.log('Error processing system file') // More descriptive
+                        //  console.log('Error processing system file') // More descriptive
                         return ''
                   }
             })
@@ -249,7 +249,7 @@ export default function WorkflowsTablePage() {
             files.fileData.forEach(file => {
                   // const fileObject = getAquaTreeFileObject(file);
                   const { workFlow, isWorkFlow } = isWorkFlowData(file.aquaTree!, someData)
-                  // console.log('Processing file:', JSON.stringify(file.aquaTree?, null,), 'WorkFlow:', workFlow, 'isWorkFlow:', isWorkFlow)
+                  // //  console.log('Processing file:', JSON.stringify(file.aquaTree?, null,), 'WorkFlow:', workFlow, 'isWorkFlow:', isWorkFlow)
                   if (isWorkFlow && workFlow === 'aqua_sign') {
                         // setWorkflows((prev : IWorkflowItem[]) => {
 
@@ -273,9 +273,9 @@ export default function WorkflowsTablePage() {
       }
 
       useEffect(() => {
-             console.log('____Rendering WorkflowsTablePage, files length:', files.fileData.length, 'systemFileInfo length:', systemFileInfo.length)
+             //  console.log('____Rendering WorkflowsTablePage, files length:', files.fileData.length, 'systemFileInfo length:', systemFileInfo.length)
             processFilesToGetWorkflows()
-      }, [files.fileData.map(e => Object.keys(e.aquaTree?.file_index ?? {})).join(','), systemFileInfo.map(e => Object.keys(e.aquaTree?.file_index??{})).join(',')])
+      }, [files.fileData.map(e => Object.keys(e?.aquaTree?.file_index ?? {})).join(','), systemFileInfo.map(e => Object.keys(e?.aquaTree?.file_index??{})).join(',')])
 
        
       return (
@@ -294,9 +294,9 @@ export default function WorkflowsTablePage() {
                                                       dialogType: 'aqua_sign',
                                                       isOpen: true,
                                                       onClose: () => setOpenDialog(null),
-                                                      onConfirm: (data) => {
+                                                      onConfirm: () => {
                                                             // Handle confirmation logic here
-                                                            console.log('Workflow created with data:', data)
+                                                            //  console.log('Workflow created with data:', data)
                                                       }
                                                 })
                                           }}
@@ -325,9 +325,9 @@ export default function WorkflowsTablePage() {
                                                             dialogType: 'aqua_sign',
                                                             isOpen: true,
                                                             onClose: () => setOpenDialog(null),
-                                                            onConfirm: (data) => {
+                                                            onConfirm: () => {
                                                                   // Handle confirmation logic here
-                                                                  console.log('Workflow created with data:', data)
+                                                                  //  console.log('Workflow created with data:', data)
                                                             }
                                                       })
                                                 }}
