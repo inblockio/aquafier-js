@@ -1,11 +1,11 @@
 import { LuLink2 } from 'react-icons/lu'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { areArraysEqual, capitalizeWords, fetchFiles, formatCryptoAddress, getAquaTreeFileObject, getFileName, getGenesisHash, isWorkFlowData } from '../../utils/functions'
 import { useStore } from 'zustand'
 import appStore from '../../store'
 import axios from 'axios'
 import { ApiFileInfo } from '../../models/FileInfo'
-import Aquafier, { AquaTreeWrapper } from 'aqua-js-sdk'
+import Aquafier, { AquaTreeWrapper, FileObject } from 'aqua-js-sdk'
 import { IShareButton } from '../../types/types'
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 
@@ -19,7 +19,24 @@ export const LinkButton = ({ item, nonce, index }: IShareButton) => {
       const { backend_url, setFiles, files, session, systemFileInfo } = useStore(appStore)
       const [isOpen, setIsOpen] = useState(false)
       const [linking, setLinking] = useState(false)
+      const [primaryFileObject, setPrimaryFileObject] = useState<FileObject | null | "loading">("loading")
       const [linkItem, setLinkItem] = useState<ApiFileInfo | null>(null)
+
+
+      useEffect(() => {
+
+
+            const fetchPrimaryFileObject = async () => {
+                  const fileObject = getAquaTreeFileObject(item)
+                  if (fileObject) {
+                        setPrimaryFileObject(fileObject)
+                  } else {
+                        setPrimaryFileObject(null)
+                  }
+            }
+
+            fetchPrimaryFileObject()
+      }, [item])
 
       const cancelClick = () => {
             setLinkItem(null)
@@ -31,18 +48,25 @@ export const LinkButton = ({ item, nonce, index }: IShareButton) => {
                   toast.error(`Please select an AquaTree to link`)
                   return
             }
+            if (primaryFileObject === "loading") {
+toast.error("File is still loading, please wait a moment and try again")
+return
+}else  if (primaryFileObject === null) {
+toast.error("Error loading file, please refresh the page and try again")
+return
+}
             try {
                   const aquafier = new Aquafier()
                   setLinking(true)
                   const aquaTreeWrapper: AquaTreeWrapper = {
                         aquaTree: item.aquaTree!,
                         revision: '',
-                        fileObject: item.fileObject[0],
+                        fileObject:  primaryFileObject ,
                   }
                   const linkAquaTreeWrapper: AquaTreeWrapper = {
                         aquaTree: linkItem!.aquaTree!,
                         revision: '',
-                        fileObject: linkItem!.fileObject[0],
+                        fileObject:  primaryFileObject ,
                   }
                   const result = await aquafier.linkAquaTree(aquaTreeWrapper, linkAquaTreeWrapper)
 
@@ -154,7 +178,15 @@ export const LinkButton = ({ item, nonce, index }: IShareButton) => {
                   {/* Link Button */}
                   <button
                         data-testid={'link-action-button-' + index}
-                        onClick={() => setIsOpen(true)}
+                        onClick={() => {
+if(primaryFileObject !== null && primaryFileObject !== "loading") {
+      setIsOpen(true)
+}else if (primaryFileObject === "loading") {
+toast.error("File is still loading, please wait a moment and try again")
+}else {
+toast.error("Error loading file, please refresh the page and try again")
+}
+                        }}
                         className="flex items-center space-x-1 bg-yellow-100 text-yellow-700 px-3 py-2 rounded hover:bg-yellow-200 transition-colors text-xs w-full justify-center"
                   >
                         <LuLink2 className="w-4 h-4" />
@@ -174,7 +206,7 @@ export const LinkButton = ({ item, nonce, index }: IShareButton) => {
                                                             Link AquaTree
                                                       </h4>
                                                       <p className="text-sm text-gray-500 mt-1">
-                                                            Connect {item.fileObject[0].fileName} to another file
+                                                            Connect {(primaryFileObject && primaryFileObject !== "loading" ? primaryFileObject.fileName : "")} to another file
                                                       </p>
                                                 </div>
                                           </div>
@@ -283,7 +315,7 @@ export const LinkButton = ({ item, nonce, index }: IShareButton) => {
                                                                                                       <div className="flex items-center space-x-2 mb-2">
                                                                                                             <FileText className="w-4 h-4 text-blue-500 flex-shrink-0" />
                                                                                                             <span className="font-medium text-sm text-gray-900 truncate">
-                                                                                                                  {itemLoop.fileObject[0].fileName}
+                                                                                                                  {(primaryFileObject && primaryFileObject !== "loading" ? primaryFileObject.fileName : "")}
                                                                                                             </span>
                                                                                                       </div>
                                                                                                       
