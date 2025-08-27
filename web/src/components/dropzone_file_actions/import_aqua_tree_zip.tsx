@@ -9,7 +9,7 @@ import { IDropzoneAction } from '../../types/types'
 import { Button } from '@/components/ui/button'
 import { toast } from 'sonner'
 import { fetchFiles } from '@/utils/functions'
- 
+
 export const ImportAquaTreeZip = ({ file, filesWrapper, removeFilesListForUpload }: IDropzoneAction) => {
       const [uploading, setUploading] = useState(false)
       // const [uploaded, setUploaded] = useState(false)
@@ -20,7 +20,7 @@ export const ImportAquaTreeZip = ({ file, filesWrapper, removeFilesListForUpload
             //  console.log('uploadFileData called...')
 
             if (!file) {
-                  toast.info( 'No file selected!')
+                  toast.info('No file selected!')
                   return
             }
 
@@ -32,23 +32,23 @@ export const ImportAquaTreeZip = ({ file, filesWrapper, removeFilesListForUpload
             try {
                   const url = `${backend_url}/explorer_aqua_zip`
                   //  //  console.log("url ", url)
-                   await axios.post(url, formData, {
+                  await axios.post(url, formData, {
                         headers: {
                               'Content-Type': 'multipart/form-data',
                               nonce: session?.nonce,
                         },
                   })
-  
+
                   // return all user files
                   // const res = response.data
 
                   // setFiles([...res.data])
-   const files = await fetchFiles(session!.address!, `${backend_url}/explorer_files`, session!.nonce)
+                  const files = await fetchFiles(session!.address!, `${backend_url}/explorer_files`, session!.nonce)
                   setFiles({
                         fileData: files, status: 'loaded'
                   })
                   // setUploaded(true)
-                  setUploading(false) 
+                  setUploading(false)
                   toast.success('File uploaded successfuly')
                   // updateUploadedIndex(fileIndex)
 
@@ -56,13 +56,13 @@ export const ImportAquaTreeZip = ({ file, filesWrapper, removeFilesListForUpload
                   return
             } catch (error) {
                   setUploading(false)
-                  toast.error( `Failed to upload file: ${error}`)
+                  toast.error(`Failed to upload file: ${error}`)
             }
       }
 
       const importFile = async () => {
 
-            if(uploading){
+            if (uploading) {
                   toast.info(`Wait for upload to complete`)
                   return
             }
@@ -94,7 +94,7 @@ export const ImportAquaTreeZip = ({ file, filesWrapper, removeFilesListForUpload
                         }
 
                         if (!hasAquaJson) {
-                              toast.info( 'Aqua Json not found.')
+                              toast.info('Aqua Json not found.')
                               return
                         }
 
@@ -115,7 +115,7 @@ export const ImportAquaTreeZip = ({ file, filesWrapper, removeFilesListForUpload
                   variant="outline"
                   className="w-24 bg-green-50 border-green-200 text-green-700 hover:bg-green-100"
                   onClick={importFile}
-                  // disabled={uploadedIndexes.includes(fileIndex) || uploaded}
+            // disabled={uploadedIndexes.includes(fileIndex) || uploaded}
             >
                   {uploading ? <span className="w-4 h-4 animate-spin border-2 border-green-600 border-t-transparent rounded-full" /> : <LuSave className="w-4 h-4" />}
                   Import

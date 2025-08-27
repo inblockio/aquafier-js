@@ -84,7 +84,7 @@ export default function NewShadcnLayoutWithSidebar() {
                                           </div>
                                     </header>
                                     <div className="flex-1 w-full max-w-full overflow-hidden px-2">
-                                          <Toaster position="top-right" richColors />
+                                          <Toaster position="top-center" richColors />
                                           <Outlet />
                                     </div>
                               </SidebarInset>

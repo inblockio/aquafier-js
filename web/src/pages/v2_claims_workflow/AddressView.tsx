@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import { formatCryptoAddress } from '@/utils/functions';
 import { Copy, Check, ArrowRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
@@ -15,11 +14,6 @@ export const AddressView: React.FC<AddressViewProps> = ({
   const [copied, setCopied] = useState(false);
   const [inputAddress, setInputAddress] = useState(address);
   const navigate = useNavigate();
-
-  const formatAddress = (addr: string, expanded: boolean = false) => {
-    if (expanded) return addr;
-    return `${addr.slice(0, 6)}...${addr.slice(-4)}`;
-  };
 
   const handleCopy = async () => {
     try {
