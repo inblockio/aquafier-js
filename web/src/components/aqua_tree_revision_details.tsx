@@ -372,7 +372,10 @@ export const RevisionDisplay = ({ fileInfo, revision, revisionHash, isVerificati
                               const urlPath = `${backend_url}/explorer_files`
                                const url2 = ensureDomainUrlHasSSL(urlPath)
                               const files = await fetchFiles(`${session?.address}`, url2, `${session?.nonce}`)
-                              setFiles(files)
+                              setFiles({
+                                    fileData: files,
+                                    status: 'loaded',
+                              })
 
                               // we need to update the side drawer for reverification to start
                               const selectedFileData = files.find(e => {
@@ -439,7 +442,7 @@ export const RevisionDisplay = ({ fileInfo, revision, revisionHash, isVerificati
                                                 <div className="p-4 text-sm leading-relaxed">
                                                       <TimelineRoot size="lg" variant="subtle" className="max-w-md">
                                                             {revision.revision_type == 'file' || revision.revision_type == 'form' || revision.revision_type == 'link' ? (
-                                                                  <>
+                                                                  
                                                                         <TimelineItem>
                                                                               <TimelineConnector bg={returnBgColor} color={'white'}>
                                                                                     {verificationStatusIcon}
@@ -459,10 +462,10 @@ export const RevisionDisplay = ({ fileInfo, revision, revisionHash, isVerificati
                                                                                                 showCopyIcon={true}
                                                                                           />
                                                                                     ) : null}
-                                                                                    {viewLinkedFile(fileInfo!, revisionHash, revision, files, setSelectedFileInfo, false)}
+                                                                                    {viewLinkedFile(fileInfo!, revisionHash, revision, files.fileData, setSelectedFileInfo, false)}
                                                                               </TimelineContent>
                                                                         </TimelineItem>
-                                                                  </>
+                                                                
                                                             ) : null}
 
                                                             {revision.revision_type == 'signature' ? (
@@ -677,7 +680,7 @@ export const RevisionDetailsSummary = ({ fileInfo, isWorkFlow }: RevisionDetails
                                           <div className="flex-1 flex flex-col">
                                                 {revisionDataHeader(fileInfo!.aquaTree!, revisionHash, fileInfo!.fileObject)}
                                                 <div className="my-2"></div>
-                                                {viewLinkedFile(fileInfo!, revisionHash, revision!, files, setSelectedFileInfo, isWorkFlow)}
+                                                {viewLinkedFile(fileInfo!, revisionHash, revision!, files.fileData, setSelectedFileInfo, isWorkFlow)}
                                           </div>
                                     </div>
                               )

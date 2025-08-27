@@ -95,8 +95,8 @@ export default function ClaimsWorkflowPage() {
                   }
             })
             const _attestations: Array<ApiFileInfo> = []
-            for (let i = 0; i < files.length; i++) {
-                  const file: ApiFileInfo = files[i]
+            for (let i = 0; i < files.fileData.length; i++) {
+                  const file: ApiFileInfo = files.fileData[i]
                   // const fileObject = getAquaTreeFileObject(file)
 
                   const { isWorkFlow, workFlow } = isWorkFlowData(file.aquaTree!, aquaTemplates)
@@ -133,8 +133,8 @@ export default function ClaimsWorkflowPage() {
             const _claims: Array<{ file: ApiFileInfo; processedInfo: ClaimInformation, attestations: Array<IAttestationEntry>, sharedContracts: Contract[] }> = []
 
             // We loop through files to find claims that match the wallet address
-            for (let i = 0; i < files.length; i++) {
-                  const file: ApiFileInfo = files[i]
+            for (let i = 0; i < files.fileData.length; i++) {
+                  const file: ApiFileInfo = files.fileData[i]
                   // const fileObject = getAquaTreeFileObject(file)
 
                   const { isWorkFlow, workFlow } = isWorkFlowData(file.aquaTree!, aquaTemplates)
@@ -235,7 +235,7 @@ export default function ClaimsWorkflowPage() {
       useEffect(() => {
             processAllAddressClaims()
       // }, [walletAddress, JSON.stringify(files)])
-   }, [files.map(e => Object.keys(e.aquaTree?.file_index ?? {})).join(','), systemFileInfo.map(e => Object.keys(e.aquaTree?.file_index??{})).join(','), walletAddress])
+   }, [files.fileData.map(e => Object.keys(e.aquaTree?.file_index ?? {})).join(','), systemFileInfo.map(e => Object.keys(e.aquaTree?.file_index??{})).join(','), walletAddress])
 
       return (
             <div className='py-6 flex flex-col gap-4'>

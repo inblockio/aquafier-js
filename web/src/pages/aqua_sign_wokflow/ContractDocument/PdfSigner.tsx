@@ -389,7 +389,10 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ fileData, setActiveStep, document
                   // Fetch updated files
                   const url2 = `${backend_url}/explorer_files`
                   const files = await fetchFiles(`${session?.address}`, url2, `${session?.nonce}`)
-                  setFiles(files)
+                  setFiles({
+                        fileData: files,
+                        status: 'loaded',
+                  })
 
                   // Find and update selected file
                   const selectedFileGenesisHash = getGenesisHash(selectedFileInfo!.aquaTree!)

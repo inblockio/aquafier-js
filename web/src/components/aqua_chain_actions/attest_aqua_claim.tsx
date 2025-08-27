@@ -22,7 +22,7 @@ export const AttestAquaClaim = ({ file, index, children }: { file: ApiFileInfo; 
 
       const attestAquaClaimAction = async () => {
             // check if already attested
-            for (const anAquaTree of files) {
+            for (const anAquaTree of files.fileData) {
                   const isWorkFlow = isWorkFlowData(
                         anAquaTree.aquaTree!,
                         systemFileInfo.map(e => {

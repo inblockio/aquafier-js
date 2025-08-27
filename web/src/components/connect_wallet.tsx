@@ -100,7 +100,10 @@ export const ConnectWallet: React.FC<{ dataTestId: string }> = ({ dataTestId }) 
                               setSession({ ...response.data.session })
 
                               const files = await fetchFiles(walletAddress, `${backend_url}/explorer_files`, responseData.session.nonce)
-                              setFiles(files)
+                              setFiles({
+                                    fileData: files,
+                                    status: 'loaded',
+                              })
                         }
 
                         setLoading(false)
@@ -188,7 +191,10 @@ export const ConnectWallet: React.FC<{ dataTestId: string }> = ({ dataTestId }) 
                         setMetamaskAddress(null)
                         setAvatar(undefined)
                         setSession(null)
-                        setFiles([])
+                        setFiles({
+                              fileData: [],
+                              status: 'idle',
+                        })
                         // disConnectWebsocket()
                   }
             } catch (error: any) {
@@ -197,7 +203,9 @@ export const ConnectWallet: React.FC<{ dataTestId: string }> = ({ dataTestId }) 
                   setMetamaskAddress(null)
                   setAvatar(undefined)
                   setSession(null)
-                  setFiles([])
+                  setFiles({
+                        fileData: [],
+                  status: 'idle',})
                   // }
             }
             setLoading(false)

@@ -141,8 +141,8 @@ export default function FilesListItem({
             const currentFileRevisionHashes = Object.keys(currentFileAquaTree.revisions)
             const firstRevision = currentFileAquaTree.revisions[currentFileRevisionHashes[0]]
 
-            for (let i = 0; i < files.length; i++) {
-                  const claimFile: ApiFileInfo = files[i]
+            for (let i = 0; i < files.fileData.length; i++) {
+                  const claimFile: ApiFileInfo = files.fileData[i]
                   const aquaTree = OrderRevisionInAquaTree(claimFile.aquaTree!)
                   const revisionHashes = Object.keys(aquaTree.revisions)
 

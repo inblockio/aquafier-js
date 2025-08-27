@@ -65,7 +65,7 @@ export const WitnessAquaChain = ({ apiFileInfo, backendUrl, nonce }: RevionOpera
 
                               if (response.status === 200 || response.status === 201) {
                                     const newFiles: ApiFileInfo[] = response.data.data
-                                    setFiles(newFiles)
+                                    setFiles({ fileData: newFiles, status: 'loaded' })
 
                                     if (selectedFileInfo) {
                                           const genesisHash = getGenesisHash(selectedFileInfo.aquaTree!)

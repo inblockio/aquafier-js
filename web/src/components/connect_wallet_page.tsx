@@ -200,7 +200,10 @@ export const ConnectWalletPage = () => {
                         setSession({ ...response.data.session })
 
                         const files = await fetchFiles(walletAddress, `${backend_url}/explorer_files`, responseData.session.nonce)
-                        setFiles(files)
+                        setFiles({
+                              fileData: files,
+                              status: 'loaded',
+                        })
 
                         toast('Sign In successful')
 

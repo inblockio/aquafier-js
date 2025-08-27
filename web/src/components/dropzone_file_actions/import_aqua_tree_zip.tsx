@@ -41,7 +41,9 @@ export const ImportAquaTreeZip = ({ file, filesWrapper, removeFilesListForUpload
                   // return all user files
                   const res = response.data
 
-                  setFiles([...res.data])
+                  // setFiles([...res.data])
+
+                   setFiles({ fileData: [...res.data, file], status: 'loaded' })
                   // setUploaded(true)
                   setUploading(false) 
                   toast.success('File uploaded successfuly')

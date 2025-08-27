@@ -311,7 +311,7 @@ export const RevisionDetailsSummary = ({ fileInfo, isWorkFlow }: RevisionDetails
                                                                         </div>
 
                                                                         <div className="w-full">
-                                                                              {viewLinkedFile(fileInfo!, revisionHash, revision!, files, setSelectedFileInfo, isWorkFlow)}
+                                                                              {viewLinkedFile(fileInfo!, revisionHash, revision!, files.fileData, setSelectedFileInfo, isWorkFlow)}
                                                                         </div>
                                                                   </div>
                                                             </div>

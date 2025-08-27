@@ -137,7 +137,10 @@ export const RevisionDisplay = ({ fileInfo, revision, revisionHash, isVerificati
                         } else {
                               const url2 = `${backend_url}/explorer_files`
                               const files = await fetchFiles(`${session?.address}`, url2, `${session?.nonce}`)
-                              setFiles(files)
+                              setFiles({
+                                    fileData: files,
+                                    status: 'loaded',
+                              })
 
                               // we need to update the side drawer for reverification to start
                               const selectedFileData = files.find(e => {
@@ -235,7 +238,7 @@ export const RevisionDisplay = ({ fileInfo, revision, revisionHash, isVerificati
                                                                                                 showCopyIcon={true}
                                                                                           />
                                                                                     )}
-                                                                                    {viewLinkedFile(fileInfo!, revisionHash, revision, files, setSelectedFileInfo, false)}
+                                                                                    {viewLinkedFile(fileInfo!, revisionHash, revision, files.fileData, setSelectedFileInfo, false)}
                                                                               </div>
                                                                         </div>
                                                                   )}

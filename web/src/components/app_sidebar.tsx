@@ -22,11 +22,11 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       const { toggleSidebar } = useSidebar()
 
       const calcukateStorage = () => {
-            if (files.length == 0) {
+            if (files.fileData.length == 0) {
                   return
             }
             let usedStorageByUser = 0
-            for (const item of files) {
+            for (const item of files.fileData) {
                   const mainFileObject = getAquaTreeFileObject(item)
                   usedStorageByUser += mainFileObject?.fileSize ?? 0
             }
@@ -163,7 +163,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                                     }
                               })
                         }}>
-                              {files.length > 0 ? (
+                              {files.fileData.length > 0 ? (
                                     <>
                                           <div className="bg-gray-50 p-4 rounded-lg">
                                                 {/* Storage Header */}

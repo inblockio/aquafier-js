@@ -59,7 +59,7 @@ export const ImportAquaChainFromFile = ({ file, filesWrapper, removeFilesListFor
                   // };
 
                   const file: ApiFileInfo = res
-                  setFiles([...files, file])
+                    setFiles({ fileData: [...files.fileData, file], status: 'loaded' })
                   // setUploadedFilesIndexes(value => [...value, fileIndex])
                   toast.success( 'Aqua Chain imported successfully')
                   setUploading(false)

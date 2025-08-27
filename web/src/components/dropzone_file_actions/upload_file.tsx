@@ -32,7 +32,7 @@ export const UploadFile = ({ file, filesWrapper, removeFilesListForUpload , auto
                   return
             }
 
-            const fileExist = await checkIfFileExistInUserFiles(file, files)
+            const fileExist = await checkIfFileExistInUserFiles(file, files.fileData)
 
             if (fileExist) {
                   toast.info('You already have the file. Delete before importing this')

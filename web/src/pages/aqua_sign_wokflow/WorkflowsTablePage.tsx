@@ -246,7 +246,7 @@ export default function WorkflowsTablePage() {
             })
 
             const newData: IWorkflowItem[] = []
-            files.forEach(file => {
+            files.fileData.forEach(file => {
                   // const fileObject = getAquaTreeFileObject(file);
                   const { workFlow, isWorkFlow } = isWorkFlowData(file.aquaTree!, someData)
                   // console.log('Processing file:', JSON.stringify(file.aquaTree?, null,), 'WorkFlow:', workFlow, 'isWorkFlow:', isWorkFlow)
@@ -273,9 +273,9 @@ export default function WorkflowsTablePage() {
       }
 
       useEffect(() => {
-             console.log('____Rendering WorkflowsTablePage, files length:', files.length, 'systemFileInfo length:', systemFileInfo.length)
+             console.log('____Rendering WorkflowsTablePage, files length:', files.fileData.length, 'systemFileInfo length:', systemFileInfo.length)
             processFilesToGetWorkflows()
-      }, [files.map(e => Object.keys(e.aquaTree?.file_index ?? {})).join(','), systemFileInfo.map(e => Object.keys(e.aquaTree?.file_index??{})).join(',')])
+      }, [files.fileData.map(e => Object.keys(e.aquaTree?.file_index ?? {})).join(','), systemFileInfo.map(e => Object.keys(e.aquaTree?.file_index??{})).join(',')])
 
        
       return (

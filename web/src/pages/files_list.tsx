@@ -5,6 +5,7 @@ import { fetchSystemFiles, getAquaTreeFileName, isWorkFlowData } from '@/utils/f
 
 import { useStore } from 'zustand'
 import appStore from '../store'
+import { ApiFileInfo } from '@/models/FileInfo'
 
 export default function FilesList() {
       const [view, setView] = useState<'table' | 'card'>('table')
@@ -62,7 +63,7 @@ export default function FilesList() {
 
                   const workflows = new Set<string>()
 
-                  files.forEach(file => {
+                  files.fileData.forEach(file => {
                         try {
                               const workFlow = isWorkFlowData(file.aquaTree!, someData)
                               if (workFlow.isWorkFlow && workFlow.workFlow) {
@@ -78,15 +79,15 @@ export default function FilesList() {
             }
    
       // }, [files.length, systemFileInfo.length])
-      }, [files.map(e => Object.keys(e.aquaTree?.file_index ?? {})).join(','), systemFileInfo.map(e => Object.keys(e.aquaTree?.file_index??{})).join(',')])
+      }, [files.fileData.map(e => Object.keys(e.aquaTree?.file_index ?? {})).join(','), systemFileInfo.map(e => Object.keys(e.aquaTree?.file_index??{})).join(',')])
 
        
 
 
       // Filter files based on selected filters AND selected workflow
-      const getFilteredFiles = () => {
+      const getFilteredFiles = () : ApiFileInfo[] => {
             // First filter by the modal filters
-            let filteredByFilters = files;
+            let filteredByFilters = files.fileData;
 
             if (!selectedFilters.includes('all')) {
                   const someData = systemFileInfo.map(e => {
@@ -98,7 +99,7 @@ export default function FilesList() {
                         }
                   })
 
-                  filteredByFilters = files.filter(file => {
+                  filteredByFilters = files.fileData.filter(file => {
                         try {
                               const workFlow = isWorkFlowData(file.aquaTree!, someData)
 
@@ -151,7 +152,7 @@ export default function FilesList() {
       // Get available filter options
       const getFilterOptions = () => {
             const options = [
-                  { value: 'all', label: 'All Files', count: files.length },
+                  { value: 'all', label: 'All Files', count: files.fileData.length },
                   { value: 'aqua_files', label: 'Aqua Files', count: 0 }
             ]
 
@@ -168,7 +169,7 @@ export default function FilesList() {
             let nonWorkflowCount = 0
             const workflowCounts: { [key: string]: number } = {}
 
-            files.forEach(file => {
+            files.fileData.forEach(file => {
                   try {
                         const workFlow = isWorkFlowData(file.aquaTree!, someData)
                         if (workFlow.isWorkFlow && workFlow.workFlow) {
@@ -319,11 +320,11 @@ export default function FilesList() {
                                                 : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                                                 }`}
                                     >
-                                          All Files ({files.length})
+                                          All Files ({files.fileData.length})
                                     </button>
                                     {
                                           view === 'table' && uniqueWorkflows.map((workflow) => {
-                                                const workflowCount = files.filter(file => {
+                                                const workflowCount = files.fileData.filter(file => {
                                                       try {
                                                             const someData = systemFileInfo.map(e => {
                                                                   try {

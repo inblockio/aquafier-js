@@ -23,7 +23,7 @@ export const FormRevisionFile = ({ file, filesWrapper, removeFilesListForUpload 
                   toast.info(`Wait for upload to complete`)
                   return
             }
-            const fileExist = await checkIfFileExistInUserFiles(file, files)
+            const fileExist = await checkIfFileExistInUserFiles(file, files.fileData)
 
             if (fileExist) {
                   toast.info( 'You already have the file. Delete before importing this')
@@ -81,8 +81,8 @@ export const FormRevisionFile = ({ file, filesWrapper, removeFilesListForUpload 
                   //     aquaTree: null,
                   //     linkedFileObjects: []
                   // };
-
-                  setFiles([...files, fileInfo])
+                  
+                  setFiles({ fileData: [...files.fileData, fileInfo], status: 'loaded' })
                   // setUploaded(true)
                   setUploading(false)
                   toast.success( 'File uploaded successfuly')
