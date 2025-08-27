@@ -113,7 +113,7 @@ export const LinkButton = ({ item, nonce, index }: IShareButton) => {
             // refetch all the files to ensure the front end state is the same as the backend
             try {
                   const files = await fetchFiles(session!.address!, `${backend_url}/explorer_files`, session!.nonce)
-                  setFiles(files)
+                  setFiles({  fileData: files, status: 'loaded'  })
             } catch (e) {
                   toast.error('Error updating files')
                   document.location.reload()
@@ -214,12 +214,12 @@ export const LinkButton = ({ item, nonce, index }: IShareButton) => {
                               </DialogHeader>
 
                               <div className="flex-1 px-6 py-4 space-y-6 overflow-auto">
-                                    {files?.length <= 1 ? (
+                                    {files?.fileData.length <= 1 ? (
                                           <Alert className="border-orange-200 bg-orange-50">
                                                 <AlertCircle className="h-4 w-4 text-orange-600" />
                                                 <AlertTitle className="text-orange-800">Multiple files needed</AlertTitle>
                                                 <AlertDescription className="text-orange-700">
-                                                      For linking to work you need multiple files, currently you only have {files?.length}.
+                                                      For linking to work you need multiple files, currently you only have {files?.fileData.length}.
                                                 </AlertDescription>
                                           </Alert>
                                     ) : (
@@ -246,7 +246,7 @@ export const LinkButton = ({ item, nonce, index }: IShareButton) => {
                                                       {/* File List */}
                                                       <div className="border border-gray-200 rounded-lg overflow-hidden flex-1">
                                                             <div className="max-h-96 min-h-80 overflow-y-auto">
-                                                                  {files?.map((itemLoop: ApiFileInfo, fileIndex: number) => {
+                                                                  {files?.fileData.map((itemLoop: ApiFileInfo, fileIndex: number) => {
                                                                         const keys = Object.keys(itemLoop.aquaTree!.revisions!)
                                                                         const keysPar = Object.keys(item.aquaTree!.revisions!)
                                                                         const res = areArraysEqual(keys, keysPar)
@@ -371,7 +371,7 @@ export const LinkButton = ({ item, nonce, index }: IShareButton) => {
                                                 Cancel
                                           </Button>
 
-                                          {files?.length > 1 && (
+                                          {files?.fileData.length > 1 && (
                                                 <Button
                                                       onClick={handleLink}
                                                       disabled={linking || linkItem === null}

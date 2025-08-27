@@ -18,7 +18,7 @@ const WalletAdrressClaim = ({ walletAddress }: IWalletAdrressClaim) => {
                   <p className="text-sm" onClick={()=>{
                         getWalletClaims(
                           systemFileInfo    ,
-                          files , 
+                          files.fileData , 
                           walletAddress ,
                           setSelectedFileInfo ,
                         )

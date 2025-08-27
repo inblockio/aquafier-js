@@ -60,7 +60,9 @@ export const ImportAquaTree = ({ file, filesWrapper, removeFilesListForUpload}: 
                   })
 
                   const responseData = await response.json()
-                  setFiles([...responseData.files])
+                  // setFiles([...responseData.files])
+
+                    setFiles({ fileData: [...responseData.data, file], status: 'loaded' })
                   // setUploaded(true)
                   setUploading(false)
                   setSelectedFileName('')
@@ -135,7 +137,7 @@ export const ImportAquaTree = ({ file, filesWrapper, removeFilesListForUpload}: 
       }
 
       const userHasAquaTreeByGenesis = (importedGenesisHash: string): boolean => {
-            return files.some(userFile => {
+            return files.fileData.some(userFile => {
                   const aquaTreeGenesisHash = getGenesisHash(userFile.aquaTree!)
                   return aquaTreeGenesisHash === importedGenesisHash
             })

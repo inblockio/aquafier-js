@@ -97,7 +97,7 @@ const WorkflowTableItem = ({ workflowName, apiFileInfo, index = 0 }: IWorkflowIt
             }
 
             let attestationsCount = 0
-            for (const file of files) {
+            for (const file of files.fileData) {
                   // console.log('Processing file:', JSON.stringify(file.aquaTree, null, 4))
                   let allHashes = Object.keys(file.aquaTree?.revisions || {})
                   if (allHashes.length >= 2) {
@@ -243,7 +243,7 @@ const ClaimsAndAttestationPage = () => {
             let myAttestions = 0
             const newData: IWorkflowItem[] = []
             // files.forEach(file => {
-            for (const file of files) {
+            for (const file of files.fileData) {
                   // const fileObject = getAquaTreeFileObject(file);
                   const { workFlow, isWorkFlow } = isWorkFlowData(file.aquaTree!, someData)
 
@@ -320,7 +320,7 @@ const ClaimsAndAttestationPage = () => {
       useEffect(() => {
             processFilesToGetWorkflows()
       // }, [JSON.stringify(files)])
-         }, [files.map(e => Object.keys(e.aquaTree?.file_index ?? {})).join(','), systemFileInfo.map(e => Object.keys(e.aquaTree?.file_index??{})).join(',')])
+         }, [files.fileData.map(e => Object.keys(e.aquaTree?.file_index ?? {})).join(','), systemFileInfo.map(e => Object.keys(e.aquaTree?.file_index??{})).join(',')])
 
 
       useEffect(() => {

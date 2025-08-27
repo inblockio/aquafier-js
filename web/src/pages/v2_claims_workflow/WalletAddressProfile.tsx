@@ -254,8 +254,8 @@ const WalletAddressProfile = ({ walletAddress, callBack, showAvatar, width, show
                   }
             })
 
-            if (files && files.length > 0) {
-                  let attestationFiles = files.filter(file => {
+            if (files && files.fileData.length > 0) {
+                  let attestationFiles = files.fileData.filter(file => {
                         const fileInfo = isWorkFlowData(file.aquaTree!, aquaTemplates)
                         return fileInfo.isWorkFlow && fileInfo.workFlow === 'identity_attestation'
                   })
@@ -264,8 +264,8 @@ const WalletAddressProfile = ({ walletAddress, callBack, showAvatar, width, show
 
                   const localClaims: IClaim[] = []
                   // let _totalAttestations = 0
-                  for (let i = 0; i < files.length; i++) {
-                        const aquaTree = files[i].aquaTree
+                  for (let i = 0; i < files.fileData.length; i++) {
+                        const aquaTree = files.fileData[i].aquaTree
                         if (aquaTree) {
                               const { isWorkFlow, workFlow } = isWorkFlowData(aquaTree!, aquaTemplates)
 
@@ -312,7 +312,7 @@ const WalletAddressProfile = ({ walletAddress, callBack, showAvatar, width, show
                                                 claimType: workFlow,
                                                 claimName: claimName,
                                                 attestationsCount: attestationsCount,
-                                                apiFileInfo: files[i],
+                                                apiFileInfo: files.fileData[i],
                                           }
                                           localClaims.push(claimInformation)
                                     }
@@ -365,7 +365,7 @@ const WalletAddressProfile = ({ walletAddress, callBack, showAvatar, width, show
                         }
                         // If it's an ArrayBuffer or similar binary data
                         else if (fileObject.fileContent instanceof ArrayBuffer || fileObject.fileContent instanceof Uint8Array) {
-                              const fileBlob = new Blob([fileObject.fileContent], {
+                              const fileBlob = new Blob([fileObject.fileContent as any], {
                                     type: 'application/octet-stream',
                               })
                               formData.append('asset', fileBlob, fileObject.fileName)
@@ -407,9 +407,12 @@ const WalletAddressProfile = ({ walletAddress, callBack, showAvatar, width, show
                         if (isFinal) {
                               if (account !== session?.address) {
                                     const files = await fetchFiles(session!.address, `${backend_url}/explorer_files`, session!.nonce)
-                                    setFiles(files)
+                                    setFiles({ fileData: files, status: 'loaded' })
                               } else {
-                                    setFiles(response.data.files)
+                                    setFiles({
+                                          fileData: response.data.files,
+                                          status: 'loaded',
+                                    })
                               }
 
                               toast.success('Profile Aqua tree created successfully')
@@ -572,7 +575,7 @@ const WalletAddressProfile = ({ walletAddress, callBack, showAvatar, width, show
 
             return () => clearTimeout(timeoutId)
       // }, [files.length])
-          }, [files.map(e => Object.keys(e.aquaTree?.file_index ?? {})).join(','), systemFileInfo.map(e => Object.keys(e.aquaTree?.file_index??{})).join(','), walletAddress])
+          }, [files.fileData.map(e => Object.keys(e.aquaTree?.file_index ?? {})).join(','), systemFileInfo.map(e => Object.keys(e.aquaTree?.file_index??{})).join(','), walletAddress])
 
       return (
             <div className={`${width ? width : 'w-full'} bg-transparent`}>

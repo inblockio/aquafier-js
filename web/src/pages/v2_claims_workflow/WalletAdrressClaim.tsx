@@ -39,7 +39,7 @@ const WalletAdrressClaim = forwardRef<HTMLDivElement, IWalletAdrressClaim>(
             }
 
             useEffect(() => {
-                  const identityClaimDetails = getWalletClaims(systemFileInfo, files, walletAddress, setSelectedFileInfo)
+                  const identityClaimDetails = getWalletClaims(systemFileInfo, files.fileData, walletAddress, setSelectedFileInfo)
                   setIdentityClaimDetails(identityClaimDetails)
             },[])
 

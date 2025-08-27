@@ -183,9 +183,12 @@ export const ImportAquaChainFromChain = ({ fileInfo, isVerificationSuccessful, c
             // Only update dbFiles if files have actually changed
             // This prevents unnecessary re-renders and potential recursion
             if (JSON.stringify(files) !== JSON.stringify(dbFiles)) {
-                  setDbFiles(files)
+                  setDbFiles(files.fileData)
             }
-      }, [files])
+      // }, [files])
+
+         }, [files.fileData.map(e => Object.keys(e.aquaTree?.file_index ?? {})).join(',')])
+      
 
       const getButtonVariant = (color: string) => {
             switch (color) {

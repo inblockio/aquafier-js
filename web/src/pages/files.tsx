@@ -89,7 +89,7 @@ const FilesPage = () => {
 
             try {
                   // Process the file upload
-                  const fileExist = await checkIfFileExistInUserFiles(fileData.file, files)
+                  const fileExist = await checkIfFileExistInUserFiles(fileData.file, files.fileData)
                   if (fileExist) {
                         throw new Error('File already exists')
                   }
@@ -118,7 +118,7 @@ const FilesPage = () => {
                   // Refresh files list
                   const url2 = `${backend_url}/explorer_files`
                   const updatedFiles = await fetchFiles(session?.address!, url2, session?.nonce!)
-                  setFiles(updatedFiles)
+                  setFiles({ fileData: updatedFiles, status: 'loaded' })
 
                   toast.success('File uploaded successfully')
             } catch (error) {
@@ -281,7 +281,7 @@ const FilesPage = () => {
             // fetch all files from the api
             const url2 = `${backend_url}/explorer_files`
             const files = await fetchFiles(session?.address!, url2, session?.nonce!)
-            setFiles(files)
+            setFiles({ fileData: files, status: 'loaded' })
       }
 
       const checkFileContentForUpload = async (upload: UploadStatus, index: number) => {
@@ -335,7 +335,7 @@ const FilesPage = () => {
                   throw new Error('No file selected')
             }
 
-            const fileExist = await checkIfFileExistInUserFiles(upload.file, files)
+            const fileExist = await checkIfFileExistInUserFiles(upload.file, files.fileData)
             if (fileExist) {
                   throw new Error('File already exists')
             }
@@ -583,7 +583,7 @@ const FilesPage = () => {
                   </div>
 
                   <div className="w-full max-w-full box-border overflow-x-hidden bg-white p-6">
-                        {files.length == 0 ? (
+                        {files.fileData.length == 0 ? (
                               <FileDropZone
                                     setFiles={(files: File[]) => {
                                           console.log(`call back here `)

@@ -42,7 +42,7 @@ const DeleteUserData = () => {
                               ens_name: '',
                               witness_contract_address: '0x45f59310ADD88E6d23ca58A0Fa7A55BEE6d2a611',
                         })
-                        setFiles([])
+                        setFiles({ fileData: [], status: 'idle' })
                         setSession(null)
                         setMetamaskAddress(null)
                         setAvatar(undefined)

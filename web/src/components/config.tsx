@@ -32,7 +32,10 @@ const LoadConfiguration = () => {
                                     const avatar = generateAvatar(address)
                                     setAvatar(avatar)
                                     const files = await fetchFiles(address, url2, nonce)
-                                    setFiles(files)
+                                setFiles({
+                                    fileData: files,
+                                    status: 'loaded',
+                              })
                                     fetchUserProfile(_address, nonce)
                                     setSession(response.data?.session)
                                     const url3 = `${backend_url}/system/aqua_tree`
@@ -46,7 +49,11 @@ const LoadConfiguration = () => {
                         setMetamaskAddress(null)
                         setAvatar(undefined)
                         setSession(null)
-                        setFiles([])
+                       setFiles({
+                                    fileData: [],
+                                    status: 'error',
+                                    error: error instanceof Error ? error.message : 'Unknown error from config',
+                              })
                         setUserProfile({
                               ens_name: '',
                               user_pub_key: '',
@@ -92,7 +99,10 @@ const LoadConfiguration = () => {
                         setMetamaskAddress(null)
                         setAvatar(undefined)
                         setSession(null)
-                        setFiles([])
+                        setFiles({
+                              fileData: [],
+                              status: 'idle',
+                        })
                         setUserProfile({
                               ens_name: '',
                               user_pub_key: '',

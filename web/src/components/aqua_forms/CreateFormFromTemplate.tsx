@@ -237,9 +237,9 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: { selectedTempla
                         if (isFinal) {
                               if (account !== session?.address) {
                                     const files = await fetchFiles(session!.address, `${backend_url}/explorer_files`, session!.nonce)
-                                    setFiles(files)
+                                    setFiles({ fileData: files, status: 'loaded' })
                               } else {
-                                    setFiles(response.data.files)
+                                    setFiles({ fileData: [...files.fileData, response.data.data], status: 'loaded' })
                               }
 
                               toast.success('Aqua tree created successfully')
@@ -1024,7 +1024,7 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: { selectedTempla
                   }
             })
 
-            for (const file of files) {
+            for (const file of files.fileData) {
 
                   const workFlow = isWorkFlowData(file.aquaTree!, someData)
 

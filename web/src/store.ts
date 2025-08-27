@@ -18,7 +18,11 @@ type AppStoreState = {
             witness_contract_address: string | null
       }
       session: Session | null
-      files: ApiFileInfo[]
+      files: {
+            fileData:  ApiFileInfo[],
+            status: 'loading' | 'loaded' | 'error' | 'idle'
+            error?: string
+      }
       apiFileData: ApiFileData[]
       systemFileInfo: ApiFileInfo[]
       formTemplates: FormTemplate[]
@@ -170,7 +174,10 @@ const appStore = createStore<TAppStore>()(
                         witness_contract_address: '0x45f59310ADD88E6d23ca58A0Fa7A55BEE6d2a611',
                   },
                   session: null,
-                  files: [],
+                  files: {
+                        fileData: [],
+                        status: 'idle',
+                  },
                   selectedFileInfo: null,
 
                   openDialog: null, // Initialize openDialog state
@@ -208,7 +215,8 @@ const appStore = createStore<TAppStore>()(
                   setContracts: (contractData: any[]) => set({ contracts: contractData }),
                   addFile: (file: ApiFileInfo) => {
                         const { files } = appStore.getState()
-                        set({ files: [...files, file] })
+                        files.fileData = [file, ...files.fileData]
+                        set({ files: files })
                   },
                   setBackEndUrl: (backend_url: AppStoreState['backend_url']) => {
                         console.log(`set backend_url to ${backend_url} `)

@@ -144,7 +144,8 @@ const WebsocketFragment = () => {
                                                 const url = `${backend_url}/explorer_files`
                                                 const actualUrlToFetch = ensureDomainUrlHasSSL(url)
                                                 const files = await fetchFiles(walletAddressRef.current, actualUrlToFetch, nounceRef.current)
-                                                setFiles(files)
+                                                // setFiles(files)
+                                                setFiles({ fileData: files, status: 'loaded' })
                                                 // if(selectedFileInfo){
                                                 //     const genesisHash = getGenesisHash(selectedFileInfo.aquaTree!)
                                                 // }
