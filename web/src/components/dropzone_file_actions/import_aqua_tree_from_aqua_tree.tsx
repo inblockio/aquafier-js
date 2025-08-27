@@ -149,7 +149,7 @@ export const ImportAquaChainFromChain = ({ fileInfo, isVerificationSuccessful, c
                         {
                               latestRevisionHash: latestRevisionHash,
                               userAddress: contractData.sender,
-                              mergeStrategy: 'fork',
+                              mergeStrategy: 'replace',
                         },
                         {
                               headers: {
