@@ -378,16 +378,16 @@ export default async function explorerController(fastify: FastifyInstance) {
             // THE FRON END  SHOULD USE FETCH API FILE INF0
 
 
-            let displayData: Array<{
-                aquaTree: AquaTree;
-                fileObject: FileObject[];
-            }> = []
-            if (session.address == walletAddress) {
+            // let displayData: Array<{
+            //     aquaTree: AquaTree;
+            //     fileObject: FileObject[];
+            // }> = []
+            // if (session.address == walletAddress) {
 
-                // Construct the full URL
-                const url = `${protocol}://${host}`;
-                displayData = await getUserApiFileInfo(url, walletAddress)
-            }
+            //     // Construct the full URL
+            //     const url = `${protocol}://${host}`;
+            //     displayData = await getUserApiFileInfo(url, walletAddress)
+            // }
 
             if (walletAddress !== session.address) {
                 try {
@@ -408,7 +408,7 @@ export default async function explorerController(fastify: FastifyInstance) {
             return reply.code(200).send({
                 success: true,
                 message: 'Aqua tree saved successfully',
-                files: displayData
+                // files: displayData
             });
         } catch (error : any) {
             console.error('\n\n Specific error in file/fileIndex creation:', error);

@@ -170,11 +170,11 @@ const WorkflowTableItem = ({ workflowName, apiFileInfo, index = 0 }: IWorkflowIt
                                           {signersStatus.filter(e => e.status == 'signed').length}/{signers?.length}
                                     </span>
                                     <span className="text-muted-foreground">
-                                          {Math.round(getProgressPercentage(signersStatus.filter(e => e.status == 'signed').length, signersStatus.filter(e => e.status == 'pending').length))}%
+                                          {Math.round(getProgressPercentage(signersStatus.length, signersStatus.filter(e => e.status == 'pending').length))}%
                                     </span>
                               </div>
                               <Progress
-                                    value={getProgressPercentage(signersStatus.filter(e => e.status == 'signed').length, signersStatus.filter(e => e.status == 'pending').length)}
+                                    value={getProgressPercentage(signersStatus.length, signersStatus.filter(e => e.status == 'pending').length)}
                                     className="h-2"
                               />
                               {signersStatus.filter(e => e.status == 'pending').length > 0 && (
