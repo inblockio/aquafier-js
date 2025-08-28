@@ -1128,7 +1128,7 @@ export async function registerNewMetaMaskWalletAndLogin(url: string = "/app"): P
             await metamaskPage.waitForSelector('[data-testid="confirm-footer-cancel-button"]', { state: 'visible' })
             await metamaskPage.waitForSelector('[data-testid="confirm-footer-button"]', { state: 'visible' })
             await metamaskPage.click('[data-testid="confirm-footer-button"]')
-        } catch (error) {
+        } catch (error : any) {
             // Check if the error is due to page being closed
             if (metamaskPage.isClosed()) {
                 console.log("MetaMask page was closed during final confirmation steps - failing silently");

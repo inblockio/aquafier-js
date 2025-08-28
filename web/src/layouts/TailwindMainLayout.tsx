@@ -194,7 +194,11 @@ const TailwindMainLayout = () => {
             <>
                   {
                         webConfigData.CUSTOM_LANDING_PAGE_URL === 'true' || webConfigData.CUSTOM_LANDING_PAGE_URL === true ?
-                              <div>Custom landing page is enabled. Where Your site goes. Set CUSTOM_LANDING_PAGE_URL to false in your environment variables to view default site.</div>
+                              <div>
+                                    Custom landing page is enabled. Where Your site goes. Set CUSTOM_LANDING_PAGE_URL to false in your environment variables to view default site.
+<br/>
+
+                              </div>
                               : <>
                                     <div className="bg-background text-foreground font-body flex flex-col min-h-screen">
                                           <Header />

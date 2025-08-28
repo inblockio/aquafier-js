@@ -77,16 +77,24 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       ]
 
       const getLogoUrl = (config: WebConfig ): string | undefined => {
-            console.log("Config in sidebar ", config);
-            if (typeof config.CUSTOM_LOGO_URL === 'string'  &&  config.CUSTOM_LOGO_URL != "true" ) {
-                  console.log("Custom logo url ", config.CUSTOM_LOGO_URL);
-                  return config.CUSTOM_LOGO_URL;
-            }
-            if (!config.CUSTOM_LOGO_URL) {
-                  console.log("Default logo url ");
+            // console.log("Config in sidebar ", config);
+            if (typeof config.CUSTOM_LOGO_URL === 'string'    ) {
+                  // config.CUSTOM_LOGO_URL != "true"
+                  if (config.CUSTOM_LOGO_URL.startsWith('http://') || config.CUSTOM_LOGO_URL.startsWith('https://') || config.CUSTOM_LOGO_URL.startsWith('/')) {
+                        console.log("Custom logo url ", config.CUSTOM_LOGO_URL);
+                        return config.CUSTOM_LOGO_URL;
+                  }
+                  if(config.CUSTOM_LOGO_URL === "true"){
+                       return undefined; 
+                  }
+                  // console.log("Default logo url ");
                   return '/images/logo.png';
             }
-            console.log("No logo url ");
+            if (!config.CUSTOM_LOGO_URL) {
+                  // console.log("Default logo url ");
+                  return '/images/logo.png';
+            }
+            // console.log("No logo url ");
             return undefined; // when it's boolean
       };
 
