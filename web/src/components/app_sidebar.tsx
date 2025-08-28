@@ -68,13 +68,17 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             },
       ]
 
-      const getLogoUrl = (config: WebConfig | undefined): string | undefined => {
-            if (typeof config?.CUSTOM_LOGO_URL === 'string') {
+      const getLogoUrl = (config: WebConfig ): string | undefined => {
+            console.log("Config in sidebar ", config);
+            if (typeof config.CUSTOM_LOGO_URL === 'string') {
+                  console.log("Custom logo url ", config.CUSTOM_LOGO_URL);
                   return config.CUSTOM_LOGO_URL;
             }
-            if (!config?.CUSTOM_LOGO_URL) {
+            if (!config.CUSTOM_LOGO_URL) {
+                  console.log("Default logo url ");
                   return '/images/logo.png';
             }
+            console.log("No logo url ");
             return undefined; // when it's boolean
       };
 

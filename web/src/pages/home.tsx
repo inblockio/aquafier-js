@@ -610,7 +610,7 @@ export default function HomeV2() {
       useEffect(() => {
             if (webConfig.BACKEND_URL == undefined) {
                   (async () => {
-                        const config: WebConfig = await fetch('/api/config').then(res => res.json())
+                        const config: WebConfig = await fetch('/config.json').then(res => res.json())
                         setWebConfig(config)
                         setWebConfigData(config)
                   })()

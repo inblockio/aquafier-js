@@ -19,11 +19,11 @@ type AppStoreState = {
       }
       session: Session | null
       files: {
-            fileData:  ApiFileInfo[],
+            fileData: ApiFileInfo[],
             status: 'loading' | 'loaded' | 'error' | 'idle'
             error?: string
       }
-      webConfig:WebConfig,
+      webConfig: WebConfig,
       apiFileData: ApiFileData[]
       systemFileInfo: ApiFileInfo[]
       formTemplates: FormTemplate[]
@@ -36,7 +36,7 @@ type AppStoreState = {
       // openCreateClaimAttestationPopUp: boolean | null
       metamaskAddress: string | null
       avatar: string | undefined
-      backend_url: string 
+      backend_url: string
       contracts: any[]
 }
 
@@ -48,8 +48,8 @@ type AppStoreActions = {
       setFiles: (files: AppStoreState['files']) => void
       setWebConfig: (config: AppStoreState['webConfig']) => void
       setSelectedFileInfo: (file: ApiFileInfo | null) => void
-      
-      setOpenDialog:(state : OpenDialog | null) => void
+
+      setOpenDialog: (state: OpenDialog | null) => void
       // setOpenFileDetailsPopUp: (state: boolean | null) => void
       // setOpenCreateTemplatePopUp: (state: boolean | null) => void
       // setOpenCreateAquaSignPopUp: (state: boolean | null) => void
@@ -181,12 +181,12 @@ const appStore = createStore<TAppStore>()(
                         status: 'idle',
                   },
                   selectedFileInfo: null,
-webConfig:{
-      CUSTOM_LANDING_PAGE_URL: false,
-      CUSTOM_LOGO_URL: false,
-      SENTRY_DSN: undefined,
-      BACKEND_URL: undefined,
-},
+                  webConfig: {
+                        CUSTOM_LANDING_PAGE_URL: false,
+                        CUSTOM_LOGO_URL: false,
+                        SENTRY_DSN: undefined,
+                        BACKEND_URL: undefined,
+                  },
                   openDialog: null, // Initialize openDialog state
                   // openFilesDetailsPopUp: false,
                   // openCreateTemplatePopUp: false,
@@ -220,8 +220,8 @@ webConfig:{
                   setSystemFileInfo: (systemFileInfo: ApiFileInfo[]) => set({ systemFileInfo: systemFileInfo }),
                   setFormTemplate: (apiFormTemplate: FormTemplate[]) => set({ formTemplates: apiFormTemplate }),
                   setContracts: (contractData: any[]) => set({ contracts: contractData }),
-                   setWebConfig(config) {
-                        set({ webConfig: config })     
+                  setWebConfig(config) {
+                        set({ webConfig: config })
                   },
                   addFile: (file: ApiFileInfo) => {
                         const { files } = appStore.getState()
