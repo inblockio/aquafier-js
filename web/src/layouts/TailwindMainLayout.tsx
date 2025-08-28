@@ -7,6 +7,7 @@ import appStore from '../store'
 import { useStore } from 'zustand'
 import { useEffect, useState } from 'react'
 import { WebConfig } from '@/types/types'
+import { ClipLoader } from 'react-spinners'
 
 const Header = () => (
       <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -176,28 +177,92 @@ const TailwindMainLayout = () => {
 
 
       const { webConfig, setWebConfig } = useStore(appStore)
+      const [loadingConfig, setLoadingConfig] = useState(true)
 
       const [webConfigData, setWebConfigData] = useState<WebConfig>(webConfig)
 
       useEffect(() => {
-            if (webConfig.BACKEND_URL == undefined) {
+            if (!webConfig.BACKEND_URL || webConfig.BACKEND_URL == "BACKEND_URL_PLACEHOLDER") {
                   (async () => {
+                        setLoadingConfig(true)
                         const config: WebConfig = await fetch('/config.json').then(res => res.json())
+                        setLoadingConfig(false)
                         setWebConfig(config)
                         setWebConfigData(config)
                   })()
+            }else{
+                  setLoadingConfig(false)
             }
       }, [])
-
 
       return (
             <>
                   {
+                        loadingConfig ? (
+                              <div className="min-h-screen flex items-center justify-center">
+                                    <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-orange-500">
+                                          <ClipLoader color="#000" loading={loadingConfig} size={100} />
+                                    </div>
+                              </div>
+                        ) : null
+                  }
+                  {
                         webConfigData.CUSTOM_LANDING_PAGE_URL === 'true' || webConfigData.CUSTOM_LANDING_PAGE_URL === true ?
-                              <div>
-                                    Custom landing page is enabled. Where Your site goes. Set CUSTOM_LANDING_PAGE_URL to false in your environment variables to view default site.
-<br/>
+                              <div className="min-h-screen bg-gradient-to-br from-orange-50 via-white to-orange-50 flex items-center justify-center p-4">
+                                    <div className="max-w-2xl mx-auto text-center space-y-8">
+                                          {/* Logo Section */}
+                                          <div className="flex justify-center mb-8">
+                                                {webConfigData.CUSTOM_LOGO_URL ? (
+                                                      <img 
+                                                            src={webConfigData.CUSTOM_LOGO_URL as string} 
+                                                            alt="Logo" 
+                                                            className="h-20 w-auto object-contain"
+                                                      />
+                                                ) : null}
+                                          </div>
 
+                                          {/* Welcome Section */}
+                                          <div className="space-y-4">
+                                                <h1 className="text-4xl md:text-5xl font-bold text-gray-900 font-headline">
+                                                      Welcome to {webConfigData.CUSTOM_NAME}
+                                                </h1>
+                                                <p className="text-xl text-gray-600 leading-relaxed max-w-xl mx-auto">
+                                                      {webConfigData.CUSTOM_DESCRIPTION}
+                                                </p>
+                                          </div>
+
+                                          {/* Description */}
+                                          <div className="bg-white/70 backdrop-blur-sm rounded-2xl p-8 shadow-lg border border-orange-100">
+                                                <p className="text-gray-700 text-lg leading-relaxed">
+                                                      Experience the future of data verification and integrity. 
+                                                      Our protocol ensures your data remains tamper-proof and verifiable 
+                                                      through advanced cryptographic techniques.
+                                                </p>
+                                          </div>
+
+                                          {/* Action Button */}
+                                          <div className="pt-4">
+                                                <Button 
+                                                      asChild 
+                                                      size="lg"
+                                                      className="bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white px-8 py-4 text-lg font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105"
+                                                >
+                                                      <Link to="/app" className="flex items-center space-x-2">
+                                                            <span>Launch Application</span>
+                                                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                                                            </svg>
+                                                      </Link>
+                                                </Button>
+                                          </div>
+
+                                          {/* Footer Note */}
+                                          <div className="pt-8">
+                                                <p className="text-sm text-gray-500">
+                                                      {webConfigData.CUSTOM_NAME} © {new Date().getFullYear()}. All rights reserved.
+                                                </p>
+                                          </div>
+                                    </div>
                               </div>
                               : <>
                                     <div className="bg-background text-foreground font-body flex flex-col min-h-screen">

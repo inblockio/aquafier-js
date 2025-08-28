@@ -11,9 +11,9 @@ import { useState } from 'react'
 import { WebConfig } from '@/types/types'
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
-      const { files, setOpenDialog,  webConfig , setWebConfig } = useStore(appStore)
-  
-       const [webConfigData, setWebConfigData] = useState<WebConfig>(webConfig)
+      const { files, setOpenDialog, webConfig, setWebConfig } = useStore(appStore)
+
+      const [webConfigData, setWebConfigData] = useState<WebConfig>(webConfig)
       const [usedStorage, setUsedStorage] = useState<number>(0)
       const [totalStorage, _setTotalStorage] = useState<number>(maxUserFileSizeForUpload)
       const [usagePercentage, setUsagePercentage] = useState<number>(0)
@@ -40,14 +40,14 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       React.useEffect(() => {
             calcukateStorage()
 
-                  if (webConfig.BACKEND_URL == undefined) {
-                        (async () => {
-                              const config: WebConfig = await fetch('/config.json').then(res => res.json())
-                              setWebConfig(config)
-                              setWebConfigData(config)
-                        })()
-                  }
-            }, [])
+            if (!webConfig.BACKEND_URL || webConfig.BACKEND_URL == "BACKEND_URL_PLACEHOLDER") {
+                  (async () => {
+                        const config: WebConfig = await fetch('/config.json').then(res => res.json())
+                        setWebConfig(config)
+                        setWebConfigData(config)
+                  })()
+            }
+      }, [])
 
       React.useEffect(() => {
             calcukateStorage()
@@ -76,16 +76,16 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             },
       ]
 
-      const getLogoUrl = (config: WebConfig ): string | undefined => {
+      const getLogoUrl = (config: WebConfig): string | undefined => {
             // console.log("Config in sidebar ", config);
-            if (typeof config.CUSTOM_LOGO_URL === 'string'    ) {
+            if (typeof config.CUSTOM_LOGO_URL === 'string') {
                   // config.CUSTOM_LOGO_URL != "true"
                   if (config.CUSTOM_LOGO_URL.startsWith('http://') || config.CUSTOM_LOGO_URL.startsWith('https://') || config.CUSTOM_LOGO_URL.startsWith('/')) {
                         console.log("Custom logo url ", config.CUSTOM_LOGO_URL);
                         return config.CUSTOM_LOGO_URL;
                   }
-                  if(config.CUSTOM_LOGO_URL === "true"){
-                       return undefined; 
+                  if (config.CUSTOM_LOGO_URL === "true") {
+                        return undefined;
                   }
                   // console.log("Default logo url ");
                   return '/images/logo.png';
