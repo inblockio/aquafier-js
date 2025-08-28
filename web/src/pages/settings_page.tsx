@@ -82,7 +82,7 @@ const DeleteUserData = () => {
 export default function SettingsPage() {
       const { setUserProfile, user_profile, backend_url, metamaskAddress, session } = useStore(appStore)
 
-      const [activeNetwork, setActiveNetwork] = useState<string>(user_profile.witness_network)
+      const [activeNetwork, setActiveNetwork] = useState<string>(user_profile.witness_network ?? "sepolia")
       const [cliPubKey, _setCliPubKey] = useState<string>(user_profile.cli_pub_key)
       const [cliPrivKey, _setCliPrivKey] = useState<string>(user_profile.cli_priv_key)
       const [ensName, setEnsName] = useState<string>(user_profile.ens_name)
