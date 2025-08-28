@@ -379,7 +379,6 @@ test("single user aqua-sign", async (): Promise<void> => {
 
 test("two user aqua-sign", async (): Promise<void> => {
     const registerWalletOneResponse = await registerNewMetaMaskWalletAndLogin();
-    const registerWalletTwoResponse = await registerNewMetaMaskWalletAndLogin();
 
     const contextWalletOne: BrowserContext = registerWalletOneResponse.context;
     const testPageWalletOne: Page = contextWalletOne.pages()[0];
@@ -389,6 +388,13 @@ test("two user aqua-sign", async (): Promise<void> => {
 
     // Create aqua sign form
     const filePath: string = path.join(__dirname, '/../resources/exampleFile.pdf');
+
+    console.log("timout to mimick delay between two users, avoid throttling");
+    await testPageWalletOne.waitForTimeout(2000);
+    const registerWalletTwoResponse = await registerNewMetaMaskWalletAndLogin();
+    await testPageWalletOne.waitForTimeout(1000);
+
+    console.log("Create aqua sign form ..");
     await createAquaSignForm(testPageWalletOne, contextWalletOne, filePath, registerWalletTwoResponse.walletAddress);
 
     // await testPageWalletOne.reload()
@@ -552,13 +558,13 @@ test("delete a template", async (): Promise<void> => {
     console.log("Clicked confirm delete modal");
 
     // testPage.waitForTimeout(500);
-// Verify template was deleted by checking both the delete button and template text are not visible
+    // Verify template was deleted by checking both the delete button and template text are not visible
     const deleteButton = testPage.locator('[data-testid="delete-form-template-test_template"]');
     const templateText = testPage.locator('text=Test Template');
-    
+
     await expect(deleteButton).not.toBeVisible();
     await expect(templateText).not.toBeVisible();
-    
+
     console.log("Template successfully deleted - verification complete");
 });
 
@@ -768,21 +774,21 @@ test("import dns claim", async (): Promise<void> => {
     try {
         // Click the details button
         await testPage.click('[data-testid="open-aqua-claim-workflow-button-0"]');
-        
+
         console.log("Clicked details button, waiting for validation message...");
-        
+
         // Take a screenshot for debugging in CI
         if (process.env.CI) {
             await testPage.screenshot({ path: 'debug-before-validation.png' });
         }
-        
+
         // Wait for the validation message to appear with increased timeout for CI
         const timeout = process.env.CI ? 15000 : 10000;
-        await testPage.waitForSelector('text=This aqua tree is valid', { 
+        await testPage.waitForSelector('text=This aqua tree is valid', {
             state: 'visible',
             timeout: timeout
         });
-        
+
         // Verify the validation message is visible
         const validationMessage = testPage.locator('text=This aqua tree is valid');
         await expect(validationMessage).toBeVisible({ timeout: timeout });
@@ -807,15 +813,15 @@ test("import dns claim", async (): Promise<void> => {
         try {
             const pageContent = await testPage.content();
             console.log("Page content length:", pageContent.length);
-            
+
             // Check if the button still exists
             const buttonExists = await testPage.locator('[data-testid="open-aqua-claim-workflow-button-0"]').isVisible();
             console.log("Details button still visible:", buttonExists);
-            
+
             // Check for any error messages on the page
             const errorElements = await testPage.locator('[class*="error"], [data-testid*="error"]').count();
             console.log("Error elements found:", errorElements);
-            
+
         } catch (debugError) {
             console.log("Failed to gather debug info:", debugError);
         }
