@@ -369,13 +369,15 @@ psql -h postgres -U "$DB_USER" -d "$DB_NAME" -c "\dt" 2>/dev/null || echo "No ta
 unset PGPASSWORD
 
 # Replace backend URL placeholder in config
-sed -i -e "s|BACKEND_URL_PLACEHOLDER|$BACKEND_URL|g" /app/frontend/config.json
+# sed -i -e "s|BACKEND_URL_PLACEHOLDER|$BACKEND_URL|g" /app/frontend/config.json
 
 # In your startup script, add this before starting the frontend:
-# "BACKEND_URL": "$BACKEND_URL",
 cat > /app/frontend/config.json << EOF
 {
-  "VITE_SENTRY_DSN": "$VITE_SENTRY_DSN",
+
+    "BACKEND_URL_PLACEHOLDER": "$BACKEND_URL",
+    "BACKEND_URL": "$BACKEND_URL",
+  "SENTRY_DSN": "$SENTRY_DSN",
   "CUSTOM_LANDING_PAGE_URL": "$CUSTOM_LANDING_PAGE_URL",
   "CUSTOM_LOGO_URL": "$CUSTOM_LOGO_URL"
 }

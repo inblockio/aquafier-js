@@ -27,7 +27,7 @@ import { Link } from 'react-router-dom'
 import SyntaxHighlighter from 'react-syntax-highlighter'
 import appStore from '../store'
 import { useStore } from 'zustand'
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { WebConfig } from '@/types/types'
 
 const HeroSection = () => (
@@ -605,29 +605,35 @@ export default function HomeV2() {
 
       const { webConfig, setWebConfig } = useStore(appStore)
 
-      useEffect(() => {
+      const [webConfigData, setWebConfigData] = useState<WebConfig>(webConfig)
 
+      useEffect(() => {
             if (webConfig.BACKEND_URL == undefined) {
                   (async () => {
                         const config: WebConfig = await fetch('/api/config').then(res => res.json())
                         setWebConfig(config)
+                        setWebConfigData(config)
                   })()
             }
       }, [])
 
 
-      if (webConfig.CUSTOM_LANDING_PAGE_URL === 'true' || webConfig.CUSTOM_LANDING_PAGE_URL === true) {
-            return <div>Custom landing page is enabled. Where Your site goes. Set CUSTOM_LANDING_PAGE_URL to false in your environment variables to view default site.</div>
-      }
       return (
             <>
-                  <HeroSection />
-                  <FeaturesSection />
-                  <HowItWorksSection />
-                  <PrototypesSection />
-                  <VisionSection />
-                  <PricingSection />
-                  <ContactSection />
+                  {
+                        webConfigData.CUSTOM_LANDING_PAGE_URL === 'true' || webConfigData.CUSTOM_LANDING_PAGE_URL === true ?
+                              <div>Custom landing page is enabled. Where Your site goes. Set CUSTOM_LANDING_PAGE_URL to false in your environment variables to view default site.</div>
+                              : <>
+                                    <HeroSection />
+                                    <FeaturesSection />
+                                    <HowItWorksSection />
+                                    <PrototypesSection />
+                                    <VisionSection />
+                                    <PricingSection />
+                                    <ContactSection />
+                              </>
+                  }
+
             </>
       )
 }
