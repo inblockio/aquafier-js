@@ -70,7 +70,7 @@ const FileDropZone = ({ setFiles }: { setFiles: (selectedFiles: File[]) => void 
 
       //   try {
       //     const url = `${backend_url}/explorer_files`
-      //     //  console.log("url ", url)
+      //     //  //  console.log("url ", url)
       //     const response = await axios.post(url, formData, {
       //       headers: {
       //         'Content-Type': 'multipart/form-data',
@@ -118,7 +118,7 @@ const FileDropZone = ({ setFiles }: { setFiles: (selectedFiles: File[]) => void 
       // useEffect(() => {
       //   // This effect runs whenever the files state changes
       //   // You can perform any side effects here, like logging or updating other states
-      //   console.log("Files updated:", filesList.length);
+      //   //  console.log("Files updated:", filesList.length);
       //   (async () => {
 
       //     let newFileData = filesList.filter(fileData => !fileData.isLoading);
@@ -163,7 +163,7 @@ const FileDropZone = ({ setFiles }: { setFiles: (selectedFiles: File[]) => void 
       //       let r = typeof jsonData === 'object'
       //       let r2 = 'revisions' in jsonData
       //       let r3 = 'file_index' in jsonData
-      //       console.log(`isAquaTreeData  ${isAquaTreeData} contentStr ${contentStr} r ${r} r2 ${r2} r3 ${r3}`)
+      //       //  console.log(`isAquaTreeData  ${isAquaTreeData} contentStr ${contentStr} r ${r} r2 ${r2} r3 ${r3}`)
       //       if (isAquaTreeData) {
       //         setFilesList((prev: FileItemWrapper[]) => [
       //           ...prev,

@@ -236,7 +236,7 @@ export function SharedContracts() {
                   console.error(error)
             }
       }
-      // console.log(contracts)
+      // //  console.log(contracts)
 
       useEffect(() => {
             loadAccountSharedContracts()
@@ -303,7 +303,7 @@ export function SharedContracts() {
                                                       )}
                                                 </TabsContent>
                                                 <TabsContent value="password">
-                                                      {shareContracts.filter(contract => contract.sender?.toLocaleLowerCase() == session?.address?.toLocaleLowerCase).map((contract, index) => (
+                                                      {shareContracts.filter(contract => contract.sender?.toLocaleLowerCase() == session?.address?.toLocaleLowerCase()).map((contract, index) => (
                                                             <SharedContract
                                                                   key={`${contract.hash}`}
                                                                   contract={contract}

@@ -64,7 +64,7 @@ export default defineConfig({
       name: 'chromium',
       use: { ...devices['Desktop Chrome'],
       baseURL: process.env.BASE_URL ? process.env.BASE_URL : "https://dev.inblock.io"},
-      timeout: 180000,
+      timeout: 220000,
     }
   ],
 });

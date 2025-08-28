@@ -239,7 +239,7 @@ const FilePreview: React.FC<IFilePreview> = ({ fileInfo }) => {
                               // If content type is missing or generic, try to detect from filename
                               if (contentType === 'application/octet-stream' || contentType === '') {
                                     contentType = getContentTypeFromFileName(fileInfo.fileName || '')
-                                    //  console.log("Determined content type from filename:", contentType);
+                                    //  //  console.log("Determined content type from filename:", contentType);
                               }
 
                               // Clone response and get data
@@ -258,7 +258,7 @@ const FilePreview: React.FC<IFilePreview> = ({ fileInfo }) => {
 
                               // Create blob with correct content type
                               const blob = new Blob([arrayBuffer], { type: contentType })
-                              //  console.log("Created blob with type:", contentType, "size:", blob.size);
+                              //  //  console.log("Created blob with type:", contentType, "size:", blob.size);
 
                               setFileType(contentType)
 
@@ -277,7 +277,7 @@ const FilePreview: React.FC<IFilePreview> = ({ fileInfo }) => {
                         else if (fileInfo.fileContent && typeof fileInfo.fileContent !== 'string') {
                               // Determine content type from filename
                               const contentType = getContentTypeFromFileName(fileInfo.fileName || '')
-                              //  console.log("Determined content type for binary data:", contentType);
+                              //  //  console.log("Determined content type for binary data:", contentType);
 
                               // Create blob with detected content type
                               const blob = new Blob([fileInfo.fileContent as Uint8Array], {
@@ -367,7 +367,7 @@ const FilePreview: React.FC<IFilePreview> = ({ fileInfo }) => {
 
       // PDF files
       if (fileType === 'application/pdf') {
-            // console.log("File url: ", fileURL)
+            // //  console.log("File url: ", fileURL)
             return <PdfViewerComponent fileType={fileType} fileURL={fileURL} fileInfo={fileInfo} />
       }
 
@@ -377,7 +377,7 @@ const FilePreview: React.FC<IFilePreview> = ({ fileInfo }) => {
             const isJson = isJSONKeyValueStringContent(newTxtContent)
 
             if (fileType === 'application/json' || isJson) {
-                  // console.log(`is this ${newTxtContent} is form ${isForm}-----`)
+                  // //  console.log(`is this ${newTxtContent} is form ${isForm}-----`)
                   // if (isForm) {
                   return (
                         <div className="p-5 m-5">

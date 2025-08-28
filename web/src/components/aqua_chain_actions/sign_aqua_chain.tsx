@@ -74,7 +74,8 @@ export const SignAquaChain = ({ apiFileInfo, backendUrl, nonce, index }: RevionO
                                           try {
                                                 const url = ensureDomainUrlHasSSL(`${backend_url}/explorer_files`)
                                                 const files = await fetchFiles(session!.address!, url, session!.nonce)
-                                                setFiles(files)
+                                                setFiles({
+                                                      fileData: files, status: 'loaded'})
 
                                                 if (selectedFileInfo) {
                                                       const genesisHash = getGenesisHash(selectedFileInfo.aquaTree!)
@@ -87,15 +88,15 @@ export const SignAquaChain = ({ apiFileInfo, backendUrl, nonce, index }: RevionO
                                                       }
                                                 }
                                           } catch (e) {
-                                                //  console.log(`Error ${e}`)
+                                                //  //  console.log(`Error ${e}`)
                                                toast.error( 'Error updating files')
                                                 // document.location.reload()
                                           }
                                     } else {
-                                          //  console.log("update state ...")
+                                          //  //  console.log("update state ...")
                                           const newFiles: ApiFileInfo[] = []
                                           const keysPar = Object.keys(apiFileInfo.aquaTree!.revisions!)
-                                          files.forEach(item => {
+                                          files.fileData.forEach(item => {
                                                 const keys = Object.keys(item.aquaTree!.revisions!)
                                                 if (areArraysEqual(keys, keysPar)) {
                                                       newFiles.push({
@@ -109,7 +110,7 @@ export const SignAquaChain = ({ apiFileInfo, backendUrl, nonce, index }: RevionO
                                           const _selectFileInfo = selectedFileInfo!
                                           _selectFileInfo.aquaTree = result.data.aquaTree!
                                           setSelectedFileInfo(_selectFileInfo)
-                                          setFiles(newFiles)
+                                          setFiles({ fileData: newFiles, status: 'loaded' })
                                     }
                               }
 

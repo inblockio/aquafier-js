@@ -369,7 +369,18 @@ psql -h postgres -U "$DB_USER" -d "$DB_NAME" -c "\dt" 2>/dev/null || echo "No ta
 unset PGPASSWORD
 
 # Replace backend URL placeholder in config
-sed -i -e "s|BACKEND_URL_PLACEHOLDER|$BACKEND_URL|g" /app/frontend/config.json
+# sed -i -e "s|BACKEND_URL_PLACEHOLDER|$BACKEND_URL|g" /app/frontend/config.json
+
+# In your startup script, add this before starting the frontend:
+cat > /app/frontend/config.json << EOF
+{
+  "BACKEND_URL_PLACEHOLDER": "$BACKEND_URL",
+  "BACKEND_URL": "$BACKEND_URL",
+  "SENTRY_DSN": "$SENTRY_DSN",
+  "CUSTOM_LANDING_PAGE_URL": "$CUSTOM_LANDING_PAGE_URL",
+  "CUSTOM_LOGO_URL": "$CUSTOM_LOGO_URL"
+}
+EOF
 
 echo "=== STARTING SERVICES ==="
 
@@ -400,6 +411,7 @@ EOF
 
 #start cron scheduler
 service cron start
+
 
 # Start serve with the configuration
 echo "Starting frontend..."

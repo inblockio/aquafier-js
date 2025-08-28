@@ -25,14 +25,18 @@ const LoadConfiguration = () => {
                         if (response.status === 200) {
                               const url2 = `${backend_url}/explorer_files`
                               const _address = response.data?.session.address
-                              //  console.log(`address ${_address} ..`)
+                              //  //  console.log(`address ${_address} ..`)
                               if (_address) {
                                     const address = ethers.getAddress(_address)
                                     setMetamaskAddress(address)
                                     const avatar = generateAvatar(address)
                                     setAvatar(avatar)
+                                    
                                     const files = await fetchFiles(address, url2, nonce)
-                                    setFiles(files)
+                                setFiles({
+                                    fileData: files,
+                                    status: 'loaded',
+                              })
                                     fetchUserProfile(_address, nonce)
                                     setSession(response.data?.session)
                                     const url3 = `${backend_url}/system/aqua_tree`
@@ -42,11 +46,15 @@ const LoadConfiguration = () => {
                         }
                   } catch (error: any) {
                         // if (error?.response?.status === 404) {
-                        // console.log("Error: ", error)
+                        // //  console.log("Error: ", error)
                         setMetamaskAddress(null)
                         setAvatar(undefined)
                         setSession(null)
-                        setFiles([])
+                       setFiles({
+                                    fileData: [],
+                                    status: 'error',
+                                    error: error instanceof Error ? error.message : 'Unknown error from config',
+                              })
                         setUserProfile({
                               ens_name: '',
                               user_pub_key: '',
@@ -58,7 +66,7 @@ const LoadConfiguration = () => {
                               witness_contract_address: '0x45f59310ADD88E6d23ca58A0Fa7A55BEE6d2a611',
                         })
                         // } else {
-                        //    //  console.log("An error from the api ", error);
+                        //    //  //  console.log("An error from the api ", error);
                         // }
                   }
             }
@@ -66,7 +74,7 @@ const LoadConfiguration = () => {
 
       const fetchUserProfile = async (address: string, nonce: string) => {
             const url = `${backend_url}/explorer_fetch_user_settings`
-            //  console.log("url is ", url);
+            //  //  console.log("url is ", url);
 
             const response = await axios.get(url, {
                   headers: {
@@ -85,13 +93,17 @@ const LoadConfiguration = () => {
       useEffect(() => {
             if (!backend_url.includes('0.0.0.0')) {
                   const nonce = getCookie('pkc_nonce')
+                  //  console.log('Fetched nonce from cookies:', nonce)
                   if (nonce) {
                         fetchAddressGivenANonce(nonce)
                   } else {
                         setMetamaskAddress(null)
                         setAvatar(undefined)
                         setSession(null)
-                        setFiles([])
+                        setFiles({
+                              fileData: [],
+                              status: 'idle',
+                        })
                         setUserProfile({
                               ens_name: '',
                               user_pub_key: '',
@@ -106,7 +118,7 @@ const LoadConfiguration = () => {
                         // window.location.reload()
                   }
             } else {
-                  // console.log(`backend url is ${backend_url}`)
+                  //  console.log(`backend url is ${backend_url}`)
             }
       }, [backend_url])
 
@@ -139,6 +151,8 @@ const LoadConfiguration = () => {
                   loadTemplates()
             }
       }, [session])
+
+      
 
       return <></>
 }

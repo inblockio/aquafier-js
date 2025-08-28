@@ -54,7 +54,7 @@ export const ConnectWallet: React.FC<{ dataTestId: string }> = ({ dataTestId }) 
       }
 
       const signAndConnect = async () => {
-            console.log('Connecting to wallet')
+            //  console.log('Connecting to wallet')
 
             const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
 
@@ -77,8 +77,8 @@ export const ConnectWallet: React.FC<{ dataTestId: string }> = ({ dataTestId }) 
                         const domain = window.location.host
                         const message = createSiweMessage(signer.address, 'Sign in with Ethereum to the app.')
                         const signature = await signer.signMessage(message)
-                        // console.log("--Signature", signature)
-                        // console.log("-- Adress", signer.address)
+                        // //  console.log("--Signature", signature)
+                        // //  console.log("-- Adress", signer.address)
                         // Send session request
                          const url = ensureDomainUrlHasSSL(`${backend_url}/session`)
                         const response = await axios.post(url, {
@@ -100,7 +100,10 @@ export const ConnectWallet: React.FC<{ dataTestId: string }> = ({ dataTestId }) 
                               setSession({ ...response.data.session })
 
                               const files = await fetchFiles(walletAddress, `${backend_url}/explorer_files`, responseData.session.nonce)
-                              setFiles(files)
+                              setFiles({
+                                    fileData: files,
+                                    status: 'loaded',
+                              })
                         }
 
                         setLoading(false)
@@ -176,7 +179,7 @@ export const ConnectWallet: React.FC<{ dataTestId: string }> = ({ dataTestId }) 
                   // formData.append("nonce", nonce);
 
                    const url = ensureDomainUrlHasSSL(`${backend_url}/session`)
-                  //  console.log("url is ", url);
+                  //  //  console.log("url is ", url);
                   const response = await axios.delete(url, {
                         params: {
                               nonce,
@@ -188,16 +191,21 @@ export const ConnectWallet: React.FC<{ dataTestId: string }> = ({ dataTestId }) 
                         setMetamaskAddress(null)
                         setAvatar(undefined)
                         setSession(null)
-                        setFiles([])
+                        setFiles({
+                              fileData: [],
+                              status: 'idle',
+                        })
                         // disConnectWebsocket()
                   }
             } catch (error: any) {
-                  console.log('error', error)
+                  //  console.log('error', error)
                   // if (error?.response?.status === 404 || error?.response?.status === 401) {
                   setMetamaskAddress(null)
                   setAvatar(undefined)
                   setSession(null)
-                  setFiles([])
+                  setFiles({
+                        fileData: [],
+                  status: 'idle',})
                   // }
             }
             setLoading(false)

@@ -2,6 +2,12 @@ import { LogData, Revision } from 'aqua-js-sdk'
 import { IconType } from 'react-icons/lib'
 import { ApiFileInfo, ClaimInformation, IAttestationEntry } from '../models/FileInfo'
 
+export interface WebConfig {
+      SENTRY_DSN?: string
+      CUSTOM_LANDING_PAGE_URL?: string | boolean
+      CUSTOM_LOGO_URL?: string | boolean
+      BACKEND_URL?: string
+} 
 export interface DNSProof {
       walletAddress: string;
       domainName: string;

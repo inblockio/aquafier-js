@@ -5,7 +5,6 @@ import appStore from '../../store'
 import { useEffect, useState } from 'react'
 import { ApiFileInfo } from '../../models/FileInfo'
 import { formatCryptoAddress } from '../../utils/functions'
-import { useNavigate } from 'react-router-dom'
 import { analyzeAndMergeRevisions } from '../../utils/aqua_funcs'
 import { RevisionsComparisonResult } from '../../models/revision_merge'
 import { OrderRevisionInAquaTree, Revision } from 'aqua-js-sdk'
@@ -14,7 +13,7 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { toast } from 'sonner'
-// import { toast } from "@/components/ui/use-toast";
+// import { toast } from "@/components/ui/use-toast"; 
 // import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 // import { Button } from "@/components/ui/button";
 // import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogTrigger } from "@/components/ui/dialog";
@@ -38,7 +37,6 @@ export const ImportAquaChainFromChain = ({ fileInfo, isVerificationSuccessful, c
       })
 
       const { files, backend_url, session } = useStore(appStore)
-      const navigate = useNavigate()
 
       const importAquaChain = async () => {
             // Early check to prevent recursion if already processing
@@ -101,7 +99,7 @@ export const ImportAquaChainFromChain = ({ fileInfo, isVerificationSuccessful, c
                   const revisions = reorderedRevisions.revisions
                   const revisionHashes = Object.keys(revisions)
                   const latestRevisionHash = revisionHashes[revisionHashes.length - 1]
-                  console.log('Latest revision hash: ', latestRevisionHash)
+                  //  console.log('Latest revision hash: ', latestRevisionHash)
 
                   const res = await axios.post(
                         url,
@@ -116,13 +114,14 @@ export const ImportAquaChainFromChain = ({ fileInfo, isVerificationSuccessful, c
                         }
                   )
 
-                  console.log('Transfer chain res: ', res)
+                  //  console.log('Transfer chain res: ', res)
                   if (res.status === 200) {
                         toast.success( 'Aqua Chain imported successfully')
 
                         // Use setTimeout to ensure state is updated before navigation
                         setTimeout(() => {
-                              navigate('/app/loading?reload=true')
+                              window.location.replace('/app');
+                              // navigate('/app',  { replace: true })
                         }, 500)
                   } else {
                         toast.error( 'Failed to import chain')
@@ -150,7 +149,7 @@ export const ImportAquaChainFromChain = ({ fileInfo, isVerificationSuccessful, c
                         {
                               latestRevisionHash: latestRevisionHash,
                               userAddress: contractData.sender,
-                              mergeStrategy: 'fork',
+                              mergeStrategy: 'replace',
                         },
                         {
                               headers: {
@@ -164,7 +163,8 @@ export const ImportAquaChainFromChain = ({ fileInfo, isVerificationSuccessful, c
 
                         // Use setTimeout to ensure state is updated before navigation
                         setTimeout(() => {
-                              navigate('/loading?reload=true')
+                              // navigate('/loading?reload=true')
+                              window.location.replace('/app');
                         }, 500)
                   } else {
                         toast.error( 'Failed to import chain')
@@ -183,9 +183,12 @@ export const ImportAquaChainFromChain = ({ fileInfo, isVerificationSuccessful, c
             // Only update dbFiles if files have actually changed
             // This prevents unnecessary re-renders and potential recursion
             if (JSON.stringify(files) !== JSON.stringify(dbFiles)) {
-                  setDbFiles(files)
+                  setDbFiles(files.fileData)
             }
-      }, [files])
+      // }, [files])
+
+         }, [files.fileData.map(e => Object.keys(e?.aquaTree?.file_index ?? {})).join(',')])
+      
 
       const getButtonVariant = (color: string) => {
             switch (color) {

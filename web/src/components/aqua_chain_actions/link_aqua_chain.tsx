@@ -1,11 +1,11 @@
 import { LuLink2 } from 'react-icons/lu'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { areArraysEqual, capitalizeWords, fetchFiles, formatCryptoAddress, getAquaTreeFileObject, getFileName, getGenesisHash, isWorkFlowData } from '../../utils/functions'
 import { useStore } from 'zustand'
 import appStore from '../../store'
 import axios from 'axios'
 import { ApiFileInfo } from '../../models/FileInfo'
-import Aquafier, { AquaTreeWrapper } from 'aqua-js-sdk'
+import Aquafier, { AquaTreeWrapper, FileObject } from 'aqua-js-sdk'
 import { IShareButton } from '../../types/types'
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 
@@ -19,7 +19,24 @@ export const LinkButton = ({ item, nonce, index }: IShareButton) => {
       const { backend_url, setFiles, files, session, systemFileInfo } = useStore(appStore)
       const [isOpen, setIsOpen] = useState(false)
       const [linking, setLinking] = useState(false)
+      const [primaryFileObject, setPrimaryFileObject] = useState<FileObject | null | "loading">("loading")
       const [linkItem, setLinkItem] = useState<ApiFileInfo | null>(null)
+
+
+      useEffect(() => {
+
+
+            const fetchPrimaryFileObject = async () => {
+                  const fileObject = getAquaTreeFileObject(item)
+                  if (fileObject) {
+                        setPrimaryFileObject(fileObject)
+                  } else {
+                        setPrimaryFileObject(null)
+                  }
+            }
+
+            fetchPrimaryFileObject()
+      }, [item])
 
       const cancelClick = () => {
             setLinkItem(null)
@@ -31,18 +48,25 @@ export const LinkButton = ({ item, nonce, index }: IShareButton) => {
                   toast.error(`Please select an AquaTree to link`)
                   return
             }
+            if (primaryFileObject === "loading") {
+                  toast.error("File is still loading, please wait a moment and try again")
+                  return
+            } else if (primaryFileObject === null) {
+                  toast.error("Error loading file, please refresh the page and try again")
+                  return
+            }
             try {
                   const aquafier = new Aquafier()
                   setLinking(true)
                   const aquaTreeWrapper: AquaTreeWrapper = {
                         aquaTree: item.aquaTree!,
                         revision: '',
-                        fileObject: item.fileObject[0],
+                        fileObject: primaryFileObject,
                   }
                   const linkAquaTreeWrapper: AquaTreeWrapper = {
                         aquaTree: linkItem!.aquaTree!,
                         revision: '',
-                        fileObject: linkItem!.fileObject[0],
+                        fileObject: primaryFileObject,
                   }
                   const result = await aquafier.linkAquaTree(aquaTreeWrapper, linkAquaTreeWrapper)
 
@@ -89,7 +113,7 @@ export const LinkButton = ({ item, nonce, index }: IShareButton) => {
             // refetch all the files to ensure the front end state is the same as the backend
             try {
                   const files = await fetchFiles(session!.address!, `${backend_url}/explorer_files`, session!.nonce)
-                  setFiles(files)
+                  setFiles({  fileData: files, status: 'loaded'  })
             } catch (e) {
                   toast.error('Error updating files')
                   document.location.reload()
@@ -97,7 +121,7 @@ export const LinkButton = ({ item, nonce, index }: IShareButton) => {
       }
 
 
-      const showClaimExtraInfo = (workflowInfo :  { isWorkFlow: boolean; workFlow: string } , file : ApiFileInfo) => {
+      const showClaimExtraInfo = (workflowInfo: { isWorkFlow: boolean; workFlow: string }, file: ApiFileInfo) => {
             if (workflowInfo?.workFlow == "identity_claim") {
                   let genesisHash = getGenesisHash(file.aquaTree!)
                   if (!genesisHash) {
@@ -149,12 +173,21 @@ export const LinkButton = ({ item, nonce, index }: IShareButton) => {
             return <div />
       }
 
+     
       return (
             <>
                   {/* Link Button */}
                   <button
                         data-testid={'link-action-button-' + index}
-                        onClick={() => setIsOpen(true)}
+                        onClick={() => {
+                              if (primaryFileObject !== null && primaryFileObject !== "loading") {
+                                    setIsOpen(true)
+                              } else if (primaryFileObject === "loading") {
+                                    toast.error("File is still loading, please wait a moment and try again")
+                              } else {
+                                    toast.error("Error loading file, please refresh the page and try again")
+                              }
+                        }}
                         className="flex items-center space-x-1 bg-yellow-100 text-yellow-700 px-3 py-2 rounded hover:bg-yellow-200 transition-colors text-xs w-full justify-center"
                   >
                         <LuLink2 className="w-4 h-4" />
@@ -174,7 +207,7 @@ export const LinkButton = ({ item, nonce, index }: IShareButton) => {
                                                             Link AquaTree
                                                       </h4>
                                                       <p className="text-sm text-gray-500 mt-1">
-                                                            Connect {item.fileObject[0].fileName} to another file
+                                                            Connect {(primaryFileObject && primaryFileObject !== "loading" ? primaryFileObject.fileName : "")} to another file
                                                       </p>
                                                 </div>
                                           </div>
@@ -182,12 +215,12 @@ export const LinkButton = ({ item, nonce, index }: IShareButton) => {
                               </DialogHeader>
 
                               <div className="flex-1 px-6 py-4 space-y-6 overflow-auto">
-                                    {files?.length <= 1 ? (
+                                    {files?.fileData.length <= 1 ? (
                                           <Alert className="border-orange-200 bg-orange-50">
                                                 <AlertCircle className="h-4 w-4 text-orange-600" />
                                                 <AlertTitle className="text-orange-800">Multiple files needed</AlertTitle>
                                                 <AlertDescription className="text-orange-700">
-                                                      For linking to work you need multiple files, currently you only have {files?.length}.
+                                                      For linking to work you need multiple files, currently you only have {files?.fileData.length}.
                                                 </AlertDescription>
                                           </Alert>
                                     ) : (
@@ -214,7 +247,10 @@ export const LinkButton = ({ item, nonce, index }: IShareButton) => {
                                                       {/* File List */}
                                                       <div className="border border-gray-200 rounded-lg overflow-hidden flex-1">
                                                             <div className="max-h-96 min-h-80 overflow-y-auto">
-                                                                  {files?.map((itemLoop: ApiFileInfo, fileIndex: number) => {
+                                                                  
+                                                                  {files?.fileData.map((itemLoop: ApiFileInfo, fileIndex: number) => {
+                                                                        //  console.log(`   ^^^^  file: ${JSON.stringify(files, null, 4)}`)
+                                                                        //  console.log(`  ^^^^^   itemLoop: ${JSON.stringify(itemLoop, null, 4)}`)
                                                                         const keys = Object.keys(itemLoop.aquaTree!.revisions!)
                                                                         const keysPar = Object.keys(item.aquaTree!.revisions!)
                                                                         const res = areArraysEqual(keys, keysPar)
@@ -248,15 +284,14 @@ export const LinkButton = ({ item, nonce, index }: IShareButton) => {
                                                                         const fileObject = getAquaTreeFileObject(itemLoop)
 
                                                                         if (fileObject) {
-                                                                              const isSelected = linkItem != null && 
+                                                                              const isSelected = linkItem != null &&
                                                                                     Object.keys(linkItem?.aquaTree?.revisions!)[0] === Object.keys(itemLoop.aquaTree?.revisions!)[0]
-                                                                              
+
                                                                               return (
-                                                                                    <div 
-                                                                                          key={fileIndex} 
-                                                                                          className={`px-4 py-4 border-b border-gray-100 hover:bg-gray-50 transition-colors cursor-pointer ${
-                                                                                                isSelected ? 'bg-blue-50 border-blue-200' : ''
-                                                                                          }`}
+                                                                                    <div
+                                                                                          key={fileIndex}
+                                                                                          className={`px-4 py-4 border-b border-gray-100 hover:bg-gray-50 transition-colors cursor-pointer ${isSelected ? 'bg-blue-50 border-blue-200' : ''
+                                                                                                }`}
                                                                                           onClick={() => {
                                                                                                 if (isSelected) {
                                                                                                       setLinkItem(null)
@@ -283,16 +318,17 @@ export const LinkButton = ({ item, nonce, index }: IShareButton) => {
                                                                                                       <div className="flex items-center space-x-2 mb-2">
                                                                                                             <FileText className="w-4 h-4 text-blue-500 flex-shrink-0" />
                                                                                                             <span className="font-medium text-sm text-gray-900 truncate">
-                                                                                                                  {itemLoop.fileObject[0].fileName}
+                                                                                                                  {/* {(primaryFileObject && primaryFileObject !== "loading" ? primaryFileObject.fileName : "")} */}
+                                                                                                                  {fileObject.fileName}
                                                                                                             </span>
                                                                                                       </div>
-                                                                                                      
+
                                                                                                       {isWorkFlow && workFlow != 'aqua_sign' && (
                                                                                                             <div className="space-y-1">
                                                                                                                   <div className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-700">
                                                                                                                         Workflow: {capitalizeWords(workFlow.replace(/_/g, ' '))}
                                                                                                                   </div>
-                                                                                                                  {showClaimExtraInfo({isWorkFlow, workFlow }, itemLoop)}
+                                                                                                                  {showClaimExtraInfo({ isWorkFlow, workFlow }, itemLoop)}
                                                                                                             </div>
                                                                                                       )}
                                                                                                 </div>
@@ -331,19 +367,19 @@ export const LinkButton = ({ item, nonce, index }: IShareButton) => {
 
                               <DialogFooter className="px-6 py-4 border-t border-gray-200 bg-gray-50 flex-shrink-0">
                                     <div className="flex justify-between w-full">
-                                          <Button 
-                                                variant="outline" 
-                                                onClick={cancelClick} 
+                                          <Button
+                                                variant="outline"
+                                                onClick={cancelClick}
                                                 data-testid="link-cancel-action-button"
                                                 disabled={linking}
                                           >
                                                 Cancel
                                           </Button>
 
-                                          {files?.length > 1 && (
-                                                <Button 
-                                                      onClick={handleLink} 
-                                                      disabled={linking || linkItem === null} 
+                                          {files?.fileData.length > 1 && (
+                                                <Button
+                                                      onClick={handleLink}
+                                                      disabled={linking || linkItem === null}
                                                       data-testid="link-modal-action-button-dialog"
                                                       className="bg-yellow-600 hover:bg-yellow-700 text-white"
                                                 >

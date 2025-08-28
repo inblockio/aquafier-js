@@ -39,7 +39,7 @@ const WalletAdrressClaim = forwardRef<HTMLDivElement, IWalletAdrressClaim>(
             }
 
             useEffect(() => {
-                  const identityClaimDetails = getWalletClaims(systemFileInfo, files, walletAddress, setSelectedFileInfo)
+                  const identityClaimDetails = getWalletClaims(systemFileInfo, files.fileData, walletAddress, setSelectedFileInfo)
                   setIdentityClaimDetails(identityClaimDetails)
             },[])
 
@@ -83,7 +83,7 @@ const WalletAdrressClaim = forwardRef<HTMLDivElement, IWalletAdrressClaim>(
                               </HoverCardTrigger>
                               <HoverCardContent className='w-[350px] p-0'>
                                     <Suspense fallback={<p className='p-6'>Loading...</p>}>
-                                    <WalletAddressProfile walletAddress={walletAddress} showShadow={false} />
+                                    <WalletAddressProfile walletAddress={walletAddress} showShadow={false} noBg={true} />
                                     </Suspense>
                               </HoverCardContent>
                         </HoverCard>

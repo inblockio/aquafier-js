@@ -100,9 +100,10 @@ export default async function explorerController(fastify: FastifyInstance) {
             }
 
 
+
+
             // Process individual .aqua.json files
-            //todo fix me to check for workflo
-            await processAquaFiles(zipData, session.address, templateId, false);
+            await processAquaFiles(zipData, session.address, templateId);
 
             // Return response with file info
             const host = request.headers.host || `${getHost()}:${getPort()}`;
@@ -123,7 +124,6 @@ export default async function explorerController(fastify: FastifyInstance) {
             });
         }
     });
-
 
 
     fastify.post('/explorer_aqua_file_upload', async (request, reply) => {
@@ -378,16 +378,16 @@ export default async function explorerController(fastify: FastifyInstance) {
             // THE FRON END  SHOULD USE FETCH API FILE INF0
 
 
-            let displayData: Array<{
-                aquaTree: AquaTree;
-                fileObject: FileObject[];
-            }> = []
-            if (session.address == walletAddress) {
+            // let displayData: Array<{
+            //     aquaTree: AquaTree;
+            //     fileObject: FileObject[];
+            // }> = []
+            // if (session.address == walletAddress) {
 
-                // Construct the full URL
-                const url = `${protocol}://${host}`;
-                displayData = await getUserApiFileInfo(url, walletAddress)
-            }
+            //     // Construct the full URL
+            //     const url = `${protocol}://${host}`;
+            //     displayData = await getUserApiFileInfo(url, walletAddress)
+            // }
 
             if (walletAddress !== session.address) {
                 try {
@@ -408,7 +408,7 @@ export default async function explorerController(fastify: FastifyInstance) {
             return reply.code(200).send({
                 success: true,
                 message: 'Aqua tree saved successfully',
-                files: displayData
+                // files: displayData
             });
         } catch (error : any) {
             console.error('\n\n Specific error in file/fileIndex creation:', error);
@@ -845,7 +845,7 @@ export default async function explorerController(fastify: FastifyInstance) {
                     }
                 ]
             const entireChain = await fetchAquatreeFoUser(url, latest)//(latestRevisionHash, userAddress, url);
-
+ 
             // Check if the user exists (create if not)
             const targetUser = await prisma.users.findUnique({
                 where: { address: session.address }
@@ -865,7 +865,8 @@ export default async function explorerController(fastify: FastifyInstance) {
                 return reply.code(400).send({ success: false, message: "Multiple revisions found for the provided hash. Please provide a unique revision hash." });
             }
 
-
+            // console.log("Just before transfer: ", JSON.stringify(entireChain[0], null, 4))
+            // throw new Error("Just before transfer");
 
             // Transfer the chain to the target user (session.address)
             const transferResult = await transferRevisionChainData(

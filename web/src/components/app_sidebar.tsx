@@ -8,10 +8,12 @@ import { formatBytes, getAquaTreeFileObject } from '@/utils/functions'
 import { useStore } from 'zustand'
 import appStore from '@/store'
 import { useState } from 'react'
+import { WebConfig } from '@/types/types'
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
-      const { files, setOpenDialog } = useStore(appStore)
-
+      const { files, setOpenDialog,  webConfig , setWebConfig } = useStore(appStore)
+  
+       const [webConfigData, setWebConfigData] = useState<WebConfig>(webConfig)
       const [usedStorage, setUsedStorage] = useState<number>(0)
       const [totalStorage, _setTotalStorage] = useState<number>(maxUserFileSizeForUpload)
       const [usagePercentage, setUsagePercentage] = useState<number>(0)
@@ -22,11 +24,11 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       const { toggleSidebar } = useSidebar()
 
       const calcukateStorage = () => {
-            if (files.length == 0) {
+            if (files.fileData.length == 0) {
                   return
             }
             let usedStorageByUser = 0
-            for (const item of files) {
+            for (const item of files.fileData) {
                   const mainFileObject = getAquaTreeFileObject(item)
                   usedStorageByUser += mainFileObject?.fileSize ?? 0
             }
@@ -37,7 +39,15 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       }
       React.useEffect(() => {
             calcukateStorage()
-      }, [])
+
+                  if (webConfig.BACKEND_URL == undefined) {
+                        (async () => {
+                              const config: WebConfig = await fetch('/config.json').then(res => res.json())
+                              setWebConfig(config)
+                              setWebConfigData(config)
+                        })()
+                  }
+            }, [])
 
       React.useEffect(() => {
             calcukateStorage()
@@ -66,6 +76,21 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             },
       ]
 
+      const getLogoUrl = (config: WebConfig ): string | undefined => {
+            console.log("Config in sidebar ", config);
+            if (typeof config.CUSTOM_LOGO_URL === 'string'  &&  config.CUSTOM_LOGO_URL != "true" ) {
+                  console.log("Custom logo url ", config.CUSTOM_LOGO_URL);
+                  return config.CUSTOM_LOGO_URL;
+            }
+            if (!config.CUSTOM_LOGO_URL) {
+                  console.log("Default logo url ");
+                  return '/images/logo.png';
+            }
+            console.log("No logo url ");
+            return undefined; // when it's boolean
+      };
+
+
       return (
             <Sidebar {...props}>
                   <SidebarHeader>
@@ -80,14 +105,19 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                                           textDecoration: 'none',
                                     }}
                               >
-                                    <img className="h-[36px]" src="/images/logo.png" />
+                                    {
+                                          getLogoUrl(webConfigData) && (
+                                                <img className="h-[36px]" src={getLogoUrl(webConfigData)} />
+                                          )
+                                    }
+
                               </a>
                         </div>
                   </SidebarHeader>
                   <SidebarContent className="gap-0">
                         <div className="flex-1 p-4">
                               <nav className="space-y-2">
-                                    <div className='my-3'/>
+                                    <div className='my-3' />
                                     {sidebarItems.map((item, index) => (
                                           <CustomNavLink
                                                 key={`app_${index}`}
@@ -157,13 +187,13 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                                     dialogType: 'early_bird_offer',
                                     isOpen: true,
                                     onClose: () => setOpenDialog(null),
-                                    onConfirm: (data) => {
+                                    onConfirm: () => {
                                           // Handle confirmation logic here
-                                          console.log('Early bird offer confirmed with data:', data)
+                                          //  console.log('Early bird offer confirmed with data:', data)
                                     }
                               })
                         }}>
-                              {files.length > 0 ? (
+                              {files.fileData.length > 0 ? (
                                     <>
                                           <div className="bg-gray-50 p-4 rounded-lg">
                                                 {/* Storage Header */}

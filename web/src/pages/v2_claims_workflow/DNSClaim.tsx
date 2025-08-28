@@ -166,7 +166,7 @@ const DNSClaim = ({ claimInfo, apiFileInfo, nonce, sessionAddress }: IDNSClaim) 
 
                   const result: VerificationResult = await response.json()
                   setVerificationResult(result)
-                  console.log(`logs ${JSON.stringify(result, null, 4)}`)
+                  //  console.log(`logs ${JSON.stringify(result, null, 4)}`)
 
                   if (result.success) {
                         setVerificationStatus('verified')

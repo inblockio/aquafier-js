@@ -44,7 +44,7 @@ export default function FilesListItem({
                   try {
                         return getAquaTreeFileName(e.aquaTree!)
                   } catch (e) {
-                        console.log('Error processing system file') // More descriptive
+                        //  console.log('Error processing system file') // More descriptive
                         return ''
                   }
             })
@@ -52,7 +52,7 @@ export default function FilesListItem({
             const fileObject = getAquaTreeFileObject(file)
             setCurrentFileObject(fileObject)
             const workFlow = isWorkFlowData(file.aquaTree!, someData)
-            // console.log(
+            // //  console.log(
             //     `Workflow info for some data ${JSON.stringify(someData, null, 4)} file ${getAquaTreeFileName(file.aquaTree!)}: ${JSON.stringify(workFlow, null, 4)}`
             // )
             setWorkFlowInfo(workFlow)
@@ -60,12 +60,12 @@ export default function FilesListItem({
 
       useEffect(() => {
 
-            // console.log(`FilesListItem  useEffect ---- `)
+            // //  console.log(`FilesListItem  useEffect ---- `)
             const someData = systemFileInfo.map(e => {
                   try {
                         return getAquaTreeFileName(e.aquaTree!)
                   } catch (e) {
-                        console.log('Error processing system file')
+                        //  console.log('Error processing system file')
                         return ''
                   }
             })
@@ -74,7 +74,7 @@ export default function FilesListItem({
             setCurrentFileObject(fileObject)
             const workFlow = isWorkFlowData(file.aquaTree!, someData)
 
-            // console.log(`systemFileInfo ${systemFileInfo} someData ${someData} -- workFlow ${JSON.stringify(workFlow, null, 4)} `)
+            // //  console.log(`systemFileInfo ${systemFileInfo} someData ${someData} -- workFlow ${JSON.stringify(workFlow, null, 4)} `)
             setWorkFlowInfo(workFlow)
       }, [file, systemFileInfo])
 
@@ -141,8 +141,8 @@ export default function FilesListItem({
             const currentFileRevisionHashes = Object.keys(currentFileAquaTree.revisions)
             const firstRevision = currentFileAquaTree.revisions[currentFileRevisionHashes[0]]
 
-            for (let i = 0; i < files.length; i++) {
-                  const claimFile: ApiFileInfo = files[i]
+            for (let i = 0; i < files.fileData.length; i++) {
+                  const claimFile: ApiFileInfo = files.fileData[i]
                   const aquaTree = OrderRevisionInAquaTree(claimFile.aquaTree!)
                   const revisionHashes = Object.keys(aquaTree.revisions)
 
@@ -229,10 +229,10 @@ export default function FilesListItem({
       }
 
       const showActionsButton = () => {
-            // console.log(
+            // //  console.log(
             //     `workflowInfo data ${JSON.stringify(workflowInfo, null, 4)}`
             // )
-            // console.log('workflowInfo: ', workflowInfo)
+            // //  console.log('workflowInfo: ', workflowInfo)
             if (workflowInfo?.isWorkFlow == true && workflowInfo.workFlow == 'aqua_sign') {
                   return workFlowAquaSignActions()
             }
@@ -408,6 +408,53 @@ export default function FilesListItem({
                         return <div className="flex flex-nowrap  text-xs text-gray-500">
                                     <p className="text-xs">Domain : &nbsp;</p>
                                     <p className="text-xs ">{domain}</p>
+                              </div>
+                      
+                  }
+
+            }
+
+
+             if (workflowInfo?.workFlow == "email_claim") {
+
+                  let genesisHash = getGenesisHash(file.aquaTree!)
+                  if (!genesisHash) {
+                        return <div />
+                  }
+                  let genRevision = file.aquaTree?.revisions[genesisHash]
+                  if (!genRevision) {
+                        return <div />
+                  }
+
+                  let phoneNumber = genRevision[`forms_email`]
+
+                  if (phoneNumber) {
+                        return <div className="flex flex-nowrap  text-xs text-gray-500">
+                                    <p className="text-xs">Email Address : &nbsp;</p>
+                                    <p className="text-xs ">{phoneNumber}</p>
+                              </div>
+                      
+                  }
+
+            }
+
+            if (workflowInfo?.workFlow == "phone_number_claim") {
+
+                  let genesisHash = getGenesisHash(file.aquaTree!)
+                  if (!genesisHash) {
+                        return <div />
+                  }
+                  let genRevision = file.aquaTree?.revisions[genesisHash]
+                  if (!genRevision) {
+                        return <div />
+                  }
+
+                  let phoneNumber = genRevision[`forms_phone_number`]
+
+                  if (phoneNumber) {
+                        return <div className="flex flex-nowrap  text-xs text-gray-500">
+                                    <p className="text-xs">Phone Number : &nbsp;</p>
+                                    <p className="text-xs ">{phoneNumber}</p>
                               </div>
                       
                   }

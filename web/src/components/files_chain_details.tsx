@@ -46,7 +46,7 @@ export const CompleteChainView = ({ callBack, selectedFileInfo }: ICompleteChain
                   })
                   if (!response.ok) throw new Error('Failed to fetch file')
                   const contentType = response.headers.get('Content-Type') || ''
-                  console.log('Content type: ', contentType)
+                  //  console.log('Content type: ', contentType)
                   if (contentType.startsWith('text/') || ['application/json', 'application/xml', 'application/javascript'].includes(contentType)) {
                         return await response.text()
                   }
@@ -144,7 +144,7 @@ export const CompleteChainView = ({ callBack, selectedFileInfo }: ICompleteChain
                   setSelectedFileAWorkFlow(isWorkFlowData(selectedFileInfo.aquaTree!, names).isWorkFlow)
             }
       }, [JSON.stringify(Object.keys(selectedFileInfo?.aquaTree?.revisions || {})), deletedRevisions.length])
-console.log(selectedFileInfo)
+//  console.log(selectedFileInfo)
       return (
             <div className=" h-full">
                   <div className="grid grid-cols-1 md:grid-cols-12 gap-4 h-full">

@@ -20,17 +20,17 @@ export const SignatureOverlay = ({
       if (!pdfMainContainerRef) return null
       if (signature.page !== currentPage || !signature.signatureId) return null
 
-      // console.log(`Signature overlay ${JSON.stringify(position, null, 2)} ---- ${JSON.stringify(signatures, null, 2)}`);
+      // //  console.log(`Signature overlay ${JSON.stringify(position, null, 2)} ---- ${JSON.stringify(signatures, null, 2)}`);
       // const signature = signatures.find(sig => sig.id === position.signatureId);
       // if (!signature) return <></>;
 
       // return <Text>{JSON.stringify(position, null, 4)}</Text>
       // Find the actual PDF element for proper positioning
-      const pdfElement = pdfMainContainerRef.current?.querySelector('.react-pdf__Page')
-      const pdfRect = pdfElement?.getBoundingClientRect()
+      // const pdfElement = pdfMainContainerRef.current?.querySelector('.react-pdf__Page')
+      // const pdfRect = pdfElement?.getBoundingClientRect()
 
       // if (!pdfElement || !pdfRect) return null;
-      console.log('PDF rect', pdfRect)
+      //  console.log('PDF rect', pdfRect)
       return (
             <div
                   className="absolute overflow-hidden hover:shadow-[0_0_0_1px_blue] transition-[border] duration-200 ease-in-out"

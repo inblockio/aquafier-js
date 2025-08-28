@@ -81,7 +81,7 @@ const WorkflowTableItem = ({ workflowName, apiFileInfo, index = 0 }: IWorkflowIt
 
             let claimGenHash = getGenesisHash(apiFileInfo.aquaTree!)
             if (!claimGenHash) {
-                  console.log('No genesis hash found for file:', apiFileInfo)
+                  //  console.log('No genesis hash found for file:', apiFileInfo)
                   return
             }
 
@@ -90,32 +90,32 @@ const WorkflowTableItem = ({ workflowName, apiFileInfo, index = 0 }: IWorkflowIt
             const firstRevsion = apiFileInfo.aquaTree?.revisions[allHashes[0]]
             if (firstRevsion) {
                   let formName = firstRevsion[`forms_name`]
-                  // console.log(`----------forms name ${formName}`)
+                  // //  console.log(`----------forms name ${formName}`)
                   if (formName) {
                         setClaimName(formName)
                   }
             }
 
             let attestationsCount = 0
-            for (const file of files) {
-                  // console.log('Processing file:', JSON.stringify(file.aquaTree, null, 4))
+            for (const file of files.fileData) {
+                  // //  console.log('Processing file:', JSON.stringify(file.aquaTree, null, 4))
                   let allHashes = Object.keys(file.aquaTree?.revisions || {})
                   if (allHashes.length >= 2) {
-                        // console.log('Found multiple revisions:', allHashes)
+                        // //  console.log('Found multiple revisions:', allHashes)
                         if (allHashes[0] === claimGenHash) {
-                              console.log('Found claim genesis hash match:', claimGenHash, 'file item ie same file:')
+                              //  console.log('Found claim genesis hash match:', claimGenHash, 'file item ie same file:')
                               continue
                         }
                         const firstRevsion = file.aquaTree?.revisions[allHashes[0]]
                         if (!firstRevsion) {
-                              console.log('First revision not found for file:', JSON.stringify(file, null, 4))
+                              //  console.log('First revision not found for file:', JSON.stringify(file, null, 4))
                               continue
                         }
 
                         const secondRevsion = file.aquaTree?.revisions[allHashes[1]]
-                        // console.log(`here..... ${JSON.stringify(secondRevsion, null, 4)}`)
+                        // //  console.log(`here..... ${JSON.stringify(secondRevsion, null, 4)}`)
                         if (secondRevsion && secondRevsion.revision_type === 'link') {
-                              // console.log('Found second revision link:', secondRevsion)
+                              // //  console.log('Found second revision link:', secondRevsion)
                               const linkVerificationHash = secondRevsion.link_verification_hashes![0]
                               if (!linkVerificationHash) {
                                     continue
@@ -123,9 +123,9 @@ const WorkflowTableItem = ({ workflowName, apiFileInfo, index = 0 }: IWorkflowIt
                               let fileIndexName = file.aquaTree?.file_index[linkVerificationHash]
                               if (fileIndexName && fileIndexName == `identity_attestation.json`) {
                                     let claimId = firstRevsion[`forms_identity_claim_id`]
-                                    // console.log('Found claim ID:', claimId, 'for file item:', fileIndexName)
+                                    // //  console.log('Found claim ID:', claimId, 'for file item:', fileIndexName)
                                     if (claimId.trim() === claimGenHash.trim()) {
-                                          // console.log('Found attestation for claim:', claimId, 'file item:', fileIndexName)
+                                          // //  console.log('Found attestation for claim:', claimId, 'file item:', fileIndexName)
                                           attestationsCount += 1
                                     }
                               }
@@ -233,7 +233,7 @@ const ClaimsAndAttestationPage = () => {
                   try {
                         return getAquaTreeFileName(e.aquaTree!)
                   } catch (e) {
-                        console.log('Error processing system file') // More descriptive
+                        //  console.log('Error processing system file') // More descriptive
                         return ''
                   }
             })
@@ -243,12 +243,12 @@ const ClaimsAndAttestationPage = () => {
             let myAttestions = 0
             const newData: IWorkflowItem[] = []
             // files.forEach(file => {
-            for (const file of files) {
+            for (const file of files.fileData) {
                   // const fileObject = getAquaTreeFileObject(file);
                   const { workFlow, isWorkFlow } = isWorkFlowData(file.aquaTree!, someData)
 
 
-                  console.log(`workFlow ${workFlow}  isWorkFlow ${isWorkFlow}`)
+                  //  console.log(`workFlow ${workFlow}  isWorkFlow ${isWorkFlow}`)
                   if (isWorkFlow && workFlow === 'identity_attestation') {
                         totolAttestors += 1
                         let allHashes = Object.keys(file.aquaTree?.revisions || {})
@@ -262,11 +262,11 @@ const ClaimsAndAttestationPage = () => {
                               }
                         }
                   }
-                  // console.log('Processing file:', JSON.stringify(file.aquaTree!, null,), 'WorkFlow:', workFlow, 'isWorkFlow:', isWorkFlow)
+                  // //  console.log('Processing file:', JSON.stringify(file.aquaTree!, null,), 'WorkFlow:', workFlow, 'isWorkFlow:', isWorkFlow)
                   if (isWorkFlow && ["identity_claim", "email_claim", "domain_claim", "phone_number_claim", "user_signature"].includes(workFlow.trim())) {
                         let allHashes = Object.keys(file.aquaTree?.revisions || {})
                         if (allHashes.length < 2) {
-                              console.log('Not enough revisions for file:', file)
+                              //  console.log('Not enough revisions for file:', file)
                               continue
                         }
 
@@ -277,17 +277,17 @@ const ClaimsAndAttestationPage = () => {
                         const signatureRevision = file.aquaTree?.revisions[allHashes[signatureReisionIndex]]
 
                         if (!signatureRevision) {
-                              console.log('Last revision not found for file:', JSON.stringify(file, null, 4))
+                              //  console.log('Last revision not found for file:', JSON.stringify(file, null, 4))
                               continue
                         }
 
                         if (signatureRevision.revision_type !== 'signature') {
-                              console.log('Last revision is not a signature:', signatureRevision)
+                              //  console.log('Last revision is not a signature:', signatureRevision)
                               continue
                         }
 
                         if (signatureRevision.signature_wallet_address == session?.address) {
-                              // console.log('Signature wallet address matches session address:', signatureRevision.signature_wallet_address, session?.address)
+                              // //  console.log('Signature wallet address matches session address:', signatureRevision.signature_wallet_address, session?.address)
                               const currentName = getAquaTreeFileName(file.aquaTree!)
                               const containsCurrentName: IWorkflowItem | undefined = newData.find((e: IWorkflowItem) => {
                                     if (e && e.apiFileInfo && e.apiFileInfo.aquaTree) {
@@ -301,13 +301,13 @@ const ClaimsAndAttestationPage = () => {
                                           apiFileInfo: file,
                                     })
                               }else{
-                                   console.log(`here not added `) 
+                                   //  console.log(`here not added `) 
                               }
                         }
 
                         totolClaims += 1
                   }else{
-                        console.log(`does not include ${workFlow}`)
+                        //  console.log(`does not include ${workFlow}`)
                   }
             }
 
@@ -319,7 +319,9 @@ const ClaimsAndAttestationPage = () => {
 
       useEffect(() => {
             processFilesToGetWorkflows()
-      }, [JSON.stringify(files)])
+      // }, [JSON.stringify(files)])
+         }, [files.fileData.map(e => Object.keys(e?.aquaTree?.file_index ?? {})).join(','), systemFileInfo.map(e => Object.keys(e?.aquaTree?.file_index??{})).join(',')])
+
 
       useEffect(() => {
             processFilesToGetWorkflows()

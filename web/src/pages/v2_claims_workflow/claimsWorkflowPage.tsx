@@ -21,6 +21,7 @@ import WalletAddressProfile from './WalletAddressProfile'
 import PhoneNumberClaim from './PhoneNumberClaim'
 import EmailClaim from './EmailClaim'
 import UserSignatureClaim from './UserSignatureClaim'
+import { AddressView } from './AddressView'
 
 
 export default function ClaimsWorkflowPage() {
@@ -89,13 +90,13 @@ export default function ClaimsWorkflowPage() {
                   try {
                         return getAquaTreeFileName(e.aquaTree!)
                   } catch (e) {
-                        // console.log('Error processing system file')
+                        // //  console.log('Error processing system file')
                         return ''
                   }
             })
             const _attestations: Array<ApiFileInfo> = []
-            for (let i = 0; i < files.length; i++) {
-                  const file: ApiFileInfo = files[i]
+            for (let i = 0; i < files.fileData.length; i++) {
+                  const file: ApiFileInfo = files.fileData[i]
                   // const fileObject = getAquaTreeFileObject(file)
 
                   const { isWorkFlow, workFlow } = isWorkFlowData(file.aquaTree!, aquaTemplates)
@@ -111,7 +112,7 @@ export default function ClaimsWorkflowPage() {
             setIsLoading(true)
             if (!walletAddress) {
                   toast.info('Please select a wallet address')
-                  console.log('Please select a wallet address')
+                  //  console.log('Please select a wallet address')
                   setIsLoading(false)
                   return
             }
@@ -122,7 +123,7 @@ export default function ClaimsWorkflowPage() {
                   try {
                         return getAquaTreeFileName(e.aquaTree!)
                   } catch (e) {
-                        // console.log('Error processing system file')
+                        // //  console.log('Error processing system file')
                         return ''
                   }
             })
@@ -132,8 +133,8 @@ export default function ClaimsWorkflowPage() {
             const _claims: Array<{ file: ApiFileInfo; processedInfo: ClaimInformation, attestations: Array<IAttestationEntry>, sharedContracts: Contract[] }> = []
 
             // We loop through files to find claims that match the wallet address
-            for (let i = 0; i < files.length; i++) {
-                  const file: ApiFileInfo = files[i]
+            for (let i = 0; i < files.fileData.length; i++) {
+                  const file: ApiFileInfo = files.fileData[i]
                   // const fileObject = getAquaTreeFileObject(file)
 
                   const { isWorkFlow, workFlow } = isWorkFlowData(file.aquaTree!, aquaTemplates)
@@ -233,15 +234,25 @@ export default function ClaimsWorkflowPage() {
 
       useEffect(() => {
             processAllAddressClaims()
-      }, [walletAddress, JSON.stringify(files)])
+      // }, [walletAddress, JSON.stringify(files)])
+   }, [files.fileData.map(e => Object.keys(e?.aquaTree?.file_index ?? {})).join(','), systemFileInfo.map(e => Object.keys(e?.aquaTree?.file_index??{})).join(','), walletAddress])
 
       return (
             <div className='py-6 flex flex-col gap-4'>
 
-                  <div className='flex items-center gap-2 flex-col text-center'>
-                        <h2 className="text-2xl font-bold">Wallet Address Profile</h2>
-                        <h3 className="text-lg">{walletAddress}</h3>
-                        {/* <CopyButton text={walletAddress} /> */}
+                  <div className="bg-gradient-to-br from-slate-100 via-blue-50 to-indigo-100 p-4 sm:p-6 lg:p-8 rounded-lg">
+                        <div className="max-w-2xl mx-auto">
+                              <div className="text-center mb-8">
+                                    <h1 className="text-3xl font-bold text-gray-900 mb-2">Identity Profile</h1>
+                                    <p className="text-gray-600">Manage your verified claims and digital identity</p>
+                              </div>
+
+                              <AddressView
+                                    address={`${walletAddress}`}
+                                    className="max-w-full"
+                              />
+
+                        </div>
                   </div>
 
                   {isLoading ? (
@@ -252,21 +263,31 @@ export default function ClaimsWorkflowPage() {
                   ) : null}
 
                   {
-                        claims.length === 0 ? (
-                              <div className="flex items-center justify-center flex-col align-center py-8">
-                                    <span className="text-center font-500 text-2xl">No claims found</span>
+                        (claims.length === 0 && !isLoading) ? (
+                              <div className="bg-blue-50 border border-blue-200 rounded-lg p-6 mx-auto max-w-md">
+                                    <div className="flex items-center justify-center flex-col gap-3">
+                                          <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
+                                                <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                                </svg>
+                                          </div>
+                                          <div className="text-center">
+                                                <h3 className="text-lg font-semibold text-blue-900 mb-1">No Claims Found</h3>
+                                                <p className="text-sm text-blue-700">This wallet address doesn't have any verified claims yet.</p>
+                                          </div>
+                                    </div>
                               </div>
                         ) : null
                   }
 
-                  <div className="container mx-auto py-4 px-1 md:px-4 bg-gray-200 rounded-lg">
+                  <div className="container mx-auto py-4 bg-white rounded-lg">
                         <WalletAddressProfile walletAddress={walletAddress} hideOpenProfileButton={true} />
                   </div>
 
                   <div className="flex flex-col gap-4">
                         {
                               claims.filter(item => ["simple_claim", "identity_claim"].includes(item.processedInfo.claimInformation.forms_type)).map((claim, index) => (
-                                    <div key={`claim_${index}`} className="container mx-auto py-4 px-1 md:px-4 bg-gray-200 rounded-lg">
+                                    <div key={`claim_${index}`} className="container mx-auto py-4 px-1 md:px-4 bg-gray-50 rounded-lg">
                                           {renderClaim(claim)}
                                           <Collapsible className='mt-4 bg-gray-50 p-2 rounded-lg'>
                                                 <CollapsibleTrigger className='cursor-pointer w-full p-2 border-2 border-gray-200 rounded-lg flex justify-between items-center'>
@@ -311,7 +332,7 @@ export default function ClaimsWorkflowPage() {
                         }
                         {
                               claims.filter(item => !["simple_claim", "identity_claim"].includes(item.processedInfo.claimInformation.forms_type)).map((claim, index) => (
-                                    <div key={`claim_${index}`} className="container mx-auto py-4 px-1 md:px-4 bg-gray-200 rounded-lg">
+                                    <div key={`claim_${index}`} className="container mx-auto py-4 px-1 md:px-4 bg-gray-50 rounded-lg">
                                           {renderClaim(claim)}
                                           <Collapsible className='mt-4 bg-gray-50 p-2 rounded-lg'>
                                                 <CollapsibleTrigger className='cursor-pointer w-full p-2 border-2 border-gray-200 rounded-lg flex justify-between items-center'>

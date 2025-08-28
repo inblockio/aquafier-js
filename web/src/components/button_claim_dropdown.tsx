@@ -11,7 +11,7 @@ export default function ClaimTypesDropdownButton() {
   const buttonRef = useRef<HTMLButtonElement>(null);
 
   const handleItemClick = (item: 'identity_claim' | 'dns_claim' | 'user_signature' | 'email_claim' | 'phone_number_claim' ) => {
-    console.log(`Selected: ${item}`);
+    //  console.log(`Selected: ${item}`);
     setIsOpen(false);
 
     setOpenDialog({ dialogType: item, isOpen: true, onClose: () => setOpenDialog(null), onConfirm: () => { } })

@@ -91,21 +91,21 @@ const SignatureWalletAddressCard = ({ walletAddress, signatureHash, index, times
                   try {
                         return getAquaTreeFileName(e.aquaTree!)
                   } catch (e) {
-                        // console.log('Error processing system file') // More descriptive
+                        // //  console.log('Error processing system file') // More descriptive
                         return ''
                   }
             })
 
-            if (files && files.length > 0) {
-                  let attestationFiles = files.filter(file => {
+            if (files && files.fileData.length > 0) {
+                  let attestationFiles = files.fileData.filter(file => {
                         const fileInfo = isWorkFlowData(file.aquaTree!, aquaTemplates)
                         return fileInfo.isWorkFlow && fileInfo.workFlow === 'identity_attestation'
                   })
 
                   const localClaims: IClaim[] = []
                   let _totalAttestations = 0
-                  for (let i = 0; i < files.length; i++) {
-                        const aquaTree = files[i].aquaTree
+                  for (let i = 0; i < files.fileData.length; i++) {
+                        const aquaTree = files.fileData[i].aquaTree
                         if (aquaTree) {
                               const { isWorkFlow, workFlow } = isWorkFlowData(aquaTree!, aquaTemplates)
 
@@ -135,7 +135,7 @@ const SignatureWalletAddressCard = ({ walletAddress, signatureHash, index, times
                                                 claimType: firstRevision.forms_type,
                                                 claimName: firstRevision.forms_name ?? firstRevision.forms_domain,
                                                 attestationsCount: attestationsCount,
-                                                apiFileInfo: files[i],
+                                                apiFileInfo: files.fileData[i],
                                           }
                                           localClaims.push(claimInformation)
                                     }

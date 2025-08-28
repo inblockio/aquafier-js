@@ -79,7 +79,7 @@ export default async function userController(fastify: FastifyInstance) {
                 });
             }
         }
- 
+
         // Check if we should attempt ENS lookup
         const infuraProjectId = process.env.VITE_INFURA_PROJECT_ID;
 
@@ -310,7 +310,7 @@ export default async function userController(fastify: FastifyInstance) {
                     }
                 }
             }
-        } catch (error : any) {
+        } catch (error: any) {
             console.error("Error fetching session:", error);
             return reply.code(500).send({ success: false, message: "Internal server error" });
         }
@@ -363,7 +363,7 @@ export default async function userController(fastify: FastifyInstance) {
                 }
             })
 
-        } catch (error : any) {
+        } catch (error: any) {
             console.error("Error fetching session:", error);
             return reply.code(500).send({ success: false, message: "Internal server error" });
         }
@@ -399,7 +399,7 @@ export default async function userController(fastify: FastifyInstance) {
             await prisma.$transaction(async (tx) => {
                 console.log('Starting user data deletion transaction for user:', userAddress);
 
-                  const deletedNotifications = await tx.notifications.deleteMany({
+                const deletedNotifications = await tx.notifications.deleteMany({
                     where: { receiver: userAddress }
                 });
                 console.log(`Deleted deletedNotifications ${deletedNotifications.count}  records`);
@@ -411,12 +411,12 @@ export default async function userController(fastify: FastifyInstance) {
                 console.log(`Deleted ${deletedLatest.count} latest records`);
 
                 const deletedContracts = await tx.contract.deleteMany({
-                    where: { 
+                    where: {
                         receiver: {
                             contains: userAddress,
                             mode: 'insensitive'
                         },
-                     }
+                    }
                 });
                 console.log(`Deleted ${deletedContracts.count} contracts records`);
 
@@ -473,22 +473,39 @@ export default async function userController(fastify: FastifyInstance) {
                     });
 
                     if (witnessRecords.length > 0) {
-                        // Get unique merkle roots for WitnessEvent deletion
-                        const merkleRoots = witnessRecords
-                            .map(w => w.Witness_merkle_root)
-                            .filter(Boolean) as string[];
 
-                        // Delete WitnessEvent records first
-                        if (merkleRoots.length > 0) {
-                            const deletedWitnessEvents = await tx.witnessEvent.deleteMany({
+                        for (const merkelItem of witnessRecords) {
+                            console.log(`Witness Record - Hash: ${merkelItem.hash}, Merkle Root: ${merkelItem.Witness_merkle_root}`);
+
+
+                            if (merkelItem.Witness_merkle_root == null) {
+                                console.log(`Skipping WitnessEvent deletion for hash ${merkelItem.hash} due to null Merkle root`);
+                                continue;
+                            }
+                            const allWithMerkleRoot = await prisma.witness.findMany({
                                 where: {
                                     Witness_merkle_root: {
-                                        in: merkleRoots
+                                        not: null,
+                                        equals: merkelItem.Witness_merkle_root
                                     }
                                 }
                             });
-                            console.log(`Deleted ${deletedWitnessEvents.count} witness event records`);
+
+                            if (allWithMerkleRoot.length <= 1) {
+                                // delete all witness event 
+                                const deletedWitnessEvents = await tx.witnessEvent.deleteMany({
+                                    where: {
+                                        Witness_merkle_root: {
+                                            equals: merkelItem.Witness_merkle_root
+                                        }
+                                    }
+                                });
+                                console.log(`Deleted ${deletedWitnessEvents.count} witness event records for merkle root ${merkelItem.Witness_merkle_root}`);
+
+                            }
+
                         }
+
 
                         // Delete Witness records
                         const deletedWitness = await tx.witness.deleteMany({
@@ -499,6 +516,8 @@ export default async function userController(fastify: FastifyInstance) {
                             }
                         });
                         console.log(`Deleted ${deletedWitness.count} witness records`);
+
+                     
                     }
 
                     // 3d. Delete AquaForms records
@@ -519,7 +538,7 @@ export default async function userController(fastify: FastifyInstance) {
                                 pubkey_hash: hash
                             }
                         });
-                        
+
                         console.log(`Processing files for revision hash: ${hash}`);
                         await handleFilesDeletion(tx, hash);
                     }
@@ -551,7 +570,7 @@ export default async function userController(fastify: FastifyInstance) {
                 message: 'All user data has been cleared successfully'
             });
 
-        } catch (error : any) {
+        } catch (error: any) {
             console.error('Error clearing user data:', error);
             return reply.code(500).send({
                 success: false,

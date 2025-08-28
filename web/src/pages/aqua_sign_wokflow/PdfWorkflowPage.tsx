@@ -29,7 +29,7 @@ export default function PdfWorkflowPage() {
 
             for (let i = 0; i < hashesToLoopPar.length; i += 3) {
                   const batch = hashesToLoopPar.slice(i, i + 3)
-                  console.log(`Processing batch ${i / 3 + 1}:`, batch)
+                  //  console.log(`Processing batch ${i / 3 + 1}:`, batch)
 
                   let signaturePositionCount = 0
                   const hashSigPosition = batch[0] ?? ''
@@ -93,10 +93,10 @@ export default function PdfWorkflowPage() {
                   if (revisionHashes.length > 4) {
                         // remove the first 4 elements from the revision list
                         fourthItmeHashOnwards = revisionHashes.slice(4)
-                        // console.log(`revisionHashes  ${revisionHashes} --  ${typeof revisionHashes}`)
-                        // console.log(`fourthItmeHashOnwards  ${fourthItmeHashOnwards}`)
+                        // //  console.log(`revisionHashes  ${revisionHashes} --  ${typeof revisionHashes}`)
+                        // //  console.log(`fourthItmeHashOnwards  ${fourthItmeHashOnwards}`)
                         signatureRevionHashes = getSignatureRevionHashes(fourthItmeHashOnwards)
-                        // console.log(`signatureRevionHashes  ${JSON.stringify(signatureRevionHashes, null, 4)}`)
+                        // //  console.log(`signatureRevionHashes  ${JSON.stringify(signatureRevionHashes, null, 4)}`)
 
                         signatureRevionHashesData = signatureRevionHashes
                   }
@@ -156,7 +156,7 @@ export default function PdfWorkflowPage() {
                         try {
                               return getAquaTreeFileName(e.aquaTree!)
                         } catch (e) {
-                              console.log('Error processing system file')
+                              //  console.log('Error processing system file')
                               return ''
                         }
                   })
