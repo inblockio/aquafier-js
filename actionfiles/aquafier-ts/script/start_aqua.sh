@@ -374,9 +374,8 @@ unset PGPASSWORD
 # In your startup script, add this before starting the frontend:
 cat > /app/frontend/config.json << EOF
 {
-
-    "BACKEND_URL_PLACEHOLDER": "$BACKEND_URL",
-    "BACKEND_URL": "$BACKEND_URL",
+  "BACKEND_URL_PLACEHOLDER": "$BACKEND_URL",
+  "BACKEND_URL": "$BACKEND_URL",
   "SENTRY_DSN": "$SENTRY_DSN",
   "CUSTOM_LANDING_PAGE_URL": "$CUSTOM_LANDING_PAGE_URL",
   "CUSTOM_LOGO_URL": "$CUSTOM_LOGO_URL"
