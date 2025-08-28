@@ -3,6 +3,10 @@ import { Github } from 'lucide-react'
 import { BsTwitterX } from 'react-icons/bs'
 import { FaFacebook, FaLinkedin } from 'react-icons/fa6'
 import { Link, Outlet } from 'react-router-dom'
+import appStore from '../store'
+import { useStore } from 'zustand'
+import { useEffect, useState } from 'react'
+import { WebConfig } from '@/types/types'
 
 const Header = () => (
       <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -169,14 +173,43 @@ const Footer = () => (
 )
 
 const TailwindMainLayout = () => {
+
+
+      const { webConfig, setWebConfig } = useStore(appStore)
+
+      const [webConfigData, setWebConfigData] = useState<WebConfig>(webConfig)
+
+      useEffect(() => {
+            if (webConfig.BACKEND_URL == undefined) {
+                  (async () => {
+                        const config: WebConfig = await fetch('/config.json').then(res => res.json())
+                        setWebConfig(config)
+                        setWebConfigData(config)
+                  })()
+            }
+      }, [])
+
+
       return (
-            <div className="bg-background text-foreground font-body flex flex-col min-h-screen">
-                  <Header />
-                  <main className="flex-grow">
-                        <Outlet />
-                  </main>
-                  <Footer />
-            </div>
+            <>
+                  {
+                        webConfigData.CUSTOM_LANDING_PAGE_URL === 'true' || webConfigData.CUSTOM_LANDING_PAGE_URL === true ?
+                              <div>Custom landing page is enabled. Where Your site goes. Set CUSTOM_LANDING_PAGE_URL to false in your environment variables to view default site.</div>
+                              : <>
+                                    <div className="bg-background text-foreground font-body flex flex-col min-h-screen">
+                                          <Header />
+                                          <main className="flex-grow">
+                                                <Outlet />
+                                          </main>
+                                          <Footer />
+                                    </div>
+
+
+                              </>
+                  }
+
+            </>
+
       )
 }
 
