@@ -80,7 +80,14 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                                           textDecoration: 'none',
                                     }}
                               >
-                                    <img className="h-[36px]" src="/images/logo.png" />
+                                    {
+                                          import.meta.env.VITE_CUSTOM_LANDING_PAGE_URL ? (
+                                                <img className="h-[36px]" src={import.meta.env.VITE_CUSTOM_LOGO_URL ? (import.meta.env.VITE_CUSTOM_LOGO_URL) : "/images/logo.png"} />
+                                          ) : (
+                                                <img className="h-[36px]" src="/images/logo.png" />
+                                          )
+                                    }
+                                    
                               </a>
                         </div>
                   </SidebarHeader>

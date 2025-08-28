@@ -598,6 +598,10 @@ const ContactSection = () => (
 )
 
 export default function HomeV2() {
+      if (import.meta.env.VITE_CUSTOM_LANDING_PAGE_URL) {
+          
+            return <div>Custom landing page is  enabled.Where Your site goes.Set VITE_CUSTOM_LANDING_PAGE_URL to false in your environment variables to view default site.</div>
+      }
       return (
             <>
                   <HeroSection />
