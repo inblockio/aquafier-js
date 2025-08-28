@@ -91,6 +91,8 @@ We are committed to making the deployment process as simple as possible. For dev
 2. (prod/dev) prepare your DNS
 3. `docker compose -f deployment/docker-compose-<local|dev|prod>.yml up` (with a -d you can detach from the startup process)
 
+check `install.md` for more a verbose explanation of the above steps.
+
 ### Dev vs Prod vs Local
 Dev and Prod are the same files only with diffrent docker image tags.
 Local has no proxy/letsencrypt container and has exposed ports (for debugging reason).

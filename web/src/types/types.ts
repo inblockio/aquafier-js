@@ -7,6 +7,8 @@ export interface WebConfig {
       CUSTOM_LANDING_PAGE_URL?: string | boolean
       CUSTOM_LOGO_URL?: string | boolean
       BACKEND_URL?: string
+      CUSTOM_NAME?: string
+      CUSTOM_DESCRIPTION?: string
 } 
 export interface DNSProof {
       walletAddress: string;
