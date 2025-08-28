@@ -2,7 +2,7 @@ import { IDBPDatabase, openDB } from 'idb'
 import { createStore } from 'zustand'
 import { createJSONStorage, persist } from 'zustand/middleware'
 import { ApiFileInfo } from './models/FileInfo'
-import { ApiFileData, OpenDialog, Session } from './types/types'
+import { ApiFileData, OpenDialog, Session, WebConfig } from './types/types'
 import { FormTemplate } from './components/aqua_forms/types'
 import { ensureDomainUrlHasSSL } from './utils/functions'
 
@@ -23,6 +23,7 @@ type AppStoreState = {
             status: 'loading' | 'loaded' | 'error' | 'idle'
             error?: string
       }
+      webConfig:WebConfig,
       apiFileData: ApiFileData[]
       systemFileInfo: ApiFileInfo[]
       formTemplates: FormTemplate[]
@@ -45,6 +46,7 @@ type AppStoreActions = {
       setMetamaskAddress: (address: AppStoreState['metamaskAddress']) => void
       setAvatar: (avatar: AppStoreState['avatar']) => void
       setFiles: (files: AppStoreState['files']) => void
+      setWebConfig: (config: AppStoreState['webConfig']) => void
       setSelectedFileInfo: (file: ApiFileInfo | null) => void
       
       setOpenDialog:(state : OpenDialog | null) => void
@@ -179,7 +181,12 @@ const appStore = createStore<TAppStore>()(
                         status: 'idle',
                   },
                   selectedFileInfo: null,
-
+webConfig:{
+      CUSTOM_LANDING_PAGE_URL: false,
+      CUSTOM_LOGO_URL: false,
+      SENTRY_DSN: undefined,
+      BACKEND_URL: undefined,
+},
                   openDialog: null, // Initialize openDialog state
                   // openFilesDetailsPopUp: false,
                   // openCreateTemplatePopUp: false,
@@ -213,6 +220,9 @@ const appStore = createStore<TAppStore>()(
                   setSystemFileInfo: (systemFileInfo: ApiFileInfo[]) => set({ systemFileInfo: systemFileInfo }),
                   setFormTemplate: (apiFormTemplate: FormTemplate[]) => set({ formTemplates: apiFormTemplate }),
                   setContracts: (contractData: any[]) => set({ contracts: contractData }),
+                   setWebConfig(config) {
+                        set({ webConfig: config })     
+                  },
                   addFile: (file: ApiFileInfo) => {
                         const { files } = appStore.getState()
                         files.fileData = [file, ...files.fileData]

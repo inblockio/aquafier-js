@@ -25,6 +25,10 @@ import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Link } from 'react-router-dom'
 import SyntaxHighlighter from 'react-syntax-highlighter'
+import appStore from '../store'
+import { useStore } from 'zustand'
+import { useEffect } from 'react'
+import { WebConfig } from '@/types/types'
 
 const HeroSection = () => (
       <section id="hero" className="relative w-full py-20 md:py-32 bg-gradient-to-b from-background to-orange-50/20 dark:to-orange-900/10">
@@ -598,9 +602,22 @@ const ContactSection = () => (
 )
 
 export default function HomeV2() {
-      if (import.meta.env.VITE_CUSTOM_LANDING_PAGE_URL) {
-          
-            return <div>Custom landing page is  enabled.Where Your site goes.Set VITE_CUSTOM_LANDING_PAGE_URL to false in your environment variables to view default site.</div>
+
+      const { webConfig, setWebConfig } = useStore(appStore)
+
+      useEffect(() => {
+
+            if (webConfig.BACKEND_URL == undefined) {
+                  (async () => {
+                        const config: WebConfig = await fetch('/api/config').then(res => res.json())
+                        setWebConfig(config)
+                  })()
+            }
+      }, [])
+
+
+      if (webConfig.CUSTOM_LANDING_PAGE_URL === 'true' || webConfig.CUSTOM_LANDING_PAGE_URL === true) {
+            return <div>Custom landing page is enabled. Where Your site goes. Set CUSTOM_LANDING_PAGE_URL to false in your environment variables to view default site.</div>
       }
       return (
             <>

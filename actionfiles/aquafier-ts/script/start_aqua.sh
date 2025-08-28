@@ -371,6 +371,16 @@ unset PGPASSWORD
 # Replace backend URL placeholder in config
 sed -i -e "s|BACKEND_URL_PLACEHOLDER|$BACKEND_URL|g" /app/frontend/config.json
 
+# In your startup script, add this before starting the frontend:
+# "BACKEND_URL": "$BACKEND_URL",
+cat > /app/frontend/config.json << EOF
+{
+  "VITE_SENTRY_DSN": "$VITE_SENTRY_DSN",
+  "CUSTOM_LANDING_PAGE_URL": "$CUSTOM_LANDING_PAGE_URL",
+  "CUSTOM_LOGO_URL": "$CUSTOM_LOGO_URL"
+}
+EOF
+
 echo "=== STARTING SERVICES ==="
 
 # Start backend in the background
@@ -400,6 +410,7 @@ EOF
 
 #start cron scheduler
 service cron start
+
 
 # Start serve with the configuration
 echo "Starting frontend..."

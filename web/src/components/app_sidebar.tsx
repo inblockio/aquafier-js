@@ -8,9 +8,11 @@ import { formatBytes, getAquaTreeFileObject } from '@/utils/functions'
 import { useStore } from 'zustand'
 import appStore from '@/store'
 import { useState } from 'react'
+import { WebConfig } from '@/types/types'
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       const { files, setOpenDialog } = useStore(appStore)
+      const { webConfig } = useStore(appStore)
 
       const [usedStorage, setUsedStorage] = useState<number>(0)
       const [totalStorage, _setTotalStorage] = useState<number>(maxUserFileSizeForUpload)
@@ -66,6 +68,17 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             },
       ]
 
+      const getLogoUrl = (config: WebConfig | undefined): string | undefined => {
+            if (typeof config?.CUSTOM_LOGO_URL === 'string') {
+                  return config.CUSTOM_LOGO_URL;
+            }
+            if (!config?.CUSTOM_LOGO_URL) {
+                  return '/images/logo.png';
+            }
+            return undefined; // when it's boolean
+      };
+
+
       return (
             <Sidebar {...props}>
                   <SidebarHeader>
@@ -81,20 +94,18 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                                     }}
                               >
                                     {
-                                          import.meta.env.VITE_CUSTOM_LANDING_PAGE_URL ? (
-                                                <img className="h-[36px]" src={import.meta.env.VITE_CUSTOM_LOGO_URL ? (import.meta.env.VITE_CUSTOM_LOGO_URL) : "/images/logo.png"} />
-                                          ) : (
-                                                <img className="h-[36px]" src="/images/logo.png" />
+                                          getLogoUrl(webConfig) && (
+                                                <img className="h-[36px]" src={getLogoUrl(webConfig)} />
                                           )
                                     }
-                                    
+
                               </a>
                         </div>
                   </SidebarHeader>
                   <SidebarContent className="gap-0">
                         <div className="flex-1 p-4">
                               <nav className="space-y-2">
-                                    <div className='my-3'/>
+                                    <div className='my-3' />
                                     {sidebarItems.map((item, index) => (
                                           <CustomNavLink
                                                 key={`app_${index}`}
