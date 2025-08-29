@@ -247,7 +247,7 @@ const TailwindMainLayout = () => {
                                           {/* Welcome Section */}
                                           <div className="space-y-4">
                                                 <h1 className="text-4xl md:text-5xl font-bold text-gray-900 font-headline">
-                                                      Welcome to {webConfigData.CUSTOM_NAME}
+                                                      Welcome to {webConfigData.CUSTOM_NAME}.
                                                 </h1>
                                                 <p className="text-xl text-gray-600 leading-relaxed max-w-xl mx-auto">
                                                       {webConfigData.CUSTOM_DESCRIPTION}
