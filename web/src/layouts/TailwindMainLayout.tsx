@@ -172,7 +172,7 @@ const Footer = () => (
             </div>
       </footer>
 )
-
+ 
 const TailwindMainLayout = () => {
 
 
@@ -180,6 +180,29 @@ const TailwindMainLayout = () => {
       const [loadingConfig, setLoadingConfig] = useState(true)
 
       const [webConfigData, setWebConfigData] = useState<WebConfig>(webConfig)
+
+      const getLogoUrl = (config: WebConfig): string | undefined => {
+                  // console.log("Config in sidebar ", config);
+                  if (typeof config.CUSTOM_LOGO_URL === 'string') {
+                        // config.CUSTOM_LOGO_URL != "true"
+                        if (config.CUSTOM_LOGO_URL.startsWith('http://') || config.CUSTOM_LOGO_URL.startsWith('https://') || config.CUSTOM_LOGO_URL.startsWith('/')) {
+                              console.log("Custom logo url ", config.CUSTOM_LOGO_URL);
+                              return config.CUSTOM_LOGO_URL;
+                        }
+                        if (config.CUSTOM_LOGO_URL === "true") {
+                              return undefined;
+                        }
+                        // console.log("Default logo url ");
+                        return '/images/logo.png';
+                  }
+                  if (!config.CUSTOM_LOGO_URL) {
+                        // console.log("Default logo url ");
+                        return '/images/logo.png';
+                  }
+                  // console.log("No logo url ");
+                  return undefined; // when it's boolean
+            };
+      
 
       useEffect(() => {
             if (!webConfig.BACKEND_URL || webConfig.BACKEND_URL == "BACKEND_URL_PLACEHOLDER") {
@@ -212,9 +235,9 @@ const TailwindMainLayout = () => {
                                     <div className="max-w-2xl mx-auto text-center space-y-8">
                                           {/* Logo Section */}
                                           <div className="flex justify-center mb-8">
-                                                {webConfigData.CUSTOM_LOGO_URL ? (
+                                                {getLogoUrl(webConfigData) ? (
                                                       <img 
-                                                            src={webConfigData.CUSTOM_LOGO_URL as string} 
+                                                            src={getLogoUrl(webConfigData) as string} 
                                                             alt="Logo" 
                                                             className="h-20 w-auto object-contain"
                                                       />
