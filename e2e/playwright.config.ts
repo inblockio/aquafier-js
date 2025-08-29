@@ -31,7 +31,7 @@ export default defineConfig({
 
     /* Collect trace when retrying the failed test. See https://playwright.dev/docs/trace-viewer */
     trace:  'retain-on-failure',
-    video: 'on-first-retry',
+    video: 'retain-on-failure',
     // Increase timeouts for CI environment
     actionTimeout: 120000,
     navigationTimeout: 60000,
