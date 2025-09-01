@@ -1274,18 +1274,24 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: { selectedTempla
                                                                                                             <button
                                                                                                                   type='button'
                                                                                                                   data-testid={'send-verifcation-ciode-'}
-                                                                                                                  disabled={verfyingFormFieldEnabled == null || verfyingFormFieldEnabled?.isTwilioEnabled == false ? true : false}
+                                                                                                                  disabled={(verfyingFormFieldEnabled == null || verfyingFormFieldEnabled?.isTwilioEnabled) == false ? true : false}
                                                                                                                   onClick={async () => {
 
+                                                                                                                        console.log(`test 1`)
                                                                                                                         if (!verfyingFormFieldEnabled) {
+                                                                                                                              console.log(`test 1.1`)
                                                                                                                               toast.error(`Unable to fetch code verification details`)
                                                                                                                               return
                                                                                                                         }
 
+                                                                                                                        console.log(`test 1.2`)
                                                                                                                         if (verfyingFormFieldEnabled?.isTwilioEnabled == false) {
+                                                                                                                              console.log(`test 1.3`)
                                                                                                                               toast.error(`Twilio is not enables, set the .env and restart the docker container`)
                                                                                                                               return
                                                                                                                         }
+
+                                                                                                                        console.log(`test 1.4`)
 
 
                                                                                                                         setVerifyingFormField(`field-${field.name}`)
