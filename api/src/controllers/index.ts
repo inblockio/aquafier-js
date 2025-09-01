@@ -25,11 +25,13 @@ export default async function indexController(fastify: FastifyInstance) {
             isTwilioEnabled = true
         }
 
+        let dbStatus = await checkDbConnection();
+        
         return { 
             status: 'ok' ,
             isTwilioEnabled : isTwilioEnabled,
             isS3Enabled :  minioClientCompleted(),
-            isDbCOnnectionOk : checkDbConnection()
+            isDbConnectionOk : dbStatus
         };
     });
 }
