@@ -373,11 +373,24 @@ sed -i -e "s|BACKEND_URL_PLACEHOLDER|$BACKEND_URL|g" /app/frontend/config.json
 
 echo "=== STARTING SERVICES ==="
 
+#add apm agent if configured
+if [ -n "${TRACING_ENABLE}" ] && [ "${TRACING_ENABLE}" = 'true' ] && [ -n "${TRACING_SERVICE_NAME}" ] && [ -n "${TRACING_SECRET}" ] && [ -n "${TRACING_URL}" ] && [ -n "${TRACING_ENV}" ]; then
+  export NODE_OPTIONS="--import @elastic/opentelemetry-node"
+  export OTEL_SERVICE_NAME=${TRACING_SERVICE_NAME}
+  export OTEL_EXPORTER_OTLP_ENDPOINT=${TRACING_URL}
+  export OTEL_RESOURCE_ATTRIBUTES="deployment.environment=${TRACING_ENV}, service.name=${TRACING_SERVICE_NAME}"
+  export OTEL_EXPORTER_OTLP_HEADERS="Authorization=Bearer ${TRACING_SECRET}"
+  export OTEL_METRICS_EXPORTER="otlp"
+  export OTEL_LOGS_EXPORTER="otlp"
+  npm install --save @elastic/opentelemetry-node
+fi
+
 # Start backend in the background
 cd /app/backend
 echo "Starting backend..."
 node dist/index.js &
 backend_pid=$!
+export NODE_OPTIONS=""
 
 # Serve frontend
 cd /app/frontend
