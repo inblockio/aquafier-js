@@ -2,6 +2,12 @@ import { LogData, Revision } from 'aqua-js-sdk'
 import { IconType } from 'react-icons/lib'
 import { ApiFileInfo, ClaimInformation, IAttestationEntry } from '../models/FileInfo'
 
+export interface ApiInfoData {
+      status: 'ok',
+      isTwilioEnabled: boolean,
+      isS3Enabled: boolean,
+      isDbCOnnectionOk: boolean
+}
 export interface WebConfig {
       SENTRY_DSN?: string
       CUSTOM_LANDING_PAGE_URL?: string | boolean
@@ -9,7 +15,7 @@ export interface WebConfig {
       BACKEND_URL?: string
       CUSTOM_NAME?: string
       CUSTOM_DESCRIPTION?: string
-} 
+}
 export interface DNSProof {
       walletAddress: string;
       domainName: string;
@@ -20,7 +26,7 @@ export interface DNSProof {
 
 
 export interface OpenDialog {
-      dialogType:  'share_dialog' | 'form_template_editor' | 'aqua_file_details' | 'identity_claim' | 'dns_claim' | 'aqua_sign' | 'identity_attestation' | 'early_bird_offer' | 'user_signature' | 'email_claim' | 'phone_number_claim',//'file' | 'folder' | 'contract' | 'claim' | 'claim-attestation'
+      dialogType: 'share_dialog' | 'form_template_editor' | 'aqua_file_details' | 'identity_claim' | 'dns_claim' | 'aqua_sign' | 'identity_attestation' | 'early_bird_offer' | 'user_signature' | 'email_claim' | 'phone_number_claim',//'file' | 'folder' | 'contract' | 'claim' | 'claim-attestation'
       isOpen: boolean
       onClose: () => void
       onConfirm: (data: any) => void
@@ -38,7 +44,7 @@ export interface IShareButton {
       nonce: string
       children?: React.ReactNode
       index?: number,
-      autoOpenShareDialog ?: boolean
+      autoOpenShareDialog?: boolean
 }
 
 export interface ApiFileData {
