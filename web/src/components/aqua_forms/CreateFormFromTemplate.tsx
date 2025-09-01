@@ -1271,7 +1271,7 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: { selectedTempla
                                                                                           {
                                                                                                 field.is_verifiable && (
                                                                                                       <>
-                                                                                                            <button
+                                                                                                            <Button
                                                                                                                   type='button'
                                                                                                                   data-testid={'send-verifcation-ciode-'}
                                                                                                                   disabled={(verfyingFormFieldEnabled == null || verfyingFormFieldEnabled?.isTwilioEnabled) == false ? true : false}
@@ -1365,7 +1365,7 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: { selectedTempla
                                                                                                                               <span>Send Code</span>
                                                                                                                         </>
                                                                                                                   )}
-                                                                                                            </button>
+                                                                                                            </Button>
 
 
                                                                                                             <div className="flex items-center gap-2">
