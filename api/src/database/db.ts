@@ -18,9 +18,7 @@ async function checkDbConnection() {
   } catch (error) {
     console.error('❌ Failed to connect:', error)
     return false
-  } finally {
-    await prisma.$disconnect()
-  }
+  } 
 }
 
 
