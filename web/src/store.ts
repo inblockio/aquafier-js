@@ -2,7 +2,7 @@ import { IDBPDatabase, openDB } from 'idb'
 import { createStore } from 'zustand'
 import { createJSONStorage, persist } from 'zustand/middleware'
 import { ApiFileInfo } from './models/FileInfo'
-import { ApiFileData, OpenDialog, Session } from './types/types'
+import { ApiFileData, OpenDialog, Session, WebConfig } from './types/types'
 import { FormTemplate } from './components/aqua_forms/types'
 import { ensureDomainUrlHasSSL } from './utils/functions'
 
@@ -18,7 +18,12 @@ type AppStoreState = {
             witness_contract_address: string | null
       }
       session: Session | null
-      files: ApiFileInfo[]
+      files: {
+            fileData: ApiFileInfo[],
+            status: 'loading' | 'loaded' | 'error' | 'idle'
+            error?: string
+      }
+      webConfig: WebConfig,
       apiFileData: ApiFileData[]
       systemFileInfo: ApiFileInfo[]
       formTemplates: FormTemplate[]
@@ -31,7 +36,7 @@ type AppStoreState = {
       // openCreateClaimAttestationPopUp: boolean | null
       metamaskAddress: string | null
       avatar: string | undefined
-      backend_url: string 
+      backend_url: string
       contracts: any[]
 }
 
@@ -41,9 +46,10 @@ type AppStoreActions = {
       setMetamaskAddress: (address: AppStoreState['metamaskAddress']) => void
       setAvatar: (avatar: AppStoreState['avatar']) => void
       setFiles: (files: AppStoreState['files']) => void
+      setWebConfig: (config: AppStoreState['webConfig']) => void
       setSelectedFileInfo: (file: ApiFileInfo | null) => void
-      
-      setOpenDialog:(state : OpenDialog | null) => void
+
+      setOpenDialog: (state: OpenDialog | null) => void
       // setOpenFileDetailsPopUp: (state: boolean | null) => void
       // setOpenCreateTemplatePopUp: (state: boolean | null) => void
       // setOpenCreateAquaSignPopUp: (state: boolean | null) => void
@@ -89,8 +95,8 @@ let dbPromiseInstance: Promise<IDBPDatabase> | null = null
 const getDbPromise = () => {
       if (!dbPromiseInstance) {
             dbPromiseInstance = openDB('aquafier-db', 2, {
-                  upgrade(db, oldVersion, newVersion, _transaction) {
-                        console.log(`Upgrading from version ${oldVersion} to ${newVersion}`)
+                  upgrade(db, _oldVersion, _newVersion, _transaction) {
+                        //  console.log(`Upgrading from version ${oldVersion} to ${newVersion}`)
 
                         // Handle version upgrades properly
                         if (!db.objectStoreNames.contains('store')) {
@@ -170,9 +176,17 @@ const appStore = createStore<TAppStore>()(
                         witness_contract_address: '0x45f59310ADD88E6d23ca58A0Fa7A55BEE6d2a611',
                   },
                   session: null,
-                  files: [],
+                  files: {
+                        fileData: [],
+                        status: 'idle',
+                  },
                   selectedFileInfo: null,
-
+                  webConfig: {
+                        CUSTOM_LANDING_PAGE_URL: false,
+                        CUSTOM_LOGO_URL: false,
+                        SENTRY_DSN: undefined,
+                        BACKEND_URL: undefined,
+                  },
                   openDialog: null, // Initialize openDialog state
                   // openFilesDetailsPopUp: false,
                   // openCreateTemplatePopUp: false,
@@ -206,12 +220,16 @@ const appStore = createStore<TAppStore>()(
                   setSystemFileInfo: (systemFileInfo: ApiFileInfo[]) => set({ systemFileInfo: systemFileInfo }),
                   setFormTemplate: (apiFormTemplate: FormTemplate[]) => set({ formTemplates: apiFormTemplate }),
                   setContracts: (contractData: any[]) => set({ contracts: contractData }),
+                  setWebConfig(config) {
+                        set({ webConfig: config })
+                  },
                   addFile: (file: ApiFileInfo) => {
                         const { files } = appStore.getState()
-                        set({ files: [...files, file] })
+                        files.fileData = [file, ...files.fileData]
+                        set({ files: files })
                   },
                   setBackEndUrl: (backend_url: AppStoreState['backend_url']) => {
-                        console.log(`set backend_url to ${backend_url} `)
+                        //  console.log(`set backend_url to ${backend_url} `)
                         let urlData = ensureDomainUrlHasSSL(backend_url)
                         set({ backend_url: urlData })
                   },

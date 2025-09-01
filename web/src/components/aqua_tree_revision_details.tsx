@@ -159,7 +159,7 @@ const viewLinkedFile = (
                                                       }
 
                                                       if (aquaTree == undefined) {
-                                                            console.log(`show  ${linkedFileName}  filw object ${JSON.stringify(fileObject, null, 4)}`)
+                                                            //  console.log(`show  ${linkedFileName}  filw object ${JSON.stringify(fileObject, null, 4)}`)
                                                             toast.info('View not available')
                                                       } else {
                                                             updateSelectedFile({
@@ -203,25 +203,25 @@ const revisionDataHeader = (aquaTree: AquaTree, revisionHash: string, fileObject
             if (isDeepLink) {
                   // before returning deep link we traverse the current aqua tree
                   const aquaTreeFiles = fileObject.filter(file => isAquaTree(file.fileContent))
-                  console.log(`👁️‍🗨️ aquaTreeFiles ${aquaTreeFiles.length} --  `)
+                  //  console.log(`👁️‍🗨️ aquaTreeFiles ${aquaTreeFiles.length} --  `)
                   if (aquaTreeFiles.length > 0) {
                         const aquaTreePick = aquaTreeFiles.find(e => {
                               const tree: AquaTree = e.fileContent as AquaTree
                               const allHashes = Object.keys(tree.revisions)
 
-                              console.log(`👁️‍🗨️ aquaTreeFiles ${allHashes.toString()} == ${revisionHash} `)
+                              //  console.log(`👁️‍🗨️ aquaTreeFiles ${allHashes.toString()} == ${revisionHash} `)
                               return allHashes.includes(revision.link_verification_hashes![0]!)
                         })
 
-                        console.log(`👁️‍🗨️ aquaTreePick ${JSON.stringify(aquaTreePick, null, 4)} `)
+                        //  console.log(`👁️‍🗨️ aquaTreePick ${JSON.stringify(aquaTreePick, null, 4)} `)
                         if (aquaTreePick) {
                               const tree: AquaTree = aquaTreePick.fileContent as AquaTree
                               const genesisHash = getGenesisHash(tree)
 
-                              console.log(`👁️‍🗨️  genesisHash ${genesisHash}`)
+                              //  console.log(`👁️‍🗨️  genesisHash ${genesisHash}`)
                               if (genesisHash) {
                                     const fileName = tree.file_index[genesisHash]
-                                    console.log(`👁️‍🗨️ fileName ${fileName}`)
+                                    //  console.log(`👁️‍🗨️ fileName ${fileName}`)
 
                                     if (fileName) {
                                           return <span className="text-md">Linked to {fileName}</span>
@@ -346,7 +346,7 @@ export const RevisionDisplay = ({ fileInfo, revision, revisionHash, isVerificati
       const handleDelete = useCallback(async () => {
             if (isDeleting) return // Prevent multiple clicks
 
-            console.log('Deleting revision: ', revisionHash, index)
+            //  console.log('Deleting revision: ', revisionHash, index)
             setIsDeleting(true)
 
             try {
@@ -372,7 +372,10 @@ export const RevisionDisplay = ({ fileInfo, revision, revisionHash, isVerificati
                               const urlPath = `${backend_url}/explorer_files`
                                const url2 = ensureDomainUrlHasSSL(urlPath)
                               const files = await fetchFiles(`${session?.address}`, url2, `${session?.nonce}`)
-                              setFiles(files)
+                              setFiles({
+                                    fileData: files,
+                                    status: 'loaded',
+                              })
 
                               // we need to update the side drawer for reverification to start
                               const selectedFileData = files.find(e => {
@@ -439,7 +442,7 @@ export const RevisionDisplay = ({ fileInfo, revision, revisionHash, isVerificati
                                                 <div className="p-4 text-sm leading-relaxed">
                                                       <TimelineRoot size="lg" variant="subtle" className="max-w-md">
                                                             {revision.revision_type == 'file' || revision.revision_type == 'form' || revision.revision_type == 'link' ? (
-                                                                  <>
+                                                                  
                                                                         <TimelineItem>
                                                                               <TimelineConnector bg={returnBgColor} color={'white'}>
                                                                                     {verificationStatusIcon}
@@ -459,10 +462,10 @@ export const RevisionDisplay = ({ fileInfo, revision, revisionHash, isVerificati
                                                                                                 showCopyIcon={true}
                                                                                           />
                                                                                     ) : null}
-                                                                                    {viewLinkedFile(fileInfo!, revisionHash, revision, files, setSelectedFileInfo, false)}
+                                                                                    {viewLinkedFile(fileInfo!, revisionHash, revision, files.fileData, setSelectedFileInfo, false)}
                                                                               </TimelineContent>
                                                                         </TimelineItem>
-                                                                  </>
+                                                                
                                                             ) : null}
 
                                                             {revision.revision_type == 'signature' ? (
@@ -677,7 +680,7 @@ export const RevisionDetailsSummary = ({ fileInfo, isWorkFlow }: RevisionDetails
                                           <div className="flex-1 flex flex-col">
                                                 {revisionDataHeader(fileInfo!.aquaTree!, revisionHash, fileInfo!.fileObject)}
                                                 <div className="my-2"></div>
-                                                {viewLinkedFile(fileInfo!, revisionHash, revision!, files, setSelectedFileInfo, isWorkFlow)}
+                                                {viewLinkedFile(fileInfo!, revisionHash, revision!, files.fileData, setSelectedFileInfo, isWorkFlow)}
                                           </div>
                                     </div>
                               )

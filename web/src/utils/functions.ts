@@ -19,7 +19,7 @@ export function formatDate(date: Date) {
 export const copyToClipboardModern = async (text: string) => {
       try {
             await navigator.clipboard.writeText(text)
-            console.log('Text copied to clipboard')
+            //  console.log('Text copied to clipboard')
             return true
       } catch (err) {
             console.error('Failed to copy text: ', err)
@@ -108,32 +108,32 @@ export const isWorkFlowData = (aquaTree: AquaTree, systemAndUserWorkFlow: string
             isWorkFlow: false,
             workFlow: '',
       }
-      // console.log("System workflows: ", systemAndUserWorkFlow)
+      // //  console.log("System workflows: ", systemAndUserWorkFlow)
 
       //order revision in aqua tree
       const aquaTreeRevisionsOrderd = OrderRevisionInAquaTree(aquaTree)
       const allHashes = Object.keys(aquaTreeRevisionsOrderd.revisions)
       if (allHashes.length <= 1) {
-            // console.log(`Aqua tree has one revision`)
+            // //  console.log(`Aqua tree has one revision`)
             return falseResponse
       }
       const secondRevision = aquaTreeRevisionsOrderd.revisions[allHashes[1]]
       if (!secondRevision) {
-            // console.log(`Aqua tree has second revision not found`)
+            // //  console.log(`Aqua tree has second revision not found`)
             return falseResponse
       }
       if (secondRevision.revision_type == 'link') {
             //get the  system aqua tree name
             const secondRevision = aquaTreeRevisionsOrderd.revisions[allHashes[1]]
-            // console.log(` second hash used ${allHashes[1]}  second revision ${JSON.stringify(secondRevision, null, 4)} tree ${JSON.stringify(aquaTreeRevisionsOrderd, null, 4)}`)
+            // //  console.log(` second hash used ${allHashes[1]}  second revision ${JSON.stringify(secondRevision, null, 4)} tree ${JSON.stringify(aquaTreeRevisionsOrderd, null, 4)}`)
 
             if (secondRevision.link_verification_hashes == undefined) {
-                  // console.log(`link verification hash is undefined`)
+                  // //  console.log(`link verification hash is undefined`)
                   return falseResponse
             }
             const revisionHash = secondRevision.link_verification_hashes[0]
             const name = aquaTreeRevisionsOrderd.file_index[revisionHash]
-            // console.log(`--  name ${name}  all hashes ${revisionHash}  second revision ${JSON.stringify(secondRevision, null, 4)} tree ${JSON.stringify(aquaTreeRevisionsOrderd, null, 4)}`)
+            // //  console.log(`--  name ${name}  all hashes ${revisionHash}  second revision ${JSON.stringify(secondRevision, null, 4)} tree ${JSON.stringify(aquaTreeRevisionsOrderd, null, 4)}`)
 
             // if (systemAndUserWorkFlow.map((e)=>e.replace(".json", "")).includes(name)) {
 
@@ -152,7 +152,7 @@ export const isWorkFlowData = (aquaTree: AquaTree, systemAndUserWorkFlow: string
                   workFlow: '',
             }
       }
-      // console.log(`Aqua tree has second revision is of type ${secondRevision.revision_type}`)
+      // //  console.log(`Aqua tree has second revision is of type ${secondRevision.revision_type}`)
 
       return falseResponse
 }
@@ -212,6 +212,8 @@ export function setCookie(name: string, value: string, expirationTime: Date) {
 }
 
 export function getAquaTreeFileName(aquaTree: AquaTree): string {
+
+      // //  console.log('((((((((( getAquaTreeFileName aquaTree'+ JSON.stringify(aquaTree, null, 4)    )
       let mainAquaHash = ''
       // fetch the genesis
       const revisionHashes = Object.keys(aquaTree!.revisions!)
@@ -264,7 +266,7 @@ export async function getCurrentNetwork() {
                   const chainId = await window.ethereum.request({
                         method: 'eth_chainId',
                   })
-                  //  console.log("Current chain ID:", chainId);
+                  //  //  console.log("Current chain ID:", chainId);
                   return chainId
             } catch (error) {
                   console.error('Error fetching chain ID:', error)
@@ -283,7 +285,7 @@ export async function switchNetwork(chainId: string) {
                         method: 'wallet_switchEthereumChain',
                         params: [{ chainId }],
                   })
-                  //  console.log("Network switched successfully");
+                  //  //  console.log("Network switched successfully");
             } catch (error) {
                   // If the network is not added, request MetaMask to add it
             }
@@ -297,7 +299,7 @@ export const getWalletClaims = (systemFileInfo: ApiFileInfo[], files: ApiFileInf
             try {
                   return getAquaTreeFileName(e.aquaTree!)
             } catch (e) {
-                  console.log('Error processing system file') // More descriptive
+                  //  console.log('Error processing system file') // More descriptive
                   return ''
             }
       })
@@ -440,7 +442,7 @@ export function validateAquaTree(tree: AquaTree): [boolean, string] {
       for (const hash in tree.revisions) {
             const revision = tree.revisions[hash]
 
-            // console.log(`Revision --  ${JSON.stringify(revision)}`)
+            // //  console.log(`Revision --  ${JSON.stringify(revision)}`)
             // Check required fields for all revisions
             if (revision.previous_verification_hash === undefined || revision.previous_verification_hash === null) {
                   return [false, 'A revision must contain previous_verification_hash']
@@ -734,7 +736,7 @@ export function getRandomNumber(min: number, max: number): number | null {
 
       // Validate inputs
       if (isNaN(min) || isNaN(max)) {
-            console.log('Please provide valid numbers')
+            //  console.log('Please provide valid numbers')
             return null
       }
 
@@ -1010,19 +1012,19 @@ export const checkIfFileExistInUserFiles = async (file: File, files: ApiFileInfo
       const fileContent = await readFileContent(file)
       const aquafier = new Aquafier()
       const fileHash = aquafier.getFileHash(fileContent)
-      //    console.log(`type of ${typeof (fileContent)} file hash generated  ${fileHash} `)
+      //    //  console.log(`type of ${typeof (fileContent)} file hash generated  ${fileHash} `)
 
       // loop through all the files the user has
       for (const fileItem of files) {
-            //   console.log(`looping ${JSON.stringify(fileItem.aquaTree)}`)
+            //   //  console.log(`looping ${JSON.stringify(fileItem.aquaTree)}`)
             const aquaTree: AquaTree = fileItem.aquaTree!
             //loop through the revisions
             // check if revsion type is file then compare the file hash if found exit loop
             const revisionsData: Array<Revision> = Object.values(aquaTree.revisions)
             for (const revision of revisionsData) {
-                  //      console.log(`--> looping ${JSON.stringify(revision)}`)
+                  //      //  console.log(`--> looping ${JSON.stringify(revision)}`)
                   if (revision.revision_type == 'file') {
-                        //            console.log(`$$$ FILE -->looping ${revision.file_hash}`)
+                        //            //  console.log(`$$$ FILE -->looping ${revision.file_hash}`)
                         if (revision.file_hash === fileHash) {
                               fileExists = true
                               break
@@ -1038,7 +1040,7 @@ export const readFileContent = async (file: File): Promise<string | Uint8Array> 
             // If it's a text file, read as text
             return await readFileAsText(file)
       } else {
-            //   console.log("binary data....")
+            //   //  console.log("binary data....")
             // Otherwise for binary files, read as ArrayBuffer
             const res = await readFileAsArrayBuffer(file)
             return new Uint8Array(res)
@@ -1070,7 +1072,7 @@ export function timeStampToDateObject(timestamp: string): Date | null {
             const dateObj = new Date(year, month, day, hour, minute, second)
             return dateObj
       } catch (e) {
-            console.log(`💣💣 Error occured parsing timestamp to date`)
+            //  console.log(`💣💣 Error occured parsing timestamp to date`)
             return null
       }
 }
@@ -1237,7 +1239,7 @@ export function dummyCredential(): CredentialsData {
 }
 
 export function areArraysEqual(array1: Array<string>, array2: Array<string>) {
-      //  console.log(`areArraysEqual array1 ${array1} == array2 ${array2} `)
+      //  //  console.log(`areArraysEqual array1 ${array1} == array2 ${array2} `)
       // Check if arrays have the same length
       if (array1.length !== array2.length) {
             return false
@@ -1277,25 +1279,25 @@ export function getFileNameWithDeepLinking(aquaTree: AquaTree, revisionHash: str
             if (isDeepLink) {
                   // before returning deep link we traverse the current  aqua tree
                   const aquaTreeFiles = fileObject.filter(file => isAquaTree(file.fileContent))
-                  console.log(`👁️‍🗨️ aquaTreeFiles ${aquaTreeFiles.length} --  `)
+                  //  console.log(`👁️‍🗨️ aquaTreeFiles ${aquaTreeFiles.length} --  `)
                   if (aquaTreeFiles.length > 0) {
                         const aquaTreePick = aquaTreeFiles.find(e => {
                               const tree: AquaTree = e.fileContent as AquaTree
                               const allHashes = Object.keys(tree.revisions)
 
-                              console.log(`👁️‍🗨️ aquaTreeFiles ${allHashes.toString()} == ${revisionHash} `)
+                              //  console.log(`👁️‍🗨️ aquaTreeFiles ${allHashes.toString()} == ${revisionHash} `)
                               return allHashes.includes(revision.link_verification_hashes![0]!)
                         })
 
-                        console.log(`👁️‍🗨️ aquaTreePick ${JSON.stringify(aquaTreePick, null, 4)} `)
+                        //  console.log(`👁️‍🗨️ aquaTreePick ${JSON.stringify(aquaTreePick, null, 4)} `)
                         if (aquaTreePick) {
                               const tree: AquaTree = aquaTreePick.fileContent as AquaTree
                               const genesisHash = getGenesisHash(tree)
 
-                              console.log(`👁️‍🗨️  genesisHash ${genesisHash}`)
+                              //  console.log(`👁️‍🗨️  genesisHash ${genesisHash}`)
                               if (genesisHash) {
                                     const fileName = tree.file_index[genesisHash]
-                                    console.log(`👁️‍🗨️ fileName ${fileName}`)
+                                    //  console.log(`👁️‍🗨️ fileName ${fileName}`)
 
                                     if (fileName) {
                                           return fileName
@@ -1330,14 +1332,14 @@ export function fetchLinkedFileName(aquaTree: AquaTree, revision: Revision): str
             return ERROR_TEXT
       }
       const lonkedHash = revision.link_verification_hashes![0]
-      // console.log(`fetchLinkedFileName ${lonkedHash}`)
+      // //  console.log(`fetchLinkedFileName ${lonkedHash}`)
       if (lonkedHash == undefined) {
-            // console.log(`fetchLinkedFileName ${lonkedHash} not found in link_verification_hashes`)
+            // //  console.log(`fetchLinkedFileName ${lonkedHash} not found in link_verification_hashes`)
             return ERROR_TEXT
       }
       const name = aquaTree.file_index[lonkedHash]
       if (name == undefined) {
-            // console.log(`fetchLinkedFileName ${lonkedHash} not found in file_index`)
+            // //  console.log(`fetchLinkedFileName ${lonkedHash} not found in file_index`)
             return ERROR_TEXT
       }
       return name
@@ -1408,7 +1410,7 @@ export const getFileName = (aquaTree: AquaTree) => {
       }
 
       const name = aquaTree!.file_index[fileIndexhash]
-      //  console.log(`getFileName ${name} from hash ${fileIndexhash}`)
+      //  //  console.log(`getFileName ${name} from hash ${fileIndexhash}`)
       return name
 }
 
@@ -1799,7 +1801,7 @@ export const determineFileType = async (file: File): Promise<File> => {
                   try {
                         const text = new TextDecoder().decode(uint8Array.slice(0, 1024))
                         if (text.includes('function') || text.includes('var ') || text.includes('const ') ||
-                              text.includes('let ') || text.includes('=>') || text.includes('console.log')) {
+                              text.includes('let ') || text.includes('=>') || text.includes('//  console.log')) {
                               extension = '.js'
                               detectedMimeType = 'application/javascript'
                         }
@@ -2081,7 +2083,7 @@ export function generateAvatar(seed: string, size = 200) {
 // export function ensureDomainUrlHasSSL(actualUrlToFetch: string): string {
 //     let url = actualUrlToFetch
 //     // check if the file hash exist
-//     // console.log(`==URL Data before ${actualUrlToFetch}`)
+//     // //  console.log(`==URL Data before ${actualUrlToFetch}`)
 // if (actualUrlToFetch.includes("inblock.io")) {
 //     if (!actualUrlToFetch.includes("https")) {
 //         url = actualUrlToFetch.replace("http", "https")
@@ -2092,7 +2094,7 @@ export function generateAvatar(seed: string, size = 200) {
 //         url = actualUrlToFetch.replace("https://0.0.0.0:0", "http://127.0.0.1:3000")
 //     }
 
-//     // console.log(`==URL Data after ${actualUrlToFetch}`)
+//     // //  console.log(`==URL Data after ${actualUrlToFetch}`)
 //     return url
 // }
 
@@ -2149,11 +2151,11 @@ export function ensureDomainUrlHasSSL(url: string): string {
             }
       }
 
-      console.log(`ensureDomainUrlHasSSL url after replacements: ${url}`)
+      //  console.log(`ensureDomainUrlHasSSL url after replacements: ${url}`)
 
       if (isLocalhost && !(windowHost.includes('127.0.0.1') || windowHost.includes('localhost'))) {
 
-            console.log(`ensureDomainUrlHasSSL isLocalhost: ${isLocalhost}, windowHost: ${windowHost}`)
+            //  console.log(`ensureDomainUrlHasSSL isLocalhost: ${isLocalhost}, windowHost: ${windowHost}`)
             // Replace localhost/127.0.0.1 based on window host
             if (windowHost === 'https://dev.inblock.io') {
                   url = url.replace('https://127.0.0.1', 'https://dev-api.inblock.io')
@@ -2232,7 +2234,7 @@ export function isHttpUrl(str: string): boolean {
 
 //       // Check if we're on inblock.io domain but URL contains localhost IP addresses
 //       const currentDomain = typeof window !== 'undefined' ? window.location.hostname : ''
-//       // console.log(`ensureDomainUrlHasSSL currentDomain ${currentDomain}`)
+//       // //  console.log(`ensureDomainUrlHasSSL currentDomain ${currentDomain}`)
 //       if (currentDomain === 'inblock.io' || currentDomain === 'dev.inblock.io' || currentDomain == 'aquafier.inblock.io' || currentDomain.includes('inblock.io')) {
 //             if (url.includes('127.0.0.1') || url.includes('0.0.0.0') || url.includes('localhost')) {
 //                   let domainData = ''
@@ -2426,7 +2428,7 @@ const getSignatureRevionHashes = (hashesToLoopPar: Array<string>, selectedFileIn
 
       for (let i = 0; i < hashesToLoopPar.length; i += 3) {
             const batch = hashesToLoopPar.slice(i, i + 3)
-            // console.log(`Processing batch ${i / 3 + 1}:`, batch);
+            // //  console.log(`Processing batch ${i / 3 + 1}:`, batch);
 
             let signaturePositionCount = 0
             const hashSigPosition = batch[0] ?? ''
@@ -2448,7 +2450,7 @@ const getSignatureRevionHashes = (hashesToLoopPar: Array<string>, selectedFileIn
 
                                     break
                               } else {
-                                    // console.log(`allHashes ${allHashes} does not incude ${hashSigPositionHashString} `)
+                                    // //  console.log(`allHashes ${allHashes} does not incude ${hashSigPositionHashString} `)
                               }
                         }
                   }
@@ -2605,7 +2607,7 @@ export async function digTxtRecords(domain: string): Promise<string[]> {
 }
 
 export async function digTxtRecordsGoogle(domain: string): Promise<string[]> {
-      console.log('Domain: ', domain)
+      //  console.log('Domain: ', domain)
       try {
             const response = await fetch(`https://dns.google/resolve?name=${encodeURIComponent(domain)}&type=TXT`, {
                   headers: {
@@ -2624,7 +2626,7 @@ export async function digTxtRecordsGoogle(domain: string): Promise<string[]> {
             }
 
             const txtRecords: string[] = []
-            console.log('Data: ', data)
+            //  console.log('Data: ', data)
             if (data.Answer) {
                   for (const record of data.Answer) {
                         if (record.type === 16) {
@@ -2662,7 +2664,7 @@ export const extractDNSClaimInfo = (
 
 export const fetchImage = async (fileUrl: string, nonce: string) => {
       try {
-            console.log(`fetchImage fileUrl ${fileUrl}`)
+            //  console.log(`fetchImage fileUrl ${fileUrl}`)
             const actualUrlToFetch = ensureDomainUrlHasSSL(fileUrl)
             const response = await fetch(actualUrlToFetch, {
                   headers: {

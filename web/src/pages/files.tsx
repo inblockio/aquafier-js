@@ -89,7 +89,7 @@ const FilesPage = () => {
 
             try {
                   // Process the file upload
-                  const fileExist = await checkIfFileExistInUserFiles(fileData.file, files)
+                  const fileExist = await checkIfFileExistInUserFiles(fileData.file, files.fileData)
                   if (fileExist) {
                         throw new Error('File already exists')
                   }
@@ -118,7 +118,7 @@ const FilesPage = () => {
                   // Refresh files list
                   const url2 = `${backend_url}/explorer_files`
                   const updatedFiles = await fetchFiles(session?.address!, url2, session?.nonce!)
-                  setFiles(updatedFiles)
+                  setFiles({ fileData: updatedFiles, status: 'loaded' })
 
                   toast.success('File uploaded successfully')
             } catch (error) {
@@ -137,7 +137,7 @@ const FilesPage = () => {
       const filesForUpload = async (selectedFiles: File[]) => {
             const newUploads: UploadStatus[] = []
             for (const file of selectedFiles) {
-                  console.log(`Files for  upload ${file.name} .....`)
+                  //  console.log(`Files for  upload ${file.name} .....`)
                   const isJson = isJSONFile(file.name)
                   const isZip = isZipFile(file.name)
                   if (isJson || isZip) {
@@ -148,17 +148,17 @@ const FilesPage = () => {
                                     const content = await readFileContent(file)
                                     const contentStr = content as string
                                     const isForm = isJSONKeyValueStringContent(contentStr)
-                                    console.log(`isForm ${isForm}`)
+                                    //  console.log(`isForm ${isForm}`)
                                     if (isForm) {
                                           isJsonForm = true
                                     }
 
                                     const jsonData = JSON.parse(contentStr)
                                     const isAquaTreeData = isAquaTree(jsonData)
-                                    const r = typeof jsonData === 'object'
-                                    const r2 = 'revisions' in jsonData
-                                    const r3 = 'file_index' in jsonData
-                                    console.log(`isAquaTreeData  ${isAquaTreeData} contentStr ${contentStr} r ${r} r2 ${r2} r3 ${r3}`)
+                                    // const _r = typeof jsonData === 'object'
+                                    // const _r2 = 'revisions' in jsonData
+                                    // const _r3 = 'file_index' in jsonData
+                                    //  console.log(`isAquaTreeData  ${isAquaTreeData} contentStr ${contentStr} r ${r} r2 ${r2} r3 ${r3}`)
                                     if (isAquaTreeData) {
                                           isJsonAquaTreeData = isAquaTreeData
                                     }
@@ -185,11 +185,11 @@ const FilesPage = () => {
                                     isJsonAquaTreeData: isJsonAquaTreeData,
                               }
 
-                              console.log(`fileItemWrapper ${JSON.stringify(fileItemWrapper, null, 4)}`)
+                              //  console.log(`fileItemWrapper ${JSON.stringify(fileItemWrapper, null, 4)}`)
                               setFilesListForUpload(prev => [...prev, fileItemWrapper])
 
                         } else {
-                              console.log(`File ${file.name} already exists in upload list`)
+                              //  console.log(`File ${file.name} already exists in upload list`)
 
                               toast.error(`1. Error file exist in upload list`)
                         }
@@ -210,7 +210,7 @@ const FilesPage = () => {
                                     isZip: isZip,
                               })
                         } else {
-                              console.log(`=== File ${file.name} already exists in upload list`)
+                              //  console.log(`=== File ${file.name} already exists in upload list`)
                               toast.error(`1. Error file exist in upload list`)
                         }
                   }
@@ -230,7 +230,7 @@ const FilesPage = () => {
       const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
             const selectedFiles = Array.from(e.target.files ?? [])
             if (selectedFiles.length === 0) {
-                  console.log(`handleFileChange is zero `)
+                  //  console.log(`handleFileChange is zero `)
                   return
             }
             await filesForUpload(selectedFiles)
@@ -281,7 +281,7 @@ const FilesPage = () => {
             // fetch all files from the api
             const url2 = `${backend_url}/explorer_files`
             const files = await fetchFiles(session?.address!, url2, session?.nonce!)
-            setFiles(files)
+            setFiles({ fileData: files, status: 'loaded' })
       }
 
       const checkFileContentForUpload = async (upload: UploadStatus, index: number) => {
@@ -335,7 +335,7 @@ const FilesPage = () => {
                   throw new Error('No file selected')
             }
 
-            const fileExist = await checkIfFileExistInUserFiles(upload.file, files)
+            const fileExist = await checkIfFileExistInUserFiles(upload.file, files.fileData)
             if (fileExist) {
                   throw new Error('File already exists')
             }
@@ -583,16 +583,30 @@ const FilesPage = () => {
                   </div>
 
                   <div className="w-full max-w-full box-border overflow-x-hidden bg-white p-6">
-                        {files.length == 0 ? (
-                              <FileDropZone
-                                    setFiles={(files: File[]) => {
-                                          console.log(`call back here `)
-                                          filesForUpload(files)
-                                    }}
-                              />
-                        ) : (
-                              <FilesList />
-                        )}
+                      
+                        {
+                              (files.status === 'loading' || files.status === 'idle')  ? (
+                                    <div className="flex justify-center items-center h-40">
+                                          <Loader2 className="w-6 h-6 text-gray-500 animate-spin" />
+                                    </div>
+                              ) : files.status === 'error' ? (
+                                    <div className="text-center text-red-500">Error loading files. Please try again.</div>
+                              ) : <>
+
+                                    {files.fileData.length == 0 ? (
+                                          <FileDropZone
+                                                setFiles={(files: File[]) => {
+                                                      //  console.log(`call back here `)
+                                                      filesForUpload(files)
+                                                }}
+                                          />
+                                    ) : (
+                                          <FilesList />
+                                    )}
+                              </>
+                        }
+
+
                   </div>
 
                   {/* chain details dialog */}

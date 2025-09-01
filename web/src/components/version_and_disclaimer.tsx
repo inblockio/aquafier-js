@@ -36,7 +36,7 @@ export default function VersionAndDisclaimer({ inline, open, updateOpenStatus }:
                         setVersionDetails(res)
                   }
             } catch (e: unknown) {
-                  //  console.log("Error fetching version ", e)
+                  //  //  console.log("Error fetching version ", e)
                   toast.error('Error fetching version details')
             }
       }

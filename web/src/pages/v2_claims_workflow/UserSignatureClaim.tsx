@@ -17,12 +17,12 @@ export async function loadSignatureImage(aquaTree: AquaTree, fileObject: FileObj
         const thirdRevision = signatureAquaTree?.revisions[allHashes[2]]
 
         if (!thirdRevision) {
-            console.log(`📢📢 third revision does not exist, this should be investigated`)
+            //  console.log(`📢📢 third revision does not exist, this should be investigated`)
             return null
         }
 
         if (!thirdRevision.link_verification_hashes) {
-            console.log(`📢📢 third revision link_verification_hashes is undefined, this should be investigated`)
+            //  console.log(`📢📢 third revision link_verification_hashes is undefined, this should be investigated`)
             return null
         }
 
@@ -33,24 +33,24 @@ export async function loadSignatureImage(aquaTree: AquaTree, fileObject: FileObj
 
         const fileContentUrl = signatureImageObject?.fileContent
 
-        console.log(`fileContentUrl ===  ${fileContentUrl}`)
+        //  console.log(`fileContentUrl ===  ${fileContentUrl}`)
 
         if (typeof fileContentUrl === 'string' && fileContentUrl.startsWith('http')) {
-            console.log(`fileContentUrl before  ===  ${fileContentUrl}`)
+            //  console.log(`fileContentUrl before  ===  ${fileContentUrl}`)
             let url = ensureDomainUrlHasSSL(fileContentUrl)
-            console.log(`fileContentUrl ===  ${url}`)
+            //  console.log(`fileContentUrl ===  ${url}`)
             let dataUrl = await fetchImage(url, `${nonce}`)
 
             if (!dataUrl) {
                 dataUrl = `${window.location.origin}/images/placeholder-img.png`
             }
 
-            console.log(`dataUrl after fetchImage ===  ${dataUrl}`)
+            //  console.log(`dataUrl after fetchImage ===  ${dataUrl}`)
             return dataUrl
         }
     }
     catch (error) {
-        console.log(`Error loading signature image: ${error}`)
+        //  console.log(`Error loading signature image: ${error}`)
         return `${window.location.origin}/images/placeholder-img.png`
     }
     return null

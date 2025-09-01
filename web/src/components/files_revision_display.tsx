@@ -20,7 +20,7 @@ import { WITNESS_NETWORK_MAP } from '@/utils/constants'
 import { WalletEnsView } from '@/components/ui/wallet_ens'
 
 export const RevisionDisplay = ({ fileInfo, revision, revisionHash, isVerificationComplete, verificationResults, isDeletable, deleteRevision, index }: AquaTreeDetailsData) => {
-      const { session, backend_url, files, setFiles, setSelectedFileInfo } = useStore(appStore)
+      const { session, backend_url, files, setFiles, setSelectedFileInfo, selectedFileInfo } = useStore(appStore)
       const [showRevisionDetails, setShowRevisionDetails] = useState(false)
       const [isRevisionVerificationSuccessful, setIsRevisionVerificationSuccessful] = useState<boolean | null>(null)
       const [isDeleting, setIsDeleting] = useState(false)
@@ -115,20 +115,20 @@ export const RevisionDisplay = ({ fileInfo, revision, revisionHash, isVerificati
       const handleDelete = useCallback(async () => {
             if (isDeleting) return // Prevent multiple clicks
 
-            console.log('Deleting revision: ', revisionHash, index)
+            //  console.log('Deleting revision: ', revisionHash, index)
             setIsDeleting(true)
 
             try {
                   const url = `${backend_url}/tree/revisions/${revisionHash}`
 
-                  const response = await axios.delete(url, {
+                    await axios.delete(url, {
                         headers: {
                               metamask_address: session?.address,
                               nonce: session?.nonce,
                         },
                   })
 
-                  if (response.status === 200) {
+                 
                         toast.success('Revision deleted')
 
                         // Reload files for the current user
@@ -137,24 +137,26 @@ export const RevisionDisplay = ({ fileInfo, revision, revisionHash, isVerificati
                         } else {
                               const url2 = `${backend_url}/explorer_files`
                               const files = await fetchFiles(`${session?.address}`, url2, `${session?.nonce}`)
-                              setFiles(files)
+                              setFiles({
+                                    fileData: files,
+                                    status: 'loaded',
+                              })
 
                               // we need to update the side drawer for reverification to start
-                              const selectedFileData = files.find(e => {
-                                    Object.keys(e.aquaTree!.revisions!)[0] == Object.keys(selectedFileData!.aquaTree!.revisions)[0]
+                              const selectedFileDataResponse = files.find(e => {
+                                    Object.keys(e.aquaTree!.revisions!)[0] == Object.keys(selectedFileInfo!.aquaTree!.revisions)[0]
                               })
-                              if (selectedFileData) {
-                                    setSelectedFileInfo(selectedFileData)
+                              if (selectedFileDataResponse) {
+                                    setSelectedFileInfo(selectedFileDataResponse)
                               }
 
                               // Remove the revision from the list of revisions
                               deleteRevision(revisionHash)
                         }
-                  } else {
-                        toast.error( 'Revision not deleted')
-                  }
+                 
             } catch (error) {
-                  toast.error('Revision not deleted')
+                  console.error('Error deleting revision:', error)
+                  toast.error('Revision not deleted ')
             } finally {
                   setIsDeleting(false)
             }
@@ -235,7 +237,7 @@ export const RevisionDisplay = ({ fileInfo, revision, revisionHash, isVerificati
                                                                                                 showCopyIcon={true}
                                                                                           />
                                                                                     )}
-                                                                                    {viewLinkedFile(fileInfo!, revisionHash, revision, files, setSelectedFileInfo, false)}
+                                                                                    {viewLinkedFile(fileInfo!, revisionHash, revision, files.fileData, setSelectedFileInfo, false)}
                                                                               </div>
                                                                         </div>
                                                                   )}

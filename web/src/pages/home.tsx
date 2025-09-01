@@ -26,6 +26,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { Link } from 'react-router-dom'
 import SyntaxHighlighter from 'react-syntax-highlighter'
 
+
 const HeroSection = () => (
       <section id="hero" className="relative w-full py-20 md:py-32 bg-gradient-to-b from-background to-orange-50/20 dark:to-orange-900/10">
             {/* Decorative elements */}
@@ -598,15 +599,20 @@ const ContactSection = () => (
 )
 
 export default function HomeV2() {
+
+
+
       return (
             <>
-                  <HeroSection />
-                  <FeaturesSection />
-                  <HowItWorksSection />
-                  <PrototypesSection />
-                  <VisionSection />
-                  <PricingSection />
-                  <ContactSection />
-            </>
+                  
+                                    <HeroSection />
+                                    <FeaturesSection />
+                                    <HowItWorksSection />
+                                    <PrototypesSection />
+                                    <VisionSection />
+                                    <PricingSection />
+                                    <ContactSection />
+                              </>
+                
       )
 }

@@ -24,7 +24,7 @@ const SharePage = () => {
 
       const loadPageData = async () => {
             if (loading) {
-                  console.log('Already loading, skipping new request')
+                  //  console.log('Already loading, skipping new request')
                   toast.warning('Already loading, skipping new request')
                   return
             }
@@ -35,23 +35,23 @@ const SharePage = () => {
                   try {
                         setLoading(true)
                         const url = `${backend_url}/share_data/${params.identifier}`
-                        //  console.log("url is ", url)
+                        //  //  console.log("url is ", url)
                         const response = await axios.get(url, {
                               headers: {
                                     'Content-Type': 'application/x-www-form-urlencoded',
                                     nonce: session?.nonce ?? '',
                               },
                         })
-                        //  console.log(response)
+                        //  //  console.log(response)
 
                         if (response.status === 200) {
-                              // console.log("Response: ", response.data)
+                              // //  console.log("Response: ", response.data)
                               setFileInfo(response.data.data.displayData[0])
                               setContractData(response.data.data.contractData)
                         }
                         setLoading(false)
                   } catch (error: any) {
-                        // console.log("Error: ", error)
+                        // //  console.log("Error: ", error)
                         if (error.response.status == 401) {
                         } else if (error.response.status == 404) {
                               setHasError(`File could not be found (probably it was deleted)`)
@@ -105,7 +105,7 @@ const SharePage = () => {
             setDrawerStatus(_drawerStatus)
       }
 
-      console.log('fileInfo', fileInfo)
+      //  console.log('fileInfo', fileInfo)
 
       return (
             <div id="replace-here" className="container w-10xl mx-auto">

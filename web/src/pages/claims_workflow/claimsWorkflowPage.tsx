@@ -102,13 +102,13 @@ export default function ClaimsWorkflowPage() {
                         try {
                               return getAquaTreeFileName(e.aquaTree!)
                         } catch (e) {
-                              // console.log('Error processing system file')
+                              // //  console.log('Error processing system file')
                               return ''
                         }
                   })
 
-                  for (let i = 0; i < files.length; i++) {
-                        const file: ApiFileInfo = files[i]
+                  for (let i = 0; i < files.fileData.length; i++) {
+                        const file: ApiFileInfo = files.fileData[i]
                         // const fileObject = getAquaTreeFileObject(file)
 
                         const { isWorkFlow, workFlow } = isWorkFlowData(file.aquaTree!, aquaTemplates)
@@ -159,6 +159,7 @@ export default function ClaimsWorkflowPage() {
 
             }
       }, [JSON.stringify(selectedClaim), JSON.stringify(files)])
+      
 
       useEffect(() => {
             if (processedInfo) {

@@ -138,6 +138,7 @@ function buildServer() {
     // reister system templates ie cheque, identity and attestation
     setUpSystemTemplates();
 
+    
     let allowedCors = process.env.ALLOWED_CORS ? [process.env.ALLOWED_CORS.split(',').map(origin => origin.trim()), ...ensureDomainViewForCors(process.env.FRONTEND_URL)] : [
         'http://localhost:5173',
         'http://127.0.0.1:5173',

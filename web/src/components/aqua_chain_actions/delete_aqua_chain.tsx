@@ -48,7 +48,7 @@ export const DeleteAquaChain = ({ apiFileInfo, backendUrl, nonce, children, inde
                         await refetchAllUserFiles()
                   }
             } catch (e) {
-                  //  console.log(`Error ${e}`)
+                  //  //  console.log(`Error ${e}`)
                   toast.error('File deletion error')
                   setIsloading(false) // Add this to ensure loading state is cleared on error
             }
@@ -60,9 +60,11 @@ export const DeleteAquaChain = ({ apiFileInfo, backendUrl, nonce, children, inde
             // refetch all the files to ensure the front end state is the same as the backend
             try {
                   const files = await fetchFiles(session!.address!, `${backend_url}/explorer_files`, session!.nonce)
-                  setFiles(files)
+                  setFiles({
+                        fileData: files, status: 'loaded'
+                  })
             } catch (e) {
-                  //  console.log(`Error ${e}`)
+                  //  //  console.log(`Error ${e}`)
                   toast.error('Error updating files')
                   document.location.reload()
             }
@@ -74,11 +76,11 @@ export const DeleteAquaChain = ({ apiFileInfo, backendUrl, nonce, children, inde
             const fileNameBeingDeleted = getFileName(apiFileInfo.aquaTree!)
 
             //check if the file is linked to any aqua chain by using the file index of an aqua tree
-            for (const anAquaTree of files) {
+            for (const anAquaTree of files.fileData) {
                   // skip the current file being deleted
                   const genesisHash = getGenesisHash(anAquaTree.aquaTree!)
                   if (genesisHash == genesisOfFileBeingDeleted) {
-                        console.log(`skipping ${fileNameBeingDeleted} the file is being deleted`)
+                        //  console.log(`skipping ${fileNameBeingDeleted} the file is being deleted`)
                   } else {
                         const { isWorkFlow } = isWorkFlowData(
                               anAquaTree.aquaTree!,
@@ -86,7 +88,7 @@ export const DeleteAquaChain = ({ apiFileInfo, backendUrl, nonce, children, inde
                                     try {
                                           return getAquaTreeFileName(e.aquaTree!)
                                     } catch (e) {
-                                          console.log('Error')
+                                          //  console.log('Error')
                                           return ''
                                     }
                               })

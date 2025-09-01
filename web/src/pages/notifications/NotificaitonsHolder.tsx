@@ -25,13 +25,13 @@ const NotificationItem = ({ notification, onRead }: NotificationItemProps) => {
 
       const navigateToPage = () => {
             if (notification.navigate_to) {
-                  console.log('one..', notification.navigate_to)
+                  //  console.log('one..', notification.navigate_to)
                   if (notification.navigate_to.length > 0) {
-                        console.log('two..', 'navigating to:', notification.navigate_to)
+                        //  console.log('two..', 'navigating to:', notification.navigate_to)
                         navigate(notification.navigate_to)
                   }
             } else {
-                  console.log('no navigate_to found:', notification.navigate_to)
+                  //  console.log('no navigate_to found:', notification.navigate_to)
             }
       }
       const markAsRead = async () => {

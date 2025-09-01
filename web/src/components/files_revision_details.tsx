@@ -311,7 +311,7 @@ export const RevisionDetailsSummary = ({ fileInfo, isWorkFlow }: RevisionDetails
                                                                         </div>
 
                                                                         <div className="w-full">
-                                                                              {viewLinkedFile(fileInfo!, revisionHash, revision!, files, setSelectedFileInfo, isWorkFlow)}
+                                                                              {viewLinkedFile(fileInfo!, revisionHash, revision!, files.fileData, setSelectedFileInfo, isWorkFlow)}
                                                                         </div>
                                                                   </div>
                                                             </div>
@@ -359,25 +359,25 @@ export const revisionDataHeader = (aquaTree: AquaTree, revisionHash: string, fil
             if (isDeepLink) {
                   // before returning deep link we traverse the current  aqua tree
                   const aquaTreeFiles = fileObject.filter(file => isAquaTree(file.fileContent))
-                  console.log(`👁️‍🗨️ aquaTreeFiles ${aquaTreeFiles.length} --  `)
+                  //  console.log(`👁️‍🗨️ aquaTreeFiles ${aquaTreeFiles.length} --  `)
                   if (aquaTreeFiles.length > 0) {
                         const aquaTreePick = aquaTreeFiles.find(e => {
                               const tree: AquaTree = e.fileContent as AquaTree
                               const allHashes = Object.keys(tree.revisions)
 
-                              console.log(`👁️‍🗨️ aquaTreeFiles ${allHashes.toString()} == ${revisionHash} `)
+                              //  console.log(`👁️‍🗨️ aquaTreeFiles ${allHashes.toString()} == ${revisionHash} `)
                               return allHashes.includes(revision.link_verification_hashes![0]!)
                         })
 
-                        console.log(`👁️‍🗨️ aquaTreePick ${JSON.stringify(aquaTreePick, null, 4)} `)
+                        //  console.log(`👁️‍🗨️ aquaTreePick ${JSON.stringify(aquaTreePick, null, 4)} `)
                         if (aquaTreePick) {
                               const tree: AquaTree = aquaTreePick.fileContent as AquaTree
                               const genesisHash = getGenesisHash(tree)
 
-                              console.log(`👁️‍🗨️  genesisHash ${genesisHash}`)
+                              //  console.log(`👁️‍🗨️  genesisHash ${genesisHash}`)
                               if (genesisHash) {
                                     const fileName = tree.file_index[genesisHash]
-                                    console.log(`👁️‍🗨️ fileName ${fileName}`)
+                                    //  console.log(`👁️‍🗨️ fileName ${fileName}`)
 
                                     if (fileName) {
                                           return (
@@ -490,7 +490,7 @@ export const viewLinkedFile = (
                                                       }
 
                                                       if (aquaTree == undefined) {
-                                                            console.log(`show  ${linkedFileName}  filw object ${JSON.stringify(fileObject, null, 4)}`)
+                                                            //  console.log(`show  ${linkedFileName}  filw object ${JSON.stringify(fileObject, null, 4)}`)
                                                             toast.info('View not available')
                                                       } else {
                                                             updateSelectedFile({
@@ -720,26 +720,26 @@ export const viewLinkedFile = (
 //         if (isDeepLink) {
 //             // before returning deep link we traverse the current  aqua tree
 //             const aquaTreeFiles = fileObject.filter(file => isAquaTree(file.fileContent));
-//             console.log(`👁️‍🗨️ aquaTreeFiles ${aquaTreeFiles.length} --  `)
+//             //  console.log(`👁️‍🗨️ aquaTreeFiles ${aquaTreeFiles.length} --  `)
 //             if (aquaTreeFiles.length > 0) {
 //                 let aquaTreePick = aquaTreeFiles.find((e) => {
 //                     let tree: AquaTree = e.fileContent as AquaTree
 //                     let allHashes = Object.keys(tree.revisions);
 
-//                     console.log(`👁️‍🗨️ aquaTreeFiles ${allHashes.toString()} == ${revisionHash} `)
+//                     //  console.log(`👁️‍🗨️ aquaTreeFiles ${allHashes.toString()} == ${revisionHash} `)
 //                     return allHashes.includes(revision.link_verification_hashes![0]!)
 //                 })
 
-//                 console.log(`👁️‍🗨️ aquaTreePick ${JSON.stringify(aquaTreePick, null, 4)} `)
+//                 //  console.log(`👁️‍🗨️ aquaTreePick ${JSON.stringify(aquaTreePick, null, 4)} `)
 //                 if (aquaTreePick) {
 //                     let tree: AquaTree = aquaTreePick.fileContent as AquaTree
 //                     let genesisHash = getGenesisHash(tree)
 
-//                     console.log(`👁️‍🗨️  genesisHash ${genesisHash}`)
+//                     //  console.log(`👁️‍🗨️  genesisHash ${genesisHash}`)
 //                     if (genesisHash) {
 
 //                         let fileName = tree.file_index[genesisHash]
-//                         console.log(`👁️‍🗨️ fileName ${fileName}`)
+//                         //  console.log(`👁️‍🗨️ fileName ${fileName}`)
 
 //                         if (fileName) {
 //                             return <Label >
@@ -824,7 +824,7 @@ export const viewLinkedFile = (
 //                                 }
 
 //                                 if (aquaTree == undefined) {
-//                                     console.log(`show  ${linkedFileName}  filw object ${JSON.stringify(fileObject, null, 4)}`)
+//                                     //  console.log(`show  ${linkedFileName}  filw object ${JSON.stringify(fileObject, null, 4)}`)
 //                                     toaster.create({
 //                                         title: "View not available",
 //                                         type: 'info',

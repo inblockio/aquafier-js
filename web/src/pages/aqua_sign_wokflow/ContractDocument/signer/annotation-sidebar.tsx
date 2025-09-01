@@ -230,7 +230,7 @@ const AnnotationSidebar: React.FC<AnnotationSidebarProps> = ({ annotations, onAn
       // );
 
       const renderSignatureAnnotationEditor = (anno: SignatureData) => {
-            console.log('anno: ', anno)
+            //  console.log('anno: ', anno)
             return (
                   <div
                         key={anno.id}

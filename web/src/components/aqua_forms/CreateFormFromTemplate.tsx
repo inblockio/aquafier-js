@@ -23,6 +23,7 @@ import { WalletAutosuggest } from '../wallet_auto_suggest'
 import { ApiFileInfo } from '@/models/FileInfo'
 import SignatureCanvas from 'react-signature-canvas'
 import { Session } from '@/types'
+import { ApiInfoData } from '@/types/types'
 
 // const CreateFormF romTemplate  = ({ selectedTemplate, callBack, openCreateTemplatePopUp = false }: { selectedTemplate: FormTemplate, callBack: () => void, openCreateTemplatePopUp: boolean }) => {
 const CreateFormFromTemplate = ({ selectedTemplate, callBack }: { selectedTemplate: FormTemplate; callBack: () => void; openCreateTemplatePopUp: boolean }) => {
@@ -41,9 +42,27 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: { selectedTempla
       const signatureRef = useRef<SignatureCanvas | null>(null)
       // const navigate = useNavigate()
 
+      const [verfyingFormFieldEnabled, setVerfyingFormFieldEnabled] = useState<ApiInfoData | null>(null)
       const [verifyingFormField, setVerifyingFormField] = useState('')
       const [canvasSize, setCanvasSize] = useState({ width: 800, height: 200 });
       const containerRef = useRef<HTMLDivElement | null>(null);
+
+      const fetchInfoDetails = async () => {
+            try {
+                  const url = `${backend_url}/app_info`
+
+                  const response = await axios.get(url)
+
+                  const res: ApiInfoData = await response.data
+
+                  if (response.status === 200) {
+                        setVerfyingFormFieldEnabled(res)
+                  }
+            } catch (e: unknown) {
+                  //  //  console.log("Error fetching version ", e)
+                  toast('Error fetching api info details')
+            }
+      }
 
       useEffect(() => {
             if (containerRef.current) {
@@ -53,6 +72,14 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: { selectedTempla
                         height: rect.height,
                   });
             }
+
+            (async () => {
+                  console.log(`running fetch api info`)
+                  await fetchInfoDetails()
+            })()
+
+
+
       }, []);
 
       const getFieldDefaultValue = (field: FormField, currentState: string | File | number | undefined
@@ -134,7 +161,7 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: { selectedTempla
                               file_name: name,
                         }
 
-                        const response = await axios({
+                        await axios({
                               method,
                               url,
                               data,
@@ -143,7 +170,7 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: { selectedTempla
                               },
                         })
 
-                        console.log(`Response from share request  ${response.status}`)
+                        //  console.log(`Response from share request  ${response.status}`)
                   }
             } catch (e) {
                   toast.error('Error sharing workflow')
@@ -188,7 +215,7 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: { selectedTempla
                         }
                         // If it's an ArrayBuffer or similar binary data
                         else if (fileObject.fileContent instanceof ArrayBuffer || fileObject.fileContent instanceof Uint8Array) {
-                              const fileBlob = new Blob([fileObject.fileContent], {
+                              const fileBlob = new Blob([fileObject.fileContent as any], {
                                     type: 'application/octet-stream',
                               })
 
@@ -235,12 +262,13 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: { selectedTempla
 
                   if (response.status === 200 || response.status === 201) {
                         if (isFinal) {
-                              if (account !== session?.address) {
-                                    const files = await fetchFiles(session!.address, `${backend_url}/explorer_files`, session!.nonce)
-                                    setFiles(files)
-                              } else {
-                                    setFiles(response.data.files)
-                              }
+
+                              // if (account !== session?.address) {
+                              const files = await fetchFiles(session!.address, `${backend_url}/explorer_files`, session!.nonce)
+                              setFiles({ fileData: files, status: 'loaded' })
+                              // } else {
+                              //       setFiles({ fileData: [...files.fileData, response.data.files], status: 'loaded' })
+                              // }
 
                               toast.success('Aqua tree created successfully')
                               callBack && callBack()
@@ -350,7 +378,7 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: { selectedTempla
       // Field validation function
       const validateFields = (completeFormData: Record<string, string | File | number>, selectedTemplate: FormTemplate) => {
 
-            console.log(`completeFormData  === ${JSON.stringify(completeFormData, null, 4)}`)
+            //  console.log(`completeFormData  === ${JSON.stringify(completeFormData, null, 4)}`)
             validateRequiredFields(completeFormData, selectedTemplate)
 
             for (const fieldItem of selectedTemplate.fields) {
@@ -392,7 +420,7 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: { selectedTempla
                   //                         })
                   //                   } else {
 
-                  //                         console.log(` Validation formdata == ${JSON.stringify(formData, null, 2)}`)
+                  //                         //  console.log(` Validation formdata == ${JSON.stringify(formData, null, 2)}`)
                   //                         throw new Error(`${fieldItem.label} must have an input.`)
                   //                   }
 
@@ -424,7 +452,7 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: { selectedTempla
             const templateApiFileInfo = allSystemFiles.find(e => {
                   const nameExtract = getAquaTreeFileName(e!.aquaTree!)
                   const selectedName = `${selectedTemplate?.name}.json`
-                  console.log(`nameExtract ${nameExtract} == selectedName ${selectedName}`)
+                  //  console.log(`nameExtract ${nameExtract} == selectedName ${selectedName}`)
                   return nameExtract === selectedName
             })
 
@@ -511,8 +539,8 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: { selectedTempla
                   // const expiration = Math.floor(Date.now() / 1000 + 90 * 24 * 60 * 60).toString() // 90 days default
                   // Message format: unix_timestamp|domain_name|expiration_timestamp
                   const message = `${timestamp}|${domain}|${expiration}`
-                  console.log('Signing message (before EIP-191 formatting):', message)
-                  console.log('MetaMask will apply EIP-191 formatting automatically')
+                  //  console.log('Signing message (before EIP-191 formatting):', message)
+                  //  console.log('MetaMask will apply EIP-191 formatting automatically')
                   // document.getElementById('sign-btn').textContent = 'Signing...';
                   // document.getElementById('sign-btn').disabled = true;
                   signature = await window.ethereum!.request({
@@ -560,14 +588,14 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: { selectedTempla
 
             // Filter out File objects for logging
             Object.entries(completeFormData).forEach(([key, value]) => {
-                  console.log('key', key)
-                  console.log('value', value)
-                  console.log('type  of  ', typeof value)
-                  console.log('instance of  ', value instanceof File)
+                  //  console.log('key', key)
+                  //  console.log('value', value)
+                  //  console.log('type  of  ', typeof value)
+                  //  console.log('instance of  ', value instanceof File)
                   if (!(value instanceof File)) {
                         if (typeof value === 'string' || typeof value === 'number') {
                               if (key.endsWith(`_verification`)) {
-                                    console.log(`ends with _verification`)
+                                    //  console.log(`ends with _verification`)
                               } else {
 
                                     filteredData[key] = value
@@ -576,12 +604,12 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: { selectedTempla
                               filteredData[key] = String(value)
                         }
                   } else {
-                        console.log('file name', (value as File).name)
+                        //  console.log('file name', (value as File).name)
                         filteredData[key] = (value as File).name
                   }
             })
 
-            console.log('completeFormData before validation:', selectedTemplate.name)
+            //  console.log('completeFormData before validation:', selectedTemplate.name)
             // for domain_claim show pop up
             if (selectedTemplate.name === 'domain_claim') {
                   // we sign the
@@ -590,7 +618,7 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: { selectedTempla
                   const timestamp = Math.floor(Date.now() / 1000).toString()
                   const expiration = Math.floor(Date.now() / 1000 + 90 * 24 * 60 * 60).toString() // 90 days default
 
-                  console.log('domain_claim selected ', JSON.stringify(completeFormData, null, 4))
+                  //  console.log('domain_claim selected ', JSON.stringify(completeFormData, null, 4))
                   let signature = await domainTemplateSignMessageFunction(domain, timestamp, expiration)
                   if (!signature) {
                         return null
@@ -601,7 +629,7 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: { selectedTempla
                   const proof = generateProofFromSignature(domain, walletAddress, timestamp, expiration, signature)
                   filteredData['txt_record'] = formatTxtRecord(proof)//signature
             }
-            console.log('completeFormData after validation:', JSON.stringify(filteredData, null, 4))
+            //  console.log('completeFormData after validation:', JSON.stringify(filteredData, null, 4))
             return { filteredData }
       }
 
@@ -609,7 +637,7 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: { selectedTempla
       const createGenesisAquaTree = async (completeFormData: Record<string, string | File | number>, fileName: string, aquafier: Aquafier) => {
             const estimateSize = estimateFileSize(JSON.stringify(completeFormData))
             const jsonString = JSON.stringify(completeFormData, null, 4)
-            console.log(`completeFormData -- jsonString-- ${jsonString}`)
+            //  console.log(`completeFormData -- jsonString-- ${jsonString}`)
 
             const fileObject: FileObject = {
                   fileContent: jsonString,
@@ -663,12 +691,12 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: { selectedTempla
                   return aquaTreeData
             }
 
-            console.log('completeFormData: ', completeFormData, 'Files: ', containsFileData)
+            //  console.log('completeFormData: ', completeFormData, 'Files: ', containsFileData)
 
             const fileProcessingPromises = containsFileData.map(async (element: FormField) => {
-                  console.log('Element: ', element)
+                  //  console.log('Element: ', element)
                   const file: File = completeFormData[element.name] as File
-                  console.log('file: ', file)
+                  //  console.log('file: ', file)
 
                   if (!file) {
                         console.warn(`No file found for field: ${element.name}`)
@@ -681,7 +709,7 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: { selectedTempla
                   }
 
                   try {
-                        console.log(`creating file object ...`)
+                        //  console.log(`creating file object ...`)
                         const arrayBuffer = await file.arrayBuffer()
                         const uint8Array = new Uint8Array(arrayBuffer)
 
@@ -694,7 +722,7 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: { selectedTempla
 
                         return fileObjectPar
                   } catch (error) {
-                        console.log('Error here: ---')
+                        //  console.log('Error here: ---')
                         console.error(`Error processing file ${file.name}:`, error)
                         throw new Error(`Error processing file ${file.name}`)
                   }
@@ -703,7 +731,7 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: { selectedTempla
             const fileObjects = await Promise.all(fileProcessingPromises)
             const validFileObjects = fileObjects.filter(obj => obj !== null) as FileObject[]
 
-            console.log(`Processed ${validFileObjects.length} files successfully`)
+            //  console.log(`Processed ${validFileObjects.length} files successfully`)
 
             let currentAquaTreeData = aquaTreeData
 
@@ -760,10 +788,10 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: { selectedTempla
       // Function to handle post-signing actions
       const handlePostSigning = async (signedAquaTree: AquaTree, fileObject: FileObject, completeFormData: Record<string, string | File | number>, selectedTemplate: FormTemplate, session: Session | null, selectedFileInfo: ApiFileInfo | null) => {
             fileObject.fileContent = completeFormData
-            console.log('Sign res: -- ', signedAquaTree)
+            //  console.log('Sign res: -- ', signedAquaTree)
 
             await saveAquaTree(signedAquaTree, fileObject, true)
-            console.log('selectedTemplate.name -- ', selectedTemplate.name)
+            //  console.log('selectedTemplate.name -- ', selectedTemplate.name)
 
             // Handle aqua_sign specific logic
             if (selectedTemplate && selectedTemplate.name === 'aqua_sign' && session?.address) {
@@ -854,7 +882,7 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: { selectedTempla
                                     }
                               } catch (e) {
 
-                                    console.log(`Verify endpoint ${e}`)
+                                    //  console.log(`Verify endpoint ${e}`)
                                     toast.error(`Error verfying code.`)
                                     return
                               }
@@ -863,12 +891,12 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: { selectedTempla
                   }
 
 
-                  console.log(`see me ...1`)
+                  //  console.log(`see me ...1`)
                   // Step 3: Get system files
                   const allSystemFiles = await getSystemFiles(systemFileInfo, backend_url, session?.address || '')
                   setSystemFileInfo(allSystemFiles)
 
-                  console.log(`see me ...2`)
+                  //  console.log(`see me ...2`)
                   // Step 4: Find template API file info
                   const templateApiFileInfo = findTemplateApiFileInfo(allSystemFiles, selectedTemplate)
 
@@ -876,18 +904,18 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: { selectedTempla
                   const aquafier = new Aquafier()
                   const fileName = generateFileName(selectedTemplate, completeFormData)
 
-                  console.log(`see me ...3`)
+                  //  console.log(`see me ...3`)
                   // Step 6: Handle identity attestation specific logic
                   if (selectedTemplate?.name === 'identity_attestation') {
                         completeFormData = handleIdentityAttestation(completeFormData, selectedFileInfo)
                   }
 
-                  console.log('Complete form data: ', completeFormData)
+                  //  console.log('Complete form data: ', completeFormData)
 
                   // Step 7: Prepare final form data
                   const finalFormDataRes = await prepareFinalFormData(completeFormData, selectedTemplate)
 
-                  // console.log('Final form data:', JSON.stringify(finalFormData, null, 4));
+                  // //  console.log('Final form data:', JSON.stringify(finalFormData, null, 4));
                   // throw new Error('Final form data preparation failed');
 
                   if (!finalFormDataRes) {
@@ -895,7 +923,7 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: { selectedTempla
                         throw new Error('Final form data preparation failed')
                   }
 
-                  console.log('Final form data: ', finalFormDataRes)
+                  //  console.log('Final form data: ', finalFormDataRes)
 
                   const finalFormDataFiltered = finalFormDataRes.filteredData
                   // Step 8: Create genesis aqua tree
@@ -903,28 +931,28 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: { selectedTempla
 
                   // Step 9: Link to system aqua tree
                   let aquaTreeData = await linkToSystemAquaTree(genesisAquaTree, fileObject, templateApiFileInfo, aquafier)
-                  console.log('Form data: ', finalFormDataFiltered)
+                  //  console.log('Form data: ', finalFormDataFiltered)
 
                   // check if the types contains scratchpad
                   // let newCompleteData = completeFormData
                   for (const fieldItem of selectedTemplate.fields) {
-                        const valueInput = completeFormData[fieldItem.name]
-                        console.log(`fieldItem.name -- ${fieldItem.name} valueInput ${valueInput}  -- type ${fieldItem.type}`)
+                        // const valueInput = completeFormData[fieldItem.name]
+                        //  console.log(`fieldItem.name -- ${fieldItem.name} valueInput ${valueInput}  -- type ${fieldItem.type}`)
                         if (fieldItem.type === 'scratchpad') {
-                              console.log(` in scratch pad`)
+                              //  console.log(` in scratch pad`)
                               if (signatureRef.current) {
-                                    console.log(` not null `)
+                                    //  console.log(` not null `)
                                     const dataUrl = signatureRef.current.toDataURL('image/png')
                                     const epochInSeconds = Math.floor(Date.now() / 1000)
                                     const lastFiveCharactersOfWalletAddres = session?.address.slice(-5)
                                     const signatureFileName = `user_signature_${lastFiveCharactersOfWalletAddres}_${epochInSeconds}.png`
                                     const signatureFile = dataURLToFile(dataUrl, signatureFileName)
-                                    console.log(`signatureFile ===  ${signatureFile}`)
+                                    //  console.log(`signatureFile ===  ${signatureFile}`)
                                     completeFormData[`scratchpad`] = signatureFile
 
 
                               } else {
-                                    console.log(`signatureRef is null 💣💣💣 `)
+                                    //  console.log(`signatureRef is null 💣💣💣 `)
                               }
 
                               break;
@@ -934,7 +962,7 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: { selectedTempla
                   }
 
 
-                  console.log(`completeFormData ${JSON.stringify(completeFormData, null, 4)}`)
+                  //  console.log(`completeFormData ${JSON.stringify(completeFormData, null, 4)}`)
 
                   // Step 10: Process file attachments
                   aquaTreeData = await processFileAttachments(
@@ -946,7 +974,7 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: { selectedTempla
                   )
 
 
-                  // console.log(`aquaTreeData after file attachement process ${JSON.stringify(aquaTreeData, null, 4)}`)
+                  // //  console.log(`aquaTreeData after file attachement process ${JSON.stringify(aquaTreeData, null, 4)}`)
                   // throw Error(`fix mee...`)
 
                   // Step 11: Sign aqua tree
@@ -1019,40 +1047,40 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: { selectedTempla
                   try {
                         return getAquaTreeFileName(e.aquaTree!)
                   } catch (e) {
-                        console.log('Error processing system file') // More descriptive
+                        //  console.log('Error processing system file') // More descriptive
                         return ''
                   }
             })
 
-            for (const file of files) {
+            for (const file of files.fileData) {
 
                   const workFlow = isWorkFlowData(file.aquaTree!, someData)
 
                   if (workFlow && workFlow.isWorkFlow) {
-                        console.log('Workflow found: ', workFlow.workFlow)
+                        //  console.log('Workflow found: ', workFlow.workFlow)
                         if (workFlow.workFlow === 'identity_claim') {
-                              console.log('Identity claim found:')
+                              //  console.log('Identity claim found:')
                               const orederdRevisionAquaTree = OrderRevisionInAquaTree(file.aquaTree!)
                               let allHashes = Object.keys(orederdRevisionAquaTree.revisions)
 
-                              // console.log('orederdRevisionAquaTree: ', JSON.stringify (orederdRevisionAquaTree.revisions ,null, 2))
-                              // console.log('hashs: ', JSON.stringify (orederdRevisionAquaTree.revisions ,null, 2))
+                              // //  console.log('orederdRevisionAquaTree: ', JSON.stringify (orederdRevisionAquaTree.revisions ,null, 2))
+                              // //  console.log('hashs: ', JSON.stringify (orederdRevisionAquaTree.revisions ,null, 2))
                               let genRevsion = orederdRevisionAquaTree.revisions[allHashes[0]]
 
-                              // console.log('genRevsion: ', JSON.stringify (genRevsion,null, 2))
-                              // console.log('name : ', genRevsion[`forms_name`])
-                              // console.log('forms_wallet_address  : ', genRevsion[`forms_wallet_address`])
+                              // //  console.log('genRevsion: ', JSON.stringify (genRevsion,null, 2))
+                              // //  console.log('name : ', genRevsion[`forms_name`])
+                              // //  console.log('forms_wallet_address  : ', genRevsion[`forms_wallet_address`])
                               if (genRevsion && genRevsion[`forms_name`] && genRevsion[`forms_wallet_address`]) {
                                     recommended.set(genRevsion[`forms_name`], genRevsion[`forms_wallet_address`])
                               }
                         }
                   } else {
-                        console.log('Not a workflow data: ', file.aquaTree)
+                        //  console.log('Not a workflow data: ', file.aquaTree)
                   }
 
             }
 
-            console.log('Recommended wallet addresses: ', JSON.stringify(recommended, null, 2))
+            //  console.log('Recommended wallet addresses: ', JSON.stringify(recommended, null, 2))
 
             return recommended;
       }
@@ -1217,7 +1245,7 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: { selectedTempla
                                                                                                 if (field.is_editable === false) {
                                                                                                       // Show toast notification (would need toast implementation)
 
-                                                                                                      console.log(`${field.label} cannot be changed`)
+                                                                                                      //  console.log(`${field.label} cannot be changed`)
                                                                                                       toast.error(`${field.label} cannot be changed`)
                                                                                                       return
                                                                                                 }
@@ -1243,10 +1271,28 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: { selectedTempla
                                                                                           {
                                                                                                 field.is_verifiable && (
                                                                                                       <>
-                                                                                                            <button
+                                                                                                            <Button
                                                                                                                   type='button'
                                                                                                                   data-testid={'send-verifcation-ciode-'}
+                                                                                                                  disabled={(verfyingFormFieldEnabled == null || verfyingFormFieldEnabled?.isTwilioEnabled) == false ? true : false}
                                                                                                                   onClick={async () => {
+
+                                                                                                                        console.log(`test 1`)
+                                                                                                                        if (!verfyingFormFieldEnabled) {
+                                                                                                                              console.log(`test 1.1`)
+                                                                                                                              toast.error(`Unable to fetch code verification details`)
+                                                                                                                              return
+                                                                                                                        }
+
+                                                                                                                        console.log(`test 1.2`)
+                                                                                                                        if (verfyingFormFieldEnabled?.isTwilioEnabled == false) {
+                                                                                                                              console.log(`test 1.3`)
+                                                                                                                              toast.error(`Twilio is not enables, set the .env and restart the docker container`)
+                                                                                                                              return
+                                                                                                                        }
+
+                                                                                                                        console.log(`test 1.4`)
+
 
                                                                                                                         setVerifyingFormField(`field-${field.name}`)
 
@@ -1292,7 +1338,7 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: { selectedTempla
                                                                                                                                     // await refetchAllUserFiles()
                                                                                                                               }
                                                                                                                         } catch (e: any) {
-                                                                                                                              console.log(`Error ${e}`, e)
+                                                                                                                              //  console.log(`Error ${e}`, e)
                                                                                                                               // toast.error('verification code not sent')
                                                                                                                               toast.error(`verification code not sent ${e?.response?.data?.message ?? ""}`)
                                                                                                                               // setIsloading(false) // Add this to ensure loading state is cleared on error
@@ -1319,7 +1365,7 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: { selectedTempla
                                                                                                                               <span>Send Code</span>
                                                                                                                         </>
                                                                                                                   )}
-                                                                                                            </button>
+                                                                                                            </Button>
 
 
                                                                                                             <div className="flex items-center gap-2">
@@ -1405,9 +1451,9 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: { selectedTempla
                                                                                                       multipleAddresses={[]}
                                                                                                       setMultipleAddresses={(data) => {
                                                                                                             // setMultipleAddresses
-                                                                                                            console.log(`data  ... ${data}`);
+                                                                                                            //  console.log(`data  ... ${data}`);
                                                                                                             let d = data[0]
-                                                                                                            console.log(`data  ... ${d}`)
+                                                                                                            //  console.log(`data  ... ${d}`)
                                                                                                             if (d) {
                                                                                                                   setFormData({
                                                                                                                         ...formData,
@@ -1459,14 +1505,14 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: { selectedTempla
                                                                                                 if (field.is_editable === false) {
                                                                                                       // Show toast notification (would need toast implementation)
 
-                                                                                                      console.log(`${field.label} cannot be changed`)
+                                                                                                      //  console.log(`${field.label} cannot be changed`)
                                                                                                       toast.error(`${field.label} cannot be changed`)
                                                                                                       return
                                                                                                 }
 
                                                                                                 if (selectedTemplate?.name === 'aqua_sign' && field.name.toLowerCase() === 'sender') {
                                                                                                       // Show toast notification (would need toast implementation)
-                                                                                                      console.log('Aqua Sign sender cannot be changed')
+                                                                                                      //  console.log('Aqua Sign sender cannot be changed')
                                                                                                       return
                                                                                                 }
 
@@ -1495,7 +1541,7 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: { selectedTempla
                                                                                                 }
 
                                                                                                 let value = isFileInput && e.target.files ? e.target.files[0] : e.target.value
-                                                                                                console.log(`value us isFileInput ${isFileInput}  value ${value}`)
+                                                                                                //  console.log(`value us isFileInput ${isFileInput}  value ${value}`)
                                                                                                 if (field.default_value !== undefined && field.default_value !== null && field.default_value !== '') {
                                                                                                       e.target.value = field.default_value
                                                                                                       toast.error(`${field.label} cannot be changed`)
@@ -1603,8 +1649,8 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: { selectedTempla
                   {/* create claim  */}
                   <Dialog
                         open={isDialogOpen}
-                        onOpenChange={(openState: boolean) => {
-                              console.log('Dialog open state:', openState)
+                        onOpenChange={() => {
+                              //  console.log('Dialog open state:', openState)
                               // setOpenCreateClaimAttestationPopUp(openState)
                         }}
                   >

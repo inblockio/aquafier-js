@@ -111,7 +111,7 @@ const FormTemplateEditorShadcn = ({ initialTemplate, onSave, updating }: FormTem
 
       const handleFormSubmit = async () => {
             try {
-                  console.log('Initial template: ', initialTemplate)
+                  //  console.log('Initial template: ', initialTemplate)
                   setIsSubmitting(true)
 
                   // Check if form has validation errors
@@ -175,7 +175,7 @@ const FormTemplateEditorShadcn = ({ initialTemplate, onSave, updating }: FormTem
                   }
 
                   toast.error('Failed to ' + (updating ? 'update' : 'create') + ' form template')
-                  console.log(`Error ${error} occured`)
+                  //  console.log(`Error ${error} occured`)
             } finally {
                   setIsSubmitting(false)
             }

@@ -42,7 +42,7 @@ const DeleteUserData = () => {
                               ens_name: '',
                               witness_contract_address: '0x45f59310ADD88E6d23ca58A0Fa7A55BEE6d2a611',
                         })
-                        setFiles([])
+                        setFiles({ fileData: [], status: 'idle' })
                         setSession(null)
                         setMetamaskAddress(null)
                         setAvatar(undefined)
@@ -82,14 +82,14 @@ const DeleteUserData = () => {
 export default function SettingsPage() {
       const { setUserProfile, user_profile, backend_url, metamaskAddress, session } = useStore(appStore)
 
-      const [activeNetwork, setActiveNetwork] = useState<string>(user_profile.witness_network)
+      const [activeNetwork, setActiveNetwork] = useState<string>(user_profile.witness_network ?? "sepolia")
       const [cliPubKey, _setCliPubKey] = useState<string>(user_profile.cli_pub_key)
       const [cliPrivKey, _setCliPrivKey] = useState<string>(user_profile.cli_priv_key)
       const [ensName, setEnsName] = useState<string>(user_profile.ens_name)
       const [contract, _setContract] = useState<string>(user_profile.witness_contract_address ?? '0x45f59310ADD88E6d23ca58A0Fa7A55BEE6d2a611')
       const [alchemyKey, setAlchemyKey] = useState<string>(user_profile.alchemy_key ?? 'ZaQtnup49WhU7fxrujVpkFdRz4JaFRtZ')
 
-      const networks = ['Mainnet', 'Sepolia', 'Holesky']
+      const networks = ['mainnet', 'sepolia', 'holesky']
 
       const updateUserProfile = async () => {
             // const formData = new URLSearchParams();
@@ -254,7 +254,7 @@ export default function SettingsPage() {
                                                             <button
                                                                   key={network}
                                                                   onClick={() => setActiveNetwork(network)}
-                                                                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                                                                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors capitalize ${
                                                                         activeNetwork === network
                                                                               ? 'bg-primary text-white'
                                                                               : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'

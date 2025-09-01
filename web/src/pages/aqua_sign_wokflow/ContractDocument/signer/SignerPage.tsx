@@ -125,7 +125,7 @@ interface EasyPDFRendererProps {
 }
 
 export const EasyPDFRenderer = ({ pdfFile, annotations, annotationsInDocument }: EasyPDFRendererProps) => {
-      // console.log("existing annotations: ", annotations)
+      // //  console.log("existing annotations: ", annotations)
       return (
             <PdfRenderer
                   pdfFile={pdfFile}
@@ -186,7 +186,7 @@ export default function SignerPage({
             (newAnnotationData: Annotation) => {
                   const id = Date.now().toString() + Math.random().toString(36).substring(2, 9)
                   const selectedSignatureInfo = mySignatures.find(signature => signature.hash === _selectedSignatureHash)
-                  console.log('Here', _selectedSignatureHash, mySignatures)
+                  //  console.log('Here', _selectedSignatureHash, mySignatures)
                   if (!selectedSignatureInfo) {
                         return
                   }
@@ -473,7 +473,7 @@ export default function SignerPage({
                         name: signature.name,
                         walletAddress: signature.walletAddress,
                   }))
-                  console.log('Existing: ', existingAnnotations)
+                  //  console.log('Existing: ', existingAnnotations)
                   setAnnotations(prev => [...prev, ...existingAnnotations])
             }
       }, [signaturesInDocument])
@@ -515,7 +515,7 @@ export default function SignerPage({
                                                                         key={signature.hash}
                                                                         className={`p-2 cursor-pointer rounded-md ${selectedSignatureHash === signature.hash ? 'bg-blue-50 border-blue-600' : 'bg-gray-100 border-transparent'} hover:bg-blue-50 border-2`}
                                                                         onClick={() => {
-                                                                              console.log(`Signature clicked ${JSON.stringify(signature, null, 4)} -- ${signature.hash} -- ${signature.id}`)
+                                                                              //  console.log(`Signature clicked ${JSON.stringify(signature, null, 4)} -- ${signature.hash} -- ${signature.id}`)
                                                                               setSelectedTool('profile')
                                                                               selectSignature(signature.hash)
                                                                               setSelectedSignatureHash(signature.hash)

@@ -73,7 +73,7 @@ export const DownloadAquaChain = ({ file, index, children }: { file: ApiFileInfo
             }
             mainAquaFileName = file.aquaTree!.file_index[genesisHash]
 
-            // console.log(`main aqua file name ${JSON.stringify(file.aquaTree, null, 4)} genesis hash ${genesisHash}`)
+            // //  console.log(`main aqua file name ${JSON.stringify(file.aquaTree, null, 4)} genesis hash ${genesisHash}`)
             // throw Error(`Genesis hash for file ${mainAquaFileName} is not defined`)
 
             if(!mainAquaFileName || !genesisHash){
@@ -86,7 +86,7 @@ export const DownloadAquaChain = ({ file, index, children }: { file: ApiFileInfo
 
             const nameWithHashes: Array<AquaNameWithHash> = []
             for (const fileObj of file.fileObject) {
-                  console.log('Processing file:', fileObj.fileName, 'Content type:', typeof fileObj.fileContent)
+                  //  console.log('Processing file:', fileObj.fileName, 'Content type:', typeof fileObj.fileContent)
 
                   const isAquaTreeData = isAquaTree(fileObj.fileContent)
                    if (typeof fileObj.fileContent === 'string' && isValidUrl(fileObj.fileContent) && isHttpUrl(fileObj.fileContent)) {
@@ -159,7 +159,7 @@ export const DownloadAquaChain = ({ file, index, children }: { file: ApiFileInfo
                               const jsonContent = JSON.stringify(fileObj.fileContent)
                               // Only add .json extension if it doesn't already have one and it's not a known binary file
                               let fileName = fileObj.fileName
-                              console.log(`download file ${fileName}`)
+                              //  console.log(`download file ${fileName}`)
                               // if (!fileName.endsWith('.json') && !isBinaryFile(fileName)) {
                               //       fileName = `${fileName}.json`
                               // }

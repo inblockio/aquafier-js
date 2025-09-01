@@ -28,6 +28,8 @@ import ClaimsAndAttestationPage from './pages/claim_and_attestation'
 import ClaimsWorkflowPage from './pages/claims_workflow/claimsWorkflowPage'
 import ClaimsWorkflowPageV2 from './pages/v2_claims_workflow/claimsWorkflowPage'
 import WalletAutosuggestDemo from './pages/demo_auto_suggest'
+import { WebConfig } from './types/types'
+import * as Sentry from "@sentry/react";
 
 declare global {
       interface Window {
@@ -36,19 +38,55 @@ declare global {
 }
 
 function App() {
-      const { setBackEndUrl } = useStore(appStore)
+      const { setBackEndUrl, setWebConfig } = useStore(appStore)
 
       useEffect(() => {
-            //  console.log("backedn url is", backend_url);
+            //  //  console.log("backedn url is", backend_url);
             // Properly handle async initialization
             const initBackend = async () => {
-                  const url = await initializeBackendUrl()
-                  setBackEndUrl(url)
+                  const {backend_url, config} = await initializeBackendUrl()
+                  setBackEndUrl(backend_url)
+                  setUpSentry(config)
+                  setWebConfig(config)
             }
 
             initBackend()
       }, []) // Empty dependency array means this runs once on mount
 
+     const  setUpSentry=(config: WebConfig) => {
+            // Initialize Sentry for error tracking
+            // Initialize Sentry for error tracking and performance monitoring
+            if (config.SENTRY_DSN) {
+            
+              Sentry.init({
+                dsn: config.SENTRY_DSN,
+                // Setting this option to true will send default PII data to Sentry.
+                // For example, automatic IP address collection on events
+                sendDefaultPii: true,
+                integrations: [
+                  Sentry.browserTracingIntegration(),
+                  Sentry.replayIntegration()
+                ],
+                // Tracing
+                tracesSampleRate: 1.0, //  Capture 100% of the transactions
+                // Set 'tracePropagationTargets' to control for which URLs distributed tracing should be enabled
+                // https://dev.inblock.io/
+                tracePropagationTargets: [
+                  "localhost",
+                  /^https:\/\/dev\.inblock\.io\//,
+                  /^https:\/\/aquafier\.inblock\.io\//,
+                  /^http:\/\/localhost:5173\//
+                ],
+                // Session Replay
+                replaysSessionSampleRate: 0.1, // This sets the sample rate at 10%. You may want to change it to 100% while in development and then sample at a lower rate in production.
+                replaysOnErrorSampleRate: 1.0, // If you're not already sampling the entire session, change the sample rate to 100% when sampling sessions where errors occur.,
+                // Enable logs to be sent to Sentry
+                enableLogs: true
+              });
+            }
+            
+
+      }
       return (
             <BrowserRouter>
                   <LoadConfiguration />

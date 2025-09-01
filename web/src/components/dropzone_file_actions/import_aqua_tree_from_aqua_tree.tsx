@@ -99,7 +99,7 @@ export const ImportAquaChainFromChain = ({ fileInfo, isVerificationSuccessful, c
                   const revisions = reorderedRevisions.revisions
                   const revisionHashes = Object.keys(revisions)
                   const latestRevisionHash = revisionHashes[revisionHashes.length - 1]
-                  console.log('Latest revision hash: ', latestRevisionHash)
+                  //  console.log('Latest revision hash: ', latestRevisionHash)
 
                   const res = await axios.post(
                         url,
@@ -114,7 +114,7 @@ export const ImportAquaChainFromChain = ({ fileInfo, isVerificationSuccessful, c
                         }
                   )
 
-                  console.log('Transfer chain res: ', res)
+                  //  console.log('Transfer chain res: ', res)
                   if (res.status === 200) {
                         toast.success( 'Aqua Chain imported successfully')
 
@@ -149,7 +149,7 @@ export const ImportAquaChainFromChain = ({ fileInfo, isVerificationSuccessful, c
                         {
                               latestRevisionHash: latestRevisionHash,
                               userAddress: contractData.sender,
-                              mergeStrategy: 'fork',
+                              mergeStrategy: 'replace',
                         },
                         {
                               headers: {
@@ -183,9 +183,12 @@ export const ImportAquaChainFromChain = ({ fileInfo, isVerificationSuccessful, c
             // Only update dbFiles if files have actually changed
             // This prevents unnecessary re-renders and potential recursion
             if (JSON.stringify(files) !== JSON.stringify(dbFiles)) {
-                  setDbFiles(files)
+                  setDbFiles(files.fileData)
             }
-      }, [files])
+      // }, [files])
+
+         }, [files.fileData.map(e => Object.keys(e?.aquaTree?.file_index ?? {})).join(',')])
+      
 
       const getButtonVariant = (color: string) => {
             switch (color) {

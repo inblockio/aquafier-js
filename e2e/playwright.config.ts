@@ -30,7 +30,7 @@ export default defineConfig({
     // baseURL: 'http://localhost:3000',
 
     /* Collect trace when retrying the failed test. See https://playwright.dev/docs/trace-viewer */
-    trace:  'on-first-retry',
+    trace:  'retain-on-failure',
     video: 'retain-on-failure',
     // Increase timeouts for CI environment
     actionTimeout: 120000,
@@ -64,7 +64,7 @@ export default defineConfig({
       name: 'chromium',
       use: { ...devices['Desktop Chrome'],
       baseURL: process.env.BASE_URL ? process.env.BASE_URL : "https://dev.inblock.io"},
-      timeout: 180000,
+      timeout: 220000,
     }
   ],
 });

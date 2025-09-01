@@ -90,13 +90,13 @@ export default function ClaimsWorkflowPage() {
                   try {
                         return getAquaTreeFileName(e.aquaTree!)
                   } catch (e) {
-                        // console.log('Error processing system file')
+                        // //  console.log('Error processing system file')
                         return ''
                   }
             })
             const _attestations: Array<ApiFileInfo> = []
-            for (let i = 0; i < files.length; i++) {
-                  const file: ApiFileInfo = files[i]
+            for (let i = 0; i < files.fileData.length; i++) {
+                  const file: ApiFileInfo = files.fileData[i]
                   // const fileObject = getAquaTreeFileObject(file)
 
                   const { isWorkFlow, workFlow } = isWorkFlowData(file.aquaTree!, aquaTemplates)
@@ -112,7 +112,7 @@ export default function ClaimsWorkflowPage() {
             setIsLoading(true)
             if (!walletAddress) {
                   toast.info('Please select a wallet address')
-                  console.log('Please select a wallet address')
+                  //  console.log('Please select a wallet address')
                   setIsLoading(false)
                   return
             }
@@ -123,7 +123,7 @@ export default function ClaimsWorkflowPage() {
                   try {
                         return getAquaTreeFileName(e.aquaTree!)
                   } catch (e) {
-                        // console.log('Error processing system file')
+                        // //  console.log('Error processing system file')
                         return ''
                   }
             })
@@ -133,8 +133,8 @@ export default function ClaimsWorkflowPage() {
             const _claims: Array<{ file: ApiFileInfo; processedInfo: ClaimInformation, attestations: Array<IAttestationEntry>, sharedContracts: Contract[] }> = []
 
             // We loop through files to find claims that match the wallet address
-            for (let i = 0; i < files.length; i++) {
-                  const file: ApiFileInfo = files[i]
+            for (let i = 0; i < files.fileData.length; i++) {
+                  const file: ApiFileInfo = files.fileData[i]
                   // const fileObject = getAquaTreeFileObject(file)
 
                   const { isWorkFlow, workFlow } = isWorkFlowData(file.aquaTree!, aquaTemplates)
@@ -234,15 +234,11 @@ export default function ClaimsWorkflowPage() {
 
       useEffect(() => {
             processAllAddressClaims()
-      }, [walletAddress, JSON.stringify(files)])
+      // }, [walletAddress, JSON.stringify(files)])
+   }, [files.fileData.map(e => Object.keys(e?.aquaTree?.file_index ?? {})).join(','), systemFileInfo.map(e => Object.keys(e?.aquaTree?.file_index??{})).join(','), walletAddress])
 
       return (
             <div className='py-6 flex flex-col gap-4'>
-
-                  {/* <div className='flex items-center gap-2 flex-col text-center'>
-                        <h2 className="text-2xl font-bold">Wallet Address Profile</h2>
-                        <h3 className="text-lg">{walletAddress}</h3>
-                  </div> */}
 
                   <div className="bg-gradient-to-br from-slate-100 via-blue-50 to-indigo-100 p-4 sm:p-6 lg:p-8 rounded-lg">
                         <div className="max-w-2xl mx-auto">
@@ -267,9 +263,19 @@ export default function ClaimsWorkflowPage() {
                   ) : null}
 
                   {
-                        claims.length === 0 ? (
-                              <div className="flex items-center justify-center flex-col align-center py-8">
-                                    <span className="text-center font-500 text-2xl">No claims found</span>
+                        (claims.length === 0 && !isLoading) ? (
+                              <div className="bg-blue-50 border border-blue-200 rounded-lg p-6 mx-auto max-w-md">
+                                    <div className="flex items-center justify-center flex-col gap-3">
+                                          <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
+                                                <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                                </svg>
+                                          </div>
+                                          <div className="text-center">
+                                                <h3 className="text-lg font-semibold text-blue-900 mb-1">No Claims Found</h3>
+                                                <p className="text-sm text-blue-700">This wallet address doesn't have any verified claims yet.</p>
+                                          </div>
+                                    </div>
                               </div>
                         ) : null
                   }

@@ -32,7 +32,7 @@ export const UploadFile = ({ file, filesWrapper, removeFilesListForUpload , auto
                   return
             }
 
-            const fileExist = await checkIfFileExistInUserFiles(file, files)
+            const fileExist = await checkIfFileExistInUserFiles(file, files.fileData)
 
             if (fileExist) {
                   toast.info('You already have the file. Delete before importing this')
@@ -53,7 +53,7 @@ export const UploadFile = ({ file, filesWrapper, removeFilesListForUpload , auto
             setUploading(true)
             try {
                   const url = `${backend_url}/explorer_files`
-                  //  console.log("url ", url)
+                  //  //  console.log("url ", url)
                   const response = await axios.post(url, formData, {
                         headers: {
                               'Content-Type': 'multipart/form-data',
@@ -88,7 +88,7 @@ export const UploadFile = ({ file, filesWrapper, removeFilesListForUpload , auto
                   // };
 
                   // let newFilesData = [...files, fileInfo];
-                  // console.log(`newFilesData -, ${JSON.stringify(newFilesData)}`)
+                  // //  console.log(`newFilesData -, ${JSON.stringify(newFilesData)}`)
 
                   addFile(fileInfo)
 

@@ -5,6 +5,7 @@ import { fetchSystemFiles, getAquaTreeFileName, isWorkFlowData } from '@/utils/f
 
 import { useStore } from 'zustand'
 import appStore from '../store'
+import { ApiFileInfo } from '@/models/FileInfo'
 
 export default function FilesList() {
       const [view, setView] = useState<'table' | 'card'>('table')
@@ -37,7 +38,7 @@ export default function FilesList() {
       // Extract unique workflows from files
       useEffect(() => {
 
-            // console.log(`use effect in files list file and systemn  info `)
+            // //  console.log(`use effect in files list file and systemn  info `)
 
             if (systemFileInfo.length == 0) {
                   if (!hasFetchedSystemAquaTrees) {
@@ -55,21 +56,21 @@ export default function FilesList() {
                         try {
                               return getAquaTreeFileName(e.aquaTree!)
                         } catch (e) {
-                              console.log('Error processing system file')
+                              //  console.log('Error processing system file')
                               return ''
                         }
                   })
 
                   const workflows = new Set<string>()
 
-                  files.forEach(file => {
+                  files.fileData.forEach(file => {
                         try {
                               const workFlow = isWorkFlowData(file.aquaTree!, someData)
                               if (workFlow.isWorkFlow && workFlow.workFlow) {
                                     workflows.add(workFlow.workFlow)
                               }
                         } catch (e) {
-                              console.log('Error processing workflow data for file:', file)
+                              //  console.log('Error processing workflow data for file:', file)
                         }
                   })
 
@@ -77,26 +78,28 @@ export default function FilesList() {
 
             }
    
-      }, [files.length, systemFileInfo.length])
+      // }, [files.length, systemFileInfo.length])
+      }, [files.fileData.map(e => Object.keys(e?.aquaTree?.file_index ?? {})).join(','), systemFileInfo.map(e => Object.keys(e?.aquaTree?.file_index??{})).join(',')])
 
+       
 
 
       // Filter files based on selected filters AND selected workflow
-      const getFilteredFiles = () => {
+      const getFilteredFiles = () : ApiFileInfo[] => {
             // First filter by the modal filters
-            let filteredByFilters = files;
+            let filteredByFilters = files.fileData;
 
             if (!selectedFilters.includes('all')) {
                   const someData = systemFileInfo.map(e => {
                         try {
                               return getAquaTreeFileName(e.aquaTree!)
                         } catch (e) {
-                              console.log('Error processing system file')
+                              //  console.log('Error processing system file')
                               return ''
                         }
                   })
 
-                  filteredByFilters = files.filter(file => {
+                  filteredByFilters = files.fileData.filter(file => {
                         try {
                               const workFlow = isWorkFlowData(file.aquaTree!, someData)
 
@@ -108,7 +111,7 @@ export default function FilesList() {
                                     return selectedFilters.includes('aqua_files')
                               }
                         } catch (e) {
-                              console.log('Error filtering file:', file)
+                              //  console.log('Error filtering file:', file)
                               return false
                         }
                   })
@@ -120,7 +123,7 @@ export default function FilesList() {
                         try {
                               return getAquaTreeFileName(e.aquaTree!)
                         } catch (e) {
-                              console.log('Error processing system file')
+                              //  console.log('Error processing system file')
                               return ''
                         }
                   })
@@ -130,7 +133,7 @@ export default function FilesList() {
                               const workFlow = isWorkFlowData(file.aquaTree!, someData)
                               return workFlow.isWorkFlow && workFlow.workFlow === selectedWorkflow
                         } catch (e) {
-                              console.log('Error filtering by workflow:', file)
+                              //  console.log('Error filtering by workflow:', file)
                               return false
                         }
                   })
@@ -149,7 +152,7 @@ export default function FilesList() {
       // Get available filter options
       const getFilterOptions = () => {
             const options = [
-                  { value: 'all', label: 'All Files', count: files.length },
+                  { value: 'all', label: 'All Files', count: files.fileData.length },
                   { value: 'aqua_files', label: 'Aqua Files', count: 0 }
             ]
 
@@ -166,7 +169,7 @@ export default function FilesList() {
             let nonWorkflowCount = 0
             const workflowCounts: { [key: string]: number } = {}
 
-            files.forEach(file => {
+            files.fileData.forEach(file => {
                   try {
                         const workFlow = isWorkFlowData(file.aquaTree!, someData)
                         if (workFlow.isWorkFlow && workFlow.workFlow) {
@@ -268,6 +271,22 @@ export default function FilesList() {
       }
 
       const renderFilesList = () => {
+
+            let hasUndefined = false
+            for (let i = 0; i < filteredFiles.length; i++) {
+                  if (filteredFiles[i].aquaTree === undefined) {
+                        hasUndefined = true
+                        break
+                  }
+                  if (filteredFiles[i].aquaTree?.revisions === undefined) {
+                        hasUndefined = true
+                        break
+                  }
+            }
+            if(hasUndefined) {
+                  return <div>No files available.</div>
+
+            }
             return <table className="w-full border-collapse">
                   <thead>
                         <tr className="bg-gray-50">
@@ -317,11 +336,11 @@ export default function FilesList() {
                                                 : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                                                 }`}
                                     >
-                                          All Files ({files.length})
+                                          All Files ({files.fileData.length})
                                     </button>
                                     {
                                           view === 'table' && uniqueWorkflows.map((workflow) => {
-                                                const workflowCount = files.filter(file => {
+                                                const workflowCount = files.fileData.filter(file => {
                                                       try {
                                                             const someData = systemFileInfo.map(e => {
                                                                   try {

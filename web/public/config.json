@@ -1,3 +1,7 @@
 {
-  "BACKEND_URL": "BACKEND_URL_PLACEHOLDER"
+  "BACKEND_URL": "BACKEND_URL_PLACEHOLDER",
+  "CUSTOM_LANDING_PAGE_URL": "false",
+  "CUSTOM_LOGO_URL": "/images/logo.png",
+  "CUSTOM_NAME": "Aqua Protocol",
+  "CUSTOM_DESCRIPTION": "A Cryptographic Trust Protocol for Decentralized Data Integrity."
 }

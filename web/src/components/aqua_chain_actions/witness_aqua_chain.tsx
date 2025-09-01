@@ -1,5 +1,5 @@
 import { LuGlasses } from 'react-icons/lu'
-import { dummyCredential, getGenesisHash } from '../../utils/functions'
+import { dummyCredential, fetchFiles, getGenesisHash } from '../../utils/functions'
 import { useStore } from 'zustand'
 import appStore from '../../store'
 import axios from 'axios'
@@ -10,7 +10,7 @@ import { RevionOperation } from '../../models/RevisionOperation'
 import { toast } from 'sonner'
 
 export const WitnessAquaChain = ({ apiFileInfo, backendUrl, nonce }: RevionOperation) => {
-      const { setFiles, metamaskAddress, selectedFileInfo, setSelectedFileInfo, user_profile, session } = useStore(appStore)
+      const { setFiles, metamaskAddress, selectedFileInfo, setSelectedFileInfo, user_profile,backend_url ,session } = useStore(appStore)
       const [witnessing, setWitnessing] = useState(false)
 
       const witnessFileHandler = async () => {
@@ -64,8 +64,15 @@ export const WitnessAquaChain = ({ apiFileInfo, backendUrl, nonce }: RevionOpera
                               )
 
                               if (response.status === 200 || response.status === 201) {
-                                    const newFiles: ApiFileInfo[] = response.data.data
-                                    setFiles(newFiles)
+                                    // const newFiles: ApiFileInfo[] = response.data.data
+                                    // setFiles({ fileData: newFiles, status: 'loaded' })
+
+                                       const files = await fetchFiles(session!.address!, `${backend_url}/explorer_files`, session!.nonce)
+                                                      setFiles({
+                                                            fileData: files, status: 'loaded'
+                                                      })
+
+                                    const newFiles: ApiFileInfo[] = files
 
                                     if (selectedFileInfo) {
                                           const genesisHash = getGenesisHash(selectedFileInfo.aquaTree!)
@@ -84,7 +91,7 @@ export const WitnessAquaChain = ({ apiFileInfo, backendUrl, nonce }: RevionOpera
 
                         setWitnessing(false)
                   } catch (error) {
-                        console.log('Error  ', error)
+                        //  console.log('Error  ', error)
                         setWitnessing(false)
                         toast.error( `Error during witnessing`)
                   }

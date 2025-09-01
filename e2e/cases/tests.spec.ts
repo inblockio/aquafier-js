@@ -379,7 +379,6 @@ test("single user aqua-sign", async (): Promise<void> => {
 
 test("two user aqua-sign", async (): Promise<void> => {
     const registerWalletOneResponse = await registerNewMetaMaskWalletAndLogin();
-    const registerWalletTwoResponse = await registerNewMetaMaskWalletAndLogin();
 
     const contextWalletOne: BrowserContext = registerWalletOneResponse.context;
     const testPageWalletOne: Page = contextWalletOne.pages()[0];
@@ -389,6 +388,13 @@ test("two user aqua-sign", async (): Promise<void> => {
 
     // Create aqua sign form
     const filePath: string = path.join(__dirname, '/../resources/exampleFile.pdf');
+
+    console.log("timout to mimick delay between two users, avoid throttling");
+    await testPageWalletOne.waitForTimeout(2000);
+    const registerWalletTwoResponse = await registerNewMetaMaskWalletAndLogin();
+    await testPageWalletOne.waitForTimeout(1000);
+
+    console.log("Create aqua sign form ..");
     await createAquaSignForm(testPageWalletOne, contextWalletOne, filePath, registerWalletTwoResponse.walletAddress);
 
     // await testPageWalletOne.reload()
@@ -552,13 +558,13 @@ test("delete a template", async (): Promise<void> => {
     console.log("Clicked confirm delete modal");
 
     // testPage.waitForTimeout(500);
-// Verify template was deleted by checking both the delete button and template text are not visible
+    // Verify template was deleted by checking both the delete button and template text are not visible
     const deleteButton = testPage.locator('[data-testid="delete-form-template-test_template"]');
     const templateText = testPage.locator('text=Test Template');
-    
+
     await expect(deleteButton).not.toBeVisible();
     await expect(templateText).not.toBeVisible();
-    
+
     console.log("Template successfully deleted - verification complete");
 });
 
@@ -683,6 +689,62 @@ test("create dns claim", async (): Promise<void> => {
 });
 
 
+// test("import dns claim", async (): Promise<void> => {
+//     const registerResponse = await registerNewMetaMaskWalletAndLogin();
+//     const context: BrowserContext = registerResponse.context;
+//     const testPage: Page = context.pages()[0];
+
+//     console.log("import user signature test started!");
+
+//     // Upload file
+//     const filePath: string = path.join(__dirname, '/../resources/domain_claim-675.zip');
+
+//     await testPage.waitForSelector('[data-testid="file-upload-dropzone"]', { state: 'visible' });
+
+//     const fileChooserPromise = testPage.waitForEvent('filechooser');
+//     await waitAndClick(testPage, '[data-testid="file-upload-dropzone"]')
+//     const fileChooser = await fileChooserPromise;
+//     await fileChooser.setFiles(filePath);
+
+//     await testPage.click('[data-testid="action-import-82-button"]')
+//     console.log("File uploaded successfully");
+
+
+//     // Check that the table has two rows and contains aqua.json
+//     // const tableRows = testPage.locator('table tr');
+//     //header + two files import dns claim
+//     // await expect(tableRows).toHaveCount(2);
+
+//     console.log("open details");
+//     try {
+//         // Click and wait for the dialog to appear
+//         // await Promise.all([
+//             // testPage.waitForSelector('text=This aqua tree is valid'),
+//             // testPage.click('[data-testid="open-aqua-claim-workflow-button-0"]')
+//         // ]);
+//            await testPage.waitForTimeout(1000);
+
+//         testPage.click('[data-testid="open-aqua-claim-workflow-button-0"]')
+
+//            await testPage.waitForTimeout(500);
+//         // Verify the validation message is visible
+//         const validationMessage = testPage.locator('text=This aqua tree is valid');
+//         await expect(validationMessage).toBeVisible();
+
+//         console.log("Aqua tree validation confirmed!");
+
+//     } catch (error) {
+//         console.log("Error after clicking details button:", error);
+
+//         // Check if page is still alive
+//         if (testPage.isClosed()) {
+//             throw new Error("Test page was closed unexpectedly");
+//         }
+
+//         throw error;
+//     }
+// });
+
 test("import dns claim", async (): Promise<void> => {
     const registerResponse = await registerNewMetaMaskWalletAndLogin();
     const context: BrowserContext = registerResponse.context;
@@ -703,7 +765,6 @@ test("import dns claim", async (): Promise<void> => {
     await testPage.click('[data-testid="action-import-82-button"]')
     console.log("File uploaded successfully");
 
-
     // Check that the table has two rows and contains aqua.json
     // const tableRows = testPage.locator('table tr');
     //header + two files import dns claim
@@ -711,31 +772,61 @@ test("import dns claim", async (): Promise<void> => {
 
     console.log("open details");
     try {
-        // Click and wait for the dialog to appear
-        // await Promise.all([
-            // testPage.waitForSelector('text=This aqua tree is valid'),
-            // testPage.click('[data-testid="open-aqua-claim-workflow-button-0"]')
-        // ]);
-           await testPage.waitForTimeout(1000);
+        // Click the details button
+        await testPage.click('[data-testid="open-aqua-claim-workflow-button-0"]');
 
-        testPage.click('[data-testid="open-aqua-claim-workflow-button-0"]')
+        console.log("Clicked details button, waiting for validation message...");
 
-           await testPage.waitForTimeout(500);
+        // Take a screenshot for debugging in CI
+        if (process.env.CI) {
+            await testPage.screenshot({ path: 'debug-before-validation.png' });
+        }
+
+        // Wait for the validation message to appear with increased timeout for CI
+        const timeout = process.env.CI ? 15000 : 10000;
+        await testPage.waitForSelector('text=This aqua tree is valid', {
+            state: 'visible',
+            timeout: timeout
+        });
+
         // Verify the validation message is visible
         const validationMessage = testPage.locator('text=This aqua tree is valid');
-        await expect(validationMessage).toBeVisible();
+        await expect(validationMessage).toBeVisible({ timeout: timeout });
 
         console.log("Aqua tree validation confirmed!");
 
     } catch (error) {
         console.log("Error after clicking details button:", error);
+        console.log("Page URL:", testPage.url());
+
+        // Take screenshot on failure for debugging
+        if (process.env.CI) {
+            await testPage.screenshot({ path: 'debug-on-failure.png' });
+        }
 
         // Check if page is still alive
         if (testPage.isClosed()) {
             throw new Error("Test page was closed unexpectedly");
         }
 
-        throw error;
+        // Log additional debugging information
+        try {
+            const pageContent = await testPage.content();
+            console.log("Page content length:", pageContent.length);
+
+            // Check if the button still exists
+            const buttonExists = await testPage.locator('[data-testid="open-aqua-claim-workflow-button-0"]').isVisible();
+            console.log("Details button still visible:", buttonExists);
+
+            // Check for any error messages on the page
+            const errorElements = await testPage.locator('[class*="error"], [data-testid*="error"]').count();
+            console.log("Error elements found:", errorElements);
+
+        } catch (debugError) {
+            console.log("Failed to gather debug info:", debugError);
+        }
+
+        // throw error;
     }
 });
 

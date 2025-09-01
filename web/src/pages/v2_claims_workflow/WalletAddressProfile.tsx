@@ -7,7 +7,7 @@ import { ApiFileInfo } from '@/models/FileInfo'
 import appStore from '@/store'
 import { estimateFileSize, fetchFiles, formatCryptoAddress, generateAvatar, getAquaTreeFileName, getAquaTreeFileObject, getGenesisHash, getRandomNumber, isWorkFlowData, timeToHumanFriendly } from '@/utils/functions'
 import Aquafier, { AquaTree, AquaTreeWrapper, FileObject, OrderRevisionInAquaTree } from 'aqua-js-sdk'
-import { ArrowRight, CheckCircle, LucideCheckCircle, Mail, Phone,  Share2, Signature, User, X } from 'lucide-react'
+import { ArrowRight, CheckCircle, LucideCheckCircle, Mail, Phone, Share2, Signature, User, X } from 'lucide-react'
 import { useEffect, useState, Suspense } from 'react'
 import { TbWorldWww } from 'react-icons/tb'
 import { useNavigate } from 'react-router-dom'
@@ -17,6 +17,7 @@ import { useStore } from 'zustand'
 import axios from 'axios'
 import { loadSignatureImage } from './UserSignatureClaim'
 import { getDNSStatusBadge, IDnsVerificationResult, verifyDNS } from '@/utils/verifiy_dns'
+import { BsInfoCircle } from 'react-icons/bs'
 
 interface ISignatureWalletAddressCard {
       index?: number
@@ -56,22 +57,22 @@ const ClaimCard = ({ claim }: { claim: IClaim }) => {
       }
 
       const getClaimTitle = () => {
-            if(claim.claimType === 'identity_claim'){
+            if (claim.claimType === 'identity_claim') {
                   return 'Identity'
             }
-            else if(claim.claimType === 'domain_claim'){
+            else if (claim.claimType === 'domain_claim') {
                   return 'Domain'
             }
-            else if(claim.claimType === 'phone_number_claim'){
+            else if (claim.claimType === 'phone_number_claim') {
                   return 'Phone'
             }
-            else if(claim.claimType === 'email_claim'){
+            else if (claim.claimType === 'email_claim') {
                   return 'Email'
             }
-            else if(claim.claimType === 'user_signature'){
+            else if (claim.claimType === 'user_signature') {
                   return 'Signature'
             }
-            else{
+            else {
                   return 'Unknown'
             }
       }
@@ -138,8 +139,8 @@ const ClaimCard = ({ claim }: { claim: IClaim }) => {
 
       const getRightSectionContent = () => {
 
-            if(claim.claimType === "user_signature"){
-                  return (    
+            if (claim.claimType === "user_signature") {
+                  return (
                         <div className="flex gap-2 items-center">
                               <div className="p-1 rounded-md w-[120px]">
                                     {
@@ -153,11 +154,11 @@ const ClaimCard = ({ claim }: { claim: IClaim }) => {
                         </div>
                   )
             }
-            else if(claim.claimType === "domain_claim"){
-                  if(!dnsVerificationResult){
+            else if (claim.claimType === "domain_claim") {
+                  if (!dnsVerificationResult) {
                         return (
                               <div className="flex gap-2 items-center">
-                                    <div className="animate-spin h-2 w-2 border border-blue-500 border-t-transparent rounded-full" /> 
+                                    <div className="animate-spin h-2 w-2 border border-blue-500 border-t-transparent rounded-full" />
                                     <p className="text-xs font-medium text-gray-900">Loading</p>
                               </div>
                         )
@@ -169,45 +170,45 @@ const ClaimCard = ({ claim }: { claim: IClaim }) => {
                         </div>
                   )
             }
-            else{
-                  if(claim.attestationsCount > 0){
+            else {
+                  if (claim.attestationsCount > 0) {
                         return (
-                              <>
-                                    <CheckCircle size={ICON_SIZE-2} className="text-green-500" />
+                              <div className="flex gap-2 items-center flex-wrap">
+                                    <CheckCircle size={ICON_SIZE - 2} className="text-green-500" />
                                     <p className="text-xs font-medium text-gray-900">Verified</p>
-                              </>
+                              </div>
                         )
                   }
                   return (
                         <>
-                              <X size={ICON_SIZE-2} className="text-red-500" />
+                              <X size={ICON_SIZE - 2} className="text-red-500" />
                               <p className="text-xs font-medium text-gray-900">Not Verified</p>
                         </>
                   )
             }
       }
-      
-      const verifyDomainClaim = async     () => {
+
+      const verifyDomainClaim = async () => {
             try {
                   const result = await verifyDNS(backend_url, claim.claimName!, session?.address!)
-                  console.log(result)
+                  //  console.log(result)
                   setDnsVerificationResult(result)
             } catch (error) {
                   console.error(error)
             }
-            
+
       }
 
       const loadImage = async () => {
-              let signatureImage = await loadSignatureImage(claim.apiFileInfo.aquaTree!, claim.apiFileInfo.fileObject, session?.nonce!)
-              setSignatureImage(signatureImage)
-          }
+            let signatureImage = await loadSignatureImage(claim.apiFileInfo.aquaTree!, claim.apiFileInfo.fileObject, session?.nonce!)
+            setSignatureImage(signatureImage)
+      }
 
-      useEffect(() => { 
+      useEffect(() => {
             const timeoutId = setTimeout(() => {
                   if (claim.claimType === 'user_signature') {
                         loadImage()
-                  }else if(claim.claimType === 'domain_claim'){
+                  } else if (claim.claimType === 'domain_claim') {
                         verifyDomainClaim()
                   }
             }, 0)
@@ -217,11 +218,11 @@ const ClaimCard = ({ claim }: { claim: IClaim }) => {
 
       return (
             <div className="flex gap-2 p-2 bg-gray-50 rounded-lg justify-between items-center">
-                  <div className="flex gap-2">
+                  <div className="flex gap-2 max-w-[60%]">
                         <div className="w-[34px] h-[34px] flex items-center justify-center text-gray-500 rounded-full bg-gray-100">{getClaimIcon()}</div>
                         <div className="flex flex-col gap-1">
                               <p className="text-xs">{getClaimTitle()}</p>
-                              <p className="text-xs font-medium text-gray-900">{getTextContent()}</p>
+                              <p className="text-xs font-medium text-gray-900 break-all">{getTextContent()}</p>
                         </div>
                   </div>
                   <div className="flex gap-1">
@@ -231,8 +232,8 @@ const ClaimCard = ({ claim }: { claim: IClaim }) => {
       )
 }
 
-const WalletAddressProfile = ({ walletAddress, callBack, showAvatar, width, showShadow, hideOpenProfileButton, noBg }: ISignatureWalletAddressCard) => {
-      const { files, systemFileInfo , session, setFiles, backend_url, setOpenDialog, setSelectedFileInfo} = useStore(appStore)
+const WalletAddressProfile = ({ walletAddress, callBack, showAvatar, width, showShadow, hideOpenProfileButton, noBg, timestamp }: ISignatureWalletAddressCard) => {
+      const { files, systemFileInfo, session, setFiles, backend_url, setOpenDialog, setSelectedFileInfo } = useStore(appStore)
       const [claims, setClaims] = useState<IClaim[]>([])
       const [loading, setLoading] = useState(false)
       // const [sharedProfileItem, setSharedProfileItem] = useState<ApiFileInfo | null>(null)
@@ -249,23 +250,23 @@ const WalletAddressProfile = ({ walletAddress, callBack, showAvatar, width, show
                   try {
                         return getAquaTreeFileName(e.aquaTree!)
                   } catch (e) {
-                        // console.log('Error processing system file') // More descriptive
+                        // //  console.log('Error processing system file') // More descriptive
                         return ''
                   }
             })
 
-            if (files && files.length > 0) {
-                  let attestationFiles = files.filter(file => {
+            if (files && files.fileData.length > 0) {
+                  let attestationFiles = files.fileData.filter(file => {
                         const fileInfo = isWorkFlowData(file.aquaTree!, aquaTemplates)
                         return fileInfo.isWorkFlow && fileInfo.workFlow === 'identity_attestation'
                   })
 
-                  console.log("attestationFiles", attestationFiles)
+                  //  console.log("attestationFiles", attestationFiles)
 
                   const localClaims: IClaim[] = []
                   // let _totalAttestations = 0
-                  for (let i = 0; i < files.length; i++) {
-                        const aquaTree = files[i].aquaTree
+                  for (let i = 0; i < files.fileData.length; i++) {
+                        const aquaTree = files.fileData[i].aquaTree
                         if (aquaTree) {
                               const { isWorkFlow, workFlow } = isWorkFlowData(aquaTree!, aquaTemplates)
 
@@ -312,7 +313,7 @@ const WalletAddressProfile = ({ walletAddress, callBack, showAvatar, width, show
                                                 claimType: workFlow,
                                                 claimName: claimName,
                                                 attestationsCount: attestationsCount,
-                                                apiFileInfo: files[i],
+                                                apiFileInfo: files.fileData[i],
                                           }
                                           localClaims.push(claimInformation)
                                     }
@@ -365,7 +366,7 @@ const WalletAddressProfile = ({ walletAddress, callBack, showAvatar, width, show
                         }
                         // If it's an ArrayBuffer or similar binary data
                         else if (fileObject.fileContent instanceof ArrayBuffer || fileObject.fileContent instanceof Uint8Array) {
-                              const fileBlob = new Blob([fileObject.fileContent], {
+                              const fileBlob = new Blob([fileObject.fileContent as any], {
                                     type: 'application/octet-stream',
                               })
                               formData.append('asset', fileBlob, fileObject.fileName)
@@ -405,41 +406,47 @@ const WalletAddressProfile = ({ walletAddress, callBack, showAvatar, width, show
 
                   if (response.status === 200 || response.status === 201) {
                         if (isFinal) {
-                              if (account !== session?.address) {
-                                    const files = await fetchFiles(session!.address, `${backend_url}/explorer_files`, session!.nonce)
-                                    setFiles(files)
-                              } else {
-                                    setFiles(response.data.files)
-                              }
+                              // if (account !== session?.address) {
+                              //       const files = await fetchFiles(session!.address, `${backend_url}/explorer_files`, session!.nonce)
+                              //       setFiles({ fileData: files, status: 'loaded' })
+                              // } else {
+                              //       setFiles({
+                              //             fileData: response.data.files,
+                              //             status: 'loaded',
+                              //       })
+                              // }
+
+                              const files = await fetchFiles(session!.address, `${backend_url}/explorer_files`, session!.nonce)
+                              setFiles({ fileData: files, status: 'loaded' })
 
                               toast.success('Profile Aqua tree created successfully')
                               callBack && callBack()
 
 
-                               // Create the profile item to share
-                  const profileItem: ApiFileInfo = {
-                        aquaTree: aquaTree,
-                        fileObject: [fileObject], // ShareButton expects an array
-                        // Add other required properties based on your ApiFileInfo interface
-                        linkedFileObjects:[],
-                        mode:'',
-                        owner:''
-                  }
+                              // Create the profile item to share
+                              const profileItem: ApiFileInfo = {
+                                    aquaTree: aquaTree,
+                                    fileObject: [fileObject], // ShareButton expects an array
+                                    // Add other required properties based on your ApiFileInfo interface
+                                    linkedFileObjects: [],
+                                    mode: '',
+                                    owner: ''
+                              }
 
-            setSelectedFileInfo(profileItem)
-                                          setOpenDialog({
-                                                dialogType: 'share_dialog',
-                                                isOpen: true,
-                                                onClose: () => setOpenDialog(null),
-                                                onConfirm: (data) => {
-                                                      // Handle confirmation logic here
-                                                      console.log('Attestation confirmed with data:', data)
-                                                }
-                                          })
+                              setSelectedFileInfo(profileItem)
+                              setOpenDialog({
+                                    dialogType: 'share_dialog',
+                                    isOpen: true,
+                                    onClose: () => setOpenDialog(null),
+                                    onConfirm: () => {
+                                          // Handle confirmation logic here
+                                          //  console.log('Attestation confirmed with data:', data)
+                                    }
+                              })
 
-                  // Set the profile item and trigger the share dialog
-                  // setSharedProfileItem(profileItem)
-                  // setShowShareDialog(true)
+                              // Set the profile item and trigger the share dialog
+                              // setSharedProfileItem(profileItem)
+                              // setShowShareDialog(true)
                               // navigate('/app')
                               // setModalFormErorMessae('')
                               // setFormData({})
@@ -455,27 +462,27 @@ const WalletAddressProfile = ({ walletAddress, callBack, showAvatar, width, show
       const handleShareProfile = async () => {
             try {
 
-                   if(claims.length==0){
-                    toast.error(`Please create a claim  first.`)
-                    return    
+                  if (claims.length == 0) {
+                        toast.error(`Please create a claim  first.`)
+                        return
                   }
 
-                  console.log("Creating profile for sharing...");
+                  //  console.log("Creating profile for sharing...");
                   if (callBack) {
                         callBack();
                   }
 
-                 
 
 
-                  let allFileObjects : Array<FileObject> =[]
+
+                  let allFileObjects: Array<FileObject> = []
                   const randomNumber = getRandomNumber(100, 1000)
                   // let fileName = `user_profile_${timeToHumanFriendly(Date.now().toString())}_${randomNumber}.json`
                   let date = timeToHumanFriendly(new Date().toISOString(), true)
                   let dateFormatted = date
-                  .replace(/,/g, '')    // Remove ALL commas
-                  .replace(/:/g, '_')
-                  .replace(/ /g, '_');  // Replace ALL spaces with underscores
+                        .replace(/,/g, '')    // Remove ALL commas
+                        .replace(/:/g, '_')
+                        .replace(/ /g, '_');  // Replace ALL spaces with underscores
                   // .replace(/[,: ]/g, '_');  // Replace ALL commas, colons, and spaces with underscores
                   let fileName = `user_profile_${dateFormatted}_${randomNumber}.json`
 
@@ -486,7 +493,7 @@ const WalletAddressProfile = ({ walletAddress, callBack, showAvatar, width, show
 
                   const estimateSize = estimateFileSize(JSON.stringify(completeFormData))
                   const jsonString = JSON.stringify(completeFormData, null, 4)
-                  console.log(`completeFormData -- jsonString-- ${jsonString}`)
+                  //  console.log(`completeFormData -- jsonString-- ${jsonString}`)
 
                   const fileObject: FileObject = {
                         fileContent: jsonString,
@@ -504,12 +511,12 @@ const WalletAddressProfile = ({ walletAddress, callBack, showAvatar, width, show
                   }
 
                   let currentAquaTree = genesisAquaTree.data.aquaTree
-              
+
 
                   for (let index = 0; index < claims.length; index++) {
                         const element = claims[index];
 
-                        
+
                         const mainAquaTreeWrapper: AquaTreeWrapper = {
                               aquaTree: currentAquaTree!!,
                               revision: '',
@@ -537,13 +544,13 @@ const WalletAddressProfile = ({ walletAddress, callBack, showAvatar, width, show
                         currentAquaTree = linkedAquaTreeResponse.data.aquaTree
                   }
 
-                  console.log(`here  ${JSON.stringify(currentAquaTree, null, 4)}`)
-// throw Error(`here...`)
-                 
-                      // save it on the server 
-                  await   saveAquaTree(currentAquaTree!,fileObject, true )
+                  //  console.log(`here  ${JSON.stringify(currentAquaTree, null, 4)}`)
+                  // throw Error(`here...`)
 
-                 
+                  // save it on the server 
+                  await saveAquaTree(currentAquaTree!, fileObject, true)
+
+
 
             } catch (error) {
                   console.error("Error creating profile:", error)
@@ -556,7 +563,7 @@ const WalletAddressProfile = ({ walletAddress, callBack, showAvatar, width, show
                   return null
             }
             let identityClaim = claims.find((claim) => claim.claimType === 'identity_claim')
-            if(!identityClaim){
+            if (!identityClaim) {
                   return null
             }
             return {
@@ -571,7 +578,8 @@ const WalletAddressProfile = ({ walletAddress, callBack, showAvatar, width, show
             }, 0)
 
             return () => clearTimeout(timeoutId)
-      }, [files.length])
+            // }, [files.length])
+      }, [files.fileData.map(e => Object.keys(e?.aquaTree?.file_index ?? {})).join(','), systemFileInfo.map(e => Object.keys(e?.aquaTree?.file_index ?? {})).join(','), walletAddress])
 
       return (
             <div className={`${width ? width : 'w-full'} bg-transparent`}>
@@ -603,60 +611,82 @@ const WalletAddressProfile = ({ walletAddress, callBack, showAvatar, width, show
 
                         {
                               claims.length === 0 ? (
-                                    <div className="flex flex-col gap-0 bg-blue-100 rounded-lg p-4">
-                                          <p className="text-sm">
-                                                Profile not created yet!
-                                          </p>
+                                    <div className="flex flex-col gap-2 bg-slate-100 p-2 rounded-lg">
+                                          <p className="text-xs font-medium">Wallet Address</p>
+                                          <div className="flex gap-2">
+                                                <BsInfoCircle size={15} className="text-primary" />
+                                                <p className="text-sm">Profile not Found!</p>
+                                          </div>
+                                          <div className="flex gap-2 items-center">
+                                                <p className="text-sm font-mono break-all">
+                                                      {walletAddress}
+                                                </p>
+                                                <CopyButton text={`${walletAddress}`} isIcon={true} />
+                                          </div>
+                                          {
+                                                timestamp ? (
+                                                      <p className="text-xs break-all">{timestamp}</p>
+                                                ) : null
+                                          }
+                                          {/* {
+                                                signatureHash ? (
+                                                      <p className="text-xs break-all">{signatureHash}</p>
+                                                ) : null
+                                          } */}
                                     </div>
                               ) : null
                         }
                         {
                               claims.length > 0 ? (
                                     <>
-                                      <div className="flex items-center gap-2">
-                                          <Avatar className='size-12'>
-                                                {/* <AvatarImage src={generateAvatar(walletAddress!)} alt="User Avatar" /> */}
-                                                <AvatarFallback className="bg-primary/10 text-primary font-semibold">
-                                                      {getIdentityClaim() ? getIdentityClaim()!.name?.substring(0, 2).toUpperCase() : 'UN'}
-                                                </AvatarFallback>
-                                          </Avatar>
-                                          <div className="flex flex-col gap-1">
-                                                <p className="font-semibold text-gray-800">{getIdentityClaim() ? getIdentityClaim()!.name : 'UN'}</p>
-                                                <div className="flex gap-2 items-center">
-                                                      <p className="text-xs break-all">{walletAddress}</p>
-                                                      <CopyButton text={`${walletAddress}`} isIcon={true} />
+                                          <div className="flex items-center gap-2">
+                                                <Avatar className='size-12'>
+                                                      {/* <AvatarImage src={generateAvatar(walletAddress!)} alt="User Avatar" /> */}
+                                                      <AvatarFallback className="bg-primary/10 text-primary font-semibold">
+                                                            {getIdentityClaim() ? getIdentityClaim()!.name?.substring(0, 2).toUpperCase() : 'UN'}
+                                                      </AvatarFallback>
+                                                </Avatar>
+                                                <div className="flex flex-col gap-1">
+                                                      <p className="font-semibold text-gray-800">{getIdentityClaim() ? getIdentityClaim()!.name : 'UN'}</p>
+                                                      <div className="flex gap-2 items-center">
+                                                            <p className="text-xs break-all">{walletAddress}</p>
+                                                            <CopyButton text={`${walletAddress}`} isIcon={true} />
+                                                      </div>
                                                 </div>
                                           </div>
-                                      </div>
                                     </>
-                              ): null
+                              ) : null
                         }
-                        <div className="flex flex-col gap-[6px] rounded-lg">
-                              {
-                                    claims.filter((claim) => claim.claimType === 'identity_claim').map((claim, index) => (
-                                          <Suspense key={`claim_${index}`} fallback={<div className="flex gap-2 p-2 bg-gray-50 rounded-lg justify-between items-center animate-pulse"><div className="h-8 bg-gray-200 rounded w-full"></div></div>}>
-                                                <ClaimCard claim={claim} />
-                                          </Suspense>
-                                    ))
-                              }
-                              {
-                                    claims.filter((claim) => claim.claimType !== 'identity_claim').map((claim, index) => (
-                                          <Suspense key={`claim_${index}`} fallback={<div className="flex gap-2 p-2 bg-gray-50 rounded-lg justify-between items-center animate-pulse"><div className="h-8 bg-gray-200 rounded w-full"></div></div>}>
-                                                <ClaimCard claim={claim} />
-                                          </Suspense>
-                                    ))
-                              }
-                        </div>
-                        <div className="flex justify-end">
-                              {
-                                    !hideOpenProfileButton && (
-                                          <div className="flex gap-2 flex-1">
+                        {
+                              claims.length > 0 ? (
+                                    <div className="flex flex-col gap-[6px] rounded-lg">
+                                          {
+                                                claims.filter((claim) => claim.claimType === 'identity_claim').map((claim, index) => (
+                                                      <Suspense key={`claim_${index}`} fallback={<div className="flex gap-2 p-2 bg-gray-50 rounded-lg justify-between items-center animate-pulse"><div className="h-8 bg-gray-200 rounded w-full"></div></div>}>
+                                                            <ClaimCard claim={claim} />
+                                                      </Suspense>
+                                                ))
+                                          }
+                                          {
+                                                claims.filter((claim) => claim.claimType !== 'identity_claim').map((claim, index) => (
+                                                      <Suspense key={`claim_${index}`} fallback={<div className="flex gap-2 p-2 bg-gray-50 rounded-lg justify-between items-center animate-pulse"><div className="h-8 bg-gray-200 rounded w-full"></div></div>}>
+                                                            <ClaimCard claim={claim} />
+                                                      </Suspense>
+                                                ))
+                                          }
+                                    </div>
+                              ) : null
+                        }
+                        {
+                              !hideOpenProfileButton && (
+                                    <div className="flex justify-end">
+                                          <div className="flex gap-1 flex-1 flex-wrap">
                                                 {/* Share Profile button */}
                                                 <Button
-                                                      className="flex-1 bg-orange-50 hover:bg-orange-200 text-orange-700 hover:text-orange-800 px-3 py-1.5 rounded-md flex items-center gap-1.5 text-sm font-medium transition-colors duration-200 border border-orange-200 hover:border-orange-300 cursor-pointer"
+                                                      className={`flex-1 bg-orange-50 hover:bg-orange-200 text-orange-700 hover:text-orange-800 px-3 py-1.5 rounded-md flex items-center gap-1.5 text-sm font-medium transition-colors duration-200 border border-orange-200 hover:border-orange-300 cursor-pointer ${claims.length === 0 ? 'hidden' : ''}`}
                                                       onClick={handleShareProfile}
                                                 >
-                                                      Share Profile
+                                                      Share
                                                       <Share2 className="w-4 h-4" />
                                                 </Button>
 
@@ -664,7 +694,7 @@ const WalletAddressProfile = ({ walletAddress, callBack, showAvatar, width, show
                                                 <Button
                                                       className="flex-1 bg-blue-50 hover:bg-blue-100 text-blue-600 hover:text-blue-700 px-3 py-1.5 rounded-md flex items-center gap-1.5 text-sm font-medium transition-colors duration-200 border border-blue-200 hover:border-blue-300 cursor-pointer"
                                                       onClick={() => {
-                                                            console.log("Clicked", callBack);
+                                                            //  console.log("Clicked", callBack);
                                                             if (callBack) {
                                                                   callBack();
                                                             }
@@ -675,8 +705,10 @@ const WalletAddressProfile = ({ walletAddress, callBack, showAvatar, width, show
                                                       <ArrowRight className="w-4 h-4" />
                                                 </Button>
                                           </div>
-                                    )}
-                        </div>
+                                    </div>
+                              )
+                        }
+
                   </div>
 
                   {/* ShareButton component with autoOpenShareDialog */}
@@ -695,384 +727,6 @@ const WalletAddressProfile = ({ walletAddress, callBack, showAvatar, width, show
 
 export default WalletAddressProfile
 
-// import CopyButton from '@/components/CopyButton'
-// import CustomCopyButton from '@/components/CustomCopyButton'
-// import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
-// import { Button } from '@/components/ui/button'
-// import { ApiFileInfo } from '@/models/FileInfo'
-// import appStore from '@/store'
-// import { estimateFileSize, formatCryptoAddress, generateAvatar, getAquaTreeFileName, getAquaTreeFileObject, getGenesisHash, getRandomNumber, isWorkFlowData, timeToHumanFriendly } from '@/utils/functions'
-// import Aquafier, { AquaTreeWrapper, FileObject, OrderRevisionInAquaTree } from 'aqua-js-sdk'
-// import { ArrowRight, LucideCheckCircle, Mail, Phone, Share, Share2, Wallet } from 'lucide-react'
-// import { useEffect, useState } from 'react'
-// import { HiShieldCheck } from 'react-icons/hi'
-// import { TbWorldWww } from 'react-icons/tb'
-// import { useNavigate } from 'react-router-dom'
-// import { ClipLoader } from 'react-spinners'
-// import { toast } from 'sonner'
-// import { useStore } from 'zustand'
-
-// interface ISignatureWalletAddressCard {
-//       index?: number
-//       signatureHash?: string
-//       walletAddress?: string
-//       timestamp?: string
-//       callBack?: () => void
-//       showAvatar?: boolean
-//       width?: string
-//       showShadow?: boolean
-//       hideOpenProfileButton?: boolean
-// }
-
-// interface IClaim {
-//       claimType: string
-//       claimName?: string
-//       attestationsCount: number
-//       apiFileInfo: ApiFileInfo
-// }
-
-// const ClaimCard = ({ claim }: { claim: IClaim }) => {
-
-//       const getTextContent = () => {
-//             let textContent = claim.claimName || claim.claimType
-//             if (claim.claimType === "domain_claim") {
-//                   textContent = textContent.replace("aqua._wallet.", "")
-//             }
-//             return textContent
-//       }
-
-//       const getClaimIcon = () => {
-//             if (claim.claimType === 'identity_claim') {
-//                   let extraClasses = ""
-//                   if (claim.attestationsCount > 0) {
-//                         extraClasses = "text-green-500"
-//                   }
-//                   return (
-//                         <div className={`h-[34px] w-[34px] flex items-center justify-center ${extraClasses}`}>
-//                               <HiShieldCheck size={24} className={extraClasses} />
-//                         </div>
-//                   )
-//             } else if (claim.claimType === 'domain_claim') {
-//                   return (
-//                         <div className="h-[34px] w-[34px] flex items-center justify-center">
-//                               <TbWorldWww size={24} />
-//                         </div>
-//                   )
-//             }
-//             else if (claim.claimType === 'phone_number_claim') {
-//                   let extraClasses = ""
-//                   if (claim.attestationsCount > 0) {
-//                         extraClasses = "text-green-500"
-//                   }
-//                   return (
-//                         <div className={`h-[34px] w-[34px] flex items-center justify-center ${extraClasses}`}>
-//                               <Phone size={24} />
-//                         </div>
-//                   )
-//             }
-//             else if (claim.claimType === 'email_claim') {
-//                   let extraClasses = ""
-//                   if (claim.attestationsCount > 0) {
-//                         extraClasses = "text-green-500"
-//                   }
-//                   return (
-//                         <div className={`h-[34px] w-[34px] flex items-center justify-center ${extraClasses}`}>
-//                               <Mail size={24} />
-//                         </div>
-//                   )
-//             }
-//             else {
-//                   return (
-//                         <div className="h-[34px] w-[34px] flex items-center justify-center">
-//                               <LucideCheckCircle size={24} />
-//                         </div>
-//                   )
-//             }
-//       }
-
-//       return (
-//             <div className="flex items-center justify-between p-2 border-t border-gray-200 dark:border-gray-700">
-//                   <div className="flex items-center gap-2">
-//                         <div className="w-[34px] h-[34px] flex items-center justify-center text-gray-500">{getClaimIcon()}</div>
-//                         <div className="flex flex-col gap-2">
-//                               <span className="text-sm">{getTextContent()}</span>
-//                         </div>
-//                   </div>
-//             </div>
-//       )
-// }
-
-// const WalletAddressProfile = ({ walletAddress, callBack, showAvatar, width, showShadow, hideOpenProfileButton }: ISignatureWalletAddressCard) => {
-//       const { files, systemFileInfo } = useStore(appStore)
-//       const [claims, setClaims] = useState<IClaim[]>([])
-//       // const [totalAttestations, setTotalAttestations] = useState(0)
-//       const [loading, setLoading] = useState(false)
-//       const navigate = useNavigate()
-
-//       const shadowClasses = showShadow ? 'shadow-lg hover:shadow-xl transition-shadow duration-300' : 'shadow-none'
-
-//       const requiredClaims = ['simple_claim', 'domain_claim', 'identity_claim', 'phone_number_claim', 'email_claim']
-
-//       const getWalletClaims = () => {
-//             setLoading(true)
-//             const aquaTemplates: string[] = systemFileInfo.map(e => {
-//                   try {
-//                         return getAquaTreeFileName(e.aquaTree!)
-//                   } catch (e) {
-//                         // console.log('Error processing system file') // More descriptive
-//                         return ''
-//                   }
-//             })
-
-//             if (files && files.length > 0) {
-//                   let attestationFiles = files.filter(file => {
-//                         const fileInfo = isWorkFlowData(file.aquaTree!, aquaTemplates)
-//                         return fileInfo.isWorkFlow && fileInfo.workFlow === 'identity_attestation'
-//                   })
-
-//                   console.log("attestationFiles", attestationFiles)
-
-//                   const localClaims: IClaim[] = []
-//                   // let _totalAttestations = 0
-//                   for (let i = 0; i < files.length; i++) {
-//                         const aquaTree = files[i].aquaTree
-//                         if (aquaTree) {
-//                               const { isWorkFlow, workFlow } = isWorkFlowData(aquaTree!, aquaTemplates)
-
-//                               if (isWorkFlow && requiredClaims.includes(workFlow)) {
-
-//                                     const orderedAquaTree = OrderRevisionInAquaTree(aquaTree)
-//                                     const revisionHashes = Object.keys(orderedAquaTree.revisions)
-//                                     const firstRevisionHash = revisionHashes[0]
-//                                     const firstRevision = orderedAquaTree.revisions[firstRevisionHash]
-//                                     const _wallet_address = firstRevision.forms_wallet_address
-//                                     if (walletAddress === _wallet_address) {
-//                                           // setSelectedFileInfo(files[i])
-//                                           // firstClaim = files[i]
-//                                           let attestationsCount = 0
-
-//                                           // Lets get all Attestation for this claim
-//                                           for (let a = 0; a < attestationFiles.length; a++) {
-//                                                 let attestationFile = attestationFiles[a]
-//                                                 let attestationAquaTree = attestationFile?.aquaTree!
-//                                                 let attestationFileGenesisHash = getGenesisHash(attestationAquaTree)!
-//                                                 let genesisRevision = attestationAquaTree.revisions[attestationFileGenesisHash]
-//                                                 // TODO: Do we have to countercheck the wallet addresses too!
-//                                                 // if (genesisRevision.forms_claim_wallet_address === _wallet_address
-//                                                 //       && genesisRevision.forms_identity_claim_id === firstRevisionHash) {
-//                                                 //       attestationsCount += 1
-//                                                 // }
-//                                                 if (genesisRevision.forms_identity_claim_id === firstRevisionHash) {
-//                                                       attestationsCount += 1
-//                                                 }
-//                                           }
-
-//                                           // _totalAttestations += attestationsCount
-//                                           let claimName = ""
-//                                           if (workFlow === 'simple_claim' || workFlow === 'identity_claim') {
-//                                                 claimName = firstRevision.forms_name ?? firstRevision.forms_domain
-//                                           } else if (workFlow === 'domain_claim' || workFlow === 'dns_claim') {
-//                                                 claimName = firstRevision.forms_domain
-//                                           } else if (workFlow === 'phone_number_claim') {
-//                                                 claimName = firstRevision.forms_phone_number
-//                                           } else if (workFlow === 'email_claim') {
-//                                                 claimName = firstRevision.forms_email
-//                                           }
-//                                           let claimInformation: IClaim = {
-//                                                 claimType: workFlow,
-//                                                 claimName: claimName,
-//                                                 attestationsCount: attestationsCount,
-//                                                 apiFileInfo: files[i],
-//                                           }
-//                                           localClaims.push(claimInformation)
-//                                     }
-//                               }
-//                         }
-//                   }
-
-//                   setClaims(localClaims)
-//                   // setTotalAttestations(_totalAttestations)
-//                   setLoading(false)
-//             }
-//       }
-
-//       useEffect(() => {
-//             // Defer the heavy computation to allow UI to render first
-//             const timeoutId = setTimeout(() => {
-//                   getWalletClaims()
-//             }, 0)
-
-//             return () => clearTimeout(timeoutId)
-//       }, [JSON.stringify(files)])
-
-//       return (
-//             <div className={`${width ? width : 'w-full'} bg-transparent`}>
-//                   <div className={`flex p-6 flex-col bg-gradient-to-br from-white to-slate-50 border border-slate-200 ${shadowClasses} rounded-xl gap-4 transition-shadow duration-300`}>
-//                         {
-//                               loading ? <div className="py-6 flex flex-col items-center justify-center h-full w-full">
-//                                     <ClipLoader color="#000" loading={loading} size={50} />
-//                                     <p className="text-sm">Loading...</p>
-//                               </div> : null
-//                         }
-
-//                         {showAvatar && (
-//                               <div className="relative group">
-//                                     <Avatar className="size-20 border-2 border-primary/20 hover:border-primary/50 transition-all duration-300">
-//                                           <AvatarImage src={generateAvatar(walletAddress!)} alt="User Avatar" />
-//                                           <AvatarFallback className="bg-primary/10 text-primary font-semibold">
-//                                                 {walletAddress ? walletAddress.substring(2, 4).toUpperCase() : 'UN'}
-//                                           </AvatarFallback>
-//                                     </Avatar>
-//                                     <div className="absolute -bottom-1 -right-1 bg-green-500 h-3 w-3 rounded-full border-2 border-background" title="Connected" />
-//                               </div>
-//                         )}
-//                         {showAvatar && (
-//                               <div className="flex flex-col items-center gap-2 w-full">
-//                                     <p className="font-mono text-sm bg-secondary/30 px-3 py-1 rounded-full">{formatCryptoAddress(walletAddress, 10, 10)}</p>
-//                                     <CustomCopyButton value={`${walletAddress}`} />
-//                               </div>
-//                         )}
-//                         <div className="flex gap-2 align-center items-center">
-//                               <Wallet size={16} />
-//                               <div className="flex gap-2 items-center">
-//                                     <p className="text-sm break-all">{walletAddress}</p>
-//                                     <CopyButton text={`${walletAddress}`} isIcon={true} />
-//                               </div>
-//                         </div>
-//                         {
-//                               claims.length === 0 ? (
-//                                     <div className="flex flex-col gap-0 bg-blue-100 rounded-lg p-4">
-//                                           <p className="text-sm">
-//                                                 Profile not created yet!
-//                                           </p>
-//                                     </div>
-//                               ) : null
-//                         }
-//                         <div className="flex flex-col gap-0 bg-amber-100 rounded-lg">
-//                               {
-//                                     claims.filter((claim) => claim.claimType === 'identity_claim').map((claim, index) => (
-//                                           <ClaimCard key={`claim_${index}`} claim={claim} />
-//                                     ))
-//                               }
-//                               {
-//                                     claims.filter((claim) => claim.claimType !== 'identity_claim').map((claim, index) => (
-//                                           <ClaimCard key={`claim_${index}`} claim={claim} />
-//                                     ))
-//                               }
-//                         </div>
-//                         <div className="flex justify-end">
-//                               {
-//                                     !hideOpenProfileButton && (
-
-
-//                                           <div className="flex gap-2">
-//                                                 {/* Share Profile button on the left */}
-//                                                 <Button
-//                                                       className="bg-orange-50 hover:bg-orange-200 text-orange-700 hover:text-orange-800 px-3 py-1.5 rounded-lg flex items-center gap-1.5 text-sm font-medium transition-colors duration-200 border border-orange-200 hover:border-orange-300 cursor-pointer"
-//                                                       onClick={async () => {
-//                                                             console.log("Clicked", callBack);
-//                                                             if (callBack) {
-//                                                                   callBack();
-//                                                             }
-//                                                             // navigate(`/app/claims/workflow/${walletAddress}`);
-
-//                                                             const randomNumber = getRandomNumber(100, 1000)
-//                                                             let fileName = `user_profile_${timeToHumanFriendly(Date.now().toString())}_${randomNumber}`
-
-//                                                             let completeFormData = {
-//                                                                   "total_claims": claims.length,
-//                                                                   "claims_included": claims.map((e) => e.claimType).toString()
-//                                                             }
-
-//                                                             const estimateSize = estimateFileSize(JSON.stringify(completeFormData))
-//                                                             const jsonString = JSON.stringify(completeFormData, null, 4)
-//                                                             console.log(`completeFormData -- jsonString-- ${jsonString}`)
-
-//                                                             const fileObject: FileObject = {
-//                                                                   fileContent: jsonString,
-//                                                                   fileName: fileName,
-//                                                                   path: './',
-//                                                                   fileSize: estimateSize,
-//                                                             }
-
-//                                                             let aquafier = new Aquafier()
-//                                                             const genesisAquaTree = await aquafier.createGenesisRevision(fileObject, true, false, false)
-
-//                                                             if (genesisAquaTree.isErr()) {
-//                                                                   toast.error(`Error creating user profile`)
-//                                                                   throw new Error('Error creating genesis aqua tree')
-//                                                             }
-//                                                             let currentAquaTree = genesisAquaTree.data.aquaTree
-
-//                                                             for (let index = 1; index < claims.length; index++) {
-//                                                                   const element = claims[index];
-//                                                                   // const mainFileObject = getAquaTreeFileObject(currentAquaTree!!)
-//                                                                   // if (!mainFileObject) {
-//                                                                   //       throw new Error('System Aqua tree has error')
-//                                                                   // }
-
-//                                                                   const mainAquaTreeWrapper: AquaTreeWrapper = {
-//                                                                         aquaTree: currentAquaTree!!,
-//                                                                         revision: '',
-//                                                                         fileObject: fileObject,
-//                                                                   }
-
-//                                                                   const linkedAquaTreeFileObj = getAquaTreeFileObject(element.apiFileInfo)
-//                                                                   if (!linkedAquaTreeFileObj) {
-//                                                                         throw new Error('System Aqua tree has error')
-//                                                                   }
-
-//                                                                   const linkedToAquaTreeWrapper: AquaTreeWrapper = {
-//                                                                         aquaTree: element.apiFileInfo.aquaTree!,
-//                                                                         revision: '',
-//                                                                         fileObject: linkedAquaTreeFileObj,
-//                                                                   }
-
-//                                                                   const linkedAquaTreeResponse = await aquafier.linkAquaTree(mainAquaTreeWrapper, linkedToAquaTreeWrapper)
-
-//                                                                   if (linkedAquaTreeResponse.isErr()) {
-//                                                                         throw new Error('Error linking aqua tree')
-//                                                                   }
-
-//                                                                   currentAquaTree =linkedAquaTreeResponse.data.aquaTree
-
-//                                                             }
-
-//                                                             // call share  button 
-                                                           
-
-//                                                       }}
-//                                                 >
-//                                                       Share Profile
-//                                                       <Share2 className="w-4 h-4" />
-//                                                 </Button>
-
-//                                                 {/* Open Profile button */}
-//                                                 <Button
-//                                                       className="bg-blue-50 hover:bg-blue-100 text-blue-600 hover:text-blue-700 px-3 py-1.5 rounded-lg flex items-center gap-1.5 text-sm font-medium transition-colors duration-200 border border-blue-200 hover:border-blue-300 cursor-pointer"
-//                                                       onClick={() => {
-//                                                             console.log("Clicked", callBack);
-//                                                             if (callBack) {
-//                                                                   callBack();
-//                                                             }
-//                                                             navigate(`/app/claims/workflow/${walletAddress}`);
-//                                                       }}
-//                                                 >
-//                                                       Open Profile
-//                                                       <ArrowRight className="w-4 h-4" />
-//                                                 </Button>
-//                                           </div>
-
-
-
-//                                     )}
-//                         </div>
-//                   </div>
-//             </div>
-//       )
-// }
-
-// export default WalletAddressProfile
 
 
 
