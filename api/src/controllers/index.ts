@@ -1,6 +1,6 @@
 import { FastifyInstance } from "fastify";
-import { checkDbConnection } from "src/database/db";
-import { minioClientCompleted } from "src/utils/s3Utils";
+import { checkDbConnection } from "../database/db";
+import { minioClientCompleted } from "../utils/s3Utils";
 
 export default async function indexController(fastify: FastifyInstance) {
 
