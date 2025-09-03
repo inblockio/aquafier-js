@@ -1,12 +1,20 @@
 import { ShareButton } from '@/components/aqua_chain_actions/share_aqua_chain'
 import { IAttestationEntry } from '@/models/FileInfo'
 import WalletAdrressClaim from './WalletAdrressClaim'
+import { useNavigate } from 'react-router-dom'
 
 const AttestationEntry = ({ file, nonce, walletAddress, context, createdAt }: IAttestationEntry) => {
+
+      const navigate = useNavigate()
+
+      const navigateToWalletAddress = () => {
+            navigate(`/app/claims/workflow/${walletAddress}`)
+      }
       
       return (
             <div 
                   className="bg-white rounded-lg border border-gray-200 p-4 mb-3 shadow-sm hover:shadow-md transition-shadow cursor-pointer"
+                  onClick={navigateToWalletAddress}
             >
                   <div className="flex justify-between items-start">
                         <div className="space-y-2">

@@ -175,6 +175,7 @@ async function checkRateLimit(
 }
 
 export default async function ApiController(fastify: FastifyInstance) {
+ 
   fastify.post("/verify_code", async (request, reply) => {
     const nonce = request.headers["nonce"];
 

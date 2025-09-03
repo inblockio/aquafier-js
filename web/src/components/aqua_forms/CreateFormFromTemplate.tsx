@@ -23,6 +23,7 @@ import { WalletAutosuggest } from '../wallet_auto_suggest'
 import { ApiFileInfo } from '@/models/FileInfo'
 import SignatureCanvas from 'react-signature-canvas'
 import { Session } from '@/types'
+import { ApiInfoData } from '@/types/types'
 
 // const CreateFormF romTemplate  = ({ selectedTemplate, callBack, openCreateTemplatePopUp = false }: { selectedTemplate: FormTemplate, callBack: () => void, openCreateTemplatePopUp: boolean }) => {
 const CreateFormFromTemplate = ({ selectedTemplate, callBack }: { selectedTemplate: FormTemplate; callBack: () => void; openCreateTemplatePopUp: boolean }) => {
@@ -41,9 +42,27 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: { selectedTempla
       const signatureRef = useRef<SignatureCanvas | null>(null)
       // const navigate = useNavigate()
 
+      const [verfyingFormFieldEnabled, setVerfyingFormFieldEnabled] = useState<ApiInfoData | null>(null)
       const [verifyingFormField, setVerifyingFormField] = useState('')
       const [canvasSize, setCanvasSize] = useState({ width: 800, height: 200 });
       const containerRef = useRef<HTMLDivElement | null>(null);
+
+      const fetchInfoDetails = async () => {
+            try {
+                  const url = `${backend_url}/app_info`
+
+                  const response = await axios.get(url)
+
+                  const res: ApiInfoData = await response.data
+
+                  if (response.status === 200) {
+                        setVerfyingFormFieldEnabled(res)
+                  }
+            } catch (e: unknown) {
+                  //  //  console.log("Error fetching version ", e)
+                  toast('Error fetching api info details')
+            }
+      }
 
       useEffect(() => {
             if (containerRef.current) {
@@ -53,6 +72,14 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: { selectedTempla
                         height: rect.height,
                   });
             }
+
+            (async () => {
+                  console.log(`running fetch api info`)
+                  await fetchInfoDetails()
+            })()
+
+
+
       }, []);
 
       const getFieldDefaultValue = (field: FormField, currentState: string | File | number | undefined
@@ -237,8 +264,8 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: { selectedTempla
                         if (isFinal) {
 
                               // if (account !== session?.address) {
-                                    const files = await fetchFiles(session!.address, `${backend_url}/explorer_files`, session!.nonce)
-                                    setFiles({ fileData: files, status: 'loaded' })
+                              const files = await fetchFiles(session!.address, `${backend_url}/explorer_files`, session!.nonce)
+                              setFiles({ fileData: files, status: 'loaded' })
                               // } else {
                               //       setFiles({ fileData: [...files.fileData, response.data.files], status: 'loaded' })
                               // }
@@ -1244,10 +1271,28 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: { selectedTempla
                                                                                           {
                                                                                                 field.is_verifiable && (
                                                                                                       <>
-                                                                                                            <button
+                                                                                                            <Button
                                                                                                                   type='button'
                                                                                                                   data-testid={'send-verifcation-ciode-'}
+                                                                                                                  disabled={(verfyingFormFieldEnabled == null || verfyingFormFieldEnabled?.isTwilioEnabled) == false ? true : false}
                                                                                                                   onClick={async () => {
+
+                                                                                                                        console.log(`test 1`)
+                                                                                                                        if (!verfyingFormFieldEnabled) {
+                                                                                                                              console.log(`test 1.1`)
+                                                                                                                              toast.error(`Unable to fetch code verification details`)
+                                                                                                                              return
+                                                                                                                        }
+
+                                                                                                                        console.log(`test 1.2`)
+                                                                                                                        if (verfyingFormFieldEnabled?.isTwilioEnabled == false) {
+                                                                                                                              console.log(`test 1.3`)
+                                                                                                                              toast.error(`Twilio is not enables, set the .env and restart the docker container`)
+                                                                                                                              return
+                                                                                                                        }
+
+                                                                                                                        console.log(`test 1.4`)
+
 
                                                                                                                         setVerifyingFormField(`field-${field.name}`)
 
@@ -1320,7 +1365,7 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: { selectedTempla
                                                                                                                               <span>Send Code</span>
                                                                                                                         </>
                                                                                                                   )}
-                                                                                                            </button>
+                                                                                                            </Button>
 
 
                                                                                                             <div className="flex items-center gap-2">
