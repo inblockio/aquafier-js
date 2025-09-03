@@ -528,7 +528,15 @@ export async function addSignatureToDocument(page: Page, context: BrowserContext
     console.log("Add Signature to document");
 
     await page.waitForSelector('[data-testid="pdf-canvas"]', { state: 'visible' });
-    await page.click('[data-testid="pdf-canvas"]');
+    //click canva. Ugly hack because canva isn ready yet
+    for (let i = 0; i < 4; i++) {
+        await page.click('[data-testid="pdf-canvas"]');
+        if(!await page.isDisabled('[data-testid="action-sign-document-button"]')){
+            break;
+        }
+        await page.waitForTimeout(1000);
+    }
+
     console.log("Signature added to document");
 
     const metamaskPromise = context.waitForEvent("page");
