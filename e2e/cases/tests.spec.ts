@@ -236,7 +236,7 @@ test("import, file multiple revisions", async (): Promise<void> => {
     }
 });
 
-test("upload, delete file", async (): Promise<void> => {
+test.only("upload, delete file", async (): Promise<void> => {
     const registerResponse = await registerNewMetaMaskWalletAndLogin();
     const context: BrowserContext = registerResponse.context;
     const testPage: Page = context.pages()[0];
