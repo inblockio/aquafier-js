@@ -41,7 +41,7 @@ const WalletAdrressClaim = forwardRef<HTMLDivElement, IWalletAdrressClaim>(
             useEffect(() => {
                   const identityClaimDetails = getWalletClaims(systemFileInfo, files.fileData, walletAddress, setSelectedFileInfo)
                   setIdentityClaimDetails(identityClaimDetails)
-            },[])
+            }, [walletAddress])
 
             return (
                   <>
@@ -71,7 +71,10 @@ const WalletAdrressClaim = forwardRef<HTMLDivElement, IWalletAdrressClaim>(
                                                 <span className="flex gap-2 items-center">
                                                       <span
                                                             className="text-sm cursor-pointer font-mono font-bold break-all"
-                                                            onClick={handleClick}
+                                                            onClick={(e) => {
+                                                                  e.stopPropagation()
+                                                                  handleClick()
+                                                            }}
                                                       >
                                                             {showWalletAddress ? walletAddress : identityClaimDetails?.name || walletAddress}
                                                       </span>
@@ -83,7 +86,7 @@ const WalletAdrressClaim = forwardRef<HTMLDivElement, IWalletAdrressClaim>(
                               </HoverCardTrigger>
                               <HoverCardContent className='w-[350px] p-0'>
                                     <Suspense fallback={<p className='p-6'>Loading...</p>}>
-                                    <WalletAddressProfile walletAddress={walletAddress} showShadow={false} noBg={true} />
+                                          <WalletAddressProfile walletAddress={walletAddress} showShadow={false} noBg={true} />
                                     </Suspense>
                               </HoverCardContent>
                         </HoverCard>
