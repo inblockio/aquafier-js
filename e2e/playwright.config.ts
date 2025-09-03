@@ -14,12 +14,12 @@ dotenv.config();
  */
 export default defineConfig({
   testDir: './cases',
-  fullyParallel: true,
+  fullyParallel: false,
   /* Fail the build on CI if you accidentally left test.only in the source code. */
   forbidOnly: false,
   retries: process.env.RETRIES ? parseInt(process.env.RETRIES) : 1,
   /* Opt out of parallel tests on CI. */
-  workers: process.env.WORKERS ? parseInt(process.env.WORKERS) : 1,
+  workers: 1,
   /* Reporter to use. See https://playwright.dev/docs/test-reporters */
   reporter: [['junit', { outputFile: 'results.xml' }]],
   /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
