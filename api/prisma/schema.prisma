@@ -90,6 +90,7 @@ model Contract {
   latest               String? //Json?
   sender               String?
   receiver             String?
+  recipients           String[]
   option               String?
   reference_count      Int?
   file_name            String?
