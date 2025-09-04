@@ -280,7 +280,7 @@ const FilePreview: React.FC<IFilePreview> = ({ fileInfo }) => {
                               //  //  console.log("Determined content type for binary data:", contentType);
 
                               // Create blob with detected content type
-                              const blob = new Blob([fileInfo.fileContent as Uint8Array], {
+                              const blob = new Blob([fileInfo.fileContent as BlobPart], {
                                     type: contentType,
                               })
 
