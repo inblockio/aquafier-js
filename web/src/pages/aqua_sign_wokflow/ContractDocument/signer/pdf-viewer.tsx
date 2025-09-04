@@ -654,7 +654,7 @@ const PdfViewer: React.FC<PdfViewerProps> = ({
       }
 
       return (
-            <div className="py-4 px-2 h-auto md:h-full" ref={viewerRef} onClick={handleViewerClick}>
+            <div className="py-4 px-2 h-auto md:h-full" ref={viewerRef} onClick={handleViewerClick}  data-testid="pdf-canvas-wrapper">
                   {!file && <p className="text-gray-700 dark:text-gray-400">Upload a PDF to start annotating.</p>}
                   {file && !isPdfjsLibLoaded && !pdfLoadingError && <p className="text-gray-700 dark:text-gray-400">Initializing PDF viewer...</p>}
                   {pdfLoadingError && <p className="text-center px-4">{pdfLoadingError}</p>}
@@ -665,6 +665,7 @@ const PdfViewer: React.FC<PdfViewerProps> = ({
                               {pdfDoc && (
                                     <div className="relative flex flex-col justify-start overflow-x-auto">
                                           <div
+                                           data-testid="pdf-canvas-container"
                                                 className="relative h-auto md:h-full shadow-lg bg-white"
                                                 style={
                                                       pageDimensions.width > 0 && pageDimensions.height > 0

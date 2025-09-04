@@ -2,6 +2,12 @@ import { LogData, Revision } from 'aqua-js-sdk'
 import { IconType } from 'react-icons/lib'
 import { ApiFileInfo, ClaimInformation, IAttestationEntry } from '../models/FileInfo'
 
+export interface ApiFileInfoState
+      {
+            fileData: ApiFileInfo[],
+            status: 'loading' | 'loaded' | 'error' | 'idle'
+            error?: string
+      }
 export interface ApiInfoData {
       status: 'ok',
       isTwilioEnabled: boolean,

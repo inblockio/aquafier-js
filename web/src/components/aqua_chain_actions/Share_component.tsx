@@ -1,10 +1,10 @@
 import appStore from '@/store'
 import { Contract } from '@/types/types'
 import { SYSTEM_WALLET_ADDRESS } from '@/utils/constants'
-import { timeToHumanFriendly } from '@/utils/functions'
+import { fetchWalletAddressesAndNamesForInputRecommendation, timeToHumanFriendly } from '@/utils/functions'
 import { getAquaTreeFileObject } from 'aqua-js-sdk'
 import axios from 'axios'
-import { Share2, X, Users, ExternalLink, Check, Copy, Lock } from 'lucide-react'
+import { Share2, X, Users, ExternalLink, Check, Copy, Lock, Trash2, Plus } from 'lucide-react'
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { ClipLoader } from 'react-spinners'
@@ -12,21 +12,40 @@ import { generateNonce } from 'siwe'
 import { toast } from 'sonner'
 import { useStore } from 'zustand'
 import CopyButton from '../CopyButton'
+import { WalletAutosuggest } from '../wallet_auto_suggest'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
 
 const ShareComponent = () => {
 
-      const { selectedFileInfo, setSelectedFileInfo, setOpenDialog, backend_url, session } = useStore(appStore)
-
+      const { selectedFileInfo, setSelectedFileInfo, setOpenDialog, backend_url, session, files, systemFileInfo } = useStore(appStore)
       const [loading, setLoading] = useState(true)
       const [recipientType, setRecipientType] = useState<'0xfabacc150f2a0000000000000000000000000000' | 'specific'>('0xfabacc150f2a0000000000000000000000000000')
-      const [walletAddress, setWalletAddress] = useState('')
+      // const [walletAddress, setWalletAddress] = useState('')
       const [optionType, setOptionType] = useState<'latest' | 'current'>('latest')
       const [shared, setShared] = useState<string | null>(null)
       const [sharing, setSharing] = useState(false)
       const [copied, setCopied] = useState(false)
       const [loadingPreviousShares, setLoadingPreviousShares] = useState(true)
       const [previousShares, setPreviousShares] = useState<Contract[]>([])
-      const recipient = recipientType === SYSTEM_WALLET_ADDRESS ? SYSTEM_WALLET_ADDRESS : walletAddress
+      const [multipleAddresses, setMultipleAddresses] = useState<string[]>([])
+      // const recipients = recipientType === SYSTEM_WALLET_ADDRESS ? [SYSTEM_WALLET_ADDRESS] : multipleAddresses
+
+      const addAddress = () => {
+            // if (multipleAddresses.length === 0 && session?.address) {
+            //     setMultipleAddresses([...multipleAddresses, session.address, ""])
+            // } else {
+            setMultipleAddresses([...multipleAddresses, ''])
+            // }
+      }
+
+      const removeAddress = (index: number) => {
+            setMultipleAddresses(multipleAddresses.filter((_, i) => i !== index))
+      }
+
+
+
 
       useEffect(() => {
             const timer = setTimeout(() => {
@@ -48,10 +67,22 @@ const ShareComponent = () => {
                   toast.error(`selected file not found`)
                   return
             }
-            if (recipientType == 'specific' && walletAddress == '') {
+            if (recipientType == 'specific' && multipleAddresses.length == 0) {
                   toast.error(`If recipient is specific a wallet address has to be specified.`)
                   return
             }
+
+            if (recipientType == 'specific') {  
+                  for (let addr of multipleAddresses) {
+
+                        if (!addr || addr.trim() === '') {
+                              toast.error(`Please fill all wallet address fields or remove empty ones.`)
+                              return
+                        }
+                  }
+
+            }
+
             setSharing(true)
 
             const unique_identifier = `${Date.now()}_${generateNonce()}`
@@ -59,9 +90,14 @@ const ShareComponent = () => {
 
             const allHashes = Object.keys(selectedFileInfo!.aquaTree!.revisions!)
             const latest = allHashes[allHashes.length - 1]
-            let recepientWalletData = recipient
-            if (recipient == '') {
-                  recepientWalletData = '0xfabacc150f2a0000000000000000000000000000'
+
+
+            let recepientWalletData: string[] = []
+
+            if (recipientType == 'specific') {
+                  recepientWalletData = multipleAddresses
+            } else {
+                  recepientWalletData = [SYSTEM_WALLET_ADDRESS]
             }
 
             let mainFileObject = getAquaTreeFileObject(selectedFileInfo)
@@ -76,7 +112,7 @@ const ShareComponent = () => {
                   {
                         latest: latest,
                         hash: unique_identifier,
-                        recipient: recepientWalletData,
+                        recipients: recepientWalletData,
                         option: optionType,
                         file_name: mainFileObject.fileName,
                   },
@@ -238,7 +274,7 @@ const ShareComponent = () => {
                                                       ? 'border-blue-500 bg-blue-50 ring-2 ring-blue-500/20'
                                                       : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
                                                       }`}
-                                                onClick={() => setRecipientType('specific')}
+                                                onClick={() => {setRecipientType('specific');addAddress()}}
                                           >
                                                 <div className="flex items-center justify-between">
                                                       <div className="flex items-center gap-3">
@@ -261,13 +297,63 @@ const ShareComponent = () => {
                                     {/* Wallet Address Input */}
                                     {recipientType === 'specific' && (
                                           <div className="ml-12 space-y-2">
-                                                <input
-                                                      type="text"
-                                                      placeholder="Enter wallet address (0x...)"
-                                                      value={walletAddress}
-                                                      onChange={(e) => setWalletAddress(e.target.value)}
-                                                      className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition-all text-sm font-mono"
-                                                />
+                                               
+                                                <div key={`field-share-1`} className="space-y-4">
+                                                      <div className="flex items-center justify-end">
+                                                           
+                                                            <Button
+                                                                  variant="outline"
+                                                                  size="sm"
+                                                                  type="button"
+                                                                  className="rounded-lg hover:bg-blue-50 hover:border-blue-300"
+                                                                  onClick={addAddress}
+                                                                  data-testid={`multiple_values_add_button`}
+                                                            >
+                                                                  <Plus className="h-4 w-4 mr-1" />
+                                                                  Add New Recepient
+                                                            </Button>
+                                                      </div>
+
+                                                      <div className="space-y-3">
+                                                            {multipleAddresses.map((address, index) => (
+                                                                  <div
+                                                                        key={`address-${index}`}
+                                                                        className="flex items-center space-x-2 sm:space-x-3 p-2 sm:p-4 bg-gray-50 rounded-lg border"
+                                                                  >
+                                                                        <div className="flex items-center justify-center w-8 h-8 bg-blue-100 rounded-full text-blue-600 font-medium text-sm">
+                                                                              {index + 1}
+                                                                        </div>
+                                                                        <div className="flex-1">
+                                                                              
+                                                                              <WalletAutosuggest
+
+                                                                                    walletAddresses={fetchWalletAddressesAndNamesForInputRecommendation(systemFileInfo, files)}
+                                                                                    field={{
+                                                                                          name: `share_address_${index}`,
+                                                                                    }}
+                                                                                    index={index}
+                                                                                    address={address}
+                                                                                    multipleAddresses={multipleAddresses}
+                                                                                    setMultipleAddresses={setMultipleAddresses}
+                                                                                    placeholder="Enter signer wallet address"
+                                                                                    className="rounded-lg border-gray-200 focus:border-blue-500 focus:ring-blue-500"
+                                                                              />
+                                                                        </div>
+                                                                        {multipleAddresses.length > 1 && (
+                                                                              <Button
+                                                                                    variant="outline"
+                                                                                    size="sm"
+                                                                                    type="button"
+                                                                                    className="rounded-lg text-red-500 hover:text-red-700 hover:bg-red-50 hover:border-red-300"
+                                                                                    onClick={() => removeAddress(index)}
+                                                                              >
+                                                                                    <Trash2 className="h-4 w-4" />
+                                                                              </Button>
+                                                                        )}
+                                                                  </div>
+                                                            ))}
+                                                      </div>
+                                                </div>
                                           </div>
                                     )}
                               </div>
