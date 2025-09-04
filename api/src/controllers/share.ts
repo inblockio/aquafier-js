@@ -6,7 +6,7 @@ import { SessionQuery, ShareRequest, SiweRequest } from '../models/request_model
 // import { verifySiweMessage } from '../utils/auth_utils';
 import { AquaTree, FileObject, OrderRevisionInAquaTree, reorderAquaTreeRevisionsProperties } from 'aqua-js-sdk';
 import { getHost, getPort } from '../utils/api_utils';
-import {  fetchAquaTreeWithForwardRevisions, saveAquaTree } from '../utils/revisions_utils';
+import { fetchAquaTreeWithForwardRevisions, saveAquaTree } from '../utils/revisions_utils';
 import { SYSTEM_WALLET_ADDRESS } from '../models/constants';
 import { sendToUserWebsockerAMessage } from './websocketController';
 import WebSocketActions from '../constants/constants';
@@ -55,7 +55,7 @@ export default async function shareController(fastify: FastifyInstance) {
             }
 
             if (contractData?.receiver?.toLowerCase() != SYSTEM_WALLET_ADDRESS && contractData?.receiver?.trim().toLocaleLowerCase() != session.address.trim().toLowerCase()) {
-                return reply.code(401).send({ success: false, message: "The aqua tree is not shared with you receiver == "+contractData?.receiver +"=="+session.address });
+                return reply.code(401).send({ success: false, message: "The aqua tree is not shared with you receiver == " + contractData?.receiver + "==" + session.address });
             }
 
             // user has permission hence  fetch the enire aqua tree
@@ -116,7 +116,7 @@ export default async function shareController(fastify: FastifyInstance) {
                 }
             });
 
-        } catch (error : any) {
+        } catch (error: any) {
             console.error("Error fetching session:", error);
             return reply.code(500).send({ success: false, message: "Internal server error" });
         }
@@ -125,7 +125,7 @@ export default async function shareController(fastify: FastifyInstance) {
     fastify.post('/share_data', async (request, reply) => {
 
 
-        const { hash, recipient, latest, option, genesis_hash, file_name } = request.body as ShareRequest;
+        const { hash, recipients, latest, option, genesis_hash, file_name } = request.body as ShareRequest;
 
         // Read `nonce` from headers
         const nonce = request.headers['nonce']; // Headers are case-insensitive
@@ -143,8 +143,8 @@ export default async function shareController(fastify: FastifyInstance) {
             return reply.code(403).send({ success: false, message: "Nounce  is invalid" });
         }
 
-        if (recipient == null || recipient == "") {
-            return reply.code(403).send({ success: false, message: "Recipient need to specified" });
+        if (recipients == null || recipients.length === 0) {
+            return reply.code(403).send({ success: false, message: "Recipient(s) need to specified" });
         }
 
 
@@ -167,7 +167,7 @@ export default async function shareController(fastify: FastifyInstance) {
             data: {
                 hash: hash, //identifier
                 genesis_hash: genesis_hash,
-                receiver: recipient,
+                recipients: recipients,
                 sender: session.address,
                 latest: latest,
                 option: option,
@@ -177,20 +177,24 @@ export default async function shareController(fastify: FastifyInstance) {
         });
 
         // Create notification for recipient about the shared document
-        await prisma.notifications.create({
-            data: {
-                sender: session.address,
-                receiver: recipient,
-                content: `A new document has been shared with you by ${session.address}`,
-                navigate_to: `/app/shared-contracts`,
-                is_read: false,
-                created_on: new Date()
-            }
-        });
+        for (let i = 0; i < recipients.length; i++) {
+            await prisma.notifications.create({
+                data: {
+                    sender: session.address,
+                    receiver: recipients[i],
+                    content: `A new document has been shared with you by ${session.address}`,
+                    navigate_to: `/app/shared-contracts`,
+                    is_read: false,
+                    created_on: new Date()
+                }
+            })
+        }
 
         //trigger the other party to refetch explorer files
-        sendToUserWebsockerAMessage(recipient, WebSocketActions.REFETCH_SHARE_CONTRACTS)
-        sendToUserWebsockerAMessage(recipient, WebSocketActions.REFETCH_SHARE_CONTRACTS)
+        // sendToUserWebsockerAMessage(recipient, WebSocketActions.REFETCH_SHARE_CONTRACTS)
+        for (let i = 0; i < recipients.length; i++) {
+            sendToUserWebsockerAMessage(recipients[i], WebSocketActions.REFETCH_SHARE_CONTRACTS)
+        }
 
         return reply.code(200).send({ success: true, message: "share contract created successfully." });
 
@@ -201,7 +205,7 @@ export default async function shareController(fastify: FastifyInstance) {
     fastify.put('/contracts/:hash', async (request, reply) => {
         // Extract the hash parameter from the URL
         const { hash } = request.params as { hash: string };
-        const { recipient, latest, option } = request.body as ShareRequest;
+        const { recipients, latest, option } = request.body as ShareRequest;
         if (hash == null || hash == undefined || hash == "") {
             return reply.code(406).send({ success: false, message: "hash not found in url" });
         }
@@ -233,27 +237,31 @@ export default async function shareController(fastify: FastifyInstance) {
                 data: {
                     latest: latest,
                     option: option,
-                    receiver: recipient
+                    recipients: recipients
                 }
             });
 
-            // Notify the recipient of the contract update
-            await prisma.notifications.create({
-                data: {
-                    sender: session.address,
-                    receiver: recipient,
-                    content: `A shared document contract has been updated by ${session.address}`,
-                    navigate_to:"",
-                    is_read: false,
-                    created_on: new Date()
-                }
-            });
+            // Notify the recipient(s) of the contract update
+            for (let i = 0; i < recipients.length; i++) {
+                await prisma.notifications.create({
+                    data: {
+                        sender: session.address,
+                        receiver: recipients[i],
+                        content: `A shared document contract has been updated by ${session.address}`,
+                        navigate_to: "",
+                        is_read: false,
+                        created_on: new Date()
+                    }
+                });
+            }
 
             // Trigger the other party to refetch explorer files
-            sendToUserWebsockerAMessage(recipient, WebSocketActions.REFETCH_SHARE_CONTRACTS);
+            for (let i = 0; i < recipients.length; i++) {
+                sendToUserWebsockerAMessage(recipients[i], WebSocketActions.REFETCH_SHARE_CONTRACTS);
+            }
 
             return reply.code(200).send({ success: true, message: "Share contract updated successfully." });
-        } catch (error : any) {
+        } catch (error: any) {
             console.error("Error updating contract:", error);
             return reply.code(500).send({ success: false, message: "Internal server error" });
         }
@@ -325,10 +333,20 @@ export default async function shareController(fastify: FastifyInstance) {
                 // return reply.code(403).send({ success: false, message: "Unauthorized: You are not the owner of this contract" });
                 await prisma.contract.update({
                     where: {
-                        hash: hash
+                        hash: hash,
+                        recipients: {
+                            has: session.address
+                        }
                     },
                     data: {
-                        receiver_has_deleted: true
+                        recipients: {
+                            set: await prisma.contract.findUnique({
+                                where: { hash: hash },
+                                select: { recipients: true }
+                            }).then(contract =>
+                                contract?.recipients?.filter(addr => addr !== session.address) ?? []
+                            )
+                        }
                     }
                 });
                 return reply.code(200).send({ success: true, message: "Share contract deleted successfully." });
@@ -342,7 +360,7 @@ export default async function shareController(fastify: FastifyInstance) {
             });
 
             return reply.code(200).send({ success: true, message: "Share contract deleted successfully." });
-        } catch (error : any) {
+        } catch (error: any) {
             console.error("Error deleting contract:", error);
             return reply.code(500).send({ success: false, message: "Internal server error" });
         }
@@ -350,12 +368,12 @@ export default async function shareController(fastify: FastifyInstance) {
 
     // Create an endpoint for filtering contracts, ie filter by sender, receiver, hash, etc
     fastify.get('/contracts', async (request, reply) => {
-        const { sender, receiver, hash, genesis_hash, ...otherParams } = request.query as { 
-            sender?: string, 
-            receiver?: string, 
-            hash?: string, 
+        const { sender, receiver, hash, genesis_hash, ...otherParams } = request.query as {
+            sender?: string,
+            receiver?: string,
+            hash?: string,
             genesis_hash?: string,
-            [key: string]: string | undefined 
+            [key: string]: string | undefined
         };
 
         // Check if at least one search parameter is provided
@@ -379,12 +397,13 @@ export default async function shareController(fastify: FastifyInstance) {
 
         // Build dynamic where clause based on provided parameters
         let whereClause: any = {};
-        
+
         if (sender && receiver) {
             whereClause = {
                 OR: [
                     { sender: { equals: sender, mode: 'insensitive' } },
-                    { receiver: { equals: receiver, mode: 'insensitive' } }
+                    // { receiver: { equals: receiver, mode: 'insensitive' } }
+                    { recipients: { has: receiver } }
                 ]
             };
         } else if (sender) {
@@ -392,24 +411,25 @@ export default async function shareController(fastify: FastifyInstance) {
                 equals: sender,
                 mode: 'insensitive'
             };
-        } else if (receiver) {
-            whereClause.receiver = {
-                equals: receiver,
-                mode: 'insensitive'
-            };
         }
-        
+        // else if (receiver) {
+        //     whereClause.receiver = {
+        //         equals: receiver,
+        //         mode: 'insensitive'
+        //     };
+        // }
+
         if (hash) {
             whereClause.hash = hash;
         }
-        
+
         if (genesis_hash) {
             whereClause.genesis_hash = {
                 contains: genesis_hash,
                 mode: 'insensitive'
             };
         }
-        
+
         // Handle any additional search parameters dynamically
         for (const [key, value] of Object.entries(otherParams)) {
             if (value !== undefined) {
@@ -429,7 +449,7 @@ export default async function shareController(fastify: FastifyInstance) {
         whereClause.receiver_has_deleted = false;
 
         // console.log('Query parameters:', JSON.stringify(whereClause, null, 2));
-        
+
         // Enable query logging for this specific query
         // const contracts = await prisma.$transaction(async (tx) => {
         //     // Log the query being executed
@@ -451,7 +471,7 @@ export default async function shareController(fastify: FastifyInstance) {
         }, {
             timeout: 10000
         });
-        
+
         // console.log('Found contracts:', contracts.length);
         return reply.code(200).send({ success: true, contracts });
     });
