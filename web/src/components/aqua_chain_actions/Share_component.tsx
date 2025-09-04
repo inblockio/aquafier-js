@@ -14,8 +14,8 @@ import { useStore } from 'zustand'
 import CopyButton from '../CopyButton'
 import { WalletAutosuggest } from '../wallet_auto_suggest'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
+// import { Input } from '@/components/ui/input'
+// import { Label } from '@/components/ui/label'
 
 const ShareComponent = () => {
 
