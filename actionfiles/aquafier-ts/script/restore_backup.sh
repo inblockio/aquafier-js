@@ -2,6 +2,10 @@
 
 set -ex
 
+echo "=== DEBUG: Current working directory ==="
+pwd
+echo "========================================"
+
 echo "=== DEBUG: Checking /restore directory ==="
 ls -la /restore
 echo "=== DEBUG: Looking for backup files ==="
