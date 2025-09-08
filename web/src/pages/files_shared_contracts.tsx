@@ -128,11 +128,17 @@ export const SharedContract = ({ contract, index, contractDeleted }: { contract:
                                                 <div className="w-8 border-t border-dashed border-gray-300"></div>
                                           </div>
 
+   <p className="text-xs text-gray-500 break-words">Receiver</p>
                                           <TooltipProvider>
                                                 <Tooltip>
                                                       <TooltipTrigger asChild>
+
                                                             <div className="flex items-center gap-2">
-                                                                  <Avatar className="w-6 h-6">
+                                                                
+                                                                 {contract.recipients.map( (recipient, _idx) => (
+                                                                  
+                                                                  <>
+                                                                   <Avatar className="w-6 h-6">
                                                                         <AvatarFallback className="text-xs bg-green-100 text-green-600">
                                                                               <Wallet className="w-4 h-4" />
                                                                         </AvatarFallback>
@@ -140,14 +146,16 @@ export const SharedContract = ({ contract, index, contractDeleted }: { contract:
                                                                   <div>
                                                                         <p className="text-xs sm:text-sm font-medium text-gray-900 font-mono max-w-[120px] sm:max-w-none truncate">
                                                                               {/* {formatCryptoAddress(contract.receiver)} */}
-                                                                              <WalletAddresClaim walletAddress={contract.receiver!} isShortened={true} />
+                                                                              <WalletAddresClaim walletAddress={recipient} isShortened={true} />
                                                                         </p>
-                                                                        <p className="text-xs text-gray-500 break-words">Receiver</p>
+                                                                       
                                                                   </div>
+                                                                  </>
+                                                            )    )}
                                                             </div>
                                                       </TooltipTrigger>
                                                       <TooltipContent>
-                                                            <p className="font-mono text-xs">{contract.receiver}</p>
+                                                            {/* <p className="font-mono text-xs">{contract.receiver}</p> */}
                                                       </TooltipContent>
                                                 </Tooltip>
                                           </TooltipProvider>
@@ -275,7 +283,7 @@ export function SharedContracts() {
                                                       <TabsTrigger value="password">Outgoing</TabsTrigger>
                                                 </TabsList>
                                                 <TabsContent value="account">
-                                                      {shareContracts.filter(contract => contract.receiver?.toLocaleLowerCase() == session?.address?.toLocaleLowerCase()).map((contract, index) => (
+                                                      {shareContracts.filter(contract => contract.recipients?.map( (e) => e.toLocaleLowerCase()).includes(session?.address?.toLocaleLowerCase()!!)).map((contract, index) => (
                                                             <SharedContract
                                                                   key={`${contract.hash}`}
                                                                   contract={contract}
@@ -290,7 +298,7 @@ export function SharedContracts() {
                                                                   }}
                                                             />
                                                       ))}
-                                                      {shareContracts.filter(contract => contract.receiver?.toLocaleLowerCase() == session?.address.toLocaleLowerCase()).length == 0 && (
+                                                      {shareContracts.filter(contract => contract.recipients?.map( (e) => e.toLocaleLowerCase()).includes(session?.address?.toLocaleLowerCase()!!)).length == 0 && (
                                                             <div className="card">
                                                                   <Alert variant="default">
                                                                         <X />

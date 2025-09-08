@@ -107,7 +107,8 @@ export interface Contract {
       genesis_hash?: string
       latest?: string
       sender?: string
-      receiver?: string
+      // receiver?: string
+      recipients     :      string[]
       option?: string
       reference_count?: number
       file_name?: string

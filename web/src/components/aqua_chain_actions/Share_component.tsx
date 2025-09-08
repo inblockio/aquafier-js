@@ -150,7 +150,8 @@ const ShareComponent = () => {
 
                   const response = await axios.get(`${backend_url}/contracts`, {
                         params: {
-                              latest: latest
+                              latest: latest,
+                              sender: session?.address
                         },
                         headers: {
                               nonce: session?.nonce
@@ -469,7 +470,7 @@ const ShareComponent = () => {
                                                                                           <div className="text-sm font-medium">
                                                                                                 <p>
                                                                                                       Shared With:
-                                                                                                      {share.receiver === SYSTEM_WALLET_ADDRESS ? "Everyone" : share.receiver}
+                                                                                                      {share.recipients.includes( SYSTEM_WALLET_ADDRESS) ? "Everyone" : share.recipients.map( (e) => e.toLocaleLowerCase() == session?.address?.toLocaleLowerCase() ? " (You)" : ` ${e}`).toString()}
                                                                                                 </p>
                                                                                                 <p className="text-sm font-medium">
                                                                                                       {timeToHumanFriendly(share.created_at!, true)}
