@@ -54,9 +54,18 @@ export default async function shareController(fastify: FastifyInstance) {
 
             }
 
-            if (contractData?.receiver?.toLowerCase() != SYSTEM_WALLET_ADDRESS && contractData?.receiver?.trim().toLocaleLowerCase() != session.address.trim().toLowerCase()) {
-                return reply.code(401).send({ success: false, message: "The aqua tree is not shared with you receiver == " + contractData?.receiver + "==" + session.address });
+            // if (contractData?.receiver?.toLowerCase() != SYSTEM_WALLET_ADDRESS && contractData?.receiver?.trim().toLocaleLowerCase() != session.address.trim().toLowerCase()) {
+            //     return reply.code(401).send({ success: false, message: "The aqua tree is not shared with you receiver == " + contractData?.receiver + "==" + session.address });
+            // }
+
+            let allRecipients = contractData?.recipients?.map(addr => addr.trim().toLowerCase()) || []
+
+            if (!allRecipients.includes(session.address.trim().toLowerCase())) {
+                return reply.code(401).send({ success: false, message: "The aqua tree is not shared with you "+allRecipients.toString()+" == "+ session.address });
             }
+
+
+
 
             // user has permission hence  fetch the enire aqua tree
             // if option is latest traverse tree into the future from the latest to the latest
@@ -237,7 +246,7 @@ export default async function shareController(fastify: FastifyInstance) {
                 data: {
                     latest: latest,
                     option: option,
-                    recipients: recipients
+                    recipients: recipients.map(addr => addr.trim().toLowerCase())
                 }
             });
 
@@ -294,8 +303,8 @@ export default async function shareController(fastify: FastifyInstance) {
     })
 
 
-    fastify.delete('/contracts/:hash', async (request, reply) => {
 
+    fastify.delete('/contracts/:hash', async (request, reply) => {
         // Extract the hash parameter from the URL
         const { hash } = request.params as { hash: string };
         if (hash == null || hash == undefined || hash == "") {
@@ -313,58 +322,133 @@ export default async function shareController(fastify: FastifyInstance) {
             });
 
             if (session == null) {
-                return reply.code(403).send({ success: false, message: "Nounce  is invalid" });
+                return reply.code(403).send({ success: false, message: "Nonce is invalid" });
             }
 
             // Check if `hash` is missing or empty
             if (hash == null || hash == "") {
                 return reply.code(403).send({ success: false, message: "Hash need to specified" });
             }
-            // Query the contract first, if contract.sender === session.address
+
+            // Query the contract first
             const contract = await prisma.contract.findFirst({
                 where: {
                     hash: hash
                 }
             });
+
             if (contract == null) {
                 return reply.code(404).send({ success: false, message: "Contract not found" });
             }
-            if (contract.sender !== session.address) {
-                // return reply.code(403).send({ success: false, message: "Unauthorized: You are not the owner of this contract" });
-                await prisma.contract.update({
+
+            // If the user is the sender (owner), they can hard delete the contract
+            if (contract.sender === session.address) {
+                await prisma.contract.delete({
                     where: {
-                        hash: hash,
-                        recipients: {
-                            has: session.address
-                        }
-                    },
-                    data: {
-                        recipients: {
-                            set: await prisma.contract.findUnique({
-                                where: { hash: hash },
-                                select: { recipients: true }
-                            }).then(contract =>
-                                contract?.recipients?.filter(addr => addr !== session.address) ?? []
-                            )
-                        }
+                        hash: hash
                     }
                 });
                 return reply.code(200).send({ success: true, message: "Share contract deleted successfully." });
             }
 
-            // Delete the contract
-            await prisma.contract.delete({
-                where: {
-                    hash: hash
+            // If the user is a recipient, add their address to receiver_has_deleted array (soft delete)
+            if (contract.recipients?.includes(session.address)) {
+                // Check if the user's address is already in the receiver_has_deleted array
+                if (!contract.receiver_has_deleted?.includes(session.address)) {
+                    await prisma.contract.update({
+                        where: { hash: hash },
+                        data: {
+                            receiver_has_deleted: {
+                                push: session.address
+                            }
+                        }
+                    });
                 }
-            });
+                return reply.code(200).send({ success: true, message: "Contract marked as deleted for user." });
+            }
 
-            return reply.code(200).send({ success: true, message: "Share contract deleted successfully." });
+            // User is neither sender nor recipient
+            return reply.code(403).send({ success: false, message: "Unauthorized: You don't have access to this contract" });
+
         } catch (error: any) {
             console.error("Error deleting contract:", error);
             return reply.code(500).send({ success: false, message: "Internal server error" });
         }
     });
+
+    // fastify.delete('/contracts/:hash', async (request, reply) => {
+
+    //     // Extract the hash parameter from the URL
+    //     const { hash } = request.params as { hash: string };
+    //     if (hash == null || hash == undefined || hash == "") {
+    //         return reply.code(406).send({ success: false, message: "hash not found in url" });
+    //     }
+    //     const nonce = request.headers['nonce'];
+
+    //     if (!nonce || typeof nonce !== 'string' || nonce.trim() === '') {
+    //         return reply.code(401).send({ error: 'Unauthorized: Missing or empty nonce header' });
+    //     }
+
+    //     try {
+    //         const session = await prisma.siweSession.findUnique({
+    //             where: { nonce: nonce }
+    //         });
+
+    //         if (session == null) {
+    //             return reply.code(403).send({ success: false, message: "Nounce  is invalid" });
+    //         }
+
+    //         // Check if `hash` is missing or empty
+    //         if (hash == null || hash == "") {
+    //             return reply.code(403).send({ success: false, message: "Hash need to specified" });
+    //         }
+    //         // Query the contract first, if contract.sender === session.address
+    //         const contract = await prisma.contract.findFirst({
+    //             where: {
+    //                 hash: hash
+    //             }
+    //         });
+    //         if (contract == null) {
+    //             return reply.code(404).send({ success: false, message: "Contract not found" });
+    //         }
+    //         if (contract.sender !== session.address) {
+    //             // return reply.code(403).send({ success: false, message: "Unauthorized: You are not the owner of this contract" });
+    //             await prisma.contract.update({
+    //                 where: {
+    //                     hash: hash,
+    //                     recipients: {
+    //                         has: session.address
+    //                     }
+    //                 },
+    //                 data: {
+    //                     recipients: {
+    //                         set: await prisma.contract.findUnique({
+    //                             where: { hash: hash },
+    //                             select: { recipients: true }
+    //                         }).then(contract =>
+    //                             contract?.recipients?.filter(addr => addr !== session.address) ?? []
+    //                         )
+    //                     }
+    //                 }
+    //             });
+    //             return reply.code(200).send({ success: true, message: "Share contract deleted successfully." });
+    //         }
+
+    //         // Delete the contract
+    //         await prisma.contract.delete({
+    //             where: {
+    //                 hash: hash
+    //             }
+    //         });
+
+    //         return reply.code(200).send({ success: true, message: "Share contract deleted successfully." });
+    //     } catch (error: any) {
+    //         console.error("Error deleting contract:", error);
+    //         return reply.code(500).send({ success: false, message: "Internal server error" });
+    //     }
+    // });
+
+
 
     // Create an endpoint for filtering contracts, ie filter by sender, receiver, hash, etc
     fastify.get('/contracts', async (request, reply) => {
@@ -392,7 +476,7 @@ export default async function shareController(fastify: FastifyInstance) {
         });
 
         if (session == null) {
-            return reply.code(403).send({ success: false, message: "Nounce  is invalid" });
+            return reply.code(403).send({ success: false, message: "Nonce is invalid" });
         }
 
         // Build dynamic where clause based on provided parameters
@@ -402,7 +486,6 @@ export default async function shareController(fastify: FastifyInstance) {
             whereClause = {
                 OR: [
                     { sender: { equals: sender, mode: 'insensitive' } },
-                    // { receiver: { equals: receiver, mode: 'insensitive' } }
                     { recipients: { has: receiver } }
                 ]
             };
@@ -412,12 +495,6 @@ export default async function shareController(fastify: FastifyInstance) {
                 mode: 'insensitive'
             };
         }
-        // else if (receiver) {
-        //     whereClause.receiver = {
-        //         equals: receiver,
-        //         mode: 'insensitive'
-        //     };
-        // }
 
         if (hash) {
             whereClause.hash = hash;
@@ -445,23 +522,15 @@ export default async function shareController(fastify: FastifyInstance) {
             }
         }
 
-        // Update the where clause to avoid querying anything that has receiver_has_deleted set to true
-        whereClause.receiver_has_deleted = false;
+        // FIXED: Exclude contracts where the current user has marked them as deleted
+        // This means the current user's address should NOT be in the receiver_has_deleted array
+        whereClause.receiver_has_deleted = {
+            not: {
+                has: session.address
+            }
+        };
 
-        // console.log('Query parameters:', JSON.stringify(whereClause, null, 2));
-
-        // Enable query logging for this specific query
-        // const contracts = await prisma.$transaction(async (tx) => {
-        //     // Log the query being executed
-        //     const result = await tx.contract.findMany({
-        //         where: whereClause
-        //     });
-        //     return result;
-        // }, {
-        //     timeout: 10000,
-        //     // This enables logging for this transaction
-        //     log: ['query']
-        // });
+        console.log('Query parameters:', JSON.stringify(whereClause, null, 2));
 
         const contracts = await prisma.$transaction(async (tx) => {
             const result = await tx.contract.findMany({
@@ -472,9 +541,183 @@ export default async function shareController(fastify: FastifyInstance) {
             timeout: 10000
         });
 
-        // console.log('Found contracts:', contracts.length);
+        console.log('Found contracts:', contracts.length);
         return reply.code(200).send({ success: true, contracts });
     });
+
+
+    fastify.post('/contracts/:hash/restore', async (request, reply) => {
+        const { hash } = request.params as { hash: string };
+
+        if (hash == null || hash == undefined || hash == "") {
+            return reply.code(406).send({ success: false, message: "hash not found in url" });
+        }
+
+        const nonce = request.headers['nonce'];
+
+        if (!nonce || typeof nonce !== 'string' || nonce.trim() === '') {
+            return reply.code(401).send({ error: 'Unauthorized: Missing or empty nonce header' });
+        }
+
+        try {
+            const session = await prisma.siweSession.findUnique({
+                where: { nonce: nonce }
+            });
+
+            if (session == null) {
+                return reply.code(403).send({ success: false, message: "Nonce is invalid" });
+            }
+
+            // Get the current contract
+            const contract = await prisma.contract.findUnique({
+                where: { hash }
+            });
+
+            if (!contract) {
+                return reply.code(404).send({ success: false, message: "Contract not found" });
+            }
+
+            // Check if user is a recipient and has previously soft-deleted the contract
+            if (!contract.recipients?.includes(session.address)) {
+                return reply.code(403).send({ success: false, message: "Unauthorized: You don't have access to this contract" });
+            }
+
+            if (!contract.receiver_has_deleted?.includes(session.address)) {
+                return reply.code(400).send({ success: false, message: "Contract is not deleted for this user" });
+            }
+
+            // Remove the user's address from the receiver_has_deleted array
+            const updatedDeletedList = contract.receiver_has_deleted.filter(
+                address => address !== session.address
+            );
+
+            await prisma.contract.update({
+                where: { hash },
+                data: {
+                    receiver_has_deleted: updatedDeletedList
+                }
+            });
+
+            return reply.code(200).send({
+                success: true,
+                message: "Contract restored for user"
+            });
+        } catch (error: any) {
+            console.error('Error restoring contract:', error);
+            return reply.code(500).send({ success: false, message: "Failed to restore contract" });
+        }
+    });
+
+
+    // Create an endpoint for filtering contracts, ie filter by sender, receiver, hash, etc
+    // fastify.get('/contracts', async (request, reply) => {
+    //     const { sender, receiver, hash, genesis_hash, ...otherParams } = request.query as {
+    //         sender?: string,
+    //         receiver?: string,
+    //         hash?: string,
+    //         genesis_hash?: string,
+    //         [key: string]: string | undefined
+    //     };
+
+    //     // Check if at least one search parameter is provided
+    //     if (!sender && !receiver && !hash && !genesis_hash && Object.keys(otherParams).length === 0) {
+    //         return reply.code(400).send({ success: false, message: "Missing required parameters" });
+    //     }
+
+    //     const nonce = request.headers['nonce'];
+
+    //     if (!nonce || typeof nonce !== 'string' || nonce.trim() === '') {
+    //         return reply.code(401).send({ error: 'Unauthorized: Missing or empty nonce header' });
+    //     }
+
+    //     const session = await prisma.siweSession.findUnique({
+    //         where: { nonce: nonce }
+    //     });
+
+    //     if (session == null) {
+    //         return reply.code(403).send({ success: false, message: "Nounce  is invalid" });
+    //     }
+
+    //     // Build dynamic where clause based on provided parameters
+    //     let whereClause: any = {};
+
+    //     if (sender && receiver) {
+    //         whereClause = {
+    //             OR: [
+    //                 { sender: { equals: sender, mode: 'insensitive' } },
+    //                 // { receiver: { equals: receiver, mode: 'insensitive' } }
+    //                 { recipients: { has: receiver } }
+    //             ]
+    //         };
+    //     } else if (sender) {
+    //         whereClause.sender = {
+    //             equals: sender,
+    //             mode: 'insensitive'
+    //         };
+    //     }
+    //     // else if (receiver) {
+    //     //     whereClause.receiver = {
+    //     //         equals: receiver,
+    //     //         mode: 'insensitive'
+    //     //     };
+    //     // }
+
+    //     if (hash) {
+    //         whereClause.hash = hash;
+    //     }
+
+    //     if (genesis_hash) {
+    //         whereClause.genesis_hash = {
+    //             contains: genesis_hash,
+    //             mode: 'insensitive'
+    //         };
+    //     }
+
+    //     // Handle any additional search parameters dynamically
+    //     for (const [key, value] of Object.entries(otherParams)) {
+    //         if (value !== undefined) {
+    //             // For string fields that should be case insensitive
+    //             if (['latest'].includes(key)) {
+    //                 whereClause[key] = {
+    //                     equals: value,
+    //                     mode: 'insensitive'
+    //                 };
+    //             } else {
+    //                 whereClause[key] = value;
+    //             }
+    //         }
+    //     }
+
+    //     // Update the where clause to avoid querying anything that has receiver_has_deleted set to true
+    //     whereClause.receiver_has_deleted = false;
+
+    //     // console.log('Query parameters:', JSON.stringify(whereClause, null, 2));
+
+    //     // Enable query logging for this specific query
+    //     // const contracts = await prisma.$transaction(async (tx) => {
+    //     //     // Log the query being executed
+    //     //     const result = await tx.contract.findMany({
+    //     //         where: whereClause
+    //     //     });
+    //     //     return result;
+    //     // }, {
+    //     //     timeout: 10000,
+    //     //     // This enables logging for this transaction
+    //     //     log: ['query']
+    //     // });
+
+    //     const contracts = await prisma.$transaction(async (tx) => {
+    //         const result = await tx.contract.findMany({
+    //             where: whereClause
+    //         });
+    //         return result;
+    //     }, {
+    //         timeout: 10000
+    //     });
+
+    //     // console.log('Found contracts:', contracts.length);
+    //     return reply.code(200).send({ success: true, contracts });
+    // });
 
     // Original, DO NOT DELETE
     // fastify.get('/contracts', async (request, reply) => {

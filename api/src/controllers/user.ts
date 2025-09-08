@@ -410,15 +410,73 @@ export default async function userController(fastify: FastifyInstance) {
                 });
                 console.log(`Deleted ${deletedLatest.count} latest records`);
 
-                const deletedContracts = await tx.contract.deleteMany({
+                // const deletedContracts = await tx.contract.deleteMany({
+                //     where: {
+                //         receiver: {
+                //             contains: userAddress,
+                //             mode: 'insensitive'
+                //         },
+                //     }
+                // });
+                // console.log(`Deleted ${deletedContracts.count} contracts records`);
+
+
+
+                // contracts 
+                // start witth recipients
+                // Updated soft delete logic - adds user address to receiver_has_deleted array
+                // instead of hard deleting contracts
+
+                // First, find all contracts where the user is a recipient
+                const contractsToSoftDelete = await tx.contract.findMany({
                     where: {
-                        receiver: {
-                            contains: userAddress,
-                            mode: 'insensitive'
-                        },
+                        recipients: {
+                            has: userAddress
+                        }
                     }
                 });
-                console.log(`Deleted ${deletedContracts.count} contracts records`);
+
+                console.log(`Found ${contractsToSoftDelete.length} contracts where user is a recipient`);
+
+                // Filter out contracts where the user has already soft-deleted (to avoid duplicates)
+                const contractsNeedingSoftDelete = contractsToSoftDelete.filter(contract =>
+                    !contract.receiver_has_deleted?.includes(userAddress)
+                );
+
+                console.log(`${contractsNeedingSoftDelete.length} contracts need soft delete for user ${userAddress}`);
+
+                // Add the user's address to the receiver_has_deleted array for each contract
+                let updatedContractsCount = 0;
+
+                for (const contract of contractsNeedingSoftDelete) {
+                    await tx.contract.update({
+                        where: {
+                            hash: contract.hash
+                        },
+                        data: {
+                            receiver_has_deleted: {
+                                push: userAddress
+                            }
+                        }
+                    });
+                    updatedContractsCount++;
+                }
+
+                console.log(`Soft deleted ${updatedContractsCount} contracts for user ${userAddress}`);
+
+
+                // also delete contracts where user is the sender
+                const deletedSenderContracts = await tx.contract.deleteMany({
+                    where: {
+                        sender: {
+                            equals: userAddress,
+                            mode: 'insensitive'
+                        }
+                    }
+                });
+                console.log(`Hard deleted ${deletedSenderContracts.count} contracts where user was sender`);
+
+                // End of contracts
 
                 // Step 2: Get all revisions associated with this user
                 const userRevisions = await tx.revision.findMany({
@@ -517,7 +575,7 @@ export default async function userController(fastify: FastifyInstance) {
                         });
                         console.log(`Deleted ${deletedWitness.count} witness records`);
 
-                     
+
                     }
 
                     // 3d. Delete AquaForms records
