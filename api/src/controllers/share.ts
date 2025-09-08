@@ -61,7 +61,7 @@ export default async function shareController(fastify: FastifyInstance) {
             let allRecipients = contractData?.recipients?.map(addr => addr.trim().toLowerCase()) || []
 
             if (!allRecipients.includes(session.address.trim().toLowerCase())) {
-                return reply.code(401).send({ success: false, message: "The aqua tree is not shared with you "+allRecipients.toString()+" == "+ session.address });
+                return reply.code(401).send({ success: false, message: "The aqua tree is not shared with you " + allRecipients.toString() + " == " + session.address });
             }
 
 
@@ -352,14 +352,14 @@ export default async function shareController(fastify: FastifyInstance) {
             }
 
             // If the user is a recipient, add their address to receiver_has_deleted array (soft delete)
-            if (contract.recipients?.includes(session.address)) {
+            if (contract.recipients?.includes(session.address.trim().toLocaleLowerCase())) {
                 // Check if the user's address is already in the receiver_has_deleted array
-                if (!contract.receiver_has_deleted?.includes(session.address)) {
+                if (!contract.receiver_has_deleted?.includes(session.address.trim().toLocaleLowerCase())) {
                     await prisma.contract.update({
                         where: { hash: hash },
                         data: {
                             receiver_has_deleted: {
-                                push: session.address
+                                push: session.address.trim().toLocaleLowerCase()
                             }
                         }
                     });
@@ -376,108 +376,108 @@ export default async function shareController(fastify: FastifyInstance) {
         }
     });
 
- 
-// Here's the complete fixed GET /contracts endpoint:
-fastify.get('/contracts', async (request, reply) => {
-    const { sender, receiver, hash, genesis_hash, ...otherParams } = request.query as {
-        sender?: string,
-        receiver?: string,
-        hash?: string,
-        genesis_hash?: string,
-        [key: string]: string | undefined
-    };
 
-    // Check if at least one search parameter is provided
-    if (!sender && !receiver && !hash && !genesis_hash && Object.keys(otherParams).length === 0) {
-        return reply.code(400).send({ success: false, message: "Missing required parameters" });
-    }
-
-    const nonce = request.headers['nonce'];
-
-    if (!nonce || typeof nonce !== 'string' || nonce.trim() === '') {
-        return reply.code(401).send({ error: 'Unauthorized: Missing or empty nonce header' });
-    }
-
-    const session = await prisma.siweSession.findUnique({
-        where: { nonce: nonce }
-    });
-
-    if (session == null) {
-        return reply.code(403).send({ success: false, message: "Nonce is invalid" });
-    }
-
-    // Build dynamic where clause based on provided parameters
-    let whereClause: any = {};
-
-    if (sender && receiver) {
-        whereClause = {
-            OR: [
-                { sender: { equals: sender, mode: 'insensitive' } },
-                { recipients: { has: receiver.trim().toLowerCase() } }
-            ]
+    // Here's the complete fixed GET /contracts endpoint:
+    fastify.get('/contracts', async (request, reply) => {
+        const { sender, receiver, hash, genesis_hash, ...otherParams } = request.query as {
+            sender?: string,
+            receiver?: string,
+            hash?: string,
+            genesis_hash?: string,
+            [key: string]: string | undefined
         };
-    } else if (sender) {
-        whereClause.sender = {
-            equals: sender,
-            mode: 'insensitive'
-        };
-    }else if (receiver) {
-        whereClause.recipients ={ has: receiver.toLowerCase() }
-    }
 
-    if (hash) {
-        whereClause.hash = hash;
-    }
-
-    if (genesis_hash) {
-        whereClause.genesis_hash = {
-            contains: genesis_hash,
-            mode: 'insensitive'
-        };
-    }
-
-    // Handle any additional search parameters dynamically
-    for (const [key, value] of Object.entries(otherParams)) {
-        if (value !== undefined) {
-            // For string fields that should be case insensitive
-            if (['latest'].includes(key)) {
-                whereClause[key] = {
-                    equals: value,
-                    mode: 'insensitive'
-                };
-            } else {
-                whereClause[key] = value;
-            }
+        // Check if at least one search parameter is provided
+        if (!sender && !receiver && !hash && !genesis_hash && Object.keys(otherParams).length === 0) {
+            return reply.code(400).send({ success: false, message: "Missing required parameters" });
         }
-    }
 
-    // FIXED: Exclude contracts where the current user has marked them as deleted
-    // Use NOT at the top level instead of nesting it within the array field
-    // whereClause.NOT = {
-    //     receiver_has_deleted: {
-    //         has: session.address
-    //     }
-    // };
+        const nonce = request.headers['nonce'];
 
-    console.log('Query parameters:', JSON.stringify(whereClause, null, 2));
+        if (!nonce || typeof nonce !== 'string' || nonce.trim() === '') {
+            return reply.code(401).send({ error: 'Unauthorized: Missing or empty nonce header' });
+        }
 
-    try {
-        const contracts = await prisma.$transaction(async (tx) => {
-            const result = await tx.contract.findMany({
-                where: whereClause
-            });
-            return result;
-        }, {
-            timeout: 10000
+        const session = await prisma.siweSession.findUnique({
+            where: { nonce: nonce }
         });
 
-        console.log('Found contracts:', contracts.length);
-        return reply.code(200).send({ success: true, contracts });
-    } catch (error: any) {
-        console.error("Error fetching contracts:", error);
-        return reply.code(500).send({ success: false, message: "Internal server error" });
-    }
-});
+        if (session == null) {
+            return reply.code(403).send({ success: false, message: "Nonce is invalid" });
+        }
+
+        // Build dynamic where clause based on provided parameters
+        let whereClause: any = {};
+
+        if (sender && receiver) {
+            whereClause = {
+                OR: [
+                    { sender: { equals: sender, mode: 'insensitive' } },
+                    { recipients: { has: receiver.trim().toLowerCase() } }
+                ]
+            };
+        } else if (sender) {
+            whereClause.sender = {
+                equals: sender,
+                mode: 'insensitive'
+            };
+        } else if (receiver) {
+            whereClause.recipients = { has: receiver.toLowerCase() }
+        }
+
+        if (hash) {
+            whereClause.hash = hash;
+        }
+
+        if (genesis_hash) {
+            whereClause.genesis_hash = {
+                contains: genesis_hash,
+                mode: 'insensitive'
+            };
+        }
+
+        // Handle any additional search parameters dynamically
+        for (const [key, value] of Object.entries(otherParams)) {
+            if (value !== undefined) {
+                // For string fields that should be case insensitive
+                if (['latest'].includes(key)) {
+                    whereClause[key] = {
+                        equals: value,
+                        mode: 'insensitive'
+                    };
+                } else {
+                    whereClause[key] = value;
+                }
+            }
+        }
+
+        // FIXED: Exclude contracts where the current user has marked them as deleted
+        // Use NOT at the top level instead of nesting it within the array field
+        // whereClause.NOT = {
+        //     receiver_has_deleted: {
+        //         has: session.address
+        //     }
+        // };
+
+        console.log('Query parameters:', JSON.stringify(whereClause, null, 2));
+
+        try {
+            const contracts = await prisma.$transaction(async (tx) => {
+                const result = await tx.contract.findMany({
+                    where: whereClause
+                });
+                return result;
+            }, {
+                timeout: 10000
+            });
+
+            console.log('Found contracts:', contracts.length);
+            return reply.code(200).send({ success: true, contracts });
+        } catch (error: any) {
+            console.error("Error fetching contracts:", error);
+            return reply.code(500).send({ success: false, message: "Internal server error" });
+        }
+    });
 
 
     fastify.post('/contracts/:hash/restore', async (request, reply) => {
@@ -512,17 +512,17 @@ fastify.get('/contracts', async (request, reply) => {
             }
 
             // Check if user is a recipient and has previously soft-deleted the contract
-            if (!contract.recipients?.includes(session.address)) {
+            if (!contract.recipients?.includes(session.address.trim().toLocaleLowerCase())) {
                 return reply.code(403).send({ success: false, message: "Unauthorized: You don't have access to this contract" });
             }
 
-            if (!contract.receiver_has_deleted?.includes(session.address)) {
+            if (!contract.receiver_has_deleted?.includes(session.address.trim().toLocaleLowerCase())) {
                 return reply.code(400).send({ success: false, message: "Contract is not deleted for this user" });
             }
 
             // Remove the user's address from the receiver_has_deleted array
             const updatedDeletedList = contract.receiver_has_deleted.filter(
-                address => address !== session.address
+                address => address !== session.address.trim().toLocaleLowerCase()
             );
 
             await prisma.contract.update({
@@ -544,7 +544,7 @@ fastify.get('/contracts', async (request, reply) => {
 
 
 
-    
+
     // fastify.delete('/contracts/:hash', async (request, reply) => {
 
     //     // Extract the hash parameter from the URL
@@ -620,7 +620,7 @@ fastify.get('/contracts', async (request, reply) => {
 
 
     // Create an endpoint for filtering contracts, ie filter by sender, receiver, hash, etc
-   
+
     // Create an endpoint for filtering contracts, ie filter by sender, receiver, hash, etc
     // fastify.get('/contracts', async (request, reply) => {
     //     const { sender, receiver, hash, genesis_hash, ...otherParams } = request.query as {
