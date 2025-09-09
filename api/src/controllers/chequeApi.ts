@@ -1,13 +1,11 @@
-
-
-import Aquafier, { AquaTree, FileObject, LogData, LogType, OrderRevisionInAquaTree, reorderAquaTreeRevisionsProperties, Revision } from "aqua-js-sdk";
-import { FastifyInstance } from "fastify";
-import { ChequeRegisterRequest, SaveRevision, VerifyRequestBody } from "../models/request_models";
-import { prisma } from "../database/db";
-import { getHost, getPort } from "../utils/api_utils";
-import { saveARevisionInAquaTree } from "../utils/revisions_utils";
-import { estimateStringFileSize } from "../utils/file_utils";
-import { createAquaTreeFromRevisions } from "../utils/revisions_operations_utils";
+import Aquafier, {OrderRevisionInAquaTree, reorderAquaTreeRevisionsProperties} from "aqua-js-sdk";
+import {FastifyInstance} from "fastify";
+import {ChequeRegisterRequest} from "../models/request_models";
+import {prisma} from "../database/db";
+import {getHost, getPort} from "../utils/api_utils";
+import {estimateStringFileSize} from "../utils/file_utils";
+import {createAquaTreeFromRevisions} from "../utils/revisions_operations_utils";
+import Logger from "../utils/Logger";
 
 export default async function chequeApiController(fastify: FastifyInstance) {
 
@@ -64,7 +62,7 @@ export default async function chequeApiController(fastify: FastifyInstance) {
     let allHash = Object.keys(aquaTreeWithOrderdRevision)
     let genesisRevision = aquaTreeWithOrderdRevision.revisions[allHash[0]]
 
-    console.log(`Genesis revision ${JSON.stringify(genesisRevision, null, 4)}`)
+      Logger.info(`Genesis revision ${JSON.stringify(genesisRevision, null, 4)}`)
     let chequeAmount = genesisRevision['form_amount']
 
     if (chequeAmount == undefined) {
@@ -134,7 +132,7 @@ export default async function chequeApiController(fastify: FastifyInstance) {
     }
 
 
-    console.log(`Aqua tree with new form  revision ${JSON.stringify(aquaTreeWithFormRevision, null, 4)}`)
+      Logger.info(`Aqua tree with new form  revision ${JSON.stringify(aquaTreeWithFormRevision, null, 4)}`)
 
 
     let aquaTreeWithNewFormRevisionAndOrderdRevision = OrderRevisionInAquaTree(aquaTreeWithFormRevision.data.aquaTree!!);
@@ -142,38 +140,9 @@ export default async function chequeApiController(fastify: FastifyInstance) {
     let allHashes = Object.keys(aquaTreeWithNewFormRevisionAndOrderdRevision.revisions)
     let lastHash = allHashes[allHashes.length - 1]
 
-    console.log(`last hash is ${lastHash} in all hashes ${allHashes}`)
-    let lastRevision = aquaTreeWithNewFormRevisionAndOrderdRevision.revisions[lastHash]
-
-    let saveRevision: SaveRevision = {
-      revision: lastRevision,
-      revisionHash: lastHash
-    }
-    // const [httpCode, message] = await saveARevisionInAquaTree(saveRevision, wallet_address, "eror");
-
-    // if (httpCode != 200) {
-    //   return reply.code(httpCode).send({ success: false, message: message });
-    // }
-
+      Logger.info(`last hash is ${lastHash} in all hashes ${allHashes}`)
 
     return { message: 'created a new revision' };
   });
-
-
-  // //Retrieves the branch from the specified hash back to the genesis hash (backward traversal only)
-  // fastify.get('/trees/:revisionHash/latest', async (request, reply) => {
-  //   const { revisionHash } = request.params as { revisionHash: string };
-  //   // //  console.log(`Received revisionHash: ${revisionHash}`);
-  //   return { message: 'Latest revision hash data', revisionHash: revisionHash };
-  // });
-
-
-  // //Retrieves details of a specific revision hash
-  // fastify.get('/trees/:revisionHash', async (request, reply) => {
-  //   const { revisionHash } = request.params as { revisionHash: string };
-  //   // //  console.log(`Received revisionHash: ${revisionHash}`);
-  //   return { message: 'Latest revision hash data', revisionHash: revisionHash };
-  // });
-
 
 }

@@ -1,15 +1,15 @@
-import { ApiFileInfo } from '@/models/FileInfo'
+import {ApiFileInfo} from '@/models/FileInfo'
 import appStore from '@/store'
-import { formatCryptoAddress, getAquaTreeFileName, getGenesisHash, isWorkFlowData } from '@/utils/functions'
-import { OrderRevisionInAquaTree } from 'aqua-js-sdk'
-import { LucideCheckCircle, TimerIcon } from 'lucide-react'
-import { useEffect, useState } from 'react'
-import { HiHashtag, HiShieldCheck } from 'react-icons/hi'
-import { LuUser } from 'react-icons/lu'
-import { TbWorldWww } from 'react-icons/tb'
-import { useNavigate } from 'react-router-dom'
-import { toast } from 'sonner'
-import { useStore } from 'zustand'
+import {formatCryptoAddress, getAquaTreeFileName, getGenesisHash, isWorkFlowData} from '@/utils/functions'
+import {OrderRevisionInAquaTree} from 'aqua-js-sdk'
+import {LucideCheckCircle, TimerIcon} from 'lucide-react'
+import {useEffect, useState} from 'react'
+import {HiHashtag, HiShieldCheck} from 'react-icons/hi'
+import {LuUser} from 'react-icons/lu'
+import {TbWorldWww} from 'react-icons/tb'
+import {useNavigate} from 'react-router-dom'
+import {toast} from 'sonner'
+import {useStore} from 'zustand'
 
 interface ISignatureWalletAddressCard {
       index?: number
@@ -91,7 +91,6 @@ const SignatureWalletAddressCard = ({ walletAddress, signatureHash, index, times
                   try {
                         return getAquaTreeFileName(e.aquaTree!)
                   } catch (e) {
-                        // //  console.log('Error processing system file') // More descriptive
                         return ''
                   }
             })

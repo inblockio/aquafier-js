@@ -1,17 +1,17 @@
-import { INotification, NotificationsHolderProps } from '../../types/index'
-import { useState } from 'react'
-import { Button } from '../../components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/card'
-import { Check, Loader2 } from 'lucide-react'
-import { ScrollArea } from '../../components/ui/scroll-area'
-import { formatDistanceToNow } from 'date-fns'
+import {INotification, NotificationsHolderProps} from '../../types/index'
+import {useState} from 'react'
+import {Button} from '../../components/ui/button'
+import {Card, CardContent, CardHeader, CardTitle} from '../../components/ui/card'
+import {Check, Loader2} from 'lucide-react'
+import {ScrollArea} from '../../components/ui/scroll-area'
+import {formatDistanceToNow} from 'date-fns'
 import axios from 'axios'
 import appStore from '../../store'
-import { API_ENDPOINTS } from '../../utils/constants'
-import { formatCryptoAddress } from '../../utils/functions'
-import { Badge } from '../../components/ui/badge'
-import { useNavigate } from 'react-router-dom'
-import { toast } from 'sonner'
+import {API_ENDPOINTS} from '../../utils/constants'
+import {formatCryptoAddress} from '../../utils/functions'
+import {Badge} from '../../components/ui/badge'
+import {useNavigate} from 'react-router-dom'
+import {toast} from 'sonner'
 
 interface NotificationItemProps {
       notification: INotification
@@ -25,13 +25,9 @@ const NotificationItem = ({ notification, onRead }: NotificationItemProps) => {
 
       const navigateToPage = () => {
             if (notification.navigate_to) {
-                  //  console.log('one..', notification.navigate_to)
                   if (notification.navigate_to.length > 0) {
-                        //  console.log('two..', 'navigating to:', notification.navigate_to)
                         navigate(notification.navigate_to)
                   }
-            } else {
-                  //  console.log('no navigate_to found:', notification.navigate_to)
             }
       }
       const markAsRead = async () => {

@@ -1,8 +1,9 @@
-import { prisma } from '../database/db';
-import { Revision, Link, Signature, WitnessEvent, AquaForms } from '@prisma/client';
+import {prisma} from '../database/db';
+import {Revision} from '@prisma/client';
 import * as fs from 'fs';
-import { ExtendedAquaTreeData } from '../models/types';
+import {ExtendedAquaTreeData} from '../models/types';
 import {deleteFile} from "./file_utils";
+import Logger from './Logger';
 
 /**
  * Recursively deletes a revision and all its child revisions (revisions that reference this as their previous hash)
@@ -26,7 +27,7 @@ export async function deleteRevisionAndChildren(
             ? `${userAddress}_${revisionHash}`
             : revisionHash;
 
-    console.log(`Starting deletion process for revision: ${fullRevisionHash}`);
+    Logger.info(`Starting deletion process for revision: ${fullRevisionHash}`);
 
     // To track all deleted items
     const deletedRevisions: string[] = [];
@@ -62,7 +63,7 @@ export async function deleteRevisionAndChildren(
     try {
         // First collect all revisions that need to be deleted
         await collectRevisionsToDelete(fullRevisionHash);
-        console.log(`Collected ${revisionsToProcess.length} revisions to process`);
+        Logger.info(`Collected ${revisionsToProcess.length} revisions to process`);
 
         // Process all revisions in a single transaction for data consistency
         await prisma.$transaction(async (tx) => {
@@ -76,7 +77,7 @@ export async function deleteRevisionAndChildren(
                 });
 
                 if (!revision) {
-                    console.log(`Revision ${hash} not found, skipping`);
+                    Logger.info(`Revision ${hash} not found, skipping`);
                     continue;
                 }
 
@@ -213,7 +214,7 @@ export async function deleteRevisionAndChildren(
                                         try {
                                             await deleteFile(file.file_location)
                                         } catch (e) {
-                                            console.error(`Error deleting file from filesystem: ${file.file_location}`, e);
+                                            Logger.error(`Error deleting file from filesystem: ${file.file_location}`, e);
                                         }
                                     }
 
@@ -240,7 +241,7 @@ export async function deleteRevisionAndChildren(
                         break;
 
                     default:
-                        console.warn(`Unknown revision type encountered: ${revision.revision_type} for ${hash}`);
+                        Logger.warn(`Unknown revision type encountered: ${revision.revision_type} for ${hash}`);
                 }
 
                 // Before deleting the revision, check if it's in Latest table
@@ -269,7 +270,7 @@ export async function deleteRevisionAndChildren(
                 });
 
                 deletedRevisions.push(hash);
-                console.log(`Deleted revision: ${hash}`);
+                Logger.info(`Deleted revision: ${hash}`);
             }
         });
 
@@ -289,7 +290,7 @@ export async function deleteRevisionAndChildren(
             }
         };
     } catch (error : any) {
-        console.error(`Error deleting revision chain: ${error}`);
+        Logger.error(`Error deleting revision chain: ${error}`);
         return {
             success: false,
             deleted: deletedRevisions.length,
@@ -338,13 +339,13 @@ export async function canDeleteRevision(
         });
 
         if (!revision) {
-            console.log(`Revision ${hashToQuery} not found`);
+            Logger.error(`Revision ${hashToQuery} not found`);
             return false;
         }
 
         // If the hash had an address, check if it matches the requester
         if (addressFromHash && addressFromHash !== requesterAddress) {
-            console.log(`Unauthorized: Hash address ${addressFromHash} doesn't match requester ${requesterAddress}`);
+            Logger.error(`Unauthorized: Hash address ${addressFromHash} doesn't match requester ${requesterAddress}`);
             return false;
         }
 
@@ -352,7 +353,7 @@ export async function canDeleteRevision(
 
         return true;
     } catch (error : any) {
-        console.error(`Error checking revision deletability: ${error}`);
+        Logger.error(`Error checking revision deletability: ${error}`);
         return false;
     }
 }
@@ -404,7 +405,7 @@ export async function transferRevisionChain(
             });
 
             if (existingRevision) {
-                console.log(`Revision already exists for target user: ${targetFullHash}`);
+                Logger.warn(`Revision already exists for target user: ${targetFullHash}`);
                 continue;
             }
 
@@ -414,7 +415,7 @@ export async function transferRevisionChain(
             });
 
             if (!originalRevision) {
-                console.warn(`Original revision not found in database: ${sourceFullHash}`);
+                Logger.warn(`Original revision not found in database: ${sourceFullHash}`);
                 continue;
             }
 
@@ -637,7 +638,7 @@ export async function transferRevisionChain(
             latestHashes
         };
     } catch (error: any) {
-        console.error("Error in transferRevisionChain:", error);
+        Logger.error("Error in transferRevisionChain:", error);
         return {
             success: false,
             message: `Error transferring chain: ${error.message}`,
@@ -705,20 +706,20 @@ export async function mergeRevisionChain(
 
         // Find the latest hash of the incoming chain
         const incomingLatestHash = orderedIncomingChain[orderedIncomingChain.length - 1];
-        console.log(`Incoming chain latest hash: ${incomingLatestHash}`);
+        Logger.info(`Incoming chain latest hash: ${incomingLatestHash}`);
 
         // Now examine target user's existing chains that might match or overlap with this chain
         // Start by checking if the genesis revision of the incoming chain exists for the target user
         const incomingGenesisHash = orderedIncomingChain[0];
         const targetGenesisHash = `${targetUserAddress}_${incomingGenesisHash}`;
 
-        console.log(`Checking if target user has genesis revision: ${targetGenesisHash}`);
+        Logger.info(`Checking if target user has genesis revision: ${targetGenesisHash}`);
         const existingGenesis = await prisma.revision.findUnique({
             where: { pubkey_hash: targetGenesisHash }
         });
 
         if (!existingGenesis) {
-            console.log("No matching genesis found, performing a simple transfer");
+            Logger.info("No matching genesis found, performing a simple transfer");
             // No overlap, so we just do a standard transfer (simplest case)
             const transferResult = await transferRevisionChain(
                 entireChain,
@@ -734,12 +735,12 @@ export async function mergeRevisionChain(
         }
 
         // Target user has the genesis, so we need to find where chains diverge (if they do)
-        console.log("Found matching genesis, analyzing chains to find merge point");
+        Logger.info("Found matching genesis, analyzing chains to find merge point");
 
         // Order target user's chain starting from the same genesis
         const targetUserChain = await orderUserChain(targetGenesisHash);
         if (!targetUserChain || targetUserChain.length === 0) {
-            console.log("Failed to order target user's chain, fallback to transfer");
+            Logger.error("Failed to order target user's chain, fallback to transfer");
             // Something went wrong with ordering, fallback to transfer
             const transferResult = await transferRevisionChain(
                 entireChain,
@@ -754,8 +755,8 @@ export async function mergeRevisionChain(
             };
         }
 
-        console.log(`Target user chain has ${targetUserChain.length} revisions`);
-        console.log(`Incoming chain has ${orderedIncomingChain.length} revisions`);
+        Logger.info(`Target user chain has ${targetUserChain.length} revisions`);
+        Logger.info(`Incoming chain has ${orderedIncomingChain.length} revisions`);
 
         // Find last common revision (divergence point)
         let lastCommonIndex = -1;
@@ -770,12 +771,12 @@ export async function mergeRevisionChain(
             }
         }
 
-        console.log(`Last common revision index: ${lastCommonIndex}, hash: ${lastCommonHash}`);
+        Logger.info(`Last common revision index: ${lastCommonIndex}, hash: ${lastCommonHash}`);
         mergePoint = lastCommonHash;
 
         if (lastCommonIndex === targetUserChain.length - 1) {
             // Target chain is a subset of incoming chain - simple addition case
-            console.log("Target chain is a subset of incoming chain, adding new revisions");
+            Logger.info("Target chain is a subset of incoming chain, adding new revisions");
             appliedStrategy = "simple_addition";
 
             // Transfer only the new revisions (from lastCommonIndex+1 onward)
@@ -791,7 +792,7 @@ export async function mergeRevisionChain(
                 });
 
                 if (!originalRevision) {
-                    console.warn(`Original revision not found in database: ${sourceFullHash}`);
+                    Logger.warn(`Original revision not found in database: ${sourceFullHash}`);
                     continue;
                 }
 
@@ -844,7 +845,7 @@ export async function mergeRevisionChain(
 
         } else if (lastCommonIndex < targetUserChain.length - 1 && lastCommonIndex < orderedIncomingChain.length - 1) {
             // Chains have diverged - handle according to merge strategy
-            console.log(`Chains diverge after index ${lastCommonIndex}, applying ${mergeStrategy} strategy`);
+            Logger.info(`Chains diverge after index ${lastCommonIndex}, applying ${mergeStrategy} strategy`);
             appliedStrategy = mergeStrategy;
 
             if (mergeStrategy === "replace") {
@@ -854,7 +855,7 @@ export async function mergeRevisionChain(
                 const divergentTargetRevisions = targetUserChain.slice(lastCommonIndex + 1);
                 for (const obsoleteHash of divergentTargetRevisions) {
                     // You might want to mark these as obsolete rather than deleting
-                    console.log(`Marking ${obsoleteHash} as obsolete due to replace strategy`);
+                    Logger.info(`Marking ${obsoleteHash} as obsolete due to replace strategy`);
                     // For example, add metadata or move to an "obsolete" status
                     // await prisma.revision.update({
                     //     where: { pubkey_hash: obsoleteHash },
@@ -875,7 +876,7 @@ export async function mergeRevisionChain(
                     });
 
                     if (!originalRevision) {
-                        console.warn(`Original revision not found in database: ${sourceFullHash}`);
+                        Logger.warn(`Original revision not found in database: ${sourceFullHash}`);
                         continue;
                     }
 
@@ -942,7 +943,7 @@ export async function mergeRevisionChain(
                     });
 
                     if (existingRev) {
-                        console.log(`Revision ${targetFullHash} already exists, skipping`);
+                        Logger.info(`Revision ${targetFullHash} already exists, skipping`);
                         continue;
                     }
 
@@ -952,7 +953,7 @@ export async function mergeRevisionChain(
                     });
 
                     if (!originalRevision) {
-                        console.warn(`Original revision not found in database: ${sourceFullHash}`);
+                        Logger.warn(`Original revision not found in database: ${sourceFullHash}`);
                         continue;
                     }
 
@@ -1014,7 +1015,7 @@ export async function mergeRevisionChain(
             }
         } else if (lastCommonIndex === orderedIncomingChain.length - 1) {
             // Incoming chain is a subset of target chain - nothing to add
-            console.log("Incoming chain is a subset of target's chain, nothing to add");
+            Logger.info("Incoming chain is a subset of target's chain, nothing to add");
             appliedStrategy = "no_change_needed";
             // The target user already has all these revisions and more
             latestHashes.push(targetUserChain[targetUserChain.length - 1]);
@@ -1048,7 +1049,7 @@ export async function mergeRevisionChain(
             strategy: appliedStrategy
         };
     } catch (error: any) {
-        console.error("Error in mergeRevisionChain:", error);
+        Logger.error("Error in mergeRevisionChain:", error);
         return {
             success: false,
             message: `Error merging chain: ${error.message}`,
@@ -1087,7 +1088,7 @@ async function orderUserChain(genesisHash: string): Promise<string[]> {
 
         return orderedChain;
     } catch (error : any) {
-        console.error("Error ordering user chain:", error);
+        Logger.error("Error ordering user chain:", error);
         return [];
     }
 }
@@ -1130,7 +1131,7 @@ function orderRevisionsInChain(chainData: any): string[] {
         }
 
         if (!genesisHash) {
-            console.error("Could not find genesis revision");
+            Logger.error("Could not find genesis revision");
             return [];
         }
 
@@ -1157,7 +1158,7 @@ function orderRevisionsInChain(chainData: any): string[] {
 
         return ordered;
     } catch (error : any) {
-        console.error("Error ordering revisions:", error);
+        Logger.error("Error ordering revisions:", error);
         return [];
     }
 }
@@ -1195,7 +1196,7 @@ async function updateLatestHash(userAddress: string, oldHash: string, newHash: s
             });
         }
     } catch (error : any) {
-        console.error("Error updating latest hash:", error);
+        Logger.error("Error updating latest hash:", error);
         throw error;
     }
 }

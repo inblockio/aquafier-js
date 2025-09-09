@@ -1,20 +1,20 @@
-import { useEffect, useState } from 'react'
-import { Button } from '@/components/ui/button'
-import { Card, CardContent } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
-import { Avatar, AvatarFallback } from '@/components/ui/avatar'
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
-import { FileText, Users, Hash, Wallet, X } from 'lucide-react'
-import { useNavigate } from 'react-router-dom'
+import {useEffect, useState} from 'react'
+import {Button} from '@/components/ui/button'
+import {Card, CardContent} from '@/components/ui/card'
+import {Badge} from '@/components/ui/badge'
+import {Avatar, AvatarFallback} from '@/components/ui/avatar'
+import {Tooltip, TooltipContent, TooltipProvider, TooltipTrigger} from '@/components/ui/tooltip'
+import {FileText, Hash, Users, Wallet, X} from 'lucide-react'
+import {useNavigate} from 'react-router-dom'
 import axios from 'axios'
-import { useStore } from 'zustand'
+import {useStore} from 'zustand'
 import appStore from '@/store'
-import { formatCryptoAddress, timeToHumanFriendly } from '@/utils/functions'
-import { Contract } from '@/types/types'
+import {formatCryptoAddress, timeToHumanFriendly} from '@/utils/functions'
+import {Contract} from '@/types/types'
 import WalletAddresClaim from "./../pages/v2_claims_workflow/WalletAdrressClaim"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
-import { toast } from 'sonner'
+import {Tabs, TabsContent, TabsList, TabsTrigger} from '@/components/ui/tabs'
+import {Alert, AlertDescription, AlertTitle} from '@/components/ui/alert'
+import {toast} from 'sonner'
 
 export const SharedContract = ({ contract, index, contractDeleted }: { contract: Contract; index: number; contractDeleted: (hash: string) => void }) => {
       const navigate = useNavigate()
@@ -236,8 +236,6 @@ export function SharedContracts() {
                   console.error(error)
             }
       }
-      // //  console.log(contracts)
-
       useEffect(() => {
             loadAccountSharedContracts()
       }, [backend_url, session])

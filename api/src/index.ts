@@ -1,8 +1,7 @@
-
 // Import the server
-import buildServer from './server';
-import { getHost, getPort } from './utils/api_utils';
-import { mockNotifications } from './server';
+import buildServer, {mockNotifications} from './server';
+import {getHost, getPort} from './utils/api_utils';
+import Logger from "./utils/Logger";
 
 const server = buildServer()
 
@@ -13,31 +12,23 @@ const PORT = getPort();
 
 // Start the server
 const start = async () => {
-  try {
-
-    await server.listen({ port: PORT, host: HOST });
-    console.log(`\n`);
-    console.log("====================================");
-    console.log("🚀  AquaFier JS is running!");
-    console.log("🌊  Website: https://aqua-protocol.org/");
-    console.log("🌐  Check it out here: https://aquafier.inblock.io | https://dev.inblock.io");
-    console.log(`📡  Listening on: http://${HOST}:${PORT}`);
-    console.log("====================================");
-    console.log("\n");
-    
-    // Create mock notifications for testing
     try {
-      if(process.env.NODE_ENV === "development" || process.env.NODE_ENV === "test"){
-        await mockNotifications();
-        console.log("✅ Mock notifications created successfully");
-      }
-    } catch (error : any) {
-      console.error("❌ Error creating mock notifications:", error);
+
+        await server.listen({port: PORT, host: HOST});
+        Logger.info("AquaFier JS is running! \n Website: https://aqua-protocol.org/ \n Check it out here: https://aquafier.inblock.io | https://dev.inblock.io \n" + `Listening on: http://${HOST}:${PORT}`);
+        // Create mock notifications for testing
+        try {
+            if (process.env.NODE_ENV === "development" || process.env.NODE_ENV === "test") {
+                await mockNotifications();
+                Logger.info("✅ Mock notifications created successfully");
+            }
+        } catch (error: any) {
+            Logger.error("❌ Error creating mock notifications:", error);
+        }
+    } catch (err) {
+        server.log.error(err);
+        process.exit(1);
     }
-  } catch (err) {
-    server.log.error(err);
-    process.exit(1);
-  }
 };
 
 start();

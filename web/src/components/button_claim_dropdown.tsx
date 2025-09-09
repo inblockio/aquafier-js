@@ -1,9 +1,9 @@
-import { useState, useRef, useEffect } from 'react';
-import { ChevronDown, Plus, Globe, UserLock, Signature, Phone, Mail } from 'lucide-react';
-import { createPortal } from 'react-dom';
+import {useEffect, useRef, useState} from 'react';
+import {ChevronDown, Globe, Mail, Phone, Plus, Signature, UserLock} from 'lucide-react';
+import {createPortal} from 'react-dom';
 import appStore from '../store'
-import { useStore } from 'zustand'
- 
+import {useStore} from 'zustand'
+
 export default function ClaimTypesDropdownButton() {
    const {setOpenDialog  } = useStore(appStore)
   const [isOpen, setIsOpen] = useState(false);
@@ -11,7 +11,6 @@ export default function ClaimTypesDropdownButton() {
   const buttonRef = useRef<HTMLButtonElement>(null);
 
   const handleItemClick = (item: 'identity_claim' | 'dns_claim' | 'user_signature' | 'email_claim' | 'phone_number_claim' ) => {
-    //  console.log(`Selected: ${item}`);
     setIsOpen(false);
 
     setOpenDialog({ dialogType: item, isOpen: true, onClose: () => setOpenDialog(null), onConfirm: () => { } })

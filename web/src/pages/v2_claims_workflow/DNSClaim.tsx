@@ -1,10 +1,10 @@
-import { ensureDomainUrlHasSSL, formatCryptoAddress } from '@/utils/functions'
-import { useEffect, useState } from 'react'
-import { TbWorldWww } from 'react-icons/tb'
-import { FaCheck, FaTimes } from 'react-icons/fa'
-import { ShareButton } from '@/components/aqua_chain_actions/share_aqua_chain'
-import { ApiFileInfo } from '@/models/FileInfo'
-import { useStore } from 'zustand'
+import {ensureDomainUrlHasSSL, formatCryptoAddress} from '@/utils/functions'
+import {useEffect, useState} from 'react'
+import {TbWorldWww} from 'react-icons/tb'
+import {FaCheck, FaTimes} from 'react-icons/fa'
+import {ShareButton} from '@/components/aqua_chain_actions/share_aqua_chain'
+import {ApiFileInfo} from '@/models/FileInfo'
+import {useStore} from 'zustand'
 import appStore from '@/store'
 import ImprovedDNSLogs from '../claims_workflow/DNSClaimLogs'
 
@@ -166,7 +166,6 @@ const DNSClaim = ({ claimInfo, apiFileInfo, nonce, sessionAddress }: IDNSClaim) 
 
                   const result: VerificationResult = await response.json()
                   setVerificationResult(result)
-                  //  console.log(`logs ${JSON.stringify(result, null, 4)}`)
 
                   if (result.success) {
                         setVerificationStatus('verified')

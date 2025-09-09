@@ -1,11 +1,11 @@
 import axios from 'axios'
-import { useEffect } from 'react'
-import { ensureDomainUrlHasSSL, fetchFiles, fetchSystemFiles, generateAvatar, getCookie } from '../utils/functions'
-import { useStore } from 'zustand'
+import {useEffect} from 'react'
+import {ensureDomainUrlHasSSL, fetchFiles, fetchSystemFiles, generateAvatar, getCookie} from '../utils/functions'
+import {useStore} from 'zustand'
 import appStore from '../store'
-import { ethers } from 'ethers'
-import { toast } from 'sonner'
-import { FormTemplate } from './aqua_forms'
+import {ethers} from 'ethers'
+import {toast} from 'sonner'
+import {FormTemplate} from './aqua_forms'
 
 const LoadConfiguration = () => {
       const { setMetamaskAddress, setUserProfile, setFiles, setAvatar, setSystemFileInfo, backend_url, setSession, setFormTemplate, session } = useStore(appStore)
@@ -25,7 +25,6 @@ const LoadConfiguration = () => {
                         if (response.status === 200) {
                               const url2 = `${backend_url}/explorer_files`
                               const _address = response.data?.session.address
-                              //  //  console.log(`address ${_address} ..`)
                               if (_address) {
                                     const address = ethers.getAddress(_address)
                                     setMetamaskAddress(address)
@@ -45,8 +44,6 @@ const LoadConfiguration = () => {
                               }
                         }
                   } catch (error: any) {
-                        // if (error?.response?.status === 404) {
-                        // //  console.log("Error: ", error)
                         setMetamaskAddress(null)
                         setAvatar(undefined)
                         setSession(null)
@@ -65,16 +62,12 @@ const LoadConfiguration = () => {
                               theme: 'light',
                               witness_contract_address: '0x45f59310ADD88E6d23ca58A0Fa7A55BEE6d2a611',
                         })
-                        // } else {
-                        //    //  //  console.log("An error from the api ", error);
-                        // }
                   }
             }
       }
 
       const fetchUserProfile = async (address: string, nonce: string) => {
             const url = `${backend_url}/explorer_fetch_user_settings`
-            //  //  console.log("url is ", url);
 
             const response = await axios.get(url, {
                   headers: {
@@ -93,7 +86,6 @@ const LoadConfiguration = () => {
       useEffect(() => {
             if (!backend_url.includes('0.0.0.0')) {
                   const nonce = getCookie('pkc_nonce')
-                  //  console.log('Fetched nonce from cookies:', nonce)
                   if (nonce) {
                         fetchAddressGivenANonce(nonce)
                   } else {
@@ -114,17 +106,12 @@ const LoadConfiguration = () => {
                               theme: 'light',
                               witness_contract_address: '0x45f59310ADD88E6d23ca58A0Fa7A55BEE6d2a611',
                         })
-                        // toast.info( "You are not logged in! Please login")
-                        // window.location.reload()
                   }
             } else {
-                  //  console.log(`backend url is ${backend_url}`)
             }
       }, [backend_url])
 
       const loadTemplates = async () => {
-            // setIsLoading(true);
-
             try {
                   const url = `${backend_url}/templates`
                   const response = await axios.get(url, {

@@ -1,4 +1,5 @@
-import { PrismaClient } from "@prisma/client";
+import {PrismaClient} from "@prisma/client";
+import Logger from "../utils/Logger";
 
 const prisma = new PrismaClient({
     // log: ['query', 'info', 'warn', 'error']
@@ -8,15 +9,15 @@ const prisma = new PrismaClient({
 async function checkDbConnection() {
   try {
     await prisma.$connect()
-    console.log('✅ Connected to database successfully')
+      Logger.info('✅ Connected to database successfully')
     
     // Optional: Test with a simple query
     const result = await prisma.$queryRaw`SELECT current_database()`
-    console.log('Database info:', result)
+      Logger.info('Database info:', result)
     
     return true
   } catch (error) {
-    console.error('❌ Failed to connect:', error)
+      Logger.error('❌ Failed to connect:', error)
     return false
   } 
 }

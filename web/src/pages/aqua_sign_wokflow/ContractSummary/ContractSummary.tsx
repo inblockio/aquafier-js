@@ -1,12 +1,20 @@
-import { useCallback, useEffect, useState } from 'react'
+import {useCallback, useEffect, useState} from 'react'
 import appStore from '../../../store'
-import { useStore } from 'zustand'
-import { ContractDocumentViewProps, SummaryDetailsDisplayData } from '../../../types/types'
-import Aquafier, { AquaTree, OrderRevisionInAquaTree, Revision } from 'aqua-js-sdk/web'
-import { isAquaTree, timeToHumanFriendly, getHighestFormIndex, getFileName, getFileHashFromUrl, fetchFileData, isArrayBufferText } from '../../../utils/functions'
+import {useStore} from 'zustand'
+import {ContractDocumentViewProps, SummaryDetailsDisplayData} from '../../../types/types'
+import Aquafier, {AquaTree, OrderRevisionInAquaTree, Revision} from 'aqua-js-sdk/web'
+import {
+    fetchFileData,
+    getFileHashFromUrl,
+    getFileName,
+    getHighestFormIndex,
+    isAquaTree,
+    isArrayBufferText,
+    timeToHumanFriendly
+} from '../../../utils/functions'
 
-import { ApiFileInfo } from '../../../models/FileInfo'
-import { IDrawerStatus, VerificationHashAndResult } from '../../../models/AquaTreeDetails'
+import {ApiFileInfo} from '../../../models/FileInfo'
+import {IDrawerStatus, VerificationHashAndResult} from '../../../models/AquaTreeDetails'
 import ContractSummaryDetails from './ContractSummaryDetails'
 
 export const ContractSummaryView: React.FC<ContractDocumentViewProps> = ({ setActiveStep }) => {
@@ -322,7 +330,6 @@ export const ContractSummaryView: React.FC<ContractDocumentViewProps> = ({ setAc
                   const signers: string[] = firstRevision.forms_signers.split(',').map((e: string) => e.trim())
 
                   if (revisionHashes.length > 4) {
-                        //  console.log(`length bigger than 4`)
 
                         // remove the first 4 elements from the revision list
                         fourthItmeHashOnwards = revisionHashes.slice(4)
@@ -330,12 +337,10 @@ export const ContractSummaryView: React.FC<ContractDocumentViewProps> = ({ setAc
 
                         const signatureRevionHashesDataAddress = signatureRevionHashes.map(e => e.walletAddress)
                         const remainSigners = signers.filter(item => !signatureRevionHashesDataAddress.includes(item))
-                        //  console.log(`signers remaining ${remainSigners.toString()}`)
                         setIsWorkFlowComplete(remainSigners)
 
                         setSignatureRevionHashes(signatureRevionHashes)
                   } else {
-                        //  console.log(`length equal to 4`)
                         setIsWorkFlowComplete(signers)
                   }
 

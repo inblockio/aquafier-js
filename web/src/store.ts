@@ -1,10 +1,10 @@
-import { IDBPDatabase, openDB } from 'idb'
-import { createStore } from 'zustand'
-import { createJSONStorage, persist } from 'zustand/middleware'
-import { ApiFileInfo } from './models/FileInfo'
-import { ApiFileData, OpenDialog, Session, WebConfig } from './types/types'
-import { FormTemplate } from './components/aqua_forms/types'
-import { ensureDomainUrlHasSSL } from './utils/functions'
+import {IDBPDatabase, openDB} from 'idb'
+import {createStore} from 'zustand'
+import {createJSONStorage, persist} from 'zustand/middleware'
+import {ApiFileInfo} from './models/FileInfo'
+import {ApiFileData, OpenDialog, Session, WebConfig} from './types/types'
+import {FormTemplate} from './components/aqua_forms/types'
+import {ensureDomainUrlHasSSL} from './utils/functions'
 
 type AppStoreState = {
       user_profile: {
@@ -66,29 +66,6 @@ type AppStoreActions = {
 
 type TAppStore = AppStoreState & AppStoreActions
 
-// Open an IndexedDB instance
-// const dbPromise = openDB('aquafier-db', 2, {
-//     upgrade(db) {
-//         db.createObjectStore('store');
-//     },
-// });
-
-// // Custom storage object for Zustand using IndexedDB
-// const indexedDBStorage = {
-//     getItem: async (name: string) => {
-//         const db = await dbPromise;
-//         return (await db.get('store', name)) || null;
-//     },
-//     setItem: async (name: string, value: string) => {
-//         const db = await dbPromise;
-//         await db.put('store', value, name);
-//     },
-//     removeItem: async (name: string) => {
-//         const db = await dbPromise;
-//         await db.delete('store', name);
-//     },
-// };
-
 // Create a singleton promise for the database to prevent multiple upgrade attempts
 let dbPromiseInstance: Promise<IDBPDatabase> | null = null
 
@@ -96,18 +73,10 @@ const getDbPromise = () => {
       if (!dbPromiseInstance) {
             dbPromiseInstance = openDB('aquafier-db', 2, {
                   upgrade(db, _oldVersion, _newVersion, _transaction) {
-                        //  console.log(`Upgrading from version ${oldVersion} to ${newVersion}`)
-
                         // Handle version upgrades properly
                         if (!db.objectStoreNames.contains('store')) {
                               db.createObjectStore('store')
                         }
-
-                        // Add more version upgrade logic here if needed
-                        // Example for future versions:
-                        // if (oldVersion < 2) {
-                        //     // Migration logic for version 2
-                        // }
                   },
 
                   // Add blocking handler to prevent version conflicts
@@ -229,7 +198,6 @@ const appStore = createStore<TAppStore>()(
                         set({ files: files })
                   },
                   setBackEndUrl: (backend_url: AppStoreState['backend_url']) => {
-                        //  console.log(`set backend_url to ${backend_url} `)
                         let urlData = ensureDomainUrlHasSSL(backend_url)
                         set({ backend_url: urlData })
                   },

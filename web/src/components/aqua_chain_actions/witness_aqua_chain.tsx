@@ -1,13 +1,13 @@
-import { LuGlasses } from 'react-icons/lu'
-import { dummyCredential, fetchFiles, getGenesisHash } from '../../utils/functions'
-import { useStore } from 'zustand'
+import {LuGlasses} from 'react-icons/lu'
+import {dummyCredential, fetchFiles, getGenesisHash} from '../../utils/functions'
+import {useStore} from 'zustand'
 import appStore from '../../store'
 import axios from 'axios'
-import { ApiFileInfo } from '../../models/FileInfo'
-import { useState } from 'react'
-import Aquafier, { AquaTreeWrapper, WitnessNetwork } from 'aqua-js-sdk'
-import { RevionOperation } from '../../models/RevisionOperation'
-import { toast } from 'sonner'
+import {ApiFileInfo} from '../../models/FileInfo'
+import {useState} from 'react'
+import Aquafier, {AquaTreeWrapper, WitnessNetwork} from 'aqua-js-sdk'
+import {RevionOperation} from '../../models/RevisionOperation'
+import {toast} from 'sonner'
 
 export const WitnessAquaChain = ({ apiFileInfo, backendUrl, nonce }: RevionOperation) => {
       const { setFiles, metamaskAddress, selectedFileInfo, setSelectedFileInfo, user_profile,backend_url ,session } = useStore(appStore)
@@ -91,7 +91,6 @@ export const WitnessAquaChain = ({ apiFileInfo, backendUrl, nonce }: RevionOpera
 
                         setWitnessing(false)
                   } catch (error) {
-                        //  console.log('Error  ', error)
                         setWitnessing(false)
                         toast.error( `Error during witnessing`)
                   }

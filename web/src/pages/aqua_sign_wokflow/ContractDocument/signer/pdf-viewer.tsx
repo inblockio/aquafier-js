@@ -1,7 +1,7 @@
 import type React from 'react'
-import { useEffect, useRef, useState, useCallback } from 'react'
-import type { Annotation, TextAnnotation, ImageAnnotation, ProfileAnnotation } from './types'
-import { SignatureData } from '../../../../types/types'
+import {useCallback, useEffect, useRef, useState} from 'react'
+import type {Annotation, ImageAnnotation, ProfileAnnotation, TextAnnotation} from './types'
+import {SignatureData} from '../../../../types/types'
 
 interface PdfViewerProps {
       file: File | null
@@ -243,18 +243,9 @@ const PdfViewer: React.FC<PdfViewerProps> = ({
 
       const handleAnnotationMouseDown = useCallback(
             (event: React.MouseEvent, annotation: Annotation) => {
-                  // This will ALWAYS print, regardless of any conditions
-                  // //  console.log(`at the root ... - Annotation ID: ${annotation.id}, Type: ${annotation.type}`);
-                  // //  console.log('Event details:', {
-                  //   target: event.target,
-                  //   currentTarget: event.currentTarget,
-                  //   clientX: event.clientX,
-                  //   clientY: event.clientY
-                  // });
 
                   // Check if it's a resize handle - if so, don't proceed with drag logic but still log
                   if ((event.target as HTMLElement).dataset.resizeHandle) {
-                        // //  console.log('Resize handle clicked, returning early');
                         return
                   }
 
@@ -266,7 +257,6 @@ const PdfViewer: React.FC<PdfViewerProps> = ({
                   onAnnotationSelect(annotation.id)
 
                   if (!canvasRef.current) {
-                        // //  console.log('Canvas ref not available');
                         return
                   }
 
@@ -274,11 +264,6 @@ const PdfViewer: React.FC<PdfViewerProps> = ({
 
                   const clickXCanvasPercent = ((event.clientX - canvasRect.left) / canvasRect.width) * 100
                   const clickYCanvasPercent = ((event.clientY - canvasRect.top) / canvasRect.height) * 100
-
-                  // //  console.log('Setting drag start offset:', {
-                  //   x: clickXCanvasPercent - annotation.x,
-                  //   y: clickYCanvasPercent - annotation.y
-                  // });
 
                   setDragStartOffset({
                         x: clickXCanvasPercent - annotation.x,
@@ -578,7 +563,6 @@ const PdfViewer: React.FC<PdfViewerProps> = ({
       }
 
       const annotationsInDocumentOnCurrentPage = annotationsInDocument.filter(anno => anno.page == currentPage)
-      // //  console.log(`annotationsInDocumentOnCurrentPage ${annotationsInDocumentOnCurrentPage.length} currentPage  ${currentPage} annotationsInDocument ${JSON.stringify(annotationsInDocument, null, 4)}`)
       let annotationsOnCurrentPage = annotations.filter(anno => anno.page === currentPage)
 
       if (annotationsInDocumentOnCurrentPage.length > 1) {

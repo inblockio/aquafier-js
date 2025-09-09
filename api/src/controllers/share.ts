@@ -1,16 +1,15 @@
-import { FastifyInstance, FastifyRequest } from 'fastify';
-import { SiweMessage } from 'siwe';
-import { prisma } from '../database/db';
-import { Settings } from '@prisma/client';
-import { SessionQuery, ShareRequest, SiweRequest } from '../models/request_models';
+import {FastifyInstance} from 'fastify';
+import {prisma} from '../database/db';
+import {ShareRequest} from '../models/request_models';
 // import { verifySiweMessage } from '../utils/auth_utils';
-import { AquaTree, FileObject, OrderRevisionInAquaTree, reorderAquaTreeRevisionsProperties } from 'aqua-js-sdk';
-import { getHost, getPort } from '../utils/api_utils';
-import {  fetchAquaTreeWithForwardRevisions, saveAquaTree } from '../utils/revisions_utils';
-import { SYSTEM_WALLET_ADDRESS } from '../models/constants';
-import { sendToUserWebsockerAMessage } from './websocketController';
+import {AquaTree, FileObject, OrderRevisionInAquaTree, reorderAquaTreeRevisionsProperties} from 'aqua-js-sdk';
+import {getHost, getPort} from '../utils/api_utils';
+import {fetchAquaTreeWithForwardRevisions} from '../utils/revisions_utils';
+import {SYSTEM_WALLET_ADDRESS} from '../models/constants';
+import {sendToUserWebsockerAMessage} from './websocketController';
 import WebSocketActions from '../constants/constants';
-import { createAquaTreeFromRevisions } from '../utils/revisions_operations_utils';
+import {createAquaTreeFromRevisions} from '../utils/revisions_operations_utils';
+import Logger from "../utils/Logger";
 
 export default async function shareController(fastify: FastifyInstance) {
 
@@ -78,7 +77,6 @@ export default async function shareController(fastify: FastifyInstance) {
             let anAquaTree: AquaTree
             let fileObject: FileObject[]
             let revision_pubkey_hash = `${contractData.sender}_${contractData.latest}`
-            //  console.log(`revision_pubkey_hash == > ${revision_pubkey_hash}`);
 
             if (contractData.option == "latest") {
                 let [_anAquaTree, _fileObject] = await fetchAquaTreeWithForwardRevisions(revision_pubkey_hash, url)
@@ -100,8 +98,6 @@ export default async function shareController(fastify: FastifyInstance) {
             }
             // let sortedAquaTree = OrderRevisionInAquaTree(anAquaTree)
 
-            //  console.log(`Aqua tree ${JSON.stringify(sortedAquaTree)}`);
-
             displayData.push({
                 aquaTree: anAquaTree,
                 fileObject: fileObject
@@ -117,7 +113,7 @@ export default async function shareController(fastify: FastifyInstance) {
             });
 
         } catch (error : any) {
-            console.error("Error fetching session:", error);
+            Logger.error("Error fetching session:", error);
             return reply.code(500).send({ success: false, message: "Internal server error" });
         }
     });
@@ -254,7 +250,7 @@ export default async function shareController(fastify: FastifyInstance) {
 
             return reply.code(200).send({ success: true, message: "Share contract updated successfully." });
         } catch (error : any) {
-            console.error("Error updating contract:", error);
+            Logger.error("Error updating contract:", error);
             return reply.code(500).send({ success: false, message: "Internal server error" });
         }
     });
@@ -343,7 +339,7 @@ export default async function shareController(fastify: FastifyInstance) {
 
             return reply.code(200).send({ success: true, message: "Share contract deleted successfully." });
         } catch (error : any) {
-            console.error("Error deleting contract:", error);
+            Logger.error("Error deleting contract:", error);
             return reply.code(500).send({ success: false, message: "Internal server error" });
         }
     });
@@ -428,21 +424,6 @@ export default async function shareController(fastify: FastifyInstance) {
         // Update the where clause to avoid querying anything that has receiver_has_deleted set to true
         whereClause.receiver_has_deleted = false;
 
-        // console.log('Query parameters:', JSON.stringify(whereClause, null, 2));
-        
-        // Enable query logging for this specific query
-        // const contracts = await prisma.$transaction(async (tx) => {
-        //     // Log the query being executed
-        //     const result = await tx.contract.findMany({
-        //         where: whereClause
-        //     });
-        //     return result;
-        // }, {
-        //     timeout: 10000,
-        //     // This enables logging for this transaction
-        //     log: ['query']
-        // });
-
         const contracts = await prisma.$transaction(async (tx) => {
             const result = await tx.contract.findMany({
                 where: whereClause
@@ -452,7 +433,6 @@ export default async function shareController(fastify: FastifyInstance) {
             timeout: 10000
         });
         
-        // console.log('Found contracts:', contracts.length);
         return reply.code(200).send({ success: true, contracts });
     });
 

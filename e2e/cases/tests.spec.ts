@@ -1,7 +1,5 @@
-import { test, BrowserContext, Page, chromium, expect } from '@playwright/test';
-import dotenv from 'dotenv';
+import {BrowserContext, expect, Page, test} from '@playwright/test';
 import path from "path";
-import fs from "fs";
 import {
     addSignatureToDocument,
     closeUploadDialog,
@@ -9,7 +7,6 @@ import {
     createAquaSignForm,
     createTemplate,
     downloadAquaTree,
-    findAndClickHighestSharedButton,
     fundWallet,
     handleMetaMaskNetworkAndConfirm,
     importAquaChain,
@@ -28,10 +25,6 @@ test("basic site accessibility test", async ({ page }) => {
     // Navigate to the site
     await page.goto('/');
     console.log("Page loaded");
-
-    // Take a screenshot for debugging
-    // await page.screenshot({ path: 'site-loaded.png' });
-    // console.log("Screenshot taken");
 
     // Simple assertion to verify the page loaded
     const title = await page.title();
@@ -587,17 +580,6 @@ test("create a simple claim", async (): Promise<void> => {
     });
     await testPage.click('[data-testid="create-simple-claim-dropdown-button-item"]');
 
-
-    // await testPage.click('[data-testid="create-document-signature"]');
-    //   console.log("clicked aqua sign");
-
-    // Upload document
-    // await uploadFile(page, filePath, '[data-testid="input-document"]');
-
-    // Configure signers
-    // await testPage.click('[data-testid="multiple_values_signers"]');
-    // console.log("clicked multiple values signers");
-
     // const metaMaskAdr: string = await testPage.locator('[data-testid="input-sender"]').inputValue();
     await testPage.fill('[data-testid="input-claim_context"]', "i claim the name sample");
     console.log("input claim context filles");
@@ -989,9 +971,4 @@ test("create email claim", async (): Promise<void> => {
 
     await handleMetaMaskNetworkAndConfirm(context, false);
     console.log("email claim saved");
-    // Check that the table has two rows and contains aqua.json
-    // const tableRows = testPage.locator('table tr');
-    //  console.log("email claim saved");
-    // //header + two files
-    // await expect(tableRows).toHaveCount(2);
 });

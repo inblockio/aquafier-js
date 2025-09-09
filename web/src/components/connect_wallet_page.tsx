@@ -1,13 +1,13 @@
-import { useState } from 'react'
-import { ensureDomainUrlHasSSL, fetchFiles, generateAvatar, setCookie } from '../utils/functions'
-import { SiweMessage, generateNonce } from 'siwe'
-import { SESSION_COOKIE_NAME } from '../utils/constants'
+import {useState} from 'react'
+import {ensureDomainUrlHasSSL, fetchFiles, generateAvatar, setCookie} from '../utils/functions'
+import {generateNonce, SiweMessage} from 'siwe'
+import {SESSION_COOKIE_NAME} from '../utils/constants'
 import axios from 'axios'
-import { useStore } from 'zustand'
+import {useStore} from 'zustand'
 import appStore from '../store'
-import { BrowserProvider, ethers } from 'ethers'
-import { toast } from 'sonner'
-import { Alert, AlertDescription } from './ui/alert'
+import {BrowserProvider, ethers} from 'ethers'
+import {toast} from 'sonner'
+import {Alert, AlertDescription} from './ui/alert'
 
 export const ConnectWalletPage = () => {
       const { setMetamaskAddress, session, setFiles, setAvatar, setUserProfile, backend_url, setSession } = useStore(appStore)
@@ -101,7 +101,6 @@ export const ConnectWalletPage = () => {
       }
 
       const signAndConnect = async () => {
-            //  console.log('Connecting to wallet '+backend_url)
             setIsConnecting(true)
             setError('')
 
@@ -172,7 +171,6 @@ export const ConnectWalletPage = () => {
                   const signature = await signer.signMessage(message)
 
                   const url = ensureDomainUrlHasSSL(`${backend_url}/session`)
-                  //  console.log(`url ${url}`)
                   // Send session request
                   const response = await axios.post(url, {
                         message,
@@ -182,9 +180,6 @@ export const ConnectWalletPage = () => {
 
                   if (response.status === 200 || response.status === 201) {
                         const responseData = response.data
-                        //  console.log('Backend response:', responseData)
-                        //  console.log('Session data:', responseData?.session)
-                        //  console.log('Address from response:', responseData?.session?.address)
 
                         // const walletAddress = ethers.getAddress(responseData?.session?.address)
                         const backendAddress = responseData?.session?.address

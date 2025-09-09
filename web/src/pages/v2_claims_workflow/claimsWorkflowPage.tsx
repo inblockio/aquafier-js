@@ -1,27 +1,27 @@
-import { useEffect, useState } from 'react'
-import { useParams } from 'react-router-dom'
+import {useEffect, useState} from 'react'
+import {useParams} from 'react-router-dom'
 import appStore from '../../store'
-import { useStore } from 'zustand'
-import { ShareButton } from '@/components/aqua_chain_actions/share_aqua_chain'
-import { getAquaTreeFileName, isWorkFlowData, processSimpleWorkflowClaim, timeToHumanFriendly } from '@/utils/functions'
-import { ClipLoader } from 'react-spinners'
-import { ApiFileInfo, ClaimInformation, IAttestationEntry } from '@/models/FileInfo'
+import {useStore} from 'zustand'
+import {ShareButton} from '@/components/aqua_chain_actions/share_aqua_chain'
+import {getAquaTreeFileName, isWorkFlowData, processSimpleWorkflowClaim, timeToHumanFriendly} from '@/utils/functions'
+import {ClipLoader} from 'react-spinners'
+import {ApiFileInfo, ClaimInformation, IAttestationEntry} from '@/models/FileInfo'
 import axios from 'axios'
-import { Contract, ICompleteClaimInformation } from '@/types/types'
-import { SharedContract } from '../files_shared_contracts'
+import {Contract, ICompleteClaimInformation} from '@/types/types'
+import {SharedContract} from '../files_shared_contracts'
 import AttestationEntry from './AttestationEntry'
-import { OrderRevisionInAquaTree } from 'aqua-js-sdk'
+import {OrderRevisionInAquaTree} from 'aqua-js-sdk'
 import SimpleClaim from './SimpleClaim'
 import DNSClaim from './DNSClaim'
-import { toast } from 'sonner'
+import {toast} from 'sonner'
 
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
-import { ChevronDown, ChevronUp } from 'lucide-react'
+import {Collapsible, CollapsibleContent, CollapsibleTrigger} from '@/components/ui/collapsible'
+import {ChevronDown, ChevronUp} from 'lucide-react'
 import WalletAddressProfile from './WalletAddressProfile'
 import PhoneNumberClaim from './PhoneNumberClaim'
 import EmailClaim from './EmailClaim'
 import UserSignatureClaim from './UserSignatureClaim'
-import { AddressView } from './AddressView'
+import {AddressView} from './AddressView'
 
 
 export default function ClaimsWorkflowPage() {
@@ -90,7 +90,6 @@ export default function ClaimsWorkflowPage() {
                   try {
                         return getAquaTreeFileName(e.aquaTree!)
                   } catch (e) {
-                        // //  console.log('Error processing system file')
                         return ''
                   }
             })
@@ -112,7 +111,6 @@ export default function ClaimsWorkflowPage() {
             setIsLoading(true)
             if (!walletAddress) {
                   toast.info('Please select a wallet address')
-                  //  console.log('Please select a wallet address')
                   setIsLoading(false)
                   return
             }
@@ -123,7 +121,6 @@ export default function ClaimsWorkflowPage() {
                   try {
                         return getAquaTreeFileName(e.aquaTree!)
                   } catch (e) {
-                        // //  console.log('Error processing system file')
                         return ''
                   }
             })

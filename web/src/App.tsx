@@ -1,10 +1,10 @@
-import { ethers } from 'ethers'
+import {ethers} from 'ethers'
 import LoadConfiguration from './components/config'
-import { initializeBackendUrl } from './utils/constants'
-import { useEffect } from 'react'
+import {initializeBackendUrl} from './utils/constants'
+import {useEffect} from 'react'
 import appStore from './store'
-import { useStore } from 'zustand'
-import { BrowserRouter, Route, Routes } from 'react-router-dom'
+import {useStore} from 'zustand'
+import {BrowserRouter, Route, Routes} from 'react-router-dom'
 import ErrorBoundary from './components/error_boundary'
 import Loading from './pages/loading'
 import PdfSigner from './pages/aqua_sign_wokflow/ContractDocument/PdfSigner'
@@ -28,7 +28,7 @@ import ClaimsAndAttestationPage from './pages/claim_and_attestation'
 import ClaimsWorkflowPage from './pages/claims_workflow/claimsWorkflowPage'
 import ClaimsWorkflowPageV2 from './pages/v2_claims_workflow/claimsWorkflowPage'
 import WalletAutosuggestDemo from './pages/demo_auto_suggest'
-import { WebConfig } from './types/types'
+import {WebConfig} from './types/types'
 import * as Sentry from "@sentry/react";
 
 declare global {
@@ -41,7 +41,6 @@ function App() {
       const { setBackEndUrl, setWebConfig } = useStore(appStore)
 
       useEffect(() => {
-            //  //  console.log("backedn url is", backend_url);
             // Properly handle async initialization
             const initBackend = async () => {
                   const {backend_url, config} = await initializeBackendUrl()

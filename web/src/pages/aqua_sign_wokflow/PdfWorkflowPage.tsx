@@ -1,19 +1,25 @@
-import React, { useEffect, useState } from 'react'
-import { FaCheck, FaQuestionCircle } from 'react-icons/fa'
-import { Alert, AlertDescription } from '../../components/ui/alert'
+import React, {useEffect, useState} from 'react'
+import {FaCheck, FaQuestionCircle} from 'react-icons/fa'
+import {Alert, AlertDescription} from '../../components/ui/alert'
 import appStore from '../../store'
-import { useStore } from 'zustand'
-import { SummaryDetailsDisplayData, WorkFlowTimeLine } from '../../types/types'
-import { convertTemplateNameToTitle, getAquaTreeFileName, getHighestFormIndex, isAquaTree, isWorkFlowData } from '../../utils/functions'
-import { ContractDocumentView } from './ContractDocument/ContractDocument'
-import { ContractSummaryView } from './ContractSummary/ContractSummary'
-import { AquaTree, OrderRevisionInAquaTree, Revision } from 'aqua-js-sdk/web'
-import { Button } from '../../components/ui/button'
-import { LuArrowLeft } from 'react-icons/lu'
-import { useNavigate } from 'react-router-dom'
-import { HiDocumentText } from 'react-icons/hi'
-import { FaCircleInfo } from 'react-icons/fa6'
-import { cn } from '../../lib/utils'
+import {useStore} from 'zustand'
+import {SummaryDetailsDisplayData, WorkFlowTimeLine} from '../../types/types'
+import {
+      convertTemplateNameToTitle,
+      getAquaTreeFileName,
+      getHighestFormIndex,
+      isAquaTree,
+      isWorkFlowData
+} from '../../utils/functions'
+import {ContractDocumentView} from './ContractDocument/ContractDocument'
+import {ContractSummaryView} from './ContractSummary/ContractSummary'
+import {AquaTree, OrderRevisionInAquaTree, Revision} from 'aqua-js-sdk/web'
+import {Button} from '../../components/ui/button'
+import {LuArrowLeft} from 'react-icons/lu'
+import {useNavigate} from 'react-router-dom'
+import {HiDocumentText} from 'react-icons/hi'
+import {FaCircleInfo} from 'react-icons/fa6'
+import {cn} from '../../lib/utils'
 
 export default function PdfWorkflowPage() {
       const [activeStep, setActiveStep] = useState(1)
@@ -29,7 +35,7 @@ export default function PdfWorkflowPage() {
 
             for (let i = 0; i < hashesToLoopPar.length; i += 3) {
                   const batch = hashesToLoopPar.slice(i, i + 3)
-                  //  console.log(`Processing batch ${i / 3 + 1}:`, batch)
+                  (`Processing batch ${i / 3 + 1}:`, batch)
 
                   let signaturePositionCount = 0
                   const hashSigPosition = batch[0] ?? ''
@@ -93,10 +99,10 @@ export default function PdfWorkflowPage() {
                   if (revisionHashes.length > 4) {
                         // remove the first 4 elements from the revision list
                         fourthItmeHashOnwards = revisionHashes.slice(4)
-                        // //  console.log(`revisionHashes  ${revisionHashes} --  ${typeof revisionHashes}`)
-                        // //  console.log(`fourthItmeHashOnwards  ${fourthItmeHashOnwards}`)
+                      // (`revisionHashes  ${revisionHashes} --  ${typeof revisionHashes}`)
+                      // (`fourthItmeHashOnwards  ${fourthItmeHashOnwards}`)
                         signatureRevionHashes = getSignatureRevionHashes(fourthItmeHashOnwards)
-                        // //  console.log(`signatureRevionHashes  ${JSON.stringify(signatureRevionHashes, null, 4)}`)
+                      // (`signatureRevionHashes  ${JSON.stringify(signatureRevionHashes, null, 4)}`)
 
                         signatureRevionHashesData = signatureRevionHashes
                   }
@@ -156,7 +162,7 @@ export default function PdfWorkflowPage() {
                         try {
                               return getAquaTreeFileName(e.aquaTree!)
                         } catch (e) {
-                              //  console.log('Error processing system file')
+                            ('Error processing system file')
                               return ''
                         }
                   })

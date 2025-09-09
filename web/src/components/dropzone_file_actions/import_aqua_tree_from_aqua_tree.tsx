@@ -1,18 +1,18 @@
-import { LuCheck, LuChevronRight, LuImport, LuMinus, LuX } from 'react-icons/lu'
+import {LuCheck, LuChevronRight, LuImport, LuMinus, LuX} from 'react-icons/lu'
 import axios from 'axios'
-import { useStore } from 'zustand'
+import {useStore} from 'zustand'
 import appStore from '../../store'
-import { useEffect, useState } from 'react'
-import { ApiFileInfo } from '../../models/FileInfo'
-import { formatCryptoAddress } from '../../utils/functions'
-import { analyzeAndMergeRevisions } from '../../utils/aqua_funcs'
-import { RevisionsComparisonResult } from '../../models/revision_merge'
-import { OrderRevisionInAquaTree, Revision } from 'aqua-js-sdk'
-import { BtnContent, ImportChainFromChainProps } from '../../types/types'
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
-import { Button } from '@/components/ui/button'
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
-import { toast } from 'sonner'
+import {useEffect, useState} from 'react'
+import {ApiFileInfo} from '../../models/FileInfo'
+import {formatCryptoAddress} from '../../utils/functions'
+import {analyzeAndMergeRevisions} from '../../utils/aqua_funcs'
+import {RevisionsComparisonResult} from '../../models/revision_merge'
+import {OrderRevisionInAquaTree, Revision} from 'aqua-js-sdk'
+import {BtnContent, ImportChainFromChainProps} from '../../types/types'
+import {Alert, AlertDescription, AlertTitle} from '@/components/ui/alert'
+import {Button} from '@/components/ui/button'
+import {Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle} from '@/components/ui/dialog'
+import {toast} from 'sonner'
 // import { toast } from "@/components/ui/use-toast"; 
 // import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 // import { Button } from "@/components/ui/button";
@@ -99,7 +99,6 @@ export const ImportAquaChainFromChain = ({ fileInfo, isVerificationSuccessful, c
                   const revisions = reorderedRevisions.revisions
                   const revisionHashes = Object.keys(revisions)
                   const latestRevisionHash = revisionHashes[revisionHashes.length - 1]
-                  //  console.log('Latest revision hash: ', latestRevisionHash)
 
                   const res = await axios.post(
                         url,
@@ -114,7 +113,6 @@ export const ImportAquaChainFromChain = ({ fileInfo, isVerificationSuccessful, c
                         }
                   )
 
-                  //  console.log('Transfer chain res: ', res)
                   if (res.status === 200) {
                         toast.success( 'Aqua Chain imported successfully')
 

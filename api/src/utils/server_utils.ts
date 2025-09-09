@@ -1,17 +1,16 @@
-import Aquafier, { AquaTree, CredentialsData, Err, getEntropy } from "aqua-js-sdk";
-import { Mnemonic, Wallet, } from "ethers";
-import { ServerWalletInformation } from "../models/types";
-
-import { ethers } from 'ethers';
-import { getFileUploadDirectory } from "./file_utils";
+import Aquafier, {AquaTree, CredentialsData} from "aqua-js-sdk";
+import {ethers,} from "ethers";
+import {ServerWalletInformation} from "../models/types";
+import {getFileUploadDirectory} from "./file_utils";
 import fs from 'fs';
 import path from 'path';
-import { prisma } from "../database/db";
-import { randomUUID } from "crypto";
-import { isWorkFlowData, saveAquaTree } from "./revisions_utils";
-import { serverAttestation } from "./server_attest";
-import { systemTemplateHashes } from "../models/constants";
-import { getGenesisHash } from "./aqua_tree_utils";
+import {prisma} from "../database/db";
+import {randomUUID} from "crypto";
+import {isWorkFlowData, saveAquaTree} from "./revisions_utils";
+import {serverAttestation} from "./server_attest";
+import {systemTemplateHashes} from "../models/constants";
+import {getGenesisHash} from "./aqua_tree_utils";
+import Logger from "./Logger";
 
 
 // Basic random number function
@@ -22,7 +21,7 @@ export function getRandomNumber(min: number, max: number): number | null {
 
       // Validate inputs
       if (isNaN(min) || isNaN(max)) {
-            console.log('Please provide valid numbers')
+          Logger.info('Please provide valid numbers')
             return null
       }
 
@@ -92,7 +91,7 @@ export async function saveAttestationFileAndAquaTree(aquaTree: AquaTree, genesis
             })
 
             if (existingFileIndex != null) {
-                console.log(`Update file index counter`)
+                Logger.info(`Update file index counter`)
 
                 await prisma.fileIndex.update({
                     where: { file_hash: existingFileIndex.file_hash },
@@ -104,7 +103,6 @@ export async function saveAttestationFileAndAquaTree(aquaTree: AquaTree, genesis
 
 
             } else {
-                // console.log(`\n ## filepubkeyhash ${filepubkeyhash}`)
                 const UPLOAD_DIR = getFileUploadDirectory();
 
 
@@ -160,10 +158,10 @@ export async function createEthAccount() {
         const publicKey = wallet.publicKey;
         const privateKey = wallet.privateKey;
 
-        console.log("Mnemonic", mnemonic)
-        console.log("Wallet Address", walletAddress)
-        console.log("Public Key", publicKey)
-        console.log("Private Key", privateKey)
+        Logger.info("Mnemonic", mnemonic)
+        Logger.info("Wallet Address", walletAddress)
+        Logger.info("Public Key", publicKey)
+        Logger.info("Private Key", privateKey)
 
         return {
             mnemonic,
@@ -172,7 +170,7 @@ export async function createEthAccount() {
             privateKey
         };
     } catch (error : any) {
-        console.error('Error creating Ethereum account:', error);
+        Logger.error('Error creating Ethereum account:', error);
         throw new Error('Failed to create Ethereum account');
     }
 }
@@ -181,10 +179,10 @@ export async function getServerWalletInformation(): Promise<ServerWalletInformat
     try {
         // Get mnemonic from environment variables
         const mnemonic = process.env.SERVER_MNEMONIC!;
-        console.log("Mnemonic", mnemonic)
+        Logger.info("Mnemonic", mnemonic)
 
         if (!mnemonic) {
-            console.error('SERVER_MNEMONIC environment variable is not set');
+            Logger.error('SERVER_MNEMONIC environment variable is not set');
             return null;
         }
 
@@ -193,13 +191,13 @@ export async function getServerWalletInformation(): Promise<ServerWalletInformat
         const validLengths = [12, 15, 18, 21, 24];
 
         if (!validLengths.includes(words.length)) {
-            console.error(`Invalid mnemonic length: ${words.length} words. Must be 12, 15, 18, 21, or 24 words.`);
+            Logger.error(`Invalid mnemonic length: ${words.length} words. Must be 12, 15, 18, 21, or 24 words.`);
             return null;
         }
 
         // Validate mnemonic using ethers
         if (!ethers.Mnemonic.isValidMnemonic(mnemonic)) {
-            console.error('Invalid mnemonic phrase - contains invalid words or checksum');
+            Logger.error('Invalid mnemonic phrase - contains invalid words or checksum');
             return null;
         }
 
@@ -218,8 +216,8 @@ export async function getServerWalletInformation(): Promise<ServerWalletInformat
             publicKey
         };
     } catch (error: any) {
-        console.error('Error getting server wallet information:', error);
-        console.error('Error details:', error.message);
+        Logger.error('Error getting server wallet information:', error);
+        Logger.error('Error details:', error.message);
         return null;
     }
 }

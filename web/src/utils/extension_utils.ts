@@ -55,8 +55,6 @@ export async function checkAndUseExtension() {
             const isInstalled = await isExtensionInstalled(EXTENSION_ID)
 
             if (isInstalled) {
-                  //  //  console.log('Extension is installed!');
-
                   // Example: Call a specific function in the extension
                   await sendMessageToExtension(EXTENSION_ID, {
                         type: 'CALL_SPECIFIC_FUNCTION',
@@ -68,10 +66,6 @@ export async function checkAndUseExtension() {
                               },
                         },
                   })
-
-                  //  console.log('Function call result:', result)
-            } else {
-                  //  console.log('Extension is not installed.')
             }
       } catch (error) {
             console.error('Error checking extension:', error)
@@ -104,7 +98,6 @@ export function setupExtensionListener() {
 
 // Example function that might be called from outside
 export function performExampleFunction(params: any) {
-      //  //  console.log('Example function called with params:', params);
       return {
             success: true,
             message: 'Function executed successfully',

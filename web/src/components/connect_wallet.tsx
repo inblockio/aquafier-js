@@ -1,17 +1,24 @@
-import { Suspense, useState, lazy } from 'react'
-import { LuCircleCheck, LuCircleX, LuLogOut, LuWallet } from 'react-icons/lu'
-import { ClipLoader } from 'react-spinners'
-import { ensureDomainUrlHasSSL, fetchFiles, formatCryptoAddress, generateAvatar, getCookie, setCookie } from '../utils/functions'
-import { SiweMessage, generateNonce } from 'siwe'
-import { SESSION_COOKIE_NAME } from '../utils/constants'
+import {lazy, Suspense, useState} from 'react'
+import {LuCircleCheck, LuCircleX, LuLogOut, LuWallet} from 'react-icons/lu'
+import {ClipLoader} from 'react-spinners'
+import {
+    ensureDomainUrlHasSSL,
+    fetchFiles,
+    formatCryptoAddress,
+    generateAvatar,
+    getCookie,
+    setCookie
+} from '../utils/functions'
+import {generateNonce, SiweMessage} from 'siwe'
+import {SESSION_COOKIE_NAME} from '../utils/constants'
 import axios from 'axios'
-import { useStore } from 'zustand'
+import {useStore} from 'zustand'
 import appStore from '../store'
-import { BrowserProvider, ethers } from 'ethers'
+import {BrowserProvider, ethers} from 'ethers'
 
-import { Button } from './ui/button'
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from './ui/dialog'
-import { toast } from 'sonner'
+import {Button} from './ui/button'
+import {Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger} from './ui/dialog'
+import {toast} from 'sonner'
 // Lazy load the WalletAddressProfile component
 const WalletAddressProfile = lazy(() => import('@/pages/v2_claims_workflow/WalletAddressProfile'))
 
@@ -54,8 +61,6 @@ export const ConnectWallet: React.FC<{ dataTestId: string }> = ({ dataTestId }) 
       }
 
       const signAndConnect = async () => {
-            //  console.log('Connecting to wallet')
-
             const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
 
             // Function to check if MetaMask is installed
@@ -77,8 +82,6 @@ export const ConnectWallet: React.FC<{ dataTestId: string }> = ({ dataTestId }) 
                         const domain = window.location.host
                         const message = createSiweMessage(signer.address, 'Sign in with Ethereum to the app.')
                         const signature = await signer.signMessage(message)
-                        // //  console.log("--Signature", signature)
-                        // //  console.log("-- Adress", signer.address)
                         // Send session request
                          const url = ensureDomainUrlHasSSL(`${backend_url}/session`)
                         const response = await axios.post(url, {
@@ -179,7 +182,6 @@ export const ConnectWallet: React.FC<{ dataTestId: string }> = ({ dataTestId }) 
                   // formData.append("nonce", nonce);
 
                    const url = ensureDomainUrlHasSSL(`${backend_url}/session`)
-                  //  //  console.log("url is ", url);
                   const response = await axios.delete(url, {
                         params: {
                               nonce,
@@ -195,18 +197,14 @@ export const ConnectWallet: React.FC<{ dataTestId: string }> = ({ dataTestId }) 
                               fileData: [],
                               status: 'idle',
                         })
-                        // disConnectWebsocket()
                   }
             } catch (error: any) {
-                  //  console.log('error', error)
-                  // if (error?.response?.status === 404 || error?.response?.status === 401) {
                   setMetamaskAddress(null)
                   setAvatar(undefined)
                   setSession(null)
                   setFiles({
                         fileData: [],
                   status: 'idle',})
-                  // }
             }
             setLoading(false)
             setIsOpen(false)

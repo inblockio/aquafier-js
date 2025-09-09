@@ -1,13 +1,19 @@
-import { canDeleteRevision, deleteRevisionAndChildren } from '../utils/quick_revision_utils';
-import { prisma } from '../database/db';
-import { DeleteRevision, FetchAquaTreeRequest, SaveRevision, SaveRevisionForUser } from '../models/request_models';
-import { getHost, getPort } from '../utils/api_utils';
-import {  deleteAquaTree, fetchAquatreeFoUser, getSignatureAquaTrees, getUserApiFileInfo, saveARevisionInAquaTree } from '../utils/revisions_utils';
-import { AquaTree, FileObject, OrderRevisionInAquaTree, Revision } from 'aqua-js-sdk';
-import { FastifyInstance } from 'fastify';
-import { sendToUserWebsockerAMessage } from './websocketController';
+import {canDeleteRevision, deleteRevisionAndChildren} from '../utils/quick_revision_utils';
+import {prisma} from '../database/db';
+import {DeleteRevision, FetchAquaTreeRequest, SaveRevisionForUser} from '../models/request_models';
+import {getHost, getPort} from '../utils/api_utils';
+import {
+    deleteAquaTree,
+    getSignatureAquaTrees,
+    getUserApiFileInfo,
+    saveARevisionInAquaTree
+} from '../utils/revisions_utils';
+import {AquaTree, FileObject, OrderRevisionInAquaTree} from 'aqua-js-sdk';
+import {FastifyInstance} from 'fastify';
+import {sendToUserWebsockerAMessage} from './websocketController';
 import WebSocketActions from '../constants/constants';
-import { createAquaTreeFromRevisions } from '../utils/revisions_operations_utils';
+import {createAquaTreeFromRevisions} from '../utils/revisions_operations_utils';
+import Logger from "../utils/Logger";
 
 export default async function revisionsController(fastify: FastifyInstance) {
     // fetch aqua tree from a revision hash
@@ -28,8 +34,6 @@ export default async function revisionsController(fastify: FastifyInstance) {
         }
 
         // traverse from the latest to the genesis of each 
-        //  console.log(`data ${JSON.stringify(latestRevisionHash, null, 4)}`)
-
 
         let displayData: Array<{
             aquaTree: AquaTree,
@@ -53,21 +57,6 @@ export default async function revisionsController(fastify: FastifyInstance) {
             const [anAquaTree, fileObject] = await createAquaTreeFromRevisions(latestRevisionHash, url)
 
             let sortedAquaTree = OrderRevisionInAquaTree(anAquaTree)
-            // console.log("Attestation: ", JSON.stringify(sortedAquaTree, null, 4))
-            // try{
-            //     const revisionHashes = Object.keys(sortedAquaTree.revisions)
-            //     const firstRevision = sortedAquaTree.revisions[revisionHashes[0]]
-            //     console.log("First revision: ", JSON.stringify(firstRevision, null, 4))
-            //     if(firstRevision.revision_type == "form" && firstRevision.forms_identity_claim_id){
-            //         const claimerWalletAddress = firstRevision.forms_claim_wallet_address
-            //         // Websocket message to the claimer
-            //         sendToUserWebsockerAMessage(claimerWalletAddress, WebSocketActions.REFETCH_FILES)
-            //     }
-                
-            // }
-            // catch(e){
-            //     console.log(`Error ${e}`);
-            // }
             displayData.push({
                 aquaTree: sortedAquaTree,
                 fileObject: fileObject
@@ -372,7 +361,7 @@ export default async function revisionsController(fastify: FastifyInstance) {
             }
 
         } catch (error: any) {
-            console.error("Error in delete operation:", error);
+            Logger.error("Error in delete operation:", error);
             return reply.code(500).send({
                 success: false,
                 message: `Error deleting revision: ${error.message}`,
@@ -425,7 +414,7 @@ export default async function revisionsController(fastify: FastifyInstance) {
             });
 
         } catch (error: any) {
-            console.error("Error in delete operation:", error);
+            Logger.error("Error in delete operation:", error);
             return reply.code(500).send({
                 success: false,
                 message: `Error deleting revision: ${error.message}`,

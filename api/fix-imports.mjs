@@ -18,7 +18,7 @@ function fixImports(dir) {
         return match;
       });
       fs.writeFileSync(fullPath, content, 'utf8');
-      console.log(`Fixed imports in ${fullPath}`);
+        Logger.info(`Fixed imports in ${fullPath}`);
     }
   });
 }

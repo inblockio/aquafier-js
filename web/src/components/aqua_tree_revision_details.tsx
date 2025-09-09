@@ -1,35 +1,34 @@
-import { useState, useEffect, useCallback, useMemo } from 'react'
-import { LuCheck, LuExternalLink, LuTrash, LuX } from 'react-icons/lu'
+import React, {useCallback, useEffect, useMemo, useState} from 'react'
+import {LuCheck, LuExternalLink, LuTrash, LuX} from 'react-icons/lu'
 import {
-      displayTime,
-      formatCryptoAddress,
-      fetchLinkedFileName,
-      getFileNameWithDeepLinking,
-      fetchFiles,
-      getAquaTreeFileObject,
-      isDeepLinkRevision,
-      isAquaTree,
-      getGenesisHash,
-      ensureDomainUrlHasSSL,
+    displayTime,
+    ensureDomainUrlHasSSL,
+    fetchFiles,
+    fetchLinkedFileName,
+    formatCryptoAddress,
+    getAquaTreeFileObject,
+    getFileNameWithDeepLinking,
+    getGenesisHash,
+    isAquaTree,
+    isDeepLinkRevision,
 } from '../utils/functions'
-import { AquaTree, FileObject, LogTypeEmojis, Revision } from 'aqua-js-sdk'
-import { ClipLoader } from 'react-spinners'
-import { ERROR_TEXT, WITNESS_NETWORK_MAP, ERROR_UKNOWN } from '../utils/constants'
-import { AquaTreeDetailsData, RevisionDetailsSummaryData } from '../models/AquaTreeDetails'
+import {AquaTree, FileObject, LogTypeEmojis, Revision} from 'aqua-js-sdk'
+import {ClipLoader} from 'react-spinners'
+import {ERROR_TEXT, ERROR_UKNOWN, WITNESS_NETWORK_MAP} from '../utils/constants'
+import {AquaTreeDetailsData, RevisionDetailsSummaryData} from '../models/AquaTreeDetails'
 
-import { ItemDetail } from './item_details'
+import {ItemDetail} from './item_details'
 import appStore from '../store'
-import { useStore } from 'zustand'
+import {useStore} from 'zustand'
 import axios from 'axios'
-import { toast } from 'sonner'
-import { ApiFileInfo } from '../models/FileInfo'
-import React from 'react'
+import {toast} from 'sonner'
+import {ApiFileInfo} from '../models/FileInfo'
 
 // Import /components/ UI components
-import { Button } from '@/components/ui/button'
-import { Alert, AlertTitle } from '@/components/ui/alert'
-import { Collapsible, CollapsibleContent } from '@/components/ui/collapsible'
-import { cn } from '@/lib/utils'
+import {Button} from '@/components/ui/button'
+import {Alert, AlertTitle} from '@/components/ui/alert'
+import {Collapsible, CollapsibleContent} from '@/components/ui/collapsible'
+import {cn} from '@/lib/utils'
 
 // Custom Timeline components using Tailwind
 const TimelineRoot = ({ children, className, size = 'md', variant = 'default' }: { children: React.ReactNode; className?: string; size?: 'sm' | 'md' | 'lg'; variant?: 'default' | 'subtle' }) => {
@@ -159,7 +158,6 @@ const viewLinkedFile = (
                                                       }
 
                                                       if (aquaTree == undefined) {
-                                                            //  console.log(`show  ${linkedFileName}  filw object ${JSON.stringify(fileObject, null, 4)}`)
                                                             toast.info('View not available')
                                                       } else {
                                                             updateSelectedFile({
@@ -203,25 +201,20 @@ const revisionDataHeader = (aquaTree: AquaTree, revisionHash: string, fileObject
             if (isDeepLink) {
                   // before returning deep link we traverse the current aqua tree
                   const aquaTreeFiles = fileObject.filter(file => isAquaTree(file.fileContent))
-                  //  console.log(`👁️‍🗨️ aquaTreeFiles ${aquaTreeFiles.length} --  `)
                   if (aquaTreeFiles.length > 0) {
                         const aquaTreePick = aquaTreeFiles.find(e => {
                               const tree: AquaTree = e.fileContent as AquaTree
                               const allHashes = Object.keys(tree.revisions)
 
-                              //  console.log(`👁️‍🗨️ aquaTreeFiles ${allHashes.toString()} == ${revisionHash} `)
                               return allHashes.includes(revision.link_verification_hashes![0]!)
                         })
 
-                        //  console.log(`👁️‍🗨️ aquaTreePick ${JSON.stringify(aquaTreePick, null, 4)} `)
                         if (aquaTreePick) {
                               const tree: AquaTree = aquaTreePick.fileContent as AquaTree
                               const genesisHash = getGenesisHash(tree)
 
-                              //  console.log(`👁️‍🗨️  genesisHash ${genesisHash}`)
                               if (genesisHash) {
                                     const fileName = tree.file_index[genesisHash]
-                                    //  console.log(`👁️‍🗨️ fileName ${fileName}`)
 
                                     if (fileName) {
                                           return <span className="text-md">Linked to {fileName}</span>
@@ -345,8 +338,6 @@ export const RevisionDisplay = ({ fileInfo, revision, revisionHash, isVerificati
       // Memoize delete handler to prevent recreation on each render
       const handleDelete = useCallback(async () => {
             if (isDeleting) return // Prevent multiple clicks
-
-            //  console.log('Deleting revision: ', revisionHash, index)
             setIsDeleting(true)
 
             try {
