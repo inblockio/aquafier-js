@@ -60,8 +60,14 @@ export default async function shareController(fastify: FastifyInstance) {
 
             let allRecipients = contractData?.recipients?.map(addr => addr.trim().toLowerCase()) || []
 
+            // if the user is not in the recipient list and is not the sender, reject access
             if (!allRecipients.includes(session.address.trim().toLowerCase())) {
-                return reply.code(401).send({ success: false, message: "The aqua tree is not shared with you " + allRecipients.toString() + " == " + session.address });
+                if(allRecipients.includes(SYSTEM_WALLET_ADDRESS)){
+                    // allow access if the system wallet is a recipient
+                    console.log(`System wallet is a recipient, allowing access`);
+                }else{
+                    return reply.code(401).send({ success: false, message: "The aqua tree is not shared with you " + allRecipients.toString() + " == " + session.address });
+                }
             }
 
 

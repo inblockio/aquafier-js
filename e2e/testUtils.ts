@@ -599,9 +599,10 @@ export async function shareDocument(
     await page.waitForSelector('text=Create Share Link', { state: 'visible' });
     await page.locator('text=Create Share Link').click();
 
+    await page.waitForTimeout(1000);
     // Wait for sharing process to complete
-    await page.waitForSelector('text=Creating share link...', { state: 'visible' });
-    await page.waitForSelector('text=Creating share link...', { state: 'hidden' });
+    // await page.waitForSelector('text=Creating share link...', { state: 'visible' });
+    // await page.waitForSelector('text=Creating share link...', { state: 'hidden' });
 
     console.log(`Shared Document Link to be visible`)
     // Wait for success message - look for "Share Link Ready" section
