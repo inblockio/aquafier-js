@@ -83,7 +83,6 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: { selectedTempla
       }, []);
 
       const getFieldDefaultValue = (field: FormField, currentState: string | File | number | undefined
-
       ): string | File | number => {
             if (field.type === 'number') {
                   return currentState ?? 0
@@ -141,7 +140,7 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: { selectedTempla
                         }
                   }
 
-                  for (const recipient of recipients) {
+                  // for (const recipient of recipients) {
                         const unique_identifier = `${Date.now()}_${generateNonce()}`
                         // let genesisHash = getGenesisHash(aquaTree)
 
@@ -156,7 +155,7 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: { selectedTempla
                               latest: latestHash,
                               genesis_hash: genesisHash,
                               hash: unique_identifier,
-                              recipient: recipient,
+                              recipients: recipients,
                               option: 'latest',
                               file_name: name,
                         }
@@ -171,7 +170,7 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: { selectedTempla
                         })
 
                         //  console.log(`Response from share request  ${response.status}`)
-                  }
+                  // }
             } catch (e) {
                   toast.error('Error sharing workflow')
             }

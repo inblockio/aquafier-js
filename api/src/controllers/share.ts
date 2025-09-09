@@ -135,7 +135,7 @@ export default async function shareController(fastify: FastifyInstance) {
             console.error("Error fetching session:", error);
             return reply.code(500).send({ success: false, message: "Internal server error" });
         }
-    });
+    }); 
 
     fastify.post('/share_data', async (request, reply) => {
 
