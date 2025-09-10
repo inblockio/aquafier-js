@@ -6,7 +6,7 @@ import {documentTypes, ERROR_TEXT, ERROR_UKNOWN, imageTypes, musicTypes, videoTy
 import Aquafier, {AquaTree, CredentialsData, FileObject, OrderRevisionInAquaTree, Revision} from 'aqua-js-sdk'
 import jdenticon from 'jdenticon/standalone'
 import {IContractInformation} from '@/types/contract_workflow'
-import {ApiFileInfoState,DNSProof, IIdentityClaimDetails, SummaryDetailsDisplayData} from '@/types/types'
+import {ApiFileInfoState, DNSProof, IIdentityClaimDetails, SummaryDetailsDisplayData} from '@/types/types'
 
 export function formatDate(date: Date) {
       const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
@@ -19,7 +19,6 @@ export function formatDate(date: Date) {
 export const copyToClipboardModern = async (text: string) => {
       try {
             await navigator.clipboard.writeText(text)
-            ('Text copied to clipboard')
             return true
       } catch (err) {
             console.error('Failed to copy text: ', err)
@@ -1279,26 +1278,17 @@ export function getFileNameWithDeepLinking(aquaTree: AquaTree, revisionHash: str
             if (isDeepLink) {
                   // before returning deep link we traverse the current  aqua tree
                   const aquaTreeFiles = fileObject.filter(file => isAquaTree(file.fileContent))
-                  (`👁️‍🗨️ aquaTreeFiles ${aquaTreeFiles.length} --  `)
                   if (aquaTreeFiles.length > 0) {
                         const aquaTreePick = aquaTreeFiles.find(e => {
                               const tree: AquaTree = e.fileContent as AquaTree
                               const allHashes = Object.keys(tree.revisions)
-
-                              (`👁️‍🗨️ aquaTreeFiles ${allHashes.toString()} == ${revisionHash} `)
                               return allHashes.includes(revision.link_verification_hashes![0]!)
                         })
-
-                        (`👁️‍🗨️ aquaTreePick ${JSON.stringify(aquaTreePick, null, 4)} `)
                         if (aquaTreePick) {
                               const tree: AquaTree = aquaTreePick.fileContent as AquaTree
                               const genesisHash = getGenesisHash(tree)
-
-                              (`👁️‍🗨️  genesisHash ${genesisHash}`)
                               if (genesisHash) {
                                     const fileName = tree.file_index[genesisHash]
-                                    (`👁️‍🗨️ fileName ${fileName}`)
-
                                     if (fileName) {
                                           return fileName
                                     }
@@ -2607,7 +2597,6 @@ export async function digTxtRecords(domain: string): Promise<string[]> {
 }
 
 export async function digTxtRecordsGoogle(domain: string): Promise<string[]> {
-    ('Domain: ', domain)
       try {
             const response = await fetch(`https://dns.google/resolve?name=${encodeURIComponent(domain)}&type=TXT`, {
                   headers: {
@@ -2626,7 +2615,6 @@ export async function digTxtRecordsGoogle(domain: string): Promise<string[]> {
             }
 
             const txtRecords: string[] = []
-            ('Data: ', data)
             if (data.Answer) {
                   for (const record of data.Answer) {
                         if (record.type === 16) {
