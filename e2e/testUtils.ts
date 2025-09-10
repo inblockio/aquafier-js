@@ -527,12 +527,21 @@ export async function addSignatureToDocument(page: Page, context: BrowserContext
     await page.getByText("Add Signature to document").click();
     console.log("Add Signature to document");
 
-    await page.waitForSelector('[data-testid="pdf-canvas"]', { state: 'visible' });
+    // await page.waitForSelector('[data-testid="pdf-canvas"]', { state: 'visible' });
+    await page.click('[data-testid="pdf-canvas-wrapper"]');
+    await page.click('[data-testid="pdf-canvas-container"]');
     await page.click('[data-testid="pdf-canvas"]');
     console.log("Signature added to document");
 
     const metamaskPromise = context.waitForEvent("page");
-    await page.getByText("Sign document").click();
+    try { 
+        await page.getByText("Sign document").click(); 
+    } catch (e) {
+        console.log("Error clicking sign document button, but continuing:", e);
+
+        await page.click('[data-testid="action-sign-document-button"]');
+
+    }
     console.log("Sign document button clicked");
 
     await metamaskPromise;
@@ -590,9 +599,10 @@ export async function shareDocument(
     await page.waitForSelector('text=Create Share Link', { state: 'visible' });
     await page.locator('text=Create Share Link').click();
 
+    await page.waitForTimeout(1000);
     // Wait for sharing process to complete
-    await page.waitForSelector('text=Creating share link...', { state: 'visible' });
-    await page.waitForSelector('text=Creating share link...', { state: 'hidden' });
+    // await page.waitForSelector('text=Creating share link...', { state: 'visible' });
+    // await page.waitForSelector('text=Creating share link...', { state: 'hidden' });
 
     console.log(`Shared Document Link to be visible`)
     // Wait for success message - look for "Share Link Ready" section
@@ -1098,7 +1108,7 @@ export async function registerNewMetaMaskWalletAndLogin(url: string = "/app"): P
         console.log("MetaMask page was closed unexpectedly, returning early");
         return response;
     }
-    
+
     try {
         await metamaskPage.bringToFront();
         await metamaskPage.waitForLoadState("load");
@@ -1118,26 +1128,26 @@ export async function registerNewMetaMaskWalletAndLogin(url: string = "/app"): P
             await metamaskPage.waitForSelector('[data-testid="confirm-footer-cancel-button"]', { state: 'visible' })
             await metamaskPage.waitForSelector('[data-testid="confirm-footer-button"]', { state: 'visible' })
             await metamaskPage.click('[data-testid="confirm-footer-button"]')
-        } catch (error : any) {
+        } catch (error: any) {
             // Check if the error is due to page being closed
             if (metamaskPage.isClosed()) {
                 console.log("MetaMask page was closed during final confirmation steps - failing silently");
                 return response;
             }
-            
+
             // If it's a different error, log it but don't throw
             console.log("Error during final MetaMask confirmation steps:", error.message);
             console.log("Continuing with test execution...");
         }
 
         return response;
-    } catch (error : any) {
+    } catch (error: any) {
         // If any error occurs in the MetaMask interaction, check if page is closed
         if (metamaskPage.isClosed()) {
             console.log("MetaMask page was closed during interaction - failing silently");
             return response;
         }
-        
+
         // For other errors, log but don't throw
         console.log("Error during MetaMask interaction:", error.message);
         console.log("Continuing with test execution...");

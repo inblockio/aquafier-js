@@ -171,7 +171,9 @@ export default function NewShadcnLayoutWithSidebar() {
                                           className="h-6 w-6 bg-red-500 text-white hover:bg-red-500 z-10 relative"
                                           onClick={() => {
                                                 setOpenDialog(null)
-                                                setSelectedFileInfo(null)
+                                                if(openDialog?.dialogType  !== "user_signature"){
+                                                      setSelectedFileInfo(null)
+                                                }
                                           }}
                                     >
                                           <X className="h-4 w-4" />
@@ -185,7 +187,7 @@ export default function NewShadcnLayoutWithSidebar() {
                                                       setOpenDialog(null)
                                                 }}
                                           />)}
-
+ 
                                     {openDialog?.dialogType === 'aqua_sign' && (
                                           <CreateFormFromTemplate
                                                 selectedTemplate={formTemplates.find(template => template.name === 'aqua_sign')!}

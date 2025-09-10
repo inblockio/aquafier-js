@@ -278,7 +278,7 @@ export const DownloadAquaChain = ({ file, index, children }: { file: ApiFileInfo
                               } else if (fileObj.fileContent instanceof Uint8Array || fileObj.fileContent instanceof ArrayBuffer) {
                                     // Binary data - determine MIME type based on extension
                                     const mimeType = getMimeType(fileObj.fileName)
-                                    blob = new Blob([fileObj.fileContent], {
+                                    blob = new Blob([fileObj.fileContent as BlobPart], {
                                           type: mimeType,
                                     })
                               } else if (typeof fileObj.fileContent === 'string') {
@@ -302,7 +302,7 @@ export const DownloadAquaChain = ({ file, index, children }: { file: ApiFileInfo
                                           // Try to reconstruct binary data from object
                                           const uint8Array = reconstructBinaryFromObject(fileObj.fileContent)
                                           const mimeType = getMimeType(fileObj.fileName)
-                                          blob = new Blob([uint8Array], { type: mimeType })
+                                          blob = new Blob([uint8Array as BlobPart], { type: mimeType })
                                     } else {
                                           // Regular object, serialize as JSON
                                           blob = new Blob([JSON.stringify(fileObj.fileContent)], {

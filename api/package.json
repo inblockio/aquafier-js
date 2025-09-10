@@ -28,7 +28,7 @@
     "@sentry/node": "^10.5.0",
     "@sentry/profiling-node": "^10.5.0",
     "aqua-js-sdk": "^3.2.1-44",
-    "dotenv": "^16.4.7",
+    "dotenv": "^17.0.0",
     "ethers": "^6.15.0",
     "fastify": "^5.2.1",
     "get-stream": "^9.0.1",

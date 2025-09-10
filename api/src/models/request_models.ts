@@ -66,7 +66,7 @@ export interface ChequeRegisterRequest {
 
 export interface ShareRequest {
   latest: string;
-  recipient: string;
+  recipients: string[];
   option: string;
   hash: string;
   genesis_hash: string;

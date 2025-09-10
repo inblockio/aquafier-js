@@ -2,29 +2,8 @@ import React, {JSX, useEffect, useRef, useState} from 'react'
 import {FormField, FormTemplate} from './types'
 import {useStore} from 'zustand'
 import appStore from '@/store'
-import {
-    dataURLToFile,
-    dummyCredential,
-    estimateFileSize,
-    fetchFiles,
-    fetchSystemFiles,
-    formatDate,
-    formatTxtRecord,
-    generateProofFromSignature,
-    getGenesisHash,
-    getRandomNumber,
-    isValidEthereumAddress,
-    isWorkFlowData
-} from '@/utils/functions'
-import Aquafier, {
-    AquaTree,
-    AquaTreeWrapper,
-    FileObject,
-    getAquaTreeFileName,
-    getAquaTreeFileObject,
-    OrderRevisionInAquaTree,
-    Revision
-} from 'aqua-js-sdk'
+import { isValidEthereumAddress, getRandomNumber, formatDate, estimateFileSize, dummyCredential, fetchSystemFiles, getGenesisHash, fetchFiles, generateProofFromSignature, formatTxtRecord, dataURLToFile, fetchWalletAddressesAndNamesForInputRecommendation } from '@/utils/functions'
+import Aquafier, { AquaTree, FileObject, getAquaTreeFileName, AquaTreeWrapper, getAquaTreeFileObject, Revision } from 'aqua-js-sdk'
 import axios from 'axios'
 import {generateNonce} from 'siwe'
 import {toast} from 'sonner'
@@ -185,7 +164,7 @@ const CreateFormFromTemplate = ({selectedTemplate, callBack}: {
                 }
             }
 
-            for (const recipient of recipients) {
+            //for (const recipient of recipients) {
                 const unique_identifier = `${Date.now()}_${generateNonce()}`
                 // let genesisHash = getGenesisHash(aquaTree)
 
@@ -200,7 +179,7 @@ const CreateFormFromTemplate = ({selectedTemplate, callBack}: {
                     latest: latestHash,
                     genesis_hash: genesisHash,
                     hash: unique_identifier,
-                    recipient: recipient,
+                    recipients: recipients,
                     option: 'latest',
                     file_name: name,
                 }
@@ -1005,52 +984,23 @@ const CreateFormFromTemplate = ({selectedTemplate, callBack}: {
     }
 
 
-    const fetchRecommendedWalletAddresses = (): Map<string, string> => {
 
-        const recommended = new Map<string, string>()
 
-        const someData = systemFileInfo.map(e => {
-            try {
-                return getAquaTreeFileName(e.aquaTree!)
-            } catch (e) {
-                return ''
-            }
-        })
-
-        for (const file of files.fileData) {
-
-            const workFlow = isWorkFlowData(file.aquaTree!, someData)
-
-            if (workFlow && workFlow.isWorkFlow) {
-                if (workFlow.workFlow === 'identity_claim') {
-                    const orederdRevisionAquaTree = OrderRevisionInAquaTree(file.aquaTree!)
-                    let allHashes = Object.keys(orederdRevisionAquaTree.revisions)
-
-                    let genRevsion = orederdRevisionAquaTree.revisions[allHashes[0]]
-
-                    if (genRevsion && genRevsion[`forms_name`] && genRevsion[`forms_wallet_address`]) {
-                        recommended.set(genRevsion[`forms_name`], genRevsion[`forms_wallet_address`])
-                    }
-                }
-            }
-        }
-        return recommended;
-    }
-    return (
-        <>
-            {/* <div className="min-h-[100%] bg-gradient-to-br from-blue-50 via-white to-indigo-50 px-4"> */}
-            <div className="min-h-[100%] px-2 sm:px-4">
-                <div className="max-w-full sm:max-w-4xl mx-auto py-4 sm:py-6">
-                    {/* Header */}
-                    <div className="mb-8">
-                        <div className="flex items-center gap-2 sm:gap-3 mb-2">
-                            <div className="h-10 w-10 rounded-lg bg-blue-100 flex items-center justify-center">
-                                <FileText className="h-5 w-5 text-blue-600"/>
-                            </div>
-                            <div>
-                                <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900">Create {selectedTemplate?.title} Workflow</h1>
-                                {selectedTemplate?.subtitle ?
-                                    <p className="text-gray-600 mt-1">{selectedTemplate.subtitle}</p>
+      return (
+            <>
+                  {/* <div className="min-h-[100%] bg-gradient-to-br from-blue-50 via-white to-indigo-50 px-4"> */}
+                  <div className="min-h-[100%] px-2 sm:px-4">
+                        <div className="max-w-full sm:max-w-4xl mx-auto py-4 sm:py-6">
+                              {/* Header */}
+                              <div className="mb-8">
+                                    <div className="flex items-center gap-2 sm:gap-3 mb-2">
+                                          <div className="h-10 w-10 rounded-lg bg-blue-100 flex items-center justify-center">
+                                                <FileText className="h-5 w-5 text-blue-600" />
+                                          </div>
+                                          <div>
+                                                <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900">Create {selectedTemplate?.title} Workflow</h1>
+                                                {selectedTemplate?.subtitle ?
+                                                      <p className="text-gray-600 mt-1">{selectedTemplate.subtitle}</p>
 
                                     : <></>
 
@@ -1138,7 +1088,7 @@ const CreateFormFromTemplate = ({selectedTemplate, callBack}: {
                                                                                                       /> */}
                                                                     <WalletAutosuggest
 
-                                                                        walletAddresses={fetchRecommendedWalletAddresses()}
+                                                                        walletAddresses={fetchWalletAddressesAndNamesForInputRecommendation(systemFileInfo, files)}
                                                                         field={field}
                                                                         index={index}
                                                                         address={address}
@@ -1411,7 +1361,7 @@ const CreateFormFromTemplate = ({selectedTemplate, callBack}: {
                                                                 :
 
                                                                 <WalletAutosuggest
-                                                                    walletAddresses={fetchRecommendedWalletAddresses()}
+                                                                    walletAddresses={fetchWalletAddressesAndNamesForInputRecommendation(systemFileInfo, files)}
                                                                     field={field}
                                                                     index={1}
                                                                     address={formData[field.name] ? formData[field.name] as string : ""}

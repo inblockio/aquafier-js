@@ -2,7 +2,7 @@ import {IDBPDatabase, openDB} from 'idb'
 import {createStore} from 'zustand'
 import {createJSONStorage, persist} from 'zustand/middleware'
 import {ApiFileInfo} from './models/FileInfo'
-import {ApiFileData, OpenDialog, Session, WebConfig} from './types/types'
+import {ApiFileData, ApiFileInfoState, OpenDialog, Session, WebConfig} from './types/types'
 import {FormTemplate} from './components/aqua_forms/types'
 import {ensureDomainUrlHasSSL} from './utils/functions'
 
@@ -18,11 +18,7 @@ type AppStoreState = {
             witness_contract_address: string | null
       }
       session: Session | null
-      files: {
-            fileData: ApiFileInfo[],
-            status: 'loading' | 'loaded' | 'error' | 'idle'
-            error?: string
-      }
+      files: ApiFileInfoState,
       webConfig: WebConfig,
       apiFileData: ApiFileData[]
       systemFileInfo: ApiFileInfo[]

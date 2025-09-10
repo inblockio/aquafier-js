@@ -283,7 +283,7 @@ const FilePreview: React.FC<IFilePreview> = ({ fileInfo }) => {
                               const contentType = getContentTypeFromFileName(fileInfo.fileName || '')
 
                               // Create blob with detected content type
-                              const blob = new Blob([fileInfo.fileContent as Uint8Array], {
+                              const blob = new Blob([fileInfo.fileContent as BlobPart], {
                                     type: contentType,
                               })
 

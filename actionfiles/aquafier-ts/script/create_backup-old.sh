@@ -25,11 +25,9 @@ fi
 #backup the sqls
 PGPASSWORD="${DB_PASSWORD}" pg_dump -U "${DB_USER}" -h postgres -p 5432 "${DB_NAME}" >> backup/backup.sql
 
-#create dump of the s3 storage with fallback to local filesystem
-S3_BACKUP_SUCCESS=false
-
+#create dump of the s3 storage
 if [ -n "${S3_USER}" ] && [ -n "${S3_PASSWORD}" ] && [ -n "${S3_BUCKET}" ] && [ -n "${S3_URL}" ]; then
-  echo "Attempting S3 backup..."
+  echo "start s3 backup!"
     USER=${S3_USER}
     PASSWORD=${S3_PASSWORD}
     BUCKET=${S3_BUCKET}
@@ -53,39 +51,25 @@ if [ -n "${S3_USER}" ] && [ -n "${S3_PASSWORD}" ] && [ -n "${S3_BUCKET}" ] && [ 
 
     mkdir workdir
 
-    # Try S3 backup with error handling
-    if /mc alias set backupSource "${URL}":"${PORT}" "${USER}" "${PASSWORD}" "${USE_SSL}" && \
-       /mc mirror "backupSource/${BUCKET}" workdir; then
-        echo "S3 backup successful!"
-        
-        #i need the files not the dir
-        mkdir backup/s3
-        mv workdir/* backup/s3 2>/dev/null || echo "No files found in S3 bucket"
-        
-        S3_BACKUP_SUCCESS=true
-    else
-        echo "S3 backup failed! Will fall back to local filesystem backup."
-    fi
+
+    /mc alias set backupSource "${URL}":"${PORT}" "${USER}" "${PASSWORD}" "${USE_SSL}"
+
+    /mc mirror "backupSource/${BUCKET}" workdir
+
+    #i need the files not the dir
+    mkdir backup/s3
+    mv workdir/* backup/s3
 
     rm -rf workdir
 else
-  echo "S3 credentials not provided, skipping S3 backup."
+  echo "skipping s3 backup because of missing creds!"
 fi
 
-# Always try local filesystem backup if S3 failed or wasn't attempted
-if [ "${S3_BACKUP_SUCCESS}" = "false" ] && [ -d "${FILE_STORAGE_PATH}" ]; then
-    echo "Using local filesystem backup!"
+
+if [ -d "${FILE_STORAGE_PATH}" ]; then
+    echo "start file backup!"+
     mkdir backup/filesystem
-    if [ "$(ls -A "${FILE_STORAGE_PATH}" 2>/dev/null)" ]; then
-        cp "${FILE_STORAGE_PATH}"/* backup/filesystem/
-        echo "Local filesystem backup completed."
-    else
-        echo "No files found in local filesystem storage path."
-    fi
-elif [ "${S3_BACKUP_SUCCESS}" = "true" ]; then
-    echo "S3 backup was successful, skipping local filesystem backup."
-elif [ ! -d "${FILE_STORAGE_PATH}" ]; then
-    echo "Local filesystem storage path does not exist: ${FILE_STORAGE_PATH}"
+    cp "${FILE_STORAGE_PATH}"/* backup/filesystem
 fi
 
 if [ ! -d "/backup" ]; then
@@ -103,3 +87,4 @@ if [ -n "${BACKUP_COUNT}" ]; then
     find . -name "backup_*.tar.gz" -type f -printf '%T@ %p\n' | sort -rn | tail -n +$((BACKUP_COUNT + 1)) | cut -d' ' -f2- | xargs -r rm -f
   fi
 fi
+
