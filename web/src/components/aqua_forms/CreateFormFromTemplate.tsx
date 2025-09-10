@@ -2,8 +2,28 @@ import React, {JSX, useEffect, useRef, useState} from 'react'
 import {FormField, FormTemplate} from './types'
 import {useStore} from 'zustand'
 import appStore from '@/store'
-import { isValidEthereumAddress, getRandomNumber, formatDate, estimateFileSize, dummyCredential, fetchSystemFiles, getGenesisHash, fetchFiles, generateProofFromSignature, formatTxtRecord, dataURLToFile, fetchWalletAddressesAndNamesForInputRecommendation } from '@/utils/functions'
-import Aquafier, { AquaTree, FileObject, getAquaTreeFileName, AquaTreeWrapper, getAquaTreeFileObject, Revision } from 'aqua-js-sdk'
+import {
+    dataURLToFile,
+    dummyCredential,
+    estimateFileSize,
+    fetchFiles,
+    fetchSystemFiles,
+    fetchWalletAddressesAndNamesForInputRecommendation,
+    formatDate,
+    formatTxtRecord,
+    generateProofFromSignature,
+    getGenesisHash,
+    getRandomNumber,
+    isValidEthereumAddress
+} from '@/utils/functions'
+import Aquafier, {
+    AquaTree,
+    AquaTreeWrapper,
+    FileObject,
+    getAquaTreeFileName,
+    getAquaTreeFileObject,
+    Revision
+} from 'aqua-js-sdk'
 import axios from 'axios'
 import {generateNonce} from 'siwe'
 import {toast} from 'sonner'
@@ -164,35 +184,35 @@ const CreateFormFromTemplate = ({selectedTemplate, callBack}: {
                 }
             }
 
-            //for (const recipient of recipients) {
-                const unique_identifier = `${Date.now()}_${generateNonce()}`
-                // let genesisHash = getGenesisHash(aquaTree)
+            // for (const recipient of recipients) {
+            const unique_identifier = `${Date.now()}_${generateNonce()}`
+            // let genesisHash = getGenesisHash(aquaTree)
 
-                const allHashes = Object.keys(aquaTree.revisions)
-                const genesisHash = getGenesisHash(aquaTree) ?? '' //allHashes[0];
-                const latestHash = allHashes[allHashes.length - 1]
+            const allHashes = Object.keys(aquaTree.revisions)
+            const genesisHash = getGenesisHash(aquaTree) ?? '' //allHashes[0];
+            const latestHash = allHashes[allHashes.length - 1]
 
-                const name = aquaTree.file_index[genesisHash] ?? 'workflow file'
-                const url = `${backend_url}/share_data`
-                const method = 'POST'
-                const data = {
-                    latest: latestHash,
-                    genesis_hash: genesisHash,
-                    hash: unique_identifier,
-                    recipients: recipients,
-                    option: 'latest',
-                    file_name: name,
-                }
-
-                await axios({
-                    method,
-                    url,
-                    data,
-                    headers: {
-                        nonce: session?.nonce,
-                    },
-                })
+            const name = aquaTree.file_index[genesisHash] ?? 'workflow file'
+            const url = `${backend_url}/share_data`
+            const method = 'POST'
+            const data = {
+                latest: latestHash,
+                genesis_hash: genesisHash,
+                hash: unique_identifier,
+                recipients: recipients,
+                option: 'latest',
+                file_name: name,
             }
+
+            await axios({
+                method,
+                url,
+                data,
+                headers: {
+                    nonce: session?.nonce,
+                },
+            })
+
         } catch (e) {
             toast.error('Error sharing workflow')
         }
@@ -398,6 +418,7 @@ const CreateFormFromTemplate = ({selectedTemplate, callBack}: {
 
     // Field validation function
     const validateFields = (completeFormData: Record<string, string | File | number>, selectedTemplate: FormTemplate) => {
+
         validateRequiredFields(completeFormData, selectedTemplate)
 
         for (const fieldItem of selectedTemplate.fields) {
@@ -575,7 +596,9 @@ const CreateFormFromTemplate = ({selectedTemplate, callBack}: {
         Object.entries(completeFormData).forEach(([key, value]) => {
             if (!(value instanceof File)) {
                 if (typeof value === 'string' || typeof value === 'number') {
-                    if (!key.endsWith(`_verification`)) {
+                    if (key.endsWith(`_verification`)) {
+                    } else {
+
                         filteredData[key] = value
                     }
                 } else {
@@ -586,7 +609,6 @@ const CreateFormFromTemplate = ({selectedTemplate, callBack}: {
             }
         })
 
-        ('completeFormData before validation:', selectedTemplate.name)
         // for domain_claim show pop up
         if (selectedTemplate.name === 'domain_claim') {
             // we sign the
@@ -612,7 +634,6 @@ const CreateFormFromTemplate = ({selectedTemplate, callBack}: {
     const createGenesisAquaTree = async (completeFormData: Record<string, string | File | number>, fileName: string, aquafier: Aquafier) => {
         const estimateSize = estimateFileSize(JSON.stringify(completeFormData))
         const jsonString = JSON.stringify(completeFormData, null, 4)
-
         const fileObject: FileObject = {
             fileContent: jsonString,
             fileName: fileName,
@@ -665,7 +686,6 @@ const CreateFormFromTemplate = ({selectedTemplate, callBack}: {
             return aquaTreeData
         }
 
-
         const fileProcessingPromises = containsFileData.map(async (element: FormField) => {
             const file: File = completeFormData[element.name] as File
 
@@ -680,7 +700,6 @@ const CreateFormFromTemplate = ({selectedTemplate, callBack}: {
             }
 
             try {
-                (`creating file object ...`)
                 const arrayBuffer = await file.arrayBuffer()
                 const uint8Array = new Uint8Array(arrayBuffer)
 
@@ -700,8 +719,6 @@ const CreateFormFromTemplate = ({selectedTemplate, callBack}: {
 
         const fileObjects = await Promise.all(fileProcessingPromises)
         const validFileObjects = fileObjects.filter(obj => obj !== null) as FileObject[]
-
-        (`Processed ${validFileObjects.length} files successfully`)
 
         let currentAquaTreeData = aquaTreeData
 
@@ -854,7 +871,6 @@ const CreateFormFromTemplate = ({selectedTemplate, callBack}: {
 
             }
 
-
             // Step 3: Get system files
             const allSystemFiles = await getSystemFiles(systemFileInfo, backend_url, session?.address || '')
             setSystemFileInfo(allSystemFiles)
@@ -870,12 +886,8 @@ const CreateFormFromTemplate = ({selectedTemplate, callBack}: {
             if (selectedTemplate?.name === 'identity_attestation') {
                 completeFormData = handleIdentityAttestation(completeFormData, selectedFileInfo)
             }
-
             // Step 7: Prepare final form data
             const finalFormDataRes = await prepareFinalFormData(completeFormData, selectedTemplate)
-
-            // ('Final form data:', JSON.stringify(finalFormData, null, 4));
-            // throw new Error('Final form data preparation failed');
 
             if (!finalFormDataRes) {
                 toast.info('Final form data preparation failed.')
@@ -892,7 +904,6 @@ const CreateFormFromTemplate = ({selectedTemplate, callBack}: {
             // check if the types contains scratchpad
             // let newCompleteData = completeFormData
             for (const fieldItem of selectedTemplate.fields) {
-                // const valueInput = completeFormData[fieldItem.name]
                 if (fieldItem.type === 'scratchpad') {
                     if (signatureRef.current) {
                         const dataUrl = signatureRef.current.toDataURL('image/png')
@@ -901,14 +912,11 @@ const CreateFormFromTemplate = ({selectedTemplate, callBack}: {
                         const signatureFileName = `user_signature_${lastFiveCharactersOfWalletAddres}_${epochInSeconds}.png`
                         const signatureFile = dataURLToFile(dataUrl, signatureFileName)
                         completeFormData[`scratchpad`] = signatureFile
-
-
                     }
                     break;
                 }
-
-
             }
+
             // Step 10: Process file attachments
             aquaTreeData = await processFileAttachments(
                 selectedTemplate,
@@ -917,10 +925,6 @@ const CreateFormFromTemplate = ({selectedTemplate, callBack}: {
                 fileObject,
                 aquafier
             )
-
-
-            // (`aquaTreeData after file attachement process ${JSON.stringify(aquaTreeData, null, 4)}`)
-            // throw Error(`fix mee...`)
 
             // Step 11: Sign aqua tree
             const signedAquaTree = await signAquaTree(aquaTreeData, fileObject, aquafier)
@@ -984,23 +988,21 @@ const CreateFormFromTemplate = ({selectedTemplate, callBack}: {
     }
 
 
-
-
-      return (
-            <>
-                  {/* <div className="min-h-[100%] bg-gradient-to-br from-blue-50 via-white to-indigo-50 px-4"> */}
-                  <div className="min-h-[100%] px-2 sm:px-4">
-                        <div className="max-w-full sm:max-w-4xl mx-auto py-4 sm:py-6">
-                              {/* Header */}
-                              <div className="mb-8">
-                                    <div className="flex items-center gap-2 sm:gap-3 mb-2">
-                                          <div className="h-10 w-10 rounded-lg bg-blue-100 flex items-center justify-center">
-                                                <FileText className="h-5 w-5 text-blue-600" />
-                                          </div>
-                                          <div>
-                                                <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900">Create {selectedTemplate?.title} Workflow</h1>
-                                                {selectedTemplate?.subtitle ?
-                                                      <p className="text-gray-600 mt-1">{selectedTemplate.subtitle}</p>
+    return (
+        <>
+            {/* <div className="min-h-[100%] bg-gradient-to-br from-blue-50 via-white to-indigo-50 px-4"> */}
+            <div className="min-h-[100%] px-2 sm:px-4">
+                <div className="max-w-full sm:max-w-4xl mx-auto py-4 sm:py-6">
+                    {/* Header */}
+                    <div className="mb-8">
+                        <div className="flex items-center gap-2 sm:gap-3 mb-2">
+                            <div className="h-10 w-10 rounded-lg bg-blue-100 flex items-center justify-center">
+                                <FileText className="h-5 w-5 text-blue-600"/>
+                            </div>
+                            <div>
+                                <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900">Create {selectedTemplate?.title} Workflow</h1>
+                                {selectedTemplate?.subtitle ?
+                                    <p className="text-gray-600 mt-1">{selectedTemplate.subtitle}</p>
 
                                     : <></>
 
@@ -1151,8 +1153,6 @@ const CreateFormFromTemplate = ({selectedTemplate, callBack}: {
                                                             onChange={e => {
                                                                 if (field.is_editable === false) {
                                                                     // Show toast notification (would need toast implementation)
-
-                                                                    (`${field.label} cannot be changed`)
                                                                     toast.error(`${field.label} cannot be changed`)
                                                                     return
                                                                 }
@@ -1197,9 +1197,7 @@ const CreateFormFromTemplate = ({selectedTemplate, callBack}: {
                                                                                     toast.error(`Twilio is not enables, set the .env and restart the docker container`)
                                                                                     return
                                                                                 }
-
                                                                                 console.log(`test 1.4`)
-
 
                                                                                 setVerifyingFormField(`field-${field.name}`)
 
@@ -1220,8 +1218,6 @@ const CreateFormFromTemplate = ({selectedTemplate, callBack}: {
                                                                                     }
                                                                                 }
                                                                                 try {
-                                                                                    // const allRevisionHashes = Object.keys(apiFileInfo.aquaTree!.revisions!)
-                                                                                    // const lastRevisionHash = allRevisionHashes[allRevisionHashes.length - 1]
                                                                                     const url = `${backend_url}/send_code`
                                                                                     const response = await axios.post(
                                                                                         url,
@@ -1238,16 +1234,9 @@ const CreateFormFromTemplate = ({selectedTemplate, callBack}: {
 
                                                                                     if (response.status === 200) {
                                                                                         toast.success(`verification code sent sucessfully`)
-                                                                                        // Close the dialog explicitly
-                                                                                        // setOpen(false)
-                                                                                        // setIsloading(false)
-                                                                                        // toast('File deleted successfully')
-                                                                                        // await refetchAllUserFiles()
                                                                                     }
                                                                                 } catch (e: any) {
-                                                                                    // toast.error('verification code not sent')
                                                                                     toast.error(`verification code not sent ${e?.response?.data?.message ?? ""}`)
-                                                                                    // setIsloading(false) // Add this to ensure loading state is cleared on error
                                                                                 } finally {
                                                                                     setVerifyingFormField(``)
 
@@ -1419,15 +1408,12 @@ const CreateFormFromTemplate = ({selectedTemplate, callBack}: {
                                                             onChange={e => {
                                                                 if (field.is_editable === false) {
                                                                     // Show toast notification (would need toast implementation)
-
-                                                                    (`${field.label} cannot be changed`)
                                                                     toast.error(`${field.label} cannot be changed`)
                                                                     return
                                                                 }
 
                                                                 if (selectedTemplate?.name === 'aqua_sign' && field.name.toLowerCase() === 'sender') {
                                                                     // Show toast notification (would need toast implementation)
-                                                                    ('Aqua Sign sender cannot be changed')
                                                                     return
                                                                 }
 
@@ -1565,7 +1551,6 @@ const CreateFormFromTemplate = ({selectedTemplate, callBack}: {
             <Dialog
                 open={isDialogOpen}
                 onOpenChange={() => {
-                    // setOpenCreateClaimAttestationPopUp(openState)
                 }}
             >
                 <DialogContent
