@@ -43,7 +43,9 @@ function startApm(config: APMConfig) {
     if (config.enabled && config.serviceName && config.serverUrl) {
         initApm({
             serviceName: config.serviceName,
-            serverUrl: config.serverUrl
+            serverUrl: config.serverUrl,
+            distributedTracing: true,
+            distributedTracingOrigins: [/^http?:\/\/.*/, /^https?:\/\/.*/]
         })
     }
 }
