@@ -6,7 +6,7 @@ import { documentTypes, ERROR_TEXT, ERROR_UKNOWN, imageTypes, musicTypes, videoT
 import Aquafier, { AquaTree, CredentialsData, FileObject, OrderRevisionInAquaTree, Revision } from 'aqua-js-sdk'
 import jdenticon from 'jdenticon/standalone'
 import { IContractInformation } from '@/types/contract_workflow'
-import { DNSProof, IIdentityClaimDetails, SummaryDetailsDisplayData } from '@/types/types'
+import { ApiFileInfoState, DNSProof, IIdentityClaimDetails, SummaryDetailsDisplayData } from '@/types/types'
 
 export function formatDate(date: Date) {
       const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
@@ -2697,4 +2697,54 @@ export const fetchImage = async (fileUrl: string, nonce: string) => {
             console.error('Error fetching file:', error)
             return null
       }
+}
+
+
+
+export const fetchWalletAddressesAndNamesForInputRecommendation = (systemFileInfo: ApiFileInfo[], files: ApiFileInfoState,): Map<string, string> => {
+
+      const recommended = new Map<string, string>()
+
+      const someData = systemFileInfo.map(e => {
+            try {
+                  return getAquaTreeFileName(e.aquaTree!)
+            } catch (e) {
+                  //  console.log('Error processing system file') // More descriptive
+                  return ''
+            }
+      })
+
+      for (const file of files.fileData) {
+
+            const workFlow = isWorkFlowData(file.aquaTree!, someData)
+
+            if (workFlow && workFlow.isWorkFlow) {
+                  //  console.log('Workflow found: ', workFlow.workFlow)
+                  if (workFlow.workFlow === 'identity_claim') {
+                        //  console.log('Identity claim found:')
+                        const orederdRevisionAquaTree = OrderRevisionInAquaTree(file.aquaTree!)
+                        let allHashes = Object.keys(orederdRevisionAquaTree.revisions)
+
+                        // //  console.log('orederdRevisionAquaTree: ', JSON.stringify (orederdRevisionAquaTree.revisions ,null, 2))
+                        // //  console.log('hashs: ', JSON.stringify (orederdRevisionAquaTree.revisions ,null, 2))
+                        let genRevsion = orederdRevisionAquaTree.revisions[allHashes[0]]
+
+                        // //  console.log('genRevsion: ', JSON.stringify (genRevsion,null, 2))
+                        // //  console.log('name : ', genRevsion[`forms_name`])
+                        // //  console.log('forms_wallet_address  : ', genRevsion[`forms_wallet_address`])
+                        if (genRevsion && genRevsion[`forms_name`] && genRevsion[`forms_wallet_address`]) {
+                              recommended.set(genRevsion[`forms_name`], genRevsion[`forms_wallet_address`])
+                        }
+                  }
+
+
+            } else {
+                  //  console.log('Not a workflow data: ', file.aquaTree)
+            }
+
+      }
+
+      //  console.log('Recommended wallet addresses: ', JSON.stringify(recommended, null, 2))
+
+      return recommended;
 }

@@ -188,7 +188,7 @@ export default function NewShadcnLayoutWithSidebar() {
                                                       setOpenDialog(null)
                                                 }}
                                           />)}
-
+ 
                                     {openDialog?.dialogType === 'aqua_sign' && (
                                           <CreateFormFromTemplate
                                                 selectedTemplate={formTemplates.find(template => template.name === 'aqua_sign')!}

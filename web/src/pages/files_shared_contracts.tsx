@@ -64,7 +64,7 @@ export const SharedContract = ({ contract, index, contractDeleted }: { contract:
       }
 
       return (
-            <Card key={contract.hash} className="hover:shadow-md transition-shadow cursor-pointer border border-gray-200 " style={{marginTop: '10px', marginBottom: '10px'}}>
+            <Card key={contract.hash} className="hover:shadow-md transition-shadow cursor-pointer border border-gray-200 " style={{ marginTop: '10px', marginBottom: '10px' }}>
                   <CardContent className="p-3 sm:p-6">
                         <div className="flex items-start justify-between">
                               <div className="flex-1 space-y-4">
@@ -97,60 +97,83 @@ export const SharedContract = ({ contract, index, contractDeleted }: { contract:
                                     </div>
 
                                     {/* Participants */}
-                                    <div className="flex items-center gap-2 sm:gap-6 flex-wrap">
-                                          <TooltipProvider>
-                                                <Tooltip>
-                                                      <TooltipTrigger asChild>
-                                                            <div className="flex items-center gap-2">
-                                                                  <Avatar className="w-6 h-6">
-                                                                        <AvatarFallback className="text-xs bg-blue-100 text-blue-600">
-                                                                              <Wallet className="w-4 h-4" />
-                                                                        </AvatarFallback>
-                                                                  </Avatar>
-                                                                  <div>
-                                                                        <p className="text-xs sm:text-sm font-medium text-gray-900 font-mono max-w-[120px] sm:max-w-none truncate">
-                                                                              {/* {formatCryptoAddress(contract.sender, 10, 10)} */}
-                                                                              <WalletAddresClaim walletAddress={contract.sender!} isShortened={true} />
-                                                                        </p>
-                                                                        <p className="text-xs text-gray-500">Sender</p>
+                                    <div className="">
+                                          {/* Create me a grid here */}
+                                          <div className="grid grid-cols-2 gap-4">
+                                                {/* Create me the two cols */}
+                                                <div>
+                                                      <TooltipProvider>
+                                                            <Tooltip>
+                                                                  <TooltipTrigger asChild>
+                                                                        <div className="flex items-center gap-2">
+                                                                              <Avatar className="w-6 h-6">
+                                                                                    <AvatarFallback className="text-xs bg-blue-100 text-blue-600">
+                                                                                          <Wallet className="w-4 h-4" />
+                                                                                    </AvatarFallback>
+                                                                              </Avatar>
+                                                                              <div>
+                                                                                    <p className="text-xs sm:text-sm font-medium text-gray-900 font-mono max-w-[120px] sm:max-w-none truncate">
+                                                                                          {/* {formatCryptoAddress(contract.sender, 10, 10)} */}
+                                                                                          <WalletAddresClaim walletAddress={contract.sender!} isShortened={true} />
+                                                                                    </p>
+                                                                                    <p className="text-xs text-gray-500">Sender</p>
+                                                                              </div>
+                                                                        </div>
+                                                                  </TooltipTrigger>
+                                                                  <TooltipContent>
+                                                                        <p className="font-mono text-xs">{contract.sender}</p>
+                                                                  </TooltipContent>
+                                                            </Tooltip>
+                                                      </TooltipProvider>
+                                                </div>
+                                                <div>
+                                                      <h3 className="text-md text-gray-900  break-words">Receivers</h3>
+                                                      <div className="flex flex-col gap-2">
+                                                            {/* {contract.recipients.map((recipient, _idx) => (
+                                                                  <TooltipProvider>
+                                                                        <Tooltip>
+                                                                              <TooltipTrigger asChild>
+                                                                                    <div className="flex items-center gap-2">
+                                                                                          <>
+                                                                                                <Avatar className="w-6 h-6">
+                                                                                                      <AvatarFallback className="text-xs bg-green-100 text-green-600">
+                                                                                                            <Wallet className="w-4 h-4" />
+                                                                                                      </AvatarFallback>
+                                                                                                </Avatar>
+                                                                                                <div>
+                                                                                                      <p className="text-xs break-words sm:text-sm font-medium text-gray-900 font-mono max-w-[120px] sm:max-w-none truncate">
+                                                                                                            <WalletAddresClaim walletAddress={recipient} isShortened={false} />
+                                                                                                      </p>
+                                                                                                </div>
+                                                                                          </>
+                                                                                    </div>
+                                                                              </TooltipTrigger>
+                                                                              <TooltipContent>
+                                                                                    <p className="font-mono text-xs">{recipient}</p>
+                                                                              </TooltipContent>
+                                                                        </Tooltip>
+                                                                  </TooltipProvider>
+                                                            ))} */}
+                                                            {contract.recipients.map((recipient, _idx) => (
+                                                                  <div key={`${recipient}-${_idx}`} className="flex items-center gap-2">
+                                                                        <>
+                                                                              <Avatar className="w-6 h-6">
+                                                                                    <AvatarFallback className="text-xs bg-green-100 text-green-600">
+                                                                                          <Wallet className="w-4 h-4" />
+                                                                                    </AvatarFallback>
+                                                                              </Avatar>
+                                                                              <div>
+                                                                                    <p className="text-xs break-words sm:text-sm font-medium text-gray-900 font-mono max-w-[120px] sm:max-w-none truncate">
+                                                                                          {/* {formatCryptoAddress(contract.receiver)} */}
+                                                                                          <WalletAddresClaim walletAddress={recipient} isShortened={false} />
+                                                                                    </p>
+                                                                              </div>
+                                                                        </>
                                                                   </div>
-                                                            </div>
-                                                      </TooltipTrigger>
-                                                      <TooltipContent>
-                                                            <p className="font-mono text-xs">{contract.sender}</p>
-                                                      </TooltipContent>
-                                                </Tooltip>
-                                          </TooltipProvider>
-
-                                          <div className="hidden xs:flex items-center text-gray-400">
-                                                <div className="w-8 border-t border-dashed border-gray-300"></div>
-                                                <div className="w-2 h-2 rounded-full bg-gray-300 mx-1"></div>
-                                                <div className="w-8 border-t border-dashed border-gray-300"></div>
+                                                            ))}
+                                                      </div>
+                                                </div>
                                           </div>
-
-                                          <TooltipProvider>
-                                                <Tooltip>
-                                                      <TooltipTrigger asChild>
-                                                            <div className="flex items-center gap-2">
-                                                                  <Avatar className="w-6 h-6">
-                                                                        <AvatarFallback className="text-xs bg-green-100 text-green-600">
-                                                                              <Wallet className="w-4 h-4" />
-                                                                        </AvatarFallback>
-                                                                  </Avatar>
-                                                                  <div>
-                                                                        <p className="text-xs sm:text-sm font-medium text-gray-900 font-mono max-w-[120px] sm:max-w-none truncate">
-                                                                              {/* {formatCryptoAddress(contract.receiver)} */}
-                                                                              <WalletAddresClaim walletAddress={contract.receiver!} isShortened={true} />
-                                                                        </p>
-                                                                        <p className="text-xs text-gray-500 break-words">Receiver</p>
-                                                                  </div>
-                                                            </div>
-                                                      </TooltipTrigger>
-                                                      <TooltipContent>
-                                                            <p className="font-mono text-xs">{contract.receiver}</p>
-                                                      </TooltipContent>
-                                                </Tooltip>
-                                          </TooltipProvider>
                                     </div>
 
                                     {/* Status and Details */}
@@ -208,7 +231,7 @@ export const SharedContract = ({ contract, index, contractDeleted }: { contract:
             </Card>
       )
 }
- 
+
 export function SharedContracts() {
       const [searchQuery, _setSearchQuery] = useState('')
       const [shareContracts, setShareContracts] = useState<Contract[]>([])
@@ -275,22 +298,22 @@ export function SharedContracts() {
                                                       <TabsTrigger value="password">Outgoing</TabsTrigger>
                                                 </TabsList>
                                                 <TabsContent value="account">
-                                                      {shareContracts.filter(contract => contract.receiver?.toLocaleLowerCase() == session?.address?.toLocaleLowerCase()).map((contract, index) => (
+                                                      {shareContracts.filter(contract => contract.recipients?.map((e) => e.toLocaleLowerCase()).includes(session?.address?.toLocaleLowerCase()!!)).map((contract, index) => (
                                                             <SharedContract
                                                                   key={`${contract.hash}`}
                                                                   contract={contract}
                                                                   index={index}
-            /**
-             * Removes a contract from the share contracts list by hash.
-             * @param {string} hash - The hash of the contract to remove.
-             */
+                                                                  /**
+                                                                   * Removes a contract from the share contracts list by hash.
+                                                                   * @param {string} hash - The hash of the contract to remove.
+                                                                   */
                                                                   contractDeleted={hash => {
                                                                         let newState = shareContracts.filter(e => e.hash != hash)
                                                                         setShareContracts(newState)
                                                                   }}
                                                             />
                                                       ))}
-                                                      {shareContracts.filter(contract => contract.receiver?.toLocaleLowerCase() == session?.address.toLocaleLowerCase()).length == 0 && (
+                                                      {shareContracts.filter(contract => contract.recipients?.map((e) => e.toLocaleLowerCase()).includes(session?.address?.toLocaleLowerCase()!!)).length == 0 && (
                                                             <div className="card">
                                                                   <Alert variant="default">
                                                                         <X />
