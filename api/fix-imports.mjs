@@ -1,6 +1,5 @@
 import fs from 'fs';
 import path from 'path';
-import Logger from './src/utils/Logger.js';
 
 const directory = './dist'; // Change if needed
 
@@ -19,7 +18,7 @@ function fixImports(dir) {
         return match;
       });
       fs.writeFileSync(fullPath, content, 'utf8');
-        Logger.info(`Fixed imports in ${fullPath}`);
+      console.log(`Fixed imports in ${fullPath}`);
     }
   });
 }
