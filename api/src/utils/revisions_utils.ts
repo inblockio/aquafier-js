@@ -1616,7 +1616,7 @@ const aquaConfig = await getAquaConfiguration(zipData);
     workFlow: string;
 } = isWorkFlowData(mainAquaTree!, systemTemplateHashes)
 
-    Logger.info(`actualIsWorkFlow: ${isWorkFlow}`);
+    Logger.info(`actualIsWorkFlow: ${JSON.stringify(isWorkFlow)}`);
     try {
         
 

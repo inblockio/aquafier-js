@@ -1,17 +1,10 @@
 import React, {useCallback, useEffect, useRef, useState} from 'react'
 
-// Import /components//ui components
 import {Button} from '../../../components/ui/button'
-// import { Input } from '../../../components/ui/input'
-// import { Label } from '../../../components/ui/label'
-// import { Dialog, DialogContent, DialogHeader, DialogTitle } from '../../../components/ui/dialog'
-// import { PDFDocument, rgb, StandardFonts } from 'pdf-lib';
 import {PDFDocument} from 'pdf-lib'
-// import SignatureCanvas from 'react-signature-canvas'
 import {FaPlus} from 'react-icons/fa'
 import appStore from '../../../store'
 import {useStore} from 'zustand'
-// import { PdfControls } from '../../../components/FilePreview';
 import axios from 'axios'
 import {ApiFileInfo} from '../../../models/FileInfo'
 import {
@@ -29,8 +22,6 @@ import Aquafier, {AquaTree, AquaTreeWrapper, FileObject, getAquaTreeFileObject} 
 import {SignatureData} from '../../../types/types'
 import {LuInfo, LuTrash} from 'react-icons/lu'
 import {useNavigate} from 'react-router-dom'
-// import SignerPage from './signer/SignerPage';
-// import AnnotationSidebar from './signer/annotation-sidebar';
 import {Annotation} from './signer/types'
 import {PdfRenderer} from './signer/SignerPage'
 import {Alert, AlertDescription} from '@/components/ui/alert'
@@ -44,46 +35,26 @@ interface PdfSignerProps {
 }
 
 const PdfSigner: React.FC<PdfSignerProps> = ({ fileData, setActiveStep, documentSignatures }) => {
-      // const { formTemplates, systemFileInfo, selectedFileInfo, setSelectedFileInfo, setFiles , setOpenDialog, openDialog} = useStore(appStore)
       const {  selectedFileInfo, setSelectedFileInfo, setFiles , setOpenDialog, openDialog} = useStore(appStore)
       // State for PDF document
       const [pdfFile, setPdfFile] = useState<File | null>(null)
       const [_pdfUrl, setPdfUrl] = useState<string | null>(null)
       const [_pdfDoc, setPdfDoc] = useState<PDFDocument | null>(null)
-      // const [creatingUserSignature, setCreatingUserSignature] = useState<boolean>(false)
       const [signers, setSigners] = useState<string[]>([])
       const [allSignersBeforeMe, setAllSignersBeforeMe] = useState<string[]>([])
 
-      
-      // const [userCanSign, setUserCanSign] = useState<boolean>(false);
-
-      // const [numPages, setNumPages] = useState<number>(0);
-      // const [currentPage, setCurrentPage] = useState<number>(1);
-
-      // State for signatures
-      // const signatureRef = useRef<SignatureCanvas | null>(null)
       const [mySignaturesAquaTree, setMySignaturesAquaTree] = useState<Array<ApiFileInfo>>([])
       const [mySignatureData, setMySignatureData] = useState<Array<SignatureData>>([])
-
-      // const [signaturesInDocument, setSignaturesInDocument] = useState<SignatureData[]>(documentSignatures || []);
-
       const [selectedSignatureId, setSelectedSignatureId] = useState<string | null>(null)
-      // const [signerName, setSignerName] = useState<string>('John Doe')
       const [signaturePositions, setSignaturePositions] = useState<SignatureData[]>([])
-      // const [placingSignature, setPlacingSignature] = useState<boolean>(false)
-      // const [signatureSize, setSignatureSize] = useState<number>(330);
       const [canPlaceSignature, setCanPlaceSignature] = useState(false)
       const [selectedTool, setSelectedTool] = useState<'text' | 'image' | 'profile' | 'signature' | null>(null)
       const [submittingSignatureData, setSubmittingSignatureData] = useState(false)
-
-      // Modal state
-      // const [isOpen, setIsOpen] = useState(false)
 
       // Get wallet address from store
       const { session, backend_url } = useStore(appStore)
 
       // PDF viewer container ref
-      // const pdfContainerRef = useRef<HTMLDivElement>(null);
       const pdfMainContainerRef = useRef<HTMLDivElement>(null)
 
       const navigate = useNavigate()
@@ -168,7 +139,7 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ fileData, setActiveStep, document
             }
 
             // Save to server
-            await saveAquaTree(userSignatureDataAquaTree.data.aquaTree!, fileObjectUserSignature, true, true, '')
+            await saveAquaTree(userSignatureDataAquaTree.data.aquaTree!, fileObjectUserSignature, true, '')
 
             return {
                   aquaTree: userSignatureDataAquaTree.data.aquaTree!,
@@ -455,7 +426,7 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ fileData, setActiveStep, document
                                     //ignore senting notification to self
                                     // ignore sending notification to  sender already sent above
                               }else{
-                                 await createSigningNotification(session!.address, wallet)   
+                                    await createSigningNotification(session!.address, wallet)
                               }
                         }
 
@@ -476,18 +447,8 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ fileData, setActiveStep, document
             }
       }
 
-      // Clear signature canvas
-      // const clearSignature = () => {
-      //       if (signatureRef.current) {
-      //             signatureRef.current.clear()
-      //             // Don't clear all signatures, just reset the canvas
-      //       }
-      // }
-
-      const saveAquaTree = async (aquaTree: AquaTree, fileObject: FileObject, isFinal: boolean = false, isWorkflow: boolean = false, template_id: string): Promise<boolean> => {
+      const saveAquaTree = async (aquaTree: AquaTree, fileObject: FileObject, isWorkflow: boolean = false, template_id: string): Promise<boolean> => {
             try {
-                  const url = `${backend_url}/explorer_aqua_file_upload`
-
                   // Create a FormData object to send multipart data
                   const formData = new FormData()
 
@@ -548,12 +509,6 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ fileData, setActiveStep, document
                         formData.append('has_asset', 'false')
                   }
 
-                  const response = await axios.post(url, formData, {
-                        headers: {
-                              nonce: session?.nonce,
-                              // Don't set Content-Type header - axios will set it automatically with the correct boundary
-                        },
-                  })
                   return true
             } catch (error) {
                   toast.error('Error uploading aqua tree', {
@@ -564,6 +519,10 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ fileData, setActiveStep, document
                   return false
             }
       }
+
+      // Handle signature dragging
+      const [activeDragId, setActiveDragId] = useState<string | null>(null)
+      const [isDragging, setIsDragging] = useState(false)
 
       // Helper function to get position from either mouse or touch event
       const getEventPosition = (e: MouseEvent | TouchEvent) => {

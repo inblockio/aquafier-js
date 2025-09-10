@@ -37,7 +37,7 @@ export async function createAquaTreeFromRevisions(
             return [aquaTree, []];
         }
 
-        Logger.info(`🎾🎾🎾 All revision ${JSON.stringify(revisionData, null, 4)}`)
+        Logger.debug(`All revisions: ${JSON.stringify(revisionData, null, 4)}`)
 
         let revisionPubKeyHashes = revisionData.map(revision => revision.pubkey_hash);
 

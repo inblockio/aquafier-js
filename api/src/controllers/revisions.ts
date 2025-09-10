@@ -361,7 +361,7 @@ export default async function revisionsController(fastify: FastifyInstance) {
             }
 
         } catch (error: any) {
-            Logger.error("Error in delete operation:", error);
+            Logger.error("Error fetching user signatures:", error);
             return reply.code(500).send({
                 success: false,
                 message: `Error deleting revision: ${error.message}`,

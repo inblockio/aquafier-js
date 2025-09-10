@@ -1,13 +1,6 @@
 import {LuDelete, LuTrash} from 'react-icons/lu'
 import {Button} from '@/components/ui/button'
-import {
-    Dialog,
-    DialogContent,
-    DialogDescription,
-    DialogFooter,
-    DialogHeader,
-    DialogTitle
-} from '@/components/ui//dialog'
+import {Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle} from '@/components/ui/dialog'
 import {fetchFiles, getAquaTreeFileName, getFileName, getGenesisHash, isWorkFlowData} from '../../utils/functions'
 import {useStore} from 'zustand'
 import appStore from '../../store'

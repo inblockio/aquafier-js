@@ -86,7 +86,11 @@ const readFileContent = async (file: File): Promise<string | Uint8Array> => {
         // If it's a text file, read as text
         return await readFileAsText(file);
     } else {
-        Logger.info("binary data....")
+        Logger.debug("Reading binary file", {
+            name: file.name,
+            size: file.size,
+            type: file.type
+        })
         // Otherwise for binary files, read as ArrayBuffer
         const res = await readFileAsArrayBuffer(file)
         return new Uint8Array(res);
@@ -266,7 +270,10 @@ async function s3Available(): Promise<boolean> {
                 await minioClient.makeBucket(getBucketName());
             }
         } catch (e) {
-            Logger.warn("Cannot use the s3 store!", e);
+            Logger.warn("Cannot use the S3 store", {
+                bucket: getBucketName(),
+                err: e
+            });
             return false
         }
         return true;

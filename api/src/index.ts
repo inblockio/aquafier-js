@@ -15,8 +15,12 @@ const start = async () => {
     try {
 
         await server.listen({port: PORT, host: HOST});
-        Logger.info("AquaFier JS is running! \n Website: https://aqua-protocol.org/ \n Check it out here: https://aquafier.inblock.io | https://dev.inblock.io \n" + `Listening on: http://${HOST}:${PORT}`);
-        // Create mock notifications for testing
+        Logger.info("Server started", {
+            host: HOST,
+            port: PORT,
+            website: "https://aqua-protocol.org/",
+            dashboards: ["https://aquafier.inblock.io", "https://dev.inblock.io"]
+        });        // Create mock notifications for testing
         try {
             if (process.env.NODE_ENV === "development" || process.env.NODE_ENV === "test") {
                 await mockNotifications();

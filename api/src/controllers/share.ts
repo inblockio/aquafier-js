@@ -128,7 +128,7 @@ export default async function shareController(fastify: FastifyInstance) {
             });
 
         } catch (error: any) {
-            Logger.error("Error fetching session:", error);
+            Logger.error("Error in GET /share_data/:hash", {err: error});
             return reply.code(500).send({ success: false, message: "Internal server error" });
         }
     });

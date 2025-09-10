@@ -259,19 +259,20 @@ export const ImportAquaTree = ({file, filesWrapper, removeFilesListForUpload}: I
                 }
             }
 
-            let aquaTree: AquaTree
+            let aquaTree: AquaTree;
             const contentData = aquaFileItemObject.fileObject.fileContent
             if (typeof contentData == 'string') {
                 aquaTree = JSON.parse(aquaFileItemObject.fileObject.fileContent as string)
             } else if (typeof contentData === 'object') {
                 aquaTree = aquaFileItemObject.fileObject.fileContent as AquaTree
-            } else {
-                throw Error(`An error occured. could not deduce aqua tree`)
             }
+
+            // @ts-ignore
             const genHash = getGenesisHash(aquaTree)
             if (genHash == null) {
                 throw Error(`Genesis hash cannot be null for ${aquaFileItemObject.fileObject.fileName}`)
             }
+            // @ts-ignore
             const genRevision = aquaTree.revisions[genHash]
             const fileHash = genRevision.file_hash
 
@@ -373,7 +374,7 @@ export const ImportAquaTree = ({file, filesWrapper, removeFilesListForUpload}: I
 
                 if (!fileObjWrapper) {
                     toast.error(`An internal error occured , cannot find file ${fileName}`)
-                    return false
+                    return
                 }
 
                 await uploadFileData(item.file, fileObjWrapper.file, true)

@@ -37,7 +37,7 @@ export function broadcastToAllClients(action: string) {
             }
         });
     } catch (e) {
-        Logger.error(`WebSocket BroadcastToAllClients  failed :${e} `);
+        Logger.error(`WebSocket BroadcastToAllClients failed: ${e}`);
     }
 }
 

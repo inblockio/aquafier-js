@@ -2,17 +2,10 @@ import buildServer from "./../server"
 import {test} from "tap"
 import Logger from "../utils/Logger";
 
-
-test('should work with fetch', async (t) => {
-    Logger.info("Tap tests work")
-})
-
 test('should work with fetch', async t => {
   const fastify = buildServer()
 
   t.after(() => fastify.close())
-
-  await fastify.listen()
 
   const response = await fastify.inject({
     method: "GET",

@@ -15,23 +15,23 @@ import Logger from "./Logger";
 
 // Basic random number function
 export function getRandomNumber(min: number, max: number): number | null {
-      // Ensure min and max are numbers
-      min = Number(min)
-      max = Number(max)
+    // Ensure min and max are numbers
+    min = Number(min)
+    max = Number(max)
 
-      // Validate inputs
-      if (isNaN(min) || isNaN(max)) {
-          Logger.info('Please provide valid numbers')
-            return null
-      }
+    // Validate inputs
+    if (isNaN(min) || isNaN(max)) {
+        Logger.warn('Please provide valid numbers')
+        return null
+    }
 
-      // Swap if min is greater than max
-      if (min > max) {
-            ;[min, max] = [max, min]
-      }
+    // Swap if min is greater than max
+    if (min > max) {
+        ;[min, max] = [max, min]
+    }
 
-      // Generate random number between min and max (inclusive)
-      return Math.floor(Math.random() * (max - min + 1)) + min
+    // Generate random number between min and max (inclusive)
+    return Math.floor(Math.random() * (max - min + 1)) + min
 }
 
 
@@ -43,7 +43,7 @@ export async function saveAttestationFileAndAquaTree(aquaTree: AquaTree, genesis
     // throw new Error(`workflowDataResponse ${JSON.stringify(workflowDataResponse)}`)
     if (workflowDataResponse.isWorkFlow && (workflowDataResponse.workFlow.includes("phone_number_claim") || workflowDataResponse.workFlow.includes("email_claim"))) {
         let serverAttestationInfo = await serverAttestation(genesisHashOfFile)
-       
+
         if (serverAttestationInfo) {
             const attestedData = serverAttestationInfo
 
@@ -72,7 +72,7 @@ export async function saveAttestationFileAndAquaTree(aquaTree: AquaTree, genesis
             }
 
             let existingFileIndex = await prisma.fileIndex.findFirst({
-                where: { file_hash: fileHash },
+                where: {file_hash: fileHash},
             });
 
             // Create unique filename
@@ -94,12 +94,11 @@ export async function saveAttestationFileAndAquaTree(aquaTree: AquaTree, genesis
                 Logger.info(`Update file index counter`)
 
                 await prisma.fileIndex.update({
-                    where: { file_hash: existingFileIndex.file_hash },
+                    where: {file_hash: existingFileIndex.file_hash},
                     data: {
                         pubkey_hash: [...existingFileIndex.pubkey_hash, filepubkeyhash]//`${session.address}_${genesisHash}`]
                     }
                 });
-
 
 
             } else {
@@ -137,7 +136,6 @@ export async function saveAttestationFileAndAquaTree(aquaTree: AquaTree, genesis
                 })
 
 
-
             }
 
             saveAquaTree(attestedData.aquaTree, walletAddress, null, false)
@@ -158,10 +156,7 @@ export async function createEthAccount() {
         const publicKey = wallet.publicKey;
         const privateKey = wallet.privateKey;
 
-        Logger.info("Mnemonic", mnemonic)
-        Logger.info("Wallet Address", walletAddress)
-        Logger.info("Public Key", publicKey)
-        Logger.info("Private Key", privateKey)
+        Logger.info("Created ephemeral Ethereum wallet")
 
         return {
             mnemonic,
@@ -169,7 +164,7 @@ export async function createEthAccount() {
             publicKey,
             privateKey
         };
-    } catch (error : any) {
+    } catch (error: any) {
         Logger.error('Error creating Ethereum account:', error);
         throw new Error('Failed to create Ethereum account');
     }
@@ -179,7 +174,6 @@ export async function getServerWalletInformation(): Promise<ServerWalletInformat
     try {
         // Get mnemonic from environment variables
         const mnemonic = process.env.SERVER_MNEMONIC!;
-        Logger.info("Mnemonic", mnemonic)
 
         if (!mnemonic) {
             Logger.error('SERVER_MNEMONIC environment variable is not set');
@@ -216,8 +210,7 @@ export async function getServerWalletInformation(): Promise<ServerWalletInformat
             publicKey
         };
     } catch (error: any) {
-        Logger.error('Error getting server wallet information:', error);
-        Logger.error('Error details:', error.message);
+        Logger.error('Error getting server wallet information', {err: error})
         return null;
     }
 }
@@ -236,7 +229,7 @@ export function dummyCredential(): CredentialsData {
 
 
 export async function saveAquaFile(aquaTree: AquaTree, assetBuffer: Buffer, genesisHash: string,
-    fileHash: string, fileName: string, filepubkeyhash: string) {
+                                   fileHash: string, fileName: string, filepubkeyhash: string) {
     const UPLOAD_DIR = getFileUploadDirectory();
 
     const aquafier = new Aquafier();
@@ -273,17 +266,16 @@ export async function saveAquaFile(aquaTree: AquaTree, assetBuffer: Buffer, gene
 
 export function ensureDomainViewForCors(domain?: string): string[] {
     const domains: string[] = []
-    
-    if(!domain){
+
+    if (!domain) {
         return domains
     }
-    if(domain.startsWith("http")){
+    if (domain.startsWith("http")) {
         domains.push(domain)
-    }
-    else{
+    } else {
         domains.push(`https://${domain}`)
         domains.push(`http://${domain}`)
     }
-    
+
     return domains
 }

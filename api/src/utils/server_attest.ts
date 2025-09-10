@@ -18,7 +18,6 @@ export function getTemplateInformation(templateItem: string): TemplateInformatio
 
     let templateAquaTreeData = path.join(getAquaAssetDirectory(), `${templateItem}.json.aqua.json`);
 
-
     let templateAquaTreeDataContent = fs.readFileSync(templateAquaTreeData, 'utf8')
     let templateAquaTree: AquaTree = JSON.parse(templateAquaTreeDataContent)
     let genHash = getGenesisHash(templateAquaTree);
@@ -34,8 +33,6 @@ export function getTemplateInformation(templateItem: string): TemplateInformatio
         genHash
     }
 }
-
-
 
 export async function serverAttestation(identityClaimId: string): Promise<{
     aquaTree : AquaTree,
@@ -104,7 +101,7 @@ export async function serverAttestation(identityClaimId: string): Promise<{
 
     const linkedAquaTreeResult = await aquafier.linkAquaTree(aquatreeWrapperToWrapTo, wrapThis, false)
 
-    Logger.info(`\n ## linkedAquaTreeResult ${JSON.stringify(linkedAquaTreeResult)}`)
+    Logger.info(`linkedAquaTreeResult: isErr=${linkedAquaTreeResult.isErr()}`)
 
     if (linkedAquaTreeResult.isErr()) {
         Logger.error(`Error linking aqua tree ${linkedAquaTreeResult.data}`)

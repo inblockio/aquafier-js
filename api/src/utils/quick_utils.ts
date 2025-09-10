@@ -61,7 +61,7 @@ export async function fetchCompleteRevisionChain(
         return extendedAquaTree;
 
     } catch (error : any) {
-        Logger.error(`${indent}[Depth:%s] Error fetching revision chain for %s:`, _depth, fullLatestHash, error);
+        Logger.error(`${indent}[Depth:${_depth}] Error fetching revision chain for ${fullLatestHash}`, error);
         throw error;
     }
 }
@@ -102,11 +102,8 @@ async function processLinkedChains(
                     }
 
                     try {
-
-                        Logger.info(`All File Object s %${JSON.stringify(allFileObjects, null, 4)}%`);
-                        Logger.info(`=======================================================================`);
-                        Logger.info(`Aqua Trees %${JSON.stringify(aquaTree, null, 4)}%`);
-                
+                        Logger.debug("All file objects", {count: allFileObjects.length});
+                        Logger.debug("Aqua tree sizes", {revisions: Object.keys(aquaTree.revisions).length});
 
                         // Update file index for the linked hash using existing helper
                         const fileIndexValue = await updateFileIndexForLinkedHash(linkedHash);

@@ -8,6 +8,7 @@ import path from 'path';
 import * as fs from "fs"
 import {getAquaAssetDirectory} from '../utils/file_utils';
 import {getTemplateInformation} from '../utils/server_attest';
+import Logger from 'src/utils/Logger';
 
 export default async function systemController(fastify: FastifyInstance) {
 

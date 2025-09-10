@@ -1,5 +1,6 @@
 import fs from 'fs';
 import path from 'path';
+import Logger from './src/utils/Logger.js';
 
 const directory = './dist'; // Change if needed
 

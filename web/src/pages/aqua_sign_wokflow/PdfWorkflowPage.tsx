@@ -35,7 +35,6 @@ export default function PdfWorkflowPage() {
 
             for (let i = 0; i < hashesToLoopPar.length; i += 3) {
                   const batch = hashesToLoopPar.slice(i, i + 3)
-                  (`Processing batch ${i / 3 + 1}:`, batch)
 
                   let signaturePositionCount = 0
                   const hashSigPosition = batch[0] ?? ''

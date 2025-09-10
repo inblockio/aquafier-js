@@ -234,7 +234,6 @@ const ClaimsAndAttestationPage = () => {
                   try {
                         return getAquaTreeFileName(e.aquaTree!)
                   } catch (e) {
-                      ('Error processing system file') // More descriptive
                         return ''
                   }
             })

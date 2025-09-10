@@ -551,18 +551,6 @@ export default async function explorerController(fastify: FastifyInstance) {
 
             try {
 
-                // Parse the timestamp string into a valid Date object
-                // const localTimestamp = new Date(
-                //     Date.UTC(
-                //         parseInt(revisionData.local_timestamp.slice(0, 4)),   // Year
-                //         parseInt(revisionData.local_timestamp.slice(4, 6)) - 1,  // Month (0-indexed)
-                //         parseInt(revisionData.local_timestamp.slice(6, 8)),   // Day
-                //         parseInt(revisionData.local_timestamp.slice(8, 10)),  // Hours
-                //         parseInt(revisionData.local_timestamp.slice(10, 12)), // Minutes
-                //         parseInt(revisionData.local_timestamp.slice(12, 14))  // Seconds
-                //     )
-                // );
-
                 let filepubkeyhash = `${session.address}_${genesisHash}`
 
                 await prisma.latest.create({
@@ -591,12 +579,9 @@ export default async function explorerController(fastify: FastifyInstance) {
                 (`one`)
                 // if is form add the form elements
                 if (isForm) {
-                    (`two`)
                     let revisioValue = Object.keys(revisionData);
                     for (let formItem of revisioValue) {
-                        (`three ${formItem}`)
                         if (formItem.startsWith("forms_")) {
-                            (`four ${formItem}`)
                             let res = await prisma.aquaForms.create({
                                 data: {
                                     hash: filepubkeyhash,
@@ -609,7 +594,6 @@ export default async function explorerController(fastify: FastifyInstance) {
                         }
                     }
                 }
-
 
                 let existingFileIndex = await prisma.fileIndex.findFirst({
                     where: {file_hash: fileHash},
@@ -625,7 +609,6 @@ export default async function explorerController(fastify: FastifyInstance) {
                         }
                     })
                 } else {
-
 
                     const UPLOAD_DIR = getFileUploadDirectory();
                     // Create unique filename
