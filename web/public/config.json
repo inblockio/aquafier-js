@@ -3,5 +3,8 @@
   "CUSTOM_LANDING_PAGE_URL": "false",
   "CUSTOM_LOGO_URL": "/images/logo.png",
   "CUSTOM_NAME": "Aqua Protocol",
-  "CUSTOM_DESCRIPTION": "A Cryptographic Trust Protocol for Decentralized Data Integrity."
+  "CUSTOM_DESCRIPTION": "A Cryptographic Trust Protocol for Decentralized Data Integrity.",
+  "APM_ENABLED": true,
+  "APM_SERVER_URL": "https://b9b5fdeede1d43c5ae69211b244715c6.apm.europe-west3.gcp.cloud.es.io:443",
+  "APM_SERVICE_NAME": "aquafier-frontend"
 }

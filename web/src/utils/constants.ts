@@ -1,4 +1,5 @@
 import {WebConfig} from "@/types/types"
+import {APMConfig} from "@/types/apm.ts";
 
 export const SEPOLIA_SMART_CONTRACT_ADDRESS = '0x45f59310ADD88E6d23ca58A0Fa7A55BEE6d2a611'
 export const SYSTEM_WALLET_ADDRESS = "0xfabacc150f2a0000000000000000000000000000"
@@ -45,9 +46,14 @@ export const videoTypes = ['video/mp4', 'video/mpeg', 'video/webm']
 
 // Function to initialize the backend URL
 // Function to initialize the backend URL
-export const initializeBackendUrl = async (): Promise<{backend_url :string, config : WebConfig}> => {
+export const initializeBackendUrl = async (): Promise<{
+      backend_url: string,
+      config: WebConfig,
+      apmConfig: APMConfig
+}> => {
       let BACKEND_URL = 'http://127.0.0.1:3000'
       let config = {}
+      let apmConfig: APMConfig = new APMConfig();
       try {
             // Fetch the config.json file from the public folder
             const response = await fetch('/config.json')
@@ -59,6 +65,12 @@ export const initializeBackendUrl = async (): Promise<{backend_url :string, conf
 
             // Parse the JSON
             const configData = await response.json()
+
+            //prepare APM-Config
+            apmConfig = new APMConfig();
+            apmConfig.enabled = configData.APM_ENABLED;
+            apmConfig.serverUrl = configData.APM_SERVER_URL;
+            apmConfig.serviceName = configData.APM_SERVICE_NAME;
 
             // Update the BACKEND_URL
             BACKEND_URL = configData.BACKEND_URL || 'http://127.0.0.1:3000'
@@ -85,7 +97,7 @@ export const initializeBackendUrl = async (): Promise<{backend_url :string, conf
             console.error('Error reading config:', err)
       }
 
-      return {    backend_url: BACKEND_URL, config: config}
+      return {backend_url: BACKEND_URL, config: config, apmConfig: apmConfig}
 }
 
 export const testWitness = {
