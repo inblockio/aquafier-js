@@ -337,6 +337,8 @@ const CreateFormFromTemplate = ({selectedTemplate, callBack}: {
                     completeFormData[field.name] = multipleAddresses.join(',')
                 }else  if (field.name === 'delegated_wallets' && selectedTemplate.name === 'dba_claim') {
                               completeFormData[field.name] = multipleAddresses.join(',')
+                        }else  if (field.name === 'delegated_wallets' && selectedTemplate.name === 'dba_claim') {
+                              completeFormData[field.name] = multipleAddresses.join(',')
                         }
 
 
@@ -878,6 +880,7 @@ const CreateFormFromTemplate = ({selectedTemplate, callBack}: {
             }
 
 
+                  console.log(`4.`)
                   //  console.log(`see me ...1`)
                   // Step 3: Get system files
                 const allSystemFiles = await getSystemFiles(systemFileInfo, backend_url, session?.address || '')
@@ -890,12 +893,46 @@ const CreateFormFromTemplate = ({selectedTemplate, callBack}: {
             const aquafier = new Aquafier()
             const fileName = generateFileName(selectedTemplate, completeFormData)
 
-            // Step 6: Handle identity attestation specific logic
-            if (selectedTemplate?.name === 'identity_attestation') {
-                completeFormData = handleIdentityAttestation(completeFormData, selectedFileInfo)
-            }
-            // Step 7: Prepare final form data
-            const finalFormDataRes = await prepareFinalFormData(completeFormData, selectedTemplate)
+                  //  console.log(`see me ...3`)
+                  // Step 6: Handle identity attestation specific logic
+                  if (selectedTemplate?.name === 'identity_attestation') {
+                        completeFormData = handleIdentityAttestation(completeFormData, selectedFileInfo)
+                  } else if (selectedTemplate?.name === 'dba_claim') {
+
+                        let dbaUrl = completeFormData['url'] as string
+                        if(!dbaUrl.includes('courts.delaware.gov')) {
+                              toast.error(`Please enter a DBA url expecting to find your trade name at courts.delaware.gov`)
+                              setSubmittingTemplateData(false)
+                              return
+                        }
+
+                        try {
+                              const url = ensureDomainUrlHasSSL(`${backend_url}/scrape_data`)
+                              const response = await axios.post(url, {
+                                    domain: completeFormData['url']
+                              },
+                              {
+                                                headers: {
+                                                      nonce: session?.nonce,
+                                                },
+                                          }
+                                    )
+                              completeFormData = response.data.data.tradeNameDetails
+
+                              completeFormData['delegated_wallets'] = multipleAddresses.join(',')
+
+                        } catch (e) {
+                              toast.error(`Error fetching data from url.`)
+                              setSubmittingTemplateData(false)
+                              return
+                        }
+
+                  }
+
+                  //  console.log('Complete form data: ', completeFormData)
+
+                  // Step 7: Prepare final form data
+                  const finalFormDataRes = await prepareFinalFormData(completeFormData, selectedTemplate)
 
             if (!finalFormDataRes) {
                 toast.info('Final form data preparation failed.')

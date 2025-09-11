@@ -169,7 +169,6 @@ if (hasProtocol && !isAllowed) {
 
 
   });
-
   fastify.post("/verify_code", async (request, reply) => {
     const nonce = request.headers["nonce"];
 

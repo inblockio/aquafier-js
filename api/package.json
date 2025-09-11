@@ -40,7 +40,7 @@
     "ts-mock-imports": "^1.3.16",
     "twilio": "^5.7.1",
     "winston": "^3.17.0",
-     "cheerio": "^1.0.0-rc.12"
+    "cheerio": "^1.0.0-rc.12"
   },
   "devDependencies": {
     "@types/estree": "^1.0.8",
