@@ -5,6 +5,7 @@ import appStore from '@/store'
 import {
     dataURLToFile,
     dummyCredential,
+    ensureDomainUrlHasSSL,
     estimateFileSize,
     fetchFiles,
     fetchSystemFiles,

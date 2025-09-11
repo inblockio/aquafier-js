@@ -1,5 +1,5 @@
 import {useEffect, useRef, useState} from 'react';
-import {ChevronDown, Globe, Mail, Phone, Plus, Signature, UserLock} from 'lucide-react';
+import {ChevronDown, Globe, Mail, Phone, Plus, Scale, Signature, UserLock} from 'lucide-react';
 import {createPortal} from 'react-dom';
 import appStore from '../store'
 import {useStore} from 'zustand'
