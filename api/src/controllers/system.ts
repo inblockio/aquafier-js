@@ -48,6 +48,7 @@ export default async function systemController(fastify: FastifyInstance) {
             "access_agreement",
             "aqua_sign",
             "domain_claim",
+            "dba_claim",
             "cheque",
             "identity_attestation",
             "identity_claim",

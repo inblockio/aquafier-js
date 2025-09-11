@@ -184,36 +184,36 @@ const CreateFormFromTemplate = ({selectedTemplate, callBack}: {
                 }
             }
 
-            // for (const recipient of recipients) {
-            const unique_identifier = `${Date.now()}_${generateNonce()}`
-            // let genesisHash = getGenesisHash(aquaTree)
+                  // for (const recipient of recipients) {
+                  const unique_identifier = `${Date.now()}_${generateNonce()}`
+                  // let genesisHash = getGenesisHash(aquaTree)
 
-            const allHashes = Object.keys(aquaTree.revisions)
-            const genesisHash = getGenesisHash(aquaTree) ?? '' //allHashes[0];
-            const latestHash = allHashes[allHashes.length - 1]
+                  const allHashes = Object.keys(aquaTree.revisions)
+                  const genesisHash = getGenesisHash(aquaTree) ?? '' //allHashes[0];
+                  const latestHash = allHashes[allHashes.length - 1]
 
-            const name = aquaTree.file_index[genesisHash] ?? 'workflow file'
-            const url = `${backend_url}/share_data`
-            const method = 'POST'
-            const data = {
-                latest: latestHash,
-                genesis_hash: genesisHash,
-                hash: unique_identifier,
-                recipients: recipients,
-                option: 'latest',
-                file_name: name,
-            }
+                  const name = aquaTree.file_index[genesisHash] ?? 'workflow file'
+                  const url = `${backend_url}/share_data`
+                  const method = 'POST'
+                  const data = {
+                        latest: latestHash,
+                        genesis_hash: genesisHash,
+                        hash: unique_identifier,
+                        recipients: recipients,
+                        option: 'latest',
+                        file_name: name,
+                  }
 
-            await axios({
-                method,
-                url,
-                data,
-                headers: {
-                    nonce: session?.nonce,
-                },
-            })
+                  await axios({
+                        method,
+                        url,
+                        data,
+                        headers: {
+                              nonce: session?.nonce,
+                        },
+                  })
 
-        } catch (e) {
+                  } catch (e) {
             toast.error('Error sharing workflow')
         }
     }
@@ -335,7 +335,11 @@ const CreateFormFromTemplate = ({selectedTemplate, callBack}: {
             } else {
                 if (field.name === 'signers' && selectedTemplate.name === 'aqua_sign') {
                     completeFormData[field.name] = multipleAddresses.join(',')
-                }
+                }else  if (field.name === 'delegated_wallets' && selectedTemplate.name === 'dba_claim') {
+                              completeFormData[field.name] = multipleAddresses.join(',')
+                        }
+
+
             }
         })
 
@@ -814,8 +818,9 @@ const CreateFormFromTemplate = ({selectedTemplate, callBack}: {
     const createWorkflowFromTemplate = async (e: React.FormEvent) => {
         e.preventDefault()
 
-        try {
-            setModalFormErorMessae('')
+            try {
+
+                  setModalFormErorMessae('')
 
             if (submittingTemplateData) {
                 toast.info('Data submission not completed, try again after some time.')
@@ -831,8 +836,9 @@ const CreateFormFromTemplate = ({selectedTemplate, callBack}: {
             validateFields(completeFormData, selectedTemplate)
 
 
-            for (const fieldItem of selectedTemplate.fields) {
-                const filledValue = completeFormData[fieldItem.name]
+
+                  for (const fieldItem of selectedTemplate.fields) {
+                        const filledValue = completeFormData[fieldItem.name]
 
 
                 // ensure there is code input for all verifiable data
@@ -871,11 +877,13 @@ const CreateFormFromTemplate = ({selectedTemplate, callBack}: {
 
             }
 
-            // Step 3: Get system files
-            const allSystemFiles = await getSystemFiles(systemFileInfo, backend_url, session?.address || '')
-            setSystemFileInfo(allSystemFiles)
 
-            // Step 4: Find template API file info
+                  //  console.log(`see me ...1`)
+                  // Step 3: Get system files
+                const allSystemFiles = await getSystemFiles(systemFileInfo, backend_url, session?.address || '')
+                setSystemFileInfo(allSystemFiles)
+
+                // Step 4: Find template API file info
             const templateApiFileInfo = findTemplateApiFileInfo(allSystemFiles, selectedTemplate)
 
             // Step 5: Initialize aquafier and prepare data

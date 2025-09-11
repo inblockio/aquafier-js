@@ -211,7 +211,8 @@ const setUpSystemTemplates = async () => {
     let templates = [
         "access_agreement",
         "aqua_sign",
-        "cheque",
+        "dba_claim",
+    "cheque",
         "identity_attestation",
         "identity_claim",
         "user_signature",
