@@ -2,6 +2,8 @@ import {FastifyInstance} from "fastify";
 import {twilioClient} from "../api/twilio";
 import {prisma} from "../database/db";
 import Logger from "../utils/Logger";
+import {WebScraper} from "../utils/scraper";
+import {ScrapedData} from "../models/types";
 
 // Rate-limiting configuration
 const RATE_LIMIT_CONFIG = {
