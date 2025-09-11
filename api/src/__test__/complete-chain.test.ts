@@ -1,5 +1,6 @@
 import buildServer from "./../server"
 import {test} from "tap"
+import Logger from "../utils/Logger";
 
 test('should work with fetch', async t => {
   const fastify = buildServer()
