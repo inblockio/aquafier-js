@@ -2,7 +2,7 @@ import React, { JSX, useEffect, useRef, useState } from 'react'
 import { FormField, FormTemplate } from './types'
 import { useStore } from 'zustand'
 import appStore from '@/store'
-import { isValidEthereumAddress, getRandomNumber, formatDate, estimateFileSize, dummyCredential, fetchSystemFiles, getGenesisHash, fetchFiles, generateProofFromSignature, formatTxtRecord, dataURLToFile, fetchWalletAddressesAndNamesForInputRecommendation } from '@/utils/functions'
+import { isValidEthereumAddress, getRandomNumber, formatDate, estimateFileSize, dummyCredential, fetchSystemFiles, getGenesisHash, fetchFiles, generateProofFromSignature, formatTxtRecord, dataURLToFile, fetchWalletAddressesAndNamesForInputRecommendation, ensureDomainUrlHasSSL } from '@/utils/functions'
 import Aquafier, { AquaTree, FileObject, getAquaTreeFileName, AquaTreeWrapper, getAquaTreeFileObject, Revision } from 'aqua-js-sdk'
 import axios from 'axios'
 import { generateNonce } from 'siwe'
@@ -141,35 +141,35 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: { selectedTempla
                   }
 
                   // for (const recipient of recipients) {
-                        const unique_identifier = `${Date.now()}_${generateNonce()}`
-                        // let genesisHash = getGenesisHash(aquaTree)
+                  const unique_identifier = `${Date.now()}_${generateNonce()}`
+                  // let genesisHash = getGenesisHash(aquaTree)
 
-                        const allHashes = Object.keys(aquaTree.revisions)
-                        const genesisHash = getGenesisHash(aquaTree) ?? '' //allHashes[0];
-                        const latestHash = allHashes[allHashes.length - 1]
+                  const allHashes = Object.keys(aquaTree.revisions)
+                  const genesisHash = getGenesisHash(aquaTree) ?? '' //allHashes[0];
+                  const latestHash = allHashes[allHashes.length - 1]
 
-                        const name = aquaTree.file_index[genesisHash] ?? 'workflow file'
-                        const url = `${backend_url}/share_data`
-                        const method = 'POST'
-                        const data = {
-                              latest: latestHash,
-                              genesis_hash: genesisHash,
-                              hash: unique_identifier,
-                              recipients: recipients,
-                              option: 'latest',
-                              file_name: name,
-                        }
+                  const name = aquaTree.file_index[genesisHash] ?? 'workflow file'
+                  const url = `${backend_url}/share_data`
+                  const method = 'POST'
+                  const data = {
+                        latest: latestHash,
+                        genesis_hash: genesisHash,
+                        hash: unique_identifier,
+                        recipients: recipients,
+                        option: 'latest',
+                        file_name: name,
+                  }
 
-                        await axios({
-                              method,
-                              url,
-                              data,
-                              headers: {
-                                    nonce: session?.nonce,
-                              },
-                        })
+                  await axios({
+                        method,
+                        url,
+                        data,
+                        headers: {
+                              nonce: session?.nonce,
+                        },
+                  })
 
-                        //  console.log(`Response from share request  ${response.status}`)
+                  //  console.log(`Response from share request  ${response.status}`)
                   // }
             } catch (e) {
                   toast.error('Error sharing workflow')
@@ -293,7 +293,11 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: { selectedTempla
                   } else {
                         if (field.name === 'signers' && selectedTemplate.name === 'aqua_sign') {
                               completeFormData[field.name] = multipleAddresses.join(',')
+                        }else  if (field.name === 'delegated_wallets' && selectedTemplate.name === 'dba_claim') {
+                              completeFormData[field.name] = multipleAddresses.join(',')
                         }
+
+
                   }
             })
 
@@ -829,6 +833,7 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: { selectedTempla
             e.preventDefault()
 
             try {
+
                   setModalFormErorMessae('')
 
                   if (submittingTemplateData) {
@@ -843,7 +848,6 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: { selectedTempla
 
                   // Step 2: Validate fields
                   validateFields(completeFormData, selectedTemplate)
-
 
 
 
@@ -890,6 +894,7 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: { selectedTempla
                   }
 
 
+                  console.log(`4.`)
                   //  console.log(`see me ...1`)
                   // Step 3: Get system files
                   const allSystemFiles = await getSystemFiles(systemFileInfo, backend_url, session?.address || '')
@@ -907,6 +912,36 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: { selectedTempla
                   // Step 6: Handle identity attestation specific logic
                   if (selectedTemplate?.name === 'identity_attestation') {
                         completeFormData = handleIdentityAttestation(completeFormData, selectedFileInfo)
+                  } else if (selectedTemplate?.name === 'dba_claim') {
+
+                        let dbaUrl = completeFormData['url'] as string
+                        if(!dbaUrl.includes('courts.delaware.gov')) {
+                              toast.error(`Please enter a DBA url expecting to find your trade name at courts.delaware.gov`)
+                              setSubmittingTemplateData(false)
+                              return
+                        }
+
+                        try {
+                              const url = ensureDomainUrlHasSSL(`${backend_url}/scrape_data`)
+                              const response = await axios.post(url, {
+                                    domain: completeFormData['url']
+                              },  
+                              {
+                                                headers: {
+                                                      nonce: session?.nonce,
+                                                },
+                                          }
+                                    )
+                              completeFormData = response.data.data.tradeNameDetails
+
+                              completeFormData['delegated_wallets'] = multipleAddresses.join(',')
+                       
+                        } catch (e) {
+                              toast.error(`Error fetching data from url.`)
+                              setSubmittingTemplateData(false)
+                              return
+                        }
+
                   }
 
                   //  console.log('Complete form data: ', completeFormData)

@@ -33,7 +33,7 @@ export default function NewShadcnLayoutWithSidebar() {
             formTemplates
       } = useStore(appStore)
 
-      
+
 
       return (
             <>
@@ -172,7 +172,7 @@ export default function NewShadcnLayoutWithSidebar() {
                                           className="h-6 w-6 bg-red-500 text-white hover:bg-red-500 z-10 relative"
                                           onClick={() => {
                                                 setOpenDialog(null)
-                                                if(openDialog?.dialogType  !== "user_signature"){
+                                                if (openDialog?.dialogType !== "user_signature") {
                                                       setSelectedFileInfo(null)
                                                 }
                                           }}
@@ -188,7 +188,7 @@ export default function NewShadcnLayoutWithSidebar() {
                                                       setOpenDialog(null)
                                                 }}
                                           />)}
- 
+
                                     {openDialog?.dialogType === 'aqua_sign' && (
                                           <CreateFormFromTemplate
                                                 selectedTemplate={formTemplates.find(template => template.name === 'aqua_sign')!}
@@ -218,6 +218,18 @@ export default function NewShadcnLayoutWithSidebar() {
                                                 openCreateTemplatePopUp={false}
                                           />
                                     )}
+
+
+                                    {openDialog?.dialogType === 'dba_claim' && (
+                                          <CreateFormFromTemplate
+                                                selectedTemplate={formTemplates.find(template => template.name === 'dba_claim')!}
+                                                callBack={function (): void {
+                                                      setOpenDialog(null)
+                                                }}
+                                                openCreateTemplatePopUp={false}
+                                          />
+                                    )}
+
 
                                     {openDialog?.dialogType === 'dns_claim' && (
                                           <CreateFormFromTemplate

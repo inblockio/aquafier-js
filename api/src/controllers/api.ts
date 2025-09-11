@@ -58,7 +58,7 @@
 //     });
 
 
-    
+
 //     fastify.post("/send_code", async (request, reply) => {
 
 
@@ -123,6 +123,8 @@
 import { FastifyInstance } from "fastify";
 import { twilioClient } from "../api/twilio";
 import { prisma } from "../database/db";
+import { WebScraper } from "src/utils/scraper";
+import { ScrapedData } from "src/models/types";
 
 // Rate-limiting configuration
 const RATE_LIMIT_CONFIG = {
@@ -175,7 +177,122 @@ async function checkRateLimit(
 }
 
 export default async function ApiController(fastify: FastifyInstance) {
- 
+
+  fastify.post("/scrape_data", async (request, reply) => {
+    const nonce = request.headers["nonce"];
+
+    // Check if `nonce` is missing or empty
+    if (!nonce || typeof nonce !== "string" || nonce.trim() === "") {
+      return reply
+        .code(401)
+        .send({ error: "Unauthorized: Missing or empty nonce header" });
+    }
+
+    const session = await prisma.siweSession.findUnique({
+      where: { nonce },
+    });
+
+    if (!session) {
+      return reply
+        .code(403)
+        .send({ success: false, message: "Nonce is invalid" });
+    }
+
+    const requestData = request.body as {
+
+      domain: string;
+    };
+
+    const valueInput = requestData.domain;
+
+    if (!valueInput || valueInput.length === 0) {
+      return reply
+        .code(412)
+        .send({ success: false, message: "Domain not found in payload" });
+    }
+
+    if (typeof valueInput !== 'string') {
+
+      return reply
+        .code(412)
+        .send({ success: false, message: "domain  provided  (${valueInput}) at is not a string" });
+
+    }
+
+    const trimmedInput = valueInput.trim()
+
+    // Check for protocol prefixes
+    // if (/^[a-zA-Z][a-zA-Z0-9+.-]*:\/\//.test(trimmedInput)) {
+
+    //   return reply
+    //     .code(412)
+    //     .send({ success: false, message: `${valueInput} - contains protocol (http://, https://, etc.). Please provide domain only (e.g., example.com)` });
+
+    // }
+
+    const allowedUrlsWithProtocol = [
+  'courts.delaware.gov',
+  'other-allowed-domain.com'
+];
+
+const hasProtocol = /^[a-zA-Z][a-zA-Z0-9+.-]*:\/\//.test(trimmedInput);
+const isAllowed = allowedUrlsWithProtocol.some(allowedUrl => 
+  trimmedInput.includes(allowedUrl)
+);
+
+if (hasProtocol && !isAllowed) {
+  return reply
+    .code(412)
+    .send({ success: false, message: `${valueInput} - contains protocol (http://, https://, etc.). Please provide domain only (e.g., example.com)` });
+}
+
+    // Check for www subdomain
+    if (/^www\./.test(trimmedInput)) {
+
+      return reply
+        .code(412)
+        .send({ success: false, message: `${valueInput} - www subdomain not allowed. Please provide domain without www (e.g., example.com instead of www.example.com)` });
+
+    }
+
+    // Domain regex validation - allowing underscores in subdomains for DNS TXT records
+    const domainWithSubdomainRegex = /^(?!www\.)((?!-)[A-Za-z0-9_-]{1,63}(?<!-)\.)*(?!-)[A-Za-z0-9-]{1,63}(?<!-)\.[A-Za-z]{2,6}$/
+
+    if (!domainWithSubdomainRegex.test(trimmedInput) && !isAllowed) {
+
+      return reply
+        .code(412)
+        .send({ success: false, message: `${valueInput} - is not a valid domain. Expected format: example.com, api.example.com, or name._prefix.example.com` });
+
+    }
+
+    // Ensure it's not just a TLD
+    const parts = trimmedInput.split('.')
+    if (parts.length < 2 || parts[0].length === 0) {
+
+      return reply
+        .code(412)
+        .send({ success: false, message: `${valueInput} - must include both domain name and TLD (e.g., example.com)` });
+
+    }
+
+    let scraper = new WebScraper(requestData.domain);
+
+    let data: ScrapedData | null = null;
+    try {
+      data = await scraper.scrape();
+    } catch (error) {
+      console.error("Error during scraping:", error);
+      return reply
+        .code(500)
+        .send({ success: false, message: "Error occurred while scraping the domain." });
+    }
+
+    return reply.code(200).send({ success: true, data });
+
+
+  });
+
   fastify.post("/verify_code", async (request, reply) => {
     const nonce = request.headers["nonce"];
 
@@ -221,35 +338,35 @@ export default async function ApiController(fastify: FastifyInstance) {
       ? "email"
       : "phone_number";
 
-      if (verificationType === "email") {
-        // Basic email format validation
-        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        if (!emailRegex.test(revisionDataPar.email_or_phone_number)) {
-          return reply
-            .code(400)
-            .send({ success: false, message: "Invalid email format" });
-        }
-
-        if(revisionDataPar.email_or_phone_number=="test@inblock.io.com"){
-          return reply
-          .code(200)
-          .send({ success: true, message: "Verification code validated" });
-        }
-      }else{
-        // Basic phone number format validation (simple regex for illustration)
-        // const phoneRegex = /^\+?[1-9]\d{1,14}$/; // E.164 format
-        // if (!phoneRegex.test(revisionDataPar.email_or_phone_number)) {
-        //   return reply
-        //     .code(400)
-        //     .send({ success: false, message: "Invalid phone number format" });
-        // }
-
-          if(revisionDataPar.email_or_phone_number=="000-000-0000"){
-          return reply
-          .code(200)
-          .send({ success: true, message: "Verification code validated" });
-        }
+    if (verificationType === "email") {
+      // Basic email format validation
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(revisionDataPar.email_or_phone_number)) {
+        return reply
+          .code(400)
+          .send({ success: false, message: "Invalid email format" });
       }
+
+      if (revisionDataPar.email_or_phone_number == "test@inblock.io.com") {
+        return reply
+          .code(200)
+          .send({ success: true, message: "Verification code validated" });
+      }
+    } else {
+      // Basic phone number format validation (simple regex for illustration)
+      // const phoneRegex = /^\+?[1-9]\d{1,14}$/; // E.164 format
+      // if (!phoneRegex.test(revisionDataPar.email_or_phone_number)) {
+      //   return reply
+      //     .code(400)
+      //     .send({ success: false, message: "Invalid phone number format" });
+      // }
+
+      if (revisionDataPar.email_or_phone_number == "000-000-0000") {
+        return reply
+          .code(200)
+          .send({ success: true, message: "Verification code validated" });
+      }
+    }
 
     // Check rate limit for verify_code
     const rateLimitCheck = await checkRateLimit(
@@ -344,35 +461,35 @@ export default async function ApiController(fastify: FastifyInstance) {
     }
 
 
-     if (verificationType === "email") {
-        // Basic email format validation
-        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        if (!emailRegex.test(revisionDataPar.email_or_phone_number)) {
-          return reply
-            .code(400)
-            .send({ success: false, message: "Invalid email format" });
-        }
-
-        if(revisionDataPar.email_or_phone_number=="test@inblock.io.com"){
-          return reply
-          .code(200)
-          .send({ success: true, message: "Verification code sent" });
-        }
-      }else{
-        // Basic phone number format validation (simple regex for illustration)
-        // const phoneRegex = /^\+?[1-9]\d{1,14}$/; // E.164 format
-        // if (!phoneRegex.test(revisionDataPar.email_or_phone_number)) {
-        //   return reply
-        //     .code(400)
-        //     .send({ success: false, message: "Invalid phone number format" });
-        // }
-
-          if(revisionDataPar.email_or_phone_number=="000-000-0000"){
-          return reply
-          .code(200)
-          .send({ success: true, message: "Verification code sent" });
-        }
+    if (verificationType === "email") {
+      // Basic email format validation
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(revisionDataPar.email_or_phone_number)) {
+        return reply
+          .code(400)
+          .send({ success: false, message: "Invalid email format" });
       }
+
+      if (revisionDataPar.email_or_phone_number == "test@inblock.io.com") {
+        return reply
+          .code(200)
+          .send({ success: true, message: "Verification code sent" });
+      }
+    } else {
+      // Basic phone number format validation (simple regex for illustration)
+      // const phoneRegex = /^\+?[1-9]\d{1,14}$/; // E.164 format
+      // if (!phoneRegex.test(revisionDataPar.email_or_phone_number)) {
+      //   return reply
+      //     .code(400)
+      //     .send({ success: false, message: "Invalid phone number format" });
+      // }
+
+      if (revisionDataPar.email_or_phone_number == "000-000-0000") {
+        return reply
+          .code(200)
+          .send({ success: true, message: "Verification code sent" });
+      }
+    }
 
     // Check rate limit for send_code
     const rateLimitCheck = await checkRateLimit(
