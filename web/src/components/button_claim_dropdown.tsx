@@ -1,6 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-// import { ChevronDown, Plus, Globe, UserLock, Signature, Phone, Mail, Scale } from 'lucide-react';
-import { ChevronDown, Plus, Globe, UserLock, Signature, Phone, Mail } from 'lucide-react';
+import { ChevronDown, Plus, Globe, UserLock, Signature, Phone, Mail, Scale } from 'lucide-react';
 import { createPortal } from 'react-dom';
 import appStore from '../store'
 import { useStore } from 'zustand'
@@ -110,14 +109,14 @@ export default function ClaimTypesDropdownButton() {
           </button>
 
 
-           {/* <button
+           <button
           data-testid="create-dns-claim-dropdown-button-item"
             onClick={() => handleItemClick('dba_claim')}
             className="group flex w-full items-center px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900"
           >
             <Scale className="mr-3 h-4 w-4 text-gray-400 group-hover:text-gray-500" />
             Create DBA Claim
-          </button> */}
+          </button>
 
 
            <button

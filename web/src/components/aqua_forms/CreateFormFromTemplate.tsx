@@ -103,12 +103,17 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: { selectedTempla
       }
 
       const reorderInputFields = (fields: FormField[]) => {
-            const sortedFields = fields.sort((a, b) => {
+            try{
+                  const sortedFields = fields.sort((a, b) => {
                   return a.name.localeCompare(b.name)
             })
 
             // Return a new array with fields ordered by name
             return sortedFields
+            }catch(e){
+                  
+                  return fields
+            }
       }
 
       const addAddress = () => {
@@ -293,7 +298,7 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: { selectedTempla
                   } else {
                         if (field.name === 'signers' && selectedTemplate.name === 'aqua_sign') {
                               completeFormData[field.name] = multipleAddresses.join(',')
-                        }else  if (field.name === 'delegated_wallets' && selectedTemplate.name === 'dba_claim') {
+                        }else  if (field.name === 'delegated_wallets' &&  selectedTemplate && selectedTemplate.name === 'dba_claim') {
                               completeFormData[field.name] = multipleAddresses.join(',')
                         }
 
