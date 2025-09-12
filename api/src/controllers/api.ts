@@ -123,8 +123,8 @@
 import { FastifyInstance } from "fastify";
 import { twilioClient } from "../api/twilio";
 import { prisma } from "../database/db";
-import { WebScraper } from "src/utils/scraper";
-import { ScrapedData } from "src/models/types";
+import { WebScraper } from "../utils/scraper";
+import { ScrapedData } from "../models/types";
 
 // Rate-limiting configuration
 const RATE_LIMIT_CONFIG = {
