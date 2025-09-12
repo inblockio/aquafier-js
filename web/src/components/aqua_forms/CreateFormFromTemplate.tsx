@@ -338,7 +338,7 @@ const CreateFormFromTemplate = ({selectedTemplate, callBack}: {
                     completeFormData[field.name] = multipleAddresses.join(',')
                 }else  if (field.name === 'delegated_wallets' && selectedTemplate.name === 'dba_claim') {
                               completeFormData[field.name] = multipleAddresses.join(',')
-                        }else  if (field.name === 'delegated_wallets' && selectedTemplate.name === 'dba_claim') {
+                        }else  if (field.name === 'delegated_wallets' &&  selectedTemplate && selectedTemplate.name === 'dba_claim') {
                               completeFormData[field.name] = multipleAddresses.join(',')
                         }
 
