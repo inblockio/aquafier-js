@@ -1,20 +1,31 @@
-import { ApiFileInfo } from '@/models/FileInfo'
+import {ApiFileInfo} from '@/models/FileInfo'
 
-import { capitalizeWords, displayTime, formatBytes, formatCryptoAddress, getAquaTreeFileName, getAquaTreeFileObject, getFileCategory, getFileExtension, getGenesisHash, isWorkFlowData } from '@/utils/functions'
-import { FileObject, OrderRevisionInAquaTree } from 'aqua-js-sdk'
-import { FileText } from 'lucide-react'
-import { useEffect, useState } from 'react'
-import { SignAquaChain } from '../components/aqua_chain_actions/sign_aqua_chain'
-import { WitnessAquaChain } from '../components/aqua_chain_actions/witness_aqua_chain'
-import { DownloadAquaChain } from '../components/aqua_chain_actions/download_aqua_chain'
-import { DeleteAquaChain } from '../components/aqua_chain_actions/delete_aqua_chain'
-import { ShareButton } from '../components/aqua_chain_actions/share_aqua_chain'
-import { OpenAquaSignWorkFlowButton } from '../components/aqua_chain_actions/open_aqua_sign_workflow'
-import { LinkButton } from '../components/aqua_chain_actions/link_aqua_chain'
-import { OpenClaimsWorkFlowButton } from '@/components/aqua_chain_actions/open_identity_claim_workflow'
-import { AttestAquaClaim } from '@/components/aqua_chain_actions/attest_aqua_claim'
-import { OpenSelectedFileDetailsButton } from '@/components/aqua_chain_actions/details_button'
-import { useStore } from 'zustand'
+import {
+    capitalizeWords,
+    displayTime,
+    formatBytes,
+    formatCryptoAddress,
+    getAquaTreeFileName,
+    getAquaTreeFileObject,
+    getFileCategory,
+    getFileExtension,
+    getGenesisHash,
+    isWorkFlowData
+} from '@/utils/functions'
+import {FileObject, OrderRevisionInAquaTree} from 'aqua-js-sdk'
+import {FileText} from 'lucide-react'
+import {useEffect, useState} from 'react'
+import {SignAquaChain} from '../components/aqua_chain_actions/sign_aqua_chain'
+import {WitnessAquaChain} from '../components/aqua_chain_actions/witness_aqua_chain'
+import {DownloadAquaChain} from '../components/aqua_chain_actions/download_aqua_chain'
+import {DeleteAquaChain} from '../components/aqua_chain_actions/delete_aqua_chain'
+import {ShareButton} from '../components/aqua_chain_actions/share_aqua_chain'
+import {OpenAquaSignWorkFlowButton} from '../components/aqua_chain_actions/open_aqua_sign_workflow'
+import {LinkButton} from '../components/aqua_chain_actions/link_aqua_chain'
+import {OpenClaimsWorkFlowButton} from '@/components/aqua_chain_actions/open_identity_claim_workflow'
+import {AttestAquaClaim} from '@/components/aqua_chain_actions/attest_aqua_claim'
+import {OpenSelectedFileDetailsButton} from '@/components/aqua_chain_actions/details_button'
+import {useStore} from 'zustand'
 import appStore from '@/store'
 
 export default function FilesListItem({
@@ -44,7 +55,6 @@ export default function FilesListItem({
                   try {
                         return getAquaTreeFileName(e.aquaTree!)
                   } catch (e) {
-                        //  console.log('Error processing system file') // More descriptive
                         return ''
                   }
             })
@@ -52,20 +62,14 @@ export default function FilesListItem({
             const fileObject = getAquaTreeFileObject(file)
             setCurrentFileObject(fileObject)
             const workFlow = isWorkFlowData(file.aquaTree!, someData)
-            // //  console.log(
-            //     `Workflow info for some data ${JSON.stringify(someData, null, 4)} file ${getAquaTreeFileName(file.aquaTree!)}: ${JSON.stringify(workFlow, null, 4)}`
-            // )
             setWorkFlowInfo(workFlow)
       }, [])
 
       useEffect(() => {
-
-            // //  console.log(`FilesListItem  useEffect ---- `)
             const someData = systemFileInfo.map(e => {
                   try {
                         return getAquaTreeFileName(e.aquaTree!)
                   } catch (e) {
-                        //  console.log('Error processing system file')
                         return ''
                   }
             })
@@ -74,7 +78,6 @@ export default function FilesListItem({
             setCurrentFileObject(fileObject)
             const workFlow = isWorkFlowData(file.aquaTree!, someData)
 
-            // //  console.log(`systemFileInfo ${systemFileInfo} someData ${someData} -- workFlow ${JSON.stringify(workFlow, null, 4)} `)
             setWorkFlowInfo(workFlow)
       }, [file, systemFileInfo])
 
@@ -229,10 +232,6 @@ export default function FilesListItem({
       }
 
       const showActionsButton = () => {
-            // //  console.log(
-            //     `workflowInfo data ${JSON.stringify(workflowInfo, null, 4)}`
-            // )
-            // //  console.log('workflowInfo: ', workflowInfo)
             if (workflowInfo?.isWorkFlow == true && workflowInfo.workFlow == 'aqua_sign') {
                   return workFlowAquaSignActions()
             }

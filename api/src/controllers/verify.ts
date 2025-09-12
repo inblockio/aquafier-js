@@ -1,9 +1,7 @@
-
-
-import { streamToBuffer } from "../utils/file_utils";
-import Aquafier, { AquaTree, FileObject, LogData, LogType, Revision } from "aqua-js-sdk";
-import { FastifyInstance } from "fastify";
-import { verifyProofApi } from "../utils/verify_dns_claim";
+import {streamToBuffer} from "../utils/file_utils";
+import Aquafier, {AquaTree, FileObject, Revision} from "aqua-js-sdk";
+import {FastifyInstance} from "fastify";
+import {verifyProofApi} from "../utils/verify_dns_claim";
 
 export default async function verifyController(fastify: FastifyInstance) {
 
@@ -155,16 +153,8 @@ export default async function verifyController(fastify: FastifyInstance) {
                     error: 'Invalid AquaTree: Missing treeMapping'
                 });
             }
-
-            // Process the AquaTree
-            // const revisionHashes = Object.keys(aquaTree.revisions);
-            // const firstRevisionHash = revisionHashes[0];
-            // const firstRevision = aquaTree.revisions[firstRevisionHash];
-
             const aquafier = new Aquafier();
 
-            ////  console.log(`fileObjects ${JSON.stringify(fileObjects, null, 4)}`)
-            ////  console.log(`aquaTree ${JSON.stringify(aquaTree, null, 4)}`)
             let res = await aquafier.verifyAquaTree(aquaTree, fileObjects)
 
             if (res.isOk()) {

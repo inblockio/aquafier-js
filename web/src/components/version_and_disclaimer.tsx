@@ -1,15 +1,15 @@
-import { useEffect, useState } from 'react'
-import { LuMessageCircleWarning } from 'react-icons/lu'
-import { useStore } from 'zustand'
+import {useEffect, useState} from 'react'
+import {LuMessageCircleWarning} from 'react-icons/lu'
+import {useStore} from 'zustand'
 import appStore from '../store'
 import axios from 'axios'
 import VersionDetails from '../models/VersionDetails'
-import { IVersionAndDisclaimer } from '../types/index'
+import {IVersionAndDisclaimer} from '../types/index'
 import versionInfo from '../version-info.json'
-import { toast } from 'sonner'
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from './ui/dialog'
-import { Button } from './ui/button'
-import { Alert, AlertDescription } from './ui/alert'
+import {toast} from 'sonner'
+import {Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger} from './ui/dialog'
+import {Button} from './ui/button'
+import {Alert, AlertDescription} from './ui/alert'
 
 export default function VersionAndDisclaimer({ inline, open, updateOpenStatus }: IVersionAndDisclaimer) {
       //   const {  es, avatar, setAvatar, setUserProfile, backend_url } = useStore(appStore);
@@ -36,7 +36,6 @@ export default function VersionAndDisclaimer({ inline, open, updateOpenStatus }:
                         setVersionDetails(res)
                   }
             } catch (e: unknown) {
-                  //  //  console.log("Error fetching version ", e)
                   toast.error('Error fetching version details')
             }
       }

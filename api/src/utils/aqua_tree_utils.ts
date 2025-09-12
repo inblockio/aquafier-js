@@ -1,12 +1,8 @@
-import Aquafier, { AquaTree, FileObject, Revision as AquaRevision, OrderRevisionInAquaTree, reorderAquaTreeRevisionsProperties, reorderRevisionsProperties } from 'aqua-js-sdk';
-import { prisma } from '../database/db';
+import {AquaTree} from 'aqua-js-sdk';
 // For specific model types
-import { Latest, Signature, Revision, Witness, AquaForms, WitnessEvent, FileIndex, Link } from '@prisma/client';
-import * as fs from "fs"
-import path from 'path';
-import { SaveRevision } from '../models/request_models';
+import {FileIndex} from '@prisma/client';
+import Logger from "./Logger";
 
- 
 
 export function removeFilePathFromFileIndex(aquaTree: AquaTree): AquaTree {
 
@@ -82,7 +78,7 @@ export function validateAquaTree(tree: AquaTree): [boolean, string] {
     for (const hash in tree.revisions) {
         const revision = tree.revisions[hash];
 
-        console.log(`Revision --  ${JSON.stringify(revision)}`)
+        Logger.info(`Revision --  ${JSON.stringify(revision)}`)
         // Check required fields for all revisions
         if (revision.previous_verification_hash === undefined || revision.previous_verification_hash === null) {
             return [false, "A revision must contain previous_verification_hash"];

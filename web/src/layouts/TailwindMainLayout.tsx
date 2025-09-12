@@ -1,13 +1,13 @@
-import { Button } from '@/components/ui/button'
-import { Github } from 'lucide-react'
-import { BsTwitterX } from 'react-icons/bs'
-import { FaFacebook, FaLinkedin } from 'react-icons/fa6'
-import { Link, Outlet } from 'react-router-dom'
+import {Button} from '@/components/ui/button'
+import {Github} from 'lucide-react'
+import {BsTwitterX} from 'react-icons/bs'
+import {FaFacebook, FaLinkedin} from 'react-icons/fa6'
+import {Link, Outlet} from 'react-router-dom'
 import appStore from '../store'
-import { useStore } from 'zustand'
-import { useEffect, useState } from 'react'
-import { WebConfig } from '@/types/types'
-import { ClipLoader } from 'react-spinners'
+import {useStore} from 'zustand'
+import {useEffect, useState} from 'react'
+import {WebConfig} from '@/types/types'
+import {ClipLoader} from 'react-spinners'
 
 const Header = () => (
       <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -182,7 +182,6 @@ const TailwindMainLayout = () => {
       const [webConfigData, setWebConfigData] = useState<WebConfig>(webConfig)
 
       const getLogoUrl = (config: WebConfig): string | undefined => {
-                  // console.log("Config in sidebar ", config);
                   if (typeof config.CUSTOM_LOGO_URL === 'string') {
                         // config.CUSTOM_LOGO_URL != "true"
                         if (config.CUSTOM_LOGO_URL.startsWith('http://') || config.CUSTOM_LOGO_URL.startsWith('https://') || config.CUSTOM_LOGO_URL.startsWith('/')) {
@@ -192,14 +191,11 @@ const TailwindMainLayout = () => {
                         if (config.CUSTOM_LOGO_URL === "true") {
                               return undefined;
                         }
-                        // console.log("Default logo url ");
                         return '/images/logo.png';
                   }
                   if (!config.CUSTOM_LOGO_URL) {
-                        // console.log("Default logo url ");
                         return '/images/logo.png';
                   }
-                  // console.log("No logo url ");
                   return undefined; // when it's boolean
             };
       

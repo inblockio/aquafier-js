@@ -18,36 +18,36 @@ services:
       retries: 5
     env_file:
       - .env
-
-  aqua-container:
-    build:
-      context: ./..
-      dockerfile: actionfiles/aquafier-ts/dockerfile/Dockerfile
-    #    image: ghcr.io/inblockio/aquafier-js:dev
-    restart: always
-    env_file:
-      - .env
-    environment:
-      RESTORE_BACKUP: true
-      VIRTUAL_HOST_MULTIPORTS: |-
-        ${FRONTEND_URL}:
-          "/":
-              port: 3600
-        ${BACKEND_URL}:
-          "/":
-              port: 3000
-      LETSENCRYPT_HOST: ${FRONTEND_URL}, ${BACKEND_URL}
-      LETSENCRYPT_EMAIL: ${LETSENCRYPT_EMAIL}
-    ports:
-      - 3000:3000
-      - 3600:3600
-    depends_on:
-      postgres:
-        condition: service_healthy
-    volumes:
-      - ./restore:/restore
-    # volumes:
-    #   - ./dev_mount_points/aquafier:/app/backend/media
+  #
+  #  aqua-container:
+  #    build:
+  #      context: ./..
+  #      dockerfile: actionfiles/aquafier-ts/dockerfile/Dockerfile
+  #    #    image: ghcr.io/inblockio/aquafier-js:dev
+  #    restart: always
+  #    env_file:
+  #      - .env
+  #    environment:
+  #      RESTORE_BACKUP: true
+  #      VIRTUAL_HOST_MULTIPORTS: |-
+  #        ${FRONTEND_URL}:
+  #          "/":
+  #              port: 3600
+  #        ${BACKEND_URL}:
+  #          "/":
+  #              port: 3000
+  #      LETSENCRYPT_HOST: ${FRONTEND_URL}, ${BACKEND_URL}
+  #      LETSENCRYPT_EMAIL: ${LETSENCRYPT_EMAIL}
+  #    ports:
+  #      - 3000:3000
+  #      - 3600:3600
+  #    depends_on:
+  #      postgres:
+  #        condition: service_healthy
+  #    volumes:
+  #      - ./restore:/restore
+  #    # volumes:
+  #    #   - ./dev_mount_points/aquafier:/app/backend/media
 
 
   s3storage:

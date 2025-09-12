@@ -1,11 +1,11 @@
-import { useEffect, useState } from 'react'
-import { Grid3X3, List, Filter, X } from 'lucide-react'
+import {useEffect, useState} from 'react'
+import {Filter, Grid3X3, List, X} from 'lucide-react'
 import FileListItem from './files_list_item'
-import { fetchSystemFiles, getAquaTreeFileName, isWorkFlowData } from '@/utils/functions'
+import {fetchSystemFiles, getAquaTreeFileName, isWorkFlowData} from '@/utils/functions'
 
-import { useStore } from 'zustand'
+import {useStore} from 'zustand'
 import appStore from '../store'
-import { ApiFileInfo } from '@/models/FileInfo'
+import {ApiFileInfo} from '@/models/FileInfo'
 
 export default function FilesList() {
       const [view, setView] = useState<'table' | 'card'>('table')
@@ -37,9 +37,6 @@ export default function FilesList() {
 
       // Extract unique workflows from files
       useEffect(() => {
-
-            // //  console.log(`use effect in files list file and systemn  info `)
-
             if (systemFileInfo.length == 0) {
                   if (!hasFetchedSystemAquaTrees) {
                         setHasFetchedSystemAquaTrees(true);
@@ -56,7 +53,6 @@ export default function FilesList() {
                         try {
                               return getAquaTreeFileName(e.aquaTree!)
                         } catch (e) {
-                              //  console.log('Error processing system file')
                               return ''
                         }
                   })
@@ -70,7 +66,6 @@ export default function FilesList() {
                                     workflows.add(workFlow.workFlow)
                               }
                         } catch (e) {
-                              //  console.log('Error processing workflow data for file:', file)
                         }
                   })
 
@@ -94,7 +89,6 @@ export default function FilesList() {
                         try {
                               return getAquaTreeFileName(e.aquaTree!)
                         } catch (e) {
-                              //  console.log('Error processing system file')
                               return ''
                         }
                   })
@@ -111,7 +105,6 @@ export default function FilesList() {
                                     return selectedFilters.includes('aqua_files')
                               }
                         } catch (e) {
-                              //  console.log('Error filtering file:', file)
                               return false
                         }
                   })
@@ -123,7 +116,6 @@ export default function FilesList() {
                         try {
                               return getAquaTreeFileName(e.aquaTree!)
                         } catch (e) {
-                              //  console.log('Error processing system file')
                               return ''
                         }
                   })
@@ -133,7 +125,6 @@ export default function FilesList() {
                               const workFlow = isWorkFlowData(file.aquaTree!, someData)
                               return workFlow.isWorkFlow && workFlow.workFlow === selectedWorkflow
                         } catch (e) {
-                              //  console.log('Error filtering by workflow:', file)
                               return false
                         }
                   })

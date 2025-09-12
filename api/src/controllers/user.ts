@@ -1,13 +1,14 @@
-import { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
+import {FastifyInstance, FastifyReply, FastifyRequest} from 'fastify';
 // import { SiweMessage } from 'siwe';
-import { prisma } from '../database/db';
+import {prisma} from '../database/db';
 // import { Settings } from '@prisma/client';
-import { SettingsRequest, UserAttestationAddressesRequest } from '../models/request_models';
+import {SettingsRequest, UserAttestationAddressesRequest} from '../models/request_models';
 // import { verifySiweMessage } from '../utils/auth_utils';
-import { fetchEnsName } from '../utils/api_utils';
-import { authenticate, AuthenticatedRequest } from '../middleware/auth_middleware';
-import { Prisma, PrismaClient, UserAttestationAddresses } from '@prisma/client';
-import { DefaultArgs } from '@prisma/client/runtime/library';
+import {fetchEnsName} from '../utils/api_utils';
+import {authenticate, AuthenticatedRequest} from '../middleware/auth_middleware';
+import {Prisma, PrismaClient, UserAttestationAddresses} from '@prisma/client';
+import {DefaultArgs} from '@prisma/client/runtime/library';
+import Logger from '../utils/Logger';
 
 export default async function userController(fastify: FastifyInstance) {
 
@@ -70,7 +71,7 @@ export default async function userController(fastify: FastifyInstance) {
             }
         });
 
-        console.log(`=> address ${address} \n Data ${JSON.stringify(userData)}`)
+        Logger.info(`=> address ${address} \n Data ${JSON.stringify(userData)}`)
         if (userData) {
             if (userData.ens_name) {
                 return reply.code(200).send({
@@ -311,7 +312,7 @@ export default async function userController(fastify: FastifyInstance) {
                 }
             }
         } catch (error: any) {
-            console.error("Error fetching session:", error);
+            Logger.error("Error fetching session:", error);
             return reply.code(500).send({ success: false, message: "Internal server error" });
         }
 
@@ -364,7 +365,7 @@ export default async function userController(fastify: FastifyInstance) {
             })
 
         } catch (error: any) {
-            console.error("Error fetching session:", error);
+            Logger.error("Error fetching session:", error);
             return reply.code(500).send({ success: false, message: "Internal server error" });
         }
     });
@@ -397,18 +398,18 @@ export default async function userController(fastify: FastifyInstance) {
 
             // Start a transaction to ensure all operations succeed or fail together
             await prisma.$transaction(async (tx) => {
-                console.log('Starting user data deletion transaction for user:', userAddress);
+                Logger.info('Starting user data deletion transaction for user:', userAddress);
 
                 const deletedNotifications = await tx.notifications.deleteMany({
                     where: { receiver: userAddress }
                 });
-                console.log(`Deleted deletedNotifications ${deletedNotifications.count}  records`);
+                Logger.info(`Deleted deletedNotifications ${deletedNotifications.count}  records`);
 
                 // Step 1: Delete all Latest records associated with user address
                 const deletedLatest = await tx.latest.deleteMany({
                     where: { user: userAddress }
                 });
-                console.log(`Deleted ${deletedLatest.count} latest records`);
+                Logger.info(`Deleted ${deletedLatest.count} latest records`);
 
                 // const deletedContracts = await tx.contract.deleteMany({
                 //     where: {
@@ -422,7 +423,7 @@ export default async function userController(fastify: FastifyInstance) {
 
 
 
-                // contracts 
+                // contracts
                 // start witth recipients
                 // Updated soft delete logic - adds user address to receiver_has_deleted array
                 // instead of hard deleting contracts
@@ -474,7 +475,7 @@ export default async function userController(fastify: FastifyInstance) {
                         }
                     }
                 });
-                console.log(`Hard deleted ${deletedSenderContracts.count} contracts where user was sender`);
+                Logger.info(`Hard deleted ${deletedSenderContracts.count} contracts where user was sender`);
 
                 // End of contracts
 
@@ -492,7 +493,7 @@ export default async function userController(fastify: FastifyInstance) {
                 });
 
                 const revisionHashes = userRevisions.map(rev => rev.pubkey_hash);
-                console.log(`Found ${revisionHashes.length} revisions to process`);
+                Logger.info(`Found ${revisionHashes.length} revisions to process`);
 
                 if (revisionHashes.length > 0) {
                     // Step 3: Delete dependent records in order
@@ -505,7 +506,7 @@ export default async function userController(fastify: FastifyInstance) {
                             }
                         }
                     });
-                    console.log(`Deleted ${deletedLinks.count} link records`);
+                    Logger.info(`Deleted ${deletedLinks.count} link records`);
 
                     // 3b. Delete Signature records
                     const deletedSignatures = await tx.signature.deleteMany({
@@ -515,7 +516,7 @@ export default async function userController(fastify: FastifyInstance) {
                             }
                         }
                     });
-                    console.log(`Deleted ${deletedSignatures.count} signature records`);
+                    Logger.info(`Deleted ${deletedSignatures.count} signature records`);
 
                     // 3c. Delete Witness records and associated WitnessEvent records
                     const witnessRecords = await tx.witness.findMany({
@@ -533,11 +534,11 @@ export default async function userController(fastify: FastifyInstance) {
                     if (witnessRecords.length > 0) {
 
                         for (const merkelItem of witnessRecords) {
-                            console.log(`Witness Record - Hash: ${merkelItem.hash}, Merkle Root: ${merkelItem.Witness_merkle_root}`);
+                            Logger.info(`Witness Record - Hash: ${merkelItem.hash}, Merkle Root: ${merkelItem.Witness_merkle_root}`);
 
 
                             if (merkelItem.Witness_merkle_root == null) {
-                                console.log(`Skipping WitnessEvent deletion for hash ${merkelItem.hash} due to null Merkle root`);
+                                Logger.info(`Skipping WitnessEvent deletion for hash ${merkelItem.hash} due to null Merkle root`);
                                 continue;
                             }
                             const allWithMerkleRoot = await prisma.witness.findMany({
@@ -558,7 +559,7 @@ export default async function userController(fastify: FastifyInstance) {
                                         }
                                     }
                                 });
-                                console.log(`Deleted ${deletedWitnessEvents.count} witness event records for merkle root ${merkelItem.Witness_merkle_root}`);
+                                Logger.info(`Deleted ${deletedWitnessEvents.count} witness event records for merkle root ${merkelItem.Witness_merkle_root}`);
 
                             }
 
@@ -573,7 +574,7 @@ export default async function userController(fastify: FastifyInstance) {
                                 }
                             }
                         });
-                        console.log(`Deleted ${deletedWitness.count} witness records`);
+                        Logger.info(`Deleted ${deletedWitness.count} witness records`);
 
 
                     }
@@ -586,7 +587,7 @@ export default async function userController(fastify: FastifyInstance) {
                             }
                         }
                     });
-                    console.log(`Deleted ${deletedAquaForms.count} aqua forms records`);
+                    Logger.info(`Deleted ${deletedAquaForms.count} aqua forms records`);
 
                     // Step 4: Handle Files and FileIndex records
                     for (const hash of revisionHashes) {
@@ -597,7 +598,7 @@ export default async function userController(fastify: FastifyInstance) {
                             }
                         });
 
-                        console.log(`Processing files for revision hash: ${hash}`);
+                        Logger.info(`Processing files for revision hash: ${hash}`);
                         await handleFilesDeletion(tx, hash);
                     }
 
@@ -609,10 +610,10 @@ export default async function userController(fastify: FastifyInstance) {
                             }
                         }
                     });
-                    console.log(`Deleted ${deletedRevisions.count} revision records`);
+                    Logger.info(`Deleted ${deletedRevisions.count} revision records`);
                 }
 
-                console.log('User data deletion completed successfully');
+                Logger.info('User data deletion completed successfully');
             });
 
             // Step 6: Delete user templates (outside transaction for better error handling)
@@ -629,7 +630,7 @@ export default async function userController(fastify: FastifyInstance) {
             });
 
         } catch (error: any) {
-            console.error('Error clearing user data:', error);
+            Logger.error('Error clearing user data:', error);
             return reply.code(500).send({
                 success: false,
                 message: 'Internal server error while clearing user data',
@@ -644,7 +645,7 @@ export default async function userController(fastify: FastifyInstance) {
     async function handleFilesDeletion(
         tx: Omit<PrismaClient<Prisma.PrismaClientOptions, never, DefaultArgs>, "$connect" | "$disconnect" | "$on" | "$transaction" | "$use" | "$extends">,
         pubKey: string) {
-        console.log('Starting files deletion process');
+        Logger.info('Starting files deletion process');
 
         // Find FileIndex records associated with this user
         let filesToDelete = await tx.fileIndex.findMany({
@@ -661,7 +662,7 @@ export default async function userController(fastify: FastifyInstance) {
 
         // If no exact matches, try partial matching
         if (filesToDelete.length === 0) {
-            console.log('No exact matches found, trying partial matching');
+            Logger.info('No exact matches found, trying partial matching');
             const rawQuery = await tx.$queryRaw`
             SELECT file_hash, pubkey_hash FROM file_index 
             WHERE EXISTS (
@@ -670,7 +671,7 @@ export default async function userController(fastify: FastifyInstance) {
             )
         `;
             filesToDelete = rawQuery as { file_hash: string; pubkey_hash: string[]; }[];
-            console.log(`Found ${filesToDelete.length} matches with partial matching`);
+            Logger.info(`Found ${filesToDelete.length} matches with partial matching`);
         }
 
         if (filesToDelete.length > 0) {
@@ -725,7 +726,7 @@ export default async function userController(fastify: FastifyInstance) {
                         }
                     }
                 });
-                console.log(`Deleted ${deletedFileIndexes.count} file index records`);
+                Logger.info(`Deleted ${deletedFileIndexes.count} file index records`);
 
                 // Now delete corresponding File records
                 const deletedFiles = await tx.file.deleteMany({
@@ -735,18 +736,18 @@ export default async function userController(fastify: FastifyInstance) {
                         }
                     }
                 });
-                console.log(`Deleted ${deletedFiles.count} file records`);
+                Logger.info(`Deleted ${deletedFiles.count} file records`);
             }
 
-            console.log(`Processed ${filesToDelete.length} file associations for user ${pubKey}`);
+            Logger.info(`Processed ${filesToDelete.length} file associations for user ${pubKey}`);
         } else {
-            console.log(`No files found for user ${pubKey}`);
+            Logger.info(`No files found for user ${pubKey}`);
         }
     }
 
     // Helper function to delete user templates
     async function deleteUserTemplates(userAddress: string) {
-        console.log('Starting template deletion process');
+        Logger.info('Starting template deletion process');
 
         const userTemplates = await prisma.aquaTemplate.findMany({
             where: {
@@ -773,7 +774,7 @@ export default async function userController(fastify: FastifyInstance) {
             });
         }
 
-        console.log(`Deleted ${userTemplates.length} user templates`);
+        Logger.info(`Deleted ${userTemplates.length} user templates`);
     }
 
 }

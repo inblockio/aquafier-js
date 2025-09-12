@@ -1,9 +1,9 @@
-
 // import { ClientConnection,  } from "../server";
-import { connectedClients } from "../store/store";
-import { ClientConnection } from "../models/types";
-import { FastifyInstance } from 'fastify';
-import { WebSocket as WSWebSocket } from 'ws';
+import {connectedClients} from "../store/store";
+import {ClientConnection} from "../models/types";
+import {FastifyInstance} from 'fastify';
+import {WebSocket as WSWebSocket} from 'ws';
+import Logger from "../utils/Logger";
 
 // Define SocketStream manually
 export interface SocketStream {
@@ -21,23 +21,23 @@ export function broadcastToAllClients(action: string) {
         connectedClients.forEach((client, userId) => {
 
             if (client?.socket && client.socket.readyState === WebSocket.OPEN) {
-                console.log(`Pinging clients ${userId} `)
+                Logger.info(`Pinging clients ${userId} `)
                 client.socket.send(messageString, (err) => {
                     if (err) {
-                        console.error(`Error sending message to user ${userId}:`, err);
+                        Logger.error(`Error sending message to user ${userId}:`, err);
                     } else {
-                        console.log(`Message sent successfully to user ${userId}`);
+                        Logger.info(`Message sent successfully to user ${userId}`);
                     }
                 });
             } else {
                 // Remove invalid or disconnected clients
 
-                console.warn(`Removing invalid or disconnected client: ${userId}`);
+                Logger.warn(`Removing invalid or disconnected client: ${userId}`);
                 connectedClients.delete(userId);
             }
         });
     } catch (e) {
-        console.log(`WebSocket BroadcastToAllClients  failed :${e} `);
+        Logger.error(`WebSocket BroadcastToAllClients failed: ${e}`);
     }
 }
 
@@ -98,16 +98,16 @@ export default async function webSocketController(fastify: FastifyInstance) {
         const ws = connection;
 
         if (!userId) {
-            console.log('WebSocket connection rejected: No user ID provided');
+            Logger.error('WebSocket connection rejected: No user ID provided');
             ws.close(1008, 'User ID is required');
             return;
         }
 
-        console.log(`Client connected to WebSocket with user ID: ${userId}`);
+        Logger.info(`Client connected to WebSocket with user ID: ${userId}`);
 
         // Check if user is already connected
         if (connectedClients.has(userId)) {
-            console.log(`User ${userId} is already connected, closing previous connection`);
+            Logger.info(`User ${userId} is already connected, closing previous connection`);
             const existingConnection = connectedClients.get(userId);
             existingConnection?.socket.close(1000, 'New connection established');
         }
@@ -121,7 +121,7 @@ export default async function webSocketController(fastify: FastifyInstance) {
         connectedClients.set(userId, clientConnection);
 
         ws.on('message', (message) => {
-            console.log(`Received message from user ${userId}:`, message.toString());
+            Logger.info(`Received message from user ${userId}:`, message.toString());
 
             try {
                 const parsedMessage = JSON.parse(message.toString());
@@ -156,12 +156,12 @@ export default async function webSocketController(fastify: FastifyInstance) {
         });
 
         ws.on('close', () => {
-            console.log(`Client ${userId} disconnected from WebSocket`);
+            Logger.info(`Client ${userId} disconnected from WebSocket`);
             connectedClients.delete(userId);
         });
 
         ws.on('error', (error) => {
-            console.error(`WebSocket error for user ${userId}:`, error);
+            Logger.error(`WebSocket error for user ${userId}:`, error);
             connectedClients.delete(userId);
         });
 

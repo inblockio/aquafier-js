@@ -1,15 +1,15 @@
-import { LuDock } from 'react-icons/lu'
+import {LuDock} from 'react-icons/lu'
 import axios from 'axios'
-import { useStore } from 'zustand'
+import {useStore} from 'zustand'
 import appStore from '../../store'
-import { useState } from 'react'
-import { ApiFileInfo } from '../../models/FileInfo'
-import { checkIfFileExistInUserFiles } from '../../utils/functions'
-import { maxFileSizeForUpload } from '../../utils/constants'
-import { IDropzoneAction } from '../../types/types'
-import { Button } from '@/components/ui/button'
-import { Loader2 } from 'lucide-react'
-import { toast } from 'sonner'
+import {useState} from 'react'
+import {ApiFileInfo} from '../../models/FileInfo'
+import {checkIfFileExistInUserFiles} from '../../utils/functions'
+import {maxFileSizeForUpload} from '../../utils/constants'
+import {IDropzoneAction} from '../../types/types'
+import {Button} from '@/components/ui/button'
+import {Loader2} from 'lucide-react'
+import {toast} from 'sonner'
 // export const FormRevisionFile = ({ file, uploadedIndexes, fileIndex, updateUploadedIndex }: IDropzoneAction) => {
 export const FormRevisionFile = ({ file, filesWrapper, removeFilesListForUpload }: IDropzoneAction) => {
       const [uploading, setUploading] = useState(false)
@@ -48,7 +48,6 @@ export const FormRevisionFile = ({ file, filesWrapper, removeFilesListForUpload 
             setUploading(true)
             try {
                   const url = `${backend_url}/explorer_files`
-                  //  //  console.log("url ", url)
                   const response = await axios.post(url, formData, {
                         headers: {
                               'Content-Type': 'multipart/form-data',

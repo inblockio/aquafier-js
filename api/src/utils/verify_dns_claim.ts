@@ -1,7 +1,7 @@
 import * as ethers from 'ethers';
 import * as dns from 'dns';
-import { promisify } from 'util';
-import * as crypto from 'crypto';
+import {promisify} from 'util';
+import Logger from "./Logger";
 
 export interface TxtRecord {
   wallet: string;
@@ -21,7 +21,7 @@ dns.setServers([
   '1.0.0.1'
 ]);
 
-console.log('🔧 DNS servers set to:', dns.getServers());
+Logger.info('🔧 DNS servers set to:', dns.getServers());
 
 // Rate limiting
 const rateLimitMap = new Map<string, { count: number; resetTime: number }>();

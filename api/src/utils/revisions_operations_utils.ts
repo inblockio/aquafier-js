@@ -1,14 +1,21 @@
-import { AquaTree, FileObject, Revision as AquaRevision, reorderRevisionsProperties, OrderRevisionInAquaTree } from 'aqua-js-sdk';
+import {
+    AquaTree,
+    FileObject,
+    OrderRevisionInAquaTree,
+    reorderRevisionsProperties,
+    Revision as AquaRevision
+} from 'aqua-js-sdk';
 
-import { prisma } from '../database/db';
+import {prisma} from '../database/db';
 // For specific model types
-import { Link, Revision, Prisma, WitnessEvent, Signature, AquaForms } from '@prisma/client';
+import {AquaForms, Link, Prisma, Revision, Signature, WitnessEvent} from '@prisma/client';
 import * as fs from "fs"
 import path from 'path';
-import { getGenesisHash } from './aqua_tree_utils';
-import { AquaTreeFileData, LinkedRevisionResult, ProcessRevisionResult, UpdateGenesisResult } from '../models/types';
-import { SYSTEM_WALLET_ADDRESS, systemTemplateHashes } from '../models/constants';
-import { getFileSize } from "./file_utils";
+import {getGenesisHash} from './aqua_tree_utils';
+import {AquaTreeFileData, LinkedRevisionResult, ProcessRevisionResult, UpdateGenesisResult} from '../models/types';
+import {SYSTEM_WALLET_ADDRESS, systemTemplateHashes} from '../models/constants';
+import {getFileSize} from "./file_utils";
+import Logger from "./Logger";
 
 // Main refactored function
 export async function createAquaTreeFromRevisions(
@@ -25,13 +32,12 @@ export async function createAquaTreeFromRevisions(
         // Step 1: Get all revisions in the chain
         const revisionData = await getRevisionChain(latestRevisionHash);
 
-        // console.log(`🤔🤔 revisionData ${JSON.stringify(revisionData, null, 4)} `)
         if (revisionData.length === 0) {
-            console.error(`Revision with hash ${latestRevisionHash} not found in system`);
+            Logger.error(`Revision with hash ${latestRevisionHash} not found in system`);
             return [aquaTree, []];
         }
 
-        console.log(`🎾🎾🎾 All revision ${JSON.stringify(revisionData, null, 4)}`)
+        Logger.debug(`All revisions: ${JSON.stringify(revisionData, null, 4)}`)
 
         let revisionPubKeyHashes = revisionData.map(revision => revision.pubkey_hash);
 
@@ -80,17 +86,17 @@ export async function createAquaTreeFromRevisions(
             }
         }
 
-        console.log(`🎇🎇 All revision pubkey hashes ${JSON.stringify(fileOrFormPubKeyHashes, null, 4)}`)
+        Logger.info(`🎇🎇 All revision pubkey hashes ${JSON.stringify(fileOrFormPubKeyHashes, null, 4)}`)
 
 
         // Step 2: Get all associated files
         const aquaTreeFileData = await fetchAquaTreeFileData(revisionPubKeyHashes);
-        console.log("File indexes: ", aquaTreeFileData)
+        Logger.info("File indexes: ", aquaTreeFileData)
 
         // Step 3: Create file objects for download
         fileObjects = await createFileObjects(aquaTreeFileData, url);
 
-        console.log("File indexe----: ", JSON.stringify(fileObjects, null, 4))
+        Logger.info("File indexe----: ", JSON.stringify(fileObjects, null, 4))
 
         // Step 4: Process each revision
         for (const revision of revisionData) {
@@ -105,7 +111,7 @@ export async function createAquaTreeFromRevisions(
         return [aquaTreeWithOrderdRevision, fileObjects];
 
     } catch (error : any) {
-        console.error('Error creating AquaTree:', error);
+        Logger.error('Error creating AquaTree:', error);
         throw new Error(`Failed to create AquaTree: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
 }
@@ -133,7 +139,6 @@ async function getRevisionChain(latestRevisionHash: string): Promise<Revision[]>
     if (latestRevision.previous && latestRevision.previous.length > 0) {
         try {
             const previousRevisions = await findAquaTreeRevision(latestRevision.previous);
-            // console.log("Genesis revision: ", previousRevisions);
             revisionData.push(...previousRevisions);
         } catch (error : any) {
             throw new Error(`Error fetching previous revisions: ${JSON.stringify(error, null, 4)}`);
@@ -183,7 +188,7 @@ type RevisionInfo =
     | null;
 
 export async function FetchRevisionInfo(hash: string, revision: Revision): Promise<RevisionInfo> {
-    console.log(`⚠️⚠️ hash ${hash} `)
+    Logger.info(`⚠️⚠️ hash ${hash} `)
     if (revision.revision_type == "signature") {
         return await prisma.signature.findFirst({
             where: {
@@ -196,10 +201,10 @@ export async function FetchRevisionInfo(hash: string, revision: Revision): Promi
                 hash: hash
             }
         });
-        console.log("Witness: ", res);
+        Logger.info("Witness: ", res);
         if (res == null) {
             // throw new Error(`witness is null ${revision.revision_type}`);
-            console.log(`☢️☢️ witness is null with hash ${hash}`);
+            Logger.info(`☢️☢️ witness is null with hash ${hash}`);
             return null;
         }
         return await prisma.witnessEvent.findFirst({
@@ -208,7 +213,7 @@ export async function FetchRevisionInfo(hash: string, revision: Revision): Promi
             }
         });
     } else if (revision.revision_type == "form") {
-        console.log(`form where hash is ${hash}`)
+        Logger.info(`form where hash is ${hash}`)
         return await prisma.aquaForms.findMany({
             where: {
                 hash: hash
@@ -221,7 +226,7 @@ export async function FetchRevisionInfo(hash: string, revision: Revision): Promi
             }
         });
     } else {
-        console.log(`type ${revision.revision_type} with hash ${hash}`);
+        Logger.info(`type ${revision.revision_type} with hash ${hash}`);
         return null;
     }
 }
@@ -299,11 +304,8 @@ async function fetchAquaTreeFileData(pubKeyHashes: string[]): Promise<AquaTreeFi
             }
 
             allData.push(data);
-            // } else {
-            //     console.log(`💣💣💣 File name not found for pubKeyHash ${pubKeyHash}`);
-            // }
         } else {
-            console.log(`💣💣💣 File index not found ..pubKeyHash ${pubKeyHash} --  ${hashOnly}`)
+            Logger.error(`💣💣💣 File index not found ..pubKeyHash ${pubKeyHash} --  ${hashOnly}`)
         }
     }
 
@@ -325,7 +327,7 @@ async function createFileObjects(aquaTreesFileData: AquaTreeFileData[], url: str
                 fileSize: fileStats.fileSizeInBytes
             });
         } catch (error : any) {
-            console.error(`Error processing file with hash ${item.fileHash} pub key hash ${item.pubKeyHash} :`, error);
+            Logger.error(`Error processing file with hash ${item.fileHash} pub key hash ${item.pubKeyHash} :`, error);
         }
     }
     return fileObjects;
@@ -410,9 +412,9 @@ async function processRevisionByType(
     url: string
 ): Promise<ProcessRevisionByTypeResult> {
     const revisionInfo = await FetchRevisionInfo(revision.pubkey_hash, revision);
-    console.log(`revisionInfo = ${JSON.stringify(revisionInfo)}`)
+    Logger.info(`revisionInfo = ${JSON.stringify(revisionInfo)}`)
     if (!revisionInfo && revision.revision_type !== "file") {
-        console.log(`Revision info not found for ${revision.pubkey_hash}`);
+        Logger.warn(`Revision info not found for ${revision.pubkey_hash}`);
         return { revisionData, aquaTree, fileObjects };
     }
 
@@ -430,7 +432,7 @@ async function processRevisionByType(
         case "link":
             return await processLinkRevision(revisionData, revisionInfo as Link, aquaTree, fileObjects, url);
         default:
-            console.log(`Unknown revision type: ${revision.revision_type}`);
+            Logger.warn(`Unknown revision type: ${revision.revision_type}`);
             return { revisionData, aquaTree, fileObjects };
     }
 }
@@ -465,16 +467,14 @@ async function processFileRevision(revision: Revision, revisionData: AquaRevisio
         if (fileIndexResult) {
             updatedRevisionData.file_hash = fileIndexResult.file_hash;
         } else {
-            console.error(`Hash not found in file index: ${hashOnly}`);
+            Logger.error(`Hash not found in file index: ${hashOnly}`);
         }
     } else {
         updatedRevisionData.file_hash = fileResult.file_hash ?? "**--error--***";
     }
 
-    // console.log(`before dummy dump `)
     // Process form data if it's a form revision
     if (revision.revision_type === "form" && revisionInfo) {
-        // console.log(`dummy dump  ${JSON.stringify(revisionInfo, null, 4)}`)
         const formData = revisionInfo as AquaForms[];
         const formFields: Record<string, any> = {};
         for (const formItem of formData) {
@@ -509,7 +509,7 @@ function processSignatureRevision(revisionData: AquaRevision, signatureData: Sig
             sig = JSON.parse(signatureData.signature_digest!);
         }
     } catch (error : any) {
-        console.log("Error parsing signature digest:", error);
+        Logger.warn("Error parsing signature digest:", error);
     }
 
     return {
@@ -536,7 +536,7 @@ async function processLinkRevision(
     };
 
     if (!linkData.link_verification_hashes?.[0]) {
-        console.error("No link verification hash found");
+        Logger.error("No link verification hash found");
         return { revisionData: updatedRevisionData, aquaTree, fileObjects };
     }
 
@@ -548,7 +548,7 @@ async function processLinkRevision(
     });
 
     if (!linkedRevision) {
-        console.log(`Linked revision not found for hash ${linkedHash}`);
+        Logger.warn(`Linked revision not found for hash ${linkedHash}`);
         return { revisionData: updatedRevisionData, aquaTree, fileObjects };
     }
 
@@ -591,7 +591,7 @@ async function getFileStats(filePath: string): Promise<{ fileSizeInBytes: number
             originalFilename
         };
     } catch (error : any) {
-        console.error(`Error getting file stats for ${filePath}:`, error);
+        Logger.error(`Error getting file stats for ${filePath}:`, error);
         return null;
     }
 }
@@ -638,13 +638,13 @@ async function updateLinkRevisionFileIndex(revision: Revision,
 
 
     let [linkedAquaTreeData, linkedFileObjects] = await createAquaTreeFromRevisions(newPubKeyHash, url);
-    console.log(` ✨✨ linkedAquaTreeData ${JSON.stringify(linkedAquaTreeData, null, 4)}`)
+    Logger.info(` ✨✨ linkedAquaTreeData ${JSON.stringify(linkedAquaTreeData, null, 4)}`)
     let linkedAquaTreeDataGenesisHash = getGenesisHash(linkedAquaTreeData);
 
     if (linkedAquaTreeDataGenesisHash == null) {
 
         // throw Error(`Expected genesis hash ${newPubKeyHash}  not to be null ${JSON.stringify(linkedAquaTreeData, null, 4)}`)
-        console.log(`Expected genesis hash ${newPubKeyHash}  not to be null ${JSON.stringify(linkedAquaTreeData, null, 4)}`)
+        Logger.error(`Expected genesis hash ${newPubKeyHash}  not to be null ${JSON.stringify(linkedAquaTreeData, null, 4)}`)
         return {
             aquaTree: aquaTree,
             fileObjects: fileObjects,
@@ -659,7 +659,7 @@ async function updateLinkRevisionFileIndex(revision: Revision,
     }
 
 
-    console.log(`🎇🎇 updateLinkRevisionFileIndex All revision pubkey hashes ${JSON.stringify(genesisPubKeyHash, null, 4)}`)
+    Logger.info(`🎇🎇 updateLinkRevisionFileIndex All revision pubkey hashes ${JSON.stringify(genesisPubKeyHash, null, 4)}`)
     const newAquaTreeFileData = await fetchAquaTreeFileData([genesisPubKeyHash]);
 
     let fileData = newAquaTreeFileData[0]
@@ -808,15 +808,14 @@ async function processLinkedFileRevision(
     url: string
 ): Promise<LinkedRevisionResult> {
 
-    // console.log(`🎇🎇 processLinkedFileRevision All revision pubkey hashes ${JSON.stringify(linkedHash, null, 4)}`)
     let aquaTreeFileData = await fetchAquaTreeFileData([linkedHash]);
     if (aquaTreeFileData.length === 0) {
-        console.log(`File index with hash ${linkedHash} not found`);
+        Logger.warn(`File index with hash ${linkedHash} not found`);
         return { aquaTree, fileObjects };
     }
 
     if (aquaTreeFileData.length > 1) {
-        console.warn(`Multiple file entries found for hash ${linkedHash}, using the first one.`);
+        Logger.warn(`Multiple file entries found for hash ${linkedHash}, using the first one.`);
         throw new Error(`Multiple file entries found for hash ${linkedHash}`);
 
     }
@@ -886,7 +885,7 @@ async function addRevisionContent(revision: Revision, revisionData: AquaRevision
             const fileContent = fs.readFileSync(fileItem.fileLocation, 'utf8');
             return { ...revisionData, content: fileContent };
         } catch (error : any) {
-            console.error(`Error reading file content: ${error}`);
+            Logger.error(`Error reading file content: ${error}`);
             return { ...revisionData, content: "--error--&" };
         }
     }

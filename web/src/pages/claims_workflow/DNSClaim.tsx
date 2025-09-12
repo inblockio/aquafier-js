@@ -1,9 +1,9 @@
-import { ensureDomainUrlHasSSL, formatCryptoAddress } from '@/utils/functions'
-import { useEffect, useState } from 'react'
-import { TbWorldWww } from 'react-icons/tb'
-import { FaCheck, FaTimes, FaChevronDown, FaChevronUp } from 'react-icons/fa'
+import {ensureDomainUrlHasSSL, formatCryptoAddress} from '@/utils/functions'
+import {useEffect, useState} from 'react'
+import {TbWorldWww} from 'react-icons/tb'
+import {FaCheck, FaChevronDown, FaChevronUp, FaTimes} from 'react-icons/fa'
 import appStore from '../../store'
-import { useStore } from 'zustand'
+import {useStore} from 'zustand'
 import ImprovedDNSLogs from './DNSClaimLogs'
 
 interface IDNSClaim {
@@ -139,7 +139,6 @@ const DNSClaim = ({ claimInfo }: IDNSClaim) => {
 
                   const result: VerificationResult = await response.json()
                   setVerificationResult(result)
-                  //  console.log(`logs ${JSON.stringify(result, null, 4)}`)
 
                   if (result.success) {
                         setVerificationStatus('verified')

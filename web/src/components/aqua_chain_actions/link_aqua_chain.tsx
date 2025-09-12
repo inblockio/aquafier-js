@@ -1,19 +1,28 @@
-import { LuLink2 } from 'react-icons/lu'
-import { useEffect, useState } from 'react'
-import { areArraysEqual, capitalizeWords, fetchFiles, formatCryptoAddress, getAquaTreeFileObject, getFileName, getGenesisHash, isWorkFlowData } from '../../utils/functions'
-import { useStore } from 'zustand'
+import {LuLink2} from 'react-icons/lu'
+import {useEffect, useState} from 'react'
+import {
+    areArraysEqual,
+    capitalizeWords,
+    fetchFiles,
+    formatCryptoAddress,
+    getAquaTreeFileObject,
+    getFileName,
+    getGenesisHash,
+    isWorkFlowData
+} from '../../utils/functions'
+import {useStore} from 'zustand'
 import appStore from '../../store'
 import axios from 'axios'
-import { ApiFileInfo } from '../../models/FileInfo'
-import Aquafier, { AquaTreeWrapper, FileObject } from 'aqua-js-sdk'
-import { IShareButton } from '../../types/types'
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import {ApiFileInfo} from '../../models/FileInfo'
+import Aquafier, {AquaTreeWrapper, FileObject} from 'aqua-js-sdk'
+import {IShareButton} from '../../types/types'
+import {Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle} from '@/components/ui/dialog'
 
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
-import { AlertCircle, Loader2, FileText, Link as LinkIcon } from 'lucide-react'
-import { Checkbox } from '@/components/ui/checkbox'
-import { Button } from '@/components/ui/button'
-import { toast } from 'sonner'
+import {Alert, AlertDescription, AlertTitle} from '@/components/ui/alert'
+import {AlertCircle, FileText, Link as LinkIcon, Loader2} from 'lucide-react'
+import {Checkbox} from '@/components/ui/checkbox'
+import {Button} from '@/components/ui/button'
+import {toast} from 'sonner'
 
 export const LinkButton = ({ item, nonce, index }: IShareButton) => {
       const { backend_url, setFiles, files, session, systemFileInfo } = useStore(appStore)
@@ -249,8 +258,6 @@ export const LinkButton = ({ item, nonce, index }: IShareButton) => {
                                                             <div className="max-h-96 min-h-80 overflow-y-auto">
                                                                   
                                                                   {files?.fileData.map((itemLoop: ApiFileInfo, fileIndex: number) => {
-                                                                        //  console.log(`   ^^^^  file: ${JSON.stringify(files, null, 4)}`)
-                                                                        //  console.log(`  ^^^^^   itemLoop: ${JSON.stringify(itemLoop, null, 4)}`)
                                                                         const keys = Object.keys(itemLoop.aquaTree!.revisions!)
                                                                         const keysPar = Object.keys(item.aquaTree!.revisions!)
                                                                         const res = areArraysEqual(keys, keysPar)

@@ -1,29 +1,38 @@
-import React, { useState } from 'react'
+import React, {useState} from 'react'
 import appStore from '../store'
-import { useStore } from 'zustand'
+import {useStore} from 'zustand'
 import FilesList from './files_list'
-import { Upload, Plus, FolderPlus, X, CheckCircle, AlertCircle, Loader2, FileText, Minimize2 } from 'lucide-react'
-import { FileItemWrapper, UploadStatus } from '@/types/types'
-import { checkIfFileExistInUserFiles, fetchFiles, getAquaTreeFileName, isAquaTree, isJSONFile, isJSONKeyValueStringContent, isZipFile, readFileContent } from '@/utils/functions'
-import { maxFileSizeForUpload } from '@/utils/constants'
+import {AlertCircle, CheckCircle, FileText, FolderPlus, Loader2, Minimize2, Plus, Upload, X} from 'lucide-react'
+import {FileItemWrapper, UploadStatus} from '@/types/types'
+import {
+    checkIfFileExistInUserFiles,
+    fetchFiles,
+    getAquaTreeFileName,
+    isAquaTree,
+    isJSONFile,
+    isJSONKeyValueStringContent,
+    isZipFile,
+    readFileContent
+} from '@/utils/functions'
+import {maxFileSizeForUpload} from '@/utils/constants'
 import axios from 'axios'
 
 // /components//ui components
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
-import { Progress } from '@/components/ui/progress'
-import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
-import { Card, CardContent } from '@/components/ui/card'
+import {Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle} from '@/components/ui/dialog'
+import {Progress} from '@/components/ui/progress'
+import {Button} from '@/components/ui/button'
+import {Badge} from '@/components/ui/badge'
+import {Card, CardContent} from '@/components/ui/card'
 
 // import { CompleteChainView } from './components/files_chain_details';
-import { IDrawerStatus } from '@/models/AquaTreeDetails'
-import { CompleteChainView } from '@/components/files_chain_details'
+import {IDrawerStatus} from '@/models/AquaTreeDetails'
+import {CompleteChainView} from '@/components/files_chain_details'
 import FileDropZone from '@/components/dropzone_file_actions'
-import { LuTrash2, LuUpload } from 'react-icons/lu'
-import { toast } from 'sonner'
-import { ImportAquaTree } from '@/components/dropzone_file_actions/import_aqua_tree'
-import { ImportAquaTreeZip } from '@/components/dropzone_file_actions/import_aqua_tree_zip'
-import { FormRevisionFile } from '@/components/dropzone_file_actions/form_revision'
+import {LuTrash2, LuUpload} from 'react-icons/lu'
+import {toast} from 'sonner'
+import {ImportAquaTree} from '@/components/dropzone_file_actions/import_aqua_tree'
+import {ImportAquaTreeZip} from '@/components/dropzone_file_actions/import_aqua_tree_zip'
+import {FormRevisionFile} from '@/components/dropzone_file_actions/form_revision'
 
 import ClaimTypesDropdownButton from '@/components/button_claim_dropdown'
 
@@ -137,7 +146,6 @@ const FilesPage = () => {
       const filesForUpload = async (selectedFiles: File[]) => {
             const newUploads: UploadStatus[] = []
             for (const file of selectedFiles) {
-                  //  console.log(`Files for  upload ${file.name} .....`)
                   const isJson = isJSONFile(file.name)
                   const isZip = isZipFile(file.name)
                   if (isJson || isZip) {
@@ -148,17 +156,12 @@ const FilesPage = () => {
                                     const content = await readFileContent(file)
                                     const contentStr = content as string
                                     const isForm = isJSONKeyValueStringContent(contentStr)
-                                    //  console.log(`isForm ${isForm}`)
                                     if (isForm) {
                                           isJsonForm = true
                                     }
 
                                     const jsonData = JSON.parse(contentStr)
                                     const isAquaTreeData = isAquaTree(jsonData)
-                                    // const _r = typeof jsonData === 'object'
-                                    // const _r2 = 'revisions' in jsonData
-                                    // const _r3 = 'file_index' in jsonData
-                                    //  console.log(`isAquaTreeData  ${isAquaTreeData} contentStr ${contentStr} r ${r} r2 ${r2} r3 ${r3}`)
                                     if (isAquaTreeData) {
                                           isJsonAquaTreeData = isAquaTreeData
                                     }
@@ -184,13 +187,8 @@ const FilesPage = () => {
                                     isJsonForm: isJsonForm,
                                     isJsonAquaTreeData: isJsonAquaTreeData,
                               }
-
-                              //  console.log(`fileItemWrapper ${JSON.stringify(fileItemWrapper, null, 4)}`)
                               setFilesListForUpload(prev => [...prev, fileItemWrapper])
-
                         } else {
-                              //  console.log(`File ${file.name} already exists in upload list`)
-
                               toast.error(`1. Error file exist in upload list`)
                         }
                   } else {
@@ -210,7 +208,6 @@ const FilesPage = () => {
                                     isZip: isZip,
                               })
                         } else {
-                              //  console.log(`=== File ${file.name} already exists in upload list`)
                               toast.error(`1. Error file exist in upload list`)
                         }
                   }
@@ -230,7 +227,6 @@ const FilesPage = () => {
       const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
             const selectedFiles = Array.from(e.target.files ?? [])
             if (selectedFiles.length === 0) {
-                  //  console.log(`handleFileChange is zero `)
                   return
             }
             await filesForUpload(selectedFiles)
@@ -596,7 +592,6 @@ const FilesPage = () => {
                                     {files.fileData.length == 0 ? (
                                           <FileDropZone
                                                 setFiles={(files: File[]) => {
-                                                      //  console.log(`call back here `)
                                                       filesForUpload(files)
                                                 }}
                                           />

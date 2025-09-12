@@ -1,130 +1,9 @@
-// import { FastifyInstance } from "fastify";
-// import { twilioClient } from "../api/twilio";
-// import { prisma } from "../database/db";
-
-// export default async function ApiController(fastify: FastifyInstance) {
-
-
-//     fastify.post("/verify_code", async (request, reply) => {
-
-//         const nonce = request.headers['nonce']; // Headers are case-insensitive
-
-//         // Check if `nonce` is missing or empty
-//         if (!nonce || typeof nonce !== 'string' || nonce.trim() === '') {
-//             return reply.code(401).send({ error: 'Unauthorized: Missing or empty nonce header' });
-//         }
-
-//         const session = await prisma.siweSession.findUnique({
-//             where: { nonce }
-//         });
-
-//         if (!session) {
-//             return reply.code(403).send({ success: false, message: "Nonce is invalid" });
-//         }
-
-//         const revisionDataPar = request.body as {
-//             email_or_phone_number: string,
-//             code: string
-//         };
-
-//         if (!revisionDataPar.email_or_phone_number || revisionDataPar.email_or_phone_number.length == 0) {
-//             return reply.code(400).send({ success: false, message: "input is required" });
-//         }
-
-//         if (!revisionDataPar.code || revisionDataPar.code.length == 0) {
-//             return reply.code(400).send({ success: false, message: "verification code is required" });
-//         }
-
-//         const twilio = process.env.TWILIO_VERIFY_SERVICE_SID;
-
-//         console.log(`=========== twilio ${twilio}`)
-//         if (!twilio) {
-//             return reply.code(500).send({ success: false, message: "twilio env variable not set" });
-//         }
-//         try {
-
-
-//             await twilioClient.verify.v2
-//                 .services(twilio)
-//                 .verificationChecks.create({ to: revisionDataPar.email_or_phone_number, code: revisionDataPar.code });
-
-//         } catch (err: any) {
-//             console.error('🛑  Twilio Verify initiation failed', err.message);
-//             return reply.code(500).send({ ok: false, error: `Twilio Failed ${err.message}` });
-//         }
-
-//         return reply.code(200).send({ success: true, message: "verification code sent" });
-
-//     });
-
-
-
-//     fastify.post("/send_code", async (request, reply) => {
-
-
-//         const nonce = request.headers['nonce']; // Headers are case-insensitive
-
-//         // Check if `nonce` is missing or empty
-//         if (!nonce || typeof nonce !== 'string' || nonce.trim() === '') {
-//             return reply.code(401).send({ error: 'Unauthorized: Missing or empty nonce header' });
-//         }
-
-//         const session = await prisma.siweSession.findUnique({
-//             where: { nonce }
-//         });
-
-//         if (!session) {
-//             return reply.code(403).send({ success: false, message: "Nonce is invalid" });
-//         }
-
-//         const revisionDataPar = request.body as {
-//             email_or_phone_number: string,
-//             name: string
-//         };
-
-//         if (!revisionDataPar.email_or_phone_number || revisionDataPar.email_or_phone_number.length == 0) {
-//             return reply.code(400).send({ success: false, message: "input is required" });
-//         }
-
-//         if (!revisionDataPar.email_or_phone_number || revisionDataPar.name.length == 0) {
-//             return reply.code(400).send({ success: false, message: "input type is required" });
-//         }
-
-
-//         let channel = 'sms'
-//         if (revisionDataPar.name == "email" || revisionDataPar.name.includes('email')) {
-//             channel = 'email'
-//         }
-
-
-//         const {
-//             TWILIO_VERIFY_SERVICE_SID,
-//         } = process.env;
-
-//         if (!TWILIO_VERIFY_SERVICE_SID) {
-//             return reply.code(500).send({ success: false, message: "twilio env variable not set" });
-//         }
-//         try {
-//             await twilioClient.verify.v2
-//                 .services(TWILIO_VERIFY_SERVICE_SID)
-//                 .verifications.create({ to: revisionDataPar.email_or_phone_number, channel });
-//         } catch (err: any) {
-//             console.error('🛑  Twilio Verify initiation failed', err.message);
-//             return reply.code(500).send({ ok: false, error: `Twilio Failed ${err.message}` });
-//         }
-
-//         return reply.code(200).send({ success: true, message: "verification code sent" });
-
-//     });
-
-// }
-
-
-import { FastifyInstance } from "fastify";
-import { twilioClient } from "../api/twilio";
-import { prisma } from "../database/db";
-import { WebScraper } from "../utils/scraper";
-import { ScrapedData } from "../models/types";
+import {FastifyInstance} from "fastify";
+import {twilioClient} from "../api/twilio";
+import {prisma} from "../database/db";
+import Logger from "../utils/Logger";
+import {WebScraper} from "../utils/scraper";
+import {ScrapedData} from "../models/types";
 
 // Rate-limiting configuration
 const RATE_LIMIT_CONFIG = {
@@ -236,7 +115,7 @@ export default async function ApiController(fastify: FastifyInstance) {
 ];
 
 const hasProtocol = /^[a-zA-Z][a-zA-Z0-9+.-]*:\/\//.test(trimmedInput);
-const isAllowed = allowedUrlsWithProtocol.some(allowedUrl => 
+const isAllowed = allowedUrlsWithProtocol.some(allowedUrl =>
   trimmedInput.includes(allowedUrl)
 );
 
@@ -292,7 +171,6 @@ if (hasProtocol && !isAllowed) {
 
 
   });
-
   fastify.post("/verify_code", async (request, reply) => {
     const nonce = request.headers["nonce"];
 
@@ -399,7 +277,7 @@ if (hasProtocol && !isAllowed) {
           code: revisionDataPar.code,
         });
     } catch (err: any) {
-      console.error("🛑 Twilio Verify initiation failed", err.message);
+        Logger.error("🛑 Twilio Verify initiation failed", err.message);
       return reply
         .code(500)
         .send({ ok: false, error: `Twilio Failed ${err.message}` });
@@ -522,7 +400,7 @@ if (hasProtocol && !isAllowed) {
           channel,
         });
     } catch (err: any) {
-      console.error("🛑 Twilio Verify initiation failed", err.message);
+        Logger.error("🛑 Twilio Verify initiation failed", err.message);
       return reply
         .code(500)
         .send({ ok: false, error: `Twilio Failed ${err.message}` });

@@ -1,10 +1,16 @@
-import { FileObject } from 'aqua-js-sdk'
-import { useEffect, useRef, useState } from 'react'
-import { useStore } from 'zustand'
+import {FileObject} from 'aqua-js-sdk'
+import {useEffect, useRef, useState} from 'react'
+import {useStore} from 'zustand'
 import appStore from '../store'
-import { ensureDomainUrlHasSSL, handleLoadFromUrl, isHttpUrl, isJSONKeyValueStringContent, isValidUrl } from '../utils/functions'
-import { FilePreviewAquaTreeFromTemplate } from './file_preview_aqua_tree_from_template'
-import { EasyPDFRenderer } from '@/pages/aqua_sign_wokflow/ContractDocument/signer/SignerPage'
+import {
+    ensureDomainUrlHasSSL,
+    handleLoadFromUrl,
+    isHttpUrl,
+    isJSONKeyValueStringContent,
+    isValidUrl
+} from '../utils/functions'
+import {FilePreviewAquaTreeFromTemplate} from './file_preview_aqua_tree_from_template'
+import {EasyPDFRenderer} from '@/pages/aqua_sign_wokflow/ContractDocument/signer/SignerPage'
 import heic2any from "heic2any"
 
 // Define file extensions to content type mappings
@@ -239,7 +245,6 @@ const FilePreview: React.FC<IFilePreview> = ({ fileInfo }) => {
                               // If content type is missing or generic, try to detect from filename
                               if (contentType === 'application/octet-stream' || contentType === '') {
                                     contentType = getContentTypeFromFileName(fileInfo.fileName || '')
-                                    //  //  console.log("Determined content type from filename:", contentType);
                               }
 
                               // Clone response and get data
@@ -258,7 +263,6 @@ const FilePreview: React.FC<IFilePreview> = ({ fileInfo }) => {
 
                               // Create blob with correct content type
                               const blob = new Blob([arrayBuffer], { type: contentType })
-                              //  //  console.log("Created blob with type:", contentType, "size:", blob.size);
 
                               setFileType(contentType)
 
@@ -277,7 +281,6 @@ const FilePreview: React.FC<IFilePreview> = ({ fileInfo }) => {
                         else if (fileInfo.fileContent && typeof fileInfo.fileContent !== 'string') {
                               // Determine content type from filename
                               const contentType = getContentTypeFromFileName(fileInfo.fileName || '')
-                              //  //  console.log("Determined content type for binary data:", contentType);
 
                               // Create blob with detected content type
                               const blob = new Blob([fileInfo.fileContent as BlobPart], {
@@ -367,7 +370,6 @@ const FilePreview: React.FC<IFilePreview> = ({ fileInfo }) => {
 
       // PDF files
       if (fileType === 'application/pdf') {
-            // //  console.log("File url: ", fileURL)
             return <PdfViewerComponent fileType={fileType} fileURL={fileURL} fileInfo={fileInfo} />
       }
 
@@ -377,14 +379,11 @@ const FilePreview: React.FC<IFilePreview> = ({ fileInfo }) => {
             const isJson = isJSONKeyValueStringContent(newTxtContent)
 
             if (fileType === 'application/json' || isJson) {
-                  // //  console.log(`is this ${newTxtContent} is form ${isForm}-----`)
-                  // if (isForm) {
                   return (
                         <div className="p-5 m-5">
                               <FilePreviewAquaTreeFromTemplate formData={JSON.parse(newTxtContent)} />
                         </div>
                   )
-                  // }
             }
             return (
                   <div

@@ -1,4 +1,3 @@
-
 // Import Fastify
 import Fastify from 'fastify';
 import cors from '@fastify/cors';
@@ -17,22 +16,23 @@ import versionController from './controllers/version';
 import filesController from './controllers/files';
 import explorerController from './controllers/explorer';
 import verifyController from './controllers/verify';
-import { getFileUploadDirectory } from './utils/file_utils';
+import {getFileUploadDirectory} from './utils/file_utils';
 import revisionsController from './controllers/revisions';
 import shareController from './controllers/share';
 import fetchChainController from './controllers/fetch-chain';
 import templatesController from './controllers/templates';
-import { setUpSystemTemplates } from './utils/api_utils';
+import {setUpSystemTemplates} from './utils/api_utils';
 import systemController from './controllers/system';
 import webSocketController from './controllers/websocketController';
 import notificationsController from './controllers/notifications';
-import { prisma } from './database/db';
+import {prisma} from './database/db';
 import ApiController from './controllers/api';
 // import { createEthAccount } from './utils/server_utils';
 // import { serverAttestation } from './utils/server_attest';
 import * as Sentry from "@sentry/node"
-import { nodeProfilingIntegration } from "@sentry/profiling-node"
-import { ensureDomainViewForCors } from './utils/server_utils';
+import {nodeProfilingIntegration} from "@sentry/profiling-node"
+import {ensureDomainViewForCors} from './utils/server_utils';
+import Logger from "./utils/Logger";
 
 export async function mockNotifications() {
     // 0x254B0D7b63342Fcb8955DB82e95C21d72EFdB6f7 - This is the receiver and the sender is 'system'
@@ -42,11 +42,11 @@ export async function mockNotifications() {
 
     // Check if notifications already exist for this user
     const existingNotifications = await prisma.notifications.findMany({
-        where: { receiver: receiverAddress }
+        where: {receiver: receiverAddress}
     });
 
     if (existingNotifications.length > 0) {
-        console.log(`${existingNotifications.length} notifications already exist for ${receiverAddress}`);
+        Logger.warn(`${existingNotifications.length} notifications already exist for ${receiverAddress}`);
         return;
     }
 
@@ -81,14 +81,13 @@ export async function mockNotifications() {
             notifications.push(notification);
         }
 
-        console.log(`Created ${notifications.length} mock notifications for ${receiverAddress}`);
+        Logger.info(`Created ${notifications.length} mock notifications for ${receiverAddress}`);
     } catch (error: any) {
-        console.error('Error creating mock notifications:', error);
+        Logger.error('Error creating mock notifications:', error);
     } finally {
         await prisma.$disconnect();
     }
 }
-
 
 
 function buildServer() {
@@ -102,7 +101,7 @@ function buildServer() {
 
     // Ensure upload directory exists
     if (!fs.existsSync(UPLOAD_DIR)) {
-        fs.mkdirSync(UPLOAD_DIR, { recursive: true });
+        fs.mkdirSync(UPLOAD_DIR, {recursive: true});
     }
 
 
@@ -127,10 +126,10 @@ function buildServer() {
     });
 
     // Create a Fastify instance
-    const fastify = Fastify({ 
-        logger: true , 
-        bodyLimit: 50 * 1024 * 1024 /* 50MB */, 
-        requestTimeout: 120000 /* 2 minutes */ 
+    const fastify = Fastify({
+        logger: true,
+        bodyLimit: 50 * 1024 * 1024 /* 50MB */,
+        requestTimeout: 120000 /* 2 minutes */
     });
 
     Sentry.setupFastifyErrorHandler(fastify);
@@ -138,7 +137,7 @@ function buildServer() {
     // reister system templates ie cheque, identity and attestation
     setUpSystemTemplates();
 
-    
+
     let allowedCors = process.env.ALLOWED_CORS ? [process.env.ALLOWED_CORS.split(',').map(origin => origin.trim()), ...ensureDomainViewForCors(process.env.FRONTEND_URL)] : [
         'http://localhost:5173',
         'http://127.0.0.1:5173',
@@ -156,13 +155,13 @@ function buildServer() {
         ...ensureDomainViewForCors(process.env.FRONTEND_URL),
     ]; // Allow your React app origins
 
-    console.log("Allowed CORS origins: ", JSON.stringify(allowedCors, null, 2));
+    Logger.info("Allowed CORS origins: ", JSON.stringify(allowedCors, null, 2));
 
-    
+
 // Remove duplicates using Set
-allowedCors = [...new Set(allowedCors.flat())];
+    allowedCors = [...new Set(allowedCors.flat())];
 
-console.log("Without duplicates Allowed CORS origins: ", JSON.stringify(allowedCors, null, 2));
+    Logger.info("Without duplicates Allowed CORS origins: ", JSON.stringify(allowedCors, null, 2));
 
     // Register the CORS plugin
     fastify.register(cors, {
@@ -170,7 +169,7 @@ console.log("Without duplicates Allowed CORS origins: ", JSON.stringify(allowedC
         origin: allowedCors, // Allow specific origins
         methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
         credentials: true, // Allow cookies if needed
-        allowedHeaders: ['Content-Type', 'Authorization', 'nonce', 'metamask_address', 'baggage', 'sentry-trace', 'x-sentry-trace', 'x-request-id', 'x-correlation-id'],
+        allowedHeaders: ['Content-Type', 'Authorization', 'nonce', 'metamask_address', 'baggage', 'sentry-trace', 'x-sentry-trace', 'x-request-id', 'x-correlation-id', 'traceparent', 'tracestate'],
     });
 
     // Static handler
@@ -185,28 +184,15 @@ console.log("Without duplicates Allowed CORS origins: ", JSON.stringify(allowedC
     // Register the plugin
     fastify.register(fastifyMultipart, {
         limits: {
-            files:100,
-            fields:100,
-            fieldNameSize: 200 * 1024 * 1024 ,// 200MB
+            files: 100,
+            fields: 100,
+            fieldNameSize: 200 * 1024 * 1024,// 200MB
             parts: 500, // files + fields
             fileSize: 200 * 1024 * 1024 // 200MB - Adding this here as well for early rejection
         }
     });
 
     fastify.register(import('@fastify/websocket'));
-
-    // Helper function to quickly create a wallet
-    // createEthAccount()
-
-    // Server attestation test
-    // serverAttestation("0x3e66c76fd088e0aac4cdb6726aa26041473be7b37a5ca8337c185de21bc9c3f0")
-
-
-    // setInterval(() => {
-
-    //     console.log(`Ping all websockets`);
-    //     broadcastToAllClients("ping all conections ")
-    // }, 1000)
 
     // Register controllers
     fastify.register(authController);

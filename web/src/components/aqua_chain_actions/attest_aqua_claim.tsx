@@ -1,11 +1,11 @@
-import {  getGenesisHash, isWorkFlowData, getAquaTreeFileName } from '../../utils/functions'
-import { useStore } from 'zustand'
+import {getAquaTreeFileName, getGenesisHash, isWorkFlowData} from '../../utils/functions'
+import {useStore} from 'zustand'
 import appStore from '../../store'
-import { ApiFileInfo } from '../../models/FileInfo'
-import { toast } from 'sonner'
-import { Album } from 'lucide-react'
-import { Revision } from 'aqua-js-sdk'
-import { Button } from '../ui/button'
+import {ApiFileInfo} from '../../models/FileInfo'
+import {toast} from 'sonner'
+import {Album} from 'lucide-react'
+import {Revision} from 'aqua-js-sdk'
+import {Button} from '../ui/button'
 
 export const AttestAquaClaim = ({ file, index, children }: { file: ApiFileInfo; index: number; children?: React.ReactNode }) => {
       const { files, session, openDialog, setOpenDialog, setSelectedFileInfo, systemFileInfo } = useStore(appStore)
@@ -29,7 +29,6 @@ export const AttestAquaClaim = ({ file, index, children }: { file: ApiFileInfo; 
                               try {
                                     return getAquaTreeFileName(e.aquaTree!)
                               } catch (e) {
-                                    //  console.log('Error')
                                     return ''
                               }
                         })
@@ -64,7 +63,6 @@ export const AttestAquaClaim = ({ file, index, children }: { file: ApiFileInfo; 
                   onClose: () => setOpenDialog(null),
                   onConfirm: () => {
                         // Handle confirmation logic here
-                        //  console.log('Attestation confirmed with data:', data)
                   }
             })
       }

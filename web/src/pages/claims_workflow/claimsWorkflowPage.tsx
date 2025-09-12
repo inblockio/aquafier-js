@@ -1,21 +1,21 @@
-import { useEffect, useState } from 'react'
-import { Package, ArrowUpDown, Boxes } from 'lucide-react'
-import { useNavigate } from 'react-router-dom'
-import { Button } from '../../components/ui/button'
-import { LuArrowLeft } from 'react-icons/lu'
+import {useEffect, useState} from 'react'
+import {ArrowUpDown, Boxes, Package} from 'lucide-react'
+import {useNavigate} from 'react-router-dom'
+import {Button} from '../../components/ui/button'
+import {LuArrowLeft} from 'react-icons/lu'
 import appStore from '../../store'
-import { useStore } from 'zustand'
-import { ShareButton } from '@/components/aqua_chain_actions/share_aqua_chain'
-import { getAquaTreeFileName, isWorkFlowData, processSimpleWorkflowClaim, timeToHumanFriendly } from '@/utils/functions'
-import { ClipLoader } from 'react-spinners'
-import { ApiFileInfo, ClaimInformation, IAttestationEntry } from '@/models/FileInfo'
+import {useStore} from 'zustand'
+import {ShareButton} from '@/components/aqua_chain_actions/share_aqua_chain'
+import {getAquaTreeFileName, isWorkFlowData, processSimpleWorkflowClaim, timeToHumanFriendly} from '@/utils/functions'
+import {ClipLoader} from 'react-spinners'
+import {ApiFileInfo, ClaimInformation, IAttestationEntry} from '@/models/FileInfo'
 import axios from 'axios'
-import { Contract } from '@/types/types'
-import { SharedContract } from '../files_shared_contracts'
-import { OrderRevisionInAquaTree } from 'aqua-js-sdk'
+import {Contract} from '@/types/types'
+import {SharedContract} from '../files_shared_contracts'
+import {OrderRevisionInAquaTree} from 'aqua-js-sdk'
 import SimpleClaim from './SimpleClaim'
 import DNSClaim from './DNSClaim'
-import { AttestAquaClaim } from '@/components/aqua_chain_actions/attest_aqua_claim'
+import {AttestAquaClaim} from '@/components/aqua_chain_actions/attest_aqua_claim'
 import AttestationEntry from '../v2_claims_workflow/AttestationEntry'
 
 export default function ClaimsWorkflowPage() {
@@ -102,7 +102,6 @@ export default function ClaimsWorkflowPage() {
                         try {
                               return getAquaTreeFileName(e.aquaTree!)
                         } catch (e) {
-                              // //  console.log('Error processing system file')
                               return ''
                         }
                   })

@@ -1,12 +1,12 @@
-import { LuImport } from 'react-icons/lu'
+import {LuImport} from 'react-icons/lu'
 import axios from 'axios'
-import { useStore } from 'zustand'
+import {useStore} from 'zustand'
 import appStore from '../../store'
-import { useState } from 'react'
-import { IDropzoneAction } from '../../types/types'
-import { Button } from '@/components/ui/button'
-import { toast } from 'sonner'
-import { fetchFiles } from '@/utils/functions'
+import {useState} from 'react'
+import {IDropzoneAction} from '../../types/types'
+import {Button} from '@/components/ui/button'
+import {toast} from 'sonner'
+import {fetchFiles} from '@/utils/functions'
 
 // export const ImportAquaChainFromFile = ({ file, uploadedIndexes, fileIndex, updateUploadedIndex }: IDropzoneAction) => {
 export const ImportAquaChainFromFile = ({ file, filesWrapper, removeFilesListForUpload}: IDropzoneAction) => {
@@ -33,34 +33,12 @@ export const ImportAquaChainFromFile = ({ file, filesWrapper, removeFilesListFor
             setUploading(true)
             try {
                   const url = `${backend_url}/explorer_aqua_file_upload`
-                  //  //  console.log("importAquaChain url ", url)
                    await axios.post(url, formData, {
                         headers: {
                               'Content-Type': 'multipart/form-data',
                               metamask_address: metamaskAddress,
                         },
                   })
-
-                  // const res = response.data
-
-                  // let logs: Array<string> = res.logs
-                  // logs.forEach((item) => {
-                  //    //  //  console.log("**>" + item + "\n.")
-                  // })
-                  ////  //  console.log("Upload res: ", res)
-                  // Assuming the API returns an array of FileInfo objects
-                  // const file: ApiFileInfo = {
-                  // id: res.file.id,
-                  // name: res.file.name,
-                  // extension: res.file.extension,
-                  // page_data: res.file.page_data,
-                  // mode: user_profile.fileMode ?? "",
-                  // owner: metamaskAddress ?? "",
-                  // };
-
-                  // const filesFromApi: Array<ApiFileInfo> = response.data.files
-                  //   setFiles({ fileData: filesFromApi, status: 'loaded' })
-                  // setUploadedFilesIndexes(value => [...value, fileIndex])
 
                    const files = await fetchFiles(session!.address, `${backend_url}/explorer_files`, session!.nonce)
                                                       setFiles({ fileData: files, status: 'loaded' })

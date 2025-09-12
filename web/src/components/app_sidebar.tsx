@@ -1,14 +1,14 @@
 import * as React from 'react'
+import {useState} from 'react'
 
-import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarRail, useSidebar } from '@/components/ui/sidebar'
+import {Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarRail, useSidebar} from '@/components/ui/sidebar'
 import CustomNavLink from './ui/CustomNavLink'
-import { Plus, Share2, Star, FileText, Settings, LayoutTemplate, Workflow, Link } from 'lucide-react'
-import { maxUserFileSizeForUpload } from '@/utils/constants'
-import { formatBytes, getAquaTreeFileObject } from '@/utils/functions'
-import { useStore } from 'zustand'
+import {FileText, LayoutTemplate, Link, Plus, Settings, Share2, Star, Workflow} from 'lucide-react'
+import {maxUserFileSizeForUpload} from '@/utils/constants'
+import {formatBytes, getAquaTreeFileObject} from '@/utils/functions'
+import {useStore} from 'zustand'
 import appStore from '@/store'
-import { useState } from 'react'
-import { WebConfig } from '@/types/types'
+import {WebConfig} from '@/types/types'
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       const { files, setOpenDialog, webConfig, setWebConfig } = useStore(appStore)
@@ -77,7 +77,6 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       ]
 
       const getLogoUrl = (config: WebConfig): string | undefined => {
-            // console.log("Config in sidebar ", config);
             if (typeof config.CUSTOM_LOGO_URL === 'string') {
                   // config.CUSTOM_LOGO_URL != "true"
                   if (config.CUSTOM_LOGO_URL.startsWith('http://') || config.CUSTOM_LOGO_URL.startsWith('https://') || config.CUSTOM_LOGO_URL.startsWith('/')) {
@@ -87,14 +86,11 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                   if (config.CUSTOM_LOGO_URL === "true") {
                         return undefined;
                   }
-                  // console.log("Default logo url ");
                   return '/images/logo.png';
             }
             if (!config.CUSTOM_LOGO_URL) {
-                  // console.log("Default logo url ");
                   return '/images/logo.png';
             }
-            // console.log("No logo url ");
             return undefined; // when it's boolean
       };
 
@@ -197,7 +193,6 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                                     onClose: () => setOpenDialog(null),
                                     onConfirm: () => {
                                           // Handle confirmation logic here
-                                          //  console.log('Early bird offer confirmed with data:', data)
                                     }
                               })
                         }}>
