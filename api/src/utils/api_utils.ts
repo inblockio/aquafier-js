@@ -212,7 +212,7 @@ const setUpSystemTemplates = async () => {
         "access_agreement",
         "aqua_sign",
         "dba_claim",
-    "cheque",
+        "cheque",
         "identity_attestation",
         "identity_claim",
         "user_signature",

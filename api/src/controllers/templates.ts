@@ -5,7 +5,7 @@ import {saveTemplateFileData} from '../utils/api_utils';
 import {authenticate, AuthenticatedRequest} from '../middleware/auth_middleware';
 import Aquafier, {AquaTree, FileObject} from 'aqua-js-sdk';
 import {deleteAquaTreeFromSystem, saveAquaTree} from '../utils/revisions_utils';
-import Logger from "../utils/Logger";
+import Logger from "../utils/Logger"; 
 
 export default async function templatesController(fastify: FastifyInstance) {
 
