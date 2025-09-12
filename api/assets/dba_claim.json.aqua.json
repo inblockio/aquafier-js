@@ -1,0 +1,83 @@
+{
+    "revisions": {
+        "0x61e1f638ca1017bd7baa32816f93e19e156dc598229873b801cd4c4f496bd799": {
+            "file_hash": "d7ed420f68e12f581edce153f630e06a2d054253ca40d56af514c08e4838a666",
+            "file_nonce": "82870a21e625486361b4883b535ebd0e3c8d5caa9b1a4b3d475a337fe84f9c4e",
+            "forms_address_1": "651 N BROAD ST",
+            "forms_address_2": "",
+            "forms_affiant": "STEVEN SPRAGUE",
+            "forms_affiant_title": "CCEO/ PRESIDENT",
+            "forms_city": "MIDDLETOWN",
+            "forms_county": "New Castle",
+            "forms_delegated_addresses": "0xD36AAf65a91bB7dc69942cF6B6d1dBa4Ef171664,0xD36AAf65a91bB7dc69942cF6B6d1dBa4Ef171664",
+            "forms_file_number": "636000",
+            "forms_filed_date": "05/23/2024",
+            "forms_formation_date": "04/09/2024",
+            "forms_last_updated_on": "05/24/2024",
+            "forms_nature_of_business": "TECHNOLOGYSERVICES AND SOFTWARE TO THIRD PARTIES",
+            "forms_parent_company": "ROOTZ CORP.",
+            "forms_phone": "413-330-9100",
+            "forms_state": "DE",
+            "forms_status": "Active",
+            "forms_termination_date": "",
+            "forms_trade_name": "0xD36AAf65a91bB7dc69942cF6B6d1dBa4Ef171664",
+            "forms_type": "dba_claim",
+            "forms_url": "https://courts.delaware.gov/tradenames/details.aspx?id=636000",
+            "forms_zip_code": "19709",
+            "leaves": [
+                "765ed61b2b203f2c9eafd78baceb633486a4cbf84269e330b3468d17f963147d",
+                "25b97c2c94639890676a4390ff6a9068a0b005418bc5de5a81680eacf05b2418",
+                "41538c5c33ae83d0294ce85b79753cabc81e2a745bbb1cb3206e9e8a140ffc85",
+                "78d42e35c956260b34001741e7bac0c2f9128ce39339ebcb2774586c240c3f52",
+                "821e90b2d2dc0052ea8b297461d81a1ef77216724d510b1c5a5adfb4a8b65649",
+                "9a4afce877d2b4e92bce17bb5b75c514003b53b28a3a6b691d043c4d7eec08c9",
+                "40e575a715bcbdb0e5d46bcb674782fa04eceb82141c90bf4066edb19a17a931",
+                "b408d45b0454bea6cffff3ae3774e7816fc313acd744e7cf48d5b76142124625",
+                "c99b5c55daa594fea73b7a3176aaa2900dac3b29d83f8eb6e609a056981f6d0b",
+                "26b6a5f0a2c4e328de326251c77cade95d64efa89b9c09363f7e3ea8b9018ac0",
+                "7a739abf77727ad1dd1679a4536fb00da790665c2c2af332c15f491048c97a0f",
+                "c04bc7ba148988223b1a75fb7dc8fac33f0b55cafce360a66124e63341343dc4",
+                "ab5d18abc57cc329cbaf0e9383d333b97edc049dd8c0c7436f1aa9059db820a2",
+                "9cacf91fd3bb3c0473c5417f7347b506fffbc824a35607e5ec7fea1cf77f3e0b",
+                "3af3f9bd919e5d5a653e10c851eb6d77e560c11d0d33f277bd96f5d5a4f6e4f2",
+                "57ee87cc904ab2f27e91fb9cb1dff7afbacf7f29687f5e77227808a9497a9040",
+                "b6bde8840edc8aafc6e2948786a1ae544a55078b3740b85680978f04ba3f1694",
+                "474884ef6fa2547a67fb2f4f09b709bf13258c58bb20dfe2ebda3adb46374f16",
+                "bec7a1b6193f0a5e7e21fb1b9ccfe06dbbf551ac82af36bd241f4558b5f51d81",
+                "d29a99a6b62853ad237c451ba6977793d8c6567290cc80f763b6b720fd49b624",
+                "b98f850c0efc2a9e53ba6cf23af299edf772f9c976efafb14ed9316878d9a034",
+                "19ea51a3ede5c3eb3c0ea4a54fc0690a57442e3848e1ca7725cf4544ba1e5b7e",
+                "3fe025023babe82d248c6276d6779b124203ed32c88b293e1442740ee709e8f2",
+                "937488e1e16f464edffcb79abb497e231c1626ab7d5b4372f0145d4a30e222b4",
+                "d781acf7ba880ecae581ffd8debcb4f5cb430bc2f237e27a6098471a9f7ffa60",
+                "43fcaef3dc4b2a2d0550543b638048edcfb710da9276da109a9e011ed1a53ed1",
+                "39ccd407bb105ed3be74df4a546d9b10c4f6c80e48b559102b04fa2b29aa83b4"
+            ],
+            "local_timestamp": "20250911082226",
+            "previous_verification_hash": "",
+            "revision_type": "form",
+            "version": "https://aqua-protocol.org/docs/v3/schema_2 | SHA256 | Method: tree"
+        }
+    },
+    "file_index": {
+        "0x61e1f638ca1017bd7baa32816f93e19e156dc598229873b801cd4c4f496bd799": "dba_claim.json"
+    },
+    "tree": {
+        "children": [
+            {
+                "hash": "0xb4e48417c9495a022d65821302fb28ae0e33733ea802f90acbece75fbc8cfe3c",
+                "children": []
+            }
+        ],
+        "hash": "0x61e1f638ca1017bd7baa32816f93e19e156dc598229873b801cd4c4f496bd799"
+    },
+    "treeMapping": {
+        "paths": {
+            "0xb4e48417c9495a022d65821302fb28ae0e33733ea802f90acbece75fbc8cfe3c": [
+                "0x61e1f638ca1017bd7baa32816f93e19e156dc598229873b801cd4c4f496bd799",
+                "0xb4e48417c9495a022d65821302fb28ae0e33733ea802f90acbece75fbc8cfe3c"
+            ]
+        },
+        "latestHash": "0xb4e48417c9495a022d65821302fb28ae0e33733ea802f90acbece75fbc8cfe3c"
+    }
+}

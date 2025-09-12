@@ -1,0 +1,17 @@
+[
+    {
+      "name": "url",
+      "label": "DBA Claim URL",
+      "type": "text",
+      "required": true,
+      "isArray": false
+    },
+      {
+    "name": "delegated_wallets",
+    "label": "Delegate Wallets Addresses to Claim",
+    "type": "wallet_address",
+    "required": true,
+    "isArray": true,
+    "description": "Add multiple wallet addresses for to delegate claim"
+  }
+  ]

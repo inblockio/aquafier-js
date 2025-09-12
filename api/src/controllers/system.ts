@@ -49,6 +49,7 @@ export default async function systemController(fastify: FastifyInstance) {
             "access_agreement",
             "aqua_sign",
             "domain_claim",
+            "dba_claim",
             "cheque",
             "identity_attestation",
             "identity_claim",
@@ -185,9 +186,7 @@ export default async function systemController(fastify: FastifyInstance) {
         }
 
 
-     
-
-       
+    
 
 
         // throw Error(`Fetching AquaTree for user ${metamaskAddress} with url ${url}  -- ${JSON.stringify(trees, null, 4)}`)

@@ -47,7 +47,7 @@ const WalletAdrressClaim = forwardRef<HTMLDivElement, IWalletAdrressClaim>(
                   <>
                         <HoverCard open={open} onOpenChange={setOpen}>
                               <HoverCardTrigger>
-                                    <div className="inline-block" ref={ref}>
+                                    <div className="inline-block w-full" ref={ref}>
                                           {avatarOnly ? (
                                                 <Tooltip>
                                                       <TooltipTrigger asChild>
@@ -68,19 +68,24 @@ const WalletAdrressClaim = forwardRef<HTMLDivElement, IWalletAdrressClaim>(
                                                       </TooltipContent>
                                                 </Tooltip>
                                           ) : (
-                                                <span className="flex gap-2 items-center">
-                                                      <span
-                                                            className="text-sm cursor-pointer font-mono font-bold break-all"
+                                                <div className="flex gap-2 items-center flex-wrap break-all">
+                                                      <p
+                                                            className="text-xs flex-1 cursor-pointer font-mono font-medium"
+                                                            style={{
+                                                                  wordBreak: "break-all",
+                                                                  wordWrap: "break-word",
+                                                                  textWrap: "wrap"
+                                                            }}
                                                             onClick={(e) => {
                                                                   e.stopPropagation()
                                                                   handleClick()
                                                             }}
                                                       >
                                                             {showWalletAddress ? walletAddress : identityClaimDetails?.name || walletAddress}
-                                                      </span>
+                                                      </p>
                                                       <CopyButton text={`${walletAddress}`} isIcon={true} />
                                                       {identityClaimDetails && <ArrowRightLeft size={16} onClick={() => setShowWalletAddress(prev => !prev)} />}
-                                                </span>
+                                                </div>
                                           )}
                                     </div>
                               </HoverCardTrigger>

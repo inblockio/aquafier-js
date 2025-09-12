@@ -2,8 +2,8 @@ import React, { JSX, useEffect, useRef, useState } from 'react'
 import { FormField, FormTemplate } from './types'
 import { useStore } from 'zustand'
 import appStore from '@/store'
-import { isValidEthereumAddress, getRandomNumber, formatDate, estimateFileSize, dummyCredential, fetchSystemFiles, getGenesisHash, fetchFiles, isWorkFlowData, generateProofFromSignature, formatTxtRecord, dataURLToFile } from '@/utils/functions'
-import Aquafier, { AquaTree, FileObject, getAquaTreeFileName, AquaTreeWrapper, getAquaTreeFileObject, Revision, OrderRevisionInAquaTree } from 'aqua-js-sdk'
+import { isValidEthereumAddress, getRandomNumber, formatDate, estimateFileSize, dummyCredential, fetchSystemFiles, getGenesisHash, fetchFiles, generateProofFromSignature, formatTxtRecord, dataURLToFile, fetchWalletAddressesAndNamesForInputRecommendation, ensureDomainUrlHasSSL } from '@/utils/functions'
+import Aquafier, { AquaTree, FileObject, getAquaTreeFileName, AquaTreeWrapper, getAquaTreeFileObject, Revision } from 'aqua-js-sdk'
 import axios from 'axios'
 import { generateNonce } from 'siwe'
 import { toast } from 'sonner'
@@ -83,7 +83,6 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: { selectedTempla
       }, []);
 
       const getFieldDefaultValue = (field: FormField, currentState: string | File | number | undefined
-
       ): string | File | number => {
             if (field.type === 'number') {
                   return currentState ?? 0
@@ -141,37 +140,37 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: { selectedTempla
                         }
                   }
 
-                  for (const recipient of recipients) {
-                        const unique_identifier = `${Date.now()}_${generateNonce()}`
-                        // let genesisHash = getGenesisHash(aquaTree)
+                  // for (const recipient of recipients) {
+                  const unique_identifier = `${Date.now()}_${generateNonce()}`
+                  // let genesisHash = getGenesisHash(aquaTree)
 
-                        const allHashes = Object.keys(aquaTree.revisions)
-                        const genesisHash = getGenesisHash(aquaTree) ?? '' //allHashes[0];
-                        const latestHash = allHashes[allHashes.length - 1]
+                  const allHashes = Object.keys(aquaTree.revisions)
+                  const genesisHash = getGenesisHash(aquaTree) ?? '' //allHashes[0];
+                  const latestHash = allHashes[allHashes.length - 1]
 
-                        const name = aquaTree.file_index[genesisHash] ?? 'workflow file'
-                        const url = `${backend_url}/share_data`
-                        const method = 'POST'
-                        const data = {
-                              latest: latestHash,
-                              genesis_hash: genesisHash,
-                              hash: unique_identifier,
-                              recipient: recipient,
-                              option: 'latest',
-                              file_name: name,
-                        }
-
-                        await axios({
-                              method,
-                              url,
-                              data,
-                              headers: {
-                                    nonce: session?.nonce,
-                              },
-                        })
-
-                        //  console.log(`Response from share request  ${response.status}`)
+                  const name = aquaTree.file_index[genesisHash] ?? 'workflow file'
+                  const url = `${backend_url}/share_data`
+                  const method = 'POST'
+                  const data = {
+                        latest: latestHash,
+                        genesis_hash: genesisHash,
+                        hash: unique_identifier,
+                        recipients: recipients,
+                        option: 'latest',
+                        file_name: name,
                   }
+
+                  await axios({
+                        method,
+                        url,
+                        data,
+                        headers: {
+                              nonce: session?.nonce,
+                        },
+                  })
+
+                  //  console.log(`Response from share request  ${response.status}`)
+                  // }
             } catch (e) {
                   toast.error('Error sharing workflow')
             }
@@ -294,7 +293,11 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: { selectedTempla
                   } else {
                         if (field.name === 'signers' && selectedTemplate.name === 'aqua_sign') {
                               completeFormData[field.name] = multipleAddresses.join(',')
+                        }else  if (field.name === 'delegated_wallets' && selectedTemplate.name === 'dba_claim') {
+                              completeFormData[field.name] = multipleAddresses.join(',')
                         }
+
+
                   }
             })
 
@@ -830,6 +833,7 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: { selectedTempla
             e.preventDefault()
 
             try {
+
                   setModalFormErorMessae('')
 
                   if (submittingTemplateData) {
@@ -844,7 +848,6 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: { selectedTempla
 
                   // Step 2: Validate fields
                   validateFields(completeFormData, selectedTemplate)
-
 
 
 
@@ -891,6 +894,7 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: { selectedTempla
                   }
 
 
+                  console.log(`4.`)
                   //  console.log(`see me ...1`)
                   // Step 3: Get system files
                   const allSystemFiles = await getSystemFiles(systemFileInfo, backend_url, session?.address || '')
@@ -908,6 +912,36 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: { selectedTempla
                   // Step 6: Handle identity attestation specific logic
                   if (selectedTemplate?.name === 'identity_attestation') {
                         completeFormData = handleIdentityAttestation(completeFormData, selectedFileInfo)
+                  } else if (selectedTemplate?.name === 'dba_claim') {
+
+                        let dbaUrl = completeFormData['url'] as string
+                        if(!dbaUrl.includes('courts.delaware.gov')) {
+                              toast.error(`Please enter a DBA url expecting to find your trade name at courts.delaware.gov`)
+                              setSubmittingTemplateData(false)
+                              return
+                        }
+
+                        try {
+                              const url = ensureDomainUrlHasSSL(`${backend_url}/scrape_data`)
+                              const response = await axios.post(url, {
+                                    domain: completeFormData['url']
+                              },  
+                              {
+                                                headers: {
+                                                      nonce: session?.nonce,
+                                                },
+                                          }
+                                    )
+                              completeFormData = response.data.data.tradeNameDetails
+
+                              completeFormData['delegated_wallets'] = multipleAddresses.join(',')
+                       
+                        } catch (e) {
+                              toast.error(`Error fetching data from url.`)
+                              setSubmittingTemplateData(false)
+                              return
+                        }
+
                   }
 
                   //  console.log('Complete form data: ', completeFormData)
@@ -1039,51 +1073,8 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: { selectedTempla
       }
 
 
-      const fetchRecommendedWalletAddresses = (): Map<string, string> => {
 
-            const recommended = new Map<string, string>()
 
-            const someData = systemFileInfo.map(e => {
-                  try {
-                        return getAquaTreeFileName(e.aquaTree!)
-                  } catch (e) {
-                        //  console.log('Error processing system file') // More descriptive
-                        return ''
-                  }
-            })
-
-            for (const file of files.fileData) {
-
-                  const workFlow = isWorkFlowData(file.aquaTree!, someData)
-
-                  if (workFlow && workFlow.isWorkFlow) {
-                        //  console.log('Workflow found: ', workFlow.workFlow)
-                        if (workFlow.workFlow === 'identity_claim') {
-                              //  console.log('Identity claim found:')
-                              const orederdRevisionAquaTree = OrderRevisionInAquaTree(file.aquaTree!)
-                              let allHashes = Object.keys(orederdRevisionAquaTree.revisions)
-
-                              // //  console.log('orederdRevisionAquaTree: ', JSON.stringify (orederdRevisionAquaTree.revisions ,null, 2))
-                              // //  console.log('hashs: ', JSON.stringify (orederdRevisionAquaTree.revisions ,null, 2))
-                              let genRevsion = orederdRevisionAquaTree.revisions[allHashes[0]]
-
-                              // //  console.log('genRevsion: ', JSON.stringify (genRevsion,null, 2))
-                              // //  console.log('name : ', genRevsion[`forms_name`])
-                              // //  console.log('forms_wallet_address  : ', genRevsion[`forms_wallet_address`])
-                              if (genRevsion && genRevsion[`forms_name`] && genRevsion[`forms_wallet_address`]) {
-                                    recommended.set(genRevsion[`forms_name`], genRevsion[`forms_wallet_address`])
-                              }
-                        }
-                  } else {
-                        //  console.log('Not a workflow data: ', file.aquaTree)
-                  }
-
-            }
-
-            //  console.log('Recommended wallet addresses: ', JSON.stringify(recommended, null, 2))
-
-            return recommended;
-      }
       return (
             <>
                   {/* <div className="min-h-[100%] bg-gradient-to-br from-blue-50 via-white to-indigo-50 px-4"> */}
@@ -1182,7 +1173,7 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: { selectedTempla
                                                                                                       /> */}
                                                                                                       <WalletAutosuggest
 
-                                                                                                            walletAddresses={fetchRecommendedWalletAddresses()}
+                                                                                                            walletAddresses={fetchWalletAddressesAndNamesForInputRecommendation(systemFileInfo, files)}
                                                                                                             field={field}
                                                                                                             index={index}
                                                                                                             address={address}
@@ -1444,7 +1435,7 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: { selectedTempla
                                                                                                 :
 
                                                                                                 <WalletAutosuggest
-                                                                                                      walletAddresses={fetchRecommendedWalletAddresses()}
+                                                                                                      walletAddresses={fetchWalletAddressesAndNamesForInputRecommendation(systemFileInfo, files)}
                                                                                                       field={field}
                                                                                                       index={1}
                                                                                                       address={formData[field.name] ? formData[field.name] as string : ""}
