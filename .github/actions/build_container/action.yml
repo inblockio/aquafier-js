@@ -30,7 +30,7 @@ runs:
   using: "composite"
   steps:
     - name: Log in to the Container registry
-      uses: docker/login-action@65c0768122147b63190ddda25aa21f81640cf5f3
+      uses: docker/login-action@5b7b28b1cc417bbd34cd8c225a957c9ce9adf7f2
       with:
         registry: ${{ env.REGISTRY }}
         username: ${{ github.actor }}
