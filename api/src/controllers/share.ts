@@ -415,7 +415,7 @@ fastify.get('/contracts', async (request, reply) => {
         whereClause = {
             OR: [
                 { sender: { equals: sender, mode: 'insensitive' } },
-                { recipients: { has: receiver } } // Changed from receiver to recipients array check
+                     { recipients: { hasSome: [receiver.toLowerCase().trim()] } } // { recipients: { has: receiver } } // Changed from receiver to recipients array check
             ]
         };
     } else if (sender) {
@@ -456,21 +456,6 @@ fastify.get('/contracts', async (request, reply) => {
         }
     }
 
-    // Fix: receiver_has_deleted is String[], so we need to filter differently
-    // Option 1: Check if array is empty (assuming empty array means not deleted)
-    whereClause.receiver_has_deleted = {
-        isEmpty: true
-    };
-
-    // Option 2: If you want to check that a specific receiver hasn't deleted it:
-    // if (receiver) {
-    //     whereClause.receiver_has_deleted = {
-    //         not: {
-    //             has: receiver
-    //         }
-    //     };
-    // }
-
     const contracts = await prisma.$transaction(async (tx) => {
         const result = await tx.contract.findMany({
             where: whereClause
@@ -484,6 +469,7 @@ fastify.get('/contracts', async (request, reply) => {
         });
         
         return filteredResult;
+       
     }, {
         timeout: 10000
     });
