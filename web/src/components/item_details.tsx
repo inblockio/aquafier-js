@@ -2,12 +2,14 @@
 import { Button } from '@/components/ui/button'
 import { IItemDetailData } from '@/models/AquaTreeDetails'
 import { Copy } from 'lucide-react'
+import { toast } from 'sonner'
 // import { IItemDetailData } from "../models/AquaTreeDetails";
 
 export const ItemDetail = ({ label, value, displayValue, showCopyIcon }: IItemDetailData) => {
       const copyToClipboard = async () => {
             try {
                   await navigator.clipboard.writeText(value)
+                  toast.success('Copied to clipboard')
             } catch (err) {
                   console.error('Failed to copy text: ', err)
             }

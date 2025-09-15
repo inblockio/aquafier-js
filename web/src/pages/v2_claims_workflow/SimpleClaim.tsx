@@ -44,7 +44,7 @@ const SimpleClaim = ({ claimInfo }: ISimpleClaim) => {
                               overflowWrap: 'break-word',
                         }}
                         >
-                              {processedValue}
+                            --  {processedValue}
                         </span>
                   </div>
             )

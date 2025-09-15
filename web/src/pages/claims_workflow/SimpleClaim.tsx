@@ -1,5 +1,6 @@
 import { HiShieldCheck } from 'react-icons/hi'
 import { formatCryptoAddress } from '@/utils/functions'
+import { ItemDetail } from '@/components/item_details'
 
 interface ISimpleClaim {
       claimInfo: Record<string, string>
@@ -35,16 +36,22 @@ const SimpleClaim = ({ claimInfo }: ISimpleClaim) => {
             return (
                   <div key={key} className="flex justify-between items-start">
                         <span className="text-sm text-gray-600 capitalize">{processedKey}</span>
-                        <span className={`text-sm font-medium max-w-[200px] break-all ${cssClass}`} 
-                        style={{ 
-                              textAlign: 'right',
-                              whiteSpace: 'normal',
-                              wordWrap: 'break-word',
-                              wordBreak: 'break-word',
-                              overflowWrap: 'break-word',
-                        }}
+                        <span className={`text-sm font-medium max-w-[200px] break-all ${cssClass}`}
+                              style={{
+                                    textAlign: 'right',
+                                    whiteSpace: 'normal',
+                                    wordWrap: 'break-word',
+                                    wordBreak: 'break-word',
+                                    overflowWrap: 'break-word',
+                              }}
                         >
-                              {processedValue}
+                              {/* {processedValue} */}
+                              {key === 'forms_wallet_address' ? <ItemDetail
+                                    label=""
+                                    displayValue={processedValue}
+                                    value={value}
+                                    showCopyIcon={true}
+                              /> : processedValue}
                         </span>
                   </div>
             )
