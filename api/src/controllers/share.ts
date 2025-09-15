@@ -380,7 +380,7 @@ export default async function shareController(fastify: FastifyInstance) {
 
  
     // Create an endpoint for filtering contracts, ie filter by sender, receiver, hash, etc
- fastify.get('/contracts', async (request, reply) => {
+fastify.get('/contracts', async (request, reply) => {
     const { sender, receiver, hash, genesis_hash, ...otherParams } = request.query as {
         sender?: string,
         receiver?: string,
@@ -456,22 +456,34 @@ export default async function shareController(fastify: FastifyInstance) {
         }
     }
 
-    
+    // Fix: receiver_has_deleted is String[], so we need to filter differently
+    // Option 1: Check if array is empty (assuming empty array means not deleted)
+    whereClause.receiver_has_deleted = {
+        isEmpty: true
+    };
 
     // Option 2: If you want to check that a specific receiver hasn't deleted it:
-    if (receiver) {
-        whereClause.receiver_has_deleted = {
-            not: {
-                has: receiver
-            }
-        };
-    }
+    // if (receiver) {
+    //     whereClause.receiver_has_deleted = {
+    //         not: {
+    //             has: receiver
+    //         }
+    //     };
+    // }
 
     const contracts = await prisma.$transaction(async (tx) => {
         const result = await tx.contract.findMany({
             where: whereClause
         });
-        return result;
+        
+        // Filter out contracts where the current user (sender or receiver) has deleted it
+        const currentUser = sender || receiver; // Get the current user from query params
+        const filteredResult = result.filter(contract => {
+            if (!currentUser) return true; // If no user specified, return all
+            return !contract.receiver_has_deleted.includes(currentUser);
+        });
+        
+        return filteredResult;
     }, {
         timeout: 10000
     });
