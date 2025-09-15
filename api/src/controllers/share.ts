@@ -378,99 +378,106 @@ export default async function shareController(fastify: FastifyInstance) {
         }
     });
 
-
+ 
     // Create an endpoint for filtering contracts, ie filter by sender, receiver, hash, etc
-    fastify.get('/contracts', async (request, reply) => {
-        const { sender, receiver, hash, genesis_hash, ...otherParams } = request.query as {
-            sender?: string,
-            receiver?: string,
-            hash?: string,
-            genesis_hash?: string,
-            [key: string]: string | undefined
+ fastify.get('/contracts', async (request, reply) => {
+    const { sender, receiver, hash, genesis_hash, ...otherParams } = request.query as {
+        sender?: string,
+        receiver?: string,
+        hash?: string,
+        genesis_hash?: string,
+        [key: string]: string | undefined
+    };
+
+    // Check if at least one search parameter is provided
+    if (!sender && !receiver && !hash && !genesis_hash && Object.keys(otherParams).length === 0) {
+        return reply.code(400).send({ success: false, message: "Missing required parameters" });
+    }
+
+    const nonce = request.headers['nonce'];
+
+    if (!nonce || typeof nonce !== 'string' || nonce.trim() === '') {
+        return reply.code(401).send({ error: 'Unauthorized: Missing or empty nonce header' });
+    }
+
+    const session = await prisma.siweSession.findUnique({
+        where: { nonce: nonce }
+    });
+
+    if (session == null) {
+        return reply.code(403).send({success: false, message: "Nonce is invalid"});
+    }
+
+    // Build dynamic where clause based on provided parameters
+    let whereClause: any = {};
+
+    if (sender && receiver) {
+        whereClause = {
+            OR: [
+                { sender: { equals: sender, mode: 'insensitive' } },
+                { recipients: { has: receiver } } // Changed from receiver to recipients array check
+            ]
         };
+    } else if (sender) {
+        whereClause.sender = {
+            equals: sender,
+            mode: 'insensitive'
+        };
+    } else if (receiver) {
+        // Changed to check if receiver exists in recipients array
+        whereClause.recipients = {
+            has: receiver
+        };
+    }
 
-        // Check if at least one search parameter is provided
-        if (!sender && !receiver && !hash && !genesis_hash && Object.keys(otherParams).length === 0) {
-            return reply.code(400).send({ success: false, message: "Missing required parameters" });
-        }
+    if (hash) {
+        whereClause.hash = hash;
+    }
 
-        const nonce = request.headers['nonce'];
+    if (genesis_hash) {
+        whereClause.genesis_hash = {
+            contains: genesis_hash,
+            mode: 'insensitive'
+        };
+    }
 
-        if (!nonce || typeof nonce !== 'string' || nonce.trim() === '') {
-            return reply.code(401).send({ error: 'Unauthorized: Missing or empty nonce header' });
-        }
-
-        const session = await prisma.siweSession.findUnique({
-            where: { nonce: nonce }
-        });
-
-        if (session == null) {
-            return reply.code(403).send({success: false, message: "Nounce  is invalid"});
-        }
-
-        // Build dynamic where clause based on provided parameters
-        let whereClause: any = {};
-
-        if (sender && receiver) {
-            whereClause = {
-                OR: [
-                    { sender: { equals: sender, mode: 'insensitive' } },
-                    {receiver: {equals: receiver, mode: 'insensitive'}}
-                ]
-            };
-        } else if (sender) {
-            whereClause.sender = {
-                equals: sender,
-                mode: 'insensitive'
-            };
-        } else if (receiver) {
-            whereClause.receiver = {
-                equals: receiver,
-                mode: 'insensitive'
-            };
-        }
-
-        if (hash) {
-            whereClause.hash = hash;
-        }
-
-        if (genesis_hash) {
-            whereClause.genesis_hash = {
-                contains: genesis_hash,
-                mode: 'insensitive'
-            };
-        }
-
-        // Handle any additional search parameters dynamically
-        for (const [key, value] of Object.entries(otherParams)) {
-            if (value !== undefined) {
-                // For string fields that should be case insensitive
-                if (['latest'].includes(key)) {
-                    whereClause[key] = {
-                        equals: value,
-                        mode: 'insensitive'
-                    };
-                } else {
-                    whereClause[key] = value;
-                }
+    // Handle any additional search parameters dynamically
+    for (const [key, value] of Object.entries(otherParams)) {
+        if (value !== undefined) {
+            // For string fields that should be case insensitive
+            if (['latest'].includes(key)) {
+                whereClause[key] = {
+                    equals: value,
+                    mode: 'insensitive'
+                };
+            } else {
+                whereClause[key] = value;
             }
         }
+    }
 
-        // Update the where clause to avoid querying anything that has receiver_has_deleted set to true
-        whereClause.receiver_has_deleted = false;
+    
 
-        const contracts = await prisma.$transaction(async (tx) => {
-            const result = await tx.contract.findMany({
-                where: whereClause
-            });
-            return result;
-        }, {
-            timeout: 10000
+    // Option 2: If you want to check that a specific receiver hasn't deleted it:
+    if (receiver) {
+        whereClause.receiver_has_deleted = {
+            not: {
+                has: receiver
+            }
+        };
+    }
+
+    const contracts = await prisma.$transaction(async (tx) => {
+        const result = await tx.contract.findMany({
+            where: whereClause
         });
-
-        // console.log('Found contracts:', contracts.length);
-        return reply.code(200).send({ success: true, contracts });
+        return result;
+    }, {
+        timeout: 10000
     });
+
+    return reply.code(200).send({ success: true, contracts });
+});
 
     // Original, DO NOT DELETE
     // fastify.get('/contracts', async (request, reply) => {
