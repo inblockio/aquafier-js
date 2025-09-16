@@ -131,7 +131,7 @@ export async function handleMetaMaskNetworkAndConfirm(
 
                     // Approach 3: Try by role
                     if (!isReviewAlertVisible) {
-                        reviewAlertButton = metaMaskPage.getByRole('button', { name: /review alert/i });
+                        reviewAlertButton = metaMaskPage.getByRole('button', {name: /review alert/i});
                         isReviewAlertVisible = await reviewAlertButton.isVisible().catch(() => false);
                     }
 
@@ -283,7 +283,7 @@ export async function handleMetaMaskNetworkAndConfirm(
 // Helper function to upload a file
 export async function uploadFile(page: Page, filePath: string, dropzoneSelector: string = '[data-testid="file-upload-dropzone"]'): Promise<void> {
     console.log("Waiting for file upload dropzone to be visible...");
-    await page.waitForSelector(dropzoneSelector, { state: 'visible' });
+    await page.waitForSelector(dropzoneSelector, {state: 'visible'});
     console.log("File upload dropzone is visible");
 
     const fileChooserPromise = page.waitForEvent('filechooser');
@@ -304,11 +304,11 @@ export async function waitForMetaMaskPopup(context: BrowserContext): Promise<Pag
 // Helper function to close upload dialog
 export async function closeUploadDialog(page: Page): Promise<void> {
     console.log("Waiting for clear completed button to appear...");
-    await page.waitForSelector('[data-testid="clear-completed-button"]', { state: 'visible' });
+    await page.waitForSelector('[data-testid="clear-completed-button"]', {state: 'visible'});
     await page.click('[data-testid="clear-completed-button"]');
 
     console.log("Waiting for close upload dialog to appear");
-    await page.waitForSelector('[data-testid="close-upload-dialog-button"]', { state: 'visible' });
+    await page.waitForSelector('[data-testid="close-upload-dialog-button"]', {state: 'visible'});
     await page.click('[data-testid="close-upload-dialog-button"]');
 
     console.log("Clicked close upload dialog button");
@@ -322,7 +322,7 @@ export async function witnessDocument(page: Page, context: BrowserContext): Prom
 
     try {
         console.log("Waiting for witness button to appear...");
-        await page.waitForSelector('[data-testid="witness-action-button"]', { state: 'visible' });
+        await page.waitForSelector('[data-testid="witness-action-button"]', {state: 'visible'});
         console.log("Witness button is visible");
 
         // Check if MetaMask page already exists
@@ -387,7 +387,7 @@ export async function witnessDocument(page: Page, context: BrowserContext): Prom
                 } else {
                     console.log("Download button not found - document may not have been witnessed successfully");
                     // Take a screenshot for debugging
-                    await page.screenshot({ path: 'witness-verification-failed.png' }).catch(() => {
+                    await page.screenshot({path: 'witness-verification-failed.png'}).catch(() => {
                     });
                 }
             } catch (verificationError) {
@@ -410,7 +410,7 @@ export async function witnessDocument(page: Page, context: BrowserContext): Prom
 // Helper function to sign a document
 export async function signDocument(page: Page, context: BrowserContext): Promise<void> {
     console.log("Waiting for sign button to appear...");
-    await page.waitForSelector('[data-testid="sign-action-button-0"]', { state: 'visible' });
+    await page.waitForSelector('[data-testid="sign-action-button-0"]', {state: 'visible'});
     console.log("Sign button is visible");
 
     const metaMaskPromise = context.waitForEvent("page");
@@ -434,7 +434,7 @@ export async function downloadAquaTree(page: Page, saveToDownloads: boolean): Pr
 
     // Click the download button
     //download-aqua-tree-button-1
-    await page.waitForSelector('[data-testid="download-aqua-tree-button-0"]', { state: 'visible' });
+    await page.waitForSelector('[data-testid="download-aqua-tree-button-0"]', {state: 'visible'});
     await page.click('[data-testid="download-aqua-tree-button-0"]');
 
     // Wait for the download to start
@@ -493,6 +493,15 @@ export async function importAquaChain(secondTestPage: Page, context: BrowserCont
     await secondTestPage.waitForLoadState('networkidle');
 
     if (shareUrl.length == 0) {
+        //dirty hack
+        for (let i = 3; i < 1; i++) {
+            await secondTestPage.waitForSelector('[data-testid="open-shared-contract-button-0"]', {state: 'visible'});
+            await secondTestPage.click('[data-testid="open-shared-contract-button-0"]');
+            await secondTestPage.waitForTimeout(1000);
+            if (!await secondTestPage.isVisible('[data-testid="open-shared-contract-button-0"]')) {
+                break;
+            }
+        }
         await waitAndClick(secondTestPage, '[data-testid="open-shared-contract-button-0"]')
     }
 
@@ -500,7 +509,7 @@ export async function importAquaChain(secondTestPage: Page, context: BrowserCont
 }
 
 export async function createAndSaveSignature(page: Page, context: BrowserContext): Promise<void> {
-    await page.getByText("Create Signature").waitFor({ state: 'visible' });
+    await page.getByText("Create Signature").waitFor({state: 'visible'});
     await page.getByText("Create Signature").click();
     console.log("create signature buttoon");
 
@@ -508,8 +517,8 @@ export async function createAndSaveSignature(page: Page, context: BrowserContext
 
     await page.locator('[id="input-name"]').fill("User name ");
 
-    await page.getByText("Create Workflow").waitFor({ state: 'visible' });
-    await page.waitForSelector('[class="signature-canvas"]', { state: 'visible' });
+    await page.getByText("Create Workflow").waitFor({state: 'visible'});
+    await page.waitForSelector('[class="signature-canvas"]', {state: 'visible'});
     await page.click('[class="signature-canvas"]');
 
     const metamaskPromise = context.waitForEvent("page");
@@ -523,7 +532,7 @@ export async function createAndSaveSignature(page: Page, context: BrowserContext
 
 // Helper function to add signature to document
 export async function addSignatureToDocument(page: Page, context: BrowserContext): Promise<void> {
-    await page.getByText("Add Signature to document").waitFor({ state: 'visible' });
+    await page.getByText("Add Signature to document").waitFor({state: 'visible'});
     await page.getByText("Add Signature to document").click();
     console.log("Add Signature to document");
 
@@ -575,7 +584,7 @@ export async function shareDocument(
         console.log(`Toggle specific wallet sharing`)
 
         // Wait for the dialog to be fully loaded
-        await page.waitForSelector('text=Who can access', { state: 'visible' });
+        await page.waitForSelector('text=Who can access', {state: 'visible'});
 
         // Click on the "Specific wallet" option - look for the container with "Specific wallet" text
         try {
@@ -594,7 +603,7 @@ export async function shareDocument(
         }
 
         // Wait for the wallet address input to appear
-        await page.waitForSelector('input[placeholder="Enter wallet address (0x...)"]', { state: 'visible' });
+        await page.waitForSelector('input[placeholder="Enter wallet address (0x...)"]', {state: 'visible'});
 
         // Enter recipient address
         await page.locator('input[placeholder="Enter wallet address (0x...)"]').fill(recipientAddress);
@@ -603,7 +612,7 @@ export async function shareDocument(
     }
 
     // Click the "Create Share Link" button
-    await page.waitForSelector('text=Create Share Link', { state: 'visible' });
+    await page.waitForSelector('text=Create Share Link', {state: 'visible'});
     await page.locator('text=Create Share Link').click();
 
     await page.waitForTimeout(1000);
@@ -613,7 +622,7 @@ export async function shareDocument(
 
     console.log(`Shared Document Link to be visible`)
     // Wait for success message - look for "Share Link Ready" section
-    await page.waitForSelector('text=Share Link Ready', { state: 'visible' });
+    await page.waitForSelector('text=Share Link Ready', {state: 'visible'});
 
     console.log(`Copy share url logic`)
     // Get the share URL from the gray container with the link
@@ -625,7 +634,7 @@ export async function shareDocument(
         console.log('Method 1 failed, trying method 2...');
         try {
             // Method 2: Look for text that starts with the domain
-            const urlElement = page.locator('p.break-all').filter({ hasText: '/app/shared-contracts/' });
+            const urlElement = page.locator('p.break-all').filter({hasText: '/app/shared-contracts/'});
             shareUrl = await urlElement.textContent() ?? "";
         } catch (error2) {
             console.log('Method 2 failed, trying method 3...');
@@ -771,7 +780,7 @@ async function switchToTestNetwork(metaMaskPage: any) {
         await metaMaskPage.click('[data-testid="network-display"]');
 
         // Wait for network list
-        await metaMaskPage.waitForSelector('[data-testid="network-list"]', { state: 'visible' });
+        await metaMaskPage.waitForSelector('[data-testid="network-list"]', {state: 'visible'});
 
         // Try to select Sepolia testnet or localhost
         const networkOptions = [
@@ -783,7 +792,7 @@ async function switchToTestNetwork(metaMaskPage: any) {
 
         for (const networkSelector of networkOptions) {
             try {
-                await metaMaskPage.waitForSelector(networkSelector, { state: 'visible' });
+                await metaMaskPage.waitForSelector(networkSelector, {state: 'visible'});
                 await metaMaskPage.click(networkSelector);
                 console.log(`Switched to test network: ${networkSelector}`);
                 return;
@@ -908,13 +917,13 @@ export async function registerNewMetaMaskWallet(): Promise<RegisterMetaMaskRespo
 
         // Decline telemetry data collection
         console.log("Declining telemetry data collection")
-        await metaMaskPage.waitForSelector('[data-testid="metametrics-no-thanks"]', { state: 'visible' });
+        await metaMaskPage.waitForSelector('[data-testid="metametrics-no-thanks"]', {state: 'visible'});
         await metaMaskPage.click('[data-testid="metametrics-no-thanks"]')
 
         // Set up password
         console.log("Setting up password")
         let myNewPassword = generatePassword(15)
-        await metaMaskPage.waitForSelector('[data-testid="create-password-new"]', { state: 'visible' })
+        await metaMaskPage.waitForSelector('[data-testid="create-password-new"]', {state: 'visible'})
         await metaMaskPage.fill('[data-testid="create-password-new"]', myNewPassword)
         await metaMaskPage.fill('[data-testid="create-password-confirm"]', myNewPassword)
         await metaMaskPage.click('[data-testid="create-password-terms"]')
@@ -922,7 +931,7 @@ export async function registerNewMetaMaskWallet(): Promise<RegisterMetaMaskRespo
 
         // Skip wallet backup
         console.log("Skipping wallet backup")
-        await metaMaskPage.waitForSelector('[data-testid="secure-wallet-later"]', { state: 'visible' });
+        await metaMaskPage.waitForSelector('[data-testid="secure-wallet-later"]', {state: 'visible'});
         await metaMaskPage.click('[data-testid="secure-wallet-later"]')
         await metaMaskPage.waitForSelector('[data-testid="skip-srp-backup-popover-checkbox"]', {
             state: 'visible'
@@ -939,14 +948,14 @@ export async function registerNewMetaMaskWallet(): Promise<RegisterMetaMaskRespo
 
         // Complete tutorial
         console.log("Completing tutorial")
-        await metaMaskPage.waitForSelector('[data-testid="pin-extension-next"]', { state: 'visible' });
+        await metaMaskPage.waitForSelector('[data-testid="pin-extension-next"]', {state: 'visible'});
         await metaMaskPage.click('[data-testid="pin-extension-next"]')
-        await metaMaskPage.waitForSelector('[data-testid="pin-extension-done"]', { state: 'visible' });
+        await metaMaskPage.waitForSelector('[data-testid="pin-extension-done"]', {state: 'visible'});
         await metaMaskPage.click('[data-testid="pin-extension-done"]')
 
         // Wait for network display to be visible
         console.log("Waiting for network display")
-        await metaMaskPage.waitForSelector('[data-testid="network-display"]', { state: 'visible' });
+        await metaMaskPage.waitForSelector('[data-testid="network-display"]', {state: 'visible'});
 
         // Switch to a test network to avoid mainnet connection issues
         console.log("Switching to test network")
@@ -989,7 +998,7 @@ export async function registerNewMetaMaskWallet(): Promise<RegisterMetaMaskRespo
         await metaMaskPage.click('[data-testid="account-list-item-menu-button"]')
         await metaMaskPage.waitForSelector('[data-testid="account-list-menu-details"]')
         await metaMaskPage.click('[data-testid="account-list-menu-details"]')
-        await metaMaskPage.getByText("Details").waitFor({ state: 'visible' })
+        await metaMaskPage.getByText("Details").waitFor({state: 'visible'})
         await metaMaskPage.getByText("Details").click()
 
         // Get the wallet address
@@ -1023,7 +1032,7 @@ export async function registerNewMetaMaskWalletAndLogin(url: string = "/app"): P
     const testPage = context.pages()[0];
     await testPage.waitForLoadState("load")
 
-    await testPage.goto(url, { waitUntil: 'networkidle' })
+    await testPage.goto(url, {waitUntil: 'networkidle'})
 
     console.log("Page loaded, looking for sign-in button...");
 
@@ -1063,13 +1072,13 @@ export async function registerNewMetaMaskWalletAndLogin(url: string = "/app"): P
             // await testPage.screenshot({ path: 'page-no-button-found.png' });
 
             // Force click the first button we find as a last resort
-            await testPage.click('button', { force: true });
+            await testPage.click('button', {force: true});
             console.log("Clicked first button found as fallback");
         }
         console.log("Clicked sign-in button, waiting for MetaMask popup...");
     } catch (error) {
         console.error("Error during login:", error);
-        await testPage.screenshot({ path: 'login-error.png' });
+        await testPage.screenshot({path: 'login-error.png'});
         throw error;
     }
 
@@ -1121,7 +1130,7 @@ export async function registerNewMetaMaskWalletAndLogin(url: string = "/app"): P
         await metamaskPage.waitForLoadState("load");
         console.log("MetaMask page loaded");
 
-        await metamaskPage.waitForSelector('[data-testid="confirm-btn"]', { state: 'visible' })
+        await metamaskPage.waitForSelector('[data-testid="confirm-btn"]', {state: 'visible'})
         await metamaskPage.click('[data-testid="confirm-btn"]')
 
         // Check if page is still open after first click
@@ -1132,8 +1141,8 @@ export async function registerNewMetaMaskWalletAndLogin(url: string = "/app"): P
 
         // Wrap the problematic section in a try-catch to fail silently
         try {
-            await metamaskPage.waitForSelector('[data-testid="confirm-footer-cancel-button"]', { state: 'visible' })
-            await metamaskPage.waitForSelector('[data-testid="confirm-footer-button"]', { state: 'visible' })
+            await metamaskPage.waitForSelector('[data-testid="confirm-footer-cancel-button"]', {state: 'visible'})
+            await metamaskPage.waitForSelector('[data-testid="confirm-footer-button"]', {state: 'visible'})
             await metamaskPage.click('[data-testid="confirm-footer-button"]')
         } catch (error: any) {
             // Check if the error is due to page being closed
@@ -1172,7 +1181,7 @@ export async function findAndClickHighestSharedButton(page: Page): Promise<numbe
 
         try {
             // Check if the element exists (with a short timeout to avoid long waits)
-            await page.waitForSelector(selector, { state: 'attached' });
+            await page.waitForSelector(selector, {state: 'attached'});
             highestCount = currentCount;
             currentCount++;
         } catch (error) {
@@ -1250,7 +1259,7 @@ export async function createTemplate(page: Page): Promise<void> {
 }
 
 export async function waitAndClick(page: Page, selector: string) {
-    await page.waitForSelector(selector, { state: 'visible' });
+    await page.waitForSelector(selector, {state: 'visible'});
     await page.click(selector);
 }
 
