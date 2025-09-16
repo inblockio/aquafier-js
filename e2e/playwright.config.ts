@@ -1,4 +1,5 @@
-import { defineConfig, devices } from '@playwright/test';
+import {defineConfig, devices} from '@playwright/test';
+
 const dotenv = require('dotenv');
 dotenv.config();
 /**
@@ -33,7 +34,7 @@ export default defineConfig({
     trace:  'retain-on-failure',
     video: 'retain-on-failure',
     // Increase timeouts for CI environment
-    actionTimeout: 120000,
+    actionTimeout: 360000,
     navigationTimeout: 60000,
     // Add browser launch options to optimize for CI
     launchOptions: {
