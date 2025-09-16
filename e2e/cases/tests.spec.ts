@@ -371,7 +371,7 @@ test("single user aqua-sign", async (): Promise<void> => {
 
 
 test.only("two user aqua-sign", async (): Promise<void> => {
-    test.setTimeout(360000);
+    test.slow();
     const registerWalletOneResponse = await registerNewMetaMaskWalletAndLogin();
 
     const contextWalletOne: BrowserContext = registerWalletOneResponse.context;
