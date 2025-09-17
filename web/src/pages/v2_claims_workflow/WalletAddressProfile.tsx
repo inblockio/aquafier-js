@@ -17,7 +17,7 @@ import {
       isWorkFlowData,
       timeToHumanFriendly
 } from '@/utils/functions'
-import Aquafier, {AquaTree, AquaTreeWrapper, FileObject, OrderRevisionInAquaTree} from 'aqua-js-sdk'
+import Aquafier, {AquaTree, AquaTreeWrapper, FileObject, OrderRevisionInAquaTree, reorderAquaTreeRevisionsProperties} from 'aqua-js-sdk'
 import {ArrowRight, CheckCircle, LucideCheckCircle, Mail, Phone, Share2, Signature, User, X} from 'lucide-react'
 import {Suspense, useEffect, useState} from 'react'
 import {TbWorldWww} from 'react-icons/tb'
@@ -51,6 +51,8 @@ interface IClaim {
 }
 
 const ClaimCard = ({ claim }: { claim: IClaim }) => {
+
+      console.log("Claim: ", claim)
 
       const [signatureImage, setSignatureImage] = useState<string | null>(null)
       const [dnsVerificationResult, setDnsVerificationResult] = useState<IDnsVerificationResult | null>(null)
@@ -201,7 +203,14 @@ const ClaimCard = ({ claim }: { claim: IClaim }) => {
 
       const verifyDomainClaim = async () => {
             try {
-                  const result = await verifyDNS(backend_url, claim.claimName!, session?.address!)
+
+                  const aquaTree = claim.apiFileInfo.aquaTree!
+                  const reorderedAquaTree = reorderAquaTreeRevisionsProperties(aquaTree)
+                  const hashes = Object.keys(reorderedAquaTree.revisions)
+                  const genesisHash = hashes[0]
+                  const genesisRevision = reorderedAquaTree.revisions[genesisHash]
+                  const result = await verifyDNS(backend_url, claim.claimName!, genesisRevision["forms_wallet_address"])
+
                   setDnsVerificationResult(result)
             } catch (error) {
                   console.error(error)

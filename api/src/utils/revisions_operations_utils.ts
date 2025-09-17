@@ -376,6 +376,10 @@ async function processRevision(
 
     if (revision.revision_type == "link") {
         const linkedRevisionResult = await updateLinkRevisionFileIndex(revision, revisionData, updatedAquaTree, updatedFileObjects, aquaTreeFileData, url);
+        if (!linkedRevisionResult) {
+            Logger.error(`Error processing link revision with hash ${revision.pubkey_hash}`);
+            return { aquaTree, fileObjects };
+        }
         updatedAquaTree = linkedRevisionResult.aquaTree;
         updatedFileObjects = linkedRevisionResult.fileObjects;
         revisionData = linkedRevisionResult.revisionData
@@ -602,7 +606,7 @@ async function updateLinkRevisionFileIndex(revision: Revision,
     fileObjects: FileObject[],
     aquaTreeFileData: AquaTreeFileData[],
     url: string
-): Promise<UpdateGenesisResult> {
+): Promise<UpdateGenesisResult | null> {
     //   const hashOnly = extractHashOnly(revision.);
 
     let linkData = await prisma.link.findFirst({
@@ -664,7 +668,9 @@ async function updateLinkRevisionFileIndex(revision: Revision,
 
     let fileData = newAquaTreeFileData[0]
     if (fileData == undefined) {
-        throw Error(`Expected file in linked revision to  exist genesisPubKeyHash ${genesisPubKeyHash} newPubKeyHash ${newPubKeyHash} newAquaTreeFileData ${newAquaTreeFileData.length}`)
+        // throw Error(`Expected file in linked revision to  exist genesisPubKeyHash ${genesisPubKeyHash} newPubKeyHash ${newPubKeyHash} newAquaTreeFileData ${newAquaTreeFileData.length}`)
+        Logger.error(`Expected file in linked revision to  exist genesisPubKeyHash ${genesisPubKeyHash} newPubKeyHash ${newPubKeyHash} newAquaTreeFileData ${newAquaTreeFileData.length}`)
+        return null
     }
 
     // if it exist is okay to ovewrite in index
@@ -696,7 +702,8 @@ async function updateLinkRevisionFileIndex(revision: Revision,
             ];
         }
     } else {
-        throw Error(`Expected file not found  fileData.fileLocation`)
+        Logger.error(`Expected file not found  fileData.fileLocation`)
+        return null
     }
 
 
@@ -729,10 +736,9 @@ async function updateLinkRevisionFileIndex(revision: Revision,
         fileObjects: updatedFileObjects,
         revisionData: revisionData
     };
-
-
-
 }
+
+
 async function updateGenesisFileIndex(
     revision: Revision,
     revisionData: AquaRevision,

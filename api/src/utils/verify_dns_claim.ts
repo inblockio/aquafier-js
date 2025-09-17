@@ -26,7 +26,7 @@ Logger.info('🔧 DNS servers set to:', dns.getServers());
 // Rate limiting
 const rateLimitMap = new Map<string, { count: number; resetTime: number }>();
 const RATE_LIMIT_MAX = 10; // Max requests per window
-const RATE_LIMIT_WINDOW = 60000; // 1 minute window
+const RATE_LIMIT_WINDOW = 60_000; // 1 minute window
 
 // Log entry interface
 interface LogEntry {
