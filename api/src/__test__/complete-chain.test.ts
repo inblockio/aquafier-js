@@ -15,7 +15,7 @@ test('should work with fetch', async t => {
   const responseCode = response.statusCode
 
   t.equal(responseCode, 404)
-  
+
 })
 
 test('test domain claim verification (sequential)', async t => {

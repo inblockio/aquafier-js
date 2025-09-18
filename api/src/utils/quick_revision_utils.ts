@@ -1,9 +1,10 @@
-import {prisma} from '../database/db';
-import {Revision} from '@prisma/client';
+import { prisma } from '../database/db';
+import { Revision } from '@prisma/client';
 import * as fs from 'fs';
-import {ExtendedAquaTreeData} from '../models/types';
-import {deleteFile} from "./file_utils";
+import { ExtendedAquaTreeData } from '../models/types';
+import { deleteFile } from "./file_utils";
 import Logger from './Logger';
+import { cliGreenify, cliRedify, cliYellowfy } from 'aqua-js-sdk';
 
 /**
  * Recursively deletes a revision and all its child revisions (revisions that reference this as their previous hash)
@@ -14,7 +15,8 @@ import Logger from './Logger';
  */
 export async function deleteRevisionAndChildren(
     revisionHash: string,
-    userAddress?: string
+    userAddress?: string,
+    deleteFromLatest: boolean = false
 ): Promise<{
     success: boolean;
     deleted: number;
@@ -250,17 +252,25 @@ export async function deleteRevisionAndChildren(
                 });
 
                 if (latestEntry) {
-                    // If this is a latest entry, update it to point to previous revision
-                    if (revision.previous) {
-                        await tx.latest.update({
-                            where: { hash: hash },
-                            data: { hash: revision.previous }
-                        });
-                    } else {
-                        // If no previous revision, delete the latest entry
+                    if (deleteFromLatest) {
+                        // If flag is enabled, simply delete it from latest
                         await tx.latest.delete({
                             where: { hash: hash }
                         });
+                    }
+                    else {
+                        // If this is a latest entry, update it to point to previous revision
+                        if (revision.previous) {
+                            await tx.latest.update({
+                                where: { hash: hash },
+                                data: { hash: revision.previous }
+                            });
+                        } else {
+                            // If no previous revision, delete the latest entry
+                            await tx.latest.delete({
+                                where: { hash: hash }
+                            });
+                        }
                     }
                 }
 
@@ -289,7 +299,7 @@ export async function deleteRevisionAndChildren(
                 }
             }
         };
-    } catch (error : any) {
+    } catch (error: any) {
         Logger.error(`Error deleting revision chain: ${error}`);
         return {
             success: false,
@@ -352,7 +362,7 @@ export async function canDeleteRevision(
         // Additional checks can be added here (e.g., admin privileges, time limits)
 
         return true;
-    } catch (error : any) {
+    } catch (error: any) {
         Logger.error(`Error checking revision deletability: ${error}`);
         return false;
     }
@@ -693,6 +703,7 @@ export async function mergeRevisionChain(
     try {
         // First, order the incoming chain to understand its structure
         const orderedIncomingChain = orderRevisionsInChain(entireChain);
+        console.log(cliRedify(`Ordered incoming chain revisions ${JSON.stringify(orderedIncomingChain)}`))
         if (!orderedIncomingChain || orderedIncomingChain.length === 0) {
             return {
                 success: false,
@@ -706,6 +717,7 @@ export async function mergeRevisionChain(
 
         // Find the latest hash of the incoming chain
         const incomingLatestHash = orderedIncomingChain[orderedIncomingChain.length - 1];
+        console.log(cliYellowfy(`Incoming chain latest hash: ${incomingLatestHash}`))
         Logger.info(`Incoming chain latest hash: ${incomingLatestHash}`);
 
         // Now examine target user's existing chains that might match or overlap with this chain
@@ -740,6 +752,7 @@ export async function mergeRevisionChain(
         // Order target user's chain starting from the same genesis
         const targetUserChain = await orderUserChain(targetGenesisHash);
         if (!targetUserChain || targetUserChain.length === 0) {
+            console.log(cliRedify("Failed to order target user's chain, fallback to transfer"))
             Logger.error("Failed to order target user's chain, fallback to transfer");
             // Something went wrong with ordering, fallback to transfer
             const transferResult = await transferRevisionChain(
@@ -754,12 +767,14 @@ export async function mergeRevisionChain(
                 strategy: appliedStrategy
             };
         }
+        console.log(cliGreenify(`Target user revisions: ${JSON.stringify(targetUserChain, null, 4)}`))
+        console.log(cliGreenify(`Incoming revisions: ${JSON.stringify(orderedIncomingChain, null, 4)}`))
 
         Logger.info(`Target user chain has ${targetUserChain.length} revisions`);
         Logger.info(`Incoming chain has ${orderedIncomingChain.length} revisions`);
 
         // Find last common revision (divergence point)
-        let lastCommonIndex = -1;
+        let lastCommonIndex = 0;
         let lastCommonHash = "";
 
         for (let i = 0; i < Math.min(targetUserChain.length, orderedIncomingChain.length); i++) {
@@ -851,16 +866,15 @@ export async function mergeRevisionChain(
             if (mergeStrategy === "replace") {
                 // Replace target's divergent revisions with incoming revisions
 
-                // 1. Mark the divergent target revisions as obsolete (could soft-delete or add metadata)
+                // 1. Mark the divergent target revisions as obsolete (could soft-delete or add metadata but in this case we delete them)
                 const divergentTargetRevisions = targetUserChain.slice(lastCommonIndex + 1);
                 for (const obsoleteHash of divergentTargetRevisions) {
                     // You might want to mark these as obsolete rather than deleting
                     Logger.info(`Marking ${obsoleteHash} as obsolete due to replace strategy`);
-                    // For example, add metadata or move to an "obsolete" status
-                    // await prisma.revision.update({
-                    //     where: { pubkey_hash: obsoleteHash },
-                    //     data: { is_obsolete: true }
-                    // });
+                    // Delete the revision
+                    console.log(cliRedify(`Delete ${obsoleteHash} due to replace strategy`))
+                    // Enabled delete from latest to force delete any revisions appearing in latest to avoid double entry till forking is implemented
+                    deleteRevisionAndChildren(obsoleteHash, targetUserAddress, true)
                 }
 
                 // 2. Import the incoming chain's divergent revisions
@@ -896,7 +910,13 @@ export async function mergeRevisionChain(
                             previousHash = previousHashFromSource;
                         }
                     }
-
+                    let revisionAlreadyExists = await prisma.revision.findUnique({
+                        where: { pubkey_hash: targetFullHash }
+                    });
+                    if (revisionAlreadyExists) {
+                        Logger.info(`Revision already exists in database: ${targetFullHash}`);
+                        continue;
+                    }
                     // Insert the new revision
                     await prisma.revision.create({
                         data: {
@@ -1074,9 +1094,14 @@ async function orderUserChain(genesisHash: string): Promise<string[]> {
         while (true) {
             const nextRevision = await prisma.revision.findFirst({
                 where: {
-                    previous: currentHash
+                    previous: {
+                        equals: currentHash,
+                        mode: 'insensitive'
+                    }
                 }
             });
+
+            console.log(cliYellowfy(`previous hash: ${currentHash} -- Current Revision: ${nextRevision?.pubkey_hash}`))
 
             if (!nextRevision) {
                 break;  // End of chain
@@ -1087,7 +1112,7 @@ async function orderUserChain(genesisHash: string): Promise<string[]> {
         }
 
         return orderedChain;
-    } catch (error : any) {
+    } catch (error: any) {
         Logger.error("Error ordering user chain:", error);
         return [];
     }
@@ -1157,7 +1182,7 @@ function orderRevisionsInChain(chainData: any): string[] {
         }
 
         return ordered;
-    } catch (error : any) {
+    } catch (error: any) {
         Logger.error("Error ordering revisions:", error);
         return [];
     }
@@ -1195,7 +1220,7 @@ async function updateLatestHash(userAddress: string, oldHash: string, newHash: s
                 }
             });
         }
-    } catch (error : any) {
+    } catch (error: any) {
         Logger.error("Error updating latest hash:", error);
         throw error;
     }

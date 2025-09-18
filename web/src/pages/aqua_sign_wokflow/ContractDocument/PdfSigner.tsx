@@ -307,6 +307,8 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ fileData, setActiveStep, document
 
       // Helper function to save multiple revisions to server
       const saveRevisionsToServer = async (aquaTrees: AquaTree[]) => {
+            console.log("AquaTrees: ", aquaTrees)
+            
             for (let index = 0; index < aquaTrees.length; index++) {
                   const aquaTree = aquaTrees[index]
                   try {

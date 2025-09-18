@@ -24,6 +24,8 @@ export const ContractDocumentView: React.FC<ContractDocumentViewProps> = ({ setA
       const [signaturesLoading, setSignaturesLoading] = useState<boolean>(false)
       const { selectedFileInfo, session, backend_url } = useStore(appStore)
 
+      console.log("Signatures: ", signatures)
+
       useEffect(() => {
             initializeComponent()
       }, [])
@@ -129,6 +131,7 @@ export const ContractDocumentView: React.FC<ContractDocumentViewProps> = ({ setA
       const loadSignatures = async (): Promise<SignatureData[]> => {
             const sigData: SignatureData[] = []
             const orderedTree = OrderRevisionInAquaTree(selectedFileInfo!.aquaTree!)
+            console.log("Aquatree: ", orderedTree)
             const revisions = orderedTree.revisions
             const revisionHashes = Object.keys(revisions)
             let fourthItmeHashOnwards: string[] = []
@@ -139,12 +142,14 @@ export const ContractDocumentView: React.FC<ContractDocumentViewProps> = ({ setA
                   fourthItmeHashOnwards = revisionHashes.slice(4)
                   signatureRevionHashes = getSignatureRevionHashes(fourthItmeHashOnwards)
             }
+            console.log("File Object: ", selectedFileInfo?.fileObject)
+            console.log("selectedFileInfo: ", selectedFileInfo?.aquaTree)
 
             for (const sigHash of signatureRevionHashes) {
+
                   const revisionSigImage = selectedFileInfo!.aquaTree!.revisions[sigHash.revisionHashWithSinatureRevision]
                   const linkRevisionWithSignaturePositions: Revision = selectedFileInfo!.aquaTree!.revisions[sigHash.revisionHashWithSignaturePosition]
                   const revisionMetMask: Revision = selectedFileInfo!.aquaTree!.revisions[sigHash.revisionHashMetamask]
-
                   // get the name
                   const referenceRevisin: string = revisionSigImage.link_verification_hashes![0]
                   let name = 'name-err'
@@ -206,11 +211,14 @@ export const ContractDocumentView: React.FC<ContractDocumentViewProps> = ({ setA
                               const aquaTreeGeneral = item.fileContent as AquaTree
                               const aquaTree = reorderAquaTreeRevisionsProperties(aquaTreeGeneral)
                               const allHashes = Object.keys(aquaTree.revisions)
+                              console.log("All hashes: ", allHashes, revisionHashWithPositions)
                               if (allHashes.includes(revisionHashWithPositions)) {
                                     revisionSigPosition = aquaTree.revisions[revisionHashWithPositions]
                               }
                         }
                   }
+
+                  console.log("Signature position: ", revisionSigPosition)
 
                   if (revisionSigPosition != null) {
                         if (sigHash.revisionHashWithSignaturePositionCount == 0) {

@@ -133,13 +133,13 @@ export const ImportAquaChainFromChain = ({ fileInfo, isVerificationSuccessful, c
                   toast.error( `Failed to import chain: ${error}`)
             }
       }
-
+ 
       const handleMergeRevisions = async () => {
             try {
                   const url = `${backend_url}/merge_chain`
                   const reorderedRevisions = OrderRevisionInAquaTree(fileInfo.aquaTree!)
-                  const revisions = reorderedRevisions.revisions
-                  const revisionHashes = Object.keys(revisions)
+                  // const revisions = reorderedRevisions.revisions
+                  const revisionHashes = Object.keys(reorderedRevisions.revisions)
                   const latestRevisionHash = revisionHashes[revisionHashes.length - 1]
 
                   const res = await axios.post(
