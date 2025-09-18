@@ -774,7 +774,7 @@ export async function mergeRevisionChain(
         Logger.info(`Incoming chain has ${orderedIncomingChain.length} revisions`);
 
         // Find last common revision (divergence point)
-        let lastCommonIndex = 0;
+        let lastCommonIndex = -1;
         let lastCommonHash = "";
 
         for (let i = 0; i < Math.min(targetUserChain.length, orderedIncomingChain.length); i++) {
