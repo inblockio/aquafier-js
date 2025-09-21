@@ -1,3 +1,14 @@
+import {BrowserContext, Page, test} from '@playwright/test';
+import path from "path";
+import {
+    addSignatureToDocument,
+    createAndSaveSignature,
+    createAquaSignForm,
+    importAquaChain,
+    registerNewMetaMaskWalletAndLogin,
+    waitAndClick,
+} from '../testUtils';
+
 test("two user aqua-sign", async (): Promise<void> => {
     test.slow();
     const registerWalletOneResponse = await registerNewMetaMaskWalletAndLogin();
