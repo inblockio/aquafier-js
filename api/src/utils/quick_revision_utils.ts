@@ -1083,6 +1083,7 @@ export async function mergeRevisionChain(
 }
 
 /**
+ * Get rid of this, should start from latest
  * Orders revisions in a chain from genesis to latest
  */
 async function orderUserChain(genesisHash: string): Promise<string[]> {

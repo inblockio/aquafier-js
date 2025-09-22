@@ -33,6 +33,7 @@ import * as Sentry from "@sentry/node"
 import {nodeProfilingIntegration} from "@sentry/profiling-node"
 import {ensureDomainViewForCors} from './utils/server_utils';
 import Logger from "./utils/Logger";
+import DNSClaimVerificationController from './controllers/dns_claim_verification';
 
 export async function mockNotifications() {
     // 0x254B0D7b63342Fcb8955DB82e95C21d72EFdB6f7 - This is the receiver and the sender is 'system'
@@ -211,6 +212,7 @@ function buildServer() {
     fastify.register(webSocketController);
     fastify.register(notificationsController);
     fastify.register(ApiController);
+    fastify.register(DNSClaimVerificationController);
 
     return fastify
 

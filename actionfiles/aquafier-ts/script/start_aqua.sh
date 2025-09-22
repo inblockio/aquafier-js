@@ -263,80 +263,83 @@ else
     echo "=== EXISTING DATABASE WITH DATA DETECTED ==="
     echo "🔒 PRESERVING EXISTING DATA"
     echo "Current data: Users=$user_count, Files=$file_count, Revisions=$revision_count"
+
+    # Run simple migrate script
+    /app/simple_migrate.sh
     
-    # Check if all required tables exist
-    export PGPASSWORD=$DB_PASSWORD
-    required_tables="users file revision siwe_session"
-    missing_tables=""
+    # # Check if all required tables exist
+    # export PGPASSWORD=$DB_PASSWORD
+    # required_tables="users file revision siwe_session"
+    # missing_tables=""
     
-    for table in $required_tables; do
-        exists=$(psql -h postgres -U "$DB_USER" -d "$DB_NAME" -t -c "
-            SELECT count(*) FROM information_schema.tables 
-            WHERE table_schema = 'public' AND table_name = '$table'
-        " 2>/dev/null | xargs || echo "0")
+    # for table in $required_tables; do
+    #     exists=$(psql -h postgres -U "$DB_USER" -d "$DB_NAME" -t -c "
+    #         SELECT count(*) FROM information_schema.tables 
+    #         WHERE table_schema = 'public' AND table_name = '$table'
+    #     " 2>/dev/null | xargs || echo "0")
         
-        if [ "$exists" = "0" ]; then
-            missing_tables="$missing_tables $table"
-        fi
-    done
-    unset PGPASSWORD
+    #     if [ "$exists" = "0" ]; then
+    #         missing_tables="$missing_tables $table"
+    #     fi
+    # done
+    # unset PGPASSWORD
     
-    if [ -n "$missing_tables" ]; then
-        echo "⚠️  Missing required tables:$missing_tables"
-        echo "Adding missing tables with schema push..."
-        npx prisma db push || {
-            echo "ERROR: Could not add missing tables"
-            exit 1
-        }
-        echo "✅ Missing tables added"
-    else
-        echo "✅ All required tables present"
+    # if [ -n "$missing_tables" ]; then
+    #     echo "⚠️  Missing required tables:$missing_tables"
+    #     echo "Adding missing tables with schema push..."
+    #     npx prisma db push || {
+    #         echo "ERROR: Could not add missing tables"
+    #         exit 1
+    #     }
+    #     echo "✅ Missing tables added"
+    # else
+    #     echo "✅ All required tables present"
         
-        # NEW: Try prisma migrate dev for schema changes when RESET_DATABASE is false
-        echo "=== ATTEMPTING SCHEMA MIGRATION ==="
-        echo "Running 'npx prisma migrate dev' to handle potential schema changes..."
+    #     # NEW: Try prisma migrate dev for schema changes when RESET_DATABASE is false
+    #     echo "=== ATTEMPTING SCHEMA MIGRATION ==="
+    #     echo "Running 'npx prisma migrate dev' to handle potential schema changes..."
         
-        # Capture the current timestamp for logging
-        migrate_start_time=$(date)
-        echo "Migration attempt started at: $migrate_start_time"
+    #     # Capture the current timestamp for logging
+    #     migrate_start_time=$(date)
+    #     echo "Migration attempt started at: $migrate_start_time"
         
-        # Run prisma migrate dev with timeout and proper error handling
-        if timeout 120 npx prisma migrate dev --create-only --skip-generate 2>&1 | tee -a $LOGFILE; then
-            echo "✅ MIGRATION DEV SUCCESS: Schema migration completed successfully at $(date)"
-            echo "Migration created new migration files if needed"
+    #     # Run prisma migrate dev with timeout and proper error handling
+    #     if timeout 120 npx prisma migrate dev --create-only --skip-generate 2>&1 | tee -a $LOGFILE; then
+    #         echo "✅ MIGRATION DEV SUCCESS: Schema migration completed successfully at $(date)"
+    #         echo "Migration created new migration files if needed"
             
-            # Apply the migrations
-            echo "Applying migrations with 'npx prisma migrate deploy'..."
-            if npx prisma migrate deploy 2>&1 | tee -a $LOGFILE; then
-                echo "✅ MIGRATION DEPLOY SUCCESS: All migrations applied successfully at $(date)"
-            else
-                echo "⚠️  MIGRATION DEPLOY WARNING: Deploy failed but schema should still be functional"
-                echo "This might indicate migrations were already applied or no new migrations to deploy"
-            fi
+    #         # Apply the migrations
+    #         echo "Applying migrations with 'npx prisma migrate deploy'..."
+    #         if npx prisma migrate deploy 2>&1 | tee -a $LOGFILE; then
+    #             echo "✅ MIGRATION DEPLOY SUCCESS: All migrations applied successfully at $(date)"
+    #         else
+    #             echo "⚠️  MIGRATION DEPLOY WARNING: Deploy failed but schema should still be functional"
+    #             echo "This might indicate migrations were already applied or no new migrations to deploy"
+    #         fi
             
-        else
-            migrate_exit_code=$?
-            echo "❌ MIGRATION DEV FAILED: 'npx prisma migrate dev' failed with exit code $migrate_exit_code at $(date)"
-            echo "This could indicate:"
-            echo "  - No schema changes detected"
-            echo "  - Migration conflicts"
-            echo "  - Database connection issues"
-            echo "  - Timeout (120 seconds exceeded)"
+    #     else
+    #         migrate_exit_code=$?
+    #         echo "❌ MIGRATION DEV FAILED: 'npx prisma migrate dev' failed with exit code $migrate_exit_code at $(date)"
+    #         echo "This could indicate:"
+    #         echo "  - No schema changes detected"
+    #         echo "  - Migration conflicts"
+    #         echo "  - Database connection issues"
+    #         echo "  - Timeout (120 seconds exceeded)"
             
-            # Fallback to migrate deploy for existing migrations
-            echo "Attempting fallback: 'npx prisma migrate deploy' for existing migrations..."
-            if npx prisma migrate deploy 2>&1 | tee -a $LOGFILE; then
-                echo "✅ FALLBACK SUCCESS: Existing migrations deployed successfully"
-            else
-                echo "⚠️  FALLBACK WARNING: Migration deploy also failed, but continuing with existing schema"
-                echo "Database should still be functional with current schema"
-            fi
-        fi
+    #         # Fallback to migrate deploy for existing migrations
+    #         echo "Attempting fallback: 'npx prisma migrate deploy' for existing migrations..."
+    #         if npx prisma migrate deploy 2>&1 | tee -a $LOGFILE; then
+    #             echo "✅ FALLBACK SUCCESS: Existing migrations deployed successfully"
+    #         else
+    #             echo "⚠️  FALLBACK WARNING: Migration deploy also failed, but continuing with existing schema"
+    #             echo "Database should still be functional with current schema"
+    #         fi
+    #     fi
         
-        echo "=== SCHEMA MIGRATION ATTEMPT COMPLETED ==="
-    fi
+    #     echo "=== SCHEMA MIGRATION ATTEMPT COMPLETED ==="
+    # fi
     
-    echo "✅ Existing database preserved and updated safely"
+    # echo "✅ Existing database preserved and updated safely"
 fi
 
 # POST-MIGRATION VERIFICATION

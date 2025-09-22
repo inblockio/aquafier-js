@@ -94,7 +94,7 @@ model Contract {
   option               String?
   reference_count      Int?
   file_name            String?
-  receiver_has_deleted   String[] //Boolean  @default(false)
+  receiver_has_deleted String[] //Boolean  @default(false)
   created_at           DateTime @default(now())
   // User             User?         @relation(fields: [hash], references: [user])
   // Revision         Revision?     @relation(fields: [hash], references: [pubkey_hash])
@@ -273,4 +273,16 @@ model VerificationAttempt {
   createdAt             DateTime @default(now())
 
   @@index([email_or_phone_number, verification_type, action]) // For efficient querying
+}
+
+model DNSClaimVerificationOne {
+  id                  Int      @id @default(autoincrement())
+  wallet_address      String
+  verification_logs   Json
+  verification_status String
+  is_verified         Boolean @default(false)
+  is_domain_verified  Boolean @default(false)
+  last_verified       DateTime
+
+  @@index([wallet_address]) // For efficient querying
 }

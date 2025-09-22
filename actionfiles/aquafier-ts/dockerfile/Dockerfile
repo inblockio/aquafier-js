@@ -57,8 +57,9 @@ COPY api/prisma /app/backend/prisma
 #we need prisma migration
 WORKDIR /app/backend
 
-# Install Prisma CLI globally
-RUN npm install -g prisma && prisma generate && npm install -g serve
+# Install Prisma CLI globally and generate client
+RUN npm install -g prisma && npm install -g serve
+# RUN npx prisma generate
 
 # Copy frontend and backend build artifacts
 COPY --from=builder_npm_web /build/web/dist /app/frontend
@@ -70,9 +71,12 @@ COPY --from=builder_npm_api /build/api/package-lock.json /app/backend/package-lo
 # Install backend dependencies
 RUN npm ci --only=production
 
-# Copy startup script
+# Copy startup and migration scripts
 COPY actionfiles/aquafier-ts/script/start_aqua.sh /app/start_aqua.sh
 RUN sed -i 's/\r$//' /app/start_aqua.sh && chmod +x /app/start_aqua.sh
+
+COPY actionfiles/aquafier-ts/script/simple_migrate.sh /app/simple_migrate.sh
+RUN sed -i 's/\r$//' /app/simple_migrate.sh && chmod +x /app/simple_migrate.sh
 
 COPY actionfiles/aquafier-ts/script/create_backup.sh /app/utils/create_backup.sh
 RUN sed -i 's/\r$//' /app/utils/create_backup.sh && chmod +x /app/utils/create_backup.sh

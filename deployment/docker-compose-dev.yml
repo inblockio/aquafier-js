@@ -16,7 +16,7 @@ services:
       interval: 5s
       timeout: 5s
       retries: 5
- 
+
   aqua-container:
     image: ghcr.io/inblockio/aquafier-js:dev
     depends_on:
