@@ -1,7 +1,7 @@
 import appStore from '@/store'
 import { Contract } from '@/types/types'
 import { SYSTEM_WALLET_ADDRESS } from '@/utils/constants'
-import { fetchWalletAddressesAndNamesForInputRecommendation, timeToHumanFriendly } from '@/utils/functions'
+import { fetchWalletAddressesAndNamesForInputRecommendation, getGenesisHash, timeToHumanFriendly } from '@/utils/functions'
 import { getAquaTreeFileObject } from 'aqua-js-sdk'
 import axios from 'axios'
 import { Share2, X, Users, ExternalLink, Check, Copy, Lock, Trash2, Plus } from 'lucide-react'
@@ -14,6 +14,7 @@ import { useStore } from 'zustand'
 import CopyButton from '../CopyButton'
 import { WalletAutosuggest } from '../wallet_auto_suggest'
 import { Button } from '@/components/ui/button'
+import { get } from 'http'
 // import { Input } from '@/components/ui/input'
 // import { Label } from '@/components/ui/label'
 
@@ -115,6 +116,8 @@ const ShareComponent = () => {
                         recipients: recepientWalletData,
                         option: optionType,
                         file_name: mainFileObject.fileName,
+                        genesis_hash : getGenesisHash(selectedFileInfo.aquaTree!),     
+                        
                   },
                   {
                         headers: {
@@ -145,12 +148,10 @@ const ShareComponent = () => {
                         toast.error(`selected file not found`)
                         return
                   }
-                  const allHashes = Object.keys(selectedFileInfo!.aquaTree!.revisions!)
-                  const latest = allHashes[allHashes.length - 1]
-
+                 
                   const response = await axios.get(`${backend_url}/contracts`, {
                         params: {
-                              latest: latest,
+                              genesis_hash: getGenesisHash(selectedFileInfo.aquaTree!),
                               sender: session?.address
                         },
                         headers: {

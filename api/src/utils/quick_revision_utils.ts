@@ -4,7 +4,9 @@ import * as fs from 'fs';
 import { ExtendedAquaTreeData } from '../models/types';
 import { deleteFile } from "./file_utils";
 import Logger from './Logger';
-import { cliGreenify, cliRedify, cliYellowfy } from 'aqua-js-sdk';
+import { AquaTree, cliGreenify, cliRedify, cliYellowfy } from 'aqua-js-sdk';
+import { fetchCompleteRevisionChain } from './quick_utils';
+import { getLastRevisionVerificationHash } from './aqua_tree_utils';
 
 /**
  * Recursively deletes a revision and all its child revisions (revisions that reference this as their previous hash)
@@ -379,7 +381,8 @@ export async function canDeleteRevision(
 export async function transferRevisionChain(
     entireChain: ExtendedAquaTreeData,
     targetUserAddress: string,
-    sourceUserAddress: string
+    sourceUserAddress: string,
+    url: string
 ): Promise<{
     success: boolean;
     message: string;
@@ -532,6 +535,17 @@ export async function transferRevisionChain(
                             }
                         });
                     }
+
+   
+                    // Fetch the entire chain from the source user
+                    let latestRevisionHash = getLastRevisionVerificationHash(entireChain as AquaTree);
+                    const entireChainInLink = await fetchCompleteRevisionChain(latestRevisionHash, sourceUserAddress, url);
+                    transferRevisionChain(
+                        entireChainInLink,
+                        targetUserAddress,
+                        sourceUserAddress,
+                        url
+                    )
                     break;
 
                 case "file":
@@ -630,7 +644,8 @@ export async function transferRevisionChain(
                 const linkedResult = await transferRevisionChain(
                     linkedChain,
                     targetUserAddress,
-                    sourceUserAddress
+                    sourceUserAddress,
+                    url
                 );
 
                 if (linkedResult.success) {
@@ -672,7 +687,8 @@ export async function mergeRevisionChain(
     entireChain: ExtendedAquaTreeData,
     targetUserAddress: string,
     sourceUserAddress: string,
-    mergeStrategy: "replace" | "fork" = "fork"
+    url: string,
+    mergeStrategy: "replace" | "fork" = "fork",
 ): Promise<{
     success: boolean;
     message: string;
@@ -736,7 +752,8 @@ export async function mergeRevisionChain(
             const transferResult = await transferRevisionChain(
                 entireChain,
                 targetUserAddress,
-                sourceUserAddress
+                sourceUserAddress,
+                url
             );
 
             appliedStrategy = "full_transfer";
@@ -758,7 +775,8 @@ export async function mergeRevisionChain(
             const transferResult = await transferRevisionChain(
                 entireChain,
                 targetUserAddress,
-                sourceUserAddress
+                sourceUserAddress,
+                url
             );
 
             appliedStrategy = "full_transfer_fallback";

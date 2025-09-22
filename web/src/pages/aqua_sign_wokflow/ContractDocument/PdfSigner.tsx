@@ -1,12 +1,12 @@
-import React, {useCallback, useEffect, useRef, useState} from 'react'
+import React, { useCallback, useEffect, useRef, useState } from 'react'
 
-import {Button} from '../../../components/ui/button'
-import {PDFDocument} from 'pdf-lib'
-import {FaPlus} from 'react-icons/fa'
+import { Button } from '../../../components/ui/button'
+import { PDFDocument } from 'pdf-lib'
+import { FaPlus } from 'react-icons/fa'
 import appStore from '../../../store'
-import {useStore} from 'zustand'
+import { useStore } from 'zustand'
 import axios from 'axios'
-import {ApiFileInfo} from '../../../models/FileInfo'
+import { ApiFileInfo } from '../../../models/FileInfo'
 import {
       dummyCredential,
       ensureDomainUrlHasSSL,
@@ -17,15 +17,15 @@ import {
       getRandomNumber,
       timeStampToDateObject,
 } from '../../../utils/functions'
-import {API_ENDPOINTS} from '../../../utils/constants'
-import Aquafier, {AquaTree, AquaTreeWrapper, FileObject, getAquaTreeFileObject} from 'aqua-js-sdk/web'
-import {SignatureData} from '../../../types/types'
-import {LuInfo, LuTrash} from 'react-icons/lu'
-import {useNavigate} from 'react-router-dom'
-import {Annotation} from './signer/types'
-import {PdfRenderer} from './signer/SignerPage'
-import {Alert, AlertDescription} from '@/components/ui/alert'
-import {toast} from 'sonner'
+import { API_ENDPOINTS } from '../../../utils/constants'
+import Aquafier, { AquaTree, AquaTreeWrapper, FileObject, getAquaTreeFileObject } from 'aqua-js-sdk/web'
+import { SignatureData } from '../../../types/types'
+import { LuInfo, LuTrash } from 'react-icons/lu'
+import { useNavigate } from 'react-router-dom'
+import { Annotation } from './signer/types'
+import { PdfRenderer } from './signer/SignerPage'
+import { Alert, AlertDescription } from '@/components/ui/alert'
+import { toast } from 'sonner'
 import WalletAddressClaim from '../../v2_claims_workflow/WalletAdrressClaim'
 
 interface PdfSignerProps {
@@ -35,7 +35,7 @@ interface PdfSignerProps {
 }
 
 const PdfSigner: React.FC<PdfSignerProps> = ({ fileData, setActiveStep, documentSignatures }) => {
-      const {  selectedFileInfo, setSelectedFileInfo, setFiles , setOpenDialog, openDialog} = useStore(appStore)
+      const { selectedFileInfo, setSelectedFileInfo, setFiles, setOpenDialog, openDialog } = useStore(appStore)
       // State for PDF document
       const [pdfFile, setPdfFile] = useState<File | null>(null)
       const [_pdfUrl, setPdfUrl] = useState<string | null>(null)
@@ -137,6 +137,8 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ fileData, setActiveStep, document
                   showError('Signature data creation failed')
                   return null
             }
+            console.log("--User signature aqua tree: ", JSON.stringify(userSignatureDataAquaTree.data.aquaTree, null, 4))
+            // console.log("User signature file object: ", JSON.stringify(fileObjectUserSignature, null, 4))
 
             // Save to server
             await saveAquaTree(userSignatureDataAquaTree.data.aquaTree!, fileObjectUserSignature, true, '')
@@ -307,8 +309,8 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ fileData, setActiveStep, document
 
       // Helper function to save multiple revisions to server
       const saveRevisionsToServer = async (aquaTrees: AquaTree[]) => {
-            console.log("AquaTrees: ", aquaTrees)
-            
+            console.log("saveRevisionsToServer AquaTrees: ", aquaTrees)
+
             for (let index = 0; index < aquaTrees.length; index++) {
                   const aquaTree = aquaTrees[index]
                   try {
@@ -319,7 +321,7 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ fileData, setActiveStep, document
                         const url = `${backend_url}/tree`
                         const actualUrlToFetch = ensureDomainUrlHasSSL(url)
 
-                        const response = await axios.post(
+                        await axios.post(
                               actualUrlToFetch,
                               {
                                     revision: lastRevision,
@@ -333,8 +335,7 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ fileData, setActiveStep, document
                               }
                         )
 
-                        if (response.status === 200 || response.status === 201) {
-                        }
+
                   } catch (error) {
                         console.error(`Error saving revision ${index + 1}:`, error)
                         throw new Error(`Error saving revision ${index + 1} to server`)
@@ -376,7 +377,8 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ fileData, setActiveStep, document
 
       const submitSignatureData = async (signaturePosition: SignatureData[]) => {
             setSubmittingSignatureData(true)
-
+            // console.log("Submitting signature data with positions: ", JSON.stringify(signaturePosition, null, 4))
+            // throw Error("Test error in submitSignatureData")
             try {
                   const aquafier = new Aquafier()
 
@@ -415,19 +417,19 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ fileData, setActiveStep, document
                         }
 
                         let signersString = revision['forms_signers']
-                        let signers : string []=[];
-                        if(signersString.includes(',')){
+                        let signers: string[] = [];
+                        if (signersString.includes(',')) {
                               signers = signersString.split(',')
-                        }else{
+                        } else {
                               signers.push(signersString)
                         }
 
-                        for(const wallet of signers){
+                        for (const wallet of signers) {
 
-                              if(wallet ==sender || wallet == session?.address){
+                              if (wallet == sender || wallet == session?.address) {
                                     //ignore senting notification to self
                                     // ignore sending notification to  sender already sent above
-                              }else{
+                              } else {
                                     await createSigningNotification(session!.address, wallet)
                               }
                         }
@@ -480,7 +482,7 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ fileData, setActiveStep, document
                         }
                         // If it's an ArrayBuffer or similar binary data
                         else if (fileObject.fileContent instanceof ArrayBuffer || fileObject.fileContent instanceof Uint8Array) {
-                              const fileBlob = new Blob([fileObject.fileContent as  any], {
+                              const fileBlob = new Blob([fileObject.fileContent as any], {
                                     type: 'application/octet-stream',
                               })
                               formData.append('asset', fileBlob, fileObject.fileName)
@@ -510,6 +512,15 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ fileData, setActiveStep, document
                   } else {
                         formData.append('has_asset', 'false')
                   }
+
+                  const url = `${backend_url}/explorer_aqua_file_upload`
+                  await axios.post(url, formData, {
+                        headers: {
+                              nonce: session?.nonce,
+                              // Don't set Content-Type header - axios will set it automatically with the correct boundary
+                        },
+                  })
+
 
                   return true
             } catch (error) {
@@ -1111,21 +1122,21 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ fileData, setActiveStep, document
                         }
 
                         const indexOfMyWalletAddressAfter = allSignersData.indexOf(session!.address)
-                      // (` index ${index} index of my wallet b4 ${indexOfMyWalletAddress} after ${indexOfMyWalletAddressAfter}`)
+                        // (` index ${index} index of my wallet b4 ${indexOfMyWalletAddress} after ${indexOfMyWalletAddressAfter}`)
 
                         const allSignersBeforeMe = allSignersData.slice(0, indexOfMyWalletAddressAfter)
                         // if (indexOfMyWalletAddress != index) {
                         setAllSignersBeforeMe(allSignersBeforeMe)
                   }
             } catch (e) {
-                // (`Error PDF Signer -  ${e}`)
+                  // (`Error PDF Signer -  ${e}`)
                   toast.error(`Error Loading pdf`)
             }
 
-          (`file data ${fileData} .....`)
+            (`file data ${fileData} .....`)
             if (fileData) {
-                  ;(async () => {
-                    (`Fetch pdf file....`)
+                  ; (async () => {
+                        (`Fetch pdf file....`)
                         setPdfFile(fileData)
 
                         // Create object URL for display
@@ -1139,7 +1150,7 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ fileData, setActiveStep, document
                   })()
             }
 
-            ;(async () => {
+            ; (async () => {
                   await loadUserSignatures(true)
             })()
 
@@ -1153,18 +1164,18 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ fileData, setActiveStep, document
       }, [])
 
 
-      useEffect(()=>{
+      useEffect(() => {
 
-            if(openDialog==null){
-//fetch user signatures 
+            if (openDialog == null) {
+                  //fetch user signatures 
 
- (async()=>{
-      await loadUserSignatures(true)
- })()
+                  (async () => {
+                        await loadUserSignatures(true)
+                  })()
 
             }
 
-      },[openDialog])
+      }, [openDialog])
       return (
             <div className="h-[calc(100vh-70px)] overflow-y-scroll md:overflow-hidden">
                   <div className="h-[60px] flex items-center">
@@ -1190,8 +1201,8 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ fileData, setActiveStep, document
                                                                         onAnnotationDelete={deleteAnnotation}
                                                                         selectedTool={selectedTool}
                                                                         selectedAnnotationId={selectedSignatureId}
-                                                                        onAnnotationSelect={() => {}}
-                                                                        onAnnotationRotate={() => {}}
+                                                                        onAnnotationSelect={() => { }}
+                                                                        onAnnotationRotate={() => { }}
                                                                   />
                                                             </div>
                                                       </div>

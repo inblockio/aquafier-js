@@ -305,6 +305,8 @@ export const ContractDocumentView: React.FC<ContractDocumentViewProps> = ({ setA
                         if (shouldLoad) {
                               setSignaturesLoading(true)
                               const allSignatures: SignatureData[] = await loadSignatures()
+
+                            
                               setSignatures(allSignatures)
                               setSignaturesLoading(false)
                         }
@@ -472,7 +474,7 @@ export const ContractDocumentView: React.FC<ContractDocumentViewProps> = ({ setA
                         </div>
                   </div>
             )
-      }
+      } 
 
       // Default case - show signing interface
       return <PdfSigner documentSignatures={signatures} fileData={pdfFile} setActiveStep={setActiveStep} />

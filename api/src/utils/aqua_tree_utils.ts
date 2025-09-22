@@ -1,7 +1,14 @@
-import {AquaTree} from 'aqua-js-sdk';
+import {AquaTree, OrderRevisionInAquaTree} from 'aqua-js-sdk';
 // For specific model types
 import {FileIndex} from '@prisma/client';
 import Logger from "./Logger";
+
+export const getLastRevisionVerificationHash = (aquaTree: AquaTree) => {
+      const orderedRevisions = OrderRevisionInAquaTree(aquaTree)
+      const revisonHashes = Object.keys(orderedRevisions.revisions)
+      const hash = revisonHashes[revisonHashes.length - 1]
+      return hash
+}
 
 
 export function removeFilePathFromFileIndex(aquaTree: AquaTree): AquaTree {
