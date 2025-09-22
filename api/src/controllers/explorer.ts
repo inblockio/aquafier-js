@@ -831,7 +831,7 @@ export default async function explorerController(fastify: FastifyInstance) {
 
             // Fetch the entire chain from the source user
             const entireChain = await fetchCompleteRevisionChain(latestRevisionHash, userAddress, url);
-            const existingChain = await fetchCompleteRevisionChain("0x11616437260e1dfd8da7cec1ff253034f704f9d55a1aff1f2800f4797c041617", session.address, url)
+            // const existingChain = await fetchCompleteRevisionChain("0x11616437260e1dfd8da7cec1ff253034f704f9d55a1aff1f2800f4797c041617", session.address, url)
             // fs.writeFileSync("existing.json", JSON.stringify(existingChain))
             // fs.writeFileSync("newchain.json", JSON.stringify(entireChain))
 
@@ -845,13 +845,14 @@ export default async function explorerController(fastify: FastifyInstance) {
                     data: { address: session.address }
                 });
             }
-
+ 
             // Merge the chain to the target user (session.address)
             const mergeResult = await mergeRevisionChain(
                 entireChain,
                 session.address,
                 userAddress,
-                mergeStrategy || "replace" // Use the provided strategy or default to "replace"
+                url,
+                mergeStrategy || "replace", // Use the provided strategy or default to "replace"
             );
 
             if (!mergeResult.success) {

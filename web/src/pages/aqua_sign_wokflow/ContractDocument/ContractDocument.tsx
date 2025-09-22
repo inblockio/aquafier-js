@@ -306,8 +306,7 @@ export const ContractDocumentView: React.FC<ContractDocumentViewProps> = ({ setA
                               setSignaturesLoading(true)
                               const allSignatures: SignatureData[] = await loadSignatures()
 
-                              console.log(" --- All signatures: ",JSON.stringify (allSignatures, null, 4))
-                              
+                            
                               setSignatures(allSignatures)
                               setSignaturesLoading(false)
                         }

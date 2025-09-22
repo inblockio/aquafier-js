@@ -20,13 +20,11 @@ const UserSignatureClaim = ({ claim }: { claim: ICompleteClaimInformation }) => 
     const loadImage = async () => {
         let signatureImage = await loadSignatureImage(claim.file.aquaTree!, claim.file.fileObject, session?.nonce!)
         if (signatureImage) {
-            console.log(" --- signatureImage: ",signatureImage)
-            console.log(" --- signatureImage: ",typeof signatureImage)
+           
             setSignatureImage(signatureImage)
         }
     }
 
-    console.log(" --- claim: ",JSON.stringify (claim, null, 4))
 
     useEffect(() => {
         loadImage()

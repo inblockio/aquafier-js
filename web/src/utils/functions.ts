@@ -1439,7 +1439,8 @@ export function estimateStringFileSize(str: string): number {
 }
 
 export const getLastRevisionVerificationHash = (aquaTree: AquaTree) => {
-      const revisonHashes = Object.keys(aquaTree.revisions)
+      const orderedRevisions = OrderRevisionInAquaTree(aquaTree)
+      const revisonHashes = Object.keys(orderedRevisions.revisions)
       const hash = revisonHashes[revisonHashes.length - 1]
       return hash
 }
