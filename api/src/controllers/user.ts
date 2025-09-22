@@ -437,14 +437,14 @@ export default async function userController(fastify: FastifyInstance) {
                     }
                 });
 
-                console.log(`Found ${contractsToSoftDelete.length} contracts where user is a recipient`);
+                // console.log(`Found ${contractsToSoftDelete.length} contracts where user is a recipient`);
 
                 // Filter out contracts where the user has already soft-deleted (to avoid duplicates)
                 const contractsNeedingSoftDelete = contractsToSoftDelete.filter(contract =>
                     !contract.receiver_has_deleted?.includes(userAddress)
                 );
 
-                console.log(`${contractsNeedingSoftDelete.length} contracts need soft delete for user ${userAddress}`);
+                // console.log(`${contractsNeedingSoftDelete.length} contracts need soft delete for user ${userAddress}`);
 
                 // Add the user's address to the receiver_has_deleted array for each contract
                 let updatedContractsCount = 0;
@@ -463,7 +463,7 @@ export default async function userController(fastify: FastifyInstance) {
                     updatedContractsCount++;
                 }
 
-                console.log(`Soft deleted ${updatedContractsCount} contracts for user ${userAddress}`);
+                // console.log(`Soft deleted ${updatedContractsCount} contracts for user ${userAddress}`);
 
 
                 // also delete contracts where user is the sender

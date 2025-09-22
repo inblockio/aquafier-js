@@ -63,7 +63,7 @@ export default async function shareController(fastify: FastifyInstance) {
             if (!allRecipients.includes(session.address.trim().toLowerCase())) {
                 if(allRecipients.includes(SYSTEM_WALLET_ADDRESS)){
                     // allow access if the system wallet is a recipient
-                    console.log(`System wallet is a recipient, allowing access`);
+                    // console.log(`System wallet is a recipient, allowing access`);
                 }else{
                     return reply.code(401).send({ success: false, message: "The aqua tree is not shared with you " + allRecipients.toString() + " == " + session.address });
                 }
