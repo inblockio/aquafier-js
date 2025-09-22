@@ -281,7 +281,7 @@ model DNSClaimVerificationOne {
   verification_logs   Json
   verification_status String
   is_verified         Boolean @default(false)
-  is_domain_verified  Boolean @default(false)
+  is_domain_verified  Boolean @default(true)
   last_verified       DateTime
 
   @@index([wallet_address]) // For efficient querying
