@@ -2736,3 +2736,49 @@ export const fetchWalletAddressesAndNamesForInputRecommendation = (systemFileInf
 
       return recommended;
 }
+
+
+
+export async function loadSignatureImage(aquaTree: AquaTree, fileObject: FileObject[], nonce: string): Promise<string | null | Uint8Array> {
+    try {
+        const signatureAquaTree = OrderRevisionInAquaTree(aquaTree)
+        const fileobjects = fileObject
+
+        const allHashes = Object.keys(signatureAquaTree!.revisions!)
+
+        const thirdRevision = signatureAquaTree?.revisions[allHashes[2]]
+
+        if (!thirdRevision) {
+            return null
+        }
+
+        if (!thirdRevision.link_verification_hashes) {
+            return null
+        }
+
+        const signatureHash = thirdRevision.link_verification_hashes[0]
+        const signatureImageName = signatureAquaTree?.file_index[signatureHash]
+
+        const signatureImageObject = fileobjects.find(e => e.fileName == signatureImageName)
+
+        const fileContentUrl = signatureImageObject?.fileContent
+
+        if (typeof fileContentUrl === 'string' && fileContentUrl.startsWith('http')) {
+            let url = ensureDomainUrlHasSSL(fileContentUrl)
+            let dataUrl = await fetchImage(url, `${nonce}`)
+
+            if (!dataUrl) {
+                dataUrl = `${window.location.origin}/images/placeholder-img.png`
+            }
+
+            return dataUrl
+        } else if (fileContentUrl instanceof Uint8Array) {
+
+            return fileContentUrl
+        }
+    }
+    catch (error) {
+        return `${window.location.origin}/images/placeholder-img.png`
+    }
+    return null
+}

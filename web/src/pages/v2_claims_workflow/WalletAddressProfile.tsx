@@ -15,6 +15,7 @@ import {
       getGenesisHash,
       getRandomNumber,
       isWorkFlowData,
+      loadSignatureImage,
       timeToHumanFriendly
 } from '@/utils/functions'
 import Aquafier, {AquaTree, AquaTreeWrapper, FileObject, OrderRevisionInAquaTree, reorderAquaTreeRevisionsProperties} from 'aqua-js-sdk'
@@ -26,7 +27,6 @@ import {ClipLoader} from 'react-spinners'
 import {toast} from 'sonner'
 import {useStore} from 'zustand'
 import axios from 'axios'
-import {loadSignatureImage} from './UserSignatureClaim'
 import {getDNSStatusBadge, IDnsVerificationResult, verifyDNS} from '@/utils/verifiy_dns'
 import {BsInfoCircle} from 'react-icons/bs'
 
@@ -54,7 +54,7 @@ const ClaimCard = ({ claim }: { claim: IClaim }) => {
 
       console.log("Claim: ", claim)
 
-      const [signatureImage, setSignatureImage] = useState<string | null>(null)
+      const [signatureImage, setSignatureImage] = useState<string | null |Uint8Array>(null)
       const [dnsVerificationResult, setDnsVerificationResult] = useState<IDnsVerificationResult | null>(null)
 
       const { session, backend_url } = useStore(appStore)
@@ -158,7 +158,14 @@ const ClaimCard = ({ claim }: { claim: IClaim }) => {
                               <div className="p-1 rounded-md w-[120px]">
                                     {
                                           signatureImage ? (
-                                                <img src={signatureImage} alt={claim.claimName} />
+                                                typeof signatureImage === 'string' ? (
+                                <img src={signatureImage} alt={signatureImage} />
+                            ) : (
+                                <img
+                                    src={`data:image/png;base64,${btoa(String.fromCharCode(...signatureImage))}`}
+                                    alt={'signatureImage'}
+                                />
+                            )
                                           ) : (
                                                 <img src={`${window.location.origin}/images/placeholder-img.png`} alt={claim.claimName} />
                                           )

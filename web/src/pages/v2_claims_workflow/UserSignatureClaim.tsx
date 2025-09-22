@@ -1,58 +1,15 @@
 import appStore from "@/store"
-import {ICompleteClaimInformation} from "@/types/types"
-import {ensureDomainUrlHasSSL, fetchImage} from "@/utils/functions"
-import {AquaTree, FileObject, OrderRevisionInAquaTree} from "aqua-js-sdk"
-import {Signature} from "lucide-react"
-import {useEffect, useState} from "react"
-import {useStore} from "zustand"
-
-
-export async function loadSignatureImage(aquaTree: AquaTree, fileObject: FileObject[], nonce: string) {
-    try {
-        const signatureAquaTree = OrderRevisionInAquaTree(aquaTree)
-        const fileobjects = fileObject
-
-        const allHashes = Object.keys(signatureAquaTree!.revisions!)
-
-        const thirdRevision = signatureAquaTree?.revisions[allHashes[2]]
-
-        if (!thirdRevision) {
-            return null
-        }
-
-        if (!thirdRevision.link_verification_hashes) {
-            return null
-        }
-
-        const signatureHash = thirdRevision.link_verification_hashes[0]
-        const signatureImageName = signatureAquaTree?.file_index[signatureHash]
-
-        const signatureImageObject = fileobjects.find(e => e.fileName == signatureImageName)
-
-        const fileContentUrl = signatureImageObject?.fileContent
-
-        if (typeof fileContentUrl === 'string' && fileContentUrl.startsWith('http')) {
-            let url = ensureDomainUrlHasSSL(fileContentUrl)
-            let dataUrl = await fetchImage(url, `${nonce}`)
-
-            if (!dataUrl) {
-                dataUrl = `${window.location.origin}/images/placeholder-img.png`
-            }
-
-            return dataUrl
-        }
-    }
-    catch (error) {
-        return `${window.location.origin}/images/placeholder-img.png`
-    }
-    return null
-}
+import { ICompleteClaimInformation } from "@/types/types"
+import {loadSignatureImage } from "@/utils/functions"
+import { Signature } from "lucide-react"
+import { useEffect, useState } from "react"
+import { useStore } from "zustand"
 
 
 
 const UserSignatureClaim = ({ claim }: { claim: ICompleteClaimInformation }) => {
 
-    const [signatureImage, setSignatureImage] = useState<string | null>(null)
+    const [signatureImage, setSignatureImage] = useState<string | Uint8Array | null>(null)
 
     const claimName = claim.processedInfo.claimInformation.forms_name
     const claimWalletAddress = claim.processedInfo.claimInformation.forms_wallet_address
@@ -62,8 +19,14 @@ const UserSignatureClaim = ({ claim }: { claim: ICompleteClaimInformation }) => 
 
     const loadImage = async () => {
         let signatureImage = await loadSignatureImage(claim.file.aquaTree!, claim.file.fileObject, session?.nonce!)
-        setSignatureImage(signatureImage)
+        if (signatureImage) {
+            console.log(" --- signatureImage: ",signatureImage)
+            console.log(" --- signatureImage: ",typeof signatureImage)
+            setSignatureImage(signatureImage)
+        }
     }
+
+    console.log(" --- claim: ",JSON.stringify (claim, null, 4))
 
     useEffect(() => {
         loadImage()
@@ -90,7 +53,14 @@ const UserSignatureClaim = ({ claim }: { claim: ICompleteClaimInformation }) => 
                 <div className="bg-gray-100 p-4 rounded-2xl w-[140px]">
                     {
                         signatureImage ? (
-                            <img src={signatureImage} alt={claimName} />
+                            typeof signatureImage === 'string' ? (
+                                <img src={signatureImage} alt={claimName} />
+                            ) : (
+                                <img
+                                    src={`data:image/png;base64,${btoa(String.fromCharCode(...signatureImage))}`}
+                                    alt={claimName}
+                                />
+                            )
                         ) : (
                             <img src={`${window.location.origin}/images/placeholder-img.png`} alt={claimName} />
                         )
