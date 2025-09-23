@@ -35,6 +35,7 @@ export interface FilesListProps {
 
     showHeader?: boolean
     showCheckbox?: boolean
+    showFileActions: boolean
     activeFile: ApiFileInfo | null  
     selectedFiles: Array<ApiFileInfo>
     onFileDeSelected: (file: ApiFileInfo) => void

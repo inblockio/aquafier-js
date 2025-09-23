@@ -237,6 +237,9 @@ export default function FilesListItem({
       }
 
       const showActionsButton = () => {
+            if(filesListProps.showFileActions == false){
+                  return null
+            }
             if (workflowInfo?.isWorkFlow == true && workflowInfo.workFlow == 'aqua_sign') {
                   return workFlowAquaSignActions()
             }
@@ -322,7 +325,9 @@ export default function FilesListItem({
                                     // not selected, so select
                                     if (!showWorkFlowsOnly && workflowInfo?.isWorkFlow && workflowInfo.workFlow == 'aqua_sign') {
 
-                                          toast.error("Aqua Sign workflows cannot be selected")
+                                          toast.error("Aqua Sign workflows cannot be selected",{
+                                                duration: 1500,
+                                          })
                                           // do not allow selection of  aqua sign workflows
                                           return
                                     }

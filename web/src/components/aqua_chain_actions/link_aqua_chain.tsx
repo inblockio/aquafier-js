@@ -1,14 +1,9 @@
 import { LuLink2 } from 'react-icons/lu'
 import { useEffect, useState } from 'react'
 import {
-      areArraysEqual,
-      capitalizeWords,
       fetchFiles,
-      formatCryptoAddress,
       getAquaTreeFileObject,
-      getFileName,
       getGenesisHash,
-      isWorkFlowData
 } from '../../utils/functions'
 import { useStore } from 'zustand'
 import appStore from '../../store'
@@ -19,15 +14,14 @@ import { IShareButton } from '../../types/types'
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
-import { AlertCircle, FileText, Link as LinkIcon, Loader2 } from 'lucide-react'
+import { AlertCircle, Link as LinkIcon, Loader2 } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
 import { toast } from 'sonner'
 import FilesList from '@/pages/files_list'
-import { set } from 'date-fns'
 
 export const LinkButton = ({ item, nonce, index }: IShareButton) => {
-      const { backend_url, setFiles, files, session, systemFileInfo } = useStore(appStore)
+      const { backend_url, setFiles, files, session } = useStore(appStore)
       const [isOpen, setIsOpen] = useState(false)
       const [linking, setLinking] = useState(false)
       const [primaryFileObject, setPrimaryFileObject] = useState<FileObject | null | "loading">("loading")
@@ -145,57 +139,6 @@ export const LinkButton = ({ item, nonce, index }: IShareButton) => {
       }
 
 
-      const showClaimExtraInfo = (workflowInfo: { isWorkFlow: boolean; workFlow: string }, file: ApiFileInfo) => {
-            if (workflowInfo?.workFlow == "identity_claim") {
-                  let genesisHash = getGenesisHash(file.aquaTree!)
-                  if (!genesisHash) {
-                        return <div />
-                  }
-                  let genRevision = file.aquaTree?.revisions[genesisHash]
-                  if (!genRevision) {
-                        return <div />
-                  }
-
-                  let creatorWallet = genRevision[`forms_wallet_address`]
-
-                  if (creatorWallet) {
-                        return <div className="flex flex-nowrap text-xs text-gray-500 mt-1">
-                              <p className="text-xs font-medium">Wallet:&nbsp;</p>
-                              <p className="text-xs font-mono">{formatCryptoAddress(creatorWallet)}</p>
-                        </div>
-                  }
-            }
-
-            if (workflowInfo?.workFlow == "identity_attestation") {
-                  let genesisHash = getGenesisHash(file.aquaTree!)
-                  if (!genesisHash) {
-                        return <div />
-                  }
-                  let genRevision = file.aquaTree?.revisions[genesisHash]
-                  if (!genRevision) {
-                        return <div />
-                  }
-
-                  let creatorWallet = genRevision[`forms_wallet_address`]
-                  let claimWallet = genRevision[`forms_claim_wallet_address`]
-
-                  if (creatorWallet) {
-                        return (
-                              <div className="mt-1 space-y-1">
-                                    <div className="flex flex-nowrap text-xs text-gray-500">
-                                          <p className="text-xs font-medium">Claim Owner:&nbsp;</p>
-                                          <p className="text-xs font-mono">{formatCryptoAddress(claimWallet)}</p>
-                                    </div>
-                                    <div className="flex flex-nowrap text-xs text-gray-500">
-                                          <p className="text-xs font-medium">Attestor Wallet:&nbsp;</p>
-                                          <p className="text-xs font-mono">{formatCryptoAddress(creatorWallet)}</p>
-                                    </div>
-                              </div>
-                        )
-                  }
-            }
-            return <div />
-      }
 
 
       return (
@@ -273,7 +216,7 @@ export const LinkButton = ({ item, nonce, index }: IShareButton) => {
                                                             {/* <div className="border border-gray-200 rounded-lg overflow-hidden flex-1 px-2"> */}
                                                             {/* <div className="max-h-96 min-h-80 overflow-y-auto"> */}
 
-                                                            <FilesList selectedFiles={linkItems} activeFile={item} showCheckbox={true} showHeader={false} onFileDeSelected={(file) => {
+                                                            <FilesList showFileActions={false} selectedFiles={linkItems} activeFile={item} showCheckbox={true} showHeader={true} onFileDeSelected={(file) => {
 
                                                                   let newData = linkItems.filter((f: ApiFileInfo) => getGenesisHash(f.aquaTree!) !== getGenesisHash(file.aquaTree!));
                                                                   setLinkItems(newData)
@@ -323,7 +266,7 @@ export const LinkButton = ({ item, nonce, index }: IShareButton) => {
                                                       ) : (
                                                             <>
                                                                   <LinkIcon className="h-4 w-4 mr-2" />
-                                                                  Link Files
+                                                                  Link Files {linkItems && linkItems.length > 0 ? `(${linkItems.length} new revisions)` : null}
                                                             </>
                                                       )}
                                                 </Button>

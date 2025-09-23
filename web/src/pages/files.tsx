@@ -597,7 +597,7 @@ const FilesPage = () => {
                                           />
                                     ) : (
 
-                                          <FilesList selectedFiles={[]} activeFile={null} showCheckbox={false} showHeader={true} onFileDeSelected={(file) => { }} onFileSelected={(file) => {
+                                          <FilesList selectedFiles={[]} activeFile={null} showFileActions={true} showCheckbox={false} showHeader={true} onFileDeSelected={() => { }} onFileSelected={() => {
 
                                           }} />
                                     )}
