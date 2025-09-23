@@ -370,7 +370,7 @@ test("single user aqua-sign", async (): Promise<void> => {
 });
 
 
-test.skip("two user aqua-sign", async (): Promise<void> => {
+test("two user aqua-sign", async (): Promise<void> => {
     const registerWalletOneResponse = await registerNewMetaMaskWalletAndLogin();
 
     const contextWalletOne: BrowserContext = registerWalletOneResponse.context;
