@@ -140,30 +140,6 @@ const DNSClaim = ({ claimInfo, apiFileInfo, nonce, sessionAddress }: IDNSClaim) 
                         }),
                   })
 
-                  // if (!response.ok) {
-                  //   throw new Error(`HTTP error! status: ${response.status}`)
-                  // }
-
-                  // const result: VerificationResult = await response.json()
-                  // setVerificationResult(result)
-
-
-                  // if (result.success) {
-                  //   setVerificationStatus('verified')
-                  //   setVerificationMessage(result.message)
-                  // } else {
-                  // Determine status based on the response and logs
-                  //   if (response.status === 404 || result.logs.some(log => log.message.includes('No TXT records found'))) {
-                  //     setVerificationStatus('not_found')
-                  //     setVerificationMessage(result.message || 'DNS records not found')
-                  //   } else {
-                  //     setVerificationStatus('failed')
-                  //     setVerificationMessage(result.message || 'Verification failed')
-                  //   }
-
-
-                  // }
-
                   const result: VerificationResult = await response.json()
                   setVerificationResult(result)
 
