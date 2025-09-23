@@ -1,13 +1,14 @@
-import {useEffect, useState} from 'react'
-import {Filter, Grid3X3, List, X} from 'lucide-react'
+import { useEffect, useState } from 'react'
+import { Filter, Grid3X3, List, X } from 'lucide-react'
 import FileListItem from './files_list_item'
-import {fetchSystemFiles, getAquaTreeFileName, isWorkFlowData} from '@/utils/functions'
+import { fetchSystemFiles, getAquaTreeFileName, isWorkFlowData } from '@/utils/functions'
 
-import {useStore} from 'zustand'
+import { useStore } from 'zustand'
 import appStore from '../store'
-import {ApiFileInfo} from '@/models/FileInfo'
+import { ApiFileInfo } from '@/models/FileInfo'
+import { FilesListProps } from '@/types/types'
 
-export default function FilesList() {
+export default function FilesList(filesListProps: FilesListProps) {
       const [view, setView] = useState<'table' | 'card'>('table')
       const [hasFetchedSystemAquaTrees, setHasFetchedSystemAquaTrees] = useState(false)
       const [isSmallScreen, setIsSmallScreen] = useState(false)
@@ -72,15 +73,15 @@ export default function FilesList() {
                   setUniqueWorkflows(Array.from(workflows).sort())
 
             }
-   
-      // }, [files.length, systemFileInfo.length])
-      }, [files.fileData.map(e => Object.keys(e?.aquaTree?.file_index ?? {})).join(','), systemFileInfo.map(e => Object.keys(e?.aquaTree?.file_index??{})).join(',')])
 
-       
+            // }, [files.length, systemFileInfo.length])
+      }, [files.fileData.map(e => Object.keys(e?.aquaTree?.file_index ?? {})).join(','), systemFileInfo.map(e => Object.keys(e?.aquaTree?.file_index ?? {})).join(',')])
+
+
 
 
       // Filter files based on selected filters AND selected workflow
-      const getFilteredFiles = () : ApiFileInfo[] => {
+      const getFilteredFiles = (): ApiFileInfo[] => {
             // First filter by the modal filters
             let filteredByFilters = files.fileData;
 
@@ -222,7 +223,8 @@ export default function FilesList() {
 
       const getFilteredTitle = () => {
             if (selectedFilters.includes('all')) {
-                  return `All files ${view}`
+                  // return `All files ${view}`
+                  return selectedWorkflow === 'all' ? 'All Files' : capitalizeWords(selectedWorkflow.replace(/_/g, ' '))
             }
 
             if (selectedFilters.length === 1) {
@@ -255,6 +257,7 @@ export default function FilesList() {
                                           backendUrl={backend_url}
                                           nonce={session?.nonce ?? ''}
                                           viewMode={view}
+                                          filesListProps={filesListProps}
                                     />
                               )
                         })}
@@ -274,13 +277,14 @@ export default function FilesList() {
                         break
                   }
             }
-            if(hasUndefined) {
+            if (hasUndefined) {
                   return <div>No files available.</div>
 
             }
             return <table className="w-full border-collapse">
                   <thead>
                         <tr className="bg-gray-50">
+                              {filesListProps.showCheckbox == true ? <th className="py-3 px-4 text-left text-sm font-medium text-gray-700 w-12 rounded-tl-md"> </th> : null}
                               <th className="py-3 px-4 text-left text-sm font-medium text-gray-700 w-1/3 rounded-tl-md">Name</th>
                               <th className="py-3 px-4 text-left text-sm font-medium text-gray-700 w-30">Type</th>
                               <th className="py-3 px-4 text-left text-sm font-medium text-gray-700 w-40">Uploaded At</th>
@@ -306,6 +310,7 @@ export default function FilesList() {
                                                 backendUrl={backend_url}
                                                 nonce={session?.nonce ?? ''}
                                                 viewMode={view}
+                                                filesListProps={filesListProps}
                                           />
                                     )
                               })}
@@ -437,44 +442,49 @@ export default function FilesList() {
                   {/* File Content */}
                   <div className="flex-1">
                         {/* File Header */}
-                        <div className="flex items-center justify-between mb-6">
-                              <div className="flex items-center space-x-4">
-                                    <h1 className="text-xl font-semibold text-gray-900">
-                                          {getFilteredTitle()}
-                                    </h1>
-                                    <div className="w-4 h-4 bg-gray-300 rounded-full flex items-center justify-center">
-                                          <span className="text-xs text-gray-600">{filteredFiles.length}</span>
-                                    </div>
-                              </div>
-                              {!isSmallScreen && (
-                                    <div className="flex items-center space-x-2">
-                                          {/* Filter Button */}
-                                          <button
-                                                onClick={() => {
-                                                      setTempSelectedFilters(selectedFilters)
-                                                      setShowFilterModal(true)
-                                                }}
-                                                className={`p-2 rounded-md border ${!selectedFilters.includes('all')
-                                                      ? 'bg-blue-50 border-blue-200 text-blue-700'
-                                                      : 'border-gray-300 text-gray-700 hover:bg-gray-50'
-                                                      }`}
-                                                title="Filter files"
-                                          >
-                                                <Filter className="w-4 h-4" />
-                                          </button>
-
-                                          {/* View Toggle */}
-                                          <div className="flex bg-gray-100 rounded-md">
-                                                <button onClick={() => setView('card')} className={`p-2 rounded-md ${view === 'card' ? 'bg-white shadow-sm' : ''}`}>
-                                                      <Grid3X3 className="w-4 h-4" />
-                                                </button>
-                                                <button onClick={() => setView('table')} className={`p-2 rounded-md ${view === 'table' ? 'bg-white shadow-sm' : ''}`}>
-                                                      <List className="w-4 h-4" />
-                                                </button>
+                        {
+                              filesListProps.showHeader == true ? (
+                                    <div className="flex items-center justify-between mb-6">
+                                          <div className="flex items-center space-x-4">
+                                                <h1 className="text-xl font-semibold text-gray-900">
+                                                      {getFilteredTitle()}
+                                                </h1>
+                                                <div className="w-4 h-4 bg-gray-300 rounded-full flex items-center justify-center">
+                                                      <span className="text-xs text-gray-600">{filteredFiles.length}</span>
+                                                </div>
                                           </div>
+                                          {!isSmallScreen && (
+                                                <div className="flex items-center space-x-2">
+                                                      {/* Filter Button */}
+                                                      <button
+                                                            onClick={() => {
+                                                                  setTempSelectedFilters(selectedFilters)
+                                                                  setShowFilterModal(true)
+                                                            }}
+                                                            className={`p-2 rounded-md border ${!selectedFilters.includes('all')
+                                                                  ? 'bg-blue-50 border-blue-200 text-blue-700'
+                                                                  : 'border-gray-300 text-gray-700 hover:bg-gray-50'
+                                                                  }`}
+                                                            title="Filter files"
+                                                      >
+                                                            <Filter className="w-4 h-4" />
+                                                      </button>
+
+                                                      {/* View Toggle */}
+                                                      <div className="flex bg-gray-100 rounded-md">
+                                                            <button onClick={() => setView('card')} className={`p-2 rounded-md ${view === 'card' ? 'bg-white shadow-sm' : ''}`}>
+                                                                  <Grid3X3 className="w-4 h-4" />
+                                                            </button>
+                                                            <button onClick={() => setView('table')} className={`p-2 rounded-md ${view === 'table' ? 'bg-white shadow-sm' : ''}`}>
+                                                                  <List className="w-4 h-4" />
+                                                            </button>
+                                                      </div>
+                                                </div>
+                                          )}
                                     </div>
-                              )}
-                        </div>
+                              ) : <div className='mb-6'></div>
+                        }
+
 
                         {/* Workflow Tabs - Only show when "all" filter is selected */}
                         {renderWorkflowTabs()}
@@ -508,6 +518,7 @@ export default function FilesList() {
                                                             backendUrl={backend_url}
                                                             nonce={session?.nonce ?? ''}
                                                             viewMode={'card'}
+                                                            filesListProps={filesListProps}
                                                       />
                                                 </div>
                                           ))}

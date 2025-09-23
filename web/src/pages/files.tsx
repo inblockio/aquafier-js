@@ -1,38 +1,38 @@
-import React, {useState} from 'react'
+import React, { useState } from 'react'
 import appStore from '../store'
-import {useStore} from 'zustand'
+import { useStore } from 'zustand'
 import FilesList from './files_list'
-import {AlertCircle, CheckCircle, FileText, FolderPlus, Loader2, Minimize2, Plus, Upload, X} from 'lucide-react'
-import {FileItemWrapper, UploadStatus} from '@/types/types'
+import { AlertCircle, CheckCircle, FileText, FolderPlus, Loader2, Minimize2, Plus, Upload, X } from 'lucide-react'
+import { FileItemWrapper, UploadStatus } from '@/types/types'
 import {
-    checkIfFileExistInUserFiles,
-    fetchFiles,
-    getAquaTreeFileName,
-    isAquaTree,
-    isJSONFile,
-    isJSONKeyValueStringContent,
-    isZipFile,
-    readFileContent
+      checkIfFileExistInUserFiles,
+      fetchFiles,
+      getAquaTreeFileName,
+      isAquaTree,
+      isJSONFile,
+      isJSONKeyValueStringContent,
+      isZipFile,
+      readFileContent
 } from '@/utils/functions'
-import {maxFileSizeForUpload} from '@/utils/constants'
+import { maxFileSizeForUpload } from '@/utils/constants'
 import axios from 'axios'
 
 // /components//ui components
-import {Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle} from '@/components/ui/dialog'
-import {Progress} from '@/components/ui/progress'
-import {Button} from '@/components/ui/button'
-import {Badge} from '@/components/ui/badge'
-import {Card, CardContent} from '@/components/ui/card'
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { Progress } from '@/components/ui/progress'
+import { Button } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
+import { Card, CardContent } from '@/components/ui/card'
 
 // import { CompleteChainView } from './components/files_chain_details';
-import {IDrawerStatus} from '@/models/AquaTreeDetails'
-import {CompleteChainView} from '@/components/files_chain_details'
+import { IDrawerStatus } from '@/models/AquaTreeDetails'
+import { CompleteChainView } from '@/components/files_chain_details'
 import FileDropZone from '@/components/dropzone_file_actions'
-import {LuTrash2, LuUpload} from 'react-icons/lu'
-import {toast} from 'sonner'
-import {ImportAquaTree} from '@/components/dropzone_file_actions/import_aqua_tree'
-import {ImportAquaTreeZip} from '@/components/dropzone_file_actions/import_aqua_tree_zip'
-import {FormRevisionFile} from '@/components/dropzone_file_actions/form_revision'
+import { LuTrash2, LuUpload } from 'react-icons/lu'
+import { toast } from 'sonner'
+import { ImportAquaTree } from '@/components/dropzone_file_actions/import_aqua_tree'
+import { ImportAquaTreeZip } from '@/components/dropzone_file_actions/import_aqua_tree_zip'
+import { FormRevisionFile } from '@/components/dropzone_file_actions/form_revision'
 
 import ClaimTypesDropdownButton from '@/components/button_claim_dropdown'
 
@@ -579,9 +579,9 @@ const FilesPage = () => {
                   </div>
 
                   <div className="w-full max-w-full box-border overflow-x-hidden bg-white p-6">
-                      
+
                         {
-                              (files.status === 'loading' || files.status === 'idle')  ? (
+                              (files.status === 'loading' || files.status === 'idle') ? (
                                     <div className="flex justify-center items-center h-40">
                                           <Loader2 className="w-6 h-6 text-gray-500 animate-spin" />
                                     </div>
@@ -596,7 +596,10 @@ const FilesPage = () => {
                                                 }}
                                           />
                                     ) : (
-                                          <FilesList />
+
+                                          <FilesList selectedFiles={[]} activeFile={null} showCheckbox={false} showHeader={true} onFileDeSelected={(file) => { }} onFileSelected={(file) => {
+
+                                          }} />
                                     )}
                               </>
                         }

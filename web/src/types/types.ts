@@ -31,6 +31,15 @@ export interface DNSProof {
 }
 
 
+export interface FilesListProps {
+
+    showHeader?: boolean
+    showCheckbox?: boolean
+    activeFile: ApiFileInfo | null  
+    selectedFiles: Array<ApiFileInfo>
+    onFileDeSelected: (file: ApiFileInfo) => void
+    onFileSelected: (file: ApiFileInfo) => void
+}   
 export interface OpenDialog {
       dialogType: 'share_dialog' | 'form_template_editor' | 'aqua_file_details' | 'identity_claim' | 'dns_claim' | 'dba_claim'| 'aqua_sign' | 'identity_attestation' | 'early_bird_offer' | 'user_signature' | 'email_claim' | 'phone_number_claim',//'file' | 'folder' | 'contract' | 'claim' | 'claim-attestation'
       isOpen: boolean
