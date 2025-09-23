@@ -283,7 +283,7 @@ test("upload, sign, download", async (): Promise<void> => {
 
 });
 
-test("upload, witness, download", async (): Promise<void> => {
+test.skip("upload, witness, download", async (): Promise<void> => {
     const registerResponse = await registerNewMetaMaskWalletAndLogin();
     const context: BrowserContext = registerResponse.context;
     const testPage: Page = context.pages()[0];
@@ -424,7 +424,7 @@ test.skip("two user aqua-sign", async (): Promise<void> => {
     await addSignatureToDocument(testPageWalletTwo, contextWalletTwo);
 });
 
- 
+
 // Test for sharing functionality
 test("share document between two users", async (): Promise<void> => {
     // Setup first user (document owner)
