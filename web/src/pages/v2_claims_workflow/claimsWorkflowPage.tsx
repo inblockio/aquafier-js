@@ -1,27 +1,27 @@
-import {useEffect, useState} from 'react'
-import {useParams} from 'react-router-dom'
+import { useEffect, useState } from 'react'
+import { useParams } from 'react-router-dom'
 import appStore from '../../store'
-import {useStore} from 'zustand'
-import {ShareButton} from '@/components/aqua_chain_actions/share_aqua_chain'
-import {getAquaTreeFileName, isWorkFlowData, processSimpleWorkflowClaim, timeToHumanFriendly} from '@/utils/functions'
-import {ClipLoader} from 'react-spinners'
-import {ApiFileInfo, ClaimInformation, IAttestationEntry} from '@/models/FileInfo'
+import { useStore } from 'zustand'
+import { ShareButton } from '@/components/aqua_chain_actions/share_aqua_chain'
+import { getAquaTreeFileName, isWorkFlowData, processSimpleWorkflowClaim, timeToHumanFriendly } from '@/utils/functions'
+import { ClipLoader } from 'react-spinners'
+import { ApiFileInfo, ClaimInformation, IAttestationEntry } from '@/models/FileInfo'
 import axios from 'axios'
-import {Contract, ICompleteClaimInformation} from '@/types/types'
-import {SharedContract} from '../files_shared_contracts'
+import { Contract, ICompleteClaimInformation } from '@/types/types'
+import { SharedContract } from '../files_shared_contracts'
 import AttestationEntry from './AttestationEntry'
-import {OrderRevisionInAquaTree} from 'aqua-js-sdk'
+import { OrderRevisionInAquaTree } from 'aqua-js-sdk'
 import SimpleClaim from './SimpleClaim'
 import DNSClaim from './DNSClaim'
-import {toast} from 'sonner'
+import { toast } from 'sonner'
 
-import {Collapsible, CollapsibleContent, CollapsibleTrigger} from '@/components/ui/collapsible'
-import {ChevronDown, ChevronUp} from 'lucide-react'
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
+import { ChevronDown, ChevronUp } from 'lucide-react'
 import WalletAddressProfile from './WalletAddressProfile'
-import PhoneNumberClaim from './PhoneNumberClaim'
-import EmailClaim from './EmailClaim'
+// import PhoneNumberClaim from './PhoneNumberClaim'
+// import EmailClaim from './EmailClaim'
 import UserSignatureClaim from './UserSignatureClaim'
-import {AddressView} from './AddressView'
+import { AddressView } from './AddressView'
 
 
 export default function ClaimsWorkflowPage() {
@@ -167,16 +167,16 @@ export default function ClaimsWorkflowPage() {
                         <DNSClaim claimInfo={claimInfo} apiFileInfo={claim.file} nonce={session!.nonce} sessionAddress={session!.address} />
                   )
             }
-            else if (claimInfo.forms_type === 'phone_number_claim') {
-                  return (
-                        <PhoneNumberClaim claim={claim} />
-                  )
-            }
-            else if (claimInfo.forms_type === 'email_claim') {
-                  return (
-                        <EmailClaim claim={claim} />
-                  )
-            }
+            // else if (claimInfo.forms_type === 'phone_number_claim') {
+            //       return (
+            //             <PhoneNumberClaim claim={claim} />
+            //       )
+            // }
+            // else if (claimInfo.forms_type === 'email_claim') {
+            //       return (
+            //             <EmailClaim claim={claim} />
+            //       )
+            // }
             else if (claimInfo.forms_type === 'user_signature') {
                   return (
                         <UserSignatureClaim claim={claim} />
@@ -198,7 +198,7 @@ export default function ClaimsWorkflowPage() {
                                           {claim.attestations.length > 0 ? (
                                                 <div className="flex flex-col gap-2">
                                                       <h3 className="text-lg font-bold text-center">Claim Attestations</h3>
-                                                      <div className="flex flex-col gap-0 h-[300px] overflow-y-auto">
+                                                      <div className="flex flex-col gap-0 max-h-[300px] overflow-y-auto">
                                                             {claim.attestations.map((attestation, index) => (
                                                                   <AttestationEntry
                                                                         key={`attestation-${index}`}
@@ -231,8 +231,8 @@ export default function ClaimsWorkflowPage() {
 
       useEffect(() => {
             processAllAddressClaims()
-      // }, [walletAddress, JSON.stringify(files)])
-   }, [files.fileData.map(e => Object.keys(e?.aquaTree?.file_index ?? {})).join(','), systemFileInfo.map(e => Object.keys(e?.aquaTree?.file_index??{})).join(','), walletAddress])
+            // }, [walletAddress, JSON.stringify(files)])
+      }, [files.fileData.map(e => Object.keys(e?.aquaTree?.file_index ?? {})).join(','), systemFileInfo.map(e => Object.keys(e?.aquaTree?.file_index ?? {})).join(','), walletAddress])
 
       return (
             <div className='py-6 flex flex-col gap-4'>
@@ -277,19 +277,23 @@ export default function ClaimsWorkflowPage() {
                         ) : null
                   }
 
-                  <div className="container mx-auto py-4 bg-white rounded-lg">
-                        <WalletAddressProfile walletAddress={walletAddress} hideOpenProfileButton={true} />
-                  </div>
+                  {
+                        !isLoading ? (
+                              <div className="container mx-auto py-4 bg-white rounded-lg">
+                                    <WalletAddressProfile walletAddress={walletAddress} hideOpenProfileButton={true} />
+                              </div>
+                        ) : null
+                  }
 
                   <div className="flex flex-col gap-4">
                         {
                               claims.filter(item => ["simple_claim", "identity_claim"].includes(item.processedInfo.claimInformation.forms_type)).map((claim, index) => (
-                                    <div key={`claim_${index}`} className="container mx-auto py-4 px-1 md:px-4 bg-gray-50 rounded-lg">
+                                    <div key={`claim_${index}`} className="container mx-auto py-4 px-1 md:px-4 bg-gray-50 rounded-lg border-[2px] border-gray-400">
                                           {renderClaim(claim)}
-                                          <Collapsible className='mt-4 bg-gray-50 p-2 rounded-lg'>
+                                          <Collapsible className=' bg-gray-50 p-2 rounded-lg'>
                                                 <CollapsibleTrigger className='cursor-pointer w-full p-2 border-2 border-gray-200 rounded-lg flex justify-between items-center'>
                                                       <div className="flex flex-col text-start">
-                                                            <p className='font-bold text-gray-700'>Sharing Information</p>
+                                                            <p className='font-bold text-gray-700'>Sharing Information---</p>
                                                             <p className='text-gray-600'>Who have you shared the claim with</p>
                                                       </div>
                                                       <div className='flex flex-col gap-0 h-fit'>
@@ -329,7 +333,7 @@ export default function ClaimsWorkflowPage() {
                         }
                         {
                               claims.filter(item => !["simple_claim", "identity_claim"].includes(item.processedInfo.claimInformation.forms_type)).map((claim, index) => (
-                                    <div key={`claim_${index}`} className="container mx-auto py-4 px-1 md:px-4 bg-gray-50 rounded-lg">
+                                    <div key={`claim_${index}`} className="container mx-auto py-4 px-1 md:px-4 bg-gray-50 rounded-lg border-[2px] border-gray-400">
                                           {renderClaim(claim)}
                                           <Collapsible className='mt-4 bg-gray-50 p-2 rounded-lg'>
                                                 <CollapsibleTrigger className='cursor-pointer w-full p-2 border-2 border-gray-200 rounded-lg flex justify-between items-center'>
