@@ -35,7 +35,11 @@ export function getRandomNumber(min: number, max: number): number | null {
 }
 
 
-export async function saveAttestationFileAndAquaTree(aquaTree: AquaTree, genesisHashOfFile: string, walletAddress: string) {
+export async function saveAttestationFileAndAquaTree(aquaTree: AquaTree, genesisHashOfFile: string, walletAddress: string) :Promise<{
+    aquaTree : AquaTree,
+    attestationJSONfileData : Object, 
+    attestationJSONfileName : string
+} | null> {
 
 
     // Logic to check and attest an aquatree if its a phone number claim or email_claim
@@ -141,8 +145,10 @@ export async function saveAttestationFileAndAquaTree(aquaTree: AquaTree, genesis
             saveAquaTree(attestedData.aquaTree, walletAddress, null, false)
 
 
+            return serverAttestationInfo
         }
     }
+    return null
 }
 
 export async function createEthAccount() {

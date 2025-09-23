@@ -27,8 +27,6 @@ import webSocketController from './controllers/websocketController';
 import notificationsController from './controllers/notifications';
 import {prisma} from './database/db';
 import ApiController from './controllers/api';
-// import { createEthAccount } from './utils/server_utils';
-// import { serverAttestation } from './utils/server_attest';
 import * as Sentry from "@sentry/node"
 import {nodeProfilingIntegration} from "@sentry/profiling-node"
 import {ensureDomainViewForCors} from './utils/server_utils';

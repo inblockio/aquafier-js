@@ -5,19 +5,19 @@ import {
     reorderAquaTreeRevisionsProperties,
     Revision as AquaTreeRevision
 } from 'aqua-js-sdk';
-import {prisma} from '../database/db';
+import { prisma } from '../database/db';
 // For specific model types
-import {AquaForms, FileIndex, Link, Revision as DBRevision, Signature, WitnessEvent} from '@prisma/client';
+import { AquaForms, FileIndex, Link, Revision as DBRevision, Signature, WitnessEvent } from '@prisma/client';
 import * as fs from "fs"
-import {AquaJsonInZip, AquaNameWithHash, SaveRevisionForUser} from '../models/request_models';
-import {getAquaTreeFileName} from './api_utils';
-import {createAquaTreeFromRevisions} from './revisions_operations_utils';
-import {getGenesisHash} from './aqua_tree_utils';
+import { AquaJsonInZip, AquaNameWithHash, SaveRevisionForUser } from '../models/request_models';
+import { getAquaTreeFileName } from './api_utils';
+import { createAquaTreeFromRevisions } from './revisions_operations_utils';
+import { getGenesisHash } from './aqua_tree_utils';
 import JSZip from 'jszip';
-import {deleteFile, getFileUploadDirectory} from './file_utils';
-import {randomUUID} from 'crypto';
+import { deleteFile, getFileUploadDirectory } from './file_utils';
+import { randomUUID } from 'crypto';
 import path from 'path';
-import {systemTemplateHashes} from '../models/constants';
+import { systemTemplateHashes } from '../models/constants';
 import Logger from './Logger';
 
 // import { PrismaClient } from '@prisma/client';
@@ -195,8 +195,21 @@ export async function transferRevisionChainData(userAddress: string, chainData: 
             hashName.set(key, value);
         }
 
-
+    
         let workFlowData = isWorkFlowData(chainData.aquaTree, systemTemplateHashes);
+        let workflowDataToBeseparated = ""
+        if (workFlowData.isWorkFlow && (workFlowData.workFlow.includes("phone_number_claim") || workFlowData.workFlow.includes("email_claim"))) {
+            let aquaTreereorder = reorderAquaTreeRevisionsProperties(chainData.aquaTree)
+            let revisionServerSign = Object.values(aquaTreereorder.revisions)[3]
+
+            if (revisionServerSign && revisionServerSign.revision_type == "link") {
+                workflowDataToBeseparated = revisionServerSign.link_verification_hashes![0] ?? ""
+            }
+        }
+
+        Logger.info(`🏆🏆  workflowDataToBeseparated : ${workflowDataToBeseparated}`);
+
+
         // save aquatree in file objects
         for (let fileObject of chainData.fileObject) {
             // Ensure the file object has a valid hashe
@@ -204,8 +217,17 @@ export async function transferRevisionChainData(userAddress: string, chainData: 
             if (isAquaTreeData) {
                 let aquaTree = fileObject.fileContent as AquaTree
 
-               
-                await saveAquaTree(aquaTree, userAddress, null, workFlowData.isWorkFlow);
+                let shouldAquaTreeBeSavedAsPartOfWorkflow = workFlowData.isWorkFlow
+
+                let allHashesOfCurrentAquaTreeInLoop = Object.keys(aquaTree.revisions)
+                Logger.info(`♟️♟️  genHashofCurrentAquaTreeInLoop : ${JSON.stringify(allHashesOfCurrentAquaTreeInLoop, null, 2)}`);
+
+                // for claims email and phone number save the  server attesation as a seperate file
+                if (workflowDataToBeseparated.length > 0 && allHashesOfCurrentAquaTreeInLoop.includes(workflowDataToBeseparated)) {
+                    shouldAquaTreeBeSavedAsPartOfWorkflow = false
+                }
+
+                await saveAquaTree(aquaTree, userAddress, null, shouldAquaTreeBeSavedAsPartOfWorkflow);
                 allAquaTrees.push(aquaTree);
                 for (let key in chainData.aquaTree.file_index) {
                     // Ensure the file object has a valid hashe
@@ -553,7 +575,6 @@ export async function saveARevisionInAquaTree(revisionData: SaveRevisionForUser,
             Logger.info(`anAquaTree ${JSON.stringify(anAquaTree, null, 4)}  fileObject  ${JSON.stringify(fileObject, null, 4)}`)
 
 
-
             let response = await transferRevisionChainData(userAddress, {
                 aquaTree: anAquaTree,
                 fileObject: fileObject
@@ -783,7 +804,7 @@ async function handleSingleFileCleanup(tx: any, pubkeyHash: string) {
                 try {
                     await deleteFile(file.file_location)
                     Logger.info(`Deleted file from filesystem: ${file.file_location}`);
-                } catch (error : any) {
+                } catch (error: any) {
                     Logger.error("Error deleting file from filesystem:", error);
                 }
 
@@ -844,7 +865,7 @@ async function handleMultipleFileCleanup(tx: any, revisionHashes: string[]) {
                     try {
                         await deleteFile(file.file_location)
                         Logger.info(`Deleted file from filesystem: ${file.file_location}`);
-                    } catch (error : any) {
+                    } catch (error: any) {
                         Logger.error(`Error deleting file from filesystem: ${file.file_location}`, error);
                     }
                 }
@@ -1228,7 +1249,7 @@ async function processSignatureRevision(revisionData: AquaTreeRevision, pubKeyHa
             reference_count: 1
         }
     });
-} 
+}
 
 async function processWitnessRevision(revisionData: AquaTreeRevision, pubKeyHash: string) {
 
@@ -1495,7 +1516,7 @@ export async function streamToBuffer(stream: any): Promise<Buffer> {
     return Buffer.concat(chunks);
 }
 export async function processAquaMetadata(zipData: JSZip, userAddress: string) {
-    let allFiles: string [] = Object.keys(zipData.files);
+    let allFiles: string[] = Object.keys(zipData.files);
     // Helper function to decode filename if it's in ASCII format
     const decodeFileName = (fileName: string): string => {
         if (fileName.includes(',') && /^\d+,/.test(fileName)) {
@@ -1505,7 +1526,7 @@ export async function processAquaMetadata(zipData: JSZip, userAddress: string) {
     };
 
     // Create a map of decoded filenames to original keys
-    const fileMap: Map<string,string> = new Map();
+    const fileMap: Map<string, string> = new Map();
     for (const originalKey in zipData.files) {
         const decodedKey = decodeFileName(originalKey);
         Logger.info(`Decoded key: ${decodedKey} for original key: ${originalKey}`);
@@ -1515,7 +1536,7 @@ export async function processAquaMetadata(zipData: JSZip, userAddress: string) {
     // throw new Error(`Manifets file not found ie aqua.json`);
     const aquaJsonOriginalKey = fileMap.get('aqua.json');
     if (!aquaJsonOriginalKey) {
-          throw new Error(`Manifets file not found ie aqua.json`);
+        throw new Error(`Manifets file not found ie aqua.json`);
         // return
     };
 
@@ -1540,60 +1561,60 @@ export async function processAquaMetadata(zipData: JSZip, userAddress: string) {
     }
 }
 
-export async function processAquaMetadataOperation(nameHash: AquaNameWithHash, fileMap: Map<string,string>, zipData: JSZip, userAddress: string) {
-let aquaFileName = "";
-        if (nameHash.name.endsWith('.aqua.json')) {
-            aquaFileName = nameHash.name;
-            
-            const aquaFileOriginalKey = fileMap.get(aquaFileName);
+export async function processAquaMetadataOperation(nameHash: AquaNameWithHash, fileMap: Map<string, string>, zipData: JSZip, userAddress: string) {
+    let aquaFileName = "";
+    if (nameHash.name.endsWith('.aqua.json')) {
+        aquaFileName = nameHash.name;
 
-            if (!aquaFileOriginalKey) {
-                throw new Error(`Expected to find ${aquaFileName} as defined in aqua.json but file not found`);
-            }
+        const aquaFileOriginalKey = fileMap.get(aquaFileName);
 
-            const aquaFile = zipData.files[aquaFileOriginalKey];
-            const aquaFileDataText = await aquaFile.async('text');
-            const aquaTreeData: AquaTree = JSON.parse(aquaFileDataText);
-
-            const genesisHash = getGenesisHash(aquaTreeData);
-            if (!genesisHash) {
-                throw new Error(`Genesis hash cannot be null`);
-            }
-
-            // const filePubKeyHash = `${userAddress}_${genesisHash}`;
-            let nameNoAquaJsonExtsion = nameHash.name.replace('.aqua.json','')
-            const fileAssetOriginalKey = fileMap.get(nameNoAquaJsonExtsion);
-
-            if (!fileAssetOriginalKey) {
-                throw new Error(`Expected to find asset file ${nameNoAquaJsonExtsion} as defined in ${aquaFileName} but file not found`);
-            }
-            const fileAsset = zipData.files[fileAssetOriginalKey];
-
-            const genRevision : AquaTreeRevision = aquaTreeData.revisions[genesisHash]
-            const assetFileHash = genRevision.file_hash
-
-
-            if(!assetFileHash){
-                 throw new Error(`Asset hash not found in aqua tree check genesis of ${nameHash.name}  `);
-            }
-            if(!fileAsset){
-                 throw new Error(`Asset not found ${nameNoAquaJsonExtsion}`);
-            }
-
-
-            Logger.info(`processFileData assetFileHash ${assetFileHash}  nameNoAquaJsonExtsion ${nameNoAquaJsonExtsion} genesisHash ${genesisHash}`)
-            
-            await processFileData(
-                assetFileHash, // nameHash.hash, should have been the asset hash not the file tree hash  nameHash.hashis the aqua tree hash
-                userAddress,
-                genesisHash,
-                fileAsset,
-                nameNoAquaJsonExtsion  //nameHash.name
-            );
-
-        } else {
-            Logger.info(`skipping non aqua json file ${nameHash.name}`)
+        if (!aquaFileOriginalKey) {
+            throw new Error(`Expected to find ${aquaFileName} as defined in aqua.json but file not found`);
         }
+
+        const aquaFile = zipData.files[aquaFileOriginalKey];
+        const aquaFileDataText = await aquaFile.async('text');
+        const aquaTreeData: AquaTree = JSON.parse(aquaFileDataText);
+
+        const genesisHash = getGenesisHash(aquaTreeData);
+        if (!genesisHash) {
+            throw new Error(`Genesis hash cannot be null`);
+        }
+
+        // const filePubKeyHash = `${userAddress}_${genesisHash}`;
+        let nameNoAquaJsonExtsion = nameHash.name.replace('.aqua.json', '')
+        const fileAssetOriginalKey = fileMap.get(nameNoAquaJsonExtsion);
+
+        if (!fileAssetOriginalKey) {
+            throw new Error(`Expected to find asset file ${nameNoAquaJsonExtsion} as defined in ${aquaFileName} but file not found`);
+        }
+        const fileAsset = zipData.files[fileAssetOriginalKey];
+
+        const genRevision: AquaTreeRevision = aquaTreeData.revisions[genesisHash]
+        const assetFileHash = genRevision.file_hash
+
+
+        if (!assetFileHash) {
+            throw new Error(`Asset hash not found in aqua tree check genesis of ${nameHash.name}  `);
+        }
+        if (!fileAsset) {
+            throw new Error(`Asset not found ${nameNoAquaJsonExtsion}`);
+        }
+
+
+        Logger.info(`processFileData assetFileHash ${assetFileHash}  nameNoAquaJsonExtsion ${nameNoAquaJsonExtsion} genesisHash ${genesisHash}`)
+
+        await processFileData(
+            assetFileHash, // nameHash.hash, should have been the asset hash not the file tree hash  nameHash.hashis the aqua tree hash
+            userAddress,
+            genesisHash,
+            fileAsset,
+            nameNoAquaJsonExtsion  //nameHash.name
+        );
+
+    } else {
+        Logger.info(`skipping non aqua json file ${nameHash.name}`)
+    }
 }
 
 
@@ -1602,32 +1623,32 @@ export async function processAquaFiles(
     zipData: JSZip,
     userAddress: string,
     templateId: string | null = null,
-    
-) {
-const aquaConfig = await getAquaConfiguration(zipData);
-    Logger.info(`config Aqua Tree: ${JSON.stringify(aquaConfig, null, 2)}`);
-        const mainAquaTree = await getMainAquaTree(zipData, aquaConfig);
-    Logger.info(`Main Aqua Tree: ${JSON.stringify(mainAquaTree, null, 2)}`);
-        
-        
 
-    const isWorkFlow :  {
-    isWorkFlow: boolean;
-    workFlow: string;
-} = isWorkFlowData(mainAquaTree!, systemTemplateHashes)
+) {
+    const aquaConfig = await getAquaConfiguration(zipData);
+    Logger.info(`config Aqua Tree: ${JSON.stringify(aquaConfig, null, 2)}`);
+    const mainAquaTree = await getMainAquaTree(zipData, aquaConfig);
+    Logger.info(`Main Aqua Tree: ${JSON.stringify(mainAquaTree, null, 2)}`);
+
+
+
+    const isWorkFlow: {
+        isWorkFlow: boolean;
+        workFlow: string;
+    } = isWorkFlowData(mainAquaTree!, systemTemplateHashes)
 
     Logger.info(`actualIsWorkFlow: ${JSON.stringify(isWorkFlow)}`);
     try {
-        
+
 
         await processAllAquaFiles(zipData, userAddress, templateId, aquaConfig, mainAquaTree, isWorkFlow.isWorkFlow);
-    } catch (error : any) {
+    } catch (error: any) {
         Logger.error('Error processing aqua files:', error);
         // Fallback: process all aqua files without special workflow handling
         // await processAllAquaFilesGeneric(zipData, userAddress, templateId);
 
         const aquaFiles = getAquaFiles(zipData);
-    await processRegularFiles(aquaFiles, userAddress, templateId, isWorkFlow.isWorkFlow);
+        await processRegularFiles(aquaFiles, userAddress, templateId, isWorkFlow.isWorkFlow);
     }
 }
 

@@ -1,4 +1,4 @@
-import Aquafier, { AquaTree, FileObject, LogData, LogType, OrderRevisionInAquaTree, Revision } from 'aqua-js-sdk';
+import Aquafier, { AquaTree, AquaTreeWrapper, FileObject, LogData, LogType, OrderRevisionInAquaTree, Revision } from 'aqua-js-sdk';
 import { FastifyInstance } from 'fastify';
 import { prisma } from '../database/db';
 import { getFileUploadDirectory, persistFile, streamToBuffer } from '../utils/file_utils';
@@ -23,11 +23,9 @@ import { getGenesisHash, removeFilePathFromFileIndex, validateAquaTree } from '.
 import WebSocketActions from '../constants/constants';
 import { sendToUserWebsockerAMessage } from './websocketController';
 // import { systemTemplateHashes } from '../models/constants';
-// import { serverAttestation } from '../utils/server_attest';
 import { saveAttestationFileAndAquaTree } from '../utils/server_utils';
 import Logger from "../utils/Logger";
 // import { saveAquaFile } from '../utils/server_utils';
-// import { serverAttestation } from '../utils/server_attest';
 // import getStream from 'get-stream';
 // Promisify pipeline
 // const pump = util.promisify(pipeline);
@@ -237,8 +235,37 @@ export default async function explorerController(fastify: FastifyInstance) {
                     return reply.code(500).send({ error: 'Genesis hash not found in aqua tree' });
                 }
 
-                saveAttestationFileAndAquaTree(aquaTree, genesisHash, walletAddress)
+                let serverAttestation = await saveAttestationFileAndAquaTree(aquaTree, genesisHash, walletAddress)
 
+                if (serverAttestation != null) {
+
+                    let aquafier = new Aquafier()
+                    let aquaTreeWrapparOne: AquaTreeWrapper = {
+                        aquaTree: aquaTree,
+                        revision: "",
+                        fileObject: undefined
+                    }
+
+                    let aquaTreeWrapparTwo: AquaTreeWrapper = {
+                        aquaTree: serverAttestation.aquaTree,
+                        revision: "",
+                        fileObject: {
+                            fileContent: JSON.stringify(serverAttestation.attestationJSONfileData),
+                            fileName: serverAttestation.attestationJSONfileName,
+                            path:"",
+                            fileSize:0
+
+                        }
+                    }
+                    const linkeRes = await aquafier.linkAquaTree(aquaTreeWrapparOne, aquaTreeWrapparTwo)
+                    if (linkeRes.isErr()) {
+
+                        Logger.error(`Error linking attestation aqua tree: ${linkeRes.data}`);
+                        return reply.code(500).send({ error: `Error linking attestation aqua tree: ${linkeRes.data}` });
+                    }
+
+                    aquaTree = linkeRes.data.aquaTree!
+                }
                 let filepubkeyhash = `${walletAddress}_${genesisHash}`
 
                 let existingFileIndex = await prisma.fileIndex.findFirst({
@@ -750,6 +777,7 @@ export default async function explorerController(fastify: FastifyInstance) {
                 ]
             const entireChain = await fetchAquatreeFoUser(url, latest)//(latestRevisionHash, userAddress, url);
 
+        
             // Check if the user exists (create if not)
             const targetUser = await prisma.users.findUnique({
                 where: { address: session.address }
@@ -845,7 +873,7 @@ export default async function explorerController(fastify: FastifyInstance) {
                     data: { address: session.address }
                 });
             }
- 
+
             // Merge the chain to the target user (session.address)
             const mergeResult = await mergeRevisionChain(
                 entireChain,
