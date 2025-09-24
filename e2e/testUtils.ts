@@ -1,7 +1,35 @@
 import path from "path";
-import {BrowserContext, chromium, Page} from "playwright";
-import {ethers} from 'ethers';
+import { BrowserContext, chromium, Page } from "playwright";
+import { ethers } from 'ethers';
 import fs from "fs";
+
+
+
+export async function createSimpleClaim(
+    context: BrowserContext,
+    testPage: Page
+): Promise<void> {
+    console.log("create a simple claim!");
+
+    // Open workflow
+    await waitAndClick(testPage, '[data-testid="create-claim-dropdown-button"]')
+    console.log("claims dropdown ");
+    await waitAndClick(testPage, '[data-testid="create-simple-claim-dropdown-button-item"]')
+
+    console.log("fill simple claim form");
+    await testPage.locator('[id="input-claim_context"]').fill("i attest the name in a test ");
+    await testPage.locator('[id="input-name"]').fill("Test user ");
+
+    const metamaskPromise = context.waitForEvent("page");
+    // await page.getByText("Save Signature").click();
+
+    console.log("create workflow");
+    await testPage.getByText("Create Workflow").click();
+    await metamaskPromise;
+
+    await handleMetaMaskNetworkAndConfirm(context, false);
+    console.log("simple workflow created");
+}
 
 export async function handleMetaMaskNetworkAndConfirm(
     context: BrowserContext,
@@ -930,6 +958,7 @@ export async function registerNewMetaMaskWallet(): Promise<RegisterMetaMaskRespo
         await metaMaskPage.click('[data-testid="skip-srp-backup-popover-checkbox"]')
         await metaMaskPage.click('[data-testid="skip-srp-backup"]')
 
+
         // Complete onboarding
         console.log("Completing onboarding")
         await metaMaskPage.waitForSelector('[data-testid="onboarding-complete-done"]', {
@@ -937,12 +966,16 @@ export async function registerNewMetaMaskWallet(): Promise<RegisterMetaMaskRespo
         });
         await metaMaskPage.click('[data-testid="onboarding-complete-done"]')
 
+
         // Complete tutorial
         console.log("Completing tutorial")
         await metaMaskPage.waitForSelector('[data-testid="pin-extension-next"]', { state: 'visible' });
         await metaMaskPage.click('[data-testid="pin-extension-next"]')
         await metaMaskPage.waitForSelector('[data-testid="pin-extension-done"]', { state: 'visible' });
         await metaMaskPage.click('[data-testid="pin-extension-done"]')
+
+        // solana popup
+        await metaMaskPage.click('[data-testid="not-now-button"]')
 
         // Wait for network display to be visible
         console.log("Waiting for network display")
@@ -953,19 +986,56 @@ export async function registerNewMetaMaskWallet(): Promise<RegisterMetaMaskRespo
 
         try {
 
+            // Check if "Connecting to Ethereum Mainnet" is visible
+            // As soon as it disappears continue
+            try {
+                await metaMaskPage.getByText("Connecting to Ethereum Mainnet").waitFor({
+                    state: 'visible',
+                    timeout: 3000
+                });
+
+                // Now wait for it to disappear
+                await metaMaskPage.getByText("Connecting to Ethereum Mainnet").waitFor({
+                    state: 'hidden',
+                });
+                console.log("Connecting to Ethereum Mainnet disappeared, continuing");
+
+            } catch (error) {
+                console.log("Connecting to Ethereum Mainnet text not found or error waiting:", error);
+            }
+
+            // Try stop the not now popup
+            try {
+
+                await metaMaskPage.getByText("Switch networks").waitFor({
+                    state: 'visible',
+                    timeout: 7000
+                });
+                await metaMaskPage.getByText("Switch networks").click();
+
+                // await metaMaskPage.click('[data-testid="not-now-button"]')
+            } catch (error) {
+                console.log("switch networks is not visible ");
+            }
+
             // Try stop the not now popup
             try {
                 await metaMaskPage.waitForSelector('[data-testid="not-now-button"]', {
-                    state: 'visible'
+                    state: 'visible',
+                    timeout: 2000
                 });
                 await metaMaskPage.click('[data-testid="not-now-button"]')
             } catch (error) {
                 console.log("No not now popup appeared or it was already dismissed");
             }
 
+            console.log("clicking network selector (network display)");
             // Click on network selector
-            await metaMaskPage.click('[data-testid="network-display"]');
-
+            try {
+                await metaMaskPage.click('[data-testid="network-display"]', { timeout: 2000 });
+            } catch (error) {
+                console.log("network-display timed out ", error);
+            }
             // Pause execution for 30 seconds, use promise
             // await new Promise(resolve => setTimeout(resolve, 30000));
 
