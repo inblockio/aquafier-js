@@ -28,7 +28,7 @@ export const ImportAquaChainFromChain = ({ fileInfo, isVerificationSuccessful, c
       const [comparisonResult, setComparisonResult] = useState<RevisionsComparisonResult | null>(null)
       const [modalOpen, setModalOpen] = useState(false)
 
-      const [_lastIdenticalRevisionHash, setLastIdenticalRevisionHash] = useState<string | null>(null)
+      const [lastIdenticalRevisionHash, setLastIdenticalRevisionHash] = useState<string | null>(null)
       const [_revisionsToImport, setRevisionsToImport] = useState<Revision[]>([])
       const [updateMessage, setUpdateMessage] = useState<string | null>(null)
       const [btnText, setBtnText] = useState<BtnContent>({
@@ -135,6 +135,10 @@ export const ImportAquaChainFromChain = ({ fileInfo, isVerificationSuccessful, c
       }
  
       const handleMergeRevisions = async () => {
+
+            // Early check to prevent recursion if already processing
+            if (uploading) return
+
             try {
                   const url = `${backend_url}/merge_chain`
                   const reorderedRevisions = OrderRevisionInAquaTree(fileInfo.aquaTree!)
@@ -146,6 +150,7 @@ export const ImportAquaChainFromChain = ({ fileInfo, isVerificationSuccessful, c
                         url,
                         {
                               latestRevisionHash: latestRevisionHash,
+                              currentUserLatestRevisionHash: lastIdenticalRevisionHash,
                               userAddress: contractData.sender,
                               mergeStrategy: 'replace',
                         },

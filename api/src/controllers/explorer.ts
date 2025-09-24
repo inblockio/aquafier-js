@@ -831,7 +831,8 @@ export default async function explorerController(fastify: FastifyInstance) {
 
     fastify.post('/merge_chain', async (request, reply) => {
         try {
-            const { latestRevisionHash, userAddress, mergeStrategy } = request.body as {
+            const { latestRevisionHash, userAddress, mergeStrategy, currentUserLatestRevisionHash } = request.body as {
+                currentUserLatestRevisionHash: string,
                 latestRevisionHash: string,
                 userAddress: string,
                 mergeStrategy?: "replace" | "fork"  // Optional merge strategy
@@ -880,7 +881,8 @@ export default async function explorerController(fastify: FastifyInstance) {
                 session.address,
                 userAddress,
                 url,
-                mergeStrategy || "replace", // Use the provided strategy or default to "replace"
+                mergeStrategy || "replace", // Use the provided strategy or default to "replace",
+                currentUserLatestRevisionHash
             );
 
             if (!mergeResult.success) {

@@ -536,7 +536,7 @@ export async function transferRevisionChain(
                         });
                     }
 
-   
+
                     // Fetch the entire chain from the source user
                     let latestRevisionHash = getLastRevisionVerificationHash(entireChain as AquaTree);
                     const entireChainInLink = await fetchCompleteRevisionChain(latestRevisionHash, sourceUserAddress, url);
@@ -689,6 +689,7 @@ export async function mergeRevisionChain(
     sourceUserAddress: string,
     url: string,
     mergeStrategy: "replace" | "fork" = "fork",
+    currentUserLatestRevisionHash?: string
 ): Promise<{
     success: boolean;
     message: string;
@@ -767,8 +768,9 @@ export async function mergeRevisionChain(
         Logger.info("Found matching genesis, analyzing chains to find merge point");
 
         // Order target user's chain starting from the same genesis
-        const targetUserChain = await orderUserChain(targetGenesisHash);
-        if (!targetUserChain || targetUserChain.length === 0) {
+        // const targetUserChain = await orderUserChain(targetGenesisHash);
+        const _targetUserChain = await orderUserChainByLatest(`${targetUserAddress}_${currentUserLatestRevisionHash}`);
+        if (!_targetUserChain || _targetUserChain.length === 0 || !currentUserLatestRevisionHash) {
             // console.log(cliRedify("Failed to order target user's chain, fallback to transfer"))
             Logger.error("Failed to order target user's chain, fallback to transfer");
             // Something went wrong with ordering, fallback to transfer
@@ -785,6 +787,10 @@ export async function mergeRevisionChain(
                 strategy: appliedStrategy
             };
         }
+
+        // We reverse here since it will start from latest to genesis -> the previous function was coming from genesis to latest
+        const targetUserChain   = _targetUserChain.reverse()
+
         // console.log(cliGreenify(`Target user revisions: ${JSON.stringify(targetUserChain, null, 4)}`))
         // console.log(cliGreenify(`Incoming revisions: ${JSON.stringify(orderedIncomingChain, null, 4)}`))
 
@@ -1067,6 +1073,7 @@ export async function mergeRevisionChain(
                     linkedChain,
                     targetUserAddress,
                     sourceUserAddress,
+                    url,
                     mergeStrategy
                 );
 
@@ -1133,6 +1140,43 @@ async function orderUserChain(genesisHash: string): Promise<string[]> {
         return orderedChain;
     } catch (error: any) {
         Logger.error("Error ordering user chain:", error);
+        return [];
+    }
+}
+
+/**
+ * Orders revisions in a chain from latest to genesis (reverse order)
+ * Starts with a pubkey_hash and traverses backwards through the chain
+ */
+export async function orderUserChainByLatest(startingHash: string): Promise<string[]> {
+    try {
+        const orderedChain: string[] = [startingHash];
+        let currentHash = startingHash;
+
+        // Starting from the given hash, follow the chain backwards by finding the previous revision
+        while (true) {
+            const currentRevision = await prisma.revision.findFirst({
+                where: {
+                    pubkey_hash: {
+                        equals: currentHash,
+                        mode: 'insensitive'
+                    }
+                }
+            });
+
+            // console.log(cliYellowfy(`Current hash: ${currentHash} -- Previous hash: ${currentRevision?.previous}`))
+
+            if (!currentRevision || !currentRevision.previous) {
+                break;  // Reached genesis or revision not found
+            }
+
+            orderedChain.push(currentRevision.previous);
+            currentHash = currentRevision.previous;
+        }
+
+        return orderedChain;
+    } catch (error: any) {
+        Logger.error("Error ordering user chain by latest:", error);
         return [];
     }
 }
