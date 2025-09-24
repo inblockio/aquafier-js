@@ -91,7 +91,7 @@ export const ConnectWalletPage = () => {
 
   // State management
   const [isConnecting, setIsConnecting] = useState(false)
-  const [connectionState, setConnectionState] = useState<ConnectionState>('idle')
+  const [_connectionState, setConnectionState] = useState<ConnectionState>('idle')
   const [error, setError] = useState('')
 
   const resetState = () => {
@@ -124,15 +124,17 @@ export const ConnectWalletPage = () => {
       // Wait briefly to see if app opens
       await new Promise(resolve => setTimeout(resolve, 2000))
 
-      // Fallback to https deep link
-      window.location.href = deepLinkUrls[0]
+      // Only use fallback if we're still on the same page (app didn't open)
+      if (document.hasFocus()) {
+        // App likely didn't open, try HTTPS deep link
+        window.location.href = deepLinkUrls[0]
+      }
     } catch (error) {
       console.error('Deep link failed:', error)
       toast.error('MetaMask not found. Redirecting to download page.')
       window.open('https://metamask.io/download/', '_blank')
     }
   }
-
   const handleMobileFlow = async (): Promise<void> => {
     if (!isMetaMaskInstalled()) {
       await handleMobileConnection()
