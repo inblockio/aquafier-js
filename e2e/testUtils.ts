@@ -958,6 +958,7 @@ export async function registerNewMetaMaskWallet(): Promise<RegisterMetaMaskRespo
         await metaMaskPage.click('[data-testid="skip-srp-backup-popover-checkbox"]')
         await metaMaskPage.click('[data-testid="skip-srp-backup"]')
 
+
         // Complete onboarding
         console.log("Completing onboarding")
         await metaMaskPage.waitForSelector('[data-testid="onboarding-complete-done"]', {
@@ -965,12 +966,16 @@ export async function registerNewMetaMaskWallet(): Promise<RegisterMetaMaskRespo
         });
         await metaMaskPage.click('[data-testid="onboarding-complete-done"]')
 
+
         // Complete tutorial
         console.log("Completing tutorial")
         await metaMaskPage.waitForSelector('[data-testid="pin-extension-next"]', { state: 'visible' });
         await metaMaskPage.click('[data-testid="pin-extension-next"]')
         await metaMaskPage.waitForSelector('[data-testid="pin-extension-done"]', { state: 'visible' });
         await metaMaskPage.click('[data-testid="pin-extension-done"]')
+
+        // solana popup
+        await metaMaskPage.click('[data-testid="not-now-button"]')
 
         // Wait for network display to be visible
         console.log("Waiting for network display")
@@ -981,6 +986,23 @@ export async function registerNewMetaMaskWallet(): Promise<RegisterMetaMaskRespo
 
         try {
 
+            // Check if "Connecting to Ethereum Mainnet" is visible
+            // As soon as it disappears continue
+            try {
+                await metaMaskPage.getByText("Connecting to Ethereum Mainnet").waitFor({
+                    state: 'visible',
+                    timeout: 3000
+                });
+
+                // Now wait for it to disappear
+                await metaMaskPage.getByText("Connecting to Ethereum Mainnet").waitFor({
+                    state: 'hidden',
+                });
+                console.log("Connecting to Ethereum Mainnet disappeared, continuing");
+
+            } catch (error) {
+                console.log("Connecting to Ethereum Mainnet text not found or error waiting:", error);
+            }
 
             // Try stop the not now popup
             try {
@@ -1007,9 +1029,13 @@ export async function registerNewMetaMaskWallet(): Promise<RegisterMetaMaskRespo
                 console.log("No not now popup appeared or it was already dismissed");
             }
 
+            console.log("clicking network selector (network display)");
             // Click on network selector
-            await metaMaskPage.click('[data-testid="network-display"]');
-
+            try {
+                await metaMaskPage.click('[data-testid="network-display"]', { timeout: 2000 });
+            } catch (error) {
+                console.log("network-display timed out ", error);
+            }
             // Pause execution for 30 seconds, use promise
             // await new Promise(resolve => setTimeout(resolve, 30000));
 
