@@ -610,7 +610,7 @@ test("create simple claim", async (): Promise<void> => {
 });
 
 
-test("attest a claim and share the claim", async (): Promise<void> => {
+test("attest a simple claim", async (): Promise<void> => {
     const registerResponse = await registerNewMetaMaskWalletAndLogin();
     const creatorContext: BrowserContext = registerResponse.context;
     const creatorPage: Page = creatorContext.pages()[0];
