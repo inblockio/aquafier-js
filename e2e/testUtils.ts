@@ -1,7 +1,35 @@
 import path from "path";
-import {BrowserContext, chromium, Page} from "playwright";
-import {ethers} from 'ethers';
+import { BrowserContext, chromium, Page } from "playwright";
+import { ethers } from 'ethers';
 import fs from "fs";
+
+
+
+export async function createSimpleClaim(
+    context: BrowserContext,
+    testPage: Page
+): Promise<void> {
+    console.log("create a simple claim!");
+
+    // Open workflow
+    await waitAndClick(testPage, '[data-testid="create-claim-dropdown-button"]')
+    console.log("claims dropdown ");
+    await waitAndClick(testPage, '[data-testid="create-simple-claim-dropdown-button-item"]')
+
+    console.log("fill simple claim form");
+    await testPage.locator('[id="input-claim_context"]').fill("i attest the name in a test ");
+    await testPage.locator('[id="input-name"]').fill("Test user ");
+
+    const metamaskPromise = context.waitForEvent("page");
+    // await page.getByText("Save Signature").click();
+
+    console.log("create workflow");
+    await testPage.getByText("Create Workflow").click();
+    await metamaskPromise;
+
+    await handleMetaMaskNetworkAndConfirm(context, false);
+    console.log("simple workflow created");
+}
 
 export async function handleMetaMaskNetworkAndConfirm(
     context: BrowserContext,
@@ -953,10 +981,26 @@ export async function registerNewMetaMaskWallet(): Promise<RegisterMetaMaskRespo
 
         try {
 
+
+            // Try stop the not now popup
+            try {
+
+                await metaMaskPage.getByText("Switch networks").waitFor({
+                    state: 'visible',
+                    timeout: 7000
+                });
+                await metaMaskPage.getByText("Switch networks").click();
+
+                // await metaMaskPage.click('[data-testid="not-now-button"]')
+            } catch (error) {
+                console.log("switch networks is not visible ");
+            }
+
             // Try stop the not now popup
             try {
                 await metaMaskPage.waitForSelector('[data-testid="not-now-button"]', {
-                    state: 'visible'
+                    state: 'visible',
+                    timeout: 2000
                 });
                 await metaMaskPage.click('[data-testid="not-now-button"]')
             } catch (error) {
