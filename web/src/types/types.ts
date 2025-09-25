@@ -1,13 +1,30 @@
-import { LogData, Revision } from 'aqua-js-sdk'
+import { AquaTree, LogData, Revision } from 'aqua-js-sdk'
 import { IconType } from 'react-icons/lib'
 import { ApiFileInfo, ClaimInformation, IAttestationEntry } from '../models/FileInfo'
 
-export interface ApiFileInfoState
-      {
-            fileData: ApiFileInfo[],
-            status: 'loading' | 'loaded' | 'error' | 'idle'
-            error?: string
-      }
+export interface ApiFileInfoState {
+      fileData: ApiFileInfo[],
+      status: 'loading' | 'loaded' | 'error' | 'idle'
+      error?: string
+}
+
+
+export interface AquaJsonNameWithHash      {
+            name : string,
+            hash: string
+        }
+export interface AquaJsonManifestFileInZip       {
+      
+    genesis: string,
+    name_with_hash: Array<AquaJsonNameWithHash>
+       
+}
+export interface ImportZipAquaTreeConflictResolutionDialogProps {
+      localFile: ApiFileInfo,
+      incomingFileName: string,
+      incomingFileAquaTree: AquaTree
+}
+
 export interface ApiInfoData {
       status: 'ok',
       isTwilioEnabled: boolean,
@@ -33,16 +50,16 @@ export interface DNSProof {
 
 export interface FilesListProps {
 
-    showHeader?: boolean
-    showCheckbox?: boolean
-    showFileActions: boolean
-    activeFile: ApiFileInfo | null  
-    selectedFiles: Array<ApiFileInfo>
-    onFileDeSelected: (file: ApiFileInfo) => void
-    onFileSelected: (file: ApiFileInfo) => void
-}   
+      showHeader?: boolean
+      showCheckbox?: boolean
+      showFileActions: boolean
+      activeFile: ApiFileInfo | null
+      selectedFiles: Array<ApiFileInfo>
+      onFileDeSelected: (file: ApiFileInfo) => void
+      onFileSelected: (file: ApiFileInfo) => void
+}
 export interface OpenDialog {
-      dialogType: 'share_dialog' | 'form_template_editor' | 'aqua_file_details' | 'identity_claim' | 'dns_claim' | 'dba_claim'| 'aqua_sign' | 'identity_attestation' | 'early_bird_offer' | 'user_signature' | 'email_claim' | 'phone_number_claim',//'file' | 'folder' | 'contract' | 'claim' | 'claim-attestation'
+      dialogType: 'share_dialog' | 'form_template_editor' | 'aqua_file_details' | 'identity_claim' | 'dns_claim' | 'dba_claim' | 'aqua_sign' | 'identity_attestation' | 'early_bird_offer' | 'user_signature' | 'email_claim' | 'phone_number_claim',//'file' | 'folder' | 'contract' | 'claim' | 'claim-attestation'
       isOpen: boolean
       onClose: () => void
       onConfirm: (data: any) => void
@@ -118,7 +135,7 @@ export interface Contract {
       latest?: string
       sender?: string
       // receiver?: string
-      recipients     :      string[]
+      recipients: string[]
       option?: string
       reference_count?: number
       file_name?: string

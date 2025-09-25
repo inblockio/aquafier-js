@@ -86,7 +86,7 @@ const SharePage = () => {
       const updateDrawerStatus = (_drawerStatus: IDrawerStatus) => {
             setDrawerStatus(_drawerStatus)
       }
-
+ 
       return (
             <div id="replace-here" className="container w-10xl mx-auto">
                   <div className="w-full py-4">

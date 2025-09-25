@@ -20,7 +20,7 @@ import {toast} from 'sonner'
 // import { Card, CardContent } from "@/components/ui/card";
 // import { Badge } from "@/components/ui/badge";
 // import { Separator } from "@/components/ui/separator";
-
+ 
 export const ImportAquaChainFromChain = ({ fileInfo, isVerificationSuccessful, contractData }: ImportChainFromChainProps) => {
       const [uploading, setUploading] = useState(false)
       const [_uploaded, setUploaded] = useState(false)
