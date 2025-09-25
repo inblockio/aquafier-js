@@ -35,7 +35,7 @@ const WorkflowTableItem = ({ workflowName, apiFileInfo, index = 0 }: IWorkflowIt
       const [currentFileObject, setCurrentFileObject] = useState<FileObject | undefined>(undefined)
       const navigate = useNavigate()
 
-      const { session, backend_url, files, setSelectedFileInfo } = useStore(appStore)
+      const { session, backend_url, files } = useStore(appStore)
 
       const [claimName, setClaimName] = useState<string>('')
       const [attestorsCount, setAttestorsCount] = useState<number>(0)
@@ -139,8 +139,16 @@ const WorkflowTableItem = ({ workflowName, apiFileInfo, index = 0 }: IWorkflowIt
       }, [apiFileInfo])
 
       const openClaimsInforPage = (item: ApiFileInfo) => {
-            setSelectedFileInfo(item)
-            navigate('/app/claims/workflow')
+            // setSelectedFileInfo(item)
+            // navigate('/app/claims/workflow')
+            if(item){
+                  const genesisHash = getGenesisHash(item.aquaTree!)
+                  const genesisRevision = item.aquaTree?.revisions[genesisHash!]
+                  let walletAddress = genesisRevision?.forms_wallet_address
+                  if(genesisHash){
+                        navigate(`/app/claims/workflow/${walletAddress}#${genesisHash}`)
+                  }
+            }
       }
       return (
             <TableRow key={`${workflowName}-${index}`} className="hover:bg-muted/50">

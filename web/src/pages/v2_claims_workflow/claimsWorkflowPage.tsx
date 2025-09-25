@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react'
-import { useParams } from 'react-router-dom'
+import { useLocation, useParams } from 'react-router-dom'
 import appStore from '../../store'
 import { useStore } from 'zustand'
 import { ShareButton } from '@/components/aqua_chain_actions/share_aqua_chain'
-import { getAquaTreeFileName, isWorkFlowData, processSimpleWorkflowClaim, timeToHumanFriendly } from '@/utils/functions'
+import { getAquaTreeFileName, getGenesisHash, isWorkFlowData, processSimpleWorkflowClaim, timeToHumanFriendly } from '@/utils/functions'
 import { ClipLoader } from 'react-spinners'
 import { ApiFileInfo, ClaimInformation, IAttestationEntry } from '@/models/FileInfo'
 import axios from 'axios'
@@ -22,6 +22,7 @@ import WalletAddressProfile from './WalletAddressProfile'
 // import EmailClaim from './EmailClaim'
 import UserSignatureClaim from './UserSignatureClaim'
 import { AddressView } from './AddressView'
+import { AttestAquaClaim } from '@/components/aqua_chain_actions/attest_aqua_claim'
 
 
 export default function ClaimsWorkflowPage() {
@@ -31,6 +32,7 @@ export default function ClaimsWorkflowPage() {
       const [isLoading, setIsLoading] = useState(false)
 
       const { walletAddress } = useParams()
+      const urlHash = useLocation().hash
 
       const loadSharedContractsData = async (_latestRevisionHash: string) => {
             try {
@@ -161,6 +163,7 @@ export default function ClaimsWorkflowPage() {
 
       const renderClaim = (claim: ICompleteClaimInformation) => {
             const claimInfo = claim.processedInfo.claimInformation
+            const genesisRevisionHash = getGenesisHash(claim.file.aquaTree!) 
 
             if (claimInfo.forms_type === 'dns_claim') {
                   return (
@@ -184,7 +187,14 @@ export default function ClaimsWorkflowPage() {
             }
             else {
                   return (
-                        <div className="grid lg:grid-cols-12 gap-4">
+                        <div className="grid lg:grid-cols-12 gap-4 relative" id={`${genesisRevisionHash}`}>
+                              {
+                                    urlHash?.replace("#", "") === genesisRevisionHash ? (
+                                          <div className='absolute top-0 right-0 z-10 bg-green-500 w-fit px-2 py-1 text-white rounded-md'>
+                                                Selected
+                                          </div>
+                                    ) : null
+                              }
                               <div className='col-span-7 bg-gray-50 p-2'>
                                     <div className="flex flex-col gap-2">
                                           <SimpleClaim claimInfo={claimInfo} />
@@ -216,9 +226,7 @@ export default function ClaimsWorkflowPage() {
                                                       <h3 className="text-lg font-bold text-center">Claim Attestations</h3>
                                                       <p className="text-gray-600">No attestations found for this claim.</p>
                                                       {claim.processedInfo?.walletAddress?.trim().toLowerCase() !== session?.address?.trim().toLowerCase() && (
-                                                            <button className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors">
-                                                                  Create Attestation
-                                                            </button>
+                                                            <AttestAquaClaim file={claim.file!!} index={1} />
                                                       )}
                                                 </div>
                                           )}
