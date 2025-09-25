@@ -18,7 +18,7 @@ const metamaskPath = path.resolve(__dirname, 'metamask-extension');
  */
 export default defineConfig({
   testDir: './cases',
-  fullyParallel: false,
+  fullyParallel: true,
   /* Fail the build on CI if you accidentally left test.only in the source code. */
   forbidOnly: false,
   retries: process.env.RETRIES ? parseInt(process.env.RETRIES) : 1,
