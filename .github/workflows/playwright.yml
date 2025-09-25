@@ -16,7 +16,7 @@ env:
 
 jobs:
   Playwright-Tests:
-    if: github.author != 'renovate[bot]'
+    if: ${{ !contains(github.head_ref, 'renovate') }}
     timeout-minutes: 60
     runs-on: ubuntu-latest
     steps:
