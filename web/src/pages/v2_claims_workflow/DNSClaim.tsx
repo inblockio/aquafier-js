@@ -1,4 +1,4 @@
-import {ensureDomainUrlHasSSL, formatCryptoAddress} from '@/utils/functions'
+import {ensureDomainUrlHasSSL, formatCryptoAddress, getGenesisHash} from '@/utils/functions'
 import {useEffect, useState} from 'react'
 import {TbWorldWww} from 'react-icons/tb'
 import {FaCheck, FaTimes} from 'react-icons/fa'
@@ -72,6 +72,7 @@ const DNSClaim = ({ claimInfo, apiFileInfo, nonce, sessionAddress }: IDNSClaim) 
       const [verificationResult, setVerificationResult] = useState<VerificationResult | null>(null)
 
       const { backend_url } = useStore(appStore)
+      const genesisRevisionHash = getGenesisHash(apiFileInfo.aquaTree!) 
 
       // Extract relevant information from claimInfo
       const claimName = 'DNS Claim'
@@ -191,7 +192,7 @@ const DNSClaim = ({ claimInfo, apiFileInfo, nonce, sessionAddress }: IDNSClaim) 
       }, [domain, walletAddress])
 
       return (
-            <div className="grid lg:grid-cols-12 gap-4">
+            <div className="grid lg:grid-cols-12 gap-4" id={`${genesisRevisionHash}`}>
                   <div className='col-span-7 bg-gray-50 p-2'>
                         <div className="flex flex-col gap-2">
                               <div className={`rounded-lg shadow-sm border p-6 ${getCardBackgroundColor()}`}>
