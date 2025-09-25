@@ -189,7 +189,7 @@ export default function ClaimsWorkflowPage() {
                   return (
                         <div className="grid lg:grid-cols-12 gap-4 relative" id={`${genesisRevisionHash}`}>
                               {
-                                    urlHash.replace("#", "") === genesisRevisionHash ? (
+                                    urlHash?.replace("#", "") === genesisRevisionHash ? (
                                           <div className='absolute top-0 right-0 z-10 bg-green-500 w-fit px-2 py-1 text-white rounded-md'>
                                                 Selected
                                           </div>
