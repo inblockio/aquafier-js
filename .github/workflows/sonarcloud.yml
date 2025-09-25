@@ -5,10 +5,10 @@ on:
       - master
       - dev
   pull_request:
-    types: [opened, synchronize, reopened]
+    types: [ opened, synchronize, reopened ]
 jobs:
   sonarqube:
-    if: !contains('renovate/', github.ref)
+    if: ${{ contains(github.ref, 'renovate/') }}
     name: SonarQube
     runs-on: ubuntu-latest
     steps:
