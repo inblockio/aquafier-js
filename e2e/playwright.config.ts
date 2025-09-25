@@ -1,5 +1,6 @@
-import { defineConfig, devices } from '@playwright/test';
+import {defineConfig, devices} from '@playwright/test';
 import path from 'path';
+
 const dotenv = require('dotenv');
 dotenv.config();
 
@@ -22,7 +23,7 @@ export default defineConfig({
   forbidOnly: false,
   retries: process.env.RETRIES ? parseInt(process.env.RETRIES) : 1,
   /* Opt out of parallel tests on CI. */
-  workers: 1,
+  workers: 4,
   /* Reporter to use. See https://playwright.dev/docs/test-reporters */
   reporter: [['junit', { outputFile: 'results.xml' }]],
   /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
