@@ -12,6 +12,7 @@
   },
   "dependencies": {
     "@elastic/apm-rum": "^5.17.0",
+    "@elastic/ecs-winston-format": "^1.5.3",
     "@emotion/react": "^11.13.3",
     "@radix-ui/react-alert-dialog": "^1.1.14",
     "@radix-ui/react-avatar": "^1.1.10",
@@ -71,6 +72,7 @@
     "tailwindcss": "^4.1.11",
     "uuid": "^11.1.0",
     "vaul": "^1.1.2",
+    "winston": "^3.17.0",
     "zustand": "^5.0.5"
   },
   "devDependencies": {

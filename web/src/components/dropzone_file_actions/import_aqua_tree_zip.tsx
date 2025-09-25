@@ -13,6 +13,7 @@ import { ApiFileInfo } from '@/models/FileInfo'
 import { FileText, Loader2, X } from 'lucide-react'
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '../ui/dialog'
 import { ScrollArea } from '../ui/scroll-area'
+import Logger from '@/utils/Logger'
 export const ImportAquaTreeZip = ({ file, filesWrapper, removeFilesListForUpload }: IDropzoneAction) => {
       const [uploading, setUploading] = useState(false)
       const [conflictFiles, setConflictFiles] = useState<Array<ImportZipAquaTreeConflictResolutionDialogProps>>([])
@@ -67,9 +68,9 @@ export const ImportAquaTreeZip = ({ file, filesWrapper, removeFilesListForUpload
                         hash: hash
                   }
             }).filter(h => h !== null)
-            console.log('All system files genesis hashes:', allSystemFilesGenesisHashes)
+            Logger.info('All system files genesis hashes:', allSystemFilesGenesisHashes)
 
-            const fileData = zipData.files['aqua.json'] || Object.entries(zipData.files).find(([fileName, fileData]) => {
+            const fileData = zipData.files['aqua.json'] || Object.entries(zipData.files).find(([fileName, _fileData]) => {
                   try {
                         // Check if filename is encoded as comma-separated ASCII codes
                         if (/^[\d,]+$/.test(fileName)) {
@@ -81,13 +82,14 @@ export const ImportAquaTreeZip = ({ file, filesWrapper, removeFilesListForUpload
                         }
                   } catch (error) {
                         // If decoding fails, skip this file
+                        Logger.error('Error decoding filename:', error)
                   }
                   return false;
             })?.[1];
 
             // Read the file content as string
             const jsonContent = await fileData.async('string')
-            console.log('Aqua JSON Content:', jsonContent)
+            Logger.info('Aqua JSON Content:', jsonContent)
 
             // Split the string into numbers, convert to chars, join back
             const decodedJson = jsonContent
@@ -95,27 +97,27 @@ export const ImportAquaTreeZip = ({ file, filesWrapper, removeFilesListForUpload
                   .map(code => String.fromCharCode(parseInt(code)))
                   .join('')
 
-            console.log('Decoded Aqua JSON:', decodedJson)
+            Logger.info('Decoded Aqua JSON:', decodedJson)
 
             // Parse the JSON
             const aquaData: AquaJsonManifestFileInZip = JSON.parse(decodedJson)
 
-            console.log('Parsed Aqua Data:', aquaData)
+            Logger.info('Parsed Aqua Data:', aquaData)
 
             // Loop through name_with_hash array
             if (aquaData.name_with_hash && Array.isArray(aquaData.name_with_hash)) {
-                  console.log('Genesis file:', aquaData.genesis)
-                  console.log('Processing', aquaData.name_with_hash.length, 'files:')
+                  Logger.info('Genesis file:', aquaData.genesis)
+                  Logger.info('Processing', aquaData.name_with_hash.length, 'files:')
 
 
                   let allAquaTrees = aquaData.name_with_hash.filter((item: { name: string; hash: string }) => item.name.endsWith('.aqua.json'));
-                  console.log('All aqua trees in zip:', allAquaTrees.length)
+                  Logger.info('All aqua trees in zip:', allAquaTrees.length)
 
                   for (const item of allAquaTrees) {
-                        console.log('Processing:', item.name, 'with hash:', item.hash)
+                        Logger.info('Processing:', item.name, 'with hash:', item.hash)
 
                         //read the file in the aqua file
-                        const fileData = zipData.files[item.name] || Object.entries(zipData.files).find(([fileName, fileData]) => {
+                        const fileData = zipData.files[item.name] || Object.entries(zipData.files).find(([fileName, _fileData]) => {
                               try {
                                     // Check if filename is encoded as comma-separated ASCII codes
                                     if (/^[\d,]+$/.test(fileName)) {
@@ -137,7 +139,7 @@ export const ImportAquaTreeZip = ({ file, filesWrapper, removeFilesListForUpload
                         }
 
                         const jsonContent = await fileData.async('string')
-                        console.log(item.name + ' JSON Content--:', jsonContent)
+                        Logger.info(item.name + ' JSON Content--:', jsonContent)
 
                         // Split the string into numbers, convert to chars, join back
                         const decodedJson = jsonContent
@@ -145,14 +147,14 @@ export const ImportAquaTreeZip = ({ file, filesWrapper, removeFilesListForUpload
                               .map(code => String.fromCharCode(parseInt(code)))
                               .join('')
 
-                        console.log('Decoded ' + item.name + ' JSON:', decodedJson)
+                        Logger.info('Decoded ' + item.name + ' JSON:', decodedJson)
 
                         let aquaTree = JSON.parse(decodedJson)
                         let genesisHash = getGenesisHash(aquaTree)
                         // Your processing logic here
                         let existingFile = allSystemFilesGenesisHashes.find(fh => fh.hash.trim() === genesisHash?.trim())
                         if (existingFile) {
-                              console.log(`File with hash ${item.hash} already exists as ${item.name}, skipping upload.`)
+                              Logger.info(`File with hash ${item.hash} already exists as ${item.name}, skipping upload.`)
                               // fetch all the hashes of the local file and the hashes of the incoming files and compare
                               let localFileHashes = Object.keys(existingFile.file.aquaTree!.revisions)
                               let incomingFileHashes = Object.keys(aquaTree.revisions)
@@ -167,23 +169,23 @@ export const ImportAquaTreeZip = ({ file, filesWrapper, removeFilesListForUpload
                                     [...localSet].every(hash => incomingSet.has(hash))
 
                               if (!areIdentical) {
-                                    console.log('Arrays are not identical!')
+                                    Logger.info('Arrays are not identical!')
 
                                     // Find elements in local but not in incoming
                                     let onlyInLocal = localFileHashes.filter(hash => !incomingSet.has(hash))
                                     if (onlyInLocal.length > 0) {
-                                          console.log('Hashes only in local file:', onlyInLocal)
+                                          Logger.info('Hashes only in local file:', onlyInLocal)
                                     }
 
                                     // Find elements in incoming but not in local
                                     let onlyInIncoming = incomingFileHashes.filter(hash => !localSet.has(hash))
                                     if (onlyInIncoming.length > 0) {
-                                          console.log('Hashes only in incoming file:', onlyInIncoming)
+                                          Logger.info('Hashes only in incoming file:', onlyInIncoming)
                                     }
 
                                     // Summary log
-                                    console.log('Local hashes:', localFileHashes)
-                                    console.log('Incoming hashes:', incomingFileHashes)
+                                    Logger.info('Local hashes:', localFileHashes)
+                                    Logger.info('Incoming hashes:', incomingFileHashes)
 
                                     allFilesWithissues.push({
                                           incomingFileAquaTree: aquaTree,
@@ -191,7 +193,7 @@ export const ImportAquaTreeZip = ({ file, filesWrapper, removeFilesListForUpload
                                           localFile: existingFile.file
                                     })
                               } else {
-                                    console.log('Arrays are identical (same elements, order may differ)')
+                                    Logger.info('Arrays are identical (same elements, order may differ)')
                               }
 
                         }
@@ -219,7 +221,7 @@ export const ImportAquaTreeZip = ({ file, filesWrapper, removeFilesListForUpload
 
 
                         const aquaJsonFileName = Object.keys(zipData.files).find(fileName => {
-                              console.log('Processing file in zip:', fileName)
+                              Logger.info('Processing file in zip:', fileName)
 
                               // Convert ASCII codes to string
                               const actualFileName = fileName
@@ -231,7 +233,7 @@ export const ImportAquaTreeZip = ({ file, filesWrapper, removeFilesListForUpload
                         })
 
                         if (aquaJsonFileName) {
-                              console.log('Found aqua.json file:', aquaJsonFileName)
+                              Logger.info('Found aqua.json file:', aquaJsonFileName)
                               let allFilesWithissues = await checkForConflicts(zipData)
 
                               if (allFilesWithissues.length > 0) {
@@ -243,15 +245,13 @@ export const ImportAquaTreeZip = ({ file, filesWrapper, removeFilesListForUpload
                                     await uploadFileData()
                               }
                         } else {
-                              console.log('aqua.json not found')
+                              Logger.info('aqua.json not found')
 
                               toast.info('Aqua Json not found.')
                               return
                         }
 
 
-
-                        // await uploadFileData()
                   } catch (error) {
                         console.error('Error reading ZIP file:', error)
                         alert('Failed to read ZIP file.')

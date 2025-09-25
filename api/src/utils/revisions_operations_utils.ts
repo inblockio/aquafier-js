@@ -37,7 +37,7 @@ export async function createAquaTreeFromRevisions(
             return [aquaTree, []];
         }
 
-        Logger.debug(`All revisions: ${JSON.stringify(revisionData, null, 4)}`)
+        // Logger.debug(`All revisions: ${JSON.stringify(revisionData, null, 4)}`)
 
         let revisionPubKeyHashes = revisionData.map(revision => revision.pubkey_hash);
 
@@ -86,17 +86,17 @@ export async function createAquaTreeFromRevisions(
             }
         }
 
-        Logger.info(`🎇🎇 All revision pubkey hashes ${JSON.stringify(fileOrFormPubKeyHashes, null, 4)}`)
+        // Logger.info(`🎇🎇 All revision pubkey hashes ${JSON.stringify(fileOrFormPubKeyHashes, null, 4)}`)
 
 
         // Step 2: Get all associated files
         const aquaTreeFileData = await fetchAquaTreeFileData(revisionPubKeyHashes);
-        Logger.info("File indexes: ", aquaTreeFileData)
+        // Logger.info("File indexes: ", aquaTreeFileData)
 
         // Step 3: Create file objects for download
         fileObjects = await createFileObjects(aquaTreeFileData, url);
 
-        Logger.info("File indexe----: ", JSON.stringify(fileObjects, null, 4))
+        // Logger.info("File indexe----: ", JSON.stringify(fileObjects, null, 4))
 
         // Step 4: Process each revision
         for (const revision of revisionData) {
@@ -188,7 +188,7 @@ type RevisionInfo =
     | null;
 
 export async function FetchRevisionInfo(hash: string, revision: Revision): Promise<RevisionInfo> {
-    Logger.info(`⚠️⚠️ hash ${hash} `)
+    // Logger.info(`⚠️⚠️ hash ${hash} `)
     if (revision.revision_type == "signature") {
         return await prisma.signature.findFirst({
             where: {
@@ -201,7 +201,7 @@ export async function FetchRevisionInfo(hash: string, revision: Revision): Promi
                 hash: hash
             }
         });
-        Logger.info("Witness: ", res);
+        // Logger.info("Witness: ", res);
         if (res == null) {
             // throw new Error(`witness is null ${revision.revision_type}`);
             Logger.info(`☢️☢️ witness is null with hash ${hash}`);
@@ -213,7 +213,7 @@ export async function FetchRevisionInfo(hash: string, revision: Revision): Promi
             }
         });
     } else if (revision.revision_type == "form") {
-        Logger.info(`form where hash is ${hash}`)
+        // Logger.info(`form where hash is ${hash}`)
         return await prisma.aquaForms.findMany({
             where: {
                 hash: hash
@@ -416,7 +416,7 @@ async function processRevisionByType(
     url: string
 ): Promise<ProcessRevisionByTypeResult> {
     const revisionInfo = await FetchRevisionInfo(revision.pubkey_hash, revision);
-    Logger.info(`revisionInfo = ${JSON.stringify(revisionInfo)}`)
+    // Logger.info(`revisionInfo = ${JSON.stringify(revisionInfo)}`)
     if (!revisionInfo && revision.revision_type !== "file") {
         Logger.warn(`Revision info not found for ${revision.pubkey_hash}`);
         return { revisionData, aquaTree, fileObjects };
@@ -642,13 +642,13 @@ async function updateLinkRevisionFileIndex(revision: Revision,
 
 
     let [linkedAquaTreeData, linkedFileObjects] = await createAquaTreeFromRevisions(newPubKeyHash, url);
-    Logger.info(` ✨✨ linkedAquaTreeData ${JSON.stringify(linkedAquaTreeData, null, 4)}`)
+    // Logger.info(` ✨✨ linkedAquaTreeData ${JSON.stringify(linkedAquaTreeData, null, 4)}`)
     let linkedAquaTreeDataGenesisHash = getGenesisHash(linkedAquaTreeData);
 
     if (linkedAquaTreeDataGenesisHash == null) {
 
         // throw Error(`Expected genesis hash ${newPubKeyHash}  not to be null ${JSON.stringify(linkedAquaTreeData, null, 4)}`)
-        Logger.error(`Expected genesis hash ${newPubKeyHash}  not to be null ${JSON.stringify(linkedAquaTreeData, null, 4)}`)
+        // Logger.error(`Expected genesis hash ${newPubKeyHash}  not to be null ${JSON.stringify(linkedAquaTreeData, null, 4)}`)
         return {
             aquaTree: aquaTree,
             fileObjects: fileObjects,
@@ -663,7 +663,7 @@ async function updateLinkRevisionFileIndex(revision: Revision,
     }
 
 
-    Logger.info(`🎇🎇 updateLinkRevisionFileIndex All revision pubkey hashes ${JSON.stringify(genesisPubKeyHash, null, 4)}`)
+    // Logger.info(`🎇🎇 updateLinkRevisionFileIndex All revision pubkey hashes ${JSON.stringify(genesisPubKeyHash, null, 4)}`)
     const newAquaTreeFileData = await fetchAquaTreeFileData([genesisPubKeyHash]);
 
     let fileData = newAquaTreeFileData[0]
@@ -681,7 +681,6 @@ async function updateLinkRevisionFileIndex(revision: Revision,
             [newHash]: fileData.name
         }
     };
-
 
     let updatedFileObjects = [...fileObjects];
 
@@ -705,7 +704,6 @@ async function updateLinkRevisionFileIndex(revision: Revision,
         Logger.error(`Expected file not found  fileData.fileLocation`)
         return null
     }
-
 
     let aquaJsonFile = `${fileData.name}.aqua.json`
 
