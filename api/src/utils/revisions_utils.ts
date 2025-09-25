@@ -195,7 +195,7 @@ export async function transferRevisionChainData(userAddress: string, chainData: 
             hashName.set(key, value);
         }
 
-    
+
         let workFlowData = isWorkFlowData(chainData.aquaTree, systemTemplateHashes);
         let workflowDataToBeseparated = ""
         if (workFlowData.isWorkFlow && (workFlowData.workFlow.includes("phone_number_claim") || workFlowData.workFlow.includes("email_claim"))) {
@@ -1644,8 +1644,6 @@ export async function processAquaFiles(
         await processAllAquaFiles(zipData, userAddress, templateId, aquaConfig, mainAquaTree, isWorkFlow.isWorkFlow);
     } catch (error: any) {
         Logger.error('Error processing aqua files:', error);
-        // Fallback: process all aqua files without special workflow handling
-        // await processAllAquaFilesGeneric(zipData, userAddress, templateId);
 
         const aquaFiles = getAquaFiles(zipData);
         await processRegularFiles(aquaFiles, userAddress, templateId, isWorkFlow.isWorkFlow);
@@ -1676,6 +1674,117 @@ async function getMainAquaTree(zipData: JSZip, aquaConfig: AquaJsonInZip | null)
 }
 
 
+// async function deletLatestIfExistsForAquaTree(aquaTree: AquaTree, userAddress: string) {
+//     const allHash = Object.keys(aquaTree.revisions);
+
+//     if (allHash.length === 0) {
+//         return;
+//     }
+
+//     const allHashPubKeyHash = allHash.map(hash => `${userAddress}_${hash}`);
+
+//     // Delete all entries where hash is in the array
+//     const deleteLatestResult = await prisma.latest.deleteMany({
+//         where: {
+//             hash: {
+//                 in: allHashPubKeyHash
+//             }
+//         }
+//     });
+
+//     const deleteRevisionResult = await prisma.revision.deleteMany({
+//         where: {
+//             pubkey_hash: {
+//                 in: allHashPubKeyHash
+//             }
+//         }
+//     });
+
+//     console.log(`Deleted ${deleteLatestResult.count} entries`);
+//     console.log(`Deleted ${deleteRevisionResult.count} entries`);
+
+// }
+
+
+async function deletLatestIfExistsForAquaTree(aquaTree: AquaTree, userAddress: string) {
+    const allHash = Object.keys(aquaTree.revisions);
+
+    if (allHash.length === 0) {
+        return;
+    }
+
+    const allHashPubKeyHash = allHash.map(hash => `${userAddress}_${hash}`);
+
+    try {
+        // Use a transaction to ensure data integrity
+        await prisma.$transaction(async (tx) => {
+            // 1. Delete related AquaForms first
+            const deleteAquaFormsResult = await tx.aquaForms.deleteMany({
+                where: {
+                    hash: {
+                        in: allHashPubKeyHash
+                    }
+                }
+            });
+            console.log(`Deleted ${deleteAquaFormsResult.count} AquaForms entries`);
+
+            // 2. Delete related Links
+            const deleteLinksResult = await tx.link.deleteMany({
+                where: {
+                    hash: {
+                        in: allHashPubKeyHash
+                    }
+                }
+            });
+            console.log(`Deleted ${deleteLinksResult.count} Link entries`);
+
+            // 3. Delete related Signatures
+            const deleteSignaturesResult = await tx.signature.deleteMany({
+                where: {
+                    hash: {
+                        in: allHashPubKeyHash
+                    }
+                }
+            });
+            console.log(`Deleted ${deleteSignaturesResult.count} Signature entries`);
+
+            // 4. Delete related Witnesses (but keep WitnessEvent as it might be shared)
+            const deleteWitnessesResult = await tx.witness.deleteMany({
+                where: {
+                    hash: {
+                        in: allHashPubKeyHash
+                    }
+                }
+            });
+            console.log(`Deleted ${deleteWitnessesResult.count} Witness entries`);
+
+            // 5. Delete Latest entries
+            const deleteLatestResult = await tx.latest.deleteMany({
+                where: {
+                    hash: {
+                        in: allHashPubKeyHash
+                    }
+                }
+            });
+            console.log(`Deleted ${deleteLatestResult.count} Latest entries`);
+
+            // 6. Finally, delete Revision entries
+            const deleteRevisionResult = await tx.revision.deleteMany({
+                where: {
+                    pubkey_hash: {
+                        in: allHashPubKeyHash
+                    }
+                }
+            });
+            console.log(`Deleted ${deleteRevisionResult.count} Revision entries`);
+        });
+
+        console.log('Successfully deleted all related records');
+    } catch (error) {
+        console.error('Error deleting records:', error);
+        throw error;
+    }
+}
 
 async function processAllAquaFiles(
     zipData: JSZip,
@@ -1687,11 +1796,22 @@ async function processAllAquaFiles(
 ) {
     const aquaFiles = getAquaFiles(zipData);
 
+
     if (isWorkFlow && mainAquaTree && aquaConfig) {
         // Process workflow: save non-main files first, then main file
         await processWorkflowFiles(aquaFiles, aquaConfig.genesis, userAddress, templateId);
-        await saveAquaTree(mainAquaTree, userAddress, templateId, false);
+        let genhash = getGenesisHash(mainAquaTree);
+        if (!genhash) {
+            throw new Error(`Genesis hash cannot be null`);
+        }
+
+        let isSystem = systemTemplateHashes.includes(genhash.trim())
+        console.log(`🥰🥰🥰 genhash ${genhash} isSystem`)
+
+        await deletLatestIfExistsForAquaTree(mainAquaTree, userAddress)
+        await saveAquaTree(mainAquaTree, userAddress, templateId, isSystem);
     } else {
+        console.log(`🤩🤩🤩 here ${isWorkFlow}`)
         // Process regular files
         await processRegularFiles(aquaFiles, userAddress, templateId, isWorkFlow);
     }
@@ -1707,6 +1827,7 @@ async function processWorkflowFiles(
 
     for (const { file } of nonMainFiles) {
         const aquaTree = await parseAquaFile(file);
+        await deletLatestIfExistsForAquaTree(aquaTree, userAddress)
         await saveAquaTree(aquaTree, userAddress, templateId, true);
     }
 }
@@ -1719,7 +1840,16 @@ async function processRegularFiles(
 ) {
     for (const { file } of aquaFiles) {
         const aquaTree = await parseAquaFile(file);
-        await saveAquaTree(aquaTree, userAddress, templateId, isWorkFlow);
+        let genhash = getGenesisHash(aquaTree);
+        if (!genhash) {
+            throw new Error(`Genesis hash cannot be null`);
+        }
+
+        let isSystem = systemTemplateHashes.includes(genhash.trim())
+        console.log(`🥲🥲 genhash ${genhash} isSystem`)
+
+        await deletLatestIfExistsForAquaTree(aquaTree, userAddress)
+        await saveAquaTree(aquaTree, userAddress, templateId, isSystem);
     }
 }
 

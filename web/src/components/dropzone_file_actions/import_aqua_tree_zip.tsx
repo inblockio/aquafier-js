@@ -8,7 +8,7 @@ import JSZip from 'jszip'
 import { AquaJsonManifestFileInZip, IDropzoneAction, ImportZipAquaTreeConflictResolutionDialogProps } from '../../types/types'
 import { Button } from '@/components/ui/button'
 import { toast } from 'sonner'
-import { fetchFiles, getGenesisHash } from '@/utils/functions'
+import { fetchFiles, getFileName, getGenesisHash } from '@/utils/functions'
 import { ApiFileInfo } from '@/models/FileInfo'
 import { FileText, Loader2, X } from 'lucide-react'
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '../ui/dialog'
@@ -69,7 +69,21 @@ export const ImportAquaTreeZip = ({ file, filesWrapper, removeFilesListForUpload
             }).filter(h => h !== null)
             console.log('All system files genesis hashes:', allSystemFilesGenesisHashes)
 
-            const fileData = zipData.files['aqua.json']
+            const fileData = zipData.files['aqua.json'] || Object.entries(zipData.files).find(([fileName, fileData]) => {
+                  try {
+                        // Check if filename is encoded as comma-separated ASCII codes
+                        if (/^[\d,]+$/.test(fileName)) {
+                              const decodedName = fileName
+                                    .split(',')
+                                    .map(code => String.fromCharCode(parseInt(code)))
+                                    .join('');
+                              return decodedName === 'aqua.json';
+                        }
+                  } catch (error) {
+                        // If decoding fails, skip this file
+                  }
+                  return false;
+            })?.[1];
 
             // Read the file content as string
             const jsonContent = await fileData.async('string')
@@ -101,14 +115,29 @@ export const ImportAquaTreeZip = ({ file, filesWrapper, removeFilesListForUpload
                         console.log('Processing:', item.name, 'with hash:', item.hash)
 
                         //read the file in the aqua file
-                        const fileData = zipData.files[item.name]
+                        const fileData = zipData.files[item.name] || Object.entries(zipData.files).find(([fileName, fileData]) => {
+                              try {
+                                    // Check if filename is encoded as comma-separated ASCII codes
+                                    if (/^[\d,]+$/.test(fileName)) {
+                                          const decodedName = fileName
+                                                .split(',')
+                                                .map(code => String.fromCharCode(parseInt(code)))
+                                                .join('');
+                                          return decodedName === item.name;
+                                    }
+                              } catch (error) {
+                                    // If decoding fails, skip this file
+                              }
+                              return false;
+                        })?.[1];
+
                         if (!fileData) {
                               console.warn(`File ${item.name} not found in ZIP, skipping.`)
                               continue
                         }
 
                         const jsonContent = await fileData.async('string')
-                        console.log(item.name + ' JSON Content:', jsonContent)
+                        console.log(item.name + ' JSON Content--:', jsonContent)
 
                         // Split the string into numbers, convert to chars, join back
                         const decodedJson = jsonContent
@@ -209,6 +238,9 @@ export const ImportAquaTreeZip = ({ file, filesWrapper, removeFilesListForUpload
                                     setConflictFiles(allFilesWithissues)
                                     return
 
+                              }else{
+                                    //proceed to upload
+                                    await uploadFileData()
                               }
                         } else {
                               console.log('aqua.json not found')
@@ -279,6 +311,15 @@ export const ImportAquaTreeZip = ({ file, filesWrapper, removeFilesListForUpload
                                           <p className="text-sm text-muted-foreground">
                                                 The following files have conflicts with existing files in your system.If you choose to proceed the local files will be overwritten.
                                           </p>
+
+                                          {conflictFiles.map((conflict, index) => (
+                                                <div key={index} className="p-4 mt-4 border rounded bg-yellow-50">
+                                                      <h3 className="font-semibold">Incoming File: {getFileName(conflict.incomingFileAquaTree!)} revisions ({Object.keys(conflict.incomingFileAquaTree.revisions).length})</h3>
+                  
+                                                      <p className="mt-2">Local File: {getFileName(conflict.localFile.aquaTree!)}  revisions ({Object.keys(conflict.localFile.aquaTree!.revisions).length})</p>
+
+                                                      </div>
+                                          ))}
                                     </DialogHeader>
                               </ScrollArea>
                               <DialogFooter className="mt-auto">
