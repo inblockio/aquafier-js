@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { useParams } from 'react-router-dom'
+import { useLocation, useParams } from 'react-router-dom'
 import appStore from '../../store'
 import { useStore } from 'zustand'
 import { ShareButton } from '@/components/aqua_chain_actions/share_aqua_chain'
@@ -32,6 +32,7 @@ export default function ClaimsWorkflowPage() {
       const [isLoading, setIsLoading] = useState(false)
 
       const { walletAddress } = useParams()
+      const urlHash = useLocation().hash
 
       const loadSharedContractsData = async (_latestRevisionHash: string) => {
             try {
@@ -186,7 +187,14 @@ export default function ClaimsWorkflowPage() {
             }
             else {
                   return (
-                        <div className="grid lg:grid-cols-12 gap-4" id={`${genesisRevisionHash}`}>
+                        <div className="grid lg:grid-cols-12 gap-4 relative" id={`${genesisRevisionHash}`}>
+                              {
+                                    urlHash.replace("#", "") === genesisRevisionHash ? (
+                                          <div className='absolute top-0 right-0 z-10 bg-green-500 w-fit px-2 py-1 text-white rounded-md'>
+                                                Selected
+                                          </div>
+                                    ) : null
+                              }
                               <div className='col-span-7 bg-gray-50 p-2'>
                                     <div className="flex flex-col gap-2">
                                           <SimpleClaim claimInfo={claimInfo} />

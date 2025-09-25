@@ -7,6 +7,7 @@ import {ApiFileInfo} from '@/models/FileInfo'
 import {useStore} from 'zustand'
 import appStore from '@/store'
 import ImprovedDNSLogs from '../claims_workflow/DNSClaimLogs'
+import { useLocation } from 'react-router-dom'
 
 interface IDNSClaim {
       claimInfo: Record<string, string>,
@@ -70,6 +71,8 @@ const DNSClaim = ({ claimInfo, apiFileInfo, nonce, sessionAddress }: IDNSClaim) 
       const [verificationMessage, setVerificationMessage] = useState<string>('Checking DNS verification...')
       // const [dnsRecords, setDnsRecords] = useState<string[]>([])
       const [verificationResult, setVerificationResult] = useState<VerificationResult | null>(null)
+
+      const urlHash = useLocation().hash
 
       const { backend_url } = useStore(appStore)
       const genesisRevisionHash = getGenesisHash(apiFileInfo.aquaTree!) 
@@ -192,7 +195,14 @@ const DNSClaim = ({ claimInfo, apiFileInfo, nonce, sessionAddress }: IDNSClaim) 
       }, [domain, walletAddress])
 
       return (
-            <div className="grid lg:grid-cols-12 gap-4" id={`${genesisRevisionHash}`}>
+            <div className="grid lg:grid-cols-12 gap-4 relative" id={`${genesisRevisionHash}`}>
+                  {
+                                    urlHash.replace("#", "") === genesisRevisionHash ? (
+                                          <div className='absolute top-0 right-0 z-10 bg-green-500 w-fit px-2 py-1 text-white rounded-md'>
+                                                Selected
+                                          </div>
+                                    ) : null
+                              }
                   <div className='col-span-7 bg-gray-50 p-2'>
                         <div className="flex flex-col gap-2">
                               <div className={`rounded-lg shadow-sm border p-6 ${getCardBackgroundColor()}`}>
