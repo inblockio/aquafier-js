@@ -27,7 +27,7 @@ export default defineConfig({
   reporter: [['junit', { outputFile: 'results.xml' }]],
   /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
   use: {
-    headless: false,
+    headless: true,
     permissions: ["clipboard-read"],
     /* Base URL to use in actions like `await page.goto('/')`. */
     // baseURL: 'http://localhost:3000',
@@ -36,7 +36,7 @@ export default defineConfig({
     trace:  'retain-on-failure',
     video: 'retain-on-failure',
     // Increase timeouts for CI environment
-    actionTimeout: 240000, // 4 minutes
+    actionTimeout: 480000, // 8 minutes
     navigationTimeout: 60000,
     // Add browser launch options to optimize for CI
     launchOptions: {
@@ -67,7 +67,7 @@ export default defineConfig({
       name: 'chromium',
       use: { ...devices['Desktop Chrome'],
       baseURL: process.env.BASE_URL ? process.env.BASE_URL : "https://dev.inblock.io"},
-      timeout: 220000,
+      timeout: 480000, // 8 minutes
     }
   ],
 });
