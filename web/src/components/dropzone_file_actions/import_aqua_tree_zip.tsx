@@ -82,14 +82,14 @@ export const ImportAquaTreeZip = ({ file, filesWrapper, removeFilesListForUpload
                         }
                   } catch (error) {
                         // If decoding fails, skip this file
-                        Logger.error('Error decoding filename:', error)
+                        Logger.error('Error decoding filename:' + error)
                   }
                   return false;
             })?.[1];
 
             // Read the file content as string
             const jsonContent = await fileData.async('string')
-            Logger.info('Aqua JSON Content:', jsonContent)
+            Logger.info('Aqua JSON Content:' + jsonContent)
 
             // Split the string into numbers, convert to chars, join back
             const decodedJson = jsonContent
@@ -97,7 +97,7 @@ export const ImportAquaTreeZip = ({ file, filesWrapper, removeFilesListForUpload
                   .map(code => String.fromCharCode(parseInt(code)))
                   .join('')
 
-            Logger.info('Decoded Aqua JSON:', decodedJson)
+            Logger.info('Decoded Aqua JSON:' + decodedJson)
 
             // Parse the JSON
             const aquaData: AquaJsonManifestFileInZip = JSON.parse(decodedJson)
@@ -106,15 +106,15 @@ export const ImportAquaTreeZip = ({ file, filesWrapper, removeFilesListForUpload
 
             // Loop through name_with_hash array
             if (aquaData.name_with_hash && Array.isArray(aquaData.name_with_hash)) {
-                  Logger.info('Genesis file:', aquaData.genesis)
-                  Logger.info('Processing', aquaData.name_with_hash.length, 'files:')
+                  Logger.info('Genesis file:' +  aquaData.genesis)
+                  Logger.info('Processing' +  aquaData.name_with_hash.length+  '--files:')
 
 
                   let allAquaTrees = aquaData.name_with_hash.filter((item: { name: string; hash: string }) => item.name.endsWith('.aqua.json'));
-                  Logger.info('All aqua trees in zip:', allAquaTrees.length)
+                  Logger.info('All aqua trees in zip:'+ allAquaTrees.length)
 
                   for (const item of allAquaTrees) {
-                        Logger.info('Processing:', item.name, 'with hash:', item.hash)
+                        Logger.info('Processing: '+ item.name + '  with hash: '+ item.hash)
 
                         //read the file in the aqua file
                         const fileData = zipData.files[item.name] || Object.entries(zipData.files).find(([fileName, _fileData]) => {
@@ -139,7 +139,7 @@ export const ImportAquaTreeZip = ({ file, filesWrapper, removeFilesListForUpload
                         }
 
                         const jsonContent = await fileData.async('string')
-                        Logger.info(item.name + ' JSON Content--:', jsonContent)
+                        Logger.info(item.name + ' JSON Content--:'+ jsonContent)
 
                         // Split the string into numbers, convert to chars, join back
                         const decodedJson = jsonContent
@@ -147,7 +147,7 @@ export const ImportAquaTreeZip = ({ file, filesWrapper, removeFilesListForUpload
                               .map(code => String.fromCharCode(parseInt(code)))
                               .join('')
 
-                        Logger.info('Decoded ' + item.name + ' JSON:', decodedJson)
+                        Logger.info('Decoded ' + item.name + ' JSON:'+ decodedJson)
 
                         let aquaTree = JSON.parse(decodedJson)
                         let genesisHash = getGenesisHash(aquaTree)
@@ -221,7 +221,7 @@ export const ImportAquaTreeZip = ({ file, filesWrapper, removeFilesListForUpload
 
 
                         const aquaJsonFileName = Object.keys(zipData.files).find(fileName => {
-                              Logger.info('Processing file in zip:', fileName)
+                              Logger.info('Processing file in zip: '+ fileName)
 
                               // Convert ASCII codes to string
                               const actualFileName = fileName
@@ -233,7 +233,7 @@ export const ImportAquaTreeZip = ({ file, filesWrapper, removeFilesListForUpload
                         })
 
                         if (aquaJsonFileName) {
-                              Logger.info('Found aqua.json file:', aquaJsonFileName)
+                              Logger.info('Found aqua.json file:'+ aquaJsonFileName)
                               let allFilesWithissues = await checkForConflicts(zipData)
 
                               if (allFilesWithissues.length > 0) {

@@ -1,18 +1,31 @@
-import winston from 'winston';
-import ecsFormat from "@elastic/ecs-winston-format";
+// logger.js
+import pino from "pino";
 
-
-const Logger = winston.createLogger({
-    level: 'info',
-    defaultMeta: {service: process.env.SERVICE_NAME || 'api'},
-    format: ecsFormat(),
-    transports: [
-        new winston.transports.Console({
-            handleExceptions: true,
-            handleRejections: true,
-        }),
-    ],
-    exitOnError: false,
+// Configure pino for browser (no Node.js deps)
+const pinoLogger = pino({
+  level: "info",
+  browser: {
+    asObject: true, // makes logs easier to read in devtools
+  },
 });
+
+// Wrap in the same interface as your winston code
+interface LoggerMeta {
+    [key: string]: any;
+}
+
+interface LoggerInterface {
+    info: (msg: string, meta?: LoggerMeta) => void;
+    error: (msg: string, meta?: LoggerMeta) => void;
+    warn: (msg: string, meta?: LoggerMeta) => void;
+    debug: (msg: string, meta?: LoggerMeta) => void;
+}
+
+const Logger: LoggerInterface = {
+    info: (msg: string, meta: LoggerMeta = {}) => pinoLogger.info(meta, msg),
+    error: (msg: string, meta: LoggerMeta = {}) => pinoLogger.error(meta, msg),
+    warn: (msg: string, meta: LoggerMeta = {}) => pinoLogger.warn(meta, msg),
+    debug: (msg: string, meta: LoggerMeta = {}) => pinoLogger.debug(meta, msg),
+};
 
 export default Logger;
