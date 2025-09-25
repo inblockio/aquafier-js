@@ -36,7 +36,7 @@ export default defineConfig({
     trace:  'retain-on-failure',
     video: 'retain-on-failure',
     // Increase timeouts for CI environment
-    actionTimeout: 480000, // 8 minutes
+    actionTimeout: 240000, // 4 minutes
     navigationTimeout: 60000,
     // Add browser launch options to optimize for CI
     launchOptions: {
@@ -67,7 +67,7 @@ export default defineConfig({
       name: 'chromium',
       use: { ...devices['Desktop Chrome'],
       baseURL: process.env.BASE_URL ? process.env.BASE_URL : "https://dev.inblock.io"},
-      timeout: 480000, // 8 minutes
+      timeout: 220000,
     }
   ],
 });
