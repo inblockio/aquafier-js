@@ -247,7 +247,7 @@ export default function FilesList(filesListProps: FilesListProps) {
                               return filenameA.localeCompare(filenameB)
                         })
                         .map((file, index) => {
-                              return (
+                              return (  
                                     <FileListItem
                                           showWorkFlowsOnly={false}
                                           key={`card-${index}`}

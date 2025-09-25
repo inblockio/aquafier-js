@@ -184,6 +184,7 @@ export async function transferRevisionChainData(userAddress: string, chainData: 
         // Logger.info(`🎈🎈 aquaTree  ${JSON.stringify(chainData.aquaTree, null, 4)}`)
         let hashName = new Map<string, string>();
         // Save the aqua tree
+        //  await deletLatestIfExistsForAquaTree(chainData.aquaTree, userAddress)
         await saveAquaTree(chainData.aquaTree, userAddress, templateId, isWorkFlow);
         allAquaTrees.push(chainData.aquaTree);
 
@@ -225,6 +226,16 @@ export async function transferRevisionChainData(userAddress: string, chainData: 
                 if (workflowDataToBeseparated.length > 0 && allHashesOfCurrentAquaTreeInLoop.includes(workflowDataToBeseparated)) {
                     shouldAquaTreeBeSavedAsPartOfWorkflow = false
                 }
+
+
+                // hide system templates from user view
+                let genhash = getGenesisHash(aquaTree);
+                if (genhash) {
+                    shouldAquaTreeBeSavedAsPartOfWorkflow = systemTemplateHashes.includes(genhash.trim())
+
+                }
+
+//    await deletLatestIfExistsForAquaTree(aquaTree, userAddress)
 
                 await saveAquaTree(aquaTree, userAddress, null, shouldAquaTreeBeSavedAsPartOfWorkflow);
                 allAquaTrees.push(aquaTree);
@@ -1792,12 +1803,12 @@ async function processAllAquaFiles(
         // Process workflow: save non-main files first, then main file
         await processWorkflowFiles(aquaFiles, aquaConfig.genesis, userAddress, templateId);
 
-    
+
 
         await deletLatestIfExistsForAquaTree(mainAquaTree, userAddress)
         await saveAquaTree(mainAquaTree, userAddress, templateId, isWorkFlow);
     } else {
-       
+
         // Process regular files
         await processRegularFiles(aquaFiles, userAddress, templateId, isWorkFlow);
     }
@@ -1817,7 +1828,7 @@ async function processWorkflowFiles(
         await saveAquaTree(aquaTree, userAddress, templateId, true);
     }
 }
- 
+
 async function processRegularFiles(
     aquaFiles: Array<{ fileName: string; file: JSZip.JSZipObject }>,
     userAddress: string,
@@ -1832,7 +1843,7 @@ async function processRegularFiles(
         }
 
         let isSystem = systemTemplateHashes.includes(genhash.trim())
-       
+
 
         await deletLatestIfExistsForAquaTree(aquaTree, userAddress)
         await saveAquaTree(aquaTree, userAddress, templateId, isSystem);

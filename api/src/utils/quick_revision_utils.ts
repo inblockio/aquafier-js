@@ -688,7 +688,7 @@ export async function mergeRevisionChain(
     targetUserAddress: string,
     sourceUserAddress: string,
     url: string,
-    mergeStrategy: "replace" | "fork" = "fork",
+    mergeStrategy: "replace" | "fork" = "replace",
     currentUserLatestRevisionHash?: string
 ): Promise<{
     success: boolean;
@@ -853,8 +853,10 @@ export async function mergeRevisionChain(
                 }
 
                 // Insert the new revision
-                await prisma.revision.create({
-                    data: {
+                await prisma.revision.upsert({
+                    where: { pubkey_hash: targetFullHash },
+                    update: {},
+                    create: {
                         pubkey_hash: targetFullHash,
                         nonce: originalRevision.nonce,
                         shared: originalRevision.shared,

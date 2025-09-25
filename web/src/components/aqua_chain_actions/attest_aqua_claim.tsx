@@ -13,7 +13,7 @@ export const AttestAquaClaim = ({ file, index, children }: { file: ApiFileInfo; 
       // const [open, setOpen] = useState(false)
       // const [isLoading, setIsloading] = useState(false)
       // const [aquaTreesAffected, setAquaTreesAffected] = useState<ApiFileInfo[]>([])
-
+ 
       const allHashes = Object.keys(file.aquaTree!.revisions!)
       let secondRevision: Revision | null = null
       if (allHashes.length >= 2) {

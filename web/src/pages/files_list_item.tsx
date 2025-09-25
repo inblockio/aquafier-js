@@ -40,7 +40,7 @@ export default function FilesListItem({
       nonce,
       viewMode = 'table',
       filesListProps
-}: {
+}: { 
       showWorkFlowsOnly: boolean
       file: ApiFileInfo
       index: number

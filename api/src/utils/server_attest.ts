@@ -34,7 +34,8 @@ export function getTemplateInformation(templateItem: string): TemplateInformatio
     }
 }
 
-export async function serverAttestation(identityClaimId: string): Promise<{
+
+export async function serverAttestation(identityClaimId: string,  walletAddress: string): Promise<{
     aquaTree : AquaTree,
     attestationJSONfileData : Object, 
     attestationJSONfileName : string
@@ -56,8 +57,11 @@ export async function serverAttestation(identityClaimId: string): Promise<{
     const attestationForm = {
         "identity_claim_id": identityClaimId,
         "context": "I hereby attest that this identity claim has been verified and validated by the Aqua Protocol server. The claim holder has successfully completed all required verification processes, including but not limited to email verification, identity validation, and compliance checks. This attestation is issued automatically upon successful completion of the verification workflow and serves as cryptographic proof of the server's validation of the presented identity credentials.",
-        "wallet_address": serverWalletInformation.walletAddress
+        "wallet_address": serverWalletInformation.walletAddress,
+        "forms_claim_wallet_address": walletAddress,
     }
+
+
 
     let randomNum = getRandomNumber(999, 9999)
     let fileName = `identity_attestation_server_${randomNum}.json`
