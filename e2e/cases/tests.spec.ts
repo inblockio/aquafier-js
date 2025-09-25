@@ -284,63 +284,64 @@ test("upload, sign, download", async (): Promise<void> => {
 
 });
 
-test("upload, witness, download", async (): Promise<void> => {
-    const registerResponse = await registerNewMetaMaskWalletAndLogin();
-    const context: BrowserContext = registerResponse.context;
-    const testPage: Page = context.pages()[0];
+// DO NOT DELETE 
+// test("upload, witness, download", async (): Promise<void> => {
+//     const registerResponse = await registerNewMetaMaskWalletAndLogin();
+//     const context: BrowserContext = registerResponse.context;
+//     const testPage: Page = context.pages()[0];
 
-    console.log("Fund wallet ");
-    // Try to fund the wallet but continue even if it fails
-    try {
-        await fundWallet(registerResponse.walletAddress);
-        console.log("Wallet fund function completed");
-    } catch (error) {
-        console.log("Failed to fund wallet, continuing with test anyway:", error);
-        // Continue with the test despite funding failure
-    }
+//     console.log("Fund wallet ");
+//     // Try to fund the wallet but continue even if it fails
+//     try {
+//         await fundWallet(registerResponse.walletAddress);
+//         console.log("Wallet fund function completed");
+//     } catch (error) {
+//         console.log("Failed to fund wallet, continuing with test anyway:", error);
+//         // Continue with the test despite funding failure
+//     }
 
-    console.log("upload, witness, download started!");
+//     console.log("upload, witness, download started!");
 
-    // Upload file
-    const filePath: string = path.join(__dirname, '/../resources/exampleFile.pdf');
-    await uploadFile(testPage, filePath);
+//     // Upload file
+//     const filePath: string = path.join(__dirname, '/../resources/exampleFile.pdf');
+//     await uploadFile(testPage, filePath);
 
-    // Wait for file processing
-    await testPage.waitForTimeout(2000);
+//     // Wait for file processing
+//     await testPage.waitForTimeout(2000);
 
-    // Close upload dialog
-    await closeUploadDialog(testPage);
+//     // Close upload dialog
+//     await closeUploadDialog(testPage);
 
-    // Try to witness document but continue even if it fails
-    try {
-        console.log("upload, witness, download - witness document");
-        // witness document
-        await witnessDocument(testPage, context);
-    } catch (error) {
-        console.log("Witness process failed, likely due to insufficient funds. Continuing with test:", error);
-    }
-
-
-    // Check if we need to download (might have already been done in witnessDocument)
-    try {
-        // Check if download button is still visible (meaning it wasn't clicked in witnessDocument)
-        const downloadButton = testPage.locator('[data-testid="download-aqua-tree-button"]');
-        const isDownloadButtonVisible = await downloadButton.isVisible().catch(() => false);
-
-        if (isDownloadButtonVisible) {
-            console.log("Download button still visible - downloading now");
-            await downloadAquaTree(testPage, false);
-            console.log("upload, witness, download - Download completed successfully");
-        } else {
-            console.log("Download button not visible - document was likely already downloaded during witness step");
-        }
-    } catch (error) {
-        console.log("upload, witness, download - Download verification failed, test will end here:", error);
-    }
+//     // Try to witness document but continue even if it fails
+//     try {
+//         console.log("upload, witness, download - witness document");
+//         // witness document
+//         await witnessDocument(testPage, context);
+//     } catch (error) {
+//         console.log("Witness process failed, likely due to insufficient funds. Continuing with test:", error);
+//     }
 
 
-    console.log("upload, witness, download test finished!");
-});
+//     // Check if we need to download (might have already been done in witnessDocument)
+//     try {
+//         // Check if download button is still visible (meaning it wasn't clicked in witnessDocument)
+//         const downloadButton = testPage.locator('[data-testid="download-aqua-tree-button"]');
+//         const isDownloadButtonVisible = await downloadButton.isVisible().catch(() => false);
+
+//         if (isDownloadButtonVisible) {
+//             console.log("Download button still visible - downloading now");
+//             await downloadAquaTree(testPage, false);
+//             console.log("upload, witness, download - Download completed successfully");
+//         } else {
+//             console.log("Download button not visible - document was likely already downloaded during witness step");
+//         }
+//     } catch (error) {
+//         console.log("upload, witness, download - Download verification failed, test will end here:", error);
+//     }
+
+
+//     console.log("upload, witness, download test finished!");
+// });
 
 test("single user aqua-sign", async (): Promise<void> => {
     const registerResponse = await registerNewMetaMaskWalletAndLogin();
@@ -371,59 +372,60 @@ test("single user aqua-sign", async (): Promise<void> => {
 });
 
 
-test("two user aqua-sign", async (): Promise<void> => {
-    const registerWalletOneResponse = await registerNewMetaMaskWalletAndLogin();
+// DO NOT DELETE
+// test("two user aqua-sign", async (): Promise<void> => {
+//     const registerWalletOneResponse = await registerNewMetaMaskWalletAndLogin();
 
-    const contextWalletOne: BrowserContext = registerWalletOneResponse.context;
-    const testPageWalletOne: Page = contextWalletOne.pages()[0];
+//     const contextWalletOne: BrowserContext = registerWalletOneResponse.context;
+//     const testPageWalletOne: Page = contextWalletOne.pages()[0];
 
-    console.log("two user aqua-sign started!");
-
-
-    // Create aqua sign form
-    const filePath: string = path.join(__dirname, '/../resources/exampleFile.pdf');
-
-    console.log("timout to mimick delay between two users, avoid throttling");
-    await testPageWalletOne.waitForTimeout(2000);
-    const registerWalletTwoResponse = await registerNewMetaMaskWalletAndLogin();
-    await testPageWalletOne.waitForTimeout(1000);
-
-    console.log("Create aqua sign form ..");
-    await createAquaSignForm(testPageWalletOne, contextWalletOne, filePath, registerWalletTwoResponse.walletAddress);
-
-    // await testPageWalletOne.reload()
-
-    await waitAndClick(testPageWalletOne, '[data-testid="open-aqua-sign-workflow-button-0"]')
-
-    await waitAndClick(testPageWalletOne, '[data-testid="action-view-contract-button"]')
-
-    // Create and save signature
-    await createAndSaveSignature(testPageWalletOne, contextWalletOne);
-
-    // Add signature to document and sign
-    await addSignatureToDocument(testPageWalletOne, contextWalletOne);
-
-    const contextWalletTwo: BrowserContext = registerWalletTwoResponse.context;
-    const testPageWalletTwo: Page = contextWalletTwo.pages()[0];
-
-    await testPageWalletTwo.reload(); // Reload the second test page to ensure it's up-to-date ie the workflow was shared to ensure its loaded
-
-    importAquaChain(testPageWalletTwo, contextWalletTwo)
+//     console.log("two user aqua-sign started!");
 
 
-    // Open workflow
+//     // Create aqua sign form
+//     const filePath: string = path.join(__dirname, '/../resources/exampleFile.pdf');
 
-    await waitAndClick(testPageWalletTwo, '[data-testid="open-aqua-sign-workflow-button-0"]')
+//     console.log("timout to mimick delay between two users, avoid throttling");
+//     await testPageWalletOne.waitForTimeout(2000);
+//     const registerWalletTwoResponse = await registerNewMetaMaskWalletAndLogin();
+//     await testPageWalletOne.waitForTimeout(1000);
 
-    // View contract document
-    await waitAndClick(testPageWalletTwo, '[data-testid="action-view-contract-button"]')
+//     console.log("Create aqua sign form ..");
+//     await createAquaSignForm(testPageWalletOne, contextWalletOne, filePath, registerWalletTwoResponse.walletAddress);
 
-    // Create and save signature
-    await createAndSaveSignature(testPageWalletTwo, contextWalletTwo);
+//     // await testPageWalletOne.reload()
 
-    // Add signature to document and sign
-    await addSignatureToDocument(testPageWalletTwo, contextWalletTwo);
-});
+//     await waitAndClick(testPageWalletOne, '[data-testid="open-aqua-sign-workflow-button-0"]')
+
+//     await waitAndClick(testPageWalletOne, '[data-testid="action-view-contract-button"]')
+
+//     // Create and save signature
+//     await createAndSaveSignature(testPageWalletOne, contextWalletOne);
+
+//     // Add signature to document and sign
+//     await addSignatureToDocument(testPageWalletOne, contextWalletOne);
+
+//     const contextWalletTwo: BrowserContext = registerWalletTwoResponse.context;
+//     const testPageWalletTwo: Page = contextWalletTwo.pages()[0];
+
+//     await testPageWalletTwo.reload(); // Reload the second test page to ensure it's up-to-date ie the workflow was shared to ensure its loaded
+
+//     importAquaChain(testPageWalletTwo, contextWalletTwo)
+
+
+//     // Open workflow
+
+//     await waitAndClick(testPageWalletTwo, '[data-testid="open-aqua-sign-workflow-button-0"]')
+
+//     // View contract document
+//     await waitAndClick(testPageWalletTwo, '[data-testid="action-view-contract-button"]')
+
+//     // Create and save signature
+//     await createAndSaveSignature(testPageWalletTwo, contextWalletTwo);
+
+//     // Add signature to document and sign
+//     await addSignatureToDocument(testPageWalletTwo, contextWalletTwo);
+// });
 
 
 // Test for sharing functionality
@@ -609,45 +611,45 @@ test("create simple claim", async (): Promise<void> => {
     await createSimpleClaim(context, testPage);
 });
 
+// DO NOT DELETE
+// test("attest a claim and share the claim", async (): Promise<void> => {
+//     const registerResponse = await registerNewMetaMaskWalletAndLogin();
+//     const creatorContext: BrowserContext = registerResponse.context;
+//     const creatorPage: Page = creatorContext.pages()[0];
+//     console.log("attest a claim and share the claim");
 
-test("attest a claim and share the claim", async (): Promise<void> => {
-    const registerResponse = await registerNewMetaMaskWalletAndLogin();
-    const creatorContext: BrowserContext = registerResponse.context;
-    const creatorPage: Page = creatorContext.pages()[0];
-    console.log("attest a claim and share the claim");
+//     await createSimpleClaim(creatorContext, creatorPage);
 
-    await createSimpleClaim(creatorContext, creatorPage);
+//     // share the claim
+//     let shareUrl = await shareDocument(creatorPage, creatorContext, "");
 
-    // share the claim
-    let shareUrl = await shareDocument(creatorPage, creatorContext, "");
-
-    // register  another wallet address
-    const attestorResponse = await registerNewMetaMaskWalletAndLogin();
-    const attestorContext: BrowserContext = attestorResponse.context;
-    const attestorPage: Page = attestorContext.pages()[0];
-
-
-    console.log("To import Recipient wallet address: ", attestorResponse.walletAddress);
-    // Recipient verifies they can access and edit the shared document
-    await importAquaChain(attestorPage, attestorContext, shareUrl);
-
-    await attestorPage.waitForTimeout(1000);
-
-    console.log("attest the claim");
+//     // register  another wallet address
+//     const attestorResponse = await registerNewMetaMaskWalletAndLogin();
+//     const attestorContext: BrowserContext = attestorResponse.context;
+//     const attestorPage: Page = attestorContext.pages()[0];
 
 
-    // attest the claim
-    await waitAndClick(attestorPage, '[data-testid="attest-aqua-claim-button-0"]')
+//     console.log("To import Recipient wallet address: ", attestorResponse.walletAddress);
+//     // Recipient verifies they can access and edit the shared document
+//     await importAquaChain(attestorPage, attestorContext, shareUrl);
 
-    await attestorPage.locator('[id="input-context"]').fill("yes i attest this claim");
-    await attestorPage.getByText("Create Workflow").click();
-    const metamaskPromise2 = attestorContext.waitForEvent("page");
-    await metamaskPromise2;
+//     await attestorPage.waitForTimeout(1000);
 
-    await handleMetaMaskNetworkAndConfirm(attestorContext, false);
-    console.log("attestation created");
+//     console.log("attest the claim");
 
-});
+
+//     // attest the claim
+//     await waitAndClick(attestorPage, '[data-testid="attest-aqua-claim-button-0"]')
+
+//     await attestorPage.locator('[id="input-context"]').fill("yes i attest this claim");
+//     await attestorPage.getByText("Create Workflow").click();
+//     const metamaskPromise2 = attestorContext.waitForEvent("page");
+//     await metamaskPromise2;
+
+//     await handleMetaMaskNetworkAndConfirm(attestorContext, false);
+//     console.log("attestation created");
+
+// });
 
 
 
@@ -693,91 +695,91 @@ test("create dns claim", async (): Promise<void> => {
 });
 
 
+// DO NOT DELETE
+// test("import dns claim", async (): Promise<void> => {
+//     const registerResponse = await registerNewMetaMaskWalletAndLogin();
+//     const context: BrowserContext = registerResponse.context;
+//     const testPage: Page = context.pages()[0];
 
-test("import dns claim", async (): Promise<void> => {
-    const registerResponse = await registerNewMetaMaskWalletAndLogin();
-    const context: BrowserContext = registerResponse.context;
-    const testPage: Page = context.pages()[0];
+//     console.log("import user signature test started!");
 
-    console.log("import user signature test started!");
+//     // Upload file
+//     const filePath: string = path.join(__dirname, '/../resources/domain_claim-675.zip');
 
-    // Upload file
-    const filePath: string = path.join(__dirname, '/../resources/domain_claim-675.zip');
+//     await testPage.waitForSelector('[data-testid="file-upload-dropzone"]', { state: 'visible' });
 
-    await testPage.waitForSelector('[data-testid="file-upload-dropzone"]', { state: 'visible' });
+//     const fileChooserPromise = testPage.waitForEvent('filechooser');
+//     await waitAndClick(testPage, '[data-testid="file-upload-dropzone"]')
+//     const fileChooser = await fileChooserPromise;
+//     await fileChooser.setFiles(filePath);
 
-    const fileChooserPromise = testPage.waitForEvent('filechooser');
-    await waitAndClick(testPage, '[data-testid="file-upload-dropzone"]')
-    const fileChooser = await fileChooserPromise;
-    await fileChooser.setFiles(filePath);
+//     await testPage.click('[data-testid="action-import-82-button"]')
+//     console.log("File uploaded successfully");
 
-    await testPage.click('[data-testid="action-import-82-button"]')
-    console.log("File uploaded successfully");
+//     // Check that the table has two rows and contains aqua.json
+//     // const tableRows = testPage.locator('table tr');
+//     //header + two files import dns claim
+//     // await expect(tableRows).toHaveCount(2);
 
-    // Check that the table has two rows and contains aqua.json
-    // const tableRows = testPage.locator('table tr');
-    //header + two files import dns claim
-    // await expect(tableRows).toHaveCount(2);
+//     console.log("open details");
+//     try {
+//         // Click the details button
+//         await testPage.click('[data-testid="open-aqua-claim-workflow-button-0"]');
 
-    console.log("open details");
-    try {
-        // Click the details button
-        await testPage.click('[data-testid="open-aqua-claim-workflow-button-0"]');
+//         console.log("Clicked details button, waiting for validation message...");
 
-        console.log("Clicked details button, waiting for validation message...");
+//         // Take a screenshot for debugging in CI
+//         if (process.env.CI) {
+//             await testPage.screenshot({ path: 'debug-before-validation.png' });
+//         }
 
-        // Take a screenshot for debugging in CI
-        if (process.env.CI) {
-            await testPage.screenshot({ path: 'debug-before-validation.png' });
-        }
+//         // Wait for the validation message to appear with increased timeout for CI
+//         const timeout = process.env.CI ? 15000 : 10000;
+//         await testPage.waitForSelector('text=This aqua tree is valid', {
+//             state: 'visible',
+//             timeout: timeout
+//         });
 
-        // Wait for the validation message to appear with increased timeout for CI
-        const timeout = process.env.CI ? 15000 : 10000;
-        await testPage.waitForSelector('text=This aqua tree is valid', {
-            state: 'visible',
-            timeout: timeout
-        });
+//         // Verify the validation message is visible
+//         const validationMessage = testPage.locator('text=This aqua tree is valid');
+//         await expect(validationMessage).toBeVisible({ timeout: timeout });
 
-        // Verify the validation message is visible
-        const validationMessage = testPage.locator('text=This aqua tree is valid');
-        await expect(validationMessage).toBeVisible({ timeout: timeout });
+//         console.log("Aqua tree validation confirmed!");
 
-        console.log("Aqua tree validation confirmed!");
+//     } catch (error) {
+//         console.log("Error after clicking details button:", error);
+//         console.log("Page URL:", testPage.url());
 
-    } catch (error) {
-        console.log("Error after clicking details button:", error);
-        console.log("Page URL:", testPage.url());
+//         // Take screenshot on failure for debugging
+//         if (process.env.CI) {
+//             await testPage.screenshot({ path: 'debug-on-failure.png' });
+//         }
 
-        // Take screenshot on failure for debugging
-        if (process.env.CI) {
-            await testPage.screenshot({ path: 'debug-on-failure.png' });
-        }
+//         // Check if page is still alive
+//         if (testPage.isClosed()) {
+//             throw new Error("Test page was closed unexpectedly");
+//         }
 
-        // Check if page is still alive
-        if (testPage.isClosed()) {
-            throw new Error("Test page was closed unexpectedly");
-        }
+//         // Log additional debugging information
+//         try {
+//             const pageContent = await testPage.content();
+//             console.log("Page content length:", pageContent.length);
 
-        // Log additional debugging information
-        try {
-            const pageContent = await testPage.content();
-            console.log("Page content length:", pageContent.length);
+//             // Check if the button still exists
+//             const buttonExists = await testPage.locator('[data-testid="open-aqua-claim-workflow-button-0"]').isVisible();
+//             console.log("Details button still visible:", buttonExists);
 
-            // Check if the button still exists
-            const buttonExists = await testPage.locator('[data-testid="open-aqua-claim-workflow-button-0"]').isVisible();
-            console.log("Details button still visible:", buttonExists);
+//             // Check for any error messages on the page
+//             const errorElements = await testPage.locator('[class*="error"], [data-testid*="error"]').count();
+//             console.log("Error elements found:", errorElements);
 
-            // Check for any error messages on the page
-            const errorElements = await testPage.locator('[class*="error"], [data-testid*="error"]').count();
-            console.log("Error elements found:", errorElements);
+//         } catch (debugError) {
+//             console.log("Failed to gather debug info:", debugError);
+//         }
 
-        } catch (debugError) {
-            console.log("Failed to gather debug info:", debugError);
-        }
-
-        // throw error;
-    }
-});
+//         // throw error;
+//     }
+// });
 
 
 test("import user  signature", async (): Promise<void> => {

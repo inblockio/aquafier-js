@@ -169,8 +169,6 @@ export function isAquaTree(content: any): boolean {
         'file_index' in content;
 }
 
-
-
 export async function transferRevisionChainData(userAddress: string, chainData: {
     aquaTree: AquaTree; fileObject: FileObject[]
 }, templateId: string | null = null, isWorkFlow: boolean = false): Promise<{ success: boolean, message: string }> {
@@ -310,6 +308,7 @@ export async function transferRevisionChainData(userAddress: string, chainData: 
     }
 
 }
+
 /**
  * Fetches aqua trees for a user based on their latest revision hashes.
  * @param url - The base URL for the API.
@@ -1818,7 +1817,7 @@ async function processWorkflowFiles(
         await saveAquaTree(aquaTree, userAddress, templateId, true);
     }
 }
-
+ 
 async function processRegularFiles(
     aquaFiles: Array<{ fileName: string; file: JSZip.JSZipObject }>,
     userAddress: string,
