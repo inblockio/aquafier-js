@@ -48,7 +48,7 @@ jobs:
           BASE_URL=http://127.0.0.1:3600
           PREFUNDED_WALLET_PRIVATEKEY=${{ secrets.PREFUNDED_WALLET_PRIVATEKEY }}
           ALCHEMY_PROJECT_ID=${{ secrets.ALCHEMY_PROJECT_ID }}
-          WORKERS=4
+          WORKERS=1
           RETRIES=1
           EOL
 
@@ -84,7 +84,7 @@ jobs:
       - name: Run Playwright tests
         env:
           DISPLAY: :99
-        run: cd e2e && npx playwright test --workers 4
+        run: cd e2e && npx playwright test
 
       - uses: actions/upload-artifact@v4
         if: ${{ !cancelled() }}
