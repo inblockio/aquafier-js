@@ -3,5 +3,7 @@
   "extends": [
     "github>inblockio/renovate-config"
   ],
-  "baseBranches": ["dev"]
+  "baseBranches": ["dev"],
+  "timezone": "Europe/Berlin",
+  "schedule": ["after 12am and before 1am"]
 }
