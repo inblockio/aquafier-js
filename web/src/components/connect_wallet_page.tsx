@@ -194,6 +194,13 @@ export const ConnectWalletPage = () => {
     const provider = new BrowserProvider(ethereum)
 
     try {
+      
+
+      // Switch to mainnet
+      await ethereum.request({ method: 'wallet_switchEthereumChain', params: [{ chainId: "0x1" }] })
+      // Switch to sepolia
+      // await ethereum.request({ method: 'wallet_switchEthereumChain', params: [{ chainId: 11155111 }] })
+
       // Use the timeoutPromise utility function for cleaner timeout handling
       const accountsResponse = await timeoutPromise(
         ethereum.request({ method: 'eth_requestAccounts' }),

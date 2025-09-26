@@ -37,13 +37,15 @@ export default async function authController(fastify: FastifyInstance) {
         }
       })
 
+      console.log("process.env.DEFAULT_WITNESS_NETWORK", process.env.DEFAULT_WITNESS_NETWORK)
+
       if (settingsData == null) {
         let defaultData = {
           user_pub_key: session.address!!,
           cli_pub_key: "",
           cli_priv_key: "",
           alchemy_key: "ZaQtnup49WhU7fxrujVpkFdRz4JaFRtZ",
-          witness_network: "sepolia",
+          witness_network: process.env.DEFAULT_WITNESS_NETWORK ?? "sepolia", 
           theme: "light",
           witness_contract_address: '0x45f59310ADD88E6d23ca58A0Fa7A55BEE6d2a611',
         }
@@ -172,14 +174,14 @@ export default async function authController(fastify: FastifyInstance) {
           user_pub_key: siweData.address!!
         }
       })
-
+      console.log("process.env.DEFAULT_WITNESS_NETWORK", process.env.DEFAULT_WITNESS_NETWORK)
       if (settingsData == null) {
         let defaultData = {
           user_pub_key: siweData.address!!,
           cli_pub_key: "",
           cli_priv_key: "",
           alchemy_key: "ZaQtnup49WhU7fxrujVpkFdRz4JaFRtZ",
-          witness_network: "sepolia",
+          witness_network: process.env.DEFAULT_WITNESS_NETWORK ?? "sepolia",
           theme: "light",
           witness_contract_address: '0x45f59310ADD88E6d23ca58A0Fa7A55BEE6d2a611',
         }

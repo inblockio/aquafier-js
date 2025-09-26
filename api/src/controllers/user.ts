@@ -624,6 +624,13 @@ export default async function userController(fastify: FastifyInstance) {
                 where: { nonce }
             });
 
+            // Step 8: Delete user settings
+            await prisma.settings.deleteMany({
+                where: {
+                    user_pub_key: userAddress
+                }
+            });
+
             return reply.code(200).send({
                 success: true,
                 message: 'All user data has been cleared successfully'
