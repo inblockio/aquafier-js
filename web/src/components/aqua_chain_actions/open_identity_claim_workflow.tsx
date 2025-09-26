@@ -65,7 +65,7 @@ export const OpenClaimsWorkFlowButton = ({ item, children, index }: IShareButton
                               disabled={!walletAddress}
                         >
                               <FaFileExport />
-                              <span className="break-words break-all overflow-hidden">Open Details</span>
+                              <span className="break-words break-all overflow-hidden">Open Workflow</span>
                         </Button>
                   )}
             </>

@@ -245,7 +245,7 @@ export default function FilesList(filesListProps: FilesListProps) {
                               const filenameA = getAquaTreeFileName(a.aquaTree!)
                               const filenameB = getAquaTreeFileName(b.aquaTree!)
                               return filenameA.localeCompare(filenameB)
-                        })
+                        }) 
                         .map((file, index) => {
                               return (  
                                     <FileListItem

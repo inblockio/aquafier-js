@@ -301,7 +301,7 @@ export default function ClaimsWorkflowPage() {
                                           <Collapsible className=' bg-gray-50 p-2 rounded-lg'>
                                                 <CollapsibleTrigger className='cursor-pointer w-full p-2 border-2 border-gray-200 rounded-lg flex justify-between items-center'>
                                                       <div className="flex flex-col text-start">
-                                                            <p className='font-bold text-gray-700'>Sharing Information---</p>
+                                                            <p className='font-bold text-gray-700'>Sharing Information</p>
                                                             <p className='text-gray-600'>Who have you shared the claim with</p>
                                                       </div>
                                                       <div className='flex flex-col gap-0 h-fit'>

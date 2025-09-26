@@ -40,7 +40,7 @@ export default function FilesListItem({
       nonce,
       viewMode = 'table',
       filesListProps
-}: { 
+}: {
       showWorkFlowsOnly: boolean
       file: ApiFileInfo
       index: number
@@ -105,17 +105,7 @@ export default function FilesListItem({
             }
       }
 
-      // Helper function to capitalize the first character of every word
 
-      // const detailsButton = () =>{
-      //         return <button onClick={() => {
-      //             setOpenFileDetailsPopUp(true);
-      //             setSelectedFileInfo(file);
-      //         } } className="w-full flex items-center justify-center space-x-1 bg-green-100 text-green-700 px-2 py-2 rounded hover:bg-green-200 transition-colors text-xs">
-      //             <LuEye className="w-4 h-4" />
-      //             <span>Details</span>
-      //         </button>;
-      //     }
 
       const workFlowAquaSignActions = () => {
             return (
@@ -123,6 +113,10 @@ export default function FilesListItem({
                   <div className="flex flex-wrap gap-1">
                         <div className="w-[202px]">
                               <OpenAquaSignWorkFlowButton item={file} nonce={nonce} index={index} />
+                        </div>
+
+                        <div className="w-[100px]">
+                              <OpenSelectedFileDetailsButton file={file} index={index} />
                         </div>
 
                         <div className="w-[100px]">
@@ -237,7 +231,7 @@ export default function FilesListItem({
       }
 
       const showActionsButton = () => {
-            if(filesListProps.showFileActions == false){
+            if (filesListProps.showFileActions == false) {
                   return null
             }
             if (workflowInfo?.isWorkFlow == true && workflowInfo.workFlow == 'aqua_sign') {
@@ -325,7 +319,7 @@ export default function FilesListItem({
                                     // not selected, so select
                                     if (!showWorkFlowsOnly && workflowInfo?.isWorkFlow && workflowInfo.workFlow == 'aqua_sign') {
 
-                                          toast.error("Aqua Sign workflows cannot be selected",{
+                                          toast.error("Aqua Sign workflows cannot be selected", {
                                                 duration: 1500,
                                           })
                                           // do not allow selection of  aqua sign workflows

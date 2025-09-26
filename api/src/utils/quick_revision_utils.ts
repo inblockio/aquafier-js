@@ -900,7 +900,7 @@ export async function mergeRevisionChain(
                     // Delete the revision
                     // console.log(cliRedify(`Delete ${obsoleteHash} due to replace strategy`))
                     // Enabled delete from latest to force delete any revisions appearing in latest to avoid double entry till forking is implemented
-                    deleteRevisionAndChildren(obsoleteHash, targetUserAddress, true)
+                  await  deleteRevisionAndChildren(obsoleteHash, targetUserAddress, true)
                 }
 
                 // 2. Import the incoming chain's divergent revisions
@@ -1256,10 +1256,55 @@ function orderRevisionsInChain(chainData: any): string[] {
 /**
  * Updates the latest hash entry for a user
  */
-async function updateLatestHash(userAddress: string, oldHash: string, newHash: string): Promise<void> {
+// async function updateLatestHash(userAddress: string, oldHash: string, newHash: string): Promise<void> {
+//     try {
+//         // First check if old hash is in the latest table
+//         const existingLatest = await prisma.latest.findFirst({
+//             where: {
+//                 hash: oldHash,
+//                 user: userAddress
+//             }
+//         });
+
+//         if (existingLatest) {
+//             // Update existing entry to point to new hash
+//             await prisma.latest.update({
+//                 where: {
+//                     hash: oldHash
+//                 },
+//                 data: {
+//                     hash: newHash
+//                 }
+//             });
+//         } else {
+//             // Create new latest entry
+//             await prisma.latest.create({
+//                 data: {
+//                     hash: newHash,
+//                     user: userAddress
+//                 }
+//             });
+//         }
+//     } catch (error: any) {
+//         Logger.error("Error updating latest hash:", error);
+//         throw error;
+//     }
+// }
+
+/**
+ * Updates the latest hash entry for a user using upsert to avoid race conditions
+ */
+async function updateLatestHash(
+    userAddress: string, 
+    oldHash: string, 
+    newHash: string,
+    tx?: any // Optional transaction client
+): Promise<void> {
+    const client = tx || prisma;
+    
     try {
-        // First check if old hash is in the latest table
-        const existingLatest = await prisma.latest.findFirst({
+        // First, get the existing latest entry to preserve metadata
+        const existingLatest = await client.latest.findFirst({
             where: {
                 hash: oldHash,
                 user: userAddress
@@ -1267,21 +1312,41 @@ async function updateLatestHash(userAddress: string, oldHash: string, newHash: s
         });
 
         if (existingLatest) {
-            // Update existing entry to point to new hash
-            await prisma.latest.update({
+            // If old hash exists in latest table, update it to new hash
+            await client.latest.upsert({
                 where: {
                     hash: oldHash
                 },
-                data: {
+                update: {
                     hash: newHash
+                },
+                create: {
+                    hash: newHash,
+                    user: userAddress,
+                    is_workflow: existingLatest.is_workflow,
+                    template_id: existingLatest.template_id
                 }
             });
         } else {
-            // Create new latest entry
-            await prisma.latest.create({
-                data: {
-                    hash: newHash,
+            // If old hash doesn't exist, just create new entry
+            // Try to get metadata from any existing latest entry for this user
+            const anyUserLatest = await client.latest.findFirst({
+                where: { user: userAddress }
+            });
+
+            await client.latest.upsert({
+                where: {
+                    hash: newHash
+                },
+                update: {
+                    // If it exists, just ensure user is correct
                     user: userAddress
+                },
+                create: {
+                    hash: newHash,
+                    user: userAddress,
+                    is_workflow: anyUserLatest?.is_workflow || false,
+                    template_id: anyUserLatest?.template_id || null
                 }
             });
         }

@@ -508,7 +508,7 @@ const FilesPage = () => {
                                                                         autoUpload={false}
                                                                   />
                                                             ) : null}
- 
+
                                                             {fileData.isZip ? (
                                                                   <ImportAquaTreeZip
                                                                         file={fileData.file}
@@ -728,9 +728,22 @@ const FilesPage = () => {
                                           ))}
 
                                           {uploadQueue.some(upload => upload.status === 'success') && (
-                                                <div className="flex justify-end pt-2">
-                                                      <Button data-testid="clear-completed-button" variant="outline" size="sm" onClick={clearCompletedUploads}>
+                                                <div className="flex justify-end gap-2 pt-2">
+                                                      <Button
+                                                            data-testid="clear-completed-button"
+                                                            variant="outline"
+                                                            size="sm"
+                                                            onClick={clearCompletedUploads}
+                                                      >
                                                             Clear completed
+                                                      </Button>
+                                                      <Button
+                                                            data-testid="close-button"
+                                                            variant="destructive"
+                                                            size="sm"
+                                                            onClick={() => setIsUploadDialogOpen(false)}
+                                                      >
+                                                            Close
                                                       </Button>
                                                 </div>
                                           )}
