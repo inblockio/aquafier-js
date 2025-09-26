@@ -25,7 +25,6 @@ import {setUpSystemTemplates} from './utils/api_utils';
 import systemController from './controllers/system';
 import webSocketController from './controllers/websocketController';
 import notificationsController from './controllers/notifications';
-import {prisma} from './database/db';
 import ApiController from './controllers/api';
 import * as Sentry from "@sentry/node"
 import {nodeProfilingIntegration} from "@sentry/profiling-node"
@@ -160,8 +159,10 @@ function buildServer() {
 
     fastify.addHook("onRequest", (request, reply, done) => {
         Logger.info("Received request", {
-            "nonce": request.headers['nonce'],
-            "url": request.url
+            "labels": {
+                "nonce": request.headers['nonce'],
+                "url": request.url
+            }
         })
         done()
     })
