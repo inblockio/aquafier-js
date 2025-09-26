@@ -411,12 +411,20 @@ export default function FilesListItem({
                   }
 
                   let creatorWallet = genRevision[`forms_wallet_address`]
+                  let name = genRevision[`forms_name`]
 
                   if (creatorWallet) {
-                        return <div className="flex flex-nowrap  text-xs text-gray-500">
+
+                        return <>
+                        <div className="flex flex-nowrap  text-xs text-gray-500">
+                              <p className="text-xs">Name: &nbsp;</p>
+                              <p className="text-xs ">{name}</p>
+                        </div>
+                        <div className="flex flex-nowrap  text-xs text-gray-500">
                               <p className="text-xs">Wallet: &nbsp;</p>
                               <p className="text-xs ">{formatCryptoAddress(creatorWallet)}</p>
                         </div>
+                        </>
                   }
             }
 
