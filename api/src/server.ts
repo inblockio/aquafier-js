@@ -157,6 +157,15 @@ function buildServer() {
     fastify.register(ApiController);
     fastify.register(DNSClaimVerificationController);
 
+
+    fastify.addHook("onRequest", (request, reply, done) => {
+        Logger.info("Received request", {
+            "nonce": request.headers['nonce'],
+            "url": request.url
+        })
+        done()
+    })
+
     return fastify
 
 }
