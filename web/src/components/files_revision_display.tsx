@@ -1,23 +1,23 @@
-import { CustomAlert } from '@/components/ui/alert-custom'
-import { Button } from '@/components/ui/button'
-import { toast } from 'sonner'
-import { AquaTreeDetailsData } from '@/models/AquaTreeDetails'
+import {CustomAlert} from '@/components/ui/alert-custom'
+import {Button} from '@/components/ui/button'
+import {toast} from 'sonner'
+import {AquaTreeDetailsData} from '@/models/AquaTreeDetails'
 import appStore from '@/store'
-import { displayTime, fetchFiles, formatCryptoAddress } from '@/utils/functions'
-import { LogTypeEmojis } from 'aqua-js-sdk/web'
+import {displayTime, fetchFiles, formatCryptoAddress} from '@/utils/functions'
+import {LogTypeEmojis} from 'aqua-js-sdk/web'
 import axios from 'axios'
-import { useCallback, useEffect, useMemo, useState } from 'react'
-import { LuCheck, LuTrash, LuX } from 'react-icons/lu'
-import { ClipLoader } from 'react-spinners'
-import { useStore } from 'zustand'
-import { revisionDataHeader, viewLinkedFile } from './files_revision_details'
-import { ItemDetail } from './item_details'
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
-import { Card, CardContent, CardFooter } from '@/components/ui/card'
+import {useCallback, useEffect, useMemo, useState} from 'react'
+import {LuCheck, LuTrash, LuX} from 'react-icons/lu'
+import {ClipLoader} from 'react-spinners'
+import {useStore} from 'zustand'
+import {revisionDataHeader, viewLinkedFile} from './files_revision_details'
+import {ItemDetail} from './item_details'
+import {Collapsible, CollapsibleContent, CollapsibleTrigger} from '@/components/ui/collapsible'
+import {Card, CardContent, CardFooter} from '@/components/ui/card'
 
-import { ExternalLink } from 'lucide-react'
-import { WITNESS_NETWORK_MAP } from '@/utils/constants'
-import { WalletEnsView } from '@/components/ui/wallet_ens'
+import {ExternalLink} from 'lucide-react'
+import {WITNESS_NETWORK_MAP} from '@/utils/constants'
+import {WalletEnsView} from '@/components/ui/wallet_ens'
 
 export const RevisionDisplay = ({ fileInfo, revision, revisionHash, isVerificationComplete, verificationResults, isDeletable, deleteRevision, index }: AquaTreeDetailsData) => {
       const { session, backend_url, files, setFiles, setSelectedFileInfo, selectedFileInfo } = useStore(appStore)
@@ -115,7 +115,6 @@ export const RevisionDisplay = ({ fileInfo, revision, revisionHash, isVerificati
       const handleDelete = useCallback(async () => {
             if (isDeleting) return // Prevent multiple clicks
 
-            //  console.log('Deleting revision: ', revisionHash, index)
             setIsDeleting(true)
 
             try {

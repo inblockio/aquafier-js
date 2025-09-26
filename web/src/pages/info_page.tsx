@@ -1,14 +1,13 @@
-import { useStore } from 'zustand'
+import {useStore} from 'zustand'
 import appStore from '../store'
-import { useState } from 'react'
-import { useEffect } from 'react'
+import {useEffect, useState} from 'react'
 import axios from 'axios'
 import VersionDetails from '@/models/VersionDetails'
-import { toast } from 'sonner'
-import { LuCalendarClock, LuCode, LuExternalLink, LuGithub, LuGlobe, LuShieldCheck, LuTag } from 'react-icons/lu'
-import { FaEthereum } from 'react-icons/fa6'
+import {toast} from 'sonner'
+import {LuCalendarClock, LuCode, LuExternalLink, LuGithub, LuGlobe, LuShieldCheck, LuTag} from 'react-icons/lu'
+import {FaEthereum} from 'react-icons/fa6'
 import versionInfo from '../version-info.json'
-import { AlertTriangleIcon } from 'lucide-react'
+import {AlertTriangleIcon} from 'lucide-react'
 
 const InfoPage = () => {
       const { backend_url } = useStore(appStore)
@@ -33,7 +32,6 @@ const InfoPage = () => {
                         setVersionDetails(res)
                   }
             } catch (e: unknown) {
-                  //  //  console.log("Error fetching version ", e)
                   toast('Error fetching version details')
             }
       }

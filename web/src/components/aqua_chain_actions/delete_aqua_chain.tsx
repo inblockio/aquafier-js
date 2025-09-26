@@ -1,14 +1,14 @@
-import { LuDelete, LuTrash } from 'react-icons/lu'
-import { Button } from '@/components/ui/button'
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui//dialog'
-import { fetchFiles, getFileName, getGenesisHash, isWorkFlowData, getAquaTreeFileName } from '../../utils/functions'
-import { useStore } from 'zustand'
+import {LuDelete, LuTrash} from 'react-icons/lu'
+import {Button} from '@/components/ui/button'
+import {Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle} from '@/components/ui/dialog'
+import {fetchFiles, getAquaTreeFileName, getFileName, getGenesisHash, isWorkFlowData} from '../../utils/functions'
+import {useStore} from 'zustand'
 import appStore from '../../store'
 import axios from 'axios'
-import { ApiFileInfo } from '../../models/FileInfo'
-import { useState } from 'react'
-import { RevionOperation } from '../../models/RevisionOperation'
-import { toast } from 'sonner'
+import {ApiFileInfo} from '../../models/FileInfo'
+import {useState} from 'react'
+import {RevionOperation} from '../../models/RevisionOperation'
+import {toast} from 'sonner'
 
 export const DeleteAquaChain = ({ apiFileInfo, backendUrl, nonce, children, index }: RevionOperation) => {
       const { files, setFiles, session, backend_url, systemFileInfo } = useStore(appStore)
@@ -48,7 +48,6 @@ export const DeleteAquaChain = ({ apiFileInfo, backendUrl, nonce, children, inde
                         await refetchAllUserFiles()
                   }
             } catch (e) {
-                  //  //  console.log(`Error ${e}`)
                   toast.error('File deletion error')
                   setIsloading(false) // Add this to ensure loading state is cleared on error
             }
@@ -64,7 +63,6 @@ export const DeleteAquaChain = ({ apiFileInfo, backendUrl, nonce, children, inde
                         fileData: files, status: 'loaded'
                   })
             } catch (e) {
-                  //  //  console.log(`Error ${e}`)
                   toast.error('Error updating files')
                   document.location.reload()
             }
@@ -80,7 +78,6 @@ export const DeleteAquaChain = ({ apiFileInfo, backendUrl, nonce, children, inde
                   // skip the current file being deleted
                   const genesisHash = getGenesisHash(anAquaTree.aquaTree!)
                   if (genesisHash == genesisOfFileBeingDeleted) {
-                        //  console.log(`skipping ${fileNameBeingDeleted} the file is being deleted`)
                   } else {
                         const { isWorkFlow } = isWorkFlowData(
                               anAquaTree.aquaTree!,
@@ -88,7 +85,6 @@ export const DeleteAquaChain = ({ apiFileInfo, backendUrl, nonce, children, inde
                                     try {
                                           return getAquaTreeFileName(e.aquaTree!)
                                     } catch (e) {
-                                          //  console.log('Error')
                                           return ''
                                     }
                               })

@@ -1,15 +1,15 @@
-import { LuUpload } from 'react-icons/lu'
+import {LuUpload} from 'react-icons/lu'
 import axios from 'axios'
-import { useStore } from 'zustand'
+import {useStore} from 'zustand'
 import appStore from '../../store'
-import { useEffect, useRef, useState } from 'react'
-import { ApiFileInfo } from '../../models/FileInfo'
-import { checkIfFileExistInUserFiles } from '../../utils/functions'
-import { maxFileSizeForUpload } from '../../utils/constants'
-import { IDropzoneAction } from '../../types/types'
-import { toast } from 'sonner'
-import { Button } from '@/components/ui/button'
-import { Loader2 } from 'lucide-react'
+import {useEffect, useRef, useState} from 'react'
+import {ApiFileInfo} from '../../models/FileInfo'
+import {checkIfFileExistInUserFiles} from '../../utils/functions'
+import {maxFileSizeForUpload} from '../../utils/constants'
+import {IDropzoneAction} from '../../types/types'
+import {toast} from 'sonner'
+import {Button} from '@/components/ui/button'
+import {Loader2} from 'lucide-react'
 
 // export const UploadFile = ({ file, uploadedIndexes, fileIndex, updateUploadedIndex, autoUpload }: IDropzoneAction) => {
 export const UploadFile = ({ file, filesWrapper, removeFilesListForUpload , autoUpload}: IDropzoneAction) => {
@@ -53,7 +53,6 @@ export const UploadFile = ({ file, filesWrapper, removeFilesListForUpload , auto
             setUploading(true)
             try {
                   const url = `${backend_url}/explorer_files`
-                  //  //  console.log("url ", url)
                   const response = await axios.post(url, formData, {
                         headers: {
                               'Content-Type': 'multipart/form-data',
@@ -70,25 +69,6 @@ export const UploadFile = ({ file, filesWrapper, removeFilesListForUpload , auto
                         mode: 'private',
                         owner: metamaskAddress ?? '',
                   }
-                  // const base64Content = await encodeFileToBase64(file);
-                  // Assuming the API returns an array of FileInfo objects
-                  // const fileInfo: ApiFileInfo = {
-                  //     fileObject: {
-                  //         fileName: res.file.name,
-                  //         fileContent: base64Content,
-                  //         path: "aqua::",
-                  //     },
-                  //     // name: res.file.name,
-                  //     // extension: res.file.extension,
-                  //     // page_data: res.file.page_data,
-                  //     mode: res.file.mode,
-                  //     owner: res.file.owner,
-                  //     aquaTree: null,
-                  //     linkedFileObjects: []
-                  // };
-
-                  // let newFilesData = [...files, fileInfo];
-                  // //  console.log(`newFilesData -, ${JSON.stringify(newFilesData)}`)
 
                   addFile(fileInfo)
 

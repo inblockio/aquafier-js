@@ -1,6 +1,6 @@
 // import * as dns from 'dns';
-import { ethers } from "ethers";
-import { digTxtRecordsGoogle } from './functions';
+import {ethers} from "ethers";
+import {digTxtRecordsGoogle} from './functions';
 
 
 export interface Proof {
@@ -199,9 +199,8 @@ interface ILog {
       let txtRecords: string[] = [];
       let dnssecValidated = false;
       const result = await resolveTxtWithDNSSEC(recordName);
-      //  console.log("Resolving with DNSSEC", result)
-  
-      try {
+
+        try {
         // txtRecords = result.records;
         dnssecValidated = result.dnssecValidated;
       } catch (dnssecError) {
@@ -261,9 +260,8 @@ interface ILog {
         record.includes('expiration=') &&
         record.includes('sig=')
       );
-      //  console.log("Txt record: ", txtRecord)
-  
-      let isLegacyFormat = false;
+
+        let isLegacyFormat = false;
   
       // Fallback to legacy format (without expiration)
       if (!txtRecord) {

@@ -1,6 +1,17 @@
 import { ApiFileInfo } from '@/models/FileInfo'
 
-import { capitalizeWords, displayTime, formatBytes, formatCryptoAddress, getAquaTreeFileName, getAquaTreeFileObject, getFileCategory, getFileExtension, getGenesisHash, isWorkFlowData } from '@/utils/functions'
+import {
+      capitalizeWords,
+      displayTime,
+      formatBytes,
+      formatCryptoAddress,
+      getAquaTreeFileName,
+      getAquaTreeFileObject,
+      getFileCategory,
+      getFileExtension,
+      getGenesisHash,
+      isWorkFlowData
+} from '@/utils/functions'
 import { FileObject, OrderRevisionInAquaTree } from 'aqua-js-sdk'
 import { FileText } from 'lucide-react'
 import { useEffect, useState } from 'react'
@@ -16,6 +27,9 @@ import { AttestAquaClaim } from '@/components/aqua_chain_actions/attest_aqua_cla
 import { OpenSelectedFileDetailsButton } from '@/components/aqua_chain_actions/details_button'
 import { useStore } from 'zustand'
 import appStore from '@/store'
+import { FilesListProps } from '@/types/types'
+import { Checkbox } from '@/components/ui/checkbox'
+import { toast } from 'sonner'
 
 export default function FilesListItem({
       showWorkFlowsOnly,
@@ -25,6 +39,7 @@ export default function FilesListItem({
       backendUrl,
       nonce,
       viewMode = 'table',
+      filesListProps
 }: {
       showWorkFlowsOnly: boolean
       file: ApiFileInfo
@@ -33,6 +48,7 @@ export default function FilesListItem({
       backendUrl: string
       nonce: string
       viewMode?: 'table' | 'card' | 'actions-only'
+      filesListProps: FilesListProps
 }) {
       // const [_selectedFiles, setSelectedFiles] = useState<number[]>([]);
       const { files } = useStore(appStore)
@@ -44,7 +60,6 @@ export default function FilesListItem({
                   try {
                         return getAquaTreeFileName(e.aquaTree!)
                   } catch (e) {
-                        //  console.log('Error processing system file') // More descriptive
                         return ''
                   }
             })
@@ -52,20 +67,14 @@ export default function FilesListItem({
             const fileObject = getAquaTreeFileObject(file)
             setCurrentFileObject(fileObject)
             const workFlow = isWorkFlowData(file.aquaTree!, someData)
-            // //  console.log(
-            //     `Workflow info for some data ${JSON.stringify(someData, null, 4)} file ${getAquaTreeFileName(file.aquaTree!)}: ${JSON.stringify(workFlow, null, 4)}`
-            // )
             setWorkFlowInfo(workFlow)
       }, [])
 
       useEffect(() => {
-
-            // //  console.log(`FilesListItem  useEffect ---- `)
             const someData = systemFileInfo.map(e => {
                   try {
                         return getAquaTreeFileName(e.aquaTree!)
                   } catch (e) {
-                        //  console.log('Error processing system file')
                         return ''
                   }
             })
@@ -74,7 +83,6 @@ export default function FilesListItem({
             setCurrentFileObject(fileObject)
             const workFlow = isWorkFlowData(file.aquaTree!, someData)
 
-            // //  console.log(`systemFileInfo ${systemFileInfo} someData ${someData} -- workFlow ${JSON.stringify(workFlow, null, 4)} `)
             setWorkFlowInfo(workFlow)
       }, [file, systemFileInfo])
 
@@ -97,17 +105,7 @@ export default function FilesListItem({
             }
       }
 
-      // Helper function to capitalize the first character of every word
 
-      // const detailsButton = () =>{
-      //         return <button onClick={() => {
-      //             setOpenFileDetailsPopUp(true);
-      //             setSelectedFileInfo(file);
-      //         } } className="w-full flex items-center justify-center space-x-1 bg-green-100 text-green-700 px-2 py-2 rounded hover:bg-green-200 transition-colors text-xs">
-      //             <LuEye className="w-4 h-4" />
-      //             <span>Details</span>
-      //         </button>;
-      //     }
 
       const workFlowAquaSignActions = () => {
             return (
@@ -115,6 +113,10 @@ export default function FilesListItem({
                   <div className="flex flex-wrap gap-1">
                         <div className="w-[202px]">
                               <OpenAquaSignWorkFlowButton item={file} nonce={nonce} index={index} />
+                        </div>
+
+                        <div className="w-[100px]">
+                              <OpenSelectedFileDetailsButton file={file} index={index} />
                         </div>
 
                         <div className="w-[100px]">
@@ -229,10 +231,9 @@ export default function FilesListItem({
       }
 
       const showActionsButton = () => {
-            // //  console.log(
-            //     `workflowInfo data ${JSON.stringify(workflowInfo, null, 4)}`
-            // )
-            // //  console.log('workflowInfo: ', workflowInfo)
+            if (filesListProps.showFileActions == false) {
+                  return null
+            }
             if (workflowInfo?.isWorkFlow == true && workflowInfo.workFlow == 'aqua_sign') {
                   return workFlowAquaSignActions()
             }
@@ -297,8 +298,64 @@ export default function FilesListItem({
             )
       }
       const renderTableView = () => {
+
+
+            if (filesListProps.activeFile) {
+                  if (getGenesisHash(filesListProps.activeFile.aquaTree!) == getGenesisHash(file.aquaTree!)) {
+                        return null
+                  }
+            }
             return (
-                  <tr key={index} className="border-b border-gray-100 hover:bg-gray-50">
+                  <tr key={index} onClick={(e) => {
+                        if (filesListProps.showCheckbox != null && filesListProps.showCheckbox == true) {
+                              // do nothing
+                              e.stopPropagation();
+
+                              let allGnesisHashes = filesListProps.selectedFiles.map(file => getGenesisHash(file.aquaTree!))
+                              if (allGnesisHashes.includes(getGenesisHash(file.aquaTree!))) {
+                                    // already selected, so deselect
+                                    filesListProps.onFileDeSelected(file)
+                              } else {
+                                    // not selected, so select
+                                    if (!showWorkFlowsOnly && workflowInfo?.isWorkFlow && workflowInfo.workFlow == 'aqua_sign') {
+
+                                          toast.error("Aqua Sign workflows cannot be selected", {
+                                                duration: 1500,
+                                          })
+                                          // do not allow selection of  aqua sign workflows
+                                          return
+                                    }
+                                    filesListProps.onFileSelected(file)
+                              }
+                              return;
+                        }
+                  }} className="border-b border-gray-100 hover:bg-gray-50">
+                        {filesListProps.showCheckbox != null && filesListProps.showCheckbox == true ? <td>
+
+                              <div className="pt-0.5">
+                                    <Checkbox
+                                          id={`file-${index}`}
+                                          checked={filesListProps.selectedFiles.map(file => getGenesisHash(file.aquaTree!)).includes(getGenesisHash(file.aquaTree!))}
+                                          onCheckedChange={(checked: boolean) => {
+                                                if (checked === true) {
+                                                      // setLinkItem(itemLoop)
+                                                      if (!showWorkFlowsOnly && workflowInfo?.isWorkFlow && workflowInfo.workFlow == 'aqua_sign') {
+                                                            toast.error("Aqua Sign workflows cannot be selected")
+                                                            // do not allow selection of  aqua sign workflows
+                                                            return
+                                                      } else {
+                                                            filesListProps.onFileSelected(file)
+                                                      }
+                                                } else {
+                                                      // setLinkItem(null)
+                                                      filesListProps.onFileDeSelected(file)
+                                                }
+                                          }}
+                                    />
+                              </div>
+                        </td> : null
+
+                        }
                         <td className="py-3 flex items-center px-4">
                               {/* <FileText className="w-5 h-5 text-blue-500" /> */}
                               <div className="flex flex-col">
@@ -406,16 +463,16 @@ export default function FilesListItem({
 
                   if (domain) {
                         return <div className="flex flex-nowrap  text-xs text-gray-500">
-                                    <p className="text-xs">Domain : &nbsp;</p>
-                                    <p className="text-xs ">{domain}</p>
-                              </div>
-                      
+                              <p className="text-xs">Domain : &nbsp;</p>
+                              <p className="text-xs ">{domain}</p>
+                        </div>
+
                   }
 
             }
 
 
-             if (workflowInfo?.workFlow == "email_claim") {
+            if (workflowInfo?.workFlow == "email_claim") {
 
                   let genesisHash = getGenesisHash(file.aquaTree!)
                   if (!genesisHash) {
@@ -430,10 +487,10 @@ export default function FilesListItem({
 
                   if (phoneNumber) {
                         return <div className="flex flex-nowrap  text-xs text-gray-500">
-                                    <p className="text-xs">Email Address : &nbsp;</p>
-                                    <p className="text-xs ">{phoneNumber}</p>
-                              </div>
-                      
+                              <p className="text-xs">Email Address : &nbsp;</p>
+                              <p className="text-xs ">{phoneNumber}</p>
+                        </div>
+
                   }
 
             }
@@ -453,10 +510,10 @@ export default function FilesListItem({
 
                   if (phoneNumber) {
                         return <div className="flex flex-nowrap  text-xs text-gray-500">
-                                    <p className="text-xs">Phone Number : &nbsp;</p>
-                                    <p className="text-xs ">{phoneNumber}</p>
-                              </div>
-                      
+                              <p className="text-xs">Phone Number : &nbsp;</p>
+                              <p className="text-xs ">{phoneNumber}</p>
+                        </div>
+
                   }
 
             }

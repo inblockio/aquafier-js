@@ -309,10 +309,10 @@ const prototypes = [
       },
       {
             name: 'Document Signing Service',
-            description: "A platform for signing and verifying files ('Aquafier').",
+            description: "A platform for signing and verifying files ('Aquafire').",
             link: 'https://aquafier.inblock.io',
             icon: <PenSquare className="h-10 w-10 text-orange-500" />,
-            cta: 'Visit Aquafier',
+            cta: 'Visit Aquafire',
       },
       {
             name: 'Decentralized Identity Solution',
@@ -604,15 +604,15 @@ export default function HomeV2() {
 
       return (
             <>
-                  
-                                    <HeroSection />
-                                    <FeaturesSection />
-                                    <HowItWorksSection />
-                                    <PrototypesSection />
-                                    <VisionSection />
-                                    <PricingSection />
-                                    <ContactSection />
-                              </>
-                
+
+                  <HeroSection />
+                  <FeaturesSection />
+                  <HowItWorksSection />
+                  <PrototypesSection />
+                  <VisionSection />
+                  <PricingSection />
+                  <ContactSection />
+            </>
+
       )
 }

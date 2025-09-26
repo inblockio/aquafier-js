@@ -1,7 +1,7 @@
 import type React from 'react'
-import type { Annotation, ProfileAnnotation } from './types'
-import { Trash2 } from 'lucide-react'
-import { SignatureData } from '../../../../types/types'
+import type {Annotation, ProfileAnnotation} from './types'
+import {Trash2} from 'lucide-react'
+import {SignatureData} from '../../../../types/types'
 
 interface AnnotationSidebarProps {
       annotations: Annotation[]
@@ -230,7 +230,6 @@ const AnnotationSidebar: React.FC<AnnotationSidebarProps> = ({ annotations, onAn
       // );
 
       const renderSignatureAnnotationEditor = (anno: SignatureData) => {
-            //  console.log('anno: ', anno)
             return (
                   <div
                         key={anno.id}

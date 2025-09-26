@@ -1,12 +1,7 @@
-
-
-import { prisma } from '../database/db';
-import { AquaTree, FileObject, Revision as AquaRevision, OrderRevisionInAquaTree } from 'aqua-js-sdk';
-import { Revision, Link, Signature, WitnessEvent, AquaForms, FileIndex } from '@prisma/client';
-import * as fs from "fs"
-import { ExtendedAquaTree, ExtendedAquaTreeData } from '../models/types';
-import { createAquaTreeFromRevisions } from './revisions_operations_utils';
-
+import {prisma} from '../database/db';
+import {ExtendedAquaTreeData} from '../models/types';
+import {createAquaTreeFromRevisions} from './revisions_operations_utils';
+import Logger from './Logger';
 
 
 /**
@@ -27,11 +22,11 @@ export async function fetchCompleteRevisionChain(
     const fullLatestHash = `${userAddress}_${latestHash}`;
     const indent = "  ".repeat(_depth);
 
-    console.log(`${indent}[Depth:${_depth}] Fetching chain for ${fullLatestHash}`);
+    Logger.info(`${indent}[Depth:${_depth}] Fetching chain for ${fullLatestHash}`);
 
     // Check for circular references
     if (_processedHashes.has(fullLatestHash)) {
-        console.warn(`${indent}[Depth:${_depth}] Already processed hash: ${fullLatestHash}. Stopping recursion.`);
+        Logger.warn(`${indent}[Depth:${_depth}] Already processed hash: ${fullLatestHash}. Stopping recursion.`);
         return { revisions: {}, file_index: {}, linkedChains: {} };
     }
 
@@ -62,11 +57,11 @@ export async function fetchCompleteRevisionChain(
             );
         }
 
-        console.log(`${indent}[Depth:${_depth}] Successfully processed chain for ${fullLatestHash}`);
+        Logger.info(`${indent}[Depth:${_depth}] Successfully processed chain for ${fullLatestHash}`);
         return extendedAquaTree;
 
     } catch (error : any) {
-        console.error(`${indent}[Depth:%s] Error fetching revision chain for %s:`, _depth, fullLatestHash, error);
+        Logger.error(`${indent}[Depth:${_depth}] Error fetching revision chain for ${fullLatestHash}`, error);
         throw error;
     }
 }
@@ -92,26 +87,23 @@ async function processLinkedChains(
     );
 
     for (const [hashOnly, linkRevision] of linkRevisions) {
-        console.log(`${indent}[Depth:${depth}] Processing link revision: ${hashOnly}`);
+        Logger.info(`${indent}[Depth:${depth}] Processing link revision: ${hashOnly}`);
         
         if (linkRevision.link_verification_hashes && linkRevision.link_verification_hashes.length > 0) {
             for (const linkedHash of linkRevision.link_verification_hashes) {
                 if (typeof linkedHash === 'string' && linkedHash.length > 0) {
-                    console.log(`${indent}[Depth:${depth}] Processing linked hash: ${linkedHash}`);
+                    Logger.info(`${indent}[Depth:${depth}] Processing linked hash: ${linkedHash}`);
 
                     // Skip if already processed
                     const fullLinkedHash = linkedHash.includes('_') ? linkedHash : `${userAddress}_${linkedHash}`;
                     if (processedHashes.has(fullLinkedHash)) {
-                        console.log(`${indent}[Depth:${depth}] Skipping already processed linked hash: ${linkedHash}`);
+                        Logger.info(`${indent}[Depth:${depth}] Skipping already processed linked hash: ${linkedHash}`);
                         continue;
                     }
 
                     try {
-                        
-                        console.log(`All File Object s %${JSON.stringify(allFileObjects, null, 4)}%`);
-                        console.log(`=======================================================================`);
-                        console.log(`Aqua Trees %${JSON.stringify(aquaTree, null, 4)}%`);
-                
+                        Logger.debug("All file objects", {count: allFileObjects.length});
+                        Logger.debug("Aqua tree sizes", {revisions: Object.keys(aquaTree.revisions).length});
 
                         // Update file index for the linked hash using existing helper
                         const fileIndexValue = await updateFileIndexForLinkedHash(linkedHash);
@@ -130,7 +122,7 @@ async function processLinkedChains(
                         );
 
                         if (Object.keys(completeLinkedTree.revisions).length > 0) {
-                            console.log(`${indent}[Depth:${depth}] Adding linked tree with ${Object.keys(completeLinkedTree.revisions).length} revisions`);
+                            Logger.info(`${indent}[Depth:${depth}] Adding linked tree with ${Object.keys(completeLinkedTree.revisions).length} revisions`);
                             
                             // Create compound key for linked chains
                             const compoundKey = `${hashOnly}_${linkedHash}`;
@@ -144,7 +136,7 @@ async function processLinkedChains(
                             }
                         }
                     } catch (linkError) {
-                        console.error(`${indent}[Depth:${depth}] Error processing linked hash ${linkedHash}:`, linkError);
+                        Logger.error(`${indent}[Depth:${depth}] Error processing linked hash ${linkedHash}:`, linkError);
                         // Set error value for this linked hash
                         updatedAquaTree.file_index[linkedHash] = '--error--@';
                     }
@@ -176,7 +168,7 @@ async function updateFileIndexForLinkedHash(linkedHash: string): Promise<string>
 
         return fileNameEntry?.file_name ?? '--error--++';
     } catch (error : any) {
-        console.error(`Error updating file index for linked hash ${linkedHash}:`, error);
+        Logger.error(`Error updating file index for linked hash ${linkedHash}:`, error);
         return '--error--';
     }
 }
@@ -186,7 +178,7 @@ async function updateFileIndexForLinkedHash(linkedHash: string): Promise<string>
  * Can be called from API routes to debug link issues
  */
 export async function diagnoseLinks(): Promise<void> {
-    console.log('===== LINK TABLE DIAGNOSTIC =====');
+    Logger.info('===== LINK TABLE DIAGNOSTIC =====');
 
     try {
         // 1. First check if any link-type revisions exist
@@ -195,44 +187,44 @@ export async function diagnoseLinks(): Promise<void> {
             take: 10 // Increased to 10 for more diagnostic data
         });
 
-        console.log(`Found ${linkRevisions.length} link revisions`);
+        Logger.info(`Found ${linkRevisions.length} link revisions`);
 
         if (linkRevisions.length === 0) {
-            console.log('No link revisions found in database');
+            Logger.warn('No link revisions found in database');
             return;
         }
 
         // 2. For each link revision, check both implementations
         for (const linkRev of linkRevisions) {
-            console.log(`\n=== Analyzing link revision: ${linkRev.pubkey_hash} ===`);
+            Logger.info(`\n=== Analyzing link revision: ${linkRev.pubkey_hash} ===`);
 
             // 2.1 Test using revisions_utils approach
-            console.log('Testing with revisions_utils approach:');
+            Logger.info('Testing with revisions_utils approach:');
             try {
                 const linkData = await prisma.link.findFirst({
                     where: { hash: linkRev.pubkey_hash }
                 });
 
                 if (linkData) {
-                    console.log('✅ Found link using revisions_utils approach');
-                    console.log('Link data structure:', Object.keys(linkData));
-                    console.log('Link type:', linkData.link_type);
-                    console.log('Link verification hashes:', linkData.link_verification_hashes);
-                    console.log('Link file hashes:', linkData.link_file_hashes);
+                    Logger.info('✅ Found link using revisions_utils approach');
+                    Logger.info('Link data structure:', Object.keys(linkData));
+                    Logger.info('Link type:', linkData.link_type);
+                    Logger.info('Link verification hashes:', linkData.link_verification_hashes);
+                    Logger.info('Link file hashes:', linkData.link_file_hashes);
 
                     // Test recursive lookup
                     if (linkData.link_verification_hashes && linkData.link_verification_hashes.length > 0) {
                         const linkedHash = linkData.link_verification_hashes[0];
-                        console.log(`Testing linked hash: ${linkedHash}`);
+                        Logger.info(`Testing linked hash: ${linkedHash}`);
 
                         // Try to fetch the linked revision
                         const linkedRev = await prisma.revision.findFirst({
                             where: { pubkey_hash: { equals: linkedHash } }
                         });
 
-                        console.log(`Linked revision exists: ${!!linkedRev}`);
+                        Logger.info(`Linked revision exists: ${!!linkedRev}`);
                         if (linkedRev) {
-                            console.log('Linked revision type:', linkedRev.revision_type);
+                            Logger.info('Linked revision type:', linkedRev.revision_type);
 
                             // throw Error(`PLEASELinked revision found: ${linkedRev.pubkey_hash}, type: ${linkedRev.revision_type}`);
                            
@@ -241,7 +233,7 @@ export async function diagnoseLinks(): Promise<void> {
                                 where: { pubkey_hash: { has: linkedHash } }
                             });
 
-                            console.log(`FileIndex exists for linked hash: ${!!linkedFileIndex}`);
+                            Logger.info(`FileIndex exists for linked hash: ${!!linkedFileIndex}`);
                             if (linkedFileIndex) {
                                 // Removed logging of .uri for FileIndex (not present in schema)
                             } else {
@@ -258,7 +250,7 @@ export async function diagnoseLinks(): Promise<void> {
                                         }
                                     });
 
-                                    console.log(`FileIndex exists via fuzzy match: ${!!fuzzyFileIndex}`);
+                                    Logger.info(`FileIndex exists via fuzzy match: ${!!fuzzyFileIndex}`);
                                     if (fuzzyFileIndex) {
                                         // Removed logging of .uri for FileIndex (not present in schema)
                                     }
@@ -266,16 +258,14 @@ export async function diagnoseLinks(): Promise<void> {
                             }
                         }
                     } else {
-                        console.log('❌ No link verification hashes found');
+                        Logger.error('❌ No link verification hashes found');
                     }
                 } else {
-                    console.log('❌ Link not found using revisions_utils approach');
+                    Logger.error('❌ Link not found using revisions_utils approach');
                 }
             } catch (err) {
-                console.error(`Error in revisions_utils approach:`, err);
+                Logger.error(`Error in revisions_utils approach:`, err);
             }
-
-            console.log('\n');
         }
 
         // 3. Check Link table structure
@@ -286,16 +276,16 @@ export async function diagnoseLinks(): Promise<void> {
                 WHERE table_name = 'Link'
             `;
 
-            console.log('\nLink table structure:');
-            console.log(tableInfo);
+            Logger.info('\nLink table structure:');
+            Logger.info(tableInfo);
         } catch (err) {
-            console.error('Could not retrieve Link table structure:', err);
+            Logger.error('Could not retrieve Link table structure:', err);
         }
 
     } catch (error : any) {
-        console.error('Error in diagnoseLinks:', error);
+        Logger.error('Error in diagnoseLinks:', error);
     }
 
-    console.log('===== END DIAGNOSTIC =====');
+    Logger.info('===== END DIAGNOSTIC =====');
 }
 

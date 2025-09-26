@@ -1,6 +1,10 @@
-import { defineConfig, devices } from '@playwright/test';
+import {defineConfig, devices} from '@playwright/test';
+import path from 'path';
+
 const dotenv = require('dotenv');
 dotenv.config();
+
+const metamaskPath = path.resolve(__dirname, 'metamask-extension');
 /**
  * Read environment variables from file.
  * https://github.com/motdotla/dotenv
@@ -33,7 +37,7 @@ export default defineConfig({
     trace:  'retain-on-failure',
     video: 'retain-on-failure',
     // Increase timeouts for CI environment
-    actionTimeout: 120000,
+    actionTimeout: 240000, // 4 minutes
     navigationTimeout: 60000,
     // Add browser launch options to optimize for CI
     launchOptions: {
@@ -50,8 +54,8 @@ export default defineConfig({
         // Add these for better extension support
         '--disable-web-security',
         '--disable-features=VizDisplayCompositor',
-        '--disable-extensions-except=./metamask-extension', // If you're loading MetaMask as unpacked extension
-        '--load-extension=./metamask-extension',
+        `--disable-extensions-except=${metamaskPath}`, // Load MetaMask extension
+        `--load-extension=${metamaskPath}`,
         '--enable-automation',
         '--disable-blink-features=AutomationControlled'
       ]

@@ -1,17 +1,17 @@
-import { useEffect, useState } from 'react'
-import { useParams } from 'react-router-dom'
-import { useStore } from 'zustand'
+import {useEffect, useState} from 'react'
+import {useParams} from 'react-router-dom'
+import {useStore} from 'zustand'
 import appStore from '../store'
 import axios from 'axios'
-import { ApiFileInfo } from '../models/FileInfo'
+import {ApiFileInfo} from '../models/FileInfo'
 // import { ClipLoader } from "react-spinners";
-import { IDrawerStatus } from '../models/AquaTreeDetails'
-import { ImportAquaChainFromChain } from '../components/dropzone_file_actions/import_aqua_tree_from_aqua_tree'
-import { toast } from 'sonner'
+import {IDrawerStatus} from '../models/AquaTreeDetails'
+import {ImportAquaChainFromChain} from '../components/dropzone_file_actions/import_aqua_tree_from_aqua_tree'
+import {toast} from 'sonner'
 
-import { Alert, AlertDescription, AlertTitle } from '../components/ui/alert'
-import { CompleteChainView } from '../components/files_chain_details'
-
+import {Alert, AlertDescription, AlertTitle} from '../components/ui/alert'
+import {CompleteChainView} from '../components/files_chain_details'
+ 
 const SharePage = () => {
       const { backend_url, metamaskAddress, session } = useStore(appStore)
       const [fileInfo, setFileInfo] = useState<ApiFileInfo | null>(null)
@@ -24,7 +24,6 @@ const SharePage = () => {
 
       const loadPageData = async () => {
             if (loading) {
-                  //  console.log('Already loading, skipping new request')
                   toast.warning('Already loading, skipping new request')
                   return
             }
@@ -35,23 +34,19 @@ const SharePage = () => {
                   try {
                         setLoading(true)
                         const url = `${backend_url}/share_data/${params.identifier}`
-                        //  //  console.log("url is ", url)
                         const response = await axios.get(url, {
                               headers: {
                                     'Content-Type': 'application/x-www-form-urlencoded',
                                     nonce: session?.nonce ?? '',
                               },
                         })
-                        //  //  console.log(response)
 
                         if (response.status === 200) {
-                              // //  console.log("Response: ", response.data)
                               setFileInfo(response.data.data.displayData[0])
                               setContractData(response.data.data.contractData)
                         }
                         setLoading(false)
                   } catch (error: any) {
-                        // //  console.log("Error: ", error)
                         if (error.response.status == 401) {
                         } else if (error.response.status == 404) {
                               setHasError(`File could not be found (probably it was deleted)`)
@@ -85,28 +80,13 @@ const SharePage = () => {
                         </div>
                   )
             }
-            // if (loading) {
-            //     return (
-            //         <div className="flex justify-center items-center py-8">
-            //             <ClipLoader
-            //                 color={"blue"}
-            //                 loading={loading}
-            //                 size={150}
-            //                 aria-label="Loading Spinner"
-            //                 data-testid="loader"
-            //             />
-            //         </div>
-            //     );
-            // }
             return <div />
       }
 
       const updateDrawerStatus = (_drawerStatus: IDrawerStatus) => {
             setDrawerStatus(_drawerStatus)
       }
-
-      //  console.log('fileInfo', fileInfo)
-
+ 
       return (
             <div id="replace-here" className="container w-10xl mx-auto">
                   <div className="w-full py-4">

@@ -1,11 +1,11 @@
-import Aquafier, { AquaTreeWrapper, FileObject } from "aqua-js-sdk";
+import Aquafier, {AquaTree, AquaTreeWrapper, FileObject} from "aqua-js-sdk";
 import path from 'path';
-import { getAquaAssetDirectory } from "./file_utils";
-import { getGenesisHash } from "./aqua_tree_utils";
+import {getAquaAssetDirectory} from "./file_utils";
+import {getGenesisHash} from "./aqua_tree_utils";
 import fs from "fs";
-import { AquaTree } from "aqua-js-sdk";
-import { dummyCredential, getRandomNumber, getServerWalletInformation } from "./server_utils";
-import { getAquaTreeFileName } from "./api_utils";
+import {dummyCredential, getRandomNumber, getServerWalletInformation} from "./server_utils";
+import {getAquaTreeFileName} from "./api_utils";
+import Logger from "./Logger";
 
 interface TemplateInformation {
     templateAquaTreeData: string;
@@ -18,11 +18,9 @@ export function getTemplateInformation(templateItem: string): TemplateInformatio
 
     let templateAquaTreeData = path.join(getAquaAssetDirectory(), `${templateItem}.json.aqua.json`);
 
-
     let templateAquaTreeDataContent = fs.readFileSync(templateAquaTreeData, 'utf8')
     let templateAquaTree: AquaTree = JSON.parse(templateAquaTreeDataContent)
     let genHash = getGenesisHash(templateAquaTree);
-    // console.log(`Template ${templateItem} with genesis hash ${genHash}`)
 
     if (!genHash) {
         throw new Error(`Genesis hash for template ${templateItem} is not defined`);
@@ -37,8 +35,7 @@ export function getTemplateInformation(templateItem: string): TemplateInformatio
 }
 
 
-
-export async function serverAttestation(identityClaimId: string): Promise<{
+export async function serverAttestation(identityClaimId: string,  walletAddress: string): Promise<{
     aquaTree : AquaTree,
     attestationJSONfileData : Object, 
     attestationJSONfileName : string
@@ -51,19 +48,20 @@ export async function serverAttestation(identityClaimId: string): Promise<{
 
     const serverWalletInformation = await getServerWalletInformation()
 
-    // console.log("Server wallet information", serverWalletInformation)
-
     if (!serverWalletInformation) {
         // throw new Error("Server wallet information is not defined");
-        console.log("Server wallet information is not defined");
+        Logger.info("Server wallet information is not defined");
         return null;
     }
 
     const attestationForm = {
         "identity_claim_id": identityClaimId,
         "context": "I hereby attest that this identity claim has been verified and validated by the Aqua Protocol server. The claim holder has successfully completed all required verification processes, including but not limited to email verification, identity validation, and compliance checks. This attestation is issued automatically upon successful completion of the verification workflow and serves as cryptographic proof of the server's validation of the presented identity credentials.",
-        "wallet_address": serverWalletInformation.walletAddress
+        "wallet_address": serverWalletInformation.walletAddress,
+        "claim_wallet_address": walletAddress,
     }
+
+
 
     let randomNum = getRandomNumber(999, 9999)
     let fileName = `identity_attestation_server_${randomNum}.json`
@@ -76,10 +74,8 @@ export async function serverAttestation(identityClaimId: string): Promise<{
 
     const genesisAquaTreeResult = await aquafier.createGenesisRevision(fileObject, true, false, false)
 
-    // console.log(`\n ## genesisAquaTreeResult ${JSON.stringify(genesisAquaTreeResult)}`)
-
     if (genesisAquaTreeResult.isErr()) {
-        console.log(`Error creating genesis aqua tree ${genesisAquaTreeResult.data}`)
+        Logger.error(`Error creating genesis aqua tree ${genesisAquaTreeResult.data}`)
         return null;
     }
     const genesisAquaTree = genesisAquaTreeResult.data.aquaTree
@@ -109,10 +105,10 @@ export async function serverAttestation(identityClaimId: string): Promise<{
 
     const linkedAquaTreeResult = await aquafier.linkAquaTree(aquatreeWrapperToWrapTo, wrapThis, false)
 
-    console.log(`\n ## linkedAquaTreeResult ${JSON.stringify(linkedAquaTreeResult)}`)
+    Logger.info(`linkedAquaTreeResult: isErr=${linkedAquaTreeResult.isErr()}`)
 
     if (linkedAquaTreeResult.isErr()) {
-        console.log(`Error linking aqua tree ${linkedAquaTreeResult.data}`)
+        Logger.error(`Error linking aqua tree ${linkedAquaTreeResult.data}`)
         return null;
     }
     const creds = dummyCredential()
@@ -125,16 +121,12 @@ export async function serverAttestation(identityClaimId: string): Promise<{
     }
     const signAquaTreeResult = await aquafier.signAquaTree(aquaTreeWrapper, "cli", creds)
 
-    // console.log(`\n ## signAquaTreeResult ${JSON.stringify(signAquaTreeResult)}`)
-
     if (signAquaTreeResult.isErr()) {
-        console.log(`Error signing aqua tree ${signAquaTreeResult.data}`)
+        Logger.error(`Error signing aqua tree ${signAquaTreeResult.data}`)
         return null;
     }
 
     const signedAttestation = signAquaTreeResult.data.aquaTree
-
-    //   console.log(`\n ## signedAttestation: `, JSON.stringify(signedAttestation, null, 4))
 
     return {
         aquaTree: signedAttestation!!,

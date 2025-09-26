@@ -1,15 +1,21 @@
-import Aquafier, { AquaTree, FileObject, LogData, LogType, OrderRevisionInAquaTree, Revision } from 'aqua-js-sdk';
+import Aquafier, { AquaTree, AquaTreeWrapper, FileObject, LogData, LogType, OrderRevisionInAquaTree, Revision } from 'aqua-js-sdk';
 import { FastifyInstance } from 'fastify';
 import { prisma } from '../database/db';
-import {getFile, getFileUploadDirectory, persistFile, streamToBuffer} from '../utils/file_utils';
+import { getFileUploadDirectory, persistFile, streamToBuffer } from '../utils/file_utils';
 import path from 'path';
 import JSZip from "jszip";
 import { randomUUID } from 'crypto';
-import util from 'util';
-import { pipeline } from 'stream';
 import * as fs from "fs"
-import { deleteAquaTreeFromSystem, fetchAquatreeFoUser, getUserApiFileInfo, isWorkFlowData, processAquaFiles, processAquaMetadata, saveAquaTree, transferRevisionChainData } from '../utils/revisions_utils';
-import { getHost, getPort, saveTemplateFileData } from '../utils/api_utils';
+import {
+    deleteAquaTreeFromSystem,
+    fetchAquatreeFoUser,
+    getUserApiFileInfo,
+    processAquaFiles,
+    processAquaMetadata,
+    saveAquaTree,
+    transferRevisionChainData
+} from '../utils/revisions_utils';
+import { getHost, getPort } from '../utils/api_utils';
 import { DeleteRevision } from '../models/request_models';
 import { fetchCompleteRevisionChain } from '../utils/quick_utils';
 import { mergeRevisionChain } from '../utils/quick_revision_utils';
@@ -17,10 +23,9 @@ import { getGenesisHash, removeFilePathFromFileIndex, validateAquaTree } from '.
 import WebSocketActions from '../constants/constants';
 import { sendToUserWebsockerAMessage } from './websocketController';
 // import { systemTemplateHashes } from '../models/constants';
-// import { serverAttestation } from '../utils/server_attest';
 import { saveAttestationFileAndAquaTree } from '../utils/server_utils';
+import Logger from "../utils/Logger";
 // import { saveAquaFile } from '../utils/server_utils';
-// import { serverAttestation } from '../utils/server_attest';
 // import getStream from 'get-stream';
 // Promisify pipeline
 // const pump = util.promisify(pipeline);
@@ -85,21 +90,11 @@ export default async function explorerController(fastify: FastifyInstance) {
             // Process aqua.json metadata first
             await processAquaMetadata(zipData, session.address);
 
-
-            // let isWorkFlow = false
-            // const isWorkFlowPar = request.headers['is_workflow'];
-            // if (isWorkFlowPar != undefined || isWorkFlowPar != null || isWorkFlowPar != "") {
-            //     if (isWorkFlowPar == "true") {
-            //         isWorkFlow = true
-            //     }
-            // }
             const isTemplateId = request.headers['is_template_id'];
             let templateId = null
             if (isTemplateId != undefined || isTemplateId != null || isTemplateId != "") {
                 templateId = isTemplateId
             }
-
-
 
 
             // Process individual .aqua.json files
@@ -117,7 +112,7 @@ export default async function explorerController(fastify: FastifyInstance) {
                 data: displayData
             });
 
-        } catch (error : any) {
+        } catch (error: any) {
             request.log.error(error);
             return reply.code(500).send({
                 error: error instanceof Error ? error.message : 'File upload failed'
@@ -180,8 +175,6 @@ export default async function explorerController(fastify: FastifyInstance) {
                         assetFilename = part.filename;
                     }
                 } else if (part.type === 'field') {
-
-                    // console.log(`name ${part.fieldname}  value ${part.value}  `)
                     if (part.fieldname === 'has_asset') {
                         hasAsset = part.value === 'true';
                     } else if (part.fieldname === 'account') {
@@ -205,10 +198,8 @@ export default async function explorerController(fastify: FastifyInstance) {
                 }
             }
 
-            console.log("Template name: ", templateName)
-            console.log("Template id: ", templateId)
-            
-
+            Logger.info("Template name: ", templateName)
+            Logger.info("Template id: ", templateId)
 
 
             if (!fileBuffer) {
@@ -219,22 +210,15 @@ export default async function explorerController(fastify: FastifyInstance) {
             let aquaTreeFromFile: AquaTree = JSON.parse(fileContent);
 
 
-
-
             let aquaTree = removeFilePathFromFileIndex(aquaTreeFromFile);
 
             let [isValidAquaTree, failureReason] = validateAquaTree(aquaTree)
-            // console.log(`is aqua tree valid ${isValidAquaTree} `);
             if (!isValidAquaTree) {
-                // console.log(`failure reason ${failureReason}`)
                 return reply.code(412).send({ error: failureReason });
             }
 
-            // console.log(`\n has asset save file ${hasAsset}  `)
             // Handle the asset if it exists
             if (hasAsset && assetBuffer) {
-                // console.log(`---------------------------------------------------------------`)
-                // console.log(`\n has asset save file \n `)
                 // Process the asset - this depends on your requirements
                 // For example, you might want to store it separately or attach it to the aqua tree
                 // aquaTreeWithFileObject.assetData = assetBuffer.toString('base64');
@@ -251,10 +235,37 @@ export default async function explorerController(fastify: FastifyInstance) {
                     return reply.code(500).send({ error: 'Genesis hash not found in aqua tree' });
                 }
 
-                saveAttestationFileAndAquaTree(aquaTree, genesisHash, walletAddress)
-                
+                let serverAttestation = await saveAttestationFileAndAquaTree(aquaTree, genesisHash, walletAddress)
 
-                // let filepubkeyhash = `${session.address}_${genesisHash}`
+                if (serverAttestation != null) {
+
+                    let aquafier = new Aquafier()
+                    let aquaTreeWrapparOne: AquaTreeWrapper = {
+                        aquaTree: aquaTree,
+                        revision: "",
+                        fileObject: undefined
+                    }
+
+                    let aquaTreeWrapparTwo: AquaTreeWrapper = {
+                        aquaTree: serverAttestation.aquaTree,
+                        revision: "",
+                        fileObject: {
+                            fileContent: JSON.stringify(serverAttestation.attestationJSONfileData),
+                            fileName: serverAttestation.attestationJSONfileName,
+                            path:"",
+                            fileSize:0
+
+                        }
+                    }
+                    const linkeRes = await aquafier.linkAquaTree(aquaTreeWrapparOne, aquaTreeWrapparTwo)
+                    if (linkeRes.isErr()) {
+
+                        Logger.error(`Error linking attestation aqua tree: ${linkeRes.data}`);
+                        return reply.code(500).send({ error: `Error linking attestation aqua tree: ${linkeRes.data}` });
+                    }
+
+                    aquaTree = linkeRes.data.aquaTree!
+                }
                 let filepubkeyhash = `${walletAddress}_${genesisHash}`
 
                 let existingFileIndex = await prisma.fileIndex.findFirst({
@@ -277,7 +288,7 @@ export default async function explorerController(fastify: FastifyInstance) {
                 })
 
                 if (existingFileIndex != null) {
-                    console.log(`Update file index counter`)
+                    Logger.info(`Update file index counter`)
 
                     await prisma.fileIndex.update({
                         where: { file_hash: existingFileIndex.file_hash },
@@ -287,9 +298,7 @@ export default async function explorerController(fastify: FastifyInstance) {
                     });
 
 
-
                 } else {
-                    // console.log(`\n ## filepubkeyhash ${filepubkeyhash}`)
                     const UPLOAD_DIR = getFileUploadDirectory();
 
 
@@ -301,7 +310,6 @@ export default async function explorerController(fastify: FastifyInstance) {
                     const filePath = path.join(UPLOAD_DIR, filename);
 
                     // Save the file
-                    // await pump(data.file, fs.createWriteStream(filePath))
                     await fs.promises.writeFile(filePath, assetBuffer);
 
 
@@ -322,12 +330,7 @@ export default async function explorerController(fastify: FastifyInstance) {
 
                         }
                     })
-
-                  
-
                 }
-
-
             } else {
                 let genhash = getGenesisHash(aquaTree)
                 if (genhash == null) {
@@ -335,38 +338,22 @@ export default async function explorerController(fastify: FastifyInstance) {
                 }
                 let genRev = aquaTree.revisions[genhash!]
                 let fileHash = genRev.file_hash
-                console.log(`Request does not have asset buffer.... ${fileHash}`)
+                Logger.info(`Request does not have asset buffer.... ${fileHash}`)
                 let res = await prisma.file.findFirst({
                     where: {
-
                         file_hash: fileHash,
-
-
                     }
                 })
 
                 if (res == null) {
-
                     return reply.code(500).send({ error: `Asset is required , not found in system -- hasAsset ${hasAsset} -- assetBuffer ${assetBuffer}` });
                 }
-
-                // console.log(`failure reason ${failureReason}`)
             }
-
-            //  throw Error(`isWorkFlow ${isWorkFlow}  -- templateId ${templateId} `)
-            // console.log("Aquatree to save: ", aquaTree)
             // Save the aqua tree
-
-            console.log(`🧭🧭 ${isWorkFlow + "--"} `)
-            // await saveAquaTree(aquaTree, session.address, templateId.length == 0 ? null : templateId, isWorkFlow);
+            Logger.info(` ${isWorkFlow + "--"} `)
             await saveAquaTree(aquaTree, walletAddress, templateId.length == 0 ? null : templateId, isWorkFlow);
 
-
-
-            console.log(`Aquatree to db ${JSON.stringify(aquaTree, null, 4)}`)
-
-            // throw Error("check hash above")
-
+            Logger.info(`Aquatree to db ${JSON.stringify(aquaTree, null, 4)}`)
             // Get the host from the request headers
             const host = request.headers.host || `${getHost()}:${getPort()}`;
 
@@ -376,19 +363,6 @@ export default async function explorerController(fastify: FastifyInstance) {
             //DO NOT FETCH  API FILE INFO ASS THE WALLET ADDRES COULD BE OF ANOTHER USER 
             // REMEMBER CLAIM ATTESTATION SAVE FOR OTHER USERS 
             // THE FRON END  SHOULD USE FETCH API FILE INF0
-
-
-            // let displayData: Array<{
-            //     aquaTree: AquaTree;
-            //     fileObject: FileObject[];
-            // }> = []
-            // if (session.address == walletAddress) {
-
-            //     // Construct the full URL
-            //     const url = `${protocol}://${host}`;
-            //     displayData = await getUserApiFileInfo(url, walletAddress)
-            // }
-
             if (walletAddress !== session.address) {
                 try {
                     let sortedAquaTree = OrderRevisionInAquaTree(aquaTree)
@@ -399,31 +373,24 @@ export default async function explorerController(fastify: FastifyInstance) {
                         // Websocket message to the claimer
                         sendToUserWebsockerAMessage(claimerWalletAddress, WebSocketActions.REFETCH_FILES)
                     }
-                }
-                catch (e) {
-                    console.log(`Attestation Error ${e}`);
+                } catch (e) {
+                    Logger.error(`Attestation Error ${e}`);
                 }
             }
 
             return reply.code(200).send({
                 success: true,
-                message: 'Aqua tree saved successfully',
-                // files: displayData
+                message: 'Aqua tree saved successfully'
             });
-        } catch (error : any) {
-            console.error('\n\n Specific error in file/fileIndex creation:', error);
+        } catch (error: any) {
+            Logger.error('Specific error in file/fileIndex creation:', error);
             request.log.error(error);
             return reply.code(500).send({ error: `Error ${error}` });
         }
-
-
-
     });
 
     // get file using file hash
     fastify.get('/explorer_files', async (request, reply) => {
-        // const { fileHash } = request.params as { fileHash: string };
-        ////  // console.log(`Received fileHash: ${fileHash}`);
         // file content from db
         // return as a blob
 
@@ -480,10 +447,7 @@ export default async function explorerController(fastify: FastifyInstance) {
             return reply.code(403).send({ success: false, message: "Nounce  is invalid" });
         }
 
-
         let aquafier = new Aquafier();
-
-
 
         // Check if the request is multipart
         const isMultipart = request.isMultipart();
@@ -502,10 +466,10 @@ export default async function explorerController(fastify: FastifyInstance) {
             // Verify file size (20MB = 20 * 1024 * 1024 bytes)
             const maxFileSize = 25 * 1024 * 1024;
             if (data.file.bytesRead > maxFileSize) {
-                return reply.code(413).send({ 
+                return reply.code(413).send({
                     error: 'File too large. Maximum file size is 20MB',
-                  maxSize: '20MB',
-            receivedSize: `${Math.round(data.file.bytesRead / 1024 / 1024)}MB`
+                    maxSize: '20MB',
+                    receivedSize: `${Math.round(data.file.bytesRead / 1024 / 1024)}MB`
                 });
             }
 
@@ -537,9 +501,6 @@ export default async function explorerController(fastify: FastifyInstance) {
                 enableScalar = enableScalarField.value === 'true';
             }
 
-
-
-
             const fileBuffer: Buffer<ArrayBufferLike> = await streamToBuffer(data.file);
             // const buffer = Buffer.from([1, 2, 3, 4]);
             const uint8Array = new Uint8Array(fileBuffer);
@@ -556,11 +517,7 @@ export default async function explorerController(fastify: FastifyInstance) {
 
             if (isForm) {
                 let d = fileBuffer.toString('utf-8')
-                console.log(`fileBuffer as string: ${d}`)
-                // let one = JSON.parse(d)
-                // console.log(`one fileBuffer as string: ${one}`)
-                // let two = JSON.stringify(one, null, 2)
-                // console.log(`two fileBuffer as string: ${two}`)
+                Logger.info(`fileBuffer as string: ${d}`)
                 fileObjectPar.fileContent = d
             }
 
@@ -577,14 +534,7 @@ export default async function explorerController(fastify: FastifyInstance) {
                 enableContent,
                 isForm ? false : enableScalar
             )
-
-            // console.log(`Aqua tree ${JSON.stringify(res, null, 4)}`)
-            // throw Error(`check aqua tree above`)
-
             if (res.isErr()) {
-
-                console.log("^&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&")
-                console.log(`error`)
                 res.data.push({
                     log: `Error creating genesis revision`,
                     logType: LogType.ERROR
@@ -602,8 +552,7 @@ export default async function explorerController(fastify: FastifyInstance) {
             let genesisHash = getGenesisHash(resData);
 
             if (!genesisHash) {
-                console.log("^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^")
-                console.log(`error`)
+                Logger.error(`Genisis-Hash is empty!`)
                 return reply.code(500).send({ error: 'Genesis revision cannot be found' });
             }
 
@@ -613,8 +562,7 @@ export default async function explorerController(fastify: FastifyInstance) {
 
 
             if (!fileHash) {
-                console.log("^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^")
-                console.log(`error`)
+                Logger.error(`File hash missing from AquaTree response`)
                 return reply.code(500).send({ error: "File hash missing from AquaTree response" });
             }
 
@@ -629,18 +577,6 @@ export default async function explorerController(fastify: FastifyInstance) {
             }
 
             try {
-
-                // Parse the timestamp string into a valid Date object
-                // const localTimestamp = new Date(
-                //     Date.UTC(
-                //         parseInt(revisionData.local_timestamp.slice(0, 4)),   // Year
-                //         parseInt(revisionData.local_timestamp.slice(4, 6)) - 1,  // Month (0-indexed)
-                //         parseInt(revisionData.local_timestamp.slice(6, 8)),   // Day
-                //         parseInt(revisionData.local_timestamp.slice(8, 10)),  // Hours
-                //         parseInt(revisionData.local_timestamp.slice(10, 12)), // Minutes
-                //         parseInt(revisionData.local_timestamp.slice(12, 14))  // Seconds
-                //     )
-                // );
 
                 let filepubkeyhash = `${session.address}_${genesisHash}`
 
@@ -667,15 +603,12 @@ export default async function explorerController(fastify: FastifyInstance) {
                     },
                 });
 
-                // console.log(`one`)
-                // if is form add the form elements 
+                (`one`)
+                // if is form add the form elements
                 if (isForm) {
-                    // console.log(`two`)
                     let revisioValue = Object.keys(revisionData);
                     for (let formItem of revisioValue) {
-                        // console.log(`three ${formItem}`)
                         if (formItem.startsWith("forms_")) {
-                            // console.log(`four ${formItem}`)
                             let res = await prisma.aquaForms.create({
                                 data: {
                                     hash: filepubkeyhash,
@@ -684,11 +617,10 @@ export default async function explorerController(fastify: FastifyInstance) {
                                     type: typeof revisionData[formItem]
                                 }
                             });
-                            console.log(`Res ${JSON.stringify(res, null, 2)}`)
+                            Logger.info(`Res ${JSON.stringify(res, null, 2)}`)
                         }
                     }
                 }
-
 
                 let existingFileIndex = await prisma.fileIndex.findFirst({
                     where: { file_hash: fileHash },
@@ -704,7 +636,6 @@ export default async function explorerController(fastify: FastifyInstance) {
                         }
                     })
                 } else {
-
 
                     const UPLOAD_DIR = getFileUploadDirectory();
                     // Create unique filename
@@ -733,7 +664,6 @@ export default async function explorerController(fastify: FastifyInstance) {
                     })
 
 
-
                 }
                 await prisma.fileName.upsert({
                     where: {
@@ -751,9 +681,8 @@ export default async function explorerController(fastify: FastifyInstance) {
                     }
                 })
 
-            } catch (error : any) {
-                console.log("======================================")
-                console.log(`error ${error}`)
+            } catch (error: any) {
+                Logger.error(`error ${error}`)
                 let logs: LogData[] = []
                 logs.push({
                     log: `Error saving genesis revision`,
@@ -771,9 +700,8 @@ export default async function explorerController(fastify: FastifyInstance) {
                 aquaTree: resData,
                 fileObject: fileObject
             });
-        } catch (error : any) {
-            console.log("++++++++++++++++++++++++++++++++++++++=")
-            console.log(`error ${error}`)
+        } catch (error: any) {
+            Logger.error(`error ${error}`)
             request.log.error(error);
             return reply.code(500).send({ error: 'File upload failed' });
         }
@@ -811,7 +739,10 @@ export default async function explorerController(fastify: FastifyInstance) {
     fastify.post('/transfer_chain', async (request, reply) => {
 
         try {
-            const { latestRevisionHash, userAddress } = request.body as { latestRevisionHash: string, userAddress: string };
+            const { latestRevisionHash, userAddress } = request.body as {
+                latestRevisionHash: string,
+                userAddress: string
+            };
 
             // Read `nonce` from headers
             const nonce = request.headers['nonce']; // Headers are case-insensitive
@@ -845,7 +776,8 @@ export default async function explorerController(fastify: FastifyInstance) {
                     }
                 ]
             const entireChain = await fetchAquatreeFoUser(url, latest)//(latestRevisionHash, userAddress, url);
- 
+
+        
             // Check if the user exists (create if not)
             const targetUser = await prisma.users.findUnique({
                 where: { address: session.address }
@@ -862,11 +794,11 @@ export default async function explorerController(fastify: FastifyInstance) {
 
             }
             if (entireChain.length > 1) {
-                return reply.code(400).send({ success: false, message: "Multiple revisions found for the provided hash. Please provide a unique revision hash." });
+                return reply.code(400).send({
+                    success: false,
+                    message: "Multiple revisions found for the provided hash. Please provide a unique revision hash."
+                });
             }
-
-            // console.log("Just before transfer: ", JSON.stringify(entireChain[0], null, 4))
-            // throw new Error("Just before transfer");
 
             // Transfer the chain to the target user (session.address)
             const transferResult = await transferRevisionChainData(
@@ -888,7 +820,7 @@ export default async function explorerController(fastify: FastifyInstance) {
                 latestHashes: '' // transferResult.latestHashes
             });
         } catch (error: any) {
-            console.error("Error in transfer_chain operation:", error);
+            Logger.error("Error in transfer_chain operation:", error);
             return reply.code(500).send({
                 success: false,
                 message: `Error transferring chain: ${error.message}`,
@@ -899,7 +831,8 @@ export default async function explorerController(fastify: FastifyInstance) {
 
     fastify.post('/merge_chain', async (request, reply) => {
         try {
-            const { latestRevisionHash, userAddress, mergeStrategy } = request.body as {
+            const { latestRevisionHash, userAddress, mergeStrategy, currentUserLatestRevisionHash } = request.body as {
+                currentUserLatestRevisionHash: string,
                 latestRevisionHash: string,
                 userAddress: string,
                 mergeStrategy?: "replace" | "fork"  // Optional merge strategy
@@ -927,6 +860,9 @@ export default async function explorerController(fastify: FastifyInstance) {
 
             // Fetch the entire chain from the source user
             const entireChain = await fetchCompleteRevisionChain(latestRevisionHash, userAddress, url);
+            // const existingChain = await fetchCompleteRevisionChain("0x11616437260e1dfd8da7cec1ff253034f704f9d55a1aff1f2800f4797c041617", session.address, url)
+            // fs.writeFileSync("existing.json", JSON.stringify(existingChain))
+            // fs.writeFileSync("newchain.json", JSON.stringify(entireChain))
 
             // Check if the user exists (create if not)
             const targetUser = await prisma.users.findUnique({
@@ -944,7 +880,9 @@ export default async function explorerController(fastify: FastifyInstance) {
                 entireChain,
                 session.address,
                 userAddress,
-                mergeStrategy || "fork" // Use the provided strategy or default to "fork"
+                url,
+                mergeStrategy || "replace", // Use the provided strategy or default to "replace",
+                currentUserLatestRevisionHash
             );
 
             if (!mergeResult.success) {
@@ -962,7 +900,7 @@ export default async function explorerController(fastify: FastifyInstance) {
                 strategy: mergeResult.strategy
             });
         } catch (error: any) {
-            console.error("Error in merge_chain operation:", error);
+            Logger.error("Error in merge_chain operation:", error);
             return reply.code(500).send({
                 success: false,
                 message: `Error merging chain: ${error.message}`,

@@ -1,21 +1,47 @@
-import { useEffect, useState } from 'react'
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
-import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Avatar, AvatarFallback } from '@/components/ui/avatar'
-import { Progress } from '@/components/ui/progress'
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
-import { FileText, Users, Clock, CheckCircle, AlertCircle, MoreHorizontal, Eye, Trash2, Download, Send, Plus } from 'lucide-react'
+import {useEffect, useState} from 'react'
+import {Table, TableBody, TableCell, TableHead, TableHeader, TableRow} from '@/components/ui/table'
+import {Badge} from '@/components/ui/badge'
+import {Button} from '@/components/ui/button'
+import {Card, CardContent, CardHeader, CardTitle} from '@/components/ui/card'
+import {Avatar, AvatarFallback} from '@/components/ui/avatar'
+import {Progress} from '@/components/ui/progress'
+import {
+      DropdownMenu,
+      DropdownMenuContent,
+      DropdownMenuItem,
+      DropdownMenuLabel,
+      DropdownMenuSeparator,
+      DropdownMenuTrigger
+} from '@/components/ui/dropdown-menu'
+import {
+      AlertCircle,
+      CheckCircle,
+      Clock,
+      Download,
+      Eye,
+      FileText,
+      MoreHorizontal,
+      Plus,
+      Send,
+      Trash2,
+      Users
+} from 'lucide-react'
 import appStore from '@/store'
-import { useStore } from 'zustand'
-import { displayTime, getAquaTreeFileName, getAquaTreeFileObject, getGenesisHash, isWorkFlowData, processContractInformation } from '@/utils/functions'
-import { FileObject } from 'aqua-js-sdk'
-import { IContractInformation } from '@/types/contract_workflow'
-import { DownloadAquaChain } from '../../components/aqua_chain_actions/download_aqua_chain'
-import { OpenAquaSignWorkFlowButton } from '../../components/aqua_chain_actions/open_aqua_sign_workflow'
-import { DeleteAquaChain } from '../../components/aqua_chain_actions/delete_aqua_chain'
-import { IWorkflowItem } from '@/types/types'
+import {useStore} from 'zustand'
+import {
+      displayTime,
+      getAquaTreeFileName,
+      getAquaTreeFileObject,
+      getGenesisHash,
+      isWorkFlowData,
+      processContractInformation
+} from '@/utils/functions'
+import {FileObject} from 'aqua-js-sdk'
+import {IContractInformation} from '@/types/contract_workflow'
+import {DownloadAquaChain} from '../../components/aqua_chain_actions/download_aqua_chain'
+import {OpenAquaSignWorkFlowButton} from '../../components/aqua_chain_actions/open_aqua_sign_workflow'
+import {DeleteAquaChain} from '../../components/aqua_chain_actions/delete_aqua_chain'
+import {IWorkflowItem} from '@/types/types'
 import WalletAdrressClaim from '../v2_claims_workflow/WalletAdrressClaim'
 
 const getStatusIcon = (status: string) => {
@@ -49,7 +75,6 @@ const getStatusColor = (status: string) => {
 }
 
 const getProgressPercentage = (total: number, remaining: number) => {
-      //  console.log('Calculating progress percentage:', { total, remaining })
       if (total === 0) return 0 // Avoid division by zero
       return ((total - remaining) / total) * 100
 }
@@ -240,7 +265,6 @@ export default function WorkflowsTablePage() {
                   try {
                         return getAquaTreeFileName(e.aquaTree!)
                   } catch (e) {
-                        //  console.log('Error processing system file') // More descriptive
                         return ''
                   }
             })
@@ -249,7 +273,6 @@ export default function WorkflowsTablePage() {
             files.fileData.forEach(file => {
                   // const fileObject = getAquaTreeFileObject(file);
                   const { workFlow, isWorkFlow } = isWorkFlowData(file.aquaTree!, someData)
-                  // //  console.log('Processing file:', JSON.stringify(file.aquaTree?, null,), 'WorkFlow:', workFlow, 'isWorkFlow:', isWorkFlow)
                   if (isWorkFlow && workFlow === 'aqua_sign') {
                         // setWorkflows((prev : IWorkflowItem[]) => {
 
@@ -273,7 +296,6 @@ export default function WorkflowsTablePage() {
       }
 
       useEffect(() => {
-             //  console.log('____Rendering WorkflowsTablePage, files length:', files.fileData.length, 'systemFileInfo length:', systemFileInfo.length)
             processFilesToGetWorkflows()
       }, [files.fileData.map(e => Object.keys(e?.aquaTree?.file_index ?? {})).join(','), systemFileInfo.map(e => Object.keys(e?.aquaTree?.file_index??{})).join(',')])
 
@@ -296,7 +318,6 @@ export default function WorkflowsTablePage() {
                                                       onClose: () => setOpenDialog(null),
                                                       onConfirm: () => {
                                                             // Handle confirmation logic here
-                                                            //  console.log('Workflow created with data:', data)
                                                       }
                                                 })
                                           }}
@@ -327,7 +348,6 @@ export default function WorkflowsTablePage() {
                                                             onClose: () => setOpenDialog(null),
                                                             onConfirm: () => {
                                                                   // Handle confirmation logic here
-                                                                  //  console.log('Workflow created with data:', data)
                                                             }
                                                       })
                                                 }}

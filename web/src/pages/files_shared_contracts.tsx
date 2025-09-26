@@ -4,17 +4,19 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
-import { FileText, Users, Hash, Wallet, X } from 'lucide-react'
+import { CircleCheckBigIcon, FileText, Hash, Users, Wallet, X } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import axios from 'axios'
 import { useStore } from 'zustand'
 import appStore from '@/store'
-import { formatCryptoAddress, timeToHumanFriendly } from '@/utils/functions'
+import { arraysEqualIgnoreOrder, formatCryptoAddress, getGenesisHash, timeToHumanFriendly } from '@/utils/functions'
 import { Contract } from '@/types/types'
 import WalletAddresClaim from "./../pages/v2_claims_workflow/WalletAdrressClaim"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { toast } from 'sonner'
+import { ApiFileInfo } from '@/models/FileInfo'
+
 
 export const SharedContract = ({ contract, index, contractDeleted }: { contract: Contract; index: number; contractDeleted: (hash: string) => void }) => {
       const navigate = useNavigate()
@@ -226,10 +228,123 @@ export const SharedContract = ({ contract, index, contractDeleted }: { contract:
 
                                     </div>
                               </div>
+                              {/* Green Button in Top Right */}
+                              <CheckIfAquaTreeIsImported contractHash={contract.hash} />
                         </div>
                   </CardContent>
             </Card>
       )
+}
+
+
+export function CheckIfAquaTreeIsImported({ contractHash }: { contractHash: string }) {
+      const [exactMatchFound, setExactMatchFound] = useState<boolean>(false)
+      const [loading, setLoading] = useState(true)
+      const { backend_url, session, files } = useStore(appStore)
+      //  const [fileInfo, setFileInfo] = useState<ApiFileInfo | null>(null)
+
+      const loadPageData = async () => {
+            try {
+                  setLoading(true)
+                  const url = `${backend_url}/share_data/${contractHash}`
+                  const response = await axios.get(url, {
+                        headers: {
+                              'Content-Type': 'application/x-www-form-urlencoded',
+                              nonce: session?.nonce ?? '',
+                        },
+                  })
+
+
+                  let apiFile = response.data.data.displayData[0] as ApiFileInfo
+
+
+                  if (apiFile) {
+
+                        let contractFileGenHash = getGenesisHash(apiFile.aquaTree!)
+
+                        for (let fileItem of files.fileData) {
+
+                              let currentGeesisHash = getGenesisHash(fileItem.aquaTree!)
+
+                              if (currentGeesisHash == contractFileGenHash) {
+
+                                    let allHashesInFileItem = Object.keys(fileItem.aquaTree!.revisions)
+                                    let allHashesInContract = Object.keys(apiFile.aquaTree!.revisions)
+
+                                    let allHashesMatch = arraysEqualIgnoreOrder(allHashesInFileItem, allHashesInContract)
+                                    if (allHashesMatch) {
+                                          setExactMatchFound(true)
+                                    }
+                                    //file exist
+                                    break;
+                              }
+                        }
+                  }
+
+                  setLoading(false)
+            } catch (error: any) {
+                  if (error.response.status == 401) {
+                  } else if (error.response.status == 404) {
+                        toast.error(`File could not be found (probably it was deleted)`)
+                  } else if (error.response.status == 412) {
+                        toast.error(`File not found or no permission for access granted.`)
+                  } else {
+                        toast.error(`Error : ${error}`)
+                  }
+                  console.error(error)
+
+                  toast.error(`Error fetching data`)
+            }
+
+      }
+      useEffect(() => {
+
+            if (contractHash) {
+                  loadPageData()
+            }
+      }, [])
+
+      if (loading) {
+            return <Button
+                  variant="default"
+                  size="sm"
+                  className={`bg-green-600 hover:bg-green-700 text-white disabled:bg-green-400 disabled:cursor-not-allowed `}
+                  disabled={true}
+                  onClick={(e) => {
+                        e.stopPropagation();
+                        //   if (onClick && !isLoading) {
+                        //     onClick(e);
+                        //   }
+                  }}
+
+            >
+
+                  <div className="flex items-center gap-2">
+                        {/* Circular Loading Spinner */}
+                        <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                        <span>checking if file is imported...</span>
+                  </div>
+
+            </Button>
+      }
+
+      if (exactMatchFound) {
+            return <div className="flex-shrink-0 ml-4">
+                  <Button
+                        variant="default"
+                        size="sm"
+                        className="bg-green-600 hover:bg-green-700 text-white"
+                        onClick={(e) => {
+                              e.stopPropagation();
+                              // Add your click handler here
+                              console.log('Green button clicked');
+                        }}
+                  >
+                        File has been Imported  <CircleCheckBigIcon />
+                  </Button>
+            </div>
+      }
+      return <div />
 }
 
 export function SharedContracts() {
@@ -259,8 +374,6 @@ export function SharedContracts() {
                   console.error(error)
             }
       }
-      // //  console.log(contracts)
-
       useEffect(() => {
             loadAccountSharedContracts()
       }, [backend_url, session])
@@ -292,12 +405,12 @@ export function SharedContracts() {
                               {/* Contracts List */}
                               <div className="flex-1 overflow-auto p-0">
                                     <div className="space-y-4">
-                                          <Tabs defaultValue="account">
+                                          <Tabs defaultValue="incoming">
                                                 <TabsList>
-                                                      <TabsTrigger value="account">Incoming</TabsTrigger>
-                                                      <TabsTrigger value="password">Outgoing</TabsTrigger>
+                                                      <TabsTrigger value="incoming">Incoming</TabsTrigger>
+                                                      <TabsTrigger value="outgoing">Outgoing</TabsTrigger>
                                                 </TabsList>
-                                                <TabsContent value="account">
+                                                <TabsContent value="incoming">
                                                       {shareContracts.filter(contract => contract.recipients?.map((e) => e.toLocaleLowerCase()).includes(session?.address?.toLocaleLowerCase()!!)).map((contract, index) => (
                                                             <SharedContract
                                                                   key={`${contract.hash}`}
@@ -325,7 +438,7 @@ export function SharedContracts() {
                                                             </div>
                                                       )}
                                                 </TabsContent>
-                                                <TabsContent value="password">
+                                                <TabsContent value="outgoing">
                                                       {shareContracts.filter(contract => contract.sender?.toLocaleLowerCase() == session?.address?.toLocaleLowerCase()).map((contract, index) => (
                                                             <SharedContract
                                                                   key={`${contract.hash}`}

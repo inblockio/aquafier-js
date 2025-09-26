@@ -2,9 +2,18 @@ import React, { useState } from 'react'
 import appStore from '../store'
 import { useStore } from 'zustand'
 import FilesList from './files_list'
-import { Upload, Plus, FolderPlus, X, CheckCircle, AlertCircle, Loader2, FileText, Minimize2 } from 'lucide-react'
+import { AlertCircle, CheckCircle, FileText, FolderPlus, Loader2, Minimize2, Plus, Upload, X } from 'lucide-react'
 import { FileItemWrapper, UploadStatus } from '@/types/types'
-import { checkIfFileExistInUserFiles, fetchFiles, getAquaTreeFileName, isAquaTree, isJSONFile, isJSONKeyValueStringContent, isZipFile, readFileContent } from '@/utils/functions'
+import {
+      checkIfFileExistInUserFiles,
+      fetchFiles,
+      getAquaTreeFileName,
+      isAquaTree,
+      isJSONFile,
+      isJSONKeyValueStringContent,
+      isZipFile,
+      readFileContent
+} from '@/utils/functions'
 import { maxFileSizeForUpload } from '@/utils/constants'
 import axios from 'axios'
 
@@ -137,7 +146,6 @@ const FilesPage = () => {
       const filesForUpload = async (selectedFiles: File[]) => {
             const newUploads: UploadStatus[] = []
             for (const file of selectedFiles) {
-                  //  console.log(`Files for  upload ${file.name} .....`)
                   const isJson = isJSONFile(file.name)
                   const isZip = isZipFile(file.name)
                   if (isJson || isZip) {
@@ -148,17 +156,12 @@ const FilesPage = () => {
                                     const content = await readFileContent(file)
                                     const contentStr = content as string
                                     const isForm = isJSONKeyValueStringContent(contentStr)
-                                    //  console.log(`isForm ${isForm}`)
                                     if (isForm) {
                                           isJsonForm = true
                                     }
 
                                     const jsonData = JSON.parse(contentStr)
                                     const isAquaTreeData = isAquaTree(jsonData)
-                                    // const _r = typeof jsonData === 'object'
-                                    // const _r2 = 'revisions' in jsonData
-                                    // const _r3 = 'file_index' in jsonData
-                                    //  console.log(`isAquaTreeData  ${isAquaTreeData} contentStr ${contentStr} r ${r} r2 ${r2} r3 ${r3}`)
                                     if (isAquaTreeData) {
                                           isJsonAquaTreeData = isAquaTreeData
                                     }
@@ -184,13 +187,8 @@ const FilesPage = () => {
                                     isJsonForm: isJsonForm,
                                     isJsonAquaTreeData: isJsonAquaTreeData,
                               }
-
-                              //  console.log(`fileItemWrapper ${JSON.stringify(fileItemWrapper, null, 4)}`)
                               setFilesListForUpload(prev => [...prev, fileItemWrapper])
-
                         } else {
-                              //  console.log(`File ${file.name} already exists in upload list`)
-
                               toast.error(`1. Error file exist in upload list`)
                         }
                   } else {
@@ -210,7 +208,6 @@ const FilesPage = () => {
                                     isZip: isZip,
                               })
                         } else {
-                              //  console.log(`=== File ${file.name} already exists in upload list`)
                               toast.error(`1. Error file exist in upload list`)
                         }
                   }
@@ -230,7 +227,6 @@ const FilesPage = () => {
       const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
             const selectedFiles = Array.from(e.target.files ?? [])
             if (selectedFiles.length === 0) {
-                  //  console.log(`handleFileChange is zero `)
                   return
             }
             await filesForUpload(selectedFiles)
@@ -583,9 +579,9 @@ const FilesPage = () => {
                   </div>
 
                   <div className="w-full max-w-full box-border overflow-x-hidden bg-white p-6">
-                      
+
                         {
-                              (files.status === 'loading' || files.status === 'idle')  ? (
+                              (files.status === 'loading' || files.status === 'idle') ? (
                                     <div className="flex justify-center items-center h-40">
                                           <Loader2 className="w-6 h-6 text-gray-500 animate-spin" />
                                     </div>
@@ -596,12 +592,14 @@ const FilesPage = () => {
                                     {files.fileData.length == 0 ? (
                                           <FileDropZone
                                                 setFiles={(files: File[]) => {
-                                                      //  console.log(`call back here `)
                                                       filesForUpload(files)
                                                 }}
                                           />
                                     ) : (
-                                          <FilesList />
+
+                                          <FilesList selectedFiles={[]} activeFile={null} showFileActions={true} showCheckbox={false} showHeader={true} onFileDeSelected={() => { }} onFileSelected={() => {
+
+                                          }} />
                                     )}
                               </>
                         }
@@ -730,9 +728,22 @@ const FilesPage = () => {
                                           ))}
 
                                           {uploadQueue.some(upload => upload.status === 'success') && (
-                                                <div className="flex justify-end pt-2">
-                                                      <Button data-testid="clear-completed-button" variant="outline" size="sm" onClick={clearCompletedUploads}>
+                                                <div className="flex justify-end gap-2 pt-2">
+                                                      <Button
+                                                            data-testid="clear-completed-button"
+                                                            variant="outline"
+                                                            size="sm"
+                                                            onClick={clearCompletedUploads}
+                                                      >
                                                             Clear completed
+                                                      </Button>
+                                                      <Button
+                                                            data-testid="close-button"
+                                                            variant="destructive"
+                                                            size="sm"
+                                                            onClick={() => setIsUploadDialogOpen(false)}
+                                                      >
+                                                            Close
                                                       </Button>
                                                 </div>
                                           )}

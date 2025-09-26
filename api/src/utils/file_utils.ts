@@ -3,8 +3,8 @@ import {fileURLToPath} from "url";
 import * as process from "node:process";
 import * as fs from "node:fs";
 import {getBucketName, getMinioClient, minioClientCompleted} from "./s3Utils";
-import stream from "node:stream";
- 
+import Logger from "./Logger";
+
 const getAquaAssetDirectory = (): string => {
     // Get the equivalent of __dirname in ES modules
     const __filename = fileURLToPath(import.meta.url);
@@ -86,7 +86,11 @@ const readFileContent = async (file: File): Promise<string | Uint8Array> => {
         // If it's a text file, read as text
         return await readFileAsText(file);
     } else {
-        console.log("binary data....")
+        Logger.debug("Reading binary file", {
+            name: file.name,
+            size: file.size,
+            type: file.type
+        })
         // Otherwise for binary files, read as ArrayBuffer
         const res = await readFileAsArrayBuffer(file)
         return new Uint8Array(res);
@@ -266,7 +270,10 @@ async function s3Available(): Promise<boolean> {
                 await minioClient.makeBucket(getBucketName());
             }
         } catch (e) {
-            console.warn("Cannot use the s3 store!", e);
+            Logger.warn("Cannot use the S3 store", {
+                bucket: getBucketName(),
+                err: e
+            });
             return false
         }
         return true;
@@ -360,7 +367,7 @@ async function getFileSize(path: string): Promise<number | undefined | null> {
                 const data = await getMinioClient().statObject(bucket, filePath)
                 return data.size;
             } catch (e) {
-                console.error(e);
+                Logger.error(e);
                 return null
             }
         }

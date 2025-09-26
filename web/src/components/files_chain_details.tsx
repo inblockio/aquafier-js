@@ -1,17 +1,25 @@
 import FilePreview from '@/components/file_preview'
-import { ICompleteChainView, VerificationHashAndResult } from '@/models/AquaTreeDetails'
+import {ICompleteChainView, VerificationHashAndResult} from '@/models/AquaTreeDetails'
 import appStore from '@/store'
-import { ensureDomainUrlHasSSL, getFileName, getFileHashFromUrl, isArrayBufferText, isWorkFlowData, isValidUrl, isHttpUrl } from '@/utils/functions'
-import Aquafier, { LogData, getAquaTreeFileName, getAquaTreeFileObject, OrderRevisionInAquaTree } from 'aqua-js-sdk'
-import { ChevronUp, ChevronDown } from 'lucide-react'
-import { useCallback, useEffect, useState, Suspense } from 'react'
-import { useStore } from 'zustand'
-import { Button } from './ui/button'
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from './ui/collapsible'
-import { RevisionDisplay } from './files_revision_display'
+import {
+    ensureDomainUrlHasSSL,
+    getFileHashFromUrl,
+    getFileName,
+    isArrayBufferText,
+    isHttpUrl,
+    isValidUrl,
+    isWorkFlowData
+} from '@/utils/functions'
+import Aquafier, {getAquaTreeFileName, getAquaTreeFileObject, LogData, OrderRevisionInAquaTree} from 'aqua-js-sdk'
+import {ChevronDown, ChevronUp} from 'lucide-react'
+import {Suspense, useCallback, useEffect, useState} from 'react'
+import {useStore} from 'zustand'
+import {Button} from './ui/button'
+import {Collapsible, CollapsibleContent, CollapsibleTrigger} from './ui/collapsible'
+import {RevisionDisplay} from './files_revision_display'
 import ErrorBoundary from './error_boundary'
-import { CustomAlert } from './ui/alert-custom'
-import { RevisionDetailsSummary } from './files_revision_details'
+import {CustomAlert} from './ui/alert-custom'
+import {RevisionDetailsSummary} from './files_revision_details'
 
 export const CompleteChainView = ({ callBack, selectedFileInfo }: ICompleteChainView) => {
       const [showMoreDetails, setShowMoreDetails] = useState(false)
@@ -46,7 +54,6 @@ export const CompleteChainView = ({ callBack, selectedFileInfo }: ICompleteChain
                   })
                   if (!response.ok) throw new Error('Failed to fetch file')
                   const contentType = response.headers.get('Content-Type') || ''
-                  //  console.log('Content type: ', contentType)
                   if (contentType.startsWith('text/') || ['application/json', 'application/xml', 'application/javascript'].includes(contentType)) {
                         return await response.text()
                   }
@@ -144,7 +151,6 @@ export const CompleteChainView = ({ callBack, selectedFileInfo }: ICompleteChain
                   setSelectedFileAWorkFlow(isWorkFlowData(selectedFileInfo.aquaTree!, names).isWorkFlow)
             }
       }, [JSON.stringify(Object.keys(selectedFileInfo?.aquaTree?.revisions || {})), deletedRevisions.length])
-//  console.log(selectedFileInfo)
       return (
             <div className=" h-full">
                   <div className="grid grid-cols-1 md:grid-cols-12 gap-4 h-full">

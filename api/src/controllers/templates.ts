@@ -1,11 +1,11 @@
-import { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
-import { prisma } from '../database/db';
-import { AquaFormRequest, AquaFormFieldRequest, SettingsRequest, UserAttestationAddressesRequest } from '../models/request_models';
-import { fetchEnsName, saveTemplateFileData } from '../utils/api_utils';
-import { authenticate, AuthenticatedRequest } from '../middleware/auth_middleware';
-import { AquaTemplateFields, AquaTemplate, UserAttestationAddresses } from '@prisma/client';
-import Aquafier, { AquaTree, FileObject } from 'aqua-js-sdk';
-import { deleteAquaTreeFromSystem, saveAquaTree } from '../utils/revisions_utils';
+import {FastifyInstance, FastifyRequest} from 'fastify';
+import {prisma} from '../database/db';
+import {AquaFormRequest} from '../models/request_models';
+import {saveTemplateFileData} from '../utils/api_utils';
+import {authenticate, AuthenticatedRequest} from '../middleware/auth_middleware';
+import Aquafier, {AquaTree, FileObject} from 'aqua-js-sdk';
+import {deleteAquaTreeFromSystem, saveAquaTree} from '../utils/revisions_utils';
+import Logger from "../utils/Logger"; 
 
 export default async function templatesController(fastify: FastifyInstance) {
 
@@ -123,9 +123,9 @@ export default async function templatesController(fastify: FastifyInstance) {
 
             if (results != null) {
 
-                console.log(`🫠🫠 results.hash --${JSON.stringify(results.hash, null, 4)}`)
+                Logger.info(`results.hash --${JSON.stringify(results.hash, null, 4)}`)
                 let response = await deleteAquaTreeFromSystem(request.user?.address ?? "-", results.hash)
-                console.log(`🫠🫠  Respmnse ${response}`)
+                Logger.info("Template delete result", {response})
                 if (response[0] != 200) {
                     return reply.code(response[0]).send({ success: response[0] == 200 ? true : false, message: response[1] });
 
@@ -279,7 +279,7 @@ export default async function templatesController(fastify: FastifyInstance) {
                 return reply.code(500).send({ success: true, logs: resIdentityAquaTree.data });
             }
         } catch (error : any) {
-            console.error("Error creating template:", error);
+            Logger.error("Error creating template:", error);
             return reply.code(500).send({ success: false, message: "Failed to create template" });
         }
     });
@@ -287,7 +287,7 @@ export default async function templatesController(fastify: FastifyInstance) {
     fastify.put('/templates/:templateId', { preHandler: authenticate }, async (request: AuthenticatedRequest, reply) => {
         const aquaFormdata = request.body as AquaFormRequest;
 
-        console.log("Update: ", aquaFormdata)
+        Logger.info("Update: ", aquaFormdata)
 
         let [isValid, reason] = validateAquaModel(aquaFormdata);
 
@@ -340,7 +340,7 @@ export default async function templatesController(fastify: FastifyInstance) {
 
             return reply.code(200).send({ success: true });
         } catch (error : any) {
-            console.error("Error creating template:", error);
+            Logger.error("Error creating template:", error);
             return reply.code(500).send({ success: false, message: "Failed to create template" });
         }
     });

@@ -1,50 +1,52 @@
-import Aquafier, { AquaTree, CredentialsData, Err, getEntropy } from "aqua-js-sdk";
-import { Mnemonic, Wallet, } from "ethers";
-import { ServerWalletInformation } from "../models/types";
-
-import { ethers } from 'ethers';
-import { getFileUploadDirectory } from "./file_utils";
+import Aquafier, {AquaTree, CredentialsData} from "aqua-js-sdk";
+import {ethers,} from "ethers";
+import {ServerWalletInformation} from "../models/types";
+import {getFileUploadDirectory} from "./file_utils";
 import fs from 'fs';
 import path from 'path';
-import { prisma } from "../database/db";
-import { randomUUID } from "crypto";
-import { isWorkFlowData, saveAquaTree } from "./revisions_utils";
-import { serverAttestation } from "./server_attest";
-import { systemTemplateHashes } from "../models/constants";
-import { getGenesisHash } from "./aqua_tree_utils";
+import {prisma} from "../database/db";
+import {randomUUID} from "crypto";
+import {isWorkFlowData, saveAquaTree} from "./revisions_utils";
+import {serverAttestation} from "./server_attest";
+import {systemTemplateHashes} from "../models/constants";
+import {getGenesisHash} from "./aqua_tree_utils";
+import Logger from "./Logger";
 
 
 // Basic random number function
 export function getRandomNumber(min: number, max: number): number | null {
-      // Ensure min and max are numbers
-      min = Number(min)
-      max = Number(max)
+    // Ensure min and max are numbers
+    min = Number(min)
+    max = Number(max)
 
-      // Validate inputs
-      if (isNaN(min) || isNaN(max)) {
-            console.log('Please provide valid numbers')
-            return null
-      }
+    // Validate inputs
+    if (isNaN(min) || isNaN(max)) {
+        Logger.warn('Please provide valid numbers')
+        return null
+    }
 
-      // Swap if min is greater than max
-      if (min > max) {
-            ;[min, max] = [max, min]
-      }
+    // Swap if min is greater than max
+    if (min > max) {
+        ;[min, max] = [max, min]
+    }
 
-      // Generate random number between min and max (inclusive)
-      return Math.floor(Math.random() * (max - min + 1)) + min
+    // Generate random number between min and max (inclusive)
+    return Math.floor(Math.random() * (max - min + 1)) + min
 }
 
 
-export async function saveAttestationFileAndAquaTree(aquaTree: AquaTree, genesisHashOfFile: string, walletAddress: string) {
-
+export async function saveAttestationFileAndAquaTree(aquaTree: AquaTree, genesisHashOfFile: string, walletAddress: string) :Promise<{
+    aquaTree : AquaTree,
+    attestationJSONfileData : Object, 
+    attestationJSONfileName : string
+} | null> {
 
     // Logic to check and attest an aquatree if its a phone number claim or email_claim
     let workflowDataResponse = isWorkFlowData(aquaTree, systemTemplateHashes)
     // throw new Error(`workflowDataResponse ${JSON.stringify(workflowDataResponse)}`)
     if (workflowDataResponse.isWorkFlow && (workflowDataResponse.workFlow.includes("phone_number_claim") || workflowDataResponse.workFlow.includes("email_claim"))) {
-        let serverAttestationInfo = await serverAttestation(genesisHashOfFile)
-       
+        let serverAttestationInfo = await serverAttestation(genesisHashOfFile, walletAddress)
+
         if (serverAttestationInfo) {
             const attestedData = serverAttestationInfo
 
@@ -73,7 +75,7 @@ export async function saveAttestationFileAndAquaTree(aquaTree: AquaTree, genesis
             }
 
             let existingFileIndex = await prisma.fileIndex.findFirst({
-                where: { file_hash: fileHash },
+                where: {file_hash: fileHash},
             });
 
             // Create unique filename
@@ -92,19 +94,17 @@ export async function saveAttestationFileAndAquaTree(aquaTree: AquaTree, genesis
             })
 
             if (existingFileIndex != null) {
-                console.log(`Update file index counter`)
+                Logger.info(`Update file index counter`)
 
                 await prisma.fileIndex.update({
-                    where: { file_hash: existingFileIndex.file_hash },
+                    where: {file_hash: existingFileIndex.file_hash},
                     data: {
                         pubkey_hash: [...existingFileIndex.pubkey_hash, filepubkeyhash]//`${session.address}_${genesisHash}`]
                     }
                 });
 
 
-
             } else {
-                // console.log(`\n ## filepubkeyhash ${filepubkeyhash}`)
                 const UPLOAD_DIR = getFileUploadDirectory();
 
 
@@ -139,14 +139,15 @@ export async function saveAttestationFileAndAquaTree(aquaTree: AquaTree, genesis
                 })
 
 
-
             }
 
             saveAquaTree(attestedData.aquaTree, walletAddress, null, false)
 
 
+            return serverAttestationInfo
         }
     }
+    return null
 }
 
 export async function createEthAccount() {
@@ -160,10 +161,7 @@ export async function createEthAccount() {
         const publicKey = wallet.publicKey;
         const privateKey = wallet.privateKey;
 
-        console.log("Mnemonic", mnemonic)
-        console.log("Wallet Address", walletAddress)
-        console.log("Public Key", publicKey)
-        console.log("Private Key", privateKey)
+        Logger.info("Created ephemeral Ethereum wallet")
 
         return {
             mnemonic,
@@ -171,8 +169,8 @@ export async function createEthAccount() {
             publicKey,
             privateKey
         };
-    } catch (error : any) {
-        console.error('Error creating Ethereum account:', error);
+    } catch (error: any) {
+        Logger.error('Error creating Ethereum account:', error);
         throw new Error('Failed to create Ethereum account');
     }
 }
@@ -181,10 +179,9 @@ export async function getServerWalletInformation(): Promise<ServerWalletInformat
     try {
         // Get mnemonic from environment variables
         const mnemonic = process.env.SERVER_MNEMONIC!;
-        console.log("Mnemonic", mnemonic)
 
         if (!mnemonic) {
-            console.error('SERVER_MNEMONIC environment variable is not set');
+            Logger.error('SERVER_MNEMONIC environment variable is not set');
             return null;
         }
 
@@ -193,13 +190,13 @@ export async function getServerWalletInformation(): Promise<ServerWalletInformat
         const validLengths = [12, 15, 18, 21, 24];
 
         if (!validLengths.includes(words.length)) {
-            console.error(`Invalid mnemonic length: ${words.length} words. Must be 12, 15, 18, 21, or 24 words.`);
+            Logger.error(`Invalid mnemonic length: ${words.length} words. Must be 12, 15, 18, 21, or 24 words.`);
             return null;
         }
 
         // Validate mnemonic using ethers
         if (!ethers.Mnemonic.isValidMnemonic(mnemonic)) {
-            console.error('Invalid mnemonic phrase - contains invalid words or checksum');
+            Logger.error('Invalid mnemonic phrase - contains invalid words or checksum');
             return null;
         }
 
@@ -218,8 +215,7 @@ export async function getServerWalletInformation(): Promise<ServerWalletInformat
             publicKey
         };
     } catch (error: any) {
-        console.error('Error getting server wallet information:', error);
-        console.error('Error details:', error.message);
+        Logger.error('Error getting server wallet information', {err: error})
         return null;
     }
 }
@@ -238,7 +234,7 @@ export function dummyCredential(): CredentialsData {
 
 
 export async function saveAquaFile(aquaTree: AquaTree, assetBuffer: Buffer, genesisHash: string,
-    fileHash: string, fileName: string, filepubkeyhash: string) {
+                                   fileHash: string, fileName: string, filepubkeyhash: string) {
     const UPLOAD_DIR = getFileUploadDirectory();
 
     const aquafier = new Aquafier();
@@ -275,17 +271,16 @@ export async function saveAquaFile(aquaTree: AquaTree, assetBuffer: Buffer, gene
 
 export function ensureDomainViewForCors(domain?: string): string[] {
     const domains: string[] = []
-    
-    if(!domain){
+
+    if (!domain) {
         return domains
     }
-    if(domain.startsWith("http")){
+    if (domain.startsWith("http")) {
         domains.push(domain)
-    }
-    else{
+    } else {
         domains.push(`https://${domain}`)
         domains.push(`http://${domain}`)
     }
-    
+
     return domains
 }

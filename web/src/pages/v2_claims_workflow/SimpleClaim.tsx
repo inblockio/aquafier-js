@@ -1,5 +1,7 @@
 import { HiShieldCheck } from 'react-icons/hi'
 import { formatCryptoAddress } from '@/utils/functions'
+import { Mail, Phone } from 'lucide-react'
+import CopyButton from '@/components/CopyButton'
 
 interface ISimpleClaim {
       claimInfo: Record<string, string>
@@ -7,17 +9,52 @@ interface ISimpleClaim {
 
 const SimpleClaim = ({ claimInfo }: ISimpleClaim) => {
       // Extract relevant information from claimInfo
-      const claimName = 'Simple Claim'
-      const description = 'A basic, standard claim type.'
-      const date =
-            claimInfo['forms_created_at'] ||
-            claimInfo['date'] ||
-            new Date().toLocaleDateString('en-US', {
-                  month: 'short',
-                  day: 'numeric',
-                  year: 'numeric',
-            })
-      const verifiedTo = claimInfo['forms_name']
+
+      function getClaimTitle(claimType: string) {
+            if (claimType === 'simple_claim') {
+                  return 'Simple Claim'
+            } else if (claimType === 'phone_number_claim') {
+                  return 'Phone Number Claim'
+            } else if (claimType === 'email_claim') {
+                  return 'Email Claim'
+            }
+            return 'Unknown Claim'
+      }
+
+      function getClaimDescription(claimType: string) {
+            if (claimType === 'simple_claim') {
+                  return 'A basic, standard claim type.'
+            } else if (claimType === 'phone_number_claim') {
+                  return 'A claim that verifies a phone number.'
+            } else if (claimType === 'email_claim') {
+                  return 'A claim that verifies an email address.'
+            }
+            return 'Unknown Claim'
+      }
+      function getClaimIcon(claimType: string) {
+            if (claimType === 'simple_claim') {
+                  return <HiShieldCheck className="text-blue-500 w-6 h-6" />
+            } else if (claimType === 'phone_number_claim') {
+                  return <Phone className="text-green-500 w-6 h-6" />
+            } else if (claimType === 'email_claim') {
+                  return <Mail className="text-green-500 w-6 h-6" />
+            }
+            return <HiShieldCheck className="text-blue-500 w-6 h-6" />
+      }
+
+      const claimName = getClaimTitle(claimInfo['forms_type'])
+      const description = getClaimDescription(claimInfo['forms_type'])
+      const Icon = getClaimIcon(claimInfo['forms_type'])
+
+      // const date =
+      //       claimInfo['forms_created_at'] ||
+      //       claimInfo['date'] ||
+      //       new Date().toLocaleDateString('en-US', {
+      //             month: 'short',
+      //             day: 'numeric',
+      //             year: 'numeric',
+      //       })
+      // const verifiedTo = claimInfo['forms_name']
 
       const fields = Object.entries(claimInfo).map(([key, value]) => {
             let processedKey = key.split('forms_')[1].split('_').join(' ')
@@ -35,17 +72,29 @@ const SimpleClaim = ({ claimInfo }: ISimpleClaim) => {
             return (
                   <div key={key} className="flex justify-between items-start">
                         <span className="text-sm text-gray-600 capitalize">{processedKey}</span>
-                        <span className={`text-sm font-medium max-w-[200px] ${cssClass}`} 
-                        style={{ 
-                              textAlign: 'right',
-                              whiteSpace: 'normal',
-                              wordWrap: 'break-word',
-                              wordBreak: 'break-word',
-                              overflowWrap: 'break-word',
-                        }}
-                        >
-                              {processedValue}
-                        </span>
+                        <div className="flex gap-2 " style={{
+                              alignItems: 'center'
+                        }}>
+                              <span className={`text-sm font-medium max-w-[200px] ${cssClass}`}
+                                    style={{
+                                          textAlign: 'right',
+                                          whiteSpace: 'normal',
+                                          wordWrap: 'break-word',
+                                          wordBreak: 'break-word',
+                                          overflowWrap: 'break-word',
+                                          lineHeight: '1',
+                                          display: "inline-block",
+                                          height: "fit-content"
+                                    }}
+                              >
+                                    {processedValue}
+                              </span>
+                              {
+                                    key === 'forms_wallet_address' ? (
+                                          <CopyButton text={value} isIcon={true} />
+                                    ) : null
+                              }
+                        </div>
                   </div>
             )
       })
@@ -55,7 +104,7 @@ const SimpleClaim = ({ claimInfo }: ISimpleClaim) => {
             <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
                   <div className="flex items-start gap-3 mb-4">
                         <div className="bg-blue-50 p-2 rounded-lg">
-                              <HiShieldCheck className="text-blue-500 w-6 h-6" />
+                              {Icon}
                         </div>
                         <div>
                               <h2 className="text-xl font-bold">{claimName}</h2>
@@ -63,10 +112,10 @@ const SimpleClaim = ({ claimInfo }: ISimpleClaim) => {
                         </div>
                   </div>
 
-                  <div className="border-t border-gray-100 pt-4 mb-4">
+                  {/* <div className="border-t border-gray-100 pt-4 mb-4">
                         <p className="text-sm text-gray-700">Claim verified to "{verifiedTo}"</p>
                         <p className="text-xs text-gray-500">{date}</p>
-                  </div>
+                  </div> */}
                   <div className="flex flex-col gap-3">{fields}</div>
 
                   {/* <div className="space-y-2">

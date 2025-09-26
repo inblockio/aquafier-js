@@ -1,15 +1,14 @@
-
-import { FastifyInstance } from 'fastify';
+import {FastifyInstance} from 'fastify';
 import fastifyRateLimit from '@fastify/rate-limit';
-import { prisma } from '../database/db';
-import { AquaTree } from 'aqua-js-sdk';
-import { checkFolderExists, getHost, getPort } from '../utils/api_utils';
-import { fetchAquatreeFoUser } from '../utils/revisions_utils';
-import { SYSTEM_WALLET_ADDRESS } from '../models/constants';
+import {prisma} from '../database/db';
+import {checkFolderExists, getHost, getPort} from '../utils/api_utils';
+import {fetchAquatreeFoUser} from '../utils/revisions_utils';
+import {SYSTEM_WALLET_ADDRESS} from '../models/constants';
 import path from 'path';
 import * as fs from "fs"
-import { getAquaAssetDirectory } from '../utils/file_utils';
-import { getTemplateInformation } from '../utils/server_attest';
+import {getAquaAssetDirectory} from '../utils/file_utils';
+import {getTemplateInformation} from '../utils/server_attest';
+import Logger from "../utils/Logger";
 
 export default async function systemController(fastify: FastifyInstance) {
 
@@ -22,7 +21,7 @@ export default async function systemController(fastify: FastifyInstance) {
     fastify.get('/system/templates', { config: { rateLimit: { max: 100, timeWindow: '15m' } } }, async (request, reply) => {
 
         let assetsPath = getAquaAssetDirectory()
-        console.log(`Assets path ${assetsPath}`)
+        Logger.info(`Assets path ${assetsPath}`)
 
         let assetPathExist = await checkFolderExists(assetsPath)
         const assetFiles = [];
@@ -35,12 +34,12 @@ export default async function systemController(fastify: FastifyInstance) {
                 const filePath = path.join(assetsPath, file);
                 const stats = await fs.promises.lstat(filePath);
                 if (stats.isFile()) {
-                    console.log(`file ${file}`)
+                    Logger.info(`file ${file}`)
                     assetFiles.push(filePath);
                 }
             }
         } else {
-            console.warn(`Assets path ${assetsPath} does not exist`)
+            Logger.warn(`Assets path ${assetsPath} does not exist`)
             return reply.code(200).send({ data: [] });
         }
 
@@ -72,64 +71,6 @@ export default async function systemController(fastify: FastifyInstance) {
 
     });
 
-    // fastify.get('/system/templates', async (request, reply) => {
-
-    //     let assetsPath = getAquaAssetDirectory()
-    //     console.log(`Assets path ${assetsPath}`)
-
-    //     let assetPathExist = await checkFolderExists(assetsPath)
-    //     const assetFiles = [];
-    //     if (assetPathExist) {
-
-    //         const files = await fs.promises.readdir(assetsPath);
-
-    //         // Filter only files (exclude directories)
-    //         for (const file of files) {
-    //             const filePath = path.join(assetsPath, file);
-    //             const stats = await fs.promises.lstat(filePath);
-    //             if (stats.isFile()) {
-    //                 console.log(`file ${file}`)
-    //                 assetFiles.push(filePath);
-    //             }
-    //         }
-    //     } else {
-    //         console.warn(`Assets path ${assetsPath} does not exist`)
-    //         return reply.code(200).send({ data: [] });
-    //     }
-
-    //     let dataMap: Map<string, string> = new Map();
-    //     let templates = [
-    //         "access_agreement",
-    //         "aqua_sign",
-    //         "cheque",
-    //         "identity_attestation",
-    //         "identity_claim",
-    //         "user_signature"
-    //     ]
-
-    //     for (let index = 0; index < templates.length; index++) {
-    //         const templateItem = templates[index];
-    //         let templateAquaTreeData = path.join(assetsPath, `${templateItem}.json.aqua.json`);
-
-
-    //         let templateAquaTreeDataContent = fs.readFileSync(templateAquaTreeData, 'utf8')
-    //         let templateAquaTree: AquaTree = JSON.parse(templateAquaTreeDataContent)
-    //         let genHash = getGenesisHash(templateAquaTree);
-    //         console.log(`Template ${templateItem} with genesis hash ${genHash}`)
-
-    //         if (!genHash) {
-    //             throw new Error(`Genesis hash for template ${templateItem} is not defined`);
-    //         }
-    //         // save to map
-    //         dataMap.set(templateItem, genHash);
-
-    //     }
-
-    //     // Convert Map to Object for JSON serialization
-    //     const dataObject = Object.fromEntries(dataMap);
-    //     return reply.code(200).send({ data: dataObject })
-
-    // });
     fastify.get('/system/aqua_tree', async (request, reply) => {
 
         // fetch all from latetst
@@ -185,14 +126,8 @@ export default async function systemController(fastify: FastifyInstance) {
             return reply.code(200).send({ data: [] });
         }
 
-
-    
-
-
         // throw Error(`Fetching AquaTree for user ${metamaskAddress} with url ${url}  -- ${JSON.stringify(trees, null, 4)}`)
         let displayData = await fetchAquatreeFoUser(url, trees)
-
-
 
         return reply.code(200).send({ data: displayData })
     });

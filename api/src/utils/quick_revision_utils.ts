@@ -1,8 +1,12 @@
 import { prisma } from '../database/db';
-import { Revision, Link, Signature, WitnessEvent, AquaForms } from '@prisma/client';
+import { Revision } from '@prisma/client';
 import * as fs from 'fs';
 import { ExtendedAquaTreeData } from '../models/types';
-import {deleteFile} from "./file_utils";
+import { deleteFile } from "./file_utils";
+import Logger from './Logger';
+import { AquaTree, cliGreenify, cliRedify, cliYellowfy } from 'aqua-js-sdk';
+import { fetchCompleteRevisionChain } from './quick_utils';
+import { getLastRevisionVerificationHash } from './aqua_tree_utils';
 
 /**
  * Recursively deletes a revision and all its child revisions (revisions that reference this as their previous hash)
@@ -13,7 +17,8 @@ import {deleteFile} from "./file_utils";
  */
 export async function deleteRevisionAndChildren(
     revisionHash: string,
-    userAddress?: string
+    userAddress?: string,
+    deleteFromLatest: boolean = false
 ): Promise<{
     success: boolean;
     deleted: number;
@@ -26,7 +31,7 @@ export async function deleteRevisionAndChildren(
             ? `${userAddress}_${revisionHash}`
             : revisionHash;
 
-    console.log(`Starting deletion process for revision: ${fullRevisionHash}`);
+    Logger.info(`Starting deletion process for revision: ${fullRevisionHash}`);
 
     // To track all deleted items
     const deletedRevisions: string[] = [];
@@ -62,7 +67,7 @@ export async function deleteRevisionAndChildren(
     try {
         // First collect all revisions that need to be deleted
         await collectRevisionsToDelete(fullRevisionHash);
-        console.log(`Collected ${revisionsToProcess.length} revisions to process`);
+        Logger.info(`Collected ${revisionsToProcess.length} revisions to process`);
 
         // Process all revisions in a single transaction for data consistency
         await prisma.$transaction(async (tx) => {
@@ -76,7 +81,7 @@ export async function deleteRevisionAndChildren(
                 });
 
                 if (!revision) {
-                    console.log(`Revision ${hash} not found, skipping`);
+                    Logger.info(`Revision ${hash} not found, skipping`);
                     continue;
                 }
 
@@ -213,7 +218,7 @@ export async function deleteRevisionAndChildren(
                                         try {
                                             await deleteFile(file.file_location)
                                         } catch (e) {
-                                            console.error(`Error deleting file from filesystem: ${file.file_location}`, e);
+                                            Logger.error(`Error deleting file from filesystem: ${file.file_location}`, e);
                                         }
                                     }
 
@@ -240,7 +245,7 @@ export async function deleteRevisionAndChildren(
                         break;
 
                     default:
-                        console.warn(`Unknown revision type encountered: ${revision.revision_type} for ${hash}`);
+                        Logger.warn(`Unknown revision type encountered: ${revision.revision_type} for ${hash}`);
                 }
 
                 // Before deleting the revision, check if it's in Latest table
@@ -249,17 +254,25 @@ export async function deleteRevisionAndChildren(
                 });
 
                 if (latestEntry) {
-                    // If this is a latest entry, update it to point to previous revision
-                    if (revision.previous) {
-                        await tx.latest.update({
-                            where: { hash: hash },
-                            data: { hash: revision.previous }
-                        });
-                    } else {
-                        // If no previous revision, delete the latest entry
+                    if (deleteFromLatest) {
+                        // If flag is enabled, simply delete it from latest
                         await tx.latest.delete({
                             where: { hash: hash }
                         });
+                    }
+                    else {
+                        // If this is a latest entry, update it to point to previous revision
+                        if (revision.previous) {
+                            await tx.latest.update({
+                                where: { hash: hash },
+                                data: { hash: revision.previous }
+                            });
+                        } else {
+                            // If no previous revision, delete the latest entry
+                            await tx.latest.delete({
+                                where: { hash: hash }
+                            });
+                        }
                     }
                 }
 
@@ -269,7 +282,7 @@ export async function deleteRevisionAndChildren(
                 });
 
                 deletedRevisions.push(hash);
-                console.log(`Deleted revision: ${hash}`);
+                Logger.info(`Deleted revision: ${hash}`);
             }
         });
 
@@ -288,8 +301,8 @@ export async function deleteRevisionAndChildren(
                 }
             }
         };
-    } catch (error : any) {
-        console.error(`Error deleting revision chain: ${error}`);
+    } catch (error: any) {
+        Logger.error(`Error deleting revision chain: ${error}`);
         return {
             success: false,
             deleted: deletedRevisions.length,
@@ -338,21 +351,21 @@ export async function canDeleteRevision(
         });
 
         if (!revision) {
-            console.log(`Revision ${hashToQuery} not found`);
+            Logger.error(`Revision ${hashToQuery} not found`);
             return false;
         }
 
         // If the hash had an address, check if it matches the requester
         if (addressFromHash && addressFromHash !== requesterAddress) {
-            console.log(`Unauthorized: Hash address ${addressFromHash} doesn't match requester ${requesterAddress}`);
+            Logger.error(`Unauthorized: Hash address ${addressFromHash} doesn't match requester ${requesterAddress}`);
             return false;
         }
 
         // Additional checks can be added here (e.g., admin privileges, time limits)
 
         return true;
-    } catch (error : any) {
-        console.error(`Error checking revision deletability: ${error}`);
+    } catch (error: any) {
+        Logger.error(`Error checking revision deletability: ${error}`);
         return false;
     }
 }
@@ -368,7 +381,8 @@ export async function canDeleteRevision(
 export async function transferRevisionChain(
     entireChain: ExtendedAquaTreeData,
     targetUserAddress: string,
-    sourceUserAddress: string
+    sourceUserAddress: string,
+    url: string
 ): Promise<{
     success: boolean;
     message: string;
@@ -404,7 +418,7 @@ export async function transferRevisionChain(
             });
 
             if (existingRevision) {
-                console.log(`Revision already exists for target user: ${targetFullHash}`);
+                Logger.warn(`Revision already exists for target user: ${targetFullHash}`);
                 continue;
             }
 
@@ -414,7 +428,7 @@ export async function transferRevisionChain(
             });
 
             if (!originalRevision) {
-                console.warn(`Original revision not found in database: ${sourceFullHash}`);
+                Logger.warn(`Original revision not found in database: ${sourceFullHash}`);
                 continue;
             }
 
@@ -521,6 +535,17 @@ export async function transferRevisionChain(
                             }
                         });
                     }
+
+
+                    // Fetch the entire chain from the source user
+                    let latestRevisionHash = getLastRevisionVerificationHash(entireChain as AquaTree);
+                    const entireChainInLink = await fetchCompleteRevisionChain(latestRevisionHash, sourceUserAddress, url);
+                    transferRevisionChain(
+                        entireChainInLink,
+                        targetUserAddress,
+                        sourceUserAddress,
+                        url
+                    )
                     break;
 
                 case "file":
@@ -619,7 +644,8 @@ export async function transferRevisionChain(
                 const linkedResult = await transferRevisionChain(
                     linkedChain,
                     targetUserAddress,
-                    sourceUserAddress
+                    sourceUserAddress,
+                    url
                 );
 
                 if (linkedResult.success) {
@@ -637,7 +663,7 @@ export async function transferRevisionChain(
             latestHashes
         };
     } catch (error: any) {
-        console.error("Error in transferRevisionChain:", error);
+        Logger.error("Error in transferRevisionChain:", error);
         return {
             success: false,
             message: `Error transferring chain: ${error.message}`,
@@ -661,7 +687,9 @@ export async function mergeRevisionChain(
     entireChain: ExtendedAquaTreeData,
     targetUserAddress: string,
     sourceUserAddress: string,
-    mergeStrategy: "replace" | "fork" = "fork"
+    url: string,
+    mergeStrategy: "replace" | "fork" = "replace",
+    currentUserLatestRevisionHash?: string
 ): Promise<{
     success: boolean;
     message: string;
@@ -692,6 +720,7 @@ export async function mergeRevisionChain(
     try {
         // First, order the incoming chain to understand its structure
         const orderedIncomingChain = orderRevisionsInChain(entireChain);
+        // console.log(cliRedify(`Ordered incoming chain revisions ${JSON.stringify(orderedIncomingChain)}`))
         if (!orderedIncomingChain || orderedIncomingChain.length === 0) {
             return {
                 success: false,
@@ -705,25 +734,27 @@ export async function mergeRevisionChain(
 
         // Find the latest hash of the incoming chain
         const incomingLatestHash = orderedIncomingChain[orderedIncomingChain.length - 1];
-        console.log(`Incoming chain latest hash: ${incomingLatestHash}`);
+        // console.log(cliYellowfy(`Incoming chain latest hash: ${incomingLatestHash}`))
+        Logger.info(`Incoming chain latest hash: ${incomingLatestHash}`);
 
         // Now examine target user's existing chains that might match or overlap with this chain
         // Start by checking if the genesis revision of the incoming chain exists for the target user
         const incomingGenesisHash = orderedIncomingChain[0];
         const targetGenesisHash = `${targetUserAddress}_${incomingGenesisHash}`;
 
-        console.log(`Checking if target user has genesis revision: ${targetGenesisHash}`);
+        Logger.info(`Checking if target user has genesis revision: ${targetGenesisHash}`);
         const existingGenesis = await prisma.revision.findUnique({
             where: { pubkey_hash: targetGenesisHash }
         });
 
         if (!existingGenesis) {
-            console.log("No matching genesis found, performing a simple transfer");
+            Logger.info("No matching genesis found, performing a simple transfer");
             // No overlap, so we just do a standard transfer (simplest case)
             const transferResult = await transferRevisionChain(
                 entireChain,
                 targetUserAddress,
-                sourceUserAddress
+                sourceUserAddress,
+                url
             );
 
             appliedStrategy = "full_transfer";
@@ -734,17 +765,20 @@ export async function mergeRevisionChain(
         }
 
         // Target user has the genesis, so we need to find where chains diverge (if they do)
-        console.log("Found matching genesis, analyzing chains to find merge point");
+        Logger.info("Found matching genesis, analyzing chains to find merge point");
 
         // Order target user's chain starting from the same genesis
-        const targetUserChain = await orderUserChain(targetGenesisHash);
-        if (!targetUserChain || targetUserChain.length === 0) {
-            console.log("Failed to order target user's chain, fallback to transfer");
+        // const targetUserChain = await orderUserChain(targetGenesisHash);
+        const _targetUserChain = await orderUserChainByLatest(`${targetUserAddress}_${currentUserLatestRevisionHash}`);
+        if (!_targetUserChain || _targetUserChain.length === 0 || !currentUserLatestRevisionHash) {
+            // console.log(cliRedify("Failed to order target user's chain, fallback to transfer"))
+            Logger.error("Failed to order target user's chain, fallback to transfer");
             // Something went wrong with ordering, fallback to transfer
             const transferResult = await transferRevisionChain(
                 entireChain,
                 targetUserAddress,
-                sourceUserAddress
+                sourceUserAddress,
+                url
             );
 
             appliedStrategy = "full_transfer_fallback";
@@ -754,8 +788,14 @@ export async function mergeRevisionChain(
             };
         }
 
-        console.log(`Target user chain has ${targetUserChain.length} revisions`);
-        console.log(`Incoming chain has ${orderedIncomingChain.length} revisions`);
+        // We reverse here since it will start from latest to genesis -> the previous function was coming from genesis to latest
+        const targetUserChain   = _targetUserChain.reverse()
+
+        // console.log(cliGreenify(`Target user revisions: ${JSON.stringify(targetUserChain, null, 4)}`))
+        // console.log(cliGreenify(`Incoming revisions: ${JSON.stringify(orderedIncomingChain, null, 4)}`))
+
+        Logger.info(`Target user chain has ${targetUserChain.length} revisions`);
+        Logger.info(`Incoming chain has ${orderedIncomingChain.length} revisions`);
 
         // Find last common revision (divergence point)
         let lastCommonIndex = -1;
@@ -770,12 +810,12 @@ export async function mergeRevisionChain(
             }
         }
 
-        console.log(`Last common revision index: ${lastCommonIndex}, hash: ${lastCommonHash}`);
+        Logger.info(`Last common revision index: ${lastCommonIndex}, hash: ${lastCommonHash}`);
         mergePoint = lastCommonHash;
 
         if (lastCommonIndex === targetUserChain.length - 1) {
             // Target chain is a subset of incoming chain - simple addition case
-            console.log("Target chain is a subset of incoming chain, adding new revisions");
+            Logger.info("Target chain is a subset of incoming chain, adding new revisions");
             appliedStrategy = "simple_addition";
 
             // Transfer only the new revisions (from lastCommonIndex+1 onward)
@@ -791,7 +831,7 @@ export async function mergeRevisionChain(
                 });
 
                 if (!originalRevision) {
-                    console.warn(`Original revision not found in database: ${sourceFullHash}`);
+                    Logger.warn(`Original revision not found in database: ${sourceFullHash}`);
                     continue;
                 }
 
@@ -813,8 +853,10 @@ export async function mergeRevisionChain(
                 }
 
                 // Insert the new revision
-                await prisma.revision.create({
-                    data: {
+                await prisma.revision.upsert({
+                    where: { pubkey_hash: targetFullHash },
+                    update: {},
+                    create: {
                         pubkey_hash: targetFullHash,
                         nonce: originalRevision.nonce,
                         shared: originalRevision.shared,
@@ -844,22 +886,21 @@ export async function mergeRevisionChain(
 
         } else if (lastCommonIndex < targetUserChain.length - 1 && lastCommonIndex < orderedIncomingChain.length - 1) {
             // Chains have diverged - handle according to merge strategy
-            console.log(`Chains diverge after index ${lastCommonIndex}, applying ${mergeStrategy} strategy`);
+            Logger.info(`Chains diverge after index ${lastCommonIndex}, applying ${mergeStrategy} strategy`);
             appliedStrategy = mergeStrategy;
 
             if (mergeStrategy === "replace") {
                 // Replace target's divergent revisions with incoming revisions
 
-                // 1. Mark the divergent target revisions as obsolete (could soft-delete or add metadata)
+                // 1. Mark the divergent target revisions as obsolete (could soft-delete or add metadata but in this case we delete them)
                 const divergentTargetRevisions = targetUserChain.slice(lastCommonIndex + 1);
                 for (const obsoleteHash of divergentTargetRevisions) {
                     // You might want to mark these as obsolete rather than deleting
-                    console.log(`Marking ${obsoleteHash} as obsolete due to replace strategy`);
-                    // For example, add metadata or move to an "obsolete" status
-                    // await prisma.revision.update({
-                    //     where: { pubkey_hash: obsoleteHash },
-                    //     data: { is_obsolete: true }
-                    // });
+                    Logger.info(`Marking ${obsoleteHash} as obsolete due to replace strategy`);
+                    // Delete the revision
+                    // console.log(cliRedify(`Delete ${obsoleteHash} due to replace strategy`))
+                    // Enabled delete from latest to force delete any revisions appearing in latest to avoid double entry till forking is implemented
+                  await  deleteRevisionAndChildren(obsoleteHash, targetUserAddress, true)
                 }
 
                 // 2. Import the incoming chain's divergent revisions
@@ -875,7 +916,7 @@ export async function mergeRevisionChain(
                     });
 
                     if (!originalRevision) {
-                        console.warn(`Original revision not found in database: ${sourceFullHash}`);
+                        Logger.warn(`Original revision not found in database: ${sourceFullHash}`);
                         continue;
                     }
 
@@ -895,7 +936,13 @@ export async function mergeRevisionChain(
                             previousHash = previousHashFromSource;
                         }
                     }
-
+                    let revisionAlreadyExists = await prisma.revision.findUnique({
+                        where: { pubkey_hash: targetFullHash }
+                    });
+                    if (revisionAlreadyExists) {
+                        Logger.info(`Revision already exists in database: ${targetFullHash}`);
+                        continue;
+                    }
                     // Insert the new revision
                     await prisma.revision.create({
                         data: {
@@ -942,7 +989,7 @@ export async function mergeRevisionChain(
                     });
 
                     if (existingRev) {
-                        console.log(`Revision ${targetFullHash} already exists, skipping`);
+                        Logger.info(`Revision ${targetFullHash} already exists, skipping`);
                         continue;
                     }
 
@@ -952,7 +999,7 @@ export async function mergeRevisionChain(
                     });
 
                     if (!originalRevision) {
-                        console.warn(`Original revision not found in database: ${sourceFullHash}`);
+                        Logger.warn(`Original revision not found in database: ${sourceFullHash}`);
                         continue;
                     }
 
@@ -1014,7 +1061,7 @@ export async function mergeRevisionChain(
             }
         } else if (lastCommonIndex === orderedIncomingChain.length - 1) {
             // Incoming chain is a subset of target chain - nothing to add
-            console.log("Incoming chain is a subset of target's chain, nothing to add");
+            Logger.info("Incoming chain is a subset of target's chain, nothing to add");
             appliedStrategy = "no_change_needed";
             // The target user already has all these revisions and more
             latestHashes.push(targetUserChain[targetUserChain.length - 1]);
@@ -1028,6 +1075,7 @@ export async function mergeRevisionChain(
                     linkedChain,
                     targetUserAddress,
                     sourceUserAddress,
+                    url,
                     mergeStrategy
                 );
 
@@ -1048,7 +1096,7 @@ export async function mergeRevisionChain(
             strategy: appliedStrategy
         };
     } catch (error: any) {
-        console.error("Error in mergeRevisionChain:", error);
+        Logger.error("Error in mergeRevisionChain:", error);
         return {
             success: false,
             message: `Error merging chain: ${error.message}`,
@@ -1062,9 +1110,10 @@ export async function mergeRevisionChain(
 }
 
 /**
+ * Get rid of this, should start from latest
  * Orders revisions in a chain from genesis to latest
  */
-async function orderUserChain(genesisHash: string): Promise<string[]> {
+export async function orderUserChain(genesisHash: string): Promise<string[]> {
     try {
         const orderedChain: string[] = [genesisHash];
         let currentHash = genesisHash;
@@ -1073,9 +1122,14 @@ async function orderUserChain(genesisHash: string): Promise<string[]> {
         while (true) {
             const nextRevision = await prisma.revision.findFirst({
                 where: {
-                    previous: currentHash
+                    previous: {
+                        equals: currentHash,
+                        mode: 'insensitive'
+                    }
                 }
             });
+
+            // console.log(cliYellowfy(`previous hash: ${currentHash} -- Current Revision: ${nextRevision?.pubkey_hash}`))
 
             if (!nextRevision) {
                 break;  // End of chain
@@ -1086,8 +1140,45 @@ async function orderUserChain(genesisHash: string): Promise<string[]> {
         }
 
         return orderedChain;
-    } catch (error : any) {
-        console.error("Error ordering user chain:", error);
+    } catch (error: any) {
+        Logger.error("Error ordering user chain:", error);
+        return [];
+    }
+}
+
+/**
+ * Orders revisions in a chain from latest to genesis (reverse order)
+ * Starts with a pubkey_hash and traverses backwards through the chain
+ */
+export async function orderUserChainByLatest(startingHash: string): Promise<string[]> {
+    try {
+        const orderedChain: string[] = [startingHash];
+        let currentHash = startingHash;
+
+        // Starting from the given hash, follow the chain backwards by finding the previous revision
+        while (true) {
+            const currentRevision = await prisma.revision.findFirst({
+                where: {
+                    pubkey_hash: {
+                        equals: currentHash,
+                        mode: 'insensitive'
+                    }
+                }
+            });
+
+            // console.log(cliYellowfy(`Current hash: ${currentHash} -- Previous hash: ${currentRevision?.previous}`))
+
+            if (!currentRevision || !currentRevision.previous) {
+                break;  // Reached genesis or revision not found
+            }
+
+            orderedChain.push(currentRevision.previous);
+            currentHash = currentRevision.previous;
+        }
+
+        return orderedChain;
+    } catch (error: any) {
+        Logger.error("Error ordering user chain by latest:", error);
         return [];
     }
 }
@@ -1130,7 +1221,7 @@ function orderRevisionsInChain(chainData: any): string[] {
         }
 
         if (!genesisHash) {
-            console.error("Could not find genesis revision");
+            Logger.error("Could not find genesis revision");
             return [];
         }
 
@@ -1156,8 +1247,8 @@ function orderRevisionsInChain(chainData: any): string[] {
         }
 
         return ordered;
-    } catch (error : any) {
-        console.error("Error ordering revisions:", error);
+    } catch (error: any) {
+        Logger.error("Error ordering revisions:", error);
         return [];
     }
 }
@@ -1165,10 +1256,55 @@ function orderRevisionsInChain(chainData: any): string[] {
 /**
  * Updates the latest hash entry for a user
  */
-async function updateLatestHash(userAddress: string, oldHash: string, newHash: string): Promise<void> {
+// async function updateLatestHash(userAddress: string, oldHash: string, newHash: string): Promise<void> {
+//     try {
+//         // First check if old hash is in the latest table
+//         const existingLatest = await prisma.latest.findFirst({
+//             where: {
+//                 hash: oldHash,
+//                 user: userAddress
+//             }
+//         });
+
+//         if (existingLatest) {
+//             // Update existing entry to point to new hash
+//             await prisma.latest.update({
+//                 where: {
+//                     hash: oldHash
+//                 },
+//                 data: {
+//                     hash: newHash
+//                 }
+//             });
+//         } else {
+//             // Create new latest entry
+//             await prisma.latest.create({
+//                 data: {
+//                     hash: newHash,
+//                     user: userAddress
+//                 }
+//             });
+//         }
+//     } catch (error: any) {
+//         Logger.error("Error updating latest hash:", error);
+//         throw error;
+//     }
+// }
+
+/**
+ * Updates the latest hash entry for a user using upsert to avoid race conditions
+ */
+async function updateLatestHash(
+    userAddress: string, 
+    oldHash: string, 
+    newHash: string,
+    tx?: any // Optional transaction client
+): Promise<void> {
+    const client = tx || prisma;
+    
     try {
-        // First check if old hash is in the latest table
-        const existingLatest = await prisma.latest.findFirst({
+        // First, get the existing latest entry to preserve metadata
+        const existingLatest = await client.latest.findFirst({
             where: {
                 hash: oldHash,
                 user: userAddress
@@ -1176,26 +1312,46 @@ async function updateLatestHash(userAddress: string, oldHash: string, newHash: s
         });
 
         if (existingLatest) {
-            // Update existing entry to point to new hash
-            await prisma.latest.update({
+            // If old hash exists in latest table, update it to new hash
+            await client.latest.upsert({
                 where: {
                     hash: oldHash
                 },
-                data: {
+                update: {
                     hash: newHash
+                },
+                create: {
+                    hash: newHash,
+                    user: userAddress,
+                    is_workflow: existingLatest.is_workflow,
+                    template_id: existingLatest.template_id
                 }
             });
         } else {
-            // Create new latest entry
-            await prisma.latest.create({
-                data: {
-                    hash: newHash,
+            // If old hash doesn't exist, just create new entry
+            // Try to get metadata from any existing latest entry for this user
+            const anyUserLatest = await client.latest.findFirst({
+                where: { user: userAddress }
+            });
+
+            await client.latest.upsert({
+                where: {
+                    hash: newHash
+                },
+                update: {
+                    // If it exists, just ensure user is correct
                     user: userAddress
+                },
+                create: {
+                    hash: newHash,
+                    user: userAddress,
+                    is_workflow: anyUserLatest?.is_workflow || false,
+                    template_id: anyUserLatest?.template_id || null
                 }
             });
         }
-    } catch (error : any) {
-        console.error("Error updating latest hash:", error);
+    } catch (error: any) {
+        Logger.error("Error updating latest hash:", error);
         throw error;
     }
 }

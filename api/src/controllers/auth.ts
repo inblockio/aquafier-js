@@ -1,8 +1,9 @@
-import { FastifyInstance, FastifyRequest } from 'fastify';
-import { prisma } from '../database/db';
-import { SessionQuery, SiweRequest } from '../models/request_models';
-import { verifySiweMessage } from '../utils/auth_utils';
-import { fetchEnsName } from '../utils/api_utils';
+import {FastifyInstance, FastifyRequest} from 'fastify';
+import {prisma} from '../database/db';
+import {SessionQuery, SiweRequest} from '../models/request_models';
+import {verifySiweMessage} from '../utils/auth_utils';
+import {fetchEnsName} from '../utils/api_utils';
+import Logger from "../utils/Logger";
 
 export default async function authController(fastify: FastifyInstance) {
   // get current session
@@ -65,7 +66,7 @@ export default async function authController(fastify: FastifyInstance) {
         user_settings: settingsData 
       };
     } catch (error : any) {
-      console.error("Error fetching session:", error);
+        Logger.error("Error fetching session:", error);
       return reply.code(500).send({ success: false, message: "Internal server error" });
     }
   });
@@ -84,7 +85,7 @@ export default async function authController(fastify: FastifyInstance) {
 
       return { success: true, message: "Session deleted successfully" };
     } catch (error : any) {
-      console.error("Error deleting session:", error);
+        Logger.error("Error deleting session:", error);
       return reply.code(500).send({ success: false, message: "Internal server error" });
     }
   });

@@ -1,22 +1,22 @@
-import { v4 as uuidv4 } from 'uuid'
-import { FormField, FormTemplate } from './types'
-import { useForm } from 'react-hook-form'
-import { useEffect, useState } from 'react'
+import {v4 as uuidv4} from 'uuid'
+import {FormField, FormTemplate} from './types'
+import {useForm} from 'react-hook-form'
+import {useEffect, useState} from 'react'
 import axios from 'axios'
-import { useStore } from 'zustand'
+import {useStore} from 'zustand'
 import appStore from '../../store'
-import { toast } from 'sonner'
-import { LuPlus, LuTrash } from 'react-icons/lu'
-import { ApiFileInfo } from '../../models/FileInfo'
+import {toast} from 'sonner'
+import {LuPlus, LuTrash} from 'react-icons/lu'
+import {ApiFileInfo} from '../../models/FileInfo'
 
 // /components//ui components
-import { Input } from '@/components/ui/input'
-import { Button } from '@/components/ui/button'
-import { Label } from '@/components/ui/label'
-import { Switch } from '@/components/ui/switch'
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { AlertCircle } from 'lucide-react'
+import {Input} from '@/components/ui/input'
+import {Button} from '@/components/ui/button'
+import {Label} from '@/components/ui/label'
+import {Switch} from '@/components/ui/switch'
+import {Alert, AlertDescription, AlertTitle} from '@/components/ui/alert'
+import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue} from '@/components/ui/select'
+import {AlertCircle} from 'lucide-react'
 
 const fieldTypes = [
       { label: 'Text', value: 'text' },
@@ -111,7 +111,6 @@ const FormTemplateEditorShadcn = ({ initialTemplate, onSave, updating }: FormTem
 
       const handleFormSubmit = async () => {
             try {
-                  //  console.log('Initial template: ', initialTemplate)
                   setIsSubmitting(true)
 
                   // Check if form has validation errors
@@ -175,7 +174,6 @@ const FormTemplateEditorShadcn = ({ initialTemplate, onSave, updating }: FormTem
                   }
 
                   toast.error('Failed to ' + (updating ? 'update' : 'create') + ' form template')
-                  //  console.log(`Error ${error} occured`)
             } finally {
                   setIsSubmitting(false)
             }

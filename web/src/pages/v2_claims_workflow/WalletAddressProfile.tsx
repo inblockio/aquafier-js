@@ -1,23 +1,34 @@
 import CopyButton from '@/components/CopyButton'
 import CustomCopyButton from '@/components/CustomCopyButton'
 // import { ShareButton } from '@/components/aqua_chain_actions/share_aqua_chain' // Add this import
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
-import { Button } from '@/components/ui/button'
-import { ApiFileInfo } from '@/models/FileInfo'
+import {Avatar, AvatarFallback, AvatarImage} from '@/components/ui/avatar'
+import {Button} from '@/components/ui/button'
+import {ApiFileInfo} from '@/models/FileInfo'
 import appStore from '@/store'
-import { estimateFileSize, fetchFiles, formatCryptoAddress, generateAvatar, getAquaTreeFileName, getAquaTreeFileObject, getGenesisHash, getRandomNumber, isWorkFlowData, timeToHumanFriendly } from '@/utils/functions'
-import Aquafier, { AquaTree, AquaTreeWrapper, FileObject, OrderRevisionInAquaTree } from 'aqua-js-sdk'
-import { ArrowRight, CheckCircle, LucideCheckCircle, Mail, Phone, Share2, Signature, User, X } from 'lucide-react'
-import { useEffect, useState, Suspense } from 'react'
-import { TbWorldWww } from 'react-icons/tb'
-import { useNavigate } from 'react-router-dom'
-import { ClipLoader } from 'react-spinners'
-import { toast } from 'sonner'
-import { useStore } from 'zustand'
+import {
+      estimateFileSize,
+      fetchFiles,
+      formatCryptoAddress,
+      generateAvatar,
+      getAquaTreeFileName,
+      getAquaTreeFileObject,
+      getGenesisHash,
+      getRandomNumber,
+      isWorkFlowData,
+      loadSignatureImage,
+      timeToHumanFriendly
+} from '@/utils/functions'
+import Aquafier, {AquaTree, AquaTreeWrapper, FileObject, OrderRevisionInAquaTree, reorderAquaTreeRevisionsProperties} from 'aqua-js-sdk'
+import {ArrowRight, CheckCircle, LucideCheckCircle, Mail, Phone, Share2, Signature, User, X} from 'lucide-react'
+import {Suspense, useEffect, useState} from 'react'
+import {TbWorldWww} from 'react-icons/tb'
+import {useNavigate} from 'react-router-dom'
+import {ClipLoader} from 'react-spinners'
+import {toast} from 'sonner'
+import {useStore} from 'zustand'
 import axios from 'axios'
-import { loadSignatureImage } from './UserSignatureClaim'
-import { getDNSStatusBadge, IDnsVerificationResult, verifyDNS } from '@/utils/verifiy_dns'
-import { BsInfoCircle } from 'react-icons/bs'
+import {getDNSStatusBadge, IDnsVerificationResult, verifyDNS} from '@/utils/verifiy_dns'
+import {BsInfoCircle} from 'react-icons/bs'
 
 interface ISignatureWalletAddressCard {
       index?: number
@@ -41,7 +52,9 @@ interface IClaim {
 
 const ClaimCard = ({ claim }: { claim: IClaim }) => {
 
-      const [signatureImage, setSignatureImage] = useState<string | null>(null)
+      console.log("Claim: ", claim)
+
+      const [signatureImage, setSignatureImage] = useState<string | null |Uint8Array>(null)
       const [dnsVerificationResult, setDnsVerificationResult] = useState<IDnsVerificationResult | null>(null)
 
       const { session, backend_url } = useStore(appStore)
@@ -145,7 +158,14 @@ const ClaimCard = ({ claim }: { claim: IClaim }) => {
                               <div className="p-1 rounded-md w-[120px]">
                                     {
                                           signatureImage ? (
-                                                <img src={signatureImage} alt={claim.claimName} />
+                                                typeof signatureImage === 'string' ? (
+                                <img src={signatureImage} alt={signatureImage} />
+                            ) : (
+                                <img
+                                    src={`data:image/png;base64,${btoa(String.fromCharCode(...signatureImage))}`}
+                                    alt={'signatureImage'}
+                                />
+                            )
                                           ) : (
                                                 <img src={`${window.location.origin}/images/placeholder-img.png`} alt={claim.claimName} />
                                           )
@@ -190,8 +210,14 @@ const ClaimCard = ({ claim }: { claim: IClaim }) => {
 
       const verifyDomainClaim = async () => {
             try {
-                  const result = await verifyDNS(backend_url, claim.claimName!, session?.address!)
-                  //  console.log(result)
+
+                  const aquaTree = claim.apiFileInfo.aquaTree!
+                  const reorderedAquaTree = reorderAquaTreeRevisionsProperties(aquaTree)
+                  const hashes = Object.keys(reorderedAquaTree.revisions)
+                  const genesisHash = hashes[0]
+                  const genesisRevision = reorderedAquaTree.revisions[genesisHash]
+                  const result = await verifyDNS(backend_url, claim.claimName!, genesisRevision["forms_wallet_address"])
+
                   setDnsVerificationResult(result)
             } catch (error) {
                   console.error(error)
@@ -250,7 +276,6 @@ const WalletAddressProfile = ({ walletAddress, callBack, showAvatar, width, show
                   try {
                         return getAquaTreeFileName(e.aquaTree!)
                   } catch (e) {
-                        // //  console.log('Error processing system file') // More descriptive
                         return ''
                   }
             })
@@ -260,8 +285,6 @@ const WalletAddressProfile = ({ walletAddress, callBack, showAvatar, width, show
                         const fileInfo = isWorkFlowData(file.aquaTree!, aquaTemplates)
                         return fileInfo.isWorkFlow && fileInfo.workFlow === 'identity_attestation'
                   })
-
-                  //  console.log("attestationFiles", attestationFiles)
 
                   const localClaims: IClaim[] = []
                   // let _totalAttestations = 0
@@ -440,17 +463,8 @@ const WalletAddressProfile = ({ walletAddress, callBack, showAvatar, width, show
                                     onClose: () => setOpenDialog(null),
                                     onConfirm: () => {
                                           // Handle confirmation logic here
-                                          //  console.log('Attestation confirmed with data:', data)
                                     }
                               })
-
-                              // Set the profile item and trigger the share dialog
-                              // setSharedProfileItem(profileItem)
-                              // setShowShareDialog(true)
-                              // navigate('/app')
-                              // setModalFormErorMessae('')
-                              // setFormData({})
-                              // setSubmittingTemplateData(false)
                         }
                   }
             } catch (error) {
@@ -467,13 +481,9 @@ const WalletAddressProfile = ({ walletAddress, callBack, showAvatar, width, show
                         return
                   }
 
-                  //  console.log("Creating profile for sharing...");
                   if (callBack) {
                         callBack();
                   }
-
-
-
 
                   let allFileObjects: Array<FileObject> = []
                   const randomNumber = getRandomNumber(100, 1000)
@@ -493,7 +503,6 @@ const WalletAddressProfile = ({ walletAddress, callBack, showAvatar, width, show
 
                   const estimateSize = estimateFileSize(JSON.stringify(completeFormData))
                   const jsonString = JSON.stringify(completeFormData, null, 4)
-                  //  console.log(`completeFormData -- jsonString-- ${jsonString}`)
 
                   const fileObject: FileObject = {
                         fileContent: jsonString,
@@ -544,14 +553,8 @@ const WalletAddressProfile = ({ walletAddress, callBack, showAvatar, width, show
                         currentAquaTree = linkedAquaTreeResponse.data.aquaTree
                   }
 
-                  //  console.log(`here  ${JSON.stringify(currentAquaTree, null, 4)}`)
-                  // throw Error(`here...`)
-
-                  // save it on the server 
+                  // save it on the server
                   await saveAquaTree(currentAquaTree!, fileObject, true)
-
-
-
             } catch (error) {
                   console.error("Error creating profile:", error)
                   toast.error("Error creating profile for sharing")
@@ -694,7 +697,6 @@ const WalletAddressProfile = ({ walletAddress, callBack, showAvatar, width, show
                                                 <Button
                                                       className="flex-1 bg-blue-50 hover:bg-blue-100 text-blue-600 hover:text-blue-700 px-3 py-1.5 rounded-md flex items-center gap-1.5 text-sm font-medium transition-colors duration-200 border border-blue-200 hover:border-blue-300 cursor-pointer"
                                                       onClick={() => {
-                                                            //  console.log("Clicked", callBack);
                                                             if (callBack) {
                                                                   callBack();
                                                             }

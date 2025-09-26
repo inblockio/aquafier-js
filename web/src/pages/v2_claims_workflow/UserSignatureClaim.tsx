@@ -1,66 +1,15 @@
 import appStore from "@/store"
 import { ICompleteClaimInformation } from "@/types/types"
-import { ensureDomainUrlHasSSL, fetchImage } from "@/utils/functions"
-import { AquaTree, FileObject, OrderRevisionInAquaTree } from "aqua-js-sdk"
+import {loadSignatureImage } from "@/utils/functions"
 import { Signature } from "lucide-react"
 import { useEffect, useState } from "react"
 import { useStore } from "zustand"
 
 
-export async function loadSignatureImage(aquaTree: AquaTree, fileObject: FileObject[], nonce: string) {
-    try {
-        const signatureAquaTree = OrderRevisionInAquaTree(aquaTree)
-        const fileobjects = fileObject
-
-        const allHashes = Object.keys(signatureAquaTree!.revisions!)
-
-        const thirdRevision = signatureAquaTree?.revisions[allHashes[2]]
-
-        if (!thirdRevision) {
-            //  console.log(`📢📢 third revision does not exist, this should be investigated`)
-            return null
-        }
-
-        if (!thirdRevision.link_verification_hashes) {
-            //  console.log(`📢📢 third revision link_verification_hashes is undefined, this should be investigated`)
-            return null
-        }
-
-        const signatureHash = thirdRevision.link_verification_hashes[0]
-        const signatureImageName = signatureAquaTree?.file_index[signatureHash]
-
-        const signatureImageObject = fileobjects.find(e => e.fileName == signatureImageName)
-
-        const fileContentUrl = signatureImageObject?.fileContent
-
-        //  console.log(`fileContentUrl ===  ${fileContentUrl}`)
-
-        if (typeof fileContentUrl === 'string' && fileContentUrl.startsWith('http')) {
-            //  console.log(`fileContentUrl before  ===  ${fileContentUrl}`)
-            let url = ensureDomainUrlHasSSL(fileContentUrl)
-            //  console.log(`fileContentUrl ===  ${url}`)
-            let dataUrl = await fetchImage(url, `${nonce}`)
-
-            if (!dataUrl) {
-                dataUrl = `${window.location.origin}/images/placeholder-img.png`
-            }
-
-            //  console.log(`dataUrl after fetchImage ===  ${dataUrl}`)
-            return dataUrl
-        }
-    }
-    catch (error) {
-        //  console.log(`Error loading signature image: ${error}`)
-        return `${window.location.origin}/images/placeholder-img.png`
-    }
-    return null
-}
-
-
 
 const UserSignatureClaim = ({ claim }: { claim: ICompleteClaimInformation }) => {
 
-    const [signatureImage, setSignatureImage] = useState<string | null>(null)
+    const [signatureImage, setSignatureImage] = useState<string | Uint8Array | null>(null)
 
     const claimName = claim.processedInfo.claimInformation.forms_name
     const claimWalletAddress = claim.processedInfo.claimInformation.forms_wallet_address
@@ -70,8 +19,12 @@ const UserSignatureClaim = ({ claim }: { claim: ICompleteClaimInformation }) => 
 
     const loadImage = async () => {
         let signatureImage = await loadSignatureImage(claim.file.aquaTree!, claim.file.fileObject, session?.nonce!)
-        setSignatureImage(signatureImage)
+        if (signatureImage) {
+           
+            setSignatureImage(signatureImage)
+        }
     }
+
 
     useEffect(() => {
         loadImage()
@@ -98,7 +51,14 @@ const UserSignatureClaim = ({ claim }: { claim: ICompleteClaimInformation }) => 
                 <div className="bg-gray-100 p-4 rounded-2xl w-[140px]">
                     {
                         signatureImage ? (
-                            <img src={signatureImage} alt={claimName} />
+                            typeof signatureImage === 'string' ? (
+                                <img src={signatureImage} alt={claimName} />
+                            ) : (
+                                <img
+                                    src={`data:image/png;base64,${btoa(String.fromCharCode(...signatureImage))}`}
+                                    alt={claimName}
+                                />
+                            )
                         ) : (
                             <img src={`${window.location.origin}/images/placeholder-img.png`} alt={claimName} />
                         )

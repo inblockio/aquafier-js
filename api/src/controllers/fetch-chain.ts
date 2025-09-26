@@ -1,7 +1,8 @@
-import { authenticate } from "../middleware/auth_middleware";
-import { prisma } from "../database/db";
-import { fetchCompleteRevisionChain, diagnoseLinks } from "../utils/quick_utils";
-import { FastifyInstance, FastifyRequest, FastifyReply } from "fastify";
+import {authenticate} from "../middleware/auth_middleware";
+import {prisma} from "../database/db";
+import {fetchCompleteRevisionChain} from "../utils/quick_utils";
+import {FastifyInstance} from "fastify";
+import Logger from "../utils/Logger";
 
 export default async function fetchChainController(fastify: FastifyInstance) {
     // Test route for fetchCompleteRevisionChain
@@ -23,7 +24,7 @@ export default async function fetchChainController(fastify: FastifyInstance) {
             const protocol = request.protocol || 'http';
             const url = `${protocol}://${host}`;
 
-            console.log(`Testing fetchCompleteRevisionChain with: userAddress=${userAddress}, latestHash=${latestHash}, url=${url}`);
+            Logger.info(`Testing fetchCompleteRevisionChain with: userAddress=${userAddress}, latestHash=${latestHash}, url=${url}`);
 
             // Call the function
             const completeTree = await fetchCompleteRevisionChain(latestHash, userAddress, url, new Set(), true, 0, true);

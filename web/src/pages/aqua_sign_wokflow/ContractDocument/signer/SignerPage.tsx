@@ -1,13 +1,13 @@
-import { useState, useCallback, useEffect } from 'react'
-import type { Annotation } from './types'
+import {useCallback, useEffect, useState} from 'react'
+import type {Annotation} from './types'
 import PdfViewer from './pdf-viewer'
 import AnnotationSidebar from './annotation-sidebar'
-import { ZoomIn, ZoomOut, ArrowLeft, ArrowRight } from 'lucide-react'
-import { SignatureData } from '../../../../types/types'
-import { LuInfo } from 'react-icons/lu'
-import { Button } from '../../../../components/ui/button'
-import { Slider } from '../../../../components/ui/slider'
-import { ensureDomainUrlHasSSL } from '@/utils/functions'
+import {ArrowLeft, ArrowRight, ZoomIn, ZoomOut} from 'lucide-react'
+import {SignatureData} from '../../../../types/types'
+import {LuInfo} from 'react-icons/lu'
+import {Button} from '../../../../components/ui/button'
+import {Slider} from '../../../../components/ui/slider'
+import {ensureDomainUrlHasSSL} from '@/utils/functions'
 // import { ScrollArea } from '@/components/ui/scroll-area';
 
 // const parseFontSizeToPoints = (fontSizeString: string, defaultSize: number = 12): number => {
@@ -125,7 +125,6 @@ interface EasyPDFRendererProps {
 }
 
 export const EasyPDFRenderer = ({ pdfFile, annotations, annotationsInDocument }: EasyPDFRendererProps) => {
-      // //  console.log("existing annotations: ", annotations)
       return (
             <PdfRenderer
                   pdfFile={pdfFile}
@@ -177,16 +176,12 @@ export default function SignerPage({
       const [selectedTool, setSelectedTool] = useState<'text' | 'image' | 'profile' | null>(null)
       const [_selectedSignatureHash, setSelectedSignatureHash] = useState<string | null>(null)
       const [canPlaceSignature, setCanPlaceSignature] = useState(false)
-      // const [currentPage, setCurrentPage] = useState(1);
-      // const [numPages, setNumPages] = useState(0);
-      // const [scale, setScale] = useState(1.0);
       const [selectedAnnotationId, setSelectedAnnotationId] = useState<string | null>(null)
 
       const addAnnotation = useCallback(
             (newAnnotationData: Annotation) => {
                   const id = Date.now().toString() + Math.random().toString(36).substring(2, 9)
                   const selectedSignatureInfo = mySignatures.find(signature => signature.hash === _selectedSignatureHash)
-                  //  console.log('Here', _selectedSignatureHash, mySignatures)
                   if (!selectedSignatureInfo) {
                         return
                   }
@@ -473,7 +468,6 @@ export default function SignerPage({
                         name: signature.name,
                         walletAddress: signature.walletAddress,
                   }))
-                  //  console.log('Existing: ', existingAnnotations)
                   setAnnotations(prev => [...prev, ...existingAnnotations])
             }
       }, [signaturesInDocument])
@@ -515,7 +509,6 @@ export default function SignerPage({
                                                                         key={signature.hash}
                                                                         className={`p-2 cursor-pointer rounded-md ${selectedSignatureHash === signature.hash ? 'bg-blue-50 border-blue-600' : 'bg-gray-100 border-transparent'} hover:bg-blue-50 border-2`}
                                                                         onClick={() => {
-                                                                              //  console.log(`Signature clicked ${JSON.stringify(signature, null, 4)} -- ${signature.hash} -- ${signature.id}`)
                                                                               setSelectedTool('profile')
                                                                               selectSignature(signature.hash)
                                                                               setSelectedSignatureHash(signature.hash)

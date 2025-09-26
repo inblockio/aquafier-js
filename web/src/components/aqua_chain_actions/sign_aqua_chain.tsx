@@ -1,13 +1,13 @@
-import { LuSignature } from 'react-icons/lu'
-import { areArraysEqual, dummyCredential, ensureDomainUrlHasSSL, fetchFiles, getGenesisHash } from '../../utils/functions'
-import { useStore } from 'zustand'
+import {LuSignature} from 'react-icons/lu'
+import {areArraysEqual, dummyCredential, ensureDomainUrlHasSSL, fetchFiles, getGenesisHash} from '../../utils/functions'
+import {useStore} from 'zustand'
 import appStore from '../../store'
 import axios from 'axios'
-import { ApiFileInfo } from '../../models/FileInfo'
-import { useState } from 'react'
-import Aquafier, { AquaTreeWrapper } from 'aqua-js-sdk'
-import { RevionOperation } from '../../models/RevisionOperation'
-import { toast } from 'sonner'
+import {ApiFileInfo} from '../../models/FileInfo'
+import {useState} from 'react'
+import Aquafier, {AquaTreeWrapper} from 'aqua-js-sdk'
+import {RevionOperation} from '../../models/RevisionOperation'
+import {toast} from 'sonner'
 // import { toast, toaster } from '@/components/ui/use-toast'
 
 export const SignAquaChain = ({ apiFileInfo, backendUrl, nonce, index }: RevionOperation) => {
@@ -88,12 +88,10 @@ export const SignAquaChain = ({ apiFileInfo, backendUrl, nonce, index }: RevionO
                                                       }
                                                 }
                                           } catch (e) {
-                                                //  //  console.log(`Error ${e}`)
                                                toast.error( 'Error updating files')
                                                 // document.location.reload()
                                           }
                                     } else {
-                                          //  //  console.log("update state ...")
                                           const newFiles: ApiFileInfo[] = []
                                           const keysPar = Object.keys(apiFileInfo.aquaTree!.revisions!)
                                           files.fileData.forEach(item => {

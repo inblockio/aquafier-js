@@ -3,6 +3,34 @@ import { BrowserContext, chromium, Page } from "playwright";
 import { ethers } from 'ethers';
 import fs from "fs";
 
+
+
+export async function createSimpleClaim(
+    context: BrowserContext,
+    testPage: Page
+): Promise<void> {
+    console.log("create a simple claim!");
+
+    // Open workflow
+    await waitAndClick(testPage, '[data-testid="create-claim-dropdown-button"]')
+    console.log("claims dropdown ");
+    await waitAndClick(testPage, '[data-testid="create-simple-claim-dropdown-button-item"]')
+
+    console.log("fill simple claim form");
+    await testPage.locator('[id="input-claim_context"]').fill("i attest the name in a test ");
+    await testPage.locator('[id="input-name"]').fill("Test user ");
+
+    const metamaskPromise = context.waitForEvent("page");
+    // await page.getByText("Save Signature").click();
+
+    console.log("create workflow");
+    await testPage.getByText("Create Workflow").click();
+    await metamaskPromise;
+
+    await handleMetaMaskNetworkAndConfirm(context, false);
+    console.log("simple workflow created");
+}
+
 export async function handleMetaMaskNetworkAndConfirm(
     context: BrowserContext,
     shouldSwitchNetwork: boolean = true,
@@ -529,13 +557,20 @@ export async function addSignatureToDocument(page: Page, context: BrowserContext
 
     // await page.waitForSelector('[data-testid="pdf-canvas"]', { state: 'visible' });
     await page.click('[data-testid="pdf-canvas-wrapper"]');
-    await page.click('[data-testid="pdf-canvas-container"]');
-    await page.click('[data-testid="pdf-canvas"]');
+    //click canva. Ugly hack because canva isn ready yet
+    for (let i = 0; i < 4; i++) {
+        await page.click('[data-testid="pdf-canvas"]');
+        if (!await page.isDisabled('[data-testid="action-sign-document-button"]')) {
+            break;
+        }
+        await page.waitForTimeout(1000);
+    }
+
     console.log("Signature added to document");
 
     const metamaskPromise = context.waitForEvent("page");
-    try { 
-        await page.getByText("Sign document").click(); 
+    try {
+        await page.getByText("Sign document").click();
     } catch (e) {
         console.log("Error clicking sign document button, but continuing:", e);
 
@@ -923,6 +958,7 @@ export async function registerNewMetaMaskWallet(): Promise<RegisterMetaMaskRespo
         await metaMaskPage.click('[data-testid="skip-srp-backup-popover-checkbox"]')
         await metaMaskPage.click('[data-testid="skip-srp-backup"]')
 
+
         // Complete onboarding
         console.log("Completing onboarding")
         await metaMaskPage.waitForSelector('[data-testid="onboarding-complete-done"]', {
@@ -930,12 +966,16 @@ export async function registerNewMetaMaskWallet(): Promise<RegisterMetaMaskRespo
         });
         await metaMaskPage.click('[data-testid="onboarding-complete-done"]')
 
+
         // Complete tutorial
         console.log("Completing tutorial")
         await metaMaskPage.waitForSelector('[data-testid="pin-extension-next"]', { state: 'visible' });
         await metaMaskPage.click('[data-testid="pin-extension-next"]')
         await metaMaskPage.waitForSelector('[data-testid="pin-extension-done"]', { state: 'visible' });
         await metaMaskPage.click('[data-testid="pin-extension-done"]')
+
+        // solana popup
+        await metaMaskPage.click('[data-testid="not-now-button"]')
 
         // Wait for network display to be visible
         console.log("Waiting for network display")
@@ -946,19 +986,56 @@ export async function registerNewMetaMaskWallet(): Promise<RegisterMetaMaskRespo
 
         try {
 
+            // Check if "Connecting to Ethereum Mainnet" is visible
+            // As soon as it disappears continue
+            try {
+                await metaMaskPage.getByText("Connecting to Ethereum Mainnet").waitFor({
+                    state: 'visible',
+                    timeout: 3000
+                });
+
+                // Now wait for it to disappear
+                await metaMaskPage.getByText("Connecting to Ethereum Mainnet").waitFor({
+                    state: 'hidden',
+                });
+                console.log("Connecting to Ethereum Mainnet disappeared, continuing");
+
+            } catch (error) {
+                console.log("Connecting to Ethereum Mainnet text not found or error waiting:", error);
+            }
+
+            // Try stop the not now popup
+            try {
+
+                await metaMaskPage.getByText("Switch networks").waitFor({
+                    state: 'visible',
+                    timeout: 7000
+                });
+                await metaMaskPage.getByText("Switch networks").click();
+
+                // await metaMaskPage.click('[data-testid="not-now-button"]')
+            } catch (error) {
+                console.log("switch networks is not visible ");
+            }
+
             // Try stop the not now popup
             try {
                 await metaMaskPage.waitForSelector('[data-testid="not-now-button"]', {
-                    state: 'visible'
+                    state: 'visible',
+                    timeout: 2000
                 });
                 await metaMaskPage.click('[data-testid="not-now-button"]')
             } catch (error) {
                 console.log("No not now popup appeared or it was already dismissed");
             }
 
+            console.log("clicking network selector (network display)");
             // Click on network selector
-            await metaMaskPage.click('[data-testid="network-display"]');
-
+            try {
+                await metaMaskPage.click('[data-testid="network-display"]', { timeout: 2000 });
+            } catch (error) {
+                console.log("network-display timed out ", error);
+            }
             // Pause execution for 30 seconds, use promise
             // await new Promise(resolve => setTimeout(resolve, 30000));
 
@@ -1021,16 +1098,6 @@ export async function registerNewMetaMaskWalletAndLogin(url: string = "/app"): P
     console.log("Page loaded, looking for sign-in button...");
 
     try {
-        // Take a screenshot to help debug
-        // await testPage.screenshot({ path: 'page-before-login.png' });
-        // console.log("Screenshot saved as page-before-login.png");
-
-        // Look for any sign-in button with a more flexible approach
-        console.log("Looking for any sign-in button...");
-
-        // Wait for and click the sign-in button
-        //  await testPage.waitForSelector('[data-testid="sign-in-button-dialog"]', {state: 'visible', timeout: 60000})
-        //  console.log("Sign-in button found, clicking it...");
         // Try different possible selectors for the sign-in button
         const signInButtonSelectors = [
             '[data-testid="sign-in-button-page"]',
@@ -1164,134 +1231,6 @@ export async function registerNewMetaMaskWalletAndLogin(url: string = "/app"): P
         return response;
     }
 }
-
-// export async function registerNewMetaMaskWalletAndLogin(url: string = "/app"): Promise<RegisterMetaMaskResponse> {
-//     const response = await registerNewMetaMaskWallet();
-//     const context = response.context;
-//     const testPage = context.pages()[0];
-//     await testPage.waitForLoadState("load")
-
-//     await testPage.goto(url, { waitUntil: 'networkidle' })
-
-//     console.log("Page loaded, looking for sign-in button...");
-
-//     try {
-//         // Take a screenshot to help debug
-//         // await testPage.screenshot({ path: 'page-before-login.png' });
-//         // console.log("Screenshot saved as page-before-login.png");
-
-//         // Look for any sign-in button with a more flexible approach
-//         console.log("Looking for any sign-in button...");
-
-//         // Wait for and click the sign-in button
-//         //  await testPage.waitForSelector('[data-testid="sign-in-button-dialog"]', {state: 'visible', timeout: 60000})
-//         //  console.log("Sign-in button found, clicking it...");
-//         // Try different possible selectors for the sign-in button
-//         const signInButtonSelectors = [
-//             '[data-testid="sign-in-button-page"]',
-//             'button:has-text("Sign In")',
-//             'button:has-text("Connect")',
-//             'button:has-text("Login")'
-//         ];
-
-//         let buttonFound = false;
-
-//         // Click the sign-in button using the data-testid attribute
-//         //  await testPage.click('[data-testid="sign-in-button-dialog"]');
-//         // Try each selector until we find a visible button
-//         for (const selector of signInButtonSelectors) {
-//             try {
-//                 const isVisible = await testPage.isVisible(selector);
-//                 if (isVisible) {
-//                     console.log(`Found visible sign-in button with selector: ${selector}`);
-//                     await testPage.click(selector);
-//                     buttonFound = true;
-//                     break;
-//                 }
-//             } catch (e) {
-//                 console.log(`Selector ${selector} not found or not visible`);
-//             }
-//         }
-
-//         if (!buttonFound) {
-//             // If no button found with specific selectors, try to find any button that might be a sign-in button
-//             console.log("No specific sign-in button found, looking for any button that might be for sign-in...");
-
-//             // Take a screenshot to see what's on the page
-//             // await testPage.screenshot({ path: 'page-no-button-found.png' });
-
-//             // Force click the first button we find as a last resort
-//             await testPage.click('button', { force: true });
-//             console.log("Clicked first button found as fallback");
-//         }
-//         console.log("Clicked sign-in button, waiting for MetaMask popup...");
-//     } catch (error) {
-//         console.error("Error during login:", error);
-//         await testPage.screenshot({ path: 'login-error.png' });
-//         throw error;
-//     }
-
-
-//     console.log("Starting metamask...");
-
-//     // Check if MetaMask page already exists
-//     let metamaskPage;
-//     const pages = context.pages();
-//     console.log(`Found ${pages.length} pages in context`);
-
-//     for (const page of pages) {
-//         console.log("Page URL:", page.url());
-//     }
-
-//     // Always wait for MetaMask popup - it should appear after clicking the sign-in button
-//     try {
-//         console.log("Waiting for MetaMask popup to appear...");
-//         const metamaskPromise = context.waitForEvent("page"); // Increased timeout
-//         metamaskPage = await metamaskPromise;
-//         console.log("MetaMask popup opened with URL:", metamaskPage.url());
-//     } catch (error) {
-//         console.error("Failed to detect MetaMask popup after 30 seconds:", error);
-
-//         // Check if MetaMask page appeared after timeout
-//         const updatedPages = context.pages();
-//         console.log(`After timeout: Found ${updatedPages.length} pages in context`);
-
-//         for (const page of updatedPages) {
-//             console.log("After timeout - Page URL:", page.url());
-//         }
-
-//         if (updatedPages.length > 1) {
-//             console.log("MetaMask page found after timeout, continuing...");
-//             metamaskPage = updatedPages[1];
-//         } else {
-//             throw new Error("MetaMask popup never appeared");
-//         }
-//     }
-
-//     // Check if page is still open before proceeding
-//     if (metamaskPage.isClosed()) {
-//         throw new Error("MetaMask page was closed unexpectedly");
-//     }
-//     await metamaskPage.bringToFront();
-//     await metamaskPage.waitForLoadState("load");
-//     console.log("MetaMask page loaded");
-
-//     await metamaskPage.waitForSelector('[data-testid="confirm-btn"]', { state: 'visible' })
-//     await metamaskPage.click('[data-testid="confirm-btn"]')
-
-//     // Check if page is still open after first click
-//     if (metamaskPage.isClosed()) {
-//         console.log("MetaMask page closed after first confirmation - this might be expected behavior");
-//         return response; // Return if the flow is complete
-//     }
-
-//     await metamaskPage.waitForSelector('[data-testid="confirm-footer-cancel-button"]', { state: 'visible' })
-//     await metamaskPage.waitForSelector('[data-testid="confirm-footer-button"]', { state: 'visible' })
-//     await metamaskPage.click('[data-testid="confirm-footer-button"]')
-
-//     return response;
-// }
-
 
 export async function findAndClickHighestSharedButton(page: Page): Promise<number | null> {
     let highestCount = -1;
