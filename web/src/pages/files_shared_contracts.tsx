@@ -411,7 +411,15 @@ export function SharedContracts() {
                                                       <TabsTrigger value="outgoing">Outgoing</TabsTrigger>
                                                 </TabsList>
                                                 <TabsContent value="incoming">
-                                                      {shareContracts.filter(contract => contract.recipients?.map((e) => e.toLocaleLowerCase()).includes(session?.address?.toLocaleLowerCase()!!)).map((contract, index) => (
+                                                      {shareContracts
+                                                      .filter((contract: Contract) => contract.recipients?.map((e) => e.toLocaleLowerCase()).includes(session?.address?.toLocaleLowerCase()!!))
+                                                      .sort((a, b) => {
+                                                                  // Sort from latest to oldest (descending order)
+                                                                  if (!a.created_at) return 1;
+                                                                  if (!b.created_at) return -1;
+                                                                  return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+                                                            })
+                                                      .map((contract, index) => (
                                                             <SharedContract
                                                                   key={`${contract.hash}`}
                                                                   contract={contract}
@@ -426,7 +434,7 @@ export function SharedContracts() {
                                                                   }}
                                                             />
                                                       ))}
-                                                      {shareContracts.filter(contract => contract.recipients?.map((e) => e.toLocaleLowerCase()).includes(session?.address?.toLocaleLowerCase()!!)).length == 0 && (
+                                                      {shareContracts.filter((contract: Contract) => contract.recipients?.map((e) => e.toLocaleLowerCase()).includes(session?.address?.toLocaleLowerCase()!!)).length == 0 && (
                                                             <div className="card">
                                                                   <Alert variant="default">
                                                                         <X />
@@ -439,17 +447,25 @@ export function SharedContracts() {
                                                       )}
                                                 </TabsContent>
                                                 <TabsContent value="outgoing">
-                                                      {shareContracts.filter(contract => contract.sender?.toLocaleLowerCase() == session?.address?.toLocaleLowerCase()).map((contract, index) => (
-                                                            <SharedContract
-                                                                  key={`${contract.hash}`}
-                                                                  contract={contract}
-                                                                  index={index}
-                                                                  contractDeleted={hash => {
-                                                                        let newState = shareContracts.filter(e => e.hash != hash)
-                                                                        setShareContracts(newState)
-                                                                  }}
-                                                            />
-                                                      ))}
+                                                      {shareContracts
+                                                            .filter((contract: Contract) => contract.sender?.toLocaleLowerCase() == session?.address?.toLocaleLowerCase())
+                                                            .sort((a, b) => {
+                                                                  // Sort from latest to oldest (descending order)
+                                                                  if (!a.created_at) return 1;
+                                                                  if (!b.created_at) return -1;
+                                                                  return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+                                                            })
+                                                            .map((contract, index) => (
+                                                                  <SharedContract
+                                                                        key={`${contract.hash}`}
+                                                                        contract={contract}
+                                                                        index={index}
+                                                                        contractDeleted={hash => {
+                                                                              let newState = shareContracts.filter(e => e.hash != hash)
+                                                                              setShareContracts(newState)
+                                                                        }}
+                                                                  />
+                                                            ))}
                                                       {shareContracts.filter(contract => contract.sender?.toLocaleLowerCase() == session?.address.toLocaleLowerCase()).length == 0 && (
                                                             <div className="card">
                                                                   <Alert variant="default">
