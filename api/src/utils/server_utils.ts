@@ -43,9 +43,11 @@ export async function saveAttestationFileAndAquaTree(aquaTree: AquaTree, genesis
 
     // Logic to check and attest an aquatree if its a phone number claim or email_claim
     let workflowDataResponse = isWorkFlowData(aquaTree, systemTemplateHashes)
+    const workflowName = workflowDataResponse.workFlow.replace(".json", "")
+    
     // throw new Error(`workflowDataResponse ${JSON.stringify(workflowDataResponse)}`)
-    if (workflowDataResponse.isWorkFlow && (workflowDataResponse.workFlow.includes("phone_number_claim") || workflowDataResponse.workFlow.includes("email_claim"))) {
-        let serverAttestationInfo = await serverAttestation(genesisHashOfFile, walletAddress)
+    if (workflowDataResponse.isWorkFlow && (workflowName.includes("phone_number_claim") || workflowName.includes("email_claim"))) {
+        let serverAttestationInfo = await serverAttestation(genesisHashOfFile, walletAddress, workflowName as "email_claim" | "phone_number_claim")
 
         if (serverAttestationInfo) {
             const attestedData = serverAttestationInfo

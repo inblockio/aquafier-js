@@ -375,7 +375,7 @@ const ClaimsAndAttestationPage = () => {
                                                       }}
                                                 >
                                                       <Plus className="w-4 h-4" />
-                                                      <span>Create Simple Claim</span>
+                                                      <span>Create Name Claim</span>
                                                 </button>
                                                 <button
                                                       className="flex items-center space-x-2 text-white px-4 py-2  mx-2 my-2 rounded-md text-sm font-medium hover:bg-gray-100 cursor-pointer"

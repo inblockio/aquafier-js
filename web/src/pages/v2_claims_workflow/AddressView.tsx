@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Copy, Check, ArrowRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
@@ -30,6 +30,10 @@ export const AddressView: React.FC<AddressViewProps> = ({
       navigate(`/app/claims/workflow/${inputAddress.trim()}`);
     }
   };
+
+  useEffect(() => {
+    setInputAddress(address)
+  }, [address])
 
   return (
     <div className={`rounded-2xl shadow-lg border border-gray-100 ${className}`}>

@@ -239,7 +239,6 @@ export default function ClaimsWorkflowPage() {
 
       useEffect(() => {
             processAllAddressClaims()
-            // }, [walletAddress, JSON.stringify(files)])
       }, [files.fileData.map(e => Object.keys(e?.aquaTree?.file_index ?? {})).join(','), systemFileInfo.map(e => Object.keys(e?.aquaTree?.file_index ?? {})).join(','), walletAddress])
 
       return (

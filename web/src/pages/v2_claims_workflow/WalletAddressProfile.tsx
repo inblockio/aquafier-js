@@ -52,8 +52,6 @@ interface IClaim {
 
 const ClaimCard = ({ claim }: { claim: IClaim }) => {
 
-      console.log("Claim: ", claim)
-
       const [signatureImage, setSignatureImage] = useState<string | null |Uint8Array>(null)
       const [dnsVerificationResult, setDnsVerificationResult] = useState<IDnsVerificationResult | null>(null)
 
@@ -202,7 +200,7 @@ const ClaimCard = ({ claim }: { claim: IClaim }) => {
                   return (
                         <>
                               <X size={ICON_SIZE - 2} className="text-red-500" />
-                              <p className="text-xs font-medium text-gray-900">Not Verified</p>
+                              <p className="text-xs font-medium text-gray-900">Not Attested</p>
                         </>
                   )
             }

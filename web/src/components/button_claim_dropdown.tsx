@@ -95,7 +95,7 @@ export default function ClaimTypesDropdownButton() {
             className="group flex w-full items-center px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900"
           >
             <UserLock className="mr-3 h-4 w-4 text-gray-400 group-hover:text-gray-500" />
-            Create Simple Claim
+            Create Name Claim
           </button>
           
           <button
