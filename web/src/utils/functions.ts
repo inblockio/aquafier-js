@@ -685,6 +685,10 @@ export function estimateFileSize(fileContent: string | AquaTree): number {
       return fileSize
 }
 
+export function arraysEqualIgnoreOrder(a: string[], b: string[]): boolean {
+  return a.length === b.length &&
+         [...new Set(a)].every(val => b.includes(val));
+}
 // Function to check if a string is Base64 encoded
 function isBase64(str: string) {
       if (typeof str !== 'string') return false
