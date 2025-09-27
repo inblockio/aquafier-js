@@ -8,7 +8,7 @@ import { ClipLoader } from 'react-spinners'
 import { ApiFileInfo, ClaimInformation, IAttestationEntry } from '@/models/FileInfo'
 import axios from 'axios'
 import { Contract, ICompleteClaimInformation } from '@/types/types'
-import { SharedContract } from '../files_shared_contracts'
+import { SharedContract } from '../files_share/files_shared_contracts_item'
 import AttestationEntry from './AttestationEntry'
 import { OrderRevisionInAquaTree } from 'aqua-js-sdk'
 import SimpleClaim from './SimpleClaim'
@@ -314,6 +314,7 @@ export default function ClaimsWorkflowPage() {
                                                                   claim.sharedContracts?.map((contract, index) => (
                                                                         <div key={`shared_contract_${index}`}>
                                                                               <SharedContract
+                                                                              type='outgoing'
                                                                                     key={`${contract.hash}`}
                                                                                     contract={contract}
                                                                                     index={index}
@@ -359,6 +360,7 @@ export default function ClaimsWorkflowPage() {
                                                                   claim.sharedContracts?.map((contract, index) => (
                                                                         <div key={`shared_contract_${index}`}>
                                                                               <SharedContract
+                                                                              type='outgoing'
                                                                                     key={`${contract.hash}`}
                                                                                     contract={contract}
                                                                                     index={index}

@@ -107,6 +107,7 @@ const SharePage = () => {
                                                       <div></div>
                                                 ) : drawerStatus ? (
                                                       <ImportAquaChainFromChain
+                                                      showButtonOnly={false}
                                                             fileInfo={fileInfo}
                                                             contractData={contractData}
                                                             isVerificationSuccessful={drawerStatus ? drawerStatus?.isVerificationSuccessful : false}
