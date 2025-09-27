@@ -4,7 +4,7 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
-import { CircleCheckBigIcon,  Hash, Users, Wallet } from 'lucide-react'
+import { CircleCheckBigIcon, Hash, Users, Wallet } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import axios from 'axios'
 import { useStore } from 'zustand'
@@ -144,8 +144,8 @@ export const SharedContract = ({ type, contract, index, contractDeleted }: { typ
 
       return (
             <Card key={contract.hash} className="hover:shadow-md transition-shadow cursor-pointer border border-gray-200 " style={{ marginTop: '10px', marginBottom: '10px' }}>
-                  <CardContent className="p-3 sm:p-6">
-                        <div className="flex items-start justify-between">
+                  <CardContent className="p-2 sm:p-6">
+                        <div className="flex items-start justify-between relative">
                               <div className="flex-1 space-y-4">
                                     {/* Contract Hash */}
                                     <div className="flex items-center gap-3 align-center">
@@ -316,11 +316,13 @@ export const SharedContract = ({ type, contract, index, contractDeleted }: { typ
                                     </div>
                               </div>
                               {/* Green Button in Top Right */}
-                              {
-                                    type == 'incoming' ? 
-                                          <CheckIfAquaTreeIsImported loadingSharedFileData={loadingSharedFileData} exactMatchFound={exactMatchFound} />
-                                    :<div className="flex-shrink-0 ml-4"/>
-                              }
+                              <div className="absolute top-0 right-0">
+                                    {
+                                          type == 'incoming' ?
+                                                <CheckIfAquaTreeIsImported loadingSharedFileData={loadingSharedFileData} exactMatchFound={exactMatchFound} />
+                                                : <div className="flex-shrink-0 ml-4" />
+                                    }
+                              </div>
                         </div>
                   </CardContent>
             </Card>

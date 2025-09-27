@@ -1,17 +1,17 @@
-import {INotification, NotificationsHolderProps} from '../../types/index'
-import {useState} from 'react'
-import {Button} from '../../components/ui/button'
-import {Card, CardContent, CardHeader, CardTitle} from '../../components/ui/card'
-import {Check, Loader2} from 'lucide-react'
-import {ScrollArea} from '../../components/ui/scroll-area'
-import {formatDistanceToNow} from 'date-fns'
+import { INotification, NotificationsHolderProps } from '../../types/index'
+import { useState } from 'react'
+import { Button } from '../../components/ui/button'
+import { Card, CardContent, CardHeader, CardTitle } from '../../components/ui/card'
+import { Check, Loader2 } from 'lucide-react'
+import { ScrollArea } from '../../components/ui/scroll-area'
+import { formatDistanceToNow } from 'date-fns'
 import axios from 'axios'
 import appStore from '../../store'
-import {API_ENDPOINTS} from '../../utils/constants'
-import {formatCryptoAddress} from '../../utils/functions'
-import {Badge} from '../../components/ui/badge'
-import {useNavigate} from 'react-router-dom'
-import {toast} from 'sonner'
+import { API_ENDPOINTS } from '../../utils/constants'
+import { Badge } from '../../components/ui/badge'
+import { useNavigate } from 'react-router-dom'
+import { toast } from 'sonner'
+import WalletAdrressClaim from '../v2_claims_workflow/WalletAdrressClaim'
 
 interface NotificationItemProps {
       notification: INotification
@@ -30,6 +30,7 @@ const NotificationItem = ({ notification, onRead }: NotificationItemProps) => {
                   }
             }
       }
+
       const markAsRead = async () => {
             if (notification.is_read) {
                   navigateToPage()
@@ -57,30 +58,69 @@ const NotificationItem = ({ notification, onRead }: NotificationItemProps) => {
             }
       }
 
+      const renderButton = () => {
+            if (notification.content.includes("new document has been")) {
+                  return (
+                        <Button
+                              variant="default"
+                              size="sm"
+                              className="cursor-pointer"
+                              onClick={e => {
+                                    e.stopPropagation()
+                                    // markAsRead()
+                                    navigate(notification.navigate_to)
+                              }}
+                              disabled={isMarking}
+                        >
+                              Review
+                        </Button>
+                  )
+            }
+            return null
+      }
+
       // Format the date to be more readable
       const formattedDate = notification.created_on
             ? formatDistanceToNow(new Date(notification.created_on), {
-                    addSuffix: true,
-              })
+                  addSuffix: true,
+            })
             : ''
 
       return (
             <div className={`p-4 border-b last:border-b-0 ${notification.is_read ? 'bg-white' : 'bg-blue-50'}`} onClick={markAsRead}>
                   <div className="flex justify-between items-start">
-                        <div className="flex-1">
+                        <div className="flex flex-col flex-1 gap-1">
                               <div className="flex items-center gap-1 mb-1">
-                                    <Badge
-                                          className={`text-xs px-2 py-0.5 ${notification.sender === 'system' ? 'bg-blue-100 text-blue-700 hover:bg-blue-100' : 'bg-gray-100 text-gray-700 hover:bg-gray-100'}`}
-                                          variant="outline"
-                                    >
-                                          {notification.sender === 'system' ? 'System' : formatCryptoAddress(notification.sender, 4, 4)}
-                                    </Badge>
+                                    {
+                                          notification.sender === 'system' ? (
+                                                <Badge
+                                                      className="text-xs px-2 py-0.5 bg-blue-100 text-blue-700 hover:bg-blue-100"
+                                                      variant="outline"
+                                                      onClick={e => e.stopPropagation()}
+                                                >
+                                                      System
+                                                </Badge>
+                                          ) : (
+                                                <Badge
+                                                      className="text-xs px-2 py-0.5 bg-gray-100 text-gray-700 hover:bg-gray-100"
+                                                      variant="outline"
+                                                      onClick={e => e.stopPropagation()}
+                                                >
+                                                      Sender: <WalletAdrressClaim walletAddress={notification.sender} />
+                                                </Badge>
+                                          )
+                                    }
                               </div>
                               <p className="text-xs font-medium" style={{
                                     whiteSpace: 'pre-wrap',
                                     wordBreak: 'break-word',
                               }}>{notification.content}</p>
-                              <p className="text-xs text-gray-500 mt-1">{formattedDate}</p>
+                              <div className="flex gap-2" style={{
+                                    alignItems: 'center',
+                              }}>
+                                    {renderButton()}
+                                    <p className="text-xs text-gray-500 h-fit">{formattedDate}</p>
+                              </div>
                         </div>
                         <div className="flex items-center space-x-2">
                               {!notification.is_read && (

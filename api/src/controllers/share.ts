@@ -151,7 +151,7 @@ export default async function shareController(fastify: FastifyInstance) {
         });
 
         if (session == null) {
-            return reply.code(403).send({ success: false, message: "Nounce  is invalid" });
+            return reply.code(403).send({ success: false, message: "Nonce  is invalid" });
         }
 
         if (recipients == null || recipients.length === 0) {
@@ -194,7 +194,7 @@ export default async function shareController(fastify: FastifyInstance) {
                     sender: session.address,
                     receiver: recipients[i],
                     content: `A new document has been shared with you by ${session.address}`,
-                    navigate_to: `/app/shared-contracts`,
+                    navigate_to: `/app/shared-contracts/${hash}`,
                     is_read: false,
                     created_on: new Date()
                 }
@@ -259,7 +259,7 @@ export default async function shareController(fastify: FastifyInstance) {
                         sender: session.address,
                         receiver: recipients[i],
                         content: `A shared document contract has been updated by ${session.address}`,
-                        navigate_to: "",
+                        navigate_to: `/app/shared-contracts/${hash}`,
                         is_read: false,
                         created_on: new Date()
                     }
