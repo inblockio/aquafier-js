@@ -274,6 +274,8 @@ export default async function userController(fastify: FastifyInstance) {
                 }
             })
 
+            let enableDBAClaim= process.env.ENABLE_DBA_CLAIM ?? "false"
+
             if (settingsData == null) {
                 let defaultData = {
                     user_pub_key: session.address,
@@ -282,6 +284,7 @@ export default async function userController(fastify: FastifyInstance) {
                     cli_priv_key: "",
                     witness_network: "sepolia",
                     theme: "light",
+                    enable_dba_claim : enableDBAClaim== "true" ? true : false,
                     witness_contract_address: '0x45f59310ADD88E6d23ca58A0Fa7A55BEE6d2a611',
                 }
                 await prisma.settings.create({

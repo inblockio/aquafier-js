@@ -581,13 +581,13 @@ const FilesPage = () => {
                   <div className="w-full max-w-full box-border overflow-x-hidden bg-white p-6">
 
                         {
-                              (files.status === 'loading' || files.status === 'idle') ? (
+                              (files.status === 'loading' || files.status === 'idle') ? 
                                     <div className="flex justify-center items-center h-40">
                                           <Loader2 className="w-6 h-6 text-gray-500 animate-spin" />
                                     </div>
-                              ) : files.status === 'error' ? (
+                               : files.status === 'error' ? 
                                     <div className="text-center text-red-500">Error loading files. Please try again.</div>
-                              ) : <>
+                               : <>
 
                                     {files.fileData.length == 0 ? (
                                           <FileDropZone

@@ -54,7 +54,8 @@ export default async function systemController(fastify: FastifyInstance) {
             "identity_claim",
             "user_signature",
             "email_claim",
-            "phone_number_claim"
+            "phone_number_claim",
+            "user_profile"
         ]
 
         for (let index = 0; index < templates.length; index++) {

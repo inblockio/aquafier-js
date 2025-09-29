@@ -4,6 +4,10 @@ import {prisma} from "../database/db";
 import Logger from "../utils/Logger";
 import {WebScraper} from "../utils/scraper";
 import {ScrapedData} from "../models/types";
+import * as fs from "fs"
+import path from 'path';
+import { getAquaAssetDirectory } from "src/utils/file_utils";
+import { checkFolderExists } from "src/utils/api_utils";
 
 // Rate-limiting configuration
 const RATE_LIMIT_CONFIG = {
@@ -410,5 +414,76 @@ if (hasProtocol && !isAllowed) {
     return reply
       .code(200)
       .send({ success: true, message: "Verification code sent" });
+  });
+
+
+   fastify.post("/fetch_template_aqua_tree", async (request, reply) => {
+    const nonce = request.headers["nonce"];
+
+    // Check if `nonce` is missing or empty
+    if (!nonce || typeof nonce !== "string" || nonce.trim() === "") {
+      return reply
+        .code(401)
+        .send({ error: "Unauthorized: Missing or empty nonce header" });
+    }
+
+    const session = await prisma.siweSession.findUnique({
+      where: { nonce },
+    });
+
+    if (!session) {
+      return reply
+        .code(403)
+        .send({ success: false, message: "Nonce is invalid" });
+    }
+
+    const revisionDataPar = request.body as {
+      template_name: string;
+      
+    };
+
+    if (
+      !revisionDataPar.template_name ||
+      revisionDataPar.template_name.length === 0
+    ) {
+      return reply
+        .code(400)
+        .send({ success: false, message: "Input is required" });
+    }
+
+  let assetsPath = getAquaAssetDirectory()
+    Logger.info(`Assets path ${assetsPath}`)
+
+    let assetPathExist = await checkFolderExists(assetsPath)
+    const assetFiles = [];
+    if (assetPathExist) {
+
+        const files = await fs.promises.readdir(assetsPath);
+
+        // Filter only files (exclude directories)
+        for (const file of files) {
+            const filePath = path.join(assetsPath, file);
+            const stats = await fs.promises.lstat(filePath);
+            if (stats.isFile()) {
+                Logger.info(`file ${file}`)
+                assetFiles.push(filePath);
+            }
+        }
+    } else {
+        Logger.warn(`Assets path ${assetsPath} does not exist`)
+    }
+
+  let templateAquaTreeData = path.join(assetsPath, `${revisionDataPar.template_name}.json.aqua.json`); 
+  let aquaTree = fs.readFileSync(templateAquaTreeData, 'utf8')
+
+
+
+    let templateData = path.join(assetsPath, `${revisionDataPar.template_name}.json`); 
+  let templateDataItem = fs.readFileSync(templateData, 'utf8')
+
+
+    return reply
+      .code(200)
+      .send({ success: true, aquaTree: aquaTree, data: templateDataItem ,message: "Verification code sent" });
   });
 }

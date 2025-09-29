@@ -145,7 +145,7 @@ export default function FilesList(filesListProps: FilesListProps) {
       const getFilterOptions = () => {
             const options = [
                   { value: 'all', label: 'All Files', count: files.fileData.length },
-                  { value: 'aqua_files', label: 'Aqua Files', count: 0 }
+                  { value: 'aqua_files', label: 'Aqua Files (Non worklows)', count: 0 }
             ]
 
             // Count non-workflow files
@@ -230,7 +230,7 @@ export default function FilesList(filesListProps: FilesListProps) {
             if (selectedFilters.length === 1) {
                   const filter = selectedFilters[0]
                   if (filter === 'aqua_files') {
-                        return 'Aqua Files'
+                        return 'Aqua Files (Non workflow)'
                   }
                   return `${capitalizeWords(filter.replace(/_/g, ' '))} Files`
             }

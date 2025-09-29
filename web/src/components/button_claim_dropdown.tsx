@@ -1,16 +1,16 @@
-import {useEffect, useRef, useState} from 'react';
-import {ChevronDown, Globe, Mail, Phone, Plus, Scale, Signature, UserLock} from 'lucide-react';
-import {createPortal} from 'react-dom';
+import { useEffect, useRef, useState } from 'react';
+import { ChevronDown, Globe, Mail, Phone, Plus, Scale, Signature, UserLock } from 'lucide-react';
+import { createPortal } from 'react-dom';
 import appStore from '../store'
-import {useStore} from 'zustand'
+import { useStore } from 'zustand'
 
 export default function ClaimTypesDropdownButton() {
-   const {setOpenDialog  } = useStore(appStore)
+  const { setOpenDialog, user_profile } = useStore(appStore)
   const [isOpen, setIsOpen] = useState(false);
   const [dropdownPosition, setDropdownPosition] = useState({ top: 0, left: 0 });
   const buttonRef = useRef<HTMLButtonElement>(null);
 
-  const handleItemClick = (item: 'identity_claim' | 'dns_claim' | 'user_signature' | 'email_claim' | 'phone_number_claim' | 'dba_claim' ) => {
+  const handleItemClick = (item: 'identity_claim' | 'dns_claim' | 'user_signature' | 'email_claim' | 'phone_number_claim' | 'dba_claim') => {
     setIsOpen(false);
 
     setOpenDialog({ dialogType: item, isOpen: true, onClose: () => setOpenDialog(null), onConfirm: () => { } })
@@ -21,31 +21,31 @@ export default function ClaimTypesDropdownButton() {
       const rect = buttonRef.current.getBoundingClientRect();
       const dropdownWidth = 224; // w-56 = 14rem = 224px
       const dropdownHeight = 88; // Approximate height of dropdown with 2 items
-      
+
       let top = rect.bottom + window.scrollY + 8;
       let left = rect.left + window.scrollX;
-      
+
       // Check if dropdown would overflow to the right
       if (left + dropdownWidth > window.innerWidth) {
         left = rect.right + window.scrollX - dropdownWidth;
       }
-      
+
       // Check if dropdown would overflow to the bottom
       if (rect.bottom + dropdownHeight > window.innerHeight) {
         // Position above the button instead
         top = rect.top + window.scrollY - dropdownHeight - 8;
       }
-      
+
       // Ensure dropdown doesn't go off the left edge
       if (left < 0) {
         left = 8; // Small margin from edge
       }
-      
+
       // Ensure dropdown doesn't go off the top
       if (top < window.scrollY) {
         top = rect.bottom + window.scrollY + 8; // Fall back to below button
       }
-      
+
       setDropdownPosition({ top, left });
     }
   };
@@ -61,10 +61,10 @@ export default function ClaimTypesDropdownButton() {
     if (isOpen) {
       const handleResize = () => updateDropdownPosition();
       const handleScroll = () => updateDropdownPosition();
-      
+
       window.addEventListener('resize', handleResize);
       window.addEventListener('scroll', handleScroll);
-      
+
       return () => {
         window.removeEventListener('resize', handleResize);
         window.removeEventListener('scroll', handleScroll);
@@ -75,13 +75,13 @@ export default function ClaimTypesDropdownButton() {
   const dropdownContent = isOpen ? (
     <>
       {/* Backdrop */}
-      <div 
-        className="fixed inset-0 z-[9999]" 
+      <div
+        className="fixed inset-0 z-[9999]"
         onClick={() => setIsOpen(false)}
       />
-      
+
       {/* Dropdown menu */}
-      <div 
+      <div
         className="fixed z-[10000] w-56 rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none"
         style={{
           top: `${dropdownPosition.top}px`,
@@ -90,16 +90,16 @@ export default function ClaimTypesDropdownButton() {
       >
         <div className="py-1">
           <button
-           data-testid="create-simple-claim-dropdown-button-item"
+            data-testid="create-simple-claim-dropdown-button-item"
             onClick={() => handleItemClick('identity_claim')}
             className="group flex w-full items-center px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900"
           >
             <UserLock className="mr-3 h-4 w-4 text-gray-400 group-hover:text-gray-500" />
             Create Name Claim
           </button>
-          
+
           <button
-          data-testid="create-dns-claim-dropdown-button-item"
+            data-testid="create-dns-claim-dropdown-button-item"
             onClick={() => handleItemClick('dns_claim')}
             className="group flex w-full items-center px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900"
           >
@@ -107,19 +107,20 @@ export default function ClaimTypesDropdownButton() {
             Create DNS Claim
           </button>
 
-
-           <button
-          data-testid="create-dns-claim-dropdown-button-item"
+          {user_profile?.enable_dba_claim ? (<button
+            data-testid="create-dns-claim-dropdown-button-item"
             onClick={() => handleItemClick('dba_claim')}
             className="group flex w-full items-center px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900"
           >
             <Scale className="mr-3 h-4 w-4 text-gray-400 group-hover:text-gray-500" />
             Create DBA Claim
-          </button>
+          </button>) : null}
 
 
-           <button
-          data-testid="create-signature-claim-dropdown-button-item"
+
+
+          <button
+            data-testid="create-signature-claim-dropdown-button-item"
             onClick={() => handleItemClick('user_signature')}
             className="group flex w-full items-center px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900"
           >
@@ -127,8 +128,8 @@ export default function ClaimTypesDropdownButton() {
             Create Signature
           </button>
 
-             <button
-          data-testid="create-email-claim-dropdown-button-item"
+          <button
+            data-testid="create-email-claim-dropdown-button-item"
             onClick={() => handleItemClick('email_claim')}
             className="group flex w-full items-center px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900"
           >
@@ -138,8 +139,8 @@ export default function ClaimTypesDropdownButton() {
 
 
 
-             <button
-          data-testid="create-phone-number-claim-dropdown-button-item"
+          <button
+            data-testid="create-phone-number-claim-dropdown-button-item"
             onClick={() => handleItemClick('phone_number_claim')}
             className="group flex w-full items-center px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 hover:text-gray-900"
           >
@@ -166,14 +167,13 @@ export default function ClaimTypesDropdownButton() {
         >
           <Plus className="w-4 h-4" />
           Create Claim
-          <ChevronDown 
-            className={`h-4 w-4 text-white transition-transform duration-200 ${
-              isOpen ? 'rotate-180' : ''
-            }`} 
+          <ChevronDown
+            className={`h-4 w-4 text-white transition-transform duration-200 ${isOpen ? 'rotate-180' : ''
+              }`}
           />
         </button>
       </div>
-      
+
       {typeof document !== 'undefined' && createPortal(dropdownContent, document.body)}
     </>
   );

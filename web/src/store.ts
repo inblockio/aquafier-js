@@ -15,6 +15,7 @@ type AppStoreState = {
             alchemy_key: string
             theme: string
             ens_name: string
+            enable_dba_claim: boolean
             witness_contract_address: string | null
       }
       session: Session | null
@@ -138,6 +139,7 @@ const appStore = createStore<TAppStore>()(
                         witness_network: '',
                         alchemy_key: '',
                         theme: 'light',
+                        enable_dba_claim: false,
                         witness_contract_address: '0x45f59310ADD88E6d23ca58A0Fa7A55BEE6d2a611',
                   },
                   session: null,
