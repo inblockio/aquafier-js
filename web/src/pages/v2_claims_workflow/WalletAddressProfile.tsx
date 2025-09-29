@@ -484,6 +484,8 @@ const WalletAddressProfile = ({ walletAddress, callBack, showAvatar, width, show
                         callBack();
                   }
 
+                  toast.info(`Creating profile for sharing...`, { duration: 4000 })
+
                   let allFileObjects: Array<FileObject> = []
                   const randomNumber = getRandomNumber(100, 1000)
                   // let fileName = `user_profile_${timeToHumanFriendly(Date.now().toString())}_${randomNumber}.json`
