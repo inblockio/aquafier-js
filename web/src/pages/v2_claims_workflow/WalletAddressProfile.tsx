@@ -534,9 +534,14 @@ const WalletAddressProfile = ({ walletAddress, callBack, showAvatar, width, show
                               },
                         })
 
-                        let jsonDataString = response.data.data
-                        let jsonData = JSON.parse(jsonDataString)
-
+                        let jsonData
+                       if(typeof response.data.data === 'string')
+{
+       let jsonDataString = response.data.data
+                         jsonData = JSON.parse(jsonDataString)
+}else{
+jsonData = response.data.data
+}
                         // Fix the wallet address in the template
                         jsonData.wallet_address = walletAddress
                         let aquaTreeString = response.data.aquaTree
