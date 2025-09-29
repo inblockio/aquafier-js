@@ -217,10 +217,6 @@ const FilePreview: React.FC<IFilePreview> = ({ fileInfo }) => {
             }
       }
 
-
-   
-
-
       useEffect(() => {
             const fetchFile = async () => {
                   setIsLoading(true)
@@ -361,12 +357,13 @@ const FilePreview: React.FC<IFilePreview> = ({ fileInfo }) => {
             }
             // return <img src={fileURL} alt="File preview" style={{ maxWidth: '100%', height: 'auto' }} />
             const previewUrl = convertedHeicUrl || fileURL
-            return <img src={previewUrl} alt="File preview" style={{ maxWidth: '100%', height: 'auto' }} />
+            return (
+                  <div className='p-2 max-h-[100%] overflow-y-auto'>
+                        <img src={previewUrl} alt="File preview" style={{ maxWidth: '100%', height: 'auto' }} />
+                  </div>
+            )
 
       }
-
-
-
 
       // PDF files
       if (fileType === 'application/pdf') {
@@ -380,7 +377,7 @@ const FilePreview: React.FC<IFilePreview> = ({ fileInfo }) => {
 
             if (fileType === 'application/json' || isJson) {
                   return (
-                        <div className="p-5 m-5">
+                        <div className="p-2">
                               <FilePreviewAquaTreeFromTemplate formData={JSON.parse(newTxtContent)} />
                         </div>
                   )

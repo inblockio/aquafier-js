@@ -68,9 +68,9 @@ const WalletAdrressClaim = forwardRef<HTMLDivElement, IWalletAdrressClaim>(
                                                       </TooltipContent>
                                                 </Tooltip>
                                           ) : (
-                                                <div className="flex gap-2 items-center flex-wrap break-all">
+                                                <div className="p-0 flex gap-2 items-center flex-wrap break-all">
                                                       <p
-                                                            className="text-xs flex-1 cursor-pointer font-mono font-medium"
+                                                            className="p-0 text-xs flex-1 cursor-pointer font-mono font-medium"
                                                             style={{
                                                                   wordBreak: "break-all",
                                                                   wordWrap: "break-word",

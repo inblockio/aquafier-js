@@ -1,11 +1,11 @@
 import appStore from '@/store'
 import { Contract } from '@/types/types'
 import { SYSTEM_WALLET_ADDRESS } from '@/utils/constants'
-import { fetchWalletAddressesAndNamesForInputRecommendation, getGenesisHash, timeToHumanFriendly } from '@/utils/functions'
+import { fetchWalletAddressesAndNamesForInputRecommendation, getGenesisHash, isValidEthereumAddress, timeToHumanFriendly } from '@/utils/functions'
 import { getAquaTreeFileObject } from 'aqua-js-sdk'
 import axios from 'axios'
 import { Share2, X, Users, ExternalLink, Check, Copy, Lock, Trash2, Plus } from 'lucide-react'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { Link } from 'react-router-dom'
 import { ClipLoader } from 'react-spinners'
 import { generateNonce } from 'siwe'
@@ -14,6 +14,8 @@ import { useStore } from 'zustand'
 import CopyButton from '../CopyButton'
 import { WalletAutosuggest } from '../wallet_auto_suggest'
 import { Button } from '@/components/ui/button'
+import { Badge } from '../ui/badge'
+import WalletAdrressClaim from '@/pages/v2_claims_workflow/WalletAdrressClaim'
 // import { Input } from '@/components/ui/input'
 // import { Label } from '@/components/ui/label'
 
@@ -30,6 +32,7 @@ const ShareComponent = () => {
       const [loadingPreviousShares, setLoadingPreviousShares] = useState(true)
       const [previousShares, setPreviousShares] = useState<Contract[]>([])
       const [multipleAddresses, setMultipleAddresses] = useState<string[]>([])
+      const [recipientErrors, setRecipientErrors] = useState<{ [key: number]: string }>({})
       // const recipients = recipientType === SYSTEM_WALLET_ADDRESS ? [SYSTEM_WALLET_ADDRESS] : multipleAddresses
 
       const addAddress = () => {
@@ -44,7 +47,10 @@ const ShareComponent = () => {
             setMultipleAddresses(multipleAddresses.filter((_, i) => i !== index))
       }
 
-
+      const resetShareState = () => {
+            setShared(null)
+            setSharing(false)
+      }
 
 
       useEffect(() => {
@@ -53,6 +59,14 @@ const ShareComponent = () => {
             }, 1000)
             return () => clearTimeout(timer)
       }, [])
+
+      const itemsToWatchForChange = useMemo(() => {
+            return [recipientType, optionType, multipleAddresses]
+      }, [recipientType, optionType, multipleAddresses])
+
+      useEffect(() => {
+            resetShareState()
+      }, [JSON.stringify(itemsToWatchForChange)])
 
       const handleCopy = () => {
             if (shared) {
@@ -72,13 +86,25 @@ const ShareComponent = () => {
                   return
             }
 
-            if (recipientType == 'specific') {  
-                  for (let addr of multipleAddresses) {
-
+            if (recipientType == 'specific') {
+                  let invalidAddresses: { msg: string, index: number }[] = []
+                  for (let i = 0; i < multipleAddresses.length; i++) {
+                        let addr = multipleAddresses[i]
                         if (!addr || addr.trim() === '') {
-                              toast.error(`Please fill all wallet address fields or remove empty ones.`)
-                              return
+                              invalidAddresses.push({ msg: `Empty address at position`, index: i })
+                        } else if (!isValidEthereumAddress(addr)) {
+                              invalidAddresses.push({ msg: `Invalid address at position`, index: i })
                         }
+                  }
+                  if (invalidAddresses.length > 0) {
+                        // toast.error(`${invalidAddresses.length} invalid wallet address found. Please fill all wallet address fields or remove empty ones.`)
+                        // Show a message for the index of invalid addresses
+                        let _recipientErrors: { [key: number]: string } = {}
+                        for (let i = 0; i < invalidAddresses.length; i++) {
+                              _recipientErrors[invalidAddresses[i].index] = invalidAddresses[i].msg
+                        }
+                        setRecipientErrors(_recipientErrors)
+                        return
                   }
 
             }
@@ -115,8 +141,8 @@ const ShareComponent = () => {
                         recipients: recepientWalletData,
                         option: optionType,
                         file_name: mainFileObject.fileName,
-                        genesis_hash : getGenesisHash(selectedFileInfo.aquaTree!),     
-                        
+                        genesis_hash: getGenesisHash(selectedFileInfo.aquaTree!),
+
                   },
                   {
                         headers: {
@@ -147,7 +173,7 @@ const ShareComponent = () => {
                         toast.error(`selected file not found`)
                         return
                   }
-                 
+
                   const response = await axios.get(`${backend_url}/contracts`, {
                         params: {
                               genesis_hash: getGenesisHash(selectedFileInfo.aquaTree!),
@@ -169,9 +195,17 @@ const ShareComponent = () => {
             }
       }
 
+      const getAddressError = (index: number) => {
+            return recipientErrors[index]
+      }
+
+      useEffect(() => {
+            setRecipientErrors({})
+      }, [JSON.stringify(multipleAddresses)])
+
       useEffect(() => {
             loadPreviousShare()
-      }, [])
+      }, [shared])
 
       if (loading) {
             return (
@@ -190,8 +224,6 @@ const ShareComponent = () => {
                   </div>
             )
       }
-
-
 
       return (
             <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
@@ -275,7 +307,7 @@ const ShareComponent = () => {
                                                       ? 'border-blue-500 bg-blue-50 ring-2 ring-blue-500/20'
                                                       : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
                                                       }`}
-                                                onClick={() => {setRecipientType('specific');addAddress()}}
+                                                onClick={() => { setRecipientType('specific'); addAddress() }}
                                           >
                                                 <div className="flex items-center justify-between">
                                                       <div className="flex items-center gap-3">
@@ -298,10 +330,10 @@ const ShareComponent = () => {
                                     {/* Wallet Address Input */}
                                     {recipientType === 'specific' && (
                                           <div className="ml-12 space-y-2">
-                                               
+
                                                 <div key={`field-share-1`} className="space-y-4">
                                                       <div className="flex items-center justify-end">
-                                                           
+
                                                             <Button
                                                                   variant="outline"
                                                                   size="sm"
@@ -325,9 +357,7 @@ const ShareComponent = () => {
                                                                               {index + 1}
                                                                         </div>
                                                                         <div className="flex-1">
-                                                                              
                                                                               <WalletAutosuggest
-
                                                                                     walletAddresses={fetchWalletAddressesAndNamesForInputRecommendation(systemFileInfo, files)}
                                                                                     field={{
                                                                                           name: `share_address_${index}`,
@@ -339,6 +369,10 @@ const ShareComponent = () => {
                                                                                     placeholder="Enter wallet address (0x...)"
                                                                                     className="rounded-lg border-gray-200 focus:border-blue-500 focus:ring-blue-500"
                                                                               />
+                                                                              {
+                                                                                    // Display error here if any
+                                                                                    getAddressError(index) && <span className="text-red-500 text-xs">{getAddressError(index)}</span>
+                                                                              }
                                                                         </div>
                                                                         {multipleAddresses.length > 1 && (
                                                                               <Button
@@ -469,9 +503,27 @@ const ShareComponent = () => {
                                                                                     <div className="flex flex-col gap-1">
                                                                                           <div className="text-sm font-medium">
                                                                                                 <p>
-                                                                                                      Shared With:
-                                                                                                      {share.recipients.includes( SYSTEM_WALLET_ADDRESS) ? "Everyone" : share.recipients.map( (e) => e.toLocaleLowerCase() == session?.address?.toLocaleLowerCase() ? " (You)" : ` ${e}`).toString()}
+                                                                                                      Shared with:
                                                                                                 </p>
+                                                                                                {share.recipients.includes(SYSTEM_WALLET_ADDRESS) ? "Everyone" : (
+                                                                                                      <div>
+                                                                                                            {share.recipients.map((e, i: number) => (
+                                                                                                                  <div key={`${share.hash}-${i}`} className="flex gap-1" style={{
+                                                                                                                        alignItems: "center",
+                                                                                                                  }}>
+                                                                                                                        <p className='text-gray-500 text-xs' style={{ wordBreak: "break-all", fontFamily: "monospace" }}>
+                                                                                                                              {`${i + 1}.`}
+                                                                                                                        </p>
+                                                                                                                        {
+                                                                                                                              e.toLowerCase() === SYSTEM_WALLET_ADDRESS ? <Badge className="text-xs">Everyone</Badge> : null
+                                                                                                                        }
+                                                                                                                        {
+                                                                                                                              e.toLowerCase() !== SYSTEM_WALLET_ADDRESS ? <WalletAdrressClaim walletAddress={e} /> : null
+                                                                                                                        }
+                                                                                                                  </div>
+                                                                                                            ))}
+                                                                                                      </div>
+                                                                                                )}
                                                                                                 <p className="text-sm font-medium">
                                                                                                       {timeToHumanFriendly(share.created_at!, true)}
                                                                                                 </p>

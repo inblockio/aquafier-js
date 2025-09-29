@@ -1,17 +1,17 @@
-import {useEffect, useState} from 'react'
-import {useParams} from 'react-router-dom'
-import {useStore} from 'zustand'
+import { useEffect, useMemo, useState } from 'react'
+import { useParams } from 'react-router-dom'
+import { useStore } from 'zustand'
 import appStore from '../store'
 import axios from 'axios'
-import {ApiFileInfo} from '../models/FileInfo'
+import { ApiFileInfo } from '../models/FileInfo'
 // import { ClipLoader } from "react-spinners";
-import {IDrawerStatus} from '../models/AquaTreeDetails'
-import {ImportAquaChainFromChain} from '../components/dropzone_file_actions/import_aqua_tree_from_aqua_tree'
-import {toast} from 'sonner'
+import { IDrawerStatus } from '../models/AquaTreeDetails'
+import { ImportAquaChainFromChain } from '../components/dropzone_file_actions/import_aqua_tree_from_aqua_tree'
+import { toast } from 'sonner'
 
-import {Alert, AlertDescription, AlertTitle} from '../components/ui/alert'
-import {CompleteChainView} from '../components/files_chain_details'
- 
+import { Alert, AlertDescription, AlertTitle } from '../components/ui/alert'
+import { CompleteChainView } from '../components/files_chain_details'
+
 const SharePage = () => {
       const { backend_url, metamaskAddress, session } = useStore(appStore)
       const [fileInfo, setFileInfo] = useState<ApiFileInfo | null>(null)
@@ -21,6 +21,9 @@ const SharePage = () => {
       const [drawerStatus, setDrawerStatus] = useState<IDrawerStatus | null>(null)
 
       const params = useParams()
+      const identifier = useMemo(() => {
+            return params.identifier
+      }, [params])
 
       const loadPageData = async () => {
             if (loading) {
@@ -68,7 +71,7 @@ const SharePage = () => {
             }
             setHasError(null)
             // }, [params, session])
-      }, [session])
+      }, [session, identifier])
 
       const showProperWidget = () => {
             if (hasError) {
@@ -86,7 +89,7 @@ const SharePage = () => {
       const updateDrawerStatus = (_drawerStatus: IDrawerStatus) => {
             setDrawerStatus(_drawerStatus)
       }
- 
+
       return (
             <div id="replace-here" className="container w-10xl mx-auto">
                   <div className="w-full py-4">
@@ -107,7 +110,7 @@ const SharePage = () => {
                                                       <div></div>
                                                 ) : drawerStatus ? (
                                                       <ImportAquaChainFromChain
-                                                      showButtonOnly={false}
+                                                            showButtonOnly={false}
                                                             fileInfo={fileInfo}
                                                             contractData={contractData}
                                                             isVerificationSuccessful={drawerStatus ? drawerStatus?.isVerificationSuccessful : false}
