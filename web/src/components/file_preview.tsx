@@ -374,7 +374,7 @@ const FilePreview: React.FC<IFilePreview> = ({ fileInfo }) => {
       if (fileType.startsWith('text/') || fileType === 'application/json' || fileType === 'application/xml') {
             const newTxtContent = textContent
             const isJson = isJSONKeyValueStringContent(newTxtContent)
-
+ 
             if (fileType === 'application/json' || isJson) {
                   return (
                         <div className="p-2">

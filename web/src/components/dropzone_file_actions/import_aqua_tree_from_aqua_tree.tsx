@@ -117,10 +117,10 @@ export const ImportAquaChainFromChain = ({ showButtonOnly, fileInfo, isVerificat
                         toast.success('Aqua Chain imported successfully')
 
                         // Use setTimeout to ensure state is updated before navigation
-                        setTimeout(() => {
-                              window.location.replace('/app');
-                              // navigate('/app',  { replace: true })
-                        }, 500)
+                        // setTimeout(() => {
+                        //       window.location.replace('/app');
+                        //       // navigate('/app',  { replace: true })
+                        // }, 500)
                   } else {
                         toast.error('Failed to import chain')
                   }
