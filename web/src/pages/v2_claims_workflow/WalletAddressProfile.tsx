@@ -534,18 +534,29 @@ const WalletAddressProfile = ({ walletAddress, callBack, showAvatar, width, show
                               },
                         })
 
+                        // throw new Error('Error fetching template aqua tree' + JSON.stringify(response.data))
+
+                        console.log("Template aqua tree response:", response.data)
                         let jsonData
-                       if(typeof response.data.data === 'string')
-{
-       let jsonDataString = response.data.data
-                         jsonData = JSON.parse(jsonDataString)
-}else{
-jsonData = response.data.data
-}
+                        if (typeof response.data.templateData === 'string') {
+                              let jsonDataString = response.data.templateData
+                              jsonData = JSON.parse(jsonDataString)
+                        } else {
+                              jsonData = response.data.templateData
+                        }
                         // Fix the wallet address in the template
                         jsonData.wallet_address = walletAddress
-                        let aquaTreeString = response.data.aquaTree
-                        let templateAquaTree = JSON.parse(aquaTreeString) as AquaTree
+
+                         let templateAquaTree
+
+
+                         if( typeof response.data.aquaTree === 'string') {
+                               let aquaTreeString = response.data.aquaTree
+                               templateAquaTree = JSON.parse(aquaTreeString) as AquaTree
+                        }else{
+                              templateAquaTree = response.data.aquaTree as AquaTree
+                        }
+                        
 
                         const mainAquaTreeWrapper: AquaTreeWrapper = {
                               aquaTree: currentAquaTree!!,
@@ -554,20 +565,20 @@ jsonData = response.data.data
                         }
 
                         allFileObjects.push({
-                              fileContent: templateAquaTree,
+                              fileContent: JSON.stringify(templateAquaTree),
                               fileName: 'user_profile.json.aqua.json',
                               path: "./",
-                              fileSize: estimateFileSize(JSON.stringify(templateAquaTree)),
+                              fileSize: 0,//estimateFileSize(JSON.stringify(templateAquaTree)),
                         })
 
                         const linkedToAquaTreeWrapper: AquaTreeWrapper = {
                               aquaTree: templateAquaTree!,
                               revision: '',
                               fileObject: {
-                                    fileContent: jsonData,
+                                    fileContent: JSON.stringify(jsonData),
                                     fileName: 'user_profile.json',
                                     path: "./",
-                                    fileSize: estimateFileSize(JSON.stringify(jsonData)),
+                                    fileSize: 0, //estimateFileSize(JSON.stringify(jsonData)),
                               },
                         }
 

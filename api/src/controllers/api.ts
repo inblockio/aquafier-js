@@ -425,7 +425,7 @@ if (hasProtocol && !isAllowed) {
       return reply
         .code(401)
         .send({ error: "Unauthorized: Missing or empty nonce header" });
-    }
+    } 
 
     const session = await prisma.siweSession.findUnique({
       where: { nonce },
@@ -484,6 +484,6 @@ if (hasProtocol && !isAllowed) {
 
     return reply
       .code(200)
-      .send({ success: true, aquaTree: aquaTree, data: templateDataItem ,message: "Verification code sent" });
+      .send({ success: true, aquaTree: aquaTree, templateData: templateDataItem ,message: "Verification code sent" });
   });
 }
