@@ -6,8 +6,8 @@ import {WebScraper} from "../utils/scraper";
 import {ScrapedData} from "../models/types";
 import * as fs from "fs"
 import path from 'path';
-import { getAquaAssetDirectory } from "src/utils/file_utils";
-import { checkFolderExists } from "src/utils/api_utils";
+import { getAquaAssetDirectory } from "../utils/file_utils";
+import { checkFolderExists } from "../utils/api_utils";
 
 // Rate-limiting configuration
 const RATE_LIMIT_CONFIG = {
