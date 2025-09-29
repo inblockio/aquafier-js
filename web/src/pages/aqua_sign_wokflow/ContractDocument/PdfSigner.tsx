@@ -854,7 +854,7 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ fileData, setActiveStep, document
 
             if (allSignersBeforeMe.length > 0) {
                   return (
-                        <div className="flex flex-col gap-2 p-2 border border-gray-100 dark:border-gray-800 rounded-md">
+                        <div className="flex flex-col gap-2 p-0 border border-gray-100 dark:border-gray-800 rounded-md">
                               <p className="text-md">The following wallet address need to sign before you can.</p>
 
                               <div className="p-2 space-y-2">
@@ -863,7 +863,8 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ fileData, setActiveStep, document
                                                 <div key={e} className="bg-background shadow-sm p-2 rounded-sm">
                                                       <div className="flex items-center space-x-1">
                                                             <span className="text-xs">{index + 1}.</span>
-                                                            <span className="text-xs"> {e}</span>
+                                                            {/* <span className="text-xs"> {e}</span> */}
+                                                            <WalletAddressClaim walletAddress={e} />
                                                       </div>
                                                 </div>
                                           )
@@ -1133,7 +1134,7 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ fileData, setActiveStep, document
                   toast.error(`Error Loading pdf`)
             }
 
-            (`file data ${fileData} .....`)
+            // (`file data ${fileData} .....`)
             if (fileData) {
                   ; (async () => {
                         (`Fetch pdf file....`)
@@ -1176,6 +1177,7 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ fileData, setActiveStep, document
             }
 
       }, [openDialog])
+      
       return (
             <div className="h-[calc(100vh-70px)] overflow-y-scroll md:overflow-hidden">
                   <div className="h-[60px] flex items-center">
