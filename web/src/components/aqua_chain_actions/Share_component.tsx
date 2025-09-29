@@ -557,41 +557,44 @@ const ShareComponent = () => {
                               >
                                     Cancel
                               </button>
+                              <div className="flex gap-2">
+                                    {shared ? (
+                                          <button
+                                                onClick={handleCopy}
+                                                className="px-6 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 cursor-pointer transition-colors flex items-center gap-2"
+                                          >
+                                                {copied ? (
+                                                      <>
+                                                            <Check className="w-4 h-4" />
+                                                            Copied!
+                                                      </>
+                                                ) : (
+                                                      <>
+                                                            <Copy className="w-4 h-4" />
+                                                            Copy Link
+                                                      </>
+                                                )}
+                                          </button>
+                                    ) : null}
 
-                              {shared ? (
-                                    <button
-                                          onClick={handleCopy}
-                                          className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2"
-                                    >
-                                          {copied ? (
-                                                <>
-                                                      <Check className="w-4 h-4" />
-                                                      Copied!
-                                                </>
-                                          ) : (
-                                                <>
-                                                      <Copy className="w-4 h-4" />
-                                                      Copy Link
-                                                </>
-                                          )}
-                                    </button>
-                              ) : (
                                     <button
                                           onClick={handleShare}
                                           disabled={sharing}
-                                          className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center gap-2"
+                                          className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50  cursor-pointer disabled:cursor-not-allowed transition-colors flex items-center gap-2"
                                     >
-                                          {sharing ? (
-                                                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                                          ) : (
-                                                <Share2 className="w-4 h-4" />
-                                          )}
+                                          {
+                                                sharing ? (
+                                                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" ></div>
+                                                ) : (
+                                                      <Share2 className="w-4 h-4" />
+                                                )}
                                           {sharing ? 'Sharing...' : 'Create Share Link'}
                                     </button>
-                              )}
+                              </div>
+
                         </div>
-                  </div>
-            </div>
+                  </div >
+            </div >
       )
 }
 
