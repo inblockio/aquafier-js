@@ -80,7 +80,6 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             if (typeof config.CUSTOM_LOGO_URL === 'string') {
                   // config.CUSTOM_LOGO_URL != "true"
                   if (config.CUSTOM_LOGO_URL.startsWith('http://') || config.CUSTOM_LOGO_URL.startsWith('https://') || config.CUSTOM_LOGO_URL.startsWith('/')) {
-                        console.log("Custom logo url ", config.CUSTOM_LOGO_URL);
                         return config.CUSTOM_LOGO_URL;
                   }
                   if (config.CUSTOM_LOGO_URL === "true") {
