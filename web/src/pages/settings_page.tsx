@@ -40,6 +40,7 @@ const DeleteUserData = () => {
                               alchemy_key: '',
                               theme: 'light',
                               ens_name: '',
+                              enable_dba_claim: false,
                               witness_contract_address: '0x45f59310ADD88E6d23ca58A0Fa7A55BEE6d2a611',
                         })
                         setFiles({ fileData: [], status: 'idle' })
@@ -132,6 +133,7 @@ export default function SettingsPage() {
                         witness_network: activeNetwork,
                         alchemy_key: alchemyKey,
                         theme: 'light',
+                        enable_dba_claim: user_profile.enable_dba_claim,
                         witness_contract_address: contract ?? '0x45f59310ADD88E6d23ca58A0Fa7A55BEE6d2a611',
                   })
 
