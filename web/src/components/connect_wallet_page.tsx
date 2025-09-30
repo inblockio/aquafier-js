@@ -58,6 +58,75 @@ const isMetaMaskBrowser = (): boolean => {
   return !!(ethereum && ethereum.isMetaMask && ethereum.selectedAddress)
 }
 
+// New function to detect multiple wallets
+const detectInstalledWallets = (): { wallets: string[], hasMultiple: boolean, hasMetaMask: boolean } => {
+  const { ethereum } = window as any
+  const wallets: string[] = []
+  
+  if (!ethereum) {
+    return { wallets: [], hasMultiple: false, hasMetaMask: false }
+  }
+
+  // Check for MetaMask
+  if (ethereum.isMetaMask) {
+    wallets.push('MetaMask')
+  }
+
+  // Check for other common wallets
+  if (ethereum.isCoinbaseWallet || ethereum.isCoinbaseBrowser) {
+    wallets.push('Coinbase Wallet')
+  }
+
+  if (ethereum.isRabby) {
+    wallets.push('Rabby')
+  }
+
+  if (ethereum.isBraveWallet) {
+    wallets.push('Brave Wallet')
+  }
+
+  if (ethereum.isTokenPocket) {
+    wallets.push('TokenPocket')
+  }
+
+  if (ethereum.isTrust) {
+    wallets.push('Trust Wallet')
+  }
+
+  if (ethereum.isPhantom) {
+    wallets.push('Phantom')
+  }
+
+  // Check if ethereum.providers array exists (injected by some wallets)
+  if (ethereum.providers && Array.isArray(ethereum.providers)) {
+    ethereum.providers.forEach((provider: any) => {
+      if (provider.isMetaMask && !wallets.includes('MetaMask')) {
+        wallets.push('MetaMask')
+      }
+      if (provider.isCoinbaseWallet && !wallets.includes('Coinbase Wallet')) {
+        wallets.push('Coinbase Wallet')
+      }
+      if (provider.isRabby && !wallets.includes('Rabby')) {
+        wallets.push('Rabby')
+      }
+      if (provider.isBraveWallet && !wallets.includes('Brave Wallet')) {
+        wallets.push('Brave Wallet')
+      }
+    })
+  }
+
+  // If no specific wallet detected but ethereum exists, it's an unknown wallet
+  if (wallets.length === 0 && ethereum) {
+    wallets.push('Unknown Wallet')
+  }
+
+  return {
+    wallets,
+    hasMultiple: wallets.length > 1,
+    hasMetaMask: wallets.includes('MetaMask')
+  }
+}
+
 const createSiweMessage = (address: string, statement: string): string => {
   const domain = window.location.host
   const origin = window.location.origin
@@ -93,11 +162,56 @@ export const ConnectWalletPage = () => {
   const [isConnecting, setIsConnecting] = useState(false)
   const [_connectionState, setConnectionState] = useState<ConnectionState>('idle')
   const [error, setError] = useState('')
+  const [hasMultipleWallets, setHasMultipleWallets] = useState(false)
+  const [detectedWallets, setDetectedWallets] = useState<string[]>([])
 
   const resetState = () => {
     setConnectionState('idle')
     setError('')
-    setIsConnecting(false) // Add this to ensure button is enabled
+    setIsConnecting(false)
+  }
+
+  const checkForMultipleWallets = (): boolean => {
+    const walletInfo = detectInstalledWallets()
+    
+    console.log(`waallet info ${JSON.stringify(walletInfo)}`)
+    setDetectedWallets(walletInfo.wallets)
+    setHasMultipleWallets(walletInfo.hasMultiple)
+
+    if (walletInfo.hasMultiple) {
+      const walletList = walletInfo.wallets.join(', ')
+      const errorMsg = `Multiple wallets detected: ${walletList}. Please disable all wallets except MetaMask to continue.`
+      setError(errorMsg)
+      toast.error(errorMsg, { duration: 6000 })
+      return false
+    }
+
+    if (walletInfo.wallets.length === 0) {
+      const errorMsg = 'No wallet detected. Please install MetaMask to continue.'
+      setError(errorMsg)
+      toast.error(errorMsg)
+      return false
+    }
+
+    if (!walletInfo.hasMetaMask) {
+      const errorMsg = `Only ${walletInfo.wallets[0]} detected. This app requires MetaMask. Please install MetaMask or disable other wallets.`
+      setError(errorMsg)
+      toast.error(errorMsg, { duration: 6000 })
+      return false
+    }
+
+    // Clear any previous errors if check passes
+    setError('')
+    return true
+  }
+
+  const handleRetryWalletCheck = () => {
+    const isValid = checkForMultipleWallets()
+    
+    if (isValid) {
+      toast.success('MetaMask is ready! Click "Sign in" to continue.')
+      setHasMultipleWallets(false)
+    }
   }
 
   const generateDeepLinkUrls = (): string[] => {
@@ -116,17 +230,13 @@ export const ConnectWalletPage = () => {
     const deepLinkUrls = generateDeepLinkUrls()
 
     try {
-      // Try to open MetaMask app using protocol scheme
       const link = document.createElement('a')
-      link.href = deepLinkUrls[1] // metamask:// protocol
+      link.href = deepLinkUrls[1]
       link.click()
 
-      // Wait briefly to see if app opens
       await new Promise(resolve => setTimeout(resolve, 2000))
 
-      // Only use fallback if we're still on the same page (app didn't open)
       if (document.hasFocus()) {
-        // App likely didn't open, try HTTPS deep link
         window.location.href = deepLinkUrls[0]
       }
     } catch (error) {
@@ -135,6 +245,7 @@ export const ConnectWalletPage = () => {
       window.open('https://metamask.io/download/', '_blank')
     }
   }
+
   const handleMobileFlow = async (): Promise<void> => {
     if (!isMetaMaskInstalled()) {
       await handleMobileConnection()
@@ -142,10 +253,8 @@ export const ConnectWalletPage = () => {
     }
 
     if (isMetaMaskBrowser()) {
-      // We're in MetaMask's in-app browser, proceed normally
       await connectWithMetaMask()
     } else {
-      // MetaMask is installed but we're in external browser
       const shouldOpenInApp = window.confirm(
         "For the best experience, please open this page in MetaMask's built-in browser. Would you like to do that now?"
       )
@@ -153,7 +262,6 @@ export const ConnectWalletPage = () => {
       if (shouldOpenInApp) {
         await handleMobileConnection()
       } else {
-        // User wants to continue in current browser
         await connectWithMetaMask()
       }
     }
@@ -187,107 +295,146 @@ export const ConnectWalletPage = () => {
     }
   }
 
-  const connectWithMetaMask = async (): Promise<void> => {
-    setConnectionState('connecting')
 
-    const { ethereum } = window as any
-    const provider = new BrowserProvider(ethereum)
-
-    try {
-      
-
-      // Switch to mainnet
-      await ethereum.request({ method: 'wallet_switchEthereumChain', params: [{ chainId: "0x1" }] })
-      // Switch to sepolia
-      // await ethereum.request({ method: 'wallet_switchEthereumChain', params: [{ chainId: 11155111 }] })
-
-      // Use the timeoutPromise utility function for cleaner timeout handling
-      const accountsResponse = await timeoutPromise(
-        ethereum.request({ method: 'eth_requestAccounts' }),
-        CONNECTION_TIMEOUT,
-        'MetaMask is taking too long to respond. Please unlock your wallet and try again.'
-      )
-
-      // Type guard to ensure we have a valid accounts array
-      const accounts = Array.isArray(accountsResponse) ? accountsResponse : []
-      
-      if (accounts.length === 0) {
-        throw new Error('No accounts found')
-      }
-
-      const signer = await provider.getSigner()
-      const address = await signer.getAddress()
-
-      // Generate SIWE message and get signature
-      const message = createSiweMessage(address, 'Sign in with Ethereum to the app.')
-      
-      // Add timeout to signature as well
-      const signature = await timeoutPromise(
-        signer.signMessage(message),
-        CONNECTION_TIMEOUT,
-        'Signature request timed out. Please try again.'
-      )
-
-      // Send session request to backend
-      const url = ensureDomainUrlHasSSL(`${backend_url}/session`)
-      const response = await axios.post(url, {
-        message,
-        signature,
-        domain: window.location.host,
-      })
-
-      if (response.status === 200 || response.status === 201) {
-        const responseData = response.data
-        const backendAddress = responseData?.session?.address
-        const walletAddress = backendAddress 
-          ? ethers.getAddress(backendAddress) 
-          : ethers.getAddress(address)
-
-        // Update application state
-        setMetamaskAddress(walletAddress)
-        setAvatar(generateAvatar(walletAddress))
-        setCookie(
-          SESSION_COOKIE_NAME, 
-          `${responseData.session.nonce}`, 
-          new Date(responseData?.session?.expiration_time)
-        )
-        setConnectionState('success')
-        setUserProfile({ ...response.data.user_settings })
-        setSession({ ...response.data.session })
-
-        // Fetch user files
-        const files = await fetchFiles(
-          walletAddress, 
-          `${backend_url}/explorer_files`, 
-          responseData.session.nonce
-        )
-        setFiles({
-          fileData: files,
-          status: 'loaded',
-        })
-
-        toast.success('Sign In successful')
-
-        // Reset state after delay
-        setTimeout(() => {
-          resetState()
-        }, SESSION_SUCCESS_DELAY)
-      }
-    } catch (error: any) {
-      console.error('MetaMask connection error:', error)
-      
-      const errorMessage = getErrorMessage(error)
-      setConnectionState('error')
-      setError(errorMessage)
-      toast.error(errorMessage)
-      
-      // Make sure to reset the connecting state on error
-      setIsConnecting(false)
-    }
+  // Function to get the genuine MetaMask provider from multiple providers
+const getMetaMaskProvider = (): any => {
+  const { ethereum } = window as any
+  
+  if (!ethereum) {
+    throw new Error('No Ethereum provider found')
   }
 
+  // If there are multiple providers, find genuine MetaMask
+  if (ethereum.providers && Array.isArray(ethereum.providers)) {
+    // Look for genuine MetaMask
+    const metamaskProvider = ethereum.providers.find((provider: any) => {
+      return provider.isMetaMask && 
+             !provider.isRainbow && 
+             !provider.isCoinbaseWallet && 
+             !provider.isRabby &&
+             !provider.isBraveWallet &&
+             !provider.overrideIsMetaMask
+    })
+
+    if (metamaskProvider) {
+      return metamaskProvider
+    }
+
+    // If not found, throw error
+    throw new Error('MetaMask provider not found among multiple wallets')
+  }
+
+  // Single provider - verify it's MetaMask
+  if (ethereum.isMetaMask && 
+      !ethereum.isRainbow && 
+      !ethereum.isCoinbaseWallet) {
+    return ethereum
+  }
+
+  // throw new Error('MetaMask is not the active provider, disable all other wallets')
+  throw new Error('Multiple wallets detected, disable all other wallets except Metamask')
+}
+
+ 
+// Update the connectWithMetaMask function to use the specific provider
+const connectWithMetaMask = async (): Promise<void> => {
+  setConnectionState('connecting')
+
+  try {
+    // Get the genuine MetaMask provider
+    const metamaskProvider = getMetaMaskProvider()
+    const provider = new BrowserProvider(metamaskProvider)
+
+    // Use metamaskProvider instead of ethereum for all requests
+    await metamaskProvider.request({ 
+      method: 'wallet_switchEthereumChain', 
+      params: [{ chainId: "0x1" }] 
+    })
+
+    const accountsResponse = await timeoutPromise(
+      metamaskProvider.request({ method: 'eth_requestAccounts' }),
+      CONNECTION_TIMEOUT,
+      'MetaMask is taking too long to respond. Please unlock your wallet and try again.'
+    )
+
+    const accounts = Array.isArray(accountsResponse) ? accountsResponse : []
+    
+    if (accounts.length === 0) {
+      throw new Error('No accounts found')
+    }
+
+    const signer = await provider.getSigner()
+    const address = await signer.getAddress()
+
+    const message = createSiweMessage(address, 'Sign in with Ethereum to the app.')
+    
+    const signature = await timeoutPromise(
+      signer.signMessage(message),
+      CONNECTION_TIMEOUT,
+      'Signature request timed out. Please try again.'
+    )
+
+    const url = ensureDomainUrlHasSSL(`${backend_url}/session`)
+    const response = await axios.post(url, {
+      message,
+      signature,
+      domain: window.location.host,
+    })
+
+    if (response.status === 200 || response.status === 201) {
+      const responseData = response.data
+      const backendAddress = responseData?.session?.address
+      const walletAddress = backendAddress 
+        ? ethers.getAddress(backendAddress) 
+        : ethers.getAddress(address)
+
+      setMetamaskAddress(walletAddress)
+      setAvatar(generateAvatar(walletAddress))
+      setCookie(
+        SESSION_COOKIE_NAME, 
+        `${responseData.session.nonce}`, 
+        new Date(responseData?.session?.expiration_time)
+      )
+      setConnectionState('success')
+      setUserProfile({ ...response.data.user_settings })
+      setSession({ ...response.data.session })
+
+      const files = await fetchFiles(
+        walletAddress, 
+        `${backend_url}/explorer_files`, 
+        responseData.session.nonce
+      )
+      setFiles({
+        fileData: files,
+        status: 'loaded',
+      })
+
+      toast.success('Sign In successful')
+
+      setTimeout(() => {
+        resetState()
+      }, SESSION_SUCCESS_DELAY)
+    }
+  } catch (error: any) {
+    console.error('MetaMask connection error:', error)
+    
+    const errorMessage = getErrorMessage(error)
+    setConnectionState('error')
+    setError(errorMessage)
+    toast.error(errorMessage)
+    
+    setIsConnecting(false)
+  }
+}
+
   const handleSignAndConnect = async (): Promise<void> => {
-    if (session) return // Don't connect if already have session
+    if (session) return
+
+    // Check for multiple wallets before proceeding
+    const isValid = checkForMultipleWallets()
+    if (!isValid) {
+      return
+    }
 
     setIsConnecting(true)
     setError('')
@@ -324,15 +471,35 @@ export const ConnectWalletPage = () => {
 
         {error && (
           <Alert className="mb-6 border-red-200 bg-red-50">
-            <AlertDescription className="text-red-700">{error}</AlertDescription>
+            <AlertDescription className="text-red-700 text-sm">{error}</AlertDescription>
           </Alert>
+        )}
+
+        {hasMultipleWallets && detectedWallets.length > 0 && (
+          <div className="mb-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+            <p className="text-sm font-medium text-yellow-900 mb-2">Detected wallets:</p>
+            <ul className="text-sm text-yellow-800 list-disc list-inside mb-3">
+              {detectedWallets.map((wallet, index) => (
+                <li key={index}>{wallet}</li>
+              ))}
+            </ul>
+            <button
+              onClick={handleRetryWalletCheck}
+              className="w-full bg-yellow-600 hover:bg-yellow-700 text-white font-medium py-2 px-4 rounded-lg transition-colors duration-200 flex items-center justify-center gap-2"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+              </svg>
+              Retry Connection Check
+            </button>
+          </div>
         )}
 
         <button
           onClick={handleSignAndConnect}
           data-testid="sign-in-button-page"
-          disabled={isConnecting}
-          className="w-full bg-black hover:bg-gray-800 disabled:bg-gray-400 text-white font-medium py-3 px-4 rounded-lg transition-colors duration-200 flex items-center justify-center gap-2"
+          disabled={isConnecting || hasMultipleWallets}
+          className="w-full bg-black hover:bg-gray-800 disabled:bg-gray-400 disabled:cursor-not-allowed text-white font-medium py-3 px-4 rounded-lg transition-colors duration-200 flex items-center justify-center gap-2"
         >
           {isConnecting ? (
             <>
