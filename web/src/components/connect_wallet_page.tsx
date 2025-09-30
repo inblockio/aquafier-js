@@ -294,9 +294,10 @@ export const ConnectWalletPage = () => {
         return error.message || 'An error occurred while connecting.'
     }
   }
-
+ 
 
   // Function to get the genuine MetaMask provider from multiple providers
+// Function to get the genuine MetaMask provider from multiple providers
 const getMetaMaskProvider = (): any => {
   const { ethereum } = window as any
   
@@ -313,7 +314,11 @@ const getMetaMaskProvider = (): any => {
              !provider.isCoinbaseWallet && 
              !provider.isRabby &&
              !provider.isBraveWallet &&
-             !provider.overrideIsMetaMask
+             !provider.isPhantom &&
+             !provider.phantom &&
+             !provider.overrideIsMetaMask &&
+             // Additional check: Phantom often has 'connect' method with publicKey
+             !(typeof provider.connect === 'function' && provider.publicKey !== undefined)
     })
 
     if (metamaskProvider) {
@@ -327,13 +332,15 @@ const getMetaMaskProvider = (): any => {
   // Single provider - verify it's MetaMask
   if (ethereum.isMetaMask && 
       !ethereum.isRainbow && 
-      !ethereum.isCoinbaseWallet) {
+      !ethereum.isCoinbaseWallet &&
+      !ethereum.isPhantom &&
+      !ethereum.phantom) {
     return ethereum
   }
 
-  // throw new Error('MetaMask is not the active provider, disable all other wallets')
-  throw new Error('Multiple wallets detected, disable all other wallets except Metamask')
+  throw new Error('MetaMask is not the active provider')
 }
+
 
  
 // Update the connectWithMetaMask function to use the specific provider
