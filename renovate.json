@@ -5,5 +5,5 @@
   ],
   "baseBranches": ["dev"],
   "timezone": "Europe/Berlin",
-  "schedule": ["0 1 * * *"]
+  "schedule": ["* 1 * * *"]
 }
