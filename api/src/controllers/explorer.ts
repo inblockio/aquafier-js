@@ -1,4 +1,4 @@
-import Aquafier, { AquaTree, AquaTreeWrapper, FileObject, LogData, LogType, OrderRevisionInAquaTree, Revision } from 'aqua-js-sdk';
+import Aquafier, { AquaTree, AquaTreeWrapper, cliGreenify, cliRedify, FileObject, LogData, LogType, OrderRevisionInAquaTree, Revision } from 'aqua-js-sdk';
 import { FastifyInstance } from 'fastify';
 import { prisma } from '../database/db';
 import { getFileUploadDirectory, persistFile, streamToBuffer } from '../utils/file_utils';
@@ -418,6 +418,8 @@ export default async function explorerController(fastify: FastifyInstance) {
 
         // Construct the full URL
         const url = `${protocol}://${host}`;
+
+        console.log(cliRedify(url), cliGreenify(session.address))
 
         const displayData = await getUserApiFileInfo(url, session.address)
 
