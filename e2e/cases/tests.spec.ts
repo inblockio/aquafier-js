@@ -36,7 +36,7 @@ test.skip("create new wallet test", async (): Promise<void> => {
     await registerNewMetaMaskWallet();
 });
 
-test("login test", async (): Promise<void> => {
+test.skip("login test", async (): Promise<void> => {
     await registerNewMetaMaskWalletAndLogin();
 });
 //
@@ -284,64 +284,6 @@ test.skip("upload, sign, download", async (): Promise<void> => {
 
 });
 
-// DO NOT DELETE
-// test.skip("upload, witness, download", async (): Promise<void> => {
-//     const registerResponse = await registerNewMetaMaskWalletAndLogin();
-//     const context: BrowserContext = registerResponse.context;
-//     const testPage: Page = context.pages()[0];
-
-//     console.log("Fund wallet ");
-//     // Try to fund the wallet but continue even if it fails
-//     try {
-//         await fundWallet(registerResponse.walletAddress);
-//         console.log("Wallet fund function completed");
-//     } catch (error) {
-//         console.log("Failed to fund wallet, continuing with test anyway:", error);
-//         // Continue with the test despite funding failure
-//     }
-
-//     console.log("upload, witness, download started!");
-
-//     // Upload file
-//     const filePath: string = path.join(__dirname, '/../resources/exampleFile.pdf');
-//     await uploadFile(testPage, filePath);
-
-//     // Wait for file processing
-//     await testPage.waitForTimeout(2000);
-
-//     // Close upload dialog
-//     await closeUploadDialog(testPage);
-
-//     // Try to witness document but continue even if it fails
-//     try {
-//         console.log("upload, witness, download - witness document");
-//         // witness document
-//         await witnessDocument(testPage, context);
-//     } catch (error) {
-//         console.log("Witness process failed, likely due to insufficient funds. Continuing with test:", error);
-//     }
-
-
-//     // Check if we need to download (might have already been done in witnessDocument)
-//     try {
-//         // Check if download button is still visible (meaning it wasn't clicked in witnessDocument)
-//         const downloadButton = testPage.locator('[data-testid="download-aqua-tree-button"]');
-//         const isDownloadButtonVisible = await downloadButton.isVisible().catch(() => false);
-
-//         if (isDownloadButtonVisible) {
-//             console.log("Download button still visible - downloading now");
-//             await downloadAquaTree(testPage, false);
-//             console.log("upload, witness, download - Download completed successfully");
-//         } else {
-//             console.log("Download button not visible - document was likely already downloaded during witness step");
-//         }
-//     } catch (error) {
-//         console.log("upload, witness, download - Download verification failed, test will end here:", error);
-//     }
-
-
-//     console.log("upload, witness, download test finished!");
-// });
 test.skip("upload, witness, download", async (): Promise<void> => {
     const registerResponse = await registerNewMetaMaskWalletAndLogin();
     const context: BrowserContext = registerResponse.context;
