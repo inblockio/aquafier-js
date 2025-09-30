@@ -1,11 +1,12 @@
 import CopyButton from '@/components/CopyButton'
 import CustomCopyButton from '@/components/CustomCopyButton'
 // import { ShareButton } from '@/components/aqua_chain_actions/share_aqua_chain' // Add this import
-import {Avatar, AvatarFallback, AvatarImage} from '@/components/ui/avatar'
-import {Button} from '@/components/ui/button'
-import {ApiFileInfo} from '@/models/FileInfo'
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import { Button } from '@/components/ui/button'
+import { ApiFileInfo } from '@/models/FileInfo'
 import appStore from '@/store'
 import {
+      ensureDomainUrlHasSSL,
       estimateFileSize,
       fetchFiles,
       formatCryptoAddress,
@@ -18,17 +19,17 @@ import {
       loadSignatureImage,
       timeToHumanFriendly
 } from '@/utils/functions'
-import Aquafier, {AquaTree, AquaTreeWrapper, FileObject, OrderRevisionInAquaTree, reorderAquaTreeRevisionsProperties} from 'aqua-js-sdk'
-import {ArrowRight, CheckCircle, LucideCheckCircle, Mail, Phone, Share2, Signature, User, X} from 'lucide-react'
-import {Suspense, useEffect, useState} from 'react'
-import {TbWorldWww} from 'react-icons/tb'
-import {useNavigate} from 'react-router-dom'
-import {ClipLoader} from 'react-spinners'
-import {toast} from 'sonner'
-import {useStore} from 'zustand'
+import Aquafier, { AquaTree, AquaTreeWrapper, FileObject, OrderRevisionInAquaTree, reorderAquaTreeRevisionsProperties } from 'aqua-js-sdk'
+import { ArrowRight, CheckCircle, LucideCheckCircle, Mail, Phone, Share2, Signature, User, X } from 'lucide-react'
+import { Suspense, useEffect, useState } from 'react'
+import { TbWorldWww } from 'react-icons/tb'
+import { useNavigate } from 'react-router-dom'
+import { ClipLoader } from 'react-spinners'
+import { toast } from 'sonner'
+import { useStore } from 'zustand'
 import axios from 'axios'
-import {getDNSStatusBadge, IDnsVerificationResult, verifyDNS} from '@/utils/verifiy_dns'
-import {BsInfoCircle} from 'react-icons/bs'
+import { getDNSStatusBadge, IDnsVerificationResult, verifyDNS } from '@/utils/verifiy_dns'
+import { BsInfoCircle } from 'react-icons/bs'
 
 interface ISignatureWalletAddressCard {
       index?: number
@@ -52,9 +53,7 @@ interface IClaim {
 
 const ClaimCard = ({ claim }: { claim: IClaim }) => {
 
-      console.log("Claim: ", claim)
-
-      const [signatureImage, setSignatureImage] = useState<string | null |Uint8Array>(null)
+      const [signatureImage, setSignatureImage] = useState<string | null | Uint8Array>(null)
       const [dnsVerificationResult, setDnsVerificationResult] = useState<IDnsVerificationResult | null>(null)
 
       const { session, backend_url } = useStore(appStore)
@@ -159,13 +158,13 @@ const ClaimCard = ({ claim }: { claim: IClaim }) => {
                                     {
                                           signatureImage ? (
                                                 typeof signatureImage === 'string' ? (
-                                <img src={signatureImage} alt={signatureImage} />
-                            ) : (
-                                <img
-                                    src={`data:image/png;base64,${btoa(String.fromCharCode(...signatureImage))}`}
-                                    alt={'signatureImage'}
-                                />
-                            )
+                                                      <img src={signatureImage} alt={signatureImage} />
+                                                ) : (
+                                                      <img
+                                                            src={`data:image/png;base64,${btoa(String.fromCharCode(...signatureImage))}`}
+                                                            alt={'signatureImage'}
+                                                      />
+                                                )
                                           ) : (
                                                 <img src={`${window.location.origin}/images/placeholder-img.png`} alt={claim.claimName} />
                                           )
@@ -202,7 +201,7 @@ const ClaimCard = ({ claim }: { claim: IClaim }) => {
                   return (
                         <>
                               <X size={ICON_SIZE - 2} className="text-red-500" />
-                              <p className="text-xs font-medium text-gray-900">Not Verified</p>
+                              <p className="text-xs font-medium text-gray-900">Not Attested</p>
                         </>
                   )
             }
@@ -485,6 +484,8 @@ const WalletAddressProfile = ({ walletAddress, callBack, showAvatar, width, show
                         callBack();
                   }
 
+                  toast.info(`Creating profile for sharing...`, { duration: 4000 })
+
                   let allFileObjects: Array<FileObject> = []
                   const randomNumber = getRandomNumber(100, 1000)
                   // let fileName = `user_profile_${timeToHumanFriendly(Date.now().toString())}_${randomNumber}.json`
@@ -498,6 +499,7 @@ const WalletAddressProfile = ({ walletAddress, callBack, showAvatar, width, show
 
                   let completeFormData = {
                         "total_claims": claims.length,
+                        "wallet_address": walletAddress,
                         "claims_included": claims.map((e) => e.claimType).toString()
                   }
 
@@ -520,6 +522,82 @@ const WalletAddressProfile = ({ walletAddress, callBack, showAvatar, width, show
                   }
 
                   let currentAquaTree = genesisAquaTree.data.aquaTree
+
+                  // link profile aqua tree
+
+                  try {
+                        const url = ensureDomainUrlHasSSL(`${backend_url}/fetch_template_aqua_tree`)
+                        const response = await axios.post(url, {
+                              template_name: 'user_profile',
+                              name: `User Profile Template`,
+                        }, {
+                              headers: {
+                                    nonce: session?.nonce,
+                              },
+                        })
+
+                        // throw new Error('Error fetching template aqua tree' + JSON.stringify(response.data))
+
+                        console.log("Template aqua tree response:", response.data)
+                        let jsonData
+                        if (typeof response.data.templateData === 'string') {
+                              let jsonDataString = response.data.templateData
+                              jsonData = JSON.parse(jsonDataString)
+                        } else {
+                              jsonData = response.data.templateData
+                        }
+                        // Fix the wallet address in the template
+                        jsonData.wallet_address = walletAddress
+
+                         let templateAquaTree
+
+
+                         if( typeof response.data.aquaTree === 'string') {
+                               let aquaTreeString = response.data.aquaTree
+                               templateAquaTree = JSON.parse(aquaTreeString) as AquaTree
+                        }else{
+                              templateAquaTree = response.data.aquaTree as AquaTree
+                        }
+                        
+
+                        const mainAquaTreeWrapper: AquaTreeWrapper = {
+                              aquaTree: currentAquaTree!!,
+                              revision: '',
+                              fileObject: fileObject,
+                        }
+
+                        allFileObjects.push({
+                              fileContent: JSON.stringify(templateAquaTree),
+                              fileName: 'user_profile.json.aqua.json',
+                              path: "./",
+                              fileSize: 0,//estimateFileSize(JSON.stringify(templateAquaTree)),
+                        })
+
+                        const linkedToAquaTreeWrapper: AquaTreeWrapper = {
+                              aquaTree: templateAquaTree!,
+                              revision: '',
+                              fileObject: {
+                                    fileContent: JSON.stringify(jsonData),
+                                    fileName: 'user_profile.json',
+                                    path: "./",
+                                    fileSize: 0, //estimateFileSize(JSON.stringify(jsonData)),
+                              },
+                        }
+
+                        const linkedAquaTreeResponse = await aquafier.linkAquaTree(mainAquaTreeWrapper, linkedToAquaTreeWrapper)
+
+                        if (linkedAquaTreeResponse.isErr()) {
+                              throw new Error('Error linking aqua tree')
+                        }
+
+                        currentAquaTree = linkedAquaTreeResponse.data.aquaTree
+
+                  } catch (error) {
+                        console.error("Error fetching template aqua tree:", error)
+
+                        toast.error("Error fetching template aqua tree (profile)")
+                        return
+                  }
 
 
                   for (let index = 0; index < claims.length; index++) {

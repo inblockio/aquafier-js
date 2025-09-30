@@ -2,7 +2,7 @@ import {useCallback, useEffect, useState} from 'react'
 import type {Annotation} from './types'
 import PdfViewer from './pdf-viewer'
 import AnnotationSidebar from './annotation-sidebar'
-import {ArrowLeft, ArrowRight, ZoomIn, ZoomOut} from 'lucide-react'
+import {ArrowLeft, ArrowRight, Download, ZoomIn, ZoomOut} from 'lucide-react'
 import {SignatureData} from '../../../../types/types'
 import {LuInfo} from 'react-icons/lu'
 import {Button} from '../../../../components/ui/button'
@@ -58,6 +58,17 @@ function PdfRendererComponent({
       const [numPages, setNumPages] = useState(0)
       const [scale, setScale] = useState(1.15)
 
+      const handleDownload = () => {
+            if (pdfFile) {
+                  const url = URL.createObjectURL(pdfFile)
+                  const link = document.createElement('a')
+                  link.href = url
+                  link.download = 'document.pdf'
+                  link.click()
+                  URL.revokeObjectURL(url)
+            }
+      }
+
       return (
             <div className="h-auto md:h-full w-full max-h-auto md:max-h-full max-w-full">
                   {pdfFile && (
@@ -70,6 +81,9 @@ function PdfRendererComponent({
                               </p>
                               <Button onClick={() => setCurrentPage(p => Math.min(numPages, p + 1))} disabled={currentPage >= numPages || numPages === 0} variant="ghost" size="icon">
                                     <ArrowRight className="h-4 w-4" />
+                              </Button>
+                              <Button onClick={() => handleDownload()} variant="ghost" className='text-blue-500 cursor-pointer' size="icon">
+                                    <Download className="h-4 w-4" />
                               </Button>
                               <Button onClick={() => setScale(s => Math.max(0.25, s - 0.25))} variant="ghost" size="icon">
                                     <ZoomOut className="h-4 w-4" />

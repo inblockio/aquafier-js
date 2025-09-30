@@ -35,7 +35,7 @@ export function getTemplateInformation(templateItem: string): TemplateInformatio
 }
 
 
-export async function serverAttestation(identityClaimId: string,  walletAddress: string): Promise<{
+export async function serverAttestation(identityClaimId: string,  walletAddress: string, workflowName: "email_claim" | "phone_number_claim"): Promise<{
     aquaTree : AquaTree,
     attestationJSONfileData : Object, 
     attestationJSONfileName : string
@@ -54,9 +54,16 @@ export async function serverAttestation(identityClaimId: string,  walletAddress:
         return null;
     }
 
+    let context = ""
+    if(workflowName === "email_claim"){
+        context = "The Aqua Server hereby attests that a one-time password (OTP) challenge for the specified email address was successfully sent and verified using the Twilio Verify API. This confirms possession of the email address at the time of verification."
+    }else if(workflowName === "phone_number_claim"){
+        context = "The Aqua Server hereby attests that a one-time password (OTP) challenge for the specified phone number was successfully sent and verified using the Twilio Verify API. This confirms possession of the phone number at the time of verification."
+    }
+
     const attestationForm = {
         "identity_claim_id": identityClaimId,
-        "context": "I hereby attest that this identity claim has been verified and validated by the Aqua Protocol server. The claim holder has successfully completed all required verification processes, including but not limited to email verification, identity validation, and compliance checks. This attestation is issued automatically upon successful completion of the verification workflow and serves as cryptographic proof of the server's validation of the presented identity credentials.",
+        "context": context,
         "wallet_address": serverWalletInformation.walletAddress,
         "claim_wallet_address": walletAddress,
     }

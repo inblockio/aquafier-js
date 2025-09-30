@@ -1,17 +1,17 @@
 import * as React from 'react'
-import {useState} from 'react'
+import { useState } from 'react'
 
-import {Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarRail, useSidebar} from '@/components/ui/sidebar'
+import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarRail, useSidebar } from '@/components/ui/sidebar'
 import CustomNavLink from './ui/CustomNavLink'
-import {FileText, LayoutTemplate, Link, Plus, Settings, Share2, Star, Workflow} from 'lucide-react'
-import {maxUserFileSizeForUpload} from '@/utils/constants'
-import {formatBytes, getAquaTreeFileObject} from '@/utils/functions'
-import {useStore} from 'zustand'
+import { FileText, LayoutTemplate, Link, Plus, Settings, Share2, Star, User, Workflow } from 'lucide-react'
+import { maxUserFileSizeForUpload } from '@/utils/constants'
+import { formatBytes, getAquaTreeFileObject } from '@/utils/functions'
+import { useStore } from 'zustand'
 import appStore from '@/store'
-import {WebConfig} from '@/types/types'
+import { WebConfig } from '@/types/types'
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
-      const { files, setOpenDialog, webConfig, setWebConfig } = useStore(appStore)
+      const { files, setOpenDialog, webConfig, setWebConfig, session } = useStore(appStore)
 
       const [webConfigData, setWebConfigData] = useState<WebConfig>(webConfig)
       const [usedStorage, setUsedStorage] = useState<number>(0)
@@ -80,7 +80,6 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             if (typeof config.CUSTOM_LOGO_URL === 'string') {
                   // config.CUSTOM_LOGO_URL != "true"
                   if (config.CUSTOM_LOGO_URL.startsWith('http://') || config.CUSTOM_LOGO_URL.startsWith('https://') || config.CUSTOM_LOGO_URL.startsWith('/')) {
-                        console.log("Custom logo url ", config.CUSTOM_LOGO_URL);
                         return config.CUSTOM_LOGO_URL;
                   }
                   if (config.CUSTOM_LOGO_URL === "true") {
@@ -157,6 +156,16 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                                                       }}
                                                 />
                                           ))}
+                                          <CustomNavLink
+                                                item={{ label: 'Identity Profile', icon: User, id: `/app/claims/workflow/${session?.address}` }}
+                                                index={10}
+                                                callBack={() => {
+                                                      const isMobileView = window.innerWidth < 768 // md breakpoint is 768px
+                                                      if (isMobileView) {
+                                                            toggleSidebar()
+                                                      }
+                                                }}
+                                          />
                                     </div>
                               </div>
 

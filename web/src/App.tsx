@@ -19,7 +19,7 @@ import CreateFormInstance from './pages/create_form_instance'
 import NewShadcnLayoutWithSidebar from './layouts/NewShadcnLayoutWithSidebar'
 import PdfWorkflowPage from './pages/aqua_sign_wokflow/PdfWorkflowPage'
 import DomainAttestationPage from './pages/domain_attestation'
-import FilesSharedContracts from './pages/files_shared_contracts'
+import FilesSharedContracts from './pages/files_share/files_shared_contracts'
 import WorkflowsTablePage from './pages/aqua_sign_wokflow/WorkflowsTablePage'
 import SharePage from './pages/share_page'
 import TermsAndConditions from './pages/legal/TermsAndConditions'
@@ -27,7 +27,7 @@ import PrivacyPolicy from './pages/legal/PrivacyPolicy'
 import ClaimsAndAttestationPage from './pages/claim_and_attestation'
 import ClaimsWorkflowPage from './pages/claims_workflow/claimsWorkflowPage'
 import ClaimsWorkflowPageV2 from './pages/v2_claims_workflow/claimsWorkflowPage'
-import WalletAutosuggestDemo from './pages/demo_auto_suggest'
+
 import {WebConfig} from './types/types'
 import * as Sentry from "@sentry/react";
 import {init as initApm} from '@elastic/apm-rum'
@@ -116,7 +116,7 @@ function App() {
                     {/* All file routes using Tailwind */}
                     <Route path="/app" element={<NewShadcnLayoutWithSidebar/>}>
                         <Route index element={<FilesPage/>}/>
-                        <Route path="demo-auto-suggest" element={<WalletAutosuggestDemo/>}/>
+                 
                         <Route path="pdf/workflow" element={<PdfWorkflowPage/>}/>
                         <Route path="claims/workflow" element={<ClaimsWorkflowPage/>}/>
                         <Route path="claims/workflow/:walletAddress" element={<ClaimsWorkflowPageV2/>}/>

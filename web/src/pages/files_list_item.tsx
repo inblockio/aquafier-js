@@ -30,6 +30,7 @@ import appStore from '@/store'
 import { FilesListProps } from '@/types/types'
 import { Checkbox } from '@/components/ui/checkbox'
 import { toast } from 'sonner'
+import WalletAdrressClaim from './v2_claims_workflow/WalletAdrressClaim'
 
 export default function FilesListItem({
       showWorkFlowsOnly,
@@ -51,7 +52,7 @@ export default function FilesListItem({
       filesListProps: FilesListProps
 }) {
       // const [_selectedFiles, setSelectedFiles] = useState<number[]>([]);
-      const { files } = useStore(appStore)
+      const { files, session } = useStore(appStore)
       const [currentFileObject, setCurrentFileObject] = useState<FileObject | undefined>(undefined)
       const [workflowInfo, setWorkFlowInfo] = useState<{ isWorkFlow: boolean; workFlow: string } | undefined>(undefined)
 
@@ -400,6 +401,29 @@ export default function FilesListItem({
 
 
       const showClaimExtraInfo = () => {
+            if (workflowInfo?.workFlow == "user_profile") {
+                  let genesisHash = getGenesisHash(file.aquaTree!)
+                  if (!genesisHash) {
+                        return <div />
+                  }
+                  let genRevision = file.aquaTree?.revisions[genesisHash]
+                  if (!genRevision) {
+                        return <div />
+                  }
+                  let creatorWallet = genRevision[`forms_wallet_address`]
+
+
+                  if (creatorWallet) {
+
+                        return <>
+
+                              <div className="flex flex-nowrap  text-xs text-gray-500">
+                                    <p className="text-xs">Profile Owner Wallet {session?.address === creatorWallet ? <>(You)</> : <></>}: &nbsp;</p>
+                                    <p className="text-xs ">{formatCryptoAddress(creatorWallet)}</p>
+                              </div>
+                        </>
+                  }
+            }
             if (workflowInfo?.workFlow == "identity_claim") {
                   let genesisHash = getGenesisHash(file.aquaTree!)
                   if (!genesisHash) {
@@ -411,12 +435,22 @@ export default function FilesListItem({
                   }
 
                   let creatorWallet = genRevision[`forms_wallet_address`]
+                  let name = genRevision[`forms_name`]
 
                   if (creatorWallet) {
-                        return <div className="flex flex-nowrap  text-xs text-gray-500">
-                              <p className="text-xs">Wallet: &nbsp;</p>
-                              <p className="text-xs ">{formatCryptoAddress(creatorWallet)}</p>
-                        </div>
+
+                        return <>
+                              <div className="flex flex-nowrap  text-xs text-gray-500">
+                                    <p className="text-xs">Name: &nbsp;</p>
+                                    <p className="text-xs ">{name}</p>
+                              </div>
+                              <div className="flex flex-nowrap   text-xs text-gray-500" style={{ alignItems: 'center' }}>
+                                    <p className="text-xs ">Owner   {session?.address === creatorWallet ? <>(You)</> : <></>}: &nbsp;</p>
+                                    <WalletAdrressClaim walletAddress={creatorWallet} />
+
+                              </div>
+
+                        </>
                   }
             }
 
@@ -460,12 +494,26 @@ export default function FilesListItem({
                   }
 
                   let domain = genRevision[`forms_domain`]
+                  let creatorWallet = genRevision[`forms_wallet_address`]
 
                   if (domain) {
-                        return <div className="flex flex-nowrap  text-xs text-gray-500">
-                              <p className="text-xs">Domain : &nbsp;</p>
-                              <p className="text-xs ">{domain}</p>
-                        </div>
+                        return <>
+                              <div className="flex flex-nowrap  text-xs text-gray-500">
+                                    <p className="text-xs">Domain : &nbsp;</p>
+                                    <p className="text-xs ">{domain}</p>
+                              </div>
+                              {
+                                    creatorWallet ?
+                                          <div className="flex flex-nowrap   text-xs text-gray-500" style={{ alignItems: 'center' }}>
+                                                <p className="text-xs ">Owner   {session?.address === creatorWallet ? <>(You)</> : <></>}: &nbsp;</p>
+                                                <WalletAdrressClaim walletAddress={creatorWallet} />
+
+                                          </div> : null
+                              }
+
+
+
+                        </>
 
                   }
 
@@ -518,6 +566,44 @@ export default function FilesListItem({
 
             }
 
+
+            if (workflowInfo?.workFlow == "user_signature") {
+ let genesisHash = getGenesisHash(file.aquaTree!)
+                  if (!genesisHash) {
+                        return <div />
+                  }
+                  let genRevision = file.aquaTree?.revisions[genesisHash]
+                  if (!genRevision) {
+                        return <div />
+                  }
+
+                  let createdAt = genRevision[`forms_created_at`]
+                  let creatorWallet = genRevision[`forms_wallet_address`]
+
+                  if (createdAt) {
+                        return <>
+                              {/* <div className="flex flex-nowrap  text-xs text-gray-500">
+                                    <p className="text-xs">Created At : &nbsp;</p>
+                                    <p className="text-xs ">{formatUnixTimestamp(createdAt, true)}</p>
+                              </div> */}
+                              {
+                                    creatorWallet ?
+                                          <div className="flex flex-nowrap   text-xs text-gray-500" style={{ alignItems: 'center' }}>
+                                                <p className="text-xs ">Owner   {session?.address === creatorWallet ? <>(You)</> : <></>}: &nbsp;</p>
+                                                <WalletAdrressClaim walletAddress={creatorWallet} />
+
+                                          </div> : null
+                              }
+
+
+
+                        </>
+
+                  }
+
+            }
+
+            //add  user signature
             return <div />
       }
 

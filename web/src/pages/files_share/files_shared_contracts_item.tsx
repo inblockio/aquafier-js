@@ -4,24 +4,31 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
-import { CircleCheckBigIcon, FileText, Hash, Users, Wallet, X } from 'lucide-react'
+import { CircleCheckBigIcon, Hash, Users, Wallet } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import axios from 'axios'
 import { useStore } from 'zustand'
 import appStore from '@/store'
 import { arraysEqualIgnoreOrder, formatCryptoAddress, getGenesisHash, timeToHumanFriendly } from '@/utils/functions'
 import { Contract } from '@/types/types'
-import WalletAddresClaim from "./../pages/v2_claims_workflow/WalletAdrressClaim"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
+import WalletAddresClaim from "../v2_claims_workflow/WalletAdrressClaim"
 import { toast } from 'sonner'
 import { ApiFileInfo } from '@/models/FileInfo'
+import { ImportAquaChainFromChain } from '@/components/dropzone_file_actions/import_aqua_tree_from_aqua_tree'
 
 
-export const SharedContract = ({ contract, index, contractDeleted }: { contract: Contract; index: number; contractDeleted: (hash: string) => void }) => {
+export const SharedContract = ({ type, contract, index, contractDeleted }: { type: 'outgoing' | 'incoming', contract: Contract; index: number; contractDeleted: (hash: string) => void }) => {
       const navigate = useNavigate()
       const [loading, setLoading] = useState(false)
-      const { backend_url, session } = useStore(appStore)
+      const [exactMatchFound, setExactMatchFound] = useState<boolean>(false)
+      const [loadingSharedFileData, setLoadingSharedFileData] = useState(true)
+      const [genesisMatch, setGenesisMatch] = useState(false)
+      const { backend_url, session, files } = useStore(appStore)
+
+
+      const [fileInfo, setFileInfo] = useState<ApiFileInfo | null>(null)
+      const [contractData, setContractData] = useState<any | null>(null)
+
       const getStatusFromLatest = (latest?: string) => {
             if (!latest) return 'unknown'
             try {
@@ -65,10 +72,80 @@ export const SharedContract = ({ contract, index, contractDeleted }: { contract:
             }
       }
 
+
+
+      const loadPageData = async () => {
+            try {
+                  setLoadingSharedFileData(true)
+                  const url = `${backend_url}/share_data/${contract.hash}`
+                  const response = await axios.get(url, {
+                        headers: {
+                              'Content-Type': 'application/x-www-form-urlencoded',
+                              nonce: session?.nonce ?? '',
+                        },
+                  })
+
+
+                  let apiFile = response.data.data.displayData[0] as ApiFileInfo
+
+
+                  if (apiFile) {
+                        setContractData(response.data.data.contractData)
+                        setFileInfo(apiFile)
+
+                        //check if file is already imported
+                        let contractFileGenHash = getGenesisHash(apiFile.aquaTree!)
+
+                        for (let fileItem of files.fileData) {
+
+                              let currentGeesisHash = getGenesisHash(fileItem.aquaTree!)
+
+                              if (currentGeesisHash == contractFileGenHash) {
+
+                                    setGenesisMatch(true)
+
+                                    //check if all hashes match
+                                    let allHashesInFileItem = Object.keys(fileItem.aquaTree!.revisions)
+                                    let allHashesInContract = Object.keys(apiFile.aquaTree!.revisions)
+
+                                    let allHashesMatch = arraysEqualIgnoreOrder(allHashesInFileItem, allHashesInContract)
+                                    if (allHashesMatch) {
+                                          setExactMatchFound(true)
+                                    }
+                                    //file exist
+                                    break;
+                              }
+                        }
+                  }
+
+                  setLoadingSharedFileData(false)
+            } catch (error: any) {
+                  if (error.response.status == 401) {
+                  } else if (error.response.status == 404) {
+                        toast.error(`File could not be found (probably it was deleted)`)
+                  } else if (error.response.status == 412) {
+                        toast.error(`File not found or no permission for access granted.`)
+                  } else {
+                        toast.error(`Error : ${error}`)
+                  }
+                  console.error(error)
+
+                  toast.error(`Error fetching data`)
+            }
+
+      }
+      useEffect(() => {
+
+            if (contract.hash) {
+                  loadPageData()
+            }
+      }, [])
+
+
       return (
             <Card key={contract.hash} className="hover:shadow-md transition-shadow cursor-pointer border border-gray-200 " style={{ marginTop: '10px', marginBottom: '10px' }}>
-                  <CardContent className="p-3 sm:p-6">
-                        <div className="flex items-start justify-between">
+                  <CardContent className="p-2 sm:p-6">
+                        <div className="flex items-start justify-between relative">
                               <div className="flex-1 space-y-4">
                                     {/* Contract Hash */}
                                     <div className="flex items-center gap-3 align-center">
@@ -204,16 +281,26 @@ export const SharedContract = ({ contract, index, contractDeleted }: { contract:
                                           </div>
 
                                           <div className="grid grid-cols-2 gap-2 w-full">
-                                                <Button
-                                                      data-testid={'open-shared-contract-button-' + index}
-                                                      variant="outline"
-                                                      size="sm"
-                                                      className="w-full"
-                                                      onClick={() => navigate(`/app/shared-contracts/${contract.hash}`)}
-                                                >
-                                                      Open
-                                                </Button>
+                                                {
+                                                      genesisMatch ?
+                                                            <Button
+                                                                  data-testid={'open-shared-contract-button-' + index}
+                                                                  variant="default"
+                                                                  size="sm"
+                                                                  className="w-full"
+                                                                  onClick={() => navigate(`/app/shared-contracts/${contract.hash}`)}
+                                                            >
+                                                                  Review
+                                                            </Button>
+                                                            :
+                                                            fileInfo && <ImportAquaChainFromChain
+                                                                  showButtonOnly={true}
+                                                                  fileInfo={fileInfo}
+                                                                  contractData={contractData}
+                                                                  isVerificationSuccessful={true}
 
+                                                            />
+                                                }
                                                 <Button
                                                       data-testid={'delete-shared-contract-button-' + index}
                                                       variant="destructive"
@@ -229,7 +316,13 @@ export const SharedContract = ({ contract, index, contractDeleted }: { contract:
                                     </div>
                               </div>
                               {/* Green Button in Top Right */}
-                              <CheckIfAquaTreeIsImported contractHash={contract.hash} />
+                              <div className="absolute top-0 right-0">
+                                    {
+                                          type == 'incoming' ?
+                                                <CheckIfAquaTreeIsImported loadingSharedFileData={loadingSharedFileData} exactMatchFound={exactMatchFound} />
+                                                : <div className="flex-shrink-0 ml-4" />
+                                    }
+                              </div>
                         </div>
                   </CardContent>
             </Card>
@@ -237,74 +330,11 @@ export const SharedContract = ({ contract, index, contractDeleted }: { contract:
 }
 
 
-export function CheckIfAquaTreeIsImported({ contractHash }: { contractHash: string }) {
-      const [exactMatchFound, setExactMatchFound] = useState<boolean>(false)
-      const [loading, setLoading] = useState(true)
-      const { backend_url, session, files } = useStore(appStore)
+export function CheckIfAquaTreeIsImported({ loadingSharedFileData, exactMatchFound }: { loadingSharedFileData: boolean, exactMatchFound: boolean }) {
+
       //  const [fileInfo, setFileInfo] = useState<ApiFileInfo | null>(null)
 
-      const loadPageData = async () => {
-            try {
-                  setLoading(true)
-                  const url = `${backend_url}/share_data/${contractHash}`
-                  const response = await axios.get(url, {
-                        headers: {
-                              'Content-Type': 'application/x-www-form-urlencoded',
-                              nonce: session?.nonce ?? '',
-                        },
-                  })
-
-
-                  let apiFile = response.data.data.displayData[0] as ApiFileInfo
-
-
-                  if (apiFile) {
-
-                        let contractFileGenHash = getGenesisHash(apiFile.aquaTree!)
-
-                        for (let fileItem of files.fileData) {
-
-                              let currentGeesisHash = getGenesisHash(fileItem.aquaTree!)
-
-                              if (currentGeesisHash == contractFileGenHash) {
-
-                                    let allHashesInFileItem = Object.keys(fileItem.aquaTree!.revisions)
-                                    let allHashesInContract = Object.keys(apiFile.aquaTree!.revisions)
-
-                                    let allHashesMatch = arraysEqualIgnoreOrder(allHashesInFileItem, allHashesInContract)
-                                    if (allHashesMatch) {
-                                          setExactMatchFound(true)
-                                    }
-                                    //file exist
-                                    break;
-                              }
-                        }
-                  }
-
-                  setLoading(false)
-            } catch (error: any) {
-                  if (error.response.status == 401) {
-                  } else if (error.response.status == 404) {
-                        toast.error(`File could not be found (probably it was deleted)`)
-                  } else if (error.response.status == 412) {
-                        toast.error(`File not found or no permission for access granted.`)
-                  } else {
-                        toast.error(`Error : ${error}`)
-                  }
-                  console.error(error)
-
-                  toast.error(`Error fetching data`)
-            }
-
-      }
-      useEffect(() => {
-
-            if (contractHash) {
-                  loadPageData()
-            }
-      }, [])
-
-      if (loading) {
+      if (loadingSharedFileData) {
             return <Button
                   variant="default"
                   size="sm"
@@ -347,146 +377,4 @@ export function CheckIfAquaTreeIsImported({ contractHash }: { contractHash: stri
       return <div />
 }
 
-export function SharedContracts() {
-      const [searchQuery, _setSearchQuery] = useState('')
-      const [shareContracts, setShareContracts] = useState<Contract[]>([])
-      const { backend_url, session, setContracts, contracts } = useStore(appStore)
 
-      const loadAccountSharedContracts = async () => {
-            if (!session) {
-                  return
-            }
-            try {
-                  const url = `${backend_url}/contracts`
-                  const response = await axios.get(url, {
-                        params: {
-                              receiver: session?.address,
-                              sender: session?.address,
-                        },
-                        headers: {
-                              nonce: session?.nonce,
-                        },
-                  })
-                  if (response.status === 200) {
-                        setContracts(response.data?.contracts)
-                  }
-            } catch (error) {
-                  console.error(error)
-            }
-      }
-      useEffect(() => {
-            loadAccountSharedContracts()
-      }, [backend_url, session])
-
-      useEffect(() => {
-            const filteredContracts = contracts.filter(
-                  contract =>
-                        contract.hash.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                        contract.sender?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                        contract.receiver?.toLowerCase().includes(searchQuery.toLowerCase())
-            )
-            setShareContracts(filteredContracts)
-      }, [JSON.stringify(contracts)])
-
-      return (
-            <div>
-                  <div className="flex flex-col gap-2 ">
-                        <div className="flex items-center gap-3 mt-5">
-                              <div className="w-10 h-10 rounded-lg bg-blue-100 flex items-center justify-center">
-                                    <FileText className="w-5 h-5 text-blue-600" />
-                              </div>
-                              <div>
-                                    <h2 className="text-xl font-semibold text-gray-900">Shared Contracts.</h2>
-                                    <p className="text-sm text-gray-500 mt-1">{contracts.length} contracts available</p>
-                              </div>
-                        </div>
-
-                        <div className="flex flex-col h-full">
-                              {/* Contracts List */}
-                              <div className="flex-1 overflow-auto p-0">
-                                    <div className="space-y-4">
-                                          <Tabs defaultValue="incoming">
-                                                <TabsList>
-                                                      <TabsTrigger value="incoming">Incoming</TabsTrigger>
-                                                      <TabsTrigger value="outgoing">Outgoing</TabsTrigger>
-                                                </TabsList>
-                                                <TabsContent value="incoming">
-                                                      {shareContracts.filter(contract => contract.recipients?.map((e) => e.toLocaleLowerCase()).includes(session?.address?.toLocaleLowerCase()!!)).map((contract, index) => (
-                                                            <SharedContract
-                                                                  key={`${contract.hash}`}
-                                                                  contract={contract}
-                                                                  index={index}
-                                                                  /**
-                                                                   * Removes a contract from the share contracts list by hash.
-                                                                   * @param {string} hash - The hash of the contract to remove.
-                                                                   */
-                                                                  contractDeleted={hash => {
-                                                                        let newState = shareContracts.filter(e => e.hash != hash)
-                                                                        setShareContracts(newState)
-                                                                  }}
-                                                            />
-                                                      ))}
-                                                      {shareContracts.filter(contract => contract.recipients?.map((e) => e.toLocaleLowerCase()).includes(session?.address?.toLocaleLowerCase()!!)).length == 0 && (
-                                                            <div className="card">
-                                                                  <Alert variant="default">
-                                                                        <X />
-                                                                        <AlertTitle>Shared Contracts</AlertTitle>
-                                                                        <AlertDescription>
-                                                                              No incoming contracts
-                                                                        </AlertDescription>
-                                                                  </Alert>
-                                                            </div>
-                                                      )}
-                                                </TabsContent>
-                                                <TabsContent value="outgoing">
-                                                      {shareContracts.filter(contract => contract.sender?.toLocaleLowerCase() == session?.address?.toLocaleLowerCase()).map((contract, index) => (
-                                                            <SharedContract
-                                                                  key={`${contract.hash}`}
-                                                                  contract={contract}
-                                                                  index={index}
-                                                                  contractDeleted={hash => {
-                                                                        let newState = shareContracts.filter(e => e.hash != hash)
-                                                                        setShareContracts(newState)
-                                                                  }}
-                                                            />
-                                                      ))}
-                                                      {shareContracts.filter(contract => contract.sender?.toLocaleLowerCase() == session?.address.toLocaleLowerCase()).length == 0 && (
-                                                            <div className="card">
-                                                                  <Alert variant="default">
-                                                                        <X />
-                                                                        <AlertTitle>Shared Contracts</AlertTitle>
-                                                                        <AlertDescription>
-                                                                              No outgoing contracts
-                                                                        </AlertDescription>
-                                                                  </Alert>
-                                                            </div>
-                                                      )}
-                                                </TabsContent>
-                                          </Tabs>
-
-                                          {shareContracts.length === 0 && (
-                                                <div className="text-center py-12">
-                                                      <div className="w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center mx-auto mb-4">
-                                                            <FileText className="w-8 h-8 text-gray-400" />
-                                                      </div>
-                                                      <h3 className="text-lg font-medium text-gray-900 mb-2">No contracts found</h3>
-                                                      <p className="text-gray-500">{searchQuery ? 'Try adjusting your search terms' : 'No shared contracts available'}</p>
-                                                </div>
-                                          )}
-                                    </div>
-                              </div>
-                        </div>
-                  </div>
-            </div>
-      )
-}
-
-const FilesSharedContracts = () => {
-      return (
-            <div className="container mx-auto max-w-4xl px-0 py-6">
-                  <SharedContracts />
-            </div>
-      )
-}
-
-export default FilesSharedContracts

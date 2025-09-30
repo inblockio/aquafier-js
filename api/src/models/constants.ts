@@ -13,6 +13,7 @@ export let systemTemplateHashes = [
         '0x6ef241fa1d974bf0d0585781d437c9f2d95e328b7ff922bf24261090c6c7ed3a', // domain_claim
         '0x4b9202932025142b4d9a75141239e46ebfed210d178434303d1c7e5f586959c3', // email claim
         '0xfa4c4ffde60cd293033b986034890800a63bd27ca2cde44d1fce5a073ae5e937', // phone number claim
+        '0x5e339aed4184f012f1ec5e9a084636fb437f535233e20277a63c13d3e4af96e8', // user profile
     ]
 
 

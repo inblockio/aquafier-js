@@ -184,6 +184,7 @@ export interface IDropzoneAction {
 }
 
 export interface ImportChainFromChainProps {
+      showButtonOnly: boolean
       fileInfo: ApiFileInfo
       isVerificationSuccessful: boolean | null
       contractData?: any

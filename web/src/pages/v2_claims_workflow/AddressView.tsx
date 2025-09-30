@@ -1,6 +1,10 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Copy, Check, ArrowRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { fetchWalletAddressesAndNamesForInputRecommendation } from '@/utils/functions';
+import { WalletAutosuggest } from '@/components/wallet_auto_suggest';
+import { useStore } from 'zustand'
+import appStore from '@/store'
 
 interface AddressViewProps {
   address: string;
@@ -12,12 +16,19 @@ export const AddressView: React.FC<AddressViewProps> = ({
   className = ""
 }) => {
   const [copied, setCopied] = useState(false);
-  const [inputAddress, setInputAddress] = useState(address);
+  // const [inputAddress, setInputAddress] = useState(address);
   const navigate = useNavigate();
+  const {
+
+    systemFileInfo,
+
+    files
+  } = useStore(appStore)
+  const [multipleAddresses, setMultipleAddresses] = useState<string[]>([address])
 
   const handleCopy = async () => {
     try {
-      await navigator.clipboard.writeText(inputAddress);
+      await navigator.clipboard.writeText(multipleAddresses[0] || '');
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch (err) {
@@ -26,22 +37,50 @@ export const AddressView: React.FC<AddressViewProps> = ({
   };
 
   const handleNavigate = () => {
-    if (inputAddress.trim()) {
-      navigate(`/app/claims/workflow/${inputAddress.trim()}`);
+    if (multipleAddresses[0] || ''.trim()) {
+      navigate(`/app/claims/workflow/${multipleAddresses[0] || ''.trim()}`);
     }
   };
+
+  useEffect(() => {
+    let add = multipleAddresses
+    if (add.length === 0) {
+      add = [address]
+    }else{
+      add[0] = address
+    }
+    setMultipleAddresses(add)
+  }, [address])
 
   return (
     <div className={`rounded-2xl shadow-lg border border-gray-100 ${className}`}>
       <div className="relative group">
         <div className="flex items-center space-x-3 bg-gray-50 rounded-xl p-4 border-2 border-transparent group-hover:border-blue-200 transition-all duration-200">
           <div className="flex-1 min-w-0">
-            <input
+            {/* <input
               type="text"
               value={inputAddress}
               onChange={(e) => setInputAddress(e.target.value)}
               className="w-full text-gray-600 font-mono text-sm sm:text-base bg-transparent border-none outline-none focus:ring-0 p-0"
               placeholder="Enter wallet address..."
+            /> */}
+            <WalletAutosuggest
+
+              walletAddresses={fetchWalletAddressesAndNamesForInputRecommendation(systemFileInfo, files)}
+              field={{
+                name: 'address',
+              
+              }}
+              index={0}
+              address={multipleAddresses[0]}
+              multipleAddresses={multipleAddresses}
+              setMultipleAddresses={(addrs: string[]) => {
+                console.log('Setting multiple addresses:', addrs)
+                setMultipleAddresses(addrs)
+               
+              }}
+              placeholder="Enter wallet address..."
+              className="rounded-lg border-gray-200 focus:border-blue-500 focus:ring-blue-500"
             />
           </div>
           <button

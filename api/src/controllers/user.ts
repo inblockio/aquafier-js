@@ -274,6 +274,8 @@ export default async function userController(fastify: FastifyInstance) {
                 }
             })
 
+            let enableDBAClaim= process.env.ENABLE_DBA_CLAIM ?? "false"
+
             if (settingsData == null) {
                 let defaultData = {
                     user_pub_key: session.address,
@@ -282,6 +284,7 @@ export default async function userController(fastify: FastifyInstance) {
                     cli_priv_key: "",
                     witness_network: "sepolia",
                     theme: "light",
+                    enable_dba_claim : enableDBAClaim== "true" ? true : false,
                     witness_contract_address: '0x45f59310ADD88E6d23ca58A0Fa7A55BEE6d2a611',
                 }
                 await prisma.settings.create({
@@ -622,6 +625,13 @@ export default async function userController(fastify: FastifyInstance) {
             // Step 7: Delete the session
             await prisma.siweSession.delete({
                 where: { nonce }
+            });
+
+            // Step 8: Delete user settings
+            await prisma.settings.deleteMany({
+                where: {
+                    user_pub_key: userAddress
+                }
             });
 
             return reply.code(200).send({

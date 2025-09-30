@@ -1,5 +1,5 @@
 // Import the server
-import buildServer, {mockNotifications} from './server';
+import buildServer from './server';
 import {getHost, getPort} from './utils/api_utils';
 import Logger from "./utils/Logger";
 
@@ -20,15 +20,7 @@ const start = async () => {
             port: PORT,
             website: "https://aqua-protocol.org/",
             dashboards: ["https://aquafier.inblock.io", "https://dev.inblock.io"]
-        });        // Create mock notifications for testing
-        try {
-            if (process.env.NODE_ENV === "development" || process.env.NODE_ENV === "test") {
-                await mockNotifications();
-                Logger.info("✅ Mock notifications created successfully");
-            }
-        } catch (error: any) {
-            Logger.error("❌ Error creating mock notifications:", error);
-        }
+        });
     } catch (err) {
         server.log.error(err);
         process.exit(1);

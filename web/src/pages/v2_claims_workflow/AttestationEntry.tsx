@@ -7,7 +7,8 @@ const AttestationEntry = ({ file, nonce, walletAddress, context, createdAt }: IA
 
       const navigate = useNavigate()
 
-      const navigateToWalletAddress = () => {
+      const navigateToWalletAddress = (e: any) => {
+            e.stopPropagation()
             navigate(`/app/claims/workflow/${walletAddress}`)
       }
       

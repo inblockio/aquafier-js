@@ -4,11 +4,18 @@ import { Copy, Check, Sun, Moon, Calendar } from 'lucide-react'
 
 // Utility function to make words readable
 const makeProperReadableWord = (word: string) => {
-      return word
-            .replace(/([A-Z])/g, ' $1')
+      let wordReplace = word.replace(/([A-Z])/g, ' $1')
             .replace(/^./, str => str.toUpperCase())
             .replace(/_/g, ' ')
             .trim()
+
+      console.log("Word before special case handling:", wordReplace.toLocaleLowerCase().trim())
+      if (wordReplace.toLocaleLowerCase().trim().startsWith("txt")) {
+            console.log("Applying special case handling for 'txt record'")
+            // wordReplace = wordReplace.replace("txt record", "TXT Record")
+            return "TXT Record"
+      }
+      return wordReplace
 }
 
 export const FilePreviewAquaTreeFromTemplateOne = ({ userData }: { userData: Record<string, string> }) => {
@@ -89,7 +96,7 @@ export const FilePreviewAquaTreeFromTemplate = ({ formData }: { formData: Record
       const keys = Object.keys(formData)
 
       const checkCopyButtonVisibility = (formKey: string) => {
-            const fieldsToWatch = ['address', 'hash']
+            const fieldsToWatch = ['address', 'hash', 'txt_record']
             let isVisible = false
 
             for (const field of fieldsToWatch) {

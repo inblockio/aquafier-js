@@ -218,7 +218,8 @@ const setUpSystemTemplates = async () => {
         "user_signature",
         "domain_claim",
         "email_claim",
-        "phone_number_claim"
+        "phone_number_claim",
+        "user_profile"
     ]
     for (let index = 0; index < templates.length; index++) {
         const templateItem = templates[index];
