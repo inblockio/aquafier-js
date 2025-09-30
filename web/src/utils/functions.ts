@@ -1115,6 +1115,22 @@ export const dataURLToUint8Array = (dataUrl: string): Uint8Array => {
       return bytes
 }
 
+export function formatUnixTimestamp(timestamp: number) {
+  // Convert seconds to milliseconds (JavaScript Date expects ms)
+  const date = new Date(timestamp * 1000);
+
+  // Use toLocaleString with options for desired format
+  return date.toLocaleString('en-US', {
+    month: 'long',
+    day: 'numeric',
+    year: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
+    second: '2-digit',
+    hour12: true
+  }).replace(',', ' at');
+}
+
 export function timeToHumanFriendly(timestamp: string | undefined, showFull: boolean = false, timezone?: string): string {
       if (!timestamp) {
             return '-'
