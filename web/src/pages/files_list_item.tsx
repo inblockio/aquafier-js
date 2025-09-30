@@ -414,13 +414,14 @@ export default function FilesListItem({
 
 
                   if (creatorWallet) {
+return <>
+                              
+                              <div className="flex flex-nowrap   text-xs text-gray-500" style={{ alignItems: 'center' }}>
+                                    <p className="text-xs ">Profile Owner   {session?.address === creatorWallet ? <>(You)</> : <></>}: &nbsp;</p>
+                                    <WalletAdrressClaim walletAddress={creatorWallet} />
 
-                        return <>
-
-                              <div className="flex flex-nowrap  text-xs text-gray-500">
-                                    <p className="text-xs">Profile Owner Wallet {session?.address === creatorWallet ? <>(You)</> : <></>}: &nbsp;</p>
-                                    <p className="text-xs ">{formatCryptoAddress(creatorWallet)}</p>
                               </div>
+
                         </>
                   }
             }

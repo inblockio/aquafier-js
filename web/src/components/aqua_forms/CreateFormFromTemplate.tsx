@@ -561,7 +561,7 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: {
                   })
             } catch (error: any) {
                   // alert('Failed to sign: ' + error.message);
-                  console.error('Error signing domain claim:', error)
+                  console.error('Error signing domain claim:'+ error)
                   setDialogOpen(true)
                   setDialogData({
                         title: 'Error signing domain claim',
@@ -569,7 +569,7 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: {
                               <>
                                     <Alert variant="destructive">
                                           <AlertCircle className="h-4 w-4" />
-                                          <AlertDescription>error signing domain claim: {error}</AlertDescription>
+                                          <AlertDescription>error signing domain claim: {JSON.stringify(error)}</AlertDescription>
                                     </Alert>
                               </>
                         ),
