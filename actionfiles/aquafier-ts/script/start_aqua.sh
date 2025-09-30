@@ -34,9 +34,16 @@ if [ -n "${BACKUP_CRON}" ]; then
   chmod 600 /app/utils/env
   env | grep -E '^(DB_|S3_|BACKUP_COUNT)' >> /app/utils/env
   echo "prepare backup cron"
-  printf '%s /app/utils/create_backup.sh >> /var/log/aquafier_ext 2>&1\n\n' "${BACKUP_CRON}" > /etc/cron.d/backup_cron
+  
+  # Create cron job with proper format (username required for /etc/cron.d/)
+  printf '%s root /bin/bash -c "cd /app && /app/utils/create_backup.sh" >> /var/log/aquafier_ext 2>&1\n' "${BACKUP_CRON}" > /etc/cron.d/backup_cron
+  
+  # Ensure proper permissions and newline
   chmod 0644 /etc/cron.d/backup_cron
-  crontab /etc/cron.d/backup_cron
+  echo "" >> /etc/cron.d/backup_cron  # Add required newline
+  
+  echo "Cron job configured: ${BACKUP_CRON}"
+  cat /etc/cron.d/backup_cron
 fi
 
 while [ $attempt -lt $max_attempts ]; do
@@ -463,7 +470,16 @@ cat > serve.json << EOF
 EOF
 
 #start cron scheduler
+echo "Starting cron daemon..."
 service cron start
+service cron status || echo "Cron service status check failed"
+
+# Verify cron jobs are loaded
+if [ -n "${BACKUP_CRON}" ]; then
+  echo "Verifying cron job installation..."
+  crontab -l || echo "No user crontab found (this is expected for /etc/cron.d/ jobs)"
+  ls -la /etc/cron.d/backup_cron || echo "Cron file not found"
+fi
 
 
 # Start serve with the configuration
