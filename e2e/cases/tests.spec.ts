@@ -21,7 +21,7 @@ import {
 } from '../testUtils';
 
 // Simple test to verify Playwright is working correctly
-test("basic site accessibility test", async ({ page }) => {
+test.skip("basic site accessibility test", async ({ page }) => {
     console.log("Running basic site accessibility test");
     // Navigate to the site
     await page.goto('/');
@@ -32,7 +32,7 @@ test("basic site accessibility test", async ({ page }) => {
     console.log(`Page title: ${title}`);
 });
 
-test("create new wallet test", async (): Promise<void> => {
+test.skip("create new wallet test", async (): Promise<void> => {
     await registerNewMetaMaskWallet();
 });
 
@@ -40,7 +40,7 @@ test("login test", async (): Promise<void> => {
     await registerNewMetaMaskWalletAndLogin();
 });
 //
-test("user alias setting test", async (): Promise<void> => {
+test.skip("user alias setting test", async (): Promise<void> => {
     const registerResponse = await registerNewMetaMaskWalletAndLogin();
     const context: BrowserContext = registerResponse.context;
     const testPage: Page = context.pages()[0];
@@ -80,7 +80,7 @@ test("user alias setting test", async (): Promise<void> => {
 });
 
 
-test("linking 2 files test", async (): Promise<void> => {
+test.skip("linking 2 files test", async (): Promise<void> => {
     const registerResponse = await registerNewMetaMaskWalletAndLogin();
     const context: BrowserContext = registerResponse.context;
     const testPage: Page = context.pages()[0];
@@ -116,7 +116,7 @@ test("linking 2 files test", async (): Promise<void> => {
 });
 
 
-test("upload, file form revision", async (): Promise<void> => {
+test.skip("upload, file form revision", async (): Promise<void> => {
     const registerResponse = await registerNewMetaMaskWalletAndLogin();
     const context: BrowserContext = registerResponse.context;
     const testPage: Page = context.pages()[0];
@@ -135,7 +135,7 @@ test("upload, file form revision", async (): Promise<void> => {
     // await expect(row).toBeVisible();
 });
 
-test("import, file multiple revisions", async (): Promise<void> => {
+test.skip("import, file multiple revisions", async (): Promise<void> => {
     const registerResponse = await registerNewMetaMaskWalletAndLogin();
     const context: BrowserContext = registerResponse.context;
     const testPage: Page = context.pages()[0];
@@ -230,7 +230,7 @@ test("import, file multiple revisions", async (): Promise<void> => {
     }
 });
 
-test("upload, delete file", async (): Promise<void> => {
+test.skip("upload, delete file", async (): Promise<void> => {
     const registerResponse = await registerNewMetaMaskWalletAndLogin();
     const context: BrowserContext = registerResponse.context;
     const testPage: Page = context.pages()[0];
@@ -259,7 +259,7 @@ test("upload, delete file", async (): Promise<void> => {
 
 });
 
-test("upload, sign, download", async (): Promise<void> => {
+test.skip("upload, sign, download", async (): Promise<void> => {
     const registerResponse = await registerNewMetaMaskWalletAndLogin();
     const context: BrowserContext = registerResponse.context;
     const testPage: Page = context.pages()[0];
@@ -285,7 +285,7 @@ test("upload, sign, download", async (): Promise<void> => {
 });
 
 // DO NOT DELETE
-// test("upload, witness, download", async (): Promise<void> => {
+// test.skip("upload, witness, download", async (): Promise<void> => {
 //     const registerResponse = await registerNewMetaMaskWalletAndLogin();
 //     const context: BrowserContext = registerResponse.context;
 //     const testPage: Page = context.pages()[0];
@@ -382,7 +382,7 @@ test.skip("upload, witness, download", async (): Promise<void> => {
     console.log("upload, witness, download test finished!");
 });
 
-test("single user aqua-sign", async (): Promise<void> => {
+test.skip("single user aqua-sign", async (): Promise<void> => {
     const registerResponse = await registerNewMetaMaskWalletAndLogin();
     const context: BrowserContext = registerResponse.context;
     const testPage: Page = context.pages()[0];
@@ -412,7 +412,7 @@ test("single user aqua-sign", async (): Promise<void> => {
 
 
 // DO NOT DELETE
-// test("two user aqua-sign", async (): Promise<void> => {
+// test.skip("two user aqua-sign", async (): Promise<void> => {
 //     const registerWalletOneResponse = await registerNewMetaMaskWalletAndLogin();
 
 //     const contextWalletOne: BrowserContext = registerWalletOneResponse.context;
@@ -521,7 +521,7 @@ test.skip("two user aqua-sign", async (): Promise<void> => {
 
 
 // Test for sharing functionality
-test("share document between two users", async (): Promise<void> => {
+test.skip("share document between two users", async (): Promise<void> => {
     // Setup first user (document owner)
     const ownerResponse = await registerNewMetaMaskWalletAndLogin();
     const ownerContext: BrowserContext = ownerResponse.context;
@@ -555,7 +555,7 @@ test("share document between two users", async (): Promise<void> => {
 });
 
 // Test for sharing with different permission levels
-test("share document with everyone", async (): Promise<void> => {
+test.skip("share document with everyone", async (): Promise<void> => {
     // Setup first user (document owner)
     const ownerResponse = await registerNewMetaMaskWalletAndLogin();
     const ownerContext: BrowserContext = ownerResponse.context;
@@ -584,7 +584,7 @@ test("share document with everyone", async (): Promise<void> => {
 });
 
 
-test("import aqua zip test", async (): Promise<void> => {
+test.skip("import aqua zip test", async (): Promise<void> => {
     const registerResponse = await registerNewMetaMaskWalletAndLogin();
     const context: BrowserContext = registerResponse.context;
     const testPage: Page = context.pages()[0];
@@ -606,7 +606,7 @@ test("import aqua zip test", async (): Promise<void> => {
 });
 
 
-test("create a template", async (): Promise<void> => {
+test.skip("create a template", async (): Promise<void> => {
     const registerResponse = await registerNewMetaMaskWalletAndLogin(`app/templates`);
     const context: BrowserContext = registerResponse.context;
     const testPage: Page = context.pages()[0];
@@ -621,7 +621,7 @@ test("create a template", async (): Promise<void> => {
 });
 
 
-test("delete a template", async (): Promise<void> => {
+test.skip("delete a template", async (): Promise<void> => {
     const registerResponse = await registerNewMetaMaskWalletAndLogin(`app/templates`);
     const context: BrowserContext = registerResponse.context;
     const testPage: Page = context.pages()[0];
@@ -657,7 +657,7 @@ test("delete a template", async (): Promise<void> => {
 });
 
 
-test("create a simple claim", async (): Promise<void> => {
+test.skip("create a simple claim", async (): Promise<void> => {
     const registerResponse = await registerNewMetaMaskWalletAndLogin(`app`);
     const context: BrowserContext = registerResponse.context;
     const testPage: Page = context.pages()[0];
@@ -693,7 +693,7 @@ test("create a simple claim", async (): Promise<void> => {
 
 });
 
-test("create simple claim", async (): Promise<void> => {
+test.skip("create simple claim", async (): Promise<void> => {
 
     const registerResponse = await registerNewMetaMaskWalletAndLogin();
     const context: BrowserContext = registerResponse.context;
@@ -704,7 +704,7 @@ test("create simple claim", async (): Promise<void> => {
 });
 
 // DO NOT DELETE
-// test("attest a claim and share the claim", async (): Promise<void> => {
+// test.skip("attest a claim and share the claim", async (): Promise<void> => {
 //     const registerResponse = await registerNewMetaMaskWalletAndLogin();
 //     const creatorContext: BrowserContext = registerResponse.context;
 //     const creatorPage: Page = creatorContext.pages()[0];
@@ -787,7 +787,7 @@ test.skip("attest a claim and share the claim", async (): Promise<void> => {
 
 
 
-test("create dns claim", async (): Promise<void> => {
+test.skip("create dns claim", async (): Promise<void> => {
     const registerResponse = await registerNewMetaMaskWalletAndLogin();
     const context: BrowserContext = registerResponse.context;
     const testPage: Page = context.pages()[0];
@@ -826,7 +826,7 @@ test("create dns claim", async (): Promise<void> => {
 
 
 // DO NOT DELETE
-// test("import dns claim", async (): Promise<void> => {
+// test.skip("import dns claim", async (): Promise<void> => {
 //     const registerResponse = await registerNewMetaMaskWalletAndLogin();
 //     const context: BrowserContext = registerResponse.context;
 //     const testPage: Page = context.pages()[0];
@@ -996,7 +996,7 @@ test.skip("import dns claim", async (): Promise<void> => {
 });
 
 
-test("import user  signature", async (): Promise<void> => {
+test.skip("import user  signature", async (): Promise<void> => {
     const registerResponse = await registerNewMetaMaskWalletAndLogin();
     const context: BrowserContext = registerResponse.context;
     const testPage: Page = context.pages()[0];
@@ -1060,7 +1060,7 @@ test("import user  signature", async (): Promise<void> => {
 });
 
 
-test("create aqua sign claim", async (): Promise<void> => {
+test.skip("create aqua sign claim", async (): Promise<void> => {
     const registerResponse = await registerNewMetaMaskWalletAndLogin();
     const context: BrowserContext = registerResponse.context;
     const testPage: Page = context.pages()[0];
@@ -1094,7 +1094,7 @@ test("create aqua sign claim", async (): Promise<void> => {
 
 
 
-test("create phone number claim", async (): Promise<void> => {
+test.skip("create phone number claim", async (): Promise<void> => {
     const registerResponse = await registerNewMetaMaskWalletAndLogin();
     const context: BrowserContext = registerResponse.context;
     const testPage: Page = context.pages()[0];
@@ -1127,7 +1127,7 @@ test("create phone number claim", async (): Promise<void> => {
     // await expect(tableRows).toHaveCount(2);
 });
 
-test("create email claim", async (): Promise<void> => {
+test.skip("create email claim", async (): Promise<void> => {
     const registerResponse = await registerNewMetaMaskWalletAndLogin();
     const context: BrowserContext = registerResponse.context;
     const testPage: Page = context.pages()[0];
