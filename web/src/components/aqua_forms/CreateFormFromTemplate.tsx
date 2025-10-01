@@ -521,6 +521,7 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: {
             const genHash = getGenesisHash(selectedFileInfo.aquaTree!)
             if (genHash) {
                   completeFormData[`identity_claim_id`] = genHash
+                  completeFormData[`attestion_type`] = 'user'
             } else {
                   throw new Error('Identity claim genesis id not found in selected file')
             }
