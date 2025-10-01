@@ -84,7 +84,7 @@ test("user alias setting test", async (): Promise<void> => {
 });
 
 
-test.skip("linking 2 files test", async (): Promise<void> => {
+test("linking 2 files test", async (): Promise<void> => {
     const registerResponse = await registerNewMetaMaskWalletAndLogin();
     const context: BrowserContext = registerResponse.context;
     const testPage: Page = context.pages()[0];
@@ -120,7 +120,7 @@ test.skip("linking 2 files test", async (): Promise<void> => {
 });
 
 
-test.skip("upload, file form revision", async (): Promise<void> => {
+test("upload, file form revision", async (): Promise<void> => {
     const registerResponse = await registerNewMetaMaskWalletAndLogin();
     const context: BrowserContext = registerResponse.context;
     const testPage: Page = context.pages()[0];
