@@ -1,12 +1,29 @@
 #!/bin/bash
 set -ex
 
+# Add logging for cron debugging
+echo "=== BACKUP STARTED at $(date) ==="
+echo "Current working directory: $(pwd)"
+echo "Current user: $(whoami)"
+echo "Environment variables loaded from /app/utils/env:"
+
 FILE_STORAGE_PATH="/app/backend/media"
 
 #load envs.... because this script runs in a cron-job we need to load the creds
 if [ -f "/app/utils/env" ]; then
   source /app/utils/env
+  echo "Environment file loaded successfully"
+  echo "DB_USER: ${DB_USER:-not set}"
+  echo "DB_NAME: ${DB_NAME:-not set}"
+  echo "S3_USER: ${S3_USER:-not set}"
+  echo "S3_BUCKET: ${S3_BUCKET:-not set}"
+else
+  echo "ERROR: Environment file /app/utils/env not found!"
+  exit 1
 fi
+
+# Ensure we're in the right directory
+cd /app
 
 #reset backup workdir
 if [ -d backup ]; then
@@ -95,6 +112,10 @@ fi
 cd backup && tar -cvf - -- * | gzip -9 > /backup/backup_"$(date +'%H-%M_%d-%m-%Y').tar.gz" && cd ..
 
 rm -rf backup
+
+echo "=== BACKUP COMPLETED at $(date) ==="
+echo "Backup file created: /backup/backup_$(date +'%H-%M_%d-%m-%Y').tar.gz"
+ls -la /backup/backup_*.tar.gz | tail -5
 
 #delete old backups if configured
 if [ -n "${BACKUP_COUNT}" ]; then

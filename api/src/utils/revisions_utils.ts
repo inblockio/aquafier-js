@@ -3,7 +3,8 @@ import {
     FileObject,
     OrderRevisionInAquaTree,
     reorderAquaTreeRevisionsProperties,
-    Revision as AquaTreeRevision
+    Revision as AquaTreeRevision,
+    cliYellowfy
 } from 'aqua-js-sdk';
 import { prisma } from '../database/db';
 // For specific model types
@@ -78,7 +79,7 @@ export async function getUserApiFileInfo(url: string, address: string): Promise<
     aquaTree: AquaTree,
     fileObject: FileObject[]
 }>> {
-
+   
     let latest = await prisma.latest.findMany({
         where: {
             AND: {
@@ -1802,11 +1803,8 @@ async function processAllAquaFiles(
     if (isWorkFlow && mainAquaTree && aquaConfig) {
         // Process workflow: save non-main files first, then main file
         await processWorkflowFiles(aquaFiles, aquaConfig.genesis, userAddress, templateId);
-
-
-
         await deletLatestIfExistsForAquaTree(mainAquaTree, userAddress)
-        await saveAquaTree(mainAquaTree, userAddress, templateId, isWorkFlow);
+        await saveAquaTree(mainAquaTree, userAddress, templateId, false);
     } else {
 
         // Process regular files
@@ -1825,7 +1823,13 @@ async function processWorkflowFiles(
     for (const { file } of nonMainFiles) {
         const aquaTree = await parseAquaFile(file);
         await deletLatestIfExistsForAquaTree(aquaTree, userAddress)
-        await saveAquaTree(aquaTree, userAddress, templateId, true);
+        let genhash = getGenesisHash(aquaTree);
+        if (!genhash) {
+            throw new Error(`Genesis hash cannot be null`);
+        }
+
+        let isSystem = systemTemplateHashes.includes(genhash.trim())
+        await saveAquaTree(aquaTree, userAddress, templateId, isSystem);
     }
 }
 
