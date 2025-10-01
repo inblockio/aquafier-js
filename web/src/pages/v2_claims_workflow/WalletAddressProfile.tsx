@@ -641,7 +641,8 @@ const WalletAddressProfile = ({ walletAddress, callBack, showAvatar, width, show
 
                               let genesisRevision = e.aquaTree?.revisions[genesisRevisionHash]
 
-                              if (genesisRevision?.forms_claim_type == "simple_claim" && genesisRevision!.forms_attestion_type == "user") {
+                              // if (genesisRevision?.forms_claim_type == "simple_claim" && genesisRevision!.forms_attestion_type == "user") {
+                              if (genesisRevision!.forms_attestion_type == "server" || genesisRevision!.forms_attestion_type == "user") {
                                     return e
                               }
                         }
