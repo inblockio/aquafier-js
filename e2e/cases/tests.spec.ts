@@ -40,43 +40,47 @@ test("login test", async (): Promise<void> => {
     await registerNewMetaMaskWalletAndLogin();
 });
 //
-test.skip("user alias setting test", async (): Promise<void> => {
+test("user alias setting test", async (): Promise<void> => {
     const registerResponse = await registerNewMetaMaskWalletAndLogin();
     const context: BrowserContext = registerResponse.context;
     const testPage: Page = context.pages()[0];
-    console.log("user alias setting test started!");
 
-    //wait until the main page was fully loaded
-    await testPage.waitForSelector('[data-testid="nav-link-0"]', { state: 'visible' });
+    // Navigate to settings page and wait for it to be fully loaded
+    await testPage.goto('/app/settings', { waitUntil: 'networkidle' });
 
-    await testPage.goto('/app/settings', { waitUntil: 'networkidle' })
-
-
-
+    // Fill in the alias name
+    await testPage.waitForSelector('[data-testid="alias-name-input"]', {
+        state: 'visible',
+        timeout: 5000
+    });
     await testPage.fill('[data-testid="alias-name-input"]', "alias_data");
-    console.log("filled aqua sign form");
 
+    // Save changes and wait for the save operation to complete
+    await testPage.waitForSelector('[data-testid="save-changes-settings"]', {
+        state: 'visible',
+        timeout: 3000
+    });
 
-    await testPage.waitForSelector('[data-testid="save-changes-settings"]', { state: 'visible', timeout: 1000 });
+    // Listen for the network request to complete
+    const savePromise = testPage.waitForResponse(
+        response => response.url().includes('/explorer_update_user_settings') && response.status() === 200,
+        { timeout: 5000 }
+    );
+
     await testPage.click('[data-testid="save-changes-settings"]');
+    await savePromise;
 
-    // for data to be saved
-    await testPage.waitForTimeout(1000);
-
-    console.log("Reloading page to verify alias name persistence");
+    // Reload and verify persistence
     await testPage.reload({ waitUntil: 'networkidle' });
+    await testPage.waitForSelector('[data-testid="alias-name-input"]', {
+        state: 'visible',
+        timeout: 5000
+    });
 
-    //add a small wait to ensure the page is fully loaded
-    await testPage.waitForTimeout(2000);
-    const alisName: string = await testPage.locator('[data-testid="alias-name-input"]').inputValue();
-
-    console.log(`Alias name after reload: ${alisName}`);
-
-    if (alisName != "alias_data") {
-        throw new Error("Alias name not updated");
+    const aliasName: string = await testPage.locator('[data-testid="alias-name-input"]').inputValue();
+    if (aliasName !== "alias_data") {
+        throw new Error(`Alias name not persisted. Expected 'alias_data', got '${aliasName}'`);
     }
-
-    console.log("Alias name updated successfully");
 });
 
 
