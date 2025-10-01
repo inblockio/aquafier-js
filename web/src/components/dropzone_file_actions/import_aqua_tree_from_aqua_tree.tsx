@@ -29,6 +29,7 @@ export const ImportAquaChainFromChain = ({ showButtonOnly, fileInfo, isVerificat
       const [modalOpen, setModalOpen] = useState(false)
 
       const [lastIdenticalRevisionHash, setLastIdenticalRevisionHash] = useState<string | null>(null)
+      const [lastLocalRevisionHash, setLastLocalRevisionHash] = useState<string | null>(null)
       const [_revisionsToImport, setRevisionsToImport] = useState<Revision[]>([])
       const [updateMessage, setUpdateMessage] = useState<string | null>(null)
       const [btnText, setBtnText] = useState<BtnContent>({
@@ -45,8 +46,10 @@ export const ImportAquaChainFromChain = ({ showButtonOnly, fileInfo, isVerificat
             const existingChainFile = dbFiles.find(file => Object.keys(file?.aquaTree?.revisions ?? {})[0] === Object.keys(fileInfo?.aquaTree?.revisions ?? {})[0])
 
             if (existingChainFile) {
-                  const existingFileRevisions = Object.keys(existingChainFile?.aquaTree?.revisions ?? {})
-                  const fileToImportRevisions = Object.keys(fileInfo?.aquaTree?.revisions ?? {})
+                  let orderedExistingChain = OrderRevisionInAquaTree(existingChainFile?.aquaTree!)
+                  let orderedFileToImport = OrderRevisionInAquaTree(fileInfo?.aquaTree!)
+                  const existingFileRevisions = Object.keys(orderedExistingChain.revisions ?? {})
+                  const fileToImportRevisions = Object.keys(orderedFileToImport.revisions ?? {})
 
                   const mergeResult = analyzeAndMergeRevisions(existingFileRevisions, fileToImportRevisions)
                   const _revisionsToImport: Revision[] = []
@@ -86,6 +89,8 @@ export const ImportAquaChainFromChain = ({ showButtonOnly, fileInfo, isVerificat
 
                   setComparisonResult(mergeResult)
                   setLastIdenticalRevisionHash(mergeResult.lastIdenticalRevisionHash)
+                  let lastRevision = existingFileRevisions[existingFileRevisions.length - 1]
+                  setLastLocalRevisionHash(lastRevision)
                   setRevisionsToImport(_revisionsToImport)
                   setModalOpen(true)
                   return
@@ -150,6 +155,7 @@ export const ImportAquaChainFromChain = ({ showButtonOnly, fileInfo, isVerificat
                         url,
                         {
                               latestRevisionHash: latestRevisionHash,
+                              lastLocalRevisionHash: lastLocalRevisionHash,
                               currentUserLatestRevisionHash: lastIdenticalRevisionHash,
                               userAddress: contractData.sender,
                               mergeStrategy: 'replace',
