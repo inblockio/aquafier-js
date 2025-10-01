@@ -3,7 +3,6 @@ node_modules/
 node_modules
 dist
 android
-prisma/migrations
 api/media
 api/src/media
 **/media/**
