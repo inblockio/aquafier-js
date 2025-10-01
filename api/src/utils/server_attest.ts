@@ -64,6 +64,7 @@ export async function serverAttestation(identityClaimId: string,  walletAddress:
     const attestationForm = {
         "identity_claim_id": identityClaimId,
         "context": context,
+        "attestion_type":"server",
         "wallet_address": serverWalletInformation.walletAddress,
         "claim_wallet_address": walletAddress,
     }
