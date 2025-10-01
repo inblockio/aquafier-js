@@ -21,7 +21,7 @@ import {
 } from '../testUtils';
 
 // Simple test to verify Playwright is working correctly
-test.skip("basic site accessibility test", async ({ page }) => {
+test("basic site accessibility test", async ({ page }) => {
     console.log("Running basic site accessibility test");
     // Navigate to the site
     await page.goto('/');
@@ -32,11 +32,11 @@ test.skip("basic site accessibility test", async ({ page }) => {
     console.log(`Page title: ${title}`);
 });
 
-test.skip("create new wallet test", async (): Promise<void> => {
+test("create new wallet test", async (): Promise<void> => {
     await registerNewMetaMaskWallet();
 });
 
-test.skip("login test", async (): Promise<void> => {
+test("login test", async (): Promise<void> => {
     await registerNewMetaMaskWalletAndLogin();
 });
 //
