@@ -549,16 +549,16 @@ const WalletAddressProfile = ({ walletAddress, callBack, showAvatar, width, show
                         // Fix the wallet address in the template
                         jsonData.wallet_address = walletAddress
 
-                         let templateAquaTree
+                        let templateAquaTree
 
 
-                         if( typeof response.data.aquaTree === 'string') {
-                               let aquaTreeString = response.data.aquaTree
-                               templateAquaTree = JSON.parse(aquaTreeString) as AquaTree
-                        }else{
+                        if (typeof response.data.aquaTree === 'string') {
+                              let aquaTreeString = response.data.aquaTree
+                              templateAquaTree = JSON.parse(aquaTreeString) as AquaTree
+                        } else {
                               templateAquaTree = response.data.aquaTree as AquaTree
                         }
-                        
+
 
                         const mainAquaTreeWrapper: AquaTreeWrapper = {
                               aquaTree: currentAquaTree!!,
@@ -600,6 +600,8 @@ const WalletAddressProfile = ({ walletAddress, callBack, showAvatar, width, show
                   }
 
 
+
+                  // link 
                   for (let index = 0; index < claims.length; index++) {
                         const element = claims[index];
 
@@ -630,6 +632,54 @@ const WalletAddressProfile = ({ walletAddress, callBack, showAvatar, width, show
 
                         currentAquaTree = linkedAquaTreeResponse.data.aquaTree
                   }
+
+
+                  // link user attestations
+                  let allSimpleClaimFiles = files.fileData.filter((e) => {
+                        let genesisRevisionHash = getGenesisHash(e.aquaTree!)
+                        if (genesisRevisionHash) {
+
+                              let genesisRevision = e.aquaTree?.revisions[genesisRevisionHash]
+
+                              if (genesisRevision?.forms_claim_type == "simple_claim" && genesisRevision!.forms_attestion_type == "user") {
+                                    return e
+                              }
+                        }
+                        return null
+                  })
+
+                  for (let index = 0; index < allSimpleClaimFiles.length; index++) {
+                        const element = allSimpleClaimFiles[index];
+
+
+                        const mainAquaTreeWrapper: AquaTreeWrapper = {
+                              aquaTree: currentAquaTree!!,
+                              revision: '',
+                              fileObject: fileObject,
+                        }
+
+                        const linkedAquaTreeFileObj = getAquaTreeFileObject(element)
+                        if (!linkedAquaTreeFileObj) {
+                              throw new Error('System Aqua tree has error')
+                        }
+
+                        allFileObjects.push(linkedAquaTreeFileObj)
+                        const linkedToAquaTreeWrapper: AquaTreeWrapper = {
+                              aquaTree: element.aquaTree!,
+                              revision: '',
+                              fileObject: linkedAquaTreeFileObj,
+                        }
+
+                        const linkedAquaTreeResponse = await aquafier.linkAquaTree(mainAquaTreeWrapper, linkedToAquaTreeWrapper)
+
+                        if (linkedAquaTreeResponse.isErr()) {
+                              throw new Error('Error linking aqua tree')
+                        }
+
+                        currentAquaTree = linkedAquaTreeResponse.data.aquaTree
+                  }
+
+
 
                   // save it on the server
                   await saveAquaTree(currentAquaTree!, fileObject, true)
