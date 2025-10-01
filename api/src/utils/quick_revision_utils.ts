@@ -540,7 +540,7 @@ export async function transferRevisionChain(
                     // Fetch the entire chain from the source user
                     let latestRevisionHash = getLastRevisionVerificationHash(entireChain as AquaTree);
                     const entireChainInLink = await fetchCompleteRevisionChain(latestRevisionHash, sourceUserAddress, url);
-                    transferRevisionChain(
+                    await transferRevisionChain(
                         entireChainInLink,
                         targetUserAddress,
                         sourceUserAddress,
@@ -573,7 +573,6 @@ export async function transferRevisionChain(
                     });
 
                     await prisma.fileName.create({
-
                         data: {
                             pubkey_hash: targetFullHash,
                             file_name: entireChain.file_index[hash] || "+ Unknown File",
@@ -1455,7 +1454,7 @@ async function transferRevisionAssociatedData(
                         pubkey_hash: [...fileIndex.pubkey_hash, targetFullHash],
                     }
                 });
-            }
+            } 
             break;
     }
 }
