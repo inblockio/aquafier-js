@@ -449,11 +449,11 @@ Add `-d` flag to run in detached mode.
 - Main branch: `main`
 
 **Code Quality Notes:**
-- Some files are extremely large and should be refactored:
-  - `web/src/utils/functions.ts` (110,850 lines)
-  - `web/src/components/aqua_forms/CreateFormFromTemplate.tsx` (107,474 lines)
-  - `web/src/components/aqua_tree_revision_details.tsx` (46,006 lines)
-  - `web/src/store.ts` (9,912 lines)
+- Some files are large and being refactored:
+  - `web/src/utils/functions.ts` (2,805 lines, 85 exports) - **IN PROGRESS**: Being split into focused modules (date-time, string, crypto, cookie, array, url, conversion, ui, network utils). See `web/src/utils/REFACTORING_GUIDE.md` for details.
+  - `web/src/components/aqua_forms/CreateFormFromTemplate.tsx` - Needs refactoring
+  - `web/src/components/aqua_tree_revision_details.tsx` - Needs refactoring
+  - `web/src/store.ts` (9,912 lines) - Consider splitting into domain-specific stores
 
 **Maintenance:**
 - Renovate bot auto-updates dependencies (base: `dev`, schedule: daily 1 AM Europe/Berlin)
