@@ -190,6 +190,35 @@ export interface ImportChainFromChainProps {
       contractData?: any
 }
 
+
+
+
+export interface LogEntry {
+    level: 'info' | 'success' | 'warning' | 'error'
+    message: string
+    details?: any
+  }
+
+
+export interface VerificationResult {
+    success: boolean
+    message: string
+    domain: string
+    expectedWallet?: string
+    totalRecords: number
+    verifiedRecords: number
+    results: any[]
+    logs: LogEntry[]
+    dnssecValidated: boolean
+}
+
+export type IDNSStatus = "loading" | "verified" | "failed" | "not_found"
+export interface IDnsVerificationResult {
+    status: string
+    message: string
+    dnsStatus: IDNSStatus
+    verificationResult: VerificationResult | null
+}
 export interface BtnContent {
       text: string
       color: string

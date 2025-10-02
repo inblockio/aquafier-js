@@ -4,7 +4,7 @@ import {createJSONStorage, persist} from 'zustand/middleware'
 import {ApiFileInfo} from './models/FileInfo'
 import {ApiFileData, ApiFileInfoState, OpenDialog, Session, WebConfig} from './types/types'
 import {FormTemplate} from './components/aqua_forms/types'
-import {ensureDomainUrlHasSSL} from './utils/functions'
+import {ensureDomainUrlHasSSL} from './utils/url.utils'
 
 type AppStoreState = {
       user_profile: {

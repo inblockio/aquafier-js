@@ -28,7 +28,7 @@ import { ClipLoader } from 'react-spinners'
 import { toast } from 'sonner'
 import { useStore } from 'zustand'
 import axios from 'axios'
-import { getDNSStatusBadge, IDnsVerificationResult, verifyDNS } from '@/utils/verifiy_dns'
+import { getDNSStatusBadge, IDnsVerificationResult, verifyDNS } from '@/components/verifiy_dns'
 import { BsInfoCircle } from 'react-icons/bs'
 
 interface ISignatureWalletAddressCard {

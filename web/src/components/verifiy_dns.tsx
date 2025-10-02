@@ -1,33 +1,8 @@
 import { ReactNode } from "react"
-import { ensureDomainUrlHasSSL } from "./functions"
+import { ensureDomainUrlHasSSL } from "../utils/functions"
+import { IDnsVerificationResult } from "../types/types"
 
 
-interface LogEntry {
-    level: 'info' | 'success' | 'warning' | 'error'
-    message: string
-    details?: any
-  }
-
-
-export interface VerificationResult {
-    success: boolean
-    message: string
-    domain: string
-    expectedWallet?: string
-    totalRecords: number
-    verifiedRecords: number
-    results: any[]
-    logs: LogEntry[]
-    dnssecValidated: boolean
-}
-
-export type IDNSStatus = "loading" | "verified" | "failed" | "not_found"
-export interface IDnsVerificationResult {
-    status: string
-    message: string
-    dnsStatus: IDNSStatus
-    verificationResult: VerificationResult | null
-}
 
 export const verifyDNS = async (backend_url: string, domain: string, walletAddress: string): Promise<IDnsVerificationResult> => {
     // Hardcoded values as requested
