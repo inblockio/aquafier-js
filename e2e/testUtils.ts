@@ -900,7 +900,7 @@ export async function registerNewMetaMaskWallet(): Promise<RegisterMetaMaskRespo
     // const isCI = process.env.CI === 'true';
     const userDataDir = '';
     const context = await chromium.launchPersistentContext(userDataDir, {
-        headless: false,//isCI,
+        headless: process.env.HEADED !== 'true',
         channel: 'chromium',
         args: [
             `--disable-extensions-except=${metamaskPath}`,
@@ -1191,44 +1191,61 @@ export async function registerNewMetaMaskWalletAndLogin(url: string = "/app"): P
         await metamaskPage.waitForLoadState("load");
         console.log("MetaMask page loaded");
 
-        await metamaskPage.waitForSelector('[data-testid="confirm-btn"]', { state: 'visible' })
-        await metamaskPage.click('[data-testid="confirm-btn"]')
+        // Wait for and click the SIWE confirmation button (first step - connect)
+        await metamaskPage.waitForSelector('[data-testid="page-container-footer-next"]', {
+            state: 'visible',
+            timeout: 30000
+        });
+        await metamaskPage.click('[data-testid="page-container-footer-next"]');
+        console.log("SIWE connect button clicked");
 
-        // Check if page is still open after first click
-        if (metamaskPage.isClosed()) {
-            console.log("MetaMask page closed after first confirmation - this might be expected behavior");
-            return response; // Return if the flow is complete
+        // Wait for the signature request page to load
+        await metamaskPage.waitForTimeout(2000);
+
+        // Check if MetaMask page is still open (signature request)
+        if (!metamaskPage.isClosed()) {
+            console.log("Waiting for SIWE signature confirmation...");
+
+            // Wait for and click the signature confirmation button
+            await metamaskPage.waitForSelector('button:has-text("Confirm")', {
+                state: 'visible',
+                timeout: 10000
+            });
+            await metamaskPage.click('button:has-text("Confirm")');
+            console.log("SIWE signature confirmed");
         }
 
-        // Wrap the problematic section in a try-catch to fail silently
-        try {
-            await metamaskPage.waitForSelector('[data-testid="confirm-footer-cancel-button"]', { state: 'visible' })
-            await metamaskPage.waitForSelector('[data-testid="confirm-footer-button"]', { state: 'visible' })
-            await metamaskPage.click('[data-testid="confirm-footer-button"]')
-        } catch (error: any) {
-            // Check if the error is due to page being closed
-            if (metamaskPage.isClosed()) {
-                console.log("MetaMask page was closed during final confirmation steps - failing silently");
-                return response;
-            }
+        // Wait for MetaMask popup to close
+        await metamaskPage.waitForEvent('close', { timeout: 15000 }).catch(() => {
+            console.log("MetaMask popup did not close after 15 seconds");
+        });
 
-            // If it's a different error, log it but don't throw
-            console.log("Error during final MetaMask confirmation steps:", error.message);
-            console.log("Continuing with test execution...");
-        }
+        // Switch back to the main app page
+        await testPage.bringToFront();
+        console.log("Switched back to main app page");
+
+        // Wait for the sign-in button to disappear (indicates login completed)
+        await testPage.waitForSelector('[data-testid="sign-in-button-page"]', {
+            state: 'hidden',
+            timeout: 30000
+        });
+        console.log("Sign-in button disappeared - login completed");
+
+        // Wait for the authenticated app to load
+        await testPage.waitForLoadState('networkidle', { timeout: 30000 });
+        console.log("App finished loading after login");
 
         return response;
     } catch (error: any) {
-        // If any error occurs in the MetaMask interaction, check if page is closed
-        if (metamaskPage.isClosed()) {
-            console.log("MetaMask page was closed during interaction - failing silently");
-            return response;
+        if (metamaskPage && !metamaskPage.isClosed()) {
+            console.log("Error during MetaMask SIWE confirmation:", error.message);
+            await metamaskPage.screenshot({ path: 'metamask-error-state.png' });
+            console.log("MetaMask error screenshot saved: metamask-error-state.png");
         }
 
-        // For other errors, log but don't throw
-        console.log("Error during MetaMask interaction:", error.message);
-        console.log("Continuing with test execution...");
-        return response;
+        await testPage.screenshot({ path: 'app-error-state.png' });
+        console.log("App error screenshot saved: app-error-state.png");
+        throw error;
     }
 }
 
