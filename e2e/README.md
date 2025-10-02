@@ -22,15 +22,32 @@ npx playwright test -g "share document between two users"
 ```
 
 #### Run tests with debugging
-```bash
-# Run with headed browsers (visible)
-npx playwright test --headed
 
-# Run in debug mode
+**Headless vs Headed Mode:**
+
+Tests run **headless by default** (no visible browser window). To see the browser during test execution:
+
+```bash
+# Headless mode (default - no browser window shown)
+npx playwright test
+
+# Headed mode (visible browser window for debugging)
+HEADED=true npx playwright test
+
+# Run specific test in headed mode
+HEADED=true npx playwright test -g "login test"
+```
+
+You can also set `HEADED=true` in the `.env` file in the e2e directory to always run in headed mode.
+
+**Debug Mode:**
+
+```bash
+# Run in debug mode (steps through test)
 npx playwright test --debug
 
-# Slow down test execution
-npx playwright test --slow-mo=500
+# Run headed with debug output
+HEADED=true npx playwright test --debug
 ```
 
 ### Github-Action
