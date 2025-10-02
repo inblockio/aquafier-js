@@ -355,6 +355,7 @@ test("single user aqua-sign", async (): Promise<void> => {
     await testPage.getByText("Workflow completed and validated").waitFor({ state: 'visible' });
 });
 
+// Still failing
 test.skip("two user aqua-sign", async (): Promise<void> => {
     const registerWalletOneResponse = await registerNewMetaMaskWalletAndLogin();
 
@@ -474,7 +475,7 @@ test("share document with everyone", async (): Promise<void> => {
 });
 
 
-test.skip("import aqua zip test", async (): Promise<void> => {
+test("import aqua zip test", async (): Promise<void> => {
     const registerResponse = await registerNewMetaMaskWalletAndLogin();
     const context: BrowserContext = registerResponse.context;
     const testPage: Page = context.pages()[0];
@@ -546,52 +547,7 @@ test("delete a template", async (): Promise<void> => {
     console.log("Template successfully deleted - verification complete");
 });
 
-test.skip("attest a claim and share the claim", async (): Promise<void> => {
-    const registerResponse = await registerNewMetaMaskWalletAndLogin();
-    const creatorContext: BrowserContext = registerResponse.context;
-    const creatorPage: Page = creatorContext.pages()[0];
-    console.log("attest a claim and share the claim");
-
-    await createSimpleClaim(creatorContext, creatorPage);
-
-    // share the claim
-    let shareUrl = await shareDocument(creatorPage, creatorContext, "");
-
-    // register  another wallet address
-    const attestorResponse = await registerNewMetaMaskWalletAndLogin();
-    const attestorContext: BrowserContext = attestorResponse.context;
-    const attestorPage: Page = attestorContext.pages()[0];
-
-
-    console.log("To import Recipient wallet address: ", attestorResponse.walletAddress);
-    // Recipient verifies they can access and edit the shared document
-    await importAquaChain(attestorPage, attestorContext, shareUrl);
-
-    await attestorPage.waitForTimeout(1000);
-
-    console.log("attest the claim");
-
-
-    // attest the claim
-    await waitAndClick(attestorPage, '[data-testid="attest-aqua-claim-button-0"]')
-
-    await attestorPage.locator('[id="input-context"]').fill("yes i attest this claim");
-    await attestorPage.getByText("Create Workflow").click();
-    const metamaskPromise2 = attestorContext.waitForEvent("page");
-    await metamaskPromise2;
-
-    await handleMetaMaskNetworkAndConfirm(attestorContext, false);
-    console.log("attestation created");
-
-});
-
-
-
-
-
-
-
-test.skip("create dns claim", async (): Promise<void> => {
+test("create dns claim", async (): Promise<void> => {
     const registerResponse = await registerNewMetaMaskWalletAndLogin();
     const context: BrowserContext = registerResponse.context;
     const testPage: Page = context.pages()[0];
@@ -714,7 +670,7 @@ test.skip("create dns claim", async (): Promise<void> => {
 //         // throw error;
 //     }
 // });
-test.skip("import dns claim", async (): Promise<void> => {
+test("import dns claim", async (): Promise<void> => {
     const registerResponse = await registerNewMetaMaskWalletAndLogin();
     const context: BrowserContext = registerResponse.context;
     const testPage: Page = context.pages()[0];
@@ -800,7 +756,7 @@ test.skip("import dns claim", async (): Promise<void> => {
 });
 
 
-test.skip("import user  signature", async (): Promise<void> => {
+test("import user signature", async (): Promise<void> => {
     const registerResponse = await registerNewMetaMaskWalletAndLogin();
     const context: BrowserContext = registerResponse.context;
     const testPage: Page = context.pages()[0];
@@ -864,7 +820,7 @@ test.skip("import user  signature", async (): Promise<void> => {
 });
 
 
-test.skip("create aqua sign claim", async (): Promise<void> => {
+test("create aqua sign claim", async (): Promise<void> => {
     const registerResponse = await registerNewMetaMaskWalletAndLogin();
     const context: BrowserContext = registerResponse.context;
     const testPage: Page = context.pages()[0];
@@ -896,9 +852,7 @@ test.skip("create aqua sign claim", async (): Promise<void> => {
     // await expect(tableRows).toHaveCount(2);
 });
 
-
-
-test.skip("create phone number claim", async (): Promise<void> => {
+test("create phone number claim", async (): Promise<void> => {
     const registerResponse = await registerNewMetaMaskWalletAndLogin();
     const context: BrowserContext = registerResponse.context;
     const testPage: Page = context.pages()[0];
@@ -931,7 +885,7 @@ test.skip("create phone number claim", async (): Promise<void> => {
     // await expect(tableRows).toHaveCount(2);
 });
 
-test.skip("create email claim", async (): Promise<void> => {
+test("create email claim", async (): Promise<void> => {
     const registerResponse = await registerNewMetaMaskWalletAndLogin();
     const context: BrowserContext = registerResponse.context;
     const testPage: Page = context.pages()[0];
