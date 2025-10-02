@@ -1,4 +1,3 @@
-import {ethers} from 'ethers'
 import LoadConfiguration from './components/config'
 import {initializeBackendUrl} from './utils/constants'
 import {useEffect} from 'react'
@@ -27,17 +26,14 @@ import PrivacyPolicy from './pages/legal/PrivacyPolicy'
 import ClaimsAndAttestationPage from './pages/claim_and_attestation'
 import ClaimsWorkflowPage from './pages/claims_workflow/claimsWorkflowPage'
 import ClaimsWorkflowPageV2 from './pages/v2_claims_workflow/claimsWorkflowPage'
+// Import appkit config to initialize AppKit at module level
+import './config/appkit'
 
 import {WebConfig} from './types/types'
 import * as Sentry from "@sentry/react";
 import {init as initApm} from '@elastic/apm-rum'
 import {APMConfig} from "@/types/apm.ts";
 
-declare global {
-    interface Window {
-        ethereum?: ethers.Eip1193Provider
-    }
-}
 
 function startApm(config: APMConfig) {
     if (config.enabled && config.serviceName && config.serverUrl) {
@@ -45,7 +41,19 @@ function startApm(config: APMConfig) {
             serviceName: config.serviceName,
             serverUrl: config.serverUrl,
             distributedTracing: true,
-            distributedTracingOrigins: [/^http?:\/\/.*/, /^https?:\/\/.*/]
+            // Exclude WalletConnect/Reown domains from distributed tracing to avoid CORS issues
+            distributedTracingOrigins: [
+                /^http?:\/\/localhost/,
+                /^https?:\/\/.*\.inblock\.io/,
+                /^https?:\/\/aquafier\./,
+                // Exclude WalletConnect/Reown RPC endpoints
+                "!https://rpc.walletconnect.org",
+                "!https://rpc.walletconnect.com",
+                "!https://relay.walletconnect.com",
+                "!https://relay.walletconnect.org",
+                "!https://explorer-api.walletconnect.com",
+                "!https://keys.walletconnect.com"
+            ]
         })
     }
 }
@@ -83,7 +91,7 @@ function App() {
                 // Tracing
                 tracesSampleRate: 1.0, //  Capture 100% of the transactions
                 // Set 'tracePropagationTargets' to control for which URLs distributed tracing should be enabled
-                // https://dev.inblock.io/
+                // Exclude WalletConnect/Reown domains to avoid CORS issues
                 tracePropagationTargets: [
                     "localhost",
                     /^https:\/\/dev\.inblock\.io\//,
@@ -116,7 +124,7 @@ function App() {
                     {/* All file routes using Tailwind */}
                     <Route path="/app" element={<NewShadcnLayoutWithSidebar/>}>
                         <Route index element={<FilesPage/>}/>
-                 
+
                         <Route path="pdf/workflow" element={<PdfWorkflowPage/>}/>
                         <Route path="claims/workflow" element={<ClaimsWorkflowPage/>}/>
                         <Route path="claims/workflow/:walletAddress" element={<ClaimsWorkflowPageV2/>}/>
