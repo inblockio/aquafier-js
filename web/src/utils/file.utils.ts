@@ -466,26 +466,7 @@ export const fetchFileData = async (url: string, nonce: string): Promise<string 
 }
 
 
-export async function fetchSystemFiles(url: string, metamaskAddress: string = ''): Promise<Array<ApiFileInfo>> {
-      try {
-            const query = await fetch(url, {
-                  method: 'GET',
-                  headers: {
-                        metamask_address: metamaskAddress,
-                  },
-            })
-            const response = await query.json()
 
-            if (!query.ok) {
-                  throw new Error(`HTTP error! status: ${query.status}`)
-            }
-
-            return response.data
-      } catch (error) {
-            console.error('Error fetching files:', error)
-            return []
-      }
-}
 
 export async function fetchFiles(publicMetaMaskAddress: string, url: string, nonce: string): Promise<Array<ApiFileInfo>> {
       try {

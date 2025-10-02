@@ -6,7 +6,8 @@ import {useState} from 'react'
 import {IDropzoneAction} from '../../types/types'
 import {Button} from '@/components/ui/button'
 import {toast} from 'sonner'
-import {fetchFiles} from '@/utils/functions'
+import { fetchFiles } from '@/utils/file.utils'
+
 
 // export const ImportAquaChainFromFile = ({ file, uploadedIndexes, fileIndex, updateUploadedIndex }: IDropzoneAction) => {
 export const ImportAquaChainFromFile = ({ file, filesWrapper, removeFilesListForUpload}: IDropzoneAction) => {

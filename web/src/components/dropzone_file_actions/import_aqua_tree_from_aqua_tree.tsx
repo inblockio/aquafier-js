@@ -4,7 +4,6 @@ import { useStore } from 'zustand'
 import appStore from '../../store'
 import { useEffect, useState } from 'react'
 import { ApiFileInfo } from '../../models/FileInfo'
-import { formatCryptoAddress } from '../../utils/functions'
 import { analyzeAndMergeRevisions } from '../../utils/aqua.utils'
 import { RevisionsComparisonResult } from '../../models/revision_merge'
 import { OrderRevisionInAquaTree, Revision } from 'aqua-js-sdk'
@@ -13,6 +12,7 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { toast } from 'sonner'
+import { formatCryptoAddress } from '@/utils/app.utils'
 // import { toast } from "@/components/ui/use-toast"; 
 // import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 // import { Button } from "@/components/ui/button";

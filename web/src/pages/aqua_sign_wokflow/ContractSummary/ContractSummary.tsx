@@ -3,19 +3,14 @@ import appStore from '../../../store'
 import {useStore} from 'zustand'
 import {ContractDocumentViewProps, SummaryDetailsDisplayData} from '../../../types/types'
 import Aquafier, {AquaTree, OrderRevisionInAquaTree, Revision} from 'aqua-js-sdk/web'
-import {
-    fetchFileData,
-    getFileHashFromUrl,
-    getFileName,
-    getHighestFormIndex,
-    isAquaTree,
-    isArrayBufferText,
-    timeToHumanFriendly
-} from '../../../utils/functions'
-
 import {ApiFileInfo} from '../../../models/FileInfo'
 import {IDrawerStatus, VerificationHashAndResult} from '../../../models/AquaTreeDetails'
 import ContractSummaryDetails from './ContractSummaryDetails'
+import { getHighestFormIndex, isAquaTree } from '@/utils/aqua.utils'
+import { fetchFileData, getFileName } from '@/utils/file.utils'
+import { getFileHashFromUrl } from '@/utils/url.utils'
+import { isArrayBufferText } from '@/utils/app.utils'
+import { timeToHumanFriendly } from '@/utils/time.utils'
 
 export const ContractSummaryView: React.FC<ContractDocumentViewProps> = ({ setActiveStep }) => {
       const [isLoading, setIsLoading] = useState(true)

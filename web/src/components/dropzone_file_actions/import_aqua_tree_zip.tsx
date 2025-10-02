@@ -8,12 +8,14 @@ import JSZip from 'jszip'
 import { AquaJsonManifestFileInZip, IDropzoneAction, ImportZipAquaTreeConflictResolutionDialogProps } from '../../types/types'
 import { Button } from '@/components/ui/button'
 import { toast } from 'sonner'
-import { fetchFiles, getFileName, getGenesisHash } from '@/utils/functions'
+
 import { ApiFileInfo } from '@/models/FileInfo'
 import { FileText, Loader2, X } from 'lucide-react'
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '../ui/dialog'
 import { ScrollArea } from '../ui/scroll-area'
 import Logger from '@/utils/logger.utils'
+import { fetchFiles, getFileName } from '@/utils/file.utils'
+import { getGenesisHash } from '@/utils/aqua.utils'
 export const ImportAquaTreeZip = ({ file, filesWrapper, removeFilesListForUpload }: IDropzoneAction) => {
       const [uploading, setUploading] = useState(false)
       const [conflictFiles, setConflictFiles] = useState<Array<ImportZipAquaTreeConflictResolutionDialogProps>>([])

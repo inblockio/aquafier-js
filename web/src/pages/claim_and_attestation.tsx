@@ -13,13 +13,6 @@ import {
 import {Download, Eye, FileText, MoreHorizontal, Send, Trash2} from 'lucide-react'
 import appStore from '@/store'
 import {useStore} from 'zustand'
-import {
-      displayTime,
-      getAquaTreeFileName,
-      getAquaTreeFileObject,
-      getGenesisHash,
-      isWorkFlowData
-} from '@/utils/functions'
 import {FileObject} from 'aqua-js-sdk'
 import {DownloadAquaChain} from '../components/aqua_chain_actions/download_aqua_chain'
 import {DeleteAquaChain} from '../components/aqua_chain_actions/delete_aqua_chain'
@@ -29,6 +22,8 @@ import {OpenClaimsWorkFlowButton} from '@/components/aqua_chain_actions/open_ide
 import {useNavigate} from 'react-router-dom'
 import {ApiFileInfo} from '@/models/FileInfo'
 import ClaimTypesDropdownButton from '@/components/button_claim_dropdown'
+import { getAquaTreeFileName, getAquaTreeFileObject, getGenesisHash, isWorkFlowData } from '@/utils/aqua.utils'
+import { displayTime } from '@/utils/time.utils'
 
 
 const WorkflowTableItem = ({ workflowName, apiFileInfo, index = 0 }: IWorkflowItem) => {

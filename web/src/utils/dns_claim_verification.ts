@@ -1,39 +1,8 @@
-// import * as dns from 'dns';
 import {ethers} from "ethers";
-import {digTxtRecordsGoogle} from './functions';
+import { digTxtRecordsGoogle } from "./url.utils";
+import { TxtRecord } from "@/types/types";
 
 
-export interface Proof {
-    walletAddress: string;
-    domainName: string;
-    timestamp: string;
-    expiration: string;
-    signature: string;
-  }
-  
-  export interface TxtRecord {
-    wallet: string;
-    timestamp: string;
-    expiration: string;
-    sig: string;
-  }
-  
-  export interface SignatureMethod {
-    type: 'metamask' | 'mnemonic' | 'interactive';
-    data?: string; // mnemonic or credential file path
-  }
-  
-  export interface WalletConfig {
-    mnemonic?: string;
-    derivationPath?: string;
-    credentialsFile?: string;
-  }
-  
-  export interface SignatureRequest {
-    message: string;
-    address: string;
-    method: SignatureMethod;
-  } 
 
 async function resolveTxt(hostname: string): Promise<string[]> {
   const result = digTxtRecordsGoogle(hostname)

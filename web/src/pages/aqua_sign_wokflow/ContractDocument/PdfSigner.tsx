@@ -7,16 +7,6 @@ import appStore from '../../../store'
 import { useStore } from 'zustand'
 import axios from 'axios'
 import { ApiFileInfo } from '../../../models/FileInfo'
-import {
-      dummyCredential,
-      ensureDomainUrlHasSSL,
-      estimateFileSize,
-      fetchFiles,
-      fetchImage,
-      getGenesisHash,
-      getRandomNumber,
-      timeStampToDateObject,
-} from '../../../utils/functions'
 import { API_ENDPOINTS } from '../../../utils/constants'
 import Aquafier, { AquaTree, AquaTreeWrapper, FileObject, getAquaTreeFileObject } from 'aqua-js-sdk/web'
 import { SignatureData } from '../../../types/types'
@@ -27,6 +17,13 @@ import { PdfRenderer } from './signer/SignerPage'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { toast } from 'sonner'
 import WalletAddressClaim from '../../v2_claims_workflow/WalletAdrressClaim'
+import { ensureDomainUrlHasSSL } from '@/utils/url.utils'
+import { estimateFileSize, fetchFiles } from '@/utils/file.utils'
+import { getRandomNumber } from '@/utils/ui.utils'
+import { dummyCredential } from '@/utils/app.utils'
+import { getGenesisHash } from '@/utils/aqua.utils'
+import { timeStampToDateObject } from '@/utils/time.utils'
+import { fetchImage } from '@/utils/image.utils'
 
 interface PdfSignerProps {
       fileData: File | null

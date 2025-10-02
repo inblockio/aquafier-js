@@ -1,13 +1,14 @@
 import { forwardRef, lazy, Suspense, useEffect, useState } from 'react'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
-import { generateAvatar, getWalletClaims } from '@/utils/functions'
 import { HoverCard, HoverCardContent, HoverCardTrigger } from '@/components/ui/hover-card'
 import CopyButton from '@/components/CopyButton'
 import appStore from '@/store'
 import { useStore } from 'zustand'
 import { IIdentityClaimDetails } from '@/types/types'
 import { ArrowRightLeft } from 'lucide-react'
+import { getWalletClaims } from '@/utils/aqua.utils'
+import { generateAvatar } from '@/utils/ui.utils'
 const WalletAddressProfile = lazy(() => import('./WalletAddressProfile'))
 
 interface IWalletAdrressClaim {

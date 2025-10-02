@@ -1,5 +1,5 @@
 import { ICompleteClaimInformation } from '@/types/types'
-import { formatCryptoAddress } from '@/utils/functions'
+import { formatCryptoAddress } from '@/utils/app.utils'
 import { Check, Phone, X } from 'lucide-react'
 
 const PhoneNumberClaim = ({ claim }: { claim: ICompleteClaimInformation }) => {

@@ -1,15 +1,7 @@
 import FilePreview from '@/components/file_preview'
 import {ICompleteChainView, VerificationHashAndResult} from '@/models/AquaTreeDetails'
 import appStore from '@/store'
-import {
-    ensureDomainUrlHasSSL,
-    getFileHashFromUrl,
-    getFileName,
-    isArrayBufferText,
-    isHttpUrl,
-    isValidUrl,
-    isWorkFlowData
-} from '@/utils/functions'
+
 import Aquafier, {getAquaTreeFileName, getAquaTreeFileObject, LogData, OrderRevisionInAquaTree} from 'aqua-js-sdk'
 import {ChevronDown, ChevronUp} from 'lucide-react'
 import {Suspense, useCallback, useEffect, useState} from 'react'
@@ -20,6 +12,10 @@ import {RevisionDisplay} from './files_revision_display'
 import ErrorBoundary from './error_boundary'
 import {CustomAlert} from './ui/alert-custom'
 import {RevisionDetailsSummary} from './files_revision_details'
+import { ensureDomainUrlHasSSL, getFileHashFromUrl, isHttpUrl, isValidUrl } from '@/utils/url.utils'
+import { getFileName } from '@/utils/file.utils'
+import { isArrayBufferText } from '@/utils/app.utils'
+import { isWorkFlowData } from '@/utils/aqua.utils'
 
 export const CompleteChainView = ({ callBack, selectedFileInfo }: ICompleteChainView) => {
       const [showMoreDetails, setShowMoreDetails] = useState(false)

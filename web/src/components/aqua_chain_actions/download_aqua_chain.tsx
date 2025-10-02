@@ -1,5 +1,4 @@
 import {LuDownload} from 'react-icons/lu'
-import {ensureDomainUrlHasSSL, extractFileHash, isAquaTree, isHttpUrl, isValidUrl} from '../../utils/functions'
 import {useStore} from 'zustand'
 import appStore from '../../store'
 import {ApiFileInfo} from '../../models/FileInfo'
@@ -10,6 +9,8 @@ import JSZip from 'jszip'
 import {AquaJsonInZip, AquaNameWithHash} from '../../models/Aqua'
 // import { toaster } from "@/components/ui/use-toast"
 import {toast} from 'sonner'
+import { isAquaTree } from '@/utils/aqua.utils'
+import { ensureDomainUrlHasSSL, extractFileHash, isHttpUrl, isValidUrl } from '@/utils/url.utils'
 
 // Helper function to determine if a file should be treated as binary based on extension
 const isBinaryFile = (filename: string): boolean => {

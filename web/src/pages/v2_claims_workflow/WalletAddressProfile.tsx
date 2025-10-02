@@ -5,20 +5,6 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
 import { ApiFileInfo } from '@/models/FileInfo'
 import appStore from '@/store'
-import {
-      ensureDomainUrlHasSSL,
-      estimateFileSize,
-      fetchFiles,
-      formatCryptoAddress,
-      generateAvatar,
-      getAquaTreeFileName,
-      getAquaTreeFileObject,
-      getGenesisHash,
-      getRandomNumber,
-      isWorkFlowData,
-      loadSignatureImage,
-      timeToHumanFriendly
-} from '@/utils/functions'
 import Aquafier, { AquaTree, AquaTreeWrapper, FileObject, OrderRevisionInAquaTree, reorderAquaTreeRevisionsProperties } from 'aqua-js-sdk'
 import { ArrowRight, CheckCircle, LucideCheckCircle, Mail, Phone, Share2, Signature, User, X } from 'lucide-react'
 import { Suspense, useEffect, useState } from 'react'
@@ -28,8 +14,16 @@ import { ClipLoader } from 'react-spinners'
 import { toast } from 'sonner'
 import { useStore } from 'zustand'
 import axios from 'axios'
-import { getDNSStatusBadge, IDnsVerificationResult, verifyDNS } from '@/components/verifiy_dns'
+import { getDNSStatusBadge, verifyDNS } from '@/components/verifiy_dns'
 import { BsInfoCircle } from 'react-icons/bs'
+import { loadSignatureImage } from '@/utils/image.utils'
+import { getAquaTreeFileName, getAquaTreeFileObject, getGenesisHash, isWorkFlowData } from '@/utils/aqua.utils'
+import { generateAvatar, getRandomNumber } from '@/utils/ui.utils'
+import { timeToHumanFriendly } from '@/utils/time.utils'
+import { estimateFileSize, fetchFiles } from '@/utils/file.utils'
+import { ensureDomainUrlHasSSL } from '@/utils/url.utils'
+import { formatCryptoAddress } from '@/utils/app.utils'
+import { IDnsVerificationResult } from '@/types/types'
 
 interface ISignatureWalletAddressCard {
       index?: number

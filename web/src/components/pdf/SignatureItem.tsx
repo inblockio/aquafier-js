@@ -1,6 +1,7 @@
 import { SignatureData } from '../../types/types'
 import WalletAddressClaim from '../../pages/v2_claims_workflow/WalletAdrressClaim'
-import { ensureDomainUrlHasSSL } from '@/utils/functions'
+import { ensureDomainUrlHasSSL } from '@/utils/url.utils'
+
 
 interface ISignatureItem {
       signature: SignatureData

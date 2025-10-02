@@ -6,7 +6,6 @@ import {LuArrowLeft} from 'react-icons/lu'
 import appStore from '../../store'
 import {useStore} from 'zustand'
 import {ShareButton} from '@/components/aqua_chain_actions/share_aqua_chain'
-import {getAquaTreeFileName, isWorkFlowData, processSimpleWorkflowClaim, timeToHumanFriendly} from '@/utils/functions'
 import {ClipLoader} from 'react-spinners'
 import {ApiFileInfo, ClaimInformation, IAttestationEntry} from '@/models/FileInfo'
 import axios from 'axios'
@@ -18,6 +17,8 @@ import DNSClaim from './DNSClaim'
 import {AttestAquaClaim} from '@/components/aqua_chain_actions/attest_aqua_claim'
 import AttestationEntry from '../v2_claims_workflow/AttestationEntry'
 import { SharedContract } from '../files_share/files_shared_contracts_item'
+import { getAquaTreeFileName, isWorkFlowData, processSimpleWorkflowClaim } from '@/utils/aqua.utils'
+import { timeToHumanFriendly } from '@/utils/time.utils'
 
 export default function ClaimsWorkflowPage() {
       const { selectedFileInfo, setSelectedFileInfo, session, backend_url, systemFileInfo, files } = useStore(appStore)

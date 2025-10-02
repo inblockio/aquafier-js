@@ -2,16 +2,11 @@ import {FileObject} from 'aqua-js-sdk'
 import {useEffect, useRef, useState} from 'react'
 import {useStore} from 'zustand'
 import appStore from '../store'
-import {
-    ensureDomainUrlHasSSL,
-    handleLoadFromUrl,
-    isHttpUrl,
-    isJSONKeyValueStringContent,
-    isValidUrl
-} from '../utils/functions'
 import {FilePreviewAquaTreeFromTemplate} from './file_preview_aqua_tree_from_template'
 import {EasyPDFRenderer} from '@/pages/aqua_sign_wokflow/ContractDocument/signer/SignerPage'
 import heic2any from "heic2any"
+import { ensureDomainUrlHasSSL, handleLoadFromUrl, isHttpUrl, isValidUrl } from '@/utils/url.utils'
+import { isJSONKeyValueStringContent } from '@/utils/validation.utils'
 
 // Define file extensions to content type mappings
 const fileExtensionMap: { [key: string]: string } = {

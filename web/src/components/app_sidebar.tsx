@@ -5,10 +5,11 @@ import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarRail, use
 import CustomNavLink from './ui/CustomNavLink'
 import { FileText, LayoutTemplate, Link, Plus, Settings, Share2, Star, User, Workflow } from 'lucide-react'
 import { maxUserFileSizeForUpload } from '@/utils/constants'
-import { formatBytes, getAquaTreeFileObject } from '@/utils/functions'
 import { useStore } from 'zustand'
 import appStore from '@/store'
 import { WebConfig } from '@/types/types'
+import { getAquaTreeFileObject } from '@/utils/aqua.utils'
+import { formatBytes } from '@/utils/ui.utils'
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       const { files, setOpenDialog, webConfig, setWebConfig, session } = useStore(appStore)

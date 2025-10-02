@@ -1,12 +1,14 @@
 import {useStore} from 'zustand'
 import appStore from '../../store'
-import {convertToWebsocketUrl, ensureDomainUrlHasSSL, fetchFiles, getGenesisHash} from '../../utils/functions'
 import axios from 'axios'
 import {useEffect, useRef, useState} from 'react'
 import {WebSocketMessage} from '../../types/types'
 import WebSocketActions from '../../constants/constants'
 
 import {toast} from 'sonner'
+import { convertToWebsocketUrl, ensureDomainUrlHasSSL } from '@/utils/url.utils'
+import { fetchFiles } from '@/utils/file.utils'
+import { getGenesisHash } from '@/utils/aqua.utils'
 
 // Add these at the component level (outside the component if using class)
 let pingInterval: NodeJS.Timeout | null = null

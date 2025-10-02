@@ -4,16 +4,7 @@ import { useStore } from 'zustand'
 import FilesList from './files_list'
 import { AlertCircle, CheckCircle, FileText, FolderPlus, Loader2, Minimize2, Plus, Upload, X } from 'lucide-react'
 import { FileItemWrapper, UploadStatus } from '@/types/types'
-import {
-      checkIfFileExistInUserFiles,
-      fetchFiles,
-      getAquaTreeFileName,
-      isAquaTree,
-      isJSONFile,
-      isJSONKeyValueStringContent,
-      isZipFile,
-      readFileContent
-} from '@/utils/functions'
+
 import { maxFileSizeForUpload } from '@/utils/constants'
 import axios from 'axios'
 
@@ -35,6 +26,10 @@ import { ImportAquaTreeZip } from '@/components/dropzone_file_actions/import_aqu
 import { FormRevisionFile } from '@/components/dropzone_file_actions/form_revision'
 
 import ClaimTypesDropdownButton from '@/components/button_claim_dropdown'
+import { checkIfFileExistInUserFiles, isJSONKeyValueStringContent } from '@/utils/validation.utils'
+import { fetchFiles, isJSONFile, isZipFile, readFileContent } from '@/utils/file.utils'
+import { isAquaTree } from 'aqua-js-sdk'
+import { getAquaTreeFileName } from '@/utils/aqua.utils'
 
 const FilesPage = () => {
       const {

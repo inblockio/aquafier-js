@@ -2,25 +2,16 @@ import React, {useRef, useState} from 'react'
 import {LuImport} from 'react-icons/lu'
 import {useStore} from 'zustand'
 import appStore from '../../store'
-import {
-    allLinkRevisionHashes,
-    dummyCredential,
-    ensureDomainUrlHasSSL,
-    fetchFiles,
-    getAquaTreeFileName,
-    getFileName,
-    getGenesisHash,
-    isAquaTree,
-    readFileAsText,
-    readFileContent,
-    validateAquaTree,
-} from '../../utils/functions'
 import Aquafier, {AquaTree, CredentialsData, FileObject} from 'aqua-js-sdk'
 import {IDropzoneAction, UploadLinkAquaTreeExpectedData} from '../../types/types'
 import {Input} from '@/components/ui/input'
 import {Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle} from '@/components/ui/dialog'
 import {Button} from '@/components/ui/button'
 import {toast} from 'sonner'
+import { fetchFiles, getFileName, readFileAsText, readFileContent } from '@/utils/file.utils'
+import { allLinkRevisionHashes, getAquaTreeFileName, getGenesisHash, isAquaTree, validateAquaTree } from '@/utils/aqua.utils'
+import { ensureDomainUrlHasSSL } from '@/utils/url.utils'
+import { dummyCredential } from '@/utils/app.utils'
 
 // export const ImportAquaTree = ({ aquaFile, uploadedIndexes, fileIndex, updateUploadedIndex }: IDropzoneAction2) => {
 export const ImportAquaTree = ({file, filesWrapper, removeFilesListForUpload}: IDropzoneAction) => {

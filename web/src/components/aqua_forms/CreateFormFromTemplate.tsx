@@ -2,21 +2,6 @@ import React, { JSX, useEffect, useRef, useState } from 'react'
 import { FormField, FormTemplate } from './types'
 import { useStore } from 'zustand'
 import appStore from '@/store'
-import {
-      dataURLToFile,
-      dummyCredential,
-      ensureDomainUrlHasSSL,
-      estimateFileSize,
-      fetchFiles,
-      fetchSystemFiles,
-      fetchWalletAddressesAndNamesForInputRecommendation,
-      formatDate,
-      formatTxtRecord,
-      generateProofFromSignature,
-      getGenesisHash,
-      getRandomNumber,
-      isValidEthereumAddress
-} from '@/utils/functions'
 import Aquafier, {
       AquaTree,
       AquaTreeWrapper,
@@ -59,6 +44,13 @@ import { ApiFileInfo } from '@/models/FileInfo'
 import SignatureCanvas from 'react-signature-canvas'
 import { Session } from '@/types'
 import { ApiInfoData } from '@/types/types'
+import { getRandomNumber } from '@/utils/ui.utils'
+import { formatDate } from '@/utils/time.utils'
+import { generateProofFromSignature, getGenesisHash } from '@/utils/aqua.utils'
+import { dummyCredential, formatTxtRecord } from '@/utils/app.utils'
+import { estimateFileSize, fetchFiles } from '@/utils/file.utils'
+import { dataURLToFile, ensureDomainUrlHasSSL, fetchSystemFiles } from '@/utils/url.utils'
+import { fetchWalletAddressesAndNamesForInputRecommendation, isValidEthereumAddress } from '@/utils/validation.utils'
 
 // const CreateFormF romTemplate  = ({ selectedTemplate, callBack, openCreateTemplatePopUp = false }: { selectedTemplate: FormTemplate, callBack: () => void, openCreateTemplatePopUp: boolean }) => {
 const CreateFormFromTemplate = ({ selectedTemplate, callBack }: {

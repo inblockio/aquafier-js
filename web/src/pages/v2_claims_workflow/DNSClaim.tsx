@@ -1,4 +1,3 @@
-import {ensureDomainUrlHasSSL, formatCryptoAddress, getGenesisHash} from '@/utils/functions'
 import {useEffect, useState} from 'react'
 import {TbWorldWww} from 'react-icons/tb'
 import {FaCheck, FaTimes} from 'react-icons/fa'
@@ -8,6 +7,9 @@ import {useStore} from 'zustand'
 import appStore from '@/store'
 import ImprovedDNSLogs from '../claims_workflow/DNSClaimLogs'
 import { useLocation } from 'react-router-dom'
+import { getGenesisHash } from '@/utils/aqua.utils'
+import { formatCryptoAddress } from '@/utils/app.utils'
+import { ensureDomainUrlHasSSL } from '@/utils/url.utils'
 
 interface IDNSClaim {
       claimInfo: Record<string, string>,

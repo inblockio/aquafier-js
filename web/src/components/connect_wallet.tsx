@@ -1,14 +1,14 @@
 import {lazy, Suspense, useState} from 'react'
 import {LuCircleCheck, LuCircleX, LuLogOut, LuWallet} from 'react-icons/lu'
 import {ClipLoader} from 'react-spinners'
-import {
-    ensureDomainUrlHasSSL,
-    fetchFiles,
-    formatCryptoAddress,
-    generateAvatar,
-    getCookie,
-    setCookie
-} from '../utils/functions'
+// import {
+//     ensureDomainUrlHasSSL,
+//     fetchFiles,
+//     formatCryptoAddress,
+//     generateAvatar,
+//     getCookie,
+//     setCookie
+// } from '../utils/functions'
 import {generateNonce, SiweMessage} from 'siwe'
 import {SESSION_COOKIE_NAME} from '../utils/constants'
 import axios from 'axios'
@@ -19,6 +19,11 @@ import {BrowserProvider, ethers} from 'ethers'
 import {Button} from './ui/button'
 import {Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger} from './ui/dialog'
 import {toast} from 'sonner'
+import { ensureDomainUrlHasSSL } from '@/utils/url.utils'
+import { generateAvatar } from '@/utils/ui.utils'
+import { getCookie, setCookie } from '@/utils/cookie.utils'
+import { fetchFiles } from '@/utils/file.utils'
+import { formatCryptoAddress } from '@/utils/app.utils'
 // Lazy load the WalletAddressProfile component
 const WalletAddressProfile = lazy(() => import('@/pages/v2_claims_workflow/WalletAddressProfile'))
 

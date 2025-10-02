@@ -1,7 +1,7 @@
 import appStore from '@/store'
 import { Contract } from '@/types/types'
 import { SYSTEM_WALLET_ADDRESS } from '@/utils/constants'
-import { fetchWalletAddressesAndNamesForInputRecommendation, getGenesisHash, isValidEthereumAddress, timeToHumanFriendly } from '@/utils/functions'
+
 import { getAquaTreeFileObject } from 'aqua-js-sdk'
 import axios from 'axios'
 import { Share2, X, Users, ExternalLink, Check, Copy, Lock, Trash2, Plus } from 'lucide-react'
@@ -16,6 +16,9 @@ import { WalletAutosuggest } from '../wallet_auto_suggest'
 import { Button } from '@/components/ui/button'
 import { Badge } from '../ui/badge'
 import WalletAdrressClaim from '@/pages/v2_claims_workflow/WalletAdrressClaim'
+import { getGenesisHash } from '@/utils/aqua.utils'
+import { fetchWalletAddressesAndNamesForInputRecommendation, isValidEthereumAddress } from '@/utils/validation.utils'
+import { timeToHumanFriendly } from '@/utils/time.utils'
 // import { Input } from '@/components/ui/input'
 // import { Label } from '@/components/ui/label'
 

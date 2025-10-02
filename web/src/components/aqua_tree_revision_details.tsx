@@ -1,34 +1,27 @@
-import React, {useCallback, useEffect, useMemo, useState} from 'react'
-import {LuCheck, LuExternalLink, LuTrash, LuX} from 'react-icons/lu'
-import {
-    displayTime,
-    ensureDomainUrlHasSSL,
-    fetchFiles,
-    fetchLinkedFileName,
-    formatCryptoAddress,
-    getAquaTreeFileObject,
-    getFileNameWithDeepLinking,
-    getGenesisHash,
-    isAquaTree,
-    isDeepLinkRevision,
-} from '../utils/functions'
-import {AquaTree, FileObject, LogTypeEmojis, Revision} from 'aqua-js-sdk'
-import {ClipLoader} from 'react-spinners'
-import {ERROR_TEXT, ERROR_UKNOWN, WITNESS_NETWORK_MAP} from '../utils/constants'
-import {AquaTreeDetailsData, RevisionDetailsSummaryData} from '../models/AquaTreeDetails'
+import React, { useCallback, useEffect, useMemo, useState } from 'react'
+import { LuCheck, LuExternalLink, LuTrash, LuX } from 'react-icons/lu'
+import { AquaTree, FileObject, LogTypeEmojis, Revision } from 'aqua-js-sdk'
+import { ClipLoader } from 'react-spinners'
+import { ERROR_TEXT, ERROR_UKNOWN, WITNESS_NETWORK_MAP } from '../utils/constants'
+import { AquaTreeDetailsData, RevisionDetailsSummaryData } from '../models/AquaTreeDetails'
 
-import {ItemDetail} from './item_details'
+import { ItemDetail } from './item_details'
 import appStore from '../store'
-import {useStore} from 'zustand'
+import { useStore } from 'zustand'
 import axios from 'axios'
-import {toast} from 'sonner'
-import {ApiFileInfo} from '../models/FileInfo'
+import { toast } from 'sonner'
+import { ApiFileInfo } from '../models/FileInfo'
 
 // Import /components/ UI components
-import {Button} from '@/components/ui/button'
-import {Alert, AlertTitle} from '@/components/ui/alert'
-import {Collapsible, CollapsibleContent} from '@/components/ui/collapsible'
-import {cn} from '@/lib/utils'
+import { Button } from '@/components/ui/button'
+import { Alert, AlertTitle } from '@/components/ui/alert'
+import { Collapsible, CollapsibleContent } from '@/components/ui/collapsible'
+import { cn } from '@/lib/utils'
+import { formatCryptoAddress } from '@/utils/app.utils'
+import { fetchLinkedFileName, getAquaTreeFileObject, getFileNameWithDeepLinking, getGenesisHash, isAquaTree, isDeepLinkRevision } from '@/utils/aqua.utils'
+import { ensureDomainUrlHasSSL } from '@/utils/url.utils'
+import { fetchFiles } from '@/utils/file.utils'
+import { displayTime } from '@/utils/time.utils'
 
 // Custom Timeline components using Tailwind
 const TimelineRoot = ({ children, className, size = 'md', variant = 'default' }: { children: React.ReactNode; className?: string; size?: 'sm' | 'md' | 'lg'; variant?: 'default' | 'subtle' }) => {
@@ -341,8 +334,8 @@ export const RevisionDisplay = ({ fileInfo, revision, revisionHash, isVerificati
             setIsDeleting(true)
 
             try {
-                 
- const url = ensureDomainUrlHasSSL(`${backend_url}/tree/revisions/${revisionHash}`)
+
+                  const url = ensureDomainUrlHasSSL(`${backend_url}/tree/revisions/${revisionHash}`)
                   const response = await axios.delete(url, {
                         headers: {
                               metamask_address: session?.address,
@@ -361,7 +354,7 @@ export const RevisionDisplay = ({ fileInfo, revision, revisionHash, isVerificati
                               window.location.reload()
                         } else {
                               const urlPath = `${backend_url}/explorer_files`
-                               const url2 = ensureDomainUrlHasSSL(urlPath)
+                              const url2 = ensureDomainUrlHasSSL(urlPath)
                               const files = await fetchFiles(`${session?.address}`, url2, `${session?.nonce}`)
                               setFiles({
                                     fileData: files,
@@ -433,30 +426,30 @@ export const RevisionDisplay = ({ fileInfo, revision, revisionHash, isVerificati
                                                 <div className="p-4 text-sm leading-relaxed">
                                                       <TimelineRoot size="lg" variant="subtle" className="max-w-md">
                                                             {revision.revision_type == 'file' || revision.revision_type == 'form' || revision.revision_type == 'link' ? (
-                                                                  
-                                                                        <TimelineItem>
-                                                                              <TimelineConnector bg={returnBgColor} color={'white'}>
-                                                                                    {verificationStatusIcon}
-                                                                              </TimelineConnector>
 
-                                                                              <TimelineContent gap="2">
-                                                                                    <TimelineTitle>{revisionDataHeader(fileInfo!.aquaTree!, revisionHash, fileInfo.fileObject)}</TimelineTitle>
-                                                                                    <TimelineDescription>
-                                                                                          {displayTime(revision.local_timestamp)}
-                                                                                          &nbsp;(UTC)
-                                                                                    </TimelineDescription>
-                                                                                    {revision.revision_type === 'file' ? (
-                                                                                          <ItemDetail
-                                                                                                label="File Hash:"
-                                                                                                displayValue={formatCryptoAddress(revision.file_hash!, 10, 15)}
-                                                                                                value={revision.file_hash!}
-                                                                                                showCopyIcon={true}
-                                                                                          />
-                                                                                    ) : null}
-                                                                                    {viewLinkedFile(fileInfo!, revisionHash, revision, files.fileData, setSelectedFileInfo, false)}
-                                                                              </TimelineContent>
-                                                                        </TimelineItem>
-                                                                
+                                                                  <TimelineItem>
+                                                                        <TimelineConnector bg={returnBgColor} color={'white'}>
+                                                                              {verificationStatusIcon}
+                                                                        </TimelineConnector>
+
+                                                                        <TimelineContent gap="2">
+                                                                              <TimelineTitle>{revisionDataHeader(fileInfo!.aquaTree!, revisionHash, fileInfo.fileObject)}</TimelineTitle>
+                                                                              <TimelineDescription>
+                                                                                    {displayTime(revision.local_timestamp)}
+                                                                                    &nbsp;(UTC)
+                                                                              </TimelineDescription>
+                                                                              {revision.revision_type === 'file' ? (
+                                                                                    <ItemDetail
+                                                                                          label="File Hash:"
+                                                                                          displayValue={formatCryptoAddress(revision.file_hash!, 10, 15)}
+                                                                                          value={revision.file_hash!}
+                                                                                          showCopyIcon={true}
+                                                                                    />
+                                                                              ) : null}
+                                                                              {viewLinkedFile(fileInfo!, revisionHash, revision, files.fileData, setSelectedFileInfo, false)}
+                                                                        </TimelineContent>
+                                                                  </TimelineItem>
+
                                                             ) : null}
 
                                                             {revision.revision_type == 'signature' ? (

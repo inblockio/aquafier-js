@@ -1,5 +1,5 @@
 import {useState} from 'react'
-import {ensureDomainUrlHasSSL, fetchFiles, generateAvatar, setCookie} from '../utils/functions'
+// import {ensureDomainUrlHasSSL, fetchFiles, generateAvatar, setCookie} from '../utils/functions'
 import {generateNonce, SiweMessage} from 'siwe'
 import {SESSION_COOKIE_NAME} from '../utils/constants'
 import axios from 'axios'
@@ -8,6 +8,10 @@ import appStore from '../store'
 import {BrowserProvider, ethers} from 'ethers'
 import {toast} from 'sonner'
 import {Alert, AlertDescription} from './ui/alert'
+import { ensureDomainUrlHasSSL } from '@/utils/url.utils'
+import { generateAvatar } from '@/utils/ui.utils'
+import { setCookie } from '@/utils/cookie.utils'
+import { fetchFiles } from '@/utils/file.utils'
 
 // Types for better type safety
 type ConnectionState = 'idle' | 'connecting' | 'success' | 'error'

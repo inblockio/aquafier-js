@@ -1,7 +1,7 @@
 import { HiShieldCheck } from 'react-icons/hi'
-import { formatCryptoAddress } from '@/utils/functions'
 import { Mail, Phone } from 'lucide-react'
 import CopyButton from '@/components/CopyButton'
+import { formatCryptoAddress } from '@/utils/app.utils'
 
 interface ISimpleClaim {
       claimInfo: Record<string, string>

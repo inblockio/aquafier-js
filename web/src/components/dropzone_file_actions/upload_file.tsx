@@ -4,12 +4,12 @@ import {useStore} from 'zustand'
 import appStore from '../../store'
 import {useEffect, useRef, useState} from 'react'
 import {ApiFileInfo} from '../../models/FileInfo'
-import {checkIfFileExistInUserFiles} from '../../utils/functions'
 import {maxFileSizeForUpload} from '../../utils/constants'
 import {IDropzoneAction} from '../../types/types'
 import {toast} from 'sonner'
 import {Button} from '@/components/ui/button'
 import {Loader2} from 'lucide-react'
+import { checkIfFileExistInUserFiles } from '@/utils/validation.utils'
 
 // export const UploadFile = ({ file, uploadedIndexes, fileIndex, updateUploadedIndex, autoUpload }: IDropzoneAction) => {
 export const UploadFile = ({ file, filesWrapper, removeFilesListForUpload , autoUpload}: IDropzoneAction) => {
