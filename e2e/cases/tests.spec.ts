@@ -5,7 +5,6 @@ import {
     closeUploadDialog,
     createAndSaveSignature,
     createAquaSignForm,
-    createSimpleClaim,
     createTemplate,
     downloadAquaTree,
     fundWallet,
@@ -139,7 +138,7 @@ test("upload, file form revision", async (): Promise<void> => {
     // await expect(row).toBeVisible();
 });
 
-test.skip("import, file multiple revisions", async (): Promise<void> => {
+test("import, file multiple revisions", async (): Promise<void> => {
     const registerResponse = await registerNewMetaMaskWalletAndLogin();
     const context: BrowserContext = registerResponse.context;
     const testPage: Page = context.pages()[0];
@@ -234,7 +233,7 @@ test.skip("import, file multiple revisions", async (): Promise<void> => {
     }
 });
 
-test.skip("upload, delete file", async (): Promise<void> => {
+test("upload, delete file", async (): Promise<void> => {
     const registerResponse = await registerNewMetaMaskWalletAndLogin();
     const context: BrowserContext = registerResponse.context;
     const testPage: Page = context.pages()[0];
@@ -263,7 +262,7 @@ test.skip("upload, delete file", async (): Promise<void> => {
 
 });
 
-test.skip("upload, sign, download", async (): Promise<void> => {
+test("upload, sign, download", async (): Promise<void> => {
     const registerResponse = await registerNewMetaMaskWalletAndLogin();
     const context: BrowserContext = registerResponse.context;
     const testPage: Page = context.pages()[0];
@@ -288,7 +287,7 @@ test.skip("upload, sign, download", async (): Promise<void> => {
 
 });
 
-test.skip("upload, witness, download", async (): Promise<void> => {
+test("upload, witness, download", async (): Promise<void> => {
     const registerResponse = await registerNewMetaMaskWalletAndLogin();
     const context: BrowserContext = registerResponse.context;
     const testPage: Page = context.pages()[0];
@@ -328,7 +327,7 @@ test.skip("upload, witness, download", async (): Promise<void> => {
     console.log("upload, witness, download test finished!");
 });
 
-test.skip("single user aqua-sign", async (): Promise<void> => {
+test("single user aqua-sign", async (): Promise<void> => {
     const registerResponse = await registerNewMetaMaskWalletAndLogin();
     const context: BrowserContext = registerResponse.context;
     const testPage: Page = context.pages()[0];
@@ -356,61 +355,6 @@ test.skip("single user aqua-sign", async (): Promise<void> => {
     await testPage.getByText("Workflow completed and validated").waitFor({ state: 'visible' });
 });
 
-
-// DO NOT DELETE
-// test.skip("two user aqua-sign", async (): Promise<void> => {
-//     const registerWalletOneResponse = await registerNewMetaMaskWalletAndLogin();
-
-//     const contextWalletOne: BrowserContext = registerWalletOneResponse.context;
-//     const testPageWalletOne: Page = contextWalletOne.pages()[0];
-
-//     console.log("two user aqua-sign started!");
-
-
-//     // Create aqua sign form
-//     const filePath: string = path.join(__dirname, '/../resources/exampleFile.pdf');
-
-//     console.log("timout to mimick delay between two users, avoid throttling");
-//     await testPageWalletOne.waitForTimeout(2000);
-//     const registerWalletTwoResponse = await registerNewMetaMaskWalletAndLogin();
-//     await testPageWalletOne.waitForTimeout(1000);
-
-//     console.log("Create aqua sign form ..");
-//     await createAquaSignForm(testPageWalletOne, contextWalletOne, filePath, registerWalletTwoResponse.walletAddress);
-
-//     // await testPageWalletOne.reload()
-
-//     await waitAndClick(testPageWalletOne, '[data-testid="open-aqua-sign-workflow-button-0"]')
-
-//     await waitAndClick(testPageWalletOne, '[data-testid="action-view-contract-button"]')
-
-//     // Create and save signature
-//     await createAndSaveSignature(testPageWalletOne, contextWalletOne);
-
-//     // Add signature to document and sign
-//     await addSignatureToDocument(testPageWalletOne, contextWalletOne);
-
-//     const contextWalletTwo: BrowserContext = registerWalletTwoResponse.context;
-//     const testPageWalletTwo: Page = contextWalletTwo.pages()[0];
-
-//     await testPageWalletTwo.reload(); // Reload the second test page to ensure it's up-to-date ie the workflow was shared to ensure its loaded
-
-//     importAquaChain(testPageWalletTwo, contextWalletTwo)
-
-
-//     // Open workflow
-
-//     await waitAndClick(testPageWalletTwo, '[data-testid="open-aqua-sign-workflow-button-0"]')
-
-//     // View contract document
-//     await waitAndClick(testPageWalletTwo, '[data-testid="action-view-contract-button"]')
-
-//     // Create and save signature
-//     await createAndSaveSignature(testPageWalletTwo, contextWalletTwo);
-
-//     // Add signature to document and sign
-//     await addSignatureToDocument(testPageWalletTwo, contextWalletTwo);
-// });
 test.skip("two user aqua-sign", async (): Promise<void> => {
     const registerWalletOneResponse = await registerNewMetaMaskWalletAndLogin();
 
@@ -467,7 +411,7 @@ test.skip("two user aqua-sign", async (): Promise<void> => {
 
 
 // Test for sharing functionality
-test.skip("share document between two users", async (): Promise<void> => {
+test("share document between two users", async (): Promise<void> => {
     // Setup first user (document owner)
     const ownerResponse = await registerNewMetaMaskWalletAndLogin();
     const ownerContext: BrowserContext = ownerResponse.context;
@@ -501,7 +445,7 @@ test.skip("share document between two users", async (): Promise<void> => {
 });
 
 // Test for sharing with different permission levels
-test.skip("share document with everyone", async (): Promise<void> => {
+test("share document with everyone", async (): Promise<void> => {
     // Setup first user (document owner)
     const ownerResponse = await registerNewMetaMaskWalletAndLogin();
     const ownerContext: BrowserContext = ownerResponse.context;
@@ -552,7 +496,7 @@ test.skip("import aqua zip test", async (): Promise<void> => {
 });
 
 
-test.skip("create a template", async (): Promise<void> => {
+test("create a template", async (): Promise<void> => {
     const registerResponse = await registerNewMetaMaskWalletAndLogin(`app/templates`);
     const context: BrowserContext = registerResponse.context;
     const testPage: Page = context.pages()[0];
@@ -567,7 +511,7 @@ test.skip("create a template", async (): Promise<void> => {
 });
 
 
-test.skip("delete a template", async (): Promise<void> => {
+test("delete a template", async (): Promise<void> => {
     const registerResponse = await registerNewMetaMaskWalletAndLogin(`app/templates`);
     const context: BrowserContext = registerResponse.context;
     const testPage: Page = context.pages()[0];
@@ -602,92 +546,6 @@ test.skip("delete a template", async (): Promise<void> => {
     console.log("Template successfully deleted - verification complete");
 });
 
-
-test.skip("create a simple claim", async (): Promise<void> => {
-    const registerResponse = await registerNewMetaMaskWalletAndLogin(`app`);
-    const context: BrowserContext = registerResponse.context;
-    const testPage: Page = context.pages()[0];
-
-
-    console.log("create aqua form template started!");
-
-
-    await testPage.waitForSelector('[data-testid="create-claim-dropdown-button"]', { state: 'visible' });
-    await testPage.click('[data-testid="create-claim-dropdown-button"]');
-
-
-    await testPage.waitForSelector('[data-testid="create-simple-claim-dropdown-button-item"]', {
-        state: 'visible'
-    });
-    await testPage.click('[data-testid="create-simple-claim-dropdown-button-item"]');
-
-    // const metaMaskAdr: string = await testPage.locator('[data-testid="input-sender"]').inputValue();
-    await testPage.fill('[data-testid="input-claim_context"]', "i claim the name sample");
-    console.log("input claim context filles");
-
-
-    await testPage.fill('[data-testid="input-name"]', "sample");
-    console.log("input claim name ");
-
-
-    // Submit form and handle MetaMask
-    const metamaskPromise = context.waitForEvent("page");
-    await testPage.click('[type="submit"]');
-    await metamaskPromise;
-
-    await handleMetaMaskNetworkAndConfirm(context, true);
-
-});
-
-test.skip("create simple claim", async (): Promise<void> => {
-
-    const registerResponse = await registerNewMetaMaskWalletAndLogin();
-    const context: BrowserContext = registerResponse.context;
-    const testPage: Page = context.pages()[0];
-    console.log("create simple claim");
-
-    await createSimpleClaim(context, testPage);
-});
-
-// DO NOT DELETE
-// test.skip("attest a claim and share the claim", async (): Promise<void> => {
-//     const registerResponse = await registerNewMetaMaskWalletAndLogin();
-//     const creatorContext: BrowserContext = registerResponse.context;
-//     const creatorPage: Page = creatorContext.pages()[0];
-//     console.log("attest a claim and share the claim");
-
-//     await createSimpleClaim(creatorContext, creatorPage);
-
-//     // share the claim
-//     let shareUrl = await shareDocument(creatorPage, creatorContext, "");
-
-//     // register  another wallet address
-//     const attestorResponse = await registerNewMetaMaskWalletAndLogin();
-//     const attestorContext: BrowserContext = attestorResponse.context;
-//     const attestorPage: Page = attestorContext.pages()[0];
-
-
-//     console.log("To import Recipient wallet address: ", attestorResponse.walletAddress);
-//     // Recipient verifies they can access and edit the shared document
-//     await importAquaChain(attestorPage, attestorContext, shareUrl);
-
-//     await attestorPage.waitForTimeout(1000);
-
-//     console.log("attest the claim");
-
-
-//     // attest the claim
-//     await waitAndClick(attestorPage, '[data-testid="attest-aqua-claim-button-0"]')
-
-//     await attestorPage.locator('[id="input-context"]').fill("yes i attest this claim");
-//     await attestorPage.getByText("Create Workflow").click();
-//     const metamaskPromise2 = attestorContext.waitForEvent("page");
-//     await metamaskPromise2;
-
-//     await handleMetaMaskNetworkAndConfirm(attestorContext, false);
-//     console.log("attestation created");
-
-// });
 test.skip("attest a claim and share the claim", async (): Promise<void> => {
     const registerResponse = await registerNewMetaMaskWalletAndLogin();
     const creatorContext: BrowserContext = registerResponse.context;

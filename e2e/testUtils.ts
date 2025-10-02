@@ -3,34 +3,6 @@ import { BrowserContext, chromium, Page } from "playwright";
 import { ethers } from 'ethers';
 import fs from "fs";
 
-
-
-export async function createSimpleClaim(
-    context: BrowserContext,
-    testPage: Page
-): Promise<void> {
-    console.log("create a simple claim!");
-
-    // Open workflow
-    await waitAndClick(testPage, '[data-testid="create-claim-dropdown-button"]')
-    console.log("claims dropdown ");
-    await waitAndClick(testPage, '[data-testid="create-simple-claim-dropdown-button-item"]')
-
-    console.log("fill simple claim form");
-    await testPage.locator('[id="input-claim_context"]').fill("i attest the name in a test ");
-    await testPage.locator('[id="input-name"]').fill("Test user ");
-
-    const metamaskPromise = context.waitForEvent("page");
-    // await page.getByText("Save Signature").click();
-
-    console.log("create workflow");
-    await testPage.getByText("Create Workflow").click();
-    await metamaskPromise;
-
-    await handleMetaMaskNetworkAndConfirm(context, false);
-    console.log("simple workflow created");
-}
-
 export async function handleMetaMaskNetworkAndConfirm(
     context: BrowserContext,
     shouldSwitchNetwork: boolean = true,
