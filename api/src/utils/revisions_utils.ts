@@ -4,11 +4,13 @@ import {
     OrderRevisionInAquaTree,
     reorderAquaTreeRevisionsProperties,
     Revision as AquaTreeRevision,
-    cliYellowfy
+    cliYellowfy,
+    cliRedify,
+    cliGreenify
 } from 'aqua-js-sdk';
 import { prisma } from '../database/db';
 // For specific model types
-import { AquaForms, FileIndex, Link, Revision as DBRevision, Signature, WitnessEvent } from '@prisma/client';
+import { AquaForms, FileIndex, Link, Revision as DBRevision, Signature, WitnessEvent, FileName } from '@prisma/client';
 import * as fs from "fs"
 import { AquaJsonInZip, AquaNameWithHash, SaveRevisionForUser } from '../models/request_models';
 import { getAquaTreeFileName } from './api_utils';
@@ -79,7 +81,7 @@ export async function getUserApiFileInfo(url: string, address: string): Promise<
     aquaTree: AquaTree,
     fileObject: FileObject[]
 }>> {
-   
+
     let latest = await prisma.latest.findMany({
         where: {
             AND: {
@@ -170,12 +172,14 @@ export function isAquaTree(content: any): boolean {
         'file_index' in content;
 }
 
-export async function transferRevisionChainData(userAddress: string, chainData: {
-    aquaTree: AquaTree; fileObject: FileObject[]
-}, templateId: string | null = null, isWorkFlow: boolean = false): Promise<{ success: boolean, message: string }> {
+export async function transferRevisionChainData(
+    userAddress: string,
+    chainData: {
+        aquaTree: AquaTree; fileObject: FileObject[]
+    },
+    templateId: string | null = null, isWorkFlow: boolean = false): Promise<{ success: boolean, message: string }> {
+
     try {
-
-
         let allAquaTrees: AquaTree[] = [];
         let allHashes = Object.keys(chainData.aquaTree.revisions);
         if (allHashes.length == 0) {
@@ -184,15 +188,12 @@ export async function transferRevisionChainData(userAddress: string, chainData: 
 
         // Logger.info(`🎈🎈 aquaTree  ${JSON.stringify(chainData.aquaTree, null, 4)}`)
         let hashName = new Map<string, string>();
-        // Save the aqua tree
-        //  await deletLatestIfExistsForAquaTree(chainData.aquaTree, userAddress)
+
         await saveAquaTree(chainData.aquaTree, userAddress, templateId, isWorkFlow);
         allAquaTrees.push(chainData.aquaTree);
 
         for (let key in chainData.aquaTree.file_index) {
             const value = chainData.aquaTree.file_index[key];
-            // Logger.info(`a 🎈🎈 file_index key ${key} vs Value ${value} `)
-
             hashName.set(key, value);
         }
 
@@ -208,12 +209,10 @@ export async function transferRevisionChainData(userAddress: string, chainData: 
             }
         }
 
-        // Logger.info(`🏆🏆  workflowDataToBeseparated : ${workflowDataToBeseparated}`);
-
-
         // save aquatree in file objects
-        for (let fileObject of chainData.fileObject) {
+        for (let i = 0; i < chainData.fileObject.length; i++) {
             // Ensure the file object has a valid hashe
+            let fileObject = chainData.fileObject[i]
             let isAquaTreeData = isAquaTree(fileObject.fileContent);
             if (isAquaTreeData) {
                 let aquaTree = fileObject.fileContent as AquaTree
@@ -228,7 +227,6 @@ export async function transferRevisionChainData(userAddress: string, chainData: 
                     shouldAquaTreeBeSavedAsPartOfWorkflow = false
                 }
 
-
                 // hide system templates from user view
                 let genhash = getGenesisHash(aquaTree);
                 if (genhash) {
@@ -236,26 +234,24 @@ export async function transferRevisionChainData(userAddress: string, chainData: 
 
                 }
 
-//    await deletLatestIfExistsForAquaTree(aquaTree, userAddress)
+                //    await deletLatestIfExistsForAquaTree(aquaTree, userAddress)
+                for (let key of Object.keys(aquaTree.file_index)) {
+                    // Ensure the file object has a valid hashes
+                    const value = aquaTree.file_index[key];
+                    hashName.set(key, value);
+                }
 
                 await saveAquaTree(aquaTree, userAddress, null, shouldAquaTreeBeSavedAsPartOfWorkflow);
                 allAquaTrees.push(aquaTree);
-                for (let key in chainData.aquaTree.file_index) {
-                    // Ensure the file object has a valid hashe
-                    const value = chainData.aquaTree.file_index[key];
-                    // Logger.info(`b 🎈🎈 file_index key ${key} vs Value ${value} `)
-                    hashName.set(key, value);
-                }
             } else {
-
                 Logger.info(`File object is not an AquaTree: ${JSON.stringify(fileObject, null, 2)}`);
             }
         }
 
         // Logger.info(`🎈🎈 hashName Map: ${JSON.stringify(Array.from(hashName.entries()), null, 2)}`);
-        // throw new Error(`here `)
+
         for (const [key, value] of hashName) {
-            // Logger.info(`🎈🎈 Key: ${key}, Value: ${value}`);
+            Logger.info(`🎈🎈 Key: ${key}, Value: ${value}`);
 
             // fetch file hash from file object
             let fileObjectItem = chainData.fileObject.find(obj => obj.fileName === value);

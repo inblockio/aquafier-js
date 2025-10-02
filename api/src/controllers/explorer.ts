@@ -7,6 +7,7 @@ import JSZip from "jszip";
 import { randomUUID } from 'crypto';
 import * as fs from "fs"
 import {
+    deleteAquaTree,
     deleteAquaTreeFromSystem,
     fetchAquatreeFoUser,
     getUserApiFileInfo,
@@ -833,11 +834,12 @@ export default async function explorerController(fastify: FastifyInstance) {
 
     fastify.post('/merge_chain', async (request, reply) => {
         try {
-            const { latestRevisionHash, userAddress, mergeStrategy, currentUserLatestRevisionHash } = request.body as {
+            const { latestRevisionHash, userAddress, mergeStrategy, currentUserLatestRevisionHash, lastLocalRevisionHash } = request.body as {
                 currentUserLatestRevisionHash: string,
                 latestRevisionHash: string,
                 userAddress: string,
                 mergeStrategy?: "replace" | "fork"  // Optional merge strategy
+                lastLocalRevisionHash: string
             };
 
             // Read `nonce` from headers
@@ -861,11 +863,48 @@ export default async function explorerController(fastify: FastifyInstance) {
             const url = `${protocol}://${host}`;
 
             // Fetch the entire chain from the source user
-            const entireChain = await fetchCompleteRevisionChain(latestRevisionHash, userAddress, url);
+            // const entireChain = await fetchCompleteRevisionChain(latestRevisionHash, userAddress, url);
             // const existingChain = await fetchCompleteRevisionChain("0x11616437260e1dfd8da7cec1ff253034f704f9d55a1aff1f2800f4797c041617", session.address, url)
             // fs.writeFileSync("existing.json", JSON.stringify(existingChain))
             // fs.writeFileSync("newchain.json", JSON.stringify(entireChain))
 
+
+            // Merge the chain to the target user (session.address)
+            // const mergeResult = await mergeRevisionChain(
+            //     entireChain,
+            //     session.address,
+            //     userAddress,
+            //     url,
+            //     mergeStrategy || "replace", // Use the provided strategy or default to "replace",
+            //     currentUserLatestRevisionHash
+            // );
+
+            // if (!mergeResult.success) {
+            //     return reply.code(500).send({
+            //         success: false,
+            //         message: mergeResult.message
+            //     });
+            // }
+
+            console.log(cliRedify(`Current user: ${session.address} - Deleting latest revision: ${currentUserLatestRevisionHash} - ${lastLocalRevisionHash}`))
+            // throw new Error("test")
+            // let deletionResult = await deleteAquaTree(lastLocalRevisionHash, session.address, url)
+            let response = await deleteAquaTreeFromSystem(session.address, lastLocalRevisionHash)
+
+            console.log(cliRedify(JSON.stringify(response, null, 4)))
+
+            let latest: Array<{
+                hash: string;
+                user: string;
+            }> = [
+                    {
+                        hash: `${userAddress}_${latestRevisionHash}`,
+                        user: userAddress
+                    }
+                ]
+            const entireChain = await fetchAquatreeFoUser(url, latest)//(latestRevisionHash, userAddress, url);
+
+        
             // Check if the user exists (create if not)
             const targetUser = await prisma.users.findUnique({
                 where: { address: session.address }
@@ -877,29 +916,36 @@ export default async function explorerController(fastify: FastifyInstance) {
                 });
             }
 
-            // Merge the chain to the target user (session.address)
-            const mergeResult = await mergeRevisionChain(
-                entireChain,
+            if (entireChain.length === 0) {
+                return reply.code(404).send({ success: false, message: "No revisions found for the provided hash" });
+
+            }
+            if (entireChain.length > 1) {
+                return reply.code(400).send({
+                    success: false,
+                    message: "Multiple revisions found for the provided hash. Please provide a unique revision hash."
+                });
+            }
+
+            // Transfer the chain to the target user (session.address)
+            const transferResult = await transferRevisionChainData(
                 session.address,
-                userAddress,
-                url,
-                mergeStrategy || "replace", // Use the provided strategy or default to "replace",
-                currentUserLatestRevisionHash
+                entireChain[0],
             );
 
-            if (!mergeResult.success) {
+            if (!transferResult.success) {
                 return reply.code(500).send({
                     success: false,
-                    message: mergeResult.message
+                    message: transferResult.message
                 });
             }
 
             return reply.code(200).send({
                 success: true,
-                message: `Chain merged successfully using "${mergeResult.strategy}" strategy: ${mergeResult.transferredRevisions} revisions and ${mergeResult.linkedChainsTransferred} linked chains`,
-                latestHashes: mergeResult.latestHashes,
-                mergePoint: mergeResult.mergePoint,
-                strategy: mergeResult.strategy
+                // message: `Chain merged successfully using "${mergeResult.strategy}" strategy: ${mergeResult.transferredRevisions} revisions and ${mergeResult.linkedChainsTransferred} linked chains`,
+                // latestHashes: mergeResult.latestHashes,
+                // mergePoint: mergeResult.mergePoint,
+                // strategy: mergeResult.strategy
             });
         } catch (error: any) {
             Logger.error("Error in merge_chain operation:", error);

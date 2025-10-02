@@ -789,7 +789,7 @@ export async function mergeRevisionChain(
         }
 
         // We reverse here since it will start from latest to genesis -> the previous function was coming from genesis to latest
-        const targetUserChain   = _targetUserChain.reverse()
+        const targetUserChain = _targetUserChain.reverse()
 
         // console.log(cliGreenify(`Target user revisions: ${JSON.stringify(targetUserChain, null, 4)}`))
         // console.log(cliGreenify(`Incoming revisions: ${JSON.stringify(orderedIncomingChain, null, 4)}`))
@@ -900,7 +900,7 @@ export async function mergeRevisionChain(
                     // Delete the revision
                     // console.log(cliRedify(`Delete ${obsoleteHash} due to replace strategy`))
                     // Enabled delete from latest to force delete any revisions appearing in latest to avoid double entry till forking is implemented
-                  await  deleteRevisionAndChildren(obsoleteHash, targetUserAddress, true)
+                    await deleteRevisionAndChildren(obsoleteHash, targetUserAddress, true)
                 }
 
                 // 2. Import the incoming chain's divergent revisions
@@ -1295,13 +1295,13 @@ function orderRevisionsInChain(chainData: any): string[] {
  * Updates the latest hash entry for a user using upsert to avoid race conditions
  */
 async function updateLatestHash(
-    userAddress: string, 
-    oldHash: string, 
+    userAddress: string,
+    oldHash: string,
     newHash: string,
     tx?: any // Optional transaction client
 ): Promise<void> {
     const client = tx || prisma;
-    
+
     try {
         // First, get the existing latest entry to preserve metadata
         const existingLatest = await client.latest.findFirst({
