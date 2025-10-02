@@ -2,6 +2,41 @@ import { AquaTree, LogData, Revision } from 'aqua-js-sdk'
 import { IconType } from 'react-icons/lib'
 import { ApiFileInfo, ClaimInformation, IAttestationEntry } from '../models/FileInfo'
 
+
+
+export interface Proof {
+    walletAddress: string;
+    domainName: string;
+    timestamp: string;
+    expiration: string;
+    signature: string;
+  }
+  
+  export interface TxtRecord {
+    wallet: string;
+    timestamp: string;
+    expiration: string;
+    sig: string;
+  }
+  
+  export interface SignatureMethod {
+    type: 'metamask' | 'mnemonic' | 'interactive';
+    data?: string; // mnemonic or credential file path
+  }
+  
+  export interface WalletConfig {
+    mnemonic?: string;
+    derivationPath?: string;
+    credentialsFile?: string;
+  }
+  
+  export interface SignatureRequest {
+    message: string;
+    address: string;
+    method: SignatureMethod;
+  } 
+
+  
 export interface ApiFileInfoState {
       fileData: ApiFileInfo[],
       status: 'loading' | 'loaded' | 'error' | 'idle'

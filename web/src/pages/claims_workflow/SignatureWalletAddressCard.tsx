@@ -1,12 +1,8 @@
 import {ApiFileInfo} from '@/models/FileInfo'
 import appStore from '@/store'
-import {
-    ensureDomainUrlHasSSL,
-    formatCryptoAddress,
-    getAquaTreeFileName,
-    getGenesisHash,
-    isWorkFlowData
-} from '@/utils/functions'
+import { formatCryptoAddress } from '@/utils/app.utils'
+import { getAquaTreeFileName, getGenesisHash, isWorkFlowData } from '@/utils/aqua.utils'
+import { ensureDomainUrlHasSSL } from '@/utils/url.utils'
 import {OrderRevisionInAquaTree} from 'aqua-js-sdk'
 import {LucideCheckCircle, TimerIcon, User, WalletMinimal} from 'lucide-react'
 import {JSX, useEffect, useState} from 'react'

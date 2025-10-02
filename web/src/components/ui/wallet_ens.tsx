@@ -4,8 +4,9 @@ import { useStore } from 'zustand'
 import { Copy, Loader2 } from 'lucide-react'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import appStore from '@/store'
-import { ensureDomainUrlHasSSL, formatCryptoAddress } from '@/utils/functions'
 import { Button } from '../ui/button'
+import { formatCryptoAddress } from '@/utils/app.utils'
+import { ensureDomainUrlHasSSL } from '@/utils/url.utils'
 
 export interface WalletEnsViewData {
       walletAddress: string

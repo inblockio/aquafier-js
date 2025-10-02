@@ -9,12 +9,12 @@ import {
     reorderAquaTreeRevisionsProperties,
     Revision
 } from 'aqua-js-sdk/web'
-import {ensureDomainUrlHasSSL, getHighestFormIndex, isAquaTree} from '../../../utils/functions'
-
 import {PDFDisplayWithJustSimpleOverlay} from './components/signature_overlay'
 import {toast} from 'sonner'
 import PdfSigner from './PdfSigner'
 import SignatureItem from '../../../components/pdf/SignatureItem'
+import { ensureDomainUrlHasSSL } from '@/utils/url.utils'
+import { getHighestFormIndex, isAquaTree } from '@/utils/aqua.utils'
 
 export const ContractDocumentView: React.FC<ContractDocumentViewProps> = ({ setActiveStep }) => {
       const [pdfLoadingFile, setLoadingPdfFile] = useState<boolean>(true)

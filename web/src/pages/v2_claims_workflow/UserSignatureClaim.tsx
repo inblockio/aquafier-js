@@ -1,6 +1,6 @@
 import appStore from "@/store"
 import { ICompleteClaimInformation } from "@/types/types"
-import {loadSignatureImage } from "@/utils/functions"
+import { loadSignatureImage } from "@/utils/image.utils"
 import { Signature } from "lucide-react"
 import { useEffect, useState } from "react"
 import { useStore } from "zustand"

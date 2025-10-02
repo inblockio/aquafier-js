@@ -3,7 +3,6 @@ import { useLocation, useParams } from 'react-router-dom'
 import appStore from '../../store'
 import { useStore } from 'zustand'
 import { ShareButton } from '@/components/aqua_chain_actions/share_aqua_chain'
-import { getAquaTreeFileName, getGenesisHash, isWorkFlowData, processSimpleWorkflowClaim, timeToHumanFriendly } from '@/utils/functions'
 import { ClipLoader } from 'react-spinners'
 import { ApiFileInfo, ClaimInformation, IAttestationEntry } from '@/models/FileInfo'
 import axios from 'axios'
@@ -23,6 +22,8 @@ import WalletAddressProfile from './WalletAddressProfile'
 import UserSignatureClaim from './UserSignatureClaim'
 import { AddressView } from './AddressView'
 import { AttestAquaClaim } from '@/components/aqua_chain_actions/attest_aqua_claim'
+import { getAquaTreeFileName, getGenesisHash, isWorkFlowData, processSimpleWorkflowClaim } from '@/utils/aqua.utils'
+import { timeToHumanFriendly } from '@/utils/time.utils'
 
 
 export default function ClaimsWorkflowPage() {

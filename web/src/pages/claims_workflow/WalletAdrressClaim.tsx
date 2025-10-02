@@ -1,6 +1,6 @@
 
 import appStore from '@/store'
-import { getWalletClaims } from '@/utils/functions'
+import { getWalletClaims } from '@/utils/aqua.utils'
 import { useStore } from 'zustand'
 
 interface IWalletAdrressClaim {

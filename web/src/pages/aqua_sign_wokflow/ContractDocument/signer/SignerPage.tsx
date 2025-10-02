@@ -7,7 +7,7 @@ import {SignatureData} from '../../../../types/types'
 import {LuInfo} from 'react-icons/lu'
 import {Button} from '../../../../components/ui/button'
 import {Slider} from '../../../../components/ui/slider'
-import {ensureDomainUrlHasSSL} from '@/utils/functions'
+import { ensureDomainUrlHasSSL } from '@/utils/url.utils'
 // import { ScrollArea } from '@/components/ui/scroll-area';
 
 // const parseFontSizeToPoints = (fontSizeString: string, defaultSize: number = 12): number => {

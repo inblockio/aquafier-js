@@ -7,18 +7,13 @@ import {Button} from '@/components/ui/button'
 import {Badge} from '@/components/ui/badge'
 import {ChevronRight, Clock, Copy, ExternalLink, Eye, FileSignature, Hash, Link2, Network} from 'lucide-react'
 import {ERROR_TEXT, ERROR_UKNOWN, WITNESS_NETWORK_MAP} from '@/utils/constants'
-import {
-    displayTime,
-    fetchLinkedFileName,
-    formatCryptoAddress,
-    getAquaTreeFileObject,
-    getFileNameWithDeepLinking,
-    isDeepLinkRevision
-} from '@/utils/functions'
 import {ApiFileInfo} from '@/models/FileInfo'
 import {toast} from 'sonner'
 import {lazy, Suspense} from 'react'
 import {ClipLoader} from 'react-spinners'
+import { displayTime } from '@/utils/time.utils'
+import { formatCryptoAddress } from '@/utils/app.utils'
+import { fetchLinkedFileName, getAquaTreeFileObject, getFileNameWithDeepLinking, isDeepLinkRevision } from '@/utils/aqua.utils'
 
 const WalletAddressProfile = lazy(() => import('@/pages/v2_claims_workflow/WalletAddressProfile'))
 

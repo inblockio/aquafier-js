@@ -3,8 +3,8 @@ import {useEffect, useState} from 'react'
 // import { PDFJSViewer } from 'pdfjs-react-viewer';
 import {SignatureData} from '../../../../types/types'
 import {EasyPDFRenderer} from '../signer/SignerPage'
-import {ensureDomainUrlHasSSL, handleLoadFromUrl} from '../../../../utils/functions'
 import {toast} from 'sonner'
+import { ensureDomainUrlHasSSL, handleLoadFromUrl } from '@/utils/url.utils'
 
 export const SignatureOverlay = ({
                                      signature,

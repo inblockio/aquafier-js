@@ -1,6 +1,6 @@
 import { HiShieldCheck } from 'react-icons/hi'
-import { formatCryptoAddress } from '@/utils/functions'
 import { ItemDetail } from '@/components/item_details'
+import { formatCryptoAddress } from '@/utils/app.utils'
 
 interface ISimpleClaim {
       claimInfo: Record<string, string>

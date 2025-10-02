@@ -3,7 +3,6 @@ import {Button} from '@/components/ui/button'
 import {toast} from 'sonner'
 import {AquaTreeDetailsData} from '@/models/AquaTreeDetails'
 import appStore from '@/store'
-import {displayTime, fetchFiles, formatCryptoAddress} from '@/utils/functions'
 import {LogTypeEmojis} from 'aqua-js-sdk/web'
 import axios from 'axios'
 import {useCallback, useEffect, useMemo, useState} from 'react'
@@ -18,6 +17,9 @@ import {Card, CardContent, CardFooter} from '@/components/ui/card'
 import {ExternalLink} from 'lucide-react'
 import {WITNESS_NETWORK_MAP} from '@/utils/constants'
 import {WalletEnsView} from '@/components/ui/wallet_ens'
+import { fetchFiles } from '@/utils/file.utils'
+import { displayTime } from '@/utils/time.utils'
+import { formatCryptoAddress } from '@/utils/app.utils'
 
 export const RevisionDisplay = ({ fileInfo, revision, revisionHash, isVerificationComplete, verificationResults, isDeletable, deleteRevision, index }: AquaTreeDetailsData) => {
       const { session, backend_url, files, setFiles, setSelectedFileInfo, selectedFileInfo } = useStore(appStore)

@@ -1,5 +1,4 @@
 import {LuSignature} from 'react-icons/lu'
-import {areArraysEqual, dummyCredential, ensureDomainUrlHasSSL, fetchFiles, getGenesisHash} from '../../utils/functions'
 import {useStore} from 'zustand'
 import appStore from '../../store'
 import axios from 'axios'
@@ -8,6 +7,11 @@ import {useState} from 'react'
 import Aquafier, {AquaTreeWrapper} from 'aqua-js-sdk'
 import {RevionOperation} from '../../models/RevisionOperation'
 import {toast} from 'sonner'
+import { dummyCredential } from '@/utils/app.utils'
+import { ensureDomainUrlHasSSL } from '@/utils/url.utils'
+import { fetchFiles } from '@/utils/file.utils'
+import { getGenesisHash } from '@/utils/aqua.utils'
+import { areArraysEqual } from '@/utils/validation.utils'
 // import { toast, toaster } from '@/components/ui/use-toast'
 
 export const SignAquaChain = ({ apiFileInfo, backendUrl, nonce, index }: RevionOperation) => {

@@ -1,11 +1,15 @@
 import axios from 'axios'
 import {useEffect} from 'react'
-import {ensureDomainUrlHasSSL, fetchFiles, fetchSystemFiles, generateAvatar, getCookie} from '../utils/functions'
+// import {ensureDomainUrlHasSSL, fetchFiles, fetchSystemFiles, generateAvatar, getCookie} from '../utils/functions'
 import {useStore} from 'zustand'
 import appStore from '../store'
 import {ethers} from 'ethers'
 import {toast} from 'sonner'
 import {FormTemplate} from './aqua_forms'
+import { ensureDomainUrlHasSSL, fetchSystemFiles } from '@/utils/url.utils'
+import { generateAvatar } from '@/utils/ui.utils'
+import { fetchFiles } from '@/utils/file.utils'
+import { getCookie } from '@/utils/cookie.utils'
 
 const LoadConfiguration = () => {
       const { setMetamaskAddress, setUserProfile, setFiles, setAvatar, setSystemFileInfo, backend_url, setSession, setFormTemplate, session } = useStore(appStore)

@@ -1,5 +1,4 @@
 import { useEffect } from 'react'
-import { copyToClipboardModern } from '../../utils/functions'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -10,6 +9,7 @@ import axios from 'axios'
 import { Link, useNavigate } from 'react-router-dom'
 import { IAccountContracts } from '../../types/index'
 import { toast } from 'sonner'
+import { copyToClipboardModern } from '@/utils/ui.utils'
 
 export default function AccountContracts({ inline, open, updateOpenStatus }: IAccountContracts) {
       const { backend_url, session, setContracts, contracts } = useStore(appStore)

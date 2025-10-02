@@ -1,7 +1,6 @@
 import {LuDelete, LuTrash} from 'react-icons/lu'
 import {Button} from '@/components/ui/button'
 import {Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle} from '@/components/ui/dialog'
-import {fetchFiles, getAquaTreeFileName, getFileName, getGenesisHash, isWorkFlowData} from '../../utils/functions'
 import {useStore} from 'zustand'
 import appStore from '../../store'
 import axios from 'axios'
@@ -9,6 +8,8 @@ import {ApiFileInfo} from '../../models/FileInfo'
 import {useState} from 'react'
 import {RevionOperation} from '../../models/RevisionOperation'
 import {toast} from 'sonner'
+import { fetchFiles, getFileName } from '@/utils/file.utils'
+import { getAquaTreeFileName, getGenesisHash, isWorkFlowData } from '@/utils/aqua.utils'
 
 export const DeleteAquaChain = ({ apiFileInfo, backendUrl, nonce, children, index }: RevionOperation) => {
       const { files, setFiles, session, backend_url, systemFileInfo } = useStore(appStore)

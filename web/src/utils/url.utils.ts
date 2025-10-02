@@ -3,6 +3,8 @@
  * Functions for URL manipulation and validation
  */
 
+import { ApiFileInfo } from "@/models/FileInfo";
+
 export function ensureDomainUrlHasSSL(url: string): string {
       // Check if actualUrlToFetch is localhost but window host is not localhost
       const isLocalhost = url.includes('127.0.0.1') || url.includes('0.0.0.0') || url.includes('localhost');
@@ -282,4 +284,26 @@ export const blobToDataURL = (blob: Blob): Promise<string> => {
             reader.onerror = reject
             reader.readAsDataURL(blob)
       })
+}
+
+
+export async function fetchSystemFiles(url: string, metamaskAddress: string = ''): Promise<Array<ApiFileInfo>> {
+      try {
+            const query = await fetch(url, {
+                  method: 'GET',
+                  headers: {
+                        metamask_address: metamaskAddress,
+                  },
+            })
+            const response = await query.json()
+
+            if (!query.ok) {
+                  throw new Error(`HTTP error! status: ${query.status}`)
+            }
+
+            return response.data
+      } catch (error) {
+            console.error('Error fetching files:', error)
+            return []
+      }
 }

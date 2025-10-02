@@ -1,6 +1,6 @@
 import { ReactNode } from "react"
-import { ensureDomainUrlHasSSL } from "../utils/functions"
-import { IDnsVerificationResult } from "../types/types"
+import { IDNSStatus, IDnsVerificationResult, VerificationResult } from "../types/types"
+import { ensureDomainUrlHasSSL } from "@/utils/url.utils"
 
 
 

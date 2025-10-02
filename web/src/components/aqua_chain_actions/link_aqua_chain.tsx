@@ -1,10 +1,5 @@
 import { LuLink2 } from 'react-icons/lu'
 import { useEffect, useState } from 'react'
-import {
-      fetchFiles,
-      getAquaTreeFileObject,
-      getGenesisHash,
-} from '../../utils/functions'
 import { useStore } from 'zustand'
 import appStore from '../../store'
 import axios from 'axios'
@@ -19,6 +14,8 @@ import { AlertCircle, Link as LinkIcon, Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { toast } from 'sonner'
 import FilesList from '@/pages/files_list'
+import { getAquaTreeFileObject, getGenesisHash } from '@/utils/aqua.utils'
+import { fetchFiles } from '@/utils/file.utils'
 
 export const LinkButton = ({ item, nonce, index }: IShareButton) => {
       const { backend_url, setFiles, files, session } = useStore(appStore)

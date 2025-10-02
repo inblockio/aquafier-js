@@ -4,13 +4,6 @@ import {Alert, AlertDescription} from '../../components/ui/alert'
 import appStore from '../../store'
 import {useStore} from 'zustand'
 import {SummaryDetailsDisplayData, WorkFlowTimeLine} from '../../types/types'
-import {
-      convertTemplateNameToTitle,
-      getAquaTreeFileName,
-      getHighestFormIndex,
-      isAquaTree,
-      isWorkFlowData
-} from '../../utils/functions'
 import {ContractDocumentView} from './ContractDocument/ContractDocument'
 import {ContractSummaryView} from './ContractSummary/ContractSummary'
 import {AquaTree, OrderRevisionInAquaTree, Revision} from 'aqua-js-sdk/web'
@@ -20,6 +13,8 @@ import {useNavigate} from 'react-router-dom'
 import {HiDocumentText} from 'react-icons/hi'
 import {FaCircleInfo} from 'react-icons/fa6'
 import {cn} from '../../lib/utils'
+import { getAquaTreeFileName, getHighestFormIndex, isAquaTree, isWorkFlowData } from '@/utils/aqua.utils'
+import { convertTemplateNameToTitle } from '@/utils/string.utils'
 
 export default function PdfWorkflowPage() {
       const [activeStep, setActiveStep] = useState(1)

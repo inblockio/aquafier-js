@@ -1,4 +1,3 @@
-import {getAquaTreeFileName, getGenesisHash, isWorkFlowData} from '../../utils/functions'
 import {useStore} from 'zustand'
 import appStore from '../../store'
 import {ApiFileInfo} from '../../models/FileInfo'
@@ -6,6 +5,7 @@ import {toast} from 'sonner'
 import {Album} from 'lucide-react'
 import {Revision} from 'aqua-js-sdk'
 import {Button} from '../ui/button'
+import { getAquaTreeFileName, getGenesisHash, isWorkFlowData } from '@/utils/aqua.utils'
 
 export const AttestAquaClaim = ({ file, index, children }: { file: ApiFileInfo; index: number; children?: React.ReactNode }) => {
       const { files, session, openDialog, setOpenDialog, setSelectedFileInfo, systemFileInfo } = useStore(appStore)

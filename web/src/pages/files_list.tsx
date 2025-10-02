@@ -1,12 +1,12 @@
 import { useEffect, useState } from 'react'
 import { Filter, Grid3X3, List, X } from 'lucide-react'
 import FileListItem from './files_list_item'
-import { fetchSystemFiles, getAquaTreeFileName, isWorkFlowData } from '@/utils/functions'
-
 import { useStore } from 'zustand'
 import appStore from '../store'
 import { ApiFileInfo } from '@/models/FileInfo'
 import { FilesListProps } from '@/types/types'
+import { getAquaTreeFileName, isWorkFlowData } from '@/utils/aqua.utils'
+import { fetchSystemFiles } from '@/utils/url.utils'
 
 export default function FilesList(filesListProps: FilesListProps) {
       const [view, setView] = useState<'table' | 'card'>('table')

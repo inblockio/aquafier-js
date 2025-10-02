@@ -1,17 +1,4 @@
 import { ApiFileInfo } from '@/models/FileInfo'
-
-import {
-      capitalizeWords,
-      displayTime,
-      formatBytes,
-      formatCryptoAddress,
-      getAquaTreeFileName,
-      getAquaTreeFileObject,
-      getFileCategory,
-      getFileExtension,
-      getGenesisHash,
-      isWorkFlowData
-} from '@/utils/functions'
 import { FileObject, OrderRevisionInAquaTree } from 'aqua-js-sdk'
 import { FileText } from 'lucide-react'
 import { useEffect, useState } from 'react'
@@ -31,6 +18,12 @@ import { FilesListProps } from '@/types/types'
 import { Checkbox } from '@/components/ui/checkbox'
 import { toast } from 'sonner'
 import WalletAdrressClaim from './v2_claims_workflow/WalletAdrressClaim'
+import { getAquaTreeFileName, getAquaTreeFileObject, getGenesisHash, isWorkFlowData } from '@/utils/aqua.utils'
+import { formatBytes } from '@/utils/ui.utils'
+import { displayTime } from '@/utils/time.utils'
+import { getFileCategory, getFileExtension } from '@/utils/file.utils'
+import { capitalizeWords } from '@/utils/string.utils'
+import { formatCryptoAddress } from '@/utils/app.utils'
 
 export default function FilesListItem({
       showWorkFlowsOnly,

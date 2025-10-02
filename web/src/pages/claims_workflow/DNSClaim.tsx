@@ -1,10 +1,11 @@
-import {ensureDomainUrlHasSSL, formatCryptoAddress} from '@/utils/functions'
 import {useEffect, useState} from 'react'
 import {TbWorldWww} from 'react-icons/tb'
 import {FaCheck, FaChevronDown, FaChevronUp, FaTimes} from 'react-icons/fa'
 import appStore from '../../store'
 import {useStore} from 'zustand'
 import ImprovedDNSLogs from './DNSClaimLogs'
+import { formatCryptoAddress } from '@/utils/app.utils'
+import { ensureDomainUrlHasSSL } from '@/utils/url.utils'
 
 interface IDNSClaim {
       claimInfo: Record<string, string>

@@ -28,14 +28,6 @@ import {
 } from 'lucide-react'
 import appStore from '@/store'
 import {useStore} from 'zustand'
-import {
-      displayTime,
-      getAquaTreeFileName,
-      getAquaTreeFileObject,
-      getGenesisHash,
-      isWorkFlowData,
-      processContractInformation
-} from '@/utils/functions'
 import {FileObject} from 'aqua-js-sdk'
 import {IContractInformation} from '@/types/contract_workflow'
 import {DownloadAquaChain} from '../../components/aqua_chain_actions/download_aqua_chain'
@@ -43,6 +35,8 @@ import {OpenAquaSignWorkFlowButton} from '../../components/aqua_chain_actions/op
 import {DeleteAquaChain} from '../../components/aqua_chain_actions/delete_aqua_chain'
 import {IWorkflowItem} from '@/types/types'
 import WalletAdrressClaim from '../v2_claims_workflow/WalletAdrressClaim'
+import { getAquaTreeFileName, getAquaTreeFileObject, getGenesisHash, isWorkFlowData, processContractInformation } from '@/utils/aqua.utils'
+import { displayTime } from '@/utils/time.utils'
 
 const getStatusIcon = (status: string) => {
       switch (status) {
