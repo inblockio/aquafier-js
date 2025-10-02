@@ -1,5 +1,5 @@
-import {ConnectWallet} from '../components/connect_wallet'
-import {ConnectWalletPage} from '../components/connect_wallet_page'
+import {ConnectWallet} from '../components/connect_wallet_appkit'
+import {ConnectWalletPage} from '../components/connect_wallet_page_appkit'
 import {Separator} from '../components/ui/separator'
 import NotificationsBell from '../pages/notifications/NotificationsBell'
 import {SidebarInset, SidebarProvider, SidebarTrigger} from '../components/ui/sidebar'

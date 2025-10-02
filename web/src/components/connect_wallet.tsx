@@ -69,11 +69,11 @@ export const ConnectWallet: React.FC<{ dataTestId: string }> = ({ dataTestId }) 
             if (isMetaMaskInstalled()) {
                   setLoading(true)
                   setConnectionState('connecting')
-                  const provider = new BrowserProvider(window.ethereum!)
+                  const provider = new BrowserProvider(window.ethereum as any)
 
                   try {
                         // Request connection
-                        await window.ethereum!.request({
+                        await (window.ethereum as any).request({
                               method: 'eth_requestAccounts',
                         })
                         const signer = await provider.getSigner()
