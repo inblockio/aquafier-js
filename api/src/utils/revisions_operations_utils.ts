@@ -14,7 +14,7 @@ import path from 'path';
 import {getGenesisHash} from './aqua_tree_utils';
 import {AquaTreeFileData, LinkedRevisionResult, ProcessRevisionResult, UpdateGenesisResult} from '../models/types';
 import {SYSTEM_WALLET_ADDRESS, systemTemplateHashes} from '../models/constants';
-import {getFileSize} from "./file_utils";
+import {estimateStringFileSize, getFileSize, getFileStats} from "./file_utils";
 import Logger from "./Logger";
 
 // Main refactored function
@@ -119,8 +119,6 @@ export async function createAquaTreeFromRevisions(
 // Helper functions
 
 async function getRevisionChain(latestRevisionHash: string): Promise<Revision[]> {
-
-
     const latestRevision = await prisma.revision.findFirst({
         where: {
             pubkey_hash: latestRevisionHash
@@ -231,25 +229,6 @@ export async function FetchRevisionInfo(hash: string, revision: Revision): Promi
     }
 }
 
-function estimateStringFileSize(str: string): number {
-    if (!str) return 0;
-
-    return str.split('').reduce((acc, char) => {
-        const code = char.charCodeAt(0);
-        // UTF-8 encoding rules:
-        // 1 byte for ASCII (0-127)
-        // 2 bytes for extended ASCII (128-2047)
-        // 3 bytes for most other characters (2048-65535)
-        // 4 bytes for remaining Unicode (65536+)
-        if (code < 128) return acc + 1;
-        if (code < 2048) return acc + 2;
-        if (code < 65536) return acc + 3;
-        return acc + 4;
-    }, 0);
-}
-
-
-
 
 async function fetchAquaTreeFileData(pubKeyHashes: string[]): Promise<AquaTreeFileData[]> {
     let allData: AquaTreeFileData[] = [];
@@ -332,9 +311,6 @@ async function createFileObjects(aquaTreesFileData: AquaTreeFileData[], url: str
     }
     return fileObjects;
 }
-
-
-
 
 async function processRevision(
     revision: Revision,
@@ -579,25 +555,6 @@ function extractHashOnly(pubkeyHash: string): string {
     if (!pubkeyHash) return "";
     const parts = pubkeyHash.split("_");
     return parts.length > 1 ? parts[1] : pubkeyHash;
-}
-
-async function getFileStats(filePath: string): Promise<{ fileSizeInBytes: number; originalFilename: string; } | null> {
-    try {
-        const fullFilename = path.basename(filePath);
-        const originalFilename = fullFilename.substring(fullFilename.indexOf('-') + 1);
-
-        let size = await getFileSize(filePath);
-        if (!size) {
-            size = -1
-        }
-        return {
-            fileSizeInBytes: size,
-            originalFilename
-        };
-    } catch (error : any) {
-        Logger.error(`Error getting file stats for ${filePath}:`, error);
-        return null;
-    }
 }
 
 async function updateLinkRevisionFileIndex(revision: Revision,

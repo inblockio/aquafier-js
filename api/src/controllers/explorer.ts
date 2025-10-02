@@ -7,7 +7,6 @@ import JSZip from "jszip";
 import { randomUUID } from 'crypto';
 import * as fs from "fs"
 import {
-    deleteAquaTree,
     deleteAquaTreeFromSystem,
     fetchAquatreeFoUser,
     getUserApiFileInfo,
@@ -18,8 +17,6 @@ import {
 } from '../utils/revisions_utils';
 import { getHost, getPort } from '../utils/api_utils';
 import { DeleteRevision } from '../models/request_models';
-import { fetchCompleteRevisionChain } from '../utils/quick_utils';
-import { mergeRevisionChain } from '../utils/quick_revision_utils';
 import { getGenesisHash, removeFilePathFromFileIndex, validateAquaTree } from '../utils/aqua_tree_utils';
 import WebSocketActions from '../constants/constants';
 import { sendToUserWebsockerAMessage } from './websocketController';

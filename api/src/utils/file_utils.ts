@@ -1,8 +1,8 @@
 import path from "path";
-import {fileURLToPath} from "url";
+import { fileURLToPath } from "url";
 import * as process from "node:process";
 import * as fs from "node:fs";
-import {getBucketName, getMinioClient, minioClientCompleted} from "./s3Utils";
+import { getBucketName, getMinioClient, minioClientCompleted } from "./s3Utils";
 import Logger from "./Logger";
 
 const getAquaAssetDirectory = (): string => {
@@ -398,19 +398,56 @@ async function deleteFile(path: string): Promise<void> {
     }
 }
 
+// function estimateStringFileSize(str: string): number {
+//     if (!str) return 0;
+
+//     return str.split('').reduce((acc, char) => {
+//         const code = char.charCodeAt(0);
+//         // UTF-8 encoding rules:
+//         // 1 byte for ASCII (0-127)
+//         // 2 bytes for extended ASCII (128-2047)
+//         // 3 bytes for most other characters (2048-65535)
+//         // 4 bytes for remaining Unicode (65536+)
+//         if (code < 128) return acc + 1;
+//         if (code < 2048) return acc + 2;
+//         if (code < 65536) return acc + 3;
+//         return acc + 4;
+//     }, 0);
+// }
+
+async function getFileStats(filePath: string): Promise<{ fileSizeInBytes: number; originalFilename: string; } | null> {
+    try {
+        const fullFilename = path.basename(filePath);
+        const originalFilename = fullFilename.substring(fullFilename.indexOf('-') + 1);
+
+        let size = await getFileSize(filePath);
+        if (!size) {
+            size = -1
+        }
+        return {
+            fileSizeInBytes: size,
+            originalFilename
+        };
+    } catch (error: any) {
+        Logger.error(`Error getting file stats for ${filePath}:`, error);
+        return null;
+    }
+}
+
 export {
-    streamToBuffer,
-    isTextFile,
-    readFileContent,
+    deleteFile,
     estimateStringFileSize,
-    isTextFileUsingName,
-    isTextFileProbability,
-    getFileUploadDirectory,
     getAquaAssetDirectory,
-    readFileAsArrayBuffer,
-    readFileAsText,
-    persistFile,
     getFile,
     getFileSize,
-    deleteFile
+    getFileStats,
+    getFileUploadDirectory,
+    isTextFile,
+    isTextFileUsingName,
+    isTextFileProbability,
+    persistFile,
+    readFileAsArrayBuffer,
+    readFileAsText,
+    readFileContent,
+    streamToBuffer
 };
