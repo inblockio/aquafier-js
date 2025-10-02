@@ -547,43 +547,6 @@ test("delete a template", async (): Promise<void> => {
     console.log("Template successfully deleted - verification complete");
 });
 
-test("create dns claim", async (): Promise<void> => {
-    const registerResponse = await registerNewMetaMaskWalletAndLogin();
-    const context: BrowserContext = registerResponse.context;
-    const testPage: Page = context.pages()[0];
-
-    console.log("create a dns claim!");
-
-    // Open workflow
-    await waitAndClick(testPage, '[data-testid="create-claim-dropdown-button"]')
-    console.log("claims dropdown ");
-    await waitAndClick(testPage, '[data-testid="create-dns-claim-dropdown-button-item"]')
-
-    console.log("fill dns claim form");
-    // await testPage.locator('[id="input-wallet_address"]').fill("0x6c5544021930b7887455e21F00b157b2FA572667");
-    await testPage.locator('[id="input-domain"]').fill("inblock.io");
-
-    const metamaskPromise = context.waitForEvent("page");
-    // await page.getByText("Save Signature").click();
-
-    console.log("create workflow");
-    await testPage.getByText("Create Workflow").click();
-    await metamaskPromise;
-
-    console.log("sign dns txt record ");
-    await handleMetaMaskNetworkAndConfirm(context, false);
-
-    console.log("sign the aqua tree ");
-
-    await handleMetaMaskNetworkAndConfirm(context, false);
-    console.log("dns workflow created");
-
-    // Check that the table has two rows and contains aqua.json
-    // const tableRows = testPage.locator('table tr');
-    // //header + two files create dns claim
-    // await expect(tableRows).toHaveCount(2);
-});
-
 
 // DO NOT DELETE
 // test.skip("import dns claim", async (): Promise<void> => {
@@ -670,91 +633,6 @@ test("create dns claim", async (): Promise<void> => {
 //         // throw error;
 //     }
 // });
-test("import dns claim", async (): Promise<void> => {
-    const registerResponse = await registerNewMetaMaskWalletAndLogin();
-    const context: BrowserContext = registerResponse.context;
-    const testPage: Page = context.pages()[0];
-
-    console.log("import user signature test started!");
-
-    // Upload file
-    const filePath: string = path.join(__dirname, '/../resources/domain_claim-675.zip');
-
-    await testPage.waitForSelector('[data-testid="file-upload-dropzone"]', { state: 'visible' });
-
-    const fileChooserPromise = testPage.waitForEvent('filechooser');
-    await waitAndClick(testPage, '[data-testid="file-upload-dropzone"]')
-    const fileChooser = await fileChooserPromise;
-    await fileChooser.setFiles(filePath);
-
-    await testPage.click('[data-testid="action-import-82-button"]')
-    console.log("File uploaded successfully");
-
-    // Check that the table has two rows and contains aqua.json
-    // const tableRows = testPage.locator('table tr');
-    //header + two files import dns claim
-    // await expect(tableRows).toHaveCount(2);
-
-    console.log("open details");
-    try {
-        // Click the details button
-        await testPage.click('[data-testid="open-aqua-claim-workflow-button-0"]');
-
-        console.log("Clicked details button, waiting for validation message...");
-
-        // Take a screenshot for debugging in CI
-        if (process.env.CI) {
-            await testPage.screenshot({ path: 'debug-before-validation.png' });
-        }
-
-        // Wait for the validation message to appear with increased timeout for CI
-        const timeout = process.env.CI ? 15000 : 10000;
-        await testPage.waitForSelector('text=This aqua tree is valid', {
-            state: 'visible',
-            timeout: timeout
-        });
-
-        // Verify the validation message is visible
-        const validationMessage = testPage.locator('text=This aqua tree is valid');
-        await expect(validationMessage).toBeVisible({ timeout: timeout });
-
-        console.log("Aqua tree validation confirmed!");
-
-    } catch (error) {
-        console.log("Error after clicking details button:", error);
-        console.log("Page URL:", testPage.url());
-
-        // Take screenshot on failure for debugging
-        if (process.env.CI) {
-            await testPage.screenshot({ path: 'debug-on-failure.png' });
-        }
-
-        // Check if page is still alive
-        if (testPage.isClosed()) {
-            throw new Error("Test page was closed unexpectedly");
-        }
-
-        // Log additional debugging information
-        try {
-            const pageContent = await testPage.content();
-            console.log("Page content length:", pageContent.length);
-
-            // Check if the button still exists
-            const buttonExists = await testPage.locator('[data-testid="open-aqua-claim-workflow-button-0"]').isVisible();
-            console.log("Details button still visible:", buttonExists);
-
-            // Check for any error messages on the page
-            const errorElements = await testPage.locator('[class*="error"], [data-testid*="error"]').count();
-            console.log("Error elements found:", errorElements);
-
-        } catch (debugError) {
-            console.log("Failed to gather debug info:", debugError);
-        }
-
-        // throw error;
-    }
-});
-
 
 test("import user signature", async (): Promise<void> => {
     const registerResponse = await registerNewMetaMaskWalletAndLogin();

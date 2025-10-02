@@ -422,7 +422,7 @@ export async function signDocument(page: Page, context: BrowserContext): Promise
 }
 
 // Helper function to download aqua tree
-export async function downloadAquaTree(page: Page, saveToDownloads: boolean): Promise<void> {
+export async function downloadAquaTree(page: Page, saveToDownloads: boolean): Promise<string> {
     // Create a downloads directory if it doesn't exist
     const downloadsPath = path.join(__dirname, 'downloads');
     if (!fs.existsSync(downloadsPath)) {
@@ -446,6 +446,8 @@ export async function downloadAquaTree(page: Page, saveToDownloads: boolean): Pr
     await download.saveAs(filePath);
 
     console.log(`Download completed and saved to: ${filePath}`);
+
+    return filePath;
 }
 
 // Helper function to create aqua sign form
