@@ -84,7 +84,6 @@ export const DownloadAquaChain = ({ file, index, children }: { file: ApiFileInfo
 
             const nameWithHashes: Array<AquaNameWithHash> = []
             for (const fileObj of file.fileObject) {
-
                   const isAquaTreeData = isAquaTree(fileObj.fileContent)
                    if (typeof fileObj.fileContent === 'string' && isValidUrl(fileObj.fileContent) && isHttpUrl(fileObj.fileContent)) {
                         try {
