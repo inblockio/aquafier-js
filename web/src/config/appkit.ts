@@ -19,7 +19,7 @@ const metadata = {
   name: 'Aquafier',
   description: 'Aquafier - Decentralized Identity and Document Management',
   url: 'https://inblock.io',
-  icons: ['https://inblock.io/favicon.ico']
+  icons: ['https://github.com/inblockio/aquafier-js/blob/pr-438/web/public/images/inblock_logo.png?raw=true']
 }
 
 // Create Ethers adapter
