@@ -30,6 +30,10 @@ export const SignAquaChain = ({ apiFileInfo, backendUrl, nonce, index }: RevionO
                         xCredentials.witness_eth_network = user_profile?.witness_network ?? 'sepolia'
 
                         const result = await aquafier.signAquaTree(aquaTreeWrapper, 'metamask', xCredentials)
+
+                        // Sign logic with wallet connect
+                        
+
                         if (result.isErr()) {
                               toast.error( `Error signing failed`)
                         } else {

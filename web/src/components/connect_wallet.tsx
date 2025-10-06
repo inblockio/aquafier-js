@@ -1,24 +1,21 @@
 import {lazy, Suspense, useState, useEffect} from 'react'
 import {LuCircleCheck, LuCircleX, LuLogOut, LuWallet} from 'react-icons/lu'
 import {ClipLoader} from 'react-spinners'
-import {formatCryptoAddress, getCookie, setCookie} from '../utils/functions'
+import {formatCryptoAddress, setCookie} from '../utils/functions'
 import {SESSION_COOKIE_NAME} from '../utils/constants'
-import axios from 'axios'
 import {useStore} from 'zustand'
 import appStore from '../store'
-import {ethers} from 'ethers'
 import {Button} from './ui/button'
 import {Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger} from './ui/dialog'
 import {toast} from 'sonner'
 import {useAppKit, useAppKitAccount, useDisconnect} from '@reown/appkit/react'
-import {ensureDomainUrlHasSSL} from '../utils/functions'
 
 // Lazy load the WalletAddressProfile component
 const WalletAddressProfile = lazy(() => import('@/pages/v2_claims_workflow/WalletAddressProfile'))
 
 export const ConnectWallet: React.FC<{ dataTestId: string }> = ({ dataTestId }) => {
   const { open } = useAppKit()
-  const { address, isConnected } = useAppKitAccount()
+  const { isConnected } = useAppKitAccount()
   const { disconnect } = useDisconnect()
   
   const { 
@@ -26,15 +23,13 @@ export const ConnectWallet: React.FC<{ dataTestId: string }> = ({ dataTestId }) 
     session, 
     setFiles, 
     setAvatar, 
-    setUserProfile, 
-    backend_url, 
     setSession 
   } = useStore(appStore)
 
   const [isOpen, setIsOpen] = useState(false)
   const [loading, setLoading] = useState(false)
-  const [connectionState, setConnectionState] = useState<'idle' | 'connecting' | 'success' | 'error'>('idle')
-  const [message, setMessage] = useState<string | null>(null)
+  const [connectionState, _setConnectionState] = useState<'idle' | 'connecting' | 'success' | 'error'>('idle')
+  const [message, _setMessage] = useState<string | null>(null)
 
   const iconSize = '120px'
 
@@ -47,10 +42,6 @@ export const ConnectWallet: React.FC<{ dataTestId: string }> = ({ dataTestId }) 
     }
   }, [isConnected, session])
 
-  const resetState = () => {
-    setConnectionState('idle')
-    setMessage(null)
-  }
 
   const handleCleanup = () => {
     setCookie(SESSION_COOKIE_NAME, '', new Date('1970-01-01T00:00:00Z'))
