@@ -5,5 +5,7 @@
   ],
   "baseBranches": ["dev"],
   "timezone": "Europe/Berlin",
-  "schedule": ["after 12am and before 1am"]
+  "schedule": [
+    "* 0-1 * * *"
+  ]
 }

@@ -17,6 +17,7 @@ import {
       getRandomNumber,
       isValidEthereumAddress
 } from '@/utils/functions'
+import { getAppKitProvider } from '@/utils/appkit-wallet-utils'
 import Aquafier, {
       AquaTree,
       AquaTreeWrapper,
@@ -537,26 +538,30 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: {
             }
 
             const account = session?.address
-            if (typeof window.ethereum == 'undefined') {
-                  console.error('MetaMask not found')
+
+            const provider = await getAppKitProvider()
+
+            if (!provider) {
+                  console.error('Wallet not connected')
                   setDialogOpen(true)
                   setDialogData({
-                        title: 'MetaMask not found',
+                        title: 'Wallet not connected',
                         content: (
                               <>
                                     <Alert variant="destructive">
                                           <AlertCircle className="h-4 w-4" />
-                                          <AlertDescription>Please install MetaMask to sign the domain claim.</AlertDescription>
+                                          <AlertDescription>Please connect your wallet to sign the domain claim.</AlertDescription>
                                     </Alert>
                               </>
                         ),
                   })
+                  return
             }
 
             const domain = domainParams.trim()
             try {
                   const message = `${timestamp}|${domain}|${expiration}`
-                  signature = await window.ethereum!.request({
+                  signature = await (provider as any).request({
                         method: 'personal_sign',
                         params: [message, account],
                   })
