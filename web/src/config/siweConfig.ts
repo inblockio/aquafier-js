@@ -4,11 +4,28 @@ import axios from 'axios'
 import { getCookie, setCookie, ensureDomainUrlHasSSL } from '../utils/functions'
 import { SESSION_COOKIE_NAME } from '../utils/constants'
 import appStore from '../store'
+import { toast } from 'sonner'
+
+// Helper function to extract Ethereum address from DID or return as-is if already an address
+const extractEthereumAddress = (addressOrDid: string): string => {
+  // Check if it's a DID format: did:pkh:eip155:1:0x...
+  if (addressOrDid.startsWith('did:pkh:eip155:')) {
+    const parts = addressOrDid.split(':')
+    // The address is the last part after splitting by ':'
+    return parts[parts.length - 1]
+  }
+  
+  // Already a standard Ethereum address
+  return addressOrDid
+}
 
 export const siweConfig = createSIWEConfig({
   createMessage: ({ address, ...args }: SIWECreateMessageArgs) => {
+    // Extract the actual Ethereum address from DID format if necessary
+    const ethAddress = extractEthereumAddress(address)
+    
     return `${args.domain} wants you to sign in with your Ethereum account:
-${address}
+${ethAddress}
 
 Sign in with Ethereum to the app.
 
@@ -30,7 +47,8 @@ Expiration Time: ${args.exp}` : ''}`
       domain: window.location.host,
       uri: window.location.origin,
       statement: 'Sign in with Ethereum to the app.',
-      version: '1'
+      version: '1',
+      chains: [1, 11155111, 17000], // main, Sepolia and Holesky
     }
   },
 
@@ -57,7 +75,7 @@ Expiration Time: ${args.exp}` : ''}`
     } catch (error) {
       console.error('Failed to get session:', error)
     }
-    
+
     return null
   },
 
@@ -75,11 +93,11 @@ Expiration Time: ${args.exp}` : ''}`
 
       if (response.status === 200 || response.status === 201) {
         const responseData = response.data
-        
+
         // Set session cookie
         setCookie(
-          SESSION_COOKIE_NAME, 
-          responseData.session.nonce, 
+          SESSION_COOKIE_NAME,
+          responseData.session.nonce,
           new Date(responseData.session.expiration_time)
         )
 
@@ -90,18 +108,20 @@ Expiration Time: ${args.exp}` : ''}`
 
         return true
       }
-      
+
       return false
     } catch (error) {
       console.error('Failed to verify message:', error)
+      toast.error('An error occurred during authentication')
       return false
     }
   },
 
+  
   signOut: async () => {
     try {
       const nonce = getCookie(SESSION_COOKIE_NAME)
-      
+
       if (nonce) {
         const backend_url = appStore.getState().backend_url
         const url = ensureDomainUrlHasSSL(`${backend_url}/session`)
@@ -112,7 +132,7 @@ Expiration Time: ${args.exp}` : ''}`
 
       // Clear cookie
       setCookie(SESSION_COOKIE_NAME, '', new Date('1970-01-01T00:00:00Z'))
-      
+
       // Clear store
       const store = appStore.getState()
       store.setMetamaskAddress(null)
@@ -122,7 +142,7 @@ Expiration Time: ${args.exp}` : ''}`
         fileData: [],
         status: 'idle',
       })
-      
+
       return true
     } catch (error) {
       console.error('Failed to sign out:', error)

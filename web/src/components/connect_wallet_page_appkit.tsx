@@ -48,7 +48,8 @@ export const ConnectWalletPageAppKit = () => {
 
   // Monitor for successful authentication
   useEffect(() => {
-    if (isConnected && address && session?.address && !hasTriggeredSiwe) {
+    // if (isConnected && address && session?.address && !hasTriggeredSiwe) {
+    if (isConnected && address  && !hasTriggeredSiwe) {
       setHasTriggeredSiwe(true)
       handleSiweSuccess()
       toast.success('Sign In successful')
@@ -90,7 +91,7 @@ export const ConnectWalletPageAppKit = () => {
       setTimeout(() => setError(''), 2000)
     }
   }, [modalOpen, error])
-
+ 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center p-4">
       <div className="bg-white rounded-xl shadow-lg border border-gray-200 p-8 w-full max-w-md">

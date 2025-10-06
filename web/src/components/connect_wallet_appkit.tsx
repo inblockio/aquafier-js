@@ -1,5 +1,5 @@
 import { useEffect, lazy, Suspense, useState } from 'react'
-import { useAppKit, useAppKitAccount } from '@reown/appkit/react'
+import { useAppKit, useAppKitAccount, useDisconnect } from '@reown/appkit/react'
 import { Button } from './ui/button'
 import { LuWallet, LuLogOut } from 'react-icons/lu'
 import { formatCryptoAddress, generateAvatar, fetchFiles } from '../utils/functions'
@@ -7,6 +7,7 @@ import { useStore } from 'zustand'
 import appStore from '../store'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from './ui/dialog'
 import { ethers } from 'ethers'
+import { toast } from 'sonner'
 
 // Lazy load the WalletAddressProfile component
 const WalletAddressProfile = lazy(() => import('@/pages/v2_claims_workflow/WalletAddressProfile'))
@@ -65,10 +66,18 @@ export const ConnectWalletAppKit: React.FC<{ dataTestId: string }> = ({ dataTest
     }
   }
 
-  const handleSignOut = () => {
+  const handleSignOut = async () => {
     // The sign out is handled by the SIWE config
     // which will clear the session and disconnect the wallet
-    open({ view: 'Account' })
+    // open({ view: 'Account' })
+    try {
+        const { disconnect } = useDisconnect()
+    await disconnect() // This calls siweConfig.signOut automatically
+    toast.success('Signed out successfully')
+  } catch (error: any) {
+    console.error('Sign out error:', error)
+    toast.error('Error signing out')
+  } 
   }
 
   return (
