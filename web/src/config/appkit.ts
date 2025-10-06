@@ -18,8 +18,8 @@ export const networks = [
 const metadata = {
   name: 'Aquafier',
   description: 'Aquafier - Decentralized Identity and Document Management',
-  url: 'https://aquafier.io',
-  icons: ['https://aquafier.io/favicon.ico']
+  url: 'https://inblock.io',
+  icons: ['https://inblock.io/favicon.ico']
 }
 
 // Create Ethers adapter
