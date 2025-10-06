@@ -1,5 +1,6 @@
 import { appKit } from '../config/appkit'
 import { ethers } from 'ethers'
+import { generateNonce, SiweMessage } from 'siwe'
 
 // Get the current provider from AppKit
 export async function getAppKitProvider() {
@@ -86,4 +87,24 @@ export async function getConnectedAddress() {
     console.error('Error getting wallet address:', error)
     return null
   }
+}
+
+export const createSiweMessage = (address: string, statement: string): string => {
+  const domain = window.location.host
+  const origin = window.location.origin
+  const expiry = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
+
+  const message = new SiweMessage({
+    domain,
+    address,
+    statement,
+    uri: origin,
+    version: '1',
+    chainId: 2,
+    nonce: generateNonce(),
+    expirationTime: expiry,
+    issuedAt: new Date(Date.now()).toISOString(),
+  })
+
+  return message.prepareMessage()
 }

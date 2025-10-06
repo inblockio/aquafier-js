@@ -5,6 +5,7 @@ import { getCookie, setCookie, ensureDomainUrlHasSSL } from '../utils/functions'
 import { SESSION_COOKIE_NAME } from '../utils/constants'
 import appStore from '../store'
 import { toast } from 'sonner'
+import { createSiweMessage } from '@/utils/appkit-wallet-utils'
 
 // Helper function to extract Ethereum address from DID or return as-is if already an address
 const extractEthereumAddress = (addressOrDid: string): string => {
@@ -14,27 +15,17 @@ const extractEthereumAddress = (addressOrDid: string): string => {
     // The address is the last part after splitting by ':'
     return parts[parts.length - 1]
   }
-  
+
   // Already a standard Ethereum address
   return addressOrDid
 }
 
 export const siweConfig = createSIWEConfig({
-  createMessage: ({ address, ...args }: SIWECreateMessageArgs) => {
+  createMessage: ({ address }: SIWECreateMessageArgs) => {
     // Extract the actual Ethereum address from DID format if necessary
     const ethAddress = extractEthereumAddress(address)
-    
-    return `${args.domain} wants you to sign in with your Ethereum account:
-${ethAddress}
 
-Sign in with Ethereum to the app.
-
-URI: ${args.uri}
-Version: ${args.version}
-Chain ID: ${args.chainId}
-Nonce: ${args.nonce}${args.iat ? `
-Issued At: ${args.iat}` : ''}${args.exp ? `
-Expiration Time: ${args.exp}` : ''}`
+    return createSiweMessage(ethAddress, "Sign in with Ethereum to the app")
   },
 
   getNonce: async () => {
@@ -117,7 +108,7 @@ Expiration Time: ${args.exp}` : ''}`
     }
   },
 
-  
+
   signOut: async () => {
     try {
       const nonce = getCookie(SESSION_COOKIE_NAME)
