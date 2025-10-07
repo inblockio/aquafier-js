@@ -4,7 +4,7 @@ import { mainnet, sepolia, polygon, arbitrum } from '@reown/appkit/networks'
 import { siweConfig } from './siweConfig'
 
 // Get projectId from https://cloud.reown.com
-export const projectId = import.meta.env.VITE_REOWN_PROJECT_ID || 'YOUR_PROJECT_ID'
+export const projectId =  '80d7707d71e3502f8635b00e56173cdf'
 
 // Create networks array
 export const networks = [
