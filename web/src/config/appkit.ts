@@ -18,7 +18,7 @@ export const networks = [
 const metadata = {
   name: 'Aquafier',
   description: 'Aquafier - Decentralized Identity and Document Management',
-  url: 'https://inblock.io',
+   url: typeof window !== 'undefined' ? window.location.origin : 'https://inblock.io',
   icons: ["/images/ico.png"],
   // icons: ['https://github.com/inblockio/aquafier-js/blob/pr-438/web/public/images/inblock_logo.png?raw=true']
 }
