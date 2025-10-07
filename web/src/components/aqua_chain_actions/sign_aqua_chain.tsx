@@ -1,18 +1,20 @@
-import {LuSignature} from 'react-icons/lu'
-import {areArraysEqual, dummyCredential, ensureDomainUrlHasSSL, fetchFiles, getGenesisHash} from '../../utils/functions'
-import {useStore} from 'zustand'
+import { LuSignature } from 'react-icons/lu'
+import { areArraysEqual, dummyCredential, ensureDomainUrlHasSSL, fetchFiles, getGenesisHash, getLastRevisionVerificationHash } from '../../utils/functions'
+import { useStore } from 'zustand'
 import appStore from '../../store'
 import axios from 'axios'
-import {ApiFileInfo} from '../../models/FileInfo'
-import {useState} from 'react'
-import Aquafier, {AquaTreeWrapper} from 'aqua-js-sdk'
-import {RevionOperation} from '../../models/RevisionOperation'
-import {toast} from 'sonner'
-// import { toast, toaster } from '@/components/ui/use-toast'
+import { ApiFileInfo } from '../../models/FileInfo'
+import { useState } from 'react'
+import Aquafier, { AquaTreeWrapper } from 'aqua-js-sdk'
+import { RevionOperation } from '../../models/RevisionOperation'
+import { toast } from 'sonner'
+import { useAppKit } from '@reown/appkit/react'
+import { getAppKitProvider } from '@/utils/appkit-wallet-utils'
 
 export const SignAquaChain = ({ apiFileInfo, backendUrl, nonce, index }: RevionOperation) => {
       const { files, setFiles, setSelectedFileInfo, selectedFileInfo, user_profile, session, backend_url } = useStore(appStore)
       const [signing, setSigning] = useState(false)
+      const { } = useAppKit()
 
       const signFileHandler = async () => {
             setSigning(true)
@@ -29,18 +31,29 @@ export const SignAquaChain = ({ apiFileInfo, backendUrl, nonce, index }: RevionO
                         const xCredentials = dummyCredential()
                         xCredentials.witness_eth_network = user_profile?.witness_network ?? 'sepolia'
 
-                        const result = await aquafier.signAquaTree(aquaTreeWrapper, 'metamask', xCredentials)
+                        const targetRevisionHash = getLastRevisionVerificationHash(apiFileInfo.aquaTree!)
+                        // Sign using WalletConnect via ethers adapter
+                        const messageToSign = `I sign this revision: [${targetRevisionHash}]`
+                        // const provider: any = walletProvider
+                        const provider = await getAppKitProvider()
+                        const signature = await provider.request({
+                              method: 'personal_sign',
+                              params: [messageToSign, session?.address!]
+                        });
+                        // const signature = await signer.signMessage(messageToSign)
 
-                        // Sign logic with wallet connect
-                        
+                        const result = await aquafier.signAquaTree(aquaTreeWrapper, 'inline', xCredentials, true, undefined, {
+                              signature: signature,
+                              walletAddress: session?.address!,
+                        })
 
                         if (result.isErr()) {
-                              toast.error( `Error signing failed`)
+                              toast.error(`Error signing failed`)
                         } else {
                               const revisionHashes = result.data.aquaTree?.revisions ? Object.keys(result.data.aquaTree.revisions) : []
 
                               if (revisionHashes.length == 0) {
-                                   toast.error( `Error signing failed (aqua tree structure)`)
+                                    toast.error(`Error signing failed (aqua tree structure)`)
                                     return
                               }
                               const lastHash = revisionHashes[revisionHashes.length - 1]
@@ -79,7 +92,8 @@ export const SignAquaChain = ({ apiFileInfo, backendUrl, nonce, index }: RevionO
                                                 const url = ensureDomainUrlHasSSL(`${backend_url}/explorer_files`)
                                                 const files = await fetchFiles(session!.address!, url, session!.nonce)
                                                 setFiles({
-                                                      fileData: files, status: 'loaded'})
+                                                      fileData: files, status: 'loaded'
+                                                })
 
                                                 if (selectedFileInfo) {
                                                       const genesisHash = getGenesisHash(selectedFileInfo.aquaTree!)
@@ -92,7 +106,7 @@ export const SignAquaChain = ({ apiFileInfo, backendUrl, nonce, index }: RevionO
                                                       }
                                                 }
                                           } catch (e) {
-                                               toast.error( 'Error updating files')
+                                                toast.error('Error updating files')
                                                 // document.location.reload()
                                           }
                                     } else {
@@ -116,14 +130,14 @@ export const SignAquaChain = ({ apiFileInfo, backendUrl, nonce, index }: RevionO
                                     }
                               }
 
-                              toast.success( `Signing successfull`)
+                              toast.success(`Signing successfull`)
                         }
 
                         setSigning(false)
                   } catch (error) {
                         console.error('An Error', error)
                         setSigning(false)
-                        toast.error( `Error during signing`)
+                        toast.error(`Error during signing`)
                   }
             } else {
                   setSigning(false)
@@ -139,7 +153,7 @@ export const SignAquaChain = ({ apiFileInfo, backendUrl, nonce, index }: RevionO
                               if (!signing) {
                                     signFileHandler()
                               } else {
-                                    toast.info( 'Signing is already in progress')
+                                    toast.info('Signing is already in progress')
                               }
                         }}
                         className={`w-full flex items-center justify-center space-x-1 bg-blue-100 text-blue-700 px-3 py-2 rounded transition-colors text-xs ${signing ? 'opacity-60 cursor-not-allowed' : 'hover:bg-blue-200'}`}

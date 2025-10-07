@@ -14,6 +14,7 @@ import {
       fetchFiles,
       fetchImage,
       getGenesisHash,
+      getLastRevisionVerificationHash,
       getRandomNumber,
       timeStampToDateObject,
 } from '../../../utils/functions'
@@ -27,6 +28,7 @@ import { PdfRenderer } from './signer/SignerPage'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { toast } from 'sonner'
 import WalletAddressClaim from '../../v2_claims_workflow/WalletAdrressClaim'
+import { getAppKitProvider } from '@/utils/appkit-wallet-utils'
 
 interface PdfSignerProps {
       fileData: File | null
@@ -229,7 +231,24 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ fileData, setActiveStep, document
                   fileObject: signatureFileObject,
             }
 
-            const resLinkedMetaMaskSignedAquaTree = await aquafier.signAquaTree(aquaTreeWrapper, 'metamask', dummyCredential())
+            // const resLinkedMetaMaskSignedAquaTree = await aquafier.signAquaTree(aquaTreeWrapper, 'metamask', dummyCredential())
+
+            // const signRes = await aquafier.signAquaTree(aquaTreeWrapper, 'metamask', dummyCredential())
+            const targetRevisionHash = getLastRevisionVerificationHash(aquaTree)
+            // Sign using WalletConnect via ethers adapter
+            const messageToSign = `I sign this revision: [${targetRevisionHash}]`
+            // const provider: any = walletProvider
+            const provider = await getAppKitProvider()
+            const signature = await provider.request({
+                  method: 'personal_sign',
+                  params: [messageToSign, session?.address!]
+            });
+            // const signature = await signer.signMessage(messageToSign)
+
+            const resLinkedMetaMaskSignedAquaTree = await aquafier.signAquaTree(aquaTreeWrapper, 'inline', dummyCredential(), true, undefined, {
+                  signature: signature,
+                  walletAddress: session?.address!,
+            })
 
             if (resLinkedMetaMaskSignedAquaTree.isErr()) {
                   showError('MetaMask signature not appended to main tree successfully')
@@ -1177,7 +1196,7 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ fileData, setActiveStep, document
             }
 
       }, [openDialog])
-      
+
       return (
             <div className="h-[calc(100vh-70px)] overflow-y-scroll md:overflow-hidden">
                   <div className="h-[60px] flex items-center">

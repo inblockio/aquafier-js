@@ -14,6 +14,7 @@ import {
       formatTxtRecord,
       generateProofFromSignature,
       getGenesisHash,
+      getLastRevisionVerificationHash,
       getRandomNumber,
       isValidEthereumAddress
 } from '@/utils/functions'
@@ -567,7 +568,7 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: {
                   })
             } catch (error: any) {
                   // alert('Failed to sign: ' + error.message);
-                  console.error('Error signing domain claim:'+ error)
+                  console.error('Error signing domain claim:' + error)
                   setDialogOpen(true)
                   setDialogData({
                         title: 'Error signing domain claim',
@@ -776,7 +777,23 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: {
                   fileObject: fileObject,
             }
 
-            const signRes = await aquafier.signAquaTree(aquaTreeWrapper, 'metamask', dummyCredential())
+            // const signRes = await aquafier.signAquaTree(aquaTreeWrapper, 'metamask', dummyCredential())
+            const targetRevisionHash = getLastRevisionVerificationHash(aquaTreeData)
+            // Sign using WalletConnect via ethers adapter
+            const messageToSign = `I sign this revision: [${targetRevisionHash}]`
+            // const provider: any = walletProvider
+            const provider = await getAppKitProvider()
+            const signature = await provider.request({
+                  method: 'personal_sign',
+                  params: [messageToSign, session?.address!]
+            });
+            // const signature = await signer.signMessage(messageToSign)
+
+            const signRes = await aquafier.signAquaTree(aquaTreeWrapper, 'inline', dummyCredential(), true, undefined, {
+                  signature: signature,
+                  walletAddress: session?.address!,
+            })
+
 
             if (signRes.isErr()) {
                   throw new Error('Error signing failed')

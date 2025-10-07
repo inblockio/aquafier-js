@@ -40,7 +40,7 @@ export async function getCurrentNetwork() {
 }
 
 // Switch network using AppKit
-export async function switchNetwork(chainId: string) {
+export async function switchNetworkWalletConnect(chainId: string) {
   try {
     const provider = await getAppKitProvider()
     if (!provider) {
