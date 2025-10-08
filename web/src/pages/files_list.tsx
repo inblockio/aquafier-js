@@ -13,7 +13,7 @@ export default function FilesList(filesListProps: FilesListProps) {
       const [hasFetchedSystemAquaTrees, setHasFetchedSystemAquaTrees] = useState(false)
       const [isSmallScreen, setIsSmallScreen] = useState(false)
       const [uniqueWorkflows, setUniqueWorkflows] = useState<string[]>([])
-      const [selectedWorkflow, setSelectedWorkflow] = useState<string>('all')
+      const [selectedWorkflow, setSelectedWorkflow] = useState<string>('aqua_files')
 
       // Filter states
       const [showFilterModal, setShowFilterModal] = useState(false)
@@ -21,6 +21,14 @@ export default function FilesList(filesListProps: FilesListProps) {
       const [tempSelectedFilters, setTempSelectedFilters] = useState<string[]>(['all'])
 
       const { files, systemFileInfo, backend_url, session, setSystemFileInfo } = useStore(appStore)
+
+      const systemAquaTreeFileNames = systemFileInfo.map(e => {
+            try {
+                  return getAquaTreeFileName(e.aquaTree!)
+            } catch (e) {
+                  return ''
+            }
+      })
 
       // Add screen size detector
       useEffect(() => {
@@ -124,6 +132,12 @@ export default function FilesList(filesListProps: FilesListProps) {
                   filteredByFilters = filteredByFilters.filter(file => {
                         try {
                               const workFlow = isWorkFlowData(file.aquaTree!, someData)
+
+                               // If "aqua_files" tab is selected, show only non-workflow files
+                              if (selectedWorkflow === 'aqua_files') {
+                                    return !workFlow.isWorkFlow
+                              }
+                              
                               return workFlow.isWorkFlow && workFlow.workFlow === selectedWorkflow
                         } catch (e) {
                               return false
@@ -245,9 +259,9 @@ export default function FilesList(filesListProps: FilesListProps) {
                               const filenameA = getAquaTreeFileName(a.aquaTree!)
                               const filenameB = getAquaTreeFileName(b.aquaTree!)
                               return filenameA.localeCompare(filenameB)
-                        }) 
+                        })
                         .map((file, index) => {
-                              return (  
+                              return (
                                     <FileListItem
                                           showWorkFlowsOnly={false}
                                           key={`card-${index}`}
@@ -289,8 +303,8 @@ export default function FilesList(filesListProps: FilesListProps) {
                               <th className="py-3 px-4 text-left text-sm font-medium text-gray-700 w-30">Type</th>
                               <th className="py-3 px-4 text-left text-sm font-medium text-gray-700 w-40">Uploaded At</th>
                               <th className="py-3 px-4 text-left text-sm font-medium text-gray-700 w-24">File Size</th>
-                              {filesListProps.showFileActions == true ? <th className="min-w-[370px] py-3 px-4 text-left text-sm font-medium text-gray-700 w-1/4 rounded-tr-md">Actions</th> : null }
-                              
+                              {filesListProps.showFileActions == true ? <th className="min-w-[370px] py-3 px-4 text-left text-sm font-medium text-gray-700 w-1/4 rounded-tr-md">Actions</th> : null}
+
                         </tr>
                   </thead>
                   <tbody>
@@ -327,6 +341,24 @@ export default function FilesList(filesListProps: FilesListProps) {
                         <div className="border-b border-gray-200">
                               <nav className="-mb-px flex space-x-8 overflow-x-auto">
                                     <button
+                                          onClick={() => setSelectedWorkflow('aqua_files')}
+                                          className={`whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm ${selectedWorkflow === 'aqua_files'
+                                                ? 'border-blue-500 text-blue-600'
+                                                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                                                }`}
+                                    >
+                                          Aqua Files ({files.fileData.filter((file) => {
+                                                const workFlow = isWorkFlowData(file.aquaTree!, systemAquaTreeFileNames)
+                                                // return workFlow.isWorkFlow && workFlow.workFlow === workflow   
+                                                if (workFlow && workFlow.isWorkFlow) {
+                                                      return null
+                                                }
+                                                return file
+                                          }).length})
+                                    </button>
+
+
+                                    <button
                                           onClick={() => setSelectedWorkflow('all')}
                                           className={`whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm ${selectedWorkflow === 'all'
                                                 ? 'border-blue-500 text-blue-600'
@@ -339,14 +371,8 @@ export default function FilesList(filesListProps: FilesListProps) {
                                           view === 'table' && uniqueWorkflows.map((workflow) => {
                                                 const workflowCount = files.fileData.filter(file => {
                                                       try {
-                                                            const someData = systemFileInfo.map(e => {
-                                                                  try {
-                                                                        return getAquaTreeFileName(e.aquaTree!)
-                                                                  } catch (e) {
-                                                                        return ''
-                                                                  }
-                                                            })
-                                                            const workFlow = isWorkFlowData(file.aquaTree!, someData)
+
+                                                            const workFlow = isWorkFlowData(file.aquaTree!, systemAquaTreeFileNames)
                                                             return workFlow.isWorkFlow && workFlow.workFlow === workflow
                                                       } catch (e) {
                                                             return false

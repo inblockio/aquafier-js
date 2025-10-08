@@ -330,7 +330,7 @@ const FilesPage = () => {
             if (!upload.file) {
                   throw new Error('No file selected')
             }
-
+ 
             const fileExist = await checkIfFileExistInUserFiles(upload.file, files.fileData)
             if (fileExist) {
                   throw new Error('File already exists')
