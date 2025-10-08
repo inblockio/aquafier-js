@@ -32,6 +32,10 @@ export const ConnectWalletAppKit: React.FC<{ dataTestId: string }> = ({ dataTest
       setMetamaskAddress(null)
       setAvatar(undefined)
     }
+
+    if(isConnected== false && session != null){
+      handleSignOut()
+    }
   }, [isConnected, address, setMetamaskAddress, setAvatar])
 
   // Monitor for SIWE success
@@ -109,7 +113,7 @@ export const ConnectWalletAppKit: React.FC<{ dataTestId: string }> = ({ dataTest
         <LuWallet />
         {status === 'connecting' ? 'Connecting...' : 
          isConnected && session ? formatCryptoAddress(session.address, 3, 3) : 
-         'Sign In'}
+         'Sign In '}
       </Button>
 
       {/* Profile Dialog for authenticated users */}
