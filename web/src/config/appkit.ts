@@ -4,7 +4,8 @@ import { mainnet, sepolia, polygon, arbitrum } from '@reown/appkit/networks'
 import { siweConfig } from './siweConfig'
 
 // Get projectId from https://cloud.reown.com
-export const projectId = '80d7707d71e3502f8635b00e56173cdf'
+// export const projectId = '80d7707d71e3502f8635b00e56173cdf'
+export const projectId = "9ed78593f9e1f84e3151ea58cfeea38b"
 
 // Create networks array
 export const networks = [
@@ -18,9 +19,10 @@ export const networks = [
 const metadata = {
   name: 'Aquafier',
   description: 'Aquafier - Decentralized Identity and Document Management',
-  url: typeof window !== 'undefined' ? window.location.origin : 'https://inblock.io',
-  icons: ["/images/ico.png"],
+  url: typeof window !== 'undefined' ? window.location.origin : 'https://aquafier.inblock.io',
+  // url: "http://localhost:5173",
   // icons: ['https://github.com/inblockio/aquafier-js/blob/pr-438/web/public/images/inblock_logo.png?raw=true']
+  icons: ["/images/ico.png"],
 }
 
 // Create Ethers adapter
@@ -33,9 +35,11 @@ export const appKit = createAppKit({
   projectId,
   metadata,
   features: {
-    analytics: true,
+    analytics: false,
     email: false,
-    socials: false,
+    socials: [
+      "google"
+    ],
     swaps: false,
     onramp: false
   },
