@@ -14,6 +14,7 @@ We will be using docker to run the aquafier  instance.
         d. `SERVER_MNEMONIC` some claim require server wallets
         e. edit `ALLOWED_CORS`  with the backend and fronend  url 
         f. set `CUSTOM_LANDING_PAGE_URL` and `CUSTOM_LOGO_URL` to true if you don't want to use inblock landing page and logo. Use `CUSTOM_NAME` and `CUSTOM_DESCRIPTION` to set your own name and description
+        g. set  `AUTH_PROVIDER` to `metamask` or `wallet_connect`
 4. If changes have been made to github, pull the new image first ie `docker compose -f deployment/docker-compose-dev.yml pull`
 5. run `docker compose -f deployment/docker-compose-dev.yml up` for bleeding edge or `docker compose -f deployment/docker-compose-prod.yml up` for stable builds
 6. if you encounter an issue always start by checking logs `sudo docker logs {image id}`.

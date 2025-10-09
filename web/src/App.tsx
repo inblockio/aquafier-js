@@ -27,7 +27,7 @@ import ClaimsAndAttestationPage from './pages/claim_and_attestation'
 import ClaimsWorkflowPage from './pages/claims_workflow/claimsWorkflowPage'
 import ClaimsWorkflowPageV2 from './pages/v2_claims_workflow/claimsWorkflowPage'
 // Import appkit config to initialize AppKit at module level
-import './config/appkit'
+// import './config/appkit'
 
 import {WebConfig} from './types/types'
 import * as Sentry from "@sentry/react";
@@ -69,6 +69,13 @@ function App() {
                 setBackEndUrl(backend_url)
                 setUpSentry(config)
                 setWebConfig(config)
+
+
+                 // Conditionally import AppKit based on AUTH_PROVIDER
+            if (config.AUTH_PROVIDER === 'wallet_connect') {
+                await import('./config/appkit')
+                console.log('AppKit initialized for wallet_connect')
+            }
             }
 
           initBackend()

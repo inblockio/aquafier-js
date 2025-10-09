@@ -52,7 +52,9 @@ export const initializeBackendUrl = async (): Promise<{
       apmConfig: APMConfig
 }> => {
       let BACKEND_URL = 'http://127.0.0.1:3000'
-      let config = {}
+      let config:WebConfig = {
+AUTH_PROVIDER:"metamask"
+      }
       let apmConfig: APMConfig = new APMConfig();
       try {
             // Fetch the config.json file from the public folder

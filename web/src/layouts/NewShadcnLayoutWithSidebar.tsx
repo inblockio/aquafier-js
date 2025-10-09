@@ -1,4 +1,4 @@
-import { ConnectWallet } from '../components/connect_wallet_appkit'
+import { ConnectWallet } from '../components/connect_wallet_button'
 import { ConnectWalletPage } from '../components/connect_wallet_page_appkit'
 import { Separator } from '../components/ui/separator'
 import NotificationsBell from '../pages/notifications/NotificationsBell'

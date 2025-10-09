@@ -10,7 +10,7 @@ import { RevionOperation } from '../../models/RevisionOperation'
 import { toast } from 'sonner'
 import { ETH_CHAINID_MAP } from '@/utils/constants'
 import { getAppKitProvider, switchNetworkWalletConnect } from '@/utils/appkit-wallet-utils'
-
+ 
 export const WitnessAquaChain = ({ apiFileInfo, backendUrl, nonce }: RevionOperation) => {
       const { setFiles, metamaskAddress, selectedFileInfo, setSelectedFileInfo, user_profile, backend_url, session } = useStore(appStore)
       const [witnessing, setWitnessing] = useState(false)

@@ -38,6 +38,7 @@ export interface WebConfig {
       BACKEND_URL?: string
       CUSTOM_NAME?: string
       CUSTOM_DESCRIPTION?: string
+      AUTH_PROVIDER: string
 }
 export interface DNSProof {
       walletAddress: string;
