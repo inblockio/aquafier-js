@@ -71,6 +71,8 @@ export const siweConfig = createSIWEConfig({
   },
 
   verifyMessage: async ({ message, signature }: SIWEVerifyMessageArgs) => {
+    console.log("Message: ", message)
+    console.log("Signature: ", signature)
     try {
       const backend_url = appStore.getState().backend_url
       const url = ensureDomainUrlHasSSL(`${backend_url}/session`)
