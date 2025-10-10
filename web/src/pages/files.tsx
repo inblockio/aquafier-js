@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import appStore from '../store'
 import { useStore } from 'zustand'
 import FilesList from './files_list'
@@ -77,6 +77,22 @@ const FilesPage = () => {
       //             setIsSelectedFileDialogOpen(false)
       //       }
       // }, [openFilesDetailsPopUp])
+
+
+      const [showError, setShowError] = useState(false);
+
+      useEffect(() => {
+            if (files.status === 'error') {
+                  const timer = setTimeout(() => {
+                        setShowError(true);
+                  }, 2000); // Show error after 2 seconds
+
+                  return () => clearTimeout(timer);
+            } else {
+                  setShowError(false);
+            }
+      }, [files.status]);
+
 
       const handleUploadClick = () => {
             fileInputRef.current?.click()
@@ -411,13 +427,28 @@ const FilesPage = () => {
       const displayFileListItems = () => {
             if (files.status === 'loading' || files.status === 'idle') {
 
-               return   <div className="flex justify-center items-center h-40">
+                  return <div className="flex justify-center items-center h-40">
                         <Loader2 className="w-6 h-6 text-gray-500 animate-spin" />
                   </div>
 
             }
+            // if (files.status === 'error') {
+            //    return   <div className="text-center text-red-500">Error loading files. Please try again.</div>
+            // }
+
             if (files.status === 'error') {
-               return   <div className="text-center text-red-500">Error loading files. Please try again.</div>
+                  if (!showError) {
+                        return (
+                              <div className="flex justify-center items-center h-40">
+                                    <Loader2 className="w-6 h-6 text-gray-500 animate-spin" />
+                              </div>
+                        );
+                  }
+                  return (
+                        <div className="text-center text-red-500">
+                              Error loading files. Please try again.
+                        </div>
+                  );
             }
 
 
@@ -431,7 +462,7 @@ const FilesPage = () => {
 
 
 
-          return  <FilesList selectedFiles={[]} activeFile={null} showFileActions={true} showCheckbox={false} showHeader={true} onFileDeSelected={() => { }} onFileSelected={() => {
+            return <FilesList selectedFiles={[]} activeFile={null} showFileActions={true} showCheckbox={false} showHeader={true} onFileDeSelected={() => { }} onFileSelected={() => {
 
             }} />
 
