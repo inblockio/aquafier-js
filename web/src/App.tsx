@@ -7,7 +7,7 @@ import {BrowserRouter, Route, Routes} from 'react-router-dom'
 import ErrorBoundary from './components/error_boundary'
 import Loading from './pages/loading'
 import PdfSigner from './pages/aqua_sign_wokflow/ContractDocument/PdfSigner'
-import FilesPage from './pages/files'
+import FilesPage from './pages/files/files'
 import Home from './pages/home'
 import TailwindMainLayout from './layouts/TailwindMainLayout'
 import PageNotFound from './pages/page_not_found'
@@ -33,6 +33,7 @@ import {WebConfig} from './types/types'
 import * as Sentry from "@sentry/react";
 import {init as initApm} from '@elastic/apm-rum'
 import {APMConfig} from "@/types/apm.ts";
+import ContactsPage from './pages/contacts/contacts'
 
 
 function startApm(config: APMConfig) {
@@ -135,6 +136,7 @@ function App() {
                         <Route path="pdf/workflow" element={<PdfWorkflowPage/>}/>
                         <Route path="claims/workflow" element={<ClaimsWorkflowPage/>}/>
                         <Route path="claims/workflow/:walletAddress" element={<ClaimsWorkflowPageV2/>}/>
+                        <Route path="contact_list" element={<ContactsPage/>}/>
                         <Route path="files_workflows" element={<FilesPage/>}/>
                         <Route path="domain_attestation" element={<DomainAttestationPage/>}/>
                         <Route path="claims_and_attestation" element={<ClaimsAndAttestationPage/>}/>

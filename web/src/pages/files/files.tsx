@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react'
-import appStore from '../store'
+import appStore from '../../store'
 import { useStore } from 'zustand'
 import FilesList from './files_list'
 import { AlertCircle, CheckCircle, FileText, FolderPlus, Loader2, Minimize2, Plus, Upload, X } from 'lucide-react'
@@ -17,7 +17,7 @@ import {
 import { maxFileSizeForUpload } from '@/utils/constants'
 import axios from 'axios'
 
-// /components//ui components
+
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Progress } from '@/components/ui/progress'
 import { Button } from '@/components/ui/button'

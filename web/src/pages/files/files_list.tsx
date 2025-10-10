@@ -4,7 +4,7 @@ import FileListItem from './files_list_item'
 import { fetchSystemFiles, getAquaTreeFileName, isWorkFlowData } from '@/utils/functions'
 
 import { useStore } from 'zustand'
-import appStore from '../store'
+import appStore from '../../store'
 import { ApiFileInfo } from '@/models/FileInfo'
 import { FilesListProps } from '@/types/types'
 

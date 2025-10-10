@@ -48,6 +48,25 @@ export interface DNSProof {
       signature: string;
 }
 
+export interface Session {
+      id: number
+      address: string
+      nonce: string
+      issuedAt: string // ISO 8601 string format
+      expirationTime: string // ISO 8601 string format
+}
+
+export interface ApiFileData {
+      fileHash: string
+      fileData: string | ArrayBuffer
+}
+
+export interface ContactProfile {
+      walletAddress: string
+      file: Array<ApiFileInfo>
+}
+
+
 
 export interface FilesListProps {
 
