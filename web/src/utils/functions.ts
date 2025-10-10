@@ -102,6 +102,14 @@ export function formatTxtRecord(proof: DNSProof): string {
       return `wallet=${proof.walletAddress}&timestamp=${proof.timestamp}&expiration=${proof.expiration}&sig=${proof.signature}`;
 }
 
+ // Helper function to convert string to hex with 0x prefix
+export const stringToHex = (str: string): string => {
+      const hex = Array.from(str)
+            .map(char => char.charCodeAt(0).toString(16).padStart(2, '0'))
+            .join('')
+      return `0x${hex}`
+}
+
 export const isWorkFlowData = (aquaTree: AquaTree, systemAndUserWorkFlow: string[]): { isWorkFlow: boolean; workFlow: string } => {
       const falseResponse = {
             isWorkFlow: false,

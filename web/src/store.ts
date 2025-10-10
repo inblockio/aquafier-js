@@ -153,7 +153,7 @@ const appStore = createStore<TAppStore>()(
                         CUSTOM_LOGO_URL: false,
                         SENTRY_DSN: undefined,
                         BACKEND_URL: undefined,
-                        AUTH_PROVIDER: 'metamask'
+                        AUTH_PROVIDER: undefined
                   },
                   openDialog: null, // Initialize openDialog state
                   // openFilesDetailsPopUp: false,

@@ -7,5 +7,5 @@
   "APM_ENABLED": true,
   "APM_SERVER_URL": "https://b9b5fdeede1d43c5ae69211b244715c6.apm.europe-west3.gcp.cloud.es.io:443",
   "APM_SERVICE_NAME": "aquafier-frontend",
-  "AUTH_PROVIDER":"metamask"
+  "AUTH_PROVIDER":"wallet_connect"
 }

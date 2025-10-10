@@ -16,7 +16,8 @@ import {
       getGenesisHash,
       getLastRevisionVerificationHash,
       getRandomNumber,
-      isValidEthereumAddress
+      isValidEthereumAddress,
+      stringToHex
 } from '@/utils/functions'
 import { getAppKitProvider } from '@/utils/appkit-wallet-utils'
 import Aquafier, {
@@ -78,7 +79,8 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: {
             setSystemFileInfo,
             setFiles,
             selectedFileInfo,
-            files
+            files,
+            webConfig
       } = useStore(appStore)
       const [formData, setFormData] = useState<Record<string, string | File | number>>({})
       const [multipleAddresses, setMultipleAddresses] = useState<string[]>([])
@@ -540,47 +542,104 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: {
 
             const account = session?.address
 
-            const provider = await getAppKitProvider()
 
-            if (!provider) {
-                  console.error('Wallet not connected')
-                  setDialogOpen(true)
-                  setDialogData({
-                        title: 'Wallet not connected',
-                        content: (
-                              <>
-                                    <Alert variant="destructive">
-                                          <AlertCircle className="h-4 w-4" />
-                                          <AlertDescription>Please connect your wallet to sign the domain claim.</AlertDescription>
-                                    </Alert>
-                              </>
-                        ),
-                  })
-                  return
-            }
 
             const domain = domainParams.trim()
-            try {
-                  const message = `${timestamp}|${domain}|${expiration}`
-                  signature = await (provider as any).request({
-                        method: 'personal_sign',
-                        params: [message, account],
-                  })
-            } catch (error: any) {
-                  // alert('Failed to sign: ' + error.message);
-                  console.error('Error signing domain claim:' + error)
-                  setDialogOpen(true)
-                  setDialogData({
-                        title: 'Error signing domain claim',
-                        content: (
-                              <>
-                                    <Alert variant="destructive">
-                                          <AlertCircle className="h-4 w-4" />
-                                          <AlertDescription>error signing domain claim: {JSON.stringify(error)}</AlertDescription>
-                                    </Alert>
-                              </>
-                        ),
-                  })
+
+            if (webConfig.AUTH_PROVIDER == "metamask") {
+                  if (typeof window.ethereum == 'undefined') {
+                        console.error('MetaMask not found')
+                        setDialogOpen(true)
+                        setDialogData({
+                              title: 'MetaMask not found',
+                              content: (
+                                    <>
+                                          <Alert variant="destructive">
+                                                <AlertCircle className="h-4 w-4" />
+                                                <AlertDescription>Please install MetaMask to sign the domain claim.</AlertDescription>
+                                          </Alert>
+                                    </>
+                              ),
+                        })
+                  }
+
+                  const domain = domainParams.trim()
+                  try {
+                        const message = `${timestamp}|${domain}|${expiration}`
+                        signature = await (window.ethereum as any).request({
+                              method: 'personal_sign',
+                              params: [message, account],
+                        })
+                  } catch (error: any) {
+                        // alert('Failed to sign: ' + error.message);
+                        console.error('Error signing domain claim:' + error)
+                        setDialogOpen(true)
+                        setDialogData({
+                              title: 'Error signing domain claim',
+                              content: (
+                                    <>
+                                          <Alert variant="destructive">
+                                                <AlertCircle className="h-4 w-4" />
+                                                <AlertDescription>error signing domain claim: {JSON.stringify(error)}</AlertDescription>
+                                          </Alert>
+                                    </>
+                              ),
+                        })
+                  }
+
+            } else {
+
+                  const provider = await getAppKitProvider()
+
+                  if (!provider) {
+                        console.error('Wallet not connected')
+                        setDialogOpen(true)
+                        setDialogData({
+                              title: 'Wallet not connected',
+                              content: (
+                                    <>
+                                          <Alert variant="destructive">
+                                                <AlertCircle className="h-4 w-4" />
+                                                <AlertDescription>Please connect your wallet to sign the domain claim.</AlertDescription>
+                                          </Alert>
+                                    </>
+                              ),
+                        })
+                        return
+                  }
+
+                  try {
+                        const messageToSign = `${timestamp}|${domain}|${expiration}`
+
+                        const messageHex = stringToHex(messageToSign)
+                        try {
+                              signature = await provider.request({
+                                    method: 'personal_sign',
+                                    params: [messageHex, session?.address!]
+                              })
+                        } catch (hexError) {
+                              // Fallback to plain text for wallets that don't accept hex
+                              signature = await provider.request({
+                                    method: 'personal_sign',
+                                    params: [messageToSign, session?.address!]
+                              })
+                        }
+                  } catch (error: any) {
+                        // alert('Failed to sign: ' + error.message);
+                        console.error('Error signing domain claim:' + error)
+                        setDialogOpen(true)
+                        setDialogData({
+                              title: 'Error signing domain claim',
+                              content: (
+                                    <>
+                                          <Alert variant="destructive">
+                                                <AlertCircle className="h-4 w-4" />
+                                                <AlertDescription>error signing domain claim: {JSON.stringify(error)}</AlertDescription>
+                                          </Alert>
+                                    </>
+                              ),
+                        })
+                  }
             }
 
             return signature
@@ -777,29 +836,60 @@ const CreateFormFromTemplate = ({ selectedTemplate, callBack }: {
                   fileObject: fileObject,
             }
 
-            // const signRes = await aquafier.signAquaTree(aquaTreeWrapper, 'metamask', dummyCredential())
-            const targetRevisionHash = getLastRevisionVerificationHash(aquaTreeData)
-            // Sign using WalletConnect via ethers adapter
-            const messageToSign = `I sign this revision: [${targetRevisionHash}]`
-            // const provider: any = walletProvider
-            const provider = await getAppKitProvider()
-            const signature = await provider.request({
-                  method: 'personal_sign',
-                  params: [messageToSign, session?.address!]
-            });
-            // const signature = await signer.signMessage(messageToSign)
+            if (webConfig.AUTH_PROVIDER == "metamask") {
+                  const aquaTreeWrapper: AquaTreeWrapper = {
+                        aquaTree: aquaTreeData,
+                        revision: '',
+                        fileObject: fileObject,
+                  }
 
-            const signRes = await aquafier.signAquaTree(aquaTreeWrapper, 'inline', dummyCredential(), true, undefined, {
-                  signature: signature,
-                  walletAddress: session?.address!,
-            })
+                  const signRes = await aquafier.signAquaTree(aquaTreeWrapper, 'metamask', dummyCredential())
+
+                  if (signRes.isErr()) {
+                        throw new Error('Error signing failed')
+                  }
+
+                  return signRes.data.aquaTree!
+            } else {
+
+                  // const signRes = await aquafier.signAquaTree(aquaTreeWrapper, 'metamask', dummyCredential())
+                  const targetRevisionHash = getLastRevisionVerificationHash(aquaTreeData)
+                  // Sign using WalletConnect via ethers adapter
+                  const messageToSign = `I sign this revision: [${targetRevisionHash}]`
+                  // const provider: any = walletProvider
+                  const provider = await getAppKitProvider()
+
+                  // Convert message to hex format for Core Wallet compatibility
+                  const messageHex = stringToHex(messageToSign)
+
+                  let signature
+                  try {
+                        signature = await provider.request({
+                              method: 'personal_sign',
+                              params: [messageHex, session?.address!]
+                        })
+                  } catch (hexError) {
+                        // Fallback to plain text for wallets that don't accept hex
+                        signature = await provider.request({
+                              method: 'personal_sign',
+                              params: [messageToSign, session?.address!]
+                        })
+                  }
+
+                  // const signature = await signer.signMessage(messageToSign)
+
+                  const signRes = await aquafier.signAquaTree(aquaTreeWrapper, 'inline', dummyCredential(), true, undefined, {
+                        signature: signature,
+                        walletAddress: session?.address!,
+                  })
 
 
-            if (signRes.isErr()) {
-                  throw new Error('Error signing failed')
+                  if (signRes.isErr()) {
+                        throw new Error('Error signing failed')
+                  }
+
+                  return signRes.data.aquaTree!
             }
-
-            return signRes.data.aquaTree!
       }
 
       // Function to handle post-signing actions

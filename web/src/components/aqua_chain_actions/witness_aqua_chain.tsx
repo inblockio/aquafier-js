@@ -21,7 +21,7 @@ export const WitnessAquaChain = ({ apiFileInfo, backendUrl, nonce }: RevionOpera
                   if (window.ethereum) {
 
                         try {
-                              const walletAddress = metamaskAddress
+                              const walletAddress = metamaskAddress ?? session?.address
 
                               if (!walletAddress) {
                                     setWitnessing(false)

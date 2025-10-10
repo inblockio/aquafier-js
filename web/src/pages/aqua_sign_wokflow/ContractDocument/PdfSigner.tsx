@@ -16,6 +16,7 @@ import {
       getGenesisHash,
       getLastRevisionVerificationHash,
       getRandomNumber,
+      stringToHex,
       timeStampToDateObject,
 } from '../../../utils/functions'
 import { API_ENDPOINTS } from '../../../utils/constants'
@@ -54,7 +55,7 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ fileData, setActiveStep, document
       const [submittingSignatureData, setSubmittingSignatureData] = useState(false)
 
       // Get wallet address from store
-      const { session, backend_url } = useStore(appStore)
+      const { session, backend_url, webConfig } = useStore(appStore)
 
       // PDF viewer container ref
       const pdfMainContainerRef = useRef<HTMLDivElement>(null)
@@ -222,42 +223,78 @@ const PdfSigner: React.FC<PdfSignerProps> = ({ fileData, setActiveStep, document
 
       // Helper function to sign with MetaMask
       const signWithMetaMask = async (aquafier: Aquafier, aquaTree: AquaTree) => {
-            const signatureFileObject = getAquaTreeFileObject(selectedFileInfo!) ?? selectedFileInfo?.fileObject[0]
-            //getAquaTreeFileObject(aquaTree) ?? signAquaTree[0].fileObject[0];
 
-            const aquaTreeWrapper: AquaTreeWrapper = {
-                  aquaTree: aquaTree,
-                  revision: '',
-                  fileObject: signatureFileObject,
+            if (webConfig.AUTH_PROVIDER == "metamask") {
+                  const signatureFileObject = getAquaTreeFileObject(selectedFileInfo!) ?? selectedFileInfo?.fileObject[0]
+                  //getAquaTreeFileObject(aquaTree) ?? signAquaTree[0].fileObject[0];
+
+                  const aquaTreeWrapper: AquaTreeWrapper = {
+                        aquaTree: aquaTree,
+                        revision: '',
+                        fileObject: signatureFileObject,
+                  }
+
+                  const resLinkedMetaMaskSignedAquaTree = await aquafier.signAquaTree(aquaTreeWrapper, 'metamask', dummyCredential())
+
+                  if (resLinkedMetaMaskSignedAquaTree.isErr()) {
+                        showError('MetaMask signature not appended to main tree successfully')
+                        return null
+                  }
+
+                  return resLinkedMetaMaskSignedAquaTree.data.aquaTree!
+            } else {
+
+                  const signatureFileObject = getAquaTreeFileObject(selectedFileInfo!) ?? selectedFileInfo?.fileObject[0]
+                  //getAquaTreeFileObject(aquaTree) ?? signAquaTree[0].fileObject[0];
+
+                  const aquaTreeWrapper: AquaTreeWrapper = {
+                        aquaTree: aquaTree,
+                        revision: '',
+                        fileObject: signatureFileObject,
+                  }
+
+                  // const resLinkedMetaMaskSignedAquaTree = await aquafier.signAquaTree(aquaTreeWrapper, 'metamask', dummyCredential())
+
+                  // const signRes = await aquafier.signAquaTree(aquaTreeWrapper, 'metamask', dummyCredential())
+                  const targetRevisionHash = getLastRevisionVerificationHash(aquaTree)
+                  // Sign using WalletConnect via ethers adapter
+                  const messageToSign = `I sign this revision: [${targetRevisionHash}]`
+                  // const provider: any = walletProvider
+                  const provider = await getAppKitProvider()
+
+
+                  // Convert message to hex format for Core Wallet compatibility
+                  const messageHex = stringToHex(messageToSign)
+
+                  let signature
+                  try {
+                        signature = await provider.request({
+                              method: 'personal_sign',
+                              params: [messageHex, session?.address!]
+                        })
+                  } catch (hexError) {
+                        // Fallback to plain text for wallets that don't accept hex
+                        signature = await provider.request({
+                              method: 'personal_sign',
+                              params: [messageToSign, session?.address!]
+                        })
+                  }
+
+
+                  const resLinkedMetaMaskSignedAquaTree = await aquafier.signAquaTree(aquaTreeWrapper, 'inline', dummyCredential(), true, undefined, {
+                        signature: signature,
+                        walletAddress: session?.address!,
+                  })
+
+                  if (resLinkedMetaMaskSignedAquaTree.isErr()) {
+                        showError('MetaMask signature not appended to main tree successfully')
+                        return null
+                  }
+
+                  return resLinkedMetaMaskSignedAquaTree.data.aquaTree!
             }
 
-            // const resLinkedMetaMaskSignedAquaTree = await aquafier.signAquaTree(aquaTreeWrapper, 'metamask', dummyCredential())
-
-            // const signRes = await aquafier.signAquaTree(aquaTreeWrapper, 'metamask', dummyCredential())
-            const targetRevisionHash = getLastRevisionVerificationHash(aquaTree)
-            // Sign using WalletConnect via ethers adapter
-            const messageToSign = `I sign this revision: [${targetRevisionHash}]`
-            // const provider: any = walletProvider
-            const provider = await getAppKitProvider()
-            const signature = await provider.request({
-                  method: 'personal_sign',
-                  params: [messageToSign, session?.address!]
-            });
-            // const signature = await signer.signMessage(messageToSign)
-
-            const resLinkedMetaMaskSignedAquaTree = await aquafier.signAquaTree(aquaTreeWrapper, 'inline', dummyCredential(), true, undefined, {
-                  signature: signature,
-                  walletAddress: session?.address!,
-            })
-
-            if (resLinkedMetaMaskSignedAquaTree.isErr()) {
-                  showError('MetaMask signature not appended to main tree successfully')
-                  return null
-            }
-
-            return resLinkedMetaMaskSignedAquaTree.data.aquaTree!
       }
-
       const shareRevisionsToOwnerAnOtherSignersOfDocument = async (aquaTrees: AquaTree[]) => {
             //get genesis hash
             const genesisHash = getGenesisHash(selectedFileInfo!.aquaTree!)

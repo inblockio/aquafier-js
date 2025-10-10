@@ -13,17 +13,21 @@ export const ConnectWalletPage = () => {
     setWebConfig
   } = useStore(appStore)
 
-  const [webConfigData, setWebConfigData] = useState<WebConfig>(webConfig)
+  const [webConfigData, setWebConfigData] = useState<WebConfig | null>(null)
 
   useEffect(() => {
-    if (!webConfig) {
+    if (!webConfigData || webConfig.AUTH_PROVIDER == null || webConfig.BACKEND_URL == null) {
       (async () => {
 
         const config: WebConfig = await fetch('/config.json').then(res => res.json())
 
+        console.log(`Here ... data ${JSON.stringify(config)}`)
         setWebConfig(config)
         setWebConfigData(config)
       })()
+    } else {
+      console.log(`Config data ${JSON.stringify(webConfig)}`)
+      setWebConfigData(webConfig)
     }
   }, [])
 

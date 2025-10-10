@@ -52,9 +52,7 @@ export const initializeBackendUrl = async (): Promise<{
       apmConfig: APMConfig
 }> => {
       let BACKEND_URL = 'http://127.0.0.1:3000'
-      let config:WebConfig = {
-AUTH_PROVIDER:"metamask"
-      }
+      let configObj:WebConfig = {}
       let apmConfig: APMConfig = new APMConfig();
       try {
             // Fetch the config.json file from the public folder
@@ -73,6 +71,8 @@ AUTH_PROVIDER:"metamask"
             apmConfig.enabled = configData.APM_ENABLED;
             apmConfig.serverUrl = configData.APM_SERVER_URL;
             apmConfig.serviceName = configData.APM_SERVICE_NAME;
+
+            configObj = configData
 
             // Update the BACKEND_URL
             BACKEND_URL = configData.BACKEND_URL || 'http://127.0.0.1:3000'
@@ -99,7 +99,7 @@ AUTH_PROVIDER:"metamask"
             console.error('Error reading config:', err)
       }
 
-      return {backend_url: BACKEND_URL, config: config, apmConfig: apmConfig}
+      return {backend_url: BACKEND_URL, config: configObj, apmConfig: apmConfig}
 }
 
 export const testWitness = {

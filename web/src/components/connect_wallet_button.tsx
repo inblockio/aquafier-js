@@ -65,10 +65,20 @@ export const ConnectWalletAppKit: React.FC<{ dataTestId: string }> = ({ dataTest
   }
 
   const handleConnect = () => {
-    if (!isConnected) {
-      open()
-    } else {
-      setIsProfileOpen(true)
+
+    if ( webConfig.AUTH_PROVIDER=="wallet_connect"){
+
+      if (!isConnected) {
+        open()
+      } else {
+        setIsProfileOpen(true)
+      }
+    }else{
+      if(!session){
+handleSignOut()
+      } else{
+        setIsProfileOpen(true)
+      } 
     }
   }
 
@@ -110,10 +120,19 @@ export const ConnectWalletAppKit: React.FC<{ dataTestId: string }> = ({ dataTest
         onClick={handleConnect}
         disabled={status === 'connecting'}
       >
-        <LuWallet />
+        {
+          webConfig.AUTH_PROVIDER=="wallet_connect" ? <>
+            <LuWallet />
         {status === 'connecting' ? 'Connecting...' : 
          isConnected && session ? formatCryptoAddress(session.address, 3, 3) : 
          'Sign In '}
+          </> : <>
+          
+           <LuWallet />
+                              {session ? formatCryptoAddress(session?.address, 3, 3) : 'Sign In'}
+          </>
+        }
+      
       </Button>
 
       {/* Profile Dialog for authenticated users */}
