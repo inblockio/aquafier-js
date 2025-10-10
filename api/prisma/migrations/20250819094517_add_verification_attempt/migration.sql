@@ -1,5 +1,5 @@
 -- CreateTable
-CREATE TABLE "public"."VerificationAttempt" (
+CREATE TABLE IF NOT EXISTS "public"."VerificationAttempt" (
     "id" SERIAL NOT NULL,
     "email_or_phone_number" TEXT NOT NULL,
     "verification_type" TEXT NOT NULL,

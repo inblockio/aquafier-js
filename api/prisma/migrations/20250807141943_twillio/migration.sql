@@ -2,7 +2,7 @@
 ALTER TABLE "aqua_templates_fields" ADD COLUMN     "is_verifiable" BOOLEAN NOT NULL DEFAULT false;
 
 -- CreateTable
-CREATE TABLE "verification_data" (
+CREATE TABLE IF NOT EXISTS "verification_data" (
     "id" TEXT NOT NULL,
     "session" TEXT NOT NULL,
     "filled_value" TEXT NOT NULL,

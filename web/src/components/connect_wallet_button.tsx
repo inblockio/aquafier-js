@@ -17,7 +17,7 @@ export const ConnectWalletAppKit: React.FC<{ dataTestId: string }> = ({ dataTest
   const { address, isConnected, status } = useAppKitAccount()
   const { disconnect } = useDisconnect()
   
-  const { setMetamaskAddress, session, setFiles, setAvatar, backend_url } = useStore(appStore)
+  const { setMetamaskAddress, session, setFiles, setAvatar, backend_url, webConfig } = useStore(appStore)
   const [isProfileOpen, setIsProfileOpen] = useState(false)
   const [hasHandledSiwe, setHasHandledSiwe] = useState(false)
   const [isSigningOut, setIsSigningOut] = useState(false)
@@ -33,7 +33,7 @@ export const ConnectWalletAppKit: React.FC<{ dataTestId: string }> = ({ dataTest
       setAvatar(undefined)
     }
 
-    if(isConnected== false && session != null){
+    if(isConnected== false && session != null  && webConfig.AUTH_PROVIDER=="wallet_connect"){
       handleSignOut()
     }
   }, [isConnected, address, setMetamaskAddress, setAvatar])

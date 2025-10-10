@@ -1,5 +1,5 @@
 import { ConnectWallet } from '../components/connect_wallet_button'
-import { ConnectWalletPage } from '../components/connect_wallet_page_appkit'
+import { ConnectWalletPage } from '../components/connect_wallet_page'
 import { Separator } from '../components/ui/separator'
 import NotificationsBell from '../pages/notifications/NotificationsBell'
 import { SidebarInset, SidebarProvider, SidebarTrigger } from '../components/ui/sidebar'
@@ -16,11 +16,6 @@ import FormTemplateEditorShadcn from '../components/aqua_forms/FormTemplateEdito
 import { AppSidebar } from '../components/app_sidebar'
 import WebsocketFragment from '@/components/navbar/WebsocketFragment'
 import { ScrollArea } from '@/components/ui/scroll-area'
-// import ClipboardButton from '@/components/ui/clipboard'
-// import { Label } from '@/components/ui/label'
-// import { Input } from '@/components/ui/input'
-// import { ClipboardIcon } from 'lucide-react'
-// import { Switch } from '@/components/ui/switch'
 import ShareComponent from '@/components/aqua_chain_actions/Share_component'
 
 export default function NewShadcnLayoutWithSidebar() {

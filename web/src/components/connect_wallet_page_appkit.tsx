@@ -80,7 +80,6 @@ export const ConnectWalletPageAppKit = () => {
 
   const handleSignAndConnect = () => {
     if (session) return
-    
     setError('')
     open()
   }
@@ -155,4 +154,4 @@ export const ConnectWalletPageAppKit = () => {
 }
 
 // Export with the same name to maintain compatibility
-export const ConnectWalletPage = ConnectWalletPageAppKit
+// export const ConnectWalletPage = ConnectWalletPageAppKit

@@ -20,13 +20,133 @@ const stringToHex = (str: string): string => {
 }
 
 export const SignAquaChain = ({ apiFileInfo, backendUrl, nonce, index }: RevionOperation) => {
-      const { files, setFiles, setSelectedFileInfo, selectedFileInfo, user_profile, session, backend_url } = useStore(appStore)
+      const { files, setFiles, setSelectedFileInfo, selectedFileInfo, user_profile, session, backend_url, webConfig } = useStore(appStore)
       const [signing, setSigning] = useState(false)
       const { } = useAppKit()
 
       const signFileHandler = async () => {
             setSigning(true)
-            if (window.ethereum) {
+
+
+            if (webConfig.AUTH_PROVIDER == "metamask") {
+                  if (window.ethereum) {
+
+                        try {
+                              const aquafier = new Aquafier()
+
+                              const aquaTreeWrapper: AquaTreeWrapper = {
+                                    aquaTree: apiFileInfo.aquaTree!,
+                                    revision: '',
+                                    fileObject: undefined,
+                              }
+
+                              const xCredentials = dummyCredential()
+                              xCredentials.witness_eth_network = user_profile?.witness_network ?? 'sepolia'
+
+                              const result = await aquafier.signAquaTree(aquaTreeWrapper, 'metamask', xCredentials)
+                              if (result.isErr()) {
+                                    toast.error(`Error signing failed`)
+                              } else {
+                                    const revisionHashes = result.data.aquaTree?.revisions ? Object.keys(result.data.aquaTree.revisions) : []
+
+                                    if (revisionHashes.length == 0) {
+                                          toast.error(`Error signing failed (aqua tree structure)`)
+                                          return
+                                    }
+                                    const lastHash = revisionHashes[revisionHashes.length - 1]
+                                    const lastRevision = result.data.aquaTree?.revisions[lastHash]
+                                    // send to server
+                                    const url = `${backendUrl}/tree`
+
+                                    const response = await axios.post(
+                                          url,
+                                          {
+                                                revision: lastRevision,
+                                                revisionHash: lastHash,
+                                                orginAddress: session?.address,
+                                          },
+                                          {
+                                                headers: {
+                                                      nonce: nonce,
+                                                },
+                                          }
+                                    )
+
+                                    if (response.status === 200 || response.status === 201) {
+                                          if (response.data.data) {
+                                                const newFiles: ApiFileInfo[] = response.data.data
+
+                                                // let data = {
+                                                //     ...selectedFileInfo!!,
+                                                //     aquaTree: result.data.aquaTree!!
+                                                // }
+                                                // if (data) {
+                                                //     setSelectedFileInfo(data)
+                                                // }
+                                                // setFiles(newFiles)
+
+                                                try {
+                                                      const url = ensureDomainUrlHasSSL(`${backend_url}/explorer_files`)
+                                                      const files = await fetchFiles(session!.address!, url, session!.nonce)
+                                                      setFiles({
+                                                            fileData: files, status: 'loaded'
+                                                      })
+
+                                                      if (selectedFileInfo) {
+                                                            const genesisHash = getGenesisHash(selectedFileInfo.aquaTree!)
+                                                            for (let i = 0; i < newFiles.length; i++) {
+                                                                  const newFile = newFiles[i]
+                                                                  const newGenesisHash = getGenesisHash(newFile.aquaTree!)
+                                                                  if (newGenesisHash == genesisHash) {
+                                                                        setSelectedFileInfo(newFile)
+                                                                  }
+                                                            }
+                                                      }
+                                                } catch (e) {
+                                                      toast.error('Error updating files')
+                                                      // document.location.reload()
+                                                }
+                                          } else {
+                                                const newFiles: ApiFileInfo[] = []
+                                                const keysPar = Object.keys(apiFileInfo.aquaTree!.revisions!)
+                                                files.fileData.forEach(item => {
+                                                      const keys = Object.keys(item.aquaTree!.revisions!)
+                                                      if (areArraysEqual(keys, keysPar)) {
+                                                            newFiles.push({
+                                                                  ...apiFileInfo,
+                                                                  aquaTree: result.data.aquaTree!,
+                                                            })
+                                                      } else {
+                                                            newFiles.push(item)
+                                                      }
+                                                })
+                                                const _selectFileInfo = selectedFileInfo!
+                                                _selectFileInfo.aquaTree = result.data.aquaTree!
+                                                setSelectedFileInfo(_selectFileInfo)
+                                                setFiles({ fileData: newFiles, status: 'loaded' })
+                                          }
+                                    }
+
+                                    toast.success(`Signing successfull`)
+                              }
+
+                              setSigning(false)
+                        } catch (error) {
+                              console.error('An Error', error)
+                              setSigning(false)
+                              toast.error(`Error during signing`)
+                        }
+
+                  } else {
+                        setSigning(false)
+                        toast.info(`MetaMask is not installed`)
+                  }
+
+
+
+            } else {
+
+
                   try {
                         const aquafier = new Aquafier()
 
@@ -40,14 +160,14 @@ export const SignAquaChain = ({ apiFileInfo, backendUrl, nonce, index }: RevionO
                         xCredentials.witness_eth_network = user_profile?.witness_network ?? 'sepolia'
 
                         const targetRevisionHash = getLastRevisionVerificationHash(apiFileInfo.aquaTree!)
-                        
+
                         // Sign using WalletConnect via ethers adapter
                         const messageToSign = `I sign this revision: [${targetRevisionHash}]`
                         const provider = await getAppKitProvider()
-                        
+
                         // Convert message to hex format for Core Wallet compatibility
                         const messageHex = stringToHex(messageToSign)
-                        
+
                         // Try with hex format first (for Core Wallet), fallback to plain text
                         let signature: string
                         try {
@@ -150,10 +270,9 @@ export const SignAquaChain = ({ apiFileInfo, backendUrl, nonce, index }: RevionO
                         setSigning(false)
                         toast.error(`Error during signing`)
                   }
-            } else {
-                  setSigning(false)
-                  toast.info(`MetaMask is not installed`)
+
             }
+
       }
       return (
             <>

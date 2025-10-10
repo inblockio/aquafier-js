@@ -10,14 +10,101 @@ import { RevionOperation } from '../../models/RevisionOperation'
 import { toast } from 'sonner'
 import { ETH_CHAINID_MAP } from '@/utils/constants'
 import { getAppKitProvider, switchNetworkWalletConnect } from '@/utils/appkit-wallet-utils'
- 
+
 export const WitnessAquaChain = ({ apiFileInfo, backendUrl, nonce }: RevionOperation) => {
-      const { setFiles, metamaskAddress, selectedFileInfo, setSelectedFileInfo, user_profile, backend_url, session } = useStore(appStore)
+      const { setFiles, metamaskAddress, selectedFileInfo, setSelectedFileInfo, user_profile, backend_url, session, webConfig } = useStore(appStore)
       const [witnessing, setWitnessing] = useState(false)
 
       const witnessFileHandler = async () => {
-            if (window.ethereum) {
-                  setWitnessing(true)
+            setWitnessing(true)
+            if (webConfig.AUTH_PROVIDER == "metamask") {
+                  if (window.ethereum) {
+
+                        try {
+                              const walletAddress = metamaskAddress
+
+                              if (!walletAddress) {
+                                    setWitnessing(false)
+                                    toast.info(`Please connect your wallet to continue`)
+                                    return
+                              }
+
+                              const aquafier = new Aquafier()
+
+                              const aquaTreeWrapper: AquaTreeWrapper = {
+                                    aquaTree: apiFileInfo.aquaTree!,
+                                    revision: '',
+                                    fileObject: undefined,
+                              }
+                              const xCredentials = dummyCredential()
+                              xCredentials.alchemy_key = user_profile?.alchemy_key ?? ''
+                              xCredentials.witness_eth_network = user_profile?.witness_network ?? 'sepolia'
+                              const result = await aquafier.witnessAquaTree(aquaTreeWrapper, 'eth', xCredentials.witness_eth_network as WitnessNetwork, 'metamask', xCredentials)
+                              if (result.isErr()) {
+                                    toast.error(`Error witnessing failed`)
+                              } else {
+                                    const revisionHashes = result.data.aquaTree?.revisions ? Object.keys(result.data.aquaTree.revisions) : []
+
+                                    if (revisionHashes.length == 0) {
+                                          toast.error(`Error witnessing failed (aqua tree structure)`)
+                                    }
+                                    const lastHash = revisionHashes[revisionHashes.length - 1]
+                                    const lastRevision = result.data.aquaTree?.revisions[lastHash]
+                                    // send to server
+                                    const url = `${backendUrl}/tree`
+
+                                    const response = await axios.post(
+                                          url,
+                                          {
+                                                revision: lastRevision,
+                                                revisionHash: lastHash,
+                                                orginAddress: session?.address,
+                                          },
+                                          {
+                                                headers: {
+                                                      nonce: nonce,
+                                                },
+                                          }
+                                    )
+
+                                    if (response.status === 200 || response.status === 201) {
+                                          // const newFiles: ApiFileInfo[] = response.data.data
+                                          // setFiles({ fileData: newFiles, status: 'loaded' })
+
+                                          const files = await fetchFiles(session!.address!, `${backend_url}/explorer_files`, session!.nonce)
+                                          setFiles({
+                                                fileData: files, status: 'loaded'
+                                          })
+
+                                          const newFiles: ApiFileInfo[] = files
+
+                                          if (selectedFileInfo) {
+                                                const genesisHash = getGenesisHash(selectedFileInfo.aquaTree!)
+                                                for (let i = 0; i < newFiles.length; i++) {
+                                                      const newFile = newFiles[i]
+                                                      const newGenesisHash = getGenesisHash(newFile.aquaTree!)
+                                                      if (newGenesisHash == genesisHash) {
+                                                            setSelectedFileInfo(newFile)
+                                                      }
+                                                }
+                                          }
+                                    }
+
+                                    toast.success(`Witnessing successfull`)
+                              }
+
+                              setWitnessing(false)
+                        } catch (error) {
+                              setWitnessing(false)
+                              toast.error(`Error during witnessing`)
+                        }
+
+                  } else {
+                        setWitnessing(false)
+                        toast.info(`MetaMask is not installed`)
+                  }
+            } else {
+
                   try {
                         const walletAddress = metamaskAddress
 
@@ -34,7 +121,7 @@ export const WitnessAquaChain = ({ apiFileInfo, backendUrl, nonce }: RevionOpera
                               revision: '',
                               fileObject: undefined,
                         }
-                        
+
                         const xCredentials = dummyCredential()
                         xCredentials.alchemy_key = user_profile?.alchemy_key ?? ''
                         xCredentials.witness_eth_network = user_profile?.witness_network ?? 'sepolia'
@@ -118,9 +205,6 @@ export const WitnessAquaChain = ({ apiFileInfo, backendUrl, nonce }: RevionOpera
                         setWitnessing(false)
                         toast.error(`Error during witnessing`)
                   }
-            } else {
-                  setWitnessing(false)
-                  toast.info(`MetaMask is not installed`)
             }
       }
 
