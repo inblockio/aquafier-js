@@ -1,11 +1,11 @@
 import axios from 'axios'
-import {useEffect} from 'react'
-import {ensureDomainUrlHasSSL, fetchFiles, fetchSystemFiles, generateAvatar, getCookie} from '../utils/functions'
-import {useStore} from 'zustand'
+import { useEffect } from 'react'
+import { ensureDomainUrlHasSSL, fetchFiles, fetchSystemFiles, generateAvatar, getCookie } from '../utils/functions'
+import { useStore } from 'zustand'
 import appStore from '../store'
-import {ethers} from 'ethers'
-import {toast} from 'sonner'
-import {FormTemplate} from './aqua_forms'
+import { ethers } from 'ethers'
+import { toast } from 'sonner'
+import { FormTemplate } from './aqua_forms'
 
 const LoadConfiguration = () => {
       const { setMetamaskAddress, setUserProfile, setFiles, setAvatar, setSystemFileInfo, backend_url, setSession, setFormTemplate, session } = useStore(appStore)
@@ -13,8 +13,8 @@ const LoadConfiguration = () => {
       const fetchAddressGivenANonce = async (nonce: string) => {
             if (!backend_url.includes('0.0.0.0')) {
                   try {
-                       
-                         const url = ensureDomainUrlHasSSL(`${backend_url}/session`)
+
+                        const url = ensureDomainUrlHasSSL(`${backend_url}/session`)
                         const response = await axios.get(url, {
                               params: { nonce: nonce }, // This is the correct way to pass query params
                               headers: {
@@ -30,12 +30,12 @@ const LoadConfiguration = () => {
                                     setMetamaskAddress(address)
                                     const avatar = generateAvatar(address)
                                     setAvatar(avatar)
-                                    
+
                                     const files = await fetchFiles(address, url2, nonce)
-                                setFiles({
-                                    fileData: files,
-                                    status: 'loaded',
-                              })
+                                    setFiles({
+                                          fileData: files,
+                                          status: 'loaded',
+                                    })
                                     fetchUserProfile(_address, nonce)
                                     setSession(response.data?.session)
                                     const url3 = `${backend_url}/system/aqua_tree`
@@ -47,11 +47,11 @@ const LoadConfiguration = () => {
                         setMetamaskAddress(null)
                         setAvatar(undefined)
                         setSession(null)
-                       setFiles({
-                                    fileData: [],
-                                    status: 'error',
-                                    error: error instanceof Error ? error.message : 'Unknown error from config',
-                              })
+                        setFiles({
+                              fileData: [],
+                              status: 'error',
+                              error: error instanceof Error ? error.message : 'Unknown error from config',
+                        })
                         setUserProfile({
                               ens_name: '',
                               user_pub_key: '',
@@ -141,7 +141,7 @@ const LoadConfiguration = () => {
             }
       }, [session])
 
-      
+
 
       return <></>
 }

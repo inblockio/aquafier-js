@@ -1,9 +1,9 @@
 import LoadConfiguration from './components/config'
-import {initializeBackendUrl} from './utils/constants'
-import {useEffect} from 'react'
+import { initializeBackendUrl } from './utils/constants'
+import { useEffect } from 'react'
 import appStore from './store'
-import {useStore} from 'zustand'
-import {BrowserRouter, Route, Routes} from 'react-router-dom'
+import { useStore } from 'zustand'
+import { BrowserRouter, Route, Routes } from 'react-router-dom'
 import ErrorBoundary from './components/error_boundary'
 import Loading from './pages/loading'
 import PdfSigner from './pages/aqua_sign_wokflow/ContractDocument/PdfSigner'
@@ -29,10 +29,10 @@ import ClaimsWorkflowPageV2 from './pages/v2_claims_workflow/claimsWorkflowPage'
 // Import appkit config to initialize AppKit at module level
 // import './config/appkit'
 
-import {WebConfig} from './types/types'
+import { WebConfig } from './types/types'
 import * as Sentry from "@sentry/react";
-import {init as initApm} from '@elastic/apm-rum'
-import {APMConfig} from "@/types/apm.ts";
+import { init as initApm } from '@elastic/apm-rum'
+import { APMConfig } from "@/types/apm.ts";
 import ContactsPage from './pages/contacts/contacts'
 
 
@@ -60,27 +60,27 @@ function startApm(config: APMConfig) {
 }
 
 function App() {
-    const {setBackEndUrl, setWebConfig} = useStore(appStore)
+    const { setBackEndUrl, setWebConfig } = useStore(appStore)
 
-      useEffect(() => {
-            // Properly handle async initialization
-            const initBackend = async () => {
-                const {backend_url, config, apmConfig} = await initializeBackendUrl()
-                startApm(apmConfig)
-                setBackEndUrl(backend_url)
-                setUpSentry(config)
-                setWebConfig(config)
+    useEffect(() => {
+        // Properly handle async initialization
+        const initBackend = async () => {
+            const { backend_url, config, apmConfig } = await initializeBackendUrl()
+            startApm(apmConfig)
+            setBackEndUrl(backend_url)
+            setUpSentry(config)
+            setWebConfig(config)
 
 
-                 // Conditionally import AppKit based on AUTH_PROVIDER
+            // Conditionally import AppKit based on AUTH_PROVIDER
             if (config.AUTH_PROVIDER === 'wallet_connect') {
                 await import('./config/appkit')
                 console.log('AppKit initialized for wallet_connect')
             }
-            }
+        }
 
-          initBackend()
-      }, []) // Empty dependency array means this runs once on mount
+        initBackend()
+    }, []) // Empty dependency array means this runs once on mount
 
     const setUpSentry = (config: WebConfig) => {
         // Initialize Sentry for error tracking
@@ -118,45 +118,45 @@ function App() {
     }
     return (
         <BrowserRouter>
-            <LoadConfiguration/>
+            <LoadConfiguration />
             <ErrorBoundary>
                 <Routes>
                     {/* Routes with Tailwind UI (no MainLayout wrapper) */}
 
-                    <Route path="/" element={<TailwindMainLayout/>}>
-                        <Route index element={<Home/>}/>
-                        <Route path="terms-and-conditions" element={<TermsAndConditions/>}/>
-                        <Route path="privacy-policy" element={<PrivacyPolicy/>}/>
+                    <Route path="/" element={<TailwindMainLayout />}>
+                        <Route index element={<Home />} />
+                        <Route path="terms-and-conditions" element={<TermsAndConditions />} />
+                        <Route path="privacy-policy" element={<PrivacyPolicy />} />
                     </Route>
 
                     {/* All file routes using Tailwind */}
-                    <Route path="/app" element={<NewShadcnLayoutWithSidebar/>}>
-                        <Route index element={<FilesPage/>}/>
+                    <Route path="/app" element={<NewShadcnLayoutWithSidebar />}>
+                        <Route index element={<FilesPage />} />
 
-                        <Route path="pdf/workflow" element={<PdfWorkflowPage/>}/>
-                        <Route path="claims/workflow" element={<ClaimsWorkflowPage/>}/>
-                        <Route path="claims/workflow/:walletAddress" element={<ClaimsWorkflowPageV2/>}/>
-                        <Route path="contact_list" element={<ContactsPage/>}/>
-                        <Route path="files_workflows" element={<FilesPage/>}/>
-                        <Route path="domain_attestation" element={<DomainAttestationPage/>}/>
-                        <Route path="claims_and_attestation" element={<ClaimsAndAttestationPage/>}/>
+                        <Route path="pdf/workflow" element={<PdfWorkflowPage />} />
+                        <Route path="claims/workflow" element={<ClaimsWorkflowPage />} />
+                        <Route path="claims/workflow/:walletAddress" element={<ClaimsWorkflowPageV2 />} />
+                        <Route path="contact_list" element={<ContactsPage />} />
+                        <Route path="files_workflows" element={<FilesPage />} />
+                        <Route path="domain_attestation" element={<DomainAttestationPage />} />
+                        <Route path="claims_and_attestation" element={<ClaimsAndAttestationPage />} />
 
-                        <Route path="templates" element={<TemplatesPage/>}/>
+                        <Route path="templates" element={<TemplatesPage />} />
 
-                        <Route path="shared-contracts" element={<FilesSharedContracts/>}/>
-                        <Route path="shared-contracts/:identifier" element={<SharePage/>}/>
+                        <Route path="shared-contracts" element={<FilesSharedContracts />} />
+                        <Route path="shared-contracts/:identifier" element={<SharePage />} />
 
-                        <Route path="settings" element={<SettingsPage/>}/>
-                        <Route path="info" element={<InfoPage/>}/>
-                        <Route path="workflows" element={<WorkflowsTablePage/>}/>
-                        <Route path="form-instance/:templateName" element={<CreateFormInstance/>}/>
-                        <Route path="loading" element={<Loading/>}/>
+                        <Route path="settings" element={<SettingsPage />} />
+                        <Route path="info" element={<InfoPage />} />
+                        <Route path="workflows" element={<WorkflowsTablePage />} />
+                        <Route path="form-instance/:templateName" element={<CreateFormInstance />} />
+                        <Route path="loading" element={<Loading />} />
                         <Route path="pdf-signer" element={<PdfSigner fileData={null} setActiveStep={_one => {
-                        }}/>}/>
+                        }} />} />
                     </Route>
 
 
-                    <Route path="*" element={<PageNotFound/>}/>
+                    <Route path="*" element={<PageNotFound />} />
                 </Routes>
             </ErrorBoundary>
         </BrowserRouter>

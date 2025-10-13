@@ -2,10 +2,11 @@ import { createSIWEConfig } from '@reown/appkit-siwe'
 import type { SIWECreateMessageArgs, SIWESession, SIWEVerifyMessageArgs } from '@reown/appkit-siwe'
 import axios from 'axios'
 import { getCookie, setCookie, ensureDomainUrlHasSSL } from '../utils/functions'
-import { SESSION_COOKIE_NAME } from '../utils/constants'
+import { ETH_CHAINID_MAP_NUMBERS, SESSION_COOKIE_NAME } from '../utils/constants'
 import appStore from '../store'
 import { toast } from 'sonner'
 import { createSiweMessage } from '@/utils/appkit-wallet-utils'
+import { ethers } from 'ethers'
 
 // Helper function to extract Ethereum address from DID or return as-is if already an address
 const extractEthereumAddress = (addressOrDid: string): string => {
@@ -45,7 +46,10 @@ export const siweConfig = createSIWEConfig({
 
   getSession: async () => {
     const nonce = getCookie(SESSION_COOKIE_NAME)
+    console.log("Nonce: ", nonce)
     if (!nonce) return null
+
+    console.log("Here after nonce")
 
     try {
       const backend_url = appStore.getState().backend_url
@@ -56,11 +60,18 @@ export const siweConfig = createSIWEConfig({
           'Content-Type': 'application/x-www-form-urlencoded',
         },
       })
+      console.log("Response: ", response)
 
       if (response.status === 200 && response.data?.session) {
+        console.log("Session: ", response.data.session)
+        const userSettings = response.data.user_settings
+        const network = userSettings.witness_network
+        const chainId = ETH_CHAINID_MAP_NUMBERS[network]
         return {
-          address: response.data.session.address,
-          chainId: response.data.session.chain_id || 1,
+          address: ethers.getAddress(response.data.session.address),
+          // TODO: fix this. Find a way to return the connected chain id from the backend to avoid issues in which it asks the user to reconnect
+          // For now, I read the user settings to get chainID
+          chainId: response.data.session.chain_id || chainId, 
         } as SIWESession
       }
     } catch (error) {

@@ -11,6 +11,8 @@ export const ConnectWalletPageAppKit = () => {
   const { open } = useAppKit()
   const { address, isConnected, status } = useAppKitAccount()
   const { open: modalOpen } = useAppKitState()
+
+  console.log("Connection status: ", status)
   
   const {
     setMetamaskAddress,

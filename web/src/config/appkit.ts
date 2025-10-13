@@ -30,6 +30,7 @@ const ethersAdapter = new EthersAdapter()
 
 // Initialize AppKit immediately at module level
 export const appKit = createAppKit({
+  enableReconnect: true,
   adapters: [ethersAdapter],
   networks: networks as any,
   projectId,

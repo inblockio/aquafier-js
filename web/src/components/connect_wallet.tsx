@@ -1,14 +1,14 @@
-import {lazy, Suspense, useState, useEffect} from 'react'
-import {LuCircleCheck, LuCircleX, LuLogOut, LuWallet} from 'react-icons/lu'
-import {ClipLoader} from 'react-spinners'
-import {formatCryptoAddress, setCookie} from '../utils/functions'
-import {SESSION_COOKIE_NAME} from '../utils/constants'
-import {useStore} from 'zustand'
+import { lazy, Suspense, useState, useEffect } from 'react'
+import { LuCircleCheck, LuCircleX, LuLogOut, LuWallet } from 'react-icons/lu'
+import { ClipLoader } from 'react-spinners'
+import { formatCryptoAddress, setCookie } from '../utils/functions'
+import { SESSION_COOKIE_NAME } from '../utils/constants'
+import { useStore } from 'zustand'
 import appStore from '../store'
-import {Button} from './ui/button'
-import {Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger} from './ui/dialog'
-import {toast} from 'sonner'
-import {useAppKit, useAppKitAccount, useDisconnect} from '@reown/appkit/react'
+import { Button } from './ui/button'
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from './ui/dialog'
+import { toast } from 'sonner'
+import { useAppKit, useAppKitAccount, useDisconnect } from '@reown/appkit/react'
 
 // Lazy load the WalletAddressProfile component
 const WalletAddressProfile = lazy(() => import('@/pages/v2_claims_workflow/WalletAddressProfile'))
@@ -17,13 +17,13 @@ export const ConnectWallet: React.FC<{ dataTestId: string }> = ({ dataTestId }) 
   const { open } = useAppKit()
   const { isConnected } = useAppKitAccount()
   const { disconnect } = useDisconnect()
-  
-  const { 
-    setMetamaskAddress, 
-    session, 
-    setFiles, 
-    setAvatar, 
-    setSession 
+
+  const {
+    setMetamaskAddress,
+    session,
+    setFiles,
+    setAvatar,
+    setSession
   } = useStore(appStore)
 
   const [isOpen, setIsOpen] = useState(false)
@@ -66,81 +66,81 @@ export const ConnectWallet: React.FC<{ dataTestId: string }> = ({ dataTestId }) 
     open()
   }
 
-//   const signOutFromSiweSession = async () => {
-//     setLoading(true)
-//     try {
-//       const nonce = getCookie(SESSION_COOKIE_NAME)
-
-    
-//       if (nonce) {
-//         const url = ensureDomainUrlHasSSL(`${backend_url}/session`)
-//         await axios.delete(url, {
-//           params: { nonce },
-//         })
-//       }
-
-//       // Clean up local state
-//       handleCleanup()
-
-//          // Close the dialog immediately
-//   setIsOpen(false)
-//       // Disconnect from AppKit wallet
-//       await disconnect({
-           
-//       })
+  //   const signOutFromSiweSession = async () => {
+  //     setLoading(true)
+  //     try {
+  //       const nonce = getCookie(SESSION_COOKIE_NAME)
 
 
-//       toast.success('Signed out successfully')
-//     } catch (error: any) {
-//       console.error('Sign out error:', error)
-//       // Clean up even if backend fails
-//       handleCleanup()
-//       toast.success('Signed out successfully')
-//     } finally {
-//       setLoading(false)
-//       setIsOpen(false)
-//     }
-//   }
-const {  close } = useAppKit() 
+  //       if (nonce) {
+  //         const url = ensureDomainUrlHasSSL(`${backend_url}/session`)
+  //         await axios.delete(url, {
+  //           params: { nonce },
+  //         })
+  //       }
 
-const signOutFromSiweSession = async () => {
-  setLoading(true)
-  setIsOpen(false)
-   // Force close any AppKit modals
+  //       // Clean up local state
+  //       handleCleanup()
+
+  //          // Close the dialog immediately
+  //   setIsOpen(false)
+  //       // Disconnect from AppKit wallet
+  //       await disconnect({
+
+  //       })
+
+
+  //       toast.success('Signed out successfully')
+  //     } catch (error: any) {
+  //       console.error('Sign out error:', error)
+  //       // Clean up even if backend fails
+  //       handleCleanup()
+  //       toast.success('Signed out successfully')
+  //     } finally {
+  //       setLoading(false)
+  //       setIsOpen(false)
+  //     }
+  //   }
+  const { close } = useAppKit()
+
+  const signOutFromSiweSession = async () => {
+    setLoading(true)
+    setIsOpen(false)
+    // Force close any AppKit modals
     close()
-  
+
     // Small delay to ensure modal is closed
     await new Promise(resolve => setTimeout(resolve, 100))
-console.log(`55555`)
-     
+    console.log(`55555`)
+
     // Find and click the disconnect button
     const disconnectButton = document.querySelector('[data-testid="disconnect-button"]') as HTMLElement
-    
+
     if (disconnectButton) {
       console.log(`8888`)
       // Click the button element inside the web component
       const button = disconnectButton.shadowRoot?.querySelector('button')
       if (button) {
-            console.log(`00`)
+        console.log(`00`)
         button.click()
       } else {
-            console.log(`111`)
+        console.log(`111`)
         // Fallback: click the component itself
         disconnectButton.click()
       }
-    }else{
+    } else {
       console.log(`33333`)
     }
-  try {
-    await disconnect() // This calls siweConfig.signOut automatically
-    toast.success('Signed out successfully')
-  } catch (error: any) {
-    console.error('Sign out error:', error)
-    toast.error('Error signing out')
-  } finally {
-    setLoading(false)
+    try {
+      await disconnect() // This calls siweConfig.signOut automatically
+      toast.success('Signed out successfully')
+    } catch (error: any) {
+      console.error('Sign out error:', error)
+      toast.error('Error signing out')
+    } finally {
+      setLoading(false)
+    }
   }
-}
 
 
   return (
@@ -156,9 +156,9 @@ console.log(`55555`)
           {session ? formatCryptoAddress(session?.address, 3, 3) : 'Sign In'}
         </Button>
       </DialogTrigger>
-      <DialogContent 
-        aria-describedby="Account dialog" 
-        aria-description="Account dialog" 
+      <DialogContent
+        aria-describedby="Account dialog"
+        aria-description="Account dialog"
         className="sm:max-w-[425px] max-w-[425px]"
       >
         <DialogHeader>
@@ -168,10 +168,10 @@ console.log(`55555`)
           {session ? (
             <div className="flex flex-col gap-5 items-center">
               <Suspense fallback={<div>Loading...</div>}>
-                <WalletAddressProfile 
-                  walletAddress={session?.address} 
-                  callBack={() => setIsOpen(false)} 
-                  showAvatar={false} 
+                <WalletAddressProfile
+                  walletAddress={session?.address}
+                  callBack={() => setIsOpen(false)}
+                  showAvatar={false}
                 />
               </Suspense>
 
@@ -199,13 +199,13 @@ console.log(`55555`)
             <div className="flex flex-col gap-10 align-center justify-center">
               {connectionState === 'connecting' && (
                 <>
-                  <ClipLoader 
-                    color={'blue'} 
-                    loading={loading} 
-                    size={150} 
-                    className="mx-auto" 
-                    aria-label="Loading Spinner" 
-                    data-testid="loader" 
+                  <ClipLoader
+                    color={'blue'}
+                    loading={loading}
+                    size={150}
+                    className="mx-auto"
+                    aria-label="Loading Spinner"
+                    data-testid="loader"
                   />
                   <p className="text-md text-center">Connecting to wallet...</p>
                 </>

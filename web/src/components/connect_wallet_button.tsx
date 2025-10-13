@@ -75,7 +75,7 @@ export const ConnectWalletAppKit: React.FC<{ dataTestId: string }> = ({ dataTest
       }
     }else{
       if(!session){
-handleSignOut()
+        handleSignOut()
       } else{
         setIsProfileOpen(true)
       } 
